@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Show Manager &middot; Gflam Touring</title>
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ccircle%20cx%3D%2750%27%20cy%3D%2750%27%20r%3D%2750%27%20fill%3D%27%23fe65c3%27%2F%3E%3C%2Fsvg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#fe65c3;--dark:#111;--dark2:#1a1a1a;--dark3:#222;--white:#fff;--muted:rgba(255,255,255,0.55);--border:rgba(255,255,255,0.1)}
+html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;font-size:15px;line-height:1.6;min-height:100vh}
+.dot{color:var(--pink)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--pink);margin-bottom:12px}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:rgba(17,17,17,0.97);position:sticky;top:0;z-index:50}
+.topbar-title{font-family:"DM Serif Display",serif;font-size:22px;letter-spacing:-0.5px;color:#fff}
+.topbar-right{display:flex;gap:10px;align-items:center}
+.tb-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;border-radius:5px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s;text-decoration:none}
+.tb-btn:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+
+/* PIN GATE */
+.gate{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 64px);padding:24px}
+.gate-box{background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
+.gate-icon{font-size:42px;margin-bottom:16px}
+.gate-title{font-family:"DM Serif Display",serif;font-size:32px;letter-spacing:-1px;margin-bottom:8px;color:#fff}
+.gate-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.pin-input{background:var(--dark3);border:1px solid var(--border);border-radius:6px;color:#fff;font-family:"DM Sans",sans-serif;font-size:28px;font-weight:700;letter-spacing:14px;text-align:center;padding:16px;width:100%;outline:none;transition:border-color .2s}
+.pin-input:focus{border-color:var(--pink)}
+.pin-error{color:var(--pink);font-size:13px;margin-top:14px;min-height:20px}
+
+/* APP */
+.app{display:none;padding:48px 32px 80px;max-width:1200px;margin:0 auto}
+.app.show{display:block}
+.app-title{font-family:"DM Serif Display",serif;font-size:42px;letter-spacing:-1.5px;margin-bottom:8px;color:#fff}
+.app-sub{font-size:15px;color:var(--muted);margin-bottom:40px}
+.status-bar{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted);margin-bottom:24px;padding:12px 16px;background:var(--dark2);border:1px solid var(--border);border-radius:6px}
+.status-bar strong{color:#fff;font-weight:600}
+.status-bar.error{border-color:rgba(254,101,195,0.3);background:rgba(254,101,195,0.04);color:var(--pink)}
+
+/* SHOW ITEMS */
+.show-items{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.show-item{background:var(--dark2);border:1px solid var(--border);border-radius:10px;padding:24px}
+.arow{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
+.afield{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.afield label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.afield input,.afield select,.afield textarea{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:"DM Sans",sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:border-color .2s;width:100%}
+.afield input:focus,.afield select:focus,.afield textarea:focus{border-color:rgba(254,101,195,0.5)}
+.afield input::placeholder{color:rgba(255,255,255,0.2)}
+.afield select option{background:var(--dark3);color:#fff}
+.afield small{color:rgba(255,255,255,0.35);font-size:11px;margin-top:4px;display:block}
+.preview-pink{color:var(--pink);font-size:13px;font-weight:600;margin-top:6px;display:block}
+
+/* IMAGE UPLOAD */
+.img-upload{border:1px dashed rgba(254,101,195,0.35);border-radius:6px;padding:14px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s}
+.img-upload:hover{border-color:var(--pink)}
+.img-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-upload-label{font-size:13px;color:var(--muted)}
+.img-preview{width:100%;height:80px;object-fit:cover;border-radius:5px;margin-top:8px}
+
+/* QUEENS */
+.q-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.q-chip{display:flex;align-items:center;gap:6px;border:1px solid rgba(254,101,195,0.35);color:var(--pink);font-size:13px;padding:4px 10px 4px 12px;border-radius:20px}
+.q-chip button{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:13px;padding:0;transition:color .15s}
+.q-chip button:hover{color:var(--pink)}
+.q-add-row{display:flex;gap:8px}
+.q-add-row input{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:"DM Sans",sans-serif;font-size:13px;padding:7px 12px;flex:1;outline:none}
+.q-add-btn{background:rgba(255,255,255,0.08);border:1px solid var(--border);color:#fff;font-size:13px;font-weight:600;padding:7px 16px;border-radius:5px;cursor:pointer;font-family:"DM Sans",sans-serif}
+.remove-btn{margin-top:14px;background:transparent;border:1px solid rgba(254,101,195,0.25);color:rgba(254,101,195,0.7);font-size:12px;font-weight:600;padding:7px 16px;border-radius:5px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .2s}
+.remove-btn:hover{border-color:var(--pink);color:var(--pink)}
+
+/* ACTIONS */
+.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.btn{font-family:"DM Sans",sans-serif;font-size:14px;font-weight:600;padding:11px 24px;border-radius:5px;cursor:pointer;border:none;transition:all .2s;text-decoration:none;display:inline-block}
+.btn-pink{background:var(--pink);color:#fff}
+.btn-pink:hover{opacity:0.85}
+.btn-pink:disabled{opacity:0.5;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid var(--border);color:#fff}
+.btn-outline:hover{background:rgba(255,255,255,0.05)}
+.toast{display:none;margin-left:auto;background:rgba(85,200,120,0.08);border:1px solid rgba(85,200,120,0.25);color:#7adc91;font-size:13px;padding:9px 16px;border-radius:5px}
+.toast.show{display:inline-block}
+
+@media(max-width:700px){
+  .topbar{padding:14px 20px}
+  .app{padding:32px 20px 60px}
+  .app-title{font-size:32px}
+  .gate-box{padding:36px 24px}
+  .actions .toast{margin-left:0;width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">Gflam<span class="dot">.</span> Manager</div>
+  <div class="topbar-right">
+    <a href="/" class="tb-btn">View Site</a>
+    <button class="tb-btn" id="lockBtn" onclick="lockOut()" style="display:none">Lock</button>
+  </div>
+</div>
+
+<!-- PIN GATE -->
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="gate-icon">&#128274;</div>
+    <div class="gate-title">Show Manager<span class="dot">.</span></div>
+    <div class="gate-sub">Enter your PIN to manage tours.</div>
+    <input type="password" class="pin-input" id="pinInput" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="&#183;&#183;&#183;&#183;" oninput="onPinInput(this)" autofocus>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="eyebrow">Tour Database</div>
+  <h1 class="app-title">Manage all shows<span class="dot">.</span></h1>
+  <p class="app-sub">Edit any field below. Changes save to Supabase and sync to gflamtouring.com.au and dragbingoatthebowlo.com.au within seconds of clicking Save.</p>
+
+  <div class="status-bar" id="status">
+    <span id="statusText">Loading shows&hellip;</span>
+  </div>
+
+  <div class="show-items" id="showItems"></div>
+
+  <div class="actions">
+    <button class="btn btn-outline" onclick="addShow()">+ Add Show</button>
+    <button class="btn btn-pink" onclick="saveShows()" id="saveBtn">Save All Shows</button>
+    <span class="toast" id="toast">&#10003; Saved successfully</span>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://gpoolavkghnxedzrmtmc.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE";
+const SB_HEADERS = {
+  "apikey": SUPABASE_KEY,
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+  "Prefer": "return=representation"
+};
+// SHA-256 hash of the access PIN — the actual PIN is never in this file.
+// To rotate: compute new SHA-256 of your chosen PIN and replace this string.
+const PIN_HASH = "827b209fa167fa5c0302fcb45e4ca3ac2076713ee96b88179a7d9cd4cb1bf834";
+const SESSION_KEY = "gflam_mgr_session";
+const SESSION_TTL_MS = 1000 * 60 * 60 * 4; // 4 hours
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let shows = [];
+
+// ─── PIN GATE ──────────────────────────────────────────────────────────────
+async function sha256Hex(text) {
+  const buf = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function onPinInput(el) {
+  const v = el.value;
+  if (v.length < 4) { document.getElementById("pinError").textContent = ""; return; }
+  if (v.length === 4) {
+    const h = await sha256Hex(v);
+    if (h === PIN_HASH) { unlock(); }
+    else {
+      document.getElementById("pinError").textContent = "Incorrect PIN. Try again.";
+      el.value = "";
+    }
+  }
+}
+
+function unlock() {
+  // Set short-lived session so refresh doesn't re-prompt
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now() }));
+  } catch (e) {}
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("app").classList.add("show");
+  document.getElementById("lockBtn").style.display = "inline-block";
+  loadShows();
+}
+
+function lockOut() {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+  location.reload();
+}
+
+function checkSession() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+    const { ts } = JSON.parse(raw);
+    if (Date.now() - ts > SESSION_TTL_MS) {
+      sessionStorage.removeItem(SESSION_KEY);
+      return false;
+    }
+    return true;
+  } catch (e) { return false; }
+}
+
+if (checkSession()) { unlock(); }
+
+// ─── DATE HELPERS ──────────────────────────────────────────────────────────
+function formatShowDate(dateStr) {
+  if (!dateStr) return "Pick a date above";
+  const d = new Date(dateStr + "T12:00:00+10:00");
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+// ─── SUPABASE LOAD ─────────────────────────────────────────────────────────
+function mapShow(s) {
+  return {
+    id: s.id,
+    showDate: s.show_date || "",
+    time: s.time || "7:00 PM",
+    doors: s.doors || "",
+    venue: s.venue || "",
+    suburb: s.suburb || "",
+    host: s.host || "",
+    queens: Array.isArray(s.queens) ? s.queens : [],
+    price: s.price || "",
+    ticketUrl: s.ticket_url || "",
+    discountUrl: s.discount_url || "",
+    imgSrc: s.img_src || "",
+    displayDate: s.go_live_date || "",
+    displayTime: s.go_live_time || "00:00",
+    showType: s.show_type || "other"
+  };
+}
+
+async function loadShows() {
+  setStatus("Loading shows from Supabase&hellip;", false);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?order=show_date.asc`, { headers: SB_HEADERS });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    shows = Array.isArray(data) ? data.map(mapShow) : [];
+    setStatus(`<strong>${shows.length}</strong> show${shows.length === 1 ? "" : "s"} loaded. Edit fields below, then Save All Shows.`, false);
+  } catch (e) {
+    shows = [];
+    setStatus(`Couldn&rsquo;t connect to Supabase: ${e.message}. Check the connection and reload.`, true);
+  }
+  renderShows();
+}
+
+function setStatus(html, isError) {
+  const bar = document.getElementById("status");
+  bar.innerHTML = `<span id="statusText">${html}</span>`;
+  bar.classList.toggle("error", !!isError);
+}
+
+// ─── RENDER ────────────────────────────────────────────────────────────────
+function renderShows() {
+  const root = document.getElementById("showItems");
+  if (shows.length === 0) {
+    root.innerHTML = `<div class="show-item" style="text-align:center;color:var(--muted)">No shows yet. Click <strong style="color:#fff">+ Add Show</strong> below to create the first one.</div>`;
+    return;
+  }
+  root.innerHTML = shows.map((s, i) => `
+    <div class="show-item">
+      <div class="arow">
+        <div class="afield" style="flex:2">
+          <label>Show Date</label>
+          <input type="date" value="${s.showDate || ""}" onchange="shows[${i}].showDate=this.value;this.closest('.show-item').querySelector('.preview-pink').textContent=formatShowDate(this.value)" style="color-scheme:dark">
+          <small class="preview-pink">${formatShowDate(s.showDate)}</small>
+        </div>
+        <div class="afield">
+          <label>Show Type</label>
+          <select onchange="shows[${i}].showType=this.value">
+            <option value="live_music" ${s.showType==="live_music"?"selected":""}>Live Music</option>
+            <option value="drag_show" ${s.showType==="drag_show"?"selected":""}>Drag Show</option>
+            <option value="drag_bingo" ${s.showType==="drag_bingo"?"selected":""}>Drag Bingo</option>
+            <option value="cabaret" ${s.showType==="cabaret"?"selected":""}>Cabaret</option>
+            <option value="comedy" ${s.showType==="comedy"?"selected":""}>Comedy</option>
+            <option value="festival" ${s.showType==="festival"?"selected":""}>Festival</option>
+            <option value="other" ${(!s.showType||s.showType==="other")?"selected":""}>Other</option>
+          </select>
+          <small>"Drag Bingo" also appears on dragbingoatthebowlo.com.au</small>
+        </div>
+        <div class="afield">
+          <label>Price</label>
+          <input value="${s.price || ""}" onchange="shows[${i}].price=this.value" placeholder="$30+BF">
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Show Time</label><input value="${s.time || ""}" onchange="shows[${i}].time=this.value" placeholder="7:00 PM"></div>
+        <div class="afield"><label>Doors Open</label><input value="${s.doors || ""}" onchange="shows[${i}].doors=this.value" placeholder="6:30 PM"></div>
+        <div class="afield"><label>Venue</label><input value="${s.venue || ""}" onchange="shows[${i}].venue=this.value" placeholder="Venue Name"></div>
+        <div class="afield"><label>Suburb / City</label><input value="${s.suburb || ""}" onchange="shows[${i}].suburb=this.value" placeholder="Suburb"></div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Host / Headliner</label><input value="${s.host || ""}" onchange="shows[${i}].host=this.value" placeholder="Artist or host name"></div>
+        <div class="afield" style="flex:2">
+          <label>Ticket URL</label>
+          <input value="${s.ticketUrl || ""}" onchange="shows[${i}].ticketUrl=this.value" placeholder="https://...">
+          <small>Moshtix, Humanitix, Ticketek, etc.</small>
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield" style="flex:2">
+          <label>&#127915; Discount URL</label>
+          <input value="${s.discountUrl || ""}" onchange="shows[${i}].discountUrl=this.value" placeholder="https://...?offercode=...">
+          <small>Optional. Used by Drag Bingo /nextevent page.</small>
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield">
+          <label>Go Live Date</label>
+          <input type="date" value="${s.displayDate || ""}" onchange="shows[${i}].displayDate=this.value" style="color-scheme:dark">
+          <small>Leave blank to show immediately.</small>
+        </div>
+        <div class="afield">
+          <label>Go Live Time (QLD)</label>
+          <input type="time" value="${s.displayTime || "00:00"}" onchange="shows[${i}].displayTime=this.value" style="color-scheme:dark">
+        </div>
+        <div class="afield" style="flex:2">
+          <label>Banner Image (1200&times;525px ideal)</label>
+          <div class="img-upload">
+            <input type="file" accept="image/*" onchange="handleImg(${i},this)">
+            <div class="img-upload-label">Click to upload</div>
+            ${s.imgSrc ? `<img src="${s.imgSrc}" class="img-preview">` : ""}
+          </div>
+        </div>
+      </div>
+      <div class="afield">
+        <label>Special Guests / Support Acts</label>
+        <div class="q-chips">${(s.queens || []).map((q, qi) => `<div class="q-chip"><span>${escapeHtml(q)}</span><button onclick="removeQueen(${i},${qi})" title="Remove">&#10005;</button></div>`).join("")}</div>
+        <div class="q-add-row">
+          <input id="qi-${s.id}" placeholder="Name..." onkeydown="if(event.key==='Enter')addQueen(${i},'${s.id}')">
+          <button class="q-add-btn" onclick="addQueen(${i},'${s.id}')">+ Add</button>
+        </div>
+      </div>
+      <button class="remove-btn" onclick="removeShow(${i})">Remove this show</button>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+// ─── EDIT ACTIONS ──────────────────────────────────────────────────────────
+function handleImg(i, input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => { shows[i].imgSrc = e.target.result; renderShows(); };
+  r.readAsDataURL(f);
+}
+
+function addQueen(si, sid) {
+  const inp = document.getElementById("qi-" + sid);
+  if (!inp) return;
+  const v = inp.value.trim();
+  if (!v) return;
+  if (!shows[si].queens) shows[si].queens = [];
+  shows[si].queens.push(v);
+  inp.value = "";
+  renderShows();
+}
+
+function removeQueen(si, qi) {
+  shows[si].queens.splice(qi, 1);
+  renderShows();
+}
+
+function removeShow(i) {
+  if (!confirm("Remove this show? You'll need to click Save All Shows to apply.")) return;
+  const s = shows[i];
+  // If it has a real DB id, mark for deletion. Otherwise just drop it.
+  if (typeof s.id === "string" && s.id.length === 36) {
+    s._delete = true;
+    shows.splice(i, 1);
+    pendingDeletes.push(s.id);
+  } else {
+    shows.splice(i, 1);
+  }
+  renderShows();
+}
+
+const pendingDeletes = [];
+
+function addShow() {
+  shows.push({
+    id: "new-" + Date.now(),
+    showDate: "", time: "7:00 PM", doors: "6:30 PM",
+    venue: "", suburb: "", host: "",
+    queens: [], price: "$30+BF",
+    ticketUrl: "", discountUrl: "", imgSrc: "",
+    displayDate: "", displayTime: "00:00",
+    showType: "other"
+  });
+  renderShows();
+  const last = document.getElementById("showItems").lastElementChild;
+  if (last) last.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+// ─── SAVE ──────────────────────────────────────────────────────────────────
+async function saveShows() {
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  try {
+    // Process deletes first
+    for (const id of pendingDeletes) {
+      await fetch(`${SUPABASE_URL}/rest/v1/shows?id=eq.${id}`, {
+        method: "DELETE", headers: SB_HEADERS
+      });
+    }
+    pendingDeletes.length = 0;
+
+    // Then upsert remaining shows
+    for (const show of shows) {
+      const row = {
+        show_date: show.showDate || null,
+        time: show.time || "",
+        doors: show.doors || "",
+        venue: show.venue || "",
+        suburb: show.suburb || "",
+        host: show.host || "",
+        queens: show.queens || [],
+        price: show.price || "",
+        ticket_url: show.ticketUrl || "",
+        discount_url: show.discountUrl || "",
+        img_src: show.imgSrc || "",
+        go_live_date: show.displayDate || null,
+        go_live_time: show.displayTime || "00:00",
+        show_type: show.showType || "other"
+      };
+      const isExisting = typeof show.id === "string" && show.id.length === 36;
+      if (isExisting) {
+        await fetch(`${SUPABASE_URL}/rest/v1/shows?id=eq.${show.id}`, {
+          method: "PATCH", headers: SB_HEADERS, body: JSON.stringify(row)
+        });
+      } else {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/shows`, {
+          method: "POST", headers: SB_HEADERS, body: JSON.stringify(row)
+        });
+        const data = await res.json();
+        if (Array.isArray(data) && data[0] && data[0].id) show.id = data[0].id;
+      }
+    }
+    const t = document.getElementById("toast");
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2800);
+    setStatus(`<strong>${shows.length}</strong> show${shows.length === 1 ? "" : "s"} saved. Live on the public sites now.`, false);
+  } catch (e) {
+    alert("Error saving: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save All Shows";
+  }
+}
+</script>
+
+</body>
+</html>

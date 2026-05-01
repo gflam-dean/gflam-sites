@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /manage
 
 Sitemap: https://gflamtouring.com.au/sitemap.xml
