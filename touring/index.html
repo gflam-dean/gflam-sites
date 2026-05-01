@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ccircle%20cx%3D%2750%27%20cy%3D%2750%27%20r%3D%2750%27%20fill%3D%27%23fe65c3%27%2F%3E%3C%2Fsvg%3E">
+<title>Current Tours | Gflam Touring</title>
+<meta name="description" content="Gflam Touring presents live entertainment across Queensland — drag shows, bingo nights and more. View all upcoming shows and book tickets now.">
+<meta name="keywords" content="Gflam Touring, current tours, drag shows Queensland, live entertainment, bowls club shows, community venue entertainment">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://gflamtouring.com.au/current-tours">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Current Tours | Gflam Touring">
+<meta property="og:description" content="Live entertainment across Queensland — drag shows, bingo nights and more. Book your tickets now.">
+<meta property="og:url" content="https://gflamtouring.com.au/current-tours">
+<meta property="og:site_name" content="Gflam Touring">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Current Tours | Gflam Touring">
+<meta name="twitter:description" content="Live entertainment across Queensland. Book now.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#fe65c3;--dark:#111;--dark2:#1a1a1a;--dark3:#222;--white:#fff;--muted:rgba(255,255,255,0.55);--border:rgba(255,255,255,0.1)}
+html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 48px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(17,17,17,0.97);backdrop-filter:blur(6px)}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-0.5px;color:#fff;text-decoration:none}
+.nav-logo span{color:var(--pink)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:rgba(255,255,255,0.55);font-size:13px;font-weight:500;text-decoration:none;letter-spacing:0.5px;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:#fff}
+
+/* HERO */
+.hero{padding:90px 48px 80px;max-width:1200px;margin:0 auto}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--pink);margin-bottom:16px}
+.hero-h1{font-family:'DM Serif Display',serif;font-size:clamp(48px,6vw,80px);letter-spacing:-2px;line-height:1;margin-bottom:24px;color:#fff}
+.hero-h1 .dot{color:var(--pink)}
+.hero-sub{color:rgba(255,255,255,0.55);font-size:17px;line-height:1.8;max-width:560px}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--border)}
+
+/* SECTION */
+.section{padding:80px 48px;max-width:1200px;margin:0 auto}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--pink);margin-bottom:12px}
+.section-heading{font-family:'DM Serif Display',serif;font-size:clamp(38px,5vw,56px);letter-spacing:-1.5px;line-height:1.05;margin-bottom:48px;color:#fff}
+.section-heading .dot{color:var(--pink)}
+
+/* SHOWS */
+.shows-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.show-card{background:#1a1a1a;border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s,transform .2s}
+.show-card:hover{border-color:rgba(254,101,195,0.4);transform:translateY(-2px)}
+.show-card-img{width:100%;aspect-ratio:16/7;object-fit:cover;display:block}
+.show-card-ph{width:100%;aspect-ratio:16/7;background:#222;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border)}
+.show-card-ph span{font-size:13px;color:rgba(255,255,255,0.55)}
+.sc-top{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.sc-top-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.sc-time-block{text-align:right}
+.sc-show-time{font-size:14px;font-weight:600;color:#fff}
+.sc-doors-time{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+.sc-day{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--pink);margin-bottom:3px}
+.sc-date-big{display:flex;flex-direction:column;align-items:flex-start;line-height:1;margin:4px 0 2px}
+.sc-date-num{font-family:'DM Serif Display',serif;font-size:42px;letter-spacing:-1px;color:#fff;line-height:1}
+.sc-date-mon{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-top:2px}
+.sc-price{background:rgba(254,101,195,0.12);border:1px solid rgba(254,101,195,0.3);color:var(--pink);font-weight:700;font-size:14px;padding:5px 13px;border-radius:6px;white-space:nowrap}
+.sc-body{padding:16px 22px 20px}
+.sc-venue{font-size:16px;font-weight:600;margin-bottom:2px;color:#fff}
+.sc-suburb{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:12px}
+.sc-host{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:10px}
+.sc-host strong{color:#fff}
+.sc-queens{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.sc-queen-tag{border:1px solid var(--border);color:rgba(255,255,255,0.55);font-size:12px;padding:3px 11px;border-radius:20px}
+.sc-show-type{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(254,101,195,0.6);border:1px solid rgba(254,101,195,0.2);padding:3px 10px;border-radius:20px;margin-bottom:12px;display:inline-block}
+.sc-foot{display:flex;justify-content:flex-end}
+.sc-btn{background:var(--pink);color:#fff;font-size:13px;font-weight:600;padding:9px 20px;border-radius:5px;text-decoration:none;transition:opacity .2s}
+.sc-btn:hover{opacity:0.85}
+
+/* VENUES SECTION (dark bg) */
+.venues-section-wrap{background:#181818;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.venues-section{padding:80px 48px;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.venues-left p{color:rgba(255,255,255,0.55);font-size:16px;line-height:1.8;margin-bottom:24px}
+.venues-types{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:32px}
+.vt-item{background:#222;border:1px solid var(--border);border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:12px}
+.vt-icon{font-size:18px;flex-shrink:0}
+.vt-label{font-size:14px;font-weight:500;color:#fff}
+.venues-contact{background:#1a1a1a;border:1px solid var(--border);border-radius:12px;padding:40px}
+.vc-label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:10px}
+.vc-email{font-family:'DM Serif Display',serif;font-size:26px;color:var(--pink);text-decoration:none;display:block;margin-bottom:12px;transition:opacity .2s}
+.vc-email:hover{opacity:0.8}
+.vc-note{font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:28px}
+.vc-divider{border:none;border-top:1px solid var(--border);margin:24px 0}
+.vc-socials{display:flex;gap:14px;flex-wrap:wrap}
+.vc-social{font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.55);text-decoration:none;transition:color .2s}
+.vc-social:hover{color:var(--pink)}
+
+/* SHOWS TYPE FILTER */
+.filter-bar{display:flex;gap:10px;margin-bottom:36px;flex-wrap:wrap}
+.filter-btn{background:transparent;border:1px solid var(--border);color:rgba(255,255,255,0.55);font-size:13px;font-weight:600;padding:8px 18px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;letter-spacing:0.5px}
+.filter-btn:hover{border-color:rgba(254,101,195,0.5);color:#fff}
+.filter-btn.active{background:var(--pink);border-color:var(--pink);color:#fff}
+
+/* FOOTER */
+.site-footer{background:#0c0c0c;border-top:1px solid var(--border);padding:60px 48px 32px}
+.footer-inner{max-width:1200px;margin:0 auto}
+.footer-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;text-align:center;margin-bottom:48px}
+.footer-col-title{font-family:'DM Serif Display',serif;font-size:26px;color:#fff;letter-spacing:-0.5px;margin-bottom:20px;text-decoration:underline}
+.footer-col-title .dot{color:var(--pink)}
+.footer-col ul{list-style:none;padding:0;margin:0}
+.footer-col ul li{margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px}
+.footer-col ul li::before{content:"";width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);display:inline-block;flex-shrink:0}
+.footer-col ul li a{font-size:13px;font-weight:700;letter-spacing:1.5px;color:#fff;text-decoration:none;text-transform:uppercase}
+.footer-col ul li a:hover{color:var(--pink)}
+.footer-bottom{border-top:1px solid var(--border);padding-top:28px;text-align:center}
+.footer-ack{font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:16px}
+.footer-copy{font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase}
+
+/* PIN MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#1a1a1a;border:1px solid var(--border);border-radius:12px;padding:40px;width:100%;max-width:360px;text-align:center}
+.modal-title{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-0.5px;margin:16px 0 6px;color:#fff}
+.modal-sub{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:24px}
+.pin-input{background:#222;border:1px solid var(--border);border-radius:6px;color:#fff;font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;letter-spacing:10px;text-align:center;padding:14px;width:100%;outline:none;transition:border-color .2s}
+.pin-input:focus{border-color:var(--pink)}
+.pin-error{color:var(--pink);font-size:13px;margin-top:10px;min-height:18px}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.modal-btn{flex:1;padding:11px;border-radius:5px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.modal-btn-cancel{background:transparent;border:1px solid var(--border);color:rgba(255,255,255,0.55)}
+.modal-btn-enter{background:var(--pink);color:#fff;border:none}
+
+/* ADMIN */
+.admin-bar{display:none;padding:60px 48px;background:#0a0a0a;border-top:2px solid var(--pink)}
+.admin-bar.open{display:block}
+.admin-inner{max-width:1200px;margin:0 auto}
+.admin-h{font-family:'DM Serif Display',serif;font-size:34px;letter-spacing:-1px;margin-bottom:6px;color:#fff}
+.admin-h .dot{color:var(--pink)}
+.admin-sub{font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:32px}
+.admin-items{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.admin-item{background:#1a1a1a;border:1px solid var(--border);border-radius:8px;padding:22px}
+.arow{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+.afield{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px}
+.afield label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.55)}
+.afield input,.afield select{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s;width:100%}
+.afield input:focus,.afield select:focus{border-color:rgba(254,101,195,0.5)}
+.afield input::placeholder{color:rgba(255,255,255,0.2)}
+.afield select option{background:#222;color:#fff}
+.img-upload-area{border:1px dashed rgba(254,101,195,0.35);border-radius:6px;padding:16px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s}
+.img-upload-area:hover{border-color:var(--pink)}
+.img-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-upload-label{font-size:13px;color:rgba(255,255,255,0.55)}
+.img-preview{width:100%;height:80px;object-fit:cover;border-radius:5px;margin-top:8px}
+.q-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.q-chip{display:flex;align-items:center;gap:6px;border:1px solid rgba(254,101,195,0.35);color:var(--pink);font-size:13px;padding:4px 10px 4px 12px;border-radius:20px}
+.q-chip button{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:13px;padding:0;transition:color .15s}
+.q-chip button:hover{color:var(--pink)}
+.q-add-row{display:flex;gap:8px}
+.q-add-row input{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 12px;flex:1;outline:none}
+.q-add-btn{background:rgba(255,255,255,0.08);border:1px solid var(--border);color:#fff;font-size:13px;font-weight:600;padding:7px 16px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.remove-btn{margin-top:10px;background:transparent;border:1px solid rgba(254,101,195,0.25);color:rgba(254,101,195,0.7);font-size:12px;font-weight:600;padding:7px 16px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.remove-btn:hover{border-color:var(--pink);color:var(--pink)}
+.admin-actions{display:flex;gap:10px;flex-wrap:wrap}
+.add-btn{background:transparent;border:1px solid var(--border);color:#fff;font-size:14px;font-weight:600;padding:10px 22px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.add-btn:hover{background:rgba(255,255,255,0.05)}
+.save-btn{background:var(--pink);color:#fff;border:none;font-size:14px;font-weight:600;padding:10px 26px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.toast{display:none;margin-top:12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:rgba(255,255,255,0.55);font-size:13px;padding:10px 16px;border-radius:5px}
+.toast.show{display:block}
+
+@media(max-width:900px){
+  .venues-section{grid-template-columns:1fr;gap:40px}
+  .venues-types{grid-template-columns:1fr 1fr}
+}
+@media(max-width:800px){
+  .nav{padding:14px 20px}.nav-links{display:none}
+  .hero,.section{padding:60px 20px}
+  .venues-section{padding:60px 20px}
+  .admin-bar{padding:40px 20px}
+  .site-footer{padding:40px 20px 24px}
+  .filter-bar{gap:8px}
+  .footer-cols{grid-template-columns:1fr;gap:32px;text-align:left}
+  .footer-col ul li{justify-content:flex-start}
+  .footer-col-title{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="https://gflamtouring.com.au" class="nav-logo">Gflam<span>.</span></a>
+  <div class="nav-links">
+    <a href="https://gflamtouring.com.au/who-we-are">Who We Are</a>
+    <a href="https://gflamtouring.com.au/what-we-do">What We Do</a>
+    <a href="https://gflamtouring.com.au/current-tours" class="active">Current Tours</a>
+    <a href="https://dragbingoatthebowlo.com.au" target="_blank">Drag Bingo</a>
+    <a href="https://gflamtouring.com.au/work-with-us">Work With Us</a>
+    <a href="https://gflamtouring.com.au/contact">Contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Current Tours</div>
+  <h1 class="hero-h1">Live shows<br>across Queensland<span class="dot">.</span></h1>
+  <p class="hero-sub">All upcoming Gflam Touring productions — drag shows, bingo nights and more. Book your tickets before they sell out.</p>
+</div>
+<hr class="divider">
+
+<!-- SHOWS -->
+<div class="section">
+  <div class="eyebrow">Upcoming Shows</div>
+  <h2 class="section-heading">On the road<span class="dot">.</span></h2>
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All Shows</button>
+    <button class="filter-btn" onclick="setFilter('drag_bingo',this)">Drag Bingo</button>
+  </div>
+  <div class="shows-grid" id="shows-grid"></div>
+</div>
+<hr class="divider">
+
+<!-- VENUES & PROMOTERS -->
+<div class="venues-section-wrap">
+  <div class="venues-section">
+    <div class="venues-left">
+      <div class="eyebrow">Venues &amp; Promoters</div>
+      <h2 class="section-heading" style="margin-bottom:24px">Bring a tour to your venue<span class="dot" onclick="openPinModal()" title="Show Manager" style="cursor:pointer">.</span></h2>
+      <p>We work with bowls clubs, pubs, RSLs, theatres and community venues across Queensland to bring high-quality live entertainment to local audiences.</p>
+      <p>Whether you're looking for a monthly event or a one-off special, we handle everything — production, talent, ticketing and marketing.</p>
+      <div class="venues-types">
+        <div class="vt-item"><span class="vt-icon">🎳</span><span class="vt-label">Bowls Clubs</span></div>
+        <div class="vt-item"><span class="vt-icon">🍺</span><span class="vt-label">Pubs &amp; Bars</span></div>
+        <div class="vt-item"><span class="vt-icon">🏅</span><span class="vt-label">RSLs</span></div>
+        <div class="vt-item"><span class="vt-icon">🎭</span><span class="vt-label">Theatres</span></div>
+        <div class="vt-item"><span class="vt-icon">🏛️</span><span class="vt-label">Community Venues</span></div>
+        <div class="vt-item"><span class="vt-icon">🎪</span><span class="vt-label">Function Centres</span></div>
+      </div>
+    </div>
+    <div class="venues-contact">
+      <div class="vc-label">Get in touch</div>
+      <a href="mailto:hello@gflam.com.au" class="vc-email">hello@gflam.com.au</a>
+      <p class="vc-note">Tell us your venue, capacity and what kind of event you're after. We'll come back to you within 2 business days with options and availability.</p>
+      <div class="vc-divider"></div>
+      <div class="vc-label" style="margin-bottom:14px">Follow Us</div>
+      <div class="vc-socials">
+        <a href="https://www.facebook.com/gflamtouring" class="vc-social" target="_blank">Facebook</a>
+        <a href="https://www.instagram.com/gflamtouring" class="vc-social" target="_blank">Instagram</a>
+        <a href="https://www.tiktok.com/@gflamtouring" class="vc-social" target="_blank">TikTok</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <div class="footer-col-title">Follow Us<span class="dot">.</span></div>
+        <ul>
+          <li><a href="https://www.facebook.com/gflamtouring" target="_blank">Facebook</a></li>
+          <li><a href="https://www.instagram.com/gflamtouring" target="_blank">Instagram</a></li>
+          <li><a href="https://www.tiktok.com/@gflamtouring" target="_blank">TikTok</a></li>
+          <li><a href="https://gflamtouring.com.au/coming-soon">Spotify</a></li>
+          <li><a href="https://gflamtouring.com.au/coming-soon">YouTube</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">About<span class="dot">.</span></div>
+        <ul>
+          <li><a href="https://gflamtouring.com.au/who-we-are">Who We Are</a></li>
+          <li><a href="https://gflamtouring.com.au/what-we-do">What We Do</a></li>
+          <li><a href="https://gflamtouring.com.au/current-tours">Current Tours</a></li>
+          <li><a href="https://dragbingoatthebowlo.com.au" target="_blank">Drag Bingo at the Bowlo</a></li>
+          <li><a href="https://gflamtouring.com.au/work-with-us">Work With Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Help<span class="dot">.</span></div>
+        <ul>
+          <li><a href="https://gflamtouring.com.au/contact">Contact</a></li>
+          <li><a href="https://gflamtouring.com.au/privacy-policy">Privacy Policy</a></li>
+          <li><a href="https://gflamtouring.com.au/privacy-policy">Cookies</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-ack">Gflam Touring acknowledges the traditional Inhabitants of the land on which we work and create.<br>We pay our respects to all past, present and emerging.</p>
+      <p class="footer-copy">&copy; GFLAM GROUP OF COMPANIES <span id="copy-year"></span> &ndash; ALL RIGHTS RESERVED</p>
+    </div>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="modal-box">
+    <div style="font-size:32px">🎭</div>
+    <div class="modal-title">Show Manager</div>
+    <div class="modal-sub">Enter your PIN to manage all tours</div>
+    <input type="password" class="pin-input" id="pin-input" maxlength="4" placeholder="&#183;&#183;&#183;&#183;" oninput="if(this.value.length===4)checkPin()">
+    <div class="pin-error" id="pin-error"></div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="closePinModal()">Cancel</button>
+      <button class="modal-btn modal-btn-enter" onclick="checkPin()">Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN BAR -->
+<div class="admin-bar" id="admin-bar">
+  <div class="admin-inner">
+    <div class="admin-h">Show Manager<span class="dot">.</span></div>
+    <div class="admin-sub">Manage all Gflam Touring shows. Changes sync to all sites immediately.</div>
+    <div class="admin-items" id="admin-shows"></div>
+    <div class="admin-actions">
+      <button class="add-btn" onclick="addShow()">+ Add Show</button>
+      <button class="save-btn" onclick="saveShows()">Save All Shows</button>
+    </div>
+    <div class="toast" id="shows-toast">✓ Shows saved successfully</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://gpoolavkghnxedzrmtmc.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE";
+const SB_HEADERS = {
+  "apikey": SUPABASE_KEY,
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+  "Prefer": "return=representation"
+};
+const PIN = "2326";
+let shows = [];
+let activeFilter = "all";
+
+// ── QLD TIME ──
+function getQldNow() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utc + (10 * 3600000));
+}
+
+function showIsVisible(s) {
+  const now = getQldNow();
+  if (s.displayDate) {
+    const timeStr = s.displayTime || "00:00";
+    const goLive = new Date(s.displayDate + "T" + timeStr + ":00+10:00");
+    if (now < goLive) return false;
+  }
+  if (s.showDate) {
+    const hideAt = new Date(s.showDate + "T22:00:00+10:00");
+    if (now >= hideAt) return false;
+  }
+  return true;
+}
+
+// ── FORMAT DATE ──
+function formatShowDate(dateStr) {
+  if (!dateStr) return {dayLabel:"",dateDisplay:"",dayNum:"",month:""};
+  const d = new Date(dateStr + "T12:00:00+10:00");
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const monthsShort = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return {
+    dayLabel: days[d.getDay()],
+    dateDisplay: days[d.getDay()] + " " + months[d.getMonth()] + " " + d.getDate(),
+    dayNum: String(d.getDate()).padStart(2,"0"),
+    month: monthsShort[d.getMonth()]
+  };
+}
+
+function showTypeLabel(t) {
+  if (t === "drag_bingo") return "Drag Bingo at the Bowlo";
+  if (t) return t.replace(/_/g," ").replace(/\b\w/g, c => c.toUpperCase());
+  return "General";
+}
+
+// ── SHOW CARD ──
+function showCardHTML(s) {
+  const hasTicket = s.ticketUrl && s.ticketUrl.trim() !== "";
+  return `<div class="show-card">
+    ${s.imgSrc ? `<img src="${s.imgSrc}" class="show-card-img" alt="Show poster">` : `<div class="show-card-ph"><span>Upload a poster in Show Manager</span></div>`}
+    <div class="sc-top">
+      <div>
+        ${s.showDate
+          ? `<div class="sc-day">${formatShowDate(s.showDate).dayLabel}</div>
+             <div class="sc-date-big">
+               <span class="sc-date-num">${formatShowDate(s.showDate).dayNum}</span>
+               <span class="sc-date-mon">${formatShowDate(s.showDate).month}</span>
+             </div>`
+          : `<div class="sc-day">Date TBC</div>`}
+      </div>
+      <div class="sc-top-right">
+        <div class="sc-price">${s.price || "$30+BF"}</div>
+        <div class="sc-time-block">
+          <div class="sc-show-time">${s.time || "7:00 PM"}</div>
+          ${s.doors ? `<div class="sc-doors-time">Doors ${s.doors}</div>` : ""}
+        </div>
+      </div>
+    </div>
+    <div class="sc-body">
+      ${s.showType ? `<span class="sc-show-type">${showTypeLabel(s.showType)}</span>` : ""}
+      <div class="sc-venue">${s.venue}</div>
+      <div class="sc-suburb">${s.suburb}</div>
+      <div class="sc-host">Hosted by <strong>${s.host || "TBA"}</strong></div>
+      ${s.queens && s.queens.length ? `<div style="font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:6px">Special Guests</div>
+      <div class="sc-queens">${s.queens.map(q => `<span class="sc-queen-tag">${q}</span>`).join("")}</div>` : ""}
+      <div class="sc-foot">${hasTicket ? `<a href="${s.ticketUrl}" target="_blank" class="sc-btn">Buy Tickets &rarr;</a>` : `<span style="font-size:13px;color:rgba(255,255,255,0.35)">Tickets coming soon</span>`}</div>
+    </div>
+  </div>`;
+}
+
+// ── FILTER ──
+function setFilter(type, btn) {
+  activeFilter = type;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderShows();
+}
+
+// ── RENDER SHOWS ──
+function renderShows() {
+  const el = document.getElementById("shows-grid");
+  if (!el) return;
+  let visible = shows.filter(showIsVisible);
+  if (activeFilter !== "all") {
+    visible = visible.filter(s => (s.showType || "") === activeFilter);
+  }
+  if (visible.length === 0) {
+    el.innerHTML = `<p style="color:rgba(255,255,255,0.4);font-size:14px">No shows scheduled yet. Check back soon!</p>`;
+  } else {
+    el.innerHTML = visible.map(showCardHTML).join("");
+  }
+}
+
+// ── PIN MODAL ──
+function openPinModal() {
+  document.getElementById("pin-modal").classList.add("open");
+  document.getElementById("pin-input").value = "";
+  document.getElementById("pin-error").textContent = "";
+  setTimeout(() => document.getElementById("pin-input").focus(), 100);
+}
+function closePinModal() { document.getElementById("pin-modal").classList.remove("open"); }
+window.addEventListener("click", e => {
+  if (e.target === document.getElementById("pin-modal")) closePinModal();
+});
+function checkPin() {
+  const v = document.getElementById("pin-input").value;
+  if (v === PIN) {
+    closePinModal();
+    const bar = document.getElementById("admin-bar");
+    bar.classList.add("open");
+    renderAdminShows();
+    bar.scrollIntoView({behavior:"smooth"});
+  } else {
+    document.getElementById("pin-error").textContent = "Incorrect PIN. Try again.";
+    document.getElementById("pin-input").value = "";
+  }
+}
+
+// ── ADMIN ──
+function renderAdminShows() {
+  document.getElementById("admin-shows").innerHTML = shows.map((s, i) => `
+    <div class="admin-item">
+      <div class="arow">
+        <div class="afield" style="flex:2">
+          <label>Show Type</label>
+          <select onchange="shows[${i}].showType=this.value">
+            <option value="drag_bingo" ${(s.showType||"") === "drag_bingo" ? "selected" : ""}>Drag Bingo at the Bowlo</option>
+            <option value="general" ${(s.showType||"") === "general" ? "selected" : ""}>General Show</option>
+          </select>
+        </div>
+        <div class="afield" style="flex:2">
+          <label>Show Date</label>
+          <input type="date" value="${s.showDate||""}" onchange="shows[${i}].showDate=this.value;this.closest('.admin-item').querySelector('.date-preview').textContent=s.showDate?formatShowDate(s.showDate).dateDisplay:'Pick a date above'" style="color-scheme:dark">
+          <small class="date-preview" style="color:var(--pink);font-size:13px;font-weight:600;margin-top:6px;display:block">${s.showDate ? formatShowDate(s.showDate).dateDisplay : "Pick a date above"}</small>
+        </div>
+        <div class="afield">
+          <label>Price</label>
+          <input value="${s.price||"$30+BF"}" onchange="shows[${i}].price=this.value" placeholder="$30+BF">
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Show Time</label><input value="${s.time||"7:00 PM"}" onchange="shows[${i}].time=this.value" placeholder="7:00 PM"></div>
+        <div class="afield"><label>Doors Open</label><input value="${s.doors||""}" onchange="shows[${i}].doors=this.value" placeholder="6:30 PM"></div>
+        <div class="afield"><label>Venue</label><input value="${s.venue}" onchange="shows[${i}].venue=this.value"></div>
+        <div class="afield"><label>Suburb</label><input value="${s.suburb}" onchange="shows[${i}].suburb=this.value"></div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Host</label><input value="${s.host||"TBA"}" onchange="shows[${i}].host=this.value"></div>
+        <div class="afield" style="flex:2">
+          <label>Ticket URL</label>
+          <input value="${s.ticketUrl||""}" onchange="shows[${i}].ticketUrl=this.value" placeholder="https://..." style="color:rgba(255,255,255,0.55)">
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Go Live Date (QLD)</label>
+          <input type="date" value="${s.displayDate||""}" onchange="shows[${i}].displayDate=this.value" style="color-scheme:dark">
+        </div>
+        <div class="afield"><label>Go Live Time (QLD)</label>
+          <input type="time" value="${s.displayTime||"00:00"}" onchange="shows[${i}].displayTime=this.value" style="color-scheme:dark">
+          <small style="color:rgba(255,255,255,0.35);font-size:11px;margin-top:4px;display:block">Leave blank to show immediately.</small>
+        </div>
+        <div class="afield" style="flex:2"><label>Banner Image (1200&times;525px ideal)</label>
+          <div class="img-upload-area">
+            <input type="file" accept="image/*" onchange="handleImg(${i},this)">
+            <div class="img-upload-label">Click to upload</div>
+            ${s.imgSrc ? `<img src="${s.imgSrc}" class="img-preview">` : ""}
+          </div>
+        </div>
+      </div>
+      <div class="afield"><label>Guest Queens / Performers</label>
+        <div class="q-chips">${(s.queens||[]).map((q,qi) => `<div class="q-chip"><span>${q}</span><button onclick="removeQueen(${i},${qi})">&#10005;</button></div>`).join("")}</div>
+        <div class="q-add-row">
+          <input id="qi-${s.id}" placeholder="Performer name..." onkeydown="if(event.key==='Enter')addQueen(${i},${s.id})">
+          <button class="q-add-btn" onclick="addQueen(${i},${s.id})">+ Add</button>
+        </div>
+      </div>
+      <button class="remove-btn" onclick="removeShow(${i})">Remove show</button>
+    </div>`).join("");
+}
+
+function handleImg(i, input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => { shows[i].imgSrc = e.target.result; renderAdminShows(); };
+  r.readAsDataURL(f);
+}
+function addQueen(si, sid) {
+  const inp = document.getElementById("qi-"+sid);
+  const v = inp.value.trim(); if (!v) return;
+  if (!shows[si].queens) shows[si].queens = [];
+  shows[si].queens.push(v); inp.value=""; renderAdminShows();
+}
+function removeQueen(si, qi) { shows[si].queens.splice(qi,1); renderAdminShows(); }
+function removeShow(i) { if(confirm("Remove this show?")){ shows.splice(i,1); renderAdminShows(); } }
+function addShow() {
+  shows.push({id:Date.now(), showDate:"", time:"7:00 PM", doors:"6:30 PM",
+    venue:"Venue Name", suburb:"Suburb", host:"TBA", queens:[],
+    price:"$30+BF", ticketUrl:"", imgSrc:"", displayDate:"", displayTime:"00:00",
+    showType:"drag_bingo"});
+  renderAdminShows();
+  document.getElementById("admin-shows").lastElementChild.scrollIntoView({behavior:"smooth"});
+}
+async function saveShows() {
+  try {
+    for (const show of shows) {
+      const row = {
+        show_date: show.showDate || null,
+        time: show.time,
+        doors: show.doors,
+        venue: show.venue,
+        suburb: show.suburb,
+        host: show.host,
+        queens: show.queens || [],
+        price: show.price,
+        ticket_url: show.ticketUrl,
+        img_src: show.imgSrc,
+        go_live_date: show.displayDate || null,
+        go_live_time: show.displayTime || "00:00",
+        show_type: show.showType || "general"
+      };
+      if (show.id && typeof show.id === "string" && show.id.length === 36) {
+        await fetch(`${SUPABASE_URL}/rest/v1/shows?id=eq.${show.id}`, {
+          method: "PATCH", headers: SB_HEADERS, body: JSON.stringify(row)
+        });
+      } else {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/shows`, {
+          method: "POST", headers: SB_HEADERS, body: JSON.stringify(row)
+        });
+        const data = await res.json();
+        if (Array.isArray(data) && data[0]) show.id = data[0].id;
+      }
+    }
+    localStorage.setItem("gt_shows_backup", JSON.stringify(shows));
+    renderShows();
+    renderAdminShows();
+    const t = document.getElementById("shows-toast");
+    t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500);
+  } catch(e) { alert("Error saving shows: " + e.message); }
+}
+
+// ── MAP ──
+function mapShow(s) {
+  return {
+    id: s.id,
+    showDate: s.show_date || "",
+    time: s.time || "7:00 PM",
+    doors: s.doors || "",
+    venue: s.venue || "",
+    suburb: s.suburb || "",
+    host: s.host || "TBA",
+    queens: s.queens || [],
+    price: s.price || "$30+BF",
+    ticketUrl: s.ticket_url || "",
+    imgSrc: s.img_src || "",
+    displayDate: s.go_live_date || "",
+    displayTime: s.go_live_time || "00:00",
+    showType: s.show_type || ""
+  };
+}
+
+// ── LOAD & INIT ──
+async function loadData() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/shows?order=show_date.asc`, {headers: SB_HEADERS});
+    const data = await res.json();
+    shows = Array.isArray(data) ? data.map(mapShow) : [];
+    if (shows.length > 0) localStorage.setItem("gt_shows_backup", JSON.stringify(shows));
+  } catch(e) {
+    try {
+      const b = localStorage.getItem("gt_shows_backup");
+      shows = b ? JSON.parse(b) : [];
+    } catch(e2) { shows = []; }
+  }
+  renderShows();
+}
+
+// Copyright year
+const cy = document.getElementById("copy-year");
+if (cy) cy.textContent = new Date().getFullYear();
+
+loadData();
+</script>
+</body>
+</html>

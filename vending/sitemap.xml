@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://gflamvending.com.au</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au"/>
+  </url>
+  <url>
+    <loc>https://gflamvending.com.au/privacy-policy</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/privacy-policy"/>
+  </url>
+  <url>
+    <loc>https://gflamvending.com.au/the-mini-bar</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/the-mini-bar"/>
+  </url>
+  <url>
+    <loc>https://gflamvending.com.au/vending-contact</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/vending-contact"/>
+  </url>
+  <url>
+    <loc>https://gflamvending.com.au/vending-industries</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/vending-industries"/>
+  </url>
+  <url>
+    <loc>https://gflamvending.com.au/vending-our-process</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/vending-our-process"/>
+  </url>
+  <url>
+    <loc>https://gflamvending.com.au/vending-what-we-do</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/vending-what-we-do"/>
+  </url>
+</urlset>

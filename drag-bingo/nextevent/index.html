@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ccircle%20cx%3D%2750%27%20cy%3D%2750%27%20r%3D%2750%27%20fill%3D%27%23fe65c3%27%2F%3E%3C%2Fsvg%3E">
+<title>Next Event — Drag Bingo at the Bowlo | Gflam Touring</title>
+<meta name="description" content="Had a great night? Book your next Drag Bingo at the Bowlo ticket and get $5 off — tonight only! Hosted by Vollie LaVont. Discount available until midnight.">
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#fe65c3;--dark:#111;--dark2:#1a1a1a;--dark3:#222;--white:#fff;--muted:rgba(255,255,255,0.55);--border:rgba(255,255,255,0.1)}
+html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 48px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(17,17,17,0.97);backdrop-filter:blur(6px)}
+.nav-links{display:flex;gap:28px}
+.nav-links a{color:rgba(255,255,255,0.55);font-size:13px;font-weight:500;text-decoration:none;letter-spacing:0.5px;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:#fff}
+.gflam-logo{cursor:pointer;opacity:0.85;transition:opacity .2s}
+.gflam-logo:hover{opacity:1}
+
+/* HERO */
+.hero{padding:80px 48px 70px;max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;text-align:center}
+.hero img.drag-logo{width:100%;max-width:360px;display:block;mix-blend-mode:lighten;margin-bottom:28px}
+.hero p{color:rgba(255,255,255,0.55);font-size:17px;line-height:1.8;max-width:540px}
+
+/* BUTTONS */
+.btn{display:inline-block;padding:11px 26px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none;transition:opacity .2s;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--pink);color:#fff}
+.btn-primary:hover{opacity:0.85}
+.btn-outline{background:transparent;color:#fff;border:1px solid var(--border)}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--border)}
+
+/* SECTION */
+.section{padding:80px 48px;max-width:1200px;margin:0 auto}
+.section-dark2{background:#1a1a1a}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--pink);margin-bottom:12px}
+.section-heading{font-family:'DM Serif Display',serif;font-size:clamp(38px,5vw,56px);letter-spacing:-1.5px;line-height:1.05;margin-bottom:48px;color:#fff}
+.section-heading .dot{color:#fe65c3}
+
+/* SHOWS */
+.shows-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.show-card{background:#1a1a1a;border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s,transform .2s}
+.show-card:hover{border-color:rgba(254,101,195,0.4);transform:translateY(-2px)}
+.show-card-img{width:100%;aspect-ratio:16/7;object-fit:cover;display:block}
+.show-card-ph{width:100%;aspect-ratio:16/7;background:#222;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border)}
+.show-card-ph span{font-size:13px;color:rgba(255,255,255,0.55)}
+.sc-top{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.sc-top-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.sc-time-block{text-align:right}
+.sc-show-time{font-size:14px;font-weight:600;color:#fff}
+.sc-doors-time{font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px}
+.sc-day{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--pink);margin-bottom:3px}
+.sc-date{font-family:'DM Serif Display',serif;font-size:24px;letter-spacing:-0.5px;line-height:1.1;color:#fff}
+.sc-date-big{display:flex;flex-direction:column;align-items:flex-start;line-height:1;margin:4px 0 2px}
+.sc-date-num{font-family:'DM Serif Display',serif;font-size:42px;letter-spacing:-1px;color:#fff;line-height:1}
+.sc-date-mon{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-top:2px}
+.sc-time{font-size:13px;color:rgba(255,255,255,0.55);margin-top:3px}
+.sc-price{background:rgba(254,101,195,0.12);border:1px solid rgba(254,101,195,0.3);color:var(--pink);font-weight:700;font-size:14px;padding:5px 13px;border-radius:6px;white-space:nowrap}
+.sc-body{padding:16px 22px 20px}
+.sc-venue{font-size:16px;font-weight:600;margin-bottom:2px;color:#fff}
+.sc-suburb{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:12px}
+.sc-host{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:10px}
+.sc-host strong{color:#fff}
+.sc-queens{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.sc-queen-tag{border:1px solid var(--border);color:rgba(255,255,255,0.55);font-size:12px;padding:3px 11px;border-radius:20px}
+.sc-foot{display:flex;justify-content:flex-end}
+.sc-btn{background:var(--pink);color:#fff;font-size:13px;font-weight:600;padding:9px 20px;border-radius:5px;text-decoration:none;transition:opacity .2s}
+.sc-btn:hover{opacity:0.85}
+
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}
+.about-text p{color:rgba(255,255,255,0.55);line-height:1.8;font-size:15px;margin-bottom:16px}
+.about-features{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.feat-item{background:#222;border:1px solid var(--border);border-radius:8px;padding:18px}
+.feat-icon{font-size:20px;margin-bottom:8px}
+.feat-title{font-size:14px;font-weight:600;margin-bottom:3px;color:#fff}
+.feat-desc{font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5}
+
+/* PERFECT FOR */
+.pf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pf-item{background:#222;border:1px solid var(--border);border-radius:8px;padding:16px 18px;display:flex;align-items:center;gap:12px}
+.pf-icon{font-size:18px;flex-shrink:0}
+.pf-text{font-size:14px;font-weight:500;color:#fff}
+
+/* HOW IT WORKS */
+.steps-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+/* Step 3 centred when alone on mobile 2-col grid */
+.steps-row .step-item:last-child:nth-child(odd){grid-column:1/-1}
+.steps-row-bottom{display:flex;justify-content:center;gap:60px;margin-top:16px}
+.steps-row-bottom .step-item{max-width:200px}
+.step-item{text-align:center}
+.step-num{width:40px;height:40px;border-radius:50%;border:1px solid var(--pink);color:var(--pink);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:20px;margin:0 auto 14px}
+.step-title{font-size:14px;font-weight:600;margin-bottom:6px;color:#fff}
+.step-desc{font-size:12px;color:rgba(255,255,255,0.55);line-height:1.5}
+
+/* VENUE */
+.venue-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.venue-text p{color:rgba(255,255,255,0.55);line-height:1.8;font-size:15px;margin-bottom:16px}
+.venue-list{list-style:none;margin:18px 0 26px}
+.venue-list li{color:rgba(255,255,255,0.55);font-size:14px;padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.venue-list li::before{content:"→";color:var(--pink);font-weight:700}
+.venue-contact{background:#222;border:1px solid var(--border);border-radius:10px;padding:32px}
+.vc-label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:8px}
+.vc-email{font-family:'DM Serif Display',serif;font-size:22px;color:var(--pink);text-decoration:none}
+.vc-note{font-size:13px;color:rgba(255,255,255,0.55);margin-top:10px;line-height:1.6}
+
+/* REVIEWS */
+.carousel-outer{overflow:hidden}
+.carousel-track{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.review-card{background:#1a1a1a;border:1px solid var(--border);border-radius:10px;padding:24px;display:flex;flex-direction:column}
+.rv-stars{color:var(--pink);font-size:14px;letter-spacing:2px;margin-bottom:12px}
+.rv-text{font-size:14px;color:rgba(255,255,255,0.75);line-height:1.7;margin-bottom:16px;font-style:italic;flex:1}
+.rv-author{font-size:13px;font-weight:600;color:#fff}
+.rv-loc{font-size:12px;color:rgba(255,255,255,0.55)}
+.carousel-controls{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:28px}
+.c-arrow{background:transparent;border:1px solid var(--border);color:rgba(255,255,255,0.55);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.c-arrow:hover:not(:disabled){border-color:var(--pink);color:var(--pink)}
+.c-arrow:disabled{opacity:0.25;cursor:default}
+.carousel-dots{display:flex;gap:8px}
+.c-dot{width:8px;height:8px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:background .2s}
+.c-dot.active{background:var(--pink)}
+
+/* FOOTER */
+.site-footer{background:#0c0c0c;border-top:1px solid var(--border);padding:60px 48px 32px}
+.footer-inner{max-width:1200px;margin:0 auto}
+.footer-logo-wrap{text-align:center;margin-bottom:48px}
+.footer-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;text-align:center;margin-bottom:48px}
+.footer-col-title{font-family:'DM Serif Display',serif;font-size:26px;color:#fff;letter-spacing:-0.5px;margin-bottom:20px;text-decoration:underline}
+.footer-col-title .dot{color:var(--pink)}
+.footer-col ul{list-style:none;padding:0;margin:0}
+.footer-col ul li{margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px}
+.footer-col ul li::before{content:"";width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);display:inline-block;flex-shrink:0}
+.footer-col ul li a{font-size:13px;font-weight:700;letter-spacing:1.5px;color:#fff;text-decoration:none;text-transform:uppercase}
+.footer-col ul li a:hover{color:var(--pink)}
+.footer-bottom{border-top:1px solid var(--border);padding-top:28px;text-align:center}
+.footer-ack{font-size:13px;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:16px}
+.footer-copy{font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase}
+
+/* PIN MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#1a1a1a;border:1px solid var(--border);border-radius:12px;padding:40px;width:100%;max-width:360px;text-align:center}
+.modal-title{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-0.5px;margin:16px 0 6px;color:#fff}
+.modal-sub{font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:24px}
+.pin-input{background:#222;border:1px solid var(--border);border-radius:6px;color:#fff;font-family:'DM Sans',sans-serif;font-size:26px;font-weight:700;letter-spacing:10px;text-align:center;padding:14px;width:100%;outline:none;transition:border-color .2s}
+.pin-input:focus{border-color:var(--pink)}
+.pin-error{color:var(--pink);font-size:13px;margin-top:10px;min-height:18px}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.modal-btn{flex:1;padding:11px;border-radius:5px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.modal-btn-cancel{background:transparent;border:1px solid var(--border);color:rgba(255,255,255,0.55)}
+.modal-btn-enter{background:var(--pink);color:#fff;border:none}
+
+/* ADMIN */
+.admin-bar{display:none;padding:60px 48px;background:#0a0a0a;border-top:2px solid var(--pink)}
+.admin-bar.open{display:block}
+.admin-inner{max-width:1200px;margin:0 auto}
+.admin-h{font-family:'DM Serif Display',serif;font-size:34px;letter-spacing:-1px;margin-bottom:6px;color:#fff}
+.admin-h .dot{color:var(--pink)}
+.admin-sub{font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:32px}
+.admin-items{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.admin-item{background:#1a1a1a;border:1px solid var(--border);border-radius:8px;padding:22px}
+.arow{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+.afield{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px}
+.afield label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.55)}
+.afield input{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s}
+.afield input:focus{border-color:rgba(254,101,195,0.5)}
+.afield input::placeholder{color:rgba(255,255,255,0.2)}
+.img-upload-area{border:1px dashed rgba(254,101,195,0.35);border-radius:6px;padding:16px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s}
+.img-upload-area:hover{border-color:var(--pink)}
+.img-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-upload-label{font-size:13px;color:rgba(255,255,255,0.55)}
+.img-preview{width:100%;height:80px;object-fit:cover;border-radius:5px;margin-top:8px}
+.q-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.q-chip{display:flex;align-items:center;gap:6px;border:1px solid rgba(254,101,195,0.35);color:var(--pink);font-size:13px;padding:4px 10px 4px 12px;border-radius:20px}
+.q-chip button{background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:13px;padding:0;transition:color .15s}
+.q-chip button:hover{color:var(--pink)}
+.q-add-row{display:flex;gap:8px}
+.q-add-row input{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:5px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 12px;flex:1;outline:none}
+.q-add-btn{background:rgba(255,255,255,0.08);border:1px solid var(--border);color:#fff;font-size:13px;font-weight:600;padding:7px 16px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.remove-btn{margin-top:10px;background:transparent;border:1px solid rgba(254,101,195,0.25);color:rgba(254,101,195,0.7);font-size:12px;font-weight:600;padding:7px 16px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.remove-btn:hover{border-color:var(--pink);color:var(--pink)}
+.admin-actions{display:flex;gap:10px;flex-wrap:wrap}
+.add-btn{background:transparent;border:1px solid var(--border);color:#fff;font-size:14px;font-weight:600;padding:10px 22px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.add-btn:hover{background:rgba(255,255,255,0.05)}
+.save-btn{background:var(--pink);color:#fff;border:none;font-size:14px;font-weight:600;padding:10px 26px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.toast{display:none;margin-top:12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:rgba(255,255,255,0.55);font-size:13px;padding:10px 16px;border-radius:5px}
+.toast.show{display:block}
+.admin-divider{border:none;border-top:1px solid var(--border);margin:36px 0}
+.admin-section-label{font-family:'DM Serif Display',serif;font-size:24px;letter-spacing:-0.5px;margin-bottom:16px;color:#fff}
+
+@media(max-width:800px){
+  .nav{padding:14px 20px}.nav-links{display:none}
+  .about-grid,.venue-grid{grid-template-columns:1fr;gap:32px}
+  .section{padding:60px 20px}.hero{padding:60px 20px}
+  .pf-grid{grid-template-columns:1fr 1fr}
+  .carousel-track{grid-template-columns:1fr}
+  .admin-bar{padding:40px 20px}
+  .site-footer{padding:40px 20px 24px}
+
+  /* Footer - single column on mobile */
+  .footer-cols{
+    grid-template-columns:1fr;
+    gap:32px;
+    text-align:left;
+  }
+  .footer-col ul li{justify-content:flex-start}
+  .footer-col-title{font-size:22px}
+  .footer-bottom{text-align:left}
+  .footer-ack,.footer-copy{text-align:left}
+
+  /* How it works mobile - all centred single column */
+  .steps-row{
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+  }
+  .steps-row-bottom{
+    gap:24px;
+    justify-content:center;
+  }
+  .steps-row-bottom .step-item{
+    max-width:160px;
+  }
+
+  /* Show card top on mobile */
+  .sc-top{flex-wrap:wrap}
+  .sc-top-right{align-items:flex-start}
+}
+
+@media(max-width:480px){
+  /* Footer fully stacked on small phones */
+  .footer-cols{gap:24px}
+  .footer-col-title{font-size:20px;margin-bottom:14px}
+
+  /* How it works - single column on small phones */
+  .steps-row{grid-template-columns:1fr}
+  .steps-row-bottom{flex-direction:column;align-items:center;gap:24px}
+  .steps-row-bottom .step-item{max-width:100%}
+}
+
+
+/* Centre last odd card in shows grid */
+.shows-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+@media(min-width:800px){
+  .shows-grid.odd-count { display:flex; flex-wrap:wrap; justify-content:center; }
+  .shows-grid.odd-count .show-card { flex:0 0 calc(33.333% - 14px); min-width:280px; }
+}
+/* Centre last odd review */
+.carousel-track.odd-count { justify-items:center; }
+
+/* Footer match */
+.site-footer { background:#111; border-top:1px solid rgba(255,255,255,0.1); padding:60px 48px 32px; }
+.footer-logo-wrap { text-align:center; margin-bottom:48px; }
+.footer-cols { display:grid; grid-template-columns:repeat(3,1fr); gap:40px; text-align:center; margin-bottom:48px; }
+.footer-col-title { 
+  font-family:'DM Serif Display',serif; font-size:26px; color:#fff; 
+  letter-spacing:-0.5px; margin-bottom:20px; text-decoration:underline;
+  text-underline-offset:3px;
+}
+.footer-col-title .dot { color:#fe65c3; text-decoration:none; display:inline-block; }
+.footer-col ul { list-style:none; padding:0; margin:0; }
+.footer-col ul li { 
+  margin-bottom:10px; display:flex; align-items:center; 
+  justify-content:center; gap:10px; 
+}
+.footer-col ul li::before { 
+  content:""; width:6px; height:6px; border-radius:50%; 
+  background:rgba(255,255,255,0.3); display:inline-block; flex-shrink:0; 
+}
+.footer-col ul li a { 
+  font-size:13px; font-weight:700; letter-spacing:1.5px; color:#fff; 
+  text-decoration:none; text-transform:uppercase; 
+}
+.footer-col ul li a:hover { color:#fe65c3; }
+.footer-bottom { border-top:1px solid rgba(255,255,255,0.1); padding-top:28px; text-align:center; }
+.footer-ack { font-size:13px; color:rgba(255,255,255,0.4); line-height:1.7; margin-bottom:16px; }
+.footer-copy { font-size:12px; color:rgba(255,255,255,0.3); letter-spacing:1px; text-transform:uppercase; }
+
+
+
+/* ── NEXT EVENT PAGE ── */
+.ne-page { background:#111; min-height:100vh; color:#fff; }
+
+/* Glitter top bar */
+.ne-top-bar {
+  background:linear-gradient(90deg, #1a1a1a, #222, #1a1a1a);
+  border-bottom:2px solid #fe65c3;
+  padding:10px 0; overflow:hidden; position:relative;
+}
+.ne-ticker {
+  display:flex; gap:48px; animation:ne-ticker 20s linear infinite;
+  white-space:nowrap; width:max-content;
+}
+.ne-ticker span {
+  font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700;
+  letter-spacing:3px; text-transform:uppercase; color:var(--pink);
+  flex-shrink:0;
+}
+.ne-ticker span.sep { color:rgba(255,255,255,0.2); }
+@keyframes ne-ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* Hero */
+.ne-hero {
+  background:linear-gradient(180deg,#1a1a1a 0%,#111 100%);
+  border-bottom:1px solid var(--border);
+  padding:70px 48px 60px; text-align:center;
+  position:relative; overflow:hidden;
+}
+.ne-hero::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(254,101,195,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 100%, rgba(255,215,0,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 80% 100%, rgba(254,101,195,0.06) 0%, transparent 60%);
+}
+.ne-eyebrow {
+  font-size:11px; font-weight:600; letter-spacing:3px; text-transform:uppercase;
+  color:var(--pink); margin-bottom:16px; position:relative;
+}
+.ne-hero h1 {
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(42px,8vw,96px);
+  letter-spacing:-3px; line-height:0.95;
+  margin-bottom:8px; position:relative;
+}
+.ne-h1-gold {
+  display:block; color:#fff;
+}
+.ne-h1-pink {
+  display:block; color:var(--pink);
+  text-shadow:0 0 40px rgba(254,101,195,0.3);
+}
+.ne-hero-sub {
+  font-size:17px; color:rgba(255,255,255,0.55);
+  margin-top:20px; position:relative;
+}
+
+/* Show card — matches main page style */
+.ne-show-wrap {
+  max-width:680px; margin:0 auto; padding:60px 24px;
+}
+.ne-show-card {
+  background:#1a1a1a; border:1px solid var(--border);
+  border-radius:10px; overflow:hidden;
+  transition:border-color .2s;
+}
+.ne-show-card:hover { border-color:rgba(254,101,195,0.4); }
+.ne-show-img { width:100%; aspect-ratio:16/7; object-fit:cover; display:block; }
+.ne-show-img-ph {
+  width:100%; aspect-ratio:16/7; background:#222;
+  display:flex; align-items:center; justify-content:center;
+  border-bottom:1px solid var(--border);
+}
+.ne-show-img-ph span { font-size:13px; color:rgba(255,255,255,0.3); }
+.ne-show-info {
+  display:grid; grid-template-columns:1fr 1fr; gap:0;
+  border-bottom:1px solid var(--border);
+}
+.ne-info-block {
+  padding:20px 22px; border-right:1px solid var(--border);
+}
+.ne-info-block:nth-child(2n) { border-right:none; }
+.ne-info-block:nth-child(n+3) { border-top:1px solid var(--border); }
+.ne-info-label {
+  font-size:10px; font-weight:600; letter-spacing:2.5px;
+  text-transform:uppercase; color:var(--pink); margin-bottom:5px;
+}
+.ne-info-val {
+  font-family:'DM Serif Display',serif; font-size:20px; color:#fff; line-height:1.2;
+}
+.ne-info-val-sm { font-size:13px; color:rgba(255,255,255,0.55); margin-top:3px; }
+
+/* Discount section */
+.ne-discount {
+  padding:32px 28px; text-align:center;
+  background:rgba(254,101,195,0.05);
+  border-top:1px solid rgba(254,101,195,0.2);
+}
+.ne-discount-badge {
+  display:inline-block;
+  background:var(--pink);
+  color:#fff; font-family:'DM Serif Display',serif;
+  font-size:clamp(32px,6vw,56px); letter-spacing:-1px;
+  padding:12px 36px; border-radius:6px; margin-bottom:16px;
+  box-shadow:0 0 40px rgba(254,101,195,0.4);
+  animation:ne-glow 2s ease-in-out infinite;
+}
+@keyframes ne-glow {
+  0%,100%{box-shadow:0 0 30px rgba(254,101,195,0.4)}
+  50%{box-shadow:0 0 60px rgba(254,101,195,0.7)}
+}
+.ne-discount-desc { font-size:16px; color:#fff; font-weight:600; margin-bottom:6px; }
+.ne-discount-expires { font-size:13px; color:rgba(255,255,255,0.4); margin-bottom:28px; }
+
+/* Countdown */
+.ne-countdown {
+  display:flex; justify-content:center; align-items:center;
+  gap:8px; margin-bottom:28px;
+}
+.ne-count-block { text-align:center; min-width:72px; }
+.ne-count-num {
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(40px,7vw,64px); line-height:1; color:var(--pink);
+  background:#222; border:1px solid var(--border);
+  border-radius:6px; padding:8px 12px; display:block;
+}
+.ne-count-label {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:rgba(255,255,255,0.35); margin-top:6px; display:block;
+}
+.ne-count-sep {
+  font-family:'DM Serif Display',serif; font-size:48px;
+  color:var(--pink); opacity:0.4; line-height:1; padding-bottom:24px;
+  animation:sep-blink 1s step-end infinite;
+}
+@keyframes sep-blink { 0%,100%{opacity:0.4} 50%{opacity:0.1} }
+
+/* CTA button */
+.ne-cta-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.ne-cta {
+  display:inline-block; background:var(--pink); color:#fff;
+  font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700;
+  padding:14px 40px; border-radius:5px; text-decoration:none;
+  box-shadow:0 4px 20px rgba(254,101,195,0.4);
+  transition:opacity .2s, transform .15s; border:none; cursor:pointer;
+}
+.ne-cta:hover { opacity:0.9; transform:translateY(-1px); }
+.ne-cta-secondary {
+  display:inline-block; background:transparent; color:var(--pink);
+  font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600;
+  padding:11px 32px; border-radius:5px; text-decoration:none;
+  border:1px solid rgba(254,101,195,0.4);
+  transition:all .2s; cursor:pointer;
+}
+.ne-cta-secondary:hover { background:rgba(254,101,195,0.08); border-color:var(--pink); }
+.ne-cta-note { font-size:12px; color:rgba(255,255,255,0.35); }
+
+/* Locked state */
+.ne-locked {
+  padding:28px; text-align:center;
+  background:rgba(0,0,0,0.2); border-top:1px solid var(--border);
+}
+.ne-locked-badge {
+  display:inline-block; filter:blur(8px); user-select:none;
+  font-family:'DM Serif Display',serif; font-size:48px;
+  color:var(--pink); opacity:0.3; margin-bottom:12px;
+}
+.ne-locked-msg { font-size:14px; color:rgba(255,255,255,0.4); }
+
+/* Normal ticket CTA (no discount) */
+.ne-ticket-cta {
+  text-align:center; padding:32px 28px;
+  border-top:1px solid var(--border);
+}
+
+/* Sign up modal */
+.signup-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.88); z-index:200;
+  align-items:center; justify-content:center; padding:20px;
+}
+.signup-overlay.open { display:flex; }
+.signup-box {
+  background:#1a1a1a; border:1px solid var(--border);
+  border-radius:12px; padding:40px; width:100%; max-width:440px;
+  position:relative;
+}
+.signup-close {
+  position:absolute; top:16px; right:20px;
+  background:none; border:none; color:rgba(255,255,255,0.4);
+  font-size:22px; cursor:pointer; line-height:1; padding:4px;
+  transition:color .2s;
+}
+.signup-close:hover { color:#fff; }
+.signup-eyebrow {
+  font-size:10px; font-weight:600; letter-spacing:3px;
+  text-transform:uppercase; color:var(--pink); margin-bottom:10px;
+}
+.signup-title {
+  font-family:'DM Serif Display',serif; font-size:28px;
+  letter-spacing:-0.5px; color:#fff; margin-bottom:8px;
+}
+.signup-title .dot { color:var(--pink); }
+.signup-sub { font-size:14px; color:rgba(255,255,255,0.55); margin-bottom:28px; line-height:1.6; }
+.signup-field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+.signup-field label { font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,0.55); }
+.signup-field input, .signup-field select {
+  background:rgba(255,255,255,0.06); border:1px solid var(--border);
+  border-radius:5px; color:#fff; font-family:'DM Sans',sans-serif;
+  font-size:14px; padding:10px 14px; outline:none; transition:border-color .2s;
+  -webkit-appearance:none;
+}
+.signup-field input:focus, .signup-field select:focus { border-color:var(--pink); }
+.signup-field input::placeholder { color:rgba(255,255,255,0.2); }
+.signup-field select option { background:#222; color:#fff; }
+.signup-submit {
+  width:100%; background:var(--pink); color:#fff; border:none;
+  font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700;
+  padding:13px; border-radius:5px; cursor:pointer;
+  transition:opacity .2s; margin-top:8px;
+}
+.signup-submit:hover { opacity:0.85; }
+.signup-success {
+  text-align:center; padding:20px 0;
+}
+.signup-success .tick {
+  font-size:48px; display:block; margin-bottom:16px;
+}
+.signup-success h3 {
+  font-family:'DM Serif Display',serif; font-size:26px;
+  color:#fff; margin-bottom:8px;
+}
+.signup-success p { font-size:14px; color:rgba(255,255,255,0.55); line-height:1.6; margin-bottom:20px; }
+.signup-privacy { font-size:11px; color:rgba(255,255,255,0.25); margin-top:14px; text-align:center; line-height:1.5; }
+
+/* Urgency bar */
+.ne-urgency {
+  position:fixed; bottom:0; left:0; right:0; z-index:100;
+  background:var(--pink);
+  padding:13px 24px;
+  display:none; align-items:center; justify-content:center; gap:16px;
+  border-top:1px solid rgba(255,255,255,0.15);
+}
+.ne-urgency.visible { display:flex; }
+.ne-urgency-text {
+  font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700;
+  color:#fff; letter-spacing:0.5px; text-transform:uppercase;
+}
+.ne-urgency-timer { color:rgba(255,255,255,0.85); font-weight:400; }
+.ne-urgency-clock { font-size:18px; animation:sep-blink 1s step-end infinite; }
+
+.ne-footer-pad { padding-bottom:80px; }
+
+.ne-coming-soon {
+  text-align:center; padding:80px 24px; max-width:600px; margin:0 auto;
+}
+.ne-coming-soon h2 {
+  font-family:'DM Serif Display',serif; font-size:48px;
+  letter-spacing:-1.5px; color:#fff; margin-bottom:16px;
+}
+.ne-coming-soon p { color:rgba(255,255,255,0.55); font-size:16px; line-height:1.7; margin-bottom:28px; }
+
+/* Sorry lover state */
+.ne-sorry-wrap { max-width:700px; margin:0 auto; }
+.ne-sorry {
+  text-align:center; padding:40px 24px 32px;
+  background:#1a1a1a; border:1px solid var(--border);
+  border-radius:10px; margin-bottom:24px;
+}
+.ne-sorry-emoji { font-size:52px; margin-bottom:16px; }
+.ne-sorry-title {
+  font-family:'DM Serif Display',serif; font-size:clamp(32px,5vw,48px);
+  letter-spacing:-1.5px; color:#fff; margin-bottom:12px;
+}
+.ne-sorry-desc {
+  color:rgba(255,255,255,0.55); font-size:16px; line-height:1.75;
+  max-width:480px; margin:0 auto 24px;
+}
+.ne-next-show-countdown {
+  text-align:center; padding:28px 24px;
+  background:#1a1a1a; border:1px solid var(--border);
+  border-radius:10px; margin-bottom:0;
+}
+.ne-nsc-label {
+  font-size:11px; font-weight:600; letter-spacing:3px; text-transform:uppercase;
+  color:var(--pink); margin-bottom:16px;
+}
+
+@media(max-width:600px){
+  .ne-hero { padding:50px 20px 40px; }
+  .ne-show-wrap { padding:40px 20px; }
+  .ne-show-info { grid-template-columns:1fr; }
+  .ne-info-block { border-right:none !important; }
+  .ne-countdown { gap:4px; }
+  .ne-count-num { font-size:38px; min-width:56px; padding:6px 8px; }
+  .ne-count-sep { font-size:36px; }
+}
+</style>
+</head>
+<body>
+
+
+<!-- ══════════════════════════════════════════ -->
+<!-- NEXT EVENT PAGE                           -->
+<!-- ══════════════════════════════════════════ -->
+<div class="ne-page">
+
+  <!-- Ticker bar -->
+  <div class="ne-top-bar">
+    <div class="ne-ticker" id="ne-ticker"></div>
+  </div>
+
+  <!-- Hero -->
+  <div class="ne-hero">
+    <div class="ne-eyebrow">&#10024; Had a fabulous time tonight, darling? &#10024;</div>
+    <h1 id="ne-hero-h1">
+      <span class="ne-h1-gold">Let's do it all again</span>
+      <span class="ne-h1-pink">but cheaper<span class="dot">.</span></span>
+    </h1>
+    <p class="ne-hero-sub" id="ne-hero-sub">&nbsp;</p>
+  </div>
+
+  <!-- Dynamic show + discount content -->
+  <div class="ne-show-wrap" id="ne-content">
+    <div style="text-align:center;color:rgba(255,255,255,0.3);padding:60px 0">Loading...</div>
+  </div>
+
+  <div class="ne-footer-pad"></div>
+
+  <!-- Urgency bar -->
+  <div class="ne-urgency" id="ne-urgency">
+    <span class="ne-urgency-clock">&#9200;</span>
+    <span class="ne-urgency-text">Discount ends at midnight &nbsp;&mdash;&nbsp; <span class="ne-urgency-timer" id="ne-urgency-timer"></span> remaining</span>
+    <span class="ne-urgency-clock">&#9200;</span>
+  </div>
+
+</div>
+
+<!-- SIGNUP MODAL -->
+<div class="signup-overlay" id="signup-modal">
+  <div class="signup-box">
+    <button class="signup-close" onclick="closeSignup()">&#10005;</button>
+    <div id="signup-form-wrap">
+      <div class="signup-eyebrow">Exclusive offer</div>
+      <h2 class="signup-title">Unlock Your Discount<span class="dot">.</span></h2>
+      <p class="signup-sub">Enter your details to get $5 off every ticket. Offer valid until midnight tonight.</p>
+      <div class="signup-field">
+        <label>First Name</label>
+        <input type="text" id="su-name" placeholder="Your first name">
+      </div>
+      <div class="signup-field">
+        <label>Email Address</label>
+        <input type="email" id="su-email" placeholder="your@email.com">
+      </div>
+      <div class="signup-field">
+        <label>Tonight's Show</label>
+        <select id="su-show">
+          <option value="">Select the show you attended...</option>
+        </select>
+      </div>
+      <button class="signup-submit" onclick="submitSignup()">Get My $5 Discount &#8594;</button>
+      <p class="signup-privacy">By submitting you agree to receive occasional emails from Gflam Touring. We never share your data.</p>
+    </div>
+    <div class="signup-success" id="signup-success" style="display:none">
+      <span class="tick">&#127775;</span>
+      <h3>You're in, darling!</h3>
+      <p>Your discount link is below — valid until midnight tonight. Don't miss out!</p>
+      <div id="signup-discount-link"></div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const SUPABASE_URL = "https://gpoolavkghnxedzrmtmc.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE";
+const SB_HEADERS = {
+  "apikey": SUPABASE_KEY,
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+  "Prefer": "return=representation"
+};
+const PIN = "2326";
+const IS_NEXT_EVENT = true;
+let carouselPage = 0;
+let shows = [];
+let reviews = [];
+// API base defined per function
+
+// ── QLD TIME HELPERS ──
+function getQldNow() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utc + (10 * 3600000));
+}
+function showIsVisible(s) {
+  const now = getQldNow();
+  // Go-live date/time check
+  if (s.displayDate) {
+    const timeStr = s.displayTime || "00:00";
+    const goLive = new Date(s.displayDate + "T" + timeStr + ":00+10:00");
+    if (now < goLive) return false;
+  }
+  if (s.showDate) {
+    if (IS_NEXT_EVENT) {
+      // nextevent: keep showing until midnight the day after show night
+      // after that we show "oops sorry lover" for the next show
+      const dayAfterMidnight = new Date(s.showDate + "T23:59:59+10:00");
+      dayAfterMidnight.setDate(dayAfterMidnight.getDate() + 1);
+      if (now > dayAfterMidnight) return false;
+    } else {
+      // Main page: auto-hide at 10pm on show night
+      const hideAt = new Date(s.showDate + "T22:00:00+10:00");
+      if (now >= hideAt) return false;
+    }
+  }
+  return true;
+}
+
+// ── NEXT EVENT PAGE LOGIC ──
+function getNextShow() {
+  const now = getQldNow();
+  const visible = shows.filter(showIsVisible);
+  if (visible.length === 0) return null;
+
+  // On nextevent page, only consider shows with a discount URL
+  const eligible = IS_NEXT_EVENT
+    ? visible.filter(s => s.discountUrl && s.discountUrl.trim() !== "")
+    : visible;
+
+  if (eligible.length === 0) return null;
+
+  const withDates = eligible.filter(s => s.showDate).sort((a,b) => a.showDate.localeCompare(b.showDate));
+  const withoutDates = eligible.filter(s => !s.showDate);
+  const allSorted = [...withDates, ...withoutDates];
+
+  // First show that hasn't fully ended (midnight QLD)
+  const upcoming = allSorted.filter(s => {
+    if (!s.showDate) return true;
+    const endOfDay = new Date(s.showDate + "T23:59:59+10:00");
+    return now <= endOfDay;
+  });
+  return upcoming.length > 0 ? upcoming[0] : null;
+}
+
+function getMidnightQld(showDate) {
+  if (!showDate) return null;
+  return new Date(showDate + "T23:59:59+10:00");
+}
+
+function isDiscountActive(s) {
+  if (!s.showDate || !s.discountUrl) return false;
+  const now = getQldNow();
+  // Active from 7pm on show day until midnight
+  const start = new Date(s.showDate + "T18:00:00+10:00");
+  const end = getMidnightQld(s.showDate);
+  return now >= start && now <= end;
+}
+
+function buildTicker(items) {
+  const ticker = document.getElementById("ne-ticker");
+  if (!ticker) return;
+  // Build two copies for seamless loop
+  const html = items.map(t => `<span>${t}</span><span class="sep">·</span>`).join("");
+  ticker.innerHTML = html + html;
+}
+
+function updateHeroForState(state) {
+  const h1 = document.getElementById("ne-hero-h1");
+  const sub = document.getElementById("ne-hero-sub");
+  const eyebrow = document.querySelector(".ne-eyebrow");
+
+  if (state === "active") {
+    if (h1) h1.innerHTML = `<span class="ne-h1-gold">Let's do it all again</span><span class="ne-h1-pink">but cheaper<span class="dot">.</span></span>`;
+    if (sub) sub.textContent = "$5 off every ticket — discount available until midnight tonight";
+    if (eyebrow) eyebrow.textContent = "✨ Had a fabulous time tonight, darling? ✨";
+    buildTicker(["Drag Bingo at the Bowlo","$5 Off Every Ticket","Tonight Only","Discount Until Midnight","Hosted by Vollie LaVont"]);
+  } else if (state === "expired") {
+    if (h1) h1.innerHTML = `<span class="ne-h1-gold">Oops, sorry lover</span><span class="ne-h1-pink">maybe next time<span class="dot">.</span></span>`;
+    if (sub) sub.textContent = "The discount has expired — but you can still grab tickets below";
+    if (eyebrow) eyebrow.textContent = "✨ See you on the dancefloor ✨";
+    buildTicker(["Drag Bingo at the Bowlo","Hosted by Vollie LaVont","Live Drag Shows","Big Prizes","Great Night Out"]);
+  } else {
+    if (h1) h1.innerHTML = `<span class="ne-h1-gold">The next show</span><span class="ne-h1-pink">is coming<span class="dot">.</span></span>`;
+    if (sub) sub.textContent = "Get your tickets before they sell out!";
+    if (eyebrow) eyebrow.textContent = "✨ Drag Bingo at the Bowlo ✨";
+    buildTicker(["Drag Bingo at the Bowlo","Hosted by Vollie LaVont","Live Drag Shows","Big Prizes","Fabulous Entertainment"]);
+  }
+}
+
+function getQldDateStr() {
+  const now = getQldNow();
+  return now.getFullYear() + "-" +
+    String(now.getMonth()+1).padStart(2,"0") + "-" +
+    String(now.getDate()).padStart(2,"0");
+}
+
+function renderNextEvent() {
+  const contentEl = document.getElementById("ne-content");
+  const urgency = document.getElementById("ne-urgency");
+  if (!contentEl) return;
+
+  const now = getQldNow();
+  const todayStr = getQldDateStr();
+
+  // During discount window (6pm-midnight), only show shows WITH a discount URL
+  // Outside that window, show all shows that have a discount URL
+  const discountWindowActive = now.getHours() >= 18; // after 6pm QLD
+
+  const eligible = shows.filter(s => {
+    if (!showIsVisible(s)) return false;
+    if (!s.discountUrl || s.discountUrl.trim() === "") return false;
+    return true;
+  });
+
+  if (eligible.length === 0) {
+    contentEl.innerHTML = `
+      <div class="ne-coming-soon">
+        <h2>Coming soon<span style="color:var(--pink)">.</span></h2>
+        <p>No upcoming discount offers right now — check back soon!</p>
+        <a href="/drag-bingo-at-the-bowlo" class="ne-cta">View All Shows</a>
+      </div>`;
+    return;
+  }
+
+  // Sort by date, get next upcoming
+  const sorted = eligible
+    .filter(s => s.showDate)
+    .sort((a,b) => a.showDate.localeCompare(b.showDate));
+  const withoutDate = eligible.filter(s => !s.showDate);
+  const allSorted = [...sorted, ...withoutDate];
+
+  // Find the next show that hasn't ended (past midnight QLD)
+  const upcoming = allSorted.filter(s => {
+    if (!s.showDate) return true;
+    // Keep showing until midnight the day after show night
+    const dayAfterMidnight = new Date(s.showDate + "T23:59:59+10:00");
+    dayAfterMidnight.setDate(dayAfterMidnight.getDate() + 1);
+    return now <= dayAfterMidnight;
+  });
+
+  const nextShow = upcoming.length > 0 ? upcoming[0] : null;
+  if (!nextShow) {
+    contentEl.innerHTML = `
+      <div class="ne-coming-soon">
+        <h2>Coming soon<span style="color:var(--pink)">.</span></h2>
+        <p>No upcoming discount offers right now — check back soon!</p>
+        <a href="/drag-bingo-at-the-bowlo" class="ne-cta">View All Shows</a>
+      </div>`;
+    return;
+  }
+
+  const showIsToday = nextShow.showDate === todayStr;
+  const discountStart = new Date(nextShow.showDate + "T18:00:00+10:00");
+  const discountEnd   = new Date(nextShow.showDate + "T23:59:59+10:00");
+  const discountActive = showIsToday && now >= discountStart && now <= discountEnd;
+
+  const dateDisplay = nextShow.showDate
+    ? formatShowDate(nextShow.showDate).dateDisplay
+    : (nextShow.dayLabel + " " + nextShow.date);
+
+  // Populate signup select
+  const suShow = document.getElementById("su-show");
+  if (suShow) {
+    suShow.innerHTML = '<option value="">Select the show you attended...</option>' +
+      shows.filter(showIsVisible).map(sh => {
+        const d = sh.showDate ? formatShowDate(sh.showDate).dateDisplay : (sh.dayLabel + " " + sh.date);
+        return `<option value="${d} — ${sh.venue}">${d} — ${sh.venue}</option>`;
+      }).join("");
+    if (showIsToday) suShow.value = dateDisplay + " — " + nextShow.venue;
+  }
+
+  const showInfoHTML = `
+    ${nextShow.imgSrc
+      ? `<img src="${nextShow.imgSrc}" class="ne-show-img" alt="Show poster">`
+      : `<div class="ne-show-img-ph"><span>Show poster coming soon</span></div>`}
+    <div class="ne-show-info">
+      <div class="ne-info-block"><div class="ne-info-label">Date</div><div class="ne-info-val">${dateDisplay}</div></div>
+      <div class="ne-info-block"><div class="ne-info-label">Show Time</div><div class="ne-info-val">${nextShow.time}</div>${nextShow.doors ? `<div class="ne-info-val-sm">Doors ${nextShow.doors}</div>` : ""}</div>
+      <div class="ne-info-block"><div class="ne-info-label">Venue</div><div class="ne-info-val">${nextShow.venue}</div><div class="ne-info-val-sm">${nextShow.suburb}</div></div>
+      <div class="ne-info-block"><div class="ne-info-label">Hosted by</div><div class="ne-info-val">${nextShow.host}</div>${nextShow.queens && nextShow.queens.length ? `<div class="ne-info-val-sm">feat. ${nextShow.queens.join(", ")}</div>` : ""}</div>
+    </div>`;
+
+  const showDate = nextShow.showDate;
+  const dayAfterMidnight = showDate
+    ? new Date(showDate + "T23:59:59+10:00")
+    : null;
+  if (dayAfterMidnight) dayAfterMidnight.setDate(dayAfterMidnight.getDate() + 1);
+
+  const isExpired = showDate && dayAfterMidnight && now > dayAfterMidnight;
+
+  // ── STATE 1: ACTIVE DISCOUNT (show night 6pm–midnight) ──
+  if (discountActive) {
+    urgency.classList.add("visible");
+    updateHeroForState("active");
+    contentEl.innerHTML = `
+      <div class="ne-show-card">
+        ${showInfoHTML}
+        <div class="ne-discount">
+          <div class="ne-discount-badge">$5 off every ticket</div>
+          <p class="ne-discount-desc">Tonight only — discount tickets until midnight!</p>
+          <p class="ne-discount-expires">&#9200; Offer expires at midnight Queensland time</p>
+          <div class="ne-countdown" id="ne-countdown"></div>
+          <div class="ne-cta-wrap">
+            <button class="ne-cta" onclick="openSignup()">&#127915; Unlock Your Discount</button>
+            <a href="${nextShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
+            <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
+          </div>
+        </div>
+      </div>`;
+    startCountdown(nextShow.showDate);
+
+  // ── STATE 2: EXPIRED (after midnight day after show) — oops sorry lover ──
+  } else if (isExpired) {
+    updateHeroForState("expired");
+    contentEl.innerHTML = `
+      <div class="ne-show-card">
+        ${showInfoHTML}
+        <div class="ne-ticket-cta">
+          ${nextShow.ticketUrl ? `<a href="${nextShow.ticketUrl}" target="_blank" class="ne-cta">Get Your Tickets &#8594;</a>` : ""}
+        </div>
+      </div>`;
+
+  // ── STATE 3: NO ACTIVE DISCOUNT — show + normal ticket link, no timer ──
+  } else {
+    updateHeroForState("normal");
+    contentEl.innerHTML = `
+      <div class="ne-show-card">
+        ${showInfoHTML}
+        <div class="ne-ticket-cta">
+          ${nextShow.ticketUrl ? `<a href="${nextShow.ticketUrl}" target="_blank" class="ne-cta">Get Your Tickets &#8594;</a>` : ""}
+        </div>
+      </div>`;
+  }
+}
+
+function startNextShowCountdown(targetDate) {
+  function update() {
+    const now = getQldNow();
+    const diff = targetDate - now;
+    const cdEl = document.getElementById("ne-countdown");
+    if (!cdEl) return;
+    if (diff <= 0) {
+      cdEl.innerHTML = `<p style="color:var(--pink);font-weight:600">Offer has expired.</p>`;
+      clearInterval(timer);
+      return;
+    }
+    const days = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const pad = n => String(n).padStart(2,"0");
+    cdEl.innerHTML =
+      (days > 0 ? `<div class="ne-count-block"><span class="ne-count-num">${days}</span><span class="ne-count-label">Days</span></div><div class="ne-count-sep">:</div>` : "") +
+      `<div class="ne-count-block"><span class="ne-count-num">${pad(h)}</span><span class="ne-count-label">Hrs</span></div>
+      <div class="ne-count-sep">:</div>
+      <div class="ne-count-block"><span class="ne-count-num">${pad(m)}</span><span class="ne-count-label">Mins</span></div>
+      <div class="ne-count-sep">:</div>
+      <div class="ne-count-block"><span class="ne-count-num">${pad(s)}</span><span class="ne-count-label">Secs</span></div>`;
+  }
+  update();
+  const timer = setInterval(update, 1000);
+}
+
+
+function closeSignup() {
+  document.getElementById("signup-modal").classList.remove("open");
+}
+const _sm = document.getElementById("signup-modal");
+if (_sm) _sm.addEventListener("click", function(e) {
+  if (e.target === this) closeSignup();
+});
+
+async function submitSignup() {
+  const name = document.getElementById("su-name").value.trim();
+  const email = document.getElementById("su-email").value.trim();
+  const show = document.getElementById("su-show").value;
+  if (!name) { alert("Please enter your name."); return; }
+  if (!email || !email.includes("@")) { alert("Please enter a valid email address."); return; }
+  if (!show) { alert("Please select tonight's show."); return; }
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/signups`, {
+      method: "POST", headers: SB_HEADERS,
+      body: JSON.stringify({first_name: name, email, source: "nextevent_discount", state: show})
+    });
+  } catch(e) {}
+  const s = getNextShow();
+  document.getElementById("signup-form-wrap").style.display = "none";
+  document.getElementById("signup-success").style.display = "block";
+  document.getElementById("signup-discount-link").innerHTML = s && s.discountUrl
+    ? `<a href="${s.discountUrl}" target="_blank" class="ne-cta" style="margin-top:8px">Get $5 Off Now &#8594;</a>`
+    : `<p style="color:rgba(255,255,255,0.5)">Enjoy the discount!</p>`;
+}
+
+let countdownTimer = null;
+function startCountdown(showDate) {
+  function update() {
+    const now = getQldNow();
+    const end = new Date(showDate + "T23:59:59+10:00");
+    const diff = end - now;
+    if (diff <= 0) {
+      clearInterval(countdownTimer);
+      renderNextEvent(); // re-render to show expired state
+      return;
+    }
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const pad = n => String(n).padStart(2,"0");
+    const cdEl = document.getElementById("ne-countdown");
+    const urgTimer = document.getElementById("ne-urgency-timer");
+    if (cdEl) cdEl.innerHTML = `
+      <div class="ne-count-block"><div class="ne-count-num">${pad(h)}</div><div class="ne-count-label">Hours</div></div>
+      <div class="ne-count-sep">:</div>
+      <div class="ne-count-block"><div class="ne-count-num">${pad(m)}</div><div class="ne-count-label">Mins</div></div>
+      <div class="ne-count-sep">:</div>
+      <div class="ne-count-block"><div class="ne-count-num">${pad(s)}</div><div class="ne-count-label">Secs</div></div>`;
+    if (urgTimer) urgTimer.textContent = pad(h) + "h " + pad(m) + "m " + pad(s) + "s remaining";
+  }
+  update();
+  countdownTimer = setInterval(update, 1000);
+}
+
+// Build bulbs for next event page
+function buildBulbs() {
+  const row1 = document.getElementById("ne-bulbs-1");
+  if (!row1) return;
+  // Build two copies for seamless scroll
+  for (let copy = 0; copy < 2; copy++) {
+    for (let i = 0; i < 40; i++) {
+      const b = document.createElement("div");
+      b.className = "ne-bulb";
+      row1.appendChild(b);
+    }
+  }
+}
+
+// ── MAIN PAGE LOGIC ──
+// Auto-format date from YYYY-MM-DD
+function formatShowDate(dateStr) {
+  if (!dateStr) return {dayLabel:"",dateDisplay:"",dayNum:"",month:""};
+  const d = new Date(dateStr + "T12:00:00+10:00");
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const monthsShort = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return {
+    dayLabel: days[d.getDay()],
+    dateDisplay: days[d.getDay()] + " " + months[d.getMonth()] + " " + d.getDate(),
+    dayNum: String(d.getDate()).padStart(2,"0"),
+    month: monthsShort[d.getMonth()]
+  };
+}
+
+function showCardHTML(s) {
+  return `<div class="show-card">
+    ${s.imgSrc ? `<img src="${s.imgSrc}" class="show-card-img" alt="Show poster">` : `<div class="show-card-ph"><span>Upload a poster in Show Manager</span></div>`}
+    <div class="sc-top">
+      <div>
+        ${s.showDate
+          ? `<div class="sc-day">${formatShowDate(s.showDate).dayLabel}</div>
+             <div class="sc-date-big">
+               <span class="sc-date-num">${formatShowDate(s.showDate).dayNum}</span>
+               <span class="sc-date-mon">${formatShowDate(s.showDate).month}</span>
+             </div>`
+          : `<div class="sc-day">${s.dayLabel}</div><div class="sc-date">${s.date}</div>`}
+      </div>
+      <div class="sc-top-right">
+        <div class="sc-price">${s.price || "$30+BF"}</div>
+        <div class="sc-time-block">
+          <div class="sc-show-time">${s.time}</div>
+          ${s.doors ? `<div class="sc-doors-time">Doors ${s.doors}</div>` : ""}
+        </div>
+      </div>
+    </div>
+    <div class="sc-body">
+      <div class="sc-venue">${s.venue}</div>
+      <div class="sc-suburb">${s.suburb}</div>
+      <div class="sc-host">Hosted by <strong>${s.host}</strong></div>
+      <div class="sc-queens-label" style="font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:6px">Special Guests</div>
+      <div class="sc-queens">${s.queens.map(q => `<span class="sc-queen-tag">${q}</span>`).join("")}</div>
+      <div class="sc-foot"><a href="${s.ticketUrl}" target="_blank" class="sc-btn">Buy Tickets &#8594;</a></div>
+    </div>
+  </div>`;
+}
+
+function renderShows() {
+  const el = document.getElementById("shows-grid");
+  if (!el) return;
+  const visible = shows.filter(s => showIsVisible(s) && (!s.showType || s.showType === "drag_bingo"));
+  if (visible.length === 0) {
+    el.innerHTML = `<p style="color:rgba(255,255,255,0.4);font-size:14px">No shows scheduled yet. Check back soon!</p>`;
+    el.classList.remove("odd-count");
+  } else {
+    el.innerHTML = visible.map(showCardHTML).join("");
+    el.classList.toggle("odd-count", visible.length % 3 === 1);
+  }
+}
+
+function renderCarousel() {
+  const track = document.getElementById("carousel-track");
+  const dotsEl = document.getElementById("carousel-dots");
+  const prevBtn = document.getElementById("arrow-prev");
+  const nextBtn = document.getElementById("arrow-next");
+  if (!track) return;
+  if (reviews.length === 0) {
+    track.innerHTML = `<p style="color:rgba(255,255,255,0.4);font-size:14px;grid-column:1/-1">No reviews yet.</p>`;
+    dotsEl.innerHTML = ""; return;
+  }
+  const pages = Math.ceil(reviews.length / 3);
+  if (carouselPage >= pages) carouselPage = pages - 1;
+  const slice = reviews.slice(carouselPage * 3, carouselPage * 3 + 3);
+  track.innerHTML = slice.map(r => `
+    <div class="review-card">
+      <div class="rv-stars">${"&#9733;".repeat(Math.max(1, Math.min(5, r.stars)))}</div>
+      <div class="rv-text">&#8220;${r.text}&#8221;</div>
+      <div class="rv-author">${r.author}</div>
+      <div class="rv-loc">${r.location}</div>
+    </div>`).join("");
+  dotsEl.innerHTML = Array.from({length: pages}, (_, i) =>
+    `<button class="c-dot${i === carouselPage ? " active" : ""}" onclick="goToPage(${i})"></button>`).join("");
+  prevBtn.disabled = carouselPage === 0;
+  nextBtn.disabled = carouselPage >= pages - 1;
+}
+
+function goToPage(p) { carouselPage = p; renderCarousel(); }
+function carouselNext() { if (carouselPage < Math.ceil(reviews.length/3)-1) { carouselPage++; renderCarousel(); } }
+function carouselPrev() { if (carouselPage > 0) { carouselPage--; renderCarousel(); } }
+
+function openPinModal() {
+  document.getElementById("pin-modal").classList.add("open");
+  document.getElementById("pin-input").value = "";
+  document.getElementById("pin-error").textContent = "";
+  setTimeout(() => document.getElementById("pin-input").focus(), 100);
+}
+function closePinModal() { document.getElementById("pin-modal").classList.remove("open"); }
+
+// Close modals when clicking outside
+window.addEventListener("click", function(e) {
+  const pm = document.getElementById("pin-modal");
+  const sm = document.getElementById("signup-modal");
+  if (pm && e.target === pm) closePinModal();
+  if (sm && e.target === sm) closeSignup();
+});
+
+// Guard functions for elements that only exist on one page
+function closeSignup() {
+  const sm = document.getElementById("signup-modal");
+  if (sm) sm.classList.remove("open");
+}
+function openSignup() {
+  const sm = document.getElementById("signup-modal");
+  if (!sm) return;
+  sm.classList.add("open");
+  const fw = document.getElementById("signup-form-wrap");
+  const ss = document.getElementById("signup-success");
+  if (fw) fw.style.display = "block";
+  if (ss) ss.style.display = "none";
+}
+function checkPin() {
+  const v = document.getElementById("pin-input").value;
+  if (v === PIN) {
+    closePinModal();
+    const bar = document.getElementById("admin-bar");
+    bar.classList.add("open");
+    renderAdminShows(); renderAdminReviews();
+    bar.scrollIntoView({behavior:"smooth"});
+  } else {
+    document.getElementById("pin-error").textContent = "Incorrect PIN. Try again.";
+    document.getElementById("pin-input").value = "";
+  }
+}
+const pm = document.getElementById("pin-modal");
+if (pm) pm.addEventListener("click", function(e) { if (e.target === this) closePinModal(); });
+
+function renderAdminShows() {
+  document.getElementById("admin-shows").innerHTML = shows.map((s, i) => `
+    <div class="admin-item">
+      <div class="arow">
+        <div class="afield" style="flex:2">
+          <label>Show Date</label>
+          <input type="date" value="${s.showDate||""}" onchange="shows[${i}].showDate=this.value;this.closest('.admin-item').querySelector('.date-preview').textContent=s.showDate?formatShowDate(s.showDate).dateDisplay:'Pick a date above'" style="color-scheme:dark">
+          <small class="date-preview" style="color:var(--pink);font-size:13px;font-weight:600;margin-top:6px;display:block">${s.showDate ? formatShowDate(s.showDate).dateDisplay : "Pick a date above"}</small>
+        </div>
+        <div class="afield">
+          <label>Price</label>
+          <input value="${s.price||"$30+BF"}" onchange="shows[${i}].price=this.value" placeholder="$30+BF">
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Show Time</label><input value="${s.time}" onchange="shows[${i}].time=this.value" placeholder="7:00 PM"></div>
+        <div class="afield"><label>Doors Open</label><input value="${s.doors||""}" onchange="shows[${i}].doors=this.value" placeholder="6:30 PM"></div>
+        <div class="afield"><label>Venue</label><input value="${s.venue}" onchange="shows[${i}].venue=this.value"></div>
+        <div class="afield"><label>Suburb</label><input value="${s.suburb}" onchange="shows[${i}].suburb=this.value"></div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Host</label><input value="${s.host}" onchange="shows[${i}].host=this.value"></div>
+        <div class="afield" style="flex:2">
+          <label>Ticket URL <span style="color:rgba(255,255,255,0.3);font-weight:400;letter-spacing:0;text-transform:none;font-size:11px">(Moshtix, Humanitix, etc.)</span></label>
+          <input value="${s.ticketUrl||""}" onchange="shows[${i}].ticketUrl=this.value" placeholder="https://..." style="color:rgba(255,255,255,0.55)">
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield" style="flex:2">
+          <label>&#127915; Discount URL (Moshtix link with offercode)</label>
+          <input value="${s.discountUrl||""}" onchange="shows[${i}].discountUrl=this.value" placeholder="https://...?offercode=..." style="color:rgba(255,255,255,0.55)">
+          <small style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px;display:block">Optional. Paste full Moshtix discount URL. Shows on /nextevent 7pm–midnight on show night.</small>
+        </div>
+      </div>
+      <div class="arow">
+        <div class="afield"><label>Go Live Date (QLD)</label>
+          <input type="date" value="${s.displayDate||""}" onchange="shows[${i}].displayDate=this.value" style="color-scheme:dark">
+        </div>
+        <div class="afield"><label>Go Live Time (QLD)</label>
+          <input type="time" value="${s.displayTime||"00:00"}" onchange="shows[${i}].displayTime=this.value" style="color-scheme:dark">
+          <small style="color:rgba(255,255,255,0.35);font-size:11px;margin-top:4px;display:block">Leave blank to show immediately.</small>
+        </div>
+        <div class="afield" style="flex:2"><label>Banner Image (1200&times;525px ideal)</label>
+          <div class="img-upload-area">
+            <input type="file" accept="image/*" onchange="handleImg(${i},this)">
+            <div class="img-upload-label">Click to upload</div>
+            ${s.imgSrc ? `<img src="${s.imgSrc}" class="img-preview">` : ""}
+          </div>
+        </div>
+      </div>
+      <div class="afield"><label>Guest Queens</label>
+        <div class="q-chips">${s.queens.map((q,qi) => `<div class="q-chip"><span>${q}</span><button onclick="removeQueen(${i},${qi})">&#10005;</button></div>`).join("")}</div>
+        <div class="q-add-row">
+          <input id="qi-${s.id}" placeholder="Queen name..." onkeydown="if(event.key==='Enter')addQueen(${i},${s.id})">
+          <button class="q-add-btn" onclick="addQueen(${i},${s.id})">+ Add</button>
+        </div>
+      </div>
+      <button class="remove-btn" onclick="removeShow(${i})">Remove show</button>
+    </div>`).join("");
+}
+
+function handleImg(i, input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = e => { shows[i].imgSrc = e.target.result; renderAdminShows(); };
+  r.readAsDataURL(f);
+}
+function addQueen(si, sid) {
+  const inp = document.getElementById("qi-"+sid);
+  const v = inp.value.trim(); if (!v) return;
+  shows[si].queens.push(v); inp.value=""; renderAdminShows();
+}
+function removeQueen(si, qi) { shows[si].queens.splice(qi,1); renderAdminShows(); }
+function removeShow(i) { if(confirm("Remove this show?")){ shows.splice(i,1); renderAdminShows(); } }
+function addShow() {
+  shows.push({id:Date.now(), showDate:"", time:"7:00 PM", doors:"6:30 PM",
+    venue:"Venue Name", suburb:"Suburb", host:"Vollie LaVont", queens:["TBA"],
+    price:"$30+BF", ticketUrl:"", discountUrl:"",
+    imgSrc:"", displayDate:"", displayTime:"00:00", showType:"drag_bingo"});
+  renderAdminShows();
+  document.getElementById("admin-shows").lastElementChild.scrollIntoView({behavior:"smooth"});
+}
+async function saveShows() {
+  try {
+    for (const show of shows) {
+      const row = {
+        show_date: show.showDate || null,
+        time: show.time,
+        doors: show.doors,
+        venue: show.venue,
+        suburb: show.suburb,
+        host: show.host,
+        queens: show.queens,
+        price: show.price,
+        ticket_url: show.ticketUrl,
+        discount_url: show.discountUrl,
+        img_src: show.imgSrc,
+        go_live_date: show.displayDate || null,
+        go_live_time: show.displayTime || "00:00",
+        show_type: show.showType || "drag_bingo"
+      };
+      if (show.id && show.id.length === 36) {
+        // Existing row - update
+        await fetch(`${SUPABASE_URL}/rest/v1/shows?id=eq.${show.id}`, {
+          method: "PATCH", headers: SB_HEADERS, body: JSON.stringify(row)
+        });
+      } else {
+        // New row - insert
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/shows`, {
+          method: "POST", headers: SB_HEADERS, body: JSON.stringify(row)
+        });
+        const data = await res.json();
+        if (Array.isArray(data) && data[0]) show.id = data[0].id;
+      }
+    }
+    localStorage.setItem("db_shows_backup", JSON.stringify(shows));
+    renderShows();
+    const t = document.getElementById("shows-toast");
+    t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500);
+  } catch(e) { alert("Error saving shows: " + e.message); }
+}
+
+function renderAdminReviews() {
+  document.getElementById("admin-reviews-list").innerHTML = reviews.map((r,i) => `
+    <div class="admin-item" style="margin-bottom:12px">
+      <div class="arow">
+        <div class="afield"><label>Author</label><input value="${r.author}" onchange="reviews[${i}].author=this.value"></div>
+        <div class="afield"><label>Location</label><input value="${r.location}" onchange="reviews[${i}].location=this.value"></div>
+        <div class="afield"><label>Stars (1-5)</label><input type="number" min="1" max="5" value="${r.stars}" onchange="reviews[${i}].stars=parseInt(this.value)"></div>
+      </div>
+      <div class="afield"><label>Review Text</label>
+        <input value="${r.text.replace(/"/g,"&quot;")}" onchange="reviews[${i}].text=this.value" style="width:100%">
+      </div>
+      <button class="remove-btn" onclick="removeReview(${i})">Remove</button>
+    </div>`).join("");
+}
+function addReview() { reviews.push({id:Date.now(),author:"Name",location:"Location",stars:5,text:"Add review text here."}); renderAdminReviews(); }
+function removeReview(i) { reviews.splice(i,1); renderAdminReviews(); }
+async function saveReviews() {
+  try {
+    for (const review of reviews) {
+      const row = {
+        author: review.author,
+        location: review.location,
+        stars: review.stars,
+        review_text: review.text
+      };
+      if (review.id && review.id.length === 36) {
+        await fetch(`${SUPABASE_URL}/rest/v1/reviews?id=eq.${review.id}`, {
+          method: "PATCH", headers: SB_HEADERS, body: JSON.stringify(row)
+        });
+      } else {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/reviews`, {
+          method: "POST", headers: SB_HEADERS, body: JSON.stringify(row)
+        });
+        const data = await res.json();
+        if (Array.isArray(data) && data[0]) review.id = data[0].id;
+      }
+    }
+    localStorage.setItem("db_reviews_backup", JSON.stringify(reviews));
+    carouselPage = 0; renderCarousel();
+    const t = document.getElementById("reviews-toast");
+    t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500);
+  } catch(e) { alert("Error saving reviews: " + e.message); }
+}
+
+// ── AUTO COPYRIGHT ──
+const cy = document.getElementById("copy-year");
+if (cy) cy.textContent = new Date().getFullYear();
+
+// ── LOAD DATA & INIT ──
+async function loadData() {
+  try {
+    const [sRes, rRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/shows?order=show_date.asc`, {headers: SB_HEADERS}),
+      fetch(`${SUPABASE_URL}/rest/v1/reviews?order=created_at.asc`, {headers: SB_HEADERS})
+    ]);
+    const sData = await sRes.json();
+    const rData = await rRes.json();
+    // Map Supabase snake_case to our camelCase
+    shows = Array.isArray(sData) ? sData.map(mapShow) : [];
+    reviews = Array.isArray(rData) ? rData.map(mapReview) : [];
+    // Backup to localStorage
+    if (shows.length > 0) localStorage.setItem("db_shows_backup", JSON.stringify(shows));
+    if (reviews.length > 0) localStorage.setItem("db_reviews_backup", JSON.stringify(reviews));
+  } catch(e) {
+    // Fallback to localStorage backup
+    try {
+      const sb = localStorage.getItem("db_shows_backup");
+      const rb = localStorage.getItem("db_reviews_backup");
+      shows = sb ? JSON.parse(sb) : [];
+      reviews = rb ? JSON.parse(rb) : [];
+    } catch(e2) { shows = []; reviews = []; }
+  }
+  renderShows();
+  renderCarousel();
+}
+
+// Map Supabase row to our show object
+function mapShow(s) {
+  return {
+    id: s.id,
+    showDate: s.show_date || "",
+    time: s.time || "7:00 PM",
+    doors: s.doors || "",
+    venue: s.venue || "",
+    suburb: s.suburb || "",
+    host: s.host || "Vollie LaVont",
+    queens: s.queens || [],
+    price: s.price || "$30+BF",
+    ticketUrl: s.ticket_url || "",
+    discountUrl: s.discount_url || "",
+    imgSrc: s.img_src || "",
+    displayDate: s.go_live_date || "",
+    displayTime: s.go_live_time || "00:00",
+    showType: s.show_type || ""
+  };
+}
+
+function mapReview(r) {
+  return {
+    id: r.id,
+    author: r.author || "",
+    location: r.location || "",
+    stars: r.stars || 5,
+    text: r.review_text || ""
+  };
+}
+
+loadData();
+</script>
+</body>
+</html>
