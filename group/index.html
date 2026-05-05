@@ -146,7 +146,7 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
   <!-- Brand Cards -->
   <div class="brands">
 
-    <div class="bc" onclick="window.location.href='https://gflamtouring.com.au'" role="link" tabindex="0">
+    <div class="bc" onclick="window.location.href='https://www.gflamtouring.com.au'" role="link" tabindex="0">
       <div class="bc-icon">
         <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
       </div>
@@ -156,7 +156,7 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
       <span class="bc-arr">Visit site <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
     </div>
 
-    <div class="bc" onclick="window.location.href='https://gflamvending.com.au'" role="link" tabindex="0">
+    <div class="bc" onclick="window.location.href='https://www.gflamvending.com.au'" role="link" tabindex="0">
       <div class="bc-icon">
         <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 2v4M16 2v4"/><path d="M4 10h16"/><rect x="8" y="14" width="3" height="4" rx="1"/></svg>
       </div>
@@ -226,8 +226,10 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
 </main>
 
 <script>
-var _SBU= + SBU + ;
-var _SBK= + SBK + ;
+// NOTE: Configure these Supabase credentials for the signup form to work
+// Replace the empty strings with your Supabase URL and API key
+var _SBU = '';  // Your Supabase URL (e.g., 'https://yourproject.supabase.co')
+var _SBK = '';  // Your Supabase anon key
 var _SBH={'apikey':_SBK,'Authorization':'Bearer '+_SBK,'Content-Type':'application/json'};
 document.getElementById('yr').textContent=new Date().getFullYear();
 
