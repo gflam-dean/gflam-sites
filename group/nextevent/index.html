@@ -435,28 +435,28 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
   0%,100%{box-shadow:0 0 30px rgba(254,101,195,0.4)}
   50%{box-shadow:0 0 60px rgba(254,101,195,0.7)}
 }
-.ne-discount-desc { font-size:16px; color:#fff; font-weight:600; margin-bottom:6px; }
-.ne-discount-expires { font-size:13px; color:rgba(255,255,255,0.4); margin-bottom:28px; }
+.ne-discount-desc { font-size:16px; color:#fff; font-weight:600; margin-bottom:6px; text-align:center; }
+.ne-discount-expires { font-size:13px; color:rgba(255,255,255,0.4); margin-bottom:28px; text-align:center; }
 
 /* Countdown */
 .ne-countdown {
   display:flex; justify-content:center; align-items:center;
-  gap:8px; margin-bottom:28px;
+  gap:10px; margin-bottom:32px;
 }
-.ne-count-block { text-align:center; min-width:72px; }
+.ne-count-block { text-align:center; min-width:88px; }
 .ne-count-num {
   font-family:'DM Serif Display',serif;
-  font-size:clamp(40px,7vw,64px); line-height:1; color:var(--pink);
+  font-size:clamp(54px,9vw,80px); line-height:1; color:var(--pink);
   background:#222; border:1px solid var(--border);
-  border-radius:6px; padding:8px 12px; display:block;
+  border-radius:6px; padding:12px 14px; display:block;
 }
 .ne-count-label {
-  font-size:10px; letter-spacing:2px; text-transform:uppercase;
-  color:rgba(255,255,255,0.35); margin-top:6px; display:block;
+  font-size:11px; letter-spacing:2px; text-transform:uppercase;
+  color:rgba(255,255,255,0.35); margin-top:8px; display:block;
 }
 .ne-count-sep {
-  font-family:'DM Serif Display',serif; font-size:48px;
-  color:var(--pink); opacity:0.4; line-height:1; padding-bottom:24px;
+  font-family:'DM Serif Display',serif; font-size:58px;
+  color:var(--pink); opacity:0.4; line-height:1; padding-bottom:28px;
   animation:sep-blink 1s step-end infinite;
 }
 @keyframes sep-blink { 0%,100%{opacity:0.4} 50%{opacity:0.1} }
@@ -617,9 +617,9 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
   .ne-show-wrap { padding:40px 20px; }
   .ne-show-info { grid-template-columns:1fr; }
   .ne-info-block { border-right:none !important; }
-  .ne-countdown { gap:4px; }
-  .ne-count-num { font-size:38px; min-width:56px; padding:6px 8px; }
-  .ne-count-sep { font-size:36px; }
+  .ne-countdown { gap:6px; }
+  .ne-count-num { font-size:52px; min-width:72px; padding:10px 10px; }
+  .ne-count-sep { font-size:46px; }
 }
 </style>
 </head>
@@ -1113,7 +1113,7 @@ function startCountdown(showDate) {
       <div class="ne-count-block"><div class="ne-count-num">${pad(m)}</div><div class="ne-count-label">Mins</div></div>
       <div class="ne-count-sep">:</div>
       <div class="ne-count-block"><div class="ne-count-num">${pad(s)}</div><div class="ne-count-label">Secs</div></div>`;
-    if (urgTimer) urgTimer.textContent = pad(h) + "h " + pad(m) + "m " + pad(s) + "s remaining";
+    if (urgTimer) urgTimer.textContent = pad(h) + "h " + pad(m) + "m " + pad(s) + "s";
   }
   update();
   countdownTimer = setInterval(update, 1000);
