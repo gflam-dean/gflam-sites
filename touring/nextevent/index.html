@@ -377,6 +377,45 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
 }
 .ne-info-val-sm { font-size:13px; color:rgba(255,255,255,0.55); margin-top:3px; }
 
+/* Mini show cards (list view, Mon onwards) */
+.ne-show-list { display:flex; flex-direction:column; gap:14px; }
+.ne-mini-card {
+  background:#1a1a1a; border:1px solid var(--border);
+  border-radius:10px; overflow:hidden;
+  display:grid; grid-template-columns:140px 1fr;
+  transition:border-color .2s;
+}
+.ne-mini-card:hover { border-color:rgba(254,101,195,0.4); }
+.ne-mini-card-img { width:100%; height:100%; object-fit:cover; min-height:140px; display:block; }
+.ne-mini-card-img-ph {
+  display:flex; align-items:center; justify-content:center;
+  background:#222; color:rgba(255,255,255,0.3); font-size:28px;
+  min-height:140px;
+}
+.ne-mini-card-body { padding:16px 20px; display:flex; flex-direction:column; gap:5px; }
+.ne-mini-card-date {
+  color:var(--pink); font-weight:700; font-size:11px;
+  letter-spacing:1.5px; text-transform:uppercase;
+}
+.ne-mini-card-venue {
+  font-family:'DM Serif Display',serif; font-size:20px; color:#fff;
+  line-height:1.15; margin-top:2px;
+}
+.ne-mini-card-meta { font-size:13px; color:rgba(255,255,255,0.55); line-height:1.4; }
+.ne-mini-card-cta {
+  align-self:flex-start; margin-top:8px;
+  padding:9px 18px; background:var(--pink); color:#fff;
+  text-decoration:none; border-radius:6px; font-weight:600;
+  font-size:13px; transition:opacity .2s;
+}
+.ne-mini-card-cta:hover { opacity:0.85; }
+@media (max-width:600px) {
+  .ne-mini-card { grid-template-columns:110px 1fr; }
+  .ne-mini-card-img, .ne-mini-card-img-ph { min-height:120px; }
+  .ne-mini-card-body { padding:12px 14px; }
+  .ne-mini-card-venue { font-size:17px; }
+}
+
 /* Discount section */
 .ne-discount {
   padding:32px 28px; text-align:center;
@@ -690,11 +729,12 @@ function showIsVisible(s) {
   }
   if (s.showDate) {
     if (IS_NEXT_EVENT) {
-      // nextevent: keep showing until midnight the day after show night
-      // after that we show "oops sorry lover" for the next show
-      const dayAfterMidnight = new Date(s.showDate + "T23:59:59+10:00");
-      dayAfterMidnight.setDate(dayAfterMidnight.getDate() + 1);
-      if (now > dayAfterMidnight) return false;
+      // nextevent: keep showing through Monday end (2 days after show night).
+      // Sun = "oops sorry lover" with discount URL still working.
+      // Mon = "oops sorry lover" with regular ticket URL (discount expired).
+      const visibleUntil = new Date(s.showDate + "T23:59:59+10:00");
+      visibleUntil.setDate(visibleUntil.getDate() + 2);
+      if (now > visibleUntil) return false;
     } else {
       // Main page: auto-hide at 10pm on show night
       const hideAt = new Date(s.showDate + "T22:00:00+10:00");
@@ -764,9 +804,14 @@ function updateHeroForState(state) {
     buildTicker(["Drag Bingo at the Bowlo","$5 Off Every Ticket","Tonight Only","Discount Until Midnight","Hosted by Vollie LaVont"]);
   } else if (state === "expired") {
     if (h1) h1.innerHTML = `<span class="ne-h1-gold">Oops, sorry lover</span><span class="ne-h1-pink">maybe next time<span class="dot">.</span></span>`;
-    if (sub) sub.textContent = "The discount has expired — but you can still grab tickets below";
+    if (sub) sub.textContent = "Missed last night? Grab your seat below before they're gone";
     if (eyebrow) eyebrow.textContent = "✨ See you on the dancefloor ✨";
     buildTicker(["Drag Bingo at the Bowlo","Hosted by Vollie LaVont","Live Drag Shows","Big Prizes","Great Night Out"]);
+  } else if (state === "missed") {
+    if (h1) h1.innerHTML = `<span class="ne-h1-gold">Oops, sorry lover</span><span class="ne-h1-pink">maybe next time<span class="dot">.</span></span>`;
+    if (sub) sub.textContent = "You missed the discount — but you can still grab tickets to these fabulous shows below";
+    if (eyebrow) eyebrow.textContent = "✨ Plenty more on sale, darling ✨";
+    buildTicker(["Drag Bingo at the Bowlo","Hosted by Vollie LaVont","Live Drag Shows","Tickets On Sale","Fabulous Entertainment"]);
   } else {
     if (h1) h1.innerHTML = `<span class="ne-h1-gold">The next show</span><span class="ne-h1-pink">is coming<span class="dot">.</span></span>`;
     if (sub) sub.textContent = "Get your tickets before they sell out!";
@@ -787,66 +832,61 @@ function renderNextEvent() {
   const urgency = document.getElementById("ne-urgency");
   if (!contentEl) return;
 
+  // Reset urgency bar — only the active state re-shows it
+  if (urgency) urgency.classList.remove("visible");
+
   const now = getQldNow();
-  const todayStr = getQldDateStr();
 
-  // During discount window (6pm-midnight), only show shows WITH a discount URL
-  // Outside that window, show all shows that have a discount URL
-  const discountWindowActive = now.getHours() >= 18; // after 6pm QLD
-
-  const eligible = shows.filter(s => {
-    if (!showIsVisible(s)) return false;
-    if (!s.discountUrl || s.discountUrl.trim() === "") return false;
-    return true;
-  });
-
-  if (eligible.length === 0) {
-    contentEl.innerHTML = `
-      <div class="ne-coming-soon">
-        <h2>Coming soon<span style="color:var(--pink)">.</span></h2>
-        <p>No upcoming discount offers right now — check back soon!</p>
-        <a href="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo" class="ne-cta">View All Shows</a>
-      </div>`;
-    return;
-  }
-
-  // Sort by date, get next upcoming
-  const sorted = eligible
+  // All shows with a real showDate, sorted ascending
+  const sortedShows = shows
     .filter(s => s.showDate)
-    .sort((a,b) => a.showDate.localeCompare(b.showDate));
-  const withoutDate = eligible.filter(s => !s.showDate);
-  const allSorted = [...sorted, ...withoutDate];
+    .sort((a, b) => a.showDate.localeCompare(b.showDate));
 
-  // Find the next show that hasn't ended (past midnight QLD)
-  const upcoming = allSorted.filter(s => {
-    if (!s.showDate) return true;
-    // Keep showing until midnight the day after show night
-    const dayAfterMidnight = new Date(s.showDate + "T23:59:59+10:00");
-    dayAfterMidnight.setDate(dayAfterMidnight.getDate() + 1);
-    return now <= dayAfterMidnight;
+  // STATE 1 trigger: any show currently in its discount window (12pm–midnight on show day),
+  //                  with a discount URL set
+  const activeShow = sortedShows.find(s => {
+    if (!s.discountUrl || !s.discountUrl.trim()) return false;
+    if (!showIsVisible(s)) return false;
+    const start = new Date(s.showDate + "T12:00:00+10:00");
+    const end = new Date(s.showDate + "T23:59:59+10:00");
+    return now >= start && now <= end;
   });
 
-  const nextShow = upcoming.length > 0 ? upcoming[0] : null;
-  if (!nextShow) {
-    contentEl.innerHTML = `
-      <div class="ne-coming-soon">
-        <h2>Coming soon<span style="color:var(--pink)">.</span></h2>
-        <p>No upcoming discount offers right now — check back soon!</p>
-        <a href="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo" class="ne-cta">View All Shows</a>
+  // STATE 2 trigger: any show currently in its soft-expired window (day after show, all day),
+  //                  with a discount URL set
+  const softExpiredShow = sortedShows.find(s => {
+    if (!s.discountUrl || !s.discountUrl.trim()) return false;
+    if (!showIsVisible(s)) return false;
+    const endShowDay = new Date(s.showDate + "T23:59:59+10:00");
+    const endDayAfter = new Date(endShowDay);
+    endDayAfter.setDate(endDayAfter.getDate() + 1);
+    return now > endShowDay && now <= endDayAfter;
+  });
+
+  // STATE 3 input: every show whose discount window hasn't started yet
+  const upcomingShows = sortedShows.filter(s => {
+    if (!showIsVisible(s)) return false;
+    const start = new Date(s.showDate + "T12:00:00+10:00");
+    return now < start;
+  });
+
+  // Helper: image + info grid (inside .ne-show-card)
+  const getShowInfoInner = (s) => {
+    const dateDisplay = formatShowDate(s.showDate).dateDisplay;
+    return `
+      ${s.imgSrc
+        ? `<img src="${s.imgSrc}" class="ne-show-img" alt="Show poster">`
+        : `<div class="ne-show-img-ph"><span>Show poster coming soon</span></div>`}
+      <div class="ne-show-info">
+        <div class="ne-info-block"><div class="ne-info-label">Date</div><div class="ne-info-val">${dateDisplay}</div></div>
+        <div class="ne-info-block"><div class="ne-info-label">Show Time</div><div class="ne-info-val">${s.time}</div>${s.doors ? `<div class="ne-info-val-sm">Doors ${s.doors}</div>` : ""}</div>
+        <div class="ne-info-block"><div class="ne-info-label">Venue</div><div class="ne-info-val">${s.venue}</div><div class="ne-info-val-sm">${s.suburb}</div></div>
+        <div class="ne-info-block"><div class="ne-info-label">Hosted by</div><div class="ne-info-val">${s.host}</div>${s.queens && s.queens.length ? `<div class="ne-info-val-sm">feat. ${s.queens.join(", ")}</div>` : ""}</div>
       </div>`;
-    return;
-  }
+  };
 
-  const showIsToday = nextShow.showDate === todayStr;
-  const discountStart = new Date(nextShow.showDate + "T18:00:00+10:00");
-  const discountEnd   = new Date(nextShow.showDate + "T23:59:59+10:00");
-  const discountActive = showIsToday && now >= discountStart && now <= discountEnd;
-
-  const dateDisplay = nextShow.showDate
-    ? formatShowDate(nextShow.showDate).dateDisplay
-    : (nextShow.dayLabel + " " + nextShow.date);
-
-  // Populate signup select
+  // Populate signup-modal dropdown with every visible show, then pre-select
+  // the show we're currently focused on (active or soft-expired)
   const suShow = document.getElementById("su-show");
   if (suShow) {
     suShow.innerHTML = '<option value="">Select the show you attended...</option>' +
@@ -854,35 +894,19 @@ function renderNextEvent() {
         const d = sh.showDate ? formatShowDate(sh.showDate).dateDisplay : (sh.dayLabel + " " + sh.date);
         return `<option value="${d} — ${sh.venue}">${d} — ${sh.venue}</option>`;
       }).join("");
-    if (showIsToday) suShow.value = dateDisplay + " — " + nextShow.venue;
+    const focused = activeShow || softExpiredShow;
+    if (focused) {
+      suShow.value = formatShowDate(focused.showDate).dateDisplay + " — " + focused.venue;
+    }
   }
 
-  const showInfoHTML = `
-    ${nextShow.imgSrc
-      ? `<img src="${nextShow.imgSrc}" class="ne-show-img" alt="Show poster">`
-      : `<div class="ne-show-img-ph"><span>Show poster coming soon</span></div>`}
-    <div class="ne-show-info">
-      <div class="ne-info-block"><div class="ne-info-label">Date</div><div class="ne-info-val">${dateDisplay}</div></div>
-      <div class="ne-info-block"><div class="ne-info-label">Show Time</div><div class="ne-info-val">${nextShow.time}</div>${nextShow.doors ? `<div class="ne-info-val-sm">Doors ${nextShow.doors}</div>` : ""}</div>
-      <div class="ne-info-block"><div class="ne-info-label">Venue</div><div class="ne-info-val">${nextShow.venue}</div><div class="ne-info-val-sm">${nextShow.suburb}</div></div>
-      <div class="ne-info-block"><div class="ne-info-label">Hosted by</div><div class="ne-info-val">${nextShow.host}</div>${nextShow.queens && nextShow.queens.length ? `<div class="ne-info-val-sm">feat. ${nextShow.queens.join(", ")}</div>` : ""}</div>
-    </div>`;
-
-  const showDate = nextShow.showDate;
-  const dayAfterMidnight = showDate
-    ? new Date(showDate + "T23:59:59+10:00")
-    : null;
-  if (dayAfterMidnight) dayAfterMidnight.setDate(dayAfterMidnight.getDate() + 1);
-
-  const isExpired = showDate && dayAfterMidnight && now > dayAfterMidnight;
-
-  // ── STATE 1: ACTIVE DISCOUNT (show night 6pm–midnight) ──
-  if (discountActive) {
-    urgency.classList.add("visible");
+  // ── STATE 1: ACTIVE DISCOUNT (show day 12pm–midnight) ──
+  if (activeShow) {
+    if (urgency) urgency.classList.add("visible");
     updateHeroForState("active");
     contentEl.innerHTML = `
       <div class="ne-show-card">
-        ${showInfoHTML}
+        ${getShowInfoInner(activeShow)}
         <div class="ne-discount">
           <div class="ne-discount-badge">$5 off every ticket</div>
           <p class="ne-discount-desc">Tonight only — discount tickets until midnight!</p>
@@ -890,35 +914,61 @@ function renderNextEvent() {
           <div class="ne-countdown" id="ne-countdown"></div>
           <div class="ne-cta-wrap">
             <button class="ne-cta" onclick="openSignup()">&#127915; Unlock Your Discount</button>
-            <a href="${nextShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
+            <a href="${activeShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
             <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
           </div>
         </div>
       </div>`;
-    startCountdown(nextShow.showDate);
+    startCountdown(activeShow.showDate);
+    return;
+  }
 
-  // ── STATE 2: EXPIRED (after midnight day after show) — oops sorry lover ──
-  } else if (isExpired) {
+  // ── STATE 2: SOFT EXPIRED (day after show) — oops sorry lover + signup ──
+  if (softExpiredShow) {
     updateHeroForState("expired");
     contentEl.innerHTML = `
       <div class="ne-show-card">
-        ${showInfoHTML}
-        <div class="ne-ticket-cta">
-          ${nextShow.ticketUrl ? `<a href="${nextShow.ticketUrl}" target="_blank" class="ne-cta">Get Your Tickets &#8594;</a>` : ""}
+        ${getShowInfoInner(softExpiredShow)}
+        <div class="ne-cta-wrap" style="padding:24px 28px;">
+          <button class="ne-cta" onclick="openSignup()">&#127915; Unlock Your Discount</button>
+          <a href="${softExpiredShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
+          <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
         </div>
       </div>`;
-
-  // ── STATE 3: NO ACTIVE DISCOUNT — show + normal ticket link, no timer ──
-  } else {
-    updateHeroForState("normal");
-    contentEl.innerHTML = `
-      <div class="ne-show-card">
-        ${showInfoHTML}
-        <div class="ne-ticket-cta">
-          ${nextShow.ticketUrl ? `<a href="${nextShow.ticketUrl}" target="_blank" class="ne-cta">Get Your Tickets &#8594;</a>` : ""}
-        </div>
-      </div>`;
+    return;
   }
+
+  // ── STATE 3: LIST VIEW (Mon onwards, or any time between shows) ──
+  if (upcomingShows.length === 0) {
+    contentEl.innerHTML = `
+      <div class="ne-coming-soon">
+        <h2>Coming soon<span style="color:var(--pink)">.</span></h2>
+        <p>No upcoming shows right now — check back soon!</p>
+        <a href="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo" class="ne-cta">View All Shows</a>
+      </div>`;
+    return;
+  }
+
+  updateHeroForState("missed");
+  contentEl.innerHTML = `<div class="ne-show-list">` + upcomingShows.map(s => {
+    const dateDisplay = formatShowDate(s.showDate).dateDisplay;
+    const url = s.ticketUrl || s.discountUrl || "";
+    const imgHTML = s.imgSrc
+      ? `<img src="${s.imgSrc}" class="ne-mini-card-img" alt="Show poster">`
+      : `<div class="ne-mini-card-img-ph"><span>&#127917;</span></div>`;
+    const queens = s.queens && s.queens.length ? ` &middot; feat. ${s.queens.join(", ")}` : "";
+    return `
+      <div class="ne-mini-card">
+        ${imgHTML}
+        <div class="ne-mini-card-body">
+          <div class="ne-mini-card-date">${dateDisplay} &middot; ${s.time}</div>
+          <div class="ne-mini-card-venue">${s.venue}</div>
+          <div class="ne-mini-card-meta">${s.suburb}</div>
+          <div class="ne-mini-card-meta">Hosted by ${s.host}${queens}</div>
+          ${url ? `<a href="${url}" target="_blank" class="ne-mini-card-cta">Get Tickets &#8594;</a>` : ""}
+        </div>
+      </div>`;
+  }).join("") + `</div>`;
 }
 
 function startNextShowCountdown(targetDate) {
@@ -1355,6 +1405,7 @@ async function loadData() {
   }
   renderShows();
   renderCarousel();
+  renderNextEvent();
 }
 
 // Map Supabase row to our show object
