@@ -842,41 +842,52 @@ function renderNextEvent() {
   if (urgency) urgency.classList.remove("visible");
 
   const now = getQldNow();
+  const todayStr = getQldDateStr();
+
+  // Compute yesterday's date string in QLD
+  const yest = new Date(now);
+  yest.setDate(yest.getDate() - 1);
+  const yesterdayStr = yest.getFullYear() + "-" +
+    String(yest.getMonth() + 1).padStart(2, "0") + "-" +
+    String(yest.getDate()).padStart(2, "0");
 
   // All shows with a real showDate, sorted ascending
   const sortedShows = shows
     .filter(s => s.showDate)
     .sort((a, b) => a.showDate.localeCompare(b.showDate));
 
-  // STATE 1 trigger: any show currently in its discount window (12pm–midnight on show day),
-  //                  with a discount URL set
-  const activeShow = sortedShows.find(s => {
-    if (!s.discountUrl || !s.discountUrl.trim()) return false;
+  // currentEventShow: a show happening TODAY (this triggers "show day mode").
+  // Doesn't need a discount URL — its job is just to tell us people are at a show right now.
+  const currentEventShow = sortedShows.find(s => {
     if (!showIsVisible(s)) return false;
-    const start = new Date(s.showDate + "T12:00:00+10:00");
-    const end = new Date(s.showDate + "T23:59:59+10:00");
-    return now >= start && now <= end;
+    return s.showDate === todayStr;
   });
 
-  // STATE 2 trigger: any show currently in its soft-expired window (day after show, all day),
-  //                  with a discount URL set
-  const softExpiredShow = sortedShows.find(s => {
-    if (!s.discountUrl || !s.discountUrl.trim()) return false;
+  // recentEventShow: a show that happened YESTERDAY (triggers "day after show day mode").
+  const recentEventShow = sortedShows.find(s => {
     if (!showIsVisible(s)) return false;
-    const endShowDay = new Date(s.showDate + "T23:59:59+10:00");
-    const endDayAfter = new Date(endShowDay);
-    endDayAfter.setDate(endDayAfter.getDate() + 1);
-    return now > endShowDay && now <= endDayAfter;
+    return s.showDate === yesterdayStr;
   });
 
-  // STATE 3 input: every visible show happening today or later, except whichever
-  // show is currently being displayed in STATE 1 (active) or STATE 2 (soft-expired)
-  const todayStr = getQldDateStr();
+  // promotedShow: the next FUTURE show with a discount URL — this is the show
+  // we're trying to sell tickets to via the wristband QR codes.
+  const promotedShow = sortedShows.find(s => {
+    if (!s.discountUrl || !s.discountUrl.trim()) return false;
+    if (!showIsVisible(s)) return false;
+    return s.showDate > todayStr;
+  });
+
+  // upcomingShows for the LIST VIEW: any FUTURE show (with or without discount).
+  // Excludes today's show (people are already there, no need to sell it back to them).
   const upcomingShows = sortedShows.filter(s => {
     if (!showIsVisible(s)) return false;
-    if (s === activeShow || s === softExpiredShow) return false;
-    return s.showDate >= todayStr;
+    return s.showDate > todayStr;
   });
+
+  // Stash the promoted show's discount URL globally so the modal submit handler
+  // can reveal it regardless of which show the user picks from the dropdown.
+  window._promotedDiscountUrl = promotedShow ? promotedShow.discountUrl : null;
+  window._promotedShowVenue = promotedShow ? promotedShow.venue : null;
 
   // Helper: image + info grid (inside .ne-show-card)
   const getShowInfoInner = (s) => {
@@ -894,7 +905,7 @@ function renderNextEvent() {
   };
 
   // Populate signup-modal dropdown with every visible show, then pre-select
-  // the show we're currently focused on (active or soft-expired)
+  // the show the user is most likely attending (today's or yesterday's show).
   const suShow = document.getElementById("su-show");
   if (suShow) {
     suShow.innerHTML = '<option value="">Select the show you attended...</option>' +
@@ -902,51 +913,58 @@ function renderNextEvent() {
         const d = sh.showDate ? formatShowDate(sh.showDate).dateDisplay : (sh.dayLabel + " " + sh.date);
         return `<option value="${d} — ${sh.venue}">${d} — ${sh.venue}</option>`;
       }).join("");
-    const focused = activeShow || softExpiredShow;
-    if (focused) {
-      suShow.value = formatShowDate(focused.showDate).dateDisplay + " — " + focused.venue;
+    const userShow = currentEventShow || recentEventShow;
+    if (userShow) {
+      suShow.value = formatShowDate(userShow.showDate).dateDisplay + " — " + userShow.venue;
     }
   }
 
-  // ── STATE 1: ACTIVE DISCOUNT (show day 12pm–midnight) ──
-  if (activeShow) {
+  // Compute today's discount window (today 12pm to today midnight QLD)
+  const todayStart12pm = new Date(todayStr + "T12:00:00+10:00");
+  const todayMidnight = new Date(todayStr + "T23:59:59+10:00");
+  const inActiveWindow = currentEventShow && now >= todayStart12pm && now <= todayMidnight;
+
+  // ── STATE 1: ACTIVE — show is on tonight, we're between 12pm and midnight,
+  //              and there's a future show with a discount to promote
+  if (inActiveWindow && promotedShow) {
     if (urgency) urgency.classList.add("visible");
     updateHeroForState("active");
     contentEl.innerHTML = `
       <div class="ne-show-card">
-        ${getShowInfoInner(activeShow)}
+        ${getShowInfoInner(promotedShow)}
         <div class="ne-discount">
           <div class="ne-discount-badge">$5 off every ticket</div>
-          <p class="ne-discount-desc">Tonight only — discount tickets until midnight!</p>
+          <p class="ne-discount-desc">Tonight only — claim your discount before midnight!</p>
           <p class="ne-discount-expires">&#9200; Offer expires at midnight Queensland time</p>
           <div class="ne-countdown" id="ne-countdown"></div>
           <div class="ne-cta-wrap">
             <button class="ne-cta" onclick="openSignup()">&#127915; Unlock Your Discount</button>
-            <a href="${activeShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
+            <a href="${promotedShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
             <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
           </div>
         </div>
       </div>`;
-    startCountdown(activeShow.showDate);
+    startCountdown(todayStr); // countdown to midnight tonight
     return;
   }
 
-  // ── STATE 2: SOFT EXPIRED (day after show) — oops sorry lover + signup ──
-  if (softExpiredShow) {
+  // ── STATE 2: SOFT EXPIRED — show was on last night, today is the day after,
+  //              the discount is still silently available
+  if (recentEventShow && !currentEventShow && promotedShow) {
     updateHeroForState("expired");
     contentEl.innerHTML = `
       <div class="ne-show-card">
-        ${getShowInfoInner(softExpiredShow)}
+        ${getShowInfoInner(promotedShow)}
         <div class="ne-cta-wrap" style="padding:24px 28px;">
           <button class="ne-cta" onclick="openSignup()">&#127915; Unlock Your Discount</button>
-          <a href="${softExpiredShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
+          <a href="${promotedShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
           <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
         </div>
       </div>`;
     return;
   }
 
-  // ── STATE 3: LIST VIEW (Mon onwards, or any time between shows) ──
+  // ── STATE 3: LIST VIEW — any other time (between shows, or before midday on show day)
   if (upcomingShows.length === 0) {
     contentEl.innerHTML = `
       <div class="ne-coming-soon">
@@ -957,16 +975,15 @@ function renderNextEvent() {
     return;
   }
 
-  // Pick hero based on whether a past discount show was recently missed (within last 7 days).
-  // If no recent missed discount, use the warmer "upcoming shows" hero instead.
-  const recentlyMissedDiscount = sortedShows.some(s => {
-    if (!s.discountUrl || !s.discountUrl.trim()) return false;
-    if (s.showDate >= todayStr) return false; // future or today, not missed yet
+  // Pick hero: "missed" if any show happened in the last 7 days, else "upcoming"
+  const recentlyHadShow = sortedShows.some(s => {
+    if (s.showDate >= todayStr) return false;
     const showDt = new Date(s.showDate + "T00:00:00+10:00");
     const daysSince = (now - showDt) / 86400000;
     return daysSince <= 7;
   });
-  updateHeroForState(recentlyMissedDiscount ? "missed" : "upcoming");
+  updateHeroForState(recentlyHadShow ? "missed" : "upcoming");
+
   contentEl.innerHTML = `<div class="ne-show-list">` + upcomingShows.map(s => {
     const dateDisplay = formatShowDate(s.showDate).dateDisplay;
     const url = s.ticketUrl || s.discountUrl || "";
@@ -1038,11 +1055,12 @@ async function submitSignup() {
       body: JSON.stringify({first_name: name, email, source: "nextevent_discount", state: show})
     });
   } catch(e) {}
-  const s = getNextShow();
   document.getElementById("signup-form-wrap").style.display = "none";
   document.getElementById("signup-success").style.display = "block";
-  document.getElementById("signup-discount-link").innerHTML = s && s.discountUrl
-    ? `<a href="${s.discountUrl}" target="_blank" class="ne-cta" style="margin-top:8px">Get $5 Off Now &#8594;</a>`
+  // Use the promoted future show's discount URL (set during renderNextEvent)
+  const promotedUrl = window._promotedDiscountUrl;
+  document.getElementById("signup-discount-link").innerHTML = promotedUrl
+    ? `<a href="${promotedUrl}" target="_blank" class="ne-cta" style="margin-top:8px">Get $5 Off Now &#8594;</a>`
     : `<p style="color:rgba(255,255,255,0.5)">Enjoy the discount!</p>`;
 }
 
