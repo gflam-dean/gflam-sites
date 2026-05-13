@@ -953,29 +953,45 @@ function renderNextEvent() {
   // ACTIVE state gets a discount banner with badge + countdown above the list
   let activeBanner = "";
   if (state === "active") {
+    // Show manual "Unlock Discount" button only if they haven't already signed up
+    const unlockBtn = !signedUp
+      ? `<button class="ne-cta" style="margin-top:8px" onclick="openSignup('list')">&#127915; Unlock Your Discount</button>`
+      : `<p style="color:rgba(255,255,255,0.7);margin-top:8px;font-size:14px">&#10003; Discount unlocked &mdash; tap any show below for $5 off</p>`;
     activeBanner = `
       <div class="ne-discount-banner">
         <div class="ne-discount-badge">$5 off every ticket</div>
         <p class="ne-discount-desc">Tonight only — claim your discount before midnight!</p>
         <p class="ne-discount-expires">&#9200; Offer expires at midnight Queensland time</p>
         <div class="ne-countdown" id="ne-countdown"></div>
+        ${unlockBtn}
       </div>`;
   }
 
+  // Stash upcomingShows globally so card buttons can reference by index
+  // (safer than escaping URLs into onclick attributes)
+  window._upcomingShowsRef = upcomingShows;
+
   // Build the list of show cards
-  const showListHTML = `<div class="ne-show-list">` + upcomingShows.map(s => {
+  const showListHTML = `<div class="ne-show-list">` + upcomingShows.map((s, idx) => {
     const dateDisplay = formatShowDate(s.showDate).dateDisplay;
     const hasDiscount = s.discountUrl && s.discountUrl.trim();
-    const useDiscount = signedUp && hasDiscount;
-    const url = useDiscount ? s.discountUrl : (s.ticketUrl || s.discountUrl || "");
-    const ctaLabel = useDiscount ? "$5 Off Tickets &#8594;" : "Get Tickets &#8594;";
     const imgHTML = s.imgSrc
       ? `<img src="${s.imgSrc}" class="ne-mini-card-img" alt="Show poster">`
       : `<div class="ne-mini-card-img-ph"><span>&#127917;</span></div>`;
     const queens = s.queens && s.queens.length ? ` &middot; feat. ${s.queens.join(", ")}` : "";
-    const discountTag = hasDiscount && !useDiscount
-      ? `<div class="ne-mini-card-discount-tag">$5 off available</div>`
-      : "";
+
+    // CTA logic:
+    // - Has discount + not signed up: button opens signup popup with this show's URL queued
+    // - Has discount + signed up: direct link to discount URL with "$5 Off Tickets" label
+    // - No discount: regular ticket link
+    let ctaHTML = "";
+    if (hasDiscount && !signedUp) {
+      ctaHTML = `<button class="ne-mini-card-cta" onclick="openSignupForCard(${idx})">&#127915; Unlock $5 Discount &#8594;</button>`;
+    } else if (hasDiscount && signedUp) {
+      ctaHTML = `<a href="${s.discountUrl}" target="_blank" class="ne-mini-card-cta">$5 Off Tickets &#8594;</a>`;
+    } else if (s.ticketUrl) {
+      ctaHTML = `<a href="${s.ticketUrl}" target="_blank" class="ne-mini-card-cta">Get Tickets &#8594;</a>`;
+    }
     return `
       <div class="ne-mini-card">
         ${imgHTML}
@@ -984,8 +1000,7 @@ function renderNextEvent() {
           <div class="ne-mini-card-venue">${s.venue}</div>
           <div class="ne-mini-card-meta">${s.suburb}</div>
           <div class="ne-mini-card-meta">Hosted by ${s.host}${queens}</div>
-          ${discountTag}
-          ${url ? `<a href="${url}" target="_blank" class="ne-mini-card-cta">${ctaLabel}</a>` : ""}
+          ${ctaHTML}
         </div>
       </div>`;
   }).join("") + `</div>`;
@@ -994,10 +1009,25 @@ function renderNextEvent() {
 
   if (state === "active") startCountdown(todayStr);
 
-  // Auto-pop the signup modal if user hasn't signed up and any show has a discount.
-  if (hasAnyDiscount && !signedUp) {
-    setTimeout(() => openSignup("list"), 900);
+  // Auto-pop the signup modal only in ACTIVE state (event-night urgency).
+  // The setTimeout re-checks signedUp & modal state before opening to avoid
+  // re-opening the popup if the user signed up via a card button before 900ms elapsed.
+  if (state === "active" && hasAnyDiscount && !signedUp) {
+    setTimeout(() => {
+      let stillNeedsSignup = false;
+      try { stillNeedsSignup = localStorage.getItem("ne_signedup") !== "true"; } catch(e) { stillNeedsSignup = true; }
+      const sm = document.getElementById("signup-modal");
+      const modalOpen = sm && sm.classList.contains("open");
+      if (stillNeedsSignup && !modalOpen) openSignup("list");
+    }, 900);
   }
+}
+
+// Wrapper called from card onclick handlers to safely pass per-show discount URLs.
+function openSignupForCard(idx) {
+  const shows = window._upcomingShowsRef || [];
+  const s = shows[idx];
+  if (s && s.discountUrl) openSignup("card", s.discountUrl);
 }
 
 function startNextShowCountdown(targetDate) {
@@ -1038,24 +1068,46 @@ if (_sm) _sm.addEventListener("click", function(e) {
 });
 
 async function submitSignup() {
+  // Prevent double-submit if user clicks the button rapidly
+  if (window._signupSubmitting) return;
   const name = document.getElementById("su-name").value.trim();
   const email = document.getElementById("su-email").value.trim();
-  // Show is auto-picked from the global state set by renderNextEvent
-  // (the currently-displayed dropdown value, pre-selected to today's or yesterday's show)
   const show = document.getElementById("su-show").value || "";
   if (!name) { alert("Please enter your name."); return; }
   if (!email || !email.includes("@")) { alert("Please enter a valid email address."); return; }
+  // Lock and disable submit button
+  window._signupSubmitting = true;
+  const submitBtn = document.querySelector(".signup-submit");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = "0.6";
+    submitBtn.textContent = "Sending...";
+  }
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/signups`, {
       method: "POST", headers: SB_HEADERS,
       body: JSON.stringify({first_name: name, email, source: "nextevent_discount", state: show})
     });
   } catch(e) {}
+  // Restore button (in case the modal is reopened later)
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = "";
+    submitBtn.innerHTML = "Get My $5 Discount &#8594;";
+  }
+  window._signupSubmitting = false;
   // Remember signup so the popup doesn't re-trigger on return visits
   try { localStorage.setItem("ne_signedup", "true"); } catch(e) {}
   document.getElementById("signup-form-wrap").style.display = "none";
   document.getElementById("signup-success").style.display = "block";
-  if (window._signupContext === "list") {
+  if (window._signupContext === "card" && window._pendingShowUrl) {
+    // User clicked a specific show's "Unlock Discount" button — link straight there
+    document.getElementById("signup-discount-link").innerHTML =
+      `<a href="${window._pendingShowUrl}" target="_blank" class="ne-cta" style="margin-top:8px">Get $5 Off Tickets &#8594;</a>
+       <p style="color:rgba(255,255,255,0.6);margin-top:12px;font-size:13px">All other shows below are now discounted too &#127881;</p>`;
+    // Re-render in the background so other cards also update
+    setTimeout(() => renderNextEvent(), 100);
+  } else if (window._signupContext === "list") {
     // LIST VIEW context: tell them all the cards below are now discounted, then close & re-render
     document.getElementById("signup-discount-link").innerHTML =
       `<p style="color:rgba(255,255,255,0.75);margin-top:8px">All your discount links are now active on the shows below &#127881;</p>`;
@@ -1064,7 +1116,7 @@ async function submitSignup() {
       renderNextEvent(); // rerender so cards swap to discount URLs
     }, 1800);
   } else {
-    // SINGLE-show context (ACTIVE / SOFT_EXPIRED): reveal the promoted show's discount URL
+    // SINGLE-show context (ACTIVE / SOFT_EXPIRED legacy): reveal the promoted show's discount URL
     const promotedUrl = window._promotedDiscountUrl;
     document.getElementById("signup-discount-link").innerHTML = promotedUrl
       ? `<a href="${promotedUrl}" target="_blank" class="ne-cta" style="margin-top:8px">Get $5 Off Now &#8594;</a>`
@@ -1227,18 +1279,20 @@ function closeSignup() {
   const sm = document.getElementById("signup-modal");
   if (sm) sm.classList.remove("open");
 }
-function openSignup(context) {
+function openSignup(context, specificDiscountUrl) {
   const sm = document.getElementById("signup-modal");
   if (!sm) return;
   // context: "single" (active/soft state — show single discount link) or
-  //          "list" (list view — unlock discounts across all show cards)
+  //          "list" (list view — unlock discounts across all show cards) or
+  //          "card" (clicked from a specific card — redirect to that show's discount)
   window._signupContext = context || "single";
+  window._pendingShowUrl = specificDiscountUrl || null;
   // Tweak modal copy based on context
   const title = document.querySelector(".signup-title");
   const sub = document.querySelector(".signup-sub");
-  if (window._signupContext === "list") {
+  if (window._signupContext === "list" || window._signupContext === "card") {
     if (title) title.innerHTML = `Unlock Your Discount<span class="dot">.</span>`;
-    if (sub) sub.textContent = "Sign up once to get $5 off every upcoming show below.";
+    if (sub) sub.textContent = "Sign up once to get $5 off every upcoming show.";
   } else {
     if (title) title.innerHTML = `Unlock Your Discount<span class="dot">.</span>`;
     if (sub) sub.textContent = "Enter your details to get $5 off every ticket. Offer valid until midnight tonight.";
@@ -1465,6 +1519,16 @@ async function loadData() {
 }
 
 // Map Supabase row to our show object
+function normalizeUrl(u) {
+  if (!u) return "";
+  u = String(u).trim();
+  if (!u) return "";
+  if (/^https?:\/\//i.test(u)) return u;
+  if (u.startsWith("//")) return "https:" + u;
+  if (u.startsWith("/")) return u; // genuine site-relative path, leave alone
+  return "https://" + u;
+}
+
 function mapShow(s) {
   return {
     id: s.id,
@@ -1476,8 +1540,8 @@ function mapShow(s) {
     host: s.host || "Vollie LaVont",
     queens: s.queens || [],
     price: s.price || "$30+BF",
-    ticketUrl: s.ticket_url || "",
-    discountUrl: s.discount_url || "",
+    ticketUrl: normalizeUrl(s.ticket_url),
+    discountUrl: normalizeUrl(s.discount_url),
     imgSrc: s.img_src || "",
     displayDate: s.go_live_date || "",
     displayTime: s.go_live_time || "00:00",

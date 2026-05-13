@@ -275,6 +275,7 @@ document.getElementById('yr').textContent = new Date().getFullYear();
 function loadShows() {
   var now = new Date();
   var today = now.toISOString().split('T')[0];
+  function normalizeUrl(u){if(!u)return'';u=String(u).trim();if(!u)return'';if(/^https?:\/\//i.test(u))return u;if(u.indexOf('//')===0)return'https:'+u;if(u.charAt(0)==='/')return u;return'https://'+u;}
   fetch(_SBU+'/rest/v1/shows?show_date=gte.'+today+'&order=show_date.asc',{headers:_SBH})
   .then(function(r){return r.json();})
   .then(function(shows){
@@ -300,7 +301,8 @@ function loadShows() {
       if(show.host)allPerformers.push(show.host);
       queens.forEach(function(q){if(q&&q!==show.host)allPerformers.push(q);});
       var qHTML=allPerformers.length?'<div class="show-queens">'+allPerformers.map(function(q){return'<span>'+q+'</span>';}).join('')+'</div>':'';
-      var tHTML=show.ticket_url?'<a href="'+show.ticket_url+'" target="_blank" class="show-ticket">Get Tickets &rarr;</a>':'<div class="show-soldout">Sold Out</div>';
+      var ticketHref=normalizeUrl(show.ticket_url);
+      var tHTML=ticketHref?'<a href="'+ticketHref+'" target="_blank" class="show-ticket">Get Tickets &rarr;</a>':'<div class="show-soldout">Sold Out</div>';
       var imgHTML = show.img_src 
         ? '<div style="height:180px;background:url('+show.img_src+') center/cover no-repeat;position:relative;border-radius:10px 10px 0 0;overflow:hidden"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.6))"></div></div>'
         : '<div style="height:120px;background:linear-gradient(135deg,#1a0a1a,#2a0a2a);display:flex;align-items:center;justify-content:center;border-radius:10px 10px 0 0;overflow:hidden"><div style="text-align:center"><div style="font-family:\'DM Serif Display\',serif;font-size:22px;color:#fe65c3;letter-spacing:-0.5px">Drag Bingo</div><div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px">at the Bowlo</div></div></div>';
