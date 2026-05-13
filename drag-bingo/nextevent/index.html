@@ -678,7 +678,7 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
         <label>Email Address</label>
         <input type="email" id="su-email" placeholder="your@email.com">
       </div>
-      <div class="signup-field">
+      <div class="signup-field" style="display:none">
         <label>Tonight's Show</label>
         <select id="su-show">
           <option value="">Select the show you attended...</option>
@@ -938,8 +938,7 @@ function renderNextEvent() {
           <p class="ne-discount-expires">&#9200; Offer expires at midnight Queensland time</p>
           <div class="ne-countdown" id="ne-countdown"></div>
           <div class="ne-cta-wrap">
-            <button class="ne-cta" onclick="openSignup()">&#127915; Unlock Your Discount</button>
-            <a href="${promotedShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
+            <button class="ne-cta" onclick="openSignup('single')">&#127915; Unlock Your Discount</button>
             <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
           </div>
         </div>
@@ -956,8 +955,7 @@ function renderNextEvent() {
       <div class="ne-show-card">
         ${getShowInfoInner(promotedShow)}
         <div class="ne-cta-wrap" style="padding:24px 28px;">
-          <button class="ne-cta" onclick="openSignup()">&#127915; Unlock Your Discount</button>
-          <a href="${promotedShow.discountUrl}" target="_blank" class="ne-cta-secondary">Already have it? Go straight to Moshtix</a>
+          <button class="ne-cta" onclick="openSignup('single')">&#127915; Unlock Your Discount</button>
           <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
         </div>
       </div>`;
@@ -984,9 +982,17 @@ function renderNextEvent() {
   });
   updateHeroForState(recentlyHadShow ? "missed" : "upcoming");
 
+  // Have they already signed up before? If so, all discount-bearing show cards
+  // should use their discount URL right away. Otherwise they get regular tickets.
+  let signedUp = false;
+  try { signedUp = localStorage.getItem("ne_signedup") === "true"; } catch(e) {}
+
   contentEl.innerHTML = `<div class="ne-show-list">` + upcomingShows.map(s => {
     const dateDisplay = formatShowDate(s.showDate).dateDisplay;
-    const url = s.ticketUrl || s.discountUrl || "";
+    const hasDiscount = s.discountUrl && s.discountUrl.trim();
+    const useDiscount = signedUp && hasDiscount;
+    const url = useDiscount ? s.discountUrl : (s.ticketUrl || s.discountUrl || "");
+    const ctaLabel = useDiscount ? "$5 Off Tickets &#8594;" : "Get Tickets &#8594;";
     const imgHTML = s.imgSrc
       ? `<img src="${s.imgSrc}" class="ne-mini-card-img" alt="Show poster">`
       : `<div class="ne-mini-card-img-ph"><span>&#127917;</span></div>`;
@@ -999,10 +1005,17 @@ function renderNextEvent() {
           <div class="ne-mini-card-venue">${s.venue}</div>
           <div class="ne-mini-card-meta">${s.suburb}</div>
           <div class="ne-mini-card-meta">Hosted by ${s.host}${queens}</div>
-          ${url ? `<a href="${url}" target="_blank" class="ne-mini-card-cta">Get Tickets &#8594;</a>` : ""}
+          ${url ? `<a href="${url}" target="_blank" class="ne-mini-card-cta">${ctaLabel}</a>` : ""}
         </div>
       </div>`;
   }).join("") + `</div>`;
+
+  // Auto-pop the signup modal if user hasn't signed up and there's at least one
+  // discount-bearing show in the list. Slight delay so the page renders first.
+  const hasAnyDiscount = upcomingShows.some(s => s.discountUrl && s.discountUrl.trim());
+  if (hasAnyDiscount && !signedUp) {
+    setTimeout(() => openSignup("list"), 900);
+  }
 }
 
 function startNextShowCountdown(targetDate) {
@@ -1045,23 +1058,36 @@ if (_sm) _sm.addEventListener("click", function(e) {
 async function submitSignup() {
   const name = document.getElementById("su-name").value.trim();
   const email = document.getElementById("su-email").value.trim();
-  const show = document.getElementById("su-show").value;
+  // Show is auto-picked from the global state set by renderNextEvent
+  // (the currently-displayed dropdown value, pre-selected to today's or yesterday's show)
+  const show = document.getElementById("su-show").value || "";
   if (!name) { alert("Please enter your name."); return; }
   if (!email || !email.includes("@")) { alert("Please enter a valid email address."); return; }
-  if (!show) { alert("Please select tonight's show."); return; }
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/signups`, {
       method: "POST", headers: SB_HEADERS,
       body: JSON.stringify({first_name: name, email, source: "nextevent_discount", state: show})
     });
   } catch(e) {}
+  // Remember signup so the popup doesn't re-trigger on return visits
+  try { localStorage.setItem("ne_signedup", "true"); } catch(e) {}
   document.getElementById("signup-form-wrap").style.display = "none";
   document.getElementById("signup-success").style.display = "block";
-  // Use the promoted future show's discount URL (set during renderNextEvent)
-  const promotedUrl = window._promotedDiscountUrl;
-  document.getElementById("signup-discount-link").innerHTML = promotedUrl
-    ? `<a href="${promotedUrl}" target="_blank" class="ne-cta" style="margin-top:8px">Get $5 Off Now &#8594;</a>`
-    : `<p style="color:rgba(255,255,255,0.5)">Enjoy the discount!</p>`;
+  if (window._signupContext === "list") {
+    // LIST VIEW context: tell them all the cards below are now discounted, then close & re-render
+    document.getElementById("signup-discount-link").innerHTML =
+      `<p style="color:rgba(255,255,255,0.75);margin-top:8px">All your discount links are now active on the shows below &#127881;</p>`;
+    setTimeout(() => {
+      closeSignup();
+      renderNextEvent(); // rerender so cards swap to discount URLs
+    }, 1800);
+  } else {
+    // SINGLE-show context (ACTIVE / SOFT_EXPIRED): reveal the promoted show's discount URL
+    const promotedUrl = window._promotedDiscountUrl;
+    document.getElementById("signup-discount-link").innerHTML = promotedUrl
+      ? `<a href="${promotedUrl}" target="_blank" class="ne-cta" style="margin-top:8px">Get $5 Off Now &#8594;</a>`
+      : `<p style="color:rgba(255,255,255,0.5)">Enjoy the discount!</p>`;
+  }
 }
 
 let countdownTimer = null;
@@ -1219,9 +1245,22 @@ function closeSignup() {
   const sm = document.getElementById("signup-modal");
   if (sm) sm.classList.remove("open");
 }
-function openSignup() {
+function openSignup(context) {
   const sm = document.getElementById("signup-modal");
   if (!sm) return;
+  // context: "single" (active/soft state — show single discount link) or
+  //          "list" (list view — unlock discounts across all show cards)
+  window._signupContext = context || "single";
+  // Tweak modal copy based on context
+  const title = document.querySelector(".signup-title");
+  const sub = document.querySelector(".signup-sub");
+  if (window._signupContext === "list") {
+    if (title) title.innerHTML = `Unlock Your Discount<span class="dot">.</span>`;
+    if (sub) sub.textContent = "Sign up once to get $5 off every upcoming show below.";
+  } else {
+    if (title) title.innerHTML = `Unlock Your Discount<span class="dot">.</span>`;
+    if (sub) sub.textContent = "Enter your details to get $5 off every ticket. Offer valid until midnight tonight.";
+  }
   sm.classList.add("open");
   const fw = document.getElementById("signup-form-wrap");
   const ss = document.getElementById("signup-success");
