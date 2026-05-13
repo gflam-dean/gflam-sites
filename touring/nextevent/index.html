@@ -344,7 +344,7 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
 
 /* Show card — matches main page style */
 .ne-show-wrap {
-  max-width:680px; margin:0 auto; padding:60px 24px;
+  max-width:1200px; margin:0 auto; padding:60px 24px;
 }
 .ne-show-card {
   background:#1a1a1a; border:1px solid var(--border);
@@ -378,13 +378,20 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
 .ne-info-val-sm { font-size:13px; color:rgba(255,255,255,0.55); margin-top:3px; }
 
 /* Mini show cards (list view, Mon onwards) */
-.ne-show-list { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; max-width:1100px; margin:0 auto; }
+.ne-show-list {
+  display:flex; flex-wrap:wrap; justify-content:center;
+  gap:20px; max-width:1200px; margin:0 auto;
+}
 .ne-mini-card {
+  flex: 0 1 360px;
+  width:360px; min-width:280px;
   background:#1a1a1a; border:1px solid var(--border);
   border-radius:10px; overflow:hidden;
   display:flex; flex-direction:column;
   transition:border-color .2s;
 }
+/* 4-card layout: 2x2 grid with wider cards */
+.ne-show-list.cards-2x2 .ne-mini-card { flex: 0 1 460px; width:460px; }
 .ne-mini-card:hover { border-color:rgba(254,101,195,0.4); }
 .ne-mini-card-img {
   width:100%; aspect-ratio: 1200 / 525;
@@ -415,7 +422,9 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
 }
 .ne-mini-card-cta:hover { opacity:0.85; }
 @media (max-width:600px) {
-  .ne-show-list { grid-template-columns:1fr; gap:14px; }
+  .ne-mini-card, .ne-show-list.cards-2x2 .ne-mini-card {
+    flex: 1 1 100%; width:100%;
+  }
   .ne-mini-card-body { padding:14px 16px; }
   .ne-mini-card-venue { font-size:18px; }
 }
@@ -975,8 +984,11 @@ function renderNextEvent() {
   // (safer than escaping URLs into onclick attributes)
   window._upcomingShowsRef = upcomingShows;
 
+  // Layout rules: 4 cards → 2x2; otherwise default (3 per row, partial last row centered)
+  const layoutClass = upcomingShows.length === 4 ? "cards-2x2" : "";
+
   // Build the list of show cards
-  const showListHTML = `<div class="ne-show-list">` + upcomingShows.map((s, idx) => {
+  const showListHTML = `<div class="ne-show-list ${layoutClass}">` + upcomingShows.map((s, idx) => {
     const dateDisplay = formatShowDate(s.showDate).dateDisplay;
     const hasDiscount = s.discountUrl && s.discountUrl.trim();
     const imgHTML = s.imgSrc
