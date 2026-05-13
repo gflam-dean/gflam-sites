@@ -723,7 +723,8 @@ function showIsVisible(s) {
   const now = getQldNow();
   // Go-live date/time check
   if (s.displayDate) {
-    const timeStr = s.displayTime || "00:00";
+    // Normalize displayTime to HH:MM (handles both "00:00" and "00:00:00" from Supabase)
+    const timeStr = (s.displayTime || "00:00").substring(0, 5);
     const goLive = new Date(s.displayDate + "T" + timeStr + ":00+10:00");
     if (now < goLive) return false;
   }
@@ -812,6 +813,11 @@ function updateHeroForState(state) {
     if (sub) sub.textContent = "You missed the discount — but you can still grab tickets to these fabulous shows below";
     if (eyebrow) eyebrow.textContent = "✨ Plenty more on sale, darling ✨";
     buildTicker(["Drag Bingo at the Bowlo","Hosted by Vollie LaVont","Live Drag Shows","Tickets On Sale","Fabulous Entertainment"]);
+  } else if (state === "upcoming") {
+    if (h1) h1.innerHTML = `<span class="ne-h1-gold">Upcoming shows</span><span class="ne-h1-pink">on sale now<span class="dot">.</span></span>`;
+    if (sub) sub.textContent = "Grab your tickets to our fabulous shows below";
+    if (eyebrow) eyebrow.textContent = "✨ Drag Bingo at the Bowlo ✨";
+    buildTicker(["Drag Bingo at the Bowlo","Hosted by Vollie LaVont","Live Drag Shows","Tickets On Sale","Fabulous Entertainment"]);
   } else {
     if (h1) h1.innerHTML = `<span class="ne-h1-gold">The next show</span><span class="ne-h1-pink">is coming<span class="dot">.</span></span>`;
     if (sub) sub.textContent = "Get your tickets before they sell out!";
@@ -863,11 +869,13 @@ function renderNextEvent() {
     return now > endShowDay && now <= endDayAfter;
   });
 
-  // STATE 3 input: every show whose discount window hasn't started yet
+  // STATE 3 input: every visible show happening today or later, except whichever
+  // show is currently being displayed in STATE 1 (active) or STATE 2 (soft-expired)
+  const todayStr = getQldDateStr();
   const upcomingShows = sortedShows.filter(s => {
     if (!showIsVisible(s)) return false;
-    const start = new Date(s.showDate + "T12:00:00+10:00");
-    return now < start;
+    if (s === activeShow || s === softExpiredShow) return false;
+    return s.showDate >= todayStr;
   });
 
   // Helper: image + info grid (inside .ne-show-card)
@@ -949,7 +957,16 @@ function renderNextEvent() {
     return;
   }
 
-  updateHeroForState("missed");
+  // Pick hero based on whether a past discount show was recently missed (within last 7 days).
+  // If no recent missed discount, use the warmer "upcoming shows" hero instead.
+  const recentlyMissedDiscount = sortedShows.some(s => {
+    if (!s.discountUrl || !s.discountUrl.trim()) return false;
+    if (s.showDate >= todayStr) return false; // future or today, not missed yet
+    const showDt = new Date(s.showDate + "T00:00:00+10:00");
+    const daysSince = (now - showDt) / 86400000;
+    return daysSince <= 7;
+  });
+  updateHeroForState(recentlyMissedDiscount ? "missed" : "upcoming");
   contentEl.innerHTML = `<div class="ne-show-list">` + upcomingShows.map(s => {
     const dateDisplay = formatShowDate(s.showDate).dateDisplay;
     const url = s.ticketUrl || s.discountUrl || "";
