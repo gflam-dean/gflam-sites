@@ -422,6 +422,10 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
   background:rgba(254,101,195,0.05);
   border-top:1px solid rgba(254,101,195,0.2);
 }
+.ne-discount-banner {
+  text-align:center; padding:32px 24px 8px;
+  margin-bottom:32px;
+}
 .ne-discount-badge {
   display:inline-block;
   background:var(--pink);
@@ -430,6 +434,13 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
   padding:12px 36px; border-radius:6px; margin-bottom:16px;
   box-shadow:0 0 40px rgba(254,101,195,0.4);
   animation:ne-glow 2s ease-in-out infinite;
+}
+.ne-mini-card-discount-tag {
+  display:inline-block; background:rgba(254,101,195,0.15);
+  color:var(--pink); font-size:11px; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  padding:5px 10px; border-radius:4px;
+  margin:8px 0 4px; border:1px solid rgba(254,101,195,0.3);
 }
 @keyframes ne-glow {
   0%,100%{box-shadow:0 0 30px rgba(254,101,195,0.4)}
@@ -869,43 +880,23 @@ function renderNextEvent() {
     return s.showDate === yesterdayStr;
   });
 
-  // promotedShow: the next FUTURE show with a discount URL — this is the show
-  // we're trying to sell tickets to via the wristband QR codes.
-  const promotedShow = sortedShows.find(s => {
-    if (!s.discountUrl || !s.discountUrl.trim()) return false;
-    if (!showIsVisible(s)) return false;
-    return s.showDate > todayStr;
-  });
+  // promotedDiscountUrl: still surface ONE discount URL for any legacy "single" modal path,
+  // pointing at the soonest upcoming show that has a discount.
+  const firstDiscountShow = sortedShows.find(s =>
+    s.discountUrl && s.discountUrl.trim() && showIsVisible(s) && s.showDate > todayStr
+  );
 
-  // upcomingShows for the LIST VIEW: any FUTURE show (with or without discount).
-  // Excludes today's show (people are already there, no need to sell it back to them).
+  // upcomingShows: every visible FUTURE show (today excluded — people are already there).
   const upcomingShows = sortedShows.filter(s => {
     if (!showIsVisible(s)) return false;
     return s.showDate > todayStr;
   });
 
-  // Stash the promoted show's discount URL globally so the modal submit handler
-  // can reveal it regardless of which show the user picks from the dropdown.
-  window._promotedDiscountUrl = promotedShow ? promotedShow.discountUrl : null;
-  window._promotedShowVenue = promotedShow ? promotedShow.venue : null;
+  window._promotedDiscountUrl = firstDiscountShow ? firstDiscountShow.discountUrl : null;
+  window._promotedShowVenue = firstDiscountShow ? firstDiscountShow.venue : null;
 
-  // Helper: image + info grid (inside .ne-show-card)
-  const getShowInfoInner = (s) => {
-    const dateDisplay = formatShowDate(s.showDate).dateDisplay;
-    return `
-      ${s.imgSrc
-        ? `<img src="${s.imgSrc}" class="ne-show-img" alt="Show poster">`
-        : `<div class="ne-show-img-ph"><span>Show poster coming soon</span></div>`}
-      <div class="ne-show-info">
-        <div class="ne-info-block"><div class="ne-info-label">Date</div><div class="ne-info-val">${dateDisplay}</div></div>
-        <div class="ne-info-block"><div class="ne-info-label">Show Time</div><div class="ne-info-val">${s.time}</div>${s.doors ? `<div class="ne-info-val-sm">Doors ${s.doors}</div>` : ""}</div>
-        <div class="ne-info-block"><div class="ne-info-label">Venue</div><div class="ne-info-val">${s.venue}</div><div class="ne-info-val-sm">${s.suburb}</div></div>
-        <div class="ne-info-block"><div class="ne-info-label">Hosted by</div><div class="ne-info-val">${s.host}</div>${s.queens && s.queens.length ? `<div class="ne-info-val-sm">feat. ${s.queens.join(", ")}</div>` : ""}</div>
-      </div>`;
-  };
-
-  // Populate signup-modal dropdown with every visible show, then pre-select
-  // the show the user is most likely attending (today's or yesterday's show).
+  // Populate signup-modal dropdown (hidden but still used for Supabase tagging).
+  // Pre-select today's or yesterday's show so the lead is tagged to the right event.
   const suShow = document.getElementById("su-show");
   if (suShow) {
     suShow.innerHTML = '<option value="">Select the show you attended...</option>' +
@@ -919,56 +910,36 @@ function renderNextEvent() {
     }
   }
 
-  // Compute today's discount window (today 12pm to today midnight QLD)
+  // Determine which state we're in (drives hero + countdown + urgency bar only —
+  // the body of the page is always the same: a list of upcoming shows).
   const todayStart12pm = new Date(todayStr + "T12:00:00+10:00");
   const todayMidnight = new Date(todayStr + "T23:59:59+10:00");
   const inActiveWindow = currentEventShow && now >= todayStart12pm && now <= todayMidnight;
+  const hasAnyDiscount = upcomingShows.some(s => s.discountUrl && s.discountUrl.trim());
 
-  // Have they already signed up on this device? Used to skip auto-popping the modal.
+  let state;
+  if (inActiveWindow && hasAnyDiscount) {
+    state = "active";
+  } else if (recentEventShow && !currentEventShow && hasAnyDiscount) {
+    state = "expired";
+  } else {
+    const recentlyHadShow = sortedShows.some(s => {
+      if (s.showDate >= todayStr) return false;
+      const showDt = new Date(s.showDate + "T00:00:00+10:00");
+      const daysSince = (now - showDt) / 86400000;
+      return daysSince <= 7;
+    });
+    state = recentlyHadShow ? "missed" : "upcoming";
+  }
+
+  updateHeroForState(state);
+  if (state === "active" && urgency) urgency.classList.add("visible");
+
+  // Have they already signed up on this device?
   let signedUp = false;
   try { signedUp = localStorage.getItem("ne_signedup") === "true"; } catch(e) {}
 
-  // ── STATE 1: ACTIVE — show is on tonight, we're between 12pm and midnight,
-  //              and there's a future show with a discount to promote
-  if (inActiveWindow && promotedShow) {
-    if (urgency) urgency.classList.add("visible");
-    updateHeroForState("active");
-    contentEl.innerHTML = `
-      <div class="ne-show-card">
-        ${getShowInfoInner(promotedShow)}
-        <div class="ne-discount">
-          <div class="ne-discount-badge">$5 off every ticket</div>
-          <p class="ne-discount-desc">Tonight only — claim your discount before midnight!</p>
-          <p class="ne-discount-expires">&#9200; Offer expires at midnight Queensland time</p>
-          <div class="ne-countdown" id="ne-countdown"></div>
-          <div class="ne-cta-wrap">
-            <button class="ne-cta" onclick="openSignup('single')">&#127915; Unlock Your Discount</button>
-            <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
-          </div>
-        </div>
-      </div>`;
-    startCountdown(todayStr); // countdown to midnight tonight
-    if (!signedUp) setTimeout(() => openSignup("single"), 900);
-    return;
-  }
-
-  // ── STATE 2: SOFT EXPIRED — show was on last night, today is the day after,
-  //              the discount is still silently available
-  if (recentEventShow && !currentEventShow && promotedShow) {
-    updateHeroForState("expired");
-    contentEl.innerHTML = `
-      <div class="ne-show-card">
-        ${getShowInfoInner(promotedShow)}
-        <div class="ne-cta-wrap" style="padding:24px 28px;">
-          <button class="ne-cta" onclick="openSignup('single')">&#127915; Unlock Your Discount</button>
-          <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
-        </div>
-      </div>`;
-    if (!signedUp) setTimeout(() => openSignup("single"), 900);
-    return;
-  }
-
-  // ── STATE 3: LIST VIEW — any other time (between shows, or before midday on show day)
+  // No future shows at all — show empty state
   if (upcomingShows.length === 0) {
     contentEl.innerHTML = `
       <div class="ne-coming-soon">
@@ -979,18 +950,20 @@ function renderNextEvent() {
     return;
   }
 
-  // Pick hero: "missed" if any show happened in the last 7 days, else "upcoming"
-  const recentlyHadShow = sortedShows.some(s => {
-    if (s.showDate >= todayStr) return false;
-    const showDt = new Date(s.showDate + "T00:00:00+10:00");
-    const daysSince = (now - showDt) / 86400000;
-    return daysSince <= 7;
-  });
-  updateHeroForState(recentlyHadShow ? "missed" : "upcoming");
+  // ACTIVE state gets a discount banner with badge + countdown above the list
+  let activeBanner = "";
+  if (state === "active") {
+    activeBanner = `
+      <div class="ne-discount-banner">
+        <div class="ne-discount-badge">$5 off every ticket</div>
+        <p class="ne-discount-desc">Tonight only — claim your discount before midnight!</p>
+        <p class="ne-discount-expires">&#9200; Offer expires at midnight Queensland time</p>
+        <div class="ne-countdown" id="ne-countdown"></div>
+      </div>`;
+  }
 
-  // signedUp already determined above. Use it to swap card CTAs to discount URLs.
-
-  contentEl.innerHTML = `<div class="ne-show-list">` + upcomingShows.map(s => {
+  // Build the list of show cards
+  const showListHTML = `<div class="ne-show-list">` + upcomingShows.map(s => {
     const dateDisplay = formatShowDate(s.showDate).dateDisplay;
     const hasDiscount = s.discountUrl && s.discountUrl.trim();
     const useDiscount = signedUp && hasDiscount;
@@ -1000,6 +973,9 @@ function renderNextEvent() {
       ? `<img src="${s.imgSrc}" class="ne-mini-card-img" alt="Show poster">`
       : `<div class="ne-mini-card-img-ph"><span>&#127917;</span></div>`;
     const queens = s.queens && s.queens.length ? ` &middot; feat. ${s.queens.join(", ")}` : "";
+    const discountTag = hasDiscount && !useDiscount
+      ? `<div class="ne-mini-card-discount-tag">$5 off available</div>`
+      : "";
     return `
       <div class="ne-mini-card">
         ${imgHTML}
@@ -1008,14 +984,17 @@ function renderNextEvent() {
           <div class="ne-mini-card-venue">${s.venue}</div>
           <div class="ne-mini-card-meta">${s.suburb}</div>
           <div class="ne-mini-card-meta">Hosted by ${s.host}${queens}</div>
+          ${discountTag}
           ${url ? `<a href="${url}" target="_blank" class="ne-mini-card-cta">${ctaLabel}</a>` : ""}
         </div>
       </div>`;
   }).join("") + `</div>`;
 
-  // Auto-pop the signup modal if user hasn't signed up and there's at least one
-  // discount-bearing show in the list. Slight delay so the page renders first.
-  const hasAnyDiscount = upcomingShows.some(s => s.discountUrl && s.discountUrl.trim());
+  contentEl.innerHTML = activeBanner + showListHTML;
+
+  if (state === "active") startCountdown(todayStr);
+
+  // Auto-pop the signup modal if user hasn't signed up and any show has a discount.
   if (hasAnyDiscount && !signedUp) {
     setTimeout(() => openSignup("list"), 900);
   }

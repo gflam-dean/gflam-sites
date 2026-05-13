@@ -291,12 +291,8 @@ function loadShows() {
         if(now<goLive)return;
       }
       // Hide show day AFTER show date (midnight UTC+11 = 1pm UTC next day is safe)
-      var showDateParts = show.show_date.split('-');
-      var cutoff = new Date(Date.UTC(
-        parseInt(showDateParts[0]),
-        parseInt(showDateParts[1])-1,
-        parseInt(showDateParts[2])+1  // day after show
-      ));
+      // Hide after end of show day in QLD time
+      var cutoff = new Date(show.show_date+'T23:59:59+10:00');
       if(now>cutoff)return;
       var d=new Date(show.show_date+'T12:00:00');
       var queens=Array.isArray(show.queens)?show.queens:(show.queens?[show.queens]:[]);
