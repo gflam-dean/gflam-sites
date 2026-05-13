@@ -1,12 +1,30 @@
 <!DOCTYPE html><html lang="en"><head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-F70HEE34EK"></script>
+<!-- Google tag (gtag.js) - Touring + Drag Bingo -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-V36EX4RX85"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
+  gtag('config', 'G-V36EX4RX85');
   gtag('config', 'G-F70HEE34EK');
 </script>
+<!-- Meta Pixel Code (Touring) -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1597842404816132');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1597842404816132&ev=PageView&noscript=1"/></noscript>
+<!-- End Meta Pixel Code -->
+
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Drag Bingo at the Bowlo | Gflam Touring</title><meta name="description" content="The Gold Coast's most fabulous night out! Live drag, bingo rounds, big prizes, hosted by Vollie LaVont.">
 <meta name="robots" content="index,follow"><link rel="canonical" href="https://gflamtouring.com.au/drag-bingo-at-the-bowlo">
@@ -283,7 +301,7 @@ function loadShows() {
       var tHTML=show.ticket_url?'<a href="'+show.ticket_url+'" target="_blank" class="show-ticket">Get Tickets &rarr;</a>':'<div class="show-soldout">Sold Out</div>';
       var imgHTML = show.img_src 
         ? '<div style="height:180px;background:url('+show.img_src+') center/cover no-repeat;position:relative;border-radius:10px 10px 0 0;overflow:hidden"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.6))"></div></div>'
-        : '<div style="height:120px;background:linear-gradient(135deg,#1a0a1a,#2a0a2a);display:flex;align-items:center;justify-content:center;border-radius:10px 10px 0 0;overflow:hidden"><div style="text-align:center"><div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fe65c3;letter-spacing:-0.5px">Drag Bingo</div><div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px">at the Bowlo</div></div></div>';
+        : '<div style="height:120px;background:linear-gradient(135deg,#1a0a1a,#2a0a2a);display:flex;align-items:center;justify-content:center;border-radius:10px 10px 0 0;overflow:hidden"><div style="text-align:center"><div style="font-family:\'DM Serif Display\',serif;font-size:22px;color:#fe65c3;letter-spacing:-0.5px">Drag Bingo</div><div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px">at the Bowlo</div></div></div>';
       var doorsHTML = show.doors ? 'Doors <strong>'+show.doors+'</strong> &middot; ' : '';
       var timeHTML = show.time ? 'Show <strong>'+show.time+'</strong>' : '';
       var card=document.createElement('div');
