@@ -924,6 +924,10 @@ function renderNextEvent() {
   const todayMidnight = new Date(todayStr + "T23:59:59+10:00");
   const inActiveWindow = currentEventShow && now >= todayStart12pm && now <= todayMidnight;
 
+  // Have they already signed up on this device? Used to skip auto-popping the modal.
+  let signedUp = false;
+  try { signedUp = localStorage.getItem("ne_signedup") === "true"; } catch(e) {}
+
   // ── STATE 1: ACTIVE — show is on tonight, we're between 12pm and midnight,
   //              and there's a future show with a discount to promote
   if (inActiveWindow && promotedShow) {
@@ -944,6 +948,7 @@ function renderNextEvent() {
         </div>
       </div>`;
     startCountdown(todayStr); // countdown to midnight tonight
+    if (!signedUp) setTimeout(() => openSignup("single"), 900);
     return;
   }
 
@@ -959,6 +964,7 @@ function renderNextEvent() {
           <p class="ne-cta-note">$5 off every ticket — discount applied automatically</p>
         </div>
       </div>`;
+    if (!signedUp) setTimeout(() => openSignup("single"), 900);
     return;
   }
 
@@ -982,10 +988,7 @@ function renderNextEvent() {
   });
   updateHeroForState(recentlyHadShow ? "missed" : "upcoming");
 
-  // Have they already signed up before? If so, all discount-bearing show cards
-  // should use their discount URL right away. Otherwise they get regular tickets.
-  let signedUp = false;
-  try { signedUp = localStorage.getItem("ne_signedup") === "true"; } catch(e) {}
+  // signedUp already determined above. Use it to swap card CTAs to discount URLs.
 
   contentEl.innerHTML = `<div class="ne-show-list">` + upcomingShows.map(s => {
     const dateDisplay = formatShowDate(s.showDate).dateDisplay;
