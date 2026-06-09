@@ -4,3 +4,9 @@ node_modules/
 .env
 .env.local
 Thumbs.db
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
