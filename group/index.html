@@ -31,7 +31,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Gflam Group | Touring · Vending · The Mini Bar · Party Hire — Australia">
 <meta name="twitter:description" content="The Gflam Group of Companies — Gflam Touring, Gflam Vending, The Mini Bar and Gflam Party Hire. Live entertainment, smart vending and event hire across Australia.">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://gflam.com.au#organization","name":"Gflam Group of Companies","url":"https://gflam.com.au","description":"The Gflam Group of Companies \u2014 operating Gflam Touring, Gflam Vending, The Mini Bar and Gflam Party Hire across Australia.","areaServed":[{"@type":"Country","name":"Australia"},{"@type":"City","name":"Sydney"},{"@type":"City","name":"Melbourne"},{"@type":"City","name":"Brisbane"},{"@type":"City","name":"Gold Coast"},{"@type":"City","name":"Sunshine Coast"},{"@type":"City","name":"Perth"},{"@type":"City","name":"Adelaide"},{"@type":"City","name":"Canberra"},{"@type":"City","name":"Hobart"},{"@type":"City","name":"Darwin"},{"@type":"City","name":"Newcastle"},{"@type":"City","name":"Geelong"},{"@type":"City","name":"Cairns"},{"@type":"City","name":"Townsville"}],"address":{"@type":"PostalAddress","addressCountry":"AU"},"sameAs":[],"makesOffer":[{"@type":"Offer","itemOffered":{"@type":"Service","name":"Live entertainment touring","areaServed":"AU"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Smart vending solutions","areaServed":"AU"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"In-room hotel retail","areaServed":"AU"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Party hire","areaServed":"AU"}}],"subOrganization":[{"@type":"Organization","name":"Gflam Touring","url":"https://gflamtouring.com.au"},{"@type":"Organization","name":"Gflam Vending","url":"https://gflamvending.com.au"},{"@type":"Organization","name":"The Mini Bar","url":"https://theminibar.com.au"},{"@type":"Organization","name":"Gflam Party Hire","url":"https://gflampartyhire.com.au"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","@id":"https://gflam.com.au#organization","name":"Gflam Group of Companies","url":"https://gflam.com.au","description":"The Gflam Group of Companies \u2014 operating Gflam Touring, Gflam Vending, The Mini Bar and Gflam Party Hire across Australia.","areaServed":[{"@type":"Country","name":"Australia"},{"@type":"City","name":"Sydney"},{"@type":"City","name":"Melbourne"},{"@type":"City","name":"Brisbane"},{"@type":"City","name":"Gold Coast"},{"@type":"City","name":"Sunshine Coast"},{"@type":"City","name":"Perth"},{"@type":"City","name":"Adelaide"},{"@type":"City","name":"Canberra"},{"@type":"City","name":"Hobart"},{"@type":"City","name":"Darwin"},{"@type":"City","name":"Newcastle"},{"@type":"City","name":"Geelong"},{"@type":"City","name":"Cairns"},{"@type":"City","name":"Townsville"}],"address":{"@type":"PostalAddress","addressCountry":"AU"},"sameAs":[],"makesOffer":[{"@type":"Offer","itemOffered":{"@type":"Service","name":"Live entertainment touring","areaServed":"AU"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Smart vending solutions","areaServed":"AU"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"In-room hotel retail","areaServed":"AU"}},{"@type":"Offer","itemOffered":{"@type":"Service","name":"Party hire","areaServed":"AU"}}],"subOrganization":[{"@type":"Organization","name":"Gflam Touring","url":"https://gflamtouring.com.au"},{"@type":"Organization","name":"Gflam Vending","url":"https://gflamvending.com.au"},{"@type":"Organization","name":"The Mini Bar","url":"https://theminibar.com.au"},{"@type":"Organization","name":"Gflam Party Hire","url":"https://gflampartyhire.com.au"},{"@type":"Organization","name":"VenuePlay","url":"https://venueplay.com.au"}]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","@id":"https://gflam.com.au#website","url":"https://gflam.com.au","name":"Gflam Group","description":"The Gflam Group of Companies \u2014 operating Gflam Touring, Gflam Vending, The Mini Bar and Gflam Party Hire across Australia.","inLanguage":"en-AU","publisher":{"@id":"https://gflam.com.au#organization"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://gflam.com.au"}]}</script>
 <meta property="og:type" content="website">
@@ -60,6 +60,8 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
 
 /* ── BRAND GRID ── */
 .brands{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;margin-bottom:48px}
+/* lone last card sits centred across the row */
+.bc.span-center{grid-column:1 / -1;max-width:calc(50% - 7px);margin-inline:auto}
 
 /* ── BRAND CARD ── */
 .bc{background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:28px 22px;text-decoration:none;display:flex;flex-direction:column;gap:0;transition:border-color .25s,transform .2s,background .2s;position:relative;overflow:hidden;cursor:pointer}
@@ -121,12 +123,9 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
   .wrap{padding:36px 16px 40px}
   .logo-wrap img{height:52px}
   .brands{grid-template-columns:1fr;gap:12px}
-  .bc{flex-direction:row;align-items:flex-start;gap:14px;padding:20px 16px}
-  .bc-icon{margin-bottom:0;flex-shrink:0;margin-top:2px}
-  .bc-arr{display:none}
-  .bc-desc{display:none}
-  .bc-name{font-size:18px;margin-bottom:4px}
-  .bc-tag{margin-bottom:6px}
+  .bc{padding:22px 18px}
+  .bc.span-center{max-width:none;margin-inline:0}
+  .bc-name{font-size:18px}
   .form-grid{grid-template-columns:1fr}
   .headline{font-size:24px}
 }
@@ -164,6 +163,16 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
       <span class="bc-arr">Visit site <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
     </div>
 
+    <div class="bc" onclick="window.location.href='https://www.venueplay.com.au'" role="link" tabindex="0">
+      <div class="bc-icon">
+        <svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+      </div>
+      <span class="bc-tag">Venue Entertainment</span>
+      <div class="bc-name">VenuePlay<span style="color:var(--pink)">.</span></div>
+      <p class="bc-desc">Live bingo, trivia and games that bring your venue to life.</p>
+      <span class="bc-arr">Visit site <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+    </div>
+
     <div class="bc" onclick="window.location.href='https://www.gflamvending.com.au'" role="link" tabindex="0">
       <div class="bc-icon">
         <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 2v4M16 2v4"/><path d="M4 10h16"/><rect x="8" y="14" width="3" height="4" rx="1"/></svg>
@@ -184,7 +193,7 @@ body{background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(254,101,195,0.0
       <span class="bc-arr">Visit site <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
     </div>
 
-    <div class="bc" onclick="window.location.href='https://gflampartyhire.com.au'" role="link" tabindex="0">
+    <div class="bc span-center" onclick="window.location.href='https://gflampartyhire.com.au'" role="link" tabindex="0">
       <div class="bc-icon">
         <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
