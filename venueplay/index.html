@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay — Every pub needs a Tuesday</title>
+<meta name="description" content="Live bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One platform, four game modes, unlimited nights. Players join from their phone — no app, no login. Founding venues lock in 20% off for life.">
+
+<!-- Open Graph -->
+<meta property="og:title" content="VenuePlay — Every pub needs a Tuesday">
+<meta property="og:description" content="One platform. Four game modes. Unlimited nights. Founding venues lock in 20% off for life.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.venueplay.com.au">
+
+<!-- Favicon: neon play triangle on stage black -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='%23FF1F8E'/%3E%3C/svg%3E">
+
+<!-- ============================================================
+     TRACKING — VenuePlay has NO GA4 / Meta Pixel of its own yet.
+     Paste the VenuePlay snippets here once created.
+     Do NOT paste another Gflam brand's IDs (touring / vending) here.
+     ============================================================ -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#0A0A0B;
+    --ink-2:#121214;
+    --ink-3:#17171B;
+    --pink:#FF1F8E;
+    --pink-deep:#C70F69;
+    --white:#FFFFFF;
+    --muted:#9A9AA4;
+    --muted-2:#6E6E78;
+    --line:rgba(255,255,255,0.08);
+    --line-2:rgba(255,255,255,0.14);
+    --glow:rgba(255,31,142,0.55);
+    --maxw:1120px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+
+  body{
+    background:var(--ink);
+    color:var(--white);
+    font-family:'Manrope',system-ui,sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  ::selection{background:var(--pink);color:#fff}
+
+  a{color:inherit;text-decoration:none}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:saturate(140%) blur(14px);
+    background:rgba(10,10,11,0.72);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+
+  /* logo lockup: glowing play triangle | divider | wordmark */
+  .logo{display:flex;align-items:center;gap:13px}
+  .logo svg{display:block;filter:drop-shadow(0 0 9px var(--glow))}
+  .logo .div{width:1px;height:24px;background:var(--line-2)}
+  .logo .word{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-weight:800;font-size:22px;letter-spacing:-0.03em;
+    color:#fff;line-height:1;
+  }
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;
+    border:0;cursor:pointer;border-radius:999px;
+    padding:13px 24px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
+  }
+  .btn-primary{background:var(--pink);color:#0A0A0B;box-shadow:0 0 0 0 var(--glow)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 30px -8px var(--glow)}
+  .btn-ghost{background:transparent;color:#fff;border:1px solid var(--line-2)}
+  .btn-ghost:hover{border-color:var(--pink);color:var(--pink)}
+  .nav .btn{padding:10px 20px;font-size:14px}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;padding:96px 0 88px;overflow:hidden}
+  .hero::before{
+    content:"";position:absolute;inset:0;z-index:0;
+    background:
+      radial-gradient(900px 520px at 50% -10%, rgba(255,31,142,0.18), transparent 60%),
+      radial-gradient(600px 400px at 85% 30%, rgba(255,31,142,0.07), transparent 60%);
+    pointer-events:none;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;z-index:0;opacity:.4;
+    background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px);
+    background-size:100% 38px;
+    mask-image:linear-gradient(to bottom,#000,transparent 70%);
+    -webkit-mask-image:linear-gradient(to bottom,#000,transparent 70%);
+    pointer-events:none;
+  }
+  .hero .wrap{position:relative;z-index:1}
+
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--pink);
+    border:1px solid var(--line-2);border-radius:999px;padding:7px 15px;margin-bottom:26px;
+  }
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink);animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+  h1{
+    font-family:'Anton',sans-serif;font-weight:400;
+    text-transform:uppercase;
+    font-size:clamp(46px,8.5vw,104px);
+    line-height:0.92;letter-spacing:0.005em;
+    max-width:14ch;
+  }
+  h1 .accent{color:var(--pink)}
+
+  .lede{
+    margin-top:26px;max-width:56ch;
+    font-size:clamp(17px,2.1vw,20px);color:#D8D8DD;font-weight:500;
+  }
+  .lede b{color:#fff;font-weight:700}
+
+  .hero-cta{margin-top:36px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .hero-note{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);margin-top:18px}
+
+  /* ---------- SECTION SCAFFOLD ---------- */
+  section{position:relative}
+  .sec{padding:84px 0}
+  .sec-head{margin-bottom:46px}
+  .label{
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--pink);font-weight:500;
+    display:flex;align-items:center;gap:12px;margin-bottom:18px;
+  }
+  .label::before{content:"";width:26px;height:1px;background:var(--pink)}
+  .sec-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;
+    font-size:clamp(30px,4.4vw,52px);line-height:1;letter-spacing:.01em}
+  .sec-sub{margin-top:18px;max-width:54ch;color:var(--muted);font-size:17px}
+
+  /* ---------- GAME MODES ---------- */
+  .modes{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .mode{
+    background:var(--ink-2);border:1px solid var(--line);border-radius:16px;
+    padding:26px 22px 24px;transition:border-color .2s ease,transform .2s ease,background .2s ease;
+    position:relative;overflow:hidden;
+  }
+  .mode:hover{border-color:var(--line-2);transform:translateY(-3px);background:var(--ink-3)}
+  .mode .ico{
+    width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.3);margin-bottom:20px;
+  }
+  .mode .ico svg{display:block}
+  .mode h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.01em;margin-bottom:8px}
+  .mode p{color:var(--muted);font-size:14.5px;line-height:1.5}
+
+  /* ---------- FOUNDING OFFER ---------- */
+  .offer{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line);border-radius:22px;
+    padding:clamp(28px,4vw,52px);position:relative;overflow:hidden;
+  }
+  .offer::before{
+    content:"";position:absolute;top:-40%;right:-10%;width:480px;height:480px;
+    background:radial-gradient(circle,rgba(255,31,142,0.16),transparent 65%);pointer-events:none;
+  }
+  .offer-grid{position:relative;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center}
+
+  .counter{font-family:'JetBrains Mono',monospace;margin-top:8px}
+  .counter .big{font-size:clamp(40px,6vw,68px);font-weight:700;color:#fff;line-height:1;letter-spacing:-.02em}
+  .counter .big .of{color:var(--pink)}
+  .counter .sub{color:var(--muted);font-size:13px;letter-spacing:.06em;margin-top:12px;text-transform:uppercase}
+  .bar{height:8px;border-radius:999px;background:var(--ink-3);overflow:hidden;margin-top:22px;border:1px solid var(--line)}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink-deep),var(--pink));box-shadow:0 0 14px var(--glow);transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+  .price-card{background:var(--ink);border:1px solid var(--line-2);border-radius:16px;padding:26px}
+  .price-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-bottom:16px;margin-bottom:2px;border-bottom:1px solid var(--line)}
+  .price-row{display:flex;align-items:baseline;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line)}
+  .price-row:last-child{border-bottom:0;padding-bottom:0}
+  .price-row:first-child{padding-top:0}
+  .price-row .pl{font-size:14.5px;color:var(--muted)}
+  .price-row .pl b{display:block;color:#fff;font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .price-row .pv{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px}
+  .price-row.list .pv{color:var(--muted-2);text-decoration:line-through;text-decoration-color:var(--pink)}
+  .price-row.found .pv{color:var(--pink)}
+  .price-foot{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);margin-top:20px;line-height:1.6}
+
+  /* ---------- INCLUDED ---------- */
+  .incl{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 40px;max-width:860px}
+  .incl li{list-style:none;display:flex;gap:14px;align-items:flex-start;padding:6px 0}
+  .incl .tick{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.35);margin-top:2px}
+  .incl b{font-weight:700;color:#fff}
+  .incl span{color:var(--muted);font-size:14.5px;display:block}
+  .incl strong{display:block;font-size:15.5px;color:#fff;font-weight:700;margin-bottom:1px}
+
+  /* ---------- SIGNUP ---------- */
+  #claim{padding-top:8px}
+  .form-shell{background:var(--ink-2);border:1px solid var(--line);border-radius:22px;
+    padding:clamp(28px,4vw,48px);max-width:680px;margin:0 auto;position:relative;overflow:hidden}
+  .form-shell::before{content:"";position:absolute;top:-30%;left:-10%;width:360px;height:360px;
+    background:radial-gradient(circle,rgba(255,31,142,0.13),transparent 65%);pointer-events:none}
+  .form-shell .inner{position:relative}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field.full{grid-column:1 / -1}
+  .field label{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted)}
+  .field input{
+    background:var(--ink);border:1px solid var(--line-2);border-radius:11px;
+    color:#fff;font-family:'Manrope',sans-serif;font-size:16px;padding:14px 15px;width:100%;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .field input::placeholder{color:var(--muted-2)}
+  .field input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  #vp-submit{width:100%;margin-top:20px;padding:16px;font-size:16px}
+  #vp-submit:disabled{opacity:.6;cursor:default;transform:none}
+  .form-fine{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);text-align:center;margin-top:16px}
+
+  .success{display:none;text-align:center;padding:16px 0}
+  .success.show{display:block}
+  .success .ring{width:64px;height:64px;border-radius:50%;margin:0 auto 22px;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.4);box-shadow:0 0 26px -4px var(--glow)}
+  .success h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;font-weight:400;letter-spacing:.01em}
+  .success p{color:var(--muted);margin-top:12px;max-width:42ch;margin-left:auto;margin-right:auto}
+
+  /* ---------- FAQ ---------- */
+  .faq{max-width:780px;margin:0 auto}
+  .q{border-bottom:1px solid var(--line)}
+  .q summary{
+    cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:24px;
+    padding:22px 4px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.01em;
+  }
+  .q summary::-webkit-details-marker{display:none}
+  .q summary .pm{flex:0 0 auto;width:22px;height:22px;position:relative;transition:transform .2s ease}
+  .q summary .pm::before,.q summary .pm::after{content:"";position:absolute;background:var(--pink);border-radius:2px}
+  .q summary .pm::before{left:0;right:0;top:10px;height:2px}
+  .q summary .pm::after{top:0;bottom:0;left:10px;width:2px;transition:opacity .2s ease}
+  .q[open] summary .pm::after{opacity:0}
+  .q .a{padding:0 4px 24px;color:var(--muted);font-size:15.5px;max-width:64ch}
+
+  /* ---------- FOOTER ---------- */
+  footer{border-top:1px solid var(--line);padding:54px 0 64px;margin-top:40px}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap}
+  .foot-brand{display:flex;align-items:center;gap:13px}
+  .foot-brand svg{filter:drop-shadow(0 0 7px var(--glow))}
+  .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em}
+  .foot-meta{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);line-height:1.9;text-align:right}
+  .foot-meta a:hover{color:var(--pink)}
+  .powered{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.08em;text-transform:uppercase}
+  .powered b{color:var(--muted);font-weight:500}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:900px){
+    .modes{grid-template-columns:repeat(2,1fr)}
+    .offer-grid{grid-template-columns:1fr;gap:34px}
+    .incl{grid-template-columns:1fr;gap:6px}
+  }
+  @media(max-width:560px){
+    .sec{padding:64px 0}
+    .hero{padding:64px 0 56px}
+    .modes{grid-template-columns:1fr}
+    .form-grid{grid-template-columns:1fr}
+    .nav .ghost-cta{display:none}
+    .foot{flex-direction:column;align-items:flex-start}
+    .foot-meta{text-align:left}
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#top" aria-label="VenuePlay home">
+      <svg width="26" height="30" viewBox="0 0 26 30" fill="none" aria-hidden="true">
+        <path d="M2 3 L24 15 L2 27 Z" fill="#FF1F8E"/>
+      </svg>
+      <span class="div"></span>
+      <span class="word">VenuePlay</span>
+    </a>
+    <a class="btn btn-primary" href="#claim">Claim founding spot</a>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow"><span class="live-dot"></span> Founding 100 — now open</span>
+    <h1>Every pub<br>needs a <span class="accent">Tuesday</span>.</h1>
+    <p class="lede">Live bingo, trivia, musical bingo and raffles — run from one screen. Your crowd plays from their own phones, <b>no app and no login</b>. You just press go. Built for pubs, clubs and bowls clubs that want a room full on a quiet night.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#claim">Lock in 20% off for life</a>
+      <a class="btn btn-ghost" href="#modes">See the game modes</a>
+    </div>
+    <p class="hero-note">First 100 venues only · launching August 2026 · price locked for life</p>
+  </div>
+</section>
+
+<!-- ===================== GAME MODES ===================== -->
+<section class="sec" id="modes">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="label">One platform</div>
+      <h2 class="sec-title">Four ways to fill the room</h2>
+      <p class="sec-sub">Swap between formats on the night, or run a different one every week. Same screen, same setup, no extra gear.</p>
+    </div>
+    <div class="modes">
+      <div class="mode">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#FF1F8E" stroke-width="1.6"/><circle cx="6.5" cy="6.5" r="1.4" fill="#FF1F8E"/><circle cx="13.5" cy="6.5" r="1.4" fill="#FF1F8E"/><circle cx="10" cy="10" r="1.4" fill="#FF1F8E"/><circle cx="6.5" cy="13.5" r="1.4" fill="#FF1F8E"/><circle cx="13.5" cy="13.5" r="1.4" fill="#FF1F8E"/></svg></div>
+        <h3>Bingo</h3>
+        <p>Classic numbers night with a big-screen caller. Digital cards on every phone, auto-marked, instant winner checks.</p>
+      </div>
+      <div class="mode">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2.5a4 4 0 0 0-2.5 7.1c.5.4.7.9.7 1.4v.5h3.6v-.5c0-.5.2-1 .7-1.4A4 4 0 0 0 10 2.5Z" stroke="#FF1F8E" stroke-width="1.6"/><path d="M8 15.5h4M8.5 17.5h3" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <h3>Trivia</h3>
+        <p>Rounds, teams and a live leaderboard. Questions, scoring and tie-breaks all handled — you just host.</p>
+      </div>
+      <div class="mode">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 14.5V5l8-1.5v9" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="14.5" r="2" stroke="#FF1F8E" stroke-width="1.6"/><circle cx="13" cy="12.5" r="2" stroke="#FF1F8E" stroke-width="1.6"/></svg></div>
+        <h3>Musical Bingo</h3>
+        <p>Songs instead of numbers — players mark the track when it drops. Built-in playlists or bring your own theme.</p>
+      </div>
+      <div class="mode">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 8.5 10 3l6 5.5" stroke="#FF1F8E" stroke-width="1.6" stroke-linejoin="round"/><rect x="4.5" y="8.5" width="11" height="8" rx="1.5" stroke="#FF1F8E" stroke-width="1.6"/><path d="M10 11v3" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <h3>Raffles &amp; Members Draws</h3>
+        <p>Run the meat tray or the members jackpot on the same system. Tickets, draws and number checks done live on screen.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOUNDING OFFER ===================== -->
+<section class="sec" id="offer">
+  <div class="wrap">
+    <div class="offer">
+      <div class="offer-grid">
+        <div>
+          <div class="label">Founding venues</div>
+          <h2 class="sec-title">20% off.<br>For life.</h2>
+          <p class="sec-sub">The first 100 venues to sign up lock in 20% off — that's $2.40 per seat a month, set and locked for life. After 100, founding pricing closes for good.</p>
+          <div class="counter">
+            <div class="big" id="vp-claimed"><span id="vp-count">—</span><span class="of"> / 100</span></div>
+            <div class="bar"><i id="vp-bar"></i></div>
+            <div class="sub" id="vp-remaining">founding spots open</div>
+          </div>
+        </div>
+        <div class="price-card">
+          <div class="price-eyebrow">Per seat · per month</div>
+          <div class="price-row list">
+            <div class="pl"><b>Standard</b>full rate</div>
+            <div class="pv">$3.00</div>
+          </div>
+          <div class="price-row found">
+            <div class="pl"><b>Founding — monthly</b>20% off, locked for life</div>
+            <div class="pv">$2.40</div>
+          </div>
+          <div class="price-row found">
+            <div class="pl"><b>Founding — annual</b>billed yearly · best value</div>
+            <div class="pv">$2.00</div>
+          </div>
+          <p class="price-foot">Priced on your venue's max seats. Your founding rate is set and locked for life — it never goes up.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHAT'S INCLUDED ===================== -->
+<section class="sec" id="included">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="label">What you get</div>
+      <h2 class="sec-title">Everything to run the night</h2>
+    </div>
+    <ul class="incl">
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>All four game modes</strong><span>Bingo, trivia, musical bingo and raffles on one screen.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Players join by phone</strong><span>Scan a code and play — no app to download, no account to make.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Big-screen display</strong><span>Caller, leaderboard and winners up on the venue TV or projector.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Unlimited nights</strong><span>Run it as often as you like — no per-event fees on your plan.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Built for your bar staff</strong><span>Set up and run a round without a tech in the room.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Founding price, locked</strong><span>Your 20% discount stays for as long as you're with us.</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SIGNUP ===================== -->
+<section class="sec" id="claim">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">Claim your spot</div>
+      <h2 class="sec-title">Get founding pricing</h2>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Drop your details and we'll hold a founding spot for your venue. We'll be in touch as soon as VenuePlay opens up.</p>
+    </div>
+
+    <div class="form-shell">
+      <div class="inner">
+        <div id="vp-form">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="vp-venue">Venue name</label>
+              <input id="vp-venue" type="text" placeholder="Tugun Bowls Club" autocomplete="organization">
+            </div>
+            <div class="field full">
+              <label for="vp-email">Contact email</label>
+              <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
+            </div>
+            <div class="field">
+              <label for="vp-mobile">Mobile (optional)</label>
+              <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel">
+            </div>
+            <div class="field">
+              <label for="vp-postcode">Postcode</label>
+              <input id="vp-postcode" type="text" inputmode="numeric" placeholder="4224" autocomplete="postal-code">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="vp-submit" type="button">Hold my founding spot</button>
+          <p class="form-fine">No payment now. Founding spot held until VenuePlay launches.</p>
+        </div>
+
+        <div class="success" id="vp-success">
+          <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>You're on the list</h3>
+          <p>Your founding spot is held. We'll email you the moment VenuePlay opens — keep an eye out.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section class="sec" id="faq">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center">
+      <div class="label" style="justify-content:center">Good to know</div>
+      <h2 class="sec-title">Questions</h2>
+    </div>
+    <div class="faq">
+      <details class="q"><summary>When does VenuePlay launch?<span class="pm"></span></summary><div class="a">VenuePlay launches August 2026. Founding venues get first access, and we'll be in touch before then to get you set up.</div></details>
+      <details class="q"><summary>What does "founding venue" actually mean?<span class="pm"></span></summary><div class="a">The first 100 venues to sign up lock in 20% off for life — $2.40 per seat a month instead of $3. Once 100 spots are gone, founding pricing closes for good.</div></details>
+      <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss — which means more of the room actually joins in.</div></details>
+      <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs — anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
+      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per seat, per month, based on your venue's max seats. Pay monthly at $2.40 a seat, or yearly for $2 a seat — founding pricing is locked for life either way. Nothing is charged until launch in August.</div></details>
+      <details class="q"><summary>Who's behind it?<span class="pm"></span></summary><div class="a">VenuePlay is built by Gflam Touring, who run live drag bingo and entertainment nights across Australia. It's the same show experience, built into a platform any venue can run.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap foot">
+    <div>
+      <div class="foot-brand">
+        <svg width="22" height="26" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="#FF1F8E"/></svg>
+        <span class="word">VenuePlay</span>
+      </div>
+      <p class="powered" style="margin-top:14px">Powered by <b>Gflam Touring</b></p>
+    </div>
+    <div class="foot-meta">
+      <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a><br>
+      Gold Coast, Australia<br>
+      &copy; <span id="vp-year"></span> VenuePlay
+    </div>
+  </div>
+</footer>
+
+<!-- ===================== SCRIPT ===================== -->
+<script>
+(function(){
+  // ---- Supabase (shared Gflam project) ----
+  // Paste the anon key from any live Gflam site source (search _SBK), or from the Supabase dashboard.
+  var _SBU = 'https://gpoolavkghnxedzrmtmc.supabase.co';
+  var _SBK = 'PASTE_ANON_KEY_HERE';
+  var _SBH = {
+    'apikey': _SBK,
+    'Authorization': 'Bearer ' + _SBK,
+    'Content-Type': 'application/json'
+  };
+  var SOURCE = 'venueplay';
+  var CAP = 100;
+
+  var keyReady = _SBK.indexOf('PASTE_') === -1;
+
+  document.getElementById('vp-year').textContent = new Date().getFullYear();
+
+  // ---- Live founding counter ----
+  function paintCounter(claimed){
+    var c = Math.max(0, Math.min(CAP, claimed));
+    var remaining = Math.max(0, CAP - c);
+    document.getElementById('vp-count').textContent = c;
+    document.getElementById('vp-bar').style.width = ((c / CAP) * 100) + '%';
+    var r = document.getElementById('vp-remaining');
+    r.textContent = remaining > 0 ? (remaining + ' founding spots open') : 'founding spots closed';
+  }
+
+  function loadCount(){
+    if (!keyReady) { paintCounter(0); return; }
+    fetch(_SBU + '/rest/v1/signups?select=id&source=eq.' + SOURCE, {
+      method: 'GET',
+      headers: Object.assign({}, _SBH, { 'Prefer': 'count=exact', 'Range': '0-0' })
+    })
+    .then(function(r){
+      var cr = r.headers.get('content-range'); // "0-0/37" or "*/0"
+      var total = cr ? parseInt(cr.split('/')[1], 10) : 0;
+      paintCounter(isNaN(total) ? 0 : total);
+    })
+    .catch(function(){ paintCounter(0); });
+  }
+  loadCount();
+
+  // ---- Signup ----
+  var submitBtn = document.getElementById('vp-submit');
+  submitBtn.addEventListener('click', function(){
+    var venue = document.getElementById('vp-venue').value.trim();
+    var email = document.getElementById('vp-email').value.trim();
+    var mobile = document.getElementById('vp-mobile').value.trim();
+    var postcode = document.getElementById('vp-postcode').value.trim();
+
+    if (!venue) { alert('Please enter your venue name.'); return; }
+    if (email.indexOf('@') === -1) { alert('Please enter a valid contact email.'); return; }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Locking it in…';
+
+    function done(){
+      document.getElementById('vp-form').style.display = 'none';
+      document.getElementById('vp-success').classList.add('show');
+      document.getElementById('vp-success').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'venueplay_founding' });
+      if (typeof fbq === 'function') fbq('track', 'Lead');
+      loadCount();
+    }
+
+    if (!keyReady) {
+      // Key not set yet — don't lose the lead silently; tell the operator.
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Hold my founding spot';
+      alert('Signup not connected yet: the Supabase key still needs to be pasted into this page.');
+      return;
+    }
+
+    // Venue name stored in first_name until a venue_name column is added (shared signups table).
+    fetch(_SBU + '/rest/v1/signups', {
+      method: 'POST',
+      headers: _SBH,
+      body: JSON.stringify({
+        first_name: venue,
+        mobile: mobile,
+        email: email,
+        postcode: postcode,
+        source: SOURCE,
+        signup_type: 'venueplay_founding'
+      })
+    })
+    .then(function(){ done(); })
+    .catch(function(){ done(); }); // don't punish a network blip — reconcile on the backend
+  });
+})();
+</script>
+</body>
+</html>
