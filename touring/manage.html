@@ -130,6 +130,19 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
     <button class="btn btn-pink" onclick="saveShows()" id="saveBtn">Save All Shows</button>
     <span class="toast" id="toast">&#10003; Saved successfully</span>
   </div>
+  <div class="eyebrow" style="margin-top:56px">Ticket Milestones</div>
+  <h1 class="app-title" style="font-size:26px">Tickets sold counter<span class="dot">.</span></h1>
+  <p class="app-sub">For your reference only — add each show and its ticket count. The homepage shows the running total as a live ticking number.</p>
+
+  <div class="status-bar" id="tktStatus"><span id="tktStatusText">Loading milestones&hellip;</span></div>
+  <div id="tktItems"></div>
+  <div style="margin:10px 0 6px;font-size:14px;color:rgba(255,255,255,.7)">Total: <strong id="tktTotal" style="color:#fff">0</strong> tickets</div>
+  <div class="actions">
+    <button class="btn btn-outline" onclick="addTkt()">+ Add Milestone</button>
+    <button class="btn btn-pink" onclick="saveTkts()" id="tktSaveBtn">Save Milestones</button>
+    <span class="toast" id="tktToast">&#10003; Saved</span>
+  </div>
+
 </div>
 
 <script>
@@ -182,6 +195,7 @@ function unlock() {
   document.getElementById("app").classList.add("show");
   document.getElementById("lockBtn").style.display = "inline-block";
   loadShows();
+  loadTkts();
 }
 
 function lockOut() {
@@ -455,6 +469,63 @@ async function saveShows() {
     btn.disabled = false;
     btn.textContent = "Save All Shows";
   }
+}
+
+// ─── TICKET MILESTONES ───
+let tkts = [];
+const TKT_IN = 'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-family:inherit;font-size:14px;padding:10px 12px';
+async function loadTkts(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/ticket_milestones?select=id,show_name,tickets&order=created_at.asc`, {headers: SB_HEADERS});
+    if(!r.ok) throw new Error(r.status);
+    tkts = await r.json();
+    document.getElementById('tktStatusText').textContent = `${tkts.length} milestone${tkts.length===1?'':'s'} loaded`;
+  }catch(e){
+    tkts = [];
+    document.getElementById('tktStatusText').textContent = 'Could not load milestones — has the ticket_milestones table been created in Supabase?';
+  }
+  renderTkts();
+}
+function renderTkts(){
+  const box = document.getElementById('tktItems');
+  box.innerHTML = '';
+  tkts.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap';
+    row.innerHTML = `
+      <input style="${TKT_IN};flex:2;min-width:180px" placeholder="Show name (e.g. Drag Bingo — Tugun, Oct 2025)" value="${escapeHtml(t.show_name||'')}" oninput="tkts[${i}].show_name=this.value">
+      <input style="${TKT_IN};flex:0 0 130px" type="number" min="0" step="1" placeholder="Tickets" value="${t.tickets??''}" oninput="tkts[${i}].tickets=parseInt(this.value)||0;updateTktTotal()">
+      <button class="btn btn-outline" style="padding:8px 14px" onclick="removeTkt(${i})">&#10005;</button>`;
+    box.appendChild(row);
+  });
+  updateTktTotal();
+}
+function updateTktTotal(){
+  const total = tkts.reduce((a,b)=>a+(parseInt(b.tickets)||0),0);
+  document.getElementById('tktTotal').textContent = total.toLocaleString();
+}
+function addTkt(){ tkts.push({show_name:'', tickets:0}); renderTkts(); }
+function removeTkt(i){ tkts.splice(i,1); renderTkts(); }
+async function saveTkts(){
+  const btn = document.getElementById('tktSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try{
+    const del = await fetch(`${SUPABASE_URL}/rest/v1/ticket_milestones?id=not.is.null`, {method:'DELETE', headers: SB_HEADERS});
+    if(!del.ok) throw new Error('delete '+del.status);
+    const clean = tkts.filter(t => (t.show_name||'').trim() && (parseInt(t.tickets)||0) > 0)
+                      .map(t => ({show_name: t.show_name.trim(), tickets: parseInt(t.tickets)||0}));
+    if(clean.length){
+      const ins = await fetch(`${SUPABASE_URL}/rest/v1/ticket_milestones`, {method:'POST', headers: SB_HEADERS, body: JSON.stringify(clean)});
+      if(!ins.ok) throw new Error('insert '+ins.status);
+    }
+    document.getElementById('tktStatusText').textContent = `${clean.length} milestone${clean.length===1?'':'s'} saved`;
+    const toast = document.getElementById('tktToast');
+    toast.style.opacity = '1'; setTimeout(()=>{toast.style.opacity='0'}, 2500);
+    await loadTkts();
+  }catch(e){
+    alert('Save failed — check the ticket_milestones table exists and try again. ('+e.message+')');
+  }
+  btn.disabled = false; btn.textContent = 'Save Milestones';
 }
 </script>
 

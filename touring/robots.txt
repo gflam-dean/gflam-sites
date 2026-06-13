@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /manage
 
-Sitemap: https://gflamtouring.com.au/sitemap.xml
+Sitemap: https://www.gflamtouring.com.au/sitemap.xml
