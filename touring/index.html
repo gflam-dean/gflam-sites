@@ -178,15 +178,18 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
 <div style="background:var(--dark2)"><div class="section">
   <div class="eyebrow">What's On Now</div>
   <h2 class="h2" style="margin-bottom:32px">Current tours<span class="dot">.</span></h2>
-  <div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(254,101,195,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)'">
+  <div id="tourCards">
+    <!-- Fallback card (shown if Supabase is unavailable; replaced by managed cards on load) -->
+    <div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(254,101,195,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)'">
     <div style="padding:40px">
       <div class="eyebrow" style="margin-bottom:14px">Touring Now</div>
       <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">Drag Bingo at the Bowlo<span class="dot">.</span></div>
-      <p class="muted" style="font-size:15px;margin-bottom:24px">The Gold Coast's most fabulous night out — live drag, bingo rounds, big prizes and hilarious entertainment hosted by Vollie LaVont.</p>
+      <p class="muted" style="font-size:15px;margin-bottom:24px">Australia's most fabulous night out &mdash; live drag, bingo rounds, big prizes and hilarious entertainment hosted by Vollie LaVont.</p>
       <a href="/drag-bingo-at-the-bowlo" class="btn btn-pink">View Shows &amp; Tickets</a>
     </div>
     <div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);min-height:220px;padding:40px;text-align:center">
       <div><div style="font-size:48px;margin-bottom:12px">&#127914;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Live Drag</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Touring Australia</div></div>
+    </div>
     </div>
   </div>
   <div style="background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:36px">
@@ -222,8 +225,8 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
   <div class="two-col">
     <div>
       <div class="eyebrow">Who We Are</div>
-      <h2 class="h2">Fifty years of experience<span class="dot">.</span></h2>
-      <p class="muted" style="margin-bottom:16px">Gflam Touring may be new by name, but our founders are seasoned industry veterans clocking up over <strong style="color:#fff">fifty years of combined experience</strong> in live events and entertainment touring.</p>
+      <h2 class="h2"><span id="yrsWordCap">Fifty</span> years of experience<span class="dot">.</span></h2>
+      <p class="muted" style="margin-bottom:16px">Gflam Touring may be new by name, but our founders are seasoned industry veterans clocking up over <strong style="color:#fff"><span id="yrsWordLow">fifty</span> years of combined experience</strong> in live events and entertainment touring.</p>
       <p class="muted" style="margin-bottom:28px">We craft <strong style="color:#fff">authentic, unforgettable experiences</strong> that leave everyone on a high.</p>
       <a href="/who-we-are" class="btn btn-outline">Meet the Team</a>
     </div>
@@ -264,6 +267,23 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
 }</script></div>
 </div></div>
 <div style="background:#0c0c0c;border-top:1px solid var(--border);padding:64px 48px 32px"><div style="max-width:1200px;margin:0 auto"><div style="text-align:center;margin-bottom:48px"><img src="/logo.png" alt="Gflam Touring" style="height:44px;width:auto;display:block;margin:0 auto"></div><div class="footer-cols-inner" style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-bottom:48px;text-align:center"><div><div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:16px;text-decoration:underline;text-underline-offset:3px">Follow Us<span class="dot">.</span></div><ul style="list-style:none"><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="https://www.facebook.com/gflamtouring" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Facebook</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="https://www.instagram.com/gflamtouring" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Instagram</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="https://www.tiktok.com/@gflamtouring" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">TikTok</a></li></ul></div><div><div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:16px;text-decoration:underline;text-underline-offset:3px">About<span class="dot">.</span></div><ul style="list-style:none"><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/who-we-are" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Who We Are</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/what-we-do" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">What We Do</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/current-tours" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Current Tours</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/drag-bingo-at-the-bowlo" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Drag Bingo at the Bowlo</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/work-with-us" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Work With Us</a></li></ul></div><div><div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:16px;text-decoration:underline;text-underline-offset:3px">Help<span class="dot">.</span></div><ul style="list-style:none"><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/contact" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Contact</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/privacy-policy" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Privacy Policy</a></li><li style="margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block;flex-shrink:0"></span><a href="/cookies" style="font-size:13px;font-weight:700;letter-spacing:1px;color:#fff;text-decoration:none;text-transform:uppercase" onmouseover="this.style.color='var(--pink)'" onmouseout="this.style.color='#fff'">Cookies</a></li></ul></div></div><div style="border-top:1px solid var(--border);padding-top:24px;text-align:center"><p style="font-size:13px;color:rgba(255,255,255,.35);line-height:1.7;margin-bottom:10px">Gflam Touring acknowledges the Traditional Custodians of the land on which we work and create.<br>We pay our respects to Elders past, present and emerging.</p><p style="font-size:12px;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase">&copy; GFLAM GROUP OF COMPANIES <span id="yr"></span> &ndash; ALL RIGHTS RESERVED</p></div></div></div><style>@media(max-width:900px){#fcols{grid-template-columns:1fr!important;text-align:left!important}}</style><script>const SBU="https://gpoolavkghnxedzrmtmc.supabase.co",SBK="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE";const SBH={"apikey":SBK,"Authorization":"Bearer "+SBK,"Content-Type":"application/json","Prefer":"return=representation"};async function sbPost(t,d){try{const r=await fetch(SBU+"/rest/v1/"+t,{method:"POST",headers:SBH,body:JSON.stringify(d)});return r.ok}catch(e){return false}}document.getElementById("yr").textContent=new Date().getFullYear();
+
+function numToWords(n){
+  n=Math.round(n);
+  if(n<=0)return "zero";
+  const ones=["","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+  const tens=["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+  function under1000(x){
+    let r="";
+    if(x>=100){r+=ones[Math.floor(x/100)]+" hundred";x%=100;if(x)r+=" and ";}
+    if(x>=20){r+=tens[Math.floor(x/10)];if(x%10)r+="-"+ones[x%10];}
+    else if(x>0){r+=ones[x];}
+    return r;
+  }
+  if(n<1000)return under1000(n);
+  if(n<1000000){let r=under1000(Math.floor(n/1000))+" thousand";const rem=n%1000;if(rem)r+=(rem<100?" and ":" ")+under1000(rem);return r;}
+  return ""+n;
+}
 (async function(){
   function animate(el,target){
     if(!el||target<=0)return;
@@ -286,7 +306,52 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
         return a+eff;
       },0);
       animate(document.getElementById("yrsCount"),total);
+      // words version for the Who We Are section
+      const w=numToWords(total);
+      const cap=document.getElementById("yrsWordCap");if(cap&&total>0)cap.textContent=w.charAt(0).toUpperCase()+w.slice(1);
+      const low=document.getElementById("yrsWordLow");if(low&&total>0)low.textContent=w;
     }
   }catch(e){}
 })();
+// ─── DYNAMIC TOUR CARDS ───
+(async function(){
+  const wrap=document.getElementById("tourCards");
+  if(!wrap)return;
+  function esc(x){return (x||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function cardHTML(c){
+    const right = c.image_url
+      ? `<div style="border-left:1px solid var(--border);min-height:220px;background:#000"><img src="${esc(c.image_url)}" alt="${esc(c.name)}" style="width:100%;height:100%;object-fit:cover;display:block"></div>`
+      : `<div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);min-height:220px;padding:40px;text-align:center"><div><div style="font-size:48px;margin-bottom:12px">&#127914;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">${esc(c.name)}</div></div></div>`;
+    const btn = (c.button_link && c.button_label)
+      ? `<a href="${esc(c.button_link)}" class="btn btn-pink">${esc(c.button_label)}</a>` : "";
+    return `<div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(254,101,195,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)'">
+      <div style="padding:40px">
+        ${c.eyebrow?`<div class="eyebrow" style="margin-bottom:14px">${esc(c.eyebrow)}</div>`:""}
+        <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">${esc(c.name)}<span class="dot">.</span></div>
+        <p class="muted" style="font-size:15px;margin-bottom:24px">${esc(c.description)}</p>
+        ${btn}
+      </div>
+      ${right}
+    </div>`;
+  }
+  try{
+    const today=new Date().toISOString().slice(0,10);
+    const [catsR, showsR] = await Promise.all([
+      fetch(SBU+"/rest/v1/tour_categories?order=priority.asc",{headers:SBH}),
+      fetch(SBU+"/rest/v1/shows?select=show_type,show_date&show_date=gte."+today,{headers:SBH})
+    ]);
+    if(!catsR.ok) throw new Error("cats");
+    const cats=await catsR.json();
+    if(!Array.isArray(cats)||!cats.length) return; // keep fallback card
+    let counts={};
+    if(showsR.ok){(await showsR.json()).forEach(function(x){counts[x.show_type]=(counts[x.show_type]||0)+1;});}
+    const visible=cats.filter(function(c){
+      if(c.auto_hide && c.show_type){ return (counts[c.show_type]||0) > 0; }
+      return true;
+    });
+    if(!visible.length){ wrap.innerHTML=`<p class="muted" style="text-align:center;padding:30px">New tours announced soon — <a href="#signup" style="color:var(--pink)">join the mailing list</a> to hear first.</p>`; return; }
+    wrap.innerHTML=visible.map(cardHTML).join("");
+  }catch(e){ /* leave fallback card in place */ }
+})();
+
 </script></body></html>
