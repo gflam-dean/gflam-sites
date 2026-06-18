@@ -1,0 +1,5 @@
+# Old vending- slugs -> new clean slugs (301 permanent)
+/vending-contact       /contact       301
+/vending-industries    /industries    301
+/vending-our-process   /our-process   301
+/vending-what-we-do    /what-we-do    301

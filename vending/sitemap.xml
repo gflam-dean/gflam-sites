@@ -2,52 +2,52 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://gflamvending.com.au</loc>
+    <loc>https://www.gflamvending.com.au</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au"/>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://www.gflamvending.com.au"/>
   </url>
   <url>
-    <loc>https://gflamvending.com.au/privacy-policy</loc>
+    <loc>https://www.gflamvending.com.au/privacy-policy</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
-    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/privacy-policy"/>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://www.gflamvending.com.au/privacy-policy"/>
   </url>
   <url>
-    <loc>https://gflamvending.com.au/the-mini-bar</loc>
+    <loc>https://www.gflamvending.com.au/the-mini-bar</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/the-mini-bar"/>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://www.gflamvending.com.au/the-mini-bar"/>
   </url>
   <url>
-    <loc>https://gflamvending.com.au/vending-contact</loc>
+    <loc>https://www.gflamvending.com.au/contact</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/vending-contact"/>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://www.gflamvending.com.au/contact"/>
   </url>
   <url>
-    <loc>https://gflamvending.com.au/vending-industries</loc>
+    <loc>https://www.gflamvending.com.au/industries</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/vending-industries"/>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://www.gflamvending.com.au/industries"/>
   </url>
   <url>
-    <loc>https://gflamvending.com.au/vending-our-process</loc>
+    <loc>https://www.gflamvending.com.au/our-process</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/vending-our-process"/>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://www.gflamvending.com.au/our-process"/>
   </url>
   <url>
-    <loc>https://gflamvending.com.au/vending-what-we-do</loc>
+    <loc>https://www.gflamvending.com.au/what-we-do</loc>
     <lastmod>2026-04-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en-AU" href="https://gflamvending.com.au/vending-what-we-do"/>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://www.gflamvending.com.au/what-we-do"/>
   </url>
 </urlset>
