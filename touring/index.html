@@ -357,7 +357,7 @@ function numToWords(n){
     let counts={};
     if(showsR.ok){(await showsR.json()).forEach(function(x){counts[x.show_type]=(counts[x.show_type]||0)+1;});}
     const visible=cats.filter(function(c){
-      if(c.auto_hide && c.show_type){ return (counts[c.show_type]||0) > 0; }
+      if(c.auto_hide && c.tour_key){ return (counts[c.tour_key]||0) > 0; }
       return true;
     });
     if(!visible.length){ wrap.innerHTML=comingSoonHTML; return; }

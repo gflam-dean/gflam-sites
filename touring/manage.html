@@ -312,15 +312,11 @@ function renderShows() {
           <small class="preview-pink">${formatShowDate(s.showDate)}</small>
         </div>
         <div class="afield">
-          <label>Show Type</label>
+          <label>Tour</label>
           <select onchange="shows[${i}].showType=this.value">
-            <option value="live_music" ${s.showType==="live_music"?"selected":""}>Live Music</option>
-            <option value="drag_show" ${s.showType==="drag_show"?"selected":""}>Drag Show</option>
-            <option value="drag_bingo" ${s.showType==="drag_bingo"?"selected":""}>Drag Bingo</option>
-            <option value="cabaret" ${s.showType==="cabaret"?"selected":""}>Cabaret</option>
-            <option value="comedy" ${s.showType==="comedy"?"selected":""}>Comedy</option>
-            <option value="festival" ${s.showType==="festival"?"selected":""}>Festival</option>
-            <option value="other" ${(!s.showType||s.showType==="other")?"selected":""}>Other</option>
+            <option value="" ${!s.showType?"selected":""}>&mdash; Select a tour &mdash;</option>
+            ${tcs.map(t=>`<option value="${t.tour_key||''}" ${s.showType===(t.tour_key||'')?"selected":""}>${escapeHtml(t.name||'(unnamed)')}</option>`).join('')}
+            ${(s.showType && !tcs.some(t=>(t.tour_key||'')===s.showType))?`<option value="${escapeHtml(s.showType)}" selected>${escapeHtml(s.showType)} (unlinked — re-pick)</option>`:''}
           </select>
           <small>"Drag Bingo" also appears on dragbingoatthebowlo.com.au</small>
         </div>
@@ -629,25 +625,32 @@ async function saveExps(){
   btn.disabled=false; btn.textContent='Save Team';
 }
 
+
+function slugify(str){
+  return (str||"").toLowerCase().trim()
+    .replace(/&/g,"and")
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-+|-+$/g,"")
+    .slice(0,60) || "tour";
+}
 // ─── TOUR CATEGORIES (homepage cards) ───
 let tcs = [];
 const TC_IN='background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-family:inherit;font-size:14px;padding:9px 11px';
-const TC_TYPES=[["","— none (no auto-hide) —"],["live_music","Live Music"],["drag_show","Drag Show"],["drag_bingo","Drag Bingo"],["cabaret","Cabaret"],["comedy","Comedy"],["festival","Festival"],["other","Other"]];
 async function loadTCs(){
   try{
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/tour_categories?select=id,name,eyebrow,description,button_label,button_link,image_url,show_type,auto_hide,priority&order=priority.asc`,{headers:SB_HEADERS});
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/tour_categories?select=id,name,eyebrow,description,button_label,button_link,image_url,show_type,auto_hide,priority,tour_key&order=priority.asc`,{headers:SB_HEADERS});
     if(!r.ok)throw new Error(r.status);
     tcs=await r.json();
     document.getElementById('tcStatusText').textContent=`${tcs.length} tour card${tcs.length===1?'':'s'} loaded`;
   }catch(e){tcs=[];document.getElementById('tcStatusText').textContent='Could not load tour cards — has the tour_categories table been created in Supabase?';}
   renderTCs();
+  if(typeof renderShows==="function" && Array.isArray(shows)) renderShows();
 }
 function renderTCs(){
   const box=document.getElementById('tcItems');box.innerHTML='';
   tcs.forEach((c,i)=>{
     const card=document.createElement('div');
     card.style.cssText='border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:16px;margin-bottom:14px;background:rgba(255,255,255,.02)';
-    const typeOpts=TC_TYPES.map(([v,l])=>`<option value="${v}" ${c.show_type===v?'selected':''}>${l}</option>`).join('');
     card.innerHTML=`
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
         <input style="${TC_IN};flex:2;min-width:180px" placeholder="Tour name (card title)" value="${escapeHtml(c.name||'')}" oninput="tcs[${i}].name=this.value">
@@ -660,16 +663,16 @@ function renderTCs(){
         <input style="${TC_IN};flex:1;min-width:140px" placeholder="Button link (e.g. /drag-bingo-at-the-bowlo)" value="${escapeHtml(c.button_link||'')}" oninput="tcs[${i}].button_link=this.value">
       </div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
-        <label style="font-size:12px;color:rgba(255,255,255,.6)">Auto-hide tracks: <select style="${TC_IN}" onchange="tcs[${i}].show_type=this.value">${typeOpts}</select></label>
-        <label style="font-size:13px;color:#fff;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" ${c.auto_hide?'checked':''} onchange="tcs[${i}].auto_hide=this.checked"> Auto-hide when no shows</label>
+        <label style="font-size:13px;color:#fff;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" ${c.auto_hide?'checked':''} onchange="tcs[${i}].auto_hide=this.checked"> Auto-hide when this tour has no upcoming shows</label>
         <label style="font-size:12px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:6px">Image: <input type="file" accept="image/*" style="font-size:12px" onchange="uploadTCImage(${i},this)"></label><span style="font-size:11px;color:rgba(255,255,255,.35)">1200×1000px · 6:5 · &lt;500KB</span>
         ${c.image_url?`<a href="${c.image_url}" target="_blank" style="color:var(--pink);font-size:12px">view image</a>`:'<span style="font-size:12px;color:rgba(255,255,255,.35)">no image</span>'}
-        <button class="btn btn-outline" style="padding:7px 12px;margin-left:auto" onclick="removeTC(${i})">&#10005; Remove</button>
+        <button class="btn btn-outline" style="padding:7px 12px;margin-left:auto" onclick="genTourPage(${i})">&#11015; Generate page</button>
+        <button class="btn btn-outline" style="padding:7px 12px" onclick="removeTC(${i})">&#10005; Remove</button>
       </div>`;
     box.appendChild(card);
   });
 }
-function addTC(){ tcs.push({name:'',eyebrow:'Touring Now',description:'',button_label:'View Shows & Tickets',button_link:'',image_url:'',show_type:'',auto_hide:false,priority:(tcs.length+1)*10}); renderTCs(); }
+function addTC(){ tcs.push({name:'',eyebrow:'Touring Now',description:'',button_label:'View Shows & Tickets',button_link:'',image_url:'',auto_hide:false,priority:(tcs.length+1)*10,tour_key:''}); renderTCs(); }
 function removeTC(i){ tcs.splice(i,1); renderTCs(); }
 async function uploadTCImage(i,el){
   const file=el.files&&el.files[0]; if(!file)return;
@@ -682,6 +685,130 @@ async function uploadTCImage(i,el){
     renderTCs();
   }catch(e){alert('Image upload failed — has the public "tour-images" bucket been created? ('+e.message+')');}
 }
+// ─── GENERATE SEO-READY TOUR PAGE ───
+function genTourPage(i){
+  const c = tcs[i];
+  if(!c || !(c.name||'').trim()){ alert('Give the tour a name first.'); return; }
+  const key = (c.tour_key && c.tour_key.trim()) ? c.tour_key.trim() : slugify(c.name);
+  const name = c.name.trim();
+  const desc = (c.description||'').trim() || (name + ' — live entertainment touring Australia with Gflam Touring.');
+  const img = (c.image_url||'').trim() || 'https://www.gflamtouring.com.au/og-image.png';
+  const e = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const url = 'https://www.gflamtouring.com.au/' + key;
+  const SBKJS = SUPABASE_KEY;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${e(name)} | Gflam Touring</title>
+<meta name="description" content="${e(desc)}">
+<link rel="canonical" href="${e(url)}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${e(name)} | Gflam Touring">
+<meta property="og:description" content="${e(desc)}">
+<meta property="og:url" content="${e(url)}">
+<meta property="og:image" content="${e(img)}">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${e(name)} | Gflam Touring">
+<meta name="twitter:description" content="${e(desc)}">
+<meta name="twitter:image" content="${e(img)}">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23fe65c3'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Event","name":${JSON.stringify(name)},"description":${JSON.stringify(desc)},"image":${JSON.stringify(img)},"url":${JSON.stringify(url)},"organizer":{"@type":"Organization","name":"Gflam Touring","url":"https://www.gflamtouring.com.au"}}<\/script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pink:#fe65c3;--dark:#111;--dark2:#1a1a1a;--dark3:#222;--white:#fff;--muted:rgba(255,255,255,0.55);--border:rgba(255,255,255,0.1)}
+body{background:#0a0a0b;color:#fff;font-family:'DM Sans',sans-serif;line-height:1.6}
+a{color:inherit}
+.dot{color:var(--pink)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:20px 48px;border-bottom:1px solid var(--border)}
+.nav img{height:40px;width:auto;display:block}
+.nav a.cta{background:var(--pink);color:#fff;padding:10px 22px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none}
+.hero{max-width:1100px;margin:0 auto;padding:80px 48px 50px;text-align:center}
+.eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--pink);font-weight:600;margin-bottom:16px}
+.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(36px,6vw,64px);letter-spacing:-1px;line-height:1.05;margin-bottom:20px}
+.hero p{font-size:18px;color:var(--muted);max-width:640px;margin:0 auto 32px}
+.hero-img{max-width:900px;margin:0 auto;border-radius:14px;overflow:hidden;border:1px solid var(--border);aspect-ratio:6/5;background:#000}
+.hero-img img{width:100%;height:100%;object-fit:cover;display:block}
+.section{max-width:1100px;margin:0 auto;padding:50px 48px}
+.section h2{font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:24px}
+.shows{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.show{background:var(--dark2);border:1px solid var(--border);border-radius:10px;padding:24px}
+.show .d{font-family:'DM Serif Display',serif;font-size:20px;color:#fff;margin-bottom:6px}
+.show .v{font-size:14px;color:var(--muted);margin-bottom:14px}
+.show a{display:inline-block;background:var(--pink);color:#fff;padding:9px 18px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none}
+.empty{text-align:center;color:var(--muted);padding:40px}
+footer{background:#0c0c0c;border-top:1px solid var(--border);padding:56px 48px;text-align:center;margin-top:40px}
+footer img{height:40px;margin-bottom:20px}
+footer .ack{font-size:12px;color:rgba(255,255,255,.3);max-width:680px;margin:20px auto 0;line-height:1.7}
+@media(max-width:600px){.nav,.hero,.section{padding-left:20px;padding-right:20px}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/"><img src="/logo.png" alt="Gflam Touring"></a>
+  <a href="/contact" class="cta">Get in Touch</a>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">${e(c.eyebrow||'Touring Now')}</div>
+  <h1>${e(name)}<span class="dot">.</span></h1>
+  <p>${e(desc)}</p>
+  ${(c.button_link&&c.button_label)?`<a href="${e(c.button_link)}" style="display:inline-block;background:var(--pink);color:#fff;padding:13px 30px;border-radius:4px;font-weight:600;text-decoration:none">${e(c.button_label)}</a>`:''}
+  <div class="hero-img" style="margin-top:40px">
+    ${(c.image_url||'').trim()?`<img src="${e(c.image_url)}" alt="${e(name)}">`:''}
+  </div>
+</header>
+
+<section class="section">
+  <h2>Upcoming shows<span class="dot">.</span></h2>
+  <div class="shows" id="shows"><p class="empty">Loading shows&hellip;</p></div>
+</section>
+
+<footer>
+  <a href="/"><img src="/logo.png" alt="Gflam Touring"></a>
+  <p class="ack">Gflam Touring acknowledges the Traditional Custodians of the land on which we work and create. We pay our respects to Elders past, present and emerging.</p>
+  <p style="font-size:12px;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;margin-top:14px">&copy; GFLAM GROUP OF COMPANIES <span id="yr"></span> &ndash; ALL RIGHTS RESERVED</p>
+</footer>
+
+<script>
+var SBU="${SUPABASE_URL}";
+var SBK="${SBKJS}";
+var SBH={"apikey":SBK,"Authorization":"Bearer "+SBK,"Content-Type":"application/json"};
+var TOUR_KEY=${JSON.stringify(key)};
+document.getElementById("yr").textContent=new Date().getFullYear();
+(function(){
+  var today=new Date().toISOString().slice(0,10);
+  fetch(SBU+"/rest/v1/shows?show_type=eq."+encodeURIComponent(TOUR_KEY)+"&show_date=gte."+today+"&order=show_date.asc",{headers:SBH})
+    .then(function(r){return r.ok?r.json():[]})
+    .then(function(rows){
+      var box=document.getElementById("shows");
+      if(!rows||!rows.length){box.innerHTML='<p class="empty">No shows on sale right now — <a href="/#signup" style="color:var(--pink)">join the mailing list</a> to hear when tickets drop.</p>';return;}
+      box.innerHTML=rows.map(function(s){
+        var d=s.show_date?new Date(s.show_date+"T00:00:00").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"long"}):"";
+        var venue=[s.venue,s.suburb].filter(Boolean).join(", ");
+        var link=s.ticket_url?'<a href="'+s.ticket_url+'" target="_blank" rel="noopener">Get Tickets</a>':'';
+        return '<div class="show"><div class="d">'+d+'</div><div class="v">'+(venue||"")+(s.time?" · "+s.time:"")+'</div>'+link+'</div>';
+      }).join("");
+    })
+    .catch(function(){document.getElementById("shows").innerHTML='<p class="empty">Unable to load shows right now.</p>';});
+})();
+<\/script>
+</body>
+</html>`;
+
+  // download
+  const blob=new Blob([html],{type:"text/html"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=key+".html";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
+  alert('Generated "'+key+'.html".\n\nUpload it to the touring folder on GitHub, then it will be live at:\nwww.gflamtouring.com.au/'+key);
+}
 async function saveTCs(){
   const btn=document.getElementById('tcSaveBtn');btn.disabled=true;btn.textContent='Saving…';
   try{
@@ -690,8 +817,9 @@ async function saveTCs(){
     const clean=tcs.filter(c=>(c.name||'').trim()).map(c=>({
       name:c.name.trim(),eyebrow:(c.eyebrow||'').trim(),description:(c.description||'').trim(),
       button_label:(c.button_label||'').trim(),button_link:(c.button_link||'').trim(),
-      image_url:(c.image_url||'').trim()||null,show_type:(c.show_type||'').trim()||null,
-      auto_hide:!!c.auto_hide,priority:parseInt(c.priority)||100
+      image_url:(c.image_url||'').trim()||null,
+      auto_hide:!!c.auto_hide,priority:parseInt(c.priority)||100,
+      tour_key:(c.tour_key&&c.tour_key.trim())?c.tour_key.trim():slugify(c.name)
     }));
     if(clean.length){
       const ins=await fetch(`${SUPABASE_URL}/rest/v1/tour_categories`,{method:'POST',headers:SB_HEADERS,body:JSON.stringify(clean)});
