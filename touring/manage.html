@@ -142,6 +142,19 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
     <button class="btn btn-pink" onclick="saveTkts()" id="tktSaveBtn">Save Milestones</button>
     <span class="toast" id="tktToast">&#10003; Saved</span>
   </div>
+  <div class="eyebrow" style="margin-top:56px">Team Experience</div>
+  <h1 class="app-title" style="font-size:26px">Years experience counter<span class="dot">.</span></h1>
+  <p class="app-sub">Add each team member and their years of experience. Tap <strong>Lock</strong> once a person's number is right — from then on it auto-increments every 1 January. The homepage shows the combined total as a ticking number. Unlock to edit; the elapsed years are kept.</p>
+
+  <div class="status-bar" id="expStatus"><span id="expStatusText">Loading team&hellip;</span></div>
+  <div id="expItems"></div>
+  <div style="margin:10px 0 6px;font-size:14px;color:rgba(255,255,255,.7)">Combined: <strong id="expTotal" style="color:#fff">0</strong> years</div>
+  <div class="actions">
+    <button class="btn btn-outline" onclick="addExp()">+ Add Team Member</button>
+    <button class="btn btn-pink" onclick="saveExps()" id="expSaveBtn">Save Team</button>
+    <span class="toast" id="expToast">&#10003; Saved</span>
+  </div>
+
 
 </div>
 
@@ -196,6 +209,7 @@ function unlock() {
   document.getElementById("lockBtn").style.display = "inline-block";
   loadShows();
   loadTkts();
+  loadExps();
 }
 
 function lockOut() {
@@ -526,6 +540,80 @@ async function saveTkts(){
     alert('Save failed — check the ticket_milestones table exists and try again. ('+e.message+')');
   }
   btn.disabled = false; btn.textContent = 'Save Milestones';
+}
+
+// ─── TEAM EXPERIENCE ───
+let exps = [];
+const EXP_IN = 'background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:#fff;font-family:inherit;font-size:14px;padding:10px 12px';
+function expEffective(e){
+  const base = parseInt(e.base_years)||0;
+  const Y = new Date().getFullYear();
+  return (e.locked && e.lock_year) ? base + (Y - e.lock_year) : base;
+}
+async function loadExps(){
+  try{
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/experience?select=id,name,base_years,locked,lock_year&order=created_at.asc`, {headers: SB_HEADERS});
+    if(!r.ok) throw new Error(r.status);
+    exps = await r.json();
+    document.getElementById('expStatusText').textContent = `${exps.length} team member${exps.length===1?'':'s'} loaded`;
+  }catch(e){
+    exps = [];
+    document.getElementById('expStatusText').textContent = 'Could not load team — has the experience table been created in Supabase?';
+  }
+  renderExps();
+}
+function renderExps(){
+  const box = document.getElementById('expItems'); box.innerHTML='';
+  exps.forEach((e,i)=>{
+    const locked = !!e.locked;
+    const eff = expEffective(e);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap';
+    row.innerHTML=`
+      <input style="${EXP_IN};flex:2;min-width:160px" placeholder="Team member name" value="${escapeHtml(e.name||'')}" ${locked?'disabled':''} oninput="exps[${i}].name=this.value">
+      <input style="${EXP_IN};flex:0 0 110px" type="number" min="0" step="1" placeholder="Years" value="${e.base_years??''}" ${locked?'disabled':''} oninput="exps[${i}].base_years=parseInt(this.value)||0;updateExpTotal()">
+      <span style="font-size:12px;color:rgba(255,255,255,.4);flex:0 0 auto">${locked?('now '+eff+' yrs'):''}</span>
+      <button class="btn btn-outline" style="padding:8px 14px" onclick="toggleLock(${i})">${locked?'&#128274; Unlock':'&#128275; Lock'}</button>
+      <button class="btn btn-outline" style="padding:8px 14px" onclick="removeExp(${i})">&#10005;</button>`;
+    box.appendChild(row);
+  });
+  updateExpTotal();
+}
+function updateExpTotal(){
+  const total = exps.reduce((a,b)=>a+expEffective(b),0);
+  document.getElementById('expTotal').textContent = total.toLocaleString();
+}
+function addExp(){ exps.push({name:'',base_years:0,locked:false,lock_year:null}); renderExps(); }
+function removeExp(i){ exps.splice(i,1); renderExps(); }
+function toggleLock(i){
+  const e = exps[i];
+  const Y = new Date().getFullYear();
+  if(e.locked){
+    // unlock: bake elapsed years into base, clear lock
+    e.base_years = expEffective(e);
+    e.locked = false; e.lock_year = null;
+  } else {
+    if(!(e.name||'').trim()){ alert('Add a name before locking.'); return; }
+    e.locked = true; e.lock_year = Y;
+  }
+  renderExps();
+}
+async function saveExps(){
+  const btn=document.getElementById('expSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const del=await fetch(`${SUPABASE_URL}/rest/v1/experience?id=not.is.null`,{method:'DELETE',headers:SB_HEADERS});
+    if(!del.ok) throw new Error('delete '+del.status);
+    const clean=exps.filter(e=>(e.name||'').trim())
+                    .map(e=>({name:e.name.trim(),base_years:parseInt(e.base_years)||0,locked:!!e.locked,lock_year:e.locked?(e.lock_year||new Date().getFullYear()):null}));
+    if(clean.length){
+      const ins=await fetch(`${SUPABASE_URL}/rest/v1/experience`,{method:'POST',headers:SB_HEADERS,body:JSON.stringify(clean)});
+      if(!ins.ok) throw new Error('insert '+ins.status);
+    }
+    document.getElementById('expStatusText').textContent=`${clean.length} team member${clean.length===1?'':'s'} saved`;
+    const t=document.getElementById('expToast'); t.style.opacity='1'; setTimeout(()=>{t.style.opacity='0'},2500);
+    await loadExps();
+  }catch(e){ alert('Save failed — check the experience table exists and try again. ('+e.message+')'); }
+  btn.disabled=false; btn.textContent='Save Team';
 }
 </script>
 
