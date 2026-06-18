@@ -156,7 +156,7 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
   </div>
   <div class="eyebrow" style="margin-top:56px">Tour Categories</div>
   <h1 class="app-title" style="font-size:26px">Homepage tour cards<span class="dot">.</span></h1>
-  <p class="app-sub">These are the cards in the "Current tours" section of the homepage. Lower priority number = higher up the page. Turn <strong>Auto-hide</strong> on to make a card vanish when its linked show type has no upcoming shows; leave it off to always show (use that for "coming soon" tours like Drag Brunch).</p>
+  <p class="app-sub">These are the cards in the "Current tours" section of the homepage. Lower priority number = higher up the page. Turn <strong>Auto-hide</strong> on to make a card vanish when its linked show type has no upcoming shows; leave it off to always show (use that for "coming soon" tours like Drag Brunch). <strong style="color:#fff">Card images: upload at 1200×1000px (6:5 ratio), under 500KB, JPG.</strong> Keep faces and key detail centred — edges may be cropped to fit.</p>
 
   <div class="status-bar" id="tcStatus"><span id="tcStatusText">Loading tour cards&hellip;</span></div>
   <div id="tcItems"></div>
@@ -662,7 +662,7 @@ function renderTCs(){
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
         <label style="font-size:12px;color:rgba(255,255,255,.6)">Auto-hide tracks: <select style="${TC_IN}" onchange="tcs[${i}].show_type=this.value">${typeOpts}</select></label>
         <label style="font-size:13px;color:#fff;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" ${c.auto_hide?'checked':''} onchange="tcs[${i}].auto_hide=this.checked"> Auto-hide when no shows</label>
-        <label style="font-size:12px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:6px">Image: <input type="file" accept="image/*" style="font-size:12px" onchange="uploadTCImage(${i},this)"></label>
+        <label style="font-size:12px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:6px">Image: <input type="file" accept="image/*" style="font-size:12px" onchange="uploadTCImage(${i},this)"></label><span style="font-size:11px;color:rgba(255,255,255,.35)">1200×1000px · 6:5 · &lt;500KB</span>
         ${c.image_url?`<a href="${c.image_url}" target="_blank" style="color:var(--pink);font-size:12px">view image</a>`:'<span style="font-size:12px;color:rgba(255,255,255,.35)">no image</span>'}
         <button class="btn btn-outline" style="padding:7px 12px;margin-left:auto" onclick="removeTC(${i})">&#10005; Remove</button>
       </div>`;

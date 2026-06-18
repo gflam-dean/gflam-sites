@@ -179,16 +179,16 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
   <div class="eyebrow">What's On Now</div>
   <h2 class="h2" style="margin-bottom:32px">Current tours<span class="dot">.</span></h2>
   <div id="tourCards">
-    <!-- Fallback card (shown if Supabase is unavailable; replaced by managed cards on load) -->
-    <div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(254,101,195,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)'">
+    <!-- Fallback: shown if Supabase is unavailable or no cards added yet; replaced by managed cards on load -->
+    <div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px">
     <div style="padding:40px">
-      <div class="eyebrow" style="margin-bottom:14px">Touring Now</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">Drag Bingo at the Bowlo<span class="dot">.</span></div>
-      <p class="muted" style="font-size:15px;margin-bottom:24px">Australia's most fabulous night out &mdash; live drag, bingo rounds, big prizes and hilarious entertainment hosted by Vollie LaVont.</p>
-      <a href="/drag-bingo-at-the-bowlo" class="btn btn-pink">View Shows &amp; Tickets</a>
+      <div class="eyebrow" style="margin-bottom:14px">Coming Soon</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">Fabulous things in the works<span class="dot">.</span></div>
+      <p class="muted" style="font-size:15px;margin-bottom:24px">New tours are being announced soon. Join the mailing list to be the first to know &mdash; and to grab early-bird tickets.</p>
+      <a href="#signup" class="btn btn-pink">Join the Mailing List</a>
     </div>
-    <div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);min-height:220px;padding:40px;text-align:center">
-      <div><div style="font-size:48px;margin-bottom:12px">&#127914;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Live Drag</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Touring Australia</div></div>
+    <div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);aspect-ratio:6/5;padding:40px;text-align:center">
+      <div><div style="font-size:48px;margin-bottom:12px">&#10024;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Stay Tuned</div></div>
     </div>
     </div>
   </div>
@@ -317,10 +317,21 @@ function numToWords(n){
 (async function(){
   const wrap=document.getElementById("tourCards");
   if(!wrap)return;
+  const comingSoonHTML = `<div style="background:var(--dark);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;margin-bottom:20px">
+      <div style="padding:40px">
+        <div class="eyebrow" style="margin-bottom:14px">Coming Soon</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:clamp(24px,3.5vw,36px);letter-spacing:-1px;color:#fff;margin-bottom:14px;line-height:1.1">Fabulous things in the works<span class="dot">.</span></div>
+        <p class="muted" style="font-size:15px;margin-bottom:24px">New tours are being announced soon. Join the mailing list to be the first to know &mdash; and to grab early-bird tickets.</p>
+        <a href="#signup" class="btn btn-pink">Join the Mailing List</a>
+      </div>
+      <div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);aspect-ratio:6/5;padding:40px;text-align:center">
+        <div><div style="font-size:48px;margin-bottom:12px">&#10024;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Stay Tuned</div></div>
+      </div>
+    </div>`;
   function esc(x){return (x||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
   function cardHTML(c){
     const right = c.image_url
-      ? `<div style="border-left:1px solid var(--border);min-height:220px;background:#000"><img src="${esc(c.image_url)}" alt="${esc(c.name)}" style="width:100%;height:100%;object-fit:cover;display:block"></div>`
+      ? `<div style="border-left:1px solid var(--border);background:#000;aspect-ratio:6/5"><img src="${esc(c.image_url)}" alt="${esc(c.name)}" style="width:100%;height:100%;object-fit:cover;display:block"></div>`
       : `<div style="background:var(--dark3);display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);min-height:220px;padding:40px;text-align:center"><div><div style="font-size:48px;margin-bottom:12px">&#127914;</div><div style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">${esc(c.name)}</div></div></div>`;
     const btn = (c.button_link && c.button_label)
       ? `<a href="${esc(c.button_link)}" class="btn btn-pink">${esc(c.button_label)}</a>` : "";
@@ -342,14 +353,14 @@ function numToWords(n){
     ]);
     if(!catsR.ok) throw new Error("cats");
     const cats=await catsR.json();
-    if(!Array.isArray(cats)||!cats.length) return; // keep fallback card
+    if(!Array.isArray(cats)||!cats.length){ wrap.innerHTML=comingSoonHTML; return; }
     let counts={};
     if(showsR.ok){(await showsR.json()).forEach(function(x){counts[x.show_type]=(counts[x.show_type]||0)+1;});}
     const visible=cats.filter(function(c){
       if(c.auto_hide && c.show_type){ return (counts[c.show_type]||0) > 0; }
       return true;
     });
-    if(!visible.length){ wrap.innerHTML=`<p class="muted" style="text-align:center;padding:30px">New tours announced soon — <a href="#signup" style="color:var(--pink)">join the mailing list</a> to hear first.</p>`; return; }
+    if(!visible.length){ wrap.innerHTML=comingSoonHTML; return; }
     wrap.innerHTML=visible.map(cardHTML).join("");
   }catch(e){ /* leave fallback card in place */ }
 })();
