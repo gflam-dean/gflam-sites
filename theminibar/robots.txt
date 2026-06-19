@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://theminibar.com.au/sitemap.xml
+Sitemap: https://www.theminibar.com.au/sitemap.xml

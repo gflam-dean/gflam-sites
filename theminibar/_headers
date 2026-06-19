@@ -1,0 +1,12 @@
+/*
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/mb-logo.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/mb-powered.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/mb-og-image.png
+  Cache-Control: public, max-age=604800
