@@ -132,7 +132,7 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
   </div>
   <div class="eyebrow" style="margin-top:56px">Ticket Milestones</div>
   <h1 class="app-title" style="font-size:26px">Tickets sold counter<span class="dot">.</span></h1>
-  <p class="app-sub">For your reference only — add each show and its ticket count. The homepage shows the running total as a live ticking number.</p>
+  <p class="app-sub">For your reference only - add each show and its ticket count. The homepage shows the running total as a live ticking number.</p>
 
   <div class="status-bar" id="tktStatus"><span id="tktStatusText">Loading milestones&hellip;</span></div>
   <div id="tktItems"></div>
@@ -144,7 +144,7 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
   </div>
   <div class="eyebrow" style="margin-top:56px">Team Experience</div>
   <h1 class="app-title" style="font-size:26px">Years experience counter<span class="dot">.</span></h1>
-  <p class="app-sub">Add each team member and their years of experience. Tap <strong>Lock</strong> once a person's number is right — from then on it auto-increments every 1 January. The homepage shows the combined total as a ticking number. Unlock to edit; the elapsed years are kept.</p>
+  <p class="app-sub">Add each team member and their years of experience. Tap <strong>Lock</strong> once a person's number is right - from then on it auto-increments every 1 January. The homepage shows the combined total as a ticking number. Unlock to edit; the elapsed years are kept.</p>
 
   <div class="status-bar" id="expStatus"><span id="expStatusText">Loading team&hellip;</span></div>
   <div id="expItems"></div>
@@ -156,7 +156,7 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
   </div>
   <div class="eyebrow" style="margin-top:56px">Tour Categories</div>
   <h1 class="app-title" style="font-size:26px">Homepage tour cards<span class="dot">.</span></h1>
-  <p class="app-sub">These are the cards in the "Current tours" section of the homepage. Lower priority number = higher up the page. Turn <strong>Auto-hide</strong> on to make a card vanish when its linked show type has no upcoming shows; leave it off to always show (use that for "coming soon" tours like Drag Brunch). <strong style="color:#fff">Card images: upload at 1200×1000px (6:5 ratio), under 500KB, JPG.</strong> Keep faces and key detail centred — edges may be cropped to fit.</p>
+  <p class="app-sub">These are the cards in the "Current tours" section of the homepage. Lower priority number = higher up the page. Turn <strong>Auto-hide</strong> on to make a card vanish when its linked show type has no upcoming shows; leave it off to always show (use that for "coming soon" tours like Drag Brunch). <strong style="color:#fff">Card images: upload at 1200×1000px (6:5 ratio), under 500KB, JPG.</strong> Keep faces and key detail centred - edges may be cropped to fit.</p>
 
   <div class="status-bar" id="tcStatus"><span id="tcStatusText">Loading tour cards&hellip;</span></div>
   <div id="tcItems"></div>
@@ -180,7 +180,7 @@ const SB_HEADERS = {
   "Content-Type": "application/json",
   "Prefer": "return=representation"
 };
-// SHA-256 hash of the access PIN — the actual PIN is never in this file.
+// SHA-256 hash of the access PIN - the actual PIN is never in this file.
 // To rotate: compute new SHA-256 of your chosen PIN and replace this string.
 const PIN_HASH = "827b209fa167fa5c0302fcb45e4ca3ac2076713ee96b88179a7d9cd4cb1bf834";
 const SESSION_KEY = "gflam_mgr_session";
@@ -314,9 +314,9 @@ function renderShows() {
         <div class="afield">
           <label>Tour</label>
           <select onchange="shows[${i}].showType=this.value">
-            <option value="" ${!s.showType?"selected":""}>&mdash; Select a tour &mdash;</option>
+            <option value="" ${!s.showType?"selected":""}>- Select a tour -</option>
             ${tcs.map(t=>`<option value="${t.tour_key||''}" ${s.showType===(t.tour_key||'')?"selected":""}>${escapeHtml(t.name||'(unnamed)')}</option>`).join('')}
-            ${(s.showType && !tcs.some(t=>(t.tour_key||'')===s.showType))?`<option value="${escapeHtml(s.showType)}" selected>${escapeHtml(s.showType)} (unlinked — re-pick)</option>`:''}
+            ${(s.showType && !tcs.some(t=>(t.tour_key||'')===s.showType))?`<option value="${escapeHtml(s.showType)}" selected>${escapeHtml(s.showType)} (unlinked - re-pick)</option>`:''}
           </select>
           <small>"Drag Bingo" also appears on dragbingoatthebowlo.com.au</small>
         </div>
@@ -505,7 +505,7 @@ async function loadTkts(){
     document.getElementById('tktStatusText').textContent = `${tkts.length} milestone${tkts.length===1?'':'s'} loaded`;
   }catch(e){
     tkts = [];
-    document.getElementById('tktStatusText').textContent = 'Could not load milestones — has the ticket_milestones table been created in Supabase?';
+    document.getElementById('tktStatusText').textContent = 'Could not load milestones - has the ticket_milestones table been created in Supabase?';
   }
   renderTkts();
 }
@@ -516,7 +516,7 @@ function renderTkts(){
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap';
     row.innerHTML = `
-      <input style="${TKT_IN};flex:2;min-width:180px" placeholder="Show name (e.g. Drag Bingo — Tugun, Oct 2025)" value="${escapeHtml(t.show_name||'')}" oninput="tkts[${i}].show_name=this.value">
+      <input style="${TKT_IN};flex:2;min-width:180px" placeholder="Show name (e.g. Drag Bingo - Tugun, Oct 2025)" value="${escapeHtml(t.show_name||'')}" oninput="tkts[${i}].show_name=this.value">
       <input style="${TKT_IN};flex:0 0 130px" type="number" min="0" step="1" placeholder="Tickets" value="${t.tickets??''}" oninput="tkts[${i}].tickets=parseInt(this.value)||0;updateTktTotal()">
       <button class="btn btn-outline" style="padding:8px 14px" onclick="removeTkt(${i})">&#10005;</button>`;
     box.appendChild(row);
@@ -546,7 +546,7 @@ async function saveTkts(){
     toast.style.opacity = '1'; setTimeout(()=>{toast.style.opacity='0'}, 2500);
     await loadTkts();
   }catch(e){
-    alert('Save failed — check the ticket_milestones table exists and try again. ('+e.message+')');
+    alert('Save failed - check the ticket_milestones table exists and try again. ('+e.message+')');
   }
   btn.disabled = false; btn.textContent = 'Save Milestones';
 }
@@ -567,7 +567,7 @@ async function loadExps(){
     document.getElementById('expStatusText').textContent = `${exps.length} team member${exps.length===1?'':'s'} loaded`;
   }catch(e){
     exps = [];
-    document.getElementById('expStatusText').textContent = 'Could not load team — has the experience table been created in Supabase?';
+    document.getElementById('expStatusText').textContent = 'Could not load team - has the experience table been created in Supabase?';
   }
   renderExps();
 }
@@ -621,7 +621,7 @@ async function saveExps(){
     document.getElementById('expStatusText').textContent=`${clean.length} team member${clean.length===1?'':'s'} saved`;
     const t=document.getElementById('expToast'); t.style.opacity='1'; setTimeout(()=>{t.style.opacity='0'},2500);
     await loadExps();
-  }catch(e){ alert('Save failed — check the experience table exists and try again. ('+e.message+')'); }
+  }catch(e){ alert('Save failed - check the experience table exists and try again. ('+e.message+')'); }
   btn.disabled=false; btn.textContent='Save Team';
 }
 
@@ -642,7 +642,7 @@ async function loadTCs(){
     if(!r.ok)throw new Error(r.status);
     tcs=await r.json();
     document.getElementById('tcStatusText').textContent=`${tcs.length} tour card${tcs.length===1?'':'s'} loaded`;
-  }catch(e){tcs=[];document.getElementById('tcStatusText').textContent='Could not load tour cards — has the tour_categories table been created in Supabase?';}
+  }catch(e){tcs=[];document.getElementById('tcStatusText').textContent='Could not load tour cards - has the tour_categories table been created in Supabase?';}
   renderTCs();
   if(typeof renderShows==="function" && Array.isArray(shows)) renderShows();
 }
@@ -677,14 +677,14 @@ function addTC(){ tcs.push({name:'',eyebrow:'Touring Now',description:'',button_
 function removeTC(i){ tcs.splice(i,1); renderTCs(); }
 async function uploadTCImage(i,el){
   const file=el.files&&el.files[0]; if(!file)return;
-  if(file.size>5*1024*1024){alert('Image too large — keep it under 5MB.');el.value='';return;}
+  if(file.size>5*1024*1024){alert('Image too large - keep it under 5MB.');el.value='';return;}
   const safe=Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
   try{
     const up=await fetch(`${SUPABASE_URL}/storage/v1/object/tour-images/${safe}`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':file.type||'application/octet-stream'},body:file});
     if(!up.ok)throw new Error(up.status);
     tcs[i].image_url=`${SUPABASE_URL}/storage/v1/object/public/tour-images/${safe}`;
     renderTCs();
-  }catch(e){alert('Image upload failed — has the public "tour-images" bucket been created? ('+e.message+')');}
+  }catch(e){alert('Image upload failed - has the public "tour-images" bucket been created? ('+e.message+')');}
 }
 // ─── GENERATE SEO-READY TOUR PAGE ───
 function genTourPage(i){
@@ -692,7 +692,7 @@ function genTourPage(i){
   if(!c || !(c.name||'').trim()){ alert('Give the tour a name first.'); return; }
   const key = (c.tour_key && c.tour_key.trim()) ? c.tour_key.trim() : slugify(c.name);
   const name = c.name.trim();
-  const desc = (c.description||'').trim() || (name + ' — live entertainment touring Australia with Gflam Touring.');
+  const desc = (c.description||'').trim() || (name + ' - live entertainment touring Australia with Gflam Touring.');
   const img = (c.image_url||'').trim() || 'https://www.gflamtouring.com.au/og-image.png';
   const e = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const url = 'https://www.gflamtouring.com.au/' + key;
@@ -787,7 +787,7 @@ document.getElementById("yr").textContent=new Date().getFullYear();
     .then(function(r){return r.ok?r.json():[]})
     .then(function(rows){
       var box=document.getElementById("shows");
-      if(!rows||!rows.length){box.innerHTML='<p class="empty">No shows on sale right now — <a href="/#signup" style="color:var(--pink)">join the mailing list</a> to hear when tickets drop.</p>';return;}
+      if(!rows||!rows.length){box.innerHTML='<p class="empty">No shows on sale right now - <a href="/#signup" style="color:var(--pink)">join the mailing list</a> to hear when tickets drop.</p>';return;}
       box.innerHTML=rows.map(function(s){
         var d=s.show_date?new Date(s.show_date+"T00:00:00").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"long"}):"";
         var venue=[s.venue,s.suburb].filter(Boolean).join(", ");
@@ -829,7 +829,7 @@ async function saveTCs(){
     document.getElementById('tcStatusText').textContent=`${clean.length} tour card${clean.length===1?'':'s'} saved`;
     const t=document.getElementById('tcToast');t.style.opacity='1';setTimeout(()=>{t.style.opacity='0'},2500);
     await loadTCs();
-  }catch(e){alert('Save failed — check the tour_categories table exists and try again. ('+e.message+')');}
+  }catch(e){alert('Save failed - check the tour_categories table exists and try again. ('+e.message+')');}
   btn.disabled=false;btn.textContent='Save Tour Cards';
 }
 </script>
