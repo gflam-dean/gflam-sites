@@ -280,8 +280,9 @@
   footer{border-top:1px solid var(--line);padding:54px 0 64px;margin-top:40px}
   .foot{display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap}
   .foot-brand{display:flex;align-items:center;gap:13px}
-  .foot-brand svg{filter:drop-shadow(0 0 7px var(--glow))}
-  .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em}
+  .foot-brand svg{display:block;filter:drop-shadow(0 0 7px var(--glow))}
+  .foot-brand .div{width:1px;height:20px;background:var(--line-2)}
+  .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em;color:#fff;line-height:1}
   .foot-meta{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);line-height:1.9;text-align:right}
   .foot-meta a:hover{color:var(--pink)}
   .powered{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.08em;text-transform:uppercase}
@@ -342,7 +343,7 @@
       <a class="btn btn-primary" href="#claim">Lock in 20% off for life</a>
       <a class="btn btn-ghost" href="#modes">See the game modes</a>
     </div>
-    <p class="hero-note">First 100 venues only · launching August 2026 · price locked for life</p>
+    <p class="hero-note">First 100 venues only · launching September 2026 · price locked for life</p>
   </div>
 </section>
 
@@ -439,7 +440,7 @@
     <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
       <div class="label" style="justify-content:center">Claim your spot</div>
       <h2 class="sec-title">Lock in founding pricing</h2>
-      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add a card to hold one of the 100 founding spots. Nothing is charged today — your first payment lands when VenuePlay launches in August, and you can cancel any time before then.</p>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add a card to hold one of the 100 founding spots. Nothing is charged today — your first payment lands when VenuePlay launches in September, and you can cancel any time before then.</p>
     </div>
 
     <div class="form-shell">
@@ -478,13 +479,13 @@
           <p class="overage-note">Set your usual max. If a night runs bigger, the extra players are added at the same per-player monthly rate — your plan just grows to match what you use.</p>
           <button class="btn btn-primary" id="vp-submit" type="button">Hold my spot — add card</button>
           <p class="form-err" id="vp-err"></p>
-          <p class="form-fine">Secured by Stripe · nothing charged until launch · cancel anytime before August</p>
+          <p class="form-fine">Secured by Stripe · nothing charged until launch · cancel anytime before September</p>
         </div>
 
         <div class="success" id="vp-success">
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>Your spot is held</h3>
-          <p>Your founding spot is locked in and your card's on file. You won't be charged until VenuePlay launches in August — we'll be in touch before then to get you set up.</p>
+          <p>Your founding spot is locked in and your card's on file. You won't be charged until VenuePlay launches in September — we'll be in touch before then to get you set up.</p>
         </div>
       </div>
     </div>
@@ -499,14 +500,14 @@
       <h2 class="sec-title">Questions</h2>
     </div>
     <div class="faq">
-      <details class="q"><summary>When does VenuePlay launch?<span class="pm"></span></summary><div class="a">VenuePlay launches August 2026. Founding venues get first access, and we'll be in touch before then to get you set up.</div></details>
+      <details class="q"><summary>When does VenuePlay launch?<span class="pm"></span></summary><div class="a">VenuePlay launches September 2026. Founding venues get first access, and we'll be in touch before then to get you set up.</div></details>
       <details class="q"><summary>What does "founding venue" actually mean?<span class="pm"></span></summary><div class="a">The first 100 venues to sign up lock in 20% off for life — $2.40 per player a month instead of $3. Once 100 spots are gone, founding pricing closes for good.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss — which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs — anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
-      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.40 a player, or yearly for $2 a player — founding pricing is locked for life either way. Nothing is charged until launch in August.</div></details>
+      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.40 a player, or yearly for $2 a player — founding pricing is locked for life either way. Nothing is charged until launch in September.</div></details>
       <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">No problem and no surprise fees. Set your max to your usual room — if a night runs bigger, the extra players are simply added at your per-player monthly rate, so your plan grows to match what you actually use. The screen flags it the moment you go over.</div></details>
       <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the display onto that screen — a TV with a browser, a cheap streaming stick, or an HDMI cable from a laptop or tablet all work. Players bring their own phones. For a rock-solid night we'd point you toward a stick or a cable over wireless casting, since that doesn't lean on venue wifi.</div></details>
-      <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your founding 20% discount stays locked for as long as you're with us — and if you cancel before launch in August, you're never charged.</div></details>
+      <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your founding 20% discount stays locked for as long as you're with us — and if you cancel before launch in September, you're never charged.</div></details>
       <details class="q"><summary>What support do I get?<span class="pm"></span></summary><div class="a">Founding venues get hands-on onboarding to get your first night running, plus ongoing support if anything comes up. The whole thing is built so your bar staff can run it without a tech in the room.</div></details>
       <details class="q"><summary>Can players win prizes?<span class="pm"></span></summary><div class="a">Yep — you set the prizes, exactly like you do now. Bar tabs, meat trays, members jackpots, vouchers, whatever suits your venue. VenuePlay runs the game and calls the winners; the prizes are yours to decide.</div></details>
       <details class="q"><summary>Is players' data safe?<span class="pm"></span></summary><div class="a">Players join with just a name — no account, no login, nothing they have to hand over. Anything captured is opt-in and handled under Australian privacy rules. We don't sell player data, full stop.</div></details>
@@ -561,7 +562,8 @@
   <div class="wrap foot">
     <div>
       <div class="foot-brand">
-        <svg width="22" height="26" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="#FF1F8E"/></svg>
+        <svg width="22" height="25" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="#FF1F8E"/></svg>
+        <span class="div"></span>
         <span class="word">VenuePlay</span>
       </div>
       <p class="powered" style="margin-top:14px">Powered by <b>Gflam Touring</b></p>
@@ -629,10 +631,10 @@
     var seats = parseInt(seatsEl.value, 10);
     if (!seats || seats < 1){ estEl.innerHTML = 'Enter your max players for a price estimate.'; return; }
     if (plan === 'monthly'){
-      estEl.innerHTML = '<b>$' + (seats * PRICE.monthly).toFixed(2) + '</b> / month from August (' + seats + ' players × $2.40)';
+      estEl.innerHTML = '<b>$' + (seats * PRICE.monthly).toFixed(2) + '</b> / month from September (' + seats + ' players × $2.40)';
     } else {
       var perYear = seats * PRICE.annual * 12;
-      estEl.innerHTML = '<b>$' + perYear.toFixed(2) + '</b> / year from August (' + seats + ' players × $2 × 12)';
+      estEl.innerHTML = '<b>$' + perYear.toFixed(2) + '</b> / year from September (' + seats + ' players × $2 × 12)';
     }
   }
   planWrap.addEventListener('click', function(e){
