@@ -310,6 +310,367 @@
   @media(prefers-reduced-motion:reduce){
     *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
   }
+
+  /* Number-of-venues field hint + group-enquiry note */
+  .field-hint{display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.01em}
+  .group-note{margin:2px 0 16px;padding:13px 15px;border:1px solid rgba(255,31,142,.3);background:rgba(255,31,142,.07);border-radius:12px;font-size:13.5px;line-height:1.55;color:#e8e8ec}
+</style>
+<style>
+  /* ---------- shared ---------- */
+  .vps-balance{text-wrap:balance}
+
+  /* ============================================================
+     1. HOW A NIGHT RUNS  (#how)
+     ============================================================ */
+  .vps-steps{
+    display:grid;
+    grid-template-columns:repeat(3,1fr); /* explicit: never auto-fill/minmax here */
+    gap:16px;
+  }
+  .vps-step{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:28px 24px 26px;
+    position:relative;
+    overflow:hidden;
+    transition:border-color .2s ease,transform .2s ease,background .2s ease;
+  }
+  .vps-step:hover{border-color:var(--line-2);background:var(--ink-3);transform:translateY(-3px)}
+  .vps-step-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;font-weight:700;letter-spacing:.16em;
+    color:var(--pink);
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:18px;
+  }
+  .vps-step-num::after{content:"";flex:1;height:1px;background:var(--line)}
+  .vps-step h3{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-weight:800;font-size:21px;letter-spacing:-.01em;
+    margin-bottom:10px;text-wrap:balance;
+  }
+  .vps-step p{color:var(--muted);font-size:15px;line-height:1.58}
+  .vps-step p b{color:#fff;font-weight:700}
+
+  /* ============================================================
+     2. SEE A NIGHT ON VENUEPLAY  (#preview)
+     ============================================================ */
+  .vps-stage{display:flex;flex-direction:column;gap:34px}
+  .vps-stage-row{
+    display:grid;
+    grid-template-columns:300px minmax(0,1fr);
+    gap:28px;
+    align-items:start;
+  }
+  .vps-device-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted-2);margin-bottom:12px;text-align:center;
+  }
+  .vps-caption{
+    color:var(--muted);font-size:14px;line-height:1.55;
+    text-align:center;margin-top:14px;
+    max-width:52ch;margin-left:auto;margin-right:auto;
+  }
+  .vps-caption b{color:#fff;font-weight:700}
+  .vps-concept-note{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;letter-spacing:.04em;color:var(--muted-2);
+    text-align:center;margin-top:38px;
+  }
+
+  /* ---- TV ---- */
+  .vps-tv{
+    aspect-ratio:16/9;border-radius:14px;
+    background:linear-gradient(160deg,#101013,#0b0b0d);
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506,0 0 60px -24px var(--glow);
+    padding:clamp(12px,2.4vw,22px);
+    display:flex;flex-direction:column;gap:clamp(8px,1.6vw,14px);
+    position:relative;overflow:hidden;
+  }
+  .vps-tv::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.05),transparent 55%);
+    pointer-events:none;
+  }
+  .vps-tv-top{display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:1;flex-wrap:wrap}
+  .vps-tv-venue{font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.4vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .vps-pill{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);
+    letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);
+    color:var(--muted);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  }
+  .vps-pill.vps-live{color:var(--pink);border-color:rgba(255,31,142,.45)}
+  .vps-pill.vps-prize{color:#fff;background:rgba(255,31,142,.12);border-color:rgba(255,31,142,.4)}
+  .vps-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 9px var(--pink)}
+  @media(prefers-reduced-motion:no-preference){
+    .vps-dot{animation:vps-pulse 2.4s ease-in-out infinite}
+    .vps-ball{animation:vps-ballglow 2.8s ease-in-out infinite}
+  }
+  @keyframes vps-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes vps-ballglow{
+    0%,100%{box-shadow:0 0 40px -6px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
+    50%{box-shadow:0 0 60px 0 var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
+  }
+  .vps-tv-body{display:grid;grid-template-columns:auto 1fr;gap:clamp(12px,2.6vw,24px);flex:1;z-index:1;min-height:0;align-items:center}
+  .vps-ball-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .vps-ball-idx{font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-ball{
+    width:clamp(78px,13vw,148px);height:clamp(78px,13vw,148px);border-radius:50%;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 45%,var(--pink-deep));
+    box-shadow:0 0 46px -4px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+  }
+  .vps-ball .vps-lt{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.6vw,15px);letter-spacing:.14em;opacity:.9;line-height:1}
+  .vps-ball .vps-nm{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(32px,6vw,62px);line-height:.9;letter-spacing:.01em}
+  .vps-board{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;align-content:center;min-width:0}
+  .vps-board .vps-col{display:flex;flex-direction:column;gap:3px}
+  .vps-board .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:clamp(10px,1.4vw,13px);letter-spacing:.06em;padding-bottom:2px}
+  .vps-cell{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(6.5px,1vw,10.5px);
+    text-align:center;padding:2px 0;border-radius:4px;
+    color:var(--muted-2);background:rgba(255,255,255,.03);
+  }
+  .vps-cell.vps-on{
+    color:#fff;background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    box-shadow:0 0 10px -2px var(--glow);font-weight:600;
+  }
+  .vps-tv-foot{
+    display:flex;align-items:center;gap:clamp(10px,2vw,16px);
+    background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:11px;padding:clamp(8px,1.6vw,12px) clamp(10px,2vw,16px);z-index:1;
+  }
+  .vps-qr{width:clamp(40px,6vw,56px);height:clamp(40px,6vw,56px);border-radius:8px;background:#fff;padding:4px;flex:none}
+  .vps-qr canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+  .vps-join{flex:1;min-width:0}
+  .vps-join .vps-l{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10.5px);letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-join .vps-u{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(11px,1.6vw,15px);margin-top:2px}
+  .vps-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(16px,3vw,28px);letter-spacing:.14em;color:var(--pink);text-shadow:0 0 18px var(--glow)}
+
+  /* ---- Phone ---- */
+  .vps-phone{
+    width:270px;max-width:100%;margin:0 auto;aspect-ratio:9/19;border-radius:34px;background:#0d0d10;
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 0 8px #050506,0 0 50px -24px var(--glow);
+    padding:14px 13px;display:flex;flex-direction:column;gap:10px;position:relative;
+  }
+  .vps-notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:92px;height:21px;background:#050506;border-radius:0 0 13px 13px;z-index:3}
+  .vps-ph-head{display:flex;align-items:center;justify-content:space-between;padding-top:15px}
+  .vps-ph-head .vps-v{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .vps-mini-mark{display:flex;align-items:center;gap:6px}
+  .vps-mini-mark svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
+  .vps-mini-mark .vps-w{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;letter-spacing:-.02em}
+  .vps-ticker{
+    background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.32);border-radius:9px;
+    padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#fff;
+    display:flex;align-items:center;gap:6px;
+  }
+  .vps-ticker b{color:var(--pink)}
+  .vps-pcard{
+    background:var(--ink-2);border:1px solid var(--line);border-radius:13px;
+    padding:10px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;
+  }
+  .vps-pcard .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:15px;padding-bottom:2px}
+  .vps-pcell{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:7px;
+    background:rgba(255,255,255,.04);color:#e8e8ec;position:relative;
+  }
+  .vps-pcell.vps-free{font-family:'Anton',sans-serif;font-size:8.5px;font-weight:400;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em}
+  .vps-pcell.vps-daub{color:#fff;font-weight:700}
+  .vps-pcell.vps-daub::after{
+    content:"";position:absolute;inset:4px;border-radius:50%;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    box-shadow:0 0 10px -1px var(--glow);z-index:0;
+  }
+  .vps-pcell.vps-daub span{position:relative;z-index:1}
+  .vps-draw-chip{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;padding:2px}
+  .vps-draw-chip b{color:#fff}
+  .vps-bingo-btn{
+    margin-top:auto;background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    color:var(--ink);font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    letter-spacing:.06em;font-size:20px;border:0;border-radius:13px;padding:14px;
+    box-shadow:0 0 30px -6px var(--glow);cursor:default;
+  }
+
+  /* ---- Host console ---- */
+  .vps-console{
+    border-radius:14px;background:linear-gradient(160deg,#101013,#0b0b0d);
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506;
+    padding:18px;display:flex;flex-direction:column;gap:14px;
+  }
+  .vps-con-top{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:13px}
+  .vps-con-top .vps-g{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:16px;letter-spacing:.02em}
+  .vps-con-top .vps-g small{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted-2);text-transform:none;margin-top:4px}
+  .vps-con-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+  .vps-next-ball{
+    display:block;width:100%;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    border:0;border-radius:12px;color:var(--ink);padding:22px 14px;cursor:default;
+    text-align:center;box-shadow:0 0 34px -8px var(--glow);
+  }
+  .vps-next-ball .vps-k{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:21px;letter-spacing:.04em}
+  .vps-next-ball .vps-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85}
+  .vps-recent{margin-top:12px}
+  .vps-recent .vps-rl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-bottom:7px}
+  .vps-recent .vps-balls{display:flex;gap:6px;flex-wrap:wrap}
+  .vps-rb{
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+    padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.05);
+    border:1px solid var(--line);color:#e8e8ec;
+  }
+  .vps-rb.vps-cur{background:rgba(255,31,142,.16);border-color:rgba(255,31,142,.45);color:#fff}
+  .vps-claim{background:var(--ink-3);border:1px solid rgba(47,210,122,.32);border-radius:12px;padding:14px}
+  .vps-claim .vps-cl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#2FD27A;margin-bottom:8px}
+  .vps-claim .vps-who{font-family:'Anton',sans-serif;font-weight:400;font-size:16px;text-transform:uppercase;letter-spacing:.02em}
+  .vps-claim .vps-verdict{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#2FD27A;margin-top:6px;display:flex;align-items:center;gap:6px}
+  .vps-claim .vps-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+  .vps-cbtn{font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;border:0;border-radius:9px;padding:10px 6px;cursor:default}
+  .vps-cbtn.vps-ok{background:#2FD27A;color:#04160c}
+  .vps-cbtn.vps-no{background:transparent;border:1px solid #FF5A6E;color:#FF5A6E}
+  .vps-con-foot{display:flex;gap:9px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:13px}
+  .vps-ghost{font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:9px;border:1px solid var(--line-2);color:var(--muted);background:transparent;cursor:default}
+  .vps-con-foot .vps-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+  .vps-con-foot .vps-count b{color:#fff}
+
+  /* ---- Admin / finance ---- */
+  .vps-browser{
+    border-radius:13px;background:var(--ink-2);border:1px solid var(--line-2);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506;overflow:hidden;
+  }
+  .vps-bbar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0d0d10;border-bottom:1px solid var(--line)}
+  .vps-bbar i{width:10px;height:10px;border-radius:50%;background:var(--line-2);display:block}
+  .vps-bbar .vps-url{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted-2);background:rgba(255,255,255,.04);border-radius:6px;padding:4px 12px}
+  .vps-admin{padding:18px}
+  .vps-admin-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+  .vps-admin-h .vps-t{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:15px;letter-spacing:.03em}
+  .vps-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
+  .vps-tile{background:var(--ink-3);border:1px solid var(--line);border-radius:11px;padding:13px}
+  .vps-tile .vps-l{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-tile .vps-n{font-family:'Anton',sans-serif;font-weight:400;font-size:24px;margin-top:7px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  .vps-tile .vps-n small{font-size:13px;color:var(--muted-2)}
+  .vps-tile .vps-n.vps-pink{color:var(--pink)}
+  .vps-inv{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:15px}
+  .vps-inv-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .vps-inv-h .vps-t{font-family:'Manrope',sans-serif;font-weight:700;font-size:14px}
+  .vps-inv-h .vps-t small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10.5px;color:var(--muted-2);margin-top:3px}
+  .vps-pend{
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:#FFB13D;border:1px solid rgba(255,177,61,.4);background:rgba(255,177,61,.1);
+    border-radius:999px;padding:4px 10px;white-space:nowrap;
+  }
+  .vps-tbl-scroll{overflow-x:auto}
+  .vps-tbl{width:100%;min-width:480px;border-collapse:collapse;font-size:12.5px}
+  .vps-tbl th{
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted-2);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:400;
+  }
+  .vps-tbl th:first-child{text-align:left}
+  .vps-tbl td{
+    font-family:'JetBrains Mono',monospace;padding:8px;border-bottom:1px solid var(--line);
+    text-align:right;font-variant-numeric:tabular-nums;color:#dcdce2;white-space:nowrap;
+  }
+  .vps-tbl td:first-child{font-family:'Manrope',sans-serif;text-align:left;color:#fff}
+  .vps-tbl td.vps-disc{color:#2FD27A}
+  .vps-tbl td.vps-add{color:var(--pink)}
+  .vps-tbl tr.vps-tot td{border-bottom:0;font-weight:700;color:#fff;padding-top:11px}
+  .vps-tbl tr.vps-tot td:first-child{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .vps-inv-act{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+  .vps-inv-act .vps-ok{background:#2FD27A;color:#04160c;font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;border:0;border-radius:9px;padding:9px 16px;cursor:default}
+  .vps-inv-act .vps-ed{background:transparent;border:1px solid var(--line-2);color:var(--muted);font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;border-radius:9px;padding:9px 16px;cursor:default}
+
+  /* ============================================================
+     3. WHY WE BUILT IT  (#why)
+     ============================================================ */
+  .vps-note{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line);border-radius:22px;
+    padding:clamp(30px,4.5vw,54px);
+    max-width:760px;margin:0 auto;
+    position:relative;overflow:hidden;
+  }
+  .vps-note::before{
+    content:"";position:absolute;top:-35%;right:-12%;width:420px;height:420px;
+    background:radial-gradient(circle,rgba(255,31,142,0.13),transparent 65%);
+    pointer-events:none;
+  }
+  .vps-note-inner{position:relative}
+  .vps-note p{
+    color:#D8D8DD;font-size:clamp(17px,2vw,19px);line-height:1.7;font-weight:500;
+  }
+  .vps-note p b{color:#fff;font-weight:700}
+  .vps-note-sign{
+    margin-top:26px;display:flex;align-items:center;gap:14px;
+    border-top:1px solid var(--line);padding-top:24px;
+  }
+  .vps-note-mark{
+    width:44px;height:44px;border-radius:50%;flex:none;
+    display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.35);
+    box-shadow:0 0 22px -6px var(--glow);
+  }
+  .vps-note-sign .vps-sig-name{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.01em}
+  .vps-note-sign .vps-sig-role{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-top:3px}
+
+  /* ============================================================
+     4. ONE SCREEN, LESS CLUTTER  (#replaces)
+     ============================================================ */
+  .vps-strip{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line);border-radius:22px;
+    padding:clamp(28px,4vw,50px);
+    position:relative;overflow:hidden;
+  }
+  .vps-strip::before{
+    content:"";position:absolute;top:-45%;left:-8%;width:460px;height:460px;
+    background:radial-gradient(circle,rgba(255,31,142,0.12),transparent 65%);
+    pointer-events:none;
+  }
+  .vps-strip-inner{position:relative}
+  .vps-strip-title{
+    font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:clamp(26px,3.6vw,42px);line-height:1.05;letter-spacing:.01em;
+    max-width:22ch;text-wrap:balance;
+  }
+  .vps-strip-title .vps-accent{color:var(--pink)}
+  .vps-swaps{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px;
+  }
+  .vps-swap{
+    background:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px 18px;
+    transition:border-color .2s ease;
+  }
+  .vps-swap:hover{border-color:var(--line-2)}
+  .vps-swap .vps-swap-k{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--pink);display:flex;align-items:center;gap:9px;margin-bottom:12px;
+  }
+  .vps-swap .vps-swap-k::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--glow);flex:none}
+  .vps-swap h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16.5px;letter-spacing:-.01em;margin-bottom:7px;text-wrap:balance}
+  .vps-swap p{color:var(--muted);font-size:13.5px;line-height:1.55}
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media(max-width:900px){
+    .vps-stage-row{grid-template-columns:1fr}
+    .vps-tiles{grid-template-columns:repeat(2,1fr)}
+    .vps-swaps{grid-template-columns:repeat(2,1fr)}
+    .vps-con-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:760px){
+    .vps-steps{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){
+    .vps-swaps{grid-template-columns:1fr}
+    .vps-tv{aspect-ratio:auto}
+    .vps-tv-body{grid-template-columns:1fr;justify-items:center}
+    .vps-code{display:none}
+  }
 </style>
 </head>
 <body>
@@ -380,6 +741,205 @@
   </div>
 </section>
 
+<section class="sec" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="label">Dead simple</div>
+      <h2 class="sec-title vps-balance">How a night runs</h2>
+      <p class="sec-sub">Three steps between a quiet room and a full one. No tech in the room, no run sheet, no rehearsal.</p>
+    </div>
+    <div class="vps-steps">
+      <div class="vps-step">
+        <div class="vps-step-num">01</div>
+        <h3>Pick your game</h3>
+        <p>Bingo, trivia, musical bingo or a raffle. It <b>plays on the screen you've already got</b>: the TV or projector behind the bar. The easy way in is a laptop with an HDMI lead, or a cheap streaming stick.</p>
+      </div>
+      <div class="vps-step">
+        <div class="vps-step-num">02</div>
+        <h3>Your crowd scans a code</h3>
+        <p>Players join from their own phone in seconds. <b>No app, no login.</b> The join code sits on the big screen all night, so latecomers walk in and jump straight into the game.</p>
+      </div>
+      <div class="vps-step">
+        <div class="vps-step-num">03</div>
+        <h3>You press go</h3>
+        <p>You run the whole night from behind the bar, one tap at a time. When someone calls bingo, the <b>win is already checked for you</b>. You just confirm it and hand over the prize.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="preview">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="label">The whole night, four screens</div>
+      <h2 class="sec-title vps-balance">See a night on VenuePlay</h2>
+      <p class="sec-sub">One platform drives every screen in the room. Here's what each one is doing while the drinks keep moving.</p>
+    </div>
+
+    <div class="vps-stage">
+
+      <!-- TV -->
+      <div>
+        <div class="vps-device-label">The big screen · TV or projector · what the room sees</div>
+        <div class="vps-tv">
+          <div class="vps-tv-top">
+            <span class="vps-tv-venue">Tugun Bowls Club · Tuesday Bingo</span>
+            <span style="display:flex;gap:8px;flex-wrap:wrap">
+              <span class="vps-pill vps-live"><span class="vps-dot"></span>62 playing</span>
+              <span class="vps-pill vps-prize">One line · $50 bar tab</span>
+            </span>
+          </div>
+          <div class="vps-tv-body">
+            <div class="vps-ball-col">
+              <div class="vps-ball-idx">Ball 17 of 75</div>
+              <div class="vps-ball"><span class="vps-lt">G</span><span class="vps-nm">54</span></div>
+            </div>
+            <div class="vps-board" id="vps-board"></div>
+          </div>
+          <div class="vps-tv-foot">
+            <div class="vps-qr"><canvas id="vps-qr" width="46" height="46"></canvas></div>
+            <div class="vps-join">
+              <div class="vps-l">Join from your phone</div>
+              <div class="vps-u">venueplay.com.au/play</div>
+            </div>
+            <div class="vps-code">TQ7M4C</div>
+          </div>
+        </div>
+        <p class="vps-caption">It <b>plays on the screen you've already got</b>: the ball just called, the full board, and the join code so latecomers jump in. Safe to leave up all night.</p>
+      </div>
+
+      <!-- Phone + host console -->
+      <div class="vps-stage-row">
+        <div>
+          <div class="vps-device-label">The player · their own phone · no app</div>
+          <div class="vps-phone">
+            <div class="vps-notch"></div>
+            <div class="vps-ph-head">
+              <span class="vps-mini-mark">
+                <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="#FF1F8E"></path></svg>
+                <span class="vps-w">VenuePlay</span>
+              </span>
+              <span class="vps-v">Tugun Bowls</span>
+            </div>
+            <div class="vps-ticker">Last call&nbsp;<b>G 54</b>&nbsp;· daub it if you've got it</div>
+            <div class="vps-pcard" id="vps-pcard"></div>
+            <div class="vps-draw-chip">In the members draw · ticket <b>#47</b></div>
+            <button class="vps-bingo-btn" type="button" tabindex="-1" aria-hidden="true">BINGO!</button>
+          </div>
+          <p class="vps-caption">Scan, get a card, tap to daub. <b>No app, no login</b>, so more of the room actually joins in.</p>
+        </div>
+        <div>
+          <div class="vps-device-label">The host · your bar staff · tablet or laptop</div>
+          <div class="vps-console">
+            <div class="vps-con-top">
+              <div class="vps-g">Game 2 · One line<small>Prize: $50 bar tab</small></div>
+              <span class="vps-pill vps-live"><span class="vps-dot"></span>Running</span>
+            </div>
+            <div class="vps-con-grid">
+              <div>
+                <button class="vps-next-ball" type="button" tabindex="-1" aria-hidden="true">
+                  <span class="vps-k">Next ball</span>
+                  <span class="vps-s" style="display:block">17 of 75 called</span>
+                </button>
+                <div class="vps-recent">
+                  <div class="vps-rl">Recent</div>
+                  <div class="vps-balls"><span class="vps-rb vps-cur">G54</span><span class="vps-rb">B7</span><span class="vps-rb">O68</span><span class="vps-rb">N31</span><span class="vps-rb">I23</span></div>
+                </div>
+              </div>
+              <div class="vps-claim">
+                <div class="vps-cl">Claim to check</div>
+                <div class="vps-who">Card 27 · Marta</div>
+                <div class="vps-verdict"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#2FD27A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg> Valid line, verified</div>
+                <div class="vps-btns">
+                  <button class="vps-cbtn vps-ok" type="button" tabindex="-1" aria-hidden="true">Confirm winner</button>
+                  <button class="vps-cbtn vps-no" type="button" tabindex="-1" aria-hidden="true">Reject</button>
+                </div>
+              </div>
+            </div>
+            <div class="vps-con-foot">
+              <button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Pause</button>
+              <button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">End game</button>
+              <button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Start raffle</button>
+              <span class="vps-count"><b>62</b> in the room</span>
+            </div>
+          </div>
+          <p class="vps-caption">One tap to draw, and when someone calls bingo the card is <b>already checked against the balls drawn</b>. You confirm, they collect.</p>
+        </div>
+      </div>
+
+      <!-- Admin / finance -->
+      <div>
+        <div class="vps-device-label">Admin &amp; finance · the numbers side, sorted</div>
+        <div class="vps-browser">
+          <div class="vps-bbar"><i></i><i></i><i></i><span class="vps-url">venueplay.com.au/admin</span></div>
+          <div class="vps-admin">
+            <div class="vps-admin-h"><span class="vps-t">VenuePlay HQ</span><span class="vps-pill">September 2026</span></div>
+            <div class="vps-tiles">
+              <div class="vps-tile"><div class="vps-l">Founding spots</div><div class="vps-n vps-pink">63<small>/100</small></div></div>
+              <div class="vps-tile"><div class="vps-l">Active venues</div><div class="vps-n">41</div></div>
+              <div class="vps-tile"><div class="vps-l">Monthly recurring</div><div class="vps-n">$7.4<small>k</small></div></div>
+              <div class="vps-tile"><div class="vps-l">Big-night add-ons</div><div class="vps-n">$188</div></div>
+            </div>
+            <div class="vps-inv">
+              <div class="vps-inv-h">
+                <div class="vps-t">Australian Venue Co<small>Group invoice · September · 3 venues</small></div>
+                <span class="vps-pend">Pending approval</span>
+              </div>
+              <div class="vps-tbl-scroll">
+                <table class="vps-tbl">
+                  <thead><tr><th>Venue</th><th>Players</th><th>Standard</th><th>Discount</th><th>Add-ons</th><th>Total</th></tr></thead>
+                  <tbody id="vps-invrows"></tbody>
+                </table>
+              </div>
+              <div class="vps-inv-act">
+                <button class="vps-ok" type="button" tabindex="-1" aria-hidden="true">Approve &amp; send</button>
+                <button class="vps-ed" type="button" tabindex="-1" aria-hidden="true">Edit invoice</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="vps-caption">The books look after themselves: <b>per-player pricing, itemised</b>, with group invoices built line by line and approved before they send.</p>
+      </div>
+
+    </div>
+
+    <p class="vps-concept-note">Concept previews of the game, shown so you can picture the night.</p>
+  </div>
+</section>
+
+<section class="sec" id="replaces">
+  <div class="wrap">
+    <div class="vps-strip">
+      <div class="vps-strip-inner">
+        <div class="label">Less to set up, less to pack down</div>
+        <h2 class="vps-strip-title">One screen replaces the paper bingo books, the hired trivia host and the <span class="vps-accent">raffle tickets</span>.</h2>
+        <div class="vps-swaps">
+          <div class="vps-swap">
+            <div class="vps-swap-k">The screen</div>
+            <h3>Already on your wall</h3>
+            <p>It plays on the screen you've already got: the TV or projector behind the bar. The easy way is a laptop with an HDMI lead or a cheap streaming stick.</p>
+          </div>
+          <div class="vps-swap">
+            <div class="vps-swap-k">The host</div>
+            <h3>Any bar staffer</h3>
+            <p>Whoever's on shift presses go. Calls, cards and winner checks are handled, so nobody needs a mic voice or a run sheet.</p>
+          </div>
+          <div class="vps-swap">
+            <div class="vps-swap-k">The formats</div>
+            <h3>Four nights, one system</h3>
+            <p>Bingo, trivia, musical bingo and raffles on the same platform. Swap formats week to week without changing anything in the room.</p>
+          </div>
+          <div class="vps-swap">
+            <div class="vps-swap-k">The bill</div>
+            <h3>Per player, no lock-in</h3>
+            <p>Priced per player on your usual max, and you can cancel anytime. Big night? The extra players just join at the same per-player rate.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===================== FOUNDING OFFER ===================== -->
 <section class="sec" id="offer">
   <div class="wrap">
@@ -434,6 +994,29 @@
   </div>
 </section>
 
+<section class="sec" id="why">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">From the people who run the nights</div>
+      <h2 class="sec-title vps-balance">Why we built it</h2>
+    </div>
+    <div class="vps-note">
+      <div class="vps-note-inner">
+        <p>We're Gflam Touring. We run bingo, live music and entertainment at venues across Australia, and we've seen what a good entertainment night does for a venue on a quiet night: a full room, a busy kitchen, regulars who come back next week. We've also wrestled the tools it takes to pull one off, and honestly, they're clunky. Paper books, a borrowed laptop, a different system for every game. So we built the platform we kept wishing every venue had: <b>one system for the whole night, simple enough that any bar staffer can run it</b>. That's VenuePlay.</p>
+        <div class="vps-note-sign">
+          <span class="vps-note-mark">
+            <svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="#FF1F8E"></path></svg>
+          </span>
+          <span>
+            <span class="vps-sig-name" style="display:block">Dean</span>
+            <span class="vps-sig-role" style="display:block">Gflam Touring</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===================== SIGNUP ===================== -->
 <section class="sec" id="claim">
   <div class="wrap">
@@ -454,6 +1037,11 @@
             <div class="field full">
               <label for="vp-email">Contact email</label>
               <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
+            </div>
+            <div class="field full">
+              <label for="vp-venues">Number of venues</label>
+              <input id="vp-venues" type="number" min="1" step="1" inputmode="numeric" value="1">
+              <span class="field-hint">Running more than two? We set groups up personally, no card needed now.</span>
             </div>
             <div class="field">
               <label for="vp-mobile">Mobile (optional)</label>
@@ -477,15 +1065,22 @@
           </div>
           <p class="estimate" id="vp-estimate">Enter your max players for a price estimate.</p>
           <p class="overage-note">Set your usual max. If a night runs bigger, the extra players are added at the same per-player monthly rate — your plan just grows to match what you use.</p>
+          <p class="group-note" id="vp-group-note" style="display:none">You're running more than two venues, so this one comes to us directly. Leave your details and we'll call you within one business day to set your group up with pricing to match. No card needed now.</p>
           <button class="btn btn-primary" id="vp-submit" type="button">Hold my spot — add card</button>
           <p class="form-err" id="vp-err"></p>
-          <p class="form-fine">Secured by Stripe · nothing charged until launch · cancel anytime before September</p>
+          <p class="form-fine" id="vp-fine">Secured by Stripe · nothing charged until launch · cancel anytime before September</p>
         </div>
 
         <div class="success" id="vp-success">
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>Your spot is held</h3>
           <p>Your founding spot is locked in and your card's on file. You won't be charged until VenuePlay launches in September — we'll be in touch before then to get you set up.</p>
+        </div>
+
+        <div class="success" id="vp-group-success">
+          <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Thanks, we'll be in touch</h3>
+          <p>Your group enquiry is in. We'll call you within one business day to set your venues up and sort founding pricing that fits. No card needed yet.</p>
         </div>
       </div>
     </div>
@@ -645,6 +1240,20 @@
   });
   seatsEl.addEventListener('input', renderEstimate);
 
+  /* ---------- Group mode: more than 2 venues routes to a call, not self-serve checkout ---------- */
+  var venuesEl = document.getElementById('vp-venues');
+  var groupNote = document.getElementById('vp-group-note');
+  var fineEl = document.getElementById('vp-fine');
+  var groupSuccess = document.getElementById('vp-group-success');
+  function isGroup(){ return (parseInt(venuesEl.value, 10) || 1) > 2; }
+  function syncMode(){
+    var g = isGroup();
+    groupNote.style.display = g ? '' : 'none';
+    submitBtn.textContent = g ? 'Request a group call' : 'Hold my spot — add card';
+    if (fineEl) fineEl.style.display = g ? 'none' : '';
+  }
+  venuesEl.addEventListener('input', syncMode);
+
   /* ---------- Founding signup → Stripe checkout (card on file) ---------- */
   var submitBtn = document.getElementById('vp-submit');
   var errEl = document.getElementById('vp-err');
@@ -658,9 +1267,41 @@
     var mobile = document.getElementById('vp-mobile').value.trim();
     var postcode = document.getElementById('vp-postcode').value.trim();
     var seats = parseInt(seatsEl.value, 10);
+    var venues = parseInt(venuesEl.value, 10) || 1;
 
     if (!venue) { showErr('Please enter your venue name.'); return; }
     if (email.indexOf('@') === -1) { showErr('Please enter a valid contact email.'); return; }
+
+    /* More than two venues is a group: route to a call, not self-serve checkout. */
+    if (venues > 2) {
+      if (!workerReady) { showErr('Group enquiries are not connected yet. For now, email hello@venueplay.com.au and we will set your group up.'); return; }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      var gmsg = 'GROUP ENQUIRY: ' + venues + ' venues\n'
+        + 'Venue / group: ' + venue + '\n'
+        + 'Email: ' + email + '\n'
+        + 'Mobile: ' + (mobile || '-') + '\n'
+        + 'Postcode: ' + (postcode || '-') + '\n'
+        + 'Max players per session: ' + (seats || '-') + '\n'
+        + 'Plan interest: ' + plan;
+      fetch(VP_WORKER + '/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: venue, email: email, message: gmsg })
+      })
+      .then(function(r){ if (!r.ok) throw new Error('send failed');
+        document.getElementById('vp-form').style.display = 'none';
+        groupSuccess.classList.add('show');
+        groupSuccess.scrollIntoView({ behavior:'smooth', block:'center' });
+        if (typeof gtag === 'function') gtag('event', 'generate_lead', { method: 'venueplay_group' });
+      })
+      .catch(function(){
+        submitBtn.disabled = false; syncMode();
+        showErr('That did not send. Please try again, or email hello@venueplay.com.au.');
+      });
+      return;
+    }
+
     if (!seats || seats < 1) { showErr('Please enter your max players per session.'); return; }
 
     if (!workerReady) { showErr('Payments aren\u2019t connected yet — the Worker URL still needs to be set on this page.'); return; }
@@ -671,7 +1312,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ venue: venue, email: email, mobile: mobile, postcode: postcode, seats: seats, plan: plan })
+      body: JSON.stringify({ venue: venue, email: email, mobile: mobile, postcode: postcode, seats: seats, plan: plan, venues: venues })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
@@ -730,6 +1371,112 @@
       ctErr.textContent = 'Couldn\u2019t send that. Please try again, or email hello@venueplay.com.au.'; ctErr.classList.add('show');
     });
   });
+})();
+</script>
+<script>
+(function(){
+  var cols = [['B',1,15],['I',16,30],['N',31,45],['G',46,60],['O',61,75]];
+  var called = {3:1,7:1,9:1,12:1,15:1,23:1,29:1,31:1,38:1,40:1,47:1,51:1,54:1,60:1,66:1,68:1,72:1};
+
+  /* ---- TV board: 1 to 75, called numbers lit ---- */
+  var board = document.getElementById('vps-board');
+  if (board) {
+    cols.forEach(function(c){
+      var col = document.createElement('div'); col.className = 'vps-col';
+      var h = document.createElement('div'); h.className = 'vps-h'; h.textContent = c[0]; col.appendChild(h);
+      for (var n = c[1]; n <= c[2]; n++) {
+        var d = document.createElement('div');
+        d.className = 'vps-cell' + (called[n] ? ' vps-on' : '');
+        d.textContent = n;
+        col.appendChild(d);
+      }
+      board.appendChild(col);
+    });
+  }
+
+  /* ---- Player card: fixed 5x5, FREE centre, called numbers daubed ---- */
+  var pcard = document.getElementById('vps-pcard');
+  if (pcard) {
+    'BINGO'.split('').forEach(function(L){
+      var h = document.createElement('div'); h.className = 'vps-h'; h.textContent = L; pcard.appendChild(h);
+    });
+    /* column-major numbers, row 2 of N is FREE (0 placeholder) */
+    var cardCols = [
+      [2, 7, 9, 13, 14],
+      [18, 23, 26, 29, 30],
+      [31, 38, 0, 40, 44],
+      [47, 50, 54, 57, 59],
+      [62, 66, 70, 72, 75]
+    ];
+    for (var r = 0; r < 5; r++) {
+      for (var ci = 0; ci < 5; ci++) {
+        var cell = document.createElement('div');
+        var num = cardCols[ci][r];
+        if (num === 0) {
+          cell.className = 'vps-pcell vps-free';
+          cell.textContent = 'FREE';
+        } else {
+          cell.className = 'vps-pcell' + (called[num] ? ' vps-daub' : '');
+          var sp = document.createElement('span'); sp.textContent = num; cell.appendChild(sp);
+        }
+        pcard.appendChild(cell);
+      }
+    }
+  }
+
+  /* ---- Faux QR: finder squares + seeded noise on canvas (decorative) ---- */
+  var qc = document.getElementById('vps-qr');
+  if (qc && qc.getContext) {
+    var ctx = qc.getContext('2d'), N = 23, s = qc.width / N;
+    var seed = 20260901;
+    function rnd(){ seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+    ctx.clearRect(0, 0, qc.width, qc.height);
+    ctx.fillStyle = '#0A0A0B';
+    function finder(ox, oy){
+      for (var yy = 0; yy < 7; yy++) for (var xx = 0; xx < 7; xx++) {
+        var edge = (xx === 0 || xx === 6 || yy === 0 || yy === 6);
+        var core = (xx >= 2 && xx <= 4 && yy >= 2 && yy <= 4);
+        if (edge || core) ctx.fillRect((ox + xx) * s, (oy + yy) * s, s, s);
+      }
+    }
+    for (var yy = 0; yy < N; yy++) for (var xx = 0; xx < N; xx++) {
+      var inF = (xx < 7 && yy < 7) || (xx > N - 8 && yy < 7) || (xx < 7 && yy > N - 8);
+      if (!inF && rnd() > 0.55) ctx.fillRect(xx * s, yy * s, s, s);
+    }
+    finder(0, 0); finder(N - 7, 0); finder(0, N - 7);
+  }
+
+  /* ---- Group invoice rows: standard $3.00/player, 20% founding discount,
+          add-ons are extra players on big nights at $2.40/player ---- */
+  var body = document.getElementById('vps-invrows');
+  if (body) {
+    var STD = 3.00, RATE = 2.40;
+    var venues = [
+      /* [name, plan players, extra players on the month's biggest night] */
+      ['The Anchor, Southport', 78, 6],
+      ['Harbourview Tavern', 60, 0],
+      ['The Sands RSL', 120, 14]
+    ];
+    function money(v){ return '$' + v.toFixed(2); }
+    var tStd = 0, tDisc = 0, tAdd = 0, tTot = 0;
+    venues.forEach(function(v){
+      var std = v[1] * STD;
+      var disc = std * 0.20;
+      var add = v[2] * RATE;
+      var tot = std - disc + add;
+      tStd += std; tDisc += disc; tAdd += add; tTot += tot;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + v[0] + '</td><td>' + v[1] + '</td><td>' + money(std) +
+        '</td><td class="vps-disc">-' + money(disc) + '</td><td class="vps-add">' + money(add) +
+        '</td><td>' + money(tot) + '</td>';
+      body.appendChild(tr);
+    });
+    var t = document.createElement('tr'); t.className = 'vps-tot';
+    t.innerHTML = '<td>Total inc GST</td><td></td><td>' + money(tStd) +
+      '</td><td class="vps-disc">-' + money(tDisc) + '</td><td class="vps-add">' + money(tAdd) +
+      '</td><td>' + money(tTot) + '</td>';
+    body.appendChild(t);
+  }
 })();
 </script>
 </body>
