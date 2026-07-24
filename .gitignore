@@ -4,3 +4,6 @@ node_modules/
 .env
 .env.local
 Thumbs.db
+
+# internal ops workspace - never deploy
+gflam-ai-team/
