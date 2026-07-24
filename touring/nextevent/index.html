@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Ccircle%20cx%3D%2750%27%20cy%3D%2750%27%20r%3D%2750%27%20fill%3D%27%23fe65c3%27%2F%3E%3C%2Fsvg%3E">
-<title>Next Event — Drag Bingo at the Bowlo | Gflam Touring</title>
-<meta name="description" content="Had a great night? Book your next Drag Bingo at the Bowlo ticket and get $5 off — tonight only! Hosted by Vollie LaVont. Discount available until midnight."><link rel="canonical" href="https://www.gflamtouring.com.au/nextevent"><meta property="og:type" content="website"><meta property="og:title" content="Next Event — Drag Bingo at the Bowlo"><meta property="og:description" content="Had a great night? Book your next Drag Bingo at the Bowlo ticket and get $5 off — tonight only! Hosted by Vollie LaVont. Discount available until midnight."><meta property="og:url" content="https://www.gflamtouring.com.au/nextevent"><meta property="og:image" content="https://www.gflamtouring.com.au/db-og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Next Event — Drag Bingo at the Bowlo"><meta name="twitter:description" content="Had a great night? Book your next Drag Bingo at the Bowlo ticket and get $5 off — tonight only! Hosted by Vollie LaVont. Discount available until midnight."><meta name="twitter:image" content="https://www.gflamtouring.com.au/db-og-image.png">
+<title>Next Event: Drag Bingo at the Bowlo | Gflam Touring</title>
+<meta name="description" content="Had a great night? Book your next Drag Bingo at the Bowlo ticket and get $5 off, tonight only! Hosted by Vollie LaVont. Discount available until midnight."><link rel="canonical" href="https://www.gflamtouring.com.au/nextevent"><meta property="og:type" content="website"><meta property="og:title" content="Next Event: Drag Bingo at the Bowlo"><meta property="og:description" content="Had a great night? Book your next Drag Bingo at the Bowlo ticket and get $5 off, tonight only! Hosted by Vollie LaVont. Discount available until midnight."><meta property="og:url" content="https://www.gflamtouring.com.au/nextevent"><meta property="og:image" content="https://www.gflamtouring.com.au/db-og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Next Event: Drag Bingo at the Bowlo"><meta name="twitter:description" content="Had a great night? Book your next Drag Bingo at the Bowlo ticket and get $5 off, tonight only! Hosted by Vollie LaVont. Discount available until midnight."><meta name="twitter:image" content="https://www.gflamtouring.com.au/db-og-image.png">
 
 <meta name="robots" content="noindex, nofollow">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -343,7 +343,7 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
   margin-top:20px; position:relative;
 }
 
-/* Show card — matches main page style */
+/* Show card, matches main page style */
 .ne-show-wrap {
   max-width:1200px; margin:0 auto; padding:60px 24px;
 }
@@ -715,7 +715,7 @@ html,body{background:#111;color:#fff;font-family:'DM Sans',sans-serif;font-size:
     <div class="signup-success" id="signup-success" style="display:none">
       <span class="tick">&#127775;</span>
       <h3>You're in, darling!</h3>
-      <p>Your discount link is below — valid until midnight tonight. Don't miss out!</p>
+      <p>Your discount link is below, valid until midnight tonight. Don't miss out!</p>
       <div id="signup-discount-link"></div>
     </div>
   </div>
@@ -825,7 +825,7 @@ function updateHeroForState(state) {
 
   if (state === "active") {
     if (h1) h1.innerHTML = `<span class="ne-h1-gold">Let's do it all again</span><span class="ne-h1-pink">but cheaper<span class="dot">.</span></span>`;
-    if (sub) sub.textContent = "$5 off every ticket — discount available until midnight tonight";
+    if (sub) sub.textContent = "$5 off every ticket, discount available until midnight tonight";
     if (eyebrow) eyebrow.textContent = "✨ Had a fabulous time tonight, darling? ✨";
     buildTicker(["Drag Bingo at the Bowlo","$5 Off Every Ticket","Tonight Only","Discount Until Midnight","Hosted by Vollie LaVont"]);
   } else if (state === "expired") {
@@ -835,7 +835,7 @@ function updateHeroForState(state) {
     buildTicker(["Drag Bingo at the Bowlo","Hosted by Vollie LaVont","Live Drag Shows","Big Prizes","Great Night Out"]);
   } else if (state === "missed") {
     if (h1) h1.innerHTML = `<span class="ne-h1-gold">Oops, sorry lover</span><span class="ne-h1-pink">maybe next time<span class="dot">.</span></span>`;
-    if (sub) sub.textContent = "You missed the discount — but you can still grab tickets to these fabulous shows below";
+    if (sub) sub.textContent = "You missed the discount, but you can still grab tickets to these fabulous shows below";
     if (eyebrow) eyebrow.textContent = "✨ Plenty more on sale, darling ✨";
     buildTicker(["Drag Bingo at the Bowlo","Hosted by Vollie LaVont","Live Drag Shows","Tickets On Sale","Fabulous Entertainment"]);
   } else if (state === "upcoming") {
@@ -863,7 +863,7 @@ function renderNextEvent() {
   const urgency = document.getElementById("ne-urgency");
   if (!contentEl) return;
 
-  // Reset urgency bar — only the active state re-shows it
+  // Reset urgency bar, only the active state re-shows it
   if (urgency) urgency.classList.remove("visible");
 
   const now = getQldNow();
@@ -882,7 +882,7 @@ function renderNextEvent() {
     .sort((a, b) => a.showDate.localeCompare(b.showDate));
 
   // currentEventShow: a show happening TODAY (this triggers "show day mode").
-  // Doesn't need a discount URL — its job is just to tell us people are at a show right now.
+  // Doesn't need a discount URL, its job is just to tell us people are at a show right now.
   const currentEventShow = sortedShows.find(s => {
     if (!showIsVisible(s)) return false;
     return s.showDate === todayStr;
@@ -900,7 +900,7 @@ function renderNextEvent() {
     s.discountUrl && s.discountUrl.trim() && showIsVisible(s) && s.showDate > todayStr
   );
 
-  // upcomingShows: every visible FUTURE show (today excluded — people are already there).
+  // upcomingShows: every visible FUTURE show (today excluded, people are already there).
   const upcomingShows = sortedShows.filter(s => {
     if (!showIsVisible(s)) return false;
     return s.showDate > todayStr;
@@ -916,15 +916,15 @@ function renderNextEvent() {
     suShow.innerHTML = '<option value="">Select the show you attended...</option>' +
       shows.filter(showIsVisible).map(sh => {
         const d = sh.showDate ? formatShowDate(sh.showDate).dateDisplay : (sh.dayLabel + " " + sh.date);
-        return `<option value="${d} — ${sh.venue}">${d} — ${sh.venue}</option>`;
+        return `<option value="${d} - ${sh.venue}">${d} - ${sh.venue}</option>`;
       }).join("");
     const userShow = currentEventShow || recentEventShow;
     if (userShow) {
-      suShow.value = formatShowDate(userShow.showDate).dateDisplay + " — " + userShow.venue;
+      suShow.value = formatShowDate(userShow.showDate).dateDisplay + " - " + userShow.venue;
     }
   }
 
-  // Determine which state we're in (drives hero + countdown + urgency bar only —
+  // Determine which state we're in (drives hero + countdown + urgency bar only,
   // the body of the page is always the same: a list of upcoming shows).
   const todayStart12pm = new Date(todayStr + "T12:00:00+10:00");
   const todayMidnight = new Date(todayStr + "T23:59:59+10:00");
@@ -953,12 +953,12 @@ function renderNextEvent() {
   let signedUp = false;
   try { signedUp = localStorage.getItem("ne_signedup") === "true"; } catch(e) {}
 
-  // No future shows at all — show empty state
+  // No future shows at all, show empty state
   if (upcomingShows.length === 0) {
     contentEl.innerHTML = `
       <div class="ne-coming-soon">
         <h2>Coming soon<span style="color:var(--pink)">.</span></h2>
-        <p>No upcoming shows right now — check back soon!</p>
+        <p>No upcoming shows right now, check back soon!</p>
         <a href="https://www.gflamtouring.com.au/drag-bingo-at-the-bowlo" class="ne-cta">View All Shows</a>
       </div>`;
     return;
@@ -974,7 +974,7 @@ function renderNextEvent() {
     activeBanner = `
       <div class="ne-discount-banner">
         <div class="ne-discount-badge">$5 off every ticket</div>
-        <p class="ne-discount-desc">Tonight only — claim your discount before midnight!</p>
+        <p class="ne-discount-desc">Tonight only, claim your discount before midnight!</p>
         <p class="ne-discount-expires">&#9200; Offer expires at midnight Queensland time</p>
         <div class="ne-countdown" id="ne-countdown"></div>
         ${unlockBtn}
@@ -1118,7 +1118,7 @@ async function submitSignup() {
   document.getElementById("signup-form-wrap").style.display = "none";
   document.getElementById("signup-success").style.display = "block";
   if (window._signupContext === "card" && window._pendingShowUrl) {
-    // User clicked a specific show's "Unlock Discount" button — link straight there
+    // User clicked a specific show's "Unlock Discount" button, link straight there
     document.getElementById("signup-discount-link").innerHTML =
       `<a href="${window._pendingShowUrl}" target="_blank" class="ne-cta" style="margin-top:8px">Get $5 Off Tickets &#8594;</a>
        <p style="color:rgba(255,255,255,0.6);margin-top:12px;font-size:13px">All other shows below are now discounted too &#127881;</p>`;
@@ -1299,9 +1299,9 @@ function closeSignup() {
 function openSignup(context, specificDiscountUrl) {
   const sm = document.getElementById("signup-modal");
   if (!sm) return;
-  // context: "single" (active/soft state — show single discount link) or
-  //          "list" (list view — unlock discounts across all show cards) or
-  //          "card" (clicked from a specific card — redirect to that show's discount)
+  // context: "single" (active/soft state, show single discount link) or
+  //          "list" (list view, unlock discounts across all show cards) or
+  //          "card" (clicked from a specific card, redirect to that show's discount)
   window._signupContext = context || "single";
   window._pendingShowUrl = specificDiscountUrl || null;
   // Tweak modal copy based on context
