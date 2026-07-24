@@ -412,9 +412,15 @@
   .vps-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 9px var(--pink)}
   @media(prefers-reduced-motion:no-preference){
     .vps-dot{animation:vps-pulse 2.4s ease-in-out infinite}
-    .vps-ball{animation:vps-ballglow 2.8s ease-in-out infinite}
+    .vps-ball{animation:vps-ballreveal 1.9s cubic-bezier(.16,1,.3,1) both,vps-ballglow 2.8s ease-in-out 1.9s infinite}
   }
   @keyframes vps-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes vps-ballreveal{
+    0%{transform:scale(.35);opacity:0}
+    32%{transform:scale(2.25);opacity:1}
+    58%{transform:scale(2.25);opacity:1}
+    100%{transform:scale(1);opacity:1}
+  }
   @keyframes vps-ballglow{
     0%,100%{box-shadow:0 0 40px -6px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
     50%{box-shadow:0 0 60px 0 var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
@@ -430,6 +436,17 @@
   }
   .vps-ball .vps-lt{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.6vw,15px);letter-spacing:.14em;opacity:.9;line-height:1}
   .vps-ball .vps-nm{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(32px,6vw,62px);line-height:.9;letter-spacing:.01em}
+  .vps-ball-chip{
+    font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.5vw,15px);
+    letter-spacing:.04em;color:#fff;line-height:1;
+    padding:5px 11px;border-radius:999px;display:inline-flex;align-items:center;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 55%,var(--pink-deep));
+    box-shadow:0 0 16px -5px var(--glow),inset 0 -3px 8px rgba(0,0,0,.3);white-space:nowrap;
+  }
+  .vps-ball-prev{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6px}
+  .vps-tv-recent{display:flex;align-items:center;gap:7px;z-index:1;flex-wrap:wrap}
+  .vps-tv-recent .vps-ball-chip{font-size:clamp(9px,1.2vw,12px);padding:3px 9px}
+  .vps-chip-lbl{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
   .vps-board{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;align-content:center;min-width:0}
   .vps-board .vps-col{display:flex;flex-direction:column;gap:3px}
   .vps-board .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:clamp(10px,1.4vw,13px);letter-spacing:.06em;padding-bottom:2px}
@@ -484,13 +501,13 @@
     background:rgba(255,255,255,.04);color:#e8e8ec;position:relative;
   }
   .vps-pcell.vps-free{font-family:'Anton',sans-serif;font-size:8.5px;font-weight:400;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em}
-  .vps-pcell.vps-daub{color:#fff;font-weight:700}
-  .vps-pcell.vps-daub::after{
+  .vps-pcell.vps-marked{color:#fff;font-weight:700}
+  .vps-pcell.vps-marked::after{
     content:"";position:absolute;inset:4px;border-radius:50%;
     background:linear-gradient(180deg,var(--pink),var(--pink-deep));
     box-shadow:0 0 10px -1px var(--glow);z-index:0;
   }
-  .vps-pcell.vps-daub span{position:relative;z-index:1}
+  .vps-pcell.vps-marked span{position:relative;z-index:1}
   .vps-draw-chip{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;padding:2px}
   .vps-draw-chip b{color:#fff}
   .vps-bingo-btn{
@@ -540,6 +557,18 @@
   .vps-ghost{font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:9px;border:1px solid var(--line-2);color:var(--muted);background:transparent;cursor:default}
   .vps-con-foot .vps-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
   .vps-con-foot .vps-count b{color:#fff}
+
+  /* ---- Host tablet frame ---- */
+  .vps-tablet{
+    background:#050506;border:1px solid var(--line-2);border-radius:20px;
+    padding:22px 16px 16px;position:relative;
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 44px -30px var(--glow);
+  }
+  .vps-tablet::before{
+    content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);
+    width:6px;height:6px;border-radius:50%;background:#17171b;
+    box-shadow:inset 0 0 3px rgba(0,0,0,.9),0 0 0 2px #0b0b0d;
+  }
 
   /* ---- Admin / finance ---- */
   .vps-browser{
@@ -775,7 +804,7 @@
 <section class="sec" id="preview">
   <div class="wrap">
     <div class="sec-head">
-      <div class="label">The whole night, four screens</div>
+      <div class="label">The whole night, three screens</div>
       <h2 class="sec-title vps-balance">See a night on VenuePlay</h2>
       <p class="sec-sub">One platform drives every screen in the room. Here's what each one is doing while the drinks keep moving.</p>
     </div>
@@ -788,8 +817,12 @@
         <div class="vps-tv">
           <div class="vps-tv-top">
             <span class="vps-tv-venue">Tugun Bowls Club · Tuesday Bingo</span>
+            <span class="vps-tv-recent">
+              <span class="vps-chip-lbl">Last calls</span>
+              <span class="vps-ball-chip">B 7</span>
+              <span class="vps-ball-chip">O 68</span>
+            </span>
             <span style="display:flex;gap:8px;flex-wrap:wrap">
-              <span class="vps-pill vps-live"><span class="vps-dot"></span>62 playing</span>
               <span class="vps-pill vps-prize">One line · $50 bar tab</span>
             </span>
           </div>
@@ -797,6 +830,10 @@
             <div class="vps-ball-col">
               <div class="vps-ball-idx">Ball 17 of 75</div>
               <div class="vps-ball"><span class="vps-lt">G</span><span class="vps-nm">54</span></div>
+              <div class="vps-ball-prev">
+                <span class="vps-ball-chip">B 7</span>
+                <span class="vps-ball-chip">O 68</span>
+              </div>
             </div>
             <div class="vps-board" id="vps-board"></div>
           </div>
@@ -825,15 +862,16 @@
               </span>
               <span class="vps-v">Tugun Bowls</span>
             </div>
-            <div class="vps-ticker">Last call&nbsp;<b>G 54</b>&nbsp;· daub it if you've got it</div>
+            <div class="vps-ticker">Last call&nbsp;<b>G 54</b>&nbsp;· mark it if you've got it</div>
             <div class="vps-pcard" id="vps-pcard"></div>
             <div class="vps-draw-chip">In the members draw · ticket <b>#47</b></div>
             <button class="vps-bingo-btn" type="button" tabindex="-1" aria-hidden="true">BINGO!</button>
           </div>
-          <p class="vps-caption">Scan, get a card, tap to daub. <b>No app, no login</b>, so more of the room actually joins in.</p>
+          <p class="vps-caption">Scan, get a card, tap to mark. <b>No app, no login</b>, so more of the room actually joins in.</p>
         </div>
         <div>
-          <div class="vps-device-label">The host · your bar staff · tablet or laptop</div>
+          <div class="vps-device-label">The host · your bar staff · on a tablet</div>
+          <div class="vps-tablet">
           <div class="vps-console">
             <div class="vps-con-top">
               <div class="vps-g">Game 2 · One line<small>Prize: $50 bar tab</small></div>
@@ -867,42 +905,9 @@
               <span class="vps-count"><b>62</b> in the room</span>
             </div>
           </div>
+          </div>
           <p class="vps-caption">One tap to draw, and when someone calls bingo the card is <b>already checked against the balls drawn</b>. You confirm, they collect.</p>
         </div>
-      </div>
-
-      <!-- Admin / finance -->
-      <div>
-        <div class="vps-device-label">Admin &amp; finance · the numbers side, sorted</div>
-        <div class="vps-browser">
-          <div class="vps-bbar"><i></i><i></i><i></i><span class="vps-url">venueplay.com.au/admin</span></div>
-          <div class="vps-admin">
-            <div class="vps-admin-h"><span class="vps-t">VenuePlay HQ</span><span class="vps-pill">September 2026</span></div>
-            <div class="vps-tiles">
-              <div class="vps-tile"><div class="vps-l">Founding spots</div><div class="vps-n vps-pink">63<small>/100</small></div></div>
-              <div class="vps-tile"><div class="vps-l">Active venues</div><div class="vps-n">41</div></div>
-              <div class="vps-tile"><div class="vps-l">Monthly recurring</div><div class="vps-n">$7.4<small>k</small></div></div>
-              <div class="vps-tile"><div class="vps-l">Big-night add-ons</div><div class="vps-n">$188</div></div>
-            </div>
-            <div class="vps-inv">
-              <div class="vps-inv-h">
-                <div class="vps-t">Australian Venue Co<small>Group invoice · September · 3 venues</small></div>
-                <span class="vps-pend">Pending approval</span>
-              </div>
-              <div class="vps-tbl-scroll">
-                <table class="vps-tbl">
-                  <thead><tr><th>Venue</th><th>Players</th><th>Standard</th><th>Discount</th><th>Add-ons</th><th>Total</th></tr></thead>
-                  <tbody id="vps-invrows"></tbody>
-                </table>
-              </div>
-              <div class="vps-inv-act">
-                <button class="vps-ok" type="button" tabindex="-1" aria-hidden="true">Approve &amp; send</button>
-                <button class="vps-ed" type="button" tabindex="-1" aria-hidden="true">Edit invoice</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <p class="vps-caption">The books look after themselves: <b>per-player pricing, itemised</b>, with group invoices built line by line and approved before they send.</p>
       </div>
 
     </div>
@@ -1408,7 +1413,7 @@
     });
   }
 
-  /* ---- Player card: fixed 5x5, FREE centre, called numbers daubed ---- */
+  /* ---- Player card: fixed 5x5, FREE centre, called numbers marked ---- */
   var pcard = document.getElementById('vps-pcard');
   if (pcard) {
     'BINGO'.split('').forEach(function(L){
@@ -1430,7 +1435,7 @@
           cell.className = 'vps-pcell vps-free';
           cell.textContent = 'FREE';
         } else {
-          cell.className = 'vps-pcell' + (called[num] ? ' vps-daub' : '');
+          cell.className = 'vps-pcell' + (called[num] ? ' vps-marked' : '');
           var sp = document.createElement('span'); sp.textContent = num; cell.appendChild(sp);
         }
         pcard.appendChild(cell);
