@@ -253,6 +253,10 @@
   #vp-submit{width:100%;margin-top:20px;padding:16px;font-size:16px}
   #vp-submit:disabled{opacity:.6;cursor:default;transform:none}
   .form-fine{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);text-align:center;margin-top:16px}
+  .consent{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+  .consent .ck{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--muted);line-height:1.45;cursor:pointer}
+  .consent .ck input{margin-top:1px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
+  .consent .ck a{color:var(--pink)}
 
   .success{display:none;text-align:center;padding:16px 0}
   .success.show{display:block}
@@ -1066,6 +1070,10 @@
           <p class="estimate" id="vp-estimate">Enter your max players for a price estimate.</p>
           <p class="overage-note">Set your usual max. If a night runs bigger, the extra players are added at the same per-player monthly rate, and your plan just grows to match what you use.</p>
           <p class="group-note" id="vp-group-note" style="display:none">You're running more than two venues, so this one comes to us directly. Leave your details and we'll call you within one business day to set your group up with pricing to match. No card needed now.</p>
+          <div class="consent">
+            <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+            <label class="ck"><input type="checkbox" id="vp-marketing" checked> <span>Send me VenuePlay news, tips and launch updates. You can unsubscribe anytime.</span></label>
+          </div>
           <button class="btn btn-primary" id="vp-submit" type="button">Hold my spot, add card</button>
           <p class="form-err" id="vp-err"></p>
           <p class="form-fine" id="vp-fine">Secured by Stripe · first month free from launch · cancel anytime before your first payment</p>
@@ -1164,7 +1172,7 @@
       <p class="powered" style="margin-top:14px">Powered by <b>Gflam Touring</b></p>
     </div>
     <div class="foot-meta">
-      <a href="#modes">Game modes</a> · <a href="#faq">FAQs</a> · <a href="#contact">Contact</a> · <a href="/privacy">Privacy</a><br>
+      <a href="#modes">Game modes</a> · <a href="#faq">FAQs</a> · <a href="#contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a><br>
       <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a><br>
       &copy; <span id="vp-year"></span> VenuePlay
     </div>
@@ -1272,6 +1280,11 @@
     if (!venue) { showErr('Please enter your venue name.'); return; }
     if (email.indexOf('@') === -1) { showErr('Please enter a valid contact email.'); return; }
 
+    var consentEl = document.getElementById('vp-consent');
+    if (consentEl && !consentEl.checked) { showErr('Please agree to the Terms and Privacy Policy to continue.'); return; }
+    var marketingEl = document.getElementById('vp-marketing');
+    var marketingOptIn = marketingEl ? marketingEl.checked : false;
+
     /* More than two venues is a group: route to a call, not self-serve checkout. */
     if (venues > 2) {
       if (!workerReady) { showErr('Group enquiries are not connected yet. For now, email hello@venueplay.com.au and we will set your group up.'); return; }
@@ -1283,7 +1296,8 @@
         + 'Mobile: ' + (mobile || '-') + '\n'
         + 'Postcode: ' + (postcode || '-') + '\n'
         + 'Max players per session: ' + (seats || '-') + '\n'
-        + 'Plan interest: ' + plan;
+        + 'Plan interest: ' + plan + '\n'
+        + 'Marketing opt-in: ' + (marketingOptIn ? 'yes' : 'no');
       fetch(VP_WORKER + '/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1312,7 +1326,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ venue: venue, email: email, mobile: mobile, postcode: postcode, seats: seats, plan: plan, venues: venues })
+      body: JSON.stringify({ venue: venue, email: email, mobile: mobile, postcode: postcode, seats: seats, plan: plan, venues: venues, marketing_opt_in: marketingOptIn })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
