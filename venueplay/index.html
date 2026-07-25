@@ -697,6 +697,14 @@
 
   /* VenuePlay neon hollow-triangle logo */
   .logo svg,.foot-brand svg,.vps-mini-mark svg{overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9)) drop-shadow(0 0 6px rgba(255,31,142,.45))}
+
+  /* Interactive demo teaser (replaces the static preview panels) */
+  .vps-explore{display:flex;flex-direction:column;align-items:center;text-align:center;gap:15px;max-width:640px;margin:0 auto;padding:clamp(30px,5vw,54px) clamp(20px,4vw,40px);border:1px solid var(--line-2);border-radius:22px;background:radial-gradient(120% 100% at 50% 0%,rgba(255,31,142,.1),rgba(18,18,20,.55));box-shadow:0 40px 90px -40px rgba(255,31,142,.4);text-decoration:none;transition:transform .18s ease,border-color .18s ease}
+  .vps-explore:hover{transform:translateY(-4px);border-color:rgba(255,31,142,.5)}
+  .vps-explore-eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);display:inline-flex;align-items:center;gap:8px}
+  .vps-explore-title{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(28px,5vw,44px);line-height:1.02;letter-spacing:.01em}
+  .vps-explore-sub{color:var(--muted);font-size:clamp(14px,2vw,17px);line-height:1.55;max-width:46ch}
+  .vps-explore-btn{display:inline-flex;align-items:center;gap:9px;margin-top:6px;background:linear-gradient(180deg,var(--pink),var(--pink-deep));color:#12030b;font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;padding:14px 24px;border-radius:12px;box-shadow:0 0 34px -8px var(--glow)}
 </style>
 </head>
 <body>
@@ -802,111 +810,17 @@
 <section class="sec" id="preview">
   <div class="wrap">
     <div class="sec-head">
-      <div class="label">The whole night, three screens</div>
+      <div class="label">The whole night, one tap</div>
       <h2 class="sec-title vps-balance">See a night on VenuePlay</h2>
-      <p class="sec-sub">One platform drives every screen in the room. Here's what each one is doing while the drinks keep moving.</p>
+      <p class="sec-sub">Open the interactive demo, tap the big screen, the host and a player, and flick between all six formats.</p>
     </div>
 
-    <div class="vps-stage">
-
-      <!-- TV -->
-      <div>
-        <div class="vps-device-label">The big screen · TV or projector · what the room sees</div>
-        <div class="vps-tv">
-          <div class="vps-tv-top">
-            <span class="vps-tv-venue">Tugun Bowls Club · Tuesday Bingo</span>
-            <span class="vps-tv-recent">
-              <span class="vps-chip-lbl">Last calls</span>
-              <span class="vps-ball-chip">B 7</span>
-              <span class="vps-ball-chip">O 68</span>
-            </span>
-            <span style="display:flex;gap:8px;flex-wrap:wrap">
-              <span class="vps-pill vps-prize">One line · $50 bar tab</span>
-            </span>
-          </div>
-          <div class="vps-tv-body">
-            <div class="vps-ball-col">
-              <div class="vps-ball-idx">Ball 17 of 75</div>
-              <div class="vps-ball"><span class="vps-lt">G</span><span class="vps-nm">54</span></div>
-              <div class="vps-ball-prev">
-                <span class="vps-ball-chip">B 7</span>
-                <span class="vps-ball-chip">O 68</span>
-              </div>
-            </div>
-            <div class="vps-board" id="vps-board"></div>
-          </div>
-          <div class="vps-tv-foot">
-            <div class="vps-qr"><canvas id="vps-qr" width="46" height="46"></canvas></div>
-            <div class="vps-join">
-              <div class="vps-l">Join from your phone</div>
-              <div class="vps-u">venueplay.com.au/play</div>
-            </div>
-            <div class="vps-code">TQ7M4C</div>
-          </div>
-        </div>
-        <p class="vps-caption">It <b>plays on the screen you've already got</b>: the ball just called, the full board, and the join code so latecomers jump in. Safe to leave up all night.</p>
-      </div>
-
-      <!-- Phone + host console -->
-      <div class="vps-stage-row">
-        <div>
-          <div class="vps-device-label">The player · their own phone · no app</div>
-          <div class="vps-phone">
-            <div class="vps-notch"></div>
-            <div class="vps-ph-head">
-              <span class="vps-mini-mark">
-                <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>
-                <span class="vps-w">VenuePlay</span>
-              </span>
-              <span class="vps-v">Tugun Bowls</span>
-            </div>
-            <div class="vps-ticker">Last call&nbsp;<b>G 54</b>&nbsp;· mark it if you've got it</div>
-            <div class="vps-pcard" id="vps-pcard"></div>
-            <div class="vps-draw-chip">In the members draw · ticket <b>#47</b></div>
-            <button class="vps-bingo-btn" type="button" tabindex="-1" aria-hidden="true">BINGO!</button>
-          </div>
-          <p class="vps-caption">Scan, get a card, tap to mark. <b>No app, no login</b>, so more of the room actually joins in.</p>
-        </div>
-        <div>
-          <div class="vps-device-label">The host · your bar staff</div>
-          <div class="vps-console">
-            <div class="vps-con-top">
-              <div class="vps-g">Game 2 · One line<small>Prize: $50 bar tab</small></div>
-              <span class="vps-pill vps-live"><span class="vps-dot"></span>Running</span>
-            </div>
-            <div class="vps-con-grid">
-              <div>
-                <button class="vps-next-ball" type="button" tabindex="-1" aria-hidden="true">
-                  <span class="vps-k">Next ball</span>
-                  <span class="vps-s" style="display:block">17 of 75 called</span>
-                </button>
-                <div class="vps-recent">
-                  <div class="vps-rl">Recent</div>
-                  <div class="vps-balls"><span class="vps-rb vps-cur">G54</span><span class="vps-rb">B7</span><span class="vps-rb">O68</span><span class="vps-rb">N31</span><span class="vps-rb">I23</span></div>
-                </div>
-              </div>
-              <div class="vps-claim">
-                <div class="vps-cl">Claim to check</div>
-                <div class="vps-who">Card 27 · Marta</div>
-                <div class="vps-verdict"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#2FD27A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg> Valid line, verified</div>
-                <div class="vps-btns">
-                  <button class="vps-cbtn vps-ok" type="button" tabindex="-1" aria-hidden="true">Confirm winner</button>
-                  <button class="vps-cbtn vps-no" type="button" tabindex="-1" aria-hidden="true">Reject</button>
-                </div>
-              </div>
-            </div>
-            <div class="vps-con-foot">
-              <button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Pause</button>
-              <button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">End game</button>
-              <button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Start raffle</button>
-              <span class="vps-count"><b>62</b> in the room</span>
-            </div>
-          </div>
-          <p class="vps-caption">One tap to draw, and when someone calls bingo the card is <b>already checked against the balls drawn</b>. You confirm, they collect.</p>
-        </div>
-      </div>
-
-    </div>
+    <a class="vps-explore" href="/see-a-night" aria-label="Open the interactive VenuePlay demo">
+      <span class="vps-explore-eyebrow"><span class="vps-dot"></span>Interactive demo</span>
+      <span class="vps-explore-title">Tap through a real night</span>
+      <span class="vps-explore-sub">Open the big screen, the host's tablet and a player's phone, and switch between bingo, trivia, musical bingo, raffles, members draws and screen ads. Click anything.</span>
+      <span class="vps-explore-btn">See a night on VenuePlay <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="#12030b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
 
   </div>
 </section>

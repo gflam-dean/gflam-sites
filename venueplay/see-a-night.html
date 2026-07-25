@@ -1,0 +1,2779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>See a night on VenuePlay</title>
+<meta name="description" content="Tap through a real night on VenuePlay: the big screen, the host and a player, across bingo, trivia, musical bingo, raffles, members draws and screen ads.">
+<link rel="canonical" href="https://www.venueplay.com.au/see-a-night">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='%23FF1F8E'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<style>
+  :root {
+    --stage: #0A0A0B;
+    --panel: #121214;
+    --panel-2: #17171B;
+    --pink: #FF1F8E;
+    --pink-deep: #C70F69;
+    --white: #FFFFFF;
+    --grey: #9A9AA4;
+    --line: rgba(255,255,255,0.08);
+    /* vars used by the real .vps-* mockups copied from the live site */
+    --ink: #0A0A0B;
+    --ink-2: #121214;
+    --ink-3: #17171B;
+    --muted: #9A9AA4;
+    --muted-2: #6E6E78;
+    --line-2: rgba(255,255,255,0.14);
+    --glow: rgba(255,31,142,0.55);
+  }
+
+  * { box-sizing: border-box; }
+
+  .vp-wrap {
+    background: var(--stage);
+    color: var(--white);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100%;
+    padding: clamp(18px, 4vw, 48px);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .vp-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+
+  .vp-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--pink);
+    background: rgba(255,31,142,0.08);
+    border: 1px solid rgba(255,31,142,0.28);
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+
+  .vp-eyebrow .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--pink);
+    box-shadow: 0 0 8px 1px var(--pink);
+  }
+
+  .vp-h1 {
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+    line-height: 1.08;
+  }
+  .vp-h1 .accent { color: var(--pink); }
+
+  .vp-intro {
+    font-size: clamp(15px, 2.2vw, 18px);
+    color: var(--grey);
+    max-width: 640px;
+    margin: 0 0 8px;
+  }
+
+  .vp-note {
+    font-size: 12.5px;
+    color: var(--grey);
+    opacity: 0.85;
+    margin: 0 0 26px;
+  }
+
+  /* Scene */
+  .vp-scene {
+    position: relative;
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 80px -30px rgba(255,31,142,0.35), 0 0 0 1px rgba(255,255,255,0.02) inset;
+  }
+
+  .vp-scene svg { display: block; width: 100%; height: auto; }
+
+  /* Hotspots */
+  .vp-hotspot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 3;
+    transition: transform 0.18s ease;
+  }
+  .vp-hotspot:focus-visible { outline: 2px solid var(--white); outline-offset: 6px; border-radius: 8px; }
+  .vp-hotspot:hover { transform: translate(-50%, -50%) scale(1.12); }
+
+  .vp-ring {
+    position: relative;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: rgba(255,31,142,0.16);
+    border: 2px solid var(--pink);
+    display: grid;
+    place-items: center;
+  }
+  .vp-ring::before, .vp-ring::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid var(--pink);
+    animation: vp-pulse 2.2s ease-out infinite;
+  }
+  .vp-ring::after { animation-delay: 1.1s; }
+  .vp-ring .core {
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--pink);
+    box-shadow: 0 0 12px 2px var(--pink);
+  }
+  @keyframes vp-pulse {
+    0%   { transform: scale(1); opacity: 0.9; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
+  .vp-tag {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--white);
+    background: rgba(10,10,11,0.82);
+    border: 1px solid rgba(255,31,142,0.4);
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Modal */
+  .vp-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(5,5,6,0.72);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 50;
+  }
+  .vp-backdrop.open { display: flex; }
+
+  .vp-modal {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel));
+    border: 1px solid rgba(255,31,142,0.28);
+    border-radius: 20px;
+    box-shadow: 0 40px 90px -20px rgba(255,31,142,0.45);
+    padding: 20px;
+    animation: vp-pop 0.22s ease;
+  }
+  /* Each modal is sized to the device it frames */
+  .vp-modal.is-tv { max-width: 820px; }
+  .vp-modal.is-host { max-width: 560px; }
+  .vp-modal.is-player { max-width: 340px; }
+  @keyframes vp-pop {
+    from { transform: translateY(14px) scale(0.98); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+  }
+
+  .vp-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .vp-modal-title {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pink);
+    font-weight: 700;
+  }
+  .vp-close {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--white);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .vp-close:hover { border-color: var(--pink); color: var(--pink); }
+
+  @media (max-width: 480px) {
+    .vp-tag { font-size: 10.5px; padding: 3px 8px; }
+    .vp-ring { width: 28px; height: 28px; }
+  }
+
+  /* ============================================================
+     REAL preview mockups, copied verbatim from the live
+     VenuePlay site (sites/venueplay/index.html). These use the
+     .vps- prefix and do not clash with the .vp- prototype styles.
+     Brand display fonts (Anton, Manrope, JetBrains Mono, Hanken
+     Grotesk) fall back to system fonts in this preview.
+     ============================================================ */
+
+  /* ---- TV ---- */
+  .vps-tv{
+    min-height:300px;border-radius:14px;
+    background:linear-gradient(160deg,#101013,#0b0b0d);
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506,0 0 60px -24px var(--glow);
+    padding:clamp(12px,2.4vw,22px);
+    display:flex;flex-direction:column;gap:clamp(8px,1.6vw,14px);
+    position:relative;overflow:hidden;
+  }
+  .vps-tv::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.05),transparent 55%);
+    pointer-events:none;
+  }
+  .vps-tv-top{display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:1;flex-wrap:wrap}
+  .vps-tv-venue{font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.4vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .vps-pill{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);
+    letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);
+    color:var(--muted);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  }
+  .vps-pill.vps-live{color:var(--pink);border-color:rgba(255,31,142,.45)}
+  .vps-pill.vps-prize{color:#fff;background:rgba(255,31,142,.12);border-color:rgba(255,31,142,.4)}
+  .vps-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 9px var(--pink)}
+  @media(prefers-reduced-motion:no-preference){
+    .vps-dot{animation:vps-pulse 2.4s ease-in-out infinite}
+    .vps-tv.vps-inview .vps-ball{animation:vps-ballreveal 1.9s cubic-bezier(.16,1,.3,1) both,vps-ballglow 2.8s ease-in-out 1.9s infinite}
+  }
+  @keyframes vps-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes vps-ballreveal{
+    0%{transform:scale(.35);opacity:0}
+    32%{transform:scale(2.25);opacity:1}
+    58%{transform:scale(2.25);opacity:1}
+    100%{transform:scale(1);opacity:1}
+  }
+  @keyframes vps-ballglow{
+    0%,100%{box-shadow:0 0 40px -6px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
+    50%{box-shadow:0 0 60px 0 var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
+  }
+  .vps-tv-body{display:grid;grid-template-columns:auto 1fr;gap:clamp(12px,2.6vw,24px);flex:1;z-index:1;min-height:0;align-items:center}
+  .vps-ball-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .vps-ball-idx{font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-ball{
+    width:clamp(78px,13vw,148px);height:clamp(78px,13vw,148px);border-radius:50%;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 45%,var(--pink-deep));
+    box-shadow:0 0 46px -4px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+  }
+  .vps-ball .vps-lt{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.6vw,15px);letter-spacing:.14em;opacity:.9;line-height:1}
+  .vps-ball .vps-nm{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(32px,6vw,62px);line-height:.9;letter-spacing:.01em}
+  .vps-ball-chip{
+    font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.5vw,15px);
+    letter-spacing:.04em;color:#fff;line-height:1;
+    padding:5px 11px;border-radius:999px;display:inline-flex;align-items:center;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 55%,var(--pink-deep));
+    box-shadow:0 0 16px -5px var(--glow),inset 0 -3px 8px rgba(0,0,0,.3);white-space:nowrap;
+  }
+  .vps-ball-prev{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6px}
+  .vps-tv-recent{display:flex;align-items:center;gap:7px;z-index:1;flex-wrap:wrap}
+  .vps-tv-recent .vps-ball-chip{font-size:clamp(9px,1.2vw,12px);padding:3px 9px}
+  .vps-chip-lbl{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;align-content:center;min-width:0}
+  .vps-board .vps-col{display:flex;flex-direction:column;gap:4px}
+  .vps-board .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:clamp(12px,1.8vw,16px);letter-spacing:.06em;padding-bottom:3px}
+  .vps-cell{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.3vw,12px);
+    text-align:center;padding:3px 0;border-radius:5px;
+    color:var(--muted-2);background:rgba(255,255,255,.03);
+  }
+  .vps-cell.vps-on{
+    color:#fff;background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    box-shadow:0 0 10px -2px var(--glow);font-weight:600;
+  }
+  .vps-tv-foot{
+    display:flex;align-items:center;gap:clamp(10px,2vw,16px);
+    background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:11px;padding:clamp(8px,1.6vw,12px) clamp(10px,2vw,16px);z-index:1;
+  }
+  .vps-qr{width:clamp(40px,6vw,56px);height:clamp(40px,6vw,56px);border-radius:8px;background:#fff;padding:4px;flex:none}
+  .vps-qr canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+  .vps-join{flex:1;min-width:0}
+  .vps-join .vps-l{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10.5px);letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-join .vps-u{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(11px,1.6vw,15px);margin-top:2px;color:#fff;display:flex;align-items:center;gap:7px}
+  .vps-u-mark{width:11px;height:13px;flex:none;overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9))}
+  .vps-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(16px,3vw,28px);letter-spacing:.14em;color:var(--pink);text-shadow:0 0 18px var(--glow)}
+
+  /* ---- Phone ---- */
+  .vps-phone{
+    width:270px;max-width:100%;margin:0 auto;aspect-ratio:9/19;border-radius:34px;background:#0d0d10;
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 0 8px #050506,0 0 50px -24px var(--glow);
+    padding:14px 13px;display:flex;flex-direction:column;gap:10px;position:relative;
+  }
+  .vps-notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:92px;height:21px;background:#050506;border-radius:0 0 13px 13px;z-index:3}
+  .vps-ph-head{display:flex;align-items:center;justify-content:space-between;padding-top:15px}
+  .vps-ph-head .vps-v{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .vps-mini-mark{display:flex;align-items:center;gap:6px}
+  .vps-mini-mark svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
+  .vps-mini-mark .vps-w{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;letter-spacing:-.02em}
+  .vps-ticker{
+    background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.32);border-radius:9px;
+    padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#fff;
+    display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;
+  }
+  .vps-ticker b{color:var(--pink)}
+  .vps-pcard{
+    background:var(--ink-2);border:1px solid var(--line);border-radius:13px;
+    padding:10px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;
+  }
+  .vps-pcard .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:15px;padding-bottom:2px}
+  .vps-pcell{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:7px;
+    background:rgba(255,255,255,.04);color:#e8e8ec;position:relative;
+  }
+  .vps-pcell.vps-free{font-family:'Anton',sans-serif;font-size:8.5px;font-weight:400;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em}
+  .vps-pcell.vps-marked{color:#fff;font-weight:700}
+  .vps-pcell.vps-marked::after{
+    content:"";position:absolute;inset:4px;border-radius:50%;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    box-shadow:0 0 10px -1px var(--glow);z-index:0;
+  }
+  .vps-pcell.vps-marked span{position:relative;z-index:1}
+  .vps-draw-chip{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;padding:2px}
+  .vps-draw-chip b{color:#fff}
+  .vps-bingo-btn{
+    margin-top:auto;background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    color:var(--ink);font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    letter-spacing:.06em;font-size:20px;border:0;border-radius:13px;padding:14px;
+    box-shadow:0 0 30px -6px var(--glow);cursor:default;
+  }
+
+  /* ---- Host console ---- */
+  .vps-console{
+    border-radius:14px;background:linear-gradient(160deg,#101013,#0b0b0d);
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506;
+    padding:18px;display:flex;flex-direction:column;gap:14px;
+  }
+  .vps-con-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:13px}
+  .vps-con-brand{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .vps-con-brand .vps-mini-mark{display:flex;align-items:center;gap:6px}
+  .vps-con-brand .vps-mini-mark svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
+  .vps-con-brand .vps-mini-mark .vps-w{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;letter-spacing:-.02em}
+  .vps-con-venue{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .vps-con-top .vps-g{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:16px;letter-spacing:.02em}
+  .vps-con-top .vps-g small{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted-2);text-transform:none;margin-top:4px}
+  .vps-con-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+  .vps-next-ball{
+    display:block;width:100%;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    border:0;border-radius:12px;color:var(--ink);padding:22px 14px;cursor:default;
+    text-align:center;box-shadow:0 0 34px -8px var(--glow);
+  }
+  .vps-next-ball .vps-k{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:21px;letter-spacing:.04em}
+  .vps-next-ball .vps-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85}
+  .vps-recent{margin-top:12px}
+  .vps-recent .vps-rl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-bottom:7px}
+  .vps-recent .vps-balls{display:flex;gap:6px;flex-wrap:wrap}
+  .vps-rb{
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+    padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.05);
+    border:1px solid var(--line);color:#e8e8ec;
+  }
+  .vps-rb.vps-cur{background:rgba(255,31,142,.16);border-color:rgba(255,31,142,.45);color:#fff}
+  .vps-claim{background:var(--ink-3);border:1px solid rgba(47,210,122,.32);border-radius:12px;padding:14px}
+  .vps-claim .vps-cl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#2FD27A;margin-bottom:8px}
+  .vps-claim .vps-who{font-family:'Anton',sans-serif;font-weight:400;font-size:16px;text-transform:uppercase;letter-spacing:.02em}
+  .vps-claim .vps-verdict{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#2FD27A;margin-top:6px;display:flex;align-items:center;gap:6px}
+  .vps-claim .vps-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+  .vps-cbtn{font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;border:0;border-radius:9px;padding:10px 6px;cursor:default}
+  .vps-cbtn.vps-ok{background:#2FD27A;color:#04160c}
+  .vps-cbtn.vps-no{background:transparent;border:1px solid #FF5A6E;color:#FF5A6E}
+  .vps-con-foot{display:flex;gap:9px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:13px}
+  .vps-ghost{font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:9px;border:1px solid var(--line-2);color:var(--muted);background:transparent;cursor:default}
+  .vps-con-foot .vps-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+  .vps-con-foot .vps-count b{color:#fff}
+
+  /* ============================================================
+     Device frames: wrap each real mockup so it reads as a real
+     screen shown a different way, in proportion to a normal screen.
+     ============================================================ */
+
+  /* TV: thin dark bezel + little stand, landscape 16:9 */
+  .vp-tvframe{
+    width:100%;max-width:780px;margin:0 auto;
+    background:#050506;
+    border:1px solid #202024;
+    border-radius:18px;
+    padding:10px 10px 12px;
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.9);
+  }
+  .vp-tvframe .vps-tv{ width:100%; }
+  .vp-tvstand{
+    width:96px;height:8px;margin:12px auto 0;
+    border-radius:0 0 8px 8px;
+    background:linear-gradient(180deg,#26262b,#141417);
+  }
+
+  /* On a normal screen the TV reads as a widescreen 16:9 panel: the
+     whole game (top row, big current ball + full 75-number board,
+     footer with QR and join code) fits inside the frame without
+     spilling or overlapping. Cells shrink to fit, which is realistic
+     for a big screen. On phones the aspect-ratio is not applied, so
+     the TV grows to fit its content and the modal scrolls. */
+  @media (min-width:601px){
+    /* Big screen reads as a wide TV via the 820px modal, sized to its own
+       content so the footer (join code + venueplay.com.au/play) is NEVER
+       clipped. Bingo's 75-number board is compacted so the TV stays wide
+       (landscape) rather than going square. No forced aspect-ratio. */
+    .vp-modal.is-tv .vps-tv{ min-height:430px; }
+    /* Short TVs (e.g. raffle) still read as a widescreen: the body
+       area grows and centres its content within the min-height. */
+    .vp-modal.is-tv .vps-tv-body,
+    .vp-modal.is-tv .vpr-tv-body,
+    .vp-modal.is-tv .vpm-tv-body,
+    .vp-modal.is-tv .vpd-tv-body{ flex:1 1 auto; justify-content:center; }
+    .vp-modal.is-tv .vps-tv-foot{ flex:0 0 auto; }
+    .vp-modal.is-tv .vps-board{ gap:4px; }
+    .vp-modal.is-tv .vps-board .vps-col{ gap:2px; }
+    .vp-modal.is-tv .vps-board .vps-h{ font-size:13px; padding-bottom:2px; }
+    .vp-modal.is-tv .vps-cell{
+      height:15px; min-height:0; padding:0; line-height:1;
+      display:flex; align-items:center; justify-content:center; font-size:9px;
+    }
+  }
+
+  /* Host: iPad style bezel with a camera dot, landscape tablet */
+  .vp-tabletframe{
+    width:100%;max-width:520px;margin:0 auto;
+    background:#050506;
+    border:1px solid #202024;
+    border-radius:26px;
+    padding:34px 20px;
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,0.03) inset;
+    position:relative;
+  }
+  .vp-tabletframe::before{
+    content:"";position:absolute;top:15px;left:50%;transform:translateX(-50%);
+    width:8px;height:8px;border-radius:50%;
+    background:#1c1c20;box-shadow:inset 0 0 0 2px #2a2a30;
+  }
+  .vp-tabletframe .vps-console{ box-shadow:0 20px 50px -30px rgba(0,0,0,.9); }
+
+  /* Player phone frame keeps its own .vps-phone bezel */
+  .vp-phoneframe{ display:flex; justify-content:center; }
+
+  @media (max-width: 560px){
+    .vp-tabletframe{ padding:30px 14px; }
+    .vps-con-grid{ grid-template-columns:1fr; }
+  }
+
+  /* ============================================================
+     Game mode selector: dark pill button + pink accent dropdown.
+     ============================================================ */
+  .vp-modebar{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    margin:0 0 24px;
+  }
+  .vp-modebtn{
+    display:inline-flex;align-items:center;gap:12px;
+    font:inherit;font-size:14px;font-weight:600;color:var(--white);
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid rgba(255,31,142,0.38);
+    padding:11px 16px;border-radius:999px;cursor:pointer;
+    box-shadow:0 0 24px -12px var(--glow);
+  }
+  .vp-modebtn:hover{ border-color:var(--pink); }
+  .vp-modebtn:focus-visible{ outline:2px solid var(--white); outline-offset:3px; }
+  .vp-modebtn .vp-mode-accent{ color:var(--pink); }
+  .vp-modebtn .vp-caret{ transition:transform 0.2s ease; color:var(--pink); }
+  .vp-modebtn[aria-expanded="true"] .vp-caret{ transform:rotate(180deg); }
+
+  .vp-modemenu{
+    position:absolute;top:calc(100% + 8px);left:0;z-index:20;
+    min-width:240px;padding:6px;
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid rgba(255,31,142,0.3);
+    border-radius:14px;
+    box-shadow:0 30px 70px -24px rgba(0,0,0,0.85);
+    display:none;
+  }
+  .vp-modemenu.open{ display:block; }
+  .vp-modeopt{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    width:100%;text-align:left;font:inherit;font-size:14px;
+    color:var(--white);background:transparent;border:0;
+    padding:11px 12px;border-radius:9px;cursor:pointer;
+  }
+  .vp-modeopt:hover,.vp-modeopt:focus-visible{ background:rgba(255,31,142,0.12); outline:none; }
+  .vp-modeopt[aria-selected="true"]{ color:var(--pink); font-weight:600; }
+  .vp-modeopt .vp-check{ opacity:0; color:var(--pink); flex:none; }
+  .vp-modeopt[aria-selected="true"] .vp-check{ opacity:1; }
+
+  /* Per-mode placeholder card shown inside a real device frame. */
+  .vp-ph-stage{ align-items:center; justify-content:center; min-height:230px; }
+  .vp-ph-card{
+    position:relative;z-index:1;flex:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;text-align:center;padding:30px 20px;
+  }
+  .vp-ph-logo{
+    width:58px;height:58px;border-radius:16px;display:grid;place-items:center;
+    background:rgba(255,31,142,0.1);
+    border:1px solid rgba(255,31,142,0.42);
+    box-shadow:0 0 30px -8px var(--glow);
+  }
+  .vp-ph-logo svg{ display:block; filter:drop-shadow(0 0 6px var(--glow)); }
+  .vp-ph-mode{ font-size:22px;font-weight:800;letter-spacing:-0.01em;color:var(--white); }
+  .vp-ph-sub{ font-size:13px;color:var(--grey); }
+  .vp-ph-badge{
+    font-size:11px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--pink);
+    background:rgba(255,31,142,0.08);
+    border:1px solid rgba(255,31,142,0.32);
+    padding:5px 11px;border-radius:999px;
+  }
+
+  /* ============================================================
+     TRIVIA views. Shares the VenuePlay chrome (dark stage, pink
+     accents, headers, timer ring) with bingo. Only the four
+     answer buttons carry the Kahoot-style colours, tuned for the
+     dark stage: A red, B blue, C amber, D green. A small shape
+     glyph rides with each letter for accessibility.
+     ============================================================ */
+
+  /* Four answer colours, used across TV, host and player. */
+  .vps-opt-a,.vps-hopt-a{ background:#FF4D5E; }
+  .vps-opt-b,.vps-hopt-b{ background:#3AA0FF; }
+  .vps-opt-c,.vps-hopt-c{ background:#FFB020; }
+  .vps-opt-d,.vps-hopt-d{ background:#2FD27A; }
+
+  /* Question, shared. */
+  .vps-tq{
+    font-family:'Anton',sans-serif;font-weight:400;color:#fff;
+    line-height:1.08;letter-spacing:.01em;text-align:center;margin:0;
+  }
+
+  /* Countdown timer ring, brand pink. */
+  .vps-timer{
+    position:relative;flex:none;margin:0 auto;
+    width:clamp(52px,7.5vw,82px);height:clamp(52px,7.5vw,82px);
+  }
+  .vps-timer svg{ width:100%;height:100%;display:block;filter:drop-shadow(0 0 10px var(--glow)); }
+  .vps-timer-num{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;
+    font-size:clamp(12px,1.7vw,19px);
+  }
+
+  /* 2x2 answer grid (TV + host share it; player switches to a stack). */
+  .vps-opts{
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:clamp(8px,1.4vw,14px);min-width:0;
+  }
+  .vps-opt{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    gap:8px;border-radius:12px;padding:clamp(10px,1.6vw,16px);
+    border:1px solid rgba(0,0,0,.16);min-width:0;min-height:66px;
+    box-shadow:0 8px 20px -12px rgba(0,0,0,.75);
+  }
+  .vps-opt-badge{
+    flex:none;display:inline-flex;align-items:center;gap:6px;color:#fff;
+    background:rgba(0,0,0,.24);border-radius:8px;padding:4px 8px;
+    font-family:'Anton',sans-serif;font-weight:400;
+    font-size:clamp(12px,1.6vw,20px);line-height:1;
+  }
+  .vps-opt-badge svg{ display:block; }
+  .vps-opt-text{
+    color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.28);min-width:0;text-align:center;
+    font-family:'Manrope',sans-serif;font-weight:800;line-height:1.15;
+    font-size:clamp(12px,1.5vw,18px);overflow-wrap:anywhere;word-break:break-word;
+  }
+
+  /* ---- Trivia TV ---- */
+  .vps-trivia-body{ grid-template-columns:1.05fr 1fr; align-items:center; }
+  .vps-tq-col{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(8px,1.6vw,16px);min-width:0;
+  }
+  .vps-trivia-tv .vps-tq{ font-size:clamp(16px,2.8vw,32px); }
+  @media (max-width:600px){
+    .vps-trivia-body{ grid-template-columns:1fr; }
+  }
+
+  /* ---- Trivia host ---- */
+  .vps-thost-q{
+    font-family:'Anton',sans-serif;font-weight:400;color:#fff;line-height:1.1;
+    font-size:clamp(16px,3.2vw,22px);text-align:center;
+  }
+  .vps-hopts{ display:flex;flex-direction:column;gap:9px; }
+  .vps-hopt{
+    display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;
+    gap:10px;border-radius:11px;padding:9px 12px;color:#fff;
+    border:1px solid rgba(0,0,0,.16);
+  }
+  .vps-hbadge{
+    flex:none;display:inline-flex;align-items:center;gap:5px;color:#fff;
+    background:rgba(0,0,0,.22);border-radius:7px;padding:4px 7px;
+    font-family:'Anton',sans-serif;font-weight:400;font-size:14px;line-height:1;
+  }
+  .vps-hbadge svg{ display:block; }
+  .vps-htextwrap{ min-width:0;display:flex;flex-direction:column;gap:5px; }
+  .vps-htext{
+    font-family:'Manrope',sans-serif;font-weight:800;color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.28);font-size:14px;line-height:1.1;
+  }
+  .vps-hbar{
+    height:5px;border-radius:999px;background:rgba(0,0,0,.28);overflow:hidden;
+  }
+  .vps-hbar-fill{ display:block;height:100%;border-radius:999px;background:rgba(255,255,255,.9); }
+  .vps-hcount{
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.28);min-width:34px;text-align:right;
+  }
+  .vps-htick{ flex:none;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center; }
+  .vps-htick.on{
+    background:#2FD27A;border-radius:50%;
+    box-shadow:0 0 12px -2px rgba(47,210,122,.9);
+  }
+  .vps-toggle{ cursor:pointer;color:#fff;border-color:var(--pink); }
+  .vps-toggle:hover{ background:rgba(255,31,142,.12); }
+  .vps-tctrl{
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;
+    border:0;border-radius:9px;padding:9px 14px;cursor:default;
+  }
+  .vps-tctrl.vps-reveal{ background:linear-gradient(180deg,var(--pink),var(--pink-deep));color:var(--ink); }
+  .vps-tctrl.vps-next{ background:transparent;border:1px solid var(--line-2);color:var(--muted); }
+
+  /* ---- Trivia player ---- */
+  .vps-tq-phone{ font-size:15px;padding:0 4px; }
+  .vps-tsub{
+    align-self:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--line-2);border-radius:999px;padding:4px 10px;
+  }
+  .vps-opts-phone{ grid-template-columns:1fr;gap:9px; }
+  .vps-popt{ width:100%;border:0;cursor:pointer;text-align:left;padding:11px 12px;font:inherit; }
+  .vps-popt.is-picked{ outline:3px solid #fff;outline-offset:-3px;box-shadow:0 0 22px -6px rgba(255,255,255,.7); }
+  .vps-pscore{
+    margin-top:auto;text-align:center;padding-top:4px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);
+  }
+  .vps-pscore b{ color:#fff;font-size:15px; }
+
+  /* ===== MUSICAL BINGO views (integrated snippet) ===== */
+block (all classes prefixed .vpm-)
+    2) the  var musicalViews = { tv, host, player };  object
+
+  Uses the prototype's existing brand tokens (--pink, --ink,
+  --panel, --muted, --line-2, --glow, --pink-deep, --muted-2)
+  and its device frames (.vp-tvframe / .vp-tabletframe /
+  .vp-phoneframe + .vps-phone). Self-contained, inline SVG
+  only, no external requests, Australian English, no em dashes.
+  ============================================================
+-->
+
+<style>
+  /* ===== MUSICAL BINGO, shared ===== */
+  .vpm-mono{font-family:'JetBrains Mono',monospace}
+
+  /* Static QR square, reuses the .vps-qr white tile from the prototype */
+  .vpm-qr{width:clamp(40px,6vw,56px);height:clamp(40px,6vw,56px);border-radius:8px;background:#fff;padding:4px;flex:none}
+  .vpm-qr svg{width:100%;height:100%;display:block}
+
+  /* ---- TV: now playing ---- */
+  .vpm-tv-body{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(8px,1.8vw,16px);flex:1;min-height:0;z-index:1;text-align:center;
+  }
+  .vpm-now{
+    width:100%;display:flex;align-items:center;justify-content:center;
+    gap:clamp(14px,3vw,30px);flex-wrap:wrap;
+    background:linear-gradient(180deg,rgba(255,31,142,.10),rgba(255,255,255,.02));
+    border:1px solid rgba(255,31,142,.32);border-radius:16px;
+    padding:clamp(12px,2.4vw,24px) clamp(14px,3vw,30px);
+  }
+  .vpm-vinyl{flex:none;width:clamp(56px,9vw,104px);height:clamp(56px,9vw,104px)}
+  .vpm-vinyl svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 18px var(--glow))}
+  .vpm-now-txt{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+  .vpm-nowlabel{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.2vw,12px);
+    letter-spacing:.18em;text-transform:uppercase;color:var(--pink);
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .vpm-song{
+    font-family:'Anton',sans-serif;font-weight:400;color:#fff;line-height:1;
+    letter-spacing:.01em;font-size:clamp(26px,5.4vw,62px);text-align:left;
+  }
+  .vpm-artist{
+    font-family:'Manrope',sans-serif;font-weight:600;color:var(--muted);
+    font-size:clamp(12px,1.8vw,20px);text-align:left;
+  }
+  .vpm-artist b{color:#fff;font-weight:700}
+
+  /* Equaliser bars, purely decorative, CSS only */
+  .vpm-eq{display:flex;align-items:flex-end;gap:clamp(3px,.6vw,6px);height:clamp(20px,3vw,34px);margin-top:2px}
+  .vpm-eq span{
+    width:clamp(4px,.7vw,7px);border-radius:3px;height:40%;
+    background:linear-gradient(180deg,#ff5cae,var(--pink-deep));
+    box-shadow:0 0 10px -3px var(--glow);
+  }
+  @media(prefers-reduced-motion:no-preference){
+    .vpm-eq span{animation:vpm-eq 900ms ease-in-out infinite}
+    .vpm-eq span:nth-child(1){animation-delay:-200ms}
+    .vpm-eq span:nth-child(2){animation-delay:-620ms}
+    .vpm-eq span:nth-child(3){animation-delay:-90ms}
+    .vpm-eq span:nth-child(4){animation-delay:-480ms}
+    .vpm-eq span:nth-child(5){animation-delay:-330ms}
+    .vpm-eq span:nth-child(6){animation-delay:-760ms}
+    .vpm-eq span:nth-child(7){animation-delay:-140ms}
+    .vpm-vinyl svg .vpm-disc{transform-origin:50% 50%;animation:vpm-spin 3.6s linear infinite}
+  }
+  @keyframes vpm-eq{0%,100%{height:30%}50%{height:100%}}
+  @keyframes vpm-spin{to{transform:rotate(360deg)}}
+
+  .vpm-tv-recent{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;z-index:1}
+  .vpm-rlbl{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,11px);
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);
+  }
+  .vpm-schip{
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:clamp(10px,1.3vw,14px);color:#e8e8ec;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);
+    border-radius:999px;padding:4px 12px;white-space:nowrap;
+  }
+
+  /* ---- Host: now playing + queue + claim ---- */
+  .vpm-hnow{
+    display:flex;align-items:center;gap:13px;
+    background:linear-gradient(180deg,rgba(255,31,142,.10),rgba(255,255,255,.02));
+    border:1px solid rgba(255,31,142,.3);border-radius:12px;padding:13px;
+  }
+  .vpm-hnow .vpm-vinyl{width:44px;height:44px}
+  .vpm-hnow-txt{min-width:0}
+  .vpm-hnow .vpm-nowlabel{margin-bottom:4px}
+  .vpm-hnow-song{font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:20px;line-height:1.05;letter-spacing:.01em}
+  .vpm-hnow-artist{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:3px}
+  .vpm-nextbtn{
+    display:block;width:100%;margin-top:12px;cursor:default;text-align:center;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    border:0;border-radius:12px;color:var(--ink);padding:16px 14px;
+    box-shadow:0 0 34px -8px var(--glow);
+  }
+  .vpm-nextbtn .vpm-k{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:19px;letter-spacing:.04em}
+  .vpm-nextbtn .vpm-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85;display:block}
+  .vpm-queue{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:13px}
+  .vpm-qhead{
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted-2);margin-bottom:9px;
+  }
+  .vpm-qrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+  .vpm-qrow:first-of-type{border-top:0;padding-top:0}
+  .vpm-qnum{
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--muted-2);
+    flex:none;width:26px;
+  }
+  .vpm-qtitle{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;color:#e8e8ec;line-height:1.15;min-width:0}
+  .vpm-qtitle small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10px;color:var(--muted);margin-top:2px}
+  .vpm-qnext{
+    margin-left:auto;flex:none;font-family:'JetBrains Mono',monospace;font-size:9px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--pink);
+    border:1px solid rgba(255,31,142,.4);border-radius:999px;padding:3px 8px;
+  }
+
+  /* ---- Player: song-title card ---- */
+  .vpm-cardlbl{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted-2);
+  }
+  .vpm-cardlbl b{color:var(--pink);font-weight:700}
+  .vpm-card{
+    background:var(--ink-2);border:1px solid var(--line);border-radius:13px;
+    padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  }
+  .vpm-cell{
+    position:relative;display:flex;align-items:center;gap:7px;min-height:46px;
+    padding:7px 8px;border-radius:9px;text-align:left;
+    background:rgba(255,255,255,.04);border:1px solid transparent;
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:11.5px;line-height:1.12;color:#e8e8ec;
+  }
+  .vpm-tick{
+    flex:none;width:16px;height:16px;border-radius:5px;
+    border:1.5px solid var(--muted-2);display:inline-flex;align-items:center;justify-content:center;
+  }
+  .vpm-tick svg{display:none}
+  .vpm-cell.vpm-on{
+    color:#fff;border-color:rgba(255,31,142,.55);
+    background:linear-gradient(180deg,rgba(255,31,142,.9),rgba(199,15,105,.9));
+    box-shadow:0 0 14px -4px var(--glow);
+  }
+  .vpm-cell.vpm-on .vpm-tick{border-color:#fff;background:#fff}
+  .vpm-cell.vpm-on .vpm-tick svg{display:block}
+
+  /* ===== RAFFLE views (integrated snippet) ===== */
+block (all classes prefixed .vpr-)
+    2) the  var raffleViews = { tv, host, player };  object
+
+  Uses the prototype's existing brand tokens (--pink, --ink,
+  --panel, --muted, --line, --line-2, --glow, --pink-deep,
+  --muted-2) and its device frames (.vp-tvframe /
+  .vp-tabletframe / .vp-phoneframe + .vps-phone). Reuses the
+  .vps-tv chrome, the .vps-tv-foot join footer and the
+  .vps-pill / .vps-con-brand / .vps-mini-mark header patterns.
+  Self-contained, inline SVG only, no external requests,
+  Australian English, no em dashes.
+  ============================================================
+-->
+
+<style>
+  /* ===== RAFFLE, shared ===== */
+  .vpr-mono{font-family:'JetBrains Mono',monospace}
+
+  /* Static QR square, reuses the .vps-qr white tile from the prototype */
+  .vpr-qr{width:clamp(40px,6vw,56px);height:clamp(40px,6vw,56px);border-radius:8px;background:#fff;padding:4px;flex:none}
+  .vpr-qr svg{width:100%;height:100%;display:block}
+
+  /* ---- TV: winning numbers ---- */
+  .vpr-tv-body{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(8px,1.8vw,18px);flex:1;min-height:0;z-index:1;text-align:center;
+  }
+  .vpr-drawlabel{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.2vw,12px);
+    letter-spacing:.18em;text-transform:uppercase;color:var(--pink);
+    display:inline-flex;align-items:center;gap:8px;
+  }
+
+  /* Big winning number, a ticket-style plate */
+  .vpr-winner{
+    position:relative;display:inline-flex;flex-direction:column;align-items:center;
+    gap:clamp(4px,1vw,8px);
+    background:linear-gradient(180deg,rgba(255,31,142,.14),rgba(255,255,255,.02));
+    border:1px solid rgba(255,31,142,.4);border-radius:20px;
+    padding:clamp(14px,2.6vw,30px) clamp(24px,5vw,60px);
+    box-shadow:0 0 60px -18px var(--glow),inset 0 -8px 22px rgba(0,0,0,.28);
+  }
+  .vpr-winner-cap{
+    font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    letter-spacing:.14em;color:#fff;line-height:1;font-size:clamp(11px,1.6vw,16px);opacity:.9;
+  }
+  .vpr-winner-num{
+    font-family:'Anton',sans-serif;font-weight:400;color:#fff;line-height:.9;
+    letter-spacing:.02em;font-size:clamp(64px,13vw,150px);
+    text-shadow:0 0 34px var(--glow);
+  }
+  /* Perforated ticket notches on the sides of the plate */
+  .vpr-winner::before,.vpr-winner::after{
+    content:"";position:absolute;top:50%;transform:translateY(-50%);
+    width:clamp(14px,2vw,22px);height:clamp(14px,2vw,22px);border-radius:50%;
+    background:#0b0b0d;border:1px solid rgba(255,31,142,.4);
+  }
+  .vpr-winner::before{left:calc(-1 * clamp(7px,1vw,11px))}
+  .vpr-winner::after{right:calc(-1 * clamp(7px,1vw,11px))}
+
+  /* Subtle celebratory ring behind the winner (CSS only) */
+  .vpr-stage{position:relative;display:inline-flex;align-items:center;justify-content:center;padding:clamp(6px,1.4vw,16px)}
+  .vpr-stage::before{
+    content:"";position:absolute;width:118%;height:118%;border-radius:26px;
+    border:1px solid rgba(255,31,142,.28);
+  }
+  @media(prefers-reduced-motion:no-preference){
+    .vpr-stage::before{animation:vpr-halo 2.8s ease-in-out infinite}
+    .vpr-winner-num{animation:vpr-pop 2.4s ease-out both}
+    .vpr-spark{animation:vpr-twinkle 2.2s ease-in-out infinite}
+    .vpr-spark:nth-child(2){animation-delay:-1.1s}
+    .vpr-spark:nth-child(3){animation-delay:-.6s}
+    .vpr-spark:nth-child(4){animation-delay:-1.7s}
+  }
+  @keyframes vpr-halo{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.03)}}
+  @keyframes vpr-pop{0%{transform:scale(.4);opacity:0}40%{transform:scale(1.12);opacity:1}70%{transform:scale(.98)}100%{transform:scale(1)}}
+  @keyframes vpr-twinkle{0%,100%{opacity:.2;transform:scale(.7)}50%{opacity:1;transform:scale(1)}}
+
+  /* Decorative sparks around the plate */
+  .vpr-spark{position:absolute;width:clamp(6px,1vw,10px);height:clamp(6px,1vw,10px);border-radius:50%;background:var(--pink);box-shadow:0 0 12px 2px var(--glow)}
+  .vpr-spark.s1{top:6%;left:12%}
+  .vpr-spark.s2{top:14%;right:10%}
+  .vpr-spark.s3{bottom:12%;left:16%}
+  .vpr-spark.s4{bottom:8%;right:14%}
+
+  /* Other winners as chips */
+  .vpr-tv-more{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;z-index:1}
+  .vpr-mlbl{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,11px);
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);
+  }
+  .vpr-chip{
+    font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(15px,2.1vw,24px);
+    letter-spacing:.04em;color:#fff;line-height:1;
+    padding:6px 15px;border-radius:999px;display:inline-flex;align-items:center;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 55%,var(--pink-deep));
+    box-shadow:0 0 16px -5px var(--glow),inset 0 -3px 8px rgba(0,0,0,.3);white-space:nowrap;
+  }
+  .vpr-check{
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:clamp(12px,1.7vw,18px);
+    color:#e8e8ec;z-index:1;
+  }
+  .vpr-check b{color:var(--pink)}
+
+  /* ---- Host: number entry + drawn results ---- */
+  .vpr-entry-lbl{
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted-2);margin-bottom:8px;
+  }
+  /* Raffle name field, reads like a filled text input */
+  .vpr-name-field{margin-bottom:14px}
+  .vpr-name-val{
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:#fff;
+    line-height:1.15;overflow-wrap:anywhere;
+  }
+  .vpr-range{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .vpr-field{
+    background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;
+    padding:9px 12px;display:flex;flex-direction:column;gap:4px;
+  }
+  .vpr-field .vpr-flbl{
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted-2);
+  }
+  .vpr-field .vpr-fval{
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:#fff;
+    display:flex;align-items:baseline;gap:8px;
+  }
+  .vpr-field .vpr-caret{
+    display:inline-block;width:2px;height:20px;background:var(--pink);
+    box-shadow:0 0 8px var(--glow);align-self:center;
+  }
+  @media(prefers-reduced-motion:no-preference){
+    .vpr-caret{animation:vpr-blink 1.1s steps(1) infinite}
+  }
+  @keyframes vpr-blink{0%,100%{opacity:1}50%{opacity:0}}
+  .vpr-field.vpr-focus{border-color:rgba(255,31,142,.5);box-shadow:0 0 20px -8px var(--glow)}
+  .vpr-winners-field{margin-top:12px}
+  .vpr-drawbtn{
+    display:block;width:100%;margin-top:14px;cursor:default;text-align:center;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    border:0;border-radius:12px;color:var(--ink);padding:18px 14px;
+    box-shadow:0 0 34px -8px var(--glow);
+  }
+  .vpr-drawbtn .vpr-k{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:21px;letter-spacing:.04em}
+  .vpr-drawbtn .vpr-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85;display:block}
+
+  .vpr-drawn{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:13px}
+  .vpr-drawn-head{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px;
+  }
+  .vpr-drawn-head .vpr-dh{
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted-2);
+  }
+  .vpr-drawn-head .vpr-range-note{
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);
+  }
+  .vpr-drawn-list{display:flex;flex-direction:column;gap:8px}
+  .vpr-drawn-row{
+    display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;
+    background:rgba(255,31,142,.08);border:1px solid rgba(255,31,142,.28);
+  }
+  .vpr-drawn-row .vpr-place{
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--pink);flex:none;width:56px;
+  }
+  .vpr-drawn-row .vpr-dnum{
+    font-family:'Anton',sans-serif;font-weight:400;font-size:26px;letter-spacing:.03em;color:#fff;
+  }
+  .vpr-drawn-row .vpr-dtick{
+    margin-left:auto;flex:none;width:22px;height:22px;border-radius:50%;
+    background:rgba(255,31,142,.9);display:inline-flex;align-items:center;justify-content:center;
+    box-shadow:0 0 12px -2px var(--glow);
+  }
+  .vpr-drawn-row .vpr-dtick svg{display:block}
+
+  /* ---- Player: light results view ---- */
+  .vpr-p-note{
+    background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.32);border-radius:9px;
+    padding:9px 11px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#fff;
+    text-align:center;line-height:1.4;
+  }
+  .vpr-p-note b{color:var(--pink)}
+  .vpr-p-winlbl{
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted-2);text-align:center;margin-top:2px;
+  }
+  .vpr-p-wins{display:flex;flex-direction:column;gap:9px}
+  .vpr-p-win{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:13px;
+    background:linear-gradient(180deg,rgba(255,31,142,.14),rgba(255,255,255,.02));
+    border:1px solid rgba(255,31,142,.38);
+  }
+  .vpr-p-place{
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--pink);flex:none;width:52px;
+  }
+  .vpr-p-num{
+    font-family:'Anton',sans-serif;font-weight:400;font-size:38px;line-height:.9;
+    letter-spacing:.03em;color:#fff;text-shadow:0 0 18px var(--glow);
+  }
+  .vpr-p-foot{
+    margin-top:auto;text-align:center;padding-top:4px;
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted-2);line-height:1.4;
+  }
+
+  /* ===== MEMBERS DRAW views (integrated snippet) ===== */
+block (all classes prefixed .vpd-)
+    2) the  var membersViews = { tv, host, player };  object
+
+  Uses the prototype's existing brand tokens (--pink, --ink,
+  --panel, --muted, --line, --line-2, --glow, --pink-deep,
+  --muted-2) and its device frames (.vp-tvframe / .vp-tabletframe
+  / .vp-phoneframe + .vps-phone). Self-contained, inline SVG
+  only, no external requests, Australian English, no em dashes.
+  ============================================================
+-->
+
+<style>
+  /* ===== MEMBERS DRAW, shared ===== */
+  .vpd-mono{font-family:'JetBrains Mono',monospace}
+
+  /* Static QR square, reuses the .vps-qr white tile look */
+  .vpd-qr{width:clamp(40px,6vw,56px);height:clamp(40px,6vw,56px);border-radius:8px;background:#fff;padding:4px;flex:none}
+  .vpd-qr svg{width:100%;height:100%;display:block}
+
+  /* Jackpot amount, shared money styling */
+  .vpd-money{font-family:'Anton',sans-serif;font-weight:400;color:#fff;line-height:.9;letter-spacing:.01em}
+
+  /* ---- TV: live jackpot + drawn member ---- */
+  .vpd-tv-body{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(10px,2vw,20px);flex:1;min-height:0;z-index:1;text-align:center;
+  }
+  .vpd-jackpot{
+    width:100%;display:flex;flex-direction:column;align-items:center;gap:clamp(4px,1vw,8px);
+    background:linear-gradient(180deg,rgba(255,31,142,.12),rgba(255,255,255,.02));
+    border:1px solid rgba(255,31,142,.34);border-radius:16px;
+    padding:clamp(12px,2.4vw,26px) clamp(14px,3vw,30px);
+  }
+  .vpd-jlabel{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.3vw,13px);
+    letter-spacing:.2em;text-transform:uppercase;color:var(--pink);
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .vpd-jamount{font-size:clamp(46px,10vw,120px)}
+  .vpd-jsub{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.3vw,13px);
+    letter-spacing:.08em;color:var(--muted-2);
+  }
+  .vpd-drawn{
+    display:flex;align-items:center;justify-content:center;gap:clamp(12px,2.4vw,24px);flex-wrap:wrap;
+  }
+  .vpd-token{
+    flex:none;width:clamp(78px,12vw,140px);height:clamp(78px,12vw,140px);border-radius:50%;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 45%,var(--pink-deep));
+    box-shadow:0 0 46px -4px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+  }
+  .vpd-token .vpd-tk-lt{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(9px,1.4vw,14px);letter-spacing:.14em;opacity:.9;line-height:1}
+  .vpd-token .vpd-tk-num{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(30px,5.6vw,60px);line-height:.9;letter-spacing:.01em}
+  .vpd-drawn-txt{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-width:0}
+  .vpd-drawn-lbl{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.2vw,12px);
+    letter-spacing:.18em;text-transform:uppercase;color:var(--muted-2);
+  }
+  .vpd-name{font-family:'Anton',sans-serif;font-weight:400;color:#fff;line-height:1;letter-spacing:.01em;font-size:clamp(28px,5.4vw,60px)}
+  .vpd-present{
+    font-family:'Manrope',sans-serif;font-weight:700;color:#e8e8ec;
+    font-size:clamp(11px,1.7vw,18px);display:inline-flex;align-items:center;gap:8px;
+  }
+  .vpd-present b{color:var(--pink);font-weight:800}
+  .vpd-present .vpd-clock{
+    font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;
+    background:rgba(255,31,142,.14);border:1px solid rgba(255,31,142,.4);
+    border-radius:999px;padding:2px 10px;
+  }
+
+  /* ---- Host: jackpot + draw + decision + roster ---- */
+  .vpd-hjackpot{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:linear-gradient(180deg,rgba(255,31,142,.10),rgba(255,255,255,.02));
+    border:1px solid rgba(255,31,142,.3);border-radius:12px;padding:13px 15px;
+  }
+  .vpd-hjackpot .vpd-hj-l{min-width:0}
+  .vpd-hj-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);display:flex;align-items:center;gap:7px;margin-bottom:5px}
+  .vpd-hj-amount{font-size:34px}
+  .vpd-hj-note{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--muted-2);text-align:right;line-height:1.5;flex:none}
+  .vpd-hj-note b{color:#e8e8ec;font-weight:700}
+  .vpd-drawbtn{
+    display:block;width:100%;margin-top:12px;cursor:default;text-align:center;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    border:0;border-radius:12px;color:var(--ink);padding:18px 14px;
+    box-shadow:0 0 34px -8px var(--glow);
+  }
+  .vpd-drawbtn .vpd-k{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:21px;letter-spacing:.04em}
+  .vpd-drawbtn .vpd-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85;display:block}
+  .vpd-hresult{
+    display:flex;align-items:center;gap:13px;margin-top:12px;
+    background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;padding:12px 13px;
+  }
+  .vpd-htoken{
+    flex:none;width:52px;height:52px;border-radius:50%;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 50%,var(--pink-deep));
+    box-shadow:0 0 20px -5px var(--glow),inset 0 -4px 10px rgba(0,0,0,.32);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;line-height:1;
+  }
+  .vpd-htoken .vpd-htk-lt{font-family:'Anton',sans-serif;font-size:8px;letter-spacing:.12em;opacity:.9}
+  .vpd-htoken .vpd-htk-num{font-family:'Anton',sans-serif;font-size:22px}
+  .vpd-hresult-txt{min-width:0}
+  .vpd-hresult-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-bottom:3px}
+  .vpd-hresult-name{font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:20px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em}
+  .vpd-hresult-sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:3px}
+
+  .vpd-count-ctrl{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;
+    background:var(--ink-3);border:1px solid var(--line);border-radius:11px;padding:11px 13px;
+  }
+  .vpd-count-l{min-width:0}
+  .vpd-count-l .vpd-ct-h{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;color:#e8e8ec}
+  .vpd-count-l .vpd-ct-s{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted-2);margin-top:2px}
+  .vpd-stepper{display:flex;align-items:center;gap:9px;flex:none}
+  .vpd-step{
+    width:30px;height:30px;border-radius:8px;border:1px solid var(--line-2);
+    background:transparent;color:var(--muted);font-family:'Anton',sans-serif;font-size:17px;
+    display:inline-flex;align-items:center;justify-content:center;cursor:default;
+  }
+  .vpd-step-num{font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:22px;min-width:20px;text-align:center}
+
+  .vpd-decide{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+  .vpd-dbtn{
+    display:flex;align-items:flex-start;gap:11px;text-align:left;width:100%;cursor:default;
+    border-radius:11px;padding:12px 13px;
+  }
+  .vpd-dbtn .vpd-dico{flex:none;width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+  .vpd-dbtn .vpd-dtxt{min-width:0}
+  .vpd-dbtn .vpd-dh{font-family:'Manrope',sans-serif;font-weight:800;font-size:13.5px;line-height:1.15}
+  .vpd-dbtn .vpd-dsub{font-family:'JetBrains Mono',monospace;font-size:10.5px;margin-top:3px;line-height:1.3}
+  .vpd-dbtn.vpd-claim{background:rgba(47,210,122,.1);border:1px solid rgba(47,210,122,.4)}
+  .vpd-dbtn.vpd-claim .vpd-dico{background:#2FD27A;color:#04160c}
+  .vpd-dbtn.vpd-claim .vpd-dh{color:#7ff0b3}
+  .vpd-dbtn.vpd-claim .vpd-dsub{color:var(--muted)}
+  .vpd-dbtn.vpd-roll{background:rgba(255,255,255,.03);border:1px solid var(--line-2)}
+  .vpd-dbtn.vpd-roll .vpd-dico{background:rgba(255,31,142,.16);color:var(--pink);border:1px solid rgba(255,31,142,.4)}
+  .vpd-dbtn.vpd-roll .vpd-dh{color:#e8e8ec}
+  .vpd-dbtn.vpd-roll .vpd-dsub{color:var(--muted-2)}
+
+  .vpd-roster{
+    display:flex;align-items:center;gap:9px;margin-top:12px;
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.04em;color:var(--muted-2);
+    background:var(--ink-3);border:1px solid var(--line);border-radius:11px;padding:11px 13px;
+  }
+  .vpd-roster svg{flex:none;display:block}
+  .vpd-roster b{color:#e8e8ec;font-weight:700}
+
+  /* ---- Player: light status view ---- */
+  .vpd-p-hero{
+    background:linear-gradient(180deg,rgba(255,31,142,.12),rgba(255,255,255,.02));
+    border:1px solid rgba(255,31,142,.32);border-radius:14px;
+    padding:16px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .vpd-p-eyebrow{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink)}
+  .vpd-p-draw{font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:22px;line-height:1.06;text-transform:uppercase;letter-spacing:.01em}
+  .vpd-p-in{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+  .vpd-p-in .vpd-dot-ok{width:7px;height:7px;border-radius:50%;background:#2FD27A;box-shadow:0 0 8px #2FD27A}
+  .vpd-p-num{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:var(--ink-2);border:1px solid var(--line);border-radius:13px;padding:14px 12px;
+  }
+  .vpd-p-num-lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+  .vpd-p-num-val{font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:52px;line-height:.9;letter-spacing:.02em}
+  .vpd-p-jackpot{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--ink-2);border:1px solid var(--line);border-radius:13px;padding:13px 15px;
+  }
+  .vpd-p-jackpot .vpd-pj-l{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
+  .vpd-p-jackpot .vpd-pj-v{font-family:'Anton',sans-serif;font-weight:400;color:var(--pink);font-size:30px;line-height:1;text-shadow:0 0 18px var(--glow)}
+  .vpd-p-foot{
+    margin-top:auto;text-align:center;
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);line-height:1.5;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;padding:11px 12px;
+  }
+  .vpd-p-foot b{color:#e8e8ec}
+
+  /* ---- Player: "not used for this format" note ---- */
+  .vpd-skip{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:13px;padding:24px 16px;
+  }
+  .vpd-skip-ico{
+    width:54px;height:54px;border-radius:15px;display:grid;place-items:center;
+    background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.42);
+    box-shadow:0 0 28px -8px var(--glow);
+  }
+  .vpd-skip-ico svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
+  .vpd-skip-h{
+    font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:20px;
+    line-height:1.15;text-transform:uppercase;letter-spacing:.01em;max-width:210px;
+  }
+  .vpd-skip-s{
+    font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;
+    color:var(--muted);line-height:1.5;max-width:210px;
+  }
+
+  /* ===== VenuePlay neon logo glow (real hollow-triangle mark) ===== */
+  .vps-mini-mark svg{overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.95)) drop-shadow(0 0 6px rgba(255,31,142,.5))}
+
+  /* ===== Host "see all balls" panel ===== */
+  .vps-allballs-btn{display:block;width:100%;margin-top:12px;cursor:pointer;font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;background:transparent;color:var(--pink);border:1px solid rgba(255,31,142,.45);border-radius:10px;padding:10px}
+  .vps-allballs-btn:hover{background:rgba(255,31,142,.1)}
+  .vps-allballs{margin-top:12px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .vps-allballs[hidden]{display:none}
+  .vps-allballs-h{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-bottom:8px}
+  .vps-allballs .vps-board{gap:4px}
+  .vps-allballs .vps-cell{font-size:10px;min-height:16px;padding:2px 0}
+
+  /* ===== SCREEN ADS views (integrated snippet) ===== */
+block (all classes prefixed .vpa-)
+    2) the  var adViews = { tv, host, player };  object
+
+  Uses the prototype's existing brand tokens (--pink, --ink,
+  --ink-2, --ink-3, --panel, --muted, --muted-2, --line,
+  --line-2, --glow, --pink-deep) and its device frames
+  (.vp-tvframe / .vp-tabletframe / .vp-phoneframe + .vps-phone).
+  Reuses the .vps-tv chrome, the .vps-console shell and the
+  .vps-con-brand / .vps-mini-mark header patterns. Static HTML,
+  no JS builders, inline SVG only, no external requests,
+  Australian English, no em dashes.
+  ============================================================
+-->
+
+<style>
+  /* ===== SCREEN ADS, shared ===== */
+  .vpa-mono{font-family:'JetBrains Mono',monospace}
+
+  /* ---- TV: full-screen venue ad slide ---- */
+  .vpa-slide{
+    position:relative;z-index:1;flex:1;min-height:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(8px,1.8vw,18px);text-align:center;
+    padding:clamp(10px,2.4vw,26px) clamp(8px,2vw,20px);
+  }
+  .vpa-tag{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.3vw,13px);
+    letter-spacing:.2em;text-transform:uppercase;color:var(--pink);
+    background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.4);
+    border-radius:999px;padding:6px 14px;
+  }
+  .vpa-headline{
+    font-family:'Anton',sans-serif;font-weight:400;color:#fff;margin:0;
+    line-height:.92;letter-spacing:.01em;font-size:clamp(38px,8.4vw,96px);
+    text-shadow:0 0 40px rgba(0,0,0,.4);
+  }
+  .vpa-headline .vpa-accent{color:var(--pink);text-shadow:0 0 34px var(--glow)}
+  .vpa-price{
+    display:inline-flex;align-items:baseline;flex-wrap:wrap;justify-content:center;
+    gap:clamp(8px,1.6vw,16px);
+    background:linear-gradient(180deg,rgba(255,31,142,.12),rgba(255,255,255,.02));
+    border:1px solid rgba(255,31,142,.32);border-radius:16px;
+    padding:clamp(10px,2vw,20px) clamp(16px,3.4vw,36px);
+  }
+  .vpa-price-num{
+    font-family:'Anton',sans-serif;font-weight:400;color:var(--pink);line-height:1;
+    letter-spacing:.01em;font-size:clamp(40px,8vw,88px);text-shadow:0 0 34px var(--glow);
+  }
+  .vpa-price-txt{
+    font-family:'Manrope',sans-serif;font-weight:700;color:#fff;
+    font-size:clamp(14px,2.2vw,26px);line-height:1.15;text-align:center;
+  }
+  .vpa-venue{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.5vw,14px);
+    letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+    display:inline-flex;align-items:center;gap:9px;
+  }
+  .vpa-venue::before,.vpa-venue::after{
+    content:"";width:clamp(14px,3vw,34px);height:1px;background:var(--line-2);
+  }
+
+  /* Subtle VenuePlay play-triangle mark, tucked in a corner */
+  .vpa-corner{
+    position:absolute;z-index:2;right:clamp(12px,2.4vw,22px);top:clamp(12px,2.4vw,22px);
+    display:inline-flex;align-items:center;gap:7px;opacity:.55;
+  }
+  .vpa-corner svg{display:block;filter:drop-shadow(0 0 5px var(--glow))}
+  .vpa-corner .vpa-cw{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(7.5px,1vw,10px);
+    letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);
+  }
+
+  /* Slide-position dots, sits at the foot of the slide */
+  .vpa-dots{
+    position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
+    gap:9px;padding-bottom:clamp(4px,1.2vw,10px);
+  }
+  .vpa-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.22)}
+  .vpa-dot.vpa-on{
+    background:var(--pink);box-shadow:0 0 12px var(--glow);
+    width:26px;border-radius:999px;
+  }
+
+  /* ---- Host: slide manager ---- */
+  .vpa-panel{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:13px}
+  .vpa-phead{
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted-2);margin-bottom:11px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .vpa-phead b{color:var(--pink);font-weight:700}
+  .vpa-row{
+    display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid var(--line);
+  }
+  .vpa-row:first-of-type{border-top:0;padding-top:0}
+  .vpa-grip{
+    flex:none;width:16px;color:var(--muted-2);display:inline-flex;
+    align-items:center;justify-content:center;
+  }
+  .vpa-grip svg{display:block}
+  .vpa-thumb{
+    flex:none;width:34px;height:34px;border-radius:8px;
+    background:linear-gradient(160deg,rgba(255,31,142,.2),rgba(255,255,255,.04));
+    border:1px solid rgba(255,31,142,.3);display:inline-flex;align-items:center;justify-content:center;
+  }
+  .vpa-thumb svg{display:block;color:var(--pink)}
+  .vpa-rtxt{min-width:0;flex:1}
+  .vpa-rname{font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;color:#e8e8ec;line-height:1.15}
+  .vpa-rsub{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.06em;color:var(--muted-2);margin-top:3px}
+  .vpa-rsub.vpa-live{color:var(--pink)}
+
+  /* On/off pill switch */
+  .vpa-sw{
+    flex:none;width:38px;height:21px;border-radius:999px;position:relative;
+    background:rgba(255,255,255,.08);border:1px solid var(--line-2);
+  }
+  .vpa-sw::after{
+    content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;
+    background:var(--muted-2);transition:none;
+  }
+  .vpa-sw.vpa-on{background:linear-gradient(180deg,var(--pink),var(--pink-deep));border-color:transparent}
+  .vpa-sw.vpa-on::after{left:auto;right:2px;background:#fff;box-shadow:0 0 10px -1px var(--glow)}
+
+  /* Add a slide, upload-looking button */
+  .vpa-add{
+    display:flex;align-items:center;gap:10px;width:100%;margin-top:11px;
+    background:rgba(255,31,142,.06);border:1px dashed rgba(255,31,142,.4);
+    border-radius:11px;padding:12px;color:#e8e8ec;cursor:default;text-align:left;
+  }
+  .vpa-add-ico{
+    flex:none;width:30px;height:30px;border-radius:8px;display:inline-flex;
+    align-items:center;justify-content:center;color:var(--pink);
+    background:rgba(255,31,142,.12);border:1px solid rgba(255,31,142,.4);
+  }
+  .vpa-add-ico svg{display:block}
+  .vpa-add-h{font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px}
+  .vpa-add-s{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.05em;color:var(--muted-2);margin-top:2px}
+
+  /* Show-when segmented toggle */
+  .vpa-when-l{
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted-2);margin-bottom:9px;
+  }
+  .vpa-seg{
+    display:grid;grid-template-columns:1fr 1fr;gap:6px;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:11px;padding:5px;
+  }
+  .vpa-seg-opt{
+    display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+    border-radius:8px;padding:9px 11px;text-align:left;
+  }
+  .vpa-seg-opt .vpa-so-h{font-family:'Manrope',sans-serif;font-weight:700;font-size:12px;color:var(--muted)}
+  .vpa-seg-opt .vpa-so-s{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;color:var(--muted-2);line-height:1.3}
+  .vpa-seg-opt.vpa-on{
+    background:linear-gradient(180deg,rgba(255,31,142,.16),rgba(255,31,142,.05));
+    border:1px solid rgba(255,31,142,.45);box-shadow:0 0 20px -10px var(--glow);
+  }
+  .vpa-seg-opt.vpa-on .vpa-so-h{color:#fff}
+  .vpa-seg-opt.vpa-on .vpa-so-s{color:var(--muted)}
+
+  /* Reassuring walk-away line */
+  .vpa-reassure{
+    display:flex;align-items:center;gap:10px;margin-top:12px;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;padding:12px;
+  }
+  .vpa-reassure svg{flex:none;display:block;color:var(--pink);filter:drop-shadow(0 0 5px var(--glow))}
+  .vpa-reassure span{font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;color:#e8e8ec;line-height:1.35}
+
+  /* ---- Player: not used note (mirrors the members-draw skip card) ---- */
+  .vpa-skip{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:13px;padding:24px 16px;
+  }
+  .vpa-skip-ico{
+    width:54px;height:54px;border-radius:15px;display:grid;place-items:center;
+    background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.42);
+    box-shadow:0 0 28px -8px var(--glow);
+  }
+  .vpa-skip-ico svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
+  .vpa-skip-h{
+    font-family:'Anton',sans-serif;font-weight:400;color:#fff;font-size:20px;
+    line-height:1.15;text-transform:uppercase;letter-spacing:.01em;max-width:210px;
+  }
+  .vpa-skip-s{
+    font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;
+    color:var(--muted);line-height:1.5;max-width:214px;
+  }
+</style>
+
+<div class="vp-wrap">
+  <div class="vp-inner">
+    <span class="vp-eyebrow"><span class="dot"></span>Interactive concept</span>
+    <h1 class="vp-h1">See a night on <span class="accent">VenuePlay</span></h1>
+    <p class="vp-intro">One room, one platform. Tap the big screen, the host and a player to see each view.</p>
+    <p class="vp-note">This is an interactive concept prototype, not a live game.</p>
+
+    <div class="vp-modebar">
+      <button class="vp-modebtn" id="vpModeBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="vpModeMenu">
+        <span>Game mode: <span class="vp-mode-accent" id="vpModeLabel">Bingo</span></span>
+        <svg class="vp-caret" width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="vp-modemenu" id="vpModeMenu" role="listbox" aria-label="Game mode" tabindex="-1">
+        <button class="vp-modeopt" type="button" role="option" data-mode="bingo" data-label="Bingo" aria-selected="true">Bingo<span class="vp-check" aria-hidden="true">&#10003;</span></button>
+        <button class="vp-modeopt" type="button" role="option" data-mode="trivia" data-label="Trivia" aria-selected="false">Trivia<span class="vp-check" aria-hidden="true">&#10003;</span></button>
+        <button class="vp-modeopt" type="button" role="option" data-mode="musical" data-label="Musical bingo" aria-selected="false">Musical bingo<span class="vp-check" aria-hidden="true">&#10003;</span></button>
+        <button class="vp-modeopt" type="button" role="option" data-mode="raffle" data-label="Raffle" aria-selected="false">Raffle<span class="vp-check" aria-hidden="true">&#10003;</span></button>
+        <button class="vp-modeopt" type="button" role="option" data-mode="members" data-label="Members draw" aria-selected="false">Members draw<span class="vp-check" aria-hidden="true">&#10003;</span></button><button class="vp-modeopt" type="button" role="option" data-mode="ads" data-label="Screen ads" aria-selected="false">Screen ads<span class="vp-check" aria-hidden="true">&#10003;</span></button>
+      </div>
+    </div>
+
+    <div class="vp-scene" id="vpScene">
+      <svg viewBox="0 0 1120 620" role="img" aria-label="Stylised pub interior with a big screen, a host at the bar and patrons at tables">
+        <defs>
+          <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#141317"/>
+            <stop offset="1" stop-color="#0A0A0B"/>
+          </linearGradient>
+          <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#161519"/>
+            <stop offset="1" stop-color="#0e0e11"/>
+          </linearGradient>
+          <radialGradient id="tvglow" cx="50%" cy="50%" r="60%">
+            <stop offset="0" stop-color="#FF1F8E" stop-opacity="0.55"/>
+            <stop offset="1" stop-color="#FF1F8E" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1d1322"/>
+            <stop offset="1" stop-color="#0f0d14"/>
+          </linearGradient>
+          <radialGradient id="ambient" cx="50%" cy="10%" r="70%">
+            <stop offset="0" stop-color="#FF1F8E" stop-opacity="0.14"/>
+            <stop offset="1" stop-color="#FF1F8E" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Walls & floor -->
+        <rect x="0" y="0" width="1120" height="430" fill="url(#wall)"/>
+        <rect x="0" y="410" width="1120" height="210" fill="url(#floor)"/>
+        <rect x="0" y="0" width="1120" height="620" fill="url(#ambient)"/>
+
+        <!-- Subtle wall panelling -->
+        <g stroke="rgba(255,255,255,0.03)" stroke-width="2">
+          <line x1="150" y1="40" x2="150" y2="410"/>
+          <line x1="450" y1="40" x2="450" y2="410"/>
+          <line x1="970" y1="40" x2="970" y2="410"/>
+        </g>
+
+        <!-- Big screen glow + TV -->
+        <ellipse cx="300" cy="150" rx="320" ry="200" fill="url(#tvglow)"/>
+        <rect x="120" y="55" width="360" height="210" rx="16" fill="#0b0b0d" stroke="#FF1F8E" stroke-width="3"/>
+        <rect x="132" y="67" width="336" height="186" rx="10" fill="url(#screen)"/>
+        <!-- Hint of bingo board on TV -->
+        <g>
+          <circle cx="185" cy="120" r="30" fill="#FF1F8E"/>
+          <text x="185" y="129" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" font-weight="800" fill="#fff">G54</text>
+          <g font-family="system-ui, sans-serif" font-size="13" font-weight="800" fill="#FF1F8E" text-anchor="middle">
+            <text x="270" y="98">B</text><text x="305" y="98">I</text><text x="340" y="98">N</text><text x="375" y="98">G</text><text x="410" y="98">O</text>
+          </g>
+          <g>
+            <rect x="256" y="108" width="26" height="20" rx="4" fill="#FF1F8E"/>
+            <rect x="291" y="108" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+            <rect x="326" y="108" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+            <rect x="361" y="108" width="26" height="20" rx="4" fill="#FF1F8E"/>
+            <rect x="396" y="108" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+
+            <rect x="256" y="132" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+            <rect x="291" y="132" width="26" height="20" rx="4" fill="#FF1F8E"/>
+            <rect x="326" y="132" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+            <rect x="361" y="132" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+            <rect x="396" y="132" width="26" height="20" rx="4" fill="#FF1F8E"/>
+
+            <rect x="256" y="156" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+            <rect x="291" y="156" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+            <rect x="326" y="156" width="26" height="20" rx="4" fill="#FF1F8E"/>
+            <rect x="361" y="156" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+            <rect x="396" y="156" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
+          </g>
+          <text x="300" y="215" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#9A9AA4">venueplay.com.au/play</text>
+          <text x="300" y="236" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="800" fill="#FF1F8E" letter-spacing="3">TQ7M4C</text>
+        </g>
+
+        <!-- Bar -->
+        <g>
+          <rect x="560" y="300" width="520" height="120" rx="10" fill="#17171B" stroke="rgba(255,255,255,0.06)"/>
+          <rect x="560" y="300" width="520" height="16" rx="6" fill="#1f1f24"/>
+          <!-- bottles behind bar -->
+          <g opacity="0.8">
+            <rect x="600" y="250" width="10" height="50" rx="3" fill="#2a2230"/>
+            <rect x="620" y="240" width="10" height="60" rx="3" fill="#33202c"/>
+            <rect x="640" y="255" width="10" height="45" rx="3" fill="#241f2a"/>
+            <rect x="990" y="245" width="10" height="55" rx="3" fill="#33202c"/>
+            <rect x="1010" y="255" width="10" height="45" rx="3" fill="#241f2a"/>
+          </g>
+          <!-- Host figure behind bar with tablet -->
+          <g>
+            <circle cx="760" cy="235" r="26" fill="#ab9a93"/>
+            <rect x="726" y="262" width="68" height="70" rx="20" fill="#726a78"/>
+            <!-- tablet -->
+            <rect x="700" y="290" width="52" height="36" rx="5" fill="#0b0b0d" stroke="#FF1F8E" stroke-width="2" transform="rotate(-10 726 308)"/>
+            <rect x="708" y="296" width="20" height="6" rx="3" fill="#FF1F8E" transform="rotate(-10 726 308)"/>
+          </g>
+        </g>
+
+        <!-- Table 1 with patron on phone -->
+        <g>
+          <ellipse cx="250" cy="500" rx="120" ry="34" fill="#141317"/>
+          <ellipse cx="250" cy="492" rx="120" ry="30" fill="#1b1a20" stroke="rgba(255,255,255,0.05)"/>
+          <!-- drinks -->
+          <rect x="215" y="470" width="16" height="26" rx="3" fill="#33202c"/>
+          <rect x="270" y="474" width="14" height="22" rx="3" fill="#2a2230"/>
+          <!-- patron seated, on phone -->
+          <g>
+            <circle cx="160" cy="440" r="22" fill="#ab9a93"/>
+            <rect x="132" y="462" width="56" height="60" rx="18" fill="#726a78"/>
+            <!-- glowing phone -->
+            <rect x="176" y="470" width="26" height="18" rx="4" fill="#0b0b0d" stroke="#FF1F8E" stroke-width="2" transform="rotate(18 189 479)"/>
+            <ellipse cx="189" cy="479" rx="26" ry="18" fill="url(#tvglow)" opacity="0.5"/>
+          </g>
+          <!-- second patron -->
+          <g>
+            <circle cx="340" cy="446" r="20" fill="#9d8f88"/>
+            <rect x="315" y="466" width="50" height="56" rx="16" fill="#6a636f"/>
+          </g>
+        </g>
+
+        <!-- Table 2 -->
+        <g opacity="0.92">
+          <ellipse cx="900" cy="540" rx="110" ry="30" fill="#141317"/>
+          <ellipse cx="900" cy="533" rx="110" ry="27" fill="#1b1a20" stroke="rgba(255,255,255,0.05)"/>
+          <rect x="875" y="512" width="15" height="24" rx="3" fill="#33202c"/>
+          <g>
+            <circle cx="820" cy="486" r="19" fill="#9d8f88"/>
+            <rect x="797" y="504" width="46" height="52" rx="15" fill="#6a636f"/>
+          </g>
+        </g>
+      </svg>
+
+      <!-- Hotspots -->
+      <button class="vp-hotspot" style="left:26.8%; top:26%;" data-view="tv" aria-label="Open the big screen view">
+        <span class="vp-ring"><span class="core"></span></span>
+        <span class="vp-tag">The big screen</span>
+      </button>
+
+      <button class="vp-hotspot" style="left:65%; top:44%;" data-view="host" aria-label="Open the host view">
+        <span class="vp-ring"><span class="core"></span></span>
+        <span class="vp-tag">The host</span>
+      </button>
+
+      <button class="vp-hotspot" style="left:15.5%; top:74%;" data-view="player" aria-label="Open the player view">
+        <span class="vp-ring"><span class="core"></span></span>
+        <span class="vp-tag">A player</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="vp-backdrop" id="vpBackdrop">
+  <div class="vp-modal" id="vpModal" role="dialog" aria-modal="true" aria-labelledby="vpModalTitle">
+    <div class="vp-modal-head">
+      <span class="vp-modal-title" id="vpModalTitle">View</span>
+      <button class="vp-close" id="vpClose" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/>
+        </svg>
+      </button>
+    </div>
+    <div id="vpModalBody"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var titles = {
+    tv: "The big screen",
+    host: "The host console",
+    player: "The player phone"
+  };
+
+  /* Selected game mode. "bingo" opens the real mockups; any other
+     mode shows an honest per-screen placeholder in the same frame. */
+  var currentMode = "bingo";
+  var currentModeLabel = "Bingo";
+
+  var screenLabels = {
+    tv: "Big screen",
+    host: "Host console",
+    player: "Player phone"
+  };
+
+  /* Placeholder card for a not-yet-built mode, wrapped in the same
+     device frame (TV bezel, tablet or phone) as the real view. */
+  function placeholderView(view) {
+    var card =
+      '<div class="vp-ph-card">' +
+        '<span class="vp-ph-logo"><svg width="26" height="30" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg></span>' +
+        '<div class="vp-ph-mode">' + currentModeLabel + '</div>' +
+        '<div class="vp-ph-sub">' + screenLabels[view] + ' view, in design</div>' +
+        '<span class="vp-ph-badge">Concept, not built yet</span>' +
+      '</div>';
+    if (view === "tv") {
+      return '<div class="vp-tvframe"><div class="vps-tv vp-ph-stage">' + card + '</div><div class="vp-tvstand"></div></div>';
+    }
+    if (view === "host") {
+      return '<div class="vp-tabletframe"><div class="vps-console vp-ph-stage">' + card + '</div></div>';
+    }
+    return '<div class="vp-phoneframe"><div class="vps-phone"><div class="vps-notch"></div>' + card + '</div></div>';
+  }
+
+  var views = {};
+
+  /* Real TV mockup (verbatim markup from the live site), inside a
+     thin dark bezel with a little stand so it reads as a screen. */
+  views.tv =
+    '<div class="vp-tvframe">' +
+      '<div class="vps-tv vps-inview">' +
+        '<div class="vps-tv-top">' +
+          '<span class="vps-tv-venue">Tugun Bowls Club &middot; Tuesday Bingo</span>' +
+          '<span class="vps-tv-recent">' +
+            '<span class="vps-chip-lbl">Last calls</span>' +
+            '<span class="vps-ball-chip">B 7</span>' +
+            '<span class="vps-ball-chip">O 68</span>' +
+          '</span>' +
+          '<span style="display:flex;gap:8px;flex-wrap:wrap">' +
+            '<span class="vps-pill vps-prize">One line &middot; $50 bar tab</span>' +
+          '</span>' +
+        '</div>' +
+        '<div class="vps-tv-body">' +
+          '<div class="vps-ball-col">' +
+            '<div class="vps-ball-idx">Ball 17 of 75</div>' +
+            '<div class="vps-ball"><span class="vps-lt">G</span><span class="vps-nm">54</span></div>' +
+            '<div class="vps-ball-prev">' +
+              '<span class="vps-ball-chip">B 7</span>' +
+              '<span class="vps-ball-chip">O 68</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-board" id="vps-board"></div>' +
+        '</div>' +
+        '<div class="vps-tv-foot">' +
+          '<div class="vps-qr"><canvas id="vps-qr" width="46" height="46"></canvas></div>' +
+          '<div class="vps-join">' +
+            '<div class="vps-l">Join from your phone</div>' +
+            '<div class="vps-u"><svg class="vps-u-mark" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.8" stroke-linejoin="round"></path></svg>venueplay.com.au/play</div>' +
+          '</div>' +
+          '<div class="vps-code">TQ7M4C</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="vp-tvstand"></div>' +
+    '</div>';
+
+  /* Real host console mockup, inside a landscape tablet bezel. */
+  views.host =
+    '<div class="vp-tabletframe">' +
+      '<div class="vps-console">' +
+        '<div class="vps-con-top">' +
+          '<div class="vps-con-brand">' +
+            '<span class="vps-mini-mark">' +
+              '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+              '<span class="vps-w">VenuePlay</span>' +
+            '</span>' +
+            '<div class="vps-con-venue">Tugun Bowls Club</div>' +
+            '<div class="vps-g">Game 2: One line<small>Prize: $50 bar tab</small></div>' +
+          '</div>' +
+          '<span class="vps-pill vps-live"><span class="vps-dot"></span>Running</span>' +
+        '</div>' +
+        '<div class="vps-con-grid">' +
+          '<div>' +
+            '<button class="vps-next-ball" type="button" tabindex="-1" aria-hidden="true">' +
+              '<span class="vps-k">Next ball</span>' +
+              '<span class="vps-s" style="display:block">17 of 75 called</span>' +
+            '</button>' +
+            '<div class="vps-recent">' +
+              '<div class="vps-rl">Recent</div>' +
+              '<div class="vps-balls"><span class="vps-rb vps-cur">G54</span><span class="vps-rb">B7</span><span class="vps-rb">O68</span><span class="vps-rb">N31</span><span class="vps-rb">I23</span></div>' +
+            '</div>' +
+            '<button class="vps-allballs-btn" type="button" id="vps-allballs-btn">See all balls</button>' +
+            '<div class="vps-allballs" id="vps-allballs" hidden>' +
+              '<div class="vps-allballs-h">All 75 balls, called ones lit</div>' +
+              '<div class="vps-board" id="vps-hostboard"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-claim">' +
+            '<div class="vps-cl">Claim to check</div>' +
+            '<div class="vps-who">Card 27 &middot; Marta</div>' +
+            '<div class="vps-verdict"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#2FD27A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg> Valid line, verified</div>' +
+            '<div class="vps-btns">' +
+              '<button class="vps-cbtn vps-ok" type="button" tabindex="-1" aria-hidden="true">Confirm winner</button>' +
+              '<button class="vps-cbtn vps-no" type="button" tabindex="-1" aria-hidden="true">Reject</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vps-con-foot">' +
+          '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Pause</button>' +
+          '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">End game</button>' +
+          '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Start raffle</button>' +
+          '<span class="vps-count"><b>62</b> in the room</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  /* Real player phone mockup (the .vps-phone is already a phone frame). */
+  views.player =
+    '<div class="vp-phoneframe">' +
+      '<div class="vps-phone">' +
+        '<div class="vps-notch"></div>' +
+        '<div class="vps-ph-head">' +
+          '<span class="vps-mini-mark">' +
+            '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+            '<span class="vps-w">VenuePlay</span>' +
+          '</span>' +
+          '<span class="vps-v">Tugun Bowls</span>' +
+        '</div>' +
+        '<div class="vps-ticker">Last call <b>G 54</b> mark it if you have got it</div>' +
+        '<div class="vps-pcard" id="vps-pcard"></div>' +
+        '<button class="vps-bingo-btn" type="button" tabindex="-1" aria-hidden="true">BINGO!</button>' +
+      '</div>' +
+    '</div>';
+
+  /* ============================================================
+     TRIVIA views. Same sample content across all three screens.
+     Round "Trivia", Question 4 of 10, ~15s timer showing 9s left.
+     Q: Which Australian city hosted the 2000 Summer Olympics?
+     A Melbourne, B Sydney (correct), C Brisbane, D Perth.
+     Shape glyphs ride with each letter for accessibility.
+     ============================================================ */
+  var triviaShapes = {
+    a: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11 11 1 11Z" fill="currentColor"></path></svg>',
+    b: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11 6 6 11 1 6Z" fill="currentColor"></path></svg>',
+    c: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="currentColor"></circle></svg>',
+    d: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" fill="currentColor"></rect></svg>'
+  };
+  var triviaQuestion = "Which Australian city hosted the 2000 Summer Olympics?";
+
+  var triviaViews = {};
+
+  /* Big screen: venue + Trivia pill + Q4 of 10, large centred
+     question, a pink countdown ring, the 4 coloured options in a
+     2x2 grid, and the join footer reused from the bingo TV. */
+  triviaViews.tv =
+    '<div class="vp-tvframe">' +
+      '<div class="vps-tv vps-trivia-tv">' +
+        '<div class="vps-tv-top">' +
+          '<span class="vps-tv-venue">Tugun Bowls Club &middot; Trivia Night</span>' +
+          '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+            '<span class="vps-pill vps-live"><span class="vps-dot"></span>Trivia</span>' +
+            '<span class="vps-pill">Q4 of 10</span>' +
+          '</span>' +
+        '</div>' +
+        '<div class="vps-tv-body vps-trivia-body">' +
+          '<div class="vps-tq-col">' +
+            '<div class="vps-tq">' + triviaQuestion + '</div>' +
+            '<div class="vps-timer">' +
+              '<svg viewBox="0 0 64 64" aria-hidden="true">' +
+                '<circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="6"></circle>' +
+                '<circle cx="32" cy="32" r="27" fill="none" stroke="#FF1F8E" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="67.8" transform="rotate(-90 32 32)"></circle>' +
+              '</svg>' +
+              '<span class="vps-timer-num">9s</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-opts">' +
+            '<div class="vps-opt vps-opt-a"><span class="vps-opt-badge">' + triviaShapes.a + 'A</span><span class="vps-opt-text">Melbourne</span></div>' +
+            '<div class="vps-opt vps-opt-b"><span class="vps-opt-badge">' + triviaShapes.b + 'B</span><span class="vps-opt-text">Sydney</span></div>' +
+            '<div class="vps-opt vps-opt-c"><span class="vps-opt-badge">' + triviaShapes.c + 'C</span><span class="vps-opt-text">Brisbane</span></div>' +
+            '<div class="vps-opt vps-opt-d"><span class="vps-opt-badge">' + triviaShapes.d + 'D</span><span class="vps-opt-text">Perth</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vps-tv-foot">' +
+          '<div class="vps-qr"><canvas id="vps-qr" width="46" height="46"></canvas></div>' +
+          '<div class="vps-join">' +
+            '<div class="vps-l">Join from your phone</div>' +
+            '<div class="vps-u"><svg class="vps-u-mark" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.8" stroke-linejoin="round"></path></svg>venueplay.com.au/play</div>' +
+          '</div>' +
+          '<div class="vps-code">TQ7M4C</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="vp-tvstand"></div>' +
+    '</div>';
+
+  /* Host console: brand + venue + Trivia Game 2, the question, the
+     4 options with the correct one (B Sydney) green-ticked and a
+     live response count/bar each, plus a working Show answers /
+     A B C D toggle and Reveal / Next controls. */
+  triviaViews.host =
+    '<div class="vp-tabletframe">' +
+      '<div class="vps-console" id="vps-thost">' +
+        '<div class="vps-con-top">' +
+          '<div class="vps-con-brand">' +
+            '<span class="vps-mini-mark">' +
+              '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+              '<span class="vps-w">VenuePlay</span>' +
+            '</span>' +
+            '<div class="vps-con-venue">Tugun Bowls Club</div>' +
+            '<div class="vps-g">Trivia, Game 2<small>Question 4 of 10</small></div>' +
+          '</div>' +
+          '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
+        '</div>' +
+        '<div class="vps-thost-q">' + triviaQuestion + '</div>' +
+        '<div class="vps-hopts">' +
+          '<div class="vps-hopt vps-hopt-a">' +
+            '<span class="vps-hbadge">' + triviaShapes.a + 'A</span>' +
+            '<span class="vps-htextwrap"><span class="vps-htext" data-full="Melbourne" data-letter="A">Melbourne</span><span class="vps-hbar"><span class="vps-hbar-fill" style="width:32%"></span></span></span>' +
+            '<span class="vps-htick" aria-hidden="true"></span>' +
+            '<span class="vps-hcount">41</span>' +
+          '</div>' +
+          '<div class="vps-hopt vps-hopt-b">' +
+            '<span class="vps-hbadge">' + triviaShapes.b + 'B</span>' +
+            '<span class="vps-htextwrap"><span class="vps-htext" data-full="Sydney" data-letter="B">Sydney</span><span class="vps-hbar"><span class="vps-hbar-fill" style="width:100%"></span></span></span>' +
+            '<span class="vps-htick on" aria-label="Correct answer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#04160c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>' +
+            '<span class="vps-hcount">128</span>' +
+          '</div>' +
+          '<div class="vps-hopt vps-hopt-c">' +
+            '<span class="vps-hbadge">' + triviaShapes.c + 'C</span>' +
+            '<span class="vps-htextwrap"><span class="vps-htext" data-full="Brisbane" data-letter="C">Brisbane</span><span class="vps-hbar"><span class="vps-hbar-fill" style="width:26%"></span></span></span>' +
+            '<span class="vps-htick" aria-hidden="true"></span>' +
+            '<span class="vps-hcount">33</span>' +
+          '</div>' +
+          '<div class="vps-hopt vps-hopt-d">' +
+            '<span class="vps-hbadge">' + triviaShapes.d + 'D</span>' +
+            '<span class="vps-htextwrap"><span class="vps-htext" data-full="Perth" data-letter="D">Perth</span><span class="vps-hbar"><span class="vps-hbar-fill" style="width:9%"></span></span></span>' +
+            '<span class="vps-htick" aria-hidden="true"></span>' +
+            '<span class="vps-hcount">12</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vps-con-foot">' +
+          '<button class="vps-ghost vps-toggle" id="vps-ttoggle" type="button">A B C D</button>' +
+          '<button class="vps-tctrl vps-reveal" type="button" tabindex="-1" aria-hidden="true">Reveal answer</button>' +
+          '<button class="vps-tctrl vps-next" type="button" tabindex="-1" aria-hidden="true">Next question</button>' +
+          '<span class="vps-count"><b>214</b> answered</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  /* Player phone: header + venue, the question, the 4 tappable
+     coloured answer buttons, and the running score. */
+  triviaViews.player =
+    '<div class="vp-phoneframe">' +
+      '<div class="vps-phone" id="vps-tplayer">' +
+        '<div class="vps-notch"></div>' +
+        '<div class="vps-ph-head">' +
+          '<span class="vps-mini-mark">' +
+            '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+            '<span class="vps-w">VenuePlay</span>' +
+          '</span>' +
+          '<span class="vps-v">Tugun Bowls</span>' +
+        '</div>' +
+        '<span class="vps-tsub">Trivia &middot; Q4 of 10</span>' +
+        '<div class="vps-tq vps-tq-phone">' + triviaQuestion + '</div>' +
+        '<div class="vps-opts vps-opts-phone">' +
+          '<button class="vps-opt vps-popt vps-opt-a" type="button"><span class="vps-opt-badge">' + triviaShapes.a + 'A</span><span class="vps-opt-text">Melbourne</span></button>' +
+          '<button class="vps-opt vps-popt vps-opt-b" type="button"><span class="vps-opt-badge">' + triviaShapes.b + 'B</span><span class="vps-opt-text">Sydney</span></button>' +
+          '<button class="vps-opt vps-popt vps-opt-c" type="button"><span class="vps-opt-badge">' + triviaShapes.c + 'C</span><span class="vps-opt-text">Brisbane</span></button>' +
+          '<button class="vps-opt vps-popt vps-opt-d" type="button"><span class="vps-opt-badge">' + triviaShapes.d + 'D</span><span class="vps-opt-text">Perth</span></button>' +
+        '</div>' +
+        '<div class="vps-pscore">Your score <b>3200</b>, 2nd</div>' +
+      '</div>' +
+    '</div>';
+
+  /* Post-inject JS. The host toggle swaps the four options between
+     full answer text and just the letters A/B/C/D. */
+  function wireTriviaHost() {
+    var toggle = document.getElementById('vps-ttoggle');
+    if (!toggle) return;
+    var texts = document.querySelectorAll('#vps-thost .vps-htext');
+    var showingLetters = false;
+    toggle.addEventListener('click', function () {
+      showingLetters = !showingLetters;
+      for (var i = 0; i < texts.length; i++) {
+        var attr = showingLetters ? 'data-letter' : 'data-full';
+        texts[i].textContent = texts[i].getAttribute(attr);
+      }
+      toggle.textContent = showingLetters ? 'Show answers' : 'A B C D';
+    });
+  }
+
+  /* Optional: player taps show a simple selected state. */
+  function wireTriviaPlayer() {
+    var opts = document.querySelectorAll('#vps-tplayer .vps-popt');
+    for (var i = 0; i < opts.length; i++) {
+      opts[i].addEventListener('click', function () {
+        for (var j = 0; j < opts.length; j++) opts[j].classList.remove('is-picked');
+        this.classList.add('is-picked');
+      });
+    }
+  }
+
+  /* ---- Builders copied from the live site preview script.
+     In this prototype the target elements only exist once a popup
+     is opened, so each builder is called after its markup is
+     injected and guards for a missing element. ---- */
+  var cols = [['B',1,15],['I',16,30],['N',31,45],['G',46,60],['O',61,75]];
+  var called = {3:1,7:1,9:1,12:1,15:1,23:1,29:1,31:1,38:1,40:1,47:1,51:1,54:1,60:1,66:1,68:1,72:1};
+
+  function buildTvBoard() {
+    var board = document.getElementById('vps-board');
+    if (!board) return;
+    cols.forEach(function(c){
+      var col = document.createElement('div'); col.className = 'vps-col';
+      var h = document.createElement('div'); h.className = 'vps-h'; h.textContent = c[0]; col.appendChild(h);
+      for (var n = c[1]; n <= c[2]; n++) {
+        var d = document.createElement('div');
+        d.className = 'vps-cell' + (called[n] ? ' vps-on' : '');
+        d.textContent = n;
+        col.appendChild(d);
+      }
+      board.appendChild(col);
+    });
+  }
+
+  function buildPcard() {
+    var pcard = document.getElementById('vps-pcard');
+    if (!pcard) return;
+    'BINGO'.split('').forEach(function(L){
+      var h = document.createElement('div'); h.className = 'vps-h'; h.textContent = L; pcard.appendChild(h);
+    });
+    var cardCols = [
+      [2, 7, 9, 13, 14],
+      [18, 23, 26, 29, 30],
+      [31, 38, 0, 40, 44],
+      [47, 50, 54, 57, 59],
+      [62, 66, 70, 72, 75]
+    ];
+    for (var r = 0; r < 5; r++) {
+      for (var ci = 0; ci < 5; ci++) {
+        var cell = document.createElement('div');
+        var num = cardCols[ci][r];
+        if (num === 0) {
+          cell.className = 'vps-pcell vps-free';
+          cell.textContent = 'FREE';
+        } else {
+          cell.className = 'vps-pcell' + (called[num] ? ' vps-marked' : '');
+          var sp = document.createElement('span'); sp.textContent = num; cell.appendChild(sp);
+        }
+        pcard.appendChild(cell);
+      }
+    }
+  }
+
+  function drawQR() {
+    var qc = document.getElementById('vps-qr');
+    if (!qc || !qc.getContext) return;
+    var ctx = qc.getContext('2d'), N = 23, s = qc.width / N;
+    var seed = 20260901;
+    function rnd(){ seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+    ctx.clearRect(0, 0, qc.width, qc.height);
+    ctx.fillStyle = '#0A0A0B';
+    function finder(ox, oy){
+      for (var yy = 0; yy < 7; yy++) for (var xx = 0; xx < 7; xx++) {
+        var edge = (xx === 0 || xx === 6 || yy === 0 || yy === 6);
+        var core = (xx >= 2 && xx <= 4 && yy >= 2 && yy <= 4);
+        if (edge || core) ctx.fillRect((ox + xx) * s, (oy + yy) * s, s, s);
+      }
+    }
+    for (var yy = 0; yy < N; yy++) for (var xx = 0; xx < N; xx++) {
+      var inF = (xx < 7 && yy < 7) || (xx > N - 8 && yy < 7) || (xx < 7 && yy > N - 8);
+      if (!inF && rnd() > 0.55) ctx.fillRect(xx * s, yy * s, s, s);
+    }
+    finder(0, 0); finder(N - 7, 0); finder(0, N - 7);
+  }
+
+  var backdrop = document.getElementById("vpBackdrop");
+  var modal = document.getElementById("vpModal");
+  var body = document.getElementById("vpModalBody");
+  var titleEl = document.getElementById("vpModalTitle");
+
+  var musicalViews = {
+    /* ---------- TV / big screen (widescreen 16:9) ---------- */
+    tv:
+      '<div class="vp-tvframe">' +
+        '<div class="vps-tv">' +
+          '<div class="vps-tv-top">' +
+            '<span class="vps-tv-venue">Tugun Bowls Club &middot; Musical Bingo</span>' +
+            '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+              '<span class="vps-pill vps-live"><span class="vps-dot"></span>Musical Bingo</span>' +
+              '<span class="vps-pill">Song 12 of 25</span>' +
+            '</span>' +
+          '</div>' +
+          '<div class="vpm-tv-body">' +
+            '<div class="vpm-now">' +
+              '<span class="vpm-vinyl">' +
+                '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+                  '<g class="vpm-disc">' +
+                    '<circle cx="50" cy="50" r="47" fill="#0c0c0f" stroke="#26262b" stroke-width="1.5"></circle>' +
+                    '<circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"></circle>' +
+                    '<circle cx="50" cy="50" r="33" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"></circle>' +
+                    '<circle cx="50" cy="50" r="26" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="1"></circle>' +
+                    '<circle cx="50" cy="50" r="17" fill="#FF1F8E"></circle>' +
+                    '<circle cx="50" cy="50" r="4" fill="#0c0c0f"></circle>' +
+                    '<circle cx="63" cy="30" r="2.4" fill="rgba(255,255,255,.55)"></circle>' +
+                  '</g>' +
+                '</svg>' +
+              '</span>' +
+              '<div class="vpm-now-txt">' +
+                '<span class="vpm-nowlabel"><span class="vps-dot"></span>Now playing</span>' +
+                '<span class="vpm-song">Mr Brightside</span>' +
+                '<span class="vpm-artist">by <b>The Killers</b></span>' +
+                '<span class="vpm-eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="vpm-tv-recent">' +
+              '<span class="vpm-rlbl">Recent songs</span>' +
+              '<span class="vpm-schip">Dancing Queen</span>' +
+              '<span class="vpm-schip">Sweet Caroline</span>' +
+              '<span class="vpm-schip">Wonderwall</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-tv-foot">' +
+            '<div class="vpm-qr">' +
+              '<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true">' +
+                '<rect width="29" height="29" fill="#fff"></rect>' +
+                '<path fill="#0A0A0B" d="M2 2h7v7h-7zM4 4h3v3h-3zM20 2h7v7h-7zM22 4h3v3h-3zM2 20h7v7h-7zM4 22h3v3h-3z' +
+                  'M11 2h2v2h-2zM15 2h2v4h-2zM11 5h2v3h-2zM18 11h2v2h-2zM11 11h4v2h-4zM2 11h3v2h-3zM24 11h3v2h-3z' +
+                  'M11 15h2v2h-2zM15 15h4v2h-4zM21 15h2v2h-2zM25 15h2v4h-2zM11 18h2v3h-2zM15 20h2v2h-2zM20 20h3v3h-3z' +
+                  'M24 22h3v2h-3zM15 24h2v3h-2zM20 25h4v2h-4zM7 11h2v2h-2zM2 15h3v2h-3zM2 25h2v2h-2z"></path>' +
+              '</svg>' +
+            '</div>' +
+            '<div class="vps-join">' +
+              '<div class="vps-l">Join from your phone</div>' +
+              '<div class="vps-u"><svg class="vps-u-mark" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.8" stroke-linejoin="round"></path></svg>venueplay.com.au/play</div>' +
+            '</div>' +
+            '<div class="vps-code">TQ7M4C</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vp-tvstand"></div>' +
+      '</div>',
+
+    /* ---------- Host console (tablet) ---------- */
+    host:
+      '<div class="vp-tabletframe">' +
+        '<div class="vps-console">' +
+          '<div class="vps-con-top">' +
+            '<div class="vps-con-brand">' +
+              '<span class="vps-mini-mark">' +
+                '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+                '<span class="vps-w">VenuePlay</span>' +
+              '</span>' +
+              '<div class="vps-con-venue">Tugun Bowls Club</div>' +
+              '<div class="vps-g">Musical Bingo, Game 3<small>Song 12 of 25 &middot; titles only, no audio</small></div>' +
+            '</div>' +
+            '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
+          '</div>' +
+          '<div class="vps-con-grid">' +
+            '<div>' +
+              '<div class="vpm-hnow">' +
+                '<span class="vpm-vinyl">' +
+                  '<svg viewBox="0 0 100 100" aria-hidden="true">' +
+                    '<g class="vpm-disc">' +
+                      '<circle cx="50" cy="50" r="47" fill="#0c0c0f" stroke="#26262b" stroke-width="1.5"></circle>' +
+                      '<circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"></circle>' +
+                      '<circle cx="50" cy="50" r="28" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"></circle>' +
+                      '<circle cx="50" cy="50" r="17" fill="#FF1F8E"></circle>' +
+                      '<circle cx="50" cy="50" r="4" fill="#0c0c0f"></circle>' +
+                    '</g>' +
+                  '</svg>' +
+                '</span>' +
+                '<div class="vpm-hnow-txt">' +
+                  '<span class="vpm-nowlabel"><span class="vps-dot"></span>Now playing</span>' +
+                  '<div class="vpm-hnow-song">Mr Brightside</div>' +
+                  '<div class="vpm-hnow-artist">by The Killers</div>' +
+                '</div>' +
+              '</div>' +
+              '<button class="vpm-nextbtn" type="button" tabindex="-1" aria-hidden="true">' +
+                '<span class="vpm-k">Next song</span>' +
+                '<span class="vpm-s">Cue song 13, then play it in the room</span>' +
+              '</button>' +
+            '</div>' +
+            '<div>' +
+              '<div class="vpm-queue">' +
+                '<div class="vpm-qhead">Up next in the queue</div>' +
+                '<div class="vpm-qrow">' +
+                  '<span class="vpm-qnum">13</span>' +
+                  '<span class="vpm-qtitle">Livin on a Prayer<small>Bon Jovi</small></span>' +
+                  '<span class="vpm-qnext">Next</span>' +
+                '</div>' +
+                '<div class="vpm-qrow">' +
+                  '<span class="vpm-qnum">14</span>' +
+                  '<span class="vpm-qtitle">Uptown Funk<small>Mark Ronson, Bruno Mars</small></span>' +
+                '</div>' +
+                '<div class="vpm-qrow">' +
+                  '<span class="vpm-qnum">15</span>' +
+                  '<span class="vpm-qtitle">Hey Jude<small>The Beatles</small></span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="vps-claim" style="margin-top:12px">' +
+                '<div class="vps-cl">Claim to check</div>' +
+                '<div class="vps-who">Card 27 &middot; Marta</div>' +
+                '<div class="vps-verdict"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#2FD27A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg> Valid line, all songs played</div>' +
+                '<div class="vps-btns">' +
+                  '<button class="vps-cbtn vps-ok" type="button" tabindex="-1" aria-hidden="true">Confirm winner</button>' +
+                  '<button class="vps-cbtn vps-no" type="button" tabindex="-1" aria-hidden="true">Reject</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-con-foot">' +
+            '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Pause</button>' +
+            '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">End game</button>' +
+            '<span class="vps-count"><b>58</b> in the room</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>',
+
+    /* ---------- Player phone ---------- */
+    player:
+      '<div class="vp-phoneframe">' +
+        '<div class="vps-phone">' +
+          '<div class="vps-notch"></div>' +
+          '<div class="vps-ph-head">' +
+            '<span class="vps-mini-mark">' +
+              '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+              '<span class="vps-w">VenuePlay</span>' +
+            '</span>' +
+            '<span class="vps-v">Tugun Bowls</span>' +
+          '</div>' +
+          '<div class="vps-ticker">Now playing: <b>Mr Brightside</b> mark it if it is on your card</div>' +
+          '<div class="vpm-cardlbl"><span>Your song card</span><span><b>4</b> of 16 marked</span></div>' +
+          '<div class="vpm-card">' +
+            '<div class="vpm-cell vpm-on"><span class="vpm-tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#C70F69" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>Mr Brightside</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Livin on a Prayer</div>' +
+            '<div class="vpm-cell vpm-on"><span class="vpm-tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#C70F69" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>Sweet Caroline</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Mr Blue Sky</div>' +
+            '<div class="vpm-cell vpm-on"><span class="vpm-tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#C70F69" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>Dancing Queen</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Hey Jude</div>' +
+            '<div class="vpm-cell vpm-on"><span class="vpm-tick"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#C70F69" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>Wonderwall</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Uptown Funk</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Africa</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>I Will Survive</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Sweet Home Alabama</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Don\'t Stop Believin</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Blinding Lights</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Nutbush City Limits</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Total Eclipse of the Heart</div>' +
+            '<div class="vpm-cell"><span class="vpm-tick"></span>Come On Eileen</div>' +
+          '</div>' +
+          '<button class="vps-bingo-btn" type="button" tabindex="-1" aria-hidden="true">BINGO!</button>' +
+        '</div>' +
+      '</div>'
+  };
+
+  var raffleViews = {
+    /* ---------- TV / big screen (widescreen 16:9) ---------- */
+    tv:
+      '<div class="vp-tvframe">' +
+        '<div class="vps-tv">' +
+          '<div class="vps-tv-top">' +
+            '<span class="vps-tv-venue">Tugun Bowls Club &middot; Raffle</span>' +
+            '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+              '<span class="vps-pill vps-live"><span class="vps-dot"></span>Raffle</span>' +
+            '</span>' +
+          '</div>' +
+          '<div class="vpr-tv-body">' +
+            '<span class="vpr-drawlabel"><span class="vps-dot"></span>Winning ticket</span>' +
+            '<div class="vpr-stage">' +
+              '<span class="vpr-spark s1" aria-hidden="true"></span>' +
+              '<span class="vpr-spark s2" aria-hidden="true"></span>' +
+              '<span class="vpr-spark s3" aria-hidden="true"></span>' +
+              '<span class="vpr-spark s4" aria-hidden="true"></span>' +
+              '<div class="vpr-winner">' +
+                '<span class="vpr-winner-cap">Ticket</span>' +
+                '<span class="vpr-winner-num">087</span>' +
+              '</div>' +
+            '</div>' +
+            '<div class="vpr-tv-more">' +
+              '<span class="vpr-mlbl">Also drawn</span>' +
+              '<span class="vpr-chip">042</span>' +
+              '<span class="vpr-chip">131</span>' +
+            '</div>' +
+            '<div class="vpr-check">Check your ticket. Winners, see the <b>host</b> to claim your prize</div>' +
+          '</div>' +
+          '<div class="vps-tv-foot">' +
+            '<div class="vpr-qr">' +
+              '<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true">' +
+                '<rect width="29" height="29" fill="#fff"></rect>' +
+                '<path fill="#0A0A0B" d="M2 2h7v7h-7zM4 4h3v3h-3zM20 2h7v7h-7zM22 4h3v3h-3zM2 20h7v7h-7zM4 22h3v3h-3z' +
+                  'M11 2h2v2h-2zM15 2h2v4h-2zM11 5h2v3h-2zM18 11h2v2h-2zM11 11h4v2h-4zM2 11h3v2h-3zM24 11h3v2h-3z' +
+                  'M11 15h2v2h-2zM15 15h4v2h-4zM21 15h2v2h-2zM25 15h2v4h-2zM11 18h2v3h-2zM15 20h2v2h-2zM20 20h3v3h-3z' +
+                  'M24 22h3v2h-3zM15 24h2v3h-2zM20 25h4v2h-4zM7 11h2v2h-2zM2 15h3v2h-3zM2 25h2v2h-2z"></path>' +
+              '</svg>' +
+            '</div>' +
+            '<div class="vps-join">' +
+              '<div class="vps-l">Watch from your phone</div>' +
+              '<div class="vps-u"><svg class="vps-u-mark" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.8" stroke-linejoin="round"></path></svg>venueplay.com.au/play</div>' +
+            '</div>' +
+            '<div class="vps-code">TQ7M4C</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vp-tvstand"></div>' +
+      '</div>',
+
+    /* ---------- Host console (tablet) ---------- */
+    host:
+      '<div class="vp-tabletframe">' +
+        '<div class="vps-console">' +
+          '<div class="vps-con-top">' +
+            '<div class="vps-con-brand">' +
+              '<span class="vps-mini-mark">' +
+                '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+                '<span class="vps-w">VenuePlay</span>' +
+              '</span>' +
+              '<div class="vps-con-venue">Tugun Bowls Club</div>' +
+              '<div class="vps-g">Raffle, Game 4<small>Enter the range of paper tickets you sold, then draw</small></div>' +
+            '</div>' +
+            '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
+          '</div>' +
+          '<div class="vps-con-grid">' +
+            '<div>' +
+              '<div class="vpr-entry-lbl">Raffle name</div>' +
+              '<div class="vpr-field vpr-name-field">' +
+                '<span class="vpr-flbl">Name this raffle</span>' +
+                '<span class="vpr-fval vpr-name-val">Friday Meat Raffle</span>' +
+              '</div>' +
+              '<div class="vpr-entry-lbl">Ticket range</div>' +
+              '<div class="vpr-range">' +
+                '<div class="vpr-field">' +
+                  '<span class="vpr-flbl">Start</span>' +
+                  '<span class="vpr-fval">1</span>' +
+                '</div>' +
+                '<div class="vpr-field vpr-focus">' +
+                  '<span class="vpr-flbl">End</span>' +
+                  '<span class="vpr-fval">150<span class="vpr-caret" aria-hidden="true"></span></span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="vpr-winners-field">' +
+                '<div class="vpr-entry-lbl">Winners to draw</div>' +
+                '<div class="vpr-field">' +
+                  '<span class="vpr-flbl">How many numbers</span>' +
+                  '<span class="vpr-fval">3</span>' +
+                '</div>' +
+              '</div>' +
+              '<button class="vpr-drawbtn" type="button" tabindex="-1" aria-hidden="true">' +
+                '<span class="vpr-k">Draw winner</span>' +
+                '<span class="vpr-s">Picks 3 random tickets between 1 and 150</span>' +
+              '</button>' +
+            '</div>' +
+            '<div>' +
+              '<div class="vpr-drawn">' +
+                '<div class="vpr-drawn-head">' +
+                  '<span class="vpr-dh">Drawn</span>' +
+                  '<span class="vpr-range-note">from 1 to 150</span>' +
+                '</div>' +
+                '<div class="vpr-drawn-list">' +
+                  '<div class="vpr-drawn-row">' +
+                    '<span class="vpr-place">1st</span>' +
+                    '<span class="vpr-dnum">087</span>' +
+                    '<span class="vpr-dtick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>' +
+                  '</div>' +
+                  '<div class="vpr-drawn-row">' +
+                    '<span class="vpr-place">2nd</span>' +
+                    '<span class="vpr-dnum">042</span>' +
+                    '<span class="vpr-dtick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>' +
+                  '</div>' +
+                  '<div class="vpr-drawn-row">' +
+                    '<span class="vpr-place">3rd</span>' +
+                    '<span class="vpr-dnum">131</span>' +
+                    '<span class="vpr-dtick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-con-foot">' +
+            '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Draw again</button>' +
+            '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">End raffle</button>' +
+            '<span class="vps-count"><b>150</b> tickets sold</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>',
+
+    /* ---------- Player phone (light results view) ---------- */
+    player:
+      '<div class="vp-phoneframe">' +
+        '<div class="vps-phone">' +
+          '<div class="vps-notch"></div>' +
+          '<div class="vps-ph-head">' +
+            '<span class="vps-mini-mark">' +
+              '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+              '<span class="vps-w">VenuePlay</span>' +
+            '</span>' +
+            '<span class="vps-v">Tugun Bowls</span>' +
+          '</div>' +
+          '<div class="vpr-p-note">Raffle in progress. <b>Check your paper ticket</b> against the numbers below</div>' +
+          '<div class="vpr-p-winlbl">Winning tickets</div>' +
+          '<div class="vpr-p-wins">' +
+            '<div class="vpr-p-win">' +
+              '<span class="vpr-p-place">1st</span>' +
+              '<span class="vpr-p-num">087</span>' +
+            '</div>' +
+            '<div class="vpr-p-win">' +
+              '<span class="vpr-p-place">2nd</span>' +
+              '<span class="vpr-p-num">042</span>' +
+            '</div>' +
+            '<div class="vpr-p-win">' +
+              '<span class="vpr-p-place">3rd</span>' +
+              '<span class="vpr-p-num">131</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vpr-p-foot">You are watching from your phone.<br>Hold a winning ticket? See the host to claim.</div>' +
+        '</div>' +
+      '</div>'
+  };
+
+  var membersViews = {
+    /* ---------- TV / big screen (widescreen 16:9) ---------- */
+    tv:
+      '<div class="vp-tvframe">' +
+        '<div class="vps-tv">' +
+          '<div class="vps-tv-top">' +
+            '<span class="vps-tv-venue">Tugun Bowls Club &middot; Members Draw</span>' +
+            '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+              '<span class="vps-pill vps-live"><span class="vps-dot"></span>Members Draw</span>' +
+              '<span class="vps-pill">Friday Members Jackpot</span>' +
+            '</span>' +
+          '</div>' +
+          '<div class="vpd-tv-body">' +
+            '<div class="vpd-jackpot">' +
+              '<span class="vpd-jlabel"><span class="vps-dot"></span>Live jackpot</span>' +
+              '<span class="vpd-money vpd-jamount">$1,240</span>' +
+              '<span class="vpd-jsub">Starts at $500, grows $80 a week</span>' +
+            '</div>' +
+            '<div class="vpd-drawn">' +
+              '<span class="vpd-token">' +
+                '<span class="vpd-tk-lt">Member</span>' +
+                '<span class="vpd-tk-num">142</span>' +
+              '</span>' +
+              '<div class="vpd-drawn-txt">' +
+                '<span class="vpd-drawn-lbl">Drawn member</span>' +
+                '<span class="vpd-name">John S</span>' +
+                '<span class="vpd-present">Must be present to win<span class="vpd-clock">3:00 to claim</span></span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-tv-foot">' +
+            '<div class="vpd-qr">' +
+              '<svg viewBox="0 0 29 29" shape-rendering="crispEdges" aria-hidden="true">' +
+                '<rect width="29" height="29" fill="#fff"></rect>' +
+                '<path fill="#0A0A0B" d="M2 2h7v7h-7zM4 4h3v3h-3zM20 2h7v7h-7zM22 4h3v3h-3zM2 20h7v7h-7zM4 22h3v3h-3z' +
+                  'M11 2h2v2h-2zM15 2h2v4h-2zM11 5h2v3h-2zM18 11h2v2h-2zM11 11h4v2h-4zM2 11h3v2h-3zM24 11h3v2h-3z' +
+                  'M11 15h2v2h-2zM15 15h4v2h-4zM21 15h2v2h-2zM25 15h2v4h-2zM11 18h2v3h-2zM15 20h2v2h-2zM20 20h3v3h-3z' +
+                  'M24 22h3v2h-3zM15 24h2v3h-2zM20 25h4v2h-4zM7 11h2v2h-2zM2 15h3v2h-3zM2 25h2v2h-2z"></path>' +
+              '</svg>' +
+            '</div>' +
+            '<div class="vps-join">' +
+              '<div class="vps-l">Join from your phone</div>' +
+              '<div class="vps-u"><svg class="vps-u-mark" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.8" stroke-linejoin="round"></path></svg>venueplay.com.au/play</div>' +
+            '</div>' +
+            '<div class="vps-code">TQ7M4C</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vp-tvstand"></div>' +
+      '</div>',
+
+    /* ---------- Host console (tablet) ---------- */
+    host:
+      '<div class="vp-tabletframe">' +
+        '<div class="vps-console">' +
+          '<div class="vps-con-top">' +
+            '<div class="vps-con-brand">' +
+              '<span class="vps-mini-mark">' +
+                '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+                '<span class="vps-w">VenuePlay</span>' +
+              '</span>' +
+              '<div class="vps-con-venue">Tugun Bowls Club</div>' +
+              '<div class="vps-g">Friday Members Jackpot<small>Must be present to win &middot; 3 minute time limit</small></div>' +
+            '</div>' +
+            '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
+          '</div>' +
+          '<div class="vps-con-grid">' +
+            '<div>' +
+              '<div class="vpd-hjackpot">' +
+                '<div class="vpd-hj-l">' +
+                  '<div class="vpd-hj-lbl"><span class="vps-dot"></span>Live jackpot</div>' +
+                  '<div class="vpd-money vpd-hj-amount">$1,240</div>' +
+                '</div>' +
+                '<div class="vpd-hj-note">Starts <b>$500</b><br>Grows <b>$80</b> a week</div>' +
+              '</div>' +
+              '<button class="vpd-drawbtn" type="button" tabindex="-1" aria-hidden="true">' +
+                '<span class="vpd-k">Draw a member</span>' +
+                '<span class="vpd-s">Pull a member number from the database</span>' +
+              '</button>' +
+              '<div class="vpd-hresult">' +
+                '<span class="vpd-htoken">' +
+                  '<span class="vpd-htk-lt">MBR</span>' +
+                  '<span class="vpd-htk-num">142</span>' +
+                '</span>' +
+                '<div class="vpd-hresult-txt">' +
+                  '<div class="vpd-hresult-lbl">Drawn member</div>' +
+                  '<div class="vpd-hresult-name">John S</div>' +
+                  '<div class="vpd-hresult-sub">Member number 142</div>' +
+                '</div>' +
+              '</div>' +
+              '<div class="vpd-count-ctrl">' +
+                '<div class="vpd-count-l">' +
+                  '<div class="vpd-ct-h">Winners to draw</div>' +
+                  '<div class="vpd-ct-s">How many numbers this draw</div>' +
+                '</div>' +
+                '<div class="vpd-stepper">' +
+                  '<button class="vpd-step" type="button" tabindex="-1" aria-hidden="true">&minus;</button>' +
+                  '<span class="vpd-step-num">1</span>' +
+                  '<button class="vpd-step" type="button" tabindex="-1" aria-hidden="true">+</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div>' +
+              '<div class="vpd-decide">' +
+                '<button class="vpd-dbtn vpd-claim" type="button" tabindex="-1" aria-hidden="true">' +
+                  '<span class="vpd-dico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#04160c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>' +
+                  '<span class="vpd-dtxt">' +
+                    '<span class="vpd-dh">Claim, winner present</span>' +
+                    '<span class="vpd-dsub">John S wins $1,240. Jackpot resets to $500.</span>' +
+                  '</span>' +
+                '</button>' +
+                '<button class="vpd-dbtn vpd-roll" type="button" tabindex="-1" aria-hidden="true">' +
+                  '<span class="vpd-dico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h11a4 4 0 0 1 0 8H8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7 5 4 8l3 3" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>' +
+                  '<span class="vpd-dtxt">' +
+                    '<span class="vpd-dh">Jackpot to next week</span>' +
+                    '<span class="vpd-dsub">Not present. Rolls over and grows to $1,320.</span>' +
+                  '</span>' +
+                '</button>' +
+              '</div>' +
+              '<div class="vpd-roster">' +
+                '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19v-1a4 4 0 0 1 4-4h3M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke="#6E6E78" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path><path d="M16 13l2 2 4-4" stroke="#2FD27A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>' +
+                '<span><b>Database 380 members</b>, excluded numbers skipped</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-con-foot">' +
+            '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Edit database</button>' +
+            '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">End draw</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>',
+
+    /* ---------- Player phone (not used for this format) ---------- */
+    player:
+      '<div class="vp-phoneframe">' +
+        '<div class="vps-phone">' +
+          '<div class="vps-notch"></div>' +
+          '<div class="vps-ph-head">' +
+            '<span class="vps-mini-mark">' +
+              '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+              '<span class="vps-w">VenuePlay</span>' +
+            '</span>' +
+            '<span class="vps-v">Tugun Bowls</span>' +
+          '</div>' +
+          '<div class="vpd-skip">' +
+            '<span class="vpd-skip-ico">' +
+              '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2" stroke="#FF1F8E" stroke-width="1.8"></rect><path d="M8 20h8M12 17v3" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round"></path></svg>' +
+            '</span>' +
+            '<div class="vpd-skip-h">Members draws run on the big screen</div>' +
+            '<div class="vpd-skip-s">Nothing to do on players\' phones, just be here to win.</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+  };
+
+  function wireBingoHost(){
+    var btn = document.getElementById('vps-allballs-btn');
+    var panel = document.getElementById('vps-allballs');
+    var board = document.getElementById('vps-hostboard');
+    if(!btn || !panel) return;
+    var built = false;
+    btn.addEventListener('click', function(){
+      if(panel.hasAttribute('hidden')){
+        panel.removeAttribute('hidden');
+        if(!built && board){
+          cols.forEach(function(c){
+            var col=document.createElement('div');col.className='vps-col';
+            var h=document.createElement('div');h.className='vps-h';h.textContent=c[0];col.appendChild(h);
+            for(var n=c[1];n<=c[2];n++){var d=document.createElement('div');d.className='vps-cell'+(called[n]?' vps-on':'');d.textContent=n;col.appendChild(d);}
+            board.appendChild(col);
+          });
+          built=true;
+        }
+        btn.textContent='Hide all balls';
+      } else {
+        panel.setAttribute('hidden','');
+        btn.textContent='See all balls';
+      }
+    });
+  }
+
+  var adViews = {
+    /* ---------- TV / big screen (widescreen 16:9): a venue ad slide ---------- */
+    tv:
+      '<div class="vp-tvframe">' +
+        '<div class="vps-tv">' +
+          '<span class="vpa-corner">' +
+            '<svg width="14" height="16" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+            '<span class="vpa-cw">VenuePlay</span>' +
+          '</span>' +
+          '<div class="vpa-slide">' +
+            '<span class="vpa-tag">Kitchen special</span>' +
+            '<h2 class="vpa-headline">PARMA <span class="vpa-accent">TUESDAY</span></h2>' +
+            '<div class="vpa-price">' +
+              '<span class="vpa-price-num">$15</span>' +
+              '<span class="vpa-price-txt">all day,<br>every Tuesday from 5pm</span>' +
+            '</div>' +
+            '<span class="vpa-venue">Tugun Bowls Club</span>' +
+          '</div>' +
+          '<div class="vpa-dots" aria-hidden="true">' +
+            '<span class="vpa-dot"></span>' +
+            '<span class="vpa-dot vpa-on"></span>' +
+            '<span class="vpa-dot"></span>' +
+            '<span class="vpa-dot"></span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="vp-tvstand"></div>' +
+      '</div>',
+
+    /* ---------- Host console (tablet): the slide manager ---------- */
+    host:
+      '<div class="vp-tabletframe">' +
+        '<div class="vps-console">' +
+          '<div class="vps-con-top">' +
+            '<div class="vps-con-brand">' +
+              '<span class="vps-mini-mark">' +
+                '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+                '<span class="vps-w">VenuePlay</span>' +
+              '</span>' +
+              '<div class="vps-con-venue">Tugun Bowls Club</div>' +
+              '<div class="vps-g">Screen ads<small>Your own promo slides on loop, no host needed</small></div>' +
+            '</div>' +
+            '<span class="vps-pill vps-live"><span class="vps-dot"></span>On the screen</span>' +
+          '</div>' +
+          '<div class="vps-con-grid">' +
+            '<div>' +
+              '<div class="vpa-panel">' +
+                '<div class="vpa-phead"><span>Your slides</span><span><b>3</b> on, 1 off</span></div>' +
+                '<div class="vpa-row">' +
+                  '<span class="vpa-grip"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="1.4"></circle><circle cx="8" cy="2" r="1.4"></circle><circle cx="2" cy="8" r="1.4"></circle><circle cx="8" cy="8" r="1.4"></circle><circle cx="2" cy="14" r="1.4"></circle><circle cx="8" cy="14" r="1.4"></circle></svg></span>' +
+                  '<span class="vpa-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"></rect><path d="M7 21h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>' +
+                  '<span class="vpa-rtxt"><div class="vpa-rname">Parma Tuesday</div><div class="vpa-rsub vpa-live">Showing now</div></span>' +
+                  '<span class="vpa-sw vpa-on"></span>' +
+                '</div>' +
+                '<div class="vpa-row">' +
+                  '<span class="vpa-grip"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="1.4"></circle><circle cx="8" cy="2" r="1.4"></circle><circle cx="2" cy="8" r="1.4"></circle><circle cx="8" cy="8" r="1.4"></circle><circle cx="2" cy="14" r="1.4"></circle><circle cx="8" cy="14" r="1.4"></circle></svg></span>' +
+                  '<span class="vpa-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18V6l10-2v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="6.5" cy="18" r="2.5" stroke="currentColor" stroke-width="1.8"></circle><circle cx="16.5" cy="16" r="2.5" stroke="currentColor" stroke-width="1.8"></circle></svg></span>' +
+                  '<span class="vpa-rtxt"><div class="vpa-rname">Live music, Sat</div><div class="vpa-rsub">Next in the loop</div></span>' +
+                  '<span class="vpa-sw vpa-on"></span>' +
+                '</div>' +
+                '<div class="vpa-row">' +
+                  '<span class="vpa-grip"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="1.4"></circle><circle cx="8" cy="2" r="1.4"></circle><circle cx="2" cy="8" r="1.4"></circle><circle cx="8" cy="8" r="1.4"></circle><circle cx="2" cy="14" r="1.4"></circle><circle cx="8" cy="14" r="1.4"></circle></svg></span>' +
+                  '<span class="vpa-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"></circle><path d="M4 19a5 5 0 0 1 10 0M16 5.5a3.2 3.2 0 0 1 0 6M18 19a5 5 0 0 0-3-4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>' +
+                  '<span class="vpa-rtxt"><div class="vpa-rname">Members joining offer</div><div class="vpa-rsub">In the loop</div></span>' +
+                  '<span class="vpa-sw vpa-on"></span>' +
+                '</div>' +
+                '<div class="vpa-row">' +
+                  '<span class="vpa-grip"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="1.4"></circle><circle cx="8" cy="2" r="1.4"></circle><circle cx="2" cy="8" r="1.4"></circle><circle cx="8" cy="8" r="1.4"></circle><circle cx="2" cy="14" r="1.4"></circle><circle cx="8" cy="14" r="1.4"></circle></svg></span>' +
+                  '<span class="vpa-thumb"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.8"></rect><path d="M4 10h16M9 4v4M15 4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span>' +
+                  '<span class="vpa-rtxt"><div class="vpa-rname">Christmas party bookings</div><div class="vpa-rsub">Draft, hidden for now</div></span>' +
+                  '<span class="vpa-sw"></span>' +
+                '</div>' +
+                '<button class="vpa-add" type="button" tabindex="-1" aria-hidden="true">' +
+                  '<span class="vpa-add-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>' +
+                  '<span><div class="vpa-add-h">Add a slide</div><div class="vpa-add-s">Upload an image or make one from a template</div></span>' +
+                '</button>' +
+              '</div>' +
+            '</div>' +
+            '<div>' +
+              '<div class="vpa-panel">' +
+                '<div class="vpa-when-l">When to show your slides</div>' +
+                '<div class="vpa-seg">' +
+                  '<div class="vpa-seg-opt vpa-on"><span class="vpa-so-h">Between games and all night</span><span class="vpa-so-s">Loops even when no game is on</span></div>' +
+                  '<div class="vpa-seg-opt"><span class="vpa-so-h">Between games only</span><span class="vpa-so-s">Quiet when the screen is idle</span></div>' +
+                '</div>' +
+                '<div class="vpa-reassure">' +
+                  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>' +
+                  '<span>Set it and walk away, no host needed.</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="vps-con-foot">' +
+            '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Preview loop</button>' +
+            '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Slide timing</button>' +
+            '<span class="vps-count"><b>4</b> slides, holds 8 seconds each</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>',
+
+    /* ---------- Player phone (not used for this mode) ---------- */
+    player:
+      '<div class="vp-phoneframe">' +
+        '<div class="vps-phone">' +
+          '<div class="vps-notch"></div>' +
+          '<div class="vps-ph-head">' +
+            '<span class="vps-mini-mark">' +
+              '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
+              '<span class="vps-w">VenuePlay</span>' +
+            '</span>' +
+            '<span class="vps-v">Tugun Bowls</span>' +
+          '</div>' +
+          '<div class="vpa-skip">' +
+            '<span class="vpa-skip-ico">' +
+              '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="2" stroke="#FF1F8E" stroke-width="1.8"></rect><path d="M8 20h8M12 17v3" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round"></path></svg>' +
+            '</span>' +
+            '<div class="vpa-skip-h">Screen ads run on the big screen</div>' +
+            '<div class="vpa-skip-s">Nothing on players\' phones, it just shows your promos in the room.</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+  };
+
+  function open(view) {
+    titleEl.textContent = titles[view] || "View";
+    modal.className = "vp-modal" + (view ? " is-" + view : "");
+    if (currentMode === "bingo") {
+      body.innerHTML = views[view] || "";
+      /* Run the relevant builder against the freshly injected markup. */
+      if (view === "tv") { buildTvBoard(); drawQR(); }
+      else if (view === "player") { buildPcard(); }
+      else if (view === "host") { wireBingoHost(); }
+    } else if (currentMode === "trivia") {
+      body.innerHTML = triviaViews[view] || "";
+      /* Run trivia post-inject JS against the freshly injected markup. */
+      if (view === "tv") { drawQR(); }
+      else if (view === "host") { wireTriviaHost(); }
+      else if (view === "player") { wireTriviaPlayer(); }
+    } else if (currentMode === "musical") {
+      body.innerHTML = musicalViews[view] || "";
+    } else if (currentMode === "raffle") {
+      body.innerHTML = raffleViews[view] || "";
+    } else if (currentMode === "members") {
+      body.innerHTML = membersViews[view] || "";
+    } else if (currentMode === "ads") {
+      body.innerHTML = adViews[view] || "";
+    } else {
+      body.innerHTML = placeholderView(view);
+    }
+    backdrop.classList.add("open");
+  }
+  function close() {
+    backdrop.classList.remove("open");
+    body.innerHTML = "";
+    modal.className = "vp-modal";
+  }
+
+  var spots = document.querySelectorAll(".vp-hotspot");
+  for (var i = 0; i < spots.length; i++) {
+    spots[i].addEventListener("click", function () {
+      open(this.getAttribute("data-view"));
+    });
+  }
+
+  document.getElementById("vpClose").addEventListener("click", close);
+  backdrop.addEventListener("click", function (e) {
+    if (e.target === backdrop) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  /* ---- Game mode dropdown ---- */
+  var modeBar = document.querySelector(".vp-modebar");
+  var modeBtn = document.getElementById("vpModeBtn");
+  var modeMenu = document.getElementById("vpModeMenu");
+  var modeLabelEl = document.getElementById("vpModeLabel");
+  var modeOpts = Array.prototype.slice.call(modeMenu.querySelectorAll(".vp-modeopt"));
+
+  function menuOpen() { return modeMenu.classList.contains("open"); }
+
+  function openMenu() {
+    modeMenu.classList.add("open");
+    modeBtn.setAttribute("aria-expanded", "true");
+    var sel = modeMenu.querySelector('[aria-selected="true"]') || modeOpts[0];
+    sel.focus();
+  }
+  function closeMenu(focusBtn) {
+    modeMenu.classList.remove("open");
+    modeBtn.setAttribute("aria-expanded", "false");
+    if (focusBtn) modeBtn.focus();
+  }
+  function selectMode(opt) {
+    currentMode = opt.getAttribute("data-mode");
+    currentModeLabel = opt.getAttribute("data-label");
+    modeLabelEl.textContent = currentModeLabel;
+    for (var i = 0; i < modeOpts.length; i++) {
+      modeOpts[i].setAttribute("aria-selected", modeOpts[i] === opt ? "true" : "false");
+    }
+  }
+  function focusOpt(idx) {
+    var n = modeOpts.length;
+    modeOpts[(idx + n) % n].focus();
+  }
+
+  modeBtn.addEventListener("click", function () {
+    if (menuOpen()) closeMenu(false); else openMenu();
+  });
+  modeBtn.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openMenu();
+    }
+  });
+
+  modeOpts.forEach(function (opt, idx) {
+    opt.addEventListener("click", function () {
+      selectMode(opt);
+      closeMenu(true);
+    });
+    opt.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown") { e.preventDefault(); focusOpt(idx + 1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); focusOpt(idx - 1); }
+      else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectMode(opt); closeMenu(true); }
+      else if (e.key === "Escape") { e.preventDefault(); closeMenu(true); }
+      else if (e.key === "Home") { e.preventDefault(); focusOpt(0); }
+      else if (e.key === "End") { e.preventDefault(); focusOpt(modeOpts.length - 1); }
+    });
+  });
+
+  document.addEventListener("click", function (e) {
+    if (menuOpen() && !modeBar.contains(e.target)) closeMenu(false);
+  });
+})();
+</script>
+
+</body>
+</html>
