@@ -296,7 +296,6 @@
 
   /* ---------- RESPONSIVE ---------- */
   @media(max-width:900px){
-    .modes{grid-template-columns:repeat(2,1fr)}
     .offer-grid{grid-template-columns:1fr;gap:34px}
     .incl{grid-template-columns:1fr;gap:6px}
   }
@@ -306,7 +305,6 @@
   @media(max-width:560px){
     .sec{padding:64px 0}
     .hero{padding:64px 0 56px}
-    .modes{grid-template-columns:1fr}
     .form-grid{grid-template-columns:1fr}
     .nav .ghost-cta{display:none}
     .foot{flex-direction:column;align-items:flex-start}
@@ -706,6 +704,8 @@
   .vps-explore-title{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(28px,5vw,44px);line-height:1.02;letter-spacing:.01em}
   .vps-explore-sub{color:var(--muted);font-size:clamp(14px,2vw,17px);line-height:1.55;max-width:46ch}
   .vps-explore-btn{display:inline-flex;align-items:center;gap:9px;margin-top:6px;background:linear-gradient(180deg,var(--pink),var(--pink-deep));color:#12030b;font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;padding:14px 24px;border-radius:12px;box-shadow:0 0 34px -8px var(--glow)}
+  a.mode{text-decoration:none;color:inherit;cursor:pointer;transition:transform .16s ease,border-color .16s ease}
+  a.mode:hover{transform:translateY(-3px);border-color:rgba(255,31,142,.45)}
 </style>
 </head>
 <body>
@@ -752,31 +752,31 @@
       <p class="sec-sub">Swap formats on the night or run a different one each week. It all plays on the screen you've already got: the TV behind the bar, a projector, whatever you run.</p>
     </div>
     <div class="modes">
-      <div class="mode">
+      <a class="mode" href="/see-a-night?mode=bingo" target="_blank" rel="noopener">
         <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#FF1F8E" stroke-width="1.6"/><circle cx="6.5" cy="6.5" r="1.4" fill="#FF1F8E"/><circle cx="13.5" cy="6.5" r="1.4" fill="#FF1F8E"/><circle cx="10" cy="10" r="1.4" fill="#FF1F8E"/><circle cx="6.5" cy="13.5" r="1.4" fill="#FF1F8E"/><circle cx="13.5" cy="13.5" r="1.4" fill="#FF1F8E"/></svg></div>
         <h3>Bingo</h3>
         <p>Classic numbers night with a big-screen caller. Digital cards on every phone, auto-marked, instant winner checks.</p>
-      </div>
-      <div class="mode">
+      </a>
+      <a class="mode" href="/see-a-night?mode=trivia" target="_blank" rel="noopener">
         <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2.5a4 4 0 0 0-2.5 7.1c.5.4.7.9.7 1.4v.5h3.6v-.5c0-.5.2-1 .7-1.4A4 4 0 0 0 10 2.5Z" stroke="#FF1F8E" stroke-width="1.6"/><path d="M8 15.5h4M8.5 17.5h3" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/></svg></div>
         <h3>Trivia</h3>
         <p>Rounds, teams and a live leaderboard. Questions, scoring and tie-breaks all handled. You just host.</p>
-      </div>
-      <div class="mode">
+      </a>
+      <a class="mode" href="/see-a-night?mode=musical" target="_blank" rel="noopener">
         <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 14.5V5l8-1.5v9" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="14.5" r="2" stroke="#FF1F8E" stroke-width="1.6"/><circle cx="13" cy="12.5" r="2" stroke="#FF1F8E" stroke-width="1.6"/></svg></div>
         <h3>Musical Bingo</h3>
         <p>Songs instead of numbers, players mark the track when it drops. Built-in playlists or bring your own theme.</p>
-      </div>
-      <div class="mode">
+      </a>
+      <a class="mode" href="/see-a-night?mode=raffle" target="_blank" rel="noopener">
         <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 8.5 10 3l6 5.5" stroke="#FF1F8E" stroke-width="1.6" stroke-linejoin="round"/><rect x="4.5" y="8.5" width="11" height="8" rx="1.5" stroke="#FF1F8E" stroke-width="1.6"/><path d="M10 11v3" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/></svg></div>
         <h3>Raffles &amp; Members Draws</h3>
         <p>Run the meat tray or the members jackpot on the same system. Tickets, draws and number checks done live on screen.</p>
-      </div>
-      <div class="mode">
+      </a>
+      <a class="mode" href="/see-a-night?mode=ads" target="_blank" rel="noopener">
         <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="10" rx="1.5" stroke="#FF1F8E" stroke-width="1.6"/><path d="M7.5 16.5h5" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/><path d="M10 13.5v3" stroke="#FF1F8E" stroke-width="1.6"/><path d="M8.5 6 L12.5 8.5 L8.5 11 Z" fill="#FF1F8E"/></svg></div>
         <h3>Screen Ads</h3>
         <p>Even with no game on, your screen earns its keep. Upload your own slides, drink specials, gigs, members offers, and VenuePlay loops them on the big screen. Set it and walk away.</p>
-      </div>
+      </a>
     </div>
   </div>
 </section>
@@ -845,8 +845,8 @@
           </div>
           <div class="vps-swap">
             <div class="vps-swap-k">The formats</div>
-            <h3>Four nights, one system</h3>
-            <p>Bingo, trivia, musical bingo and raffles on the same platform. Swap formats week to week without changing anything in the room.</p>
+            <h3>Every night, one system</h3>
+            <p>Bingo, trivia, musical bingo, raffles, members draws and your own screen ads on the same platform. Swap formats week to week without changing anything in the room.</p>
           </div>
           <div class="vps-swap">
             <div class="vps-swap-k">The bill</div>
@@ -903,7 +903,7 @@
       <h2 class="sec-title">Everything to run the night</h2>
     </div>
     <ul class="incl">
-      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>All four game modes</strong><span>Bingo, trivia, musical bingo and raffles on one screen.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Every game mode</strong><span>Bingo, trivia, musical bingo, raffles, members draws and screen ads on one screen.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Players join by phone</strong><span>Scan a code and play, no app to download, no account to make.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Plays on any screen</strong><span>The TV behind the bar, a projector, or a cheap streaming stick, your call.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Unlimited nights</strong><span>Run it as often as you like, no per-event fees on your plan.</span></div></li>
