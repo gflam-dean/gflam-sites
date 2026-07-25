@@ -1331,6 +1331,19 @@ block (all classes prefixed .vpa-)
     letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);
   }
 
+  /* Real ad-slide slideshow on the big screen (cross-fades the venue's slides) */
+  .vps-adtv{padding:0;overflow:hidden}
+  .vpa-show{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit}
+  .vpa-show img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:0}
+  .vpa-show img:first-child{opacity:1}
+  @media(prefers-reduced-motion:no-preference){
+    .vpa-show img{opacity:0;animation:vpa-fade 18s infinite}
+    .vpa-show img:nth-child(2){animation-delay:4.5s}
+    .vpa-show img:nth-child(3){animation-delay:9s}
+    .vpa-show img:nth-child(4){animation-delay:13.5s}
+  }
+  @keyframes vpa-fade{0%{opacity:0}2%{opacity:1}23%{opacity:1}27%{opacity:0}100%{opacity:0}}
+
   /* Slide-position dots, sits at the foot of the slide */
   .vpa-dots{
     position:relative;z-index:1;display:flex;align-items:center;justify-content:center;
@@ -2544,26 +2557,17 @@ block (all classes prefixed .vpa-)
     /* ---------- TV / big screen (widescreen 16:9): a venue ad slide ---------- */
     tv:
       '<div class="vp-tvframe">' +
-        '<div class="vps-tv">' +
+        '<div class="vps-tv vps-adtv">' +
+          '<div class="vpa-show">' +
+            '<img src="/logos/ad-slides/tugun-tuesday.jpg" alt="Tugun Bowls Club promo slide">' +
+            '<img src="/logos/ad-slides/tugun-thursday.jpg" alt="">' +
+            '<img src="/logos/ad-slides/tugun-friday.jpg" alt="">' +
+            '<img src="/logos/ad-slides/tugun-saturday.jpg" alt="">' +
+          '</div>' +
           '<span class="vpa-corner">' +
             '<svg width="14" height="16" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
             '<span class="vpa-cw">VenuePlay</span>' +
           '</span>' +
-          '<div class="vpa-slide">' +
-            '<span class="vpa-tag">Kitchen special</span>' +
-            '<h2 class="vpa-headline">PARMA <span class="vpa-accent">TUESDAY</span></h2>' +
-            '<div class="vpa-price">' +
-              '<span class="vpa-price-num">$15</span>' +
-              '<span class="vpa-price-txt">all day,<br>every Tuesday from 5pm</span>' +
-            '</div>' +
-            '<span class="vpa-venue">Tugun Bowls Club</span>' +
-          '</div>' +
-          '<div class="vpa-dots" aria-hidden="true">' +
-            '<span class="vpa-dot"></span>' +
-            '<span class="vpa-dot vpa-on"></span>' +
-            '<span class="vpa-dot"></span>' +
-            '<span class="vpa-dot"></span>' +
-          '</div>' +
         '</div>' +
         '<div class="vp-tvstand"></div>' +
       '</div>',

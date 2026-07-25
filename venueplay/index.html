@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VenuePlay: Run a packed Tuesday. Every Tuesday.</title>
-<meta name="description" content="Bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One pub, one platform: four formats on one screen. Players join from their phone, no app, no login. Founding venues lock in 20% off for life.">
+<meta name="description" content="Bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One pub, one platform, every format on one screen. Players join from their phone, no app, no login. Founding venues lock in 20% off for life.">
 
 <!-- Open Graph -->
 <meta property="og:title" content="VenuePlay: Run a packed Tuesday. Every Tuesday.">
-<meta property="og:description" content="One pub, one platform. Four formats, one screen. Founding venues lock in 20% off for life.">
+<meta property="og:description" content="One pub, one platform. Every format, one screen. Founding venues lock in 20% off for life.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.venueplay.com.au">
 
@@ -176,7 +176,8 @@
   .sec-sub{margin-top:18px;max-width:54ch;color:var(--muted);font-size:17px}
 
   /* ---------- GAME MODES ---------- */
-  .modes{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .modes{display:flex;flex-wrap:wrap;justify-content:center;gap:16px}
+  .modes .mode{flex:1 1 280px;max-width:340px}
   .mode{
     background:var(--ink-2);border:1px solid var(--line);border-radius:16px;
     padding:26px 22px 24px;transition:border-color .2s ease,transform .2s ease,background .2s ease;
@@ -747,7 +748,7 @@
   <div class="wrap">
     <div class="sec-head">
       <div class="label">One pub, one platform</div>
-      <h2 class="sec-title">Four formats. And your own screen ads.</h2>
+      <h2 class="sec-title">Every format. And your own screen ads.</h2>
       <p class="sec-sub">Swap formats on the night or run a different one each week. It all plays on the screen you've already got: the TV behind the bar, a projector, whatever you run.</p>
     </div>
     <div class="modes">
@@ -815,7 +816,7 @@
       <p class="sec-sub">Open the interactive demo, tap the big screen, the host and a player, and flick between all six formats.</p>
     </div>
 
-    <a class="vps-explore" href="/see-a-night" aria-label="Open the interactive VenuePlay demo">
+    <a class="vps-explore" href="/see-a-night" target="_blank" rel="noopener" aria-label="Open the interactive VenuePlay demo">
       <span class="vps-explore-eyebrow"><span class="vps-dot"></span>Interactive demo</span>
       <span class="vps-explore-title">Tap through a real night</span>
       <span class="vps-explore-sub">Open the big screen, the host's tablet and a player's phone, and switch between bingo, trivia, musical bingo, raffles, members draws and screen ads. Click anything.</span>
@@ -830,7 +831,7 @@
     <div class="vps-strip">
       <div class="vps-strip-inner">
         <div class="label">Less to set up, less to pack down</div>
-        <h2 class="vps-strip-title">One screen replaces the paper bingo books, the hired trivia host and the <span class="vps-accent">raffle tickets</span>.</h2>
+        <h2 class="vps-strip-title">One screen replaces the paper bingo books and the <span class="vps-accent">hired trivia host</span>.</h2>
         <div class="vps-swaps">
           <div class="vps-swap">
             <div class="vps-swap-k">The screen</div>
