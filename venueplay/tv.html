@@ -161,7 +161,7 @@
       <div class="qrbig"><canvas id="qrBig"></canvas></div>
       <div class="lobbytxt">
         <div class="lobbyname">Bingo</div>
-        <div class="joinurl">venueplay.com.au/app/play</div>
+        <div class="joinurl">venueplay.com.au/play</div>
         <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
         <div class="playing"><b id="lobbyPlaying">0</b> playing</div>
       </div>
@@ -251,7 +251,7 @@
   }
   var ORIGIN=siteOrigin();
   var pairURL=ORIGIN+"/app?tv="+CODE;
-  var playURL=ORIGIN+"/app/play?room="+CODE;
+  var playURL=ORIGIN+"/play?room="+CODE;
 
   // once a host has ever connected to this screen, we never show the pair QR again
   var paired=false;
