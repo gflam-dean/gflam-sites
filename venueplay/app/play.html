@@ -298,7 +298,7 @@
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
     P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
-    ch=client.channel("vp-bingo-"+room, { config:{ broadcast:{ self:false } } });
+    ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
