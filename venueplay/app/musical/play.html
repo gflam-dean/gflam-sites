@@ -172,9 +172,11 @@
     daubs:{}, claimPending:false, won:false, ended:false
   };
 
-  // ---- pid persistence (keep identity across reconnects) ----
+  // ---- pid + name persistence (keep identity + seat across reconnects/reloads) ----
   function loadPid(room){ try{ return sessionStorage.getItem("vp-mpid-"+room)||""; }catch(e){ return ""; } }
   function savePid(room,pid){ try{ sessionStorage.setItem("vp-mpid-"+room, pid); }catch(e){} }
+  function loadName(room){ try{ return sessionStorage.getItem("vp-mname-"+room)||""; }catch(e){ return ""; } }
+  function saveName(room,nm){ try{ sessionStorage.setItem("vp-mname-"+room, nm); }catch(e){} }
 
   // ---- verification (from played set + FREE, ignore cosmetic daubs) ----
   function playedSet(){ var s={}; for(var i=0;i<P.played.length;i++) s[P.played[i]]=true; return s; }
@@ -253,6 +255,7 @@
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
     P.name=nm.slice(0,20); P.joined=true;
+    saveName(P.room, P.name);
     send({ t:"join", pid:P.pid, name:P.name });
     route();
   }
@@ -316,11 +319,17 @@
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
     P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
+    // restore a saved name so a reload rejoins straight to the card, no re-typing
+    var savedName=loadName(room);
+    if(savedName){ P.name=savedName; P.joined=true; }
     ch=client.channel("vp-musical-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true; flushQueue();
+        // re-announce on every (re)connect so the host rebuilds our seat and re-deals
+        // the current card if it lost the roster (idempotent on the host by pid)
+        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); }
         $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";

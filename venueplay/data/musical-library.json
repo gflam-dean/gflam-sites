@@ -1,0 +1,1027 @@
+{
+  "version": 1,
+  "note": "Song previews resolved from the Apple iTunes Search API (AU store). Each previewUrl is a ~30 second AAC clip served with permissive CORS, played by the host device through the venue PA. VenuePlay hosts no recordings; playback sits under the venue's own OneMusic licence.",
+  "songs": [
+    {
+      "id": "the-horses-daryl-braithwaite",
+      "title": "The Horses",
+      "artist": "Daryl Braithwaite",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/82/cc/5c/82cc5c31-8407-f78b-ecd3-e3b6132a19d5/mzaf_17572135534268359349.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/40/fe/1e/40fe1e44-ee25-e025-3f36-931c97783036/886971200423.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "khe-sanh-cold-chisel",
+      "title": "Khe Sanh",
+      "artist": "Cold Chisel",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/96/ed/93/96ed93b9-37a0-485b-56c5-bf5a1446f76d/mzaf_7899022346431782264.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/96/1e/d6/961ed68b-b595-a6ae-e187-9df064db8475/13UAEIM00192.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "flame-trees-cold-chisel",
+      "title": "Flame Trees",
+      "artist": "Cold Chisel",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/92/15/3d/92153d1b-eafc-957a-a137-ff0e51117a8f/mzaf_16463568745559321088.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/9e/3d/a3/9e3da3aa-87af-7a41-5108-dfd97dbb153c/00602537562817.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "cheap-wine-cold-chisel",
+      "title": "Cheap Wine",
+      "artist": "Cold Chisel",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/d5/a7/17/d5a71749-b523-e403-4ed2-828e12378b49/mzaf_11828250359866451.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/8c/ed/4b/8ced4ba5-8cb2-59bc-d9e9-cd3043601b72/13UAEIM00198.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "bow-river-cold-chisel",
+      "title": "Bow River",
+      "artist": "Cold Chisel",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/31/c5/04/31c50453-6e42-dbaf-a871-57e636a07aed/mzaf_11072449165420461330.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/76/28/79/7628798c-08e3-1a18-89f2-1f6b10ab7f08/00602537562756.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "down-under-men-at-work",
+      "title": "Down Under",
+      "artist": "Men at Work",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/15/1d/b6/151db6e8-a2c8-2b95-52e4-5f9e6c1c0954/mzaf_545647434728539744.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features115/v4/80/07/23/80072391-3543-cdb9-e298-08d5f0595f41/dj.uyepaoyc.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "who-can-it-be-now-men-at-work",
+      "title": "Who Can It Be Now?",
+      "artist": "Men at Work",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/c8/e0/cd/c8e0cdc3-196e-4b4f-1996-c763557823ab/mzaf_1680654134232879360.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features115/v4/80/07/23/80072391-3543-cdb9-e298-08d5f0595f41/dj.uyepaoyc.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "beds-are-burning-midnight-oil",
+      "title": "Beds Are Burning",
+      "artist": "Midnight Oil",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/bc/a7/0f/bca70f33-0167-e634-06ee-8c4567c88b7f/mzaf_2802059726748155562.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/1d/ae/99/1dae999a-8d53-a45a-d14e-7e811c752b12/886971827323.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "throw-your-arms-around-me-hunters-collectors",
+      "title": "Throw Your Arms Around Me",
+      "artist": "Hunters & Collectors",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview122/v4/f0/eb/0b/f0eb0b2e-6769-3370-b6be-e0c5b7ca4a28/mzaf_10060571150064172179.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music/y2005/m09/d23/h13/mzi.zcvhzrpi.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "holy-grail-hunters-collectors",
+      "title": "Holy Grail",
+      "artist": "Hunters & Collectors",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/65/29/b6/6529b64e-c476-a0d4-90b6-651bac269932/mzaf_15382004846892425685.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/a9/42/2a/a9422a8e-ed6f-90a6-e02d-3b32cf8a160c/dj.mafldqkd.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "am-i-ever-gonna-see-your-face-again-the-angels",
+      "title": "Am I Ever Gonna See Your Face Again",
+      "artist": "The Angels",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/50/75/d6/5075d609-4d57-9bca-eacc-c954beec5447/mzaf_773685748362844123.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/db/08/2d/db082d5e-0bc9-eff9-d2d5-8c5a2a14d6fc/40_Years_of_Rock_Vol._1_40_Greatest_Studio_Hits.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "working-class-man-jimmy-barnes",
+      "title": "Working Class Man",
+      "artist": "Jimmy Barnes",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/15/f1/9f/15f19f1e-7568-4f3e-2657-90bce86854a4/mzaf_937035477856775341.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music3/v4/d5/9b/e3/d59be365-dde4-77f0-4e8e-96ef288a620f/contsched.uwclwsdk.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "you-re-the-voice-john-farnham",
+      "title": "You're the Voice",
+      "artist": "John Farnham",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/45/3f/f2/453ff277-2a21-b545-6415-8c1b44ad7be5/mzaf_15237526553999423899.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/fa/68/b6/fa68b689-8f05-ddf5-c789-f9727344e20c/9399421014927.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "great-southern-land-icehouse",
+      "title": "Great Southern Land",
+      "artist": "Icehouse",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/88/91/45/88914508-24af-2498-f9d6-38c0f29f2e3f/mzaf_7526979128459885076.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/18/da/e7/18dae749-73f0-ad52-a03f-423ae99954a1/12UMGIM36621.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "eagle-rock-daddy-cool",
+      "title": "Eagle Rock",
+      "artist": "Daddy Cool",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/55/72/6d/55726d8c-5283-bfd7-0217-1ad036f58345/mzaf_1930527851176517262.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music/89/53/bd/mzi.llmkloar.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "april-sun-in-cuba-dragon",
+      "title": "April Sun in Cuba",
+      "artist": "Dragon",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/cb/a1/bd/cba1bd6d-5e56-1277-1d05-594534f21785/mzaf_4077756357217744105.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music/1c/f6/cd/mzi.bxobignv.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "never-tear-us-apart-inxs",
+      "title": "Never Tear Us Apart",
+      "artist": "INXS",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/c2/58/b7/c258b713-d9c8-370c-06fd-d3ec1c66f565/mzaf_1103030677976543632.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/30/e8/fc/30e8fc7b-2591-5dc9-5387-3741b3f97b08/06UMGIM44563.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "need-you-tonight-inxs",
+      "title": "Need You Tonight",
+      "artist": "INXS",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/a5/62/c2/a562c2b4-2712-6fbc-67f5-1717e9ec6272/mzaf_14423145199678464920.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music123/v4/95/af/d1/95afd1ad-c345-57ee-8837-43a4eacc89f6/19UMGIM90467.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "new-sensation-inxs",
+      "title": "New Sensation",
+      "artist": "INXS",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/0d/0c/64/0d0c648e-a559-925c-ddcb-24c7a198658c/mzaf_9961543840709849123.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/30/e8/fc/30e8fc7b-2591-5dc9-5387-3741b3f97b08/06UMGIM44563.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "better-the-screaming-jets",
+      "title": "Better",
+      "artist": "The Screaming Jets",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/26/b5/d5/26b5d53f-8d1b-e74b-fa89-1e9efd61501c/mzaf_14072922539707243636.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music/e6/04/fc/mzi.uxednahx.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "solid-rock-goanna",
+      "title": "Solid Rock",
+      "artist": "Goanna",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/ad/9f/41/ad9f41eb-fe60-3f3d-b6ec-ea64870d33aa/mzaf_12769909259317336228.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/f1/83/81/f1838182-86bd-f1c3-a6ef-fde8171a0d10/5054197297021.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "my-happiness-powderfinger",
+      "title": "My Happiness",
+      "artist": "Powderfinger",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f0/a5/94/f0a594a3-3306-cc9b-71f5-ed109b12b031/mzaf_1143427840117989441.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/51/fb/e9/51fbe982-27b5-bbf4-f53c-1645a59cd5f0/06UMGIM70460.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "these-days-powderfinger",
+      "title": "These Days",
+      "artist": "Powderfinger",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/b1/ab/aa/b1abaa54-b8e3-e727-dca1-aee9c328b180/mzaf_17331286875420870605.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/46/2c/06/462c0681-d257-ac71-6b11-967f0cd9e213/00602567588580.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "sounds-of-then-this-is-australia-ganggajang",
+      "title": "Sounds of Then (This Is Australia)",
+      "artist": "GANGgajang",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/dd/3a/f5/dd3af518-81ca-a75c-6d94-2d28b126f323/mzaf_143261624674396079.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/e9/20/5d/e9205d61-6c4b-e597-5df6-4e286265ebd5/21UM1IM19186.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "reckless-australian-crawl",
+      "title": "Reckless",
+      "artist": "Australian Crawl",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/15/0b/9e/150b9e13-00c7-e83b-5ded-b03ce6ffe1d0/mzaf_6304716072406094918.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/a3/a5/e4/a3a5e4e6-4d04-1d65-5139-efec3e1827ec/13UAEIM30799.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "the-boys-light-up-australian-crawl",
+      "title": "The Boys Light Up",
+      "artist": "Australian Crawl",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e4/fb/67/e4fb6751-9264-4dbc-bcce-73af0cf6f156/mzaf_2936122967417984589.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/22/b0/47/22b04718-9717-7f7d-7014-d8c496674b10/13UAAIM12789.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "tucker-s-daughter-ian-moss",
+      "title": "Tucker's Daughter",
+      "artist": "Ian Moss",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/16/50/60/16506002-9763-48f4-5a26-9923b2b5c4e0/mzaf_5246315330550975890.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/93/dd/2c/93dd2cbe-f49a-9372-09d2-c20b3f4fe639/mzi.xlmgeyoa.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "better-be-home-soon-crowded-house",
+      "title": "Better Be Home Soon",
+      "artist": "Crowded House",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/c7/74/62/c77462f8-44d2-9525-085b-b3833f4ab72d/mzaf_8537995140192671496.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/df/ef/54/dfef54fc-8bf5-a9ac-ebed-850f490cddcf/13UABIM53691.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "weather-with-you-crowded-house",
+      "title": "Weather With You",
+      "artist": "Crowded House",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/21/57/82/21578207-c302-f7a8-00c0-d409be42dde5/mzaf_3853598404902110329.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/1b/93/18/1b931893-b838-cecb-4943-2965ef6d23f9/00077779355952.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "don-t-dream-it-s-over-crowded-house",
+      "title": "Don't Dream It's Over",
+      "artist": "Crowded House",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/6d/07/2b/6d072b60-4bec-c854-5267-575e2ccc1a91/mzaf_4354817901169615291.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/91/42/09/91420918-380f-c05a-3225-78b27c792774/13UAEIM58114.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "prisoner-of-society-the-living-end",
+      "title": "Prisoner of Society",
+      "artist": "The Living End",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/44/ba/48/44ba48a5-7851-71ca-547c-3affd8dabb95/mzaf_16132668670986250031.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/ed/75/27/ed7527ad-1e90-e5b1-5817-e044f21669ca/4050538462975.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "scar-missy-higgins",
+      "title": "Scar",
+      "artist": "Missy Higgins",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/1a/40/5e/1a405ece-c374-3331-6562-22564e8160ee/mzaf_14166320622977587494.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/17/c1/c4/17c1c420-893b-04ff-d5a6-ffccd4854280/00602577168499.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "somebody-that-i-used-to-know-gotye",
+      "title": "Somebody That I Used to Know",
+      "artist": "Gotye",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/6c/41/8f/6c418f89-a507-87f4-aaad-e6247ce2d94d/mzaf_14056769598494823890.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/bb/09/79/bb09799d-1827-0382-d570-d18eb790273d/11UMGIM17696.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "riptide-vance-joy",
+      "title": "Riptide",
+      "artist": "Vance Joy",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/b7/e7/f1/b7e7f170-062e-35f2-83e3-d84b4ff3b787/mzaf_824272123485506658.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/e8/39/a4/e839a476-1b15-12f9-abde-180fdde5d267/1595.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "love-is-in-the-air-john-paul-young",
+      "title": "Love Is in the Air",
+      "artist": "John Paul Young",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/58/c9/97/58c9977b-2012-5d4e-a741-c2e182663d54/mzaf_7919173321197907960.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/f8/93/5c/f8935c7c-8831-0383-2c83-f49aef71cae7/dj.udacnedg.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "friday-on-my-mind-the-easybeats",
+      "title": "Friday on My Mind",
+      "artist": "The Easybeats",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/6f/8c/c2/6f8cc259-0490-486e-13c8-623decb41f2b/mzaf_17626125309030310848.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/19/c2/33/19c2338e-f80e-f98e-c762-478e0e62354d/4050538311983.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "come-said-the-boy-mondo-rock",
+      "title": "Come Said the Boy",
+      "artist": "Mondo Rock",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/dd/d1/37/ddd13784-4c5e-9064-22a9-a273e5f19297/mzaf_4963550697360251104.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/a8/f1/29/a8f1293a-01b5-564b-2c2d-f286bc30b9d6/The_Greatest_Hits.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "long-way-to-the-top-ac-dc",
+      "title": "Long Way to the Top",
+      "artist": "AC/DC",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/3c/fd/a2/3cfda2e0-e14b-f56c-6fa9-68eac2bd6033/mzaf_5314568621970145034.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/2d/a8/b5/2da8b582-64aa-d25f-2cdf-ad63a3e04920/dj.jnlhrcpf.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "highway-to-hell-ac-dc",
+      "title": "Highway to Hell",
+      "artist": "AC/DC",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/cb/f4/3f/cbf43f47-747d-bcc2-19cf-6bf2c523f5d8/mzaf_9504019990576453182.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/b9/c8/ef/b9c8ef42-bbc9-64df-11f8-717571f6730f/886443673458.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "thunderstruck-ac-dc",
+      "title": "Thunderstruck",
+      "artist": "AC/DC",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/a0/fb/99/a0fb995a-6e93-c67b-846b-8c81a54748c9/mzaf_2311271038340188410.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/bb/a2/f0/bba2f0d7-4d9e-c617-d49e-3ae02fd5d440/dj.xbkfgllk.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "you-shook-me-all-night-long-ac-dc",
+      "title": "You Shook Me All Night Long",
+      "artist": "AC/DC",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/e7/7d/25/e77d252b-b9d2-d5b5-4f73-8e1cb75cca19/mzaf_5673079058814175168.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/1e/14/58/1e145814-281a-58e0-3ab1-145f5d1af421/886443673441.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "t-n-t-ac-dc",
+      "title": "T.N.T.",
+      "artist": "AC/DC",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/aa/a1/94/aaa194f9-9568-a6b8-1ee0-c231eab9412a/mzaf_2739203206537586158.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/2d/a8/b5/2da8b582-64aa-d25f-2cdf-ad63a3e04920/dj.jnlhrcpf.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "sweet-child-o-mine-guns-n-roses",
+      "title": "Sweet Child o' Mine",
+      "artist": "Guns N' Roses",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/0d/cb/f3/0dcbf381-7cbf-78b8-7f74-d5789adf65a1/mzaf_17081805577020235844.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/56/47/b7/5647b700-6b9d-9e72-ec9f-51140b6d4492/00602567673781.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "take-on-me-a-ha",
+      "title": "Take On Me",
+      "artist": "a-ha",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f2/03/4f/f2034f41-707f-7111-bc63-e5d3cf7f2240/mzaf_17215043934336702540.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music/c6/e1/c8/mzi.ixgzfcmc.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "livin-on-a-prayer-bon-jovi",
+      "title": "Livin' on a Prayer",
+      "artist": "Bon Jovi",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/b9/21/dd/b921dd04-16b2-ac16-c848-9b43b44a4880/mzaf_8082971053956070223.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/5f/a8/1e/5fa81eae-6514-1d56-b352-8e3b243c65ec/24UMGIM99102.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "billie-jean-michael-jackson",
+      "title": "Billie Jean",
+      "artist": "Michael Jackson",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/2e/45/ac/2e45ac8d-80fd-c6cc-6c2f-e13ba72f6395/mzaf_5270213574920944683.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/67/c6/c9/67c6c9b0-e879-7e4d-fcda-dc52f758ec43/888880457066.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "don-t-stop-believin-journey",
+      "title": "Don't Stop Believin'",
+      "artist": "Journey",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/94/f7/d7/94f7d709-811c-3af5-f35a-9601591eb3eb/mzaf_10178220480141203357.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features114/v4/f9/c9/49/f9c9495e-f91c-54c5-02ba-47d5db500f15/dj.nsdhasdt.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "every-breath-you-take-the-police",
+      "title": "Every Breath You Take",
+      "artist": "The Police",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/fe/e4/66/fee46681-9bbc-358a-ba0f-51d39feabf8b/mzaf_16980938720718099101.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/a4/67/ba/a467ba62-87df-9d10-98d2-c517f68ac870/16UMGIM60882.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "sweet-dreams-are-made-of-this-eurythmics",
+      "title": "Sweet Dreams (Are Made of This)",
+      "artist": "Eurythmics",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/33/72/78/337278b2-6ec6-ddbd-1d11-94e0c8ca3b22/mzaf_17096504411490598724.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/ad/d3/3d/add33dea-0a4d-9509-643b-939ba6735733/dj.vpugapfp.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "girls-just-want-to-have-fun-cyndi-lauper",
+      "title": "Girls Just Want to Have Fun",
+      "artist": "Cyndi Lauper",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/95/1d/ed/951ded3d-4e31-1452-42b6-cc36070a2204/mzaf_10794841548233618528.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/8a/8c/13/8a8c13e0-06af-1710-7b7d-ebec65fb8361/074643893022.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "africa-toto",
+      "title": "Africa",
+      "artist": "Toto",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/12/e5/ba/12e5ba45-05c1-7060-25a8-c9b718e7f6e8/mzaf_4488601364870711408.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/69/ce/d2/69ced240-07a7-2a04-bbab-2afbacf30809/074643772822.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "total-eclipse-of-the-heart-bonnie-tyler",
+      "title": "Total Eclipse of the Heart",
+      "artist": "Bonnie Tyler",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/34/d1/23/34d1239b-1efd-1bc3-ff86-2d0f947668b8/mzaf_10784434046657021328.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/20/74/b8/2074b81d-d546-b0c2-d85b-dda3a5e17661/886448236856.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "karma-chameleon-culture-club",
+      "title": "Karma Chameleon",
+      "artist": "Culture Club",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/2e/26/30/2e263078-2754-768a-f606-e2fecef2d5d6/mzaf_16497493683544181535.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ea/dc/39/eadc39bf-f349-a141-a5c4-12b3d9b018cb/14ULAIM00351.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "wake-me-up-before-you-go-go-wham",
+      "title": "Wake Me Up Before You Go-Go",
+      "artist": "Wham!",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/59/d0/df/59d0df1f-b9b0-c1f0-d27e-ad59ee9fe1fa/mzaf_15629855503092199047.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/ee/49/ac/ee49accc-78bd-bcdb-1aff-c40c1ac3ccc4/074643959520.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "never-gonna-give-you-up-rick-astley",
+      "title": "Never Gonna Give You Up",
+      "artist": "Rick Astley",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/b0/d8/aa/b0d8aa8e-1a38-6287-508d-27693174249e/mzaf_12819981103726582013.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music122/v4/de/eb/63/deeb63c1-7bc0-9153-cfa3-fd9e4929aacf/4050538826562.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "like-a-prayer-madonna",
+      "title": "Like a Prayer",
+      "artist": "Madonna",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/0b/23/82/0b238289-52e2-2107-5531-181836267ed2/mzaf_6726729811402686020.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/20/3c/f5/203cf53d-689e-528f-29d7-ba33758254aa/mzi.rotbotfl.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "faith-george-michael",
+      "title": "Faith",
+      "artist": "George Michael",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/f4/62/71/f4627198-0a77-8372-5530-15ee4a6ac0ec/mzaf_9110352412892616382.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/89/46/95/8946959a-e959-f22d-ced2-745feb799454/mzm.upagbaeg.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "jump-van-halen",
+      "title": "Jump",
+      "artist": "Van Halen",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/1c/20/5f/1c205f7f-e8e6-0b1e-59c2-6effd87aa768/mzaf_10715396752169169116.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/d8/de/0f/d8de0fcf-08ee-bc28-ac19-fd3d4ccab220/mzi.glkndtsv.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "tainted-love-soft-cell",
+      "title": "Tainted Love",
+      "artist": "Soft Cell",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/3a/cd/7f/3acd7ffb-7627-d4ef-feb5-b17596742cae/mzaf_914316149793934258.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/e1/2d/a5/e12da5fb-b7b4-82d8-7e6f-7c8ebc4f5c62/06UMGIM46703.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "come-on-eileen-dexys-midnight-runners",
+      "title": "Come On Eileen",
+      "artist": "Dexys Midnight Runners",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4c/3a/e5/4c3ae535-ee68-7c7c-a998-85a077d6a9d2/mzaf_3310936843656351064.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/c6/de/c5/c6dec557-f025-402c-c443-76a3e4e894e0/00600753222584.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "everybody-wants-to-rule-the-world-tears-for-fears",
+      "title": "Everybody Wants to Rule the World",
+      "artist": "Tears for Fears",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ed/23/1f/ed231f7c-78cb-3b4d-f312-fc6b7ec09063/mzaf_14579022326895349191.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/74/41/43/744143ae-afad-8380-106e-1c1bc48922e4/14UMGIM34762.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "i-wanna-dance-with-somebody-who-loves-me-whitney-houston",
+      "title": "I Wanna Dance with Somebody (Who Loves Me)",
+      "artist": "Whitney Houston",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/7b/67/fd/7b67fd07-6a7a-0362-135c-878ac5799f2c/mzaf_11309521725869189721.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/86/b5/25/86b525b1-bff1-4bf6-6112-531251b3d672/dj.hthdmusj.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "hungry-like-the-wolf-duran-duran",
+      "title": "Hungry Like the Wolf",
+      "artist": "Duran Duran",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/16/1e/f3/161ef3f8-88c6-d80b-745f-0eb90eba4412/mzaf_6736118104079294125.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/4c/28/ba/4c28ba7a-8e8d-cf8c-3081-c7a9faf67520/5099996563359.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "don-t-you-forget-about-me-simple-minds",
+      "title": "Don't You (Forget About Me)",
+      "artist": "Simple Minds",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/7e/4f/ef/7e4fef28-9ffa-40ed-4f38-57d00df97cc0/mzaf_3114446322994103754.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/28/6e/43/286e43ed-12e3-f007-966f-ebd6c25b96bf/15UMGIM42148.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "time-after-time-cyndi-lauper",
+      "title": "Time After Time",
+      "artist": "Cyndi Lauper",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/02/bd/5e/02bd5e7c-8efe-9218-6c91-1c69c4c5c062/mzaf_23204011408983330.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/8a/8c/13/8a8c13e0-06af-1710-7b7d-ebec65fb8361/074643893022.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "footloose-kenny-loggins",
+      "title": "Footloose",
+      "artist": "Kenny Loggins",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/d5/b0/72/d5b07225-dd18-cdef-3802-0c1996d2da29/mzaf_3046661895771399553.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music/04/0e/61/mzi.gbajfzvv.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "wonderwall-oasis",
+      "title": "Wonderwall",
+      "artist": "Oasis",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/5b/ed/e3/5bede3b2-2616-92a8-9a56-d3694fb161ff/mzaf_8253629533906297367.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/76/ef/9a/76ef9af6-2ee2-df6a-436e-75d43dbdceae/mzi.rzlcahee.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "don-t-look-back-in-anger-oasis",
+      "title": "Don't Look Back in Anger",
+      "artist": "Oasis",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/c1/a1/39/c1a13912-0258-e74a-18ec-01f3b75f9882/mzaf_7973906281407419040.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/34/2e/cb/342ecb17-ef19-816a-4ce5-e60b9ceec161/5051961073164.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "bitter-sweet-symphony-the-verve",
+      "title": "Bitter Sweet Symphony",
+      "artist": "The Verve",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/0e/3b/4a/0e3b4a89-3f5f-b2f4-f99b-0d51e1568ade/mzaf_17530686600831005668.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/5c/b1/85/5cb18512-9cbd-7b84-4042-37f23bc2ae45/17UMGIM89555.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "torn-natalie-imbruglia",
+      "title": "Torn",
+      "artist": "Natalie Imbruglia",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/68/79/31/68793174-044f-0368-6262-0b65adb785c9/mzaf_14805600564261963665.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/71/48/49/71484921-1017-035e-59bd-d0726cde0372/743215713821.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "zombie-the-cranberries",
+      "title": "Zombie",
+      "artist": "The Cranberries",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/17/06/d1/1706d1c3-4c96-68bd-6a8b-ddec684fd9cb/mzaf_7183844787347303528.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/b6/c8/85/b6c885de-fde6-d40d-c95a-d89ede4270ae/06UMGIM09433.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "wannabe-spice-girls",
+      "title": "Wannabe",
+      "artist": "Spice Girls",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/76/15/ef/7615ef0c-0db4-93ec-992b-05fa55745c4a/mzaf_2018813520783989466.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/36/d0/ba/36d0ba31-e2c4-b7fd-a26e-cbdf3cca9e5c/13UABIM54826.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "baby-one-more-time-britney-spears",
+      "title": "...Baby One More Time",
+      "artist": "Britney Spears",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/2a/ef/e5/2aefe5c7-e83b-07b1-227e-117347aa3006/mzaf_11333878250757508664.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/51/73/28/5173280b-9b5e-c5e4-d3f8-a2612d044543/888880423368.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "believe-cher",
+      "title": "Believe",
+      "artist": "Cher",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview112/v4/c1/0d/a8/c10da837-e5d3-fee3-e494-cea140cd3400/mzaf_7420600068893534947.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/bb/90/f3/bb90f392-b78d-f180-ba6b-f04d2d1e62fd/s05.kfnyrece.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "i-want-it-that-way-backstreet-boys",
+      "title": "I Want It That Way",
+      "artist": "Backstreet Boys",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/12/cd/f8/12cdf81c-f174-cd45-9a56-9b2388df9e63/mzaf_2642298639219088626.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/5f/6b/e9/5f6be919-1b9e-30ef-45b7-cc27fc428fd5/012414167224.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "smells-like-teen-spirit-nirvana",
+      "title": "Smells Like Teen Spirit",
+      "artist": "Nirvana",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8f/0e/a8/8f0ea87d-a151-ae2a-20e4-996fe2e4050b/mzaf_7443670678198364255.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/32/03/d2/3203d294-c0a0-a016-ddcb-508a093aa0b0/11UMGIM26899.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "under-the-bridge-red-hot-chili-peppers",
+      "title": "Under the Bridge",
+      "artist": "Red Hot Chili Peppers",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/bc/9f/89/bc9f892f-a55b-493f-d11d-097a7fc3c194/mzaf_5067400398413485421.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/c9/c8/b2/c9c8b20d-42b8-a2a6-1678-54b997e845f5/093624931973.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "livin-la-vida-loca-ricky-martin",
+      "title": "Livin' la Vida Loca",
+      "artist": "Ricky Martin",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/08/a7/cb/08a7cb6d-0618-3c01-6b80-2b92aaca7406/mzaf_15654413058067067771.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/ab/3c/ed/ab3cedd0-03a6-0802-ec42-2f48c4eb118c/074646989128.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "mr-jones-counting-crows",
+      "title": "Mr. Jones",
+      "artist": "Counting Crows",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f3/b0/2a/f3b02a56-a5bf-e940-4370-2e0a609f1cb4/mzaf_16264556580562087321.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/3b/dc/90/3bdc90a2-3697-0c5e-3265-65ccaa7dcbb3/14UMGIM00847.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "basket-case-green-day",
+      "title": "Basket Case",
+      "artist": "Green Day",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/c2/c9/0f/c2c90fef-f994-111d-2afc-17747de6bc03/mzaf_8917420879191568081.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/88/83/e7/8883e74b-1b7c-0725-09de-21e4e00d54b5/093624915713.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "sweet-caroline-neil-diamond",
+      "title": "Sweet Caroline",
+      "artist": "Neil Diamond",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/4a/31/40/4a3140c4-d8fe-6773-b123-2d315d764405/mzaf_16271406515906806872.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/5c/bd/00/5cbd006b-367f-b9ee-2871-c01beab2dc30/20UMGIM77817.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "mr-brightside-the-killers",
+      "title": "Mr. Brightside",
+      "artist": "The Killers",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/5c/95/cf/5c95cf3a-bef3-97e7-b6aa-3adde55deb30/mzaf_15328769143459778457.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/07/1a/5a/071a5aee-6e42-060c-35b9-6a6e45b9ea59/06UMGIM10441.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "don-t-stop-me-now-queen",
+      "title": "Don't Stop Me Now",
+      "artist": "Queen",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/bd/0d/c8/bd0dc899-3f72-71aa-c5b2-c070c687a527/mzaf_6494501303589492688.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/b0/ca/05/b0ca05aa-29c9-4e01-5a16-f6fa06bce05c/602527594347.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "we-are-the-champions-queen",
+      "title": "We Are the Champions",
+      "artist": "Queen",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4f/6f/e2/4f6fe2f7-4399-4ae4-5ee0-93c9767de778/mzaf_6121695699181617141.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/b0/ca/05/b0ca05aa-29c9-4e01-5a16-f6fa06bce05c/602527594347.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "we-will-rock-you-queen",
+      "title": "We Will Rock You",
+      "artist": "Queen",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/3f/43/ff/3f43ff06-69ff-30b8-d0e9-cae077ce0fd3/mzaf_16025301848716463358.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/1e/3e/d3/1e3ed33b-6491-7772-05fe-360a235c1c04/mzi.cyrjfpwb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "somebody-to-love-queen",
+      "title": "Somebody to Love",
+      "artist": "Queen",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/c3/75/b2/c375b23e-5488-cce7-3d2d-179acf129f8f/mzaf_14885670372853794875.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/89/46/95/8946959a-e959-f22d-ced2-745feb799454/mzm.upagbaeg.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "brown-eyed-girl-van-morrison",
+      "title": "Brown Eyed Girl",
+      "artist": "Van Morrison",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/b8/5e/01/b85e0137-21d0-a265-b2e1-40d3c67a5d94/mzaf_1618708767076233365.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/dd/0e/bc/dd0ebcee-9d50-fe99-4ef8-c0fb79932511/886445621334_Cover.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "hey-jude-the-beatles",
+      "title": "Hey Jude",
+      "artist": "The Beatles",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/30/f0/d7/30f0d7ca-327d-e10c-aa3f-a869503ae6c3/mzaf_11886340716360890712.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/01/69/02/01690216-48fc-1c54-b1de-48170d16b1c3/00602567725268.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "twist-and-shout-the-beatles",
+      "title": "Twist and Shout",
+      "artist": "The Beatles",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/c0/aa/5c/c0aa5c43-56f7-52be-3f63-3338ef03ee34/mzaf_12153535793054939886.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/22/9f/0e/229f0e4b-67c0-99e7-f946-9f5360e40d05/00602557088687.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "summer-of-69-bryan-adams",
+      "title": "Summer of '69",
+      "artist": "Bryan Adams",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/a7/3e/b2/a73eb26b-db02-90f3-0ac6-d0a3170fa876/mzaf_14223839568238436580.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/e4/9b/c2/e49bc283-607b-9f0b-d7d4-adaba6cd3ff3/14UMGIM34434.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "american-pie-don-mclean",
+      "title": "American Pie",
+      "artist": "Don McLean",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/91/d2/14/91d21488-628a-c23d-9e49-6a1d56c84490/mzaf_12305680440357283952.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/7a/fd/77/7afd77f5-a928-109c-5da5-c591b8dad4b2/13UABIM59293.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "piano-man-billy-joel",
+      "title": "Piano Man",
+      "artist": "Billy Joel",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/8e/e4/51/8ee451b3-a74e-25fa-be4e-09ce04a39df0/mzaf_13595078232063121698.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/67/f9/8d/67f98d03-7896-153f-4965-a92458c06965/dj.aiuntmgo.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "uptown-girl-billy-joel",
+      "title": "Uptown Girl",
+      "artist": "Billy Joel",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/47/ed/6a/47ed6a89-63aa-12c0-7b13-8c2c086f3f47/mzaf_13314293207054965636.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/b3/ed/8e/b3ed8eb8-e276-ee92-bf69-fba2865516b6/dj.yjsnvawq.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "angels-robbie-williams",
+      "title": "Angels",
+      "artist": "Robbie Williams",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/90/41/bf/9041bf4d-21d7-be0b-f48d-1da261cdc9b7/mzaf_13449384614633248572.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/70/87/d6/7087d62d-f751-c9c3-5c5c-d3fe7caa307b/13UABIM56247.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "let-me-entertain-you-robbie-williams",
+      "title": "Let Me Entertain You",
+      "artist": "Robbie Williams",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6c/ac/69/6cac693d-35e9-8346-25dd-da3a8908c907/mzaf_13733508164460391586.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/70/87/d6/7087d62d-f751-c9c3-5c5c-d3fe7caa307b/13UABIM56247.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "sex-on-fire-kings-of-leon",
+      "title": "Sex on Fire",
+      "artist": "Kings of Leon",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/8f/39/df/8f39df6b-9b97-1313-b26d-368d9cc0d20f/mzaf_16643660259914950728.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/74/25/4c/74254c8b-e03d-44e8-304d-4cde508b8cfb/dj.swemfdrr.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "use-somebody-kings-of-leon",
+      "title": "Use Somebody",
+      "artist": "Kings of Leon",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/ae/78/eb/ae78eb81-01e0-a02a-1442-eea0cff76f41/mzaf_17219616663227158625.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Features125/v4/74/25/4c/74254c8b-e03d-44e8-304d-4cde508b8cfb/dj.swemfdrr.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "chelsea-dagger-the-fratellis",
+      "title": "Chelsea Dagger",
+      "artist": "The Fratellis",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/6c/be/0f/6cbe0f4e-d8d6-f7f5-e1b1-9fa73f35f260/mzaf_16630794347311139813.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music128/v4/bf/72/3e/bf723e65-3d54-689a-d2fa-c3acae95798e/00602517063716.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "i-m-gonna-be-500-miles-the-proclaimers",
+      "title": "I'm Gonna Be (500 Miles)",
+      "artist": "The Proclaimers",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/af/68/bf/af68bfe9-c447-3d03-25dd-3edd5129c350/mzaf_3425295693121731744.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/13/96/50/139650ee-571d-a428-9ea4-ca6cf2d0bbbd/094638392057.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "all-star-smash-mouth",
+      "title": "All Star",
+      "artist": "Smash Mouth",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/b0/03/ef/b003ef4c-1a22-6b15-e851-fb106ad96a3b/mzaf_3320656447657988367.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/ab/6f/5f/ab6f5f79-fe60-a6b9-c47c-cecf0e491be0/06UMGIM04334.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "wagon-wheel-darius-rucker",
+      "title": "Wagon Wheel",
+      "artist": "Darius Rucker",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/55/f6/45/55f645d7-e263-2396-4e50-d0492c0a51ad/mzaf_11131290710291072927.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/85/67/71/856771e4-7058-c00f-a42b-3f10b8394a1c/19UMGIM53422.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "country-roads-john-denver",
+      "title": "Country Roads",
+      "artist": "John Denver",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/e7/d1/c4/e7d1c476-fa55-0be0-adf8-5fdcc7d18f3f/mzaf_3863812668516994856.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/52/ed/f3/52edf3b6-5b73-c52d-e3f6-4473412eec7c/886443406193.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "dancing-queen-abba",
+      "title": "Dancing Queen",
+      "artist": "ABBA",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/1f/9c/24/1f9c2431-9119-c035-68fd-85da10e2f139/mzaf_1483649076246613479.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/dc/f7/90/dcf790c3-7c63-f7b3-e57b-5a8747a8ebbe/14UMGIM11148.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "mamma-mia-abba",
+      "title": "Mamma Mia",
+      "artist": "ABBA",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/4e/a8/65/4ea8652c-78d2-f4a2-b280-172c53214728/mzaf_2638669605971250687.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/60/f8/a6/60f8a6bc-e875-238d-f2f8-f34a6034e6d2/14UMGIM07615.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "waterloo-abba",
+      "title": "Waterloo",
+      "artist": "ABBA",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/32/ca/2b/32ca2b0a-79a1-77ad-4746-07a83639d3ce/mzaf_9127813743185986422.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/60/f8/a6/60f8a6bc-e875-238d-f2f8-f34a6034e6d2/14UMGIM07615.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "take-a-chance-on-me-abba",
+      "title": "Take a Chance on Me",
+      "artist": "ABBA",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/33/da/4b/33da4be8-dccc-b813-688d-17450f629ce9/mzaf_8411635802164180318.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/60/f8/a6/60f8a6bc-e875-238d-f2f8-f34a6034e6d2/14UMGIM07615.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "gimme-gimme-gimme-a-man-after-midnight-abba",
+      "title": "Gimme! Gimme! Gimme! (A Man After Midnight)",
+      "artist": "ABBA",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/b6/89/f4/b689f49d-17f0-4c23-0008-a2846ff3d216/mzaf_4518780566099169041.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/60/f8/a6/60f8a6bc-e875-238d-f2f8-f34a6034e6d2/14UMGIM07615.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "i-gotta-feeling-black-eyed-peas",
+      "title": "I Gotta Feeling",
+      "artist": "Black Eyed Peas",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/00/97/a3/0097a3ca-f4fa-d156-5154-a409acb878b6/mzaf_3366387139686599371.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/b1/d1/ae/b1d1ae62-12dd-eb84-3e46-643c444da662/09UMGIM13833.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "uptown-funk-mark-ronson",
+      "title": "Uptown Funk",
+      "artist": "Mark Ronson",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/62/e1/98/62e19826-cd13-6eff-390e-dbca502bb7b5/mzaf_8006535252627949661.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/7e/30/c5/7e30c572-aa47-5f7b-c6fd-42d50cd2c56d/886444959797.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "shut-up-and-dance-walk-the-moon",
+      "title": "Shut Up and Dance",
+      "artist": "WALK THE MOON",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/a7/8a/f2/a78af283-73e8-233d-e52d-7058fcfefd4d/mzaf_9814132662326377160.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/0c/13/ca/0c13ca44-3b42-95b1-340a-56304dd408c3/886444911689.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "can-t-stop-the-feeling-justin-timberlake",
+      "title": "Can't Stop the Feeling!",
+      "artist": "Justin Timberlake",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/3c/cb/2b/3ccb2bf8-cefd-d732-ea95-58a87efbd4d5/mzaf_16981953923593124938.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/52/d0/02/52d002d7-1f7f-8d91-4791-ed04c460ec93/886445894653.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "september-earth-wind-fire",
+      "title": "September",
+      "artist": "Earth, Wind & Fire",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/78/d4/95/78d49529-bd72-c490-5392-3a7f3d24755b/mzaf_6924139238970009441.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/c6/3b/0d/c63b0ddb-ba2d-49fc-f255-9c925dd4e6e1/886447605004.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "y-m-c-a-village-people",
+      "title": "Y.M.C.A.",
+      "artist": "Village People",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/a8/70/a3/a870a342-e31e-7565-a454-cd1bfcf3c5f8/mzaf_12739017271520691732.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music/a7/03/22/mzi.wafixwot.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "i-will-survive-gloria-gaynor",
+      "title": "I Will Survive",
+      "artist": "Gloria Gaynor",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/62/50/b3/6250b325-13a6-4d25-7e92-8a44449680ba/mzaf_12142264741612072338.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/b5/b0/0b/b5b00b45-e209-9d03-4656-4117eec98a01/17UM1IM10690.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "hey-ya-outkast",
+      "title": "Hey Ya!",
+      "artist": "OutKast",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/bc/32/83/bc328389-2e39-9f39-7cd4-e1501938a78d/mzaf_5663538039270291614.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/71/ae/6a/71ae6a46-99a6-e9d8-d7f3-41c0f2df45c4/196872579123.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "since-u-been-gone-kelly-clarkson",
+      "title": "Since U Been Gone",
+      "artist": "Kelly Clarkson",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/b4/1a/0f/b41a0fe2-fdde-b513-fbb4-4d8669070036/mzaf_4149242335743385757.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/43/de/2a/43de2abe-8213-d6bd-6e55-dadc4a8a6cd7/mzi.rcqjswky.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "mambo-no-5-a-little-bit-of-lou-bega",
+      "title": "Mambo No. 5 (A Little Bit of...)",
+      "artist": "Lou Bega",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/95/12/14/951214ff-a3f2-7b9c-094c-385b382b5a14/mzaf_6010878480642586774.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/68/59/96/68599610-92f1-4400-8db3-4e794e2f2757/886446819020.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "don-t-stop-til-you-get-enough-michael-jackson",
+      "title": "Don't Stop 'Til You Get Enough",
+      "artist": "Michael Jackson",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/02/8b/f4/028bf436-7279-0dd0-4b10-adbf2275ab80/mzaf_7743925534490811276.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/0c/fe/a3/0cfea324-57c1-d530-5248-9bb591bbd7bf/074643574525.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "dancing-in-the-dark-bruce-springsteen",
+      "title": "Dancing in the Dark",
+      "artist": "Bruce Springsteen",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/3c/a8/0a/3ca80ac1-92fe-8d9f-e97c-469bdb4f19f9/mzaf_2843471731886662529.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/32/72/68/327268ba-b9dd-b322-2a16-bdd0212df48c/074643865326.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "livin-thing-electric-light-orchestra",
+      "title": "Livin' Thing",
+      "artist": "Electric Light Orchestra",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/d2/77/10/d277103d-edb8-3a1e-91f9-dd11f4471d78/mzaf_10388015441664304476.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/a8/96/19/a8961914-9909-0cac-4817-87dd33389ae9/886445593907.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "mr-blue-sky-electric-light-orchestra",
+      "title": "Mr. Blue Sky",
+      "artist": "Electric Light Orchestra",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/ba/d3/81/bad381a5-ccbe-07a4-6097-4bb372c4826a/mzaf_4498794709805783404.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/2c/0f/f9/2c0ff9b3-693b-5690-a17d-641076ae3140/886445593945.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "build-me-up-buttercup-the-foundations",
+      "title": "Build Me Up Buttercup",
+      "artist": "The Foundations",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/ea/46/a9/ea46a9b2-195a-4197-5200-05cde73c30a3/mzaf_18168930961610301254.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/d8/85/8a/d8858a35-cc37-50f5-0bdf-495ba5759bcb/5023224230027.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "i-m-still-standing-elton-john",
+      "title": "I'm Still Standing",
+      "artist": "Elton John",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/25/2c/ff/252cff7a-887a-1086-0aed-2f18da51f973/mzaf_15765186317138488450.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/45/e5/b4/45e5b409-0564-a7a3-186c-1dc116c3ffb7/06UMGIM49712.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "tiny-dancer-elton-john",
+      "title": "Tiny Dancer",
+      "artist": "Elton John",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview116/v4/11/05/cc/1105ccb8-87e5-a793-a87c-4b4f1f944484/mzaf_11950347492626215968.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/46/d7/21/46d72100-a10b-902e-8ee6-98a22ad26769/06UMGIM52391.rgb.jpg/100x100bb.jpg"
+    },
+    {
+      "id": "valerie-mark-ronson",
+      "title": "Valerie",
+      "artist": "Mark Ronson",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/d3/20/da/d320dacd-80b6-4cac-debc-27fe38d0e459/mzaf_15935523575833611990.plus.aac.p.m4a",
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/9b/c3/36/9bc3369b-250a-5efb-af02-eb29b5a17d0c/mzi.hcitlgrl.jpg/100x100bb.jpg"
+    }
+  ],
+  "playlists": [
+    {
+      "id": "pub-classics",
+      "name": "Pub Classics",
+      "songIds": [
+        "khe-sanh-cold-chisel",
+        "flame-trees-cold-chisel",
+        "cheap-wine-cold-chisel",
+        "bow-river-cold-chisel",
+        "down-under-men-at-work",
+        "who-can-it-be-now-men-at-work",
+        "beds-are-burning-midnight-oil",
+        "am-i-ever-gonna-see-your-face-again-the-angels",
+        "working-class-man-jimmy-barnes",
+        "eagle-rock-daddy-cool",
+        "april-sun-in-cuba-dragon",
+        "love-is-in-the-air-john-paul-young",
+        "friday-on-my-mind-the-easybeats",
+        "long-way-to-the-top-ac-dc",
+        "highway-to-hell-ac-dc",
+        "thunderstruck-ac-dc",
+        "you-shook-me-all-night-long-ac-dc",
+        "t-n-t-ac-dc",
+        "sweet-child-o-mine-guns-n-roses",
+        "livin-on-a-prayer-bon-jovi",
+        "don-t-stop-believin-journey",
+        "wonderwall-oasis",
+        "don-t-look-back-in-anger-oasis",
+        "sweet-caroline-neil-diamond",
+        "mr-brightside-the-killers",
+        "don-t-stop-me-now-queen",
+        "we-are-the-champions-queen",
+        "we-will-rock-you-queen",
+        "somebody-to-love-queen",
+        "brown-eyed-girl-van-morrison"
+      ]
+    },
+    {
+      "id": "80s-90s",
+      "name": "80s & 90s",
+      "songIds": [
+        "never-tear-us-apart-inxs",
+        "need-you-tonight-inxs",
+        "new-sensation-inxs",
+        "better-be-home-soon-crowded-house",
+        "weather-with-you-crowded-house",
+        "don-t-dream-it-s-over-crowded-house",
+        "sweet-child-o-mine-guns-n-roses",
+        "take-on-me-a-ha",
+        "livin-on-a-prayer-bon-jovi",
+        "billie-jean-michael-jackson",
+        "don-t-stop-believin-journey",
+        "every-breath-you-take-the-police",
+        "sweet-dreams-are-made-of-this-eurythmics",
+        "girls-just-want-to-have-fun-cyndi-lauper",
+        "africa-toto",
+        "total-eclipse-of-the-heart-bonnie-tyler",
+        "karma-chameleon-culture-club",
+        "wake-me-up-before-you-go-go-wham",
+        "never-gonna-give-you-up-rick-astley",
+        "like-a-prayer-madonna",
+        "faith-george-michael",
+        "jump-van-halen",
+        "tainted-love-soft-cell",
+        "come-on-eileen-dexys-midnight-runners",
+        "everybody-wants-to-rule-the-world-tears-for-fears",
+        "i-wanna-dance-with-somebody-who-loves-me-whitney-houston",
+        "hungry-like-the-wolf-duran-duran",
+        "don-t-you-forget-about-me-simple-minds",
+        "time-after-time-cyndi-lauper",
+        "footloose-kenny-loggins"
+      ]
+    },
+    {
+      "id": "aussie-anthems",
+      "name": "Aussie Anthems",
+      "songIds": [
+        "the-horses-daryl-braithwaite",
+        "khe-sanh-cold-chisel",
+        "flame-trees-cold-chisel",
+        "cheap-wine-cold-chisel",
+        "bow-river-cold-chisel",
+        "down-under-men-at-work",
+        "who-can-it-be-now-men-at-work",
+        "beds-are-burning-midnight-oil",
+        "throw-your-arms-around-me-hunters-collectors",
+        "holy-grail-hunters-collectors",
+        "am-i-ever-gonna-see-your-face-again-the-angels",
+        "working-class-man-jimmy-barnes",
+        "you-re-the-voice-john-farnham",
+        "great-southern-land-icehouse",
+        "eagle-rock-daddy-cool",
+        "april-sun-in-cuba-dragon",
+        "never-tear-us-apart-inxs",
+        "need-you-tonight-inxs",
+        "new-sensation-inxs",
+        "better-the-screaming-jets",
+        "solid-rock-goanna",
+        "my-happiness-powderfinger",
+        "these-days-powderfinger",
+        "sounds-of-then-this-is-australia-ganggajang",
+        "reckless-australian-crawl",
+        "the-boys-light-up-australian-crawl",
+        "tucker-s-daughter-ian-moss",
+        "better-be-home-soon-crowded-house",
+        "weather-with-you-crowded-house",
+        "don-t-dream-it-s-over-crowded-house"
+      ]
+    },
+    {
+      "id": "party-singalong",
+      "name": "Party Singalong",
+      "songIds": [
+        "the-horses-daryl-braithwaite",
+        "down-under-men-at-work",
+        "holy-grail-hunters-collectors",
+        "working-class-man-jimmy-barnes",
+        "you-re-the-voice-john-farnham",
+        "need-you-tonight-inxs",
+        "somebody-that-i-used-to-know-gotye",
+        "riptide-vance-joy",
+        "love-is-in-the-air-john-paul-young",
+        "highway-to-hell-ac-dc",
+        "you-shook-me-all-night-long-ac-dc",
+        "take-on-me-a-ha",
+        "livin-on-a-prayer-bon-jovi",
+        "billie-jean-michael-jackson",
+        "don-t-stop-believin-journey",
+        "girls-just-want-to-have-fun-cyndi-lauper",
+        "africa-toto",
+        "wake-me-up-before-you-go-go-wham",
+        "never-gonna-give-you-up-rick-astley",
+        "come-on-eileen-dexys-midnight-runners",
+        "i-wanna-dance-with-somebody-who-loves-me-whitney-houston",
+        "footloose-kenny-loggins",
+        "wonderwall-oasis",
+        "wannabe-spice-girls",
+        "baby-one-more-time-britney-spears",
+        "believe-cher",
+        "i-want-it-that-way-backstreet-boys",
+        "livin-la-vida-loca-ricky-martin",
+        "sweet-caroline-neil-diamond",
+        "mr-brightside-the-killers"
+      ]
+    }
+  ]
+}

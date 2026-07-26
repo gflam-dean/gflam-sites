@@ -236,7 +236,7 @@
     stopAds(); stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
     if(typeof nextJackpotCents==="number") state.jackpotCents=nextJackpotCents;
     hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
-    $("resEye").textContent="Not claimed &middot; rolls over to next week";
+    $("resEye").innerHTML="Not claimed &middot; rolls over to next week";
     $("resWinName").classList.add("hidden"); $("resWinsLabel").classList.add("hidden"); $("resWon").classList.add("hidden");
     $("resNext").classList.remove("hidden"); $("resNext").textContent="Next week's jackpot";
     $("resJack").classList.remove("hidden"); $("resJack").textContent=money(nextJackpotCents||0);

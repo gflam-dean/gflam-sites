@@ -400,7 +400,7 @@
     $("pairErr").textContent="";
     $("pairIn").focus();
   }
-  $("diffTv").addEventListener("click", function(){ $("pairIn").value=""; $("pairErr").textContent=""; $("pairIn").focus(); });
+  $("diffTv").addEventListener("click", function(){ try{ localStorage.removeItem("vpPairCode"); }catch(e){} $("pairIn").value=""; $("pairErr").textContent=""; $("pairIn").focus(); });
 
   // ================= PAIR =================
   var pairIn=$("pairIn");
@@ -422,6 +422,53 @@
     claim:null, won:false
   };
   var currentGame="bingo";
+
+  // ---- persist the running game so a host reload (battery, refresh) recovers ----
+  // Keyed by the paired screen code. We only keep RUNNING games, tagged with a
+  // timestamp so a stale game from an earlier night is never restored.
+  var SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
+  function gameKey(code){ return "vpHostGame-"+code; }
+  function saveGame(){
+    if(!G.code) return;
+    try{
+      if(G.status==="running"){
+        localStorage.setItem(gameKey(G.code), JSON.stringify({
+          v:1, ts:Date.now(),
+          status:G.status, pattern:G.pattern, prize:G.prize,
+          draw:G.draw, idx:G.idx, called:G.called,
+          players:G.players, order:G.order,
+          claim:G.claim, won:G.won
+        }));
+      } else {
+        localStorage.removeItem(gameKey(G.code));
+      }
+    }catch(e){}
+  }
+  function restoreGame(code){
+    try{
+      var raw=localStorage.getItem(gameKey(code));
+      if(!raw) return false;
+      var s=JSON.parse(raw);
+      if(!s || s.status!=="running") return false;
+      if(!s.ts || (Date.now()-s.ts)>SAVE_MAX_AGE){ localStorage.removeItem(gameKey(code)); return false; }
+      G.code=code;
+      G.status="running";
+      G.pattern=s.pattern||"one";
+      G.prize=(typeof s.prize==="string")?s.prize:"the prize";
+      G.draw=Array.isArray(s.draw)?s.draw:[];
+      G.idx=(typeof s.idx==="number")?s.idx:-1;
+      G.called=s.called||{};
+      G.players=s.players||{};
+      G.order=Array.isArray(s.order)?s.order:[];
+      G.claim=s.claim||null;
+      G.won=!!s.won;
+      return true;
+    }catch(e){ return false; }
+  }
+  function syncNextBtn(){
+    if(G.status==="running" && G.idx>=89){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
+    else { $("nextBtn").disabled=false; $("nextBtn").textContent="Next number"; }
+  }
 
   // ---- 90-ball ticket: 3 rows x 9 cols, 15 numbers, exactly 5 per row ----
   function colRange(col){ if(col===0) return [1,9]; if(col===8) return [80,90]; return [col*10, col*10+9]; }
@@ -579,6 +626,7 @@
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to bingo first
     send({ t:"started", pattern:G.pattern, prize:G.prize });
     sendState();
+    saveGame();
     renderConsole();
   }
   function newGame(){
@@ -589,12 +637,14 @@
     send({ t:"mode", mode:"bingo" });
     send({ t:"started", pattern:G.pattern, prize:G.prize });
     sendState();
+    saveGame();
     renderConsole();
   }
   function endGame(){
     G.status="setup"; G.claim=null; G.won=false;
     send({ t:"idle" });   // TV returns to the advertising loop
     sendState();
+    saveGame();   // status is now "setup", so this clears the saved game for this code
     renderConsole();
   }
   function nextBall(){
@@ -602,6 +652,7 @@
     G.idx++;
     var n=G.draw[G.idx]; G.called[n]=true;
     send({ t:"ball", number:n, called:calledArray(), index:G.idx });
+    saveGame();
     renderLive(); updateBoard();
     if(G.idx>=89){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
   }
@@ -610,20 +661,35 @@
     var c=G.claim;
     G.won=true; G.claim=null;
     send({ t:"winner", pid:c.pid, name:c.name, cardNo:c.cardNo });
+    saveGame();
     renderClaimQueue();
   }
   function hostReject(){
     if(!G.claim) return;
     G.claim=null;
     send({ t:"resume" });
+    saveGame();
     renderClaimQueue();
   }
 
   // ---- incoming ----
-  function tvHere(){ $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; $("pairedChip").innerHTML="&middot; connected"; }
+  function tvHere(m){
+    $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; $("pairedChip").innerHTML="&middot; connected";
+    // a freshly (re)loaded TV announces itself with hello:true. Re-announce the host
+    // (hides the pair QR even if the TV missed our first host_here) and, if a game is
+    // live, replay the current state so the screen catches up instead of showing ads.
+    if(m && m.hello){
+      send({ t:"host_here" });
+      if(G.status==="running"){
+        send({ t:"mode", mode:"bingo" });
+        sendState();
+        if(G.claim) send({ t:"claim_pending", name:G.claim.name });
+      }
+    }
+  }
   function onMsg(m){
     if(!m||!m.t) return;
-    if(m.t==="tv_here"){ tvHere(); return; }
+    if(m.t==="tv_here"){ tvHere(m); return; }
     if(m.t==="join"){
       if(!m.pid) return;
       var isNew=!G.players[m.pid];
@@ -636,6 +702,7 @@
       }
       sendPlayers();
       sendState();
+      saveGame();
       renderConsole();
     }
     else if(m.t==="claim"){
@@ -645,6 +712,7 @@
       if(checkPattern(pl.card)){
         G.claim={ pid:m.pid, name:pl.name, cardNo:pl.cardNo, card:pl.card };
         send({ t:"claim_pending", name:pl.name });
+        saveGame();
         renderClaimQueue();
       }
     }
@@ -654,6 +722,9 @@
   function connect(code){
     G.code=code;
     $("headerTag").textContent="Host console";
+    // if this screen has a saved RUNNING game (host reloaded mid game), bring it back
+    // before we subscribe, so the draw, called set, roster and cards all survive.
+    restoreGame(code);
     ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
@@ -664,7 +735,15 @@
         // stay "waiting for the TV" until the screen acknowledges with tv_here
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for TV";
         $("pairedChip").innerHTML="&middot; waiting for the TV";
+        // if we reloaded mid game, put the screen back on bingo and replay the state so
+        // a TV that stayed up (or came back) shows the running game, not the ads loop
+        if(G.status==="running"){ send({ t:"mode", mode:"bingo" }); }
         sendState();
+        if(G.status==="running" && G.claim){ send({ t:"claim_pending", name:G.claim.name }); }
+        // roll call: ask every joined phone to re-announce so we rebuild seats and
+        // re-deal the current card. players answer with a join; we answer that join with
+        // card/state (never another roll call), so the exchange terminates and cannot loop.
+        send({ t:"rollcall" });
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
         $("pairedChip").innerHTML="&middot; reconnecting";
@@ -676,6 +755,7 @@
     buildBoard();
     selectGame("bingo");
     renderConsole();
+    syncNextBtn();
   }
 
   // ================= GAME PICKER =================

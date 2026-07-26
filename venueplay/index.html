@@ -434,7 +434,6 @@
     box-shadow:0 0 46px -4px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32);
     display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
   }
-  .vps-ball .vps-lt{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.6vw,15px);letter-spacing:.14em;opacity:.9;line-height:1}
   .vps-ball .vps-nm{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(32px,6vw,62px);line-height:.9;letter-spacing:.01em}
   .vps-ball-chip{
     font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.5vw,15px);
@@ -447,9 +446,6 @@
   .vps-tv-recent{display:flex;align-items:center;gap:7px;z-index:1;flex-wrap:wrap}
   .vps-tv-recent .vps-ball-chip{font-size:clamp(9px,1.2vw,12px);padding:3px 9px}
   .vps-chip-lbl{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
-  .vps-board{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;align-content:center;min-width:0}
-  .vps-board .vps-col{display:flex;flex-direction:column;gap:3px}
-  .vps-board .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:clamp(10px,1.4vw,13px);letter-spacing:.06em;padding-bottom:2px}
   .vps-cell{
     font-family:'JetBrains Mono',monospace;font-size:clamp(6.5px,1vw,10.5px);
     text-align:center;padding:2px 0;border-radius:4px;
@@ -490,17 +486,11 @@
     display:flex;align-items:center;gap:6px;
   }
   .vps-ticker b{color:var(--pink)}
-  .vps-pcard{
-    background:var(--ink-2);border:1px solid var(--line);border-radius:13px;
-    padding:10px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;
-  }
-  .vps-pcard .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:15px;padding-bottom:2px}
   .vps-pcell{
     aspect-ratio:1;display:flex;align-items:center;justify-content:center;
     font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:7px;
     background:rgba(255,255,255,.04);color:#e8e8ec;position:relative;
   }
-  .vps-pcell.vps-free{font-family:'Anton',sans-serif;font-size:8.5px;font-weight:400;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em}
   .vps-pcell.vps-marked{color:#fff;font-weight:700}
   .vps-pcell.vps-marked::after{
     content:"";position:absolute;inset:4px;border-radius:50%;
@@ -707,6 +697,37 @@
   a.mode{text-decoration:none;color:inherit;cursor:pointer;transition:transform .16s ease,border-color .16s ease}
   a.mode:hover{transform:translateY(-3px);border-color:rgba(255,31,142,.45)}
 </style>
+<style>
+  /* ============================================================
+     MOBILE POLISH: tighten the vertical rhythm and remove dead
+     space on phones, keep every section responsive. Desktop layout
+     is unchanged. Australian English, no em dashes.
+     ============================================================ */
+  img{max-width:100%;height:auto}
+
+  @media (max-width:560px){
+    .sec{padding:54px 0}
+    .sec-head{margin-bottom:30px}
+    .hero{padding:54px 0 46px}
+    .hero .lede{margin-top:20px}
+    .hero-cta{margin-top:28px}
+    .modes{gap:12px}
+    .vps-steps{gap:12px}
+    .vps-swaps{margin-top:26px}
+    footer{padding:40px 0 46px;margin-top:26px}
+  }
+
+  @media (max-width:430px){
+    .wrap{padding:0 18px}
+    .sec{padding:44px 0}
+    .sec-head{margin-bottom:24px}
+    .hero{padding:46px 0 40px}
+    h1{font-size:clamp(38px,11vw,52px)}
+    .hero-cta .btn{flex:1 1 100%}
+    .nav .btn{padding:9px 15px;font-size:13px}
+    .eyebrow{margin-bottom:20px}
+  }
+</style>
 </head>
 <body>
 
@@ -739,7 +760,7 @@
       <a class="btn btn-primary" href="#claim">Lock in 20% off for life</a>
       <a class="btn btn-ghost" href="#modes">See the game modes</a>
     </div>
-    <p class="hero-note">First 100 venues only · launching September 2026 · price locked for life</p>
+    <p class="hero-note">First 100 venues only · launching August 2026 · price locked for life</p>
   </div>
 </section>
 
@@ -942,7 +963,7 @@
     <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
       <div class="label" style="justify-content:center">Claim your spot</div>
       <h2 class="sec-title">Lock in founding pricing</h2>
-      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to hold one of the 100 founding spots. Nothing is charged today. Your first month is free from the September launch, so your first payment comes a month after we go live, and you can cancel any time before then.</p>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to hold one of the 100 founding spots. Nothing is charged today. Your first month is free from the August launch, so your first payment is on 24 September 2026, and you can cancel any time before then.</p>
     </div>
 
     <div class="form-shell">
@@ -997,7 +1018,7 @@
         <div class="success" id="vp-success">
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>Your spot is held</h3>
-          <p>Your founding spot is locked in and your card's on file. Your first month is free from the September launch, so your first payment is a month after we go live. We'll be in touch before then to get you set up, and you can cancel any time before your first payment.</p>
+          <p>Your founding spot is locked in and your card's on file. Your first month is free from the August launch, so your first payment is on 24 September 2026. We'll be in touch before then to get you set up, and you can cancel any time before your first payment.</p>
         </div>
 
         <div class="success" id="vp-group-success">
@@ -1018,11 +1039,11 @@
       <h2 class="sec-title">Questions</h2>
     </div>
     <div class="faq">
-      <details class="q"><summary>When does VenuePlay launch?<span class="pm"></span></summary><div class="a">VenuePlay launches September 2026. Founding venues get first access, and we'll be in touch before then to get you set up.</div></details>
+      <details class="q"><summary>When does VenuePlay launch?<span class="pm"></span></summary><div class="a">VenuePlay launches August 2026. Founding venues get first access, and we'll be in touch before then to get you set up.</div></details>
       <details class="q"><summary>What does "founding venue" actually mean?<span class="pm"></span></summary><div class="a">The first 100 venues to sign up lock in 20% off for life: $2.40 per player a month instead of $3. Once 100 spots are gone, founding pricing closes for good.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
-      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.40 a player, or yearly for $2 a player, and your founding pricing is locked for life either way. Your first month is free from the September launch, then billing recurs at your founding rate. Cancel any time before your first payment and you are never charged.</div></details>
+      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.40 a player, or yearly for $2 a player, and your founding pricing is locked for life either way. Your first month is free from the August launch, then billing recurs at your founding rate. Cancel any time before your first payment and you are never charged.</div></details>
       <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">No problem and no surprise fees. Set your max to your usual room. If a night runs bigger, the extra players are simply added at your per-player monthly rate, so your plan grows to match what you actually use. The screen flags it the moment you go over.</div></details>
       <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the display onto that screen: a TV with a browser, a cheap streaming stick, or an HDMI cable from a laptop or tablet all work. Players bring their own phones. For a rock-solid night we'd point you toward a stick or a cable over wireless casting, since that doesn't lean on venue wifi.</div></details>
       <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your founding 20% discount stays locked for as long as you're with us, and if you cancel before your first payment, you're never charged.</div></details>
@@ -1304,55 +1325,6 @@
 </script>
 <script>
 (function(){
-  var cols = [['B',1,15],['I',16,30],['N',31,45],['G',46,60],['O',61,75]];
-  var called = {3:1,7:1,9:1,12:1,15:1,23:1,29:1,31:1,38:1,40:1,47:1,51:1,54:1,60:1,66:1,68:1,72:1};
-
-  /* ---- TV board: 1 to 75, called numbers lit ---- */
-  var board = document.getElementById('vps-board');
-  if (board) {
-    cols.forEach(function(c){
-      var col = document.createElement('div'); col.className = 'vps-col';
-      var h = document.createElement('div'); h.className = 'vps-h'; h.textContent = c[0]; col.appendChild(h);
-      for (var n = c[1]; n <= c[2]; n++) {
-        var d = document.createElement('div');
-        d.className = 'vps-cell' + (called[n] ? ' vps-on' : '');
-        d.textContent = n;
-        col.appendChild(d);
-      }
-      board.appendChild(col);
-    });
-  }
-
-  /* ---- Player card: fixed 5x5, FREE centre, called numbers marked ---- */
-  var pcard = document.getElementById('vps-pcard');
-  if (pcard) {
-    'BINGO'.split('').forEach(function(L){
-      var h = document.createElement('div'); h.className = 'vps-h'; h.textContent = L; pcard.appendChild(h);
-    });
-    /* column-major numbers, row 2 of N is FREE (0 placeholder) */
-    var cardCols = [
-      [2, 7, 9, 13, 14],
-      [18, 23, 26, 29, 30],
-      [31, 38, 0, 40, 44],
-      [47, 50, 54, 57, 59],
-      [62, 66, 70, 72, 75]
-    ];
-    for (var r = 0; r < 5; r++) {
-      for (var ci = 0; ci < 5; ci++) {
-        var cell = document.createElement('div');
-        var num = cardCols[ci][r];
-        if (num === 0) {
-          cell.className = 'vps-pcell vps-free';
-          cell.textContent = 'FREE';
-        } else {
-          cell.className = 'vps-pcell' + (called[num] ? ' vps-marked' : '');
-          var sp = document.createElement('span'); sp.textContent = num; cell.appendChild(sp);
-        }
-        pcard.appendChild(cell);
-      }
-    }
-  }
-
   /* ---- Faux QR: finder squares + seeded noise on canvas (decorative) ---- */
   var qc = document.getElementById('vps-qr');
   if (qc && qc.getContext) {

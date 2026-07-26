@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VenuePlay for Bowls Clubs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B;
+    --pink:#FF1F8E;
+    --pink-deep:#C70F69;
+    --paper:#ffffff;
+    --wash:#FFF2F8;
+    --text:#171719;
+    --muted:#5A5A63;
+    --line:#E4E4EA;
+    --line-pink:rgba(255,31,142,0.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#EDEDF0;color:var(--text);
+    font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.4}
+  ::selection{background:var(--pink);color:#fff}
+
+  /* A4 sheet */
+  .sheet{
+    width:210mm;min-height:297mm;margin:14px auto;background:var(--paper);
+    padding:13mm 13mm 10mm;position:relative;
+    box-shadow:0 12px 40px -12px rgba(0,0,0,.35);
+    display:flex;flex-direction:column;
+  }
+
+  /* ---- header ---- */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    border-bottom:2px solid var(--ink);padding-bottom:11px;margin-bottom:14px}
+  .logo{display:flex;align-items:center;gap:11px}
+  .logo svg{display:block}
+  .logo .div{width:1px;height:22px;background:#c9c9d0}
+  .logo .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+    font-size:23px;letter-spacing:-0.03em;color:var(--ink);line-height:1}
+  .kicker{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--pink-deep);text-align:right;line-height:1.5}
+
+  /* ---- headline ---- */
+  .hero{margin-bottom:13px}
+  .hero h1{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:33px;line-height:0.98;letter-spacing:0.005em;color:var(--ink)}
+  .hero h1 em{font-style:normal;color:var(--pink-deep)}
+  .hero .lede{margin-top:9px;font-size:13px;line-height:1.5;color:var(--muted);max-width:172mm}
+  .hero .lede strong{color:var(--text);font-weight:700}
+
+  /* ---- two column body ---- */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+  .panel{border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+  .panel h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:11px;
+    letter-spacing:.11em;text-transform:uppercase;color:var(--ink);margin-bottom:10px;
+    display:flex;align-items:center;gap:8px}
+  .panel h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--pink)}
+
+  /* games list */
+  .games{list-style:none;display:flex;flex-direction:column;gap:8px}
+  .games li{display:flex;gap:9px;align-items:flex-start}
+  .games .gname{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;
+    letter-spacing:.04em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+  .games .lead .gname{color:var(--pink-deep)}
+  .games .gtext{font-size:11.5px;line-height:1.4;color:var(--muted)}
+  .games li .row{display:flex;flex-direction:column}
+
+  /* benefits */
+  .bens{list-style:none;display:flex;flex-direction:column;gap:8px}
+  .bens li{display:flex;gap:9px;align-items:flex-start;font-size:11.7px;line-height:1.4;color:var(--muted)}
+  .bens strong{color:var(--text);font-weight:700}
+  .tick{flex:none;width:16px;height:16px;border-radius:50%;background:var(--wash);
+    border:1px solid var(--line-pink);display:flex;align-items:center;justify-content:center;margin-top:1px}
+
+  /* ---- founding offer ---- */
+  .offer{background:var(--ink);color:#fff;border-radius:13px;padding:15px 17px;margin-bottom:13px}
+  .offer .oh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:10px;margin-bottom:11px;flex-wrap:wrap}
+  .offer .oh h2{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:19px;letter-spacing:.01em;color:#fff}
+  .offer .oh h2 span{color:var(--pink)}
+  .offer .badge{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:var(--pink);
+    border-radius:999px;padding:5px 11px}
+  .offer .ogrid{display:grid;grid-template-columns:auto auto 1fr;gap:0 20px;align-items:stretch}
+  .price{display:flex;flex-direction:column;justify-content:center;padding-right:20px;
+    border-right:1px solid rgba(255,255,255,.14)}
+  .price .lbl{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:9px;
+    letter-spacing:.13em;text-transform:uppercase;color:#B9B9C2;margin-bottom:3px}
+  .price .amt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;color:#fff;line-height:1}
+  .price .amt span{font-size:12px;color:var(--pink);font-weight:700}
+  .price .sub{font-size:10px;color:#9A9AA4;margin-top:3px}
+  .oterms{padding-left:0}
+  .oterms ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .oterms li{font-size:11px;line-height:1.35;color:#D7D7DE;display:flex;gap:8px;align-items:flex-start}
+  .oterms li b{color:#fff;font-weight:700}
+  .oterms .pk{color:var(--pink);flex:none;font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px}
+  .fineprint{font-size:9.5px;color:#8A8A94;margin-top:10px;line-height:1.4;
+    border-top:1px solid rgba(255,255,255,.1);padding-top:8px}
+
+  /* ---- get started ---- */
+  .start{margin-bottom:auto}
+  .start h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:11px;
+    letter-spacing:.11em;text-transform:uppercase;color:var(--ink);margin-bottom:11px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+  .step{border:1px solid var(--line);border-radius:11px;padding:12px 13px;position:relative}
+  .step .num{font-family:'Anton',sans-serif;font-size:20px;color:var(--pink);line-height:1;margin-bottom:6px}
+  .step .st{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12.5px;color:var(--ink);margin-bottom:3px}
+  .step .sx{font-size:11px;line-height:1.4;color:var(--muted)}
+
+  /* ---- footer ---- */
+  .foot{margin-top:14px;border-top:1px solid var(--line);padding-top:11px;
+    display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .contact{display:flex;flex-direction:column;gap:3px}
+  .contact .cl{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--pink-deep)}
+  .contact .cv{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:var(--ink);line-height:1.15}
+  .contact .cv2{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;color:var(--text)}
+  .built{font-size:10px;color:var(--muted);text-align:right;max-width:74mm;line-height:1.45}
+  .built b{color:var(--ink);font-weight:700}
+
+  /* ---- print ---- */
+  @page{size:A4 portrait;margin:0}
+  @media print{
+    html,body{background:#fff}
+    .sheet{width:auto;min-height:auto;margin:0;padding:12mm 12mm 9mm;box-shadow:none}
+    .offer{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .badge,.tick,.offer .oh h2 span,.price .amt span,.step .num,.hero h1 em,.games .lead .gname{
+      -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- header -->
+  <div class="top">
+    <div class="logo">
+      <svg width="24" height="28" viewBox="0 0 26 30" fill="none" aria-hidden="true">
+        <path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/>
+      </svg>
+      <span class="div"></span>
+      <span class="word">VenuePlay</span>
+    </div>
+    <div class="kicker">Game nights for<br>your bowls club</div>
+  </div>
+
+  <!-- headline -->
+  <div class="hero">
+    <h1>Busier quiet nights.<br><em>More members</em> through the door.</h1>
+    <p class="lede">VenuePlay runs bingo, trivia, musical bingo, raffles and members draws off the <strong>screen you already have</strong>, and your players join in on their phones. No app to download, no account to make. One platform for every game night at the club.</p>
+  </div>
+
+  <!-- two columns -->
+  <div class="cols">
+
+    <div class="panel">
+      <h2><span class="dot"></span>Everything a bowlo runs</h2>
+      <ul class="games">
+        <li class="lead"><div class="row"><span class="gname">Members / badge draw</span><span class="gtext">Runs itself on the big screen and pulls members in on draw night.</span></div></li>
+        <li class="lead"><div class="row"><span class="gname">Raffles / meat trays</span><span class="gtext">Sell and draw your meat trays and raffles live on the TV.</span></div></li>
+        <li><div class="row"><span class="gname">Bingo</span><span class="gtext">Full 90-ball house nights, players dab along on their phones.</span></div></li>
+        <li><div class="row"><span class="gname">Trivia</span><span class="gtext">Fill a quiet Tuesday or Wednesday with a proper quiz night.</span></div></li>
+        <li><div class="row"><span class="gname">Musical bingo</span><span class="gtext">Songs instead of numbers, a crowd favourite that packs the room.</span></div></li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2><span class="dot"></span>Why clubs love it</h2>
+      <ul class="bens">
+        <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Draws and raffles run themselves</strong> on the big screen, no fiddly gear on the night.</div></li>
+        <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Members join by phone</strong>, scan a code and play, no app and no account.</div></li>
+        <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div>Need paper? <strong>Print your own cards</strong> straight from the platform.</div></li>
+        <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div>It <strong>plays on the screen you've already got</strong>, and runs your own ads there between games, bistro, events and live music, all included.</div></li>
+        <li><span class="tick"><svg width="9" height="9" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div>Every night <strong>grows a members list you own</strong>, and you choose which details to collect, with players' consent.</div></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- founding offer -->
+  <div class="offer">
+    <div class="oh">
+      <h2>The founding offer <span>20% off for life</span></h2>
+      <span class="badge">First 100 venues only</span>
+    </div>
+    <div class="ogrid">
+      <div class="price">
+        <span class="lbl">Monthly</span>
+        <span class="amt">$2.40<span> /player</span></span>
+        <span class="sub">Billed monthly</span>
+      </div>
+      <div class="price">
+        <span class="lbl">Annual</span>
+        <span class="amt">$2.00<span> /player</span></span>
+        <span class="sub">Best value</span>
+      </div>
+      <div class="oterms">
+        <ul>
+          <li><span class="pk">&#10003;</span><div><b>First month free.</b> Go live 24 August 2026, first payment 24 September 2026.</div></li>
+          <li><span class="pk">&#10003;</span><div><b>Cancel any time before your first payment</b> and you are never charged. No lock-in.</div></li>
+          <li><span class="pk">&#10003;</span><div>Standard price after the founding round is <b>$3 per player</b>. Lock in the discount now.</div></li>
+        </ul>
+      </div>
+    </div>
+    <p class="fineprint">All prices are per player and include GST. Your 20% founding discount stays locked for as long as you are with us.</p>
+  </div>
+
+  <!-- get started -->
+  <div class="start">
+    <h2>How to get started</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="st">We set you up</div>
+        <div class="sx">We get the club up and running on VenuePlay before your first night, ready to go.</div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div class="st">We train your staff</div>
+        <div class="sx">A friendly run through, in person or remote, plus short setup videos so any bar staff can host a night on their own.</div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div class="st">You run your first night</div>
+        <div class="sx">Put it on the screen, members join on their phones, and away you go.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div class="foot">
+    <div class="contact">
+      <span class="cl">Have a chat</span>
+      <span class="cv">hello@venueplay.com.au</span>
+      <span class="cv2">venueplay.com.au</span>
+    </div>
+    <div class="built">Built by <b>Gflam Touring</b>, who run bingo, live music and entertainment across Australia.</div>
+  </div>
+
+</div>
+</body>
+</html>

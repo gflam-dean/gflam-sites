@@ -169,6 +169,9 @@
   // ---- pid persistence (keep identity across reconnects) ----
   function loadPid(room){ try{ return sessionStorage.getItem("vp-pid-"+room)||""; }catch(e){ return ""; } }
   function savePid(room,pid){ try{ sessionStorage.setItem("vp-pid-"+room, pid); }catch(e){} }
+  // keep the name too, so a full page reload auto-rejoins instead of showing Join again
+  function loadName(room){ try{ return sessionStorage.getItem("vp-name-"+room)||""; }catch(e){ return ""; } }
+  function saveName(room,name){ try{ sessionStorage.setItem("vp-name-"+room, name); }catch(e){} }
 
   // ---- verification (from the called set only, ignore cosmetic daubs) ----
   function calledSet(){ var s={}; for(var i=0;i<P.called.length;i++) s[P.called[i]]=true; return s; }
@@ -229,6 +232,7 @@
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
     P.name=nm.slice(0,20); P.joined=true;
+    saveName(P.room, P.name);
     send({ t:"join", pid:P.pid, name:P.name });
     route();
   }
@@ -246,6 +250,14 @@
   // ---- incoming ----
   function onMsg(m){
     if(!m||!m.t) return;
+    if(m.t==="rollcall" || m.t==="host_here"){
+      // the host (re)connected and is rebuilding its roster. re-announce ourselves so it
+      // re-seats us and re-deals the current card. we only ever send in reply to this
+      // explicit host presence; the host answers a join with card/state (never another
+      // rollcall or host_here), so the exchange terminates and cannot feed back.
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); }
+      return;
+    }
     if(m.t==="card"){
       if(m.pid!==P.pid) return;
       P.card=m.cells; P.cardNo=m.cardNo; P.daubs={}; P.won=false; P.ended=false; P.claimPending=false;
@@ -289,11 +301,18 @@
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
     P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
+    // a saved name means this player already joined this room: auto-rejoin on reload so
+    // they land back on their card (or the wait screen), not the Join screen
+    var savedName=loadName(room);
+    if(savedName){ P.name=savedName; P.joined=true; }
     ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true; flushQueue();
+        // re-announce on every (re)connect so the host rebuilds our seat and re-deals
+        // the current card if it lost the roster (idempotent on the host by pid)
+        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); }
         $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";

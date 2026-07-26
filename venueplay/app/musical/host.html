@@ -121,6 +121,24 @@
   .compliance .ct{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);margin-bottom:6px}
   .compliance p{font-size:12px;color:var(--muted);line-height:1.55}
 
+  /* ---- audio player (host device is plugged into the PA) ---- */
+  .nowrow{display:flex;align-items:center;gap:12px;text-align:left;margin-top:4px}
+  .nowart{width:52px;height:52px;border-radius:9px;flex:none;background:var(--ink-2);border:1px solid var(--line-2);object-fit:cover}
+  .nowart.blank{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--faint)}
+  .nowinfo{min-width:0;flex:1}
+  .nowinfo .nt{font-weight:800;color:#fff;font-size:15px;font-family:'Hanken Grotesk',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nowinfo .na{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .clipbar{height:6px;border-radius:4px;background:var(--ink-2);border:1px solid var(--line-2);overflow:hidden;margin-top:9px}
+  .clipfill{height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--pink-deep));transition:width .25s linear}
+  .cliptime{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);margin-top:5px}
+  .audioctl{display:grid;grid-template-columns:auto 1fr;gap:8px;margin-top:12px}
+  .audioctl .btn{margin:0}
+  .clipwarn{margin-top:10px;font-size:12px;color:var(--roll);background:rgba(245,165,36,.1);border:1px solid rgba(245,165,36,.28);border-radius:9px;padding:9px 11px;line-height:1.45}
+  .spotrow{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+  .spotrow .btn{flex:1;min-width:120px}
+  .copyok{font-size:11.5px;color:var(--win);font-weight:600}
+  .pill.playing{background:rgba(255,194,75,.16);color:var(--gold);border-color:rgba(255,194,75,.34)}
+
   .hidden{display:none!important}
 </style>
 </head>
@@ -190,15 +208,33 @@
           <button class="btn pink big" id="startBtn">Start game</button>
           <p class="note" style="text-align:center;margin-top:10px">Deals every phone a fresh card of 24 song titles plus a free centre, and shows the join screen on the TV.</p>
           <div class="compliance">
-            <div class="ct">Music licensing</div>
-            <p>VenuePlay shows song titles only and never plays or streams audio. The venue plays the music through its own system under its own OneMusic licence.</p>
+            <div class="ct">How the music plays</div>
+            <p>This device plays a short preview of each song. Plug it into your PA by aux cable or Bluetooth and set it loud. VenuePlay never hosts or streams the recording itself, so the music playing in the room sits under your venue's own OneMusic licence, the same as any other track you play.</p>
           </div>
         </div>
 
         <div id="liveBlock" class="hidden">
-          <div class="nowbar">
-            <div class="k">Current song</div>
-            <div class="v" id="hostNow">Play a song, then mark it below</div>
+          <div class="nowbar" style="text-align:left">
+            <div class="k">Now playing</div>
+            <div class="nowrow">
+              <div class="nowart blank" id="nowArt">&#9834;</div>
+              <div class="nowinfo">
+                <div class="nt" id="hostNow">Tap Play next to start</div>
+                <div class="na" id="hostNowArtist">The clip plays through this device</div>
+              </div>
+            </div>
+            <div class="clipbar"><div class="clipfill" id="clipFill"></div></div>
+            <div class="cliptime"><span id="clipElapsed">0:00</span><span id="clipTotal">0:30</span></div>
+            <div class="audioctl">
+              <button class="btn ghost" id="playPauseBtn" disabled>Pause</button>
+              <button class="btn pink" id="playNextBtn">Play next song</button>
+            </div>
+            <div class="clipwarn hidden" id="clipWarn">No preview clip for this one. Play it yourself through the PA, then tap Mark called.</div>
+            <div class="spotrow">
+              <button class="btn ghost" id="spotifyBtn">Copy Spotify links</button>
+              <span class="copyok hidden" id="spotifyOk">Copied</span>
+            </div>
+            <p class="note" style="margin-top:8px">Prefer full tracks off your own subscription? Copy the Spotify search links, paste them into a new Spotify playlist, and play that through the PA instead. The daubing and winners still run from here.</p>
           </div>
           <div class="stat">
             <div class="box"><div class="k">Played</div><div class="v" id="livePlayed">0</div></div>
@@ -235,6 +271,8 @@
   </div>
 </div>
 
+<audio id="clip" preload="auto" playsinline></audio>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
@@ -245,70 +283,40 @@
 
   var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
 
-  // ---- sample playlists (each well over the 24 needed to deal a card) ----
-  var PLAYLISTS={
-    eighties:{ id:"eighties", name:"80s Anthems", songs:[
-      {t:"Sweet Child o' Mine", a:"Guns N' Roses"},
-      {t:"Take On Me", a:"a-ha"},
-      {t:"Livin' on a Prayer", a:"Bon Jovi"},
-      {t:"Billie Jean", a:"Michael Jackson"},
-      {t:"Don't Stop Believin'", a:"Journey"},
-      {t:"Every Breath You Take", a:"The Police"},
-      {t:"Sweet Dreams", a:"Eurythmics"},
-      {t:"Girls Just Want to Have Fun", a:"Cyndi Lauper"},
-      {t:"Africa", a:"Toto"},
-      {t:"Total Eclipse of the Heart", a:"Bonnie Tyler"},
-      {t:"Karma Chameleon", a:"Culture Club"},
-      {t:"Wake Me Up Before You Go-Go", a:"Wham!"},
-      {t:"Never Gonna Give You Up", a:"Rick Astley"},
-      {t:"Like a Prayer", a:"Madonna"},
-      {t:"Faith", a:"George Michael"},
-      {t:"Purple Rain", a:"Prince"},
-      {t:"Jump", a:"Van Halen"},
-      {t:"Should I Stay or Should I Go", a:"The Clash"},
-      {t:"Tainted Love", a:"Soft Cell"},
-      {t:"Come On Eileen", a:"Dexys Midnight Runners"},
-      {t:"Everybody Wants to Rule the World", a:"Tears for Fears"},
-      {t:"I Wanna Dance with Somebody", a:"Whitney Houston"},
-      {t:"Hungry Like the Wolf", a:"Duran Duran"},
-      {t:"Blue Monday", a:"New Order"},
-      {t:"Don't You (Forget About Me)", a:"Simple Minds"},
-      {t:"Time After Time", a:"Cyndi Lauper"},
-      {t:"Material Girl", a:"Madonna"},
-      {t:"Footloose", a:"Kenny Loggins"}
-    ]},
-    aussie:{ id:"aussie", name:"Aussie Pub Classics", songs:[
-      {t:"Khe Sanh", a:"Cold Chisel"},
-      {t:"Down Under", a:"Men at Work"},
-      {t:"Horror Movie", a:"Skyhooks"},
-      {t:"Beds Are Burning", a:"Midnight Oil"},
-      {t:"Throw Your Arms Around Me", a:"Hunters & Collectors"},
-      {t:"Am I Ever Gonna See Your Face Again", a:"The Angels"},
-      {t:"Working Class Man", a:"Jimmy Barnes"},
-      {t:"You're the Voice", a:"John Farnham"},
-      {t:"Great Southern Land", a:"Icehouse"},
-      {t:"Bow River", a:"Cold Chisel"},
-      {t:"Cheap Wine", a:"Cold Chisel"},
-      {t:"Eagle Rock", a:"Daddy Cool"},
-      {t:"Better", a:"The Screaming Jets"},
-      {t:"April Sun in Cuba", a:"Dragon"},
-      {t:"Flame Trees", a:"Cold Chisel"},
-      {t:"Living in the 70's", a:"Skyhooks"},
-      {t:"Solid Rock", a:"Goanna"},
-      {t:"My Happiness", a:"Powderfinger"},
-      {t:"These Days", a:"Powderfinger"},
-      {t:"Sounds of Then (This Is Australia)", a:"GANGgajang"},
-      {t:"Reckless", a:"Australian Crawl"},
-      {t:"The Boys Light Up", a:"Australian Crawl"},
-      {t:"Holy Grail", a:"Hunters & Collectors"},
-      {t:"Don't Change", a:"INXS"},
-      {t:"Never Tear Us Apart", a:"INXS"},
-      {t:"Need You Tonight", a:"INXS"},
-      {t:"Tucker's Daughter", a:"Ian Moss"},
-      {t:"Better Be Home Soon", a:"Crowded House"}
-    ]}
-  };
-  var PLORDER=["eighties","aussie"];
+  // ---- song library (loaded from data/musical-library.json) ----
+  // Only the host loads the library. Players and the TV receive song titles and
+  // artwork over broadcast, so they never need the file.
+  var LIB={ songs:[], byId:{}, byTitle:{}, playlists:[], plById:{} };
+  var libLoaded=false, libError=false;
+  var LIB_URL="../../data/musical-library.json";
+
+  function normTitle(t){ return (t==null?"":String(t)).trim().toLowerCase(); }
+  function loadLibrary(){
+    return fetch(LIB_URL, { cache:"no-store" }).then(function(r){
+      if(!r.ok) throw new Error("http "+r.status);
+      return r.json();
+    }).then(function(data){
+      LIB.songs=(data.songs||[]).slice();
+      LIB.byId={}; LIB.byTitle={};
+      for(var i=0;i<LIB.songs.length;i++){
+        var s=LIB.songs[i];
+        LIB.byId[s.id]=s;
+        LIB.byTitle[normTitle(s.title)]=s;   // titles in the library are unique
+      }
+      LIB.playlists=(data.playlists||[]).slice();
+      LIB.plById={};
+      for(var j=0;j<LIB.playlists.length;j++){ LIB.plById[LIB.playlists[j].id]=LIB.playlists[j]; }
+      libLoaded=true;
+    });
+  }
+  // song objects for a playlist id ("all" = every song), de-duplicated, order preserved
+  function songsForPlaylist(plId){
+    var ids, out=[], seen={};
+    if(plId==="all"){ for(var i=0;i<LIB.songs.length;i++){ out.push(LIB.songs[i]); } return out; }
+    var p=LIB.plById[plId]; ids=p?p.songIds:[];
+    for(var k=0;k<ids.length;k++){ var s=LIB.byId[ids[k]]; if(s && !seen[s.id]){ seen[s.id]=true; out.push(s); } }
+    return out;
+  }
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
@@ -322,21 +330,31 @@
   // ---- authoritative game state ----
   var G={
     code:"", status:"setup", pattern:"one", prize:"the prize", autoDaub:true,
-    playlistId:"eighties",
-    played:{}, playedOrder:[], hostNow:null,
-    players:{}, order:[],     // pid -> {name, cells, cardNo}
+    playlistId:"", playlistName:"All songs",
+    songs:[],              // song objects in play for this game (fixed at start)
+    queue:[], qIdx:-1,     // shuffled play order for the "Play next" button
+    played:{}, playedOrder:[], hostNow:null, nowSong:null,
+    players:{}, order:[],  // pid -> {name, cells, cardNo}
     claim:null, won:false
   };
-  function curPl(){ return PLAYLISTS[G.playlistId]; }
-  function findSong(title){ var s=curPl().songs; for(var i=0;i<s.length;i++){ if(s[i].t===title) return s[i]; } return {t:title,a:""}; }
+  function curSongs(){ return G.songs; }
+  function findSong(title){
+    var s=LIB.byTitle[normTitle(title)];
+    return s || { id:"", title:title, artist:"", previewUrl:"", artworkUrl:"" };
+  }
 
   // ---- musical bingo card (25 cells, index 12 FREE) ----
   function makeCard(){
-    var pool=curPl().songs.slice(), titles=[];
-    for(var i=0;i<24 && pool.length;i++){ var idx=cryptoInt(pool.length); titles.push(pool[idx].t); pool.splice(idx,1); }
+    var pool=G.songs.slice(), titles=[];
+    for(var i=0;i<24 && pool.length;i++){ var idx=cryptoInt(pool.length); titles.push(pool[idx].title); pool.splice(idx,1); }
     var cells=[], ti=0;
     for(var p=0;p<25;p++){ if(p===12){ cells.push(null); } else { cells.push(titles[ti++]||""); } }
     return cells;
+  }
+  function shuffledQueue(){
+    var a=[]; for(var i=0;i<G.songs.length;i++) a.push(i);
+    for(var j=a.length-1;j>0;j--){ var k=cryptoInt(j+1); var t=a[j]; a[j]=a[k]; a[k]=t; }
+    return a;
   }
   function isCovered(cells,i){ return i===12 || (!!cells[i] && !!G.played[cells[i]]); }
   function rowComplete(cells,r){ for(var c=0;c<5;c++){ if(!isCovered(cells,r*5+c)) return false; } return true; }
@@ -366,6 +384,77 @@
   }
   function sendPlayers(){ send({ t:"players", count:playerCount() }); }
 
+  // ================= AUDIO ENGINE (this device is plugged into the PA) =================
+  var audio=$("clip"), prefetchEl=null;
+  function fmtTime(s){ s=Math.max(0,Math.floor(s||0)); var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
+  function resetClipUI(){ $("clipFill").style.width="0%"; $("clipElapsed").textContent="0:00"; $("clipTotal").textContent="0:30"; }
+  function updateClipUI(){
+    var dur=audio.duration; if(!isFinite(dur)||dur<=0) dur=30;
+    var cur=audio.currentTime||0;
+    $("clipElapsed").textContent=fmtTime(cur); $("clipTotal").textContent=fmtTime(dur);
+    $("clipFill").style.width=Math.min(100,(cur/dur)*100)+"%";
+  }
+  function setPlayPause(playing){ var b=$("playPauseBtn"); b.disabled=false; b.textContent=playing?"Pause":"Play"; }
+  audio.addEventListener("timeupdate", updateClipUI);
+  audio.addEventListener("loadedmetadata", updateClipUI);
+  audio.addEventListener("play", function(){ setPlayPause(true); });
+  audio.addEventListener("pause", function(){ if(!audio.ended) setPlayPause(false); });
+  audio.addEventListener("ended", function(){ setPlayPause(false); $("clipFill").style.width="100%"; });
+
+  function peekNextInQueue(){
+    for(var i=G.qIdx+1;i<G.queue.length;i++){ var s=G.songs[G.queue[i]]; if(s && !G.played[s.title]) return s; }
+    return null;
+  }
+  function prefetchNext(){
+    var song=peekNextInQueue();
+    if(song && song.previewUrl){ try{ prefetchEl=new Audio(); prefetchEl.preload="auto"; prefetchEl.src=song.previewUrl; prefetchEl.load(); }catch(e){} }
+  }
+
+  // play a song: it counts as called the instant it starts (host-authoritative),
+  // the clip plays here, and every player card + the TV update over broadcast
+  function playSong(song){
+    if(!song || G.status!=="running") return;
+    if(!G.played[song.title]){ G.played[song.title]=true; G.playedOrder.push(song.title); }
+    G.nowSong=song; G.hostNow=song.title;
+    send({ t:"played", title:song.title, artist:song.artist, artworkUrl:song.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub });
+    var warn=$("clipWarn");
+    if(song.previewUrl){
+      warn.classList.add("hidden");
+      audio.src=song.previewUrl; audio.volume=1.0; resetClipUI();
+      var pr=audio.play(); if(pr && pr.catch){ pr.catch(function(){}); }
+      $("playPauseBtn").disabled=false; $("playPauseBtn").textContent="Pause";
+    } else {
+      try{ audio.pause(); }catch(e){} audio.removeAttribute("src");
+      warn.classList.remove("hidden"); resetClipUI(); $("playPauseBtn").disabled=true;
+    }
+    prefetchNext();
+    renderLive();
+  }
+  function playNext(){
+    for(var i=G.qIdx+1;i<G.queue.length;i++){
+      var s=G.songs[G.queue[i]];
+      if(s && !G.played[s.title]){ G.qIdx=i; playSong(s); return; }
+    }
+    // nothing left unplayed
+    $("playNextBtn").disabled=true; $("playNextBtn").textContent="All songs played";
+  }
+  function togglePlayPause(){ if(!audio.src) return; if(audio.paused){ var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); } else { audio.pause(); } }
+  function stopAudio(){ try{ audio.pause(); }catch(e){} try{ audio.removeAttribute("src"); audio.load(); }catch(e){} resetClipUI(); $("playPauseBtn").disabled=true; $("playPauseBtn").textContent="Pause"; }
+
+  // ---- Spotify affordance (for venues who prefer full tracks off their own subscription) ----
+  function spotifyLinks(){
+    var lines=[], s=G.songs.length?G.songs:songsForPlaylist(G.playlistId||"all");
+    for(var i=0;i<s.length;i++){ lines.push("https://open.spotify.com/search/"+encodeURIComponent(s[i].title+" "+s[i].artist)); }
+    return lines.join("\n");
+  }
+  function fallbackCopy(text){ try{ var ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }catch(e){} }
+  function copySpotify(){
+    var text=spotifyLinks();
+    var done=function(){ var ok=$("spotifyOk"); ok.classList.remove("hidden"); setTimeout(function(){ ok.classList.add("hidden"); },2500); };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); }); }
+    else { fallbackCopy(text); done(); }
+  }
+
   // ---- render console ----
   function renderConsole(){
     var live=G.status==="running";
@@ -384,25 +473,40 @@
     for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p) html+='<span class="pchip">'+esc(p.name)+'</span>'; }
     el.innerHTML=html;
   }
+  function renderNow(){
+    var song=G.nowSong || (G.hostNow?findSong(G.hostNow):null);
+    var art=$("nowArt");
+    if(song && song.title){
+      $("hostNow").textContent=song.title;
+      $("hostNowArtist").textContent=song.artist||"";
+      if(song.artworkUrl){ art.className="nowart"; art.innerHTML=""; art.style.backgroundImage="url('"+song.artworkUrl+"')"; art.style.backgroundSize="cover"; art.style.backgroundPosition="center"; }
+      else { art.className="nowart blank"; art.style.backgroundImage=""; art.innerHTML="&#9834;"; }
+    } else {
+      $("hostNow").textContent="Tap Play next to start";
+      $("hostNowArtist").textContent="The clip plays through this device";
+      art.className="nowart blank"; art.style.backgroundImage=""; art.innerHTML="&#9834;";
+    }
+  }
   function renderLive(){
-    var song=G.hostNow?findSong(G.hostNow):null;
-    $("hostNow").textContent=song?(song.t+" · "+song.a):"Play a song, then mark it below";
+    renderNow();
     $("livePlayed").textContent=G.playedOrder.length;
     $("livePattern").textContent=PATTERN_NAMES[G.pattern];
     $("livePlayers").textContent=playerCount();
-    $("playedCount").textContent=G.playedOrder.length+" of "+curPl().songs.length+" songs played";
+    $("playedCount").textContent=G.playedOrder.length+" of "+G.songs.length+" songs played";
     $("prizeLine2").innerHTML="Playing for <b>"+esc(G.prize)+"</b>";
     renderSongList();
     renderClaimQueue();
   }
   function renderSongList(){
     var box=$("songList"); box.innerHTML="";
-    var songs=curPl().songs;
+    var songs=curSongs();
     for(var i=0;i<songs.length;i++){
-      var s=songs[i], done=!!G.played[s.t];
+      var s=songs[i], done=!!G.played[s.title], now=(G.hostNow===s.title);
       var row=document.createElement("div"); row.className="songrow"+(done?" done":"");
-      row.innerHTML='<div class="info"><div class="st">'+esc(s.t)+'</div><div class="sa">'+esc(s.a)+'</div></div>'+
-        '<span class="pill '+(done?"on":"play")+'" data-title="'+esc(s.t)+'">'+(done?"Played ✓":"Mark played")+'</span>';
+      var pillCls=now?"playing":(done?"on":"play");
+      var pillTxt=s.previewUrl ? (now?"Playing":(done?"Played &#10003;":"Play")) : (done?"Called &#10003;":"Mark called");
+      row.innerHTML='<div class="info"><div class="st">'+esc(s.title)+'</div><div class="sa">'+esc(s.artist)+'</div></div>'+
+        '<span class="pill '+pillCls+'" data-title="'+esc(s.title)+'">'+pillTxt+'</span>';
       box.appendChild(row);
     }
   }
@@ -433,44 +537,33 @@
     for(var i=0;i<G.order.length;i++){ var pid=G.order[i]; var p=G.players[pid];
       p.cells=makeCard(); p.cardNo=100+cryptoInt(900); sendCard(pid); }
   }
+  function beginRound(){
+    G.songs=songsForPlaylist(G.playlistId||"all");
+    G.queue=shuffledQueue(); G.qIdx=-1;
+    G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null;
+    G.won=false; G.claim=null;
+    stopAudio();
+    $("playNextBtn").disabled=false; $("playNextBtn").textContent="Play next song";
+    dealCards();
+    send({ t:"started", pattern:G.pattern, prize:G.prize, autoDaub:G.autoDaub });
+    sendState();
+    renderConsole();
+  }
   function startGame(){
+    if(!libLoaded){ return; }
     G.playlistId=$("playlistSel").value;
+    G.playlistName=(G.playlistId==="all")?"All songs":((LIB.plById[G.playlistId]||{}).name||"Playlist");
     G.pattern=$("patternSel").value;
     G.prize=($("prizeInput").value||"").trim()||"the prize";
-    G.played={}; G.playedOrder=[]; G.hostNow=null;
-    G.status="running"; G.won=false; G.claim=null;
-    dealCards();
-    send({ t:"started", pattern:G.pattern, prize:G.prize, autoDaub:G.autoDaub });
-    sendState();
-    renderConsole();
+    G.status="running";
+    beginRound();
   }
-  function newGame(){
-    G.played={}; G.playedOrder=[]; G.hostNow=null;
-    G.won=false; G.claim=null;
-    dealCards();
-    send({ t:"started", pattern:G.pattern, prize:G.prize, autoDaub:G.autoDaub });
-    sendState();
-    renderConsole();
-  }
+  function newGame(){ if(G.status!=="running"){ G.status="running"; } beginRound(); }
   function endGame(){
-    G.status="setup"; G.claim=null; G.won=false;
+    G.status="setup"; G.claim=null; G.won=false; G.nowSong=null; G.hostNow=null;
+    stopAudio();
     sendState();
     renderConsole();
-  }
-  function markPlayed(title){
-    if(G.status!=="running") return;
-    if(G.played[title]){
-      // unmark: remove and resync players from state
-      delete G.played[title];
-      G.playedOrder=G.playedOrder.filter(function(t){ return t!==title; });
-      if(G.hostNow===title) G.hostNow=G.playedOrder.length?G.playedOrder[G.playedOrder.length-1]:null;
-      sendState();
-    } else {
-      G.played[title]=true; G.playedOrder.push(title); G.hostNow=title;
-      var song=findSong(title);
-      send({ t:"played", title:song.t, artist:song.a, played:playedArray(), autoDaub:G.autoDaub });
-    }
-    renderLive();
   }
   function hostConfirm(){
     if(!G.claim) return;
@@ -487,8 +580,24 @@
   }
 
   // ---- incoming messages ----
+  function tvHere(m){
+    $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+    // a freshly (re)loaded screen announces itself with hello:true. Re-announce the
+    // host and, if a game is live, replay state + the current song so the TV catches
+    // up instead of sitting in the lobby.
+    if(m && m.hello){
+      send({ t:"host_here" });
+      if(G.status==="running"){
+        sendState();
+        if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
+        if(G.claim) send({ t:"claim_pending", name:G.claim.name });
+      }
+    }
+  }
   function onMsg(m){
     if(!m||!m.t) return;
+    if(m.t==="tv_here"){ tvHere(m); return; }
+    if(m.t==="host_here") return; // ignore our own presence pings
     if(m.t==="join"){
       if(!m.pid) return;
       var isNew=!G.players[m.pid];
@@ -523,9 +632,16 @@
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
-        subscribed=true; flushQueue();
-        $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
-        sendState(); // announce presence so the TV and any waiting players catch up
+        subscribed=true;
+        send({ t:"host_here" });   // announce to the screen; it replies with tv_here
+        flushQueue();
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
+        // replay state so a screen/players who joined before us (or reloaded) catch up
+        if(G.status==="running"){
+          sendState();
+          if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
+          if(G.claim) send({ t:"claim_pending", name:G.claim.name });
+        } else { sendState(); }
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
@@ -539,10 +655,14 @@
   // ---- playlist select ----
   function fillPlaylists(){
     var s=$("playlistSel"); s.innerHTML="";
-    for(var i=0;i<PLORDER.length;i++){ var k=PLORDER[i];
-      var o=document.createElement("option"); o.value=k; o.textContent=PLAYLISTS[k].name+" ("+PLAYLISTS[k].songs.length+" songs)";
-      if(k===G.playlistId) o.selected=true; s.appendChild(o);
+    for(var i=0;i<LIB.playlists.length;i++){
+      var p=LIB.playlists[i];
+      var o=document.createElement("option"); o.value=p.id; o.textContent=p.name+" ("+(p.songIds||[]).length+" songs)";
+      s.appendChild(o);
     }
+    var all=document.createElement("option"); all.value="all"; all.textContent="All songs ("+LIB.songs.length+" songs)"; s.appendChild(all);
+    if(LIB.playlists.length){ G.playlistId=LIB.playlists[0].id; s.value=G.playlistId; }
+    else { G.playlistId="all"; s.value="all"; }
   }
 
   // ---- events ----
@@ -568,9 +688,12 @@
   $("startBtn").addEventListener("click", startGame);
   $("newGameBtn").addEventListener("click", newGame);
   $("endGameBtn").addEventListener("click", endGame);
+  $("playNextBtn").addEventListener("click", playNext);
+  $("playPauseBtn").addEventListener("click", togglePlayPause);
+  $("spotifyBtn").addEventListener("click", copySpotify);
   $("songList").addEventListener("click", function(e){
     var pill=e.target.closest(".pill"); if(!pill) return;
-    markPlayed(pill.getAttribute("data-title"));
+    playSong(findSong(pill.getAttribute("data-title")));
   });
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;
@@ -580,8 +703,16 @@
   // prefill code from ?room if present (handy for testing)
   (function(){ var m=/[?&]room=([^&]+)/.exec(window.location.search); if(m){ codeIn.value=decodeURIComponent(m[1]).toUpperCase().slice(0,6); } })();
 
-  // init
-  fillPlaylists();
+  // init: load the song library, then fill the playlist picker
+  $("startBtn").disabled=true;
+  var plSel=$("playlistSel"); plSel.innerHTML='<option>Loading songs...</option>'; plSel.disabled=true;
+  loadLibrary().then(function(){
+    plSel.disabled=false; fillPlaylists(); $("startBtn").disabled=false;
+  }).catch(function(){
+    libError=true; plSel.innerHTML='<option>Could not load songs</option>'; $("startBtn").disabled=true;
+    var note=document.querySelector("#setupBlock .note");
+    if(note){ note.textContent="Could not load the song library. Check you are online, then reload this page."; }
+  });
 })();
 </script>
 </body>

@@ -291,7 +291,6 @@
     box-shadow:0 0 46px -4px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32);
     display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
   }
-  .vps-ball .vps-lt{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.6vw,15px);letter-spacing:.14em;opacity:.9;line-height:1}
   .vps-ball .vps-nm{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(32px,6vw,62px);line-height:.9;letter-spacing:.01em}
   .vps-ball-chip{
     font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.5vw,15px);
@@ -304,9 +303,8 @@
   .vps-tv-recent{display:flex;align-items:center;gap:7px;z-index:1;flex-wrap:wrap}
   .vps-tv-recent .vps-ball-chip{font-size:clamp(9px,1.2vw,12px);padding:3px 9px}
   .vps-chip-lbl{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
-  .vps-board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;align-content:center;min-width:0}
+  .vps-board{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;align-content:center;min-width:0}
   .vps-board .vps-col{display:flex;flex-direction:column;gap:4px}
-  .vps-board .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:clamp(12px,1.8vw,16px);letter-spacing:.06em;padding-bottom:3px}
   .vps-cell{
     font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.3vw,12px);
     text-align:center;padding:3px 0;border-radius:5px;
@@ -350,15 +348,14 @@
   .vps-ticker b{color:var(--pink)}
   .vps-pcard{
     background:var(--ink-2);border:1px solid var(--line);border-radius:13px;
-    padding:10px;display:grid;grid-template-columns:repeat(5,1fr);gap:5px;
+    padding:10px;display:grid;grid-template-columns:repeat(9,1fr);gap:5px;
   }
-  .vps-pcard .vps-h{font-family:'Anton',sans-serif;font-weight:400;text-align:center;color:var(--pink);font-size:15px;padding-bottom:2px}
   .vps-pcell{
     aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:7px;
+    font-family:'JetBrains Mono',monospace;font-size:11px;border-radius:6px;
     background:rgba(255,255,255,.04);color:#e8e8ec;position:relative;
   }
-  .vps-pcell.vps-free{font-family:'Anton',sans-serif;font-size:8.5px;font-weight:400;color:var(--muted-2);text-transform:uppercase;letter-spacing:.05em}
+  .vps-pcell.vps-blank{background:transparent;border:0}
   .vps-pcell.vps-marked{color:#fff;font-weight:700}
   .vps-pcell.vps-marked::after{
     content:"";position:absolute;inset:4px;border-radius:50%;
@@ -443,7 +440,7 @@
   }
 
   /* On a normal screen the TV reads as a widescreen 16:9 panel: the
-     whole game (top row, big current ball + full 75-number board,
+     whole game (top row, big current ball + full 90-number board,
      footer with QR and join code) fits inside the frame without
      spilling or overlapping. Cells shrink to fit, which is realistic
      for a big screen. On phones the aspect-ratio is not applied, so
@@ -451,7 +448,7 @@
   @media (min-width:601px){
     /* Big screen reads as a wide TV via the 820px modal, sized to its own
        content so the footer (join code + venueplay.com.au/play) is NEVER
-       clipped. Bingo's 75-number board is compacted so the TV stays wide
+       clipped. Bingo's 90-number board is compacted so the TV stays wide
        (landscape) rather than going square. No forced aspect-ratio. */
     .vp-modal.is-tv .vps-tv{ min-height:430px; }
     /* Short TVs (e.g. raffle) still read as a widescreen: the body
@@ -463,7 +460,6 @@
     .vp-modal.is-tv .vps-tv-foot{ flex:0 0 auto; }
     .vp-modal.is-tv .vps-board{ gap:4px; }
     .vp-modal.is-tv .vps-board .vps-col{ gap:2px; }
-    .vp-modal.is-tv .vps-board .vps-h{ font-size:13px; padding-bottom:2px; }
     .vp-modal.is-tv .vps-cell{
       height:15px; min-height:0; padding:0; line-height:1;
       display:flex; align-items:center; justify-content:center; font-size:9px;
@@ -1462,6 +1458,50 @@ block (all classes prefixed .vpa-)
   }
 </style>
 
+<style>
+  /* ============================================================
+     MOBILE POLISH for the interactive demo. Desktop layout is
+     untouched; these rules only fire on phones. All interactivity
+     (mode switching, hotspots, controls) is preserved.
+     Australian English, no em dashes.
+     ============================================================ */
+  html,body{overflow-x:hidden}
+
+  @media (max-width:600px){
+    /* Use more of the screen for the popups so the device mockups breathe */
+    .vp-backdrop{padding:10px}
+    .vp-modal{padding:15px;border-radius:16px}
+    .vp-modal.is-tv,.vp-modal.is-host,.vp-modal.is-player{max-width:460px}
+
+    /* Slimmer device bezels leave more room for the screen inside */
+    .vp-tvframe{padding:8px 8px 10px}
+    .vp-tabletframe{padding:24px 12px}
+
+    /* Big screen (bingo): stack the called ball above the number board
+       instead of squeezing them side by side like on desktop */
+    .vps-tv-body{grid-template-columns:1fr;justify-items:center;gap:14px}
+    .vps-board{width:100%}
+    .vps-board .vps-cell{font-size:11px;padding:3px 0}
+
+    /* Join footer stays inside the frame and centres if it needs to wrap */
+    .vps-tv-foot{flex-wrap:wrap;justify-content:center}
+
+    /* Keep the mode dropdown fully on screen and easy to tap */
+    .vp-modebar{width:100%}
+    .vp-modebtn{width:100%;justify-content:space-between}
+    .vp-modemenu{left:0;right:0;min-width:0}
+  }
+
+  @media (max-width:430px){
+    .vp-backdrop{padding:8px}
+    .vp-modal{padding:12px}
+    .vps-board .vps-cell{font-size:10px}
+    /* Trivia answers stack to a single column so the text never clips */
+    .vps-opts{grid-template-columns:1fr}
+    .vps-tv-top{gap:8px}
+  }
+</style>
+
 <div class="vp-wrap">
   <div class="vp-inner">
     <span class="vp-eyebrow"><span class="dot"></span>Interactive concept</span>
@@ -1527,10 +1567,7 @@ block (all classes prefixed .vpa-)
         <!-- Hint of bingo board on TV -->
         <g>
           <circle cx="185" cy="120" r="30" fill="#FF1F8E"/>
-          <text x="185" y="129" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" font-weight="800" fill="#fff">G54</text>
-          <g font-family="system-ui, sans-serif" font-size="13" font-weight="800" fill="#FF1F8E" text-anchor="middle">
-            <text x="270" y="98">B</text><text x="305" y="98">I</text><text x="340" y="98">N</text><text x="375" y="98">G</text><text x="410" y="98">O</text>
-          </g>
+          <text x="185" y="129" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" font-weight="800" fill="#fff">53</text>
           <g>
             <rect x="256" y="108" width="26" height="20" rx="4" fill="#FF1F8E"/>
             <rect x="291" y="108" width="26" height="20" rx="4" fill="#17171B" stroke="rgba(255,255,255,0.1)"/>
@@ -1693,8 +1730,8 @@ block (all classes prefixed .vpa-)
           '<span class="vps-tv-venue">Tugun Bowls Club &middot; Tuesday Bingo</span>' +
           '<span class="vps-tv-recent">' +
             '<span class="vps-chip-lbl">Last calls</span>' +
-            '<span class="vps-ball-chip">B 7</span>' +
-            '<span class="vps-ball-chip">O 68</span>' +
+            '<span class="vps-ball-chip">90</span>' +
+            '<span class="vps-ball-chip">71</span>' +
           '</span>' +
           '<span style="display:flex;gap:8px;flex-wrap:wrap">' +
             '<span class="vps-pill vps-prize">One line &middot; $50 bar tab</span>' +
@@ -1702,11 +1739,11 @@ block (all classes prefixed .vpa-)
         '</div>' +
         '<div class="vps-tv-body">' +
           '<div class="vps-ball-col">' +
-            '<div class="vps-ball-idx">Ball 17 of 75</div>' +
-            '<div class="vps-ball"><span class="vps-lt">G</span><span class="vps-nm">54</span></div>' +
+            '<div class="vps-ball-idx">Ball 17 of 90</div>' +
+            '<div class="vps-ball"><span class="vps-nm">53</span></div>' +
             '<div class="vps-ball-prev">' +
-              '<span class="vps-ball-chip">B 7</span>' +
-              '<span class="vps-ball-chip">O 68</span>' +
+              '<span class="vps-ball-chip">90</span>' +
+              '<span class="vps-ball-chip">71</span>' +
             '</div>' +
           '</div>' +
           '<div class="vps-board" id="vps-board"></div>' +
@@ -1742,15 +1779,15 @@ block (all classes prefixed .vpa-)
           '<div>' +
             '<button class="vps-next-ball" type="button" tabindex="-1" aria-hidden="true">' +
               '<span class="vps-k">Next ball</span>' +
-              '<span class="vps-s" style="display:block">17 of 75 called</span>' +
+              '<span class="vps-s" style="display:block">17 of 90 called</span>' +
             '</button>' +
             '<div class="vps-recent">' +
               '<div class="vps-rl">Recent</div>' +
-              '<div class="vps-balls"><span class="vps-rb vps-cur">G54</span><span class="vps-rb">B7</span><span class="vps-rb">O68</span><span class="vps-rb">N31</span><span class="vps-rb">I23</span></div>' +
+              '<div class="vps-balls"><span class="vps-rb vps-cur">53</span><span class="vps-rb">90</span><span class="vps-rb">71</span><span class="vps-rb">27</span><span class="vps-rb">66</span></div>' +
             '</div>' +
             '<button class="vps-allballs-btn" type="button" id="vps-allballs-btn">See all balls</button>' +
             '<div class="vps-allballs" id="vps-allballs" hidden>' +
-              '<div class="vps-allballs-h">All 75 balls, called ones lit</div>' +
+              '<div class="vps-allballs-h">All 90 balls, called ones lit</div>' +
               '<div class="vps-board" id="vps-hostboard"></div>' +
             '</div>' +
           '</div>' +
@@ -1785,7 +1822,7 @@ block (all classes prefixed .vpa-)
           '</span>' +
           '<span class="vps-v">Tugun Bowls</span>' +
         '</div>' +
-        '<div class="vps-ticker">Last call <b>G 54</b> mark it if you have got it</div>' +
+        '<div class="vps-ticker">Last call <b>53</b> mark it if you have got it</div>' +
         '<div class="vps-pcard" id="vps-pcard"></div>' +
         '<button class="vps-bingo-btn" type="button" tabindex="-1" aria-hidden="true">BINGO!</button>' +
       '</div>' +
@@ -1962,45 +1999,46 @@ block (all classes prefixed .vpa-)
      In this prototype the target elements only exist once a popup
      is opened, so each builder is called after its markup is
      injected and guards for a missing element. ---- */
-  var cols = [['B',1,15],['I',16,30],['N',31,45],['G',46,60],['O',61,75]];
-  var called = {3:1,7:1,9:1,12:1,15:1,23:1,29:1,31:1,38:1,40:1,47:1,51:1,54:1,60:1,66:1,68:1,72:1};
+  // 90-ball board: 9 columns of 1 to 90, no letters. Called numbers lit.
+  var called = {3:1,5:1,8:1,12:1,21:1,27:1,34:1,41:1,45:1,49:1,53:1,62:1,66:1,71:1,82:1,88:1,90:1};
+
+  function fillBoard(board) {
+    for (var col = 0; col < 9; col++) {
+      var c = document.createElement('div'); c.className = 'vps-col';
+      for (var k = 0; k < 10; k++) {
+        var n = col * 10 + k + 1;
+        var d = document.createElement('div');
+        d.className = 'vps-cell' + (called[n] ? ' vps-on' : '');
+        d.textContent = n;
+        c.appendChild(d);
+      }
+      board.appendChild(c);
+    }
+  }
 
   function buildTvBoard() {
     var board = document.getElementById('vps-board');
     if (!board) return;
-    cols.forEach(function(c){
-      var col = document.createElement('div'); col.className = 'vps-col';
-      var h = document.createElement('div'); h.className = 'vps-h'; h.textContent = c[0]; col.appendChild(h);
-      for (var n = c[1]; n <= c[2]; n++) {
-        var d = document.createElement('div');
-        d.className = 'vps-cell' + (called[n] ? ' vps-on' : '');
-        d.textContent = n;
-        col.appendChild(d);
-      }
-      board.appendChild(col);
-    });
+    fillBoard(board);
   }
+
+  // 90-ball ticket: 3 rows x 9 columns, 15 numbers, exactly 5 per row,
+  // blank cells elsewhere, no letters, no FREE. Marked = number called.
+  var ticket = [
+    [3, 0, 21, 0, 42, 0, 66, 0, 84],
+    [0, 12, 27, 0, 0, 53, 0, 71, 90],
+    [8, 0, 0, 34, 49, 58, 0, 77, 0]
+  ];
 
   function buildPcard() {
     var pcard = document.getElementById('vps-pcard');
     if (!pcard) return;
-    'BINGO'.split('').forEach(function(L){
-      var h = document.createElement('div'); h.className = 'vps-h'; h.textContent = L; pcard.appendChild(h);
-    });
-    var cardCols = [
-      [2, 7, 9, 13, 14],
-      [18, 23, 26, 29, 30],
-      [31, 38, 0, 40, 44],
-      [47, 50, 54, 57, 59],
-      [62, 66, 70, 72, 75]
-    ];
-    for (var r = 0; r < 5; r++) {
-      for (var ci = 0; ci < 5; ci++) {
+    for (var r = 0; r < 3; r++) {
+      for (var c = 0; c < 9; c++) {
+        var num = ticket[r][c];
         var cell = document.createElement('div');
-        var num = cardCols[ci][r];
-        if (num === 0) {
-          cell.className = 'vps-pcell vps-free';
-          cell.textContent = 'FREE';
+        if (!num) {
+          cell.className = 'vps-pcell vps-blank';
         } else {
           cell.className = 'vps-pcell' + (called[num] ? ' vps-marked' : '');
           var sp = document.createElement('span'); sp.textContent = num; cell.appendChild(sp);
@@ -2537,12 +2575,7 @@ block (all classes prefixed .vpa-)
       if(panel.hasAttribute('hidden')){
         panel.removeAttribute('hidden');
         if(!built && board){
-          cols.forEach(function(c){
-            var col=document.createElement('div');col.className='vps-col';
-            var h=document.createElement('div');h.className='vps-h';h.textContent=c[0];col.appendChild(h);
-            for(var n=c[1];n<=c[2];n++){var d=document.createElement('div');d.className='vps-cell'+(called[n]?' vps-on':'');d.textContent=n;col.appendChild(d);}
-            board.appendChild(col);
-          });
+          fillBoard(board);
           built=true;
         }
         btn.textContent='Hide all balls';

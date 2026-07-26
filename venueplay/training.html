@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay: Training Simulator</title>
+<meta name="description" content="Train your venue team on VenuePlay. Watch the big screen, the host iPad and a player's phone react together as you run a pretend game of bingo.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --stage:#050506;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    background:radial-gradient(1100px 620px at 82% -8%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  /* ============ HEADER ============ */
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.72);backdrop-filter:blur(8px);position:sticky;top:0;z-index:30}
+  .bar{max-width:1320px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--pink)}
+  .scen{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+  .sp{padding:8px 13px;border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:10px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;transition:.15s;line-height:1.05;text-align:center}
+  .sp:hover{color:#fff;border-color:var(--pink)}
+  .sp.on{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(255,31,142,.3)}
+  .sp .soon{display:block;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-top:2px}
+  .sp.on .soon{color:rgba(255,255,255,.75)}
+
+  .sim{max-width:1320px;margin:0 auto;padding:20px 22px 40px}
+
+  /* ============ DRIVE + COACHING BAR ============ */
+  .drive{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:16px;align-items:stretch;margin-bottom:20px}
+  @media(max-width:820px){ .drive{grid-template-columns:1fr} }
+
+  .controls{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:11px}
+  .clbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10px;color:var(--faint)}
+  .btn{border:none;border-radius:11px;padding:13px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%;display:flex;align-items:center;justify-content:center;gap:9px}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--pink);color:#fff}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .btnrow{display:flex;gap:9px}
+  .btnrow .btn{width:auto;flex:1;padding:12px 10px;font-size:13px}
+  .prog{margin-top:2px}
+  .progtop{display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:6px}
+  .progtop b{color:#fff}
+  .progtrack{height:6px;border-radius:999px;background:var(--ink-3);border:1px solid var(--line-2);overflow:hidden}
+  .progfill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--pink),var(--pink-deep));width:0;transition:width .3s ease}
+
+  .coach{background:linear-gradient(180deg, rgba(255,31,142,.08), rgba(255,255,255,.015));border:1px solid rgba(255,31,142,.28);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;justify-content:center;min-height:120px}
+  .coach-eye{display:inline-flex;align-items:center;gap:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink);margin-bottom:9px}
+  .coach-eye .d{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 9px var(--pink)}
+  .coach-cap{font-family:'Manrope',sans-serif;font-weight:500;font-size:clamp(15px,2.1vw,18px);color:#fff;line-height:1.5}
+  .coach-hint{margin-top:10px;font-size:12.5px;color:var(--muted)}
+  .coach-hint b{color:var(--gold)}
+
+  /* ============ DEVICE STAGE ============ */
+  /* Flexbox so the player phone can slide in/out smoothly (flex-grow animates). */
+  .stage{display:flex;gap:18px;align-items:flex-start}
+  .stage.hidden{display:none}
+  .dev-tv{flex:1.62 1 0;min-width:0}
+  .dev-host{flex:1.16 1 0;min-width:0}
+  .dev-phone{flex:.72 1 0;min-width:0;transition:flex-grow .45s ease, opacity .35s ease, margin .45s ease}
+  /* ADVERTISING = 2 devices: collapse the phone away smoothly */
+  .stage.two .dev-phone{flex-grow:0;flex-basis:0;opacity:0;margin-left:-18px;overflow:hidden;pointer-events:none}
+  @media(max-width:1120px){
+    .stage{flex-wrap:wrap}
+    .dev-tv{flex:1 1 100%}
+    .dev-host{flex:1.35 1 0}
+    .dev-phone{flex:.9 1 0}
+    .stage.two .dev-phone{margin-left:0}
+  }
+  @media(max-width:720px){
+    .stage{flex-direction:column}
+    .dev-tv,.dev-host,.dev-phone{flex:1 1 auto;width:100%}
+    .dev-phone{transition:opacity .35s ease}
+    .stage.two .dev-phone{display:none}
+    .bezel.phone{max-width:280px}
+  }
+
+  .dev{min-width:0}
+  .devlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+  .devlbl .pin{color:var(--pink)}
+  .dev.infocus .devlbl{color:var(--pink)}
+
+  .bezel{background:#050506;border:1px solid #202024;border-radius:16px;padding:9px;transition:box-shadow .2s ease, border-color .2s ease}
+  .dev.infocus .bezel{border-color:rgba(255,31,142,.5);box-shadow:0 0 0 1px rgba(255,31,142,.3),0 18px 50px -22px rgba(255,31,142,.45)}
+  /* landscape iPad frame */
+  .bezel.tablet{border-radius:20px;padding:11px 20px;position:relative}
+  .bezel.tablet::before{content:"";position:absolute;top:50%;right:8px;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:#1c1c20;box-shadow:inset 0 0 0 2px #2a2a30}
+  /* portrait phone frame */
+  .bezel.phone{border-radius:30px;padding:10px;max-width:250px;margin:0 auto}
+
+  /* --- screen shells with real device proportions --- */
+  .screen{border-radius:10px;overflow:hidden;position:relative}
+  .tvscreen{aspect-ratio:16/9;background:radial-gradient(700px 460px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;
+    padding:clamp(12px,2vw,20px);display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+  .hostscreen{aspect-ratio:4/3;background:radial-gradient(700px 400px at 80% -10%, rgba(255,31,142,.08), transparent 60%), var(--ink);
+    padding:13px;overflow:auto}
+  .phonescreen{aspect-ratio:9/19.5;container-type:inline-size;background:radial-gradient(400px 300px at 80% -10%, rgba(255,31,142,.12), transparent 60%), var(--ink);
+    border-radius:20px;display:flex;flex-direction:column;overflow:hidden}
+  .phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:70px;height:15px;background:#050506;border-radius:0 0 12px 12px;z-index:5}
+
+  /* brand corner (replaces the old status row; no connected light anywhere) */
+  .tvcorner{position:absolute;top:clamp(8px,1.6vw,16px);right:clamp(10px,2vw,20px);z-index:6}
+  .sp-brand{display:flex;align-items:center;gap:6px}
+  .sp-brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .sp-brand .w{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12px;color:#fff}
+
+  /* ---- TV advertising loop ---- */
+  .tvads{position:absolute;inset:0;z-index:1}
+  .layerad{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8% 7%;opacity:0;transition:opacity .8s ease}
+  .layerad.show{opacity:1}
+  .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(10px,1.7vw,16px)}
+  .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(28px,5.8vw,60px);color:#fff;line-height:.98;margin:2% 0}
+  .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,1.9vw,20px);color:var(--text);max-width:80%}
+  .ad-a{background:radial-gradient(560px 320px at 50% 18%, rgba(255,194,75,.20), transparent 60%), linear-gradient(160deg,#151007,#050506)}
+  .ad-b{background:radial-gradient(560px 320px at 40% 24%, rgba(255,31,142,.18), transparent 60%), linear-gradient(160deg,#12060d,#050506)}
+  .ad-c{background:radial-gradient(560px 320px at 60% 25%, rgba(53,208,127,.16), transparent 60%), linear-gradient(160deg,#06120c,#050506)}
+
+  /* ---- TV pair panel (only while unpaired, in ads mode) ---- */
+  .pairpanel{position:absolute;right:clamp(10px,1.6vw,16px);bottom:clamp(10px,1.6vw,16px);z-index:7;display:flex;align-items:center;gap:12px;
+    background:rgba(0,0,0,.55);border:1px solid var(--line-2);border-radius:14px;padding:10px 14px 10px 10px;backdrop-filter:blur(6px);max-width:78%}
+  .pairpanel .qrp{width:clamp(60px,9vw,96px);height:clamp(60px,9vw,96px);background:#fff;border-radius:8px;padding:5px;flex:none}
+  .pairpanel .qrp svg{display:block;width:100%;height:100%}
+  .pt-head{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.09em;font-size:clamp(9px,1.2vw,13px);color:#fff}
+  .pt-lbl{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(8px,1.05vw,12px);color:var(--muted);margin-top:3px}
+  .pt-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(10px,1.5vw,16px);color:var(--gold);letter-spacing:.08em;margin-top:5px}
+
+  /* ---- TV lobby ---- */
+  .tv-eye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(9px,1.3vw,12px);color:var(--muted)}
+  .tv-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .lobbyrow{display:flex;align-items:center;gap:clamp(14px,3vw,32px);margin:8px 0}
+  .qr{width:clamp(96px,15vw,150px);height:clamp(96px,15vw,150px);background:#fff;border-radius:12px;padding:8px;flex:none}
+  .qr svg{display:block;width:100%;height:100%}
+  .lobbytxt{text-align:left}
+  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(26px,4.6vw,52px);color:#fff;line-height:1}
+  .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,1.7vw,18px);color:var(--pink);margin-top:6px}
+  .codebox{display:flex;align-items:center;gap:12px;margin-top:12px}
+  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:clamp(9px,1.1vw,12px);color:var(--muted)}
+  .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,3.2vw,38px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:11px;padding:5px 16px}
+  .playing{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,1.5vw,16px);color:var(--muted);margin-top:12px}
+  .playing b{color:#fff}
+  .tv-jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.4vw,15px);color:var(--muted);margin-top:14px}
+
+  /* ---- TV running ---- */
+  .tv-run{flex:1;display:flex;gap:clamp(12px,2.4vw,26px);align-items:center;min-height:0}
+  .runleft{flex:0 0 40%;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
+  .runright{flex:1;min-width:0}
+  .curball{font-family:'Anton',sans-serif;font-size:clamp(48px,10vw,130px);color:#fff;line-height:.82;text-shadow:0 0 40px rgba(255,255,255,.22)}
+  .prevballs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  .prevball{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.3vw,14px);color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:6px;padding:3px 9px}
+  .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.3vw,14px);color:var(--muted);margin-top:9px}
+  .ballcount b{color:#fff}
+  .patline{margin-top:9px;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(11px,1.5vw,16px)}
+  .patlbl{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:.72em}
+  .patval{color:var(--pink);font-weight:800}
+  .prizeline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.3vw,14px);color:var(--muted);margin-top:4px}
+  .prizeline b{color:var(--gold)}
+
+  .vboard{display:flex;gap:5px;width:100%}
+  .vcol{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+  .vb{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(8px,1.1vw,14px);color:var(--faint);text-align:center;padding:clamp(2px,.5vw,5px) 0;border-radius:4px;background:rgba(255,255,255,.02);border:1px solid transparent}
+  .vb.lit{background:rgba(255,31,142,.18);color:#fff;border-color:rgba(255,31,142,.4)}
+  .vb.cur{background:var(--gold);color:#1a1000;border-color:transparent;box-shadow:0 0 12px rgba(255,194,75,.6)}
+
+  .tv-claim, .tv-win{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .claimbig{font-family:'Anton',sans-serif;font-size:clamp(44px,9vw,120px);color:var(--pink);line-height:.9;text-shadow:0 0 40px rgba(255,31,142,.5);margin:8px 0}
+  .claimname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,3vw,40px);color:#fff}
+  .winbingo{font-family:'Anton',sans-serif;font-size:clamp(48px,11vw,150px);line-height:.85;
+    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 28%,#FFF3D0 46%,#FFC24B 64%,#E9A93A 100%);background-size:220% auto;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 32px rgba(255,194,75,.42));animation:shimmer 3.2s linear infinite, winpop .6s ease-out}
+  .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,4.4vw,64px);color:var(--pink);line-height:1;margin-top:8px;text-shadow:0 0 30px rgba(255,31,142,.55)}
+  .winslabel{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.24em;color:var(--muted);font-size:clamp(9px,1.4vw,16px);margin-top:12px}
+  .winprize{font-family:'Anton',sans-serif;font-size:clamp(26px,5.6vw,90px);color:var(--gold);line-height:1;margin-top:4px;filter:drop-shadow(0 0 20px rgba(255,194,75,.4))}
+  .wincard{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.3vw,14px);color:var(--muted);margin-top:12px}
+  .wincard b{color:#fff}
+  @keyframes shimmer{to{background-position:220% center}}
+  @keyframes winpop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+  .confetti{position:absolute;top:-8%;width:8px;height:12px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
+  @keyframes confettiFall{0%{transform:translateY(-10%) rotate(0);opacity:1}100%{transform:translateY(360px) rotate(680deg);opacity:.8}}
+
+  /* ---- HOST iPad ---- */
+  .htop{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap}
+  .htag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:9px;color:var(--pink)}
+  .hpaired{margin-left:auto;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:9px;color:var(--faint)}
+  .hpaired b{color:var(--gold);font-family:'JetBrains Mono',monospace}
+
+  /* host pairing screen */
+  .hpair{max-width:320px;margin:6% auto 0;text-align:center}
+  .hpair-big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:26px;color:#fff;line-height:1.05}
+  .hpair-sub{color:var(--muted);font-size:12.5px;margin:8px 0 16px;line-height:1.5}
+  .hpair-lbl{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;text-align:left}
+  .hpair-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;text-align:center;letter-spacing:.2em;color:var(--text);
+    background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+  .hpair-note{font-size:11px;color:var(--faint);margin-top:12px;line-height:1.5}
+
+  /* host console 2-up layout (like the real iPad app) */
+  .hgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  @media(max-width:560px){ .hgrid{grid-template-columns:1fr} }
+  .hcol{min-width:0}
+  .field{margin-bottom:11px}
+  .field label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  .fauxsel,.fauxinput{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;font-family:'Manrope',sans-serif;font-size:12.5px}
+  .fauxsel{display:flex;align-items:center;justify-content:space-between}
+  .fauxsel .ca{color:var(--muted)}
+  .hstat{display:flex;gap:8px;margin-bottom:11px;flex-wrap:wrap}
+  .hbox{flex:1;background:var(--ink-3);border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;min-width:64px}
+  .hbox .k{font-size:8.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .hbox .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;color:#fff;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hbox .v.g{color:var(--gold)}
+  .lastball{background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;padding:12px;text-align:center;margin-bottom:11px}
+  .lbeye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:8.5px;color:var(--faint)}
+  .lbval{font-family:'Anton',sans-serif;font-size:42px;color:#fff;line-height:1;margin:5px 0}
+  .prizeline2{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);text-align:center;margin:0 0 11px}
+  .prizeline2 b{color:var(--gold)}
+  .btn.win{background:var(--win);color:#04120a}
+  .btn.roll{background:var(--roll);color:#1a1000}
+  .btn.sm{padding:10px;font-size:12px}
+  .h-sectlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:9px;color:var(--faint);margin:13px 0 7px}
+  .hcol .h-sectlbl:first-child{margin-top:0}
+  .claimempty{color:var(--faint);font-size:11px;padding:12px 9px;text-align:center;background:var(--ink-3);border:1px dashed var(--line);border-radius:11px}
+  .claimcard{background:var(--ink-3);border:1px solid var(--line);border-radius:11px;padding:11px}
+  .claimcard .top{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .claimcard .cn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:14px}
+  .vbadge{margin-left:auto;font-size:9.5px;font-weight:700;font-family:'Hanken Grotesk',sans-serif;text-transform:uppercase;letter-spacing:.06em;padding:4px 9px;border-radius:20px;background:rgba(53,208,127,.14);color:var(--win)}
+  .claimsub{font-size:10px;color:var(--faint);margin-top:9px;text-align:center}
+  .resolve{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .players{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .pchip{font-size:11.5px;font-weight:600;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:4px 10px}
+  .pempty{color:var(--faint);font-size:11px;padding:4px}
+  .hcard9{display:grid;grid-template-columns:repeat(9,1fr);gap:3px}
+  .hcard9 .hc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9px;color:var(--text);background:var(--ink-2);border:1px solid var(--line);border-radius:4px}
+  .hcard9 .hc.blank{background:transparent;border-color:transparent}
+  .hcard9 .hc.on{background:rgba(53,208,127,.16);color:var(--win);border-color:rgba(53,208,127,.35)}
+  .hboardwrap{margin-top:12px}
+
+  /* ---- PHONE ---- */
+  .ph-head{padding:14px 12px 10px;text-align:center;border-bottom:1px solid var(--line-2)}
+  .ph-brand{display:flex;align-items:center;justify-content:center;gap:7px}
+  .ph-brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .ph-brand .w{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;color:#fff}
+  .ph-venue{font-size:10px;color:var(--muted);margin-top:5px}
+  .ph-body{flex:1;display:flex;flex-direction:column;padding:16px 14px}
+  .ph-center{justify-content:center;text-align:center}
+  .pbig{font-family:'Anton',sans-serif;font-size:30px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
+  .psub{color:var(--muted);font-size:13px}
+  .psub b{color:var(--text)}
+  .pnote{font-size:11.5px;color:var(--faint);margin-top:14px}
+  .ph-field{margin-top:13px}
+  .fauxname{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--faint);border-radius:11px;padding:13px;font-size:15px;text-align:center}
+  .cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+  .cardhead .pn{font-weight:800;color:#fff;font-size:15px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
+  .cardpat{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:5px 11px;border-radius:20px;white-space:nowrap}
+  .lastcalled{text-align:center;margin-bottom:11px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+  .lastcalled b{color:#fff;font-size:16px}
+  /* 90-ball ticket sized to the phone width via container query so all 9 columns fit */
+  .card9{display:grid;grid-template-columns:repeat(9,1fr);gap:2.5px;width:100%}
+  .card9 .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(8px,4.3cqw,15px);color:var(--text);background:var(--ink-3);border:1px solid var(--line);border-radius:5px;cursor:pointer;user-select:none;transition:.12s}
+  .card9 .cc.blank{background:transparent;border-color:transparent;cursor:default;box-shadow:none}
+  .card9 .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(255,31,142,.3)}
+  .card9 .cc.on{outline:2px solid var(--win);outline-offset:-2px}
+  .pmsg{font-size:12px;color:var(--muted);text-align:center;margin:12px 0;min-height:34px;line-height:1.4}
+  .pmsg.wait{color:var(--gold)}
+  .pmsg.no{color:var(--roll)}
+  .bingoBtn{background:var(--pink);color:#fff;box-shadow:0 8px 24px rgba(255,31,142,.4);font-size:20px;text-transform:uppercase;letter-spacing:.06em;padding:16px;border:none;border-radius:12px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;width:100%;cursor:pointer;margin-top:auto}
+  .bingoBtn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+  .prizebox{margin-top:14px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:15px}
+  .wonwrap{background:radial-gradient(500px 340px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
+
+  /* ---- cue: the glowing "tap this" control the trainer can click ---- */
+  .cue{position:relative;cursor:pointer !important;animation:cuePulse 1.5s ease-in-out infinite}
+  @keyframes cuePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,31,142,.55)}50%{box-shadow:0 0 0 7px rgba(255,31,142,0)}}
+  .cue::after{content:"Tap";position:absolute;top:-10px;right:-8px;background:var(--gold);color:#1a1000;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:20px;z-index:9}
+
+  /* ---- coming soon (other formats hook) ---- */
+  .comingsoon{background:var(--ink-2);border:1px dashed var(--line);border-radius:16px;padding:48px 24px;text-align:center}
+  .comingsoon.hidden{display:none}
+  .cs-name{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;color:#fff}
+  .cs-sub{font-size:14px;color:var(--muted);margin-top:10px;max-width:460px;margin-left:auto;margin-right:auto;line-height:1.6}
+  .cs-pill{display:inline-block;margin-top:18px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:20px;padding:6px 15px;font-family:'Hanken Grotesk',sans-serif}
+
+  /* ============ TROUBLESHOOTING TIPS ============ */
+  .tips{margin-top:28px}
+  .tips-head{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:12px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .tips-head .ln{flex:1;height:1px;background:var(--line-2)}
+  .tipgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:820px){ .tipgrid{grid-template-columns:1fr} }
+  .tip{background:var(--ink-2);border:1px solid var(--line-2);border-radius:13px;padding:17px;transition:.2s}
+  .tip.lit{border-color:rgba(255,194,75,.45);box-shadow:0 0 0 1px rgba(255,194,75,.25)}
+  .tip .ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.3);font-size:17px;margin-bottom:11px}
+  .tip .tt{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14.5px;color:#fff;margin-bottom:7px}
+  .tip .td{font-size:13px;color:var(--muted);line-height:1.55}
+  .tip .td b{color:var(--text)}
+
+  .footnote{margin-top:26px;font-size:11.5px;color:var(--faint);text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Training simulator</span>
+    <div class="scen" id="scenPicker">
+      <button class="sp on" data-scen="bingo">Bingo</button>
+      <button class="sp" data-scen="trivia">Trivia<span class="soon">Coming soon</span></button>
+      <button class="sp" data-scen="musical-bingo">Musical Bingo<span class="soon">Coming soon</span></button>
+      <button class="sp" data-scen="raffle">Raffle<span class="soon">Coming soon</span></button>
+      <button class="sp" data-scen="members-draw">Members Draw<span class="soon">Coming soon</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="sim" id="sim">
+
+  <!-- DRIVE + COACHING -->
+  <div class="drive">
+    <div class="controls">
+      <span class="clbl">Run the game</span>
+      <button class="btn pink" id="playBtn">Play auto demo</button>
+      <div class="btnrow">
+        <button class="btn ghost" id="stepBtn">Next step</button>
+        <button class="btn ghost" id="restartBtn">Restart</button>
+      </div>
+      <div class="prog">
+        <div class="progtop"><span>Step <b id="stepNow">1</b> of <b id="stepTot">1</b></span><span id="modeLbl">Paused</span></div>
+        <div class="progtrack"><div class="progfill" id="progFill"></div></div>
+      </div>
+    </div>
+    <div class="coach">
+      <span class="coach-eye"><span class="d"></span> What is happening now</span>
+      <div class="coach-cap" id="coachCap">Loading&hellip;</div>
+      <div class="coach-hint" id="coachHint">Press <b>Play auto demo</b> to run a whole game, or <b>Next step</b> to walk through it one action at a time.</div>
+    </div>
+  </div>
+
+  <!-- DEVICE STAGE -->
+  <div class="stage two" id="stage">
+    <!-- VENUE TV -->
+    <div class="dev dev-tv" id="devTv">
+      <div class="devlbl"><span class="pin">&#9654;</span> Venue big screen</div>
+      <div class="bezel"><div class="screen tvscreen" id="tvScreen"></div></div>
+    </div>
+    <!-- HOST iPad -->
+    <div class="dev dev-host" id="devHost">
+      <div class="devlbl"><span class="pin">&#9654;</span> Host iPad</div>
+      <div class="bezel tablet"><div class="screen hostscreen" id="hostScreen"></div></div>
+    </div>
+    <!-- PLAYER PHONE -->
+    <div class="dev dev-phone" id="devPhone">
+      <div class="devlbl"><span class="pin">&#9654;</span> A player's phone</div>
+      <div class="bezel phone"><div class="screen phonescreen" id="phoneScreen"></div></div>
+    </div>
+  </div>
+
+  <!-- COMING SOON (hook for trivia / musical bingo / raffle / members draw) -->
+  <div class="comingsoon hidden" id="comingSoon">
+    <div class="cs-name" id="csName">Trivia</div>
+    <div class="cs-sub">This training scenario is next in line. The bingo simulator above is complete and ready to run in front of a venue today. Every format uses the same three screens, so once you can run bingo you can run them all.</div>
+    <div class="cs-pill">Scenario coming soon</div>
+  </div>
+
+  <!-- TROUBLESHOOTING -->
+  <div class="tips">
+    <div class="tips-head">Floor staff troubleshooting <span class="ln"></span></div>
+    <div class="tipgrid">
+      <div class="tip" id="tipJoin">
+        <div class="ico">&#128241;</div>
+        <div class="tt">A player cannot join</div>
+        <div class="td">Check they scanned the code on the <b>TV</b>, or typed the 6 characters shown on it. Make sure their phone is on the <b>venue wifi</b> or has mobile data. A quick refresh of the page clears most stuck joins.</div>
+      </div>
+      <div class="tip" id="tipClaim">
+        <div class="ico">&#9989;</div>
+        <div class="tt">Handling a BINGO claim</div>
+        <div class="td">When a claim comes in, the host's iPad shows that player's card with the called numbers marked. <b>Verify the line before you call it out.</b> If it is not complete, tap <b>Play on</b> and the game carries on. Nothing shows as a win on the TV until the host confirms.</div>
+      </div>
+      <div class="tip" id="tipDaub">
+        <div class="ico">&#128077;</div>
+        <div class="tt">A number did not mark</div>
+        <div class="td">Players mark their own numbers by tapping them, but the <b>TV board shows every number called</b> regardless. If someone missed a tap they have lost nothing, the host checks the real card at claim time, so a missed daub never costs the win.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    This is a self-contained training tool. It runs a pretend game on this page only, with no sign in and no internet game needed, so it always works in the room. The live product connects the three screens over the network.
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+  function shuffle(a){ for(var j=a.length-1;j>0;j--){ var k=cryptoInt(j+1); var t=a[j]; a[j]=a[k]; a[k]=t; } return a; }
+
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house"};
+
+  // small logo used inside the screens
+  var MARK='<svg width="15" height="17" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>';
+
+  // ============================================================
+  // 90-BALL TICKET LOGIC (mirrors the live host console verbatim:
+  // 3 rows x 9 cols, 15 numbers, exactly 5 per row, column ranges
+  // 1-9 / 10-19 / ... / 80-90, ascending in a column, no free centre).
+  // ============================================================
+  function colRange(col){ if(col===0) return [1,9]; if(col===8) return [80,90]; return [col*10, col*10+9]; }
+  function pickColCounts(){
+    var c=[1,1,1,1,1,1,1,1,1], need=6;
+    while(need>0){ var col=cryptoInt(9); if(c[col]<3){ c[col]++; need--; } }
+    return c;
+  }
+  function assignRows(counts){
+    for(var attempt=0;attempt<400;attempt++){
+      var rowCount=[0,0,0], assign=[];
+      for(var col=0;col<9;col++){
+        var rows=[0,1,2];
+        for(var s=rows.length-1;s>0;s--){ var kk=cryptoInt(s+1); var tt=rows[s]; rows[s]=rows[kk]; rows[kk]=tt; }
+        var mark=[false,false,false];
+        for(var i=0;i<counts[col];i++){ mark[rows[i]]=true; rowCount[rows[i]]++; }
+        assign.push(mark);
+      }
+      if(rowCount[0]===5 && rowCount[1]===5 && rowCount[2]===5) return assign;
+    }
+    return null;
+  }
+  function pickNumbers(col,count){
+    var rg=colRange(col), pool=[], n;
+    for(n=rg[0];n<=rg[1];n++) pool.push(n);
+    var pick=[];
+    for(var i=0;i<count;i++){ var idx=cryptoInt(pool.length); pick.push(pool[idx]); pool.splice(idx,1); }
+    pick.sort(function(a,b){ return a-b; });
+    return pick;
+  }
+  function validTicket(t){
+    if(!t || t.length!==3) return false;
+    for(var r=0;r<3;r++){
+      if(t[r].length!==9) return false;
+      var cnt=0;
+      for(var c=0;c<9;c++){ var v=t[r][c]; if(!v) continue; cnt++; var rg=colRange(c); if(v<rg[0]||v>rg[1]) return false; }
+      if(cnt!==5) return false;
+    }
+    return true;
+  }
+  function makeCard(){
+    for(var attempt=0;attempt<500;attempt++){
+      var counts=pickColCounts();
+      var assign=assignRows(counts);
+      if(!assign) continue;
+      var t=[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]];
+      for(var col=0;col<9;col++){
+        var nums=pickNumbers(col, counts[col]);
+        var rows=[]; for(var r=0;r<3;r++){ if(assign[col][r]) rows.push(r); }
+        for(var i=0;i<rows.length;i++){ t[rows[i]][col]=nums[i]; }
+      }
+      if(validTicket(t)) return t;
+    }
+    return [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]];
+  }
+
+  // decorative QR (no network, nothing to scan, purely to look like the real screen)
+  function qrSVG(seed){
+    var n=21, h=2166136261>>>0, i;
+    for(i=0;i<seed.length;i++){ h^=seed.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    function rnd(){ h^=h<<13; h>>>=0; h^=h>>>17; h^=h<<5; h>>>=0; return h/4294967296; }
+    function finder(x,y){ return '<rect x="'+x+'" y="'+y+'" width="7" height="7" fill="#0A0A0B"/><rect x="'+(x+1)+'" y="'+(y+1)+'" width="5" height="5" fill="#fff"/><rect x="'+(x+2)+'" y="'+(y+2)+'" width="3" height="3" fill="#0A0A0B"/>'; }
+    function isFinder(x,y){ return (x<8&&y<8)||(x>=n-8&&y<8)||(x<8&&y>=n-8); }
+    var body='';
+    for(var y=0;y<n;y++){ for(var x=0;x<n;x++){ if(isFinder(x,y)) continue; if(rnd()>0.52) body+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="#0A0A0B"/>'; } }
+    return '<svg viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg"><rect x="-1" y="-1" width="'+(n+2)+'" height="'+(n+2)+'" fill="#fff"/>'+body+finder(0,0)+finder(n-7,0)+finder(0,n-7)+'</svg>';
+  }
+
+  // ============================================================
+  // SHARED GAME STATE  (all three screens render from this one object)
+  // ============================================================
+  var S={};
+  function resetGame(){
+    S.stage="pairing";        // pairing | ads | game  (drives 2 vs 3 devices)
+    S.phase="ads";            // ads | lobby | running | claim | win
+    S.paired=false;           // host paired to the TV yet
+    S.hostConnected=false;    // hides the TV pair panel once the host is on
+    S.code="GAME24";          // 6-char screen/join code (real alphabet, readable)
+    S.pattern="one";
+    S.prize="$50 bar tab";
+    S.called=[];              // numbers in call order
+    S.players=[];             // other joined names
+    S.you={ name:"You", joined:false, card:null, cardNo:0, daubs:{}, claimPending:false, won:false };
+    S.claim=null;             // {name, cardNo, card} shown on host iPad
+    S.hostLive=false;         // host console setup vs live
+    S.winner=null;
+    S.confetti=false;
+  }
+
+  // TV advertising slides (mirror the real tv.html loop: bistro, live music, members
+  // draw, and a VenuePlay "scan to play" promo)
+  var TV_ADS=[
+    { cls:"ad-a", tagcol:"#FFC24B", tag:"Bistro",                 head:"Schnitzel<br>Wednesday",   sub:"Chicken or veal, chips and salad &middot; $18" },
+    { cls:"ad-c", tagcol:"#35D07F", tag:"Live music",             head:"Friday<br>Sundowners",     sub:"On the green from 5pm &middot; free entry" },
+    { cls:"ad-a", tagcol:"#FFC24B", tag:"Tonight &middot; drawn 7:00pm", head:"Wednesday<br>Members Draw", sub:"$1,240 jackpot &middot; be here when your number is drawn" },
+    { cls:"ad-b", tagcol:"#FF1F8E", tag:"Play tonight",           head:"Scan to<br>play bingo",    sub:"Grab your phone, scan the code, no app needed" }
+  ];
+
+  // ============================================================
+  // SCENARIO REGISTRY
+  //   Add new training formats here. Give them a build() that
+  //   returns { steps:[...] }. Each step is:
+  //     { cap:"coaching text", focus:"tv|host|player",
+  //       hint:"pairConnect|hostStart|playerJoin|hostNext|playerBingo|hostConfirm"|null,
+  //       tip:"join|claim|daub"|null, run:function(){ mutate S } }
+  //   Set ready:false to show the "coming soon" placeholder.
+  // ============================================================
+  var SCENARIOS={
+    "bingo":        { label:"Bingo",         ready:true,  build:buildBingoScenario },
+    "trivia":       { label:"Trivia",        ready:false },
+    "musical-bingo":{ label:"Musical Bingo", ready:false },
+    "raffle":       { label:"Raffle",        ready:false },
+    "members-draw": { label:"Members Draw",  ready:false }
+  };
+
+  function buildBingoScenario(){
+    var card=makeCard();
+    var onCard={}; var r,c;
+    for(r=0;r<3;r++){ for(c=0;c<9;c++){ if(card[r][c]) onCard[card[r][c]]=true; } }
+    function isOnCard(n){ return !!onCard[n]; }
+
+    // numbers per row
+    var rowNums=[[],[],[]];
+    for(r=0;r<3;r++){ for(c=0;c<9;c++){ if(card[r][c]) rowNums[r].push(card[r][c]); } }
+
+    // the row that will win (one line): its 5th number is the BINGO ball, called last
+    var targetRow=cryptoInt(3);
+    var targ=shuffle(rowNums[targetRow].slice());
+    var lastBall=targ[targ.length-1];
+    var preTarget=targ.slice(0, targ.length-1);       // 4 of the 5 winning numbers
+
+    // a couple of marks on the losing rows for realism (never completes a second line)
+    var others=[];
+    for(r=0;r<3;r++){ if(r!==targetRow) others=others.concat(rowNums[r]); }
+    var extras=shuffle(others).slice(0,2);
+
+    // filler numbers that are not on the card at all
+    var pool=[]; for(var nn=1;nn<=90;nn++){ if(!onCard[nn]) pool.push(nn); }
+    var fillers=shuffle(pool).slice(0,3);
+
+    // the call order: mixed middle, winning ball appended last
+    var mid=shuffle(preTarget.concat(extras).concat(fillers));
+    var draw=mid.concat([lastBall]);
+
+    var cardNo=100+cryptoInt(900);
+    var steps=[];
+
+    // 1. PAIR the iPad to the venue screen (2 devices)
+    steps.push({
+      focus:"host", hint:"pairConnect", tip:null,
+      run:function(){ S.stage="pairing"; S.paired=false; S.hostConnected=false; S.phase="ads"; S.hostLive=false;
+        S.you.joined=false; S.you.card=null; S.called=[]; S.players=[]; },
+      cap:"First you pair your iPad to the venue screen. The big screen is playing your ads loop with a set-up code in the corner. On the iPad you scan or type that code, then tap Connect."
+    });
+
+    // 2. ADVERTISING + setup (2 devices)
+    steps.push({
+      focus:"host", hint:"hostStart", tip:null,
+      run:function(){ S.stage="ads"; S.paired=true; S.hostConnected=true; S.phase="ads"; S.hostLive=false; S.players=[]; S.you.joined=false; S.you.card=null; S.called=[]; },
+      cap:"Paired. Between games the big screen just runs your advertising: bistro specials, live music, members draws. On the iPad you pick the pattern and the prize, then tap Start game."
+    });
+
+    // 3. LOBBY: the join code goes up, players start scanning (3 devices, phone slides in)
+    steps.push({
+      focus:"player", hint:"playerJoin", tip:"join",
+      run:function(){ S.stage="game"; S.phase="lobby"; S.hostLive=true; S.called=[]; S.players=["Sana","Milo"]; S.you.joined=false; S.you.card=null; S.you.daubs={}; },
+      cap:"Bingo goes up on the big screen with the join code and QR. Players grab a phone, scan, pop in a name and they are in. No app and no account. Tap Join on the phone to jump in."
+    });
+
+    // 4. YOU'RE IN, waiting for the first ball
+    steps.push({
+      focus:"player", hint:"hostNext", tip:null,
+      run:function(){ S.you.joined=true; S.you.card=card; S.you.cardNo=cardNo; S.you.daubs={}; S.players=["Sana","Milo","Priya"]; },
+      cap:"You are in. Your phone shows You're in while you wait, and your name is on the host's player list. When the room is ready the host taps Next number to call the first ball."
+    });
+
+    // 5..N. CALLING
+    for(var i=0;i<draw.length;i++){
+      (function(n, idx, isLast){
+        var cap;
+        if(idx===0) cap="The host taps Next number and the first ball goes up big on the TV so the whole room can see it. Players tap that number on their phone to daub it, and it lights up on the board.";
+        else if(isLast) cap="That ball completes a full line on your card, so your BINGO button lights up. Tap BINGO to claim.";
+        else if(idx===1) cap="Every ball the host calls lights up on the TV board and marks itself on any phone that has it. The last couple stay on screen so anyone who looked away can catch up.";
+        else cap="The host keeps calling at their own pace. There is no rush, they can pause any time to chat with the room or pull a beer.";
+        steps.push({
+          focus: isLast ? "player" : "tv",
+          hint: isLast ? "playerBingo" : "hostNext",
+          tip:null,
+          run:function(){ S.phase="running"; S.called.push(n); if(isOnCard(n)) S.you.daubs[n]=true; },
+          cap:cap
+        });
+      })(draw[i], i, i===draw.length-1);
+    }
+
+    // claim + verify
+    steps.push({
+      focus:"host", hint:"hostConfirm", tip:"claim",
+      run:function(){ S.phase="claim"; S.you.claimPending=true; S.claim={ name:S.you.name, cardNo:S.you.cardNo, card:S.you.card }; },
+      cap:"You tap BINGO. Your phone sends the claim and shows Checking, while the TV flips to BINGO? and the room holds its breath. Nothing is announced yet. The host checks the highlighted line on their iPad, it is a valid line, so they tap Confirm winner."
+    });
+
+    // win
+    steps.push({
+      focus:"tv", hint:null, tip:null,
+      run:function(){ S.phase="win"; S.you.claimPending=false; S.you.won=true; S.winner={ name:S.you.name, cardNo:S.you.cardNo }; S.claim=null; S.confetti=true; },
+      cap:"The big screen celebrates and your phone shows You won. Show it at the bar to collect the prize. That is a full game: pair, advertise, lobby, call, claim, verify, winner. Tap Restart to run it again, or Next step to walk a venue through it slowly."
+    });
+
+    return { steps:steps };
+  }
+
+  // ============================================================
+  // RENDER HELPERS
+  // ============================================================
+  function boardHTML(called, cur){
+    var set={}; for(var i=0;i<called.length;i++) set[called[i]]=true;
+    var h='<div class="vboard">';
+    for(var col=0;col<9;col++){
+      h+='<div class="vcol">';
+      for(var k=0;k<10;k++){ var n=col*10+k+1; var cls="vb"; if(set[n]) cls+=" lit"; if(n===cur) cls+=" cur"; h+='<div class="'+cls+'">'+n+'</div>'; }
+      h+='</div>';
+    }
+    return h+'</div>';
+  }
+  function hostBoardHTML(called, cur){ return boardHTML(called, cur); }
+  function playerCardHTML(card, called, daubs){
+    var set={}; for(var i=0;i<called.length;i++) set[called[i]]=true;
+    var h='<div class="card9" id="phoneCard">';
+    for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=card[r][c];
+      if(!n){ h+='<div class="cc blank"></div>'; continue; }
+      var cls="cc"; if(daubs[n]) cls+=" daub"; if(set[n]) cls+=" on";
+      h+='<div class="'+cls+'" data-n="'+n+'">'+n+'</div>';
+    } }
+    return h+'</div>';
+  }
+  function hostClaimCardHTML(card, called){
+    var set={}; for(var i=0;i<called.length;i++) set[called[i]]=true;
+    var h='<div class="hcard9">';
+    for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=card[r][c];
+      if(!n){ h+='<div class="hc blank"></div>'; continue; }
+      h+='<div class="hc'+(set[n]?" on":"")+'">'+n+'</div>';
+    } }
+    return h+'</div>';
+  }
+  function brandCorner(){ return '<div class="tvcorner"><span class="sp-brand">'+MARK+'<span class="w">VenuePlay</span></span></div>'; }
+  function prevBallsHTML(){
+    var h="";
+    for(var i=2;i<=3;i++){ var pi=S.called.length-i; if(pi>=0){ h+='<div class="prevball">'+S.called[pi]+'</div>'; } }
+    return h;
+  }
+
+  // ---- advertising loop DOM + rotation ----
+  function adsHTML(){
+    var h='<div class="tvads">';
+    for(var i=0;i<TV_ADS.length;i++){ var a=TV_ADS[i];
+      h+='<div class="layerad '+a.cls+(i===0?' show':'')+'">'+
+         '<div class="adtag" style="color:'+a.tagcol+'">'+a.tag+'</div>'+
+         '<div class="adbig">'+a.head+'</div>'+
+         '<div class="adsub">'+a.sub+'</div></div>';
+    }
+    return h+'</div>';
+  }
+  function pairPanelHTML(){
+    return '<div class="pairpanel"><div class="qrp">'+qrSVG("PAIR-"+S.code)+'</div>'+
+      '<div class="pairtxt"><div class="pt-head">Set up this screen</div>'+
+      '<div class="pt-lbl">Scan on your iPad to run a game</div>'+
+      '<div class="pt-code">Code '+S.code+'</div></div></div>';
+  }
+  var adTimer=null;
+  function stopAdRotation(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
+  function startAdRotation(){
+    stopAdRotation();
+    var host=$("tvScreen");
+    var slides = host && host.querySelectorAll ? host.querySelectorAll(".layerad") : [];
+    if(!slides || !slides.length) return;
+    var i=0;
+    for(var k=0;k<slides.length;k++){ slides[k].classList.toggle("show", k===0); }
+    if(slides.length<2) return;
+    adTimer=setInterval(function(){
+      slides[i].classList.remove("show");
+      i=(i+1)%slides.length;
+      slides[i].classList.add("show");
+    }, 4200);
+  }
+
+  // ============================================================
+  // RENDERERS
+  // ============================================================
+  function renderTV(){
+    stopAdRotation();
+    var h=brandCorner();
+    if(S.stage==="pairing" || S.stage==="ads"){
+      h+=adsHTML();
+      if(!S.hostConnected) h+=pairPanelHTML();
+      $("tvScreen").innerHTML=h;
+      startAdRotation();
+      return;
+    }
+    var cur=S.called.length ? S.called[S.called.length-1] : 0;
+    if(S.phase==="lobby"){
+      h+='<div class="tv-mid">'+
+         '<div class="tv-eye">Join the game</div>'+
+         '<div class="lobbyrow"><div class="qr">'+qrSVG("PLAY-"+S.code)+'</div>'+
+           '<div class="lobbytxt"><div class="lobbyname">Bingo</div>'+
+           '<div class="joinurl">venueplay.com.au/play</div>'+
+           '<div class="codebox"><span class="codelbl">Code</span><span class="codeval">'+S.code+'</span></div>'+
+           '<div class="playing"><b>'+(S.players.length+(S.you.joined?1:0))+'</b> playing</div></div>'+
+         '</div>'+
+         '<div class="tv-jsub">Grab your phone and scan to play&hellip;</div>'+
+         '</div>';
+    } else if(S.phase==="running"){
+      h+='<div class="tv-eye" style="text-align:center;margin-bottom:4px">Number called</div>'+
+         '<div class="tv-run"><div class="runleft">'+
+           '<div class="curball">'+(cur?cur:"--")+'</div>'+
+           '<div class="prevballs">'+prevBallsHTML()+'</div>'+
+           '<div class="ballcount"><b>'+S.called.length+'</b> of 90 called</div>'+
+           '<div class="patline"><span class="patlbl">Pattern</span> <span class="patval">'+PATTERN_NAMES[S.pattern]+'</span></div>'+
+           '<div class="prizeline">Playing for <b>'+esc(S.prize)+'</b></div>'+
+         '</div><div class="runright">'+boardHTML(S.called, cur)+'</div></div>';
+    } else if(S.phase==="claim"){
+      h+='<div class="tv-claim"><div class="tv-eye">Bingo claimed</div>'+
+         '<div class="claimbig">BINGO?</div>'+
+         '<div class="claimname">'+esc(S.claim?S.claim.name:"Player")+'</div>'+
+         '<div class="tv-jsub">Checking the card against the called numbers&hellip;</div></div>';
+    } else if(S.phase==="win"){
+      h+='<div class="tv-win"><div class="tv-eye">&#127881; We have a winner</div>'+
+         '<div class="winbingo">BINGO!</div>'+
+         '<div class="wname">'+esc(S.winner?S.winner.name:"Player")+'</div>'+
+         '<div class="winslabel">Wins</div>'+
+         '<div class="winprize">'+esc(S.prize)+'</div>'+
+         '<div class="wincard">Card <b>#'+(S.winner?S.winner.cardNo:"000")+'</b> &middot; show your phone at the bar</div></div>';
+    }
+    $("tvScreen").innerHTML=h;
+    if(S.confetti) spawnConfetti();
+  }
+
+  function renderHost(){
+    if(S.stage==="pairing"){
+      var hp='<div class="htop"><span class="sp-brand">'+MARK+'<span class="w">VenuePlay</span></span><span class="htag">Host</span></div>'+
+        '<div class="hpair"><div class="hpair-big">Pair to your TV</div>'+
+        '<div class="hpair-sub">This is the code on your venue screen. Check it matches, then connect.</div>'+
+        '<label class="hpair-lbl">Screen code</label>'+
+        '<div class="hpair-code">'+S.code+'</div>'+
+        '<button class="btn pink" id="pairConnectBtn">Connect</button>'+
+        '<div class="hpair-note">The 6-character code is shown in the corner of the venue TV.</div></div>';
+      $("hostScreen").innerHTML=hp;
+      return;
+    }
+
+    var playing=S.players.length+(S.you.joined?1:0);
+    var cur=S.called.length ? S.called[S.called.length-1] : 0;
+    var h='<div class="htop"><span class="sp-brand">'+MARK+'<span class="w">VenuePlay</span></span>'+
+          '<span class="htag">Host console</span>'+
+          '<span class="hpaired">Paired to screen <b>'+S.code+'</b></span></div>';
+
+    h+='<div class="hgrid"><div class="hcol">';
+    if(!S.hostLive){
+      h+='<div class="field"><label>Winning pattern</label><div class="fauxsel">One line <span class="ca">&#9662;</span></div></div>'+
+         '<div class="field"><label>Prize</label><div class="fauxinput">'+esc(S.prize)+'</div></div>'+
+         '<div class="hstat"><div class="hbox"><div class="k">Players</div><div class="v">'+playing+'</div></div>'+
+         '<div class="hbox"><div class="k">Join code</div><div class="v g">'+S.code+'</div></div></div>'+
+         '<button class="btn pink" id="hostStartBtn">Start game</button>';
+    } else {
+      h+='<div class="hstat">'+
+           '<div class="hbox"><div class="k">Called</div><div class="v">'+S.called.length+' of 90</div></div>'+
+           '<div class="hbox"><div class="k">Pattern</div><div class="v" style="font-size:11px">'+PATTERN_NAMES[S.pattern]+'</div></div>'+
+           '<div class="hbox"><div class="k">Playing</div><div class="v g">'+playing+'</div></div>'+
+         '</div>'+
+         '<div class="lastball"><div class="lbeye">Last ball called</div><div class="lbval">'+(cur?cur:"&ndash;")+'</div>'+
+           '<div class="prevballs">'+prevBallsHTML()+'</div></div>'+
+         '<div class="prizeline2">Playing for <b>'+esc(S.prize)+'</b></div>'+
+         '<button class="btn pink" id="hostNextBtn">Next number</button>'+
+         '<div class="h-sectlbl">Claim queue</div>'+claimQueueHTML()+
+         '<div class="resolve"><button class="btn ghost sm">New game</button><button class="btn roll sm">End game</button></div>';
+    }
+    h+='</div><div class="hcol">'+
+       '<div class="h-sectlbl">Players ('+playing+')</div>'+playersHTML()+
+       '<div class="hboardwrap"><div class="h-sectlbl">Called board &middot; '+S.called.length+' of 90</div>'+hostBoardHTML(S.called, cur)+'</div>'+
+       '</div></div>';
+    $("hostScreen").innerHTML=h;
+  }
+  function playersHTML(){
+    var names=S.players.slice(); if(S.you.joined) names.push(S.you.name);
+    if(!names.length) return '<div class="pempty">No players yet. They join by scanning the QR on the TV once you start.</div>';
+    var h='<div class="players">';
+    for(var i=0;i<names.length;i++){ h+='<span class="pchip">'+esc(names[i])+'</span>'; }
+    return h+'</div>';
+  }
+  function claimQueueHTML(){
+    if(!S.claim) return '<div class="claimempty">No claims yet. When a player hits BINGO and the pattern checks out, it lands here to confirm.</div>';
+    var c=S.claim;
+    return '<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span><span class="vbadge">Valid</span></div>'+
+      hostClaimCardHTML(c.card, S.called)+
+      '<div class="claimsub">'+PATTERN_NAMES[S.pattern]+' &middot; verified against '+S.called.length+' called numbers &middot; card #'+c.cardNo+'</div>'+
+      '<div class="resolve"><button class="btn win sm" id="hostConfirmBtn">Confirm winner</button><button class="btn roll sm">Play on</button></div></div>';
+  }
+
+  function renderPhone(){
+    var h='<div class="phone-notch"></div>';
+    h+='<div class="ph-head"><div class="ph-brand">'+MARK+'<span class="w">VenuePlay</span></div>'+
+       '<div class="ph-venue">Room <span class="mono" style="color:var(--muted)">'+S.code+'</span></div></div>';
+
+    if(S.you.won){
+      h+='<div class="ph-body ph-center wonwrap"><div style="font-size:46px">&#127881;</div>'+
+         '<div class="pbig" style="color:var(--win)">You won!</div>'+
+         '<div class="psub">Show this screen at the bar to claim</div>'+
+         '<div class="prizebox">'+esc(S.prize)+'</div>'+
+         '<div class="pnote">Card <b style="color:var(--muted)">#'+S.you.cardNo+'</b></div></div>';
+    } else if(!S.you.joined){
+      h+='<div class="ph-body ph-center"><div class="pbig">Join the<br>game</div>'+
+         '<div class="psub">You are joining room <b class="mono" style="color:var(--gold)">'+S.code+'</b></div>'+
+         '<div class="ph-field"><div class="fauxname">Your name</div></div>'+
+         '<div class="ph-field"><button class="bingoBtn" id="phoneJoinBtn" style="font-size:16px;padding:15px;margin-top:0">Join</button></div>'+
+         '<div class="pnote">No app and no account. Your card appears here when the host starts.</div></div>';
+    } else if(!S.you.card || S.phase==="lobby"){
+      h+='<div class="ph-body ph-center"><div style="font-size:40px">&#127921;</div>'+
+         '<div class="pbig" style="color:var(--gold)">You&rsquo;re in</div>'+
+         '<div class="psub">Good luck, <b>'+esc(S.you.name)+'</b></div>'+
+         '<div class="pnote">Waiting for the host to start. Your card will appear here.</div></div>';
+    } else {
+      var last=S.called.length ? S.called[S.called.length-1] : 0;
+      var msg, msgcls="";
+      if(S.you.claimPending){ msg="BINGO sent. The host is checking your card&hellip;"; msgcls=" wait"; }
+      else msg="Tap a number to daub it. Numbers you have are outlined in green. Hit BINGO when you complete the pattern.";
+      h+='<div class="ph-body"><div class="cardhead"><span class="pn">'+esc(S.you.name)+'</span><span class="cardpat">'+PATTERN_NAMES[S.pattern]+'</span></div>'+
+         '<div class="lastcalled">'+(last?('Last called <b>'+last+'</b> &middot; '+S.called.length+' of 90'):'No numbers called yet')+'</div>'+
+         playerCardHTML(S.you.card, S.called, S.you.daubs)+
+         '<div class="pmsg'+msgcls+'" id="pMsg">'+msg+'</div>'+
+         '<button class="bingoBtn" id="phoneBingoBtn"'+(S.you.claimPending?' disabled':'')+'>BINGO!</button></div>';
+    }
+    $("phoneScreen").innerHTML=h;
+  }
+
+  // confetti on the TV screen
+  function spawnConfetti(){
+    var tv=$("tvScreen"), colors=["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#C70F69"];
+    for(var i=0;i<80;i++){
+      var el=document.createElement("div"); el.className="confetti";
+      el.style.left=cryptoInt(100)+"%"; el.style.background=colors[i%colors.length];
+      el.style.animationDelay=(cryptoInt(500)/1000)+"s"; el.style.animationDuration=(1.9+cryptoInt(160)/100)+"s";
+      tv.appendChild(el);
+      (function(x){ setTimeout(function(){ if(x.parentNode) x.parentNode.removeChild(x); }, 3600); })(el);
+    }
+  }
+
+  // ============================================================
+  // STEP ENGINE  (drives auto demo + step through from one shared state)
+  // ============================================================
+  var SC=null, idx=0, playing=false, autoTimer=null;
+  var HINT_IDS={ pairConnect:"pairConnectBtn", hostStart:"hostStartBtn", playerJoin:"phoneJoinBtn", hostNext:"hostNextBtn", playerBingo:"phoneBingoBtn", hostConfirm:"hostConfirmBtn" };
+
+  function atEnd(){ return !SC || idx>=SC.steps.length-1; }
+
+  function renderAll(){
+    renderStageDevices();
+    renderTV(); renderHost(); renderPhone();
+    renderCoach(); applyCue(); updateFocus(); updateControls();
+  }
+
+  // 2 devices while advertising / pairing, 3 devices once the game is on
+  function renderStageDevices(){
+    var two = (S.stage==="pairing" || S.stage==="ads");
+    $("stage").classList.toggle("two", two);
+    $("stage").classList.toggle("three", !two);
+  }
+
+  function renderCoach(){
+    var st=SC.steps[idx];
+    $("coachCap").innerHTML=st.cap;
+    $("stepNow").textContent=idx+1;
+    $("stepTot").textContent=SC.steps.length;
+    $("progFill").style.width=(SC.steps.length>1 ? (idx/(SC.steps.length-1))*100 : 100)+"%";
+    ["tipJoin","tipClaim","tipDaub"].forEach(function(id){ $(id).classList.remove("lit"); });
+    if(st.tip==="join") $("tipJoin").classList.add("lit");
+    else if(st.tip==="claim") $("tipClaim").classList.add("lit");
+    else if(st.tip==="daub") $("tipDaub").classList.add("lit");
+  }
+
+  function applyCue(){
+    var st=SC.steps[idx];
+    if(st.hint && !atEnd()){
+      var el=$(HINT_IDS[st.hint]);
+      if(el){ el.classList.add("cue"); }
+    }
+  }
+  function updateFocus(){
+    var st=SC.steps[idx];
+    $("devTv").classList.toggle("infocus", st.focus==="tv");
+    $("devHost").classList.toggle("infocus", st.focus==="host");
+    $("devPhone").classList.toggle("infocus", st.focus==="player");
+  }
+  function updateControls(){
+    if(!SC) return;   // pause() can fire before the first scenario is built; nothing to update yet
+    $("playBtn").textContent = playing ? "Pause" : (atEnd() ? "Play again" : "Play auto demo");
+    $("stepBtn").disabled = atEnd();
+    $("modeLbl").textContent = playing ? "Auto demo running" : (atEnd() ? "Finished" : "Paused");
+    var hint=SC.steps[idx].hint;
+    if(hint && !atEnd()){
+      $("coachHint").innerHTML='Tap the glowing button on the '+focusWord(SC.steps[idx].focus)+', or press <b>Next step</b>.';
+    } else if(atEnd()){
+      $("coachHint").innerHTML='Game over. Press <b>Restart</b> to run it again.';
+    } else {
+      $("coachHint").innerHTML='Press <b>Play auto demo</b> to run a whole game, or <b>Next step</b> to walk through it one action at a time.';
+    }
+  }
+  function focusWord(f){ return f==="tv" ? "big screen" : (f==="host" ? "host iPad" : "player's phone"); }
+
+  function advance(){
+    if(atEnd()) return;
+    idx++; SC.steps[idx].run(); renderAll();
+  }
+  function manualAdvance(){ pause(); advance(); }
+
+  function stepDelay(){
+    var st=SC.steps[idx];
+    if(!st) return 2200;
+    if(st.hint==="hostNext") return 1500;
+    if(st.hint==="hostStart"||st.hint==="playerBingo"||st.hint==="hostConfirm"||st.hint==="pairConnect"||st.hint==="playerJoin") return 2600;
+    return 3400;
+  }
+  function scheduleAuto(){
+    clearTimeout(autoTimer);
+    autoTimer=setTimeout(function(){
+      if(!playing) return;
+      if(atEnd()){ pause(); return; }
+      advance();
+      scheduleAuto();
+    }, stepDelay());
+  }
+  function play(){
+    if(atEnd()) startScenario("bingo-restart");   // reruns a fresh game
+    playing=true; updateControls(); scheduleAuto();
+  }
+  function pause(){ playing=false; clearTimeout(autoTimer); updateControls(); }
+  function togglePlay(){ if(playing) pause(); else play(); }
+
+  function startScenario(mode){
+    pause();
+    resetGame();
+    SC=SCENARIOS.bingo.build();
+    idx=0; SC.steps[0].run();
+    renderAll();
+  }
+
+  // ============================================================
+  // LIVE INTERACTION  (host + phone are genuinely clickable; live clicks
+  // and the scripted modes share the one state via the step index)
+  // ============================================================
+  function toggleDaub(cell){
+    var n=parseInt(cell.getAttribute("data-n"),10);
+    if(!n) return;
+    if(S.you.daubs[n]){ delete S.you.daubs[n]; cell.classList.remove("daub"); }
+    else { S.you.daubs[n]=true; cell.classList.add("daub"); }
+  }
+  function nudgeBingo(){
+    var m=$("pMsg"); if(!m) return;
+    m.innerHTML="Not yet, keep playing. That line is not complete on your card yet.";
+    m.className="pmsg no";
+  }
+
+  // ============================================================
+  // SCENARIO PICKER (bingo live, others show the coming-soon hook)
+  // ============================================================
+  function selectScenario(key){
+    var sc=SCENARIOS[key]; if(!sc) return;
+    var btns=document.querySelectorAll("#scenPicker .sp");
+    for(var i=0;i<btns.length;i++){ btns[i].classList.toggle("on", btns[i].getAttribute("data-scen")===key); }
+    if(sc.ready){
+      $("stage").classList.remove("hidden");
+      $("comingSoon").classList.add("hidden");
+      $("playBtn").disabled=false; $("stepBtn").disabled=false; $("restartBtn").disabled=false;
+      startScenario();
+    } else {
+      pause();
+      stopAdRotation();
+      $("stage").classList.add("hidden");
+      $("comingSoon").classList.remove("hidden");
+      $("csName").textContent=sc.label;
+      $("playBtn").disabled=true; $("stepBtn").disabled=true; $("restartBtn").disabled=true;
+      $("coachCap").textContent=sc.label+" training is coming soon. The bingo simulator is complete and ready to run in front of a venue today.";
+      $("coachHint").innerHTML='Pick <b>Bingo</b> to run the live training game.';
+      $("modeLbl").textContent="Coming soon";
+    }
+  }
+
+  // ============================================================
+  // EVENTS
+  // ============================================================
+  $("playBtn").addEventListener("click", togglePlay);
+  $("stepBtn").addEventListener("click", manualAdvance);
+  $("restartBtn").addEventListener("click", function(){ startScenario(); });
+  $("scenPicker").addEventListener("click", function(e){
+    var b=e.target.closest(".sp"); if(!b) return;
+    selectScenario(b.getAttribute("data-scen"));
+  });
+  // live taps inside the devices
+  $("sim").addEventListener("click", function(e){
+    // tap a card number to daub it (cosmetic, independent of the script)
+    var cell=e.target.closest(".cc");
+    if(cell && cell.getAttribute && cell.getAttribute("data-n")){ toggleDaub(cell); return; }
+    // tap the glowing control (Connect / Start / Join / Next number / BINGO / Confirm)
+    // to advance, exactly like the real tap would
+    if(e.target.closest(".cue")){ manualAdvance(); return; }
+    // tapped BINGO before the line is complete: coach them to keep playing
+    if(e.target.closest("#phoneBingoBtn")){ nudgeBingo(); return; }
+  });
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  startScenario();
+})();
+</script>
+</body>
+</html>

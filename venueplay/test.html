@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay: Tester Hub</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(900px 500px at 85% -10%, rgba(255,31,142,.12), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;
+    min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;word-wrap:break-word}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.72);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:820px;margin:0 auto;padding:13px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:9px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;color:#fff;letter-spacing:-.01em}
+  .brand .div{width:1px;height:19px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;color:var(--pink)}
+
+  .wrap{max-width:820px;margin:0 auto;padding:22px 18px 60px}
+  .h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(30px,8vw,46px);color:#fff;line-height:1.02;margin-bottom:12px}
+  .h1 b{color:var(--pink)}
+  .lead{font-size:15.5px;color:var(--text);margin-bottom:14px}
+  .lead .muted{color:var(--muted)}
+
+  .callout{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:16px 16px;margin:18px 0}
+  .callout.pink{border-color:rgba(255,31,142,.32);background:rgba(255,31,142,.06)}
+  .callout.gold{border-color:rgba(255,194,75,.3);background:rgba(255,194,75,.07)}
+  .callout p{font-size:14px;color:var(--text)}
+  .callout p + p{margin-top:8px}
+  .callout .k{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:11px;color:var(--pink);display:block;margin-bottom:7px}
+  .callout.gold .k{color:var(--gold)}
+
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--faint);margin:34px 0 12px}
+
+  .roles-note{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 4px}
+  .rn{flex:1;min-width:150px;background:var(--ink-2);border:1px solid var(--line-2);border-radius:12px;padding:12px 13px}
+  .rn .rt{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:13.5px;margin-bottom:3px}
+  .rn .rd{font-size:12.5px;color:var(--muted)}
+
+  .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:18px 16px;margin-bottom:16px}
+  .card h2{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:24px;color:#fff;line-height:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pill{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:9.5px;padding:4px 9px;border-radius:20px;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line-2)}
+  .pill.three{background:rgba(53,208,127,.13);color:var(--win);border-color:transparent}
+  .pill.two{background:rgba(255,194,75,.13);color:var(--gold);border-color:transparent}
+  .pill.audio{background:rgba(255,31,142,.14);color:var(--pink);border-color:transparent}
+  .card .desc{font-size:14px;color:var(--muted);margin:9px 0 4px}
+
+  .steps{list-style:none;counter-reset:s;margin-top:12px}
+  .steps > li{position:relative;padding:12px 0 12px 40px;border-top:1px solid var(--line-2)}
+  .steps > li:first-child{border-top:none}
+  .steps > li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:11px;width:26px;height:26px;border-radius:50%;
+    background:var(--ink-3);border:1px solid var(--line);color:var(--pink);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;
+    display:flex;align-items:center;justify-content:center}
+  .steps .stt{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:14px}
+  .steps .std{font-size:13px;color:var(--muted);margin-top:2px}
+  .steps .std b{color:var(--text)}
+
+  .rolebtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:9px;min-height:48px;padding:12px 18px;width:100%;
+    border-radius:12px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;letter-spacing:.01em;text-decoration:none;
+    border:1px solid var(--line);background:var(--ink-3);color:#fff;transition:.15s;text-align:center}
+  .rolebtn:active{transform:translateY(1px)}
+  .rolebtn.screen{background:var(--ink-3);border-color:var(--line);color:#fff}
+  .rolebtn.host{background:var(--pink);border-color:transparent;color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.28)}
+  .rolebtn.play{background:rgba(53,208,127,.14);border-color:rgba(53,208,127,.4);color:var(--win)}
+  .rolebtn .arw{opacity:.7;font-size:13px}
+
+  .codewrap{margin-top:9px}
+  .codein{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:13px;
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:24px;text-align:center;letter-spacing:.24em;text-transform:uppercase;
+    outline:none;transition:.15s}
+  .codein:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  .codein.ok{border-color:var(--win);box-shadow:0 0 0 3px rgba(53,208,127,.14)}
+  .codehint{font-size:12px;color:var(--faint);margin-top:6px;text-align:center}
+  .codehint.on{color:var(--win)}
+
+  .fb{list-style:none;margin-top:6px}
+  .fb li{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line-2);font-size:14.5px;color:var(--text)}
+  .fb li:first-child{border-top:none}
+  .fb .q{color:var(--pink);font-weight:800;font-family:'JetBrains Mono',monospace;flex:none}
+
+  .contact{text-align:center;margin-top:10px}
+  .mail{display:inline-flex;align-items:center;gap:9px;min-height:50px;padding:13px 22px;border-radius:12px;background:var(--pink);color:#fff;
+    text-decoration:none;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15.5px;box-shadow:0 8px 20px rgba(255,31,142,.28)}
+  .foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line-2);font-size:12px;color:var(--faint);text-align:center;line-height:1.7}
+  a.inline{color:var(--pink);text-decoration:none;font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="19" height="22" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Tester Hub</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="h1">Help us <b>break</b> VenuePlay</div>
+  <p class="lead">VenuePlay turns the TV in a pub or club into a live game night. The venue runs bingo, trivia, musical bingo, a raffle draw or a members draw straight off the big screen, and the room joins in on their phones. No app to download and no account to make.</p>
+  <p class="lead"><span class="muted">This is a pre-launch test build, not the finished product. You have it for a week. Please try hard to break it, and jot down anything that is confusing, slow, ugly or plain broken. Rough edges are exactly what we want to hear about.</span></p>
+
+  <div class="callout">
+    <span class="k">What you will need</span>
+    <p>A laptop or tablet for the <b>Screen</b> (this stands in for the venue TV), the same or a second device for the <b>Host</b> console, and your <b>phone</b> to join as a player. Two browser tabs on one laptop plus your phone is plenty.</p>
+    <p class="muted" style="margin-top:8px">Test window is open now. Any times below are Brisbane time. Right now in Brisbane it is <b id="bneNow" style="color:var(--text)">loading...</b>.</p>
+  </div>
+
+  <div class="callout pink">
+    <span class="k">The one rule that makes it all connect</span>
+    <p>Every game is built around a <b>6-character room code</b>. Always open the <b>Screen first</b>: it shows the code. Type that code into the box on the card below, then open the Host and Player links and they will all land in the same room. Codes use letters and numbers only, no lookalikes like O or I.</p>
+  </div>
+
+  <div class="roles-note">
+    <div class="rn"><div class="rt">Screen / TV</div><div class="rd">The big screen in the room. Shows the code, the QR and the game.</div></div>
+    <div class="rn"><div class="rt">Host</div><div class="rd">The staff console. Runs the game and calls the numbers or questions.</div></div>
+    <div class="rn"><div class="rt">Player</div><div class="rd">A punter on their phone. Joins with the code and plays along.</div></div>
+  </div>
+
+  <div class="lbl">The five formats</div>
+
+  <!-- ============ BINGO ============ -->
+  <article class="card" data-format="bingo">
+    <h2>Bingo <span class="pill three">3 roles</span></h2>
+    <p class="desc">Classic 90-ball bingo. The host calls the numbers, phones daub their cards, first to the pattern hits BINGO.</p>
+    <ol class="steps">
+      <li>
+        <div class="stt">Open the Screen</div>
+        <div class="std">On your laptop or TV browser. It shows a pairing code in the corner. This is your room code.</div>
+        <a class="rolebtn screen" href="tv.html" target="_blank" rel="noopener">Open the Screen <span class="arw">&#8599;</span></a>
+      </li>
+      <li>
+        <div class="stt">Type the code from the screen</div>
+        <div class="std">Read the 6 characters off the screen and pop them in here. It wires up the two buttons below.</div>
+        <div class="codewrap">
+          <input class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+          <div class="codehint">Waiting for a 6-character code...</div>
+        </div>
+      </li>
+      <li>
+        <div class="stt">Open the Host console</div>
+        <div class="std">On the Host tap <b>Skip for demo</b>, the code will already be filled in, then tap <b>Connect</b>. Pick a prize, tap <b>Start game</b>, then <b>Next number</b> to call balls.</div>
+        <a class="rolebtn host" data-tpl="app/index.html?tv=" href="app/index.html" target="_blank" rel="noopener">Open Host <span class="arw">&#8599;</span></a>
+      </li>
+      <li>
+        <div class="stt">Join as a Player</div>
+        <div class="std">On your phone. Enter your name and wait for the host to start. Or just scan the QR on the screen.</div>
+        <a class="rolebtn play" data-tpl="play.html?room=" href="play.html" target="_blank" rel="noopener">Join as Player <span class="arw">&#8599;</span></a>
+      </li>
+    </ol>
+  </article>
+
+  <!-- ============ TRIVIA ============ -->
+  <article class="card" data-format="trivia">
+    <h2>Trivia <span class="pill three">3 roles</span></h2>
+    <p class="desc">Fast multiple-choice quiz. Questions on the big screen, four answers on each phone, faster correct answers score more.</p>
+    <ol class="steps">
+      <li>
+        <div class="stt">Open the Screen</div>
+        <div class="std">It opens the room and shows the code plus a QR for players.</div>
+        <a class="rolebtn screen" href="app/trivia/screen.html" target="_blank" rel="noopener">Open the Screen <span class="arw">&#8599;</span></a>
+      </li>
+      <li>
+        <div class="stt">Type the code from the screen</div>
+        <div class="std">6 characters, off the screen, into here.</div>
+        <div class="codewrap">
+          <input class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+          <div class="codehint">Waiting for a 6-character code...</div>
+        </div>
+      </li>
+      <li>
+        <div class="stt">Open the Host console</div>
+        <div class="std">The code is filled in, tap <b>Connect</b>. Tap <b>Start round</b>, then <b>First question</b>. Reveal each answer when you are ready.</div>
+        <a class="rolebtn host" data-tpl="app/trivia/host.html?room=" href="app/trivia/host.html" target="_blank" rel="noopener">Open Host <span class="arw">&#8599;</span></a>
+      </li>
+      <li>
+        <div class="stt">Join as a Player</div>
+        <div class="std">On your phone, enter your name, then tap your answers as the questions come up. Or scan the QR on the screen.</div>
+        <a class="rolebtn play" data-tpl="app/trivia/play.html?room=" href="app/trivia/play.html" target="_blank" rel="noopener">Join as Player <span class="arw">&#8599;</span></a>
+      </li>
+    </ol>
+  </article>
+
+  <!-- ============ MUSICAL BINGO ============ -->
+  <article class="card" data-format="musical">
+    <h2>Musical Bingo <span class="pill three">3 roles</span> <span class="pill audio">sound on</span></h2>
+    <p class="desc">Bingo, but with songs instead of numbers. Cards are full of song titles. The host plays a clip, players daub the track they hear.</p>
+    <div class="callout gold" style="margin:12px 0 4px">
+      <span class="k">Run the Host with the sound up</span>
+      <p>The Host device now plays a real preview clip of each song, about 30 seconds, through whatever it is plugged into. Turn the volume up, or plug the Host into a speaker, so players can actually hear the track. Everything else works fine on a phone or laptop.</p>
+    </div>
+    <ol class="steps">
+      <li>
+        <div class="stt">Open the Screen</div>
+        <div class="std">Shows the code and the QR. Keep it visible in the room.</div>
+        <a class="rolebtn screen" href="app/musical/screen.html" target="_blank" rel="noopener">Open the Screen <span class="arw">&#8599;</span></a>
+      </li>
+      <li>
+        <div class="stt">Type the code from the screen</div>
+        <div class="std">6 characters, off the screen, into here.</div>
+        <div class="codewrap">
+          <input class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+          <div class="codehint">Waiting for a 6-character code...</div>
+        </div>
+      </li>
+      <li>
+        <div class="stt">Open the Host console (sound up)</div>
+        <div class="std">The code is filled in, tap <b>Connect</b>. Tap <b>Start game</b>, then <b>Play next song</b> to play a clip out loud and reveal the title.</div>
+        <a class="rolebtn host" data-tpl="app/musical/host.html?room=" href="app/musical/host.html" target="_blank" rel="noopener">Open Host <span class="arw">&#8599;</span></a>
+      </li>
+      <li>
+        <div class="stt">Join as a Player</div>
+        <div class="std">On your phone, enter your name, then daub the song you hear. Or scan the QR on the screen.</div>
+        <a class="rolebtn play" data-tpl="app/musical/play.html?room=" href="app/musical/play.html" target="_blank" rel="noopener">Join as Player <span class="arw">&#8599;</span></a>
+      </li>
+    </ol>
+  </article>
+
+  <!-- ============ RAFFLE ============ -->
+  <article class="card" data-format="raffle">
+    <h2>Raffle <span class="pill two">2 roles</span></h2>
+    <p class="desc">The meat-tray style draw. Tickets are sold at the bar, so there is no phone for players. The host spins the draw and the winning number lands on the big screen.</p>
+    <ol class="steps">
+      <li>
+        <div class="stt">Open the Screen</div>
+        <div class="std">Shows the code for the host to connect to. There is no player phone for this one.</div>
+        <a class="rolebtn screen" href="app/raffle/screen.html" target="_blank" rel="noopener">Open the Screen <span class="arw">&#8599;</span></a>
+      </li>
+      <li>
+        <div class="stt">Type the code from the screen</div>
+        <div class="std">6 characters, off the screen, into here.</div>
+        <div class="codewrap">
+          <input class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+          <div class="codehint">Waiting for a 6-character code...</div>
+        </div>
+      </li>
+      <li>
+        <div class="stt">Open the Host console</div>
+        <div class="std">The code is filled in, tap <b>Connect</b>. Set the ticket range and prize, then spin the draw and watch it play out on the screen.</div>
+        <a class="rolebtn host" data-tpl="app/raffle/host.html?room=" href="app/raffle/host.html" target="_blank" rel="noopener">Open Host <span class="arw">&#8599;</span></a>
+      </li>
+    </ol>
+  </article>
+
+  <!-- ============ MEMBERS DRAW ============ -->
+  <article class="card" data-format="members">
+    <h2>Members Draw <span class="pill two">2 roles</span></h2>
+    <p class="desc">The weekly members jackpot. A membership number is drawn, and it pays out if that member is in the room. If not, it rolls over to next week. Host and screen only, no player phone.</p>
+    <ol class="steps">
+      <li>
+        <div class="stt">Open the Screen</div>
+        <div class="std">Shows the jackpot, the draw and the code for the host.</div>
+        <a class="rolebtn screen" href="app/members/screen.html" target="_blank" rel="noopener">Open the Screen <span class="arw">&#8599;</span></a>
+      </li>
+      <li>
+        <div class="stt">Type the code from the screen</div>
+        <div class="std">6 characters, off the screen, into here.</div>
+        <div class="codewrap">
+          <input class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+          <div class="codehint">Waiting for a 6-character code...</div>
+        </div>
+      </li>
+      <li>
+        <div class="stt">Open the Host console</div>
+        <div class="std">The code is filled in, tap <b>Connect</b>. Set the draw and jackpot, draw a number, then mark it claimed or let it roll over.</div>
+        <a class="rolebtn host" data-tpl="app/members/host.html?room=" href="app/members/host.html" target="_blank" rel="noopener">Open Host <span class="arw">&#8599;</span></a>
+      </li>
+    </ol>
+  </article>
+
+  <!-- ============ FEEDBACK ============ -->
+  <div class="lbl">What we most want to know</div>
+  <div class="card">
+    <ul class="fb">
+      <li><span class="q">1</span><span>Was it <b>obvious what to do</b> at each step, without anyone explaining it to you?</span></li>
+      <li><span class="q">2</span><span>Did it <b>work across your devices</b>? Laptop screen, host tab and phone all staying in sync?</span></li>
+      <li><span class="q">3</span><span>Was it actually <b>fun</b>? Would you keep playing a full game?</span></li>
+      <li><span class="q">4</span><span>Be brutal: would a <b>venue pay</b> for this to run a game night, and what would you fix first?</span></li>
+    </ul>
+  </div>
+
+  <div class="callout" style="text-align:center">
+    <span class="k" style="color:var(--pink)">Send Dean your notes</span>
+    <p style="color:var(--muted);margin-bottom:14px">Anything at all, however small. Screenshots of anything broken are gold.</p>
+    <div class="contact">
+      <a class="mail" href="mailto:dean.tindale@outlook.com?subject=VenuePlay%20tester%20feedback">Email your feedback &#8599;</a>
+    </div>
+  </div>
+
+  <div class="foot">
+    VenuePlay pre-launch test build &middot; please keep this page and these links private.<br>
+    Not sure where to start? Open <a class="inline" href="tv.html" target="_blank" rel="noopener">Bingo</a> first, it is the quickest to see running end to end.
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Brisbane clock (Australian Eastern, no daylight saving)
+  function updateBne(){
+    var el=document.getElementById("bneNow");
+    if(!el) return;
+    try{
+      el.textContent=new Date().toLocaleString("en-AU",{
+        timeZone:"Australia/Brisbane",
+        weekday:"short", day:"numeric", month:"short",
+        hour:"numeric", minute:"2-digit", hour12:true
+      });
+    }catch(e){ el.textContent="Brisbane time"; }
+  }
+  updateBne();
+  setInterval(updateBne, 30000);
+
+  // Room-code wiring: read the code once per card, rewrite the Host + Player links
+  var ALLOWED=/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g;
+
+  function wireCard(card){
+    var input=card.querySelector(".codein");
+    var hint=card.querySelector(".codehint");
+    var links=card.querySelectorAll("a[data-tpl]");
+    if(!input) return;
+
+    function apply(){
+      var code=input.value.toUpperCase().replace(ALLOWED, "");
+      if(code!==input.value) input.value=code;
+      var ready=(code.length===6);
+      input.classList.toggle("ok", ready);
+      if(hint){
+        hint.classList.toggle("on", ready);
+        hint.textContent = ready
+          ? ("Linked. Both buttons below now open room " + code + ".")
+          : "Waiting for a 6-character code...";
+      }
+      for(var i=0;i<links.length;i++){
+        var a=links[i];
+        var tpl=a.getAttribute("data-tpl");
+        var base=tpl.split("?")[0];
+        a.setAttribute("href", ready ? (tpl + code) : base);
+      }
+    }
+
+    input.addEventListener("input", apply);
+    apply();
+  }
+
+  var cards=document.querySelectorAll(".card[data-format]");
+  for(var i=0;i<cards.length;i++){ wireCard(cards[i]); }
+})();
+</script>
+</body>
+</html>

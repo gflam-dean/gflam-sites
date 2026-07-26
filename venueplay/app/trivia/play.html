@@ -296,7 +296,8 @@
     }
     else if(m.t==="leaderboard"){
       if(!P.joined) return;
-      if(m.title && m.title.indexOf("Final")===0){ /* handled by podium */ }
+      if(P.ended || P.won) return;                                  // game over: podium screen owns the display
+      if(m.title && m.title.indexOf("Final")===0) return;           // final scores are handled by the podium message
       showWait("Next question coming up. Watch the big screen.");
     }
     else if(m.t==="podium"){
