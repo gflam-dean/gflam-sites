@@ -173,9 +173,9 @@
   <div class="layer runlayer hidden" id="tvRun">
     <div class="runleft">
       <div class="balleye">Number called</div>
-      <div class="curball"><span class="cbletter" id="cbLetter">B</span><span class="cbnum" id="cbNum">--</span></div>
+      <div class="curball"><span class="cbnum" id="cbNum">--</span></div>
       <div class="prevballs" id="tvPrev"></div>
-      <div class="ballcount" id="tvBallCount"><b>0</b> of 75 called</div>
+      <div class="ballcount" id="tvBallCount"><b>0</b> of 90 called</div>
       <div class="patline"><span class="patlbl">Pattern</span> <span class="patval" id="tvPattern">One line</span></div>
       <div class="prizeline">Playing for <b id="tvPrize">the prize</b></div>
     </div>
@@ -226,10 +226,7 @@
   function escBr(s){ return esc(s).replace(/\r?\n/g,"<br>"); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
-  var LETTERS=["B","I","N","G","O"];
-  var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
-  function ballLetter(n){ return LETTERS[Math.floor((n-1)/15)]; }
-  function ballLabel(n){ return ballLetter(n)+" "+n; }
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house"};
 
   var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
@@ -253,15 +250,14 @@
   var pairURL=ORIGIN+"/app?tv="+CODE;
   var playURL=ORIGIN+"/play?room="+CODE;
 
-  // once a host has ever connected to this screen, we never show the pair QR again
-  var paired=false;
-  try{ paired=(localStorage.getItem("vpPaired")==="1"); }catch(e){}
-  function markPaired(){
-    if(paired) return;
-    paired=true;
-    try{ localStorage.setItem("vpPaired","1"); }catch(e){}
-    $("pairPanel").classList.add("hidden");
-  }
+  // show the pair QR whenever this screen is in ads mode and no host has connected
+  // THIS session. no permanent "paired forever" flag: a reload shows it again until
+  // a host reconnects this session.
+  var hostConnected=false;
+  function drawPairQR(){ drawQR($("qrPair"), pairURL, 320); }
+  function showPairPanel(){ var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR(); }
+  function hidePairPanel(){ $("pairPanel").classList.add("hidden"); }
+  function markHostConnected(){ hostConnected=true; hidePairPanel(); }
 
   // ================= ADVERTISING LOOP =================
   var ADS={
@@ -346,10 +342,9 @@
 
   function buildBoard(){
     var wrap=$("tvBoard"); wrap.innerHTML="";
-    for(var col=0;col<5;col++){
+    for(var col=0;col<9;col++){
       var bc=document.createElement("div"); bc.className="bcol";
-      var h=document.createElement("div"); h.className="bhead"; h.textContent=LETTERS[col]; bc.appendChild(h);
-      for(var k=0;k<15;k++){ var n=col*15+k+1; var cell=document.createElement("div"); cell.className="bnum"; cell.id="tvb-"+n; cell.textContent=n; bc.appendChild(cell); }
+      for(var k=0;k<10;k++){ var n=col*10+k+1; var cell=document.createElement("div"); cell.className="bnum"; cell.id="tvb-"+n; cell.textContent=n; bc.appendChild(cell); }
       wrap.appendChild(bc);
     }
   }
@@ -357,7 +352,7 @@
   function updateBoard(){
     var cur=state.called.length ? state.called[state.called.length-1] : 0;
     var set=calledSet();
-    for(var n=1;n<=75;n++){ var el=$("tvb-"+n); if(el) el.className="bnum"+(set[n]?" lit":"")+(n===cur?" cur":""); }
+    for(var n=1;n<=90;n++){ var el=$("tvb-"+n); if(el) el.className="bnum"+(set[n]?" lit":"")+(n===cur?" cur":""); }
   }
 
   var BLAYERS=["tvLobby","tvRun","tvClaim","tvWin","tvHold"];
@@ -377,11 +372,10 @@
   }
   function renderRun(){
     var n=state.called.length ? state.called[state.called.length-1] : 0;
-    if(n){ $("cbLetter").textContent=ballLetter(n); $("cbNum").textContent=n; }
-    else { $("cbLetter").textContent=""; $("cbNum").textContent="--"; }
+    $("cbNum").textContent = n ? n : "--";
     var prev=$("tvPrev"); prev.innerHTML="";
-    for(var i=2;i<=3;i++){ var pi=state.called.length-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=ballLabel(state.called[pi]); prev.appendChild(d); } }
-    $("tvBallCount").innerHTML="<b>"+state.called.length+"</b> of 75 called";
+    for(var i=2;i<=3;i++){ var pi=state.called.length-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=state.called[pi]; prev.appendChild(d); } }
+    $("tvBallCount").innerHTML="<b>"+state.called.length+"</b> of 90 called";
     $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
     $("tvPrize").textContent=state.prize;
     updateBoard();
@@ -432,7 +426,7 @@
     tvMode="ads"; stopCelebrate();
     hideBingoLayers();
     $("adsRoot").classList.remove("hidden");
-    $("pairPanel").classList.toggle("hidden", paired);
+    if(hostConnected) hidePairPanel(); else showPairPanel();
     startAds();
   }
   function enterBingo(){
@@ -453,16 +447,21 @@
   // ================= REALTIME =================
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
+  var tvSubscribed=false;
+  function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
   ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
   ch.subscribe(function(status){
-    if(status==="SUBSCRIBED"){ $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
-    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here" }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
   });
 
+  var HOST_TYPES={host_here:1,mode:1,idle:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
   function onMsg(m){
     if(!m||!m.t) return;
-    // any host broadcast means this screen is now set up: retire the pair QR for good
-    if(m.t==="host_here"||m.t==="mode"||m.t==="idle"||m.t==="state"||m.t==="started"||m.t==="ball"||m.t==="players"){ markPaired(); }
+    if(m.t==="tv_here") return; // ignore our own presence pings
+    // any host broadcast means a host is connected this session: hide the pair QR
+    // and reply so the host can flip to "connected"
+    if(HOST_TYPES[m.t]){ markHostConnected(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ return; }
     if(m.t==="mode"){
       if(m.mode==="bingo") enterBingo();
@@ -513,10 +512,9 @@
   $("pairCode").textContent=CODE;
   $("lobbyCode").textContent=CODE;
   $("tvJoinCode").textContent=CODE;
-  drawQR($("qrPair"), pairURL, 320);
   drawQR($("qrBig"), playURL, 512);
   drawQR($("qrMini"), playURL, 240);
-  enterAds();
+  enterAds(); // shows + draws the pair QR while in ads with no host connected
 })();
 </script>
 </body>

@@ -56,13 +56,11 @@
   .cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
   .cardhead .pn{font-weight:800;color:#fff;font-size:16px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
   .cardpat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:5px 12px;border-radius:20px;white-space:nowrap}
-  .card5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-  .card5 .ch{font-family:'Anton',sans-serif;font-size:22px;color:var(--pink);text-align:center;line-height:1;padding-bottom:3px}
-  .card5 .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:var(--text);background:var(--ink-3);border:1px solid var(--line);border-radius:10px;cursor:pointer;user-select:none;transition:.12s}
-  .card5 .cc.free{font-size:11px;color:var(--gold);background:rgba(255,194,75,.12);border-color:rgba(255,194,75,.3);cursor:default;letter-spacing:.04em}
-  .card5 .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
-  .card5 .cc.free.daub{background:rgba(255,194,75,.12);color:var(--gold);box-shadow:none}
-  .card5 .cc.on{outline:2px solid var(--win);outline-offset:-2px}
+  .card9{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+  .card9 .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(11px,3.3vw,18px);color:var(--text);background:var(--ink-3);border:1px solid var(--line);border-radius:8px;cursor:pointer;user-select:none;transition:.12s}
+  .card9 .cc.blank{background:transparent;border-color:transparent;cursor:default;box-shadow:none}
+  .card9 .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
+  .card9 .cc.on{outline:2px solid var(--win);outline-offset:-2px}
   .pmsg{font-size:13px;color:var(--muted);text-align:center;margin:16px 0;min-height:38px;line-height:1.4}
   .pmsg.no{color:var(--roll)}
   .pmsg.wait{color:var(--gold)}
@@ -118,7 +116,7 @@
   <div class="view hidden" id="vCard">
     <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line</span></div>
     <div class="lastcalled" id="lastCalled">No numbers called yet</div>
-    <div class="card5" id="cardGrid"></div>
+    <div class="card9" id="cardGrid"></div>
     <div class="pmsg" id="pMsg">Numbers light up as they are called.</div>
     <button class="btn bingoBtn" id="bingoBtn">BINGO!</button>
   </div>
@@ -149,10 +147,7 @@
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
   function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
 
-  var LETTERS=["B","I","N","G","O"];
-  var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
-  function ballLetter(n){ return LETTERS[Math.floor((n-1)/15)]; }
-  function ballLabel(n){ return ballLetter(n)+" "+n; }
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house"};
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
@@ -175,21 +170,17 @@
   function loadPid(room){ try{ return sessionStorage.getItem("vp-pid-"+room)||""; }catch(e){ return ""; } }
   function savePid(room,pid){ try{ sessionStorage.setItem("vp-pid-"+room, pid); }catch(e){} }
 
-  // ---- verification (from called set + FREE, ignore cosmetic daubs) ----
+  // ---- verification (from the called set only, ignore cosmetic daubs) ----
   function calledSet(){ var s={}; for(var i=0;i<P.called.length;i++) s[P.called[i]]=true; return s; }
-  function isCovered(set,n){ return n===0 || !!set[n]; }
+  function rowDone(set,card,row){ for(var c=0;c<9;c++){ var v=card[row][c]; if(v && !set[v]) return false; } return true; }
   function checkPattern(){
     if(!P.card) return false;
-    var set=calledSet(), card=P.card, c, r;
-    function rowDone(row){ for(c=0;c<5;c++){ if(!isCovered(set,card[c][row])) return false; } return true; }
-    var rows=0; for(r=0;r<5;r++){ if(rowDone(r)) rows++; }
+    var set=calledSet(), rows=0, r;
+    for(r=0;r<3;r++){ if(rowDone(set,P.card,r)) rows++; }
     switch(P.pattern){
       case "one": return rows>=1;
       case "two": return rows>=2;
-      case "corners": return isCovered(set,card[0][0])&&isCovered(set,card[4][0])&&isCovered(set,card[0][4])&&isCovered(set,card[4][4]);
-      case "full":
-        for(c=0;c<5;c++){ for(r=0;r<5;r++){ if(!isCovered(set,card[c][r])) return false; } }
-        return true;
+      case "full": return rows>=3;
     }
     return false;
   }
@@ -209,27 +200,27 @@
   // ---- card render ----
   function autoDaub(){
     if(!P.card) return; var set=calledSet();
-    for(var c=0;c<5;c++){ for(var r=0;r<5;r++){ var n=P.card[c][r]; if(n!==0 && set[n]) P.daubs[c+","+r]=true; } }
+    for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=P.card[r][c]; if(n && set[n]) P.daubs[n]=true; } }
   }
   function renderCard(){
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
     var last=P.called.length ? P.called[P.called.length-1] : 0;
-    $("lastCalled").innerHTML = last ? ("Last called <b>"+ballLabel(last)+"</b> &middot; "+P.called.length+" of 75") : "No numbers called yet";
+    $("lastCalled").innerHTML = last ? ("Last called <b>"+last+"</b> &middot; "+P.called.length+" of 90") : "No numbers called yet";
     var set=calledSet();
     var wrap=$("cardGrid"); wrap.innerHTML="";
-    LETTERS.forEach(function(L){ var h=document.createElement("div"); h.className="ch"; h.textContent=L; wrap.appendChild(h); });
-    for(var r=0;r<5;r++){ for(var c=0;c<5;c++){
-      var n=P.card[c][r]; var free=(n===0); var cell=document.createElement("div");
-      cell.className="cc"+(free?" free":"");
-      cell.setAttribute("data-c",c); cell.setAttribute("data-r",r);
-      cell.textContent=free?"FREE":n;
-      if(free || P.daubs[c+","+r]) cell.classList.add("daub");
-      if(!free && set[n]) cell.classList.add("on");
+    for(var r=0;r<3;r++){ for(var c=0;c<9;c++){
+      var n=P.card[r][c]; var blank=!n; var cell=document.createElement("div");
+      if(blank){ cell.className="cc blank"; wrap.appendChild(cell); continue; }
+      cell.className="cc";
+      cell.setAttribute("data-n",n);
+      cell.textContent=n;
+      if(P.daubs[n]) cell.classList.add("daub");
+      if(set[n]) cell.classList.add("on");
       wrap.appendChild(cell);
     } }
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); }
-    else { $("bingoBtn").disabled=false; setMsg("Tap a square to daub it. Numbers you have are outlined in green. Hit BINGO when you have the pattern.",""); }
+    else { $("bingoBtn").disabled=false; setMsg("Tap a number to daub it. Numbers you have are outlined in green. Hit BINGO when you have the pattern.",""); }
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
 
@@ -325,10 +316,10 @@
   $("joinBtn").addEventListener("click", join);
   $("bingoBtn").addEventListener("click", pressBingo);
   $("cardGrid").addEventListener("click", function(e){
-    var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("free")) return;
-    var key=cell.getAttribute("data-c")+","+cell.getAttribute("data-r");
-    if(P.daubs[key]){ delete P.daubs[key]; cell.classList.remove("daub"); }
-    else { P.daubs[key]=true; cell.classList.add("daub"); }
+    var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("blank")) return;
+    var n=parseInt(cell.getAttribute("data-n"),10);
+    if(P.daubs[n]){ delete P.daubs[n]; cell.classList.remove("daub"); }
+    else { P.daubs[n]=true; cell.classList.add("daub"); }
   });
 
   // ---- init: read ?room ----
