@@ -32,6 +32,16 @@
   .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 
+  /* ---- fullscreen control (setup affordance, ads/pairing states only) ---- */
+  .tv-fs{position:absolute;left:2cqw;bottom:2.4cqw;z-index:9;display:flex;align-items:center;gap:.7cqw;
+    background:rgba(10,10,11,.72);border:1px solid rgba(255,31,142,.5);border-radius:1.2cqw;
+    padding:.85cqw 1.4cqw;color:var(--text);cursor:pointer;backdrop-filter:blur(6px);
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
+    font-size:clamp(9px,1.3cqw,14px);line-height:1;transition:background .2s ease,border-color .2s ease}
+  .tv-fs:hover{background:rgba(255,31,142,.16);border-color:var(--pink)}
+  .tv-fs svg{display:block;filter:drop-shadow(0 0 4px rgba(255,31,142,.7))}
+  .tv-fs .fshint{color:var(--muted);font-weight:600;text-transform:none;letter-spacing:.02em;font-size:.82em}
+
   /* ---- advertising loop (default state) ---- */
   #adsRoot{position:absolute;inset:0;z-index:1}
   .ad{opacity:0;transition:opacity .8s ease}
@@ -142,7 +152,16 @@
   </div>
 
   <!-- ADVERTISING LOOP (default) -->
-  <div id="adsRoot"><div id="tvAds" style="position:absolute;inset:0"></div></div>
+  <div id="adsRoot">
+    <div id="tvAds" style="position:absolute;inset:0"></div>
+    <!-- Fullscreen setup control: lives inside adsRoot so it only shows on the
+         idle/advertising and pairing states (adsRoot is hidden during a game). -->
+    <button type="button" class="tv-fs" id="tvFsBtn" aria-label="Go fullscreen">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15"/></svg>
+      <span class="fslabel">Go fullscreen</span>
+      <span class="fshint">or press F11</span>
+    </button>
+  </div>
 
   <!-- PAIR PANEL (ads mode only) -->
   <div class="pairpanel" id="pairPanel">
@@ -515,6 +534,41 @@
   drawQR($("qrBig"), playURL, 512);
   drawQR($("qrMini"), playURL, 240);
   enterAds(); // shows + draws the pair QR while in ads with no host connected
+
+  // ================= FULLSCREEN (additive setup control) =================
+  // Purely additive: lets a staff member tap once to fill the TV. Does not touch
+  // the game, realtime, pairing or ad logic above.
+  (function setupFullscreen(){
+    var btn=$("tvFsBtn");
+    if(!btn) return;
+    var root=document.documentElement;
+    var el=$("tv")||root;
+    function fsElement(){
+      return document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement||null;
+    }
+    function canFs(node){
+      return !!(node && (node.requestFullscreen||node.webkitRequestFullscreen||node.msRequestFullscreen));
+    }
+    // If the Fullscreen API is unavailable (some smart TV browsers block it),
+    // hide the button so it is a harmless no-op. F11 still works on laptops.
+    if(!canFs(el) && !canFs(root)){ btn.style.display="none"; return; }
+    function requestOn(node){
+      if(!node) return false;
+      var fn=node.requestFullscreen||node.webkitRequestFullscreen||node.msRequestFullscreen;
+      if(!fn) return false;
+      try{ var r=fn.call(node); if(r&&typeof r.catch==="function") r.catch(function(){}); return true; }
+      catch(e){ return false; }
+    }
+    btn.addEventListener("click", function(){
+      if(fsElement()) return;
+      if(!requestOn(el)) requestOn(root);
+    });
+    function sync(){ btn.style.display = fsElement() ? "none" : ""; }
+    document.addEventListener("fullscreenchange", sync);
+    document.addEventListener("webkitfullscreenchange", sync);
+    document.addEventListener("msfullscreenchange", sync);
+    sync();
+  })();
 })();
 </script>
 </body>
