@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Trivia: Big Screen</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;overflow:hidden}
+  .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
+  .hidden{display:none!important}
+
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
+  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
+  .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .tv-status{position:absolute;top:2cqw;left:2.4cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
+  .jsub b{color:var(--gold)}
+  .hostline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.7cqw,14px);color:var(--faint);margin-top:1.2cqw}
+  .hostline b{color:var(--pink)}
+
+  /* lobby */
+  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
+  .qrbig{width:26cqw;max-width:300px;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
+  .qrbig canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .lobbytxt{text-align:left}
+  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,6cqw,64px);color:#fff;line-height:1}
+  .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
+  .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
+  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
+  .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
+  .playing{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,20px);color:var(--muted);margin-top:1.8cqw}
+  .playing b{color:#fff}
+
+  /* question layer */
+  .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  .qtext{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5.4cqw,54px);color:#fff;line-height:1.03;margin:1.6cqw 0 2.4cqw;max-width:92cqw}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqw;width:100%;max-width:82cqw}
+  .answers.rev4{grid-template-columns:repeat(4,1fr);max-width:94cqw;gap:1.6cqw}
+  .ans{--ac:154,154,164;background:rgba(var(--ac),.12);border:0.32cqw solid rgba(var(--ac),.55);border-radius:2cqw;padding:2cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;min-height:14cqw;overflow:hidden;transition:opacity .3s,box-shadow .3s}
+  .answers.rev4 .ans{min-height:11cqw;padding:1.4cqw 1cqw;gap:.7cqw}
+  .ans.c0{--ac:255,77,77}
+  .ans.c1{--ac:77,141,255}
+  .ans.c2{--ac:255,194,75}
+  .ans.c3{--ac:53,208,127}
+  .answers.neutral .ans{--ac:154,154,164;background:var(--ink-3);border-color:var(--line)}
+  .ans .al{font-family:'Anton',sans-serif;font-size:5cqw;line-height:.9;color:rgb(var(--ac))}
+  .answers.rev4 .ans .al{font-size:3.4cqw}
+  .answers.neutral .ans .al{color:#fff}
+  .ans .at{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.9cqw;color:#fff;text-align:center;line-height:1.08;word-break:break-word;overflow-wrap:anywhere}
+  .answers.rev4 .ans .at{font-size:2.1cqw}
+  .ans.correct{--ac:53,208,127;background:rgba(53,208,127,.22);border-color:var(--win);box-shadow:0 0 5cqw rgba(53,208,127,.4)}
+  .ans.correct .al,.answers.neutral .ans.correct .al{color:var(--win)}
+  .answers.neutral .ans.correct{background:rgba(53,208,127,.22);border-color:var(--win)}
+  .ans.dim{opacity:.38}
+  .split{width:100%;margin-top:.8cqw}
+  .split .sbar{height:1.2cqw;border-radius:1cqw;background:rgba(255,255,255,.12);overflow:hidden}
+  .split .sfill{height:100%;background:rgb(var(--ac));border-radius:1cqw;transition:width .6s ease}
+  .split .sc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.7cqw;color:var(--text);margin-top:.5cqw}
+
+  .qfoot{display:flex;align-items:center;justify-content:center;gap:6cqw;margin-top:3cqw}
+  .ringwrap{position:relative;width:12cqw;height:12cqw}
+  .ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ringwrap .rbg{fill:none;stroke:rgba(255,255,255,.12);stroke-width:8}
+  .ringwrap .rfg{fill:none;stroke:var(--pink);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
+  .ringwrap .rnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:4.4cqw;color:#fff}
+  .answered{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3.4cqw;color:var(--text)}
+  .answered b{color:var(--gold)}
+  .answered .sub{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:1.4cqw;color:var(--faint);margin-top:.4cqw}
+
+  /* reveal / board */
+  .revhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(12px,2.6cqw,30px);color:var(--win);margin-bottom:2cqw;max-width:92cqw;line-height:1.1}
+  .revboard{width:100%;max-width:70cqw;margin-top:2.6cqw;display:flex;flex-direction:column;gap:.8cqw}
+  .boardtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,58px);color:#fff;line-height:1;margin-bottom:2.4cqw}
+  .board{width:100%;max-width:70cqw;display:flex;flex-direction:column;gap:1cqw}
+  .brow{display:grid;grid-template-columns:7cqw 1fr auto;gap:2cqw;align-items:center;padding:1.3cqw 2.6cqw;border:0.2cqw solid var(--line);border-radius:1.6cqw;background:rgba(255,255,255,.02)}
+  .revboard .brow{padding:.9cqw 2cqw;border-radius:1.2cqw}
+  .brow.top1{border-color:var(--gold);background:rgba(255,194,75,.08)}
+  .brow .r{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.8cqw;color:var(--muted)}
+  .brow.top1 .r{color:var(--gold)}
+  .brow .n{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:3cqw;color:#fff;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow .s{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:3cqw;color:var(--gold)}
+  .revboard .brow .r,.revboard .brow .n,.revboard .brow .s{font-size:2.3cqw}
+
+  /* podium */
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:3cqw;margin-top:2cqw}
+  .pcol{display:flex;flex-direction:column;align-items:center;gap:1.2cqw;width:22cqw}
+  .pcol .medal{font-size:5cqw;line-height:1}
+  .pcol .pn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:2.8cqw;color:#fff;text-align:center;line-height:1.05;word-break:break-word}
+  .pcol .ps{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:2.6cqw;color:var(--gold)}
+  .pcol .bar{width:100%;border-radius:1.4cqw 1.4cqw 0 0;border:0.2cqw solid var(--line);border-bottom:none;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.01))}
+  .pcol.first .bar{height:24cqw;border-color:var(--gold);background:linear-gradient(180deg,rgba(255,194,75,.22),rgba(255,194,75,.03))}
+  .pcol.first .pn{color:var(--gold)}
+  .pcol.second .bar{height:16cqw}
+  .pcol.third .bar{height:11cqw}
+
+  /* join corner */
+  .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
+  .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
+  .qrmini canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
+  .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,26px);color:var(--gold);letter-spacing:.08em}
+
+  .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
+  @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+</style>
+</head>
+<body>
+<div class="tv" id="tv">
+
+  <div class="tv-status"><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <div class="tv-corner">
+    <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="vn">VenuePlay Trivia</span>
+  </div>
+
+  <!-- lobby -->
+  <div class="layer" id="tvLobby">
+    <div class="eyebrow">Join the trivia</div>
+    <div class="lobbyrow">
+      <div class="qrbig"><canvas id="qrBig"></canvas></div>
+      <div class="lobbytxt">
+        <div class="lobbyname">Trivia Night</div>
+        <div class="joinurl">venueplay.com.au/app/trivia/play</div>
+        <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
+        <div class="playing"><b id="lobbyPlaying">0</b> playing</div>
+      </div>
+    </div>
+    <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
+    <div class="hostline">Host, open venueplay.com.au/app/trivia/host and enter code <b id="hostLineCode">------</b></div>
+  </div>
+
+  <!-- question -->
+  <div class="layer hidden" id="tvQ">
+    <div class="qcount" id="tvQCount">Question 1</div>
+    <div class="qtext" id="tvQText">Question</div>
+    <div class="answers" id="tvAnswers"></div>
+    <div class="qfoot">
+      <div class="ringwrap">
+        <svg viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfg" id="tvRing" cx="50" cy="50" r="44"/></svg>
+        <div class="rnum" id="tvCdNum">20</div>
+      </div>
+      <div class="answered"><b id="tvAnsCount">0</b><span class="sub">answered</span></div>
+    </div>
+  </div>
+
+  <!-- reveal -->
+  <div class="layer hidden" id="tvReveal">
+    <div class="revhead" id="tvRevHead">Correct answer</div>
+    <div class="answers rev4" id="tvRevAnswers"></div>
+    <div class="revboard" id="tvRevBoard"></div>
+  </div>
+
+  <!-- leaderboard -->
+  <div class="layer hidden" id="tvBoard">
+    <div class="boardtitle" id="tvBoardTitle">Leaderboard</div>
+    <div class="board" id="tvBoardRows"></div>
+  </div>
+
+  <!-- podium -->
+  <div class="layer hidden" id="tvPodium">
+    <div class="boardtitle">Winners tonight</div>
+    <div class="podium" id="tvPodiumCols"></div>
+  </div>
+
+  <!-- persistent join corner -->
+  <div class="tv-join hidden" id="tvJoinCorner">
+    <div class="qrmini"><canvas id="qrMini"></canvas></div>
+    <div><div class="tjl">Join now</div><div class="tjc" id="tvJoinCode">------</div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+
+  var LETTERS=["A","B","C","D"];
+  var RING_C=2*Math.PI*44;
+
+  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  function makeCode(){ var s=""; for(var i=0;i<6;i++) s+=CODE_ALPHABET.charAt(cryptoInt(CODE_ALPHABET.length)); return s; }
+
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+
+  var CODE=makeCode();
+  var base=window.location.href.replace(/\/[^\/]*(\?.*)?$/,"");
+  var joinURL=base+"/play.html?room="+CODE;
+
+  var state={ phase:"lobby", hostSeen:false, playerCount:0, colour:true };
+  var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null;
+
+  // ---- layers ----
+  var LAYERS=["tvLobby","tvQ","tvReveal","tvBoard","tvPodium"];
+  function show(which){
+    for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
+    $("tvJoinCorner").classList.toggle("hidden", which==="tvLobby");
+  }
+  function applyColour(container){ container.classList.toggle("neutral", !state.colour); }
+
+  function renderLobby(){
+    $("lobbyCode").textContent=CODE;
+    $("hostLineCode").textContent=CODE;
+    $("tvJoinCode").textContent=CODE;
+    $("lobbyPlaying").textContent=state.playerCount;
+    if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
+    else $("lobbySub").innerHTML="Host is connected. Grab your phone and join, the quiz is about to start&hellip;";
+  }
+
+  // ---- ring / countdown ----
+  function setRing(frac){ var r=$("tvRing"); r.setAttribute("stroke-dasharray", RING_C); r.setAttribute("stroke-dashoffset", RING_C*(1-frac)); }
+  function stopRing(){ if(ringTimer){ clearInterval(ringTimer); ringTimer=null; } }
+  function tickRing(){
+    if(!curQ) return;
+    var remMs=curQ.endsAt-Date.now();
+    var rem=Math.max(0, Math.ceil(remMs/1000));
+    var frac=Math.max(0, Math.min(1, remMs/(curQ.dur*1000)));
+    setRing(frac);
+    $("tvCdNum").textContent=rem;
+    $("tvRing").style.stroke = rem<=5 ? "var(--roll)" : "var(--pink)";
+    if(remMs<=0){ stopRing(); }
+  }
+
+  function renderQuestion(m){
+    stopRing(); if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+    var dur=m.secs || Math.max(1, Math.round((m.endsAt-Date.now())/1000));
+    curQ={ qseq:m.qseq, options:m.options||[], endsAt:m.endsAt, dur:dur, correct:null };
+    answeredPids={};
+    show("tvQ");
+    $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
+    $("tvQText").textContent = m.text||"";
+    var wrap=$("tvAnswers"); wrap.className="answers"; wrap.innerHTML="";
+    for(var i=0;i<curQ.options.length;i++){
+      var box=el("div","ans c"+i);
+      box.appendChild(el("span","al",LETTERS[i]));
+      box.appendChild(el("span","at",esc(curQ.options[i])));
+      wrap.appendChild(box);
+    }
+    applyColour(wrap);
+    $("tvAnsCount").textContent="0";
+    setRing(1); $("tvRing").style.stroke="var(--pink)"; $("tvCdNum").textContent=dur;
+    ringTimer=setInterval(tickRing, 300); tickRing();
+  }
+
+  function renderReveal(m){
+    stopRing();
+    if(!curQ) curQ={ options:m.options||[] };
+    curQ.correct=m.correctIndex;
+    show("tvReveal");
+    var opts=curQ.options||m.options||[];
+    var ci=m.correctIndex;
+    $("tvRevHead").textContent="Correct answer: "+LETTERS[ci]+" · "+(opts[ci]||"");
+    var split=m.split||[0,0,0,0], total=0;
+    for(var t=0;t<split.length;t++) total+=split[t]; if(total===0) total=1;
+    var wrap=$("tvRevAnswers"); wrap.className="answers rev4"; wrap.innerHTML="";
+    for(var i=0;i<opts.length;i++){
+      var box=el("div","ans c"+i+(i===ci?" correct":" dim"));
+      box.appendChild(el("span","al",LETTERS[i]));
+      box.appendChild(el("span","at",esc(opts[i])));
+      var sp=el("div","split");
+      var bar=el("div","sbar"); var fill=el("div","sfill"); fill.style.width=Math.round((split[i]||0)/total*100)+"%"; bar.appendChild(fill);
+      sp.appendChild(bar); sp.appendChild(el("div","sc",(split[i]||0)+((split[i]||0)===1?" player":" players")));
+      box.appendChild(sp);
+      wrap.appendChild(box);
+    }
+    applyColour(wrap);
+    renderRows($("tvRevBoard"), m.leaderboard||[], 5);
+    // roll to full leaderboard shortly after (host will also drive this authoritatively)
+    if(boardRollTimer) clearTimeout(boardRollTimer);
+    boardRollTimer=setTimeout(function(){
+      if(state.phase==="reveal"){ $("tvBoardTitle").textContent="Leaderboard"; renderRows($("tvBoardRows"), m.leaderboard||[], 10); show("tvBoard"); }
+    }, 5200);
+  }
+
+  function renderRows(container, rows, limit){
+    container.innerHTML="";
+    var n=Math.min(limit, rows.length);
+    for(var i=0;i<n;i++){
+      var row=el("div","brow"+(i===0?" top1":""));
+      row.appendChild(el("span","r","#"+(i+1)));
+      row.appendChild(el("span","n",esc(rows[i].name)));
+      row.appendChild(el("span","s",rows[i].points));
+      container.appendChild(row);
+    }
+    if(!n){ container.appendChild(el("div","jsub","No scores yet")); }
+  }
+
+  function renderPodium(top){
+    show("tvPodium");
+    var cols=$("tvPodiumCols"); cols.innerHTML="";
+    var order=[{p:top[1],cls:"second",medal:"🥈"},{p:top[0],cls:"first",medal:"🥇"},{p:top[2],cls:"third",medal:"🥉"}];
+    order.forEach(function(o){ if(!o.p) return;
+      var col=el("div","pcol "+o.cls);
+      col.appendChild(el("div","medal",o.medal));
+      col.appendChild(el("div","pn",esc(o.p.name)));
+      col.appendChild(el("div","ps",o.p.points));
+      col.appendChild(el("div","bar"));
+      cols.appendChild(col);
+    });
+    celebrate(9000);
+  }
+
+  // ---- confetti ----
+  function spawnBurst(count){
+    var tv=$("tv"), colors=["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#4D8DFF","#FF4D4D"];
+    for(var i=0;i<count;i++){
+      var c=el("div","confetti");
+      c.style.left=cryptoInt(100)+"%"; c.style.background=colors[i%colors.length];
+      c.style.animationDelay=(cryptoInt(400)/1000)+"s"; c.style.animationDuration=(2.1+cryptoInt(180)/100)+"s";
+      tv.appendChild(c);
+      (function(e){ setTimeout(function(){ if(e.parentNode) e.parentNode.removeChild(e); },3900); })(c);
+    }
+  }
+  var celebrateTimer=null;
+  function celebrate(ms){
+    if(celebrateTimer) clearInterval(celebrateTimer);
+    spawnBurst(100);
+    var elapsed=0; celebrateTimer=setInterval(function(){ elapsed+=1300; spawnBurst(46); if(elapsed>=ms){ clearInterval(celebrateTimer); celebrateTimer=null; } },1300);
+  }
+
+  // ---- realtime ----
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=client.channel("vp-trivia-"+CODE, { config:{ broadcast:{ self:false } } });
+  ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+  ch.subscribe(function(status){
+    if(status==="SUBSCRIBED"){ $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+  });
+
+  function onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==="state"){
+      state.hostSeen=true;
+      if(typeof m.playerCount==="number") state.playerCount=m.playerCount;
+      if(typeof m.colour==="boolean") state.colour=m.colour;
+      if(m.phase==="lobby"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); }
+      else if(state.phase==="lobby"){ renderLobby(); }
+      if(state.phase==="lobby") $("lobbyPlaying").textContent=state.playerCount;
+    }
+    else if(m.t==="question"){
+      state.phase="question";
+      if(typeof m.colour==="boolean") state.colour=m.colour;
+      renderQuestion(m);
+    }
+    else if(m.t==="answer"){
+      if(curQ && m.qseq===curQ.qseq && m.pid){ answeredPids[m.pid]=true; $("tvAnsCount").textContent=countKeys(answeredPids); }
+    }
+    else if(m.t==="lock"){
+      stopRing(); setRing(0); $("tvCdNum").textContent="0";
+    }
+    else if(m.t==="reveal"){
+      state.phase="reveal";
+      renderReveal(m);
+    }
+    else if(m.t==="leaderboard"){
+      state.phase="leaderboard";
+      if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+      $("tvBoardTitle").textContent=m.title||"Leaderboard";
+      renderRows($("tvBoardRows"), m.rows||[], 10);
+      show("tvBoard");
+    }
+    else if(m.t==="podium"){
+      state.phase="podium";
+      renderPodium(m.top||[]);
+    }
+  }
+  function countKeys(o){ var n=0,k; for(k in o){ if(o.hasOwnProperty(k)) n++; } return n; }
+
+  // ---- init ----
+  renderLobby();
+  show("tvLobby");
+  function drawQR(el2, size){ if(window.QRCode&&el2){ QRCode.toCanvas(el2, joinURL, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
+  drawQR($("qrBig"), 512);
+  drawQR($("qrMini"), 240);
+})();
+</script>
+</body>
+</html>

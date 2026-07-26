@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Musical Bingo: Big Screen</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;overflow:hidden}
+  .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
+  .hidden{display:none!important}
+
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
+  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
+  .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .tv-status{position:absolute;top:2cqw;left:2.4cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
+  .jsub b{color:var(--gold)}
+  .hostline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.7cqw,14px);color:var(--faint);margin-top:1.2cqw}
+  .hostline b{color:var(--pink)}
+
+  /* lobby */
+  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
+  .qrbig{width:26cqw;max-width:280px;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
+  .qrbig canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .lobbytxt{text-align:left}
+  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,52px);color:#fff;line-height:1}
+  .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
+  .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
+  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
+  .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
+  .playing{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,20px);color:var(--muted);margin-top:1.8cqw}
+  .playing b{color:#fff}
+
+  /* running (now playing) */
+  .listen{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,60px);color:var(--pink);line-height:1;margin-top:1.6cqw;text-shadow:0 0 30px rgba(255,31,142,.4)}
+  .nowtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,72px);color:#fff;line-height:1.02;margin:1.2cqw 0 .6cqw;animation:pop .45s ease-out;max-width:92cqw}
+  .nowartist{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,24px);color:var(--gold);letter-spacing:.02em}
+  @keyframes pop{0%{transform:scale(.86);opacity:0}60%{transform:scale(1.03)}100%{transform:scale(1);opacity:1}}
+  .mpat{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,17px);color:var(--muted);margin-top:1.8cqw;letter-spacing:.02em}
+  .mpat b{color:var(--text)}
+  .pboard{display:flex;flex-wrap:wrap;gap:1cqw;justify-content:center;margin-top:2.2cqw;max-width:90cqw;max-height:28cqw;overflow:hidden}
+  .ptok{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(8px,1.7cqw,15px);color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:20px;padding:.5cqw 1.4cqw}
+  .ptok.new{background:rgba(255,31,142,.16);border-color:var(--pink);color:#fff;box-shadow:0 0 14px rgba(255,31,142,.3)}
+
+  /* join corner (running only) */
+  .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
+  .qrmini{width:clamp(44px,8cqw,96px);height:clamp(44px,8cqw,96px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
+  .qrmini canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
+  .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,24px);color:var(--gold);letter-spacing:.08em}
+
+  /* claim / win */
+  .checking{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,10cqw,120px);color:#fff;line-height:.9;margin:1cqw 0}
+  .holdmusic{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,22px);color:var(--roll);letter-spacing:.04em}
+  .claimname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,4cqw,44px);color:#fff;margin-top:1cqw}
+  .winbingo{font-family:'Anton',sans-serif;font-size:clamp(44px,14cqw,180px);line-height:.85;
+    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 28%,#FFF3D0 46%,#FFC24B 64%,#E9A93A 100%);background-size:220% auto;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 38px rgba(255,194,75,.42));animation:shimmer 3.2s linear infinite, winpop .6s ease-out}
+  .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,72px);color:var(--pink);line-height:1;margin-top:1cqw;text-shadow:0 0 36px rgba(255,31,142,.55)}
+  .winslabel{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.24em;color:var(--muted);font-size:clamp(10px,2cqw,18px);margin-top:1.6cqw}
+  .winprize{font-family:'Anton',sans-serif;font-size:clamp(28px,8cqw,96px);color:var(--gold);line-height:1;margin-top:.4cqw;filter:drop-shadow(0 0 24px rgba(255,194,75,.4))}
+  @keyframes shimmer{to{background-position:220% center}}
+  @keyframes winpop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+  .winburst{position:absolute;inset:0;background:radial-gradient(closest-side, rgba(255,194,75,.13), transparent 68%);opacity:0;z-index:1;transition:opacity .7s ease}
+  .winburst.show{opacity:1}
+
+  .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
+  @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+</style>
+</head>
+<body>
+<div class="tv" id="tv">
+  <div class="winburst" id="winBurst"></div>
+
+  <div class="tv-status"><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <div class="tv-corner">
+    <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="vn">VenuePlay Musical Bingo</span>
+  </div>
+
+  <!-- lobby -->
+  <div class="layer" id="tvLobby">
+    <div class="eyebrow">Join the game</div>
+    <div class="lobbyrow">
+      <div class="qrbig"><canvas id="qrBig"></canvas></div>
+      <div class="lobbytxt">
+        <div class="lobbyname">Musical Bingo</div>
+        <div class="joinurl">venueplay.com.au/app/musical/play</div>
+        <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
+        <div class="playing"><b id="lobbyPlaying">0</b> playing</div>
+      </div>
+    </div>
+    <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
+    <div class="hostline">Host, open venueplay.com.au/app/musical/host and enter code <b id="hostLineCode">------</b></div>
+  </div>
+
+  <!-- running (now playing) -->
+  <div class="layer hidden" id="tvRun">
+    <div class="eyebrow" id="tvNowEye">Now playing</div>
+    <div class="listen pulse hidden" id="tvListen">Listen&hellip;</div>
+    <div id="tvNow">
+      <div class="nowtitle" id="tvNowTitle">Ready to play</div>
+      <div class="nowartist" id="tvNowArtist">First song coming up</div>
+    </div>
+    <div class="mpat">Pattern &middot; <b id="tvPattern">One line</b> &nbsp;&middot;&nbsp; Playing for <b id="tvPrize">the prize</b> &nbsp;&middot;&nbsp; <span id="tvPlayCount">0 playing</span></div>
+    <div class="pboard" id="tvBoard"></div>
+  </div>
+
+  <!-- claim suspense -->
+  <div class="layer hidden" id="tvClaim">
+    <div class="eyebrow">Someone called Bingo</div>
+    <div class="checking">Checking<br>the card</div>
+    <div class="holdmusic pulse">Hold the music&hellip;</div>
+    <div class="claimname" id="claimName">Player</div>
+  </div>
+
+  <!-- win -->
+  <div class="layer hidden" id="tvWin">
+    <div class="eyebrow">&#127881; We have a winner</div>
+    <div class="winbingo">BINGO!</div>
+    <div class="wname" id="winName">Player</div>
+    <div class="winslabel">Wins</div>
+    <div class="winprize" id="winPrizeVal">the prize</div>
+    <div class="jsub">Card <b id="winCard">#000</b> &middot; show your phone at the bar</div>
+  </div>
+
+  <!-- persistent join corner -->
+  <div class="tv-join hidden" id="tvJoinCorner">
+    <div class="qrmini"><canvas id="qrMini"></canvas></div>
+    <div><div class="tjl">Join now</div><div class="tjc" id="tvJoinCode">------</div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+
+  var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+
+  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  function makeCode(){ var s=""; for(var i=0;i<6;i++) s+=CODE_ALPHABET.charAt(cryptoInt(CODE_ALPHABET.length)); return s; }
+
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+
+  var CODE=makeCode();
+  var base=window.location.href.replace(/\/[^\/]*(\?.*)?$/,"");
+  var joinURL=base+"/play.html?room="+CODE;
+
+  var state={ phase:"lobby", pattern:"one", prize:"the prize", played:[], playerCount:0, hostSeen:false, winner:null };
+  var revealTimer=null;
+
+  // ---- layers ----
+  var LAYERS=["tvLobby","tvRun","tvClaim","tvWin"];
+  function show(which){
+    for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
+    $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun");
+  }
+
+  function renderLobby(){
+    $("lobbyCode").textContent=CODE;
+    $("hostLineCode").textContent=CODE;
+    $("tvJoinCode").textContent=CODE;
+    $("lobbyPlaying").textContent=state.playerCount;
+    if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
+    else $("lobbySub").innerHTML="Host is connected. Grab your phone and join, the game is about to start&hellip;";
+  }
+  function renderMeta(){
+    $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
+    $("tvPrize").textContent=state.prize;
+    $("tvPlayCount").textContent=state.playerCount+" playing";
+  }
+  function renderBoard(){
+    var b=$("tvBoard"); b.innerHTML="";
+    var last=state.played.length-1;
+    for(var i=0;i<state.played.length;i++){
+      var d=document.createElement("div"); d.className="ptok"+(i===last?" new":""); d.textContent=state.played[i]; b.appendChild(d);
+    }
+  }
+  function renderRun(){ renderMeta(); renderBoard(); }
+  function showReady(){
+    show("tvRun");
+    if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
+    $("tvNowEye").textContent="Get ready";
+    $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
+    $("tvNowTitle").textContent="Ready to play"; $("tvNowArtist").textContent="First song coming up";
+    renderRun();
+  }
+  function revealSong(title, artist){
+    show("tvRun");
+    if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
+    $("tvNowEye").textContent="Now playing";
+    $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden");
+    renderRun();
+    revealTimer=setTimeout(function(){
+      $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
+      $("tvNowTitle").textContent=title||"Now playing"; $("tvNowArtist").textContent=artist||"";
+      renderBoard();
+    }, 850);
+  }
+
+  // ---- confetti ----
+  var celebrateTimer=null;
+  function stopCelebrate(){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } $("winBurst").classList.remove("show"); }
+  function spawnBurst(count){
+    var tv=$("tv"), colors=["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#C70F69"];
+    for(var i=0;i<count;i++){
+      var c=document.createElement("div"); c.className="confetti";
+      c.style.left=cryptoInt(100)+"%"; c.style.background=colors[i%colors.length];
+      c.style.animationDelay=(cryptoInt(400)/1000)+"s"; c.style.animationDuration=(2.1+cryptoInt(180)/100)+"s";
+      tv.appendChild(c);
+      (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); },3800); })(c);
+    }
+  }
+  function celebrate(ms){
+    stopCelebrate(); $("winBurst").classList.add("show"); spawnBurst(90);
+    var elapsed=0; celebrateTimer=setInterval(function(){ elapsed+=1300; spawnBurst(46); if(elapsed>=ms) stopCelebrate(); },1300);
+  }
+
+  // ---- realtime ----
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=client.channel("vp-musical-"+CODE, { config:{ broadcast:{ self:false } } });
+  ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+  ch.subscribe(function(status){
+    if(status==="SUBSCRIBED"){ $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+  });
+
+  function onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==="state"){
+      state.hostSeen=true;
+      if(m.pattern) state.pattern=m.pattern;
+      if(typeof m.prize==="string") state.prize=m.prize;
+      state.played=m.played||[];
+      if(typeof m.playerCount==="number") state.playerCount=m.playerCount;
+      if(m.active){
+        state.phase="running"; show("tvRun");
+        if(state.played.length>0){
+          var t=state.played[state.played.length-1];
+          $("tvNowEye").textContent="Now playing"; $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
+          $("tvNowTitle").textContent=t; $("tvNowArtist").textContent="";
+          renderRun();
+        } else { showReady(); }
+      } else {
+        state.phase="lobby"; stopCelebrate(); show("tvLobby"); renderLobby();
+      }
+    }
+    else if(m.t==="started"){
+      state.hostSeen=true;
+      if(m.pattern) state.pattern=m.pattern;
+      if(typeof m.prize==="string") state.prize=m.prize;
+      state.played=[]; state.winner=null; stopCelebrate();
+      state.phase="running"; showReady();
+    }
+    else if(m.t==="played"){
+      state.hostSeen=true;
+      state.played=m.played||state.played;
+      state.phase="running";
+      revealSong(m.title, m.artist);
+    }
+    else if(m.t==="players"){
+      if(typeof m.count==="number") state.playerCount=m.count;
+      if(state.phase==="lobby"){ $("lobbyPlaying").textContent=state.playerCount; }
+      else if(state.phase==="running"){ renderMeta(); }
+    }
+    else if(m.t==="claim_pending"){
+      state.phase="claim"; show("tvClaim");
+      $("claimName").textContent=m.name||"Player";
+    }
+    else if(m.t==="resume"){
+      state.phase="running"; show("tvRun"); renderRun();
+    }
+    else if(m.t==="winner"){
+      state.winner=m; state.phase="win"; show("tvWin");
+      $("winName").textContent=m.name||"Player";
+      $("winPrizeVal").textContent=state.prize;
+      $("winCard").textContent="#"+(m.cardNo||"000");
+      celebrate(9000);
+    }
+  }
+
+  // ---- init ----
+  renderLobby();
+  show("tvLobby");
+  function drawQR(el, size){ if(window.QRCode&&el){ QRCode.toCanvas(el, joinURL, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
+  drawQR($("qrBig"), 512);
+  drawQR($("qrMini"), 220);
+})();
+</script>
+</body>
+</html>

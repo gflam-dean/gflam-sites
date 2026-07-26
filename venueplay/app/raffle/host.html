@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Raffle: Host Console</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:760px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .wrap{max-width:760px;margin:0 auto;padding:22px}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
+  .note{font-size:12px;color:var(--faint);line-height:1.5}
+
+  /* connect screen */
+  .connect{max-width:420px;margin:6vh auto 0;text-align:center}
+  .connect .big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:34px;color:#fff;line-height:1.02;margin-bottom:8px}
+  .connect .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  .codein{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:30px;text-align:center;letter-spacing:.22em;text-transform:uppercase;outline:none;transition:.15s}
+  .codein:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  .cerr{color:var(--roll);font-size:12.5px;min-height:18px;margin-top:8px}
+
+  select,input[type=text],input[type=number]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:10px 12px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;transition:.15s}
+  input.mono{font-family:'JetBrains Mono',monospace}
+  select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  input:disabled{opacity:.5;cursor:not-allowed}
+
+  .btn{border:none;border-radius:10px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--pink);color:#fff}
+  .btn.win{background:var(--win);color:#04120a}
+  .btn.win:hover{filter:brightness(1.08)}
+  .btn.roll{background:var(--roll);color:#1a1000}
+  .btn.roll:hover{filter:brightness(1.08)}
+  .btn.nextmode{background:var(--gold);color:#1a1000;box-shadow:0 8px 20px rgba(255,194,75,.3)}
+  .btn.nextmode:hover{filter:brightness(1.06)}
+  .btn.big{width:100%;padding:16px;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+  .panel{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:18px;margin-bottom:20px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .check{display:flex;align-items:center;gap:9px;cursor:pointer;font-weight:600;color:var(--text);font-size:13px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:12px}
+  .check input{width:18px;height:18px;accent-color:var(--pink);cursor:pointer;flex:none}
+
+  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .presets button{border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:20px;padding:5px 11px;font-size:11.5px;font-weight:600;cursor:pointer;transition:.15s}
+  .presets button:hover{border-color:var(--pink);color:#fff}
+  .presets .empty{color:var(--faint);font-size:11.5px;padding:2px 0}
+  .presetlbl{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:5px}
+
+  .rangeline{font-size:12px;color:var(--faint);margin:-2px 0 14px}
+  .rangeline .warn{color:var(--roll)}
+
+  .winner-card{margin-top:16px;background:var(--ink-3);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;display:none}
+  .winner-card.show{display:block}
+  .winner-card .pz{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:11px;color:var(--gold);margin-bottom:4px}
+  .winner-card .num{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:46px;color:#fff;line-height:1}
+  .winner-card .wlist{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:4px}
+  .winner-card .wlist span{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:#fff;background:var(--ink-2);border:1px solid var(--line-2);border-radius:8px;padding:5px 11px}
+  .winner-card .cd{font-family:'JetBrains Mono',monospace;color:var(--muted);font-size:13px;margin-top:10px}
+  .winner-card .cd b{color:var(--gold)}
+  .resolve{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:9.5px;color:var(--faint);text-align:left;padding:7px;background:var(--ink-2)}
+  td{padding:8px 7px;border-top:1px solid var(--line-2);vertical-align:middle}
+  td.num{font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff}
+  .res-claim{color:var(--win);font-weight:700}
+  .res-no{color:var(--muted);font-weight:700}
+  .tablewrap{overflow-x:auto}
+
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Raffle Host</span>
+    <span class="who"><span class="dot" id="statusDot"></span> <span id="statusText">Not connected</span></span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- CONNECT -->
+  <div id="connectView">
+    <div class="connect">
+      <div class="big">Connect to the room</div>
+      <div class="sub">Enter the 6-character code shown on the venue TV.</div>
+      <input id="codeIn" class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div class="cerr" id="codeErr"></div>
+      <button class="btn pink big" id="connectBtn" style="margin-top:6px">Connect</button>
+      <p class="note" style="margin-top:14px">No phones needed for a raffle. The venue sells its own paper tickets. Type the range you sold, tap Draw, and this console picks the winning number and shows it big on the TV.</p>
+    </div>
+  </div>
+
+  <!-- CONSOLE -->
+  <div id="consoleView" class="hidden">
+    <div class="lbl">Room <span class="mono" style="color:var(--gold)" id="roomCode">------</span> &middot; raffle host</div>
+
+    <div class="panel">
+      <div class="field">
+        <label>What are you drawing for?</label>
+        <div class="presetlbl">Your saved prizes</div>
+        <div class="presets" id="prizePresets"></div>
+        <input type="text" id="rfPrize" placeholder="e.g. Meat Tray" value="Meat Tray">
+      </div>
+      <div class="two">
+        <div class="field"><label>First ticket number</label><input type="number" id="rfStart" class="mono" value="1" min="0"></div>
+        <div class="field"><label>Last ticket number</label><input type="number" id="rfEnd" class="mono" value="150" min="0" max="999999"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label>Winners to draw</label><input type="number" id="rfWinners" class="mono" value="1" min="1" max="50"></div>
+        <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" min="0"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
+      <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0"></div>
+      <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
+      <div class="rangeline" id="rangeLine"></div>
+      <button class="btn pink big" id="drawBtn">Draw the winner</button>
+
+      <div class="winner-card" id="winnerCard">
+        <div class="pz" id="wcPrize">Meat Tray</div>
+        <div class="num" id="wcNum">0</div>
+        <div class="wlist hidden" id="wcList"></div>
+        <div class="cd" id="wcCd"></div>
+        <div class="resolve" id="wcResolve">
+          <button class="btn win" id="claimBtn">Claim &middot; present</button>
+          <button class="btn roll" id="redrawBtn">Not here &middot; redraw</button>
+        </div>
+      </div>
+
+      <div class="resolve" style="margin-top:16px">
+        <button class="btn ghost" id="drawLenWrap" style="pointer-events:none;background:transparent;border:none;padding:0;text-align:left">
+          <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s</span>
+        </button>
+        <button class="btn ghost" id="newRaffleBtn">New raffle &middot; clear drawn</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="lbl" style="margin-bottom:10px">Raffle results &middot; audit log</div>
+      <div id="winnersEmpty" style="color:var(--faint);font-size:13px;padding:6px 2px">No draws yet. Every winning ticket is logged here with the prize and result.</div>
+      <div class="tablewrap">
+        <table id="winnersTable" class="hidden">
+          <thead><tr><th>When</th><th>Prize</th><th>Ticket</th><th>Range</th><th style="text-align:right">Result</th></tr></thead>
+          <tbody id="winnersBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function show(el,on){ $(el).classList.toggle("hidden", !on); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+  function secsToClock(s){ var m=Math.floor(s/60),r=s%60; return m+":"+(r<10?"0":"")+r; }
+  function money(d){ return "$"+Number(d||0).toLocaleString("en-AU"); }
+
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=null, subscribed=false, sendQueue=[];
+  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+
+  // ---- authoritative raffle state ----
+  var G={ code:"", prize:"Meat Tray", min:1, max:150, winnersCount:1, time:180, drawLength:4,
+          jackOn:false, jackAmt:500, allowRedraw:true,
+          savedPrizes:["Meat Tray","$100 Bar Tab","Seafood Platter","Bottle of Whisky"],
+          drawn:{}, round:null, results:[],
+          spinTimer:null, countdownTimer:null, celebrateWait:null };
+
+  function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (G.prize||"Prize"); }
+  function padWidth(){ return String(Math.max(G.max||0,1)).length; }
+  function pad(n){ var s=String(n); var w=padWidth(); while(s.length<w) s="0"+s; return s; }
+
+  // ---- inputs ----
+  function readInputs(){
+    G.prize=($("rfPrize").value||"").trim()||"Prize";
+    G.min=parseInt($("rfStart").value,10); G.max=parseInt($("rfEnd").value,10);
+    G.jackOn=$("rfJackOn").checked; G.jackAmt=Math.max(0,parseInt($("rfJackAmt").value,10)||0);
+    G.winnersCount = G.jackOn ? 1 : Math.max(1, Math.min(50, parseInt($("rfWinners").value,10)||1));
+    G.time=parseInt($("rfTime").value,10); if(isNaN(G.time)||G.time<0) G.time=180;
+    G.drawLength=4;
+    G.allowRedraw=$("rfAllowRedraw").checked;
+  }
+  function validRange(){ return !(isNaN(G.min)||isNaN(G.max)||G.max<G.min); }
+  function remainingCount(){ return validRange() ? (G.max-G.min+1) - drawnCount() : 0; }
+  function drawnCount(){ var n=0; for(var k in G.drawn){ if(G.drawn.hasOwnProperty(k)) n++; } return n; }
+
+  function renderRange(){
+    readInputs();
+    var line=$("rangeLine");
+    if(!validRange()){ line.innerHTML='<span class="warn">Enter a valid ticket range.</span>'; return; }
+    var drew=drawnCount();
+    line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"+(G.winnersCount>1?" · "+G.winnersCount+" winners":"")+(drew?" · "+drew+" already drawn":"");
+    if(!G.round) sendIdle();
+  }
+  function pickNumbers(n){
+    var out=[], span=G.max-G.min+1, guard=0;
+    while(out.length<n && guard<span*6){ guard++; var x=G.min+cryptoInt(span); if(!G.drawn[x] && out.indexOf(x)<0) out.push(x); }
+    return out;
+  }
+
+  // ---- saved prizes ----
+  function renderPresets(){
+    var w=$("prizePresets"); w.innerHTML="";
+    if(!G.savedPrizes.length){ w.innerHTML='<span class="empty">None yet. Type a prize and it saves for next time.</span>'; return; }
+    for(var i=0;i<G.savedPrizes.length;i++){ var p=G.savedPrizes[i]; var b=document.createElement("button"); b.type="button"; b.setAttribute("data-p",p); b.textContent=p; w.appendChild(b); }
+  }
+  function savePrize(p){ if(!p) return; var i=G.savedPrizes.indexOf(p); if(i>-1) G.savedPrizes.splice(i,1); G.savedPrizes.unshift(p); if(G.savedPrizes.length>8) G.savedPrizes.length=8; renderPresets(); }
+
+  // ---- broadcasts ----
+  function sendIdle(){ send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
+  function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
+  function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
+
+  // ---- draw button modes ----
+  function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw the winner"; b.classList.remove("nextmode"); }
+  function drawBtnNext(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw the next prize"; b.classList.add("nextmode"); }
+
+  // ---- timers ----
+  function stopSpin(){ if(G.spinTimer){ clearInterval(G.spinTimer); G.spinTimer=null; } }
+  function stopCountdown(){ if(G.countdownTimer){ clearInterval(G.countdownTimer); G.countdownTimer=null; } }
+  function stopWait(){ if(G.celebrateWait){ clearTimeout(G.celebrateWait); G.celebrateWait=null; } }
+  function clearTimers(){ stopSpin(); stopCountdown(); stopWait(); }
+
+  // ---- draw ----
+  function startDraw(){
+    readInputs();
+    if(!validRange()){ alert("Enter a valid ticket range first."); return; }
+    if(G.jackOn && G.jackAmt<=0){ alert("Enter a jackpot amount."); return; }
+    if(!G.jackOn && !G.prize){ alert("Type what you're drawing for."); return; }
+    if(remainingCount()<G.winnersCount){ alert("Not enough undrawn tickets for "+G.winnersCount+" winners. Tap New raffle to start again."); return; }
+    if(!G.jackOn) savePrize(G.prize);
+
+    clearTimers();
+    $("winnerCard").classList.remove("show");
+    $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…"; $("drawBtn").classList.remove("nextmode");
+
+    sendDrawing();
+    var ticks=0, total=Math.max(8, Math.round(G.drawLength*1000/90));
+    G.spinTimer=setInterval(function(){ ticks++; if(ticks>=total){ stopSpin(); reveal(); } },90);
+  }
+
+  function reveal(){
+    var nums=pickNumbers(G.winnersCount);
+    if(!nums.length){ alert("No tickets left to draw."); sendIdle(); drawBtnIdle(); return; }
+    G.round={ numbers:nums, remaining:G.time, resolved:false, prize:prizeLabel() };
+    var multi=nums.length>1;
+
+    // broadcast winner to the TV
+    send({ t:"winner", numbers:nums, prizeLabel:G.round.prize, allowRedraw:G.allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(G.allowRedraw?G.time:0) });
+
+    // local winner card
+    var wc=$("winnerCard"); wc.classList.add("show"); $("wcPrize").textContent=G.round.prize;
+    if(multi){
+      show("wcNum",false); var wl=$("wcList"); show("wcList",true); wl.innerHTML="";
+      for(var i=0;i<nums.length;i++){ var sp=document.createElement("span"); sp.textContent=pad(nums[i]); wl.appendChild(sp); }
+    } else { show("wcNum",true); show("wcList",false); $("wcNum").textContent=pad(nums[0]); }
+
+    if(G.allowRedraw){
+      show("wcResolve",true);
+      updateCd();
+      G.countdownTimer=setInterval(function(){ G.round.remaining--; updateCd();
+        if(G.round.remaining<=0){ stopCountdown(); onRedraw(true); } },1000);
+    } else {
+      show("wcResolve",false);
+      finalizeSimple();
+    }
+  }
+  function updateCd(){ var t=secsToClock(Math.max(0,G.round.remaining)); $("wcCd").innerHTML="Come to the bar within <b>"+t+"</b>"; }
+
+  function finalizeSimple(){
+    if(!G.round) return;
+    logResults("drawn");
+    for(var i=0;i<G.round.numbers.length;i++){ G.drawn[G.round.numbers[i]]=true; }
+    var nums=G.round.numbers.slice(), pz=G.round.prize;
+    $("wcCd").innerHTML='<span style="color:var(--win)">Winner drawn. Hand over the prize.</span>';
+    G.round=null; renderRange(); drawBtnNext();
+    // celebrate on the TV
+    stopWait(); G.celebrateWait=setTimeout(function(){ send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max }); }, 1200);
+  }
+
+  function onClaim(){
+    if(!G.round||G.round.resolved) return;
+    G.round.resolved=true; clearTimers();
+    var nums=G.round.numbers.slice(), pz=G.round.prize;
+    logResults("claimed");
+    for(var i=0;i<nums.length;i++){ G.drawn[nums[i]]=true; }
+    send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max });
+    $("wcCd").innerHTML='<span style="color:var(--win)">Claimed · '+esc(pz)+'</span>';
+    show("wcResolve",false);
+    G.round=null; renderRange(); drawBtnNext();
+  }
+  function onRedraw(auto){
+    if(!G.round||G.round.resolved) return;
+    G.round.resolved=true; clearTimers();
+    logResults("no_show");
+    for(var i=0;i<G.round.numbers.length;i++){ G.drawn[G.round.numbers[i]]=true; }
+    G.round=null; renderRange();
+    send({ t:"redraw", pad:padWidth(), min:G.min, max:G.max, prizeLabel:prizeLabel() });
+    setTimeout(function(){ startDraw(); }, auto?1200:0);
+  }
+  function newRaffle(){
+    G.drawn={}; clearTimers(); G.round=null;
+    $("winnerCard").classList.remove("show"); drawBtnIdle(); renderRange(); sendIdle();
+  }
+
+  // ---- audit log ----
+  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function logResults(outcome){
+    if(!G.round) return; var now=new Date();
+    for(var i=0;i<G.round.numbers.length;i++){ var n=G.round.numbers[i];
+      G.results.unshift({ when:now.toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}),
+        date:now.toLocaleDateString("en-AU",{day:"numeric",month:"short"}),
+        prize:G.round.prize, numText:pad(n), range:G.min+"-"+G.max, outcome:outcome });
+    }
+    renderResults();
+  }
+  function renderResults(){
+    var b=$("winnersBody"); b.innerHTML="";
+    if(!G.results.length){ show("winnersEmpty",true); show("winnersTable",false); return; }
+    show("winnersEmpty",false); show("winnersTable",true);
+    for(var i=0;i<G.results.length;i++){ var r=G.results[i];
+      var res=r.outcome==="claimed"?'<span class="res-claim">Claimed</span>':(r.outcome==="drawn"?'<span class="res-claim">Won</span>':'<span class="res-no">No show, redrawn</span>');
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td style="white-space:nowrap">'+r.date+' '+r.when+'</td><td>'+esc(r.prize)+'</td><td class="num">'+r.numText+'</td><td class="mono" style="color:var(--muted)">'+r.range+'</td><td style="text-align:right">'+res+'</td>';
+      b.appendChild(tr);
+    }
+  }
+
+  // ---- connect ----
+  function connect(code){
+    G.code=code;
+    ch=client.channel("vp-raffle-"+code, { config:{ broadcast:{ self:false } } });
+    ch.on("broadcast", { event:"msg" }, function(e){ /* host is authority; TV does not talk back */ });
+    ch.subscribe(function(status){
+      if(status==="SUBSCRIBED"){
+        subscribed=true; flushQueue();
+        $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+        sendState(); // announce presence + prize so the TV catches up
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+      }
+    });
+    $("connectView").classList.add("hidden");
+    $("consoleView").classList.remove("hidden");
+    $("roomCode").textContent=code;
+    renderPresets(); renderRange(); renderResults();
+  }
+
+  // ---- events ----
+  var codeIn=$("codeIn");
+  codeIn.addEventListener("input", function(){
+    var v=codeIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"");
+    codeIn.value=v; $("codeErr").textContent="";
+  });
+  codeIn.addEventListener("keydown", function(e){ if(e.key==="Enter") tryConnect(); });
+  function tryConnect(){
+    var code=codeIn.value.toUpperCase().trim();
+    if(code.length!==6){ $("codeErr").textContent="Enter all 6 characters from the TV."; return; }
+    connect(code);
+  }
+  $("connectBtn").addEventListener("click", tryConnect);
+  $("drawBtn").addEventListener("click", startDraw);
+  $("claimBtn").addEventListener("click", onClaim);
+  $("redrawBtn").addEventListener("click", function(){ onRedraw(false); });
+  $("newRaffleBtn").addEventListener("click", newRaffle);
+  $("rfJackOn").addEventListener("change", function(){
+    show("rfJackWrap", this.checked); $("rfWinners").disabled=this.checked; if(this.checked) $("rfWinners").value=1; renderRange();
+  });
+  $("prizePresets").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-p]"); if(!b) return;
+    $("rfJackOn").checked=false; show("rfJackWrap",false); $("rfWinners").disabled=false;
+    $("rfPrize").value=b.getAttribute("data-p"); renderRange();
+  });
+  ["rfPrize","rfStart","rfEnd","rfWinners","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", renderRange); });
+  $("rfAllowRedraw").addEventListener("change", readInputs);
+
+  // prefill code from ?room if present (handy for testing)
+  (function(){ var m=/[?&]room=([^&]+)/.exec(window.location.search); if(m){ codeIn.value=decodeURIComponent(m[1]).toUpperCase().slice(0,6); } })();
+})();
+</script>
+</body>
+</html>

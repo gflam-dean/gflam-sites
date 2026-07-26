@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Bingo: Big Screen</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;overflow:hidden}
+  .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
+  .hidden{display:none!important}
+
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
+  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
+  .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .tv-status{position:absolute;top:2cqw;left:2.4cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
+  .jsub b{color:var(--gold)}
+  .hostline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.7cqw,14px);color:var(--faint);margin-top:1.2cqw}
+  .hostline b{color:var(--pink)}
+
+  /* lobby */
+  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
+  .qrbig{width:26cqw;max-width:280px;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
+  .qrbig canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .lobbytxt{text-align:left}
+  .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,52px);color:#fff;line-height:1}
+  .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
+  .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
+  .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
+  .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
+  .playing{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,20px);color:var(--muted);margin-top:1.8cqw}
+  .playing b{color:#fff}
+
+  /* running */
+  .runlayer{flex-direction:row;gap:3cqw;align-items:center;justify-content:center;padding:3.5% 5%}
+  .runleft{flex:0 0 41%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .runright{flex:1;min-width:0}
+  .balleye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(9px,1.7cqw,14px);color:var(--muted)}
+  .curball{display:flex;flex-direction:column;align-items:center;line-height:.85;margin:.6cqw 0}
+  .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
+  .cbnum{font-family:'Anton',sans-serif;font-size:clamp(48px,20cqw,168px);color:#fff;line-height:.82;text-shadow:0 0 46px rgba(255,255,255,.22)}
+  .prevballs{display:flex;gap:.8cqw;justify-content:center;flex-wrap:wrap;margin-top:1cqw}
+  .prevball{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.8cqw,15px);color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:.6cqw;padding:.3cqw .9cqw}
+  .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,15px);color:var(--muted);margin-top:1cqw}
+  .ballcount b{color:#fff}
+  .patline{margin-top:1.2cqw;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(11px,2.2cqw,18px)}
+  .patlbl{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:.72em}
+  .patval{color:var(--pink);font-weight:800}
+  .prizeline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,15px);color:var(--muted);margin-top:.5cqw}
+  .prizeline b{color:var(--gold)}
+
+  .tvboard{display:flex;gap:.6cqw;width:100%}
+  .bcol{display:flex;flex-direction:column;gap:.4cqw;flex:1;min-width:0}
+  .bhead{font-family:'Anton',sans-serif;font-size:clamp(14px,2.6cqw,32px);color:var(--pink);text-align:center;line-height:1;margin-bottom:.3cqw}
+  .bnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.5cqw,17px);color:var(--faint);text-align:center;padding:.5cqw 0;border-radius:.4cqw;background:rgba(255,255,255,.02);border:1px solid transparent}
+  .bnum.lit{background:rgba(255,31,142,.18);color:#fff;border-color:rgba(255,31,142,.4)}
+  .bnum.cur{background:var(--gold);color:#1a1000;border-color:transparent;box-shadow:0 0 14px rgba(255,194,75,.6)}
+
+  /* join corner (running only) */
+  .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
+  .qrmini{width:clamp(44px,8cqw,96px);height:clamp(44px,8cqw,96px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
+  .qrmini canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
+  .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,24px);color:var(--gold);letter-spacing:.08em}
+
+  /* claim / win */
+  .claimbig{font-family:'Anton',sans-serif;font-size:clamp(40px,12cqw,150px);color:var(--pink);line-height:.9;text-shadow:0 0 40px rgba(255,31,142,.5);margin:1cqw 0}
+  .claimname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,4cqw,44px);color:#fff}
+  .winbingo{font-family:'Anton',sans-serif;font-size:clamp(44px,14cqw,180px);line-height:.85;
+    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 28%,#FFF3D0 46%,#FFC24B 64%,#E9A93A 100%);background-size:220% auto;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 38px rgba(255,194,75,.42));animation:shimmer 3.2s linear infinite, winpop .6s ease-out}
+  .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,72px);color:var(--pink);line-height:1;margin-top:1cqw;text-shadow:0 0 36px rgba(255,31,142,.55)}
+  .winslabel{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.24em;color:var(--muted);font-size:clamp(10px,2cqw,18px);margin-top:1.6cqw}
+  .winprize{font-family:'Anton',sans-serif;font-size:clamp(28px,8cqw,96px);color:var(--gold);line-height:1;margin-top:.4cqw;filter:drop-shadow(0 0 24px rgba(255,194,75,.4))}
+  @keyframes shimmer{to{background-position:220% center}}
+  @keyframes winpop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+  .winburst{position:absolute;inset:0;background:radial-gradient(closest-side, rgba(255,194,75,.13), transparent 68%);opacity:0;z-index:1;transition:opacity .7s ease}
+  .winburst.show{opacity:1}
+
+  .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
+  @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+</style>
+</head>
+<body>
+<div class="tv" id="tv">
+  <div class="winburst" id="winBurst"></div>
+
+  <div class="tv-status"><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <div class="tv-corner">
+    <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="vn">VenuePlay Bingo</span>
+  </div>
+
+  <!-- lobby -->
+  <div class="layer" id="tvLobby">
+    <div class="eyebrow">Join the game</div>
+    <div class="lobbyrow">
+      <div class="qrbig"><canvas id="qrBig"></canvas></div>
+      <div class="lobbytxt">
+        <div class="lobbyname">Bingo</div>
+        <div class="joinurl">venueplay.com.au/app/play</div>
+        <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
+        <div class="playing"><b id="lobbyPlaying">0</b> playing</div>
+      </div>
+    </div>
+    <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
+    <div class="hostline">Host, open venueplay.com.au/app/host and enter code <b id="hostLineCode">------</b></div>
+  </div>
+
+  <!-- running -->
+  <div class="layer runlayer hidden" id="tvRun">
+    <div class="runleft">
+      <div class="balleye">Number called</div>
+      <div class="curball"><span class="cbletter" id="cbLetter">B</span><span class="cbnum" id="cbNum">--</span></div>
+      <div class="prevballs" id="tvPrev"></div>
+      <div class="ballcount" id="tvBallCount"><b>0</b> of 75 called</div>
+      <div class="patline"><span class="patlbl">Pattern</span> <span class="patval" id="tvPattern">One line</span></div>
+      <div class="prizeline">Playing for <b id="tvPrize">the prize</b></div>
+    </div>
+    <div class="runright">
+      <div class="tvboard" id="tvBoard"></div>
+    </div>
+  </div>
+
+  <!-- claim suspense -->
+  <div class="layer hidden" id="tvClaim">
+    <div class="eyebrow" id="claimEye">Bingo claimed</div>
+    <div class="claimbig" id="claimTitle">BINGO?</div>
+    <div class="claimname" id="claimName">Player</div>
+    <div class="jsub" id="claimSub">Checking the card against the called numbers&hellip;</div>
+  </div>
+
+  <!-- win -->
+  <div class="layer hidden" id="tvWin">
+    <div class="eyebrow">&#127881; We have a winner</div>
+    <div class="winbingo">BINGO!</div>
+    <div class="wname" id="winName">Player</div>
+    <div class="winslabel">Wins</div>
+    <div class="winprize" id="winPrizeVal">the prize</div>
+    <div class="jsub">Card <b id="winCard">#000</b> &middot; show your phone at the bar</div>
+  </div>
+
+  <!-- persistent join corner -->
+  <div class="tv-join hidden" id="tvJoinCorner">
+    <div class="qrmini"><canvas id="qrMini"></canvas></div>
+    <div><div class="tjl">Join now</div><div class="tjc" id="tvJoinCode">------</div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+
+  var LETTERS=["B","I","N","G","O"];
+  var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+  function ballLetter(n){ return LETTERS[Math.floor((n-1)/15)]; }
+  function ballLabel(n){ return ballLetter(n)+" "+n; }
+
+  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  function makeCode(){ var s=""; for(var i=0;i<6;i++) s+=CODE_ALPHABET.charAt(cryptoInt(CODE_ALPHABET.length)); return s; }
+
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+
+  var CODE=makeCode();
+  var base=window.location.href.replace(/\/[^\/]*(\?.*)?$/,"");
+  var joinURL=base+"/play.html?room="+CODE;
+
+  var state={ phase:"lobby", pattern:"one", prize:"the prize", called:[], playerCount:0, hostSeen:false, winner:null };
+
+  // ---- board ----
+  function buildBoard(){
+    var wrap=$("tvBoard"); wrap.innerHTML="";
+    for(var col=0;col<5;col++){
+      var bc=document.createElement("div"); bc.className="bcol";
+      var h=document.createElement("div"); h.className="bhead"; h.textContent=LETTERS[col]; bc.appendChild(h);
+      for(var k=0;k<15;k++){ var n=col*15+k+1; var cell=document.createElement("div"); cell.className="bnum"; cell.id="tvb-"+n; cell.textContent=n; bc.appendChild(cell); }
+      wrap.appendChild(bc);
+    }
+  }
+  function calledSet(){ var s={}; for(var i=0;i<state.called.length;i++) s[state.called[i]]=true; return s; }
+  function updateBoard(){
+    var cur=state.called.length ? state.called[state.called.length-1] : 0;
+    var set=calledSet();
+    for(var n=1;n<=75;n++){ var el=$("tvb-"+n); if(el) el.className="bnum"+(set[n]?" lit":"")+(n===cur?" cur":""); }
+  }
+
+  // ---- layers ----
+  var LAYERS=["tvLobby","tvRun","tvClaim","tvWin"];
+  function show(which){
+    for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
+    $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun");
+  }
+
+  function renderLobby(){
+    $("lobbyCode").textContent=CODE;
+    $("hostLineCode").textContent=CODE;
+    $("tvJoinCode").textContent=CODE;
+    $("lobbyPlaying").textContent=state.playerCount;
+    if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
+    else $("lobbySub").innerHTML="Host is connected. Grab your phone and join, the game is about to start&hellip;";
+  }
+  function renderRun(){
+    var n=state.called.length ? state.called[state.called.length-1] : 0;
+    if(n){ $("cbLetter").textContent=ballLetter(n); $("cbNum").textContent=n; }
+    else { $("cbLetter").textContent=""; $("cbNum").textContent="--"; }
+    var prev=$("tvPrev"); prev.innerHTML="";
+    for(var i=2;i<=3;i++){ var pi=state.called.length-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=ballLabel(state.called[pi]); prev.appendChild(d); } }
+    $("tvBallCount").innerHTML="<b>"+state.called.length+"</b> of 75 called";
+    $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
+    $("tvPrize").textContent=state.prize;
+    updateBoard();
+  }
+
+  // ---- confetti ----
+  var celebrateTimer=null;
+  function stopCelebrate(){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } $("winBurst").classList.remove("show"); }
+  function spawnBurst(count){
+    var tv=$("tv"), colors=["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#C70F69"];
+    for(var i=0;i<count;i++){
+      var c=document.createElement("div"); c.className="confetti";
+      c.style.left=cryptoInt(100)+"%"; c.style.background=colors[i%colors.length];
+      c.style.animationDelay=(cryptoInt(400)/1000)+"s"; c.style.animationDuration=(2.1+cryptoInt(180)/100)+"s";
+      tv.appendChild(c);
+      (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); },3800); })(c);
+    }
+  }
+  function celebrate(ms){
+    stopCelebrate(); $("winBurst").classList.add("show"); spawnBurst(90);
+    var elapsed=0; celebrateTimer=setInterval(function(){ elapsed+=1300; spawnBurst(46); if(elapsed>=ms) stopCelebrate(); },1300);
+  }
+
+  // ---- realtime ----
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=client.channel("vp-bingo-"+CODE, { config:{ broadcast:{ self:false } } });
+  ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+  ch.subscribe(function(status){
+    if(status==="SUBSCRIBED"){ $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+  });
+
+  function onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==="state"){
+      state.hostSeen=true;
+      if(m.pattern) state.pattern=m.pattern;
+      if(typeof m.prize==="string") state.prize=m.prize;
+      state.called=m.called||[];
+      if(typeof m.playerCount==="number") state.playerCount=m.playerCount;
+      if(m.active && state.called.length>0){ state.phase="running"; show("tvRun"); renderRun(); }
+      else { state.phase="lobby"; stopCelebrate(); show("tvLobby"); renderLobby(); }
+    }
+    else if(m.t==="started"){
+      state.hostSeen=true;
+      if(m.pattern) state.pattern=m.pattern;
+      if(typeof m.prize==="string") state.prize=m.prize;
+      state.called=[]; state.winner=null; stopCelebrate();
+      state.phase="lobby"; show("tvLobby"); renderLobby();
+    }
+    else if(m.t==="ball"){
+      state.hostSeen=true;
+      state.called=m.called||state.called;
+      state.phase="running"; show("tvRun"); renderRun();
+    }
+    else if(m.t==="players"){
+      if(typeof m.count==="number") state.playerCount=m.count;
+      if(state.phase==="lobby"){ $("lobbyPlaying").textContent=state.playerCount; }
+    }
+    else if(m.t==="claim_pending"){
+      state.phase="claim"; show("tvClaim");
+      $("claimEye").textContent="Bingo claimed";
+      $("claimTitle").textContent="BINGO?";
+      $("claimName").textContent=m.name||"Player";
+      $("claimSub").innerHTML="Checking the card against the called numbers&hellip;";
+    }
+    else if(m.t==="resume"){
+      state.phase="running"; show("tvRun"); renderRun();
+    }
+    else if(m.t==="winner"){
+      state.winner=m; state.phase="win"; show("tvWin");
+      $("winName").textContent=m.name||"Player";
+      $("winPrizeVal").textContent=state.prize;
+      $("winCard").textContent="#"+(m.cardNo||"000");
+      celebrate(9000);
+    }
+  }
+
+  // ---- init ----
+  buildBoard();
+  renderLobby();
+  show("tvLobby");
+  function drawQR(el, size){ if(window.QRCode&&el){ QRCode.toCanvas(el, joinURL, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
+  drawQR($("qrBig"), 512);
+  drawQR($("qrMini"), 220);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>VenuePlay Trivia: Play</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.12), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
+    overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .app{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+  .ptop{padding:16px;text-align:center;border-bottom:1px solid var(--line-2);position:sticky;top:0;background:rgba(10,10,11,.82);backdrop-filter:blur(8px);z-index:10}
+  .brand{display:flex;align-items:center;justify-content:center;gap:8px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
+  .brand .div{width:1px;height:16px;background:var(--line)}
+  .venue{font-size:11px;color:var(--muted);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .view{flex:1;display:flex;flex-direction:column;padding:22px 18px}
+  .center{justify-content:center;text-align:center}
+  .hidden{display:none!important}
+
+  .pbig{font-family:'Anton',sans-serif;font-size:34px;color:#fff;text-transform:uppercase;line-height:1.02;margin-bottom:8px}
+  .psub{color:var(--muted);font-size:14px}
+  .pnote{font-size:12px;color:var(--faint);margin-top:16px}
+  .field{margin-top:14px}
+  input[type=text]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
+    padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
+  input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  input.code{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:24px}
+
+  .btn{border:none;border-radius:12px;padding:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:active{background:var(--pink-deep)}
+  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .cerr{color:var(--roll);font-size:13px;min-height:18px;margin-top:10px}
+
+  /* question */
+  .pq-count{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--faint);text-align:center;margin-bottom:8px}
+  .pq-text{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;text-align:center;line-height:1.28;margin-bottom:8px;min-height:70px;display:flex;align-items:center;justify-content:center}
+  .pq-cd{text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:var(--gold);margin-bottom:16px}
+  .panswers{display:flex;flex-direction:column;gap:12px}
+  .pans{--ac:154,154,164;display:flex;align-items:center;gap:14px;width:100%;padding:18px 16px;border-radius:16px;border:2px solid rgba(var(--ac),.6);background:rgba(var(--ac),.14);color:#fff;cursor:pointer;text-align:left;font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;transition:.15s;line-height:1.18}
+  .pans.c0{--ac:255,77,77}
+  .pans.c1{--ac:77,141,255}
+  .pans.c2{--ac:255,194,75}
+  .pans.c3{--ac:53,208,127}
+  .pans.neutral{--ac:154,154,164;background:var(--ink-3);border-color:var(--line)}
+  .pans .pl{font-family:'Anton',sans-serif;font-size:26px;color:rgb(var(--ac));width:28px;text-align:center;flex:none}
+  .pans.neutral .pl{color:#fff}
+  .pans.picked{outline:3px solid #fff;outline-offset:1px}
+  .pans:disabled{cursor:not-allowed}
+  .pans.dim{opacity:.4}
+  .pstatus{text-align:center;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--muted);margin-top:18px}
+  .pstatus.locked{color:var(--win)}
+
+  /* result */
+  .presult{text-align:center}
+  .presult .rem{font-size:58px;line-height:1;margin-bottom:8px}
+  .presult .rtag{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:34px;line-height:1;margin-bottom:6px}
+  .presult .rtag.good{color:var(--win)}
+  .presult .rtag.bad{color:#FF4D4D}
+  .presult .pts{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:30px;color:var(--gold);margin:14px 0 4px}
+  .presult .tot{font-size:14px;color:var(--text)}
+  .presult .tot b{color:#fff}
+  .presult .rank{margin-top:14px;display:inline-block;background:rgba(255,31,142,.12);border:1px solid rgba(255,31,142,.3);color:var(--pink);border-radius:20px;padding:7px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px}
+
+  .scorebox{margin-top:18px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:22px}
+  .rankline{color:var(--muted);font-size:13px;margin-top:2px}
+  .finalwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(255,194,75,.16), transparent 65%)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="ptop">
+    <div class="brand">
+      <svg width="17" height="19" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay Trivia</span>
+    </div>
+    <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span> &middot; Room <span class="mono" id="roomLabel">------</span></div>
+  </div>
+
+  <!-- NO ROOM -->
+  <div class="view center hidden" id="vNoRoom">
+    <div class="pbig">Enter the<br>game code</div>
+    <div class="psub">Scan the QR on the big screen, or type the 6-character code shown there.</div>
+    <div class="field"><input id="roomIn" class="code" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+    <div class="cerr" id="roomErr"></div>
+    <div class="field"><button class="btn pink" id="roomBtn">Continue</button></div>
+  </div>
+
+  <!-- JOIN -->
+  <div class="view center hidden" id="vJoin">
+    <div class="pbig">Join the<br>trivia</div>
+    <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
+    <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="off"></div>
+    <div class="cerr" id="joinErr"></div>
+    <div class="field"><button class="btn pink" id="joinBtn">Join</button></div>
+    <div class="pnote">No app and no account. Questions pop up here when the host starts.</div>
+  </div>
+
+  <!-- WAIT -->
+  <div class="view center hidden" id="vWait">
+    <div style="font-size:44px">&#9989;</div>
+    <div class="pbig" style="color:var(--win)">You&#39;re in</div>
+    <div class="psub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
+    <div class="pnote" id="waitMsg">Watch the big screen. Your questions will pop up here.</div>
+    <div class="scorebox hidden" id="waitScore"></div>
+    <div class="rankline hidden" id="waitRank"></div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="view hidden" id="vQ">
+    <div class="pq-count" id="pqCount">Question</div>
+    <div class="pq-text" id="pqText">Question</div>
+    <div class="pq-cd" id="pqCd">Answer in 20s</div>
+    <div class="panswers" id="pAnswers"></div>
+    <div class="pstatus" id="pStatus">Tap your answer</div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="view center hidden" id="vRes">
+    <div class="presult">
+      <div class="rem" id="pResEmoji">&#127881;</div>
+      <div class="rtag" id="pResTag">Correct!</div>
+      <div class="pts" id="pResPts">+130</div>
+      <div class="tot">Total <b id="pResTot">130</b> points</div>
+      <div><span class="rank" id="pResRank">Rank 3 of 11</span></div>
+      <div class="psub" style="margin-top:16px">Next question coming up on the big screen</div>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div class="view center hidden finalwrap" id="vFinal">
+    <div style="font-size:52px">&#127881;</div>
+    <div class="pbig" style="color:var(--gold)">That&#39;s a wrap</div>
+    <div class="psub">Thanks for playing tonight</div>
+    <div class="scorebox" id="finalScore">0 points</div>
+    <div class="rankline" id="finalRank"></div>
+    <div class="pnote">The winners are up on the big screen.</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+  function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
+
+  var LETTERS=["A","B","C","D"];
+
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=null, subscribed=false, sendQueue=[];
+  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+
+  // ---- player state ----
+  var P={
+    room:"", pid:"", name:"", joined:false,
+    colour:true, score:0, rank:0, total:0,
+    q:null, choice:null, locked:false,
+    lastPts:0, lastCorrect:false, lastAnswered:false, cdTimer:null, ended:false
+  };
+
+  function loadPid(room){ try{ return sessionStorage.getItem("vp-tpid-"+room)||""; }catch(e){ return ""; } }
+  function savePid(room,pid){ try{ sessionStorage.setItem("vp-tpid-"+room, pid); }catch(e){} }
+
+  // ---- views ----
+  var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal"];
+  function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
+
+  function showWait(msg){
+    show("vWait");
+    $("waitName").textContent=P.name;
+    if(msg) $("waitMsg").textContent=msg;
+    if(P.total>0){
+      $("waitScore").classList.remove("hidden"); $("waitScore").textContent=P.total+" points";
+      $("waitRank").classList.remove("hidden"); $("waitRank").textContent="Rank "+P.rank;
+    } else { $("waitScore").classList.add("hidden"); $("waitRank").classList.add("hidden"); }
+  }
+
+  // ---- countdown ----
+  function stopCd(){ if(P.cdTimer){ clearInterval(P.cdTimer); P.cdTimer=null; } }
+  function tickCd(){
+    if(!P.q) return;
+    var rem=Math.max(0, Math.ceil((P.q.endsAt-Date.now())/1000));
+    if(P.locked){ $("pqCd").textContent="Answer locked in"; }
+    else { $("pqCd").textContent="Answer in "+rem+"s"; }
+    if(P.q.endsAt-Date.now()<=0){ stopCd(); lockOut(); }
+  }
+
+  function renderQuestion(m){
+    stopCd();
+    P.q={ qseq:m.qseq, options:m.options||[], endsAt:m.endsAt };
+    P.choice=null; P.locked=false;
+    if(typeof m.colour==="boolean") P.colour=m.colour;
+    show("vQ");
+    $("pqCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
+    $("pqText").textContent = m.text||"";
+    var wrap=$("pAnswers"); wrap.innerHTML="";
+    wrap.classList.toggle("neutral", !P.colour);
+    for(var i=0;i<P.q.options.length;i++){
+      var b=el("button","pans c"+i+(P.colour?"":" neutral")); b.setAttribute("data-i",i);
+      b.appendChild(el("span","pl",LETTERS[i]));
+      b.appendChild(el("span",null,esc(P.q.options[i])));
+      (function(idx){ b.addEventListener("click", function(){ answer(idx); }); })(i);
+      wrap.appendChild(b);
+    }
+    $("pStatus").className="pstatus"; $("pStatus").textContent="Tap your answer";
+    P.cdTimer=setInterval(tickCd, 300); tickCd();
+  }
+
+  function answer(i){
+    if(!P.q || P.locked) return;
+    if(P.q.endsAt-Date.now()<=0){ lockOut(); return; }
+    P.choice=i; P.locked=true;
+    send({ t:"answer", pid:P.pid, qseq:P.q.qseq, choice:i });
+    var btns=document.querySelectorAll("#pAnswers .pans");
+    for(var k=0;k<btns.length;k++){
+      var bi=parseInt(btns[k].getAttribute("data-i"),10);
+      if(bi===i) btns[k].classList.add("picked"); else btns[k].classList.add("dim");
+      btns[k].disabled=true;
+    }
+    $("pStatus").className="pstatus locked"; $("pStatus").textContent="Answer in! Good luck.";
+    $("pqCd").textContent="Answer locked in";
+  }
+  function lockOut(){
+    if(P.q && !P.locked){
+      var btns=document.querySelectorAll("#pAnswers .pans");
+      for(var k=0;k<btns.length;k++){ btns[k].disabled=true; btns[k].classList.add("dim"); }
+      $("pStatus").className="pstatus"; $("pStatus").textContent="Time's up";
+      $("pqCd").textContent="Time's up";
+    }
+  }
+
+  function showResult(m){
+    stopCd();
+    var mine=(m.players && m.players[P.pid]) ? m.players[P.pid] : { pts:0, total:P.total, rank:P.rank };
+    P.lastPts=mine.pts||0; P.total=mine.total; P.rank=mine.rank; P.score=mine.total;
+    var answered=(P.choice!=null);
+    var correct=(answered && P.choice===m.correctIndex);
+    show("vRes");
+    $("pResEmoji").innerHTML = correct ? "&#127881;" : (answered ? "&#10060;" : "&#9203;");
+    $("pResTag").className="rtag "+(correct?"good":"bad");
+    $("pResTag").textContent = correct ? "Correct!" : (answered ? "Not this time" : "No answer");
+    $("pResPts").textContent = (P.lastPts>0?"+":"")+P.lastPts;
+    $("pResPts").style.color = correct ? "var(--gold)" : "var(--faint)";
+    $("pResTot").textContent = P.total;
+    $("pResRank").textContent = "Rank "+P.rank;
+  }
+
+  // ---- incoming ----
+  function onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==="state"){
+      if(typeof m.colour==="boolean") P.colour=m.colour;
+      if(m.phase==="lobby"){ P.q=null; P.ended=false; if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); } }
+    }
+    else if(m.t==="question"){
+      if(!P.joined) return;
+      P.ended=false;
+      renderQuestion(m);
+    }
+    else if(m.t==="lock"){
+      stopCd(); lockOut();
+    }
+    else if(m.t==="reveal"){
+      if(!P.joined){ return; }
+      showResult(m);
+    }
+    else if(m.t==="leaderboard"){
+      if(!P.joined) return;
+      if(m.title && m.title.indexOf("Final")===0){ /* handled by podium */ }
+      showWait("Next question coming up. Watch the big screen.");
+    }
+    else if(m.t==="podium"){
+      if(!P.joined) return;
+      P.ended=true;
+      show("vFinal");
+      $("finalScore").textContent=P.total+" points";
+      $("finalRank").textContent = P.rank ? ("You finished rank "+P.rank) : "";
+    }
+  }
+
+  // ---- actions ----
+  function join(){
+    var nm=($("nameIn").value||"").trim();
+    if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
+    P.name=nm.slice(0,20); P.joined=true;
+    send({ t:"join", pid:P.pid, name:P.name });
+    showWait("Watch the big screen. Your questions will pop up here.");
+  }
+
+  // ---- connect ----
+  function connect(room){
+    P.room=room;
+    $("roomLabel").textContent=room;
+    $("joinCode").textContent=room;
+    P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
+    ch=client.channel("vp-trivia-"+room, { config:{ broadcast:{ self:false } } });
+    ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+    ch.subscribe(function(status){
+      if(status==="SUBSCRIBED"){
+        subscribed=true; flushQueue();
+        $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+      }
+    });
+    show("vJoin");
+  }
+
+  // ---- events ----
+  var roomIn=$("roomIn");
+  roomIn.addEventListener("input", function(){ roomIn.value=roomIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,""); $("roomErr").textContent=""; });
+  roomIn.addEventListener("keydown", function(e){ if(e.key==="Enter") roomGo(); });
+  function roomGo(){
+    var v=roomIn.value.toUpperCase().trim();
+    if(!CODE_RE.test(v)){ $("roomErr").textContent="Enter all 6 characters from the TV."; return; }
+    connect(v);
+  }
+  $("roomBtn").addEventListener("click", roomGo);
+  $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
+  $("joinBtn").addEventListener("click", join);
+
+  // ---- init: read ?room ----
+  (function(){
+    var m=/[?&]room=([^&]+)/.exec(window.location.search);
+    var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
+    if(room && CODE_RE.test(room)){ connect(room); }
+    else { $("statusText").textContent="No room"; show("vNoRoom"); }
+  })();
+})();
+</script>
+</body>
+</html>

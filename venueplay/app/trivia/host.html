@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Trivia: Host Console</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .dot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:22px}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:9px;display:flex;align-items:center;gap:10px}
+  .note{font-size:12px;color:var(--faint);line-height:1.5}
+
+  .connect{max-width:420px;margin:6vh auto 0;text-align:center}
+  .connect .big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:34px;color:#fff;line-height:1.02;margin-bottom:8px}
+  .connect .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  .codein{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:30px;text-align:center;letter-spacing:.22em;text-transform:uppercase;outline:none;transition:.15s}
+  .codein:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  .cerr{color:var(--roll);font-size:12.5px;min-height:18px;margin-top:8px}
+
+  select,input[type=text],input[type=number]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:10px 12px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;transition:.15s}
+  select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 17px,calc(100% - 13px) 17px;background-size:5px 5px;background-repeat:no-repeat}
+
+  .btn{border:none;border-radius:10px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--pink);color:#fff}
+  .btn.win{background:var(--win);color:#04120a}
+  .btn.win:hover{filter:brightness(1.08)}
+  .btn.big{width:100%;padding:16px;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+  .console{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+  @media (max-width:820px){ .console{grid-template-columns:1fr} }
+  .panel{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:18px}
+
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .seg{display:flex;gap:5px;background:var(--ink-3);padding:4px;border-radius:11px;border:1px solid var(--line-2)}
+  .seg button{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--pink);color:#fff}
+
+  .stat{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .stat .box{flex:1;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;min-width:80px}
+  .stat .box .k{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .stat .box .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:#fff;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat .box .v.g{color:var(--gold)}
+
+  .qwrap{background:var(--ink-3);border:1px solid var(--line-2);border-radius:13px;padding:14px;margin-bottom:14px}
+  .qmeta{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .qmeta .qn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint)}
+  .qmeta .live{margin-left:auto;display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+  .qmeta .live b{color:#fff}
+  .qmeta .live .cd{color:var(--gold)}
+  .qtext-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.25;margin-bottom:11px}
+  .opt{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line-2);border-radius:10px;margin-bottom:7px;font-size:13px;background:var(--ink-2)}
+  .opt .ol{font-family:'Anton',sans-serif;font-size:15px;width:20px;text-align:center;color:var(--muted)}
+  .opt .otx{flex:1;color:var(--text)}
+  .opt.correct{border-color:rgba(53,208,127,.5);background:rgba(53,208,127,.10)}
+  .opt.correct .otx{color:var(--win);font-weight:700}
+  .opt.correct .ol{color:var(--win)}
+  .opt .ck{color:var(--win);font-weight:700;font-size:12px}
+
+  .since{font-size:12px;color:var(--faint);margin:0 0 14px}
+  .since b{color:var(--muted)}
+
+  .board-h{margin:6px 0 0}
+  .brow-h{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:7px 10px;border-top:1px solid var(--line-2);font-size:13px}
+  .brow-h .rk{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted)}
+  .brow-h .nm{color:#fff;font-weight:600}
+  .brow-h .sc{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold)}
+  .brow-h.top1 .rk{color:var(--gold)}
+
+  .players{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+  .pchip{font-size:12.5px;font-weight:600;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:5px 12px}
+  .pempty{color:var(--faint);font-size:12.5px;padding:12px 4px}
+
+  .btnrow{display:flex;gap:10px;margin-top:12px}
+  .btnrow .btn{flex:1}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Trivia Host</span>
+    <span class="who"><span class="dot" id="statusDot"></span> <span id="statusText">Not connected</span></span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- CONNECT -->
+  <div id="connectView">
+    <div class="connect">
+      <div class="big">Connect to the room</div>
+      <div class="sub">Enter the 6-character code shown on the venue TV.</div>
+      <input id="codeIn" class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div class="cerr" id="codeErr"></div>
+      <button class="btn pink big" id="connectBtn" style="margin-top:6px">Connect</button>
+      <p class="note" style="margin-top:14px">The TV opens the room. This console runs the quiz and holds the answers, which never reach a phone before the reveal. Players join by scanning the QR on the screen.</p>
+    </div>
+  </div>
+
+  <!-- CONSOLE -->
+  <div id="consoleView" class="hidden">
+    <div class="lbl">Room <span class="mono" style="color:var(--gold)" id="roomCode">------</span> &middot; host console</div>
+    <div class="console">
+
+      <!-- left: run -->
+      <div class="panel">
+        <div id="setupBlock">
+          <div class="stat">
+            <div class="box"><div class="k">Questions</div><div class="v" id="setupQs">0</div></div>
+            <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
+            <div class="box"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
+          </div>
+          <div class="two">
+            <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="20"></div>
+            <div class="field"><label>Base points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
+          </div>
+          <div class="field">
+            <label>Speed bonus (faster answers score more, up to +50%)</label>
+            <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
+          </div>
+          <div class="field">
+            <label>Four-colour answers (A red, B blue, C gold, D green)</label>
+            <div class="seg" id="cfgColour"><button data-v="on" class="on">On</button><button data-v="off">Off (neutral)</button></div>
+          </div>
+          <button class="btn pink big" id="startBtn">Start round</button>
+          <p class="note" style="text-align:center;margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
+        </div>
+
+        <div id="liveBlock" class="hidden">
+          <div id="runBody"></div>
+        </div>
+      </div>
+
+      <!-- right: players + leaderboard -->
+      <div>
+        <div class="panel" style="margin-bottom:20px">
+          <div class="lbl" style="margin-bottom:0">Players <span class="mono" style="color:var(--gold)">(<span id="playerCount">0</span>)</span></div>
+          <div class="players" id="playerList"></div>
+        </div>
+        <div class="panel">
+          <div class="lbl">Leaderboard</div>
+          <div class="board-h" id="hostBoard"><div class="pempty">Scores appear once the round is under way.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  var LETTERS=["A","B","C","D"];
+
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=null, subscribed=false, sendQueue=[];
+  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+
+  // ---- sample question library (answers held here only) ----
+  var QUESTIONS=[
+    { q:"What is the capital city of Australia?", a:["Sydney","Canberra","Melbourne","Perth"], c:1 },
+    { q:"Which two animals feature on the Australian coat of arms?", a:["Koala and emu","Kangaroo and emu","Wombat and kookaburra","Dingo and platypus"], c:1 },
+    { q:"What is the largest living structure on Earth, off the Queensland coast?", a:["Ningaloo Reef","The Great Barrier Reef","The Coral Sea Shelf","The Whitsunday Passage"], c:1 },
+    { q:"Who painted the Mona Lisa?", a:["Michelangelo","Raphael","Leonardo da Vinci","Vincent van Gogh"], c:2 },
+    { q:"In which state or territory is Kakadu National Park?", a:["Queensland","Western Australia","Northern Territory","South Australia"], c:2 },
+    { q:"What is the longest river in Australia?", a:["The Darling River","The Murray River","The Murrumbidgee River","The Fitzroy River"], c:1 },
+    { q:"Which planet is known as the Red Planet?", a:["Venus","Jupiter","Mars","Saturn"], c:2 },
+    { q:"What is the chemical symbol for gold?", a:["Gd","Au","Ag","Go"], c:1 }
+  ];
+
+  // ---- authoritative game state ----
+  var G={
+    code:"", status:"setup",
+    timePerQ:20, base:100, speedBonus:true, colour:true,
+    players:{}, order:[],           // pid -> {name, score, lastPts, lastChoice}
+    qIndex:-1, qseq:0, current:null, endsAt:0,
+    answers:{},                     // pid -> {choice, remaining}
+    tick:null, autoLock:null
+  };
+
+  function playerCount(){ return G.order.length; }
+  function sortedPlayers(){
+    var arr=[]; for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p) arr.push(p); }
+    arr.sort(function(a,b){ if(b.score!==a.score) return b.score-a.score; return a.name.localeCompare(b.name); });
+    return arr;
+  }
+  function leaderboard(limit){
+    var s=sortedPlayers(), out=[];
+    for(var i=0;i<Math.min(limit,s.length);i++){ out.push({ name:s[i].name, points:s[i].score }); }
+    return out;
+  }
+
+  // ---- broadcasts ----
+  function sendState(){ send({ t:"state", playerCount:playerCount(), phase:(G.status==="setup"?"lobby":G.status), colour:G.colour }); }
+
+  // ---- render console ----
+  function renderConsole(){
+    var live=G.status!=="setup";
+    $("setupBlock").classList.toggle("hidden", live);
+    $("liveBlock").classList.toggle("hidden", !live);
+    $("setupQs").textContent=QUESTIONS.length;
+    $("setupPlayers").textContent=playerCount();
+    $("setupCode").textContent=G.code;
+    $("playerCount").textContent=playerCount();
+    renderPlayers();
+    renderBoard();
+    if(live) renderRun();
+  }
+  function renderPlayers(){
+    var elx=$("playerList");
+    if(!G.order.length){ elx.innerHTML='<div class="pempty">No players yet. They join by scanning the QR on the TV.</div>'; return; }
+    var html="";
+    for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p) html+='<span class="pchip">'+esc(p.name)+'</span>'; }
+    elx.innerHTML=html;
+  }
+  function renderBoard(){
+    var box=$("hostBoard"); var s=sortedPlayers();
+    if(!s.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
+    box.innerHTML="";
+    for(var i=0;i<Math.min(8,s.length);i++){
+      var row=el("div","brow-h"+(i===0?" top1":""));
+      row.innerHTML='<span class="rk">'+(i+1)+'</span><span class="nm">'+esc(s[i].name)+'</span><span class="sc">'+s[i].score+'</span>';
+      box.appendChild(row);
+    }
+  }
+
+  function answeredCount(){ var n=0,k; for(k in G.answers){ if(G.answers.hasOwnProperty(k)) n++; } return n; }
+  function remainingSecs(){ return Math.max(0, Math.ceil((G.endsAt-Date.now())/1000)); }
+
+  function renderRun(){
+    var body=$("runBody"); body.innerHTML="";
+
+    if(G.status==="ready"){
+      var rd=el("div","qwrap");
+      rd.innerHTML='<div class="qmeta"><span class="qn">Round armed</span></div>'+
+        '<div class="qtext-h">'+QUESTIONS.length+' questions loaded</div>'+
+        '<div class="since" style="margin:0">Players are joining on their phones. Show the first question when the room is ready.</div>';
+      body.appendChild(rd);
+      var nb=el("button","btn pink big","First question"); nb.addEventListener("click", nextQuestion); body.appendChild(nb);
+      body.appendChild(endBtn("End round"));
+      return;
+    }
+
+    if(G.status==="question" || G.status==="locked"){
+      var q=G.current;
+      var w=el("div","qwrap");
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(G.qIndex+1)+' of '+QUESTIONS.length+'</span>'+
+        '<span class="live"><span><b id="hAns">'+answeredCount()+'</b> answered</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
+        '<div class="qtext-h">'+esc(q.q)+'</div>';
+      for(var i=0;i<q.a.length;i++){
+        var correct=(i===q.c);
+        var o=el("div","opt"+(correct?" correct":""));
+        o.innerHTML='<span class="ol">'+LETTERS[i]+'</span><span class="otx">'+esc(q.a[i])+'</span>'+(correct?'<span class="ck">&#10003; correct</span>':'');
+        w.appendChild(o);
+      }
+      body.appendChild(w);
+      var rv=el("button","btn win big","Reveal answer"); rv.addEventListener("click", reveal); body.appendChild(rv);
+      body.appendChild(endBtn("End round"));
+      return;
+    }
+
+    if(G.status==="reveal"){
+      var q2=G.current;
+      var rw=el("div","qwrap");
+      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(G.qIndex+1)+' of '+QUESTIONS.length+' &middot; revealed</span></div>'+
+        '<div class="qtext-h">Correct: '+LETTERS[q2.c]+' &middot; '+esc(q2.a[q2.c])+'</div>';
+      body.appendChild(rw);
+      var more=(G.qIndex < QUESTIONS.length-1);
+      var brow=el("div","btnrow");
+      if(more){ var nb2=el("button","btn pink big","Next question"); nb2.addEventListener("click", nextQuestion); brow.appendChild(nb2); }
+      var fin=el("button","btn "+(more?"ghost":"win")+" big", more?"Final podium":"Show podium"); fin.addEventListener("click", finish); brow.appendChild(fin);
+      body.appendChild(brow);
+      return;
+    }
+
+    if(G.status==="ended"){
+      var done=el("div","qwrap");
+      done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
+        '<div class="qtext-h">The winners are on the big screen.</div>';
+      body.appendChild(done);
+      var again=el("button","btn pink big","Start a new round"); again.addEventListener("click", startRound); body.appendChild(again);
+    }
+  }
+  function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", finish); return b; }
+
+  function updateLive(){
+    var e=$("hAns"), c=$("hCd");
+    if(e) e.textContent=answeredCount();
+    if(c) c.textContent=remainingSecs()+"s";
+  }
+
+  // ---- game flow ----
+  function readSettings(){
+    G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||20));
+    G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
+  }
+  function startRound(){
+    clearTimers();
+    readSettings();
+    G.players={}; G.order=[]; G.qIndex=-1; G.qseq=0; G.current=null; G.answers={};
+    G.status="ready";
+    sendState();
+    renderConsole();
+  }
+  function nextQuestion(){
+    clearTimers();
+    if(G.qIndex>=QUESTIONS.length-1){ finish(); return; }
+    G.qIndex++; G.qseq++; G.current=QUESTIONS[G.qIndex]; G.answers={};
+    G.endsAt=Date.now()+G.timePerQ*1000;
+    G.status="question";
+    send({ t:"question", qseq:G.qseq, text:G.current.q, options:G.current.a.slice(), endsAt:G.endsAt, secs:G.timePerQ, colour:G.colour, qi:(G.qIndex+1), qtotal:QUESTIONS.length });
+    renderRun();
+    G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ autoLock(); } }, 500);
+    G.autoLock=setTimeout(autoLock, G.timePerQ*1000+200);
+  }
+  function autoLock(){
+    if(G.status!=="question") return;
+    if(G.tick){ clearInterval(G.tick); G.tick=null; }
+    if(G.autoLock){ clearTimeout(G.autoLock); G.autoLock=null; }
+    G.status="locked";
+    send({ t:"lock" });
+    renderRun();
+  }
+  function reveal(){
+    if(G.status!=="question" && G.status!=="locked") return;
+    clearTimers();
+    if(G.status==="question"){ send({ t:"lock" }); }
+    G.status="reveal";
+    var q=G.current, split=[0,0,0,0], results={};
+    for(var i=0;i<G.order.length;i++){
+      var pid=G.order[i], p=G.players[pid]; if(!p) continue;
+      var a=G.answers[pid], choice=(a?a.choice:null), remaining=(a?a.remaining:0);
+      if(choice!=null && choice>=0 && choice<4) split[choice]++;
+      var pts=0;
+      if(choice===q.c){ pts=G.base + (G.speedBonus ? Math.round(G.base*0.5*(remaining/G.timePerQ)) : 0); }
+      p.lastPts=pts; p.lastChoice=choice; p.score+=pts;
+    }
+    // rank + per-player results
+    var s=sortedPlayers(), rankOf={};
+    for(var r=0;r<s.length;r++){ rankOf[s[r].pid]=r+1; }
+    for(var j=0;j<G.order.length;j++){ var pj=G.players[G.order[j]]; if(!pj) continue;
+      results[pj.pid]={ pts:pj.lastPts||0, total:pj.score, rank:rankOf[pj.pid]||playerCount() }; }
+    send({ t:"reveal", qseq:G.qseq, correctIndex:q.c, options:q.a.slice(), split:split, leaderboard:leaderboard(10), players:results });
+    renderConsole();
+    // authoritative roll to the full leaderboard on the TV
+    G.autoLock=setTimeout(function(){ if(G.status==="reveal"){ send({ t:"leaderboard", title:"Leaderboard", rows:leaderboard(10) }); } }, 5000);
+  }
+  function finish(){
+    clearTimers();
+    G.status="ended";
+    var s=sortedPlayers(), top=[];
+    for(var i=0;i<Math.min(3,s.length);i++){ top.push({ name:s[i].name, points:s[i].score }); }
+    send({ t:"podium", top:top });
+    send({ t:"leaderboard", title:"Final scores", rows:leaderboard(10) });
+    sendState();
+    renderConsole();
+  }
+  function clearTimers(){ if(G.tick){ clearInterval(G.tick); G.tick=null; } if(G.autoLock){ clearTimeout(G.autoLock); G.autoLock=null; } }
+
+  // ---- incoming ----
+  function onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==="join"){
+      if(!m.pid) return;
+      if(!G.players[m.pid]){ G.players[m.pid]={ pid:m.pid, name:(m.name||"Player"), score:0, lastPts:0, lastChoice:null }; G.order.push(m.pid); }
+      else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
+      sendState();
+      renderConsole();
+    }
+    else if(m.t==="answer"){
+      if(G.status!=="question") return;
+      if(m.qseq!==G.qseq) return;
+      if(!m.pid || !G.players[m.pid]) return;
+      if(G.answers[m.pid]) return;                 // reject a second answer
+      if(Date.now()>G.endsAt) return;              // reject after time is up
+      var choice=parseInt(m.choice,10);
+      if(!(choice>=0 && choice<4)) return;
+      var remaining=Math.max(0, (G.endsAt-Date.now())/1000);
+      G.answers[m.pid]={ choice:choice, remaining:remaining };
+      updateLive();
+    }
+  }
+
+  // ---- connect ----
+  function connect(code){
+    G.code=code;
+    ch=client.channel("vp-trivia-"+code, { config:{ broadcast:{ self:false } } });
+    ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+    ch.subscribe(function(status){
+      if(status==="SUBSCRIBED"){
+        subscribed=true; flushQueue();
+        $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+        sendState();
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+      }
+    });
+    $("connectView").classList.add("hidden");
+    $("consoleView").classList.remove("hidden");
+    $("roomCode").textContent=code;
+    renderConsole();
+  }
+
+  // ---- events ----
+  var codeIn=$("codeIn");
+  codeIn.addEventListener("input", function(){
+    var v=codeIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"");
+    codeIn.value=v; $("codeErr").textContent="";
+  });
+  codeIn.addEventListener("keydown", function(e){ if(e.key==="Enter") tryConnect(); });
+  function tryConnect(){
+    var code=codeIn.value.toUpperCase().trim();
+    if(code.length!==6){ $("codeErr").textContent="Enter all 6 characters from the TV."; return; }
+    connect(code);
+  }
+  $("connectBtn").addEventListener("click", tryConnect);
+  $("startBtn").addEventListener("click", startRound);
+
+  document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
+    G.speedBonus=b.getAttribute("data-v")==="on";
+    document.querySelectorAll("#cfgSpeed button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+  }); });
+  document.querySelectorAll("#cfgColour button").forEach(function(b){ b.addEventListener("click", function(){
+    G.colour=b.getAttribute("data-v")==="on";
+    document.querySelectorAll("#cfgColour button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
+  }); });
+
+  // prefill code from ?room if present (handy for testing)
+  (function(){ var m=/[?&]room=([^&]+)/.exec(window.location.search); if(m){ codeIn.value=decodeURIComponent(m[1]).toUpperCase().slice(0,6); } })();
+})();
+</script>
+</body>
+</html>

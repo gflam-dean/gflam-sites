@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Members Draw: Big Screen</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:#050506;color:var(--text);font-family:'Manrope',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+
+  .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #050506;overflow:hidden}
+  .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
+  .hidden{display:none!important}
+
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
+  .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
+  .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  .tv-status{position:absolute;top:2cqw;left:2.4cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
+  .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
+
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,26px);color:var(--muted)}
+  .drawname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,74px);color:#fff;line-height:1;margin:1.4cqw 0 .4cqw}
+  .jack{font-family:'Anton',sans-serif;font-size:clamp(52px,16cqw,300px);line-height:.9;
+    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 30%,#FFF0C6 48%,#FFC24B 66%,#E9A93A 100%);background-size:220% auto;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 24px rgba(255,194,75,.32));animation:shimmer 4.5s linear infinite}
+  @keyframes shimmer{to{background-position:220% center}}
+  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,30px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
+  .jsub b{color:var(--gold)}
+  .hostline{position:absolute;left:0;right:0;bottom:2.6cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.5cqw,20px);color:var(--faint);z-index:6}
+  .hostline b{color:var(--pink)}
+
+  .spin{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(56px,20cqw,360px);color:#fff;line-height:1;text-shadow:0 0 40px rgba(255,255,255,.2)}
+  .drawing{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(16px,3.4cqw,48px);color:var(--pink);letter-spacing:.1em;margin-top:1.4cqw}
+  .winnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(60px,22cqw,380px);color:#fff;line-height:.95;text-shadow:0 0 60px rgba(255,31,142,.35)}
+  .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,96px);color:var(--pink);line-height:1;margin-top:1cqw;text-shadow:0 0 36px rgba(255,31,142,.55)}
+  .present{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,2.8cqw,38px);color:#fff;margin-top:2.4cqw}
+  .present b{color:var(--gold)}
+
+  .winslabel{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.24em;color:var(--muted);font-size:clamp(11px,2.2cqw,28px);margin-top:1.4cqw}
+  .wonamt{font-family:'Anton',sans-serif;font-size:clamp(56px,19cqw,340px);line-height:.85;
+    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 28%,#FFF3D0 46%,#FFC24B 64%,#E9A93A 100%);background-size:220% auto;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 38px rgba(255,194,75,.42));animation:shimmer 3.2s linear infinite, winpop .6s ease-out}
+  @keyframes winpop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+  .winburst{position:absolute;inset:0;background:radial-gradient(closest-side, rgba(255,194,75,.13), transparent 68%);opacity:0;z-index:1;transition:opacity .7s ease}
+  .winburst.show{opacity:1}
+  .missed{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,24px);color:var(--faint);margin-top:2.4cqw}
+  .missed b{color:var(--muted)}
+
+  /* advertising idle */
+  .ad{opacity:0;transition:opacity .8s ease}
+  .ad.show{opacity:1}
+  .ad .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(10px,1.9cqw,24px);color:var(--pink)}
+  .ad .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(28px,7cqw,120px);color:#fff;line-height:.98;margin:2cqw 0}
+  .ad .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,2.4cqw,34px);color:var(--text)}
+  .ad-a{background:radial-gradient(760px 420px at 50% 18%, rgba(255,194,75,.20), transparent 60%), linear-gradient(160deg,#151007,#050506)}
+  .ad-b{background:radial-gradient(760px 420px at 30% 30%, rgba(255,31,142,.18), transparent 60%), linear-gradient(160deg,#12060d,#050506)}
+  .ad-c{background:radial-gradient(760px 420px at 70% 25%, rgba(53,208,127,.16), transparent 60%), linear-gradient(160deg,#06120c,#050506)}
+  .ad-d{background:radial-gradient(760px 420px at 50% 30%, rgba(120,140,255,.16), transparent 60%), linear-gradient(160deg,#080a16,#050506)}
+
+  .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
+  @keyframes confettiFall{0%{transform:translateY(-3vh) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(680deg);opacity:.85}}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+</style>
+</head>
+<body>
+<div class="tv" id="tv">
+  <div class="winburst" id="winBurst"></div>
+
+  <div class="tv-status"><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <div class="tv-corner">
+    <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="vn">VenuePlay Members Draw</span>
+  </div>
+
+  <!-- idle / advertising -->
+  <div id="tvIdle">
+    <div class="layer ad ad-a">
+      <div class="eyebrow">Members draw</div>
+      <div class="drawname" id="idleDrawName">Members Draw</div>
+      <div class="jack" id="idleJack">$0</div>
+      <div class="jsub">Be here when your number is drawn</div>
+    </div>
+    <div class="layer ad ad-b"><div class="adtag">Bistro</div><div class="adbig">Schnitzel<br>Wednesday</div><div class="adsub">Chicken or veal, chips &amp; salad &middot; $18</div></div>
+    <div class="layer ad ad-c"><div class="adtag">Live music</div><div class="adbig">Friday<br>Sundowners</div><div class="adsub">On the green from 5pm &middot; free entry</div></div>
+    <div class="layer ad ad-d"><div class="adtag">Membership</div><div class="adbig">Join at<br>the bar</div><div class="adsub">Weekly members draws, bar perks &amp; more</div></div>
+  </div>
+
+  <!-- drawing -->
+  <div id="tvDraw" class="layer hidden">
+    <div class="drawname" id="drawTitle" style="font-size:clamp(16px,3.2cqw,42px);margin:0 0 .6cqw">Members Draw</div>
+    <div class="eyebrow">Drawing now</div>
+    <div class="spin" id="tvSpin">00</div>
+    <div class="drawing pulse">Good luck&hellip;</div>
+  </div>
+
+  <!-- winner reveal -->
+  <div id="tvWin" class="layer hidden">
+    <div class="drawname" id="winTitle" style="font-size:clamp(16px,3.2cqw,42px);margin:0 0 .6cqw">Members Draw</div>
+    <div class="eyebrow">Winning number</div>
+    <div class="winnum" id="tvWinNum">00</div>
+    <div class="wname hidden" id="tvWinName">&middot;</div>
+    <div class="present hidden" id="tvPresent">Come to the bar now to claim your <b>jackpot</b></div>
+  </div>
+
+  <!-- result: claimed or rollover -->
+  <div id="tvResult" class="layer hidden">
+    <div class="drawname" id="resTitle" style="font-size:clamp(16px,3.2cqw,42px);margin:0 0 .6cqw">Members Draw</div>
+    <div class="eyebrow" id="resEye">Winner</div>
+    <div class="wname hidden" id="resWinName">&middot;</div>
+    <div class="winslabel hidden" id="resWinsLabel">Wins</div>
+    <div class="wonamt hidden" id="resWon">$0</div>
+    <div class="drawname hidden" id="resNext">Next jackpot</div>
+    <div class="jack hidden" id="resJack">$0</div>
+    <div class="jsub" id="resSub"></div>
+    <div class="missed hidden" id="resMissed"></div>
+  </div>
+
+  <div class="hostline" id="hostLine">Host, open venueplay.com.au/app/members/host and enter code <b id="hostCode">------</b></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+  function money(cents){ return "$"+(cents/100).toLocaleString("en-AU",{minimumFractionDigits:0,maximumFractionDigits:0}); }
+
+  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  function makeCode(){ var s=""; for(var i=0;i<6;i++) s+=CODE_ALPHABET.charAt(cryptoInt(CODE_ALPHABET.length)); return s; }
+
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+
+  var CODE=makeCode();
+
+  var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0 };
+  var adTimer=null, adIdx=0, spinTimer=null, nameTimer=null, celebrateTimer=null, countTimer=null;
+
+  // ---- layers ----
+  function hideAll(){ ["tvIdle","tvDraw","tvWin","tvResult"].forEach(function(k){ $(k).classList.add("hidden"); }); }
+
+  // ---- idle / ads ----
+  function fillIdle(){ $("idleDrawName").textContent=state.drawName; $("idleJack").textContent=money(state.jackpotCents); }
+  function stopAds(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
+  function startAds(){
+    stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.remove("hidden");
+    hideAll(); $("tvIdle").classList.remove("hidden"); fillIdle();
+    var slides=document.querySelectorAll("#tvIdle .ad"); adIdx=0;
+    for(var i=0;i<slides.length;i++){ slides[i].classList.toggle("show", i===0); }
+    stopAds();
+    adTimer=setInterval(function(){
+      slides[adIdx].classList.remove("show");
+      adIdx=(adIdx+1)%slides.length; if(adIdx===0) fillIdle();
+      slides[adIdx].classList.add("show");
+    }, 5200);
+  }
+
+  // ---- drawing ----
+  function stopSpin(){ if(spinTimer){ clearInterval(spinTimer); spinTimer=null; } if(nameTimer){ clearTimeout(nameTimer); nameTimer=null; } }
+  function showDrawing(){
+    stopAds(); stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
+    hideAll(); $("drawTitle").textContent=state.drawName; $("tvDraw").classList.remove("hidden");
+    var spin=$("tvSpin");
+    spinTimer=setInterval(function(){ spin.textContent=(101+cryptoInt(400)); }, 90);
+  }
+
+  // ---- winner ----
+  function showWinner(number, name){
+    stopAds(); stopSpin(); $("hostLine").classList.add("hidden");
+    hideAll(); $("winTitle").textContent=state.drawName; $("tvWin").classList.remove("hidden");
+    $("tvWinNum").textContent = (number==null?"--":number);
+    var nm=$("tvWinName"), pr=$("tvPresent");
+    nm.classList.add("hidden"); pr.classList.add("hidden");
+    nameTimer=setTimeout(function(){
+      nm.textContent=name||"·"; nm.classList.remove("hidden");
+      pr.classList.remove("hidden");
+    }, 1500);
+  }
+
+  // ---- confetti ----
+  function stopCelebrate(){ if(celebrateTimer){ clearInterval(celebrateTimer); celebrateTimer=null; } $("winBurst").classList.remove("show"); }
+  function spawnBurst(count){
+    var tv=$("tv"), colors=["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#C70F69"];
+    for(var i=0;i<count;i++){
+      var c=document.createElement("div"); c.className="confetti";
+      c.style.left=cryptoInt(100)+"%"; c.style.background=colors[i%colors.length];
+      c.style.animationDelay=(cryptoInt(400)/1000)+"s"; c.style.animationDuration=(2.1+cryptoInt(180)/100)+"s";
+      tv.appendChild(c);
+      (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); },3800); })(c);
+    }
+  }
+  function celebrate(ms){
+    stopCelebrate(); $("winBurst").classList.add("show"); spawnBurst(90);
+    var elapsed=0; celebrateTimer=setInterval(function(){ elapsed+=1300; spawnBurst(46); if(elapsed>=ms) stopCelebrate(); },1300);
+  }
+  function countUp(el, targetCents){
+    if(countTimer){ clearInterval(countTimer); countTimer=null; }
+    var steps=34, i=0; countTimer=setInterval(function(){ i++; var v=Math.round(targetCents*(i/steps));
+      el.textContent=money(v); if(i>=steps){ el.textContent=money(targetCents); clearInterval(countTimer); countTimer=null; } },34);
+  }
+
+  // ---- result: claimed ----
+  function showClaimed(name, amountCents, nextResetCents){
+    stopAds(); stopSpin(); $("hostLine").classList.add("hidden");
+    if(typeof nextResetCents==="number") state.jackpotCents=nextResetCents;
+    hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
+    $("resEye").innerHTML="&#127881; We have a winner";
+    var wn=$("resWinName"); wn.classList.remove("hidden"); wn.textContent=name||"·";
+    $("resWinsLabel").classList.remove("hidden");
+    var won=$("resWon"); won.classList.remove("hidden"); countUp(won, amountCents||0);
+    $("resNext").classList.add("hidden"); $("resJack").classList.add("hidden"); $("resMissed").classList.add("hidden");
+    $("resSub").textContent="Come to the bar to claim";
+    celebrate(60000);
+  }
+
+  // ---- result: rollover ----
+  function showRollover(nextJackpotCents, incrementCents, missedNumber, missedName){
+    stopAds(); stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
+    if(typeof nextJackpotCents==="number") state.jackpotCents=nextJackpotCents;
+    hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
+    $("resEye").textContent="Not claimed &middot; rolls over to next week";
+    $("resWinName").classList.add("hidden"); $("resWinsLabel").classList.add("hidden"); $("resWon").classList.add("hidden");
+    $("resNext").classList.remove("hidden"); $("resNext").textContent="Next week's jackpot";
+    $("resJack").classList.remove("hidden"); $("resJack").textContent=money(nextJackpotCents||0);
+    $("resSub").innerHTML="Grew by "+money(incrementCents||0)+" &middot; be here next week";
+    var mm=$("resMissed"); mm.classList.remove("hidden");
+    mm.innerHTML="Drawn tonight: <b>#"+(missedNumber==null?"--":missedNumber)+" "+(missedName||"")+"</b>, not present in time";
+  }
+
+  // ---- realtime ----
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  var ch=client.channel("vp-members-"+CODE, { config:{ broadcast:{ self:false } } });
+  ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+  ch.subscribe(function(status){
+    if(status==="SUBSCRIBED"){ $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+  });
+
+  function onMsg(m){
+    if(!m||!m.t) return;
+    if(m.t==="state"){
+      if(typeof m.drawName==="string") state.drawName=m.drawName;
+      if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents;
+      if(!m.playing){ state.phase="idle"; startAds(); }
+    }
+    else if(m.t==="drawing"){ state.phase="drawing"; showDrawing(); }
+    else if(m.t==="winner"){ state.phase="winner"; showWinner(m.number, m.name); }
+    else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
+    else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName); }
+    else if(m.t==="idle"){ state.phase="idle"; startAds(); }
+  }
+
+  // ---- init ----
+  $("hostCode").textContent=CODE;
+  startAds();
+})();
+</script>
+</body>
+</html>
