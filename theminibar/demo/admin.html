@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Mini Bar | Back Office</title>
+<!--
+  ============================================================================
+  THE MINI BAR - BACK OFFICE / ADMIN CONSOLE (real working MVP)
+  ============================================================================
+  The operator's console. Loads the shared foundation core.js (window.MB) and
+  drives the real back office against it: live sales + audit from MB.store,
+  catalogue management + policy controls persisted through MB.admin, and a mock
+  machine/hotel fleet.
+
+  It shares state with the guest kiosk over the SAME localStorage +
+  BroadcastChannel bus. Open kiosk.html in one tab and admin.html in another:
+  sales and refusals rung up at the kiosk appear here live, and a price or
+  policy change made here is picked up by the kiosk on its next load.
+
+  INTERNAL TOOL. This file is NOT web-deployed. Runs from file:// with no build
+  step and no server. Just open it next to core.js.
+  ============================================================================
+-->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#c9a96e;--gold-light:#e8d5a3;--dark:#0a0a0a;--dark2:#111111;--dark3:#161616;--dark4:#1e1e1e;
+  --white:#fff;--off-white:#f5f0e8;--muted:rgba(255,255,255,0.5);--muted2:rgba(255,255,255,0.3);
+  --border:rgba(255,255,255,0.08);--border-gold:rgba(201,169,110,0.25);
+  --green:#6fcf97;--red:#e57373;--amber:#e8b96e;
+}
+html,body{height:100%;background:var(--dark);color:var(--white);font-family:"DM Sans",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.serif{font-family:"Cormorant Garamond",serif;font-weight:300}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit}
+a{color:inherit;text-decoration:none}
+.dot{color:var(--gold)}
+
+/* ---- Layout shell ---- */
+#app{display:flex;min-height:100vh}
+#sidebar{width:248px;flex-shrink:0;background:linear-gradient(180deg,#0d0d0d,#0a0a0a);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{padding:30px 26px 24px;border-bottom:1px solid var(--border)}
+.brand .wm{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:27px;letter-spacing:.02em;color:var(--off-white);line-height:1}
+.brand .wm em{font-style:normal;color:var(--gold)}
+.brand .sub{font-size:9px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-top:9px}
+.nav{padding:16px 14px;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:13px 14px;border-radius:4px;
+  font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);transition:all .15s;margin-bottom:3px}
+.nav-item svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;flex-shrink:0}
+.nav-item:hover{color:var(--off-white);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--gold);background:rgba(201,169,110,.1);font-weight:600}
+.nav-foot{padding:16px 20px;border-top:1px solid var(--border)}
+.nav-foot .op{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);line-height:1.7}
+.reset-link{margin-top:12px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);
+  border:1px solid var(--border);border-radius:3px;padding:9px 12px;width:100%}
+.reset-link:hover{border-color:var(--red);color:var(--red)}
+
+#main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:22px 40px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;
+  background:rgba(10,10,10,.92);backdrop-filter:blur(10px)}
+.topbar h1{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:30px;letter-spacing:-.3px;color:var(--off-white)}
+.topbar .crumb{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.live{display:inline-flex;align-items:center;gap:9px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);border:1px solid var(--border-gold);border-radius:100px;padding:9px 16px}
+.live .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(111,207,151,.5);animation:pl 2.2s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 rgba(111,207,151,.5)}70%{box-shadow:0 0 0 7px rgba(111,207,151,0)}100%{box-shadow:0 0 0 0 rgba(111,207,151,0)}}
+
+.view{padding:34px 40px 60px;display:none}
+.view.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---- Stat tiles ---- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:30px}
+.tile{background:linear-gradient(160deg,var(--dark3),var(--dark2));border:1px solid var(--border-gold);
+  border-radius:6px;padding:22px 24px}
+.tile .l{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:12px}
+.tile .n{font-family:"Cormorant Garamond",serif;font-size:42px;line-height:1;color:var(--off-white)}
+.tile .n small{font-size:20px;color:var(--muted)}
+.tile .x{font-size:12px;color:var(--muted);margin-top:9px}
+.tile.gold{border-color:var(--gold)}
+.tile.gold .n{color:var(--gold)}
+.tile.red .n{color:var(--red)}
+.tile .split{display:flex;gap:22px;margin-top:4px}
+.tile .split .sn{font-family:"Cormorant Garamond",serif;font-size:34px;line-height:1;color:var(--off-white)}
+.tile .split .sl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);margin-top:6px}
+.tile .split .a .sn{color:var(--gold)}
+
+/* ---- Panels + section headers ---- */
+.panel{background:var(--dark2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:26px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 24px;border-bottom:1px solid var(--border)}
+.panel-head h2{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:24px;color:var(--off-white)}
+.panel-head p{font-size:12px;color:var(--muted);margin-top:3px;max-width:640px;line-height:1.6}
+
+/* ---- Buttons ---- */
+.btn{display:inline-flex;align-items:center;gap:9px;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  padding:12px 22px;border-radius:3px;transition:all .16s;white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7}
+.btn-gold{background:var(--gold);color:var(--dark)}
+.btn-gold:hover{opacity:.88}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border-gold)}
+.btn-ghost:hover{color:var(--gold);border-color:var(--gold)}
+.btn-sm{padding:8px 14px;font-size:10px;letter-spacing:1.5px}
+.btn-danger:hover{color:var(--red);border-color:var(--red)}
+
+/* ---- Tables ---- */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{text-align:left;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);
+  padding:14px 24px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--dark3)}
+tbody td{padding:15px 24px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+td.name{color:var(--off-white)}
+td.mono{font-variant-numeric:tabular-nums;letter-spacing:.3px}
+td.right,.right{text-align:right}
+.slot-tag{display:inline-block;font-size:11px;font-variant-numeric:tabular-nums;color:var(--gold);
+  border:1px solid var(--border-gold);border-radius:3px;padding:3px 9px;letter-spacing:.5px}
+.badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  border-radius:100px;padding:4px 10px}
+.badge.cat{color:var(--muted);border:1px solid var(--border)}
+.badge.al{color:var(--gold);border:1px solid var(--border-gold);background:rgba(201,169,110,.08)}
+.badge.na{color:var(--muted2);border:1px solid var(--border)}
+.badge.on{color:var(--green);border:1px solid rgba(111,207,151,.4);background:rgba(111,207,151,.08)}
+.badge.off{color:var(--red);border:1px solid rgba(229,115,115,.4);background:rgba(229,115,115,.08)}
+.badge.low{color:var(--amber);border:1px solid rgba(232,185,110,.4);background:rgba(232,185,110,.08)}
+.badge.rest{color:var(--gold-light);border:1px solid var(--border-gold);background:rgba(201,169,110,.08)}
+.row-actions{display:flex;gap:8px;justify-content:flex-end}
+.link-btn{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-radius:3px;border:1px solid var(--border)}
+.link-btn:hover{color:var(--gold);border-color:var(--border-gold)}
+.link-btn.del:hover{color:var(--red);border-color:rgba(229,115,115,.4)}
+.empty{padding:56px 24px;text-align:center;color:var(--muted2);font-size:14px}
+tfoot td{padding:16px 24px;border-top:1px solid var(--border-gold);font-weight:600;color:var(--off-white);background:var(--dark3)}
+tfoot td.mono{font-variant-numeric:tabular-nums}
+.comm-input{width:92px;background:rgba(255,255,255,.04);border:1px solid var(--border-gold);color:#fff;
+  font-size:15px;font-variant-numeric:tabular-nums;padding:9px 12px;border-radius:3px;outline:none;text-align:right;-webkit-appearance:none}
+.comm-input:focus{border-color:var(--gold)}
+td.pick-need{color:var(--gold);font-weight:600}
+td.pick-zero{color:var(--muted2)}
+tr.row-need td.name{color:var(--gold-light)}
+
+/* ---- Recent sales list ---- */
+.sale{display:grid;grid-template-columns:66px 1fr auto;gap:16px;align-items:center;padding:15px 24px;border-bottom:1px solid var(--border)}
+.sale:last-child{border-bottom:none}
+.sale .t{font-size:12px;color:var(--muted2);font-variant-numeric:tabular-nums}
+.sale .d .rm{font-size:14px;color:var(--off-white)}
+.sale .d .it{font-size:12px;color:var(--muted);margin-top:2px}
+.sale .amt{font-family:"Cormorant Garamond",serif;font-size:22px;color:var(--off-white)}
+.sale .amt small{display:block;font-family:"DM Sans";font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);text-align:right;margin-top:2px}
+
+/* ---- Compliance filters + log ---- */
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border)}
+.filters .fl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.sel{background:var(--dark4);border:1px solid var(--border-gold);color:var(--off-white);font-size:13px;
+  padding:10px 14px;border-radius:3px;outline:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a96e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.sel:focus{border-color:var(--gold)}
+.toggle{display:inline-flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{display:none}
+.toggle .sw{width:38px;height:20px;border-radius:100px;background:var(--dark4);border:1px solid var(--border-gold);position:relative;transition:all .18s}
+.toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:all .18s}
+.toggle input:checked + .sw{background:rgba(229,115,115,.2);border-color:var(--red)}
+.toggle input:checked + .sw::after{left:19px;background:var(--red)}
+.log{max-height:560px;overflow-y:auto}
+.log-row{display:grid;grid-template-columns:132px 12px 1fr;gap:14px;align-items:start;padding:14px 24px;border-bottom:1px solid var(--border)}
+.log-row:last-child{border-bottom:none}
+.log-row .t{font-size:12px;color:var(--muted2);font-variant-numeric:tabular-nums;letter-spacing:.2px;line-height:1.5}
+.log-row .k{width:9px;height:9px;border-radius:50%;margin-top:5px;background:var(--gold)}
+.log-row .k.pass{background:var(--green)}
+.log-row .k.refuse{background:var(--red)}
+.log-row .ev{font-size:14px;color:var(--off-white)}
+.log-row .ev .who{color:var(--muted2);font-size:12px}
+.log-row .dt{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.log-row.refuse{background:rgba(229,115,115,.05)}
+.log-row.refuse .ev{color:var(--red)}
+
+/* ---- Settings form ---- */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;padding:26px 24px}
+.field{display:flex;flex-direction:column;gap:9px}
+.field label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.field .hint{font-size:12px;color:var(--muted);line-height:1.55}
+.field input,.field select{background:rgba(255,255,255,.04);border:1px solid var(--border-gold);color:#fff;
+  font-size:17px;padding:13px 15px;outline:none;border-radius:3px;transition:border-color .18s;-webkit-appearance:none}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+.field .unit{font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase}
+.check-field{display:flex;align-items:center;gap:12px}
+.readonly-row{display:flex;flex-wrap:wrap;gap:12px;padding:0 24px 24px}
+.ro{border:1px solid var(--border);border-radius:4px;padding:12px 18px;min-width:150px}
+.ro .rl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2)}
+.ro .rv{font-size:15px;color:var(--off-white);margin-top:5px}
+.form-foot{display:flex;gap:12px;padding:0 24px 26px;flex-wrap:wrap;align-items:center}
+.saved-flag{font-size:12px;color:var(--green);letter-spacing:1px;opacity:0;transition:opacity .3s}
+.saved-flag.show{opacity:1}
+.policy-note{margin:0 24px 24px;padding:16px 20px;border:1px solid var(--border-gold);border-radius:5px;
+  background:rgba(201,169,110,.05);font-size:13px;color:var(--muted);line-height:1.65}
+.policy-note b{color:var(--gold);font-weight:600}
+
+/* ---- Machines ---- */
+.hotel-group{margin-bottom:26px}
+.hotel-group .hg-head{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}
+.hotel-group .hg-head h3{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:23px;color:var(--off-white)}
+.hotel-group .hg-head .cnt{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2)}
+.mach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
+.mach{background:var(--dark2);border:1px solid var(--border);border-radius:6px;padding:20px}
+.mach .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:16px}
+.mach .mid{font-family:"Cormorant Garamond",serif;font-size:22px;color:var(--off-white);line-height:1}
+.mach .fl{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.mach .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:14px}
+.stockbar{height:6px;border-radius:100px;background:var(--dark4);overflow:hidden;margin-top:8px}
+.stockbar i{display:block;height:100%;border-radius:100px;background:linear-gradient(90deg,var(--gold),var(--gold-light))}
+.stockbar i.lowfill{background:var(--amber)}
+.stockbar i.empty{background:var(--red)}
+.mach .foot{display:flex;gap:8px;margin-top:16px}
+.mach .foot .link-btn{flex:1;text-align:center}
+
+/* ---- Modal ---- */
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:90;display:none;align-items:center;justify-content:center;padding:24px}
+.mask.show{display:flex}
+.modal{width:min(94vw,520px);max-height:90vh;overflow-y:auto;background:var(--dark2);border:1px solid var(--border-gold);border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:22px 26px;border-bottom:1px solid var(--border)}
+.modal-head h3{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:26px;color:var(--off-white)}
+.modal-close{font-size:24px;color:var(--muted);line-height:1}
+.modal-close:hover{color:var(--gold)}
+.modal-body{padding:24px 26px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.modal-body .full{grid-column:1 / -1}
+.modal-foot{display:flex;justify-content:flex-end;gap:12px;padding:18px 26px;border-top:1px solid var(--border)}
+
+/* ---- Missing core notice ---- */
+#missing{display:none;padding:60px;text-align:center}
+#missing h2{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:32px;color:var(--red);margin-bottom:12px}
+#missing p{color:var(--muted);max-width:480px;margin:0 auto;line-height:1.7}
+
+@media(max-width:860px){
+  #app{flex-direction:column}
+  #sidebar{width:100%;height:auto;position:static;flex-direction:column}
+  .nav{display:flex;flex-wrap:wrap;gap:6px;padding:12px}
+  .nav-item{width:auto;margin-bottom:0}
+  .nav-foot{display:none}
+  .topbar{padding:18px 20px}
+  .view{padding:24px 20px 48px}
+  .modal-body{grid-template-columns:1fr}
+}
+@media print{
+  #sidebar,.topbar .live,.filters,.panel-head .btn,.nav{display:none!important}
+  body,html{background:#fff;color:#000}
+  .panel,.log-row{border-color:#ccc}
+  .log-row .ev,.log-row .dt,.log-row .t{color:#000}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="wm">The Mini Bar<em>.</em></div>
+      <div class="sub">Back Office</div>
+    </div>
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-view="dashboard" onclick="showView('dashboard')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</button>
+      <button class="nav-item" data-view="products" onclick="showView('products')">
+        <svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Products</button>
+      <button class="nav-item" data-view="compliance" onclick="showView('compliance')">
+        <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>Compliance</button>
+      <button class="nav-item" data-view="settings" onclick="showView('settings')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.06-.4.1-.8.1-1.2z"/></svg>Settings</button>
+      <button class="nav-item" data-view="machines" onclick="showView('machines')">
+        <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6M9 10h6M9 14h3"/></svg>Machines</button>
+      <button class="nav-item" data-view="payouts" onclick="showView('payouts')">
+        <svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Payouts</button>
+      <button class="nav-item" data-view="picklist" onclick="showView('picklist')">
+        <svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 11l1.5 1.5L13 10M9 16h5"/></svg>Pick lists</button>
+    </nav>
+    <div class="nav-foot">
+      <div class="op">Operator: Gflam Vending<br>Fleet console v1.0</div>
+      <button class="reset-link" onclick="resetDemo()">Reset demo data</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div class="topbar">
+      <div>
+        <div class="crumb" id="crumb">Overview</div>
+        <h1 id="page-title">Dashboard</h1>
+      </div>
+      <span class="live"><span class="pulse"></span>Live &middot; <span id="live-time">--:--</span></span>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="v-dashboard">
+      <div class="tiles" id="dash-tiles"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Recent Sales</h2><p>Completed purchases across the fleet, newest first. Updates live as guests buy at any machine.</p></div>
+          <button class="btn btn-ghost btn-sm" onclick="renderDashboard()"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>Refresh</button>
+        </div>
+        <div id="recent-sales"></div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section class="view" id="v-products">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Product Catalogue</h2><p>The live range every machine sells. Edits here are persisted through the shared core and picked up by the kiosk on its next load. Alcohol items carry standard-drink data that feeds the responsible-service cap.</p></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost btn-sm btn-danger" onclick="resetCatalogue()">Reset catalogue</button>
+            <button class="btn btn-gold btn-sm" onclick="openProduct(null)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add product</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Slot</th><th>Product</th><th>Category</th><th>Type</th><th class="right">Std drinks</th><th class="right">Price</th><th class="right">Actions</th></tr></thead>
+            <tbody id="products-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPLIANCE -->
+    <section class="view" id="v-compliance">
+      <div class="tiles" id="comp-tiles"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Compliance &amp; Audit Log</h2><p>Every age check, OTP verification, cap check, refusal, payment and vend, timestamped and append-only. This is the property's responsible-service due-diligence record and doubles as evidence for OLGR and hotel partners. Refusals are highlighted in red.</p></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost btn-sm" onclick="window.print()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportAuditCsv()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button>
+          </div>
+        </div>
+        <div class="filters">
+          <span class="fl">Filter</span>
+          <select class="sel" id="comp-filter" onchange="renderCompliance()"></select>
+          <label class="toggle"><input type="checkbox" id="comp-refuse-only" onchange="renderCompliance()"><span class="sw"></span>Refusals only</label>
+          <span style="flex:1"></span>
+          <span class="fl" id="comp-count"></span>
+        </div>
+        <div class="log" id="comp-log"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="v-settings">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Policy Controls</h2><p>These are live responsible-service policy controls, not cosmetic settings. Changing them changes how every machine verifies age and caps alcohol. A change is picked up by the kiosk on its next load.</p></div>
+        </div>
+        <div class="policy-note">
+          <b>Handle with care.</b> The buffer age forces a photo-ID check when a face estimate lands under it. The daily cap is the maximum alcoholic drinks per verified mobile per day. The stay window is how long a mobile stays verified before a fresh code is needed. Every change here is written to the audit log as due-diligence evidence.
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Buffer age (years)</label>
+            <input id="cfg-buffer" type="number" min="18" max="40" inputmode="numeric">
+            <span class="hint">Face estimates under this age force a hard photo-ID check. Default 27.</span>
+          </div>
+          <div class="field">
+            <label>Daily alcohol cap (drinks)</label>
+            <input id="cfg-cap" type="number" min="0" max="20" inputmode="numeric">
+            <span class="hint">Max alcoholic drinks per verified mobile per day. Resets at local midnight. Default 4.</span>
+          </div>
+          <div class="field">
+            <label>Stay window (days)</label>
+            <input id="cfg-stay" type="number" min="1" max="30" inputmode="numeric">
+            <span class="hint">How long a verified mobile skips a fresh OTP. Default 4.</span>
+          </div>
+        </div>
+        <div class="readonly-row" id="settings-readonly"></div>
+        <div class="form-foot">
+          <button class="btn btn-gold btn-sm" onclick="saveSettings()"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 6"/></svg>Save policy</button>
+          <button class="btn btn-ghost btn-sm btn-danger" onclick="resetSettings()">Reset to defaults</button>
+          <span class="saved-flag" id="settings-saved">Saved. Machines will apply this on next load.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MACHINES -->
+    <section class="view" id="v-machines">
+      <div class="tiles" id="mach-tiles"></div>
+      <div class="panel-head" style="border:none;padding:0 0 8px">
+        <div><h2 class="serif" style="font-size:24px;color:var(--off-white)">Fleet by Hotel</h2><p style="color:var(--muted);font-size:12px;margin-top:3px">One machine per floor. Mock fleet for the operator model. Status toggles are stored locally.</p></div>
+      </div>
+      <div id="machines-body"></div>
+    </section>
+
+    <!-- PAYOUTS -->
+    <section class="view" id="v-payouts">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Venue Commission</h2><p>Each venue earns a commission on everything its machines sell. Set the percentage per venue here. The Mini Bar pays each venue their commission on the 1st of the following month. Changes are persisted and written to the audit log.</p></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Venue</th><th class="right">Machines</th><th class="right">Commission %</th><th class="right">Actions</th></tr></thead>
+            <tbody id="venues-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Monthly Payout Report</h2><p>Per venue for the selected month: total sales, the commission rate, the commission owed and the payout total. Simulated trading is shown so the run is complete, and any live kiosk sales for the month are folded in.</p></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost btn-sm" onclick="printPayout()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportPayoutCsv()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button>
+          </div>
+        </div>
+        <div class="filters">
+          <span class="fl">Trading month</span>
+          <select class="sel" id="payout-month" onchange="renderPayoutReport()"></select>
+          <span style="flex:1"></span>
+          <span class="fl" id="payout-paydate"></span>
+        </div>
+        <div id="payout-print">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Venue</th><th class="right">Machines</th><th class="right">Total sales</th><th class="right">Units</th><th class="right">Commission %</th><th class="right">Commission owed</th><th class="right">Payout total</th></tr></thead>
+              <tbody id="payout-body"></tbody>
+              <tfoot id="payout-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="policy-note">
+          <b>Future:</b> this is where a XERO sync will raise each venue's monthly commission bill automatically from these figures (one accounts-payable invoice per venue). For now the report computes, displays and exports only, with no network calls.
+        </div>
+      </div>
+    </section>
+
+    <!-- PICK LISTS -->
+    <section class="view" id="v-picklist">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Restock Pick List</h2><p>Choose a machine to generate its restock pick list: every product with its par (capacity), current stock and the quantity to pick to refill to par. This is what the restock team picks before heading to the hotel.</p></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost btn-sm" onclick="printPickList()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportPickCsv()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button>
+          </div>
+        </div>
+        <div class="filters">
+          <span class="fl">Machine</span>
+          <select class="sel" id="pick-machine" onchange="renderPickList()"></select>
+          <label class="toggle"><input type="checkbox" id="pick-needed-only" onchange="renderPickList()"><span class="sw"></span>Needs picking only</label>
+          <span style="flex:1"></span>
+          <span class="fl" id="pick-summary"></span>
+        </div>
+        <div id="pick-print">
+          <div id="pick-head-line" class="policy-note" style="display:none"></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Slot</th><th>Product</th><th>Category</th><th>Type</th><th class="right">Par</th><th class="right">In stock</th><th class="right">Qty to pick</th></tr></thead>
+              <tbody id="pick-body"></tbody>
+              <tfoot id="pick-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="mask" id="product-mask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="product-modal-title">Add Product</h3>
+      <button class="modal-close" onclick="closeProduct()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field full"><label>Product name</label><input id="pf-name" type="text" placeholder="e.g. Local Craft Lager 375ml"></div>
+      <div class="field"><label>Category</label><select id="pf-category" class="sel"></select></div>
+      <div class="field"><label>Slot</label><input id="pf-slot" type="text" placeholder="e.g. B1"></div>
+      <div class="field"><label>Price (AUD)</label><input id="pf-price" type="number" min="0" step="0.10" inputmode="decimal" placeholder="12.00"></div>
+      <div class="field"><label>Standard drinks</label><input id="pf-std" type="number" min="0" step="0.1" inputmode="decimal" placeholder="1.4"></div>
+      <div class="field full check-field">
+        <label class="toggle"><input type="checkbox" id="pf-alcohol" onchange="onAlcoholToggle()"><span class="sw"></span></label>
+        <label style="letter-spacing:2px">Alcoholic product (18+, counts toward the daily cap)</label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeProduct()">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="saveProduct()">Save product</button>
+    </div>
+  </div>
+</div>
+
+<div id="missing">
+  <h2>core.js did not load</h2>
+  <p>The back office needs core.js sitting next to admin.html. Make sure both files are in the same folder and reopen this page.</p>
+</div>
+
+<script src="core.js"></script>
+<script>
+"use strict";
+/* ===========================================================================
+   THE MINI BAR - ADMIN LOGIC (real, driven by window.MB + MB.admin)
+   =========================================================================== */
+if (!window.MB) {
+  document.getElementById("app").style.display = "none";
+  document.getElementById("missing").style.display = "block";
+}
+
+/* ---------- Shared audit vocabulary (mirrors the kiosk, plus admin events) ---------- */
+var AUDIT_LABELS = {
+  session_start:"Guest session started", session_end:"Guest session ended",
+  otp_sent:"Mobile OTP sent", otp_verified:"Mobile verified (OTP)", otp_failed:"Mobile OTP failed",
+  checkout_start:"Checkout started", age_estimate:"Face age estimate", id_verify:"Photo ID checked",
+  limit_check:"Daily cap checked", approval_requested:"Sent to reception", approval_resolved:"Reception decision",
+  payment:"Payment", vend:"Product dispensed", purchase_complete:"Sale completed",
+  admin_item_add:"Product added (admin)", admin_item_edit:"Product edited (admin)", admin_item_remove:"Product removed (admin)",
+  admin_catalogue_reset:"Catalogue reset (admin)", admin_config_update:"Policy updated (admin)",
+  admin_config_reset:"Policy reset (admin)", admin_machine_status:"Machine status changed (admin)",
+  admin_venue_commission:"Venue commission set (admin)"
+};
+var FILTER_GROUPS = [
+  { v:"all", label:"All events" },
+  { v:"refusals", label:"Refusals only" },
+  { v:"age", label:"Age & ID checks" },
+  { v:"otp", label:"Mobile verification" },
+  { v:"limit_check", label:"Daily cap checks" },
+  { v:"payment", label:"Payments" },
+  { v:"vend", label:"Vends" },
+  { v:"purchase_complete", label:"Completed sales" },
+  { v:"admin", label:"Admin actions" }
+];
+
+function auditKind(a){
+  var d = a.detail || {};
+  switch(a.event){
+    case "otp_verified": return "pass";
+    case "otp_failed": return "refuse";
+    case "age_estimate": return d.estimatedAge >= (d.bufferAge||27) ? "pass" : "neutral";
+    case "id_verify": return d.over18 ? "pass" : "refuse";
+    case "limit_check": return d.ok ? "pass" : "refuse";
+    case "approval_resolved": return d.approved ? "pass" : "refuse";
+    case "payment": return d.ok ? "pass" : "refuse";
+    case "vend": return d.dispensed ? "pass" : "refuse";
+    case "purchase_complete": return "pass";
+    default: return "neutral";
+  }
+}
+function isRefusal(a){ return auditKind(a) === "refuse"; }
+function auditDetailText(a){
+  var d = a.detail || {};
+  switch(a.event){
+    case "otp_sent": return "One-time code sent for identity verification.";
+    case "otp_verified": return "Identity verified. Stay window open until "+(d.expiresAt?fmtDateTime(d.expiresAt):"")+".";
+    case "otp_failed": return "REFUSED: wrong code entered.";
+    case "age_estimate": return "Estimated ~"+d.estimatedAge+" (confidence "+Math.round((d.confidence||0)*100)+"%). Buffer age "+d.bufferAge+". "+(d.estimatedAge>=d.bufferAge?"Cleared without ID.":"Under buffer, photo ID required.");
+    case "id_verify": return d.over18 ? "Confirmed 18 or over." : "REFUSED: not confirmed 18+. Alcohol blocked.";
+    case "limit_check": return d.ok ? ("Within cap ("+d.used+" used of "+d.cap+", buying "+d.requested+").") : ("REFUSED: daily cap of "+d.cap+" reached ("+d.used+" already today).");
+    case "approval_requested": return "Alcohol order routed to front desk. "+(d.alcoholDrinks||0)+" drink(s), "+MB.money(d.totalCents||0)+".";
+    case "approval_resolved": return (d.approved?"Approved":"REFUSED")+" by "+(d.decidedBy||"reception")+".";
+    case "payment": return d.ok ? ("Approved "+MB.money(d.amountCents||0)+" (txn "+(d.txnId||"-")+").") : "DECLINED by payment provider.";
+    case "vend": return d.dispensed ? ("Dispensed from slot "+d.slot+".") : ("FAILED to dispense slot "+d.slot+".");
+    case "purchase_complete": return "Total "+MB.money(d.totalCents||0)+", "+(d.alcoholDrinks||0)+" alcoholic drink(s), "+(d.standardDrinks||0)+" standard drinks. Txn "+(d.txnId||"-")+".";
+    case "checkout_start": return "Order "+MB.money(d.totalCents||0)+(d.hasAlcohol?", contains alcohol.":", no alcohol.");
+    case "admin_item_add": return "Added \""+(d.name||"")+"\" to the catalogue"+(d.priceCents!=null?" at "+MB.money(d.priceCents):"")+(d.isAlcohol?" (alcohol).":".");
+    case "admin_item_edit": return "Edited \""+(d.name||"")+"\""+(d.priceCents!=null?", price now "+MB.money(d.priceCents):"")+(d.isAlcohol?" (alcohol).":".");
+    case "admin_item_remove": return "Removed \""+(d.name||"")+"\" from the catalogue.";
+    case "admin_catalogue_reset": return "Catalogue restored to defaults.";
+    case "admin_config_update": return "Policy changed: "+cfgChangeText(d);
+    case "admin_config_reset": return "Policy restored to defaults.";
+    case "admin_machine_status": return "Machine "+(d.id||"")+" set to "+prettyStatus(d.status)+".";
+    case "admin_venue_commission": return "Commission for "+(d.hotel||"venue")+" set to "+(d.commissionPct)+"%.";
+    default: return "";
+  }
+}
+function cfgChangeText(d){
+  var parts = [];
+  if ("BUFFER_AGE" in d) parts.push("buffer age "+d.BUFFER_AGE);
+  if ("DAILY_ALCOHOL_CAP" in d) parts.push("daily cap "+d.DAILY_ALCOHOL_CAP);
+  if ("STAY_WINDOW_DAYS" in d) parts.push("stay window "+d.STAY_WINDOW_DAYS+"d");
+  return parts.length ? parts.join(", ")+"." : "no numeric change.";
+}
+function maskMobile(m){ if(!m) return ""; var s=String(m); return s.length>3 ? ("mobile "+"•••"+s.slice(-3)) : ("mobile "+s); }
+function fmtTime(iso){ var d=new Date(iso); function p(n){return ("0"+n).slice(-2);} return p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds()); }
+function fmtDateTime(iso){ var d=new Date(iso); function p(n){return ("0"+n).slice(-2);}
+  return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes()); }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* ---------- View router ---------- */
+var VIEW_META = {
+  dashboard:{ title:"Dashboard", crumb:"Overview" },
+  products:{ title:"Products", crumb:"Catalogue" },
+  compliance:{ title:"Compliance", crumb:"Due diligence" },
+  settings:{ title:"Settings", crumb:"Policy controls" },
+  machines:{ title:"Machines", crumb:"Fleet" },
+  payouts:{ title:"Payouts", crumb:"Venue commission" },
+  picklist:{ title:"Pick Lists", crumb:"Restocking" }
+};
+function showView(id){
+  var views = document.querySelectorAll(".view");
+  for (var i=0;i<views.length;i++) views[i].classList.remove("active");
+  document.getElementById("v-"+id).classList.add("active");
+  var items = document.querySelectorAll(".nav-item");
+  for (var j=0;j<items.length;j++) items[j].classList.toggle("active", items[j].getAttribute("data-view")===id);
+  document.getElementById("page-title").textContent = VIEW_META[id].title;
+  document.getElementById("crumb").textContent = VIEW_META[id].crumb;
+  if (id==="dashboard") renderDashboard();
+  if (id==="products") renderProducts();
+  if (id==="compliance") renderCompliance();
+  if (id==="settings") renderSettings();
+  if (id==="machines") renderMachines();
+  if (id==="payouts") renderPayouts();
+  if (id==="picklist") renderPickView();
+}
+
+/* ======================= DASHBOARD ======================= */
+function renderDashboard(){
+  var s = MB.admin.salesSummary();
+  var today = MB.dayKey();
+  var refusalsToday = MB.admin.refusalCount(today);
+  var machines = MB.admin.getMachines();
+  var online = 0;
+  for (var i=0;i<machines.length;i++){ if (machines[i].status==="online") online++; }
+
+  document.getElementById("dash-tiles").innerHTML =
+      tile("Today's sales", MB.money(s.revenueCents), s.txns+" transaction"+(s.txns===1?"":"s"), "gold")
+    + tile("Units sold", String(s.units), s.standardDrinks+" standard drinks served", "")
+    + splitTile("Alcohol vs non-alcohol", s.alcoholUnits, s.nonAlcoholUnits)
+    + tile("Refusals today", String(refusalsToday), refusalsToday? "Age, cap, ID or payment" : "None so far today", refusalsToday? "red":"")
+    + tile("Active machines", online+"<small>/"+machines.length+"</small>", "Online across the fleet", "");
+
+  var purchases = MB.store.getPurchases().slice().reverse();
+  var box = document.getElementById("recent-sales");
+  if (!purchases.length){
+    box.innerHTML = '<div class="empty">No sales yet. Ring one up in the kiosk tab and it will appear here instantly.</div>';
+    return;
+  }
+  var html = "";
+  for (var k=0;k<Math.min(purchases.length,14);k++){
+    var p = purchases[k];
+    var units = 0, names = [];
+    for (var l=0;l<(p.lines||[]).length;l++){ units += p.lines[l].qty; names.push(p.lines[l].qty+"x "+p.lines[l].name); }
+    var itemStr = names.join(", ");
+    if (itemStr.length>72) itemStr = itemStr.slice(0,70)+"...";
+    html += '<div class="sale"><div class="t">'+fmtTime(p.ts)+'</div>'
+      + '<div class="d"><div class="rm">Room '+esc(p.room||"--")+' <span style="color:var(--muted2);font-size:12px">'+esc(maskMobile(p.mobile))+'</span></div>'
+      + '<div class="it">'+esc(itemStr)+'</div></div>'
+      + '<div><div class="amt">'+MB.money(p.totalCents)+(p.alcoholDrinks?'<small>'+p.alcoholDrinks+' alcohol</small>':'')+'</div></div></div>';
+  }
+  box.innerHTML = html;
+}
+function tile(label,n,x,cls){
+  return '<div class="tile '+(cls||"")+'"><div class="l">'+label+'</div><div class="n">'+n+'</div><div class="x">'+x+'</div></div>';
+}
+function splitTile(label,al,na){
+  return '<div class="tile"><div class="l">'+label+'</div><div class="split">'
+    + '<div class="a"><div class="sn">'+al+'</div><div class="sl">Alcohol</div></div>'
+    + '<div><div class="sn">'+na+'</div><div class="sl">Non-alcohol</div></div></div></div>';
+}
+
+/* ======================= PRODUCTS ======================= */
+function renderProducts(){
+  var items = MB.admin.getCatalogue();
+  // group by category order for readability
+  var order = MB.categories;
+  items.sort(function(a,b){
+    var ca = order.indexOf(a.category), cb = order.indexOf(b.category);
+    if (ca!==cb) return ca-cb;
+    return (a.slot||"").localeCompare(b.slot||"");
+  });
+  var html = "";
+  for (var i=0;i<items.length;i++){
+    var p = items[i];
+    html += '<tr>'
+      + '<td><span class="slot-tag">'+esc(p.slot||"--")+'</span></td>'
+      + '<td class="name">'+esc(p.name)+'</td>'
+      + '<td><span class="badge cat">'+esc(p.category)+'</span></td>'
+      + '<td>'+(p.isAlcohol?'<span class="badge al">18+ Alcohol</span>':'<span class="badge na">Standard</span>')+'</td>'
+      + '<td class="right mono">'+(p.isAlcohol? p.standardDrinks : "-")+'</td>'
+      + '<td class="right mono">'+MB.money(p.priceCents)+'</td>'
+      + '<td><div class="row-actions">'
+      + '<button class="link-btn" onclick="openProduct(\''+p.id+'\')">Edit</button>'
+      + '<button class="link-btn del" onclick="removeProduct(\''+p.id+'\')">Remove</button>'
+      + '</div></td></tr>';
+  }
+  document.getElementById("products-body").innerHTML = html || '<tr><td colspan="7"><div class="empty">No products. Add one to get started.</div></td></tr>';
+}
+
+var editingId = null;
+function fillCategorySelect(sel){
+  var html = "";
+  for (var i=0;i<MB.categories.length;i++) html += '<option value="'+esc(MB.categories[i])+'">'+esc(MB.categories[i])+'</option>';
+  sel.innerHTML = html;
+}
+function openProduct(id){
+  editingId = id;
+  var sel = document.getElementById("pf-category");
+  fillCategorySelect(sel);
+  document.getElementById("product-modal-title").textContent = id ? "Edit Product" : "Add Product";
+  if (id){
+    var p = MB.findItem(id);
+    document.getElementById("pf-name").value = p.name;
+    sel.value = p.category;
+    document.getElementById("pf-slot").value = p.slot||"";
+    document.getElementById("pf-price").value = (p.priceCents/100).toFixed(2);
+    document.getElementById("pf-alcohol").checked = !!p.isAlcohol;
+    document.getElementById("pf-std").value = p.isAlcohol ? p.standardDrinks : "";
+  } else {
+    document.getElementById("pf-name").value = "";
+    sel.value = MB.categories[0];
+    document.getElementById("pf-slot").value = "";
+    document.getElementById("pf-price").value = "";
+    document.getElementById("pf-alcohol").checked = false;
+    document.getElementById("pf-std").value = "";
+  }
+  onAlcoholToggle();
+  document.getElementById("product-mask").classList.add("show");
+}
+function closeProduct(){ document.getElementById("product-mask").classList.remove("show"); editingId=null; }
+function onAlcoholToggle(){
+  var on = document.getElementById("pf-alcohol").checked;
+  var std = document.getElementById("pf-std");
+  std.disabled = !on;
+  std.style.opacity = on ? "1" : ".4";
+  if (!on) std.value = "";
+}
+function saveProduct(){
+  var name = document.getElementById("pf-name").value.trim();
+  if (!name){ document.getElementById("pf-name").focus(); return; }
+  var isAl = document.getElementById("pf-alcohol").checked;
+  var priceDollars = parseFloat(document.getElementById("pf-price").value)||0;
+  var data = {
+    name: name,
+    category: document.getElementById("pf-category").value,
+    slot: document.getElementById("pf-slot").value.trim(),
+    priceCents: Math.round(priceDollars*100),
+    isAlcohol: isAl,
+    standardDrinks: isAl ? (parseFloat(document.getElementById("pf-std").value)||0) : 0
+  };
+  if (editingId) MB.admin.updateItem(editingId, data);
+  else MB.admin.addItem(data);
+  closeProduct();
+  renderProducts();
+}
+function removeProduct(id){
+  var p = MB.findItem(id);
+  if (!p) return;
+  if (window.confirm('Remove "'+p.name+'" from the catalogue? This is logged to the audit trail.')){
+    MB.admin.removeItem(id);
+    renderProducts();
+  }
+}
+function resetCatalogue(){
+  if (window.confirm("Restore the catalogue to the 26 default products? Any changes you made will be lost.")){
+    MB.admin.resetCatalogue();
+    renderProducts();
+  }
+}
+
+/* ======================= COMPLIANCE ======================= */
+function buildFilterSelect(){
+  var sel = document.getElementById("comp-filter");
+  var html = "";
+  for (var i=0;i<FILTER_GROUPS.length;i++) html += '<option value="'+FILTER_GROUPS[i].v+'">'+FILTER_GROUPS[i].label+'</option>';
+  sel.innerHTML = html;
+}
+function matchesFilter(a, filter){
+  switch(filter){
+    case "all": return true;
+    case "refusals": return isRefusal(a);
+    case "age": return a.event==="age_estimate" || a.event==="id_verify";
+    case "otp": return a.event==="otp_sent" || a.event==="otp_verified" || a.event==="otp_failed";
+    case "admin": return a.event.indexOf("admin_")===0;
+    default: return a.event===filter;
+  }
+}
+function renderCompliance(){
+  var log = MB.store.getAudit().slice().reverse();
+  var refusals=0, ageChecks=0, vends=0, sales=0;
+  for (var i=0;i<log.length;i++){
+    if (isRefusal(log[i])) refusals++;
+    if (log[i].event==="age_estimate" || log[i].event==="id_verify") ageChecks++;
+    if (log[i].event==="vend") vends++;
+    if (log[i].event==="purchase_complete") sales++;
+  }
+  document.getElementById("comp-tiles").innerHTML =
+      tile("Logged events", String(log.length), "Append-only, all time", "")
+    + tile("Age & ID checks", String(ageChecks), "Verifications performed", "")
+    + tile("Completed sales", String(sales), "Successful vends recorded", "")
+    + tile("Refusals", String(refusals), "Age, cap, ID, payment or vend", refusals?"red":"");
+
+  var filter = document.getElementById("comp-filter").value;
+  var refuseOnly = document.getElementById("comp-refuse-only").checked;
+  var box = document.getElementById("comp-log");
+  var shown = [];
+  for (var j=0;j<log.length;j++){
+    var a = log[j];
+    if (refuseOnly && !isRefusal(a)) continue;
+    if (!matchesFilter(a, filter)) continue;
+    shown.push(a);
+  }
+  document.getElementById("comp-count").textContent = shown.length+" of "+log.length+" events";
+  if (!shown.length){
+    box.innerHTML = '<div class="empty">No matching events. Run a sale or a refusal in the kiosk, or clear the filter.</div>';
+    return;
+  }
+  var html = "";
+  for (var k=0;k<shown.length;k++){
+    var e = shown[k];
+    var kind = auditKind(e);
+    var who = [];
+    if (e.room) who.push("Room "+esc(e.room));
+    if (e.mobile) who.push(esc(maskMobile(e.mobile)));
+    var ctx = who.length ? ' <span class="who">&middot; '+who.join(" &middot; ")+'</span>' : "";
+    var det = auditDetailText(e);
+    html += '<div class="log-row'+(kind==="refuse"?" refuse":"")+'">'
+      + '<div class="t">'+fmtDateTime(e.ts)+'</div>'
+      + '<div class="k '+(kind==="neutral"?"":kind)+'"></div>'
+      + '<div><div class="ev">'+esc(AUDIT_LABELS[e.event]||e.event)+ctx+'</div>'
+      + (det?'<div class="dt">'+esc(det)+'</div>':'')+'</div></div>';
+  }
+  box.innerHTML = html;
+}
+function exportAuditCsv(){
+  var log = MB.store.getAudit();
+  var rows = [["timestamp","event","label","kind","room","mobile","detail"]];
+  for (var i=0;i<log.length;i++){
+    var a = log[i];
+    rows.push([
+      a.ts, a.event, AUDIT_LABELS[a.event]||a.event, auditKind(a),
+      a.room||"", a.mobile||"", auditDetailText(a).replace(/\s+/g," ")
+    ]);
+  }
+  var csv = rows.map(function(r){
+    return r.map(function(c){ var s=String(c==null?"":c); return '"'+s.replace(/"/g,'""')+'"'; }).join(",");
+  }).join("\r\n");
+  var uri = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  var a = document.createElement("a");
+  a.setAttribute("href", uri);
+  a.setAttribute("download", "theminibar-audit-"+MB.dayKey()+".csv");
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/* ======================= SETTINGS ======================= */
+function renderSettings(){
+  document.getElementById("cfg-buffer").value = MB.config.BUFFER_AGE;
+  document.getElementById("cfg-cap").value = MB.config.DAILY_ALCOHOL_CAP;
+  document.getElementById("cfg-stay").value = MB.config.STAY_WINDOW_DAYS;
+  document.getElementById("settings-readonly").innerHTML =
+      ro("Operating mode", MB.config.MODE)
+    + ro("Currency", MB.config.currency)
+    + ro("Daily reset", MB.config.RESET_LABEL)
+    + ro("Core version", MB.version);
+  document.getElementById("settings-saved").classList.remove("show");
+}
+function ro(l,v){ return '<div class="ro"><div class="rl">'+l+'</div><div class="rv">'+esc(v)+'</div></div>'; }
+function saveSettings(){
+  MB.admin.updateConfig({
+    BUFFER_AGE: document.getElementById("cfg-buffer").value,
+    DAILY_ALCOHOL_CAP: document.getElementById("cfg-cap").value,
+    STAY_WINDOW_DAYS: document.getElementById("cfg-stay").value
+  });
+  renderSettings();
+  var flag = document.getElementById("settings-saved");
+  flag.classList.add("show");
+  setTimeout(function(){ flag.classList.remove("show"); }, 2600);
+}
+function resetSettings(){
+  if (window.confirm("Reset all policy controls to their defaults (buffer 27, cap 4, stay 4 days)?")){
+    MB.admin.resetConfig();
+    renderSettings();
+  }
+}
+
+/* ======================= MACHINES ======================= */
+function prettyStatus(s){
+  return { online:"Online", offline:"Offline", low_stock:"Low stock", restocking:"Restocking" }[s] || s;
+}
+function statusBadge(s){
+  var cls = { online:"on", offline:"off", low_stock:"low", restocking:"rest" }[s] || "cat";
+  return '<span class="badge '+cls+'">'+prettyStatus(s)+'</span>';
+}
+function renderMachines(){
+  var machines = MB.admin.getMachines();
+  var online=0, offline=0, attention=0, stockSum=0;
+  for (var i=0;i<machines.length;i++){
+    if (machines[i].status==="online") online++;
+    else if (machines[i].status==="offline") offline++;
+    else attention++;
+    stockSum += machines[i].stockPct;
+  }
+  var avgStock = machines.length ? Math.round(stockSum/machines.length) : 0;
+  document.getElementById("mach-tiles").innerHTML =
+      tile("Machines", String(machines.length), "Across "+countHotels(machines)+" hotels", "")
+    + tile("Online", String(online), "Serving guests now", online===machines.length?"gold":"")
+    + tile("Needs attention", String(offline+attention), (offline?offline+" offline":"")+(offline&&attention?", ":"")+(attention?attention+" restock/low":"") || "All healthy", (offline+attention)?"red":"")
+    + tile("Average stock", avgStock+"<small>%</small>", "Fleet-wide fill level", "");
+
+  // group by hotel
+  var groups = {};
+  var orderedHotels = [];
+  for (var j=0;j<machines.length;j++){
+    var h = machines[j].hotel;
+    if (!groups[h]){ groups[h]=[]; orderedHotels.push(h); }
+    groups[h].push(machines[j]);
+  }
+  var html = "";
+  for (var g=0;g<orderedHotels.length;g++){
+    var hotel = orderedHotels[g];
+    var list = groups[hotel];
+    html += '<div class="hotel-group"><div class="hg-head"><h3>'+esc(hotel)+'</h3><span class="cnt">'+list.length+' machine'+(list.length===1?"":"s")+'</span></div><div class="mach-grid">';
+    for (var m=0;m<list.length;m++){
+      var mc = list[m];
+      var fillCls = mc.stockPct<=0 ? "empty" : (mc.stockPct<30 ? "lowfill":"");
+      var nextStatus = mc.status==="offline" ? "online" : "offline";
+      var toggleLabel = mc.status==="offline" ? "Bring online" : "Take offline";
+      html += '<div class="mach"><div class="top"><div><div class="mid">'+esc(mc.id)+'</div><div class="fl">'+esc(mc.floor)+' &middot; Slots '+esc(mc.slots)+'</div></div>'+statusBadge(mc.status)+'</div>'
+        + '<div class="meta"><span>Stock</span><span>'+mc.stockPct+'%</span></div>'
+        + '<div class="stockbar"><i class="'+fillCls+'" style="width:'+Math.max(2,mc.stockPct)+'%"></i></div>'
+        + '<div class="meta"><span>Last vend</span><span>'+(mc.lastVend?fmtDateTime(mc.lastVend):"--")+'</span></div>'
+        + '<div class="foot"><button class="link-btn" onclick="toggleMachine(\''+mc.id+'\',\''+nextStatus+'\')">'+toggleLabel+'</button></div>'
+        + '</div>';
+    }
+    html += '</div></div>';
+  }
+  document.getElementById("machines-body").innerHTML = html;
+}
+function countHotels(machines){
+  var seen = {}, n=0;
+  for (var i=0;i<machines.length;i++){ if(!seen[machines[i].hotel]){ seen[machines[i].hotel]=1; n++; } }
+  return n;
+}
+function toggleMachine(id, status){
+  MB.admin.setMachineStatus(id, status);
+  renderMachines();
+}
+
+/* ======================= PAYOUTS ======================= */
+function renderPayouts(){
+  renderVenuesTable();
+  ensurePayoutMonths();
+  renderPayoutReport();
+}
+function renderVenuesTable(){
+  var venues = MB.admin.getVenues();
+  var html = "";
+  for (var i=0;i<venues.length;i++){
+    var v = venues[i];
+    var idAttr = 'comm-'+i;
+    html += '<tr>'
+      + '<td class="name">'+esc(v.hotel)+'</td>'
+      + '<td class="right mono">'+v.machineCount+'</td>'
+      + '<td class="right"><input class="comm-input" id="'+idAttr+'" type="number" min="0" max="100" step="0.5" value="'+v.commissionPct+'"></td>'
+      + '<td><div class="row-actions"><button class="link-btn" onclick="saveVenueCommission('+i+',\''+esc(v.hotel).replace(/'/g,"\\'")+'\')">Save</button></div></td>'
+      + '</tr>';
+  }
+  document.getElementById("venues-body").innerHTML = html || '<tr><td colspan="4"><div class="empty">No venues in the fleet yet.</div></td></tr>';
+}
+function saveVenueCommission(idx, hotel){
+  var el = document.getElementById("comm-"+idx);
+  if (!el) return;
+  var pct = parseFloat(el.value);
+  if (isNaN(pct)){ el.focus(); return; }
+  MB.admin.setVenueCommission(hotel, pct);
+  renderVenuesTable();
+  renderPayoutReport();
+}
+function ensurePayoutMonths(){
+  var sel = document.getElementById("payout-month");
+  if (sel.options.length) return; // build once
+  var months = MB.admin.availablePayoutMonths(6);
+  var html = "";
+  for (var i=0;i<months.length;i++) html += '<option value="'+months[i].key+'">'+esc(months[i].label)+'</option>';
+  sel.innerHTML = html;
+  // default to the most recent COMPLETED month (previous month) if present
+  if (months.length>1) sel.value = months[1].key;
+}
+function renderPayoutReport(){
+  var sel = document.getElementById("payout-month");
+  var mk = sel.value || (MB.admin.availablePayoutMonths(1)[0].key);
+  var rep = MB.admin.payoutReport(mk);
+  document.getElementById("payout-paydate").textContent = "Pay venues on "+rep.payDate;
+  var html = "";
+  for (var i=0;i<rep.rows.length;i++){
+    var r = rep.rows[i];
+    var realNote = r.realTxns ? ' <span style="color:var(--muted2);font-size:11px">('+r.realTxns+' live)</span>' : '';
+    html += '<tr>'
+      + '<td class="name">'+esc(r.hotel)+realNote+'</td>'
+      + '<td class="right mono">'+r.machineCount+'</td>'
+      + '<td class="right mono">'+MB.money(r.salesCents)+'</td>'
+      + '<td class="right mono">'+r.units+'</td>'
+      + '<td class="right mono">'+r.commissionPct+'%</td>'
+      + '<td class="right mono">'+MB.money(r.commissionCents)+'</td>'
+      + '<td class="right mono" style="color:var(--gold)">'+MB.money(r.payoutCents)+'</td>'
+      + '</tr>';
+  }
+  document.getElementById("payout-body").innerHTML = html || '<tr><td colspan="7"><div class="empty">No venues to pay for this month.</div></td></tr>';
+  var t = rep.totals;
+  document.getElementById("payout-foot").innerHTML = rep.rows.length ?
+    ('<tr><td>Fleet total &middot; '+esc(rep.monthLabel)+'</td>'
+      + '<td class="right mono">'+rep.rows.length+'</td>'
+      + '<td class="right mono">'+MB.money(t.salesCents)+'</td>'
+      + '<td class="right mono">'+t.units+'</td>'
+      + '<td class="right mono">--</td>'
+      + '<td class="right mono">'+MB.money(t.commissionCents)+'</td>'
+      + '<td class="right mono" style="color:var(--gold)">'+MB.money(t.payoutCents)+'</td></tr>') : "";
+}
+function exportPayoutCsv(){
+  var mk = document.getElementById("payout-month").value;
+  var rep = MB.admin.payoutReport(mk);
+  var rows = [["month","pay_date","venue","machines","total_sales_aud","units","commission_pct","commission_owed_aud","payout_total_aud"]];
+  for (var i=0;i<rep.rows.length;i++){
+    var r = rep.rows[i];
+    rows.push([rep.monthLabel, rep.payDate, r.hotel, r.machineCount,
+      (r.salesCents/100).toFixed(2), r.units, r.commissionPct,
+      (r.commissionCents/100).toFixed(2), (r.payoutCents/100).toFixed(2)]);
+  }
+  var t = rep.totals;
+  rows.push(["", "", "TOTAL", rep.rows.length, (t.salesCents/100).toFixed(2), t.units, "", (t.commissionCents/100).toFixed(2), (t.payoutCents/100).toFixed(2)]);
+  downloadCsv(rows, "theminibar-payouts-"+mk+".csv");
+}
+function printPayout(){ window.print(); }
+
+/* ======================= PICK LISTS ======================= */
+function renderPickView(){
+  ensurePickMachines();
+  renderPickList();
+}
+function ensurePickMachines(){
+  var sel = document.getElementById("pick-machine");
+  var machines = MB.admin.getMachines();
+  var html = "";
+  for (var i=0;i<machines.length;i++){
+    var m = machines[i];
+    html += '<option value="'+esc(m.id)+'">'+esc(m.id)+' - '+esc(m.hotel)+' ('+esc(m.floor)+')</option>';
+  }
+  var prev = sel.value;
+  sel.innerHTML = html;
+  if (prev) sel.value = prev;
+}
+function renderPickList(){
+  var sel = document.getElementById("pick-machine");
+  var id = sel.value;
+  var neededOnly = document.getElementById("pick-needed-only").checked;
+  var pl = id ? MB.admin.pickList(id) : null;
+  var headEl = document.getElementById("pick-head-line");
+  if (!pl){
+    headEl.style.display = "none";
+    document.getElementById("pick-body").innerHTML = '<tr><td colspan="7"><div class="empty">No machine selected.</div></td></tr>';
+    document.getElementById("pick-foot").innerHTML = "";
+    document.getElementById("pick-summary").textContent = "";
+    return;
+  }
+  var m = pl.machine;
+  headEl.style.display = "block";
+  headEl.innerHTML = '<b>'+esc(m.id)+'</b> &middot; '+esc(m.hotel)+' &middot; '+esc(m.floor)+' &middot; Slots '+esc(m.slots)
+    + ' &middot; Machine fill '+m.stockPct+'% &middot; Status '+prettyStatus(m.status)+'. Pick <b>'+pl.totals.unitsToPick+'</b> unit(s) across <b>'+pl.totals.skusToPick+'</b> product(s) to refill to par.';
+  var shown = 0, html = "";
+  for (var i=0;i<pl.lines.length;i++){
+    var l = pl.lines[i];
+    if (neededOnly && l.pick<=0) continue;
+    shown++;
+    html += '<tr'+(l.pick>0?' class="row-need"':'')+'>'
+      + '<td><span class="slot-tag">'+esc(l.slot)+'</span></td>'
+      + '<td class="name">'+esc(l.name)+'</td>'
+      + '<td><span class="badge cat">'+esc(l.category)+'</span></td>'
+      + '<td>'+(l.isAlcohol?'<span class="badge al">18+ Alcohol</span>':'<span class="badge na">Standard</span>')+'</td>'
+      + '<td class="right mono">'+l.par+'</td>'
+      + '<td class="right mono">'+l.current+'</td>'
+      + '<td class="right mono '+(l.pick>0?'pick-need':'pick-zero')+'">'+(l.pick>0?l.pick:'-')+'</td>'
+      + '</tr>';
+  }
+  document.getElementById("pick-body").innerHTML = html || '<tr><td colspan="7"><div class="empty">Nothing to pick. This machine is at par.</div></td></tr>';
+  document.getElementById("pick-foot").innerHTML =
+    '<tr><td colspan="4">Total to pick'+(neededOnly?' (showing '+shown+' needing stock)':'')+'</td>'
+    + '<td class="right mono">--</td><td class="right mono">--</td>'
+    + '<td class="right mono" style="color:var(--gold)">'+pl.totals.unitsToPick+'</td></tr>';
+  document.getElementById("pick-summary").textContent = pl.totals.unitsToPick+" units / "+pl.totals.skusToPick+" products to pick";
+}
+function exportPickCsv(){
+  var id = document.getElementById("pick-machine").value;
+  var pl = id ? MB.admin.pickList(id) : null;
+  if (!pl) return;
+  var m = pl.machine;
+  var rows = [["machine","hotel","floor","slot","product","category","type","par","in_stock","qty_to_pick"]];
+  for (var i=0;i<pl.lines.length;i++){
+    var l = pl.lines[i];
+    rows.push([m.id, m.hotel, m.floor, l.slot, l.name, l.category,
+      l.isAlcohol?"Alcohol":"Standard", l.par, l.current, l.pick]);
+  }
+  rows.push(["", "", "", "", "TOTAL", "", "", "", "", pl.totals.unitsToPick]);
+  downloadCsv(rows, "theminibar-picklist-"+m.id+"-"+MB.dayKey()+".csv");
+}
+function printPickList(){ window.print(); }
+
+/* Shared CSV builder + data-URI download (no network). */
+function downloadCsv(rows, filename){
+  var csv = rows.map(function(r){
+    return r.map(function(c){ var s=String(c==null?"":c); return '"'+s.replace(/"/g,'""')+'"'; }).join(",");
+  }).join("\r\n");
+  var uri = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  var a = document.createElement("a");
+  a.setAttribute("href", uri);
+  a.setAttribute("download", filename);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/* ======================= LIVE BUS ======================= */
+function refreshActive(){
+  var active = document.querySelector(".view.active");
+  if (!active) return;
+  var id = active.id.replace("v-","");
+  if (id==="dashboard") renderDashboard();
+  else if (id==="compliance") renderCompliance();
+  else if (id==="products") renderProducts();
+  else if (id==="machines") renderMachines();
+  else if (id==="payouts") renderPayoutReport();
+  else if (id==="picklist") renderPickList();
+}
+if (window.MB && MB.bus){
+  MB.bus.on(function(type){
+    if (type==="purchase:new" || type==="audit:new" || type==="session:start" ||
+        type==="catalogue:changed" || type==="config:changed" || type==="machines:changed" ||
+        type==="venues:changed"){
+      refreshActive();
+    }
+  });
+}
+
+/* ======================= DEMO RESET ======================= */
+function resetDemo(){
+  if (window.confirm("Wipe all demo data (sales, audit log, sessions, verifications)? Catalogue, policy and machines are kept.")){
+    if (MB.resetAll) MB.resetAll();
+    refreshActive();
+  }
+}
+
+/* ======================= INIT ======================= */
+function tickClock(){
+  var d = new Date();
+  function p(n){ return ("0"+n).slice(-2); }
+  var el = document.getElementById("live-time");
+  if (el) el.textContent = p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());
+}
+if (window.MB){
+  buildFilterSelect();
+  tickClock();
+  setInterval(tickClock, 1000);
+  showView("dashboard");
+}
+</script>
+</body>
+</html>
