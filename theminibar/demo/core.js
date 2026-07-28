@@ -1,7 +1,7 @@
 /* ===========================================================================
    THE MINI BAR - core.js
-   Shared foundation for the guest kiosk, the reception console and the admin
-   tools (the last two to be built later against this exact same core).
+   Shared foundation for the guest kiosk and the back-office admin console,
+   both built against this exact same core.
 
    HOW IT LOADS
    ------------
@@ -22,8 +22,8 @@
 
    The "backend" (MB.store) is a MOCK NETWORKED BACKEND: it persists to
    localStorage and gossips between browser tabs over BroadcastChannel (with a
-   localStorage 'storage' event fallback), so a kiosk tab and a reception
-   console tab in the same browser can talk to each other in real time.
+   localStorage 'storage' event fallback), so a kiosk tab and an admin console
+   tab in the same browser stay in sync in real time.
    =========================================================================== */
 (function () {
   "use strict";
@@ -50,16 +50,8 @@
 
     // How alcohol is authorised. The Mini Bar is a FULLY AUTOMATED product:
     // age is verified on-device at every dispense, with a hard daily cap. There
-    // is deliberately no human-approval step in the normal flow - that is the
-    // clunky competitor model this machine exists to replace.
-    //   'automated'  - DEFAULT. Machine verifies age on-device, no staff. This
-    //                  is the product and the only path the kiosk UI uses.
-    //   'supervised' / 'reception' - OPTIONAL OVERSIGHT HOOK ONLY. Left here so
-    //                  that IF a regulator ever insisted on a human in the loop,
-    //                  the dormant approval machinery below (requestApproval /
-    //                  respondApproval / listPending) could drive a future
-    //                  reception console WITHOUT re-architecting the core. Not
-    //                  wired into the kiosk and not shown in the demo.
+    // is deliberately no human-approval step - that is the clunky competitor
+    // model this machine exists to replace. 'automated' is the only mode.
     // NOTE: nothing here asserts any mode is legally approved. That is a
     // licensing decision for each venue and jurisdiction.
     MODE: "automated",
@@ -158,7 +150,7 @@
   };
 
   /* Turn a cart map { itemId: qty } into a rich summary used everywhere
-     (kiosk checkout, reception approval card, audit). */
+     (kiosk checkout, audit, receipts). */
   MB.summariseCart = function (cartMap) {
     var lines = [];
     var totalCents = 0, alcoholDrinks = 0, standardDrinks = 0, hasAlcohol = false;
@@ -224,13 +216,12 @@
     verified:  "mb_verified",   // { mobile: { verifiedAt, expiresAt } }
     purchases: "mb_purchases",  // [ purchase, ... ]
     audit:     "mb_audit",      // [ auditEntry, ... ]
-    pending:   "mb_pending",    // { requestId: approvalRequest }
     bus:       "mb_bus"         // last cross-tab message (storage-event fallback)
   };
 
   /* =========================================================================
      5. CROSS-TAB BUS
-     Real-time messaging between tabs (kiosk <-> reception console). Uses
+     Real-time messaging between tabs (kiosk <-> admin console). Uses
      BroadcastChannel where available and ALSO mirrors through a localStorage
      key so the 'storage' event delivers to tabs even when BroadcastChannel is
      flaky on file://. Messages carry an id and receivers dedupe on it.
@@ -280,12 +271,10 @@
   /* =========================================================================
      6. STORE  (the mock networked backend)
      ========================================================================= */
-  var _approvalResolvers = {}; // requestId -> { resolve, timer }
-
   var Store = {
 
     /* ---- Audit trail ---------------------------------------------------
-       Every age check, approval, payment and vend is written here with a
+       Every age check, payment, vend and restock is written here with a
        timestamp. This is the hotel's due-diligence evidence, so it is
        append-only and never overwritten. */
     audit: function (event, detail, ctx) {
@@ -451,127 +440,8 @@
       Bus.post("purchase:new", purchase);
       return purchase;
     },
-    getPurchases: function () { return LS.get(KEYS.purchases, []); },
-
-    /* ---- OPTIONAL OVERSIGHT HOOK (dormant) ----------------------------
-       requestApproval / respondApproval / listPending exist ONLY as a future
-       oversight hook. The Mini Bar ships fully automated (MODE 'automated') and
-       the kiosk never calls these. They are kept so that if a regulator ever
-       required a human in the loop, a reception console could be built against
-       this exact core with no re-architecting.
-
-       requestApproval(session, summary) posts a pending request over the bus; a
-       console would call respondApproval to answer. Returns a Promise resolving
-       with the decision. With no console connected, MB.demo.standalone
-       auto-resolves after MB.demo.approvalMs. */
-    requestApproval: function (session, summary) {
-      var req = {
-        id: MB.uid("apr"),
-        ts: new Date().toISOString(),
-        sessionId: session.id || null,
-        mobile: session.mobile || null,
-        room: session.room || null,
-        summary: {
-          lines: summary.lines.map(function (l) { return { name: l.item.name, qty: l.qty, isAlcohol: l.item.isAlcohol }; }),
-          totalCents: summary.totalCents,
-          alcoholDrinks: summary.alcoholDrinks,
-          standardDrinks: summary.standardDrinks
-        },
-        status: "pending",   // pending | approved | denied
-        decidedBy: null,
-        note: null
-      };
-
-      // persist so a console can list it
-      var pend = LS.get(KEYS.pending, {});
-      pend[req.id] = req;
-      LS.set(KEYS.pending, pend);
-
-      Store.audit("approval_requested", {
-        totalCents: summary.totalCents, alcoholDrinks: summary.alcoholDrinks
-      }, { mobile: req.mobile, room: req.room, sessionId: req.sessionId });
-
-      Bus.post("approval:request", req);
-
-      return new Promise(function (resolve) {
-        var timer = null;
-        if (MB.demo.standalone) {
-          // Local auto-resolve fallback (no console connected yet).
-          timer = setTimeout(function () {
-            _finishApproval(req.id, {
-              approved: MB.demo.autoApprove !== false,
-              decidedBy: "auto (standalone demo)",
-              note: MB.demo.autoApprove !== false ? "No reception console connected - auto-approved for demo" : "No reception console connected - auto-denied for demo"
-            });
-          }, MB.demo.approvalMs || 2600);
-        }
-        _approvalResolvers[req.id] = { resolve: resolve, timer: timer };
-      });
-    },
-
-    // Called by a RECEPTION CONSOLE (another tab) to answer a request.
-    respondApproval: function (requestId, approved, decidedBy, note) {
-      var result = {
-        approved: !!approved,
-        decidedBy: decidedBy || "reception",
-        note: note || null
-      };
-      // update stored record on this side
-      _writeApprovalOutcome(requestId, result);
-      // tell the kiosk tab
-      Bus.post("approval:response", { requestId: requestId, result: result });
-      // if the request happens to be awaited in THIS tab too, finish it
-      _finishApproval(requestId, result);
-      return result;
-    },
-
-    listPending: function () {
-      var pend = LS.get(KEYS.pending, {});
-      var out = [];
-      for (var k in pend) {
-        if (pend[k].status === "pending") out.push(pend[k]);
-      }
-      out.sort(function (a, b) { return a.ts < b.ts ? -1 : 1; });
-      return out;
-    },
-    getApproval: function (id) {
-      var pend = LS.get(KEYS.pending, {});
-      return pend[id] || null;
-    }
+    getPurchases: function () { return LS.get(KEYS.purchases, []); }
   };
-
-  // Update the persisted approval record with its outcome.
-  function _writeApprovalOutcome(requestId, result) {
-    var pend = LS.get(KEYS.pending, {});
-    if (pend[requestId]) {
-      pend[requestId].status = result.approved ? "approved" : "denied";
-      pend[requestId].decidedBy = result.decidedBy;
-      pend[requestId].note = result.note;
-      pend[requestId].decidedAt = new Date().toISOString();
-      LS.set(KEYS.pending, pend);
-    }
-    Store.audit("approval_resolved", {
-      requestId: requestId, approved: result.approved, decidedBy: result.decidedBy
-    }, pend[requestId] ? { mobile: pend[requestId].mobile, room: pend[requestId].room, sessionId: pend[requestId].sessionId } : {});
-  }
-
-  // Resolve the awaiting Promise in the kiosk tab (idempotent).
-  function _finishApproval(requestId, result) {
-    var entry = _approvalResolvers[requestId];
-    if (!entry) return;
-    if (entry.timer) clearTimeout(entry.timer);
-    delete _approvalResolvers[requestId];
-    // ensure the local record reflects the outcome even if it was decided here
-    _writeApprovalOutcome(requestId, result);
-    entry.resolve(result);
-  }
-
-  // Any tab awaiting a request will finish it when the response arrives.
-  Bus.on(function (type, payload) {
-    if (type === "approval:response" && payload && payload.requestId) {
-      _finishApproval(payload.requestId, payload.result);
-    }
-  });
 
   MB.store = Store;
 
@@ -677,12 +547,9 @@
   /* =========================================================================
      8. DEMO CONTROLS
      Presenting hooks only. None of this appears to a real guest, and in a real
-     build MB.demo.standalone would be false and the *Outcome hooks removed.
+     build the *Outcome hooks would be removed.
      ========================================================================= */
   MB.demo = {
-    standalone: true,       // true = reception approval auto-resolves locally
-    autoApprove: true,      // when standalone, approve (true) or deny (false)
-    approvalMs: 2600,       // auto-resolve delay
     ageOutcome: "pass",     // 'pass' | 'under'
     idOutcome: "ok",        // 'ok' | 'fail'
     otpOutcome: "ok",       // 'ok' | 'wrong'  (mobile OTP at login)
@@ -697,7 +564,6 @@
     LS.set(KEYS.daily, {});
     LS.set(KEYS.sessions, {});
     LS.set(KEYS.verified, {});
-    LS.set(KEYS.pending, {});
     LS.set(KEYS.purchases, []);
     LS.set(KEYS.audit, []);
     LS.set(KEYS.bus, null);
@@ -936,8 +802,7 @@
                      (a.event === "limit_check" && !d.ok) ||
                      (a.event === "payment" && !d.ok) ||
                      (a.event === "vend" && !d.dispensed) ||
-                     (a.event === "otp_failed") ||
-                     (a.event === "approval_resolved" && !d.approved);
+                     (a.event === "otp_failed");
         if (refuse) n++;
       }
       return n;
@@ -1250,4 +1115,683 @@
       totals: { unitsToPick: totalPick, skusToPick: skusToPick, slots: lines.length }
     };
   };
+})();
+
+/* ===========================================================================
+   ADMIN EXTENSIONS - PART 3  (the real back-office hierarchy + money model)
+   ---------------------------------------------------------------------------
+   This is the real operator back office. It SUPERSEDES the flat mock fleet and
+   commission helpers above by redefining the relevant MB.admin methods (later
+   definitions win), and adds the full three-level model:
+
+       CHAIN  (hotel group)  ->  PROPERTY (individual hotel)  ->  MACHINE
+
+   plus:
+     - ROLE-BASED ACCESS: an owner/accounts vs staff current-user concept.
+       Staff never see a dollar figure or commission anywhere.
+     - CHAIN-LEVEL PRICING + PLANOGRAM overrides, with a price-resolution
+       function MB.priceFor(productId, ref) the kiosk can adopt later.
+     - PER-PROPERTY POLICY (cap / stay window / buffer age) overriding config.
+     - REAL PER-MACHINE STOCK + PAR, a printable pick list, and a machine
+       restock flow gated behind a 4-digit staff PIN.
+     - MONTHLY PAYOUT run rolled up per chain, commission = the property's own
+       commission % x that property's sales, with a STUB "Sync to Xero" hook.
+
+   Strictly additive to the guest kiosk: nothing the kiosk calls is changed.
+   Everything persists to localStorage and gossips over the same bus.
+   =========================================================================== */
+(function () {
+  "use strict";
+  var MB = window.MB;
+  if (!MB || !MB.admin) return;
+
+  /* ---- tiny localStorage wrapper (same behaviour as the core) ---- */
+  var _mem = {};
+  var _lsOk = (function () {
+    try { window.localStorage.setItem("__mba3__", "1"); window.localStorage.removeItem("__mba3__"); return true; }
+    catch (e) { return false; }
+  })();
+  function lsGet(k, d) {
+    try { var r = _lsOk ? window.localStorage.getItem(k) : _mem[k]; if (r === null || r === undefined) return d; return JSON.parse(r); }
+    catch (e) { return d; }
+  }
+  function lsSet(k, v) {
+    var r = JSON.stringify(v);
+    try { if (_lsOk) window.localStorage.setItem(k, r); else _mem[k] = r; } catch (e) { _mem[k] = r; }
+  }
+
+  var K = {
+    hier: "mb_hier_v1",   // { chains:[], properties:[], machines:[] }
+    role: "mb_role_v1"    // current-user role id
+  };
+
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function hashStr(s) {
+    var h = 2166136261; s = String(s);
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function seededRand(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Par (capacity) for a product's machine column.
+  function parFor(item) { return item.category === "Essentials" ? 6 : 10; }
+
+  /* =========================================================================
+     ROLE-BASED ACCESS
+     OWNER (Dean) and ACCOUNTS can see + edit every dollar figure and every
+     commission. STAFF see NO money and NO commission anywhere. This is a
+     current-user concept the admin console reads to decide what to render.
+     ========================================================================= */
+  MB.roles = {
+    owner:    { id: "owner",    name: "Dean (Owner)",    email: "dean@theminibar.com.au",     money: true },
+    accounts: { id: "accounts", name: "Accounts",        email: "accounts@theminibar.com.au", money: true },
+    staff:    { id: "staff",    name: "Operations Staff", email: "staff@theminibar.com.au",    money: false }
+  };
+  MB.getRole = function () {
+    var id = lsGet(K.role, "owner");
+    return MB.roles[id] ? MB.roles[id] : MB.roles.owner;
+  };
+  MB.setRole = function (id) {
+    if (!MB.roles[id]) return MB.getRole();
+    lsSet(K.role, id);
+    MB.bus.post("role:changed", { role: id });
+    return MB.roles[id];
+  };
+  // The one gate the whole UI asks: may the current user see dollar figures?
+  MB.canSeeMoney = function () { return !!MB.getRole().money; };
+
+  /* =========================================================================
+     SEED - realistic AU hotel chains -> properties -> machines
+     ========================================================================= */
+  function seedHier() {
+    var chains = [
+      { id: "ch_mantra",  name: "Mantra Hotels",
+        priceOverrides: { "a-craft-lager": 1300, "a-pale-ale": 1300, "d-water-still": 500, "s-chips": 650 },
+        planogram: null },                 // null = stocks the full master catalogue
+      { id: "ch_rydges",  name: "Rydges Hotels",
+        priceOverrides: { "a-craft-lager": 1250, "a-shiraz": 1500, "e-charger": 2800 },
+        planogram: catalogueIdsExcept(["e-earplugs"]) }, // Rydges drops ear plugs
+      { id: "ch_peppers", name: "Peppers Retreats",
+        priceOverrides: {},                // no overrides -> demonstrates default fallback
+        planogram: null }
+    ];
+    var properties = [
+      { id: "pr_mantra_view",   chainId: "ch_mantra",  name: "Mantra on View, Surfers Paradise", city: "Surfers Paradise", state: "QLD",
+        levels: ["Level 8", "Level 12"], phones: ["07 5579 1000"], emails: ["reservations@mantraonview.com.au"],
+        notes: "Flagship high-rise. Loading dock access via Ferny Ave, use service lift 3.",
+        commissionPct: 12, policy: { DAILY_ALCOHOL_CAP: 4, STAY_WINDOW_DAYS: 4, BUFFER_AGE: 27 } },
+      { id: "pr_mantra_south",  chainId: "ch_mantra",  name: "Mantra Southbank, Melbourne", city: "Melbourne", state: "VIC",
+        levels: ["Level 5"], phones: ["03 9020 3000"], emails: ["stay@mantrasouthbank.com.au"],
+        notes: "Tighter VIC responsible-service posture: lower daily cap agreed with the venue.",
+        commissionPct: 12, policy: { DAILY_ALCOHOL_CAP: 3, STAY_WINDOW_DAYS: 5, BUFFER_AGE: 27 } },
+      { id: "pr_rydges_airport", chainId: "ch_rydges", name: "Rydges Gold Coast Airport, Bilinga", city: "Bilinga", state: "QLD",
+        levels: ["Level 2", "Level 3"], phones: ["07 5589 0000"], emails: ["frontdesk@rydgesgca.com.au"],
+        notes: "Airport property, high turnover. Restock mornings before 10am check-out rush.",
+        commissionPct: 10, policy: { DAILY_ALCOHOL_CAP: 4, STAY_WINDOW_DAYS: 3, BUFFER_AGE: 27 } },
+      { id: "pr_rydges_southbank", chainId: "ch_rydges", name: "Rydges South Bank, Brisbane", city: "Brisbane", state: "QLD",
+        levels: ["Level 9"], phones: ["07 3364 0800"], emails: ["reception@rydgessouthbank.com.au"],
+        notes: "",
+        commissionPct: 10, policy: { DAILY_ALCOHOL_CAP: 4, STAY_WINDOW_DAYS: 4, BUFFER_AGE: 27 } },
+      { id: "pr_peppers_broadbeach", chainId: "ch_peppers", name: "Peppers Broadbeach", city: "Broadbeach", state: "QLD",
+        levels: ["Level 14", "Level 20"], phones: ["07 5635 1000"], emails: ["broadbeach@peppers.com.au"],
+        notes: "Premium residences. Guest expectation is high, keep facings full.",
+        commissionPct: 14, policy: { DAILY_ALCOHOL_CAP: 5, STAY_WINDOW_DAYS: 7, BUFFER_AGE: 27 } }
+    ];
+    var machineDefs = [
+      { id: "MB-MV-01", propertyId: "pr_mantra_view",       level: "Level 8",  status: "online",    pin: "4917" },
+      { id: "MB-MV-02", propertyId: "pr_mantra_view",       level: "Level 12", status: "low_stock", pin: "4917" },
+      { id: "MB-MS-01", propertyId: "pr_mantra_south",      level: "Level 5",  status: "online",    pin: "2280" },
+      { id: "MB-RA-01", propertyId: "pr_rydges_airport",    level: "Level 2",  status: "online",    pin: "7731" },
+      { id: "MB-RA-02", propertyId: "pr_rydges_airport",    level: "Level 3",  status: "online",    pin: "7731" },
+      { id: "MB-RS-01", propertyId: "pr_rydges_southbank",  level: "Level 9",  status: "offline",   pin: "5064" },
+      { id: "MB-PB-01", propertyId: "pr_peppers_broadbeach", level: "Level 14", status: "online",   pin: "3390" },
+      { id: "MB-PB-02", propertyId: "pr_peppers_broadbeach", level: "Level 20", status: "online",   pin: "3390" }
+    ];
+    var machines = machineDefs.map(function (md) {
+      var prop = findIn(properties, md.propertyId);
+      var chain = findIn(chains, prop.chainId);
+      var pids = planogramIdsFor(chain);
+      var stock = {}, par = {};
+      var rnd = seededRand(hashStr(md.id));
+      var slots = [];
+      for (var i = 0; i < pids.length; i++) {
+        var it = MB.findItem(pids[i]); if (!it) continue;
+        var p = parFor(it);
+        par[it.id] = p;
+        // seed most slots below par so a pick list always has real content
+        var cur = md.status === "offline" ? 0 : Math.round(p * (0.15 + rnd() * 0.7));
+        stock[it.id] = clamp(cur, 0, p);
+        slots.push(it.slot);
+      }
+      return {
+        id: md.id, propertyId: md.propertyId, level: md.level, status: md.status,
+        pin: md.pin, slotRange: slotRange(slots), stock: stock, par: par,
+        lastVend: "2026-07-27T22:00:00"
+      };
+    });
+    return { chains: chains, properties: properties, machines: machines };
+  }
+
+  function catalogueIdsExcept(excl) {
+    var out = [];
+    for (var i = 0; i < MB.catalogue.length; i++) {
+      if (excl.indexOf(MB.catalogue[i].id) === -1) out.push(MB.catalogue[i].id);
+    }
+    return out;
+  }
+  function planogramIdsFor(chain) {
+    if (chain && chain.planogram && chain.planogram.length) return chain.planogram.slice();
+    return MB.catalogue.map(function (x) { return x.id; }); // full master catalogue
+  }
+  function findIn(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
+  function slotRange(slots) {
+    if (!slots.length) return "-";
+    slots.sort();
+    return slots[0] + "-" + slots[slots.length - 1];
+  }
+
+  /* ---- load / save the whole hierarchy blob ---- */
+  function loadHier() {
+    var h = lsGet(K.hier, null);
+    if (!h || !h.chains || !h.chains.length) { h = seedHier(); lsSet(K.hier, h); }
+    return h;
+  }
+  function saveHier(h) { lsSet(K.hier, h); }
+
+  /* =========================================================================
+     ACCESSORS
+     ========================================================================= */
+  MB.admin.getChains = function () { return loadHier().chains.slice(); };
+  MB.admin.getChain = function (id) { return findIn(loadHier().chains, id); };
+
+  MB.admin.getProperties = function (chainId) {
+    var props = loadHier().properties;
+    if (!chainId) return props.slice();
+    return props.filter(function (p) { return p.chainId === chainId; });
+  };
+  MB.admin.getProperty = function (id) { return findIn(loadHier().properties, id); };
+
+  MB.admin.getMachinesForProperty = function (propertyId) {
+    return loadHier().machines.filter(function (m) { return m.propertyId === propertyId; });
+  };
+  MB.admin.getMachine = function (id) { return findIn(loadHier().machines, id); };
+
+  // Sum of current stock over sum of par, as a whole-number percentage.
+  function stockPctOf(machine) {
+    var cur = 0, cap = 0;
+    for (var pid in machine.par) { if (!machine.par.hasOwnProperty(pid)) continue; cap += machine.par[pid]; cur += (machine.stock[pid] || 0); }
+    return cap ? Math.round(cur / cap * 100) : 0;
+  }
+
+  /* getMachines(): flattened fleet view. REDEFINES the old flat mock so the
+     dashboard / any legacy caller keeps working, but every row now carries its
+     property + chain context and a live stockPct computed from real stock. */
+  MB.admin.getMachines = function () {
+    var h = loadHier();
+    return h.machines.map(function (m) {
+      var prop = findIn(h.properties, m.propertyId) || {};
+      var chain = findIn(h.chains, prop.chainId) || {};
+      return {
+        id: m.id, status: m.status, level: m.level, floor: m.level,
+        propertyId: m.propertyId, propertyName: prop.name || "", city: prop.city || "", state: prop.state || "",
+        chainId: chain.id || "", chainName: chain.name || "",
+        hotel: prop.name || "",           // legacy alias used by older views
+        slots: m.slotRange || "-", slotRange: m.slotRange || "-",
+        stockPct: stockPctOf(m), lastVend: m.lastVend, pin: m.pin
+      };
+    });
+  };
+
+  /* =========================================================================
+     CHAIN-LEVEL PRICING + PLANOGRAM  +  PRICE RESOLUTION
+     ========================================================================= */
+
+  // Resolve any reference (chainId | propertyId | machineId) to its chain.
+  function resolveChain(ref) {
+    var h = loadHier();
+    var c = findIn(h.chains, ref); if (c) return c;
+    var p = findIn(h.properties, ref); if (p) return findIn(h.chains, p.chainId);
+    var m = findIn(h.machines, ref);
+    if (m) { var pp = findIn(h.properties, m.propertyId); if (pp) return findIn(h.chains, pp.chainId); }
+    return null;
+  }
+  MB.admin.resolveChain = resolveChain;
+
+  /* MB.priceFor(productId, ref)
+     The price a given machine/property/chain charges for a product: the chain's
+     override if it set one, otherwise the master catalogue default. `ref` may be
+     a chain id, a property id or a machine id (all resolve to the chain). With
+     no ref, returns the default. This is the function the kiosk can adopt in a
+     later pass; the kiosk's current display is deliberately left unchanged. */
+  MB.priceFor = function (productId, ref) {
+    var item = MB.findItem(productId);
+    var dflt = item ? item.priceCents : 0;
+    var chain = ref ? resolveChain(ref) : null;
+    if (chain && chain.priceOverrides && chain.priceOverrides.hasOwnProperty(productId)) {
+      return chain.priceOverrides[productId];
+    }
+    return dflt;
+  };
+
+  /* Products this reference stocks (the chain planogram, else the full
+     catalogue), as an ordered array of catalogue item objects. */
+  MB.planogramFor = function (ref) {
+    var chain = ref ? resolveChain(ref) : null;
+    var ids = planogramIdsFor(chain);
+    var out = [];
+    for (var i = 0; i < ids.length; i++) { var it = MB.findItem(ids[i]); if (it) out.push(it); }
+    return out;
+  };
+
+  /* A chain's full price list: every catalogue item with its default price, the
+     chain's override (if any) and the effective price. Drives the chain price
+     editor. */
+  MB.admin.chainPriceList = function (chainId) {
+    var chain = MB.admin.getChain(chainId);
+    if (!chain) return null;
+    var inPlan = {};
+    var ids = planogramIdsFor(chain);
+    for (var i = 0; i < ids.length; i++) inPlan[ids[i]] = true;
+    var lines = MB.catalogue.map(function (it) {
+      var has = chain.priceOverrides && chain.priceOverrides.hasOwnProperty(it.id);
+      return {
+        id: it.id, name: it.name, category: it.category, slot: it.slot, isAlcohol: !!it.isAlcohol,
+        defaultCents: it.priceCents,
+        overrideCents: has ? chain.priceOverrides[it.id] : null,
+        effectiveCents: has ? chain.priceOverrides[it.id] : it.priceCents,
+        stocked: !!inPlan[it.id]
+      };
+    });
+    return { chain: chain, lines: lines };
+  };
+
+  /* Save a chain's price overrides + planogram in one go.
+     overrides: { productId: priceCents | null }  (null clears an override)
+     stockedIds: array of productIds the chain stocks (its planogram); pass null
+                 to leave the planogram as-is. */
+  MB.admin.saveChainPricing = function (chainId, overrides, stockedIds) {
+    var h = loadHier();
+    var chain = findIn(h.chains, chainId);
+    if (!chain) return null;
+    chain.priceOverrides = chain.priceOverrides || {};
+    if (overrides) {
+      for (var pid in overrides) {
+        if (!overrides.hasOwnProperty(pid)) continue;
+        var v = overrides[pid];
+        if (v === null || v === "" || isNaN(Number(v))) { delete chain.priceOverrides[pid]; }
+        else { chain.priceOverrides[pid] = Math.max(0, Math.round(Number(v))); }
+      }
+    }
+    if (stockedIds) {
+      // if every catalogue item is stocked, store null (means "full catalogue")
+      chain.planogram = (stockedIds.length >= MB.catalogue.length) ? null : stockedIds.slice();
+    }
+    saveHier(h);
+    MB.bus.post("chains:changed", { chainId: chainId });
+    MB.store.audit("admin_chain_pricing", { chainId: chainId, name: chain.name,
+      overrides: Object.keys(chain.priceOverrides).length, planogram: chain.planogram ? chain.planogram.length : MB.catalogue.length }, {});
+    return chain;
+  };
+
+  /* =========================================================================
+     PER-PROPERTY EDITOR + POLICY
+     ========================================================================= */
+
+  // Effective policy for a machine/property: property override merged over the
+  // global config defaults. Exposed for the kiosk to adopt per-machine later.
+  MB.policyFor = function (ref) {
+    var h = loadHier();
+    var prop = findIn(h.properties, ref);
+    if (!prop) { var m = findIn(h.machines, ref); if (m) prop = findIn(h.properties, m.propertyId); }
+    var pol = (prop && prop.policy) || {};
+    return {
+      DAILY_ALCOHOL_CAP: pol.DAILY_ALCOHOL_CAP != null ? pol.DAILY_ALCOHOL_CAP : MB.config.DAILY_ALCOHOL_CAP,
+      STAY_WINDOW_DAYS:  pol.STAY_WINDOW_DAYS  != null ? pol.STAY_WINDOW_DAYS  : MB.config.STAY_WINDOW_DAYS,
+      BUFFER_AGE:        pol.BUFFER_AGE        != null ? pol.BUFFER_AGE        : MB.config.BUFFER_AGE
+    };
+  };
+
+  /* Update a property record. Commission is only written when the caller passes
+     it AND the current user may see money (owner/accounts) - staff can never set
+     a commission. Everything else (levels, phones, emails, notes, policy) is
+     editable by any role. */
+  MB.admin.updateProperty = function (id, patch) {
+    var h = loadHier();
+    var prop = findIn(h.properties, id);
+    if (!prop) return null;
+    patch = patch || {};
+    if ("name" in patch)  prop.name = String(patch.name);
+    if ("city" in patch)  prop.city = String(patch.city);
+    if ("state" in patch) prop.state = String(patch.state);
+    if ("levels" in patch)  prop.levels = cleanList(patch.levels);
+    if ("phones" in patch)  prop.phones = cleanList(patch.phones);
+    if ("emails" in patch)  prop.emails = cleanList(patch.emails);
+    if ("notes" in patch)   prop.notes = String(patch.notes || "");
+    if (patch.policy) {
+      prop.policy = prop.policy || {};
+      ["DAILY_ALCOHOL_CAP", "STAY_WINDOW_DAYS", "BUFFER_AGE"].forEach(function (k) {
+        if (k in patch.policy && patch.policy[k] !== null && patch.policy[k] !== "") {
+          var v = Math.round(Number(patch.policy[k]));
+          if (!isNaN(v) && v >= 0) prop.policy[k] = v;
+        }
+      });
+    }
+    // commission is money: only owner/accounts may write it
+    if ("commissionPct" in patch && MB.canSeeMoney()) {
+      var c = Number(patch.commissionPct);
+      if (!isNaN(c)) prop.commissionPct = Math.round(clamp(c, 0, 100) * 100) / 100;
+    }
+    saveHier(h);
+    MB.bus.post("properties:changed", { id: id });
+    MB.store.audit("admin_property_update", { id: id, name: prop.name }, {});
+    return prop;
+  };
+  function cleanList(v) {
+    if (Array.isArray(v)) return v.map(function (x) { return String(x).trim(); }).filter(function (x) { return x; });
+    return String(v || "").split(/[\n,]/).map(function (x) { return x.trim(); }).filter(function (x) { return x; });
+  }
+
+  // Commission setter kept for compatibility; routes to the property record and
+  // is refused for staff (they cannot see or set money).
+  MB.admin.setPropertyCommission = function (propertyId, pct) {
+    if (!MB.canSeeMoney()) return null;
+    return MB.admin.updateProperty(propertyId, { commissionPct: pct });
+  };
+
+  /* =========================================================================
+     MACHINE STOCK, PICK LIST + RESTOCK FLOW (4-digit staff PIN)
+     ========================================================================= */
+
+  // Real per-slot stock for a machine (only the products it planograms).
+  MB.admin.getMachineStock = function (machineId) {
+    var h = loadHier();
+    var m = findIn(h.machines, machineId);
+    if (!m) return null;
+    var prop = findIn(h.properties, m.propertyId) || {};
+    var chain = findIn(h.chains, prop.chainId) || {};
+    var lines = [];
+    for (var pid in m.par) {
+      if (!m.par.hasOwnProperty(pid)) continue;
+      var it = MB.findItem(pid); if (!it) continue;
+      lines.push({
+        id: pid, slot: it.slot, name: it.name, category: it.category, isAlcohol: !!it.isAlcohol,
+        par: m.par[pid], current: m.stock[pid] || 0,
+        priceCents: MB.priceFor(pid, machineId)
+      });
+    }
+    lines.sort(function (a, b) { return (a.slot || "").localeCompare(b.slot || ""); });
+    return {
+      machine: { id: m.id, level: m.level, status: m.status, slotRange: m.slotRange, stockPct: stockPctOf(m), lastVend: m.lastVend },
+      property: prop, chain: chain, lines: lines
+    };
+  };
+
+  /* pickList(machineId): every stocked product with par, current and the qty to
+     pick to reach par. `lines` is the full set (for the on-screen table); `needed`
+     is ONLY the items that need restocking (qty > 0) - that is what the compact
+     printable PDF prints. */
+  MB.admin.pickList = function (machineId) {
+    var stock = MB.admin.getMachineStock(machineId);
+    if (!stock) return null;
+    var order = MB.categories;
+    var lines = stock.lines.map(function (l) {
+      var o = {}; for (var k in l) o[k] = l[k];
+      o.pick = Math.max(0, l.par - l.current);
+      return o;
+    });
+    lines.sort(function (a, b) {
+      var ca = order.indexOf(a.category), cb = order.indexOf(b.category);
+      if (ca !== cb) return ca - cb;
+      return (a.slot || "").localeCompare(b.slot || "");
+    });
+    var needed = lines.filter(function (l) { return l.pick > 0; });
+    var totalPick = 0;
+    for (var i = 0; i < needed.length; i++) totalPick += needed[i].pick;
+    return {
+      machine: stock.machine, property: stock.property, chain: stock.chain,
+      generatedAt: new Date().toISOString(),
+      lines: lines, needed: needed,
+      totals: { unitsToPick: totalPick, skusToPick: needed.length, slots: lines.length }
+    };
+  };
+
+  // Verify the 4-digit staff PIN held behind the machine's red button.
+  MB.admin.verifyStaffPin = function (machineId, pin) {
+    var m = MB.admin.getMachine(machineId);
+    if (!m) return false;
+    return String(pin || "") === String(m.pin || "");
+  };
+  // Exposed so the demo restock screen can show the right code to type.
+  MB.admin.machinePin = function (machineId) {
+    var m = MB.admin.getMachine(machineId); return m ? m.pin : null;
+  };
+
+  /* restockMachine(machineId, opts) - simulate a staff restock at the machine.
+     Requires a valid staff PIN (the red button + PIN gate).
+       opts.staffPin  : the 4-digit PIN entered
+       opts.mode      : 'par'      -> top every slot to par (Refill all)
+                        'picklist' -> accept the suggested pick quantities
+                                      (also lands every below-par slot at par)
+                        'custom'   -> live per-slot counts from opts.counts
+       opts.counts    : { productId: newCurrent } for 'custom'
+       opts.staffName : who is loading (audit only)
+     Updates machine stock, refreshes status, writes a 'restock' audit entry. */
+  MB.admin.restockMachine = function (machineId, opts) {
+    opts = opts || {};
+    var h = loadHier();
+    var m = findIn(h.machines, machineId);
+    if (!m) return { ok: false, reason: "no_machine" };
+    if (!MB.admin.verifyStaffPin(machineId, opts.staffPin)) return { ok: false, reason: "bad_pin" };
+
+    var before = {}; for (var pid in m.stock) before[pid] = m.stock[pid];
+    var added = 0, touched = 0;
+
+    if (opts.mode === "custom" && opts.counts) {
+      for (var cid in opts.counts) {
+        if (!m.par.hasOwnProperty(cid)) continue;
+        var nv = clamp(Math.round(Number(opts.counts[cid])), 0, m.par[cid]);
+        if (nv !== m.stock[cid]) { if (nv > (m.stock[cid] || 0)) added += nv - (m.stock[cid] || 0); m.stock[cid] = nv; touched++; }
+      }
+    } else {
+      // 'par' and 'picklist' both bring every below-par slot up to par
+      for (var ppid in m.par) {
+        if (!m.par.hasOwnProperty(ppid)) continue;
+        var cur = m.stock[ppid] || 0, par = m.par[ppid];
+        if (cur < par) { added += par - cur; m.stock[ppid] = par; touched++; }
+      }
+    }
+
+    // status refresh: a well-stocked machine comes back online
+    var pct = stockPctOf(m);
+    if (m.status !== "offline") m.status = pct < 30 ? "low_stock" : "online";
+    m.lastRestock = new Date().toISOString();
+    saveHier(h);
+
+    var prop = findIn(h.properties, m.propertyId) || {};
+    MB.store.audit("restock", {
+      machineId: machineId, property: prop.name, level: m.level,
+      mode: opts.mode || "par", unitsAdded: added, slotsTouched: touched,
+      staff: opts.staffName || "staff", stockPct: pct
+    }, { room: null });
+    MB.bus.post("machines:changed", { id: machineId, restock: true });
+    return { ok: true, unitsAdded: added, slotsTouched: touched, stockPct: pct, mode: opts.mode || "par" };
+  };
+
+  // Directly set one slot's live count during a restock (used as staff load).
+  MB.admin.setMachineSlot = function (machineId, productId, current) {
+    var h = loadHier();
+    var m = findIn(h.machines, machineId);
+    if (!m || !m.par.hasOwnProperty(productId)) return null;
+    m.stock[productId] = clamp(Math.round(Number(current) || 0), 0, m.par[productId]);
+    saveHier(h);
+    return m.stock[productId];
+  };
+
+  /* =========================================================================
+     VENUES (properties) + MONTHLY PAYOUT, ROLLED UP PER CHAIN
+     ========================================================================= */
+  var MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  function monthKeyOf(date) { var d = date || new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2); }
+  function monthLabel(mk) { var p = String(mk).split("-"); return (MONTH_NAMES[parseInt(p[1], 10) - 1] || "?") + " " + p[0]; }
+  function daysInMonth(mk) { var p = String(mk).split("-"); return new Date(parseInt(p[0], 10), parseInt(p[1], 10), 0).getDate(); }
+  // The payout run happens on the 1st for the PREVIOUS month. Default month key.
+  MB.admin.previousMonthKey = function (fromDate) {
+    var d = fromDate || new Date();
+    var y = d.getFullYear(), m = d.getMonth(); // 0-based; previous month
+    if (m === 0) { m = 12; y--; } // becomes December of last year
+    return y + "-" + ("0" + m).slice(-2);
+  };
+  MB.admin.availablePayoutMonths = function (count) {
+    count = count || 6;
+    var out = [], now = new Date();
+    var y = now.getFullYear(), m = now.getMonth(); // start at CURRENT month
+    for (var i = 0; i < count; i++) {
+      var mk = y + "-" + ("0" + (m + 1)).slice(-2);
+      out.push({ key: mk, label: monthLabel(mk) });
+      m--; if (m < 0) { m = 11; y--; }
+    }
+    return out;
+  };
+  function payDateFor(mk) {
+    var p = String(mk).split("-"); var y = parseInt(p[0], 10), m = parseInt(p[1], 10);
+    m += 1; if (m > 12) { m = 1; y++; }
+    return "01/" + ("0" + m).slice(-2) + "/" + y;
+  }
+
+  // Deterministic simulated month of trading for one property.
+  function simulatedPropertyMonth(prop, machineCount, mk) {
+    var days = daysInMonth(mk);
+    // future month -> no trading
+    var now = new Date(); var p = String(mk).split("-");
+    var first = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, 1);
+    var monthStartOfNow = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (first.getTime() > monthStartOfNow.getTime()) return { salesCents: 0, units: 0, txns: 0 };
+    if (machineCount <= 0) return { salesCents: 0, units: 0, txns: 0 };
+    var rnd = seededRand(hashStr(prop.id + "|" + mk));
+    var perMachineDaily = 5 + Math.floor(rnd() * 10);
+    var txns = Math.round(perMachineDaily * machineCount * days);
+    var units = Math.round(txns * (1.3 + rnd() * 0.9));
+    var salesCents = units * (700 + Math.round(rnd() * 550));
+    return { salesCents: salesCents, units: units, txns: txns };
+  }
+
+  // Attribute real kiosk purchases across properties for the month.
+  function realSalesByProperty(mk, properties) {
+    var by = {};
+    for (var i = 0; i < properties.length; i++) by[properties[i].id] = { salesCents: 0, units: 0, txns: 0 };
+    if (!properties.length) return by;
+    var purchases = MB.store.getPurchases();
+    for (var p = 0; p < purchases.length; p++) {
+      var pur = purchases[p];
+      if (monthKeyOf(new Date(pur.ts)) !== mk) continue;
+      var key = pur.mobile || pur.room || pur.id || "";
+      var idx = hashStr(key) % properties.length;
+      var b = by[properties[idx].id];
+      b.salesCents += pur.totalCents || 0; b.txns += 1;
+      var lines = pur.lines || [];
+      for (var l = 0; l < lines.length; l++) b.units += lines[l].qty || 0;
+    }
+    return by;
+  }
+
+  /* payoutReport(monthKey): the monthly payout run for the given trading month
+     (defaults to the PREVIOUS month, matching the 1st-of-month schedule).
+     Rolled up CHAIN -> PROPERTY. commission = the property's OWN commission % x
+     that property's sales. Returns chain subtotals and a fleet total.
+
+     NOTE (future): each property row is exactly what a XERO sync would post as an
+     accounts-payable bill on the 1st. See MB.admin.syncPayoutToXero (a stub). */
+  MB.admin.payoutReport = function (monthKey) {
+    var mk = monthKey || MB.admin.previousMonthKey();
+    var h = loadHier();
+    var real = realSalesByProperty(mk, h.properties);
+    var chains = [];
+    var totals = { salesCents: 0, units: 0, txns: 0, commissionCents: 0, machineCount: 0, propertyCount: 0 };
+    for (var c = 0; c < h.chains.length; c++) {
+      var chain = h.chains[c];
+      var props = h.properties.filter(function (p) { return p.chainId === chain.id; });
+      var chRows = [];
+      var chSub = { salesCents: 0, units: 0, txns: 0, commissionCents: 0, machineCount: 0 };
+      for (var pi = 0; pi < props.length; pi++) {
+        var prop = props[pi];
+        var mCount = h.machines.filter(function (m) { return m.propertyId === prop.id; }).length;
+        var sim = simulatedPropertyMonth(prop, mCount, mk);
+        var r = real[prop.id] || { salesCents: 0, units: 0, txns: 0 };
+        var salesCents = sim.salesCents + r.salesCents;
+        var units = sim.units + r.units;
+        var txns = sim.txns + r.txns;
+        var pct = prop.commissionPct || 0;
+        var commissionCents = Math.round(salesCents * pct / 100);
+        chRows.push({
+          propertyId: prop.id, name: prop.name, city: prop.city, state: prop.state,
+          machineCount: mCount, commissionPct: pct,
+          salesCents: salesCents, units: units, txns: txns,
+          commissionCents: commissionCents, realTxns: r.txns
+        });
+        chSub.salesCents += salesCents; chSub.units += units; chSub.txns += txns;
+        chSub.commissionCents += commissionCents; chSub.machineCount += mCount;
+      }
+      chains.push({ chainId: chain.id, name: chain.name, rows: chRows, subtotal: chSub });
+      totals.salesCents += chSub.salesCents; totals.units += chSub.units; totals.txns += chSub.txns;
+      totals.commissionCents += chSub.commissionCents; totals.machineCount += chSub.machineCount;
+      totals.propertyCount += props.length;
+    }
+    return {
+      month: mk, monthLabel: monthLabel(mk), payDate: payDateFor(mk),
+      chains: chains, totals: totals
+    };
+  };
+
+  /* getVenues(): flat list of properties with commission + machine count,
+     newest model equivalent of the old per-hotel venue list. */
+  MB.admin.getVenues = function () {
+    var h = loadHier();
+    return h.properties.map(function (p) {
+      var chain = findIn(h.chains, p.chainId) || {};
+      return {
+        propertyId: p.id, hotel: p.name, name: p.name, chainId: p.chainId, chainName: chain.name || "",
+        city: p.city, state: p.state, commissionPct: p.commissionPct || 0,
+        machineCount: h.machines.filter(function (m) { return m.propertyId === p.id; }).length
+      };
+    });
+  };
+
+  /* -------- STUB: Sync to Xero --------------------------------------------
+     Would post each property's monthly commission as an accounts-payable bill in
+     Xero on the 1st, from exactly the payoutReport figures. Deliberately does NO
+     network call: it is a placeholder pending the real Xero API credentials
+     (client id/secret, tenant connection + OAuth). See the UI note beside the
+     button in admin.html.
+     TODO(real): Xero Accounting API - POST /Bills (ACCPAY invoices), one per
+     property, using an OAuth2 access token for the connected tenant. */
+  MB.admin.syncPayoutToXero = function (monthKey) {
+    var rep = MB.admin.payoutReport(monthKey);
+    var billCount = 0;
+    for (var i = 0; i < rep.chains.length; i++) billCount += rep.chains[i].rows.length;
+    MB.store.audit("xero_sync_stub", {
+      month: rep.month, bills: billCount, totalCommissionCents: rep.totals.commissionCents
+    }, {});
+    // No network. Returns what WOULD have been posted, so the UI can confirm.
+    return {
+      ok: false, stub: true,
+      message: "Stub only. Pending Xero API credentials - no invoice was posted.",
+      month: rep.month, monthLabel: rep.monthLabel, payDate: rep.payDate,
+      billsThatWouldPost: billCount, totalCommissionCents: rep.totals.commissionCents
+    };
+  };
+
+  /* -------- one-shot reset of the hierarchy back to the seed (demo) -------- */
+  MB.admin.resetHierarchy = function () { var h = seedHier(); saveHier(h); MB.bus.post("chains:changed", { reset: true }); return h; };
+
+  // Ensure the hierarchy is seeded on first load so the fleet is never empty.
+  loadHier();
 })();

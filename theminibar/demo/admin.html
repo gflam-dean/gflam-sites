@@ -10,9 +10,16 @@
   THE MINI BAR - BACK OFFICE / ADMIN CONSOLE (real working MVP)
   ============================================================================
   The operator's console. Loads the shared foundation core.js (window.MB) and
-  drives the real back office against it: live sales + audit from MB.store,
-  catalogue management + policy controls persisted through MB.admin, and a mock
-  machine/hotel fleet.
+  drives the real back office against it:
+
+    - live sales + audit from MB.store
+    - the CHAIN -> PROPERTY -> MACHINE fleet from MB.admin
+    - chain-level pricing + planogram overrides (MB.priceFor resolution)
+    - per-property editor with its own policy + commission
+    - printable per-machine pick list (Print / Save as PDF)
+    - a machine restock flow gated behind a 4-digit staff PIN
+    - a monthly payout run rolled up per chain, with a stub Xero sync
+    - role-based access: OWNER / ACCOUNTS see money, STAFF never do
 
   It shares state with the guest kiosk over the SAME localStorage +
   BroadcastChannel bus. Open kiosk.html in one tab and admin.html in another:
@@ -36,7 +43,7 @@ html,body{height:100%;background:var(--dark);color:var(--white);font-family:"DM 
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
 .serif{font-family:"Cormorant Garamond",serif;font-weight:300}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-input,select{font-family:inherit}
+input,select,textarea{font-family:inherit}
 a{color:inherit;text-decoration:none}
 .dot{color:var(--gold)}
 
@@ -66,10 +73,23 @@ a{color:inherit;text-decoration:none}
   background:rgba(10,10,10,.92);backdrop-filter:blur(10px)}
 .topbar h1{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:30px;letter-spacing:-.3px;color:var(--off-white)}
 .topbar .crumb{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.topbar-right{display:flex;align-items:center;gap:16px}
 .live{display:inline-flex;align-items:center;gap:9px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
   color:var(--muted);border:1px solid var(--border-gold);border-radius:100px;padding:9px 16px}
 .live .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(111,207,151,.5);animation:pl 2.2s infinite}
 @keyframes pl{0%{box-shadow:0 0 0 0 rgba(111,207,151,.5)}70%{box-shadow:0 0 0 7px rgba(111,207,151,0)}100%{box-shadow:0 0 0 0 rgba(111,207,151,0)}}
+
+/* ---- Role switcher ---- */
+.role-box{display:flex;align-items:center;gap:10px;border:1px solid var(--border-gold);border-radius:100px;padding:6px 8px 6px 16px}
+.role-box .rl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.role-box .who{font-size:11px;color:var(--off-white);letter-spacing:.5px}
+.role-box .role-sel{background:var(--dark4);border:1px solid var(--border-gold);color:var(--gold);font-size:11px;
+  letter-spacing:1px;text-transform:uppercase;padding:7px 26px 7px 12px;border-radius:100px;outline:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a96e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center}
+.role-tag{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:100px;padding:4px 9px}
+.role-tag.money{color:var(--gold);border:1px solid var(--border-gold);background:rgba(201,169,110,.08)}
+.role-tag.nomoney{color:var(--muted);border:1px solid var(--border)}
 
 .view{padding:34px 40px 60px;display:none}
 .view.active{display:block;animation:fade .35s ease}
@@ -95,7 +115,7 @@ a{color:inherit;text-decoration:none}
 .panel{background:var(--dark2);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:26px}
 .panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 24px;border-bottom:1px solid var(--border)}
 .panel-head h2{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:24px;color:var(--off-white)}
-.panel-head p{font-size:12px;color:var(--muted);margin-top:3px;max-width:640px;line-height:1.6}
+.panel-head p{font-size:12px;color:var(--muted);margin-top:3px;max-width:660px;line-height:1.6}
 
 /* ---- Buttons ---- */
 .btn{display:inline-flex;align-items:center;gap:9px;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
@@ -134,12 +154,18 @@ td.right,.right{text-align:right}
 .link-btn{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-radius:3px;border:1px solid var(--border)}
 .link-btn:hover{color:var(--gold);border-color:var(--border-gold)}
 .link-btn.del:hover{color:var(--red);border-color:rgba(229,115,115,.4)}
+.link-btn.gold{color:var(--gold);border-color:var(--border-gold)}
 .empty{padding:56px 24px;text-align:center;color:var(--muted2);font-size:14px}
 tfoot td{padding:16px 24px;border-top:1px solid var(--border-gold);font-weight:600;color:var(--off-white);background:var(--dark3)}
 tfoot td.mono{font-variant-numeric:tabular-nums}
+tr.chain-sub td{background:rgba(201,169,110,.05);border-top:1px solid var(--border-gold);color:var(--gold-light);font-weight:600}
 .comm-input{width:92px;background:rgba(255,255,255,.04);border:1px solid var(--border-gold);color:#fff;
   font-size:15px;font-variant-numeric:tabular-nums;padding:9px 12px;border-radius:3px;outline:none;text-align:right;-webkit-appearance:none}
 .comm-input:focus{border-color:var(--gold)}
+.price-input{width:104px;background:rgba(255,255,255,.04);border:1px solid var(--border-gold);color:#fff;
+  font-size:14px;font-variant-numeric:tabular-nums;padding:8px 10px;border-radius:3px;outline:none;text-align:right;-webkit-appearance:none}
+.price-input:focus{border-color:var(--gold)}
+.price-input.overridden{border-color:var(--gold);color:var(--gold-light)}
 td.pick-need{color:var(--gold);font-weight:600}
 td.pick-zero{color:var(--muted2)}
 tr.row-need td.name{color:var(--gold-light)}
@@ -185,9 +211,10 @@ tr.row-need td.name{color:var(--gold-light)}
 .field{display:flex;flex-direction:column;gap:9px}
 .field label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
 .field .hint{font-size:12px;color:var(--muted);line-height:1.55}
-.field input,.field select{background:rgba(255,255,255,.04);border:1px solid var(--border-gold);color:#fff;
-  font-size:17px;padding:13px 15px;outline:none;border-radius:3px;transition:border-color .18s;-webkit-appearance:none}
-.field input:focus,.field select:focus{border-color:var(--gold)}
+.field input,.field select,.field textarea{background:rgba(255,255,255,.04);border:1px solid var(--border-gold);color:#fff;
+  font-size:16px;padding:12px 15px;outline:none;border-radius:3px;transition:border-color .18s;-webkit-appearance:none}
+.field textarea{min-height:70px;resize:vertical;font-size:14px;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
 .field .unit{font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase}
 .check-field{display:flex;align-items:center;gap:12px}
 .readonly-row{display:flex;flex-wrap:wrap;gap:12px;padding:0 24px 24px}
@@ -201,40 +228,103 @@ tr.row-need td.name{color:var(--gold-light)}
   background:rgba(201,169,110,.05);font-size:13px;color:var(--muted);line-height:1.65}
 .policy-note b{color:var(--gold);font-weight:600}
 
-/* ---- Machines ---- */
-.hotel-group{margin-bottom:26px}
-.hotel-group .hg-head{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}
-.hotel-group .hg-head h3{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:23px;color:var(--off-white)}
-.hotel-group .hg-head .cnt{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2)}
-.mach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
-.mach{background:var(--dark2);border:1px solid var(--border);border-radius:6px;padding:20px}
-.mach .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:16px}
-.mach .mid{font-family:"Cormorant Garamond",serif;font-size:22px;color:var(--off-white);line-height:1}
+/* ---- Fleet: chain -> property -> machine ---- */
+.chain-block{margin-bottom:34px}
+.chain-head{display:flex;align-items:baseline;gap:14px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-gold)}
+.chain-head h3{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:26px;color:var(--gold)}
+.chain-head .cnt{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2)}
+.prop-card{background:var(--dark2);border:1px solid var(--border);border-radius:6px;padding:20px 22px;margin-bottom:16px}
+.prop-card .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.prop-card .pt{font-family:"Cormorant Garamond",serif;font-size:22px;color:var(--off-white);line-height:1.1}
+.prop-card .pm{font-size:12px;color:var(--muted);margin-top:5px}
+.prop-card .pm b{color:var(--gold-light);font-weight:500}
+.mach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px;margin-top:16px}
+.mach{background:var(--dark3);border:1px solid var(--border);border-radius:6px;padding:18px}
+.mach .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+.mach .mid{font-family:"Cormorant Garamond",serif;font-size:20px;color:var(--off-white);line-height:1}
 .mach .fl{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:6px}
-.mach .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:14px}
+.mach .meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:12px}
 .stockbar{height:6px;border-radius:100px;background:var(--dark4);overflow:hidden;margin-top:8px}
 .stockbar i{display:block;height:100%;border-radius:100px;background:linear-gradient(90deg,var(--gold),var(--gold-light))}
 .stockbar i.lowfill{background:var(--amber)}
 .stockbar i.empty{background:var(--red)}
-.mach .foot{display:flex;gap:8px;margin-top:16px}
+.mach .foot{display:flex;gap:8px;margin-top:14px}
 .mach .foot .link-btn{flex:1;text-align:center}
 
 /* ---- Modal ---- */
 .mask{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:90;display:none;align-items:center;justify-content:center;padding:24px}
 .mask.show{display:flex}
-.modal{width:min(94vw,520px);max-height:90vh;overflow-y:auto;background:var(--dark2);border:1px solid var(--border-gold);border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal{width:min(94vw,560px);max-height:92vh;overflow-y:auto;background:var(--dark2);border:1px solid var(--border-gold);border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal.wide{width:min(96vw,760px)}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:22px 26px;border-bottom:1px solid var(--border)}
 .modal-head h3{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:26px;color:var(--off-white)}
+.modal-head .sub{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-top:4px}
 .modal-close{font-size:24px;color:var(--muted);line-height:1}
 .modal-close:hover{color:var(--gold)}
 .modal-body{padding:24px 26px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .modal-body .full{grid-column:1 / -1}
 .modal-foot{display:flex;justify-content:flex-end;gap:12px;padding:18px 26px;border-top:1px solid var(--border)}
+.section-label{grid-column:1/-1;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);
+  border-top:1px solid var(--border);padding-top:18px;margin-top:2px}
+.section-label:first-child{border-top:none;padding-top:0;margin-top:0}
+
+/* chain pricing modal body */
+.pricing-tools{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:20px 26px;border-bottom:1px solid var(--border);background:var(--dark3)}
+.pricing-tools .fl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.mk-input{width:84px;background:rgba(255,255,255,.04);border:1px solid var(--border-gold);color:#fff;font-size:15px;
+  padding:9px 12px;border-radius:3px;outline:none;text-align:right;-webkit-appearance:none}
+.mk-input:focus{border-color:var(--gold)}
+
+/* ---- Restock simulator ---- */
+.restock-stage{padding:30px 26px;text-align:center}
+.red-btn{width:150px;height:150px;border-radius:50%;margin:8px auto 20px;
+  background:radial-gradient(circle at 38% 32%,#ff6b6b,#c0392b 70%,#7a1f16);
+  border:6px solid #2a0e0b;box-shadow:0 12px 30px rgba(192,57,43,.45),inset 0 -8px 18px rgba(0,0,0,.4);
+  color:#fff;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:transform .1s}
+.red-btn:active{transform:scale(.94)}
+.red-btn.held{box-shadow:0 4px 14px rgba(192,57,43,.5),inset 0 -3px 10px rgba(0,0,0,.5),0 0 0 8px rgba(229,115,115,.18)}
+.pin-display{display:flex;gap:12px;justify-content:center;margin:6px 0 22px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:1px solid var(--border-gold);background:transparent}
+.pin-dot.on{background:var(--gold);border-color:var(--gold)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,84px);gap:12px;justify-content:center}
+.pin-key{height:64px;border:1px solid var(--border-gold);border-radius:8px;font-size:24px;color:var(--off-white);background:var(--dark3)}
+.pin-key:hover{border-color:var(--gold);color:var(--gold)}
+.pin-key.wide{grid-column:span 1}
+.pin-hint{font-size:12px;color:var(--muted);margin-top:18px}
+.pin-hint b{color:var(--gold)}
+.pin-err{color:var(--red);font-size:13px;margin-top:14px;min-height:18px}
+.restock-opts{display:grid;gap:14px;padding:26px}
+.ropt{display:flex;align-items:center;gap:16px;text-align:left;border:1px solid var(--border-gold);border-radius:8px;padding:18px 20px;transition:all .15s;background:var(--dark3);width:100%}
+.ropt:hover{border-color:var(--gold);background:rgba(201,169,110,.05)}
+.ropt .ic{width:42px;height:42px;flex-shrink:0;border-radius:8px;border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center}
+.ropt .ic svg{width:22px;height:22px;stroke:var(--gold);fill:none;stroke-width:1.6}
+.ropt .tt{font-size:15px;color:var(--off-white);font-weight:500}
+.ropt .ds{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
+.live-load{padding:6px 26px 20px}
+.load-row{display:grid;grid-template-columns:52px 1fr 84px 64px;gap:12px;align-items:center;padding:11px 6px;border-bottom:1px solid var(--border)}
+.load-row .nm{font-size:13px;color:var(--off-white)}
+.load-row .pr{font-size:11px;color:var(--muted)}
+.load-input{width:64px;background:rgba(255,255,255,.04);border:1px solid var(--border-gold);color:#fff;font-size:15px;
+  padding:8px;border-radius:3px;outline:none;text-align:center;-webkit-appearance:none}
+.load-input:focus{border-color:var(--gold)}
+.load-topar{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:3px;padding:7px 8px}
+.load-topar:hover{color:var(--gold);border-color:var(--border-gold)}
+.restock-done{padding:40px 26px;text-align:center}
+.restock-done .big{font-family:"Cormorant Garamond",serif;font-size:40px;color:var(--gold);margin-bottom:8px}
+.restock-done .msg{color:var(--muted);line-height:1.6}
+
+/* ---- Locked (staff) notice ---- */
+.locked{padding:60px 24px;text-align:center;color:var(--muted2)}
+.locked svg{width:44px;height:44px;stroke:var(--muted2);fill:none;stroke-width:1.4;margin-bottom:16px}
+.locked h3{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:26px;color:var(--muted);margin-bottom:8px}
 
 /* ---- Missing core notice ---- */
 #missing{display:none;padding:60px;text-align:center}
 #missing h2{font-family:"Cormorant Garamond",serif;font-weight:300;font-size:32px;color:var(--red);margin-bottom:12px}
 #missing p{color:var(--muted);max-width:480px;margin:0 auto;line-height:1.7}
+
+/* role: hide money-only nav + elements for staff */
+body.role-staff .money-only{display:none !important}
 
 @media(max-width:860px){
   #app{flex-direction:column}
@@ -242,15 +332,39 @@ tr.row-need td.name{color:var(--gold-light)}
   .nav{display:flex;flex-wrap:wrap;gap:6px;padding:12px}
   .nav-item{width:auto;margin-bottom:0}
   .nav-foot{display:none}
-  .topbar{padding:18px 20px}
+  .topbar{padding:18px 20px;flex-wrap:wrap}
   .view{padding:24px 20px 48px}
   .modal-body{grid-template-columns:1fr}
 }
+
+/* ============================ PRINT ============================ */
+/* Default print: hide chrome, print the active panel (payout / compliance). */
 @media print{
-  #sidebar,.topbar .live,.filters,.panel-head .btn,.nav{display:none!important}
+  #sidebar,.topbar,.filters,.panel-head .btn,.nav,.mask,.role-box{display:none!important}
   body,html{background:#fff;color:#000}
-  .panel,.log-row{border-color:#ccc}
-  .log-row .ev,.log-row .dt,.log-row .t{color:#000}
+  .panel,.log-row,tbody td,thead th,tfoot td{border-color:#ccc}
+  .log-row .ev,.log-row .dt,.log-row .t,td,th,.tile .n,.panel-head h2{color:#000!important}
+  .tile{border-color:#ccc}
+  #picklist-pdf{display:none}
+}
+/* Dedicated pick-list PDF layout: shown ONLY when printing a pick list. */
+#picklist-pdf{display:none}
+@media print{
+  body.print-pick #app{display:none!important}
+  body.print-pick #picklist-pdf{display:block!important;color:#000;padding:0;font-family:"DM Sans",sans-serif}
+  body.print-pick{background:#fff}
+  #picklist-pdf .pl-head{border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:16px}
+  #picklist-pdf .pl-brand{font-family:"Cormorant Garamond",serif;font-size:26px}
+  #picklist-pdf .pl-title{font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+  #picklist-pdf .pl-meta{font-size:12px;margin-top:10px;line-height:1.7}
+  #picklist-pdf .pl-meta b{display:inline-block;min-width:74px}
+  #picklist-pdf table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  #picklist-pdf th{text-align:left;border-bottom:1.5px solid #000;padding:7px 8px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+  #picklist-pdf td{border-bottom:1px solid #bbb;padding:7px 8px}
+  #picklist-pdf td.qty,#picklist-pdf th.qty{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  #picklist-pdf tfoot td{border-top:2px solid #000;font-weight:700}
+  #picklist-pdf .pl-foot{margin-top:20px;font-size:11px;color:#333;border-top:1px solid #999;padding-top:10px}
+  @page{size:A4;margin:16mm}
 }
 </style>
 </head>
@@ -268,19 +382,21 @@ tr.row-need td.name{color:var(--gold-light)}
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</button>
       <button class="nav-item" data-view="products" onclick="showView('products')">
         <svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>Products</button>
+      <button class="nav-item money-only" data-view="chains" onclick="showView('chains')">
+        <svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 10h.01M15 10h.01"/></svg>Chains &amp; Pricing</button>
+      <button class="nav-item" data-view="fleet" onclick="showView('fleet')">
+        <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6M9 10h6M9 14h3"/></svg>Fleet</button>
+      <button class="nav-item" data-view="picklist" onclick="showView('picklist')">
+        <svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 11l1.5 1.5L13 10M9 16h5"/></svg>Pick &amp; Restock</button>
+      <button class="nav-item money-only" data-view="payouts" onclick="showView('payouts')">
+        <svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Payouts</button>
       <button class="nav-item" data-view="compliance" onclick="showView('compliance')">
         <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>Compliance</button>
       <button class="nav-item" data-view="settings" onclick="showView('settings')">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.06-.4.1-.8.1-1.2z"/></svg>Settings</button>
-      <button class="nav-item" data-view="machines" onclick="showView('machines')">
-        <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 6h6M9 10h6M9 14h3"/></svg>Machines</button>
-      <button class="nav-item" data-view="payouts" onclick="showView('payouts')">
-        <svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Payouts</button>
-      <button class="nav-item" data-view="picklist" onclick="showView('picklist')">
-        <svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 11l1.5 1.5L13 10M9 16h5"/></svg>Pick lists</button>
     </nav>
     <div class="nav-foot">
-      <div class="op">Operator: Gflam Vending<br>Fleet console v1.0</div>
+      <div class="op">Operator: Gflam Vending<br>Fleet console v1.1</div>
       <button class="reset-link" onclick="resetDemo()">Reset demo data</button>
     </div>
   </aside>
@@ -292,7 +408,14 @@ tr.row-need td.name{color:var(--gold-light)}
         <div class="crumb" id="crumb">Overview</div>
         <h1 id="page-title">Dashboard</h1>
       </div>
-      <span class="live"><span class="pulse"></span>Live &middot; <span id="live-time">--:--</span></span>
+      <div class="topbar-right">
+        <div class="role-box">
+          <span class="rl">Signed in</span>
+          <select class="role-sel" id="role-sel" onchange="onRoleChange(this.value)"></select>
+          <span class="role-tag" id="role-tag"></span>
+        </div>
+        <span class="live"><span class="pulse"></span>Live &middot; <span id="live-time">--:--</span></span>
+      </div>
     </div>
 
     <!-- DASHBOARD -->
@@ -307,11 +430,11 @@ tr.row-need td.name{color:var(--gold-light)}
       </div>
     </section>
 
-    <!-- PRODUCTS -->
+    <!-- PRODUCTS (master catalogue, default prices) -->
     <section class="view" id="v-products">
       <div class="panel">
         <div class="panel-head">
-          <div><h2>Product Catalogue</h2><p>The live range every machine sells. Edits here are persisted through the shared core and picked up by the kiosk on its next load. Alcohol items carry standard-drink data that feeds the responsible-service cap.</p></div>
+          <div><h2>Master Catalogue</h2><p>The master range and its DEFAULT prices. Every machine inherits these unless a chain sets its own price on the Chains &amp; Pricing page. Alcohol items carry standard-drink data that feeds the responsible-service cap.</p></div>
           <div style="display:flex;gap:10px">
             <button class="btn btn-ghost btn-sm btn-danger" onclick="resetCatalogue()">Reset catalogue</button>
             <button class="btn btn-gold btn-sm" onclick="openProduct(null)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add product</button>
@@ -319,9 +442,97 @@ tr.row-need td.name{color:var(--gold-light)}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Slot</th><th>Product</th><th>Category</th><th>Type</th><th class="right">Std drinks</th><th class="right">Price</th><th class="right">Actions</th></tr></thead>
+            <thead><tr><th>Slot</th><th>Product</th><th>Category</th><th>Type</th><th class="right">Std drinks</th><th class="right money-only">Default price</th><th class="right">Actions</th></tr></thead>
             <tbody id="products-body"></tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAINS & PRICING (money-only) -->
+    <section class="view" id="v-chains">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Chains &amp; Pricing</h2><p>Each hotel chain sets its prices and product selection ONCE, and every property in the chain inherits them. A chain with no override simply uses the master catalogue price.</p></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Chain</th><th class="right">Properties</th><th class="right">Machines</th><th class="right">Price overrides</th><th class="right">Products stocked</th><th class="right">Actions</th></tr></thead>
+            <tbody id="chains-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- FLEET: chain -> property -> machine -->
+    <section class="view" id="v-fleet">
+      <div class="tiles" id="fleet-tiles"></div>
+      <div class="panel-head" style="border:none;padding:0 0 10px">
+        <div><h2 class="serif" style="font-size:24px;color:var(--off-white)">Fleet by Chain</h2><p style="color:var(--muted);font-size:12px;margin-top:3px">Chain, then property, then machine. Click a property to open its record: levels, contacts, notes, policy and commission.</p></div>
+        <button class="btn btn-ghost btn-sm btn-danger" onclick="resetFleet()">Reset fleet to seed</button>
+      </div>
+      <div id="fleet-body"></div>
+    </section>
+
+    <!-- PICK & RESTOCK -->
+    <section class="view" id="v-picklist">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Restock Pick List</h2><p>Choose a machine to generate its restock pick list: every product with its par (capacity), current stock and the quantity to pick to refill to par. Print or save as a clean PDF to take on the run, then restock the machine.</p></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-gold btn-sm" onclick="openRestockFromPick()"><svg viewBox="0 0 24 24"><path d="M12 2v6M12 22v-6M2 12h6M22 12h-6"/><circle cx="12" cy="12" r="3"/></svg>Restock machine</button>
+            <button class="btn btn-ghost btn-sm" onclick="printPickList()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print / Save as PDF</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportPickCsv()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button>
+          </div>
+        </div>
+        <div class="filters">
+          <span class="fl">Machine</span>
+          <select class="sel" id="pick-machine" onchange="renderPickList()"></select>
+          <label class="toggle"><input type="checkbox" id="pick-needed-only" onchange="renderPickList()"><span class="sw"></span>Needs picking only</label>
+          <span style="flex:1"></span>
+          <span class="fl" id="pick-summary"></span>
+        </div>
+        <div id="pick-print">
+          <div id="pick-head-line" class="policy-note" style="display:none"></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Slot</th><th>Product</th><th>Category</th><th>Type</th><th class="right">Par</th><th class="right">In stock</th><th class="right">Qty to pick</th></tr></thead>
+              <tbody id="pick-body"></tbody>
+              <tfoot id="pick-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAYOUTS (money-only) -->
+    <section class="view" id="v-payouts">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Monthly Payout Run</h2><p>Runs on the 1st of the month for the PREVIOUS month. Per property, rolled up per chain: total sales, the property's own commission %, and the commission The Mini Bar pays that venue. Simulated trading is shown so the run is complete, and any live kiosk sales for the month are folded in.</p></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-gold btn-sm" onclick="syncXero()"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 8-8 8 8 0 0 1 6.9 4M20 12a8 8 0 0 1-8 8 8 8 0 0 1-6.9-4"/><path d="M18 4v4h-4M6 20v-4h4"/></svg>Sync to Xero</button>
+            <button class="btn btn-ghost btn-sm" onclick="window.print()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
+            <button class="btn btn-ghost btn-sm" onclick="exportPayoutCsv()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button>
+          </div>
+        </div>
+        <div class="filters">
+          <span class="fl">Trading month</span>
+          <select class="sel" id="payout-month" onchange="renderPayoutReport()"></select>
+          <span style="flex:1"></span>
+          <span class="fl" id="payout-paydate"></span>
+        </div>
+        <div id="payout-print">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Property</th><th>Location</th><th class="right">Machines</th><th class="right">Total sales</th><th class="right">Units</th><th class="right">Commission %</th><th class="right">Commission owed</th></tr></thead>
+              <tbody id="payout-body"></tbody>
+              <tfoot id="payout-foot"></tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="policy-note">
+          <b>Sync to Xero is a STUB.</b> It is the hook where, on the 1st, each property's commission would be raised as an accounts-payable bill in Xero (one per property) straight from these figures. It is pending the real Xero API credentials, so no invoice is posted and no network call is made.
         </div>
       </div>
     </section>
@@ -331,7 +542,7 @@ tr.row-need td.name{color:var(--gold-light)}
       <div class="tiles" id="comp-tiles"></div>
       <div class="panel">
         <div class="panel-head">
-          <div><h2>Compliance &amp; Audit Log</h2><p>Every age check, OTP verification, cap check, refusal, payment and vend, timestamped and append-only. This is the property's responsible-service due-diligence record and doubles as evidence for OLGR and hotel partners. Refusals are highlighted in red.</p></div>
+          <div><h2>Compliance &amp; Audit Log</h2><p>Every age check, OTP verification, cap check, refusal, payment, vend and restock, timestamped and append-only. This is the property's responsible-service due-diligence record and doubles as evidence for OLGR and hotel partners. Refusals are highlighted in red.</p></div>
           <div style="display:flex;gap:10px">
             <button class="btn btn-ghost btn-sm" onclick="window.print()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
             <button class="btn btn-ghost btn-sm" onclick="exportAuditCsv()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button>
@@ -352,7 +563,7 @@ tr.row-need td.name{color:var(--gold-light)}
     <section class="view" id="v-settings">
       <div class="panel">
         <div class="panel-head">
-          <div><h2>Policy Controls</h2><p>These are live responsible-service policy controls, not cosmetic settings. Changing them changes how every machine verifies age and caps alcohol. A change is picked up by the kiosk on its next load.</p></div>
+          <div><h2>Global Policy Defaults</h2><p>The fleet-wide responsible-service defaults. A property can tighten these on its own record (Fleet page). Changing a default changes how every machine verifies age and caps alcohol unless a property overrides it. A change is picked up by the kiosk on its next load.</p></div>
         </div>
         <div class="policy-note">
           <b>Handle with care.</b> The buffer age forces a photo-ID check when a face estimate lands under it. The daily cap is the maximum alcoholic drinks per verified mobile per day. The stay window is how long a mobile stays verified before a fresh code is needed. Every change here is written to the audit log as due-diligence evidence.
@@ -376,91 +587,9 @@ tr.row-need td.name{color:var(--gold-light)}
         </div>
         <div class="readonly-row" id="settings-readonly"></div>
         <div class="form-foot">
-          <button class="btn btn-gold btn-sm" onclick="saveSettings()"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 6"/></svg>Save policy</button>
+          <button class="btn btn-gold btn-sm" onclick="saveSettings()"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 6"/></svg>Save defaults</button>
           <button class="btn btn-ghost btn-sm btn-danger" onclick="resetSettings()">Reset to defaults</button>
           <span class="saved-flag" id="settings-saved">Saved. Machines will apply this on next load.</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- MACHINES -->
-    <section class="view" id="v-machines">
-      <div class="tiles" id="mach-tiles"></div>
-      <div class="panel-head" style="border:none;padding:0 0 8px">
-        <div><h2 class="serif" style="font-size:24px;color:var(--off-white)">Fleet by Hotel</h2><p style="color:var(--muted);font-size:12px;margin-top:3px">One machine per floor. Mock fleet for the operator model. Status toggles are stored locally.</p></div>
-      </div>
-      <div id="machines-body"></div>
-    </section>
-
-    <!-- PAYOUTS -->
-    <section class="view" id="v-payouts">
-      <div class="panel">
-        <div class="panel-head">
-          <div><h2>Venue Commission</h2><p>Each venue earns a commission on everything its machines sell. Set the percentage per venue here. The Mini Bar pays each venue their commission on the 1st of the following month. Changes are persisted and written to the audit log.</p></div>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Venue</th><th class="right">Machines</th><th class="right">Commission %</th><th class="right">Actions</th></tr></thead>
-            <tbody id="venues-body"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div><h2>Monthly Payout Report</h2><p>Per venue for the selected month: total sales, the commission rate, the commission owed and the payout total. Simulated trading is shown so the run is complete, and any live kiosk sales for the month are folded in.</p></div>
-          <div style="display:flex;gap:10px">
-            <button class="btn btn-ghost btn-sm" onclick="printPayout()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
-            <button class="btn btn-ghost btn-sm" onclick="exportPayoutCsv()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button>
-          </div>
-        </div>
-        <div class="filters">
-          <span class="fl">Trading month</span>
-          <select class="sel" id="payout-month" onchange="renderPayoutReport()"></select>
-          <span style="flex:1"></span>
-          <span class="fl" id="payout-paydate"></span>
-        </div>
-        <div id="payout-print">
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Venue</th><th class="right">Machines</th><th class="right">Total sales</th><th class="right">Units</th><th class="right">Commission %</th><th class="right">Commission owed</th><th class="right">Payout total</th></tr></thead>
-              <tbody id="payout-body"></tbody>
-              <tfoot id="payout-foot"></tfoot>
-            </table>
-          </div>
-        </div>
-        <div class="policy-note">
-          <b>Future:</b> this is where a XERO sync will raise each venue's monthly commission bill automatically from these figures (one accounts-payable invoice per venue). For now the report computes, displays and exports only, with no network calls.
-        </div>
-      </div>
-    </section>
-
-    <!-- PICK LISTS -->
-    <section class="view" id="v-picklist">
-      <div class="panel">
-        <div class="panel-head">
-          <div><h2>Restock Pick List</h2><p>Choose a machine to generate its restock pick list: every product with its par (capacity), current stock and the quantity to pick to refill to par. This is what the restock team picks before heading to the hotel.</p></div>
-          <div style="display:flex;gap:10px">
-            <button class="btn btn-ghost btn-sm" onclick="printPickList()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
-            <button class="btn btn-ghost btn-sm" onclick="exportPickCsv()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>Export CSV</button>
-          </div>
-        </div>
-        <div class="filters">
-          <span class="fl">Machine</span>
-          <select class="sel" id="pick-machine" onchange="renderPickList()"></select>
-          <label class="toggle"><input type="checkbox" id="pick-needed-only" onchange="renderPickList()"><span class="sw"></span>Needs picking only</label>
-          <span style="flex:1"></span>
-          <span class="fl" id="pick-summary"></span>
-        </div>
-        <div id="pick-print">
-          <div id="pick-head-line" class="policy-note" style="display:none"></div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Slot</th><th>Product</th><th>Category</th><th>Type</th><th class="right">Par</th><th class="right">In stock</th><th class="right">Qty to pick</th></tr></thead>
-              <tbody id="pick-body"></tbody>
-              <tfoot id="pick-foot"></tfoot>
-            </table>
-          </div>
         </div>
       </div>
     </section>
@@ -478,7 +607,7 @@ tr.row-need td.name{color:var(--gold-light)}
       <div class="field full"><label>Product name</label><input id="pf-name" type="text" placeholder="e.g. Local Craft Lager 375ml"></div>
       <div class="field"><label>Category</label><select id="pf-category" class="sel"></select></div>
       <div class="field"><label>Slot</label><input id="pf-slot" type="text" placeholder="e.g. B1"></div>
-      <div class="field"><label>Price (AUD)</label><input id="pf-price" type="number" min="0" step="0.10" inputmode="decimal" placeholder="12.00"></div>
+      <div class="field"><label>Default price (AUD)</label><input id="pf-price" type="number" min="0" step="0.10" inputmode="decimal" placeholder="12.00"></div>
       <div class="field"><label>Standard drinks</label><input id="pf-std" type="number" min="0" step="0.1" inputmode="decimal" placeholder="1.4"></div>
       <div class="field full check-field">
         <label class="toggle"><input type="checkbox" id="pf-alcohol" onchange="onAlcoholToggle()"><span class="sw"></span></label>
@@ -491,6 +620,79 @@ tr.row-need td.name{color:var(--gold-light)}
     </div>
   </div>
 </div>
+
+<!-- CHAIN PRICING MODAL -->
+<div class="mask" id="chain-mask">
+  <div class="modal wide">
+    <div class="modal-head">
+      <div><h3 id="chain-modal-title">Chain Prices</h3><div class="sub" id="chain-modal-sub"></div></div>
+      <button class="modal-close" onclick="closeChain()">&times;</button>
+    </div>
+    <div class="pricing-tools">
+      <span class="fl">Pass commission into price</span>
+      <input class="mk-input" id="chain-markup" type="number" min="0" max="100" step="0.5" placeholder="%">
+      <button class="btn btn-ghost btn-sm" onclick="applyMarkup()">Apply markup across chain</button>
+      <span style="flex:1"></span>
+      <button class="btn btn-ghost btn-sm btn-danger" onclick="clearChainOverrides()">Clear all overrides</button>
+    </div>
+    <div class="tbl-wrap" style="max-height:52vh;overflow-y:auto">
+      <table>
+        <thead><tr><th>Slot</th><th>Product</th><th class="right">Default</th><th class="right">Chain price (AUD)</th><th style="text-align:center">Stocked</th></tr></thead>
+        <tbody id="chain-price-body"></tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeChain()">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="saveChain()">Save chain pricing</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROPERTY EDITOR MODAL -->
+<div class="mask" id="prop-mask">
+  <div class="modal wide">
+    <div class="modal-head">
+      <div><h3 id="prop-modal-title">Property</h3><div class="sub" id="prop-modal-sub"></div></div>
+      <button class="modal-close" onclick="closeProperty()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="section-label">Details</div>
+      <div class="field full"><label>Property name</label><input id="prf-name" type="text"></div>
+      <div class="field"><label>City</label><input id="prf-city" type="text"></div>
+      <div class="field"><label>State</label><input id="prf-state" type="text" placeholder="QLD"></div>
+      <div class="field full"><label>Levels (comma separated)</label><input id="prf-levels" type="text" placeholder="Level 8, Level 12"></div>
+      <div class="field full"><label>Phone numbers (comma separated)</label><input id="prf-phones" type="text"></div>
+      <div class="field full"><label>Emails (comma separated)</label><input id="prf-emails" type="text"></div>
+      <div class="field full"><label>Notes</label><textarea id="prf-notes"></textarea></div>
+
+      <div class="section-label">Responsible-service policy (overrides the global defaults)</div>
+      <div class="field"><label>Daily alcohol cap</label><input id="prf-cap" type="number" min="0" max="20" inputmode="numeric"></div>
+      <div class="field"><label>Stay window (days)</label><input id="prf-stay" type="number" min="1" max="30" inputmode="numeric"></div>
+      <div class="field"><label>Buffer age (years)</label><input id="prf-buffer" type="number" min="18" max="40" inputmode="numeric"></div>
+
+      <div class="section-label money-only">Commission</div>
+      <div class="field money-only"><label>Commission % (owner / accounts only)</label><input id="prf-commission" type="number" min="0" max="100" step="0.5" inputmode="decimal"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeProperty()">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="saveProperty()">Save property</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESTOCK SIMULATOR MODAL -->
+<div class="mask" id="restock-mask">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3 id="restock-title">Restock machine</h3><div class="sub" id="restock-sub"></div></div>
+      <button class="modal-close" onclick="closeRestock()">&times;</button>
+    </div>
+    <div id="restock-content"></div>
+  </div>
+</div>
+
+<!-- HIDDEN: dedicated pick-list PDF layout -->
+<div id="picklist-pdf"></div>
 
 <div id="missing">
   <h2>core.js did not load</h2>
@@ -508,17 +710,19 @@ if (!window.MB) {
   document.getElementById("missing").style.display = "block";
 }
 
-/* ---------- Shared audit vocabulary (mirrors the kiosk, plus admin events) ---------- */
+/* ---------- Audit vocabulary (fully automated machine: no reception) ---------- */
 var AUDIT_LABELS = {
   session_start:"Guest session started", session_end:"Guest session ended",
   otp_sent:"Mobile OTP sent", otp_verified:"Mobile verified (OTP)", otp_failed:"Mobile OTP failed",
   checkout_start:"Checkout started", age_estimate:"Face age estimate", id_verify:"Photo ID checked",
-  limit_check:"Daily cap checked", approval_requested:"Sent to reception", approval_resolved:"Reception decision",
+  limit_check:"Daily cap checked",
   payment:"Payment", vend:"Product dispensed", purchase_complete:"Sale completed",
+  restock:"Machine restocked",
   admin_item_add:"Product added (admin)", admin_item_edit:"Product edited (admin)", admin_item_remove:"Product removed (admin)",
   admin_catalogue_reset:"Catalogue reset (admin)", admin_config_update:"Policy updated (admin)",
   admin_config_reset:"Policy reset (admin)", admin_machine_status:"Machine status changed (admin)",
-  admin_venue_commission:"Venue commission set (admin)"
+  admin_venue_commission:"Commission set (admin)", admin_property_update:"Property updated (admin)",
+  admin_chain_pricing:"Chain pricing updated (admin)", xero_sync_stub:"Xero sync (stub)"
 };
 var FILTER_GROUPS = [
   { v:"all", label:"All events" },
@@ -529,6 +733,7 @@ var FILTER_GROUPS = [
   { v:"payment", label:"Payments" },
   { v:"vend", label:"Vends" },
   { v:"purchase_complete", label:"Completed sales" },
+  { v:"restock", label:"Restocks" },
   { v:"admin", label:"Admin actions" }
 ];
 
@@ -540,10 +745,10 @@ function auditKind(a){
     case "age_estimate": return d.estimatedAge >= (d.bufferAge||27) ? "pass" : "neutral";
     case "id_verify": return d.over18 ? "pass" : "refuse";
     case "limit_check": return d.ok ? "pass" : "refuse";
-    case "approval_resolved": return d.approved ? "pass" : "refuse";
     case "payment": return d.ok ? "pass" : "refuse";
     case "vend": return d.dispensed ? "pass" : "refuse";
     case "purchase_complete": return "pass";
+    case "restock": return "pass";
     default: return "neutral";
   }
 }
@@ -557,23 +762,26 @@ function auditDetailText(a){
     case "age_estimate": return "Estimated ~"+d.estimatedAge+" (confidence "+Math.round((d.confidence||0)*100)+"%). Buffer age "+d.bufferAge+". "+(d.estimatedAge>=d.bufferAge?"Cleared without ID.":"Under buffer, photo ID required.");
     case "id_verify": return d.over18 ? "Confirmed 18 or over." : "REFUSED: not confirmed 18+. Alcohol blocked.";
     case "limit_check": return d.ok ? ("Within cap ("+d.used+" used of "+d.cap+", buying "+d.requested+").") : ("REFUSED: daily cap of "+d.cap+" reached ("+d.used+" already today).");
-    case "approval_requested": return "Alcohol order routed to front desk. "+(d.alcoholDrinks||0)+" drink(s), "+MB.money(d.totalCents||0)+".";
-    case "approval_resolved": return (d.approved?"Approved":"REFUSED")+" by "+(d.decidedBy||"reception")+".";
-    case "payment": return d.ok ? ("Approved "+MB.money(d.amountCents||0)+" (txn "+(d.txnId||"-")+").") : "DECLINED by payment provider.";
+    case "payment": return IS_MONEY() ? (d.ok ? ("Approved "+MB.money(d.amountCents||0)+" (txn "+(d.txnId||"-")+").") : "DECLINED by payment provider.") : (d.ok ? "Approved by payment provider." : "DECLINED by payment provider.");
     case "vend": return d.dispensed ? ("Dispensed from slot "+d.slot+".") : ("FAILED to dispense slot "+d.slot+".");
-    case "purchase_complete": return "Total "+MB.money(d.totalCents||0)+", "+(d.alcoholDrinks||0)+" alcoholic drink(s), "+(d.standardDrinks||0)+" standard drinks. Txn "+(d.txnId||"-")+".";
-    case "checkout_start": return "Order "+MB.money(d.totalCents||0)+(d.hasAlcohol?", contains alcohol.":", no alcohol.");
-    case "admin_item_add": return "Added \""+(d.name||"")+"\" to the catalogue"+(d.priceCents!=null?" at "+MB.money(d.priceCents):"")+(d.isAlcohol?" (alcohol).":".");
-    case "admin_item_edit": return "Edited \""+(d.name||"")+"\""+(d.priceCents!=null?", price now "+MB.money(d.priceCents):"")+(d.isAlcohol?" (alcohol).":".");
+    case "purchase_complete": return (IS_MONEY()?("Total "+MB.money(d.totalCents||0)+", "):"")+(d.alcoholDrinks||0)+" alcoholic drink(s), "+(d.standardDrinks||0)+" standard drinks. Txn "+(d.txnId||"-")+".";
+    case "checkout_start": return (IS_MONEY()?("Order "+MB.money(d.totalCents||0)):"Order")+(d.hasAlcohol?", contains alcohol.":", no alcohol.");
+    case "restock": return "Machine "+(d.machineId||"")+" at "+(d.property||"")+" "+(d.level||"")+" restocked ("+prettyRestockMode(d.mode)+"). "+(d.unitsAdded||0)+" unit(s) loaded across "+(d.slotsTouched||0)+" slot(s). Fill now "+(d.stockPct!=null?d.stockPct+"%":"")+". By "+(d.staff||"staff")+".";
+    case "admin_item_add": return "Added \""+(d.name||"")+"\" to the catalogue"+(IS_MONEY()&&d.priceCents!=null?" at "+MB.money(d.priceCents):"")+(d.isAlcohol?" (alcohol).":".");
+    case "admin_item_edit": return "Edited \""+(d.name||"")+"\""+(IS_MONEY()&&d.priceCents!=null?", price now "+MB.money(d.priceCents):"")+(d.isAlcohol?" (alcohol).":".");
     case "admin_item_remove": return "Removed \""+(d.name||"")+"\" from the catalogue.";
     case "admin_catalogue_reset": return "Catalogue restored to defaults.";
     case "admin_config_update": return "Policy changed: "+cfgChangeText(d);
     case "admin_config_reset": return "Policy restored to defaults.";
     case "admin_machine_status": return "Machine "+(d.id||"")+" set to "+prettyStatus(d.status)+".";
     case "admin_venue_commission": return "Commission for "+(d.hotel||"venue")+" set to "+(d.commissionPct)+"%.";
+    case "admin_property_update": return "Property \""+(d.name||"")+"\" record updated.";
+    case "admin_chain_pricing": return "Chain \""+(d.name||"")+"\" pricing updated ("+(d.overrides||0)+" price override(s), "+(d.planogram||0)+" products stocked).";
+    case "xero_sync_stub": return "STUB: would post "+(d.bills||0)+" commission bill(s) to Xero for "+(d.month||"")+(IS_MONEY()&&d.totalCommissionCents!=null?" totalling "+MB.money(d.totalCommissionCents):"")+". No invoice posted.";
     default: return "";
   }
 }
+function prettyRestockMode(m){ return { par:"refill all to par", picklist:"refill from pick list", custom:"live per-slot load" }[m] || m || "restock"; }
 function cfgChangeText(d){
   var parts = [];
   if ("BUFFER_AGE" in d) parts.push("buffer age "+d.BUFFER_AGE);
@@ -585,17 +793,43 @@ function maskMobile(m){ if(!m) return ""; var s=String(m); return s.length>3 ? (
 function fmtTime(iso){ var d=new Date(iso); function p(n){return ("0"+n).slice(-2);} return p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds()); }
 function fmtDateTime(iso){ var d=new Date(iso); function p(n){return ("0"+n).slice(-2);}
   return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes()); }
+function fmtDate(d){ function p(n){return ("0"+n).slice(-2);} return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear(); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* ---------- Role gate ---------- */
+function IS_MONEY(){ return window.MB ? MB.canSeeMoney() : true; }
+function buildRoleSwitcher(){
+  var sel = document.getElementById("role-sel");
+  var html = "";
+  for (var id in MB.roles){ if(!MB.roles.hasOwnProperty(id)) continue; html += '<option value="'+id+'">'+esc(MB.roles[id].name)+'</option>'; }
+  sel.innerHTML = html;
+  sel.value = MB.getRole().id;
+  applyRoleUI();
+}
+function onRoleChange(id){ MB.setRole(id); applyRoleUI(); refreshActive(); }
+function applyRoleUI(){
+  var role = MB.getRole();
+  document.body.classList.toggle("role-staff", !role.money);
+  var tag = document.getElementById("role-tag");
+  tag.textContent = role.money ? "Sees money" : "No money";
+  tag.className = "role-tag " + (role.money ? "money" : "nomoney");
+  // if staff is on a money-only view, bounce to dashboard
+  if (!role.money){
+    var active = document.querySelector(".view.active");
+    if (active && (active.id==="v-payouts" || active.id==="v-chains")) showView("dashboard");
+  }
+}
 
 /* ---------- View router ---------- */
 var VIEW_META = {
   dashboard:{ title:"Dashboard", crumb:"Overview" },
-  products:{ title:"Products", crumb:"Catalogue" },
+  products:{ title:"Master Catalogue", crumb:"Products & default prices" },
+  chains:{ title:"Chains & Pricing", crumb:"Chain overrides" },
+  fleet:{ title:"Fleet", crumb:"Chains, properties, machines" },
+  picklist:{ title:"Pick & Restock", crumb:"Restocking" },
+  payouts:{ title:"Payouts", crumb:"Monthly commission run" },
   compliance:{ title:"Compliance", crumb:"Due diligence" },
-  settings:{ title:"Settings", crumb:"Policy controls" },
-  machines:{ title:"Machines", crumb:"Fleet" },
-  payouts:{ title:"Payouts", crumb:"Venue commission" },
-  picklist:{ title:"Pick Lists", crumb:"Restocking" }
+  settings:{ title:"Settings", crumb:"Global policy defaults" }
 };
 function showView(id){
   var views = document.querySelectorAll(".view");
@@ -607,11 +841,12 @@ function showView(id){
   document.getElementById("crumb").textContent = VIEW_META[id].crumb;
   if (id==="dashboard") renderDashboard();
   if (id==="products") renderProducts();
+  if (id==="chains") renderChains();
+  if (id==="fleet") renderFleet();
+  if (id==="picklist") renderPickView();
+  if (id==="payouts") renderPayouts();
   if (id==="compliance") renderCompliance();
   if (id==="settings") renderSettings();
-  if (id==="machines") renderMachines();
-  if (id==="payouts") renderPayouts();
-  if (id==="picklist") renderPickView();
 }
 
 /* ======================= DASHBOARD ======================= */
@@ -623,12 +858,14 @@ function renderDashboard(){
   var online = 0;
   for (var i=0;i<machines.length;i++){ if (machines[i].status==="online") online++; }
 
-  document.getElementById("dash-tiles").innerHTML =
-      tile("Today's sales", MB.money(s.revenueCents), s.txns+" transaction"+(s.txns===1?"":"s"), "gold")
-    + tile("Units sold", String(s.units), s.standardDrinks+" standard drinks served", "")
+  var tiles = "";
+  if (IS_MONEY()) tiles += tile("Today's sales", MB.money(s.revenueCents), s.txns+" transaction"+(s.txns===1?"":"s"), "gold");
+  else tiles += tile("Transactions today", String(s.txns), "Completed sales", "gold");
+  tiles += tile("Units sold", String(s.units), s.standardDrinks+" standard drinks served", "")
     + splitTile("Alcohol vs non-alcohol", s.alcoholUnits, s.nonAlcoholUnits)
     + tile("Refusals today", String(refusalsToday), refusalsToday? "Age, cap, ID or payment" : "None so far today", refusalsToday? "red":"")
     + tile("Active machines", online+"<small>/"+machines.length+"</small>", "Online across the fleet", "");
+  document.getElementById("dash-tiles").innerHTML = tiles;
 
   var purchases = MB.store.getPurchases().slice().reverse();
   var box = document.getElementById("recent-sales");
@@ -643,10 +880,13 @@ function renderDashboard(){
     for (var l=0;l<(p.lines||[]).length;l++){ units += p.lines[l].qty; names.push(p.lines[l].qty+"x "+p.lines[l].name); }
     var itemStr = names.join(", ");
     if (itemStr.length>72) itemStr = itemStr.slice(0,70)+"...";
+    var amt = IS_MONEY()
+      ? ('<div class="amt">'+MB.money(p.totalCents)+(p.alcoholDrinks?'<small>'+p.alcoholDrinks+' alcohol</small>':'')+'</div>')
+      : ('<div class="amt">'+units+'<small>item'+(units===1?'':'s')+'</small></div>');
     html += '<div class="sale"><div class="t">'+fmtTime(p.ts)+'</div>'
       + '<div class="d"><div class="rm">Room '+esc(p.room||"--")+' <span style="color:var(--muted2);font-size:12px">'+esc(maskMobile(p.mobile))+'</span></div>'
       + '<div class="it">'+esc(itemStr)+'</div></div>'
-      + '<div><div class="amt">'+MB.money(p.totalCents)+(p.alcoholDrinks?'<small>'+p.alcoholDrinks+' alcohol</small>':'')+'</div></div></div>';
+      + '<div>'+amt+'</div></div>';
   }
   box.innerHTML = html;
 }
@@ -659,16 +899,16 @@ function splitTile(label,al,na){
     + '<div><div class="sn">'+na+'</div><div class="sl">Non-alcohol</div></div></div></div>';
 }
 
-/* ======================= PRODUCTS ======================= */
+/* ======================= PRODUCTS (master catalogue) ======================= */
 function renderProducts(){
   var items = MB.admin.getCatalogue();
-  // group by category order for readability
   var order = MB.categories;
   items.sort(function(a,b){
     var ca = order.indexOf(a.category), cb = order.indexOf(b.category);
     if (ca!==cb) return ca-cb;
     return (a.slot||"").localeCompare(b.slot||"");
   });
+  var money = IS_MONEY();
   var html = "";
   for (var i=0;i<items.length;i++){
     var p = items[i];
@@ -678,7 +918,7 @@ function renderProducts(){
       + '<td><span class="badge cat">'+esc(p.category)+'</span></td>'
       + '<td>'+(p.isAlcohol?'<span class="badge al">18+ Alcohol</span>':'<span class="badge na">Standard</span>')+'</td>'
       + '<td class="right mono">'+(p.isAlcohol? p.standardDrinks : "-")+'</td>'
-      + '<td class="right mono">'+MB.money(p.priceCents)+'</td>'
+      + (money?'<td class="right mono">'+MB.money(p.priceCents)+'</td>':'')
       + '<td><div class="row-actions">'
       + '<button class="link-btn" onclick="openProduct(\''+p.id+'\')">Edit</button>'
       + '<button class="link-btn del" onclick="removeProduct(\''+p.id+'\')">Remove</button>'
@@ -752,10 +992,573 @@ function removeProduct(id){
   }
 }
 function resetCatalogue(){
-  if (window.confirm("Restore the catalogue to the 26 default products? Any changes you made will be lost.")){
+  if (window.confirm("Restore the catalogue to the 27 default products? Any changes you made will be lost.")){
     MB.admin.resetCatalogue();
     renderProducts();
   }
+}
+
+/* ======================= CHAINS & PRICING ======================= */
+function renderChains(){
+  var chains = MB.admin.getChains();
+  var machines = MB.admin.getMachines();
+  var html = "";
+  for (var i=0;i<chains.length;i++){
+    var c = chains[i];
+    var props = MB.admin.getProperties(c.id);
+    var mCount = machines.filter(function(m){ return m.chainId===c.id; }).length;
+    var overrides = c.priceOverrides ? Object.keys(c.priceOverrides).length : 0;
+    var stocked = (c.planogram && c.planogram.length) ? c.planogram.length : MB.catalogue.length;
+    html += '<tr>'
+      + '<td class="name">'+esc(c.name)+'</td>'
+      + '<td class="right mono">'+props.length+'</td>'
+      + '<td class="right mono">'+mCount+'</td>'
+      + '<td class="right mono">'+(overrides?overrides+' item'+(overrides===1?'':'s'):'<span style="color:var(--muted2)">none (uses default)</span>')+'</td>'
+      + '<td class="right mono">'+stocked+' / '+MB.catalogue.length+'</td>'
+      + '<td><div class="row-actions"><button class="link-btn gold" onclick="openChain(\''+c.id+'\')">Prices &amp; planogram</button></div></td>'
+      + '</tr>';
+  }
+  document.getElementById("chains-body").innerHTML = html || '<tr><td colspan="6"><div class="empty">No chains.</div></td></tr>';
+}
+
+var chainEditId = null;
+function openChain(id){
+  chainEditId = id;
+  var data = MB.admin.chainPriceList(id);
+  if (!data) return;
+  document.getElementById("chain-modal-title").textContent = data.chain.name;
+  document.getElementById("chain-modal-sub").textContent = "Set once, every property inherits";
+  document.getElementById("chain-markup").value = "";
+  renderChainPriceRows(data.lines);
+  document.getElementById("chain-mask").classList.add("show");
+}
+function renderChainPriceRows(lines){
+  var order = MB.categories;
+  lines = lines.slice().sort(function(a,b){
+    var ca=order.indexOf(a.category), cb=order.indexOf(b.category);
+    if (ca!==cb) return ca-cb; return (a.slot||"").localeCompare(b.slot||"");
+  });
+  var html = "";
+  for (var i=0;i<lines.length;i++){
+    var l = lines[i];
+    var val = (l.effectiveCents/100).toFixed(2);
+    var over = l.overrideCents!=null;
+    html += '<tr data-pid="'+esc(l.id)+'">'
+      + '<td><span class="slot-tag">'+esc(l.slot)+'</span></td>'
+      + '<td class="name">'+esc(l.name)+(l.isAlcohol?' <span class="badge al" style="margin-left:6px">18+</span>':'')+'</td>'
+      + '<td class="right mono" style="color:var(--muted2)">'+MB.money(l.defaultCents)+'</td>'
+      + '<td class="right"><input class="price-input'+(over?' overridden':'')+'" data-price type="number" min="0" step="0.10" value="'+val+'"></td>'
+      + '<td style="text-align:center"><input type="checkbox" data-stock '+(l.stocked?'checked':'')+'></td>'
+      + '</tr>';
+  }
+  document.getElementById("chain-price-body").innerHTML = html;
+}
+function applyMarkup(){
+  var pct = parseFloat(document.getElementById("chain-markup").value);
+  if (isNaN(pct)){ document.getElementById("chain-markup").focus(); return; }
+  // Add the entered % markup across every line, based on the DEFAULT catalogue price.
+  // Each line stays individually editable afterwards.
+  var rows = document.querySelectorAll("#chain-price-body tr");
+  for (var i=0;i<rows.length;i++){
+    var pid = rows[i].getAttribute("data-pid");
+    var item = MB.findItem(pid);
+    if (!item) continue;
+    var marked = item.priceCents * (1 + pct/100);
+    var inp = rows[i].querySelector("[data-price]");
+    inp.value = (Math.round(marked)/100).toFixed(2);
+    inp.classList.add("overridden");
+  }
+}
+function clearChainOverrides(){
+  var rows = document.querySelectorAll("#chain-price-body tr");
+  for (var i=0;i<rows.length;i++){
+    var pid = rows[i].getAttribute("data-pid");
+    var item = MB.findItem(pid);
+    var inp = rows[i].querySelector("[data-price]");
+    inp.value = (item.priceCents/100).toFixed(2);
+    inp.classList.remove("overridden");
+  }
+}
+function saveChain(){
+  var rows = document.querySelectorAll("#chain-price-body tr");
+  var overrides = {}, stockedIds = [];
+  for (var i=0;i<rows.length;i++){
+    var pid = rows[i].getAttribute("data-pid");
+    var item = MB.findItem(pid);
+    var cents = Math.round((parseFloat(rows[i].querySelector("[data-price]").value)||0)*100);
+    // an override is only stored when it differs from the master default
+    if (cents !== item.priceCents) overrides[pid] = cents; else overrides[pid] = null;
+    if (rows[i].querySelector("[data-stock]").checked) stockedIds.push(pid);
+  }
+  MB.admin.saveChainPricing(chainEditId, overrides, stockedIds);
+  closeChain();
+  renderChains();
+}
+function closeChain(){ document.getElementById("chain-mask").classList.remove("show"); chainEditId=null; }
+
+/* ======================= FLEET (chain -> property -> machine) ======================= */
+function renderFleet(){
+  var chains = MB.admin.getChains();
+  var machines = MB.admin.getMachines();
+  var online=0, offline=0, attention=0, stockSum=0;
+  for (var i=0;i<machines.length;i++){
+    if (machines[i].status==="online") online++;
+    else if (machines[i].status==="offline") offline++;
+    else attention++;
+    stockSum += machines[i].stockPct;
+  }
+  var avgStock = machines.length ? Math.round(stockSum/machines.length) : 0;
+  document.getElementById("fleet-tiles").innerHTML =
+      tile("Chains", String(chains.length), MB.admin.getProperties().length+" properties", "")
+    + tile("Machines", String(machines.length), "Across the fleet", "")
+    + tile("Online", String(online), (offline+attention)?(offline+" offline, "+attention+" restock/low"):"All serving", (offline+attention)?"red":"gold")
+    + tile("Average stock", avgStock+"<small>%</small>", "Fleet-wide fill level", "");
+
+  var html = "";
+  for (var c=0;c<chains.length;c++){
+    var chain = chains[c];
+    var props = MB.admin.getProperties(chain.id);
+    var chMachines = machines.filter(function(m){ return m.chainId===chain.id; });
+    html += '<div class="chain-block"><div class="chain-head"><h3>'+esc(chain.name)+'</h3>'
+      + '<span class="cnt">'+props.length+' propert'+(props.length===1?'y':'ies')+' &middot; '+chMachines.length+' machine'+(chMachines.length===1?'':'s')+'</span></div>';
+    for (var p=0;p<props.length;p++){
+      var prop = props[p];
+      var pm = machines.filter(function(m){ return m.propertyId===prop.id; });
+      var contact = [];
+      if (prop.phones && prop.phones.length) contact.push(prop.phones[0]);
+      if (prop.emails && prop.emails.length) contact.push(prop.emails[0]);
+      var commTxt = IS_MONEY() ? (' &middot; Commission <b>'+prop.commissionPct+'%</b>') : '';
+      html += '<div class="prop-card"><div class="ph"><div>'
+        + '<div class="pt">'+esc(prop.name)+'</div>'
+        + '<div class="pm">'+esc(prop.city)+', '+esc(prop.state)+' &middot; '+(prop.levels?prop.levels.length:0)+' level(s) &middot; '+pm.length+' machine(s)'+commTxt+'</div>'
+        + (contact.length?'<div class="pm">'+esc(contact.join("  ·  "))+'</div>':'')
+        + '</div>'
+        + '<button class="btn btn-ghost btn-sm" onclick="openProperty(\''+prop.id+'\')"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Edit property</button>'
+        + '</div>';
+      html += '<div class="mach-grid">';
+      for (var m=0;m<pm.length;m++){
+        var mc = pm[m];
+        var fillCls = mc.stockPct<=0 ? "empty" : (mc.stockPct<30 ? "lowfill":"");
+        html += '<div class="mach"><div class="top"><div><div class="mid">'+esc(mc.id)+'</div><div class="fl">'+esc(mc.level)+' &middot; Slots '+esc(mc.slots)+'</div></div>'+statusBadge(mc.status)+'</div>'
+          + '<div class="meta"><span>Stock</span><span>'+mc.stockPct+'%</span></div>'
+          + '<div class="stockbar"><i class="'+fillCls+'" style="width:'+Math.max(2,mc.stockPct)+'%"></i></div>'
+          + '<div class="meta"><span>Last vend</span><span>'+(mc.lastVend?fmtDateTime(mc.lastVend):"--")+'</span></div>'
+          + '<div class="foot"><button class="link-btn" onclick="pickForMachine(\''+mc.id+'\')">Pick list</button>'
+          + '<button class="link-btn gold" onclick="openRestock(\''+mc.id+'\')">Restock</button></div>'
+          + '</div>';
+      }
+      html += '</div></div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById("fleet-body").innerHTML = html;
+}
+function prettyStatus(s){ return { online:"Online", offline:"Offline", low_stock:"Low stock", restocking:"Restocking" }[s] || s; }
+function statusBadge(s){
+  var cls = { online:"on", offline:"off", low_stock:"low", restocking:"rest" }[s] || "cat";
+  return '<span class="badge '+cls+'">'+prettyStatus(s)+'</span>';
+}
+
+/* ----- Property editor ----- */
+var propEditId = null;
+function openProperty(id){
+  var prop = MB.admin.getProperty(id);
+  if (!prop) return;
+  propEditId = id;
+  var chain = MB.admin.getChain(prop.chainId) || {};
+  document.getElementById("prop-modal-title").textContent = prop.name;
+  document.getElementById("prop-modal-sub").textContent = (chain.name||"") + " property";
+  document.getElementById("prf-name").value = prop.name||"";
+  document.getElementById("prf-city").value = prop.city||"";
+  document.getElementById("prf-state").value = prop.state||"";
+  document.getElementById("prf-levels").value = (prop.levels||[]).join(", ");
+  document.getElementById("prf-phones").value = (prop.phones||[]).join(", ");
+  document.getElementById("prf-emails").value = (prop.emails||[]).join(", ");
+  document.getElementById("prf-notes").value = prop.notes||"";
+  var pol = prop.policy||{};
+  document.getElementById("prf-cap").value = pol.DAILY_ALCOHOL_CAP!=null?pol.DAILY_ALCOHOL_CAP:MB.config.DAILY_ALCOHOL_CAP;
+  document.getElementById("prf-stay").value = pol.STAY_WINDOW_DAYS!=null?pol.STAY_WINDOW_DAYS:MB.config.STAY_WINDOW_DAYS;
+  document.getElementById("prf-buffer").value = pol.BUFFER_AGE!=null?pol.BUFFER_AGE:MB.config.BUFFER_AGE;
+  document.getElementById("prf-commission").value = prop.commissionPct!=null?prop.commissionPct:"";
+  document.getElementById("prop-mask").classList.add("show");
+}
+function closeProperty(){ document.getElementById("prop-mask").classList.remove("show"); propEditId=null; }
+function saveProperty(){
+  if (!propEditId) return;
+  var patch = {
+    name: document.getElementById("prf-name").value.trim(),
+    city: document.getElementById("prf-city").value.trim(),
+    state: document.getElementById("prf-state").value.trim(),
+    levels: document.getElementById("prf-levels").value,
+    phones: document.getElementById("prf-phones").value,
+    emails: document.getElementById("prf-emails").value,
+    notes: document.getElementById("prf-notes").value,
+    policy: {
+      DAILY_ALCOHOL_CAP: document.getElementById("prf-cap").value,
+      STAY_WINDOW_DAYS: document.getElementById("prf-stay").value,
+      BUFFER_AGE: document.getElementById("prf-buffer").value
+    }
+  };
+  // commission only sent (and only honoured) for owner/accounts
+  if (IS_MONEY()) patch.commissionPct = document.getElementById("prf-commission").value;
+  MB.admin.updateProperty(propEditId, patch);
+  closeProperty();
+  renderFleet();
+}
+function resetFleet(){
+  if (window.confirm("Reset the whole fleet (chains, properties, machines, stock and pricing) back to the seeded demo? Sales and audit are kept.")){
+    MB.admin.resetHierarchy();
+    renderFleet();
+  }
+}
+
+/* ======================= PICK & RESTOCK ======================= */
+function renderPickView(){ ensurePickMachines(); renderPickList(); }
+function ensurePickMachines(){
+  var sel = document.getElementById("pick-machine");
+  var machines = MB.admin.getMachines();
+  var html = "";
+  for (var i=0;i<machines.length;i++){
+    var m = machines[i];
+    html += '<option value="'+esc(m.id)+'">'+esc(m.id)+' - '+esc(m.propertyName)+' ('+esc(m.level)+')</option>';
+  }
+  var prev = sel.value;
+  sel.innerHTML = html;
+  if (prev) sel.value = prev;
+}
+function pickForMachine(id){
+  showView("picklist");
+  var sel = document.getElementById("pick-machine");
+  sel.value = id;
+  renderPickList();
+}
+function renderPickList(){
+  var sel = document.getElementById("pick-machine");
+  var id = sel.value;
+  var neededOnly = document.getElementById("pick-needed-only").checked;
+  var pl = id ? MB.admin.pickList(id) : null;
+  var headEl = document.getElementById("pick-head-line");
+  if (!pl){
+    headEl.style.display = "none";
+    document.getElementById("pick-body").innerHTML = '<tr><td colspan="7"><div class="empty">No machine selected.</div></td></tr>';
+    document.getElementById("pick-foot").innerHTML = "";
+    document.getElementById("pick-summary").textContent = "";
+    return;
+  }
+  var m = pl.machine, prop = pl.property, chain = pl.chain;
+  headEl.style.display = "block";
+  headEl.innerHTML = '<b>'+esc(m.id)+'</b> &middot; '+esc(chain.name||"")+' &middot; '+esc(prop.name||"")+' &middot; '+esc(m.level)
+    + ' &middot; Machine fill '+m.stockPct+'% &middot; Status '+prettyStatus(m.status)+'. Pick <b>'+pl.totals.unitsToPick+'</b> unit(s) across <b>'+pl.totals.skusToPick+'</b> product(s) to refill to par.';
+  var shown = 0, html = "";
+  for (var i=0;i<pl.lines.length;i++){
+    var l = pl.lines[i];
+    if (neededOnly && l.pick<=0) continue;
+    shown++;
+    html += '<tr'+(l.pick>0?' class="row-need"':'')+'>'
+      + '<td><span class="slot-tag">'+esc(l.slot)+'</span></td>'
+      + '<td class="name">'+esc(l.name)+'</td>'
+      + '<td><span class="badge cat">'+esc(l.category)+'</span></td>'
+      + '<td>'+(l.isAlcohol?'<span class="badge al">18+ Alcohol</span>':'<span class="badge na">Standard</span>')+'</td>'
+      + '<td class="right mono">'+l.par+'</td>'
+      + '<td class="right mono">'+l.current+'</td>'
+      + '<td class="right mono '+(l.pick>0?'pick-need':'pick-zero')+'">'+(l.pick>0?l.pick:'-')+'</td>'
+      + '</tr>';
+  }
+  document.getElementById("pick-body").innerHTML = html || '<tr><td colspan="7"><div class="empty">Nothing to pick. This machine is at par.</div></td></tr>';
+  document.getElementById("pick-foot").innerHTML =
+    '<tr><td colspan="4">Total to pick'+(neededOnly?' (showing '+shown+' needing stock)':'')+'</td>'
+    + '<td class="right mono">--</td><td class="right mono">--</td>'
+    + '<td class="right mono" style="color:var(--gold)">'+pl.totals.unitsToPick+'</td></tr>';
+  document.getElementById("pick-summary").textContent = pl.totals.unitsToPick+" units / "+pl.totals.skusToPick+" products to pick";
+}
+function exportPickCsv(){
+  var id = document.getElementById("pick-machine").value;
+  var pl = id ? MB.admin.pickList(id) : null;
+  if (!pl) return;
+  var m = pl.machine, prop = pl.property;
+  var rows = [["machine","chain","property","level","slot","product","category","type","par","in_stock","qty_to_pick"]];
+  for (var i=0;i<pl.lines.length;i++){
+    var l = pl.lines[i];
+    rows.push([m.id, pl.chain.name, prop.name, m.level, l.slot, l.name, l.category,
+      l.isAlcohol?"Alcohol":"Standard", l.par, l.current, l.pick]);
+  }
+  rows.push(["", "", "", "", "", "TOTAL", "", "", "", "", pl.totals.unitsToPick]);
+  downloadCsv(rows, "theminibar-picklist-"+m.id+"-"+MB.dayKey()+".csv");
+}
+
+/* Print / Save as PDF: build the dedicated compact layout (ONLY items that need
+   restocking) and hand off to the browser print-to-PDF. */
+function printPickList(){
+  var id = document.getElementById("pick-machine").value;
+  var pl = id ? MB.admin.pickList(id) : null;
+  if (!pl){ window.print(); return; }
+  var m = pl.machine, prop = pl.property, chain = pl.chain;
+  var rows = "";
+  for (var i=0;i<pl.needed.length;i++){
+    var l = pl.needed[i];
+    rows += '<tr><td>'+esc(l.slot)+'</td><td>'+esc(l.name)+(l.isAlcohol?' (18+)':'')+'</td><td>'+esc(l.category)+'</td>'
+      + '<td class="qty">'+l.current+' / '+l.par+'</td><td class="qty">'+l.pick+'</td></tr>';
+  }
+  if (!pl.needed.length) rows = '<tr><td colspan="5" style="text-align:center;padding:24px">Nothing to restock. This machine is at par.</td></tr>';
+  var html = '<div class="pl-head">'
+    + '<div class="pl-brand">The Mini Bar</div>'
+    + '<div class="pl-title">Restock Pick List</div>'
+    + '<div class="pl-meta">'
+    + '<div><b>Property</b> '+esc(chain.name||"")+' &middot; '+esc(prop.name||"")+'</div>'
+    + '<div><b>Machine</b> '+esc(m.id)+'</div>'
+    + '<div><b>Level</b> '+esc(m.level)+'</div>'
+    + '<div><b>Date</b> '+fmtDate(new Date())+'</div>'
+    + '</div></div>'
+    + '<table><thead><tr><th>Slot</th><th>Product</th><th>Category</th><th class="qty">In / Par</th><th class="qty">Pick</th></tr></thead>'
+    + '<tbody>'+rows+'</tbody>'
+    + '<tfoot><tr><td colspan="4">Total units to pick</td><td class="qty">'+pl.totals.unitsToPick+'</td></tr></tfoot></table>'
+    + '<div class="pl-foot">'+pl.totals.skusToPick+' product(s) need restocking. Fill each listed slot up to its par. Machine fill at time of print: '+m.stockPct+'%.</div>';
+  document.getElementById("picklist-pdf").innerHTML = html;
+  document.body.classList.add("print-pick");
+  window.print();
+}
+window.addEventListener("afterprint", function(){ document.body.classList.remove("print-pick"); });
+
+/* ----- Restock simulator (red button + 4-digit PIN) ----- */
+var restockMachineId = null, restockPin = "", restockPinTarget = null;
+function openRestockFromPick(){
+  var id = document.getElementById("pick-machine").value;
+  if (id) openRestock(id);
+}
+function openRestock(machineId){
+  restockMachineId = machineId;
+  restockPin = "";
+  var m = MB.admin.getMachine(machineId);
+  var stock = MB.admin.getMachineStock(machineId);
+  restockPinTarget = m ? m.pin : null;
+  document.getElementById("restock-title").textContent = "Restock " + machineId;
+  document.getElementById("restock-sub").textContent = (stock ? (stock.property.name + " · " + m.level) : "");
+  restockStageRedButton();
+  document.getElementById("restock-mask").classList.add("show");
+}
+function closeRestock(){ document.getElementById("restock-mask").classList.remove("show"); restockMachineId=null; restockPin=""; }
+
+function restockStageRedButton(){
+  document.getElementById("restock-content").innerHTML =
+    '<div class="restock-stage">'
+    + '<p style="color:var(--muted);margin-bottom:6px">Reach behind the machine and hold the red service button to begin.</p>'
+    + '<button class="red-btn" id="red-btn" onmousedown="holdRed(true)" onmouseup="holdRed(false)" onmouseleave="holdRed(false)" ontouchstart="holdRed(true)" ontouchend="holdRed(false)">Hold<br>to start</button>'
+    + '<div class="pin-hint">This is the physical anti-tamper gate: only staff can reach the button, then a PIN confirms who is loading.</div>'
+    + '</div>';
+}
+var _redTimer = null;
+function holdRed(down){
+  var btn = document.getElementById("red-btn");
+  if (!btn) return;
+  if (down){
+    btn.classList.add("held");
+    _redTimer = setTimeout(function(){ restockStagePin(); }, 650);
+  } else {
+    btn.classList.remove("held");
+    if (_redTimer){ clearTimeout(_redTimer); _redTimer=null; }
+  }
+}
+function restockStagePin(){
+  restockPin = "";
+  var dots = '';
+  for (var i=0;i<4;i++) dots += '<div class="pin-dot" id="pd'+i+'"></div>';
+  var keys = "";
+  for (var k=1;k<=9;k++) keys += '<button class="pin-key" onclick="pinPress(\''+k+'\')">'+k+'</button>';
+  keys += '<button class="pin-key" onclick="pinClear()">&larr;</button>';
+  keys += '<button class="pin-key" onclick="pinPress(\'0\')">0</button>';
+  keys += '<button class="pin-key" onclick="pinSubmit()" style="color:var(--gold)">&#10003;</button>';
+  document.getElementById("restock-content").innerHTML =
+    '<div class="restock-stage">'
+    + '<p style="color:var(--off-white);margin-bottom:14px">Enter your 4-digit staff PIN</p>'
+    + '<div class="pin-display">'+dots+'</div>'
+    + '<div class="pin-pad">'+keys+'</div>'
+    + '<div class="pin-err" id="pin-err"></div>'
+    + '<div class="pin-hint">Demo PIN for this machine: <b>'+esc(restockPinTarget||"----")+'</b></div>'
+    + '</div>';
+}
+function pinPress(d){
+  if (restockPin.length>=4) return;
+  restockPin += d;
+  var dot = document.getElementById("pd"+(restockPin.length-1));
+  if (dot) dot.classList.add("on");
+  if (restockPin.length===4) setTimeout(pinSubmit, 120);
+}
+function pinClear(){
+  if (!restockPin.length) return;
+  var dot = document.getElementById("pd"+(restockPin.length-1));
+  if (dot) dot.classList.remove("on");
+  restockPin = restockPin.slice(0,-1);
+  document.getElementById("pin-err").textContent = "";
+}
+function pinSubmit(){
+  if (restockPin.length<4) return;
+  if (!MB.admin.verifyStaffPin(restockMachineId, restockPin)){
+    document.getElementById("pin-err").textContent = "Incorrect PIN. Try again.";
+    restockPin = "";
+    for (var i=0;i<4;i++){ var d=document.getElementById("pd"+i); if(d) d.classList.remove("on"); }
+    return;
+  }
+  restockStageOptions();
+}
+function restockStageOptions(){
+  var pl = MB.admin.pickList(restockMachineId);
+  var needTxt = pl.totals.unitsToPick>0 ? (pl.totals.unitsToPick+" unit(s) across "+pl.totals.skusToPick+" product(s) below par") : "This machine is already at par";
+  document.getElementById("restock-content").innerHTML =
+    '<div class="restock-opts">'
+    + '<div style="font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">PIN accepted &middot; '+esc(needTxt)+'</div>'
+    + ropt("refill-pick", "M5 12l5 5L20 6", "Refill from pick list", "Accept the suggested quantities and top every below-par slot to par.")
+    + ropt("refill-all", "M3 12a9 9 0 1 1 9 9", "Refill all to par", "Top every slot in the machine up to its par level.")
+    + ropt("live", "M12 20h9M3 20h4M3 4h18M8 12h13M3 12h1", "Live update as I load", "Adjust each slot count by hand as you physically load the machine.")
+    + '</div>';
+  document.getElementById("opt-refill-pick").onclick = function(){ doRestock("picklist"); };
+  document.getElementById("opt-refill-all").onclick = function(){ doRestock("par"); };
+  document.getElementById("opt-live").onclick = restockStageLive;
+}
+function ropt(id, path, title, desc){
+  return '<button class="ropt" id="opt-'+id+'"><span class="ic"><svg viewBox="0 0 24 24"><path d="'+path+'"/></svg></span>'
+    + '<span><span class="tt">'+esc(title)+'</span><span class="ds">'+esc(desc)+'</span></span></button>';
+}
+function doRestock(mode){
+  var res = MB.admin.restockMachine(restockMachineId, { staffPin: restockPin, mode: mode, staffName: MB.getRole().name });
+  if (!res.ok){ alert("Restock failed: "+res.reason); return; }
+  restockStageDone(res);
+}
+function restockStageLive(){
+  var stock = MB.admin.getMachineStock(restockMachineId);
+  var rows = "";
+  for (var i=0;i<stock.lines.length;i++){
+    var l = stock.lines[i];
+    rows += '<div class="load-row" data-pid="'+esc(l.id)+'">'
+      + '<span><span class="slot-tag">'+esc(l.slot)+'</span></span>'
+      + '<span><span class="nm">'+esc(l.name)+'</span><span class="pr"> par '+l.par+'</span></span>'
+      + '<input class="load-input" data-load type="number" min="0" max="'+l.par+'" value="'+l.current+'">'
+      + '<button class="load-topar" onclick="loadToPar(this,'+l.par+')">To par</button>'
+      + '</div>';
+  }
+  document.getElementById("restock-content").innerHTML =
+    '<div class="live-load">'
+    + '<p style="color:var(--muted);margin:6px 0 12px">Set what you have actually loaded into each slot, then save.</p>'
+    + rows
+    + '<div style="display:flex;gap:12px;justify-content:flex-end;margin-top:18px">'
+    + '<button class="btn btn-ghost btn-sm" onclick="restockStageOptions()">Back</button>'
+    + '<button class="btn btn-gold btn-sm" onclick="saveLiveLoad()">Save loaded counts</button></div>'
+    + '</div>';
+}
+function loadToPar(btn, par){
+  var input = btn.parentNode.querySelector("[data-load]");
+  input.value = par;
+}
+function saveLiveLoad(){
+  var rows = document.querySelectorAll("#restock-content .load-row");
+  var counts = {};
+  for (var i=0;i<rows.length;i++){
+    counts[rows[i].getAttribute("data-pid")] = parseInt(rows[i].querySelector("[data-load]").value,10)||0;
+  }
+  var res = MB.admin.restockMachine(restockMachineId, { staffPin: restockPin, mode: "custom", counts: counts, staffName: MB.getRole().name });
+  if (!res.ok){ alert("Restock failed: "+res.reason); return; }
+  restockStageDone(res);
+}
+function restockStageDone(res){
+  document.getElementById("restock-content").innerHTML =
+    '<div class="restock-done">'
+    + '<div class="big">Restocked</div>'
+    + '<div class="msg">'+res.unitsAdded+' unit(s) loaded across '+res.slotsTouched+' slot(s).<br>Machine fill now <b style="color:var(--gold)">'+res.stockPct+'%</b>. Logged to the audit trail.</div>'
+    + '<div style="margin-top:22px"><button class="btn btn-gold btn-sm" onclick="finishRestock()">Done</button></div>'
+    + '</div>';
+}
+function finishRestock(){
+  closeRestock();
+  refreshActive();
+}
+
+/* ======================= PAYOUTS ======================= */
+function renderPayouts(){
+  if (!IS_MONEY()){
+    // staff should never reach here, but guard anyway
+    showView("dashboard");
+    return;
+  }
+  ensurePayoutMonths();
+  renderPayoutReport();
+}
+function ensurePayoutMonths(){
+  var sel = document.getElementById("payout-month");
+  if (sel.options.length) return;
+  var months = MB.admin.availablePayoutMonths(6);
+  var html = "";
+  for (var i=0;i<months.length;i++) html += '<option value="'+months[i].key+'">'+esc(months[i].label)+'</option>';
+  sel.innerHTML = html;
+  // default to the previous (completed) month - the one the 1st-of-month run pays
+  sel.value = MB.admin.previousMonthKey();
+}
+function renderPayoutReport(){
+  var sel = document.getElementById("payout-month");
+  var mk = sel.value || MB.admin.previousMonthKey();
+  var rep = MB.admin.payoutReport(mk);
+  document.getElementById("payout-paydate").textContent = "Pay venues on "+rep.payDate;
+  var html = "";
+  for (var c=0;c<rep.chains.length;c++){
+    var ch = rep.chains[c];
+    for (var i=0;i<ch.rows.length;i++){
+      var r = ch.rows[i];
+      var realNote = r.realTxns ? ' <span style="color:var(--muted2);font-size:11px">('+r.realTxns+' live)</span>' : '';
+      html += '<tr>'
+        + '<td class="name">'+esc(r.name)+realNote+'</td>'
+        + '<td>'+esc(r.city)+', '+esc(r.state)+'</td>'
+        + '<td class="right mono">'+r.machineCount+'</td>'
+        + '<td class="right mono">'+MB.money(r.salesCents)+'</td>'
+        + '<td class="right mono">'+r.units+'</td>'
+        + '<td class="right mono">'+r.commissionPct+'%</td>'
+        + '<td class="right mono" style="color:var(--gold)">'+MB.money(r.commissionCents)+'</td>'
+        + '</tr>';
+    }
+    var s = ch.subtotal;
+    html += '<tr class="chain-sub">'
+      + '<td>'+esc(ch.name)+' subtotal</td><td></td>'
+      + '<td class="right mono">'+s.machineCount+'</td>'
+      + '<td class="right mono">'+MB.money(s.salesCents)+'</td>'
+      + '<td class="right mono">'+s.units+'</td>'
+      + '<td class="right mono">--</td>'
+      + '<td class="right mono">'+MB.money(s.commissionCents)+'</td>'
+      + '</tr>';
+  }
+  document.getElementById("payout-body").innerHTML = html || '<tr><td colspan="7"><div class="empty">No properties to pay for this month.</div></td></tr>';
+  var t = rep.totals;
+  document.getElementById("payout-foot").innerHTML =
+    '<tr><td>Fleet total &middot; '+esc(rep.monthLabel)+'</td>'
+    + '<td>'+t.propertyCount+' properties</td>'
+    + '<td class="right mono">'+t.machineCount+'</td>'
+    + '<td class="right mono">'+MB.money(t.salesCents)+'</td>'
+    + '<td class="right mono">'+t.units+'</td>'
+    + '<td class="right mono">--</td>'
+    + '<td class="right mono" style="color:var(--gold)">'+MB.money(t.commissionCents)+'</td></tr>';
+}
+function exportPayoutCsv(){
+  var mk = document.getElementById("payout-month").value;
+  var rep = MB.admin.payoutReport(mk);
+  var rows = [["month","pay_date","chain","property","location","machines","total_sales_aud","units","commission_pct","commission_owed_aud"]];
+  for (var c=0;c<rep.chains.length;c++){
+    var ch = rep.chains[c];
+    for (var i=0;i<ch.rows.length;i++){
+      var r = ch.rows[i];
+      rows.push([rep.monthLabel, rep.payDate, ch.name, r.name, r.city+" "+r.state, r.machineCount,
+        (r.salesCents/100).toFixed(2), r.units, r.commissionPct, (r.commissionCents/100).toFixed(2)]);
+    }
+    var s = ch.subtotal;
+    rows.push(["", "", ch.name+" SUBTOTAL", "", "", s.machineCount, (s.salesCents/100).toFixed(2), s.units, "", (s.commissionCents/100).toFixed(2)]);
+  }
+  var t = rep.totals;
+  rows.push(["", "", "FLEET TOTAL", "", "", t.machineCount, (t.salesCents/100).toFixed(2), t.units, "", (t.commissionCents/100).toFixed(2)]);
+  downloadCsv(rows, "theminibar-payouts-"+mk+".csv");
+}
+function syncXero(){
+  var mk = document.getElementById("payout-month").value;
+  var res = MB.admin.syncPayoutToXero(mk);
+  alert("Sync to Xero (STUB)\n\n" + res.message + "\n\nMonth: " + res.monthLabel
+    + "\nWould post: " + res.billsThatWouldPost + " commission bill(s)"
+    + "\nTotal commission: " + MB.money(res.totalCommissionCents)
+    + "\nPay date: " + res.payDate);
+  renderCompliance();
 }
 
 /* ======================= COMPLIANCE ======================= */
@@ -771,7 +1574,7 @@ function matchesFilter(a, filter){
     case "refusals": return isRefusal(a);
     case "age": return a.event==="age_estimate" || a.event==="id_verify";
     case "otp": return a.event==="otp_sent" || a.event==="otp_verified" || a.event==="otp_failed";
-    case "admin": return a.event.indexOf("admin_")===0;
+    case "admin": return a.event.indexOf("admin_")===0 || a.event==="xero_sync_stub";
     default: return a.event===filter;
   }
 }
@@ -832,16 +1635,7 @@ function exportAuditCsv(){
       a.room||"", a.mobile||"", auditDetailText(a).replace(/\s+/g," ")
     ]);
   }
-  var csv = rows.map(function(r){
-    return r.map(function(c){ var s=String(c==null?"":c); return '"'+s.replace(/"/g,'""')+'"'; }).join(",");
-  }).join("\r\n");
-  var uri = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-  var a = document.createElement("a");
-  a.setAttribute("href", uri);
-  a.setAttribute("download", "theminibar-audit-"+MB.dayKey()+".csv");
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  downloadCsv(rows, "theminibar-audit-"+MB.dayKey()+".csv");
 }
 
 /* ======================= SETTINGS ======================= */
@@ -869,232 +1663,11 @@ function saveSettings(){
   setTimeout(function(){ flag.classList.remove("show"); }, 2600);
 }
 function resetSettings(){
-  if (window.confirm("Reset all policy controls to their defaults (buffer 27, cap 4, stay 4 days)?")){
+  if (window.confirm("Reset all policy defaults (buffer 27, cap 4, stay 4 days)?")){
     MB.admin.resetConfig();
     renderSettings();
   }
 }
-
-/* ======================= MACHINES ======================= */
-function prettyStatus(s){
-  return { online:"Online", offline:"Offline", low_stock:"Low stock", restocking:"Restocking" }[s] || s;
-}
-function statusBadge(s){
-  var cls = { online:"on", offline:"off", low_stock:"low", restocking:"rest" }[s] || "cat";
-  return '<span class="badge '+cls+'">'+prettyStatus(s)+'</span>';
-}
-function renderMachines(){
-  var machines = MB.admin.getMachines();
-  var online=0, offline=0, attention=0, stockSum=0;
-  for (var i=0;i<machines.length;i++){
-    if (machines[i].status==="online") online++;
-    else if (machines[i].status==="offline") offline++;
-    else attention++;
-    stockSum += machines[i].stockPct;
-  }
-  var avgStock = machines.length ? Math.round(stockSum/machines.length) : 0;
-  document.getElementById("mach-tiles").innerHTML =
-      tile("Machines", String(machines.length), "Across "+countHotels(machines)+" hotels", "")
-    + tile("Online", String(online), "Serving guests now", online===machines.length?"gold":"")
-    + tile("Needs attention", String(offline+attention), (offline?offline+" offline":"")+(offline&&attention?", ":"")+(attention?attention+" restock/low":"") || "All healthy", (offline+attention)?"red":"")
-    + tile("Average stock", avgStock+"<small>%</small>", "Fleet-wide fill level", "");
-
-  // group by hotel
-  var groups = {};
-  var orderedHotels = [];
-  for (var j=0;j<machines.length;j++){
-    var h = machines[j].hotel;
-    if (!groups[h]){ groups[h]=[]; orderedHotels.push(h); }
-    groups[h].push(machines[j]);
-  }
-  var html = "";
-  for (var g=0;g<orderedHotels.length;g++){
-    var hotel = orderedHotels[g];
-    var list = groups[hotel];
-    html += '<div class="hotel-group"><div class="hg-head"><h3>'+esc(hotel)+'</h3><span class="cnt">'+list.length+' machine'+(list.length===1?"":"s")+'</span></div><div class="mach-grid">';
-    for (var m=0;m<list.length;m++){
-      var mc = list[m];
-      var fillCls = mc.stockPct<=0 ? "empty" : (mc.stockPct<30 ? "lowfill":"");
-      var nextStatus = mc.status==="offline" ? "online" : "offline";
-      var toggleLabel = mc.status==="offline" ? "Bring online" : "Take offline";
-      html += '<div class="mach"><div class="top"><div><div class="mid">'+esc(mc.id)+'</div><div class="fl">'+esc(mc.floor)+' &middot; Slots '+esc(mc.slots)+'</div></div>'+statusBadge(mc.status)+'</div>'
-        + '<div class="meta"><span>Stock</span><span>'+mc.stockPct+'%</span></div>'
-        + '<div class="stockbar"><i class="'+fillCls+'" style="width:'+Math.max(2,mc.stockPct)+'%"></i></div>'
-        + '<div class="meta"><span>Last vend</span><span>'+(mc.lastVend?fmtDateTime(mc.lastVend):"--")+'</span></div>'
-        + '<div class="foot"><button class="link-btn" onclick="toggleMachine(\''+mc.id+'\',\''+nextStatus+'\')">'+toggleLabel+'</button></div>'
-        + '</div>';
-    }
-    html += '</div></div>';
-  }
-  document.getElementById("machines-body").innerHTML = html;
-}
-function countHotels(machines){
-  var seen = {}, n=0;
-  for (var i=0;i<machines.length;i++){ if(!seen[machines[i].hotel]){ seen[machines[i].hotel]=1; n++; } }
-  return n;
-}
-function toggleMachine(id, status){
-  MB.admin.setMachineStatus(id, status);
-  renderMachines();
-}
-
-/* ======================= PAYOUTS ======================= */
-function renderPayouts(){
-  renderVenuesTable();
-  ensurePayoutMonths();
-  renderPayoutReport();
-}
-function renderVenuesTable(){
-  var venues = MB.admin.getVenues();
-  var html = "";
-  for (var i=0;i<venues.length;i++){
-    var v = venues[i];
-    var idAttr = 'comm-'+i;
-    html += '<tr>'
-      + '<td class="name">'+esc(v.hotel)+'</td>'
-      + '<td class="right mono">'+v.machineCount+'</td>'
-      + '<td class="right"><input class="comm-input" id="'+idAttr+'" type="number" min="0" max="100" step="0.5" value="'+v.commissionPct+'"></td>'
-      + '<td><div class="row-actions"><button class="link-btn" onclick="saveVenueCommission('+i+',\''+esc(v.hotel).replace(/'/g,"\\'")+'\')">Save</button></div></td>'
-      + '</tr>';
-  }
-  document.getElementById("venues-body").innerHTML = html || '<tr><td colspan="4"><div class="empty">No venues in the fleet yet.</div></td></tr>';
-}
-function saveVenueCommission(idx, hotel){
-  var el = document.getElementById("comm-"+idx);
-  if (!el) return;
-  var pct = parseFloat(el.value);
-  if (isNaN(pct)){ el.focus(); return; }
-  MB.admin.setVenueCommission(hotel, pct);
-  renderVenuesTable();
-  renderPayoutReport();
-}
-function ensurePayoutMonths(){
-  var sel = document.getElementById("payout-month");
-  if (sel.options.length) return; // build once
-  var months = MB.admin.availablePayoutMonths(6);
-  var html = "";
-  for (var i=0;i<months.length;i++) html += '<option value="'+months[i].key+'">'+esc(months[i].label)+'</option>';
-  sel.innerHTML = html;
-  // default to the most recent COMPLETED month (previous month) if present
-  if (months.length>1) sel.value = months[1].key;
-}
-function renderPayoutReport(){
-  var sel = document.getElementById("payout-month");
-  var mk = sel.value || (MB.admin.availablePayoutMonths(1)[0].key);
-  var rep = MB.admin.payoutReport(mk);
-  document.getElementById("payout-paydate").textContent = "Pay venues on "+rep.payDate;
-  var html = "";
-  for (var i=0;i<rep.rows.length;i++){
-    var r = rep.rows[i];
-    var realNote = r.realTxns ? ' <span style="color:var(--muted2);font-size:11px">('+r.realTxns+' live)</span>' : '';
-    html += '<tr>'
-      + '<td class="name">'+esc(r.hotel)+realNote+'</td>'
-      + '<td class="right mono">'+r.machineCount+'</td>'
-      + '<td class="right mono">'+MB.money(r.salesCents)+'</td>'
-      + '<td class="right mono">'+r.units+'</td>'
-      + '<td class="right mono">'+r.commissionPct+'%</td>'
-      + '<td class="right mono">'+MB.money(r.commissionCents)+'</td>'
-      + '<td class="right mono" style="color:var(--gold)">'+MB.money(r.payoutCents)+'</td>'
-      + '</tr>';
-  }
-  document.getElementById("payout-body").innerHTML = html || '<tr><td colspan="7"><div class="empty">No venues to pay for this month.</div></td></tr>';
-  var t = rep.totals;
-  document.getElementById("payout-foot").innerHTML = rep.rows.length ?
-    ('<tr><td>Fleet total &middot; '+esc(rep.monthLabel)+'</td>'
-      + '<td class="right mono">'+rep.rows.length+'</td>'
-      + '<td class="right mono">'+MB.money(t.salesCents)+'</td>'
-      + '<td class="right mono">'+t.units+'</td>'
-      + '<td class="right mono">--</td>'
-      + '<td class="right mono">'+MB.money(t.commissionCents)+'</td>'
-      + '<td class="right mono" style="color:var(--gold)">'+MB.money(t.payoutCents)+'</td></tr>') : "";
-}
-function exportPayoutCsv(){
-  var mk = document.getElementById("payout-month").value;
-  var rep = MB.admin.payoutReport(mk);
-  var rows = [["month","pay_date","venue","machines","total_sales_aud","units","commission_pct","commission_owed_aud","payout_total_aud"]];
-  for (var i=0;i<rep.rows.length;i++){
-    var r = rep.rows[i];
-    rows.push([rep.monthLabel, rep.payDate, r.hotel, r.machineCount,
-      (r.salesCents/100).toFixed(2), r.units, r.commissionPct,
-      (r.commissionCents/100).toFixed(2), (r.payoutCents/100).toFixed(2)]);
-  }
-  var t = rep.totals;
-  rows.push(["", "", "TOTAL", rep.rows.length, (t.salesCents/100).toFixed(2), t.units, "", (t.commissionCents/100).toFixed(2), (t.payoutCents/100).toFixed(2)]);
-  downloadCsv(rows, "theminibar-payouts-"+mk+".csv");
-}
-function printPayout(){ window.print(); }
-
-/* ======================= PICK LISTS ======================= */
-function renderPickView(){
-  ensurePickMachines();
-  renderPickList();
-}
-function ensurePickMachines(){
-  var sel = document.getElementById("pick-machine");
-  var machines = MB.admin.getMachines();
-  var html = "";
-  for (var i=0;i<machines.length;i++){
-    var m = machines[i];
-    html += '<option value="'+esc(m.id)+'">'+esc(m.id)+' - '+esc(m.hotel)+' ('+esc(m.floor)+')</option>';
-  }
-  var prev = sel.value;
-  sel.innerHTML = html;
-  if (prev) sel.value = prev;
-}
-function renderPickList(){
-  var sel = document.getElementById("pick-machine");
-  var id = sel.value;
-  var neededOnly = document.getElementById("pick-needed-only").checked;
-  var pl = id ? MB.admin.pickList(id) : null;
-  var headEl = document.getElementById("pick-head-line");
-  if (!pl){
-    headEl.style.display = "none";
-    document.getElementById("pick-body").innerHTML = '<tr><td colspan="7"><div class="empty">No machine selected.</div></td></tr>';
-    document.getElementById("pick-foot").innerHTML = "";
-    document.getElementById("pick-summary").textContent = "";
-    return;
-  }
-  var m = pl.machine;
-  headEl.style.display = "block";
-  headEl.innerHTML = '<b>'+esc(m.id)+'</b> &middot; '+esc(m.hotel)+' &middot; '+esc(m.floor)+' &middot; Slots '+esc(m.slots)
-    + ' &middot; Machine fill '+m.stockPct+'% &middot; Status '+prettyStatus(m.status)+'. Pick <b>'+pl.totals.unitsToPick+'</b> unit(s) across <b>'+pl.totals.skusToPick+'</b> product(s) to refill to par.';
-  var shown = 0, html = "";
-  for (var i=0;i<pl.lines.length;i++){
-    var l = pl.lines[i];
-    if (neededOnly && l.pick<=0) continue;
-    shown++;
-    html += '<tr'+(l.pick>0?' class="row-need"':'')+'>'
-      + '<td><span class="slot-tag">'+esc(l.slot)+'</span></td>'
-      + '<td class="name">'+esc(l.name)+'</td>'
-      + '<td><span class="badge cat">'+esc(l.category)+'</span></td>'
-      + '<td>'+(l.isAlcohol?'<span class="badge al">18+ Alcohol</span>':'<span class="badge na">Standard</span>')+'</td>'
-      + '<td class="right mono">'+l.par+'</td>'
-      + '<td class="right mono">'+l.current+'</td>'
-      + '<td class="right mono '+(l.pick>0?'pick-need':'pick-zero')+'">'+(l.pick>0?l.pick:'-')+'</td>'
-      + '</tr>';
-  }
-  document.getElementById("pick-body").innerHTML = html || '<tr><td colspan="7"><div class="empty">Nothing to pick. This machine is at par.</div></td></tr>';
-  document.getElementById("pick-foot").innerHTML =
-    '<tr><td colspan="4">Total to pick'+(neededOnly?' (showing '+shown+' needing stock)':'')+'</td>'
-    + '<td class="right mono">--</td><td class="right mono">--</td>'
-    + '<td class="right mono" style="color:var(--gold)">'+pl.totals.unitsToPick+'</td></tr>';
-  document.getElementById("pick-summary").textContent = pl.totals.unitsToPick+" units / "+pl.totals.skusToPick+" products to pick";
-}
-function exportPickCsv(){
-  var id = document.getElementById("pick-machine").value;
-  var pl = id ? MB.admin.pickList(id) : null;
-  if (!pl) return;
-  var m = pl.machine;
-  var rows = [["machine","hotel","floor","slot","product","category","type","par","in_stock","qty_to_pick"]];
-  for (var i=0;i<pl.lines.length;i++){
-    var l = pl.lines[i];
-    rows.push([m.id, m.hotel, m.floor, l.slot, l.name, l.category,
-      l.isAlcohol?"Alcohol":"Standard", l.par, l.current, l.pick]);
-  }
-  rows.push(["", "", "", "", "TOTAL", "", "", "", "", pl.totals.unitsToPick]);
-  downloadCsv(rows, "theminibar-picklist-"+m.id+"-"+MB.dayKey()+".csv");
-}
-function printPickList(){ window.print(); }
 
 /* Shared CSV builder + data-URI download (no network). */
 function downloadCsv(rows, filename){
@@ -1118,7 +1691,8 @@ function refreshActive(){
   if (id==="dashboard") renderDashboard();
   else if (id==="compliance") renderCompliance();
   else if (id==="products") renderProducts();
-  else if (id==="machines") renderMachines();
+  else if (id==="chains") renderChains();
+  else if (id==="fleet") renderFleet();
   else if (id==="payouts") renderPayoutReport();
   else if (id==="picklist") renderPickList();
 }
@@ -1126,15 +1700,16 @@ if (window.MB && MB.bus){
   MB.bus.on(function(type){
     if (type==="purchase:new" || type==="audit:new" || type==="session:start" ||
         type==="catalogue:changed" || type==="config:changed" || type==="machines:changed" ||
-        type==="venues:changed"){
+        type==="chains:changed" || type==="properties:changed" || type==="venues:changed"){
       refreshActive();
     }
+    if (type==="role:changed"){ /* another tab changed role */ }
   });
 }
 
 /* ======================= DEMO RESET ======================= */
 function resetDemo(){
-  if (window.confirm("Wipe all demo data (sales, audit log, sessions, verifications)? Catalogue, policy and machines are kept.")){
+  if (window.confirm("Wipe all demo sales data (sales, audit log, sessions, verifications)? The fleet, pricing, policy and stock are kept.")){
     if (MB.resetAll) MB.resetAll();
     refreshActive();
   }
@@ -1148,6 +1723,7 @@ function tickClock(){
   if (el) el.textContent = p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds());
 }
 if (window.MB){
+  buildRoleSwitcher();
   buildFilterSelect();
   tickClock();
   setInterval(tickClock, 1000);
