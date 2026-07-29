@@ -8,79 +8,407 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<!--
+=======================================================================
+  VenuePlay "Gflam HQ" admin console  (hq.html)
+  Real Supabase data via window.VP (vp-session.js). No demo venues.
+-----------------------------------------------------------------------
+  WHAT IS LIVE FROM THE BROWSER (admin JWT, RLS-scoped, read + some writes)
+    - Venues list ............ VP.listVenues()            (vp_venues)
+    - Live-now flags ......... vp_sessions (admin select)
+    - Founding tracker ....... rpc venueplay_spots_taken()
+    - Groups list/create ..... vp_venue_groups (admin FOR ALL)
+    - Assign venue to group .. vp_venues.group_id update  (admin FOR ALL)
+    - Usage / billing table .. vp_billing_usage (admin FOR ALL)
+    - Active discounts (read). vp_discounts (admin FOR ALL)
+    - Team list / remove ..... vp_platform_admins (admin FOR ALL)
+    - Audit log .............. vp_admin_audit (admin FOR ALL)
+
+  WHAT NEEDS A SERVICE-ROLE WORKER (browser CANNOT do these safely)
+    These POST to the existing Worker origin. The browser sends the
+    caller's Supabase access token as a Bearer header; the Worker MUST
+    verify the token, confirm the caller is a platform admin, and (where
+    noted) that adminRole is 'owner' or 'accounts' before acting. If an
+    endpoint is missing the UI degrades: it says "not deployed yet" and
+    changes nothing. NEVER put the service_role key in this page.
+
+    Worker origin: VP_WORKER (below).  All bodies/responses are JSON.
+
+    1) POST /admin/venue         (owner|accounts)
+       Onboard a venue: creates the vp_venues row, its vp_venue_settings +
+       vp_screens defaults, and — for an independent venue — the
+       venueplay_founding subscription record, and (optional) the first
+       manager's Supabase Auth user + vp_venue_staff row, then an audit row.
+       body: {
+         name, slug, timezone,
+         billing: { type:'founding'|'group',
+                    group_id?, included_players?,        // group only
+                    founding?: { contact_email, mobile, postcode,
+                                 max_seats, plan:'monthly'|'annual' } },
+         manager?: { mobile?, email?, display_name }
+       }
+       -> { ok:true, venue:{id,name,slug}, founding_id?, manager?:{auth_user_id} }
+          | { error:"..." }
+
+    2) POST /admin/discount      (owner|accounts)
+       Writes vp_discounts + a vp_admin_audit row (both service-role).
+       body: { target_type:'venue'|'group', target_id,
+               kind:'percent'|'dollar', value_numeric, months|null, note }
+       -> { ok:true, discount:{id} } | { error:"..." }
+
+    3) POST /admin/venue-status  (owner|accounts)
+       Suspend / reactivate. Writes vp_venues.status + a vp_admin_audit row.
+       body: { venue_id, status:'active'|'suspended', reason? }
+       -> { ok:true } | { error:"..." }
+
+    4) POST /admin/staff         (owner)
+       Add a Gflam staff login: creates the Supabase Auth user (invite),
+       inserts vp_platform_admins {auth_user_id, role, label}, audit row.
+       body: { name, email, role:'owner'|'accounts'|'staff' }
+       -> { ok:true, auth_user_id } | { error:"..." }
+
+    5) POST /admin/audit         (any admin) — optional, best-effort
+       Records a view-as / read action. Fire-and-forget from the browser.
+       body: { action, target?, detail? }  -> { ok:true } | { error }
+
+  VIEW-AS (impersonation) contract — see the block below and index.html:
+    "View as" calls VP.setCurrentVenue(id), writes localStorage
+    "vpImpersonate" = {"id","name"} and opens index.html. index.html reads
+    that flag: an admin whose current venue matches drops into that venue's
+    host console behind a gold "Viewing <venue> from Gflam HQ / Back to
+    Gflam HQ" banner instead of being bounced back to HQ.
+
+  MOCKUP ITEMS WITH NO REAL COLUMN (shown honestly, never faked):
+    - Venue "type" (Pub/RSL/Bowls): no column on vp_venues -> omitted.
+    - Venue suburb/state: no column -> timezone shown as the locality proxy.
+    - Independent venue plan tier (Founding vs Standard) + its player cap:
+      live in venueplay_founding, which is RLS-locked to the Worker, so the
+      browser cannot read them. Independent venues show "Independent (card)"
+      and the cap/plan come from the onboarding Worker, not this page.
+    - Billing "health" (declined cards / overdue): lives in Stripe /
+      venueplay_founding.status, not browser-readable -> shows an empty
+      state until the billing Worker feeds it.
+    - Per-venue dollar charges: no rate column is browser-readable for
+      independent venues; grouped venues use vp_venue_groups.negotiated_rate_cents.
+=======================================================================
+-->
 <style>
   :root{
-    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
-    --pink:#FF1F8E; --pink-deep:#C70F69;
-    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
-    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524; --white:#fff; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{overflow-x:clip}
-  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
-    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  body{background:radial-gradient(1100px 560px at 78% -12%, rgba(255,31,142,.12), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
   .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
-  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
-  .bar{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .hidden{display:none!important}
+
   .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
   .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
   .brand .div{width:1px;height:20px;background:var(--line)}
   .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
-  .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:12px}
-  .wrap{max-width:1100px;margin:0 auto;padding:22px}
-  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;color:#fff;line-height:1.04;margin-bottom:6px}
-  .authsub{color:var(--muted);font-size:13.5px;margin-bottom:22px;line-height:1.5}
-  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin:22px 0 12px;display:flex;align-items:center;gap:10px}
-  .note{font-size:12px;color:var(--faint);line-height:1.5}
-  .btn{border:none;border-radius:12px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em;text-decoration:none;display:inline-block}
+  .btn{border:none;border-radius:10px;padding:11px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s}
   .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:hover{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
   .btn.ghost:hover{border-color:var(--pink);color:#fff}
-  .btn.sm{padding:8px 12px;font-size:12px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .mini{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 12px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:.15s;text-decoration:none;display:inline-block}
+  .mini:hover{border-color:var(--pink);color:#fff}
+  .mini.roll{border-color:rgba(245,165,36,.4);color:var(--roll)}
+  .mini.roll:hover{border-color:var(--roll);color:var(--roll)}
+  .mini.win{border-color:rgba(53,208,127,.4);color:var(--win)}
   .link{color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:inherit}
   .link:hover{color:var(--pink)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-  .vcard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:16px}
-  .vcard .vname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
-  .vcard .vslug{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--gold);margin-top:2px}
-  .vcard .vmeta{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6}
-  .pill{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:20px;font-family:'Hanken Grotesk',sans-serif}
-  .pill.active{background:rgba(53,208,127,.14);color:var(--win)}
-  .pill.suspended{background:rgba(245,165,36,.14);color:var(--roll)}
-  .pill.grouped{background:rgba(255,31,142,.12);color:var(--pink);margin-left:6px}
-  .pill.indep{background:rgba(255,255,255,.06);color:var(--muted);margin-left:6px}
-  .vactions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+
+  input[type=text],input[type=email],input[type=number],select,textarea{
+    width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:10px 11px;font-family:'Manrope',sans-serif;font-size:13.5px;outline:none;transition:.15s}
+  input:focus,select:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  input:disabled,select:disabled{opacity:.55;cursor:not-allowed}
+  select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 17px,calc(100% - 13px) 17px;background-size:5px 5px;background-repeat:no-repeat}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:600}
+
+  .topbar{border-bottom:1px solid var(--line);background:rgba(10,10,11,.72);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .tbin{max-width:1240px;margin:0 auto;padding:11px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .who{margin-left:auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:14px}
+  .who b{color:var(--text);font-weight:700}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:24px 22px 60px}
+  .titlerow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:3px}
+  .h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:22px}
+  .subh{color:var(--muted);font-size:13px;margin-bottom:20px}
+  .lblk{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:10.5px;color:var(--faint);margin:26px 0 11px}
+  .rowbetween{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .rowbetween .sp{margin-left:auto}
+  .note{font-size:12px;color:var(--muted);margin-top:11px;line-height:1.5}
+  .note b{color:var(--text);font-weight:600}
+  .okflash{font-size:12px;color:var(--win);font-weight:600;margin-top:10px;display:none;align-items:center;gap:7px}
+  .okflash.show{display:flex}
+  .errflash{font-size:12px;color:var(--roll);font-weight:600;margin-top:10px;display:none;line-height:1.5}
+  .errflash.show{display:block}
+
+  .stats{display:grid;gap:13px;margin-bottom:6px;grid-template-columns:repeat(5,1fr)}
+  @media (max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
+  @media (max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .scard{background:linear-gradient(180deg,#141416,#0e0e10);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+  .scard .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .scard .v{font-family:'Anton',sans-serif;font-size:32px;color:#fff;line-height:1;margin-top:8px}
+  .scard .v.g{color:var(--gold)}
+  .scard .d{font-size:11.5px;color:var(--muted);margin-top:6px}
+
+  .navpills{display:flex;gap:7px;flex-wrap:wrap;margin:22px 0 20px}
+  .navpills button{border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:9px;padding:8px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;transition:.15s}
+  .navpills button.on{background:var(--pink);color:#fff;border-color:transparent}
+  .navpills button:hover{color:#fff}
+
+  .panel{background:linear-gradient(180deg,#131315,#0e0e10);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .panel.pad{padding:18px}
+  .tscroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+  th{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:10px;color:var(--faint);text-align:left;padding:11px 14px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+  td{padding:12px 14px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  td .vn{font-weight:700;color:#fff}
+  td .vt{font-size:11.5px;color:var(--muted)}
+  td.num{font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff}
+  td.money{font-family:'JetBrains Mono',monospace;color:var(--gold)}
+  tr.off td{color:var(--faint)}
+  tr.off td.num{color:var(--faint)}
+  .detail td{background:rgba(255,255,255,.02);font-size:12.5px;color:var(--muted);padding:14px 16px}
+  .detail td b{color:var(--text)}
+
+  .badge{font-size:10.5px;font-weight:700;font-family:'Hanken Grotesk',sans-serif;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+  .badge.live{background:rgba(53,208,127,.14);color:var(--win)}
+  .badge.idle{background:rgba(154,154,164,.12);color:var(--muted)}
+  .badge.gold{background:rgba(255,194,75,.14);color:var(--gold)}
+  .badge.suspend{background:rgba(245,165,36,.16);color:var(--roll)}
+  .badge.grouped{background:rgba(255,31,142,.12);color:var(--pink)}
+  .badge.indep{background:rgba(255,255,255,.06);color:var(--muted)}
+  .actcell{text-align:right;white-space:nowrap;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+
+  .formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media (max-width:560px){.formgrid{grid-template-columns:1fr}}
+  .addrow3{display:grid;grid-template-columns:1fr 1fr 130px auto;gap:8px}
+  @media (max-width:640px){.addrow3{grid-template-columns:1fr 1fr}}
+  .filterbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .filterbar input[type=text]{max-width:280px}
+  .filterbar select{width:auto;min-width:150px}
+
   .empty{color:var(--faint);font-size:13px;padding:22px;text-align:center;background:var(--ink-2);border:1px dashed var(--line);border-radius:14px}
-  .toprow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .toprow .btn{margin-left:auto}
+  .srole{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.08em;padding:3px 10px;border-radius:20px}
+  .srole.owner{background:rgba(255,31,142,.14);color:var(--pink)}
+  .srole.accounts{background:rgba(255,194,75,.14);color:var(--gold)}
+  .srole.staff{background:rgba(154,154,164,.12);color:var(--muted)}
+
+  .prog{height:12px;border-radius:8px;background:var(--ink-3);border:1px solid var(--line-2);overflow:hidden}
+  .prog span{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--gold));transition:width .3s}
+
+  .bkline{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line-2);font-size:12.5px}
+  .bkline:last-of-type{border-bottom:none}
+  .bkline .l{color:var(--muted)}
+  .bkline .r{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--text)}
+  .bkline.tot .l{color:var(--text);font-weight:700}
+  .bkline.tot .r{color:var(--gold);font-size:14px}
+  .bkline.disc .r{color:var(--win)}
+  .dform{background:var(--ink-3);border:1px solid var(--line-2);border-radius:12px;padding:13px;margin-top:12px}
+  .dgrid{display:grid;grid-template-columns:130px 110px 140px 1fr;gap:8px;align-items:end}
+  @media (max-width:640px){.dgrid{grid-template-columns:1fr 1fr}}
+  .restrict{font-size:12px;color:var(--roll);background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.25);border-radius:10px;padding:10px 12px;margin-top:12px}
+  .checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:6px}
+  @media (max-width:560px){.checklist{grid-template-columns:1fr}}
+  .checkitem{display:flex;align-items:center;gap:8px;background:var(--ink-3);border:1px solid var(--line-2);border-radius:9px;padding:8px 11px;font-size:13px;cursor:pointer}
+  .checkitem input{width:auto}
+  .checkitem.dis{opacity:.5;cursor:not-allowed}
+
+  .grouphead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 16px;border-bottom:1px solid var(--line-2)}
+  .grouphead .gn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:16px}
+  .grouphead .gm{font-size:12px;color:var(--muted)}
+
+  .foot{max-width:1240px;margin:0 auto 44px;padding:0 22px;font-size:12px;color:var(--faint);line-height:1.6}
 </style>
 </head>
 <body>
-<header>
-  <div class="bar">
-    <div class="brand">
-      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
-      <span class="div"></span><span class="word">VenuePlay</span>
-    </div>
-    <span class="tag">Gflam HQ</span>
-    <span class="who"><span id="whoLabel"></span> <button class="link" id="signOut">Sign out</button></span>
-  </div>
-</header>
 
-<div class="wrap">
-  <div class="toprow">
-    <div>
-      <div class="authbig">Venues</div>
-      <div class="authsub">Every VenuePlay venue. Open one to change its settings, or view it as its host.</div>
-    </div>
-    <a class="btn pink" href="onboard.html">+ Onboard a venue</a>
+<div class="topbar"><div class="tbin">
+  <div class="brand">
+    <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="div"></span><span class="word">VenuePlay</span>
+  </div>
+  <span class="tag">Gflam HQ</span>
+  <div class="who"><span id="whoLabel"></span> <button class="link" id="signOut">Log out</button></div>
+</div></div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="titlerow"><div class="h2">Gflam HQ</div></div>
+  <div class="subh">Every VenuePlay venue in one place</div>
+
+  <div class="stats">
+    <div class="scard"><div class="k">Venues</div><div class="v" id="stVenues">0</div><div class="d" id="stVenuesD">&nbsp;</div></div>
+    <div class="scard"><div class="k">Live now</div><div class="v g" id="stLive">0</div><div class="d">running a game</div></div>
+    <div class="scard"><div class="k">Groups</div><div class="v" id="stGroups">0</div><div class="d">pub / operator groups</div></div>
+    <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">0</div><div class="d">kill-switch off</div></div>
+    <div class="scard"><div class="k">Founding spots left</div><div class="v g" id="stSpots">&mdash;</div><div class="d">of 100</div></div>
   </div>
 
-  <div class="lbl" id="listLbl">Loading venues</div>
-  <div id="venueGrid" class="grid"></div>
+  <div class="panel pad" style="margin-top:13px">
+    <div class="rowbetween" style="margin-bottom:8px">
+      <div class="lblk" style="margin:0">Founding spots</div>
+      <div class="mono" style="color:var(--gold);font-weight:700" id="foundText">&hellip;</div>
+    </div>
+    <div class="prog"><span id="foundBar" style="width:0%"></span></div>
+    <div class="note">At 100 founding venues, new venues roll to the standard <b>$3.00 per player</b> automatically. Founding venues keep <b>$2.40 per player</b> for life.</div>
+  </div>
+
+  <div class="navpills" id="hqNav">
+    <button data-pane="venues" class="on">Venues</button>
+    <button data-pane="billing">Billing</button>
+    <button data-pane="groups">Groups</button>
+    <button data-pane="usage">Usage</button>
+    <button data-pane="team">Team</button>
+    <button data-pane="audit">Audit</button>
+  </div>
+
+  <!-- ============ VENUES ============ -->
+  <div id="paneVenues">
+    <div class="rowbetween">
+      <div class="filterbar">
+        <input type="text" id="venueSearch" placeholder="Search name or slug&hellip;">
+        <select id="venueFilter">
+          <option value="all">All venues</option>
+          <option value="grouped">Grouped</option>
+          <option value="independent">Independent</option>
+          <option value="live">Live now</option>
+          <option value="suspended">Suspended</option>
+        </select>
+      </div>
+      <button class="btn ghost sp" id="addVenueToggle">+ Add venue</button>
+      <a class="btn pink" href="onboard.html">Full onboarding</a>
+    </div>
+
+    <div id="addVenuePanel" class="panel pad hidden" style="margin-bottom:16px">
+      <div class="lblk" style="margin-top:0">Onboard a venue</div>
+      <div class="formgrid">
+        <div class="field"><label>Venue name</label><input type="text" id="nvName" placeholder="e.g. The Royal Hotel"></div>
+        <div class="field"><label>Screen slug (screen.venueplay.com.au/&lt;slug&gt;)</label><input type="text" id="nvSlug" placeholder="auto from the name" class="mono"></div>
+        <div class="field"><label>Timezone</label><select id="nvTz">
+          <option value="Australia/Brisbane">Australia/Brisbane (QLD)</option>
+          <option value="Australia/Sydney">Australia/Sydney (NSW/ACT)</option>
+          <option value="Australia/Melbourne">Australia/Melbourne (VIC)</option>
+          <option value="Australia/Adelaide">Australia/Adelaide (SA)</option>
+          <option value="Australia/Perth">Australia/Perth (WA)</option>
+          <option value="Australia/Hobart">Australia/Hobart (TAS)</option>
+          <option value="Australia/Darwin">Australia/Darwin (NT)</option>
+        </select></div>
+        <div class="field"><label>Billing parent</label><select id="nvBill"><option value="founding">Independent (card)</option><option value="group">Grouped operator</option></select></div>
+        <div class="field nvGroupF hidden"><label>Operator group</label><select id="nvGroup"></select></div>
+        <div class="field nvGroupF hidden"><label>Included players (cap)</label><input type="number" id="nvCap" placeholder="e.g. 150" class="mono"></div>
+        <div class="field nvFoundF"><label>Contact email</label><input type="email" id="nvEmail" placeholder="owner@venue.com.au"></div>
+        <div class="field nvFoundF"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"></div>
+        <div class="field nvFoundF"><label>Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
+        <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly">Founding monthly</option><option value="annual">Founding annual</option></select></div>
+      </div>
+      <button class="btn pink" id="addVenueSubmit">Create venue</button>
+      <div class="note">Onboarding creates the founding subscription record and the first manager's login. That needs service-role access, so it runs on the VenuePlay Worker (<span class="mono">POST /admin/venue</span>), not from this page.</div>
+      <div class="okflash" id="addVenueOk"><span>&#10003;</span> <span></span></div>
+      <div class="errflash" id="addVenueErr"></div>
+    </div>
+
+    <div class="lblk" id="venuesLbl">All venues</div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
+      <tbody id="venueRows"></tbody>
+    </table></div></div>
+    <div class="note">One row per venue, sorted A&ndash;Z, scales to 400+. Open <b>Details</b> for the screen address and caps. <b>View as</b> drops into that venue's console from HQ.</div>
+  </div>
+
+  <!-- ============ BILLING ============ -->
+  <div id="paneBilling" class="hidden">
+    <div class="lblk" style="margin-top:0">Billing health</div>
+    <div id="healthList"></div>
+
+    <div class="lblk">This month by venue <span id="billMonth" class="mono" style="color:var(--gold)"></span></div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>Venue</th><th>Billing</th><th>Peak players</th><th>Included</th><th>Overage</th><th style="text-align:right">Est charge</th><th></th></tr></thead>
+      <tbody id="billingRows"></tbody>
+    </table></div></div>
+    <div class="note">Peak rule: the single biggest metered night sets the month. Raffles and members draws never count. Open <b>Details</b> to apply a discount. Dollar estimates use the group's negotiated rate; independent venue rates live in the founding record (Worker only).</div>
+
+    <div class="lblk">Active discounts</div>
+    <div id="discountList"></div>
+  </div>
+
+  <!-- ============ GROUPS ============ -->
+  <div id="paneGroups" class="hidden">
+    <div class="rowbetween">
+      <div class="lblk" style="margin:0">Pub &amp; operator groups</div>
+      <button class="btn pink sp" id="addGroupToggle">Create group</button>
+    </div>
+    <div id="addGroupPanel" class="panel pad hidden" style="margin-bottom:16px">
+      <div class="formgrid">
+        <div class="field"><label>Group name</label><input type="text" id="ngName" placeholder="e.g. Coastline Hotels"></div>
+        <div class="field"><label>Billing email</label><input type="email" id="ngEmail" placeholder="accounts@group.com.au"></div>
+        <div class="field"><label>Negotiated rate ($ per player)</label><input type="number" step="0.01" id="ngRate" placeholder="e.g. 2.20" class="mono"></div>
+        <div class="field"><label>Rack / standard rate ($ per player)</label><input type="number" step="0.01" id="ngRack" placeholder="e.g. 3.00" class="mono"></div>
+      </div>
+      <button class="btn pink" id="addGroupSubmit">Create group</button>
+      <div class="okflash" id="addGroupOk"><span>&#10003;</span> <span></span></div>
+      <div class="errflash" id="addGroupErr"></div>
+    </div>
+    <div id="groupList"></div>
+    <div class="note">Grouped venues are billed on one consolidated invoice, never card-charged. Only grouped venues can be reassigned here; moving an independent (card) venue into a group is a billing-parent change handled at onboarding.</div>
+  </div>
+
+  <!-- ============ USAGE ============ -->
+  <div id="paneUsage" class="hidden">
+    <div class="rowbetween">
+      <div class="lblk" style="margin:0">Usage this month by venue <span id="usageMonth" class="mono" style="color:var(--gold)"></span></div>
+      <button class="btn ghost sp" id="usageCsv">Download CSV</button>
+    </div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>Venue</th><th>Sessions</th><th>Peak billable</th><th>Included</th><th>Overage</th><th style="text-align:right">Est overage charge</th></tr></thead>
+      <tbody id="usageRows"></tbody>
+    </table></div></div>
+    <div class="note">From <b>vp_billing_usage</b>. Peak rule: the biggest metered night sets the month. Raffles and members draws never count. Automatic metering is a post-launch job; rows appear here once it runs.</div>
+  </div>
+
+  <!-- ============ TEAM ============ -->
+  <div id="paneTeam" class="hidden">
+    <div class="lblk">Gflam staff logins</div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>Login</th><th>Role</th><th>Auth user</th><th></th></tr></thead>
+      <tbody id="teamRows"></tbody>
+    </table></div></div>
+    <div class="lblk">Add a Gflam staff member</div>
+    <div class="panel pad">
+      <div class="addrow3">
+        <input type="text" id="tmName" placeholder="Full name">
+        <input type="email" id="tmEmail" placeholder="name@gflam.com.au">
+        <select id="tmRole"><option value="staff">Staff</option><option value="accounts">Accounts</option><option value="owner">Owner</option></select>
+        <button class="btn pink" id="tmAdd">Add</button>
+      </div>
+      <div class="note"><b>Owner</b> and <b>Accounts</b> can apply discounts, edit billing and suspend venues. <b>Staff</b> see everything else but no billing changes. Adding a login creates a Supabase Auth user, so it runs on the Worker (<span class="mono">POST /admin/staff</span>).</div>
+      <div id="teamGate" class="restrict hidden">Only an Owner can add or remove Gflam staff logins.</div>
+      <div class="okflash" id="tmOk"><span>&#10003;</span> <span></span></div>
+      <div class="errflash" id="tmErr"></div>
+    </div>
+  </div>
+
+  <!-- ============ AUDIT ============ -->
+  <div id="paneAudit" class="hidden">
+    <div class="lblk">Admin audit log</div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>When</th><th>Who</th><th>Action</th></tr></thead>
+      <tbody id="auditRows"></tbody>
+    </table></div></div>
+    <div class="note">Every discount, suspension, new venue and staff change the Worker records lands here, newest first.</div>
+  </div>
 </div>
+
+<div class="foot">Gflam HQ is your view across every venue. Reads run live on Supabase (RLS-scoped to admins). Privileged writes (onboarding, discounts, suspend, staff) run on the VenuePlay Worker with a service-role key, never from this page.</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
@@ -88,53 +416,555 @@
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
-  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function aud(n){ return "$"+Number(n||0).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function show(el,on){ var n=(typeof el==="string")?$(el):el; if(n) n.classList.toggle("hidden", !on); }
+  function slugify(s){ return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+  function tzShort(tz){ if(!tz) return ""; var p=tz.split("/"); return (p[1]||tz).replace(/_/g," "); }
 
-  $("signOut").addEventListener("click", function(){ VP.signOut(); });
+  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
 
-  // Admins only. Non-admins are bounced back to their own home.
-  VP.requireAuth().then(function(ctx){
-    if(!ctx.isAdmin){ window.location.href = VP.homeHref(ctx); return; }
-    $("whoLabel").textContent = "Gflam admin"+(ctx.adminRole?(" ("+ctx.adminRole+")"):"");
-    return VP.listVenues().then(render);
-  });
+  function fmtWhen(iso){
+    var d=new Date(iso); if(isNaN(d)) return esc(iso||"");
+    var mo=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var h=d.getHours(), m=d.getMinutes(), ap=h<12?"am":"pm", h12=h%12; if(h12===0)h12=12;
+    return d.getDate()+" "+mo[d.getMonth()]+" "+d.getFullYear()+", "+h12+":"+(m<10?"0":"")+m+ap;
+  }
+  function monthLabel(dateStr){
+    if(!dateStr) return "";
+    var d=new Date(dateStr+"T00:00:00");
+    var mo=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    return mo[d.getMonth()]+" "+d.getFullYear();
+  }
 
-  function render(venues){
-    var grid=$("venueGrid");
-    $("listLbl").textContent = venues.length+" venue"+(venues.length===1?"":"s");
-    if(!venues.length){
-      grid.innerHTML='<div class="empty">No venues yet. Use <b>Onboard a venue</b> to create the first one.</div>';
-      return;
-    }
-    grid.innerHTML="";
-    venues.forEach(function(v){
-      var grouped = !!v.group_id;
-      var card=document.createElement("div"); card.className="vcard";
-      card.innerHTML=
-        '<div class="vname">'+esc(v.name)+'</div>'+
-        '<div class="vslug">'+esc(v.slug||"(no slug)")+'</div>'+
-        '<div class="vmeta">'+
-          '<span class="pill '+(v.status==="active"?"active":"suspended")+'">'+esc(v.status)+'</span>'+
-          '<span class="pill '+(grouped?"grouped":"indep")+'">'+(grouped?"Grouped":"Independent")+'</span>'+
-          '<br>Timezone '+esc(v.timezone||"")+
-          (grouped && v.included_players!=null ? ' &middot; cap '+v.included_players+' players' : '')+
-        '</div>'+
-        '<div class="vactions">'+
-          '<a class="btn ghost sm" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>'+
-          '<button class="btn ghost sm" data-viewas="'+esc(v.id)+'">View as host</button>'+
-        '</div>';
-      grid.appendChild(card);
-    });
-    grid.addEventListener("click", function(e){
-      var b=e.target.closest("button[data-viewas]"); if(!b) return;
-      // "View as" sets the working venue, then drops into the host console (index.html).
-      // NOTE: the design calls for logging view-as to vp_admin_audit; that is a
-      // service-role Worker action and is intentionally not done from the browser.
-      VP.setCurrentVenue(b.getAttribute("data-viewas")).then(function(){
-        window.location.href="index.html";
-      });
+  /* ---- CSV ---- */
+  function csvCell(v){ v=(v==null?"":String(v)); if(/[",\n\r]/.test(v)){ v='"'+v.replace(/"/g,'""')+'"'; } return v; }
+  function downloadCSV(filename, rows){
+    var csv=rows.map(function(r){ return r.map(csvCell).join(","); }).join("\r\n");
+    var blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    var url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download=filename; a.style.display="none";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); },600);
+  }
+  function flash(id, msg){ var n=$(id); if(!n) return; if(msg){ var sp=n.querySelector("span:last-child"); if(sp) sp.textContent=" "+msg; } n.classList.add("show"); setTimeout(function(){ n.classList.remove("show"); }, 3200); }
+  function errFlash(id, msg){ var n=$(id); if(!n) return; n.textContent=msg; n.classList.add("show"); setTimeout(function(){ n.classList.remove("show"); }, 6000); }
+
+  /* ---- Worker (service-role actions) with graceful degradation ---- */
+  function authToken(){
+    return VP.getClient().auth.getSession().then(function(r){
+      return (r && r.data && r.data.session && r.data.session.access_token) || null;
     });
   }
+  function workerPost(path, body){
+    return authToken().then(function(tok){
+      var headers={ "Content-Type":"application/json" };
+      if(tok) headers["Authorization"]="Bearer "+tok;
+      return fetch(VP_WORKER+path, { method:"POST", headers:headers, body:JSON.stringify(body||{}) })
+        .then(function(res){
+          if(res.status===404) return { degraded:true, error:"Backend endpoint "+path+" is not deployed yet. Nothing was changed." };
+          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || ("Request failed ("+res.status+")") }; })
+                           .catch(function(){ return { error:"Unexpected response from the server." }; });
+        })
+        .catch(function(){ return { degraded:true, error:"Backend endpoint "+path+" is not reachable yet (Worker not deployed). Nothing was changed." }; });
+    });
+  }
+  function auditBestEffort(action, target, detail){ workerPost("/admin/audit", { action:action, target:target, detail:detail||{} }); }
+
+  /* ---- state ---- */
+  var S={ ctx:null, adminRole:null,
+          venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
+          admins:[], audit:[], live:{}, spots:null,
+          vFilter:"all", vSearch:"", openVenue:null, openBilling:null, openGroup:null };
+
+  function canBilling(){ return S.adminRole==="owner" || S.adminRole==="accounts"; }
+  function canTeam(){ return S.adminRole==="owner"; }
+  function groupName(id){ var g=S.groupById[id]; return g?g.name:"(unknown group)"; }
+  function venueName(id){ for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i].name; } return "(unknown venue)"; }
+
+  /* ================= BOOT ================= */
+  $("signOut").addEventListener("click", function(){ VP.signOut(); });
+
+  VP.requireAuth().then(function(ctx){
+    if(!ctx.isAdmin){ window.location.href = VP.homeHref(ctx); return; }
+    // Landing on HQ normally clears any stale impersonation flag.
+    try{ localStorage.removeItem("vpImpersonate"); }catch(e){}
+    S.ctx=ctx; S.adminRole=ctx.adminRole||"staff";
+    $("whoLabel").innerHTML = "Gflam admin &middot; <b>"+esc(ctx.adminRole||"staff")+"</b>";
+    $("app").style.display="block";
+    loadAll();
+  });
+
+  function loadAll(){
+    var c=VP.getClient();
+    Promise.all([
+      VP.listVenues(),
+      c.from("vp_venue_groups").select("*").order("name"),
+      c.from("vp_discounts").select("*").order("created_at",{ascending:false}),
+      c.from("vp_billing_usage").select("*").order("period_month",{ascending:false}),
+      c.from("vp_platform_admins").select("*"),
+      c.from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250),
+      c.from("vp_sessions").select("venue_id,status").in("status",["lobby","running","paused"]),
+      c.rpc("venueplay_spots_taken")
+    ]).then(function(r){
+      S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
+      S.groups=(r[1] && r[1].data) || [];
+      S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
+      S.discounts=(r[2] && r[2].data) || [];
+      S.usage=(r[3] && r[3].data) || [];
+      S.admins=(r[4] && r[4].data) || [];
+      S.audit=(r[5] && r[5].data) || [];
+      S.live={}; ((r[6] && r[6].data)||[]).forEach(function(s){ S.live[s.venue_id]=true; });
+      S.spots=(r[7] && typeof r[7].data==="number") ? r[7].data : null;
+      // latest usage month present
+      S.usageMonth = S.usage.length ? S.usage[0].period_month : null;
+      renderStats(); renderVenues(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderAudit(); populateGroupSelect();
+    }).catch(function(e){
+      $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(e&&e.message||e)+'</td></tr>';
+    });
+  }
+
+  /* ================= STATS ================= */
+  function renderStats(){
+    var grouped=S.venues.filter(function(v){ return !!v.group_id; }).length;
+    var indep=S.venues.length-grouped;
+    var susp=S.venues.filter(function(v){ return v.status==="suspended"; }).length;
+    var liveN=Object.keys(S.live).length;
+    $("stVenues").textContent=S.venues.length;
+    $("stVenuesD").textContent=indep+" independent, "+grouped+" grouped";
+    $("stLive").textContent=liveN;
+    $("stGroups").textContent=S.groups.length;
+    $("stSusp").textContent=susp;
+    if(S.spots==null){ $("stSpots").textContent="—"; $("foundText").textContent="Founding count unavailable"; $("foundBar").style.width="0%"; }
+    else {
+      var left=Math.max(0,100-S.spots);
+      $("stSpots").textContent=left;
+      $("foundText").textContent=S.spots+" of 100 used";
+      $("foundBar").style.width=Math.min(100,S.spots)+"%";
+    }
+  }
+
+  /* ================= NAV ================= */
+  var PANES=["venues","billing","groups","usage","team","audit"];
+  $("hqNav").addEventListener("click", function(e){
+    var b=e.target.closest("button"); if(!b) return;
+    var pane=b.getAttribute("data-pane");
+    Array.prototype.forEach.call(this.children, function(x){ x.classList.toggle("on", x===b); });
+    PANES.forEach(function(p){ show("pane"+p.charAt(0).toUpperCase()+p.slice(1), p===pane); });
+  });
+
+  /* ================= VENUES ================= */
+  function venuePasses(v){
+    if(S.vFilter==="grouped" && !v.group_id) return false;
+    if(S.vFilter==="independent" && v.group_id) return false;
+    if(S.vFilter==="live" && !S.live[v.id]) return false;
+    if(S.vFilter==="suspended" && v.status!=="suspended") return false;
+    if(S.vSearch){
+      var q=S.vSearch.toLowerCase();
+      if(String(v.name||"").toLowerCase().indexOf(q)<0 && String(v.slug||"").toLowerCase().indexOf(q)<0) return false;
+    }
+    return true;
+  }
+  function renderVenues(){
+    var b=$("venueRows"); b.innerHTML="";
+    var list=S.venues.filter(venuePasses);
+    $("venuesLbl").textContent="All venues ("+list.length+(list.length===S.venues.length?"":" of "+S.venues.length)+")";
+    if(!list.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'+(S.venues.length?"No venues match that filter.":"No venues yet. Use Add venue to onboard the first one.")+'</div></td></tr>'; return; }
+    list.forEach(function(v){
+      var suspended=v.status==="suspended";
+      var billBadge=v.group_id ? '<span class="badge grouped">'+esc(groupName(v.group_id))+'</span>' : '<span class="badge indep">Independent</span>';
+      var statusCell = suspended ? '<span class="badge suspend">Suspended</span>'
+                       : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
+      var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
+                  '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
+                  '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
+      if(canBilling()) actions+='<button class="mini'+(suspended?' win':' roll')+'" data-suspend="'+esc(v.id)+'" data-to="'+(suspended?'active':'suspended')+'">'+(suspended?"Reactivate":"Suspend")+'</button>';
+      var tr=document.createElement("tr"); if(suspended) tr.className="off";
+      tr.innerHTML='<td><div class="vn">'+esc(v.name)+'</div><div class="vt mono">'+esc(v.slug||"(no slug)")+'</div></td>'+
+        '<td>'+esc(tzShort(v.timezone))+'</td>'+
+        '<td>'+billBadge+'</td>'+
+        '<td>'+statusCell+'</td>'+
+        '<td><div class="actcell">'+actions+'</div></td>';
+      b.appendChild(tr);
+      var cap = v.group_id ? (v.included_players!=null?(v.included_players+" players"):"cap not set") : "from founding record (Worker)";
+      var dt=document.createElement("tr"); dt.className="detail"+(S.openVenue===v.id?"":" hidden");
+      dt.innerHTML='<td colspan="5">'+
+        'Screen address <b>screen.venueplay.com.au/'+esc(v.slug||"")+'</b> &middot; '+
+        'timezone <b>'+esc(v.timezone||"")+'</b> &middot; '+
+        'billing <b>'+(v.group_id?("group: "+esc(groupName(v.group_id))):"independent (card)")+'</b> &middot; '+
+        'included players <b>'+esc(cap)+'</b> &middot; '+
+        'created <b>'+esc(fmtWhen(v.created_at))+'</b>'+
+        (v.group_id?"":' &middot; <span style="color:var(--faint)">plan tier (Founding/Standard) lives in the founding record, not readable here</span>')+
+        '</td>';
+      b.appendChild(dt);
+    });
+  }
+  $("venueSearch").addEventListener("input", function(){ S.vSearch=this.value.trim(); renderVenues(); });
+  $("venueFilter").addEventListener("change", function(){ S.vFilter=this.value; renderVenues(); });
+  $("venueRows").addEventListener("click", function(e){
+    var va=e.target.closest("button[data-viewas]");
+    if(va){ viewAs(va.getAttribute("data-viewas")); return; }
+    var dt=e.target.closest("button[data-details]");
+    if(dt){ var id=dt.getAttribute("data-details"); S.openVenue=(S.openVenue===id?null:id); renderVenues(); return; }
+    var sp=e.target.closest("button[data-suspend]");
+    if(sp){ suspendVenue(sp.getAttribute("data-suspend"), sp.getAttribute("data-to"), sp); return; }
+  });
+
+  /* ---- VIEW AS (impersonation) ---- */
+  function viewAs(id){
+    var name=venueName(id);
+    VP.setCurrentVenue(id).then(function(ctx){
+      if(!ctx || ctx.currentVenueId!==id){ alert("Could not switch to that venue."); return; }
+      try{ localStorage.setItem("vpImpersonate", JSON.stringify({ id:id, name:name })); }catch(e){}
+      auditBestEffort("view_as", "venue:"+id, { name:name });   // best-effort; ignored if Worker absent
+      window.location.href="index.html";
+    });
+  }
+
+  /* ---- SUSPEND / REACTIVATE (Worker) ---- */
+  function suspendVenue(id, to, btn){
+    if(!canBilling()) return;
+    var name=venueName(id);
+    if(!confirm((to==="suspended"?"Suspend ":"Reactivate ")+name+"?")) return;
+    btn.disabled=true; var old=btn.textContent; btn.textContent="…";
+    workerPost("/admin/venue-status", { venue_id:id, status:to }).then(function(res){
+      btn.disabled=false; btn.textContent=old;
+      if(res.error){ alert(res.error); return; }
+      for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) S.venues[i].status=to; }
+      renderStats(); renderVenues();
+      loadAuditOnly();
+    });
+  }
+
+  /* ================= BILLING ================= */
+  function usageForMonth(){ return S.usage.filter(function(u){ return u.period_month===S.usageMonth; }); }
+  function groupRate(v){ if(v.group_id && S.groupById[v.group_id] && S.groupById[v.group_id].negotiated_rate_cents!=null) return S.groupById[v.group_id].negotiated_rate_cents/100; return null; }
+  function usageByVenue(id){ var rows=usageForMonth(); for(var i=0;i<rows.length;i++){ if(rows[i].venue_id===id) return rows[i]; } return null; }
+
+  function renderBilling(){
+    // health: not browser-readable
+    $("healthList").innerHTML='<div class="empty">Payment health (declined cards, overdue) comes from Stripe and the founding records, which are not readable from this page. It appears here once the billing Worker feeds it. Suspended venues: '+S.venues.filter(function(v){return v.status==="suspended";}).length+'.</div>';
+
+    $("billMonth").textContent = S.usageMonth ? ("· "+monthLabel(S.usageMonth)) : "";
+    var b=$("billingRows"); b.innerHTML="";
+    if(!S.usageMonth){ b.innerHTML='<tr><td colspan="7"><div class="empty" style="border:none;background:none">No metered usage yet. Rows appear once the metering job runs.</div></td></tr>'; renderDiscounts(); return; }
+    var rows=usageForMonth();
+    rows.sort(function(a,b){ return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
+    rows.forEach(function(u){
+      var v=null; for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===u.venue_id){ v=S.venues[i]; break; } }
+      var over=u.overage_players||0;
+      var overCell=over>0?'<span class="badge gold">+'+over+' over</span>':'<span style="color:var(--muted)">None</span>';
+      var rate=v?groupRate(v):null;
+      var est= rate!=null ? aud(((u.plan_cap||0)+over)*rate) : '<span style="color:var(--faint)">Worker</span>';
+      var hasDisc = S.discounts.some(function(d){ return d.target_type==="venue" && d.target_id===u.venue_id; });
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td class="vn">'+esc(venueName(u.venue_id))+(hasDisc?' <span class="badge gold">Disc</span>':'')+'</td>'+
+        '<td>'+(v&&v.group_id?'<span class="badge grouped">Grouped</span>':'<span class="badge indep">Independent</span>')+'</td>'+
+        '<td class="num">'+(u.peak_billable_players!=null?u.peak_billable_players:"—")+'</td>'+
+        '<td class="num">'+(u.plan_cap!=null?u.plan_cap:"—")+'</td>'+
+        '<td>'+overCell+'</td>'+
+        '<td class="money" style="text-align:right">'+est+'</td>'+
+        '<td class="actcell"><button class="mini" data-bdet="'+esc(u.venue_id)+'">Details</button></td>';
+      b.appendChild(tr);
+      var dt=document.createElement("tr"); dt.className="detail"+(S.openBilling===u.venue_id?"":" hidden");
+      dt.innerHTML='<td colspan="7">'+billingDetailHtml(u,v,rate)+'</td>';
+      b.appendChild(dt);
+    });
+    renderDiscounts();
+  }
+  function billingDetailHtml(u,v,rate){
+    var over=u.overage_players||0, h='';
+    if(rate!=null){
+      h+='<div class="bkline"><span class="l">Included ('+(u.plan_cap||0)+' x '+aud(rate)+')</span><span class="r">'+aud((u.plan_cap||0)*rate)+'</span></div>';
+      if(over>0) h+='<div class="bkline"><span class="l">Peak add-on ('+over+' over x '+aud(rate)+')</span><span class="r">'+aud(over*rate)+'</span></div>';
+      h+='<div class="bkline tot"><span class="l">Estimated charge (GST inclusive)</span><span class="r">'+aud(((u.plan_cap||0)+over)*rate)+'</span></div>';
+    } else {
+      h+='<div class="note" style="margin:0 0 6px">Dollar amounts for independent venues use the founding rate, which is not readable here. The billing Worker computes the invoice.</div>';
+    }
+    var ds=S.discounts.filter(function(d){ return d.target_type==="venue" && d.target_id===u.venue_id; });
+    if(ds.length){ h+='<div style="margin-top:8px">'+ds.map(discLine).join("")+'</div>'; }
+    if(canBilling()) h+='<div class="dform" data-target="venue" data-id="'+esc(u.venue_id)+'">'+discountFormHtml()+'</div>';
+    else h+='<div class="restrict">Discounts and billing changes are restricted to Owner and Accounts.</div>';
+    return h;
+  }
+  function discLine(d){
+    var lbl = d.kind==="percent" ? (d.value_numeric+"% "+(d.months?("for "+d.months+" month"+(d.months>1?"s":"")):"ongoing")) : (aud(d.value_numeric)+" credit");
+    return '<div class="bkline disc"><span class="l">Discount: '+esc(lbl)+(d.note?(" &middot; "+esc(d.note)):"")+'</span><span class="r">'+esc(fmtWhen(d.created_at))+'</span></div>';
+  }
+  function discountFormHtml(){
+    return '<div class="dgrid">'+
+      '<div class="field" style="margin:0"><label>Type</label><select class="dcType"><option value="percent">Percentage</option><option value="dollar">Dollar amount</option></select></div>'+
+      '<div class="field" style="margin:0"><label>Value</label><input type="number" step="0.01" class="dcValue mono" placeholder="e.g. 10"></div>'+
+      '<div class="field dcMonthsWrap" style="margin:0"><label>For how many months</label><input type="number" class="dcMonths mono" placeholder="blank = ongoing"></div>'+
+      '<div class="field" style="margin:0"><label>Note / reason</label><input type="text" class="dcNote" placeholder="optional"></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">'+
+      '<button class="btn pink dcApply">Apply discount</button>'+
+      '<span class="dcMsg" style="font-size:12px;color:var(--muted)"></span>'+
+      '</div>';
+  }
+  function renderDiscounts(){
+    var wrap=$("discountList");
+    if(!S.discounts.length){ wrap.innerHTML='<div class="empty">No discounts applied.</div>'; return; }
+    wrap.innerHTML='<div class="panel pad">'+S.discounts.map(function(d){
+      var target = d.target_type==="group" ? ("Group: "+esc(groupName(d.target_id))) : ("Venue: "+esc(venueName(d.target_id)));
+      var lbl = d.kind==="percent" ? (d.value_numeric+"% "+(d.months?("for "+d.months+" month"+(d.months>1?"s":"")):"ongoing")) : (aud(d.value_numeric)+" credit");
+      return '<div class="bkline"><span class="l">'+target+' &middot; <b style="color:var(--gold)">'+esc(lbl)+'</b>'+(d.note?(" &middot; "+esc(d.note)):"")+'</span><span class="r" style="color:var(--muted)">'+esc(fmtWhen(d.created_at))+'</span></div>';
+    }).join("")+'</div>';
+  }
+  // discount type toggle (percent shows months)
+  document.addEventListener("change", function(e){
+    var t=e.target.closest(".dcType"); if(!t) return;
+    var form=t.closest(".dform"); var mw=form.querySelector(".dcMonthsWrap");
+    if(mw) mw.style.display=(t.value==="dollar")?"none":"";
+  });
+  // apply discount (Worker)
+  document.addEventListener("click", function(e){
+    var ap=e.target.closest(".dcApply"); if(!ap) return;
+    var form=ap.closest(".dform");
+    var target=form.getAttribute("data-target"), id=form.getAttribute("data-id");
+    var kind=form.querySelector(".dcType").value;
+    var value=parseFloat(form.querySelector(".dcValue").value);
+    var monthsEl=form.querySelector(".dcMonths");
+    var months=(kind==="percent" && monthsEl && monthsEl.value!=="") ? parseInt(monthsEl.value,10) : null;
+    var note=form.querySelector(".dcNote").value.trim();
+    var msg=form.querySelector(".dcMsg");
+    if(!(value>0)){ msg.style.color="var(--roll)"; msg.textContent="Enter a value greater than zero."; return; }
+    ap.disabled=true; msg.style.color="var(--muted)"; msg.textContent="Applying…";
+    workerPost("/admin/discount", { target_type:target, target_id:id, kind:kind, value_numeric:value, months:months, note:note }).then(function(res){
+      ap.disabled=false;
+      if(res.error){ msg.style.color="var(--roll)"; msg.textContent=res.error; return; }
+      msg.style.color="var(--win)"; msg.textContent="Discount applied.";
+      reloadDiscounts();
+    });
+  });
+  $("billingRows").addEventListener("click", function(e){
+    var det=e.target.closest("button[data-bdet]");
+    if(det){ var id=det.getAttribute("data-bdet"); S.openBilling=(S.openBilling===id?null:id); renderBilling(); }
+  });
+
+  function reloadDiscounts(){
+    VP.getClient().from("vp_discounts").select("*").order("created_at",{ascending:false}).then(function(r){
+      S.discounts=(r&&r.data)||[]; renderBilling(); renderGroups();
+    });
+    loadAuditOnly();
+  }
+  function loadAuditOnly(){
+    VP.getClient().from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250).then(function(r){
+      S.audit=(r&&r.data)||[]; renderAudit();
+    });
+  }
+
+  /* ================= GROUPS ================= */
+  function renderGroups(){
+    var wrap=$("groupList"); wrap.innerHTML="";
+    if(!S.groups.length){ wrap.innerHTML='<div class="empty">No groups yet. Use Create group.</div>'; return; }
+    S.groups.forEach(function(g){
+      var members=S.venues.filter(function(v){ return v.group_id===g.id; });
+      var neg=g.negotiated_rate_cents!=null?aud(g.negotiated_rate_cents/100):"—";
+      var rack=g.rack_rate_cents!=null?aud(g.rack_rate_cents/100):"—";
+      var ds=S.discounts.filter(function(d){ return d.target_type==="group" && d.target_id===g.id; });
+      var panel=document.createElement("div"); panel.className="panel"; panel.style.marginBottom="16px";
+      var h='';
+      h+='<div class="grouphead"><div style="flex:1;min-width:200px"><div class="gn">'+esc(g.name)+'</div>'+
+        '<div class="gm">'+esc(g.billing_email||"no billing email")+' &middot; '+members.length+' venue'+(members.length===1?"":"s")+' &middot; negotiated '+neg+'/player &middot; rack '+rack+'</div></div>'+
+        '<span class="badge '+(g.status==="suspended"?"suspend":"grouped")+'">'+esc(g.status||"active")+'</span>'+
+        '<button class="mini" data-gedit="'+esc(g.id)+'">Assign venues</button></div>';
+      // member list
+      h+='<div style="padding:12px 16px">';
+      if(members.length){
+        h+='<div class="tscroll"><table style="min-width:420px"><thead><tr><th>Venue</th><th>Screen</th><th>Included</th></tr></thead><tbody>';
+        members.forEach(function(v){ h+='<tr><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+(v.included_players!=null?v.included_players:"—")+'</td></tr>'; });
+        h+='</tbody></table></div>';
+      } else { h+='<div style="color:var(--muted);font-size:12.5px">No venues assigned yet.</div>'; }
+      if(ds.length){ h+='<div style="margin-top:8px">'+ds.map(discLine).join("")+'</div>'; }
+      h+='</div>';
+      // assign editor
+      h+='<div class="detail'+(S.openGroup===g.id?"":" hidden")+'" style="padding:14px 16px"><div class="lblk" style="margin:0 0 8px">Assign grouped venues to '+esc(g.name)+'</div><div class="checklist">'+venueCheckboxes(g)+'</div>'+
+         (canBilling()?'<div class="dform" data-target="group" data-id="'+esc(g.id)+'" style="margin-top:12px"><div class="lblk" style="margin:0 0 8px">Whole-group discount</div>'+discountFormHtml()+'</div>':'')+
+         '<div class="note">Only venues already in a group appear here (moving them just changes which group). Independent card-billed venues are converted at onboarding.</div></div>';
+      panel.innerHTML=h; wrap.appendChild(panel);
+    });
+  }
+  function venueCheckboxes(g){
+    // Only grouped venues are safe to reassign (independent venues carry a founding_id and the
+    // DB requires exactly one billing parent).
+    var assignable=S.venues.filter(function(v){ return !!v.group_id; });
+    if(!assignable.length) return '<div style="color:var(--muted);font-size:12.5px">No grouped venues to assign yet.</div>';
+    return assignable.map(function(v){
+      var here=v.group_id===g.id;
+      return '<label class="checkitem"><input type="checkbox" class="gvchk" data-gid="'+esc(g.id)+'" data-vid="'+esc(v.id)+'"'+(here?" checked":"")+'>'+esc(v.name)+
+             (v.group_id&&!here?' <span class="vt">('+esc(groupName(v.group_id))+')</span>':"")+'</label>';
+    }).join("");
+  }
+  $("groupList").addEventListener("click", function(e){
+    var ed=e.target.closest("button[data-gedit]");
+    if(ed){ var id=ed.getAttribute("data-gedit"); S.openGroup=(S.openGroup===id?null:id); renderGroups(); }
+  });
+  $("groupList").addEventListener("change", function(e){
+    var chk=e.target.closest(".gvchk"); if(!chk) return;
+    var gid=chk.getAttribute("data-gid"), vid=chk.getAttribute("data-vid");
+    chk.disabled=true;
+    // Direct browser write allowed by RLS (admin FOR ALL on vp_venues). founding_id stays null.
+    var newGroup = chk.checked ? gid : null;
+    if(newGroup===null){
+      // unchecking would orphan the venue's billing parent (violates the one-parent constraint); block it.
+      chk.checked=true; chk.disabled=false;
+      alert("A venue must belong to a group. To remove it from all groups, convert it to independent card billing at onboarding.");
+      return;
+    }
+    VP.getClient().from("vp_venues").update({ group_id:gid }).eq("id",vid).then(function(r){
+      chk.disabled=false;
+      if(r.error){ alert("Could not reassign: "+r.error.message); chk.checked=(function(){ for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===vid) return S.venues[i].group_id===gid; } return false; })(); return; }
+      for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===vid) S.venues[i].group_id=gid; }
+      S.openGroup=gid; renderStats(); renderVenues(); renderGroups();
+    });
+  });
+  $("addGroupToggle").addEventListener("click", function(){ show("addGroupPanel", $("addGroupPanel").classList.contains("hidden")); });
+  $("addGroupSubmit").addEventListener("click", function(){
+    var name=$("ngName").value.trim(), email=$("ngEmail").value.trim();
+    var rate=parseFloat($("ngRate").value), rack=parseFloat($("ngRack").value);
+    if(!name){ errFlash("addGroupErr","Enter a group name."); return; }
+    if(!email){ errFlash("addGroupErr","Enter a billing email (required)."); return; }
+    if(!(rate>0)){ errFlash("addGroupErr","Enter a negotiated rate (required)."); return; }
+    var row={ name:name, billing_email:email, negotiated_rate_cents:Math.round(rate*100) };
+    if(rack>0) row.rack_rate_cents=Math.round(rack*100);
+    var btn=$("addGroupSubmit"); btn.disabled=true;
+    VP.getClient().from("vp_venue_groups").insert(row).select("*").maybeSingle().then(function(r){
+      btn.disabled=false;
+      if(r.error){ errFlash("addGroupErr","Could not create group: "+r.error.message); return; }
+      S.groups.push(r.data); S.groupById[r.data.id]=r.data;
+      $("ngName").value=""; $("ngEmail").value=""; $("ngRate").value=""; $("ngRack").value="";
+      flash("addGroupOk","Group created.");
+      renderStats(); renderGroups(); populateGroupSelect();
+    });
+  });
+
+  /* ================= USAGE ================= */
+  function renderUsage(){
+    $("usageMonth").textContent = S.usageMonth ? ("· "+monthLabel(S.usageMonth)) : "";
+    var b=$("usageRows"); b.innerHTML="";
+    if(!S.usageMonth){ b.innerHTML='<tr><td colspan="6"><div class="empty" style="border:none;background:none">No usage recorded yet.</div></td></tr>'; return; }
+    var rows=usageForMonth();
+    rows.sort(function(a,b){ return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
+    rows.forEach(function(u){
+      var v=null; for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===u.venue_id){ v=S.venues[i]; break; } }
+      var over=u.overage_players||0, rate=v?groupRate(v):null;
+      var est= rate!=null ? aud(over*rate) : '<span style="color:var(--faint)">Worker</span>';
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td class="vn">'+esc(venueName(u.venue_id))+'</td>'+
+        '<td class="num">'+(u.sessions_count!=null?u.sessions_count:"—")+'</td>'+
+        '<td class="num">'+(u.peak_billable_players!=null?u.peak_billable_players:"—")+'</td>'+
+        '<td class="num">'+(u.plan_cap!=null?u.plan_cap:"—")+'</td>'+
+        '<td>'+(over>0?'<span class="badge gold">+'+over+'</span>':'<span style="color:var(--muted)">None</span>')+'</td>'+
+        '<td class="money" style="text-align:right">'+est+'</td>';
+      b.appendChild(tr);
+    });
+  }
+  $("usageCsv").addEventListener("click", function(){
+    var rows=[["Venue","Sessions","Peak billable players","Included cap","Overage players","Period month"]];
+    usageForMonth().forEach(function(u){ rows.push([venueName(u.venue_id), (u.sessions_count!=null?u.sessions_count:""), (u.peak_billable_players!=null?u.peak_billable_players:""), (u.plan_cap!=null?u.plan_cap:""), (u.overage_players||0), u.period_month]); });
+    downloadCSV("venueplay-usage-"+(S.usageMonth||"current")+".csv", rows);
+  });
+
+  /* ================= TEAM ================= */
+  function renderTeam(){
+    var b=$("teamRows"); b.innerHTML="";
+    if(!S.admins.length){ b.innerHTML='<tr><td colspan="4"><div class="empty" style="border:none;background:none">No staff logins found.</div></td></tr>'; }
+    S.admins.forEach(function(a){
+      var role=a.role||"staff";
+      var isMe = S.ctx && S.ctx.user && a.auth_user_id===S.ctx.user.id;
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td class="vn">'+esc(a.label||"(no label)")+(isMe?' <span class="vt">(you)</span>':'')+'</td>'+
+        '<td><span class="srole '+esc(role)+'">'+esc(role)+'</span></td>'+
+        '<td class="mono vt">'+esc(String(a.auth_user_id||"").slice(0,8))+'…</td>'+
+        '<td style="text-align:right">'+((canTeam()&&!isMe)?'<button class="mini roll" data-rmadmin="'+esc(a.auth_user_id)+'" data-label="'+esc(a.label||"")+'">Remove</button>':'')+'</td>';
+      b.appendChild(tr);
+    });
+    show("teamGate", !canTeam());
+    $("tmName").disabled=$("tmEmail").disabled=$("tmRole").disabled=$("tmAdd").disabled=!canTeam();
+  }
+  $("teamRows").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-rmadmin]"); if(!b || !canTeam()) return;
+    var uid=b.getAttribute("data-rmadmin"), label=b.getAttribute("data-label");
+    if(!confirm("Remove the Gflam login "+(label||uid)+"? This strips their admin access.")) return;
+    b.disabled=true;
+    // Direct browser delete allowed by RLS (admin FOR ALL on vp_platform_admins). The auth user
+    // itself is left intact; the Worker can fully delete it later.
+    VP.getClient().from("vp_platform_admins").delete().eq("auth_user_id",uid).then(function(r){
+      if(r.error){ b.disabled=false; alert("Could not remove: "+r.error.message); return; }
+      S.admins=S.admins.filter(function(a){ return a.auth_user_id!==uid; });
+      renderTeam();
+    });
+  });
+  $("tmAdd").addEventListener("click", function(){
+    if(!canTeam()) return;
+    var name=$("tmName").value.trim(), email=$("tmEmail").value.trim(), role=$("tmRole").value;
+    if(!name||!email){ errFlash("tmErr","Enter a name and email."); return; }
+    var btn=$("tmAdd"); btn.disabled=true;
+    workerPost("/admin/staff", { name:name, email:email, role:role }).then(function(res){
+      btn.disabled=false;
+      if(res.error){ errFlash("tmErr",res.error); return; }
+      $("tmName").value=""; $("tmEmail").value="";
+      flash("tmOk","Invited "+name+" as "+role+".");
+      // refresh admins + audit
+      VP.getClient().from("vp_platform_admins").select("*").then(function(r){ S.admins=(r&&r.data)||[]; renderTeam(); });
+      loadAuditOnly();
+    });
+  });
+
+  /* ================= AUDIT ================= */
+  function renderAudit(){
+    var b=$("auditRows"); b.innerHTML="";
+    if(!S.audit.length){ b.innerHTML='<tr><td colspan="3"><div class="empty" style="border:none;background:none">No admin actions recorded yet.</div></td></tr>'; return; }
+    S.audit.forEach(function(a){
+      var det=a.detail && Object.keys(a.detail).length ? (' &middot; <span style="color:var(--faint)">'+esc(JSON.stringify(a.detail))+'</span>') : '';
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td style="white-space:nowrap">'+esc(fmtWhen(a.created_at))+'</td>'+
+        '<td><div class="vn">'+esc(a.actor_label||"admin")+'</div></td>'+
+        '<td><b style="color:var(--text)">'+esc(a.action)+'</b>'+(a.target?(' &middot; '+esc(a.target)):'')+det+'</td>';
+      b.appendChild(tr);
+    });
+  }
+
+  /* ================= ADD VENUE (Worker) ================= */
+  function populateGroupSelect(){
+    var sel=$("nvGroup"); if(!sel) return;
+    sel.innerHTML = S.groups.length ? S.groups.map(function(g){ return '<option value="'+esc(g.id)+'">'+esc(g.name)+'</option>'; }).join("") : '<option value="">(no groups yet)</option>';
+  }
+  $("addVenueToggle").addEventListener("click", function(){ show("addVenuePanel", $("addVenuePanel").classList.contains("hidden")); });
+  $("nvName").addEventListener("input", function(){ $("nvSlug").value=slugify(this.value); });
+  $("nvBill").addEventListener("change", function(){
+    var group=this.value==="group";
+    document.querySelectorAll(".nvGroupF").forEach(function(el){ el.classList.toggle("hidden", !group); });
+    document.querySelectorAll(".nvFoundF").forEach(function(el){ el.classList.toggle("hidden", group); });
+  });
+  $("addVenueSubmit").addEventListener("click", function(){
+    var name=$("nvName").value.trim(), slug=slugify($("nvSlug").value||$("nvName").value);
+    if(!name){ errFlash("addVenueErr","Enter a venue name."); return; }
+    if(!slug){ errFlash("addVenueErr","Enter a slug (the TV web address)."); return; }
+    var bill=$("nvBill").value;
+    var body={ name:name, slug:slug, timezone:$("nvTz").value, billing:{ type:bill } };
+    if(bill==="group"){
+      var gid=$("nvGroup").value; if(!gid){ errFlash("addVenueErr","Choose an operator group."); return; }
+      body.billing.group_id=gid;
+      var cap=parseInt($("nvCap").value,10); if(cap) body.billing.included_players=cap;
+    } else {
+      var email=$("nvEmail").value.trim(); if(!email){ errFlash("addVenueErr","Enter the contact email."); return; }
+      var max=parseInt($("nvMax").value,10);
+      body.billing.founding={ contact_email:email, mobile:$("nvMobile").value.trim(), postcode:"", max_seats:(max||null), plan:$("nvPlan").value };
+      var mob=$("nvMobile").value.trim();
+      if(mob) body.manager={ mobile:mob, display_name:"Manager" };
+    }
+    var btn=$("addVenueSubmit"); btn.disabled=true; btn.textContent="Creating…";
+    workerPost("/admin/venue", body).then(function(res){
+      btn.disabled=false; btn.textContent="Create venue";
+      if(res.error){ errFlash("addVenueErr",res.error); return; }
+      flash("addVenueOk","Venue created. The manager will be texted a login invite.");
+      $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value="";
+      loadAll();
+    });
+  });
 })();
 </script>
 </body>

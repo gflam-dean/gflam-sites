@@ -356,13 +356,42 @@
   var VIEWS=["vSignIn","vAdmin","vNoVenue","vPair","vConsole"];
   function go(view){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==view); } }
 
+  // ---- Gflam HQ "View as" (impersonation) handoff ----
+  // hq.html sets localStorage "vpImpersonate" = {"id","name"} and opens this
+  // page. An admin whose current venue matches drops into that venue's console
+  // behind a gold banner, instead of being bounced back to HQ.
+  function impFlag(){ try{ return JSON.parse(localStorage.getItem("vpImpersonate")||"null"); }catch(e){ return null; } }
+  function clearImp(){ try{ localStorage.removeItem("vpImpersonate"); }catch(e){} }
+  function showImpBanner(name){
+    if(document.getElementById("vpImpBar")) return;
+    var bar=document.createElement("div");
+    bar.id="vpImpBar";
+    bar.style.cssText="position:sticky;top:0;z-index:60;background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
+    bar.innerHTML='<span>Viewing <b>'+String(name||"this venue").replace(/[<>&]/g,"")+'</b> from Gflam HQ</span>'+
+      '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to Gflam HQ</a>';
+    document.body.insertBefore(bar, document.body.firstChild);
+    document.getElementById("vpImpBack").addEventListener("click", function(){ clearImp(); window.location.href="hq.html"; });
+  }
+
   // ---- post-login routing: resolve the real role, then send them on ----
   // Gflam admin -> Gflam HQ; venue staff -> their venue's host flow (TV pair
   // then console); signed in but unlinked -> a friendly "no venue" notice.
   // The demo shortcut buttons deliberately bypass this (no real role).
   function applyRoute(ctx){
     if(!ctx || !ctx.authed){ go("vSignIn"); return; }
-    if(ctx.isAdmin){ window.location.href="hq.html"; return; }
+    if(ctx.isAdmin){
+      var imp=impFlag();
+      if(imp && imp.id && ctx.currentVenueId===imp.id){
+        // Impersonating a venue from Gflam HQ: show the console for that venue.
+        showImpBanner(imp.name);
+        $("headerTag").textContent="Host console";
+        $("statusText").textContent="Gflam HQ · "+(imp.name||"venue");
+        proceedVenue();
+        return;
+      }
+      clearImp();
+      window.location.href="hq.html"; return;
+    }
     if(ctx.scope==="staff"){
       var vn=(ctx.venue&&ctx.venue.name)?ctx.venue.name:"your venue";
       $("headerTag").textContent="Host console";
