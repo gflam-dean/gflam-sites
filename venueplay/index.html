@@ -881,6 +881,18 @@
 </section>
 
 <!-- ===================== FOUNDING OFFER ===================== -->
+<!-- ===================== TRIVIA BANK COUNTER ===================== -->
+<section class="sec" id="trivia-bank">
+  <div class="wrap" style="text-align:center">
+    <div class="label">The trivia bank</div>
+    <div class="counter" style="margin-top:14px">
+      <div class="big"><span id="vp-trivia-count">10,706</span></div>
+      <div class="sub">trivia questions and counting</div>
+    </div>
+    <p class="sec-sub" style="margin:18px auto 0;max-width:640px">Fact-checked, Aussie-friendly questions across every category, and the bank grows every week. It is all included, no extra packs to buy.</p>
+  </div>
+</section>
+
 <section class="sec" id="offer">
   <div class="wrap">
     <div class="offer">
@@ -1160,6 +1172,40 @@
     .catch(function(){ paintCounter(0); });
   }
   loadCount();
+
+  /* ---------- Live trivia question counter (reads /data/trivia-count.json) ---------- */
+  (function(){
+    var el = document.getElementById('vp-trivia-count');
+    var sec = document.getElementById('trivia-bank');
+    if (!el) return;
+    var done = false;
+    function animateTo(target){
+      if (done) return; done = true;
+      var start = Math.max(0, target - 400), t0 = null, dur = 1400;
+      function step(ts){
+        if (!t0) t0 = ts;
+        var p = Math.min(1, (ts - t0) / dur);
+        var ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(start + (target - start) * ease).toLocaleString('en-AU');
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    fetch('/data/trivia-count.json').then(function(r){ return r.json(); }).then(function(d){
+      var n = parseInt(d && d.count, 10) || 0;
+      if (!n) return;
+      el.textContent = n.toLocaleString('en-AU');
+      if (sec && 'IntersectionObserver' in window){
+        el.textContent = Math.max(0, n - 400).toLocaleString('en-AU');
+        var io = new IntersectionObserver(function(entries){
+          for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
+        }, { threshold: 0.4 });
+        io.observe(sec);
+      } else {
+        animateTo(n);
+      }
+    }).catch(function(){});
+  })();
 
   /* ---------- Plan toggle + live estimate ---------- */
   var planWrap = document.getElementById('vp-plan');
