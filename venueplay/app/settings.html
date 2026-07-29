@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay: Venue settings</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{overflow-x:clip}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:720px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .who{margin-left:auto;display:flex;gap:12px;align-items:center}
+  .wrap{max-width:720px;margin:0 auto;padding:22px}
+  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:28px;color:#fff;line-height:1.04;margin-bottom:4px}
+  .authsub{color:var(--muted);font-size:13px;margin-bottom:22px;line-height:1.5}
+  .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:20px;margin-bottom:16px}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:6px}
+  .sublbl{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+  .note{font-size:12px;color:var(--faint);line-height:1.5}
+  .link{color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:inherit}
+  .link:hover{color:var(--pink)}
+  .btn{border:none;border-radius:12px;padding:13px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:.15s}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3);width:100%;text-transform:uppercase;letter-spacing:.04em}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .seg{display:flex;gap:8px}
+  .seg .opt{flex:1;padding:11px 8px;border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:10px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;text-align:center;transition:.15s}
+  .seg .opt.on{background:var(--pink);color:#fff;border-color:transparent}
+  .row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-2)}
+  .row:last-child{border-bottom:none}
+  .row .t{flex:1}
+  .row .t .n{font-weight:600;font-size:14px;color:var(--text)}
+  .row .t .d{font-size:11.5px;color:var(--faint);margin-top:2px}
+  .sw{width:46px;height:27px;border-radius:20px;background:var(--ink-3);border:1px solid var(--line);position:relative;cursor:pointer;transition:.15s;flex:none}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:var(--faint);transition:.15s}
+  .sw.on{background:rgba(255,31,142,.25);border-color:var(--pink)}
+  .sw.on::after{left:21px;background:var(--pink)}
+  .msg{min-height:20px;font-size:12.5px;margin-top:10px}
+  .msg.ok{color:var(--win)}
+  .msg.err{color:var(--roll)}
+  .warn{background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.3);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--roll);line-height:1.5;margin-bottom:16px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Settings</span>
+    <span class="who"><a class="link" id="backLink" href="index.html">Back</a> <button class="link" id="signOut">Sign out</button></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="authbig" id="vTitle">Venue settings</div>
+  <div class="authsub" id="vSub">Loading...</div>
+
+  <div id="body" class="hidden">
+    <div id="migWarn" class="warn hidden">Player-data toggles need the schema update (migration <b>venueplay-08</b>) applied first. Until then only the display-name style below saves.</div>
+
+    <div class="card">
+      <div class="lbl">Name display on the TV</div>
+      <div class="sublbl">How winner and member names appear on the big screen.</div>
+      <div class="seg" id="nameSeg">
+        <div class="opt" data-nd="abbrev_last">John S</div>
+        <div class="opt" data-nd="abbrev_first">J Smith</div>
+        <div class="opt" data-nd="full">John Smith</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">What players are asked for when they join</div>
+      <div class="sublbl">Only ask for what you will use. Less is friendlier and joins faster.</div>
+      <div class="row"><div class="t"><div class="n">First name</div><div class="d">Shown on the TV and leaderboards.</div></div><div class="sw" data-k="collect_first_name"></div></div>
+      <div class="row"><div class="t"><div class="n">Last name</div><div class="d">Only if you display or export full names.</div></div><div class="sw" data-k="collect_last_name"></div></div>
+      <div class="row"><div class="t"><div class="n">Postcode</div><div class="d">Handy for local marketing insight.</div></div><div class="sw" data-k="collect_postcode"></div></div>
+      <div class="row"><div class="t"><div class="n">Email</div><div class="d">For your marketing list (with opt-in below).</div></div><div class="sw" data-k="collect_email"></div></div>
+      <div class="row"><div class="t"><div class="n">Mobile</div><div class="d">For your marketing list (with opt-in below).</div></div><div class="sw" data-k="collect_mobile"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Marketing opt-in</div>
+      <div class="sublbl">Whether the join screen asks the player to opt in to your venue's marketing.</div>
+      <div class="row"><div class="t"><div class="n">Ask players to opt in</div><div class="d">Default OFF. When on, the tick is always shown UNTICKED, and the player must tick it themselves (this is a locked rule, never pre-ticked).</div></div><div class="sw" data-k="collect_marketing_optin"></div></div>
+    </div>
+
+    <button class="btn pink" id="saveBtn">Save settings</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="vp-session.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function qp(k){ var m=new RegExp("[?&]"+k+"=([^&]+)").exec(location.search); return m?decodeURIComponent(m[1]):""; }
+
+  var TOGGLES=["collect_first_name","collect_last_name","collect_postcode","collect_email","collect_mobile","collect_marketing_optin"];
+  var DEFAULTS={ collect_first_name:true, collect_last_name:false, collect_postcode:false, collect_email:false, collect_mobile:false, collect_marketing_optin:false };
+  var state={ name_display:"abbrev_last" };
+  var venueId=null, hasNewCols=true;
+
+  $("signOut").addEventListener("click", function(){ VP.signOut(); });
+
+  // Manager/owner (or admin). If a ?venue= is passed (from HQ), switch to it first.
+  var want=qp("venue");
+  VP.ready().then(function(ctx){
+    if(!ctx.authed){ location.href="index.html"; return; }
+    if(want && want!==ctx.currentVenueId){ return VP.setCurrentVenue(want); }
+    return ctx;
+  }).then(function(ctx){
+    if(!ctx) return;
+    var canEdit = ctx.isAdmin || ctx.role==="owner" || ctx.role==="manager";
+    if(!canEdit){ location.href=VP.homeHref(ctx); return; }
+    venueId=ctx.currentVenueId;
+    if(!venueId){ $("vSub").textContent="No venue selected."; return; }
+    $("backLink").href = ctx.isAdmin ? "hq.html" : "index.html";
+    $("vTitle").textContent=(ctx.venue&&ctx.venue.name)?ctx.venue.name:"Venue settings";
+    $("vSub").textContent="Settings"+(ctx.venue&&ctx.venue.slug?(" for "+ctx.venue.slug):"")+(ctx.isAdmin?" (admin)":(" ("+ctx.role+")"));
+    fill(ctx.settings||{});
+    $("body").classList.remove("hidden");
+  });
+
+  function fill(s){
+    state.name_display = s.name_display || "abbrev_last";
+    // detect whether the new columns exist on the loaded row
+    hasNewCols = ("collect_first_name" in s);
+    if(!hasNewCols){ $("migWarn").classList.remove("hidden"); }
+    TOGGLES.forEach(function(k){
+      state[k] = hasNewCols ? !!s[k] : DEFAULTS[k];
+    });
+    // paint name_display segment
+    Array.prototype.forEach.call($("nameSeg").children, function(o){ o.classList.toggle("on", o.getAttribute("data-nd")===state.name_display); });
+    // paint switches
+    document.querySelectorAll(".sw[data-k]").forEach(function(sw){ sw.classList.toggle("on", !!state[sw.getAttribute("data-k")]); });
+  }
+
+  $("nameSeg").addEventListener("click", function(e){
+    var o=e.target.closest(".opt"); if(!o) return;
+    state.name_display=o.getAttribute("data-nd");
+    Array.prototype.forEach.call(this.children, function(c){ c.classList.toggle("on", c===o); });
+  });
+  document.querySelectorAll(".sw[data-k]").forEach(function(sw){
+    sw.addEventListener("click", function(){
+      var k=this.getAttribute("data-k");
+      state[k]=!state[k];
+      this.classList.toggle("on", state[k]);
+    });
+  });
+
+  $("saveBtn").addEventListener("click", function(){
+    if(!venueId) return;
+    var msg=$("msg"); msg.className="msg"; msg.textContent="";
+    var btn=this; btn.disabled=true; btn.textContent="Saving...";
+    var patch={ name_display:state.name_display };
+    TOGGLES.forEach(function(k){ patch[k]=state[k]; });
+
+    VP.saveSettings(venueId, patch).then(function(){
+      btn.disabled=false; btn.textContent="Save settings";
+      msg.className="msg ok"; msg.textContent="Saved.";
+    }).catch(function(e){
+      btn.disabled=false; btn.textContent="Save settings";
+      var m=(e&&e.message)?e.message:"Could not save.";
+      if(/column .* does not exist|collect_/i.test(m)){
+        // migration 08 not applied: retry with just name_display so at least that saves
+        VP.saveSettings(venueId, { name_display:state.name_display }).then(function(){
+          $("migWarn").classList.remove("hidden");
+          msg.className="msg ok"; msg.textContent="Display name saved. Apply migration venueplay-08 to save the player-data toggles.";
+        }).catch(function(e2){
+          msg.className="msg err"; msg.textContent=(e2&&e2.message)||"Could not save.";
+        });
+        return;
+      }
+      if(/permission|rls|policy|denied/i.test(m)) m="Not allowed. Manager access + migration venueplay-08 are needed to save settings.";
+      msg.className="msg err"; msg.textContent=m;
+    });
+  });
+})();
+</script>
+</body>
+</html>

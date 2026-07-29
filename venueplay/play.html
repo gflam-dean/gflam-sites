@@ -133,8 +133,8 @@
   <!-- LOST (someone else won) -->
   <div class="view center hidden biglose" id="vLost">
     <div style="font-size:44px">&#127882;</div>
-    <div class="pbig" id="lostName">Someone</div>
-    <div class="psub">took this one. Nice game!</div>
+    <div class="pbig">Nice game!</div>
+    <div class="psub">Good luck next round.</div>
     <div class="pnote">Sit tight, the host may start another round.</div>
   </div>
 </div>
@@ -291,7 +291,7 @@
     else if(m.t==="winner"){
       P.claimPending=false;
       if(m.pid===P.pid){ P.won=true; route(); }
-      else { P.ended=true; $("lostName").textContent=(m.name||"Someone")+" won"; route(); }
+      else { P.ended=true; route(); }
     }
   }
 

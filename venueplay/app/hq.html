@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay: Gflam HQ</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --white:#FFFFFF; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{overflow-x:clip}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .who{margin-left:auto;font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:12px}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px}
+  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;color:#fff;line-height:1.04;margin-bottom:6px}
+  .authsub{color:var(--muted);font-size:13.5px;margin-bottom:22px;line-height:1.5}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin:22px 0 12px;display:flex;align-items:center;gap:10px}
+  .note{font-size:12px;color:var(--faint);line-height:1.5}
+  .btn{border:none;border-radius:12px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em;text-decoration:none;display:inline-block}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--pink);color:#fff}
+  .btn.sm{padding:8px 12px;font-size:12px}
+  .link{color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:inherit}
+  .link:hover{color:var(--pink)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  .vcard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:16px}
+  .vcard .vname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
+  .vcard .vslug{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--gold);margin-top:2px}
+  .vcard .vmeta{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6}
+  .pill{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:20px;font-family:'Hanken Grotesk',sans-serif}
+  .pill.active{background:rgba(53,208,127,.14);color:var(--win)}
+  .pill.suspended{background:rgba(245,165,36,.14);color:var(--roll)}
+  .pill.grouped{background:rgba(255,31,142,.12);color:var(--pink);margin-left:6px}
+  .pill.indep{background:rgba(255,255,255,.06);color:var(--muted);margin-left:6px}
+  .vactions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .empty{color:var(--faint);font-size:13px;padding:22px;text-align:center;background:var(--ink-2);border:1px dashed var(--line);border-radius:14px}
+  .toprow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .toprow .btn{margin-left:auto}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Gflam HQ</span>
+    <span class="who"><span id="whoLabel"></span> <button class="link" id="signOut">Sign out</button></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="toprow">
+    <div>
+      <div class="authbig">Venues</div>
+      <div class="authsub">Every VenuePlay venue. Open one to change its settings, or view it as its host.</div>
+    </div>
+    <a class="btn pink" href="onboard.html">+ Onboard a venue</a>
+  </div>
+
+  <div class="lbl" id="listLbl">Loading venues</div>
+  <div id="venueGrid" class="grid"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="vp-session.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  $("signOut").addEventListener("click", function(){ VP.signOut(); });
+
+  // Admins only. Non-admins are bounced back to their own home.
+  VP.requireAuth().then(function(ctx){
+    if(!ctx.isAdmin){ window.location.href = VP.homeHref(ctx); return; }
+    $("whoLabel").textContent = "Gflam admin"+(ctx.adminRole?(" ("+ctx.adminRole+")"):"");
+    return VP.listVenues().then(render);
+  });
+
+  function render(venues){
+    var grid=$("venueGrid");
+    $("listLbl").textContent = venues.length+" venue"+(venues.length===1?"":"s");
+    if(!venues.length){
+      grid.innerHTML='<div class="empty">No venues yet. Use <b>Onboard a venue</b> to create the first one.</div>';
+      return;
+    }
+    grid.innerHTML="";
+    venues.forEach(function(v){
+      var grouped = !!v.group_id;
+      var card=document.createElement("div"); card.className="vcard";
+      card.innerHTML=
+        '<div class="vname">'+esc(v.name)+'</div>'+
+        '<div class="vslug">'+esc(v.slug||"(no slug)")+'</div>'+
+        '<div class="vmeta">'+
+          '<span class="pill '+(v.status==="active"?"active":"suspended")+'">'+esc(v.status)+'</span>'+
+          '<span class="pill '+(grouped?"grouped":"indep")+'">'+(grouped?"Grouped":"Independent")+'</span>'+
+          '<br>Timezone '+esc(v.timezone||"")+
+          (grouped && v.included_players!=null ? ' &middot; cap '+v.included_players+' players' : '')+
+        '</div>'+
+        '<div class="vactions">'+
+          '<a class="btn ghost sm" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>'+
+          '<button class="btn ghost sm" data-viewas="'+esc(v.id)+'">View as host</button>'+
+        '</div>';
+      grid.appendChild(card);
+    });
+    grid.addEventListener("click", function(e){
+      var b=e.target.closest("button[data-viewas]"); if(!b) return;
+      // "View as" sets the working venue, then drops into the host console (index.html).
+      // NOTE: the design calls for logging view-as to vp_admin_audit; that is a
+      // service-role Worker action and is intentionally not done from the browser.
+      VP.setCurrentVenue(b.getAttribute("data-viewas")).then(function(){
+        window.location.href="index.html";
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

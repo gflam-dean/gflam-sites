@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay: Onboard a venue</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{overflow-x:clip}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:760px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .who{margin-left:auto}
+  .wrap{max-width:760px;margin:0 auto;padding:22px}
+  .authbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;color:#fff;line-height:1.04;margin-bottom:6px}
+  .authsub{color:var(--muted);font-size:13.5px;margin-bottom:22px;line-height:1.5}
+  .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:22px 20px;margin-bottom:16px}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;color:var(--faint);margin-bottom:14px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
+  input[type=text],select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:11px 12px;font-family:'Manrope',sans-serif;font-size:14px;outline:none;transition:.15s}
+  input:focus,select:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  input.mono{font-family:'JetBrains Mono',monospace;font-size:12.5px}
+  .note{font-size:12px;color:var(--faint);line-height:1.5;margin-top:6px}
+  .btn{border:none;border-radius:12px;padding:13px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:.15s;text-decoration:none;display:inline-block}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3);width:100%;text-transform:uppercase;letter-spacing:.04em}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .link{color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer}
+  .link:hover{color:var(--pink)}
+  .seg{display:flex;gap:8px;margin-bottom:6px}
+  .seg .opt{flex:1;padding:11px;border:1px solid var(--line);background:var(--ink-3);color:var(--muted);border-radius:10px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;text-align:center;transition:.15s}
+  .seg .opt.on{background:var(--pink);color:#fff;border-color:transparent}
+  .err{color:var(--roll);font-size:12.5px;min-height:18px;margin-top:8px}
+  .ok{background:rgba(53,208,127,.1);border:1px solid rgba(53,208,127,.3);border-radius:12px;padding:16px;margin-top:8px}
+  .ok .h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:var(--win);font-size:15px;margin-bottom:8px}
+  .ok .r{font-size:12.5px;color:var(--text);margin:4px 0}
+  .ok .r b{color:var(--gold)}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Onboard</span>
+    <span class="who"><a class="link" href="hq.html">Back to HQ</a></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="authbig">Onboard a venue</div>
+  <div class="authsub">Creates the venue, its default settings and one TV screen. The venue slug becomes the TV web address screen.venueplay.com.au/&lt;slug&gt;.</div>
+
+  <div id="formWrap">
+    <div class="card">
+      <div class="lbl">Venue</div>
+      <div class="field">
+        <label>Venue name</label>
+        <input type="text" id="vname" placeholder="The Example Tavern">
+      </div>
+      <div class="field">
+        <label>Slug (TV web address key)</label>
+        <input type="text" id="vslug" class="mono" placeholder="example-tavern">
+        <div class="note">Lowercase, hyphens, no spaces. Must be unique. Auto-filled from the name, edit if needed.</div>
+      </div>
+      <div class="field">
+        <label>Timezone</label>
+        <select id="vtz">
+          <option value="Australia/Brisbane" selected>Australia/Brisbane (QLD, no DST)</option>
+          <option value="Australia/Sydney">Australia/Sydney (NSW/ACT)</option>
+          <option value="Australia/Melbourne">Australia/Melbourne (VIC)</option>
+          <option value="Australia/Adelaide">Australia/Adelaide (SA)</option>
+          <option value="Australia/Perth">Australia/Perth (WA)</option>
+          <option value="Australia/Hobart">Australia/Hobart (TAS)</option>
+          <option value="Australia/Darwin">Australia/Darwin (NT)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">Billing parent (exactly one)</div>
+      <div class="seg" id="billSeg">
+        <div class="opt on" data-bill="group">Grouped operator</div>
+        <div class="opt" data-bill="founding">Independent (card)</div>
+      </div>
+      <div class="note" style="margin-bottom:14px">A venue must attach to exactly one billing parent. Grouped venues are invoiced through an operator group. Independent venues are card-billed through their founding subscription record.</div>
+
+      <div id="groupFields">
+        <div class="field">
+          <label>Operator group</label>
+          <select id="vgroup"><option value="">Loading groups...</option></select>
+          <div class="note">Groups are created by Gflam. If the group is missing, create it in the Supabase Table Editor (vp_venue_groups) first.</div>
+        </div>
+        <div class="field">
+          <label>Included players (this venue's cap)</label>
+          <input type="text" id="vcap" class="mono" placeholder="150" inputmode="numeric">
+        </div>
+      </div>
+
+      <div id="foundingFields" class="hidden">
+        <div class="field">
+          <label>venueplay_founding record id</label>
+          <input type="text" id="vfounding" class="mono" placeholder="paste the founding row id (uuid)">
+          <div class="note">The independent venue's paid subscription record. It is created when they sign up on the founding page (Worker, service role), so the browser cannot create it here. Copy its id from the Supabase Table Editor (venueplay_founding). The player cap is read from that record's max_seats.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">First manager (optional)</div>
+      <div class="note" style="margin-bottom:14px">A manager needs a Supabase Auth user, which can only be created with admin/service-role access (Authentication &rarr; Users in Supabase, or a future service-role endpoint). Create the user there, tick Auto Confirm, then paste their User UID here to link them as this venue's manager. You can also skip this and add staff later.</div>
+      <div class="field">
+        <label>Manager Auth User UID</label>
+        <input type="text" id="mgruid" class="mono" placeholder="e.g. 11111111-2222-3333-4444-555555555555">
+      </div>
+      <div class="field">
+        <label>Manager display name</label>
+        <input type="text" id="mgrname" placeholder="Jane (Manager)">
+      </div>
+    </div>
+
+    <button class="btn pink" id="createBtn">Create venue</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="doneWrap" class="hidden">
+    <div class="card">
+      <div class="ok">
+        <div class="h">Venue created</div>
+        <div class="r"><b id="dName"></b></div>
+        <div class="r">Slug: <b id="dSlug"></b></div>
+        <div class="r">TV address: <span class="mono" id="dTv"></span></div>
+        <div class="r" id="dScreen"></div>
+        <div class="r" id="dSettings"></div>
+        <div class="r" id="dManager"></div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn pink" style="width:auto;flex:1" href="hq.html">Back to HQ</a>
+        <a class="btn pink" style="width:auto;flex:1;background:var(--ink-3);color:var(--text);box-shadow:none;border:1px solid var(--line)" id="settingsLink" href="#">Open settings</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="vp-session.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function slugify(s){ return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+
+  var bill="group";
+  var client=null;
+
+  VP.requireAuth().then(function(ctx){
+    if(!ctx.isAdmin){ window.location.href=VP.homeHref(ctx); return; }
+    client=VP.getClient();
+    loadGroups();
+  });
+
+  function loadGroups(){
+    client.from("vp_venue_groups").select("id,name").order("name").then(function(r){
+      var sel=$("vgroup"); var rows=(r&&r.data)||[];
+      if(!rows.length){ sel.innerHTML='<option value="">(no groups yet)</option>'; return; }
+      sel.innerHTML='<option value="">Choose a group...</option>';
+      rows.forEach(function(g){ var o=document.createElement("option"); o.value=g.id; o.textContent=g.name; sel.appendChild(o); });
+    });
+  }
+
+  // slug auto-fill (only until the admin edits the slug field themselves)
+  var slugTouched=false;
+  $("vslug").addEventListener("input", function(){ slugTouched=true; });
+  $("vname").addEventListener("input", function(){ if(!slugTouched) $("vslug").value=slugify(this.value); });
+
+  $("billSeg").addEventListener("click", function(e){
+    var o=e.target.closest(".opt"); if(!o) return;
+    bill=o.getAttribute("data-bill");
+    Array.prototype.forEach.call(this.children, function(c){ c.classList.toggle("on", c===o); });
+    $("groupFields").classList.toggle("hidden", bill!=="group");
+    $("foundingFields").classList.toggle("hidden", bill!=="founding");
+  });
+
+  $("createBtn").addEventListener("click", function(){
+    $("err").textContent="";
+    var name=($("vname").value||"").trim();
+    var slug=slugify($("vslug").value||$("vname").value);
+    var tz=$("vtz").value;
+    if(!name){ $("err").textContent="Enter the venue name."; return; }
+    if(!slug){ $("err").textContent="Enter a slug (the TV web address key)."; return; }
+
+    var venueRow={ name:name, slug:slug, timezone:tz };
+    if(bill==="group"){
+      var gid=$("vgroup").value;
+      if(!gid){ $("err").textContent="Choose the operator group (or switch to Independent)."; return; }
+      venueRow.group_id=gid;
+      var cap=($("vcap").value||"").replace(/\D/g,"");
+      if(cap) venueRow.included_players=parseInt(cap,10);
+    } else {
+      var fid=($("vfounding").value||"").trim();
+      if(!fid){ $("err").textContent="Paste the venueplay_founding record id (or switch to Grouped)."; return; }
+      venueRow.founding_id=fid;
+    }
+
+    var mgrUid=($("mgruid").value||"").trim();
+    var mgrName=($("mgrname").value||"").trim();
+
+    var btn=this; btn.disabled=true; btn.textContent="Creating...";
+
+    // 1. the venue
+    client.from("vp_venues").insert(venueRow).select("id,name,slug").maybeSingle().then(function(r){
+      if(r.error) throw r.error;
+      var v=r.data;
+      // 2. default settings, 3. a default screen (best-effort, sequential)
+      return client.from("vp_venue_settings").insert({ venue_id:v.id }).then(function(sr){
+        return client.from("vp_screens").insert({ venue_id:v.id, name:"Main TV" }).then(function(scr){
+          // 4. optional first manager
+          var mgrDone=Promise.resolve({ skipped:true });
+          if(mgrUid){
+            mgrDone=client.from("vp_venue_staff").insert({
+              venue_id:v.id, auth_user_id:mgrUid, role:"manager", display_name:(mgrName||"Manager")
+            }).then(function(mr){ return { ok:!mr.error, error:mr.error }; });
+          }
+          return mgrDone.then(function(mgr){
+            done(v, { settings:sr, screen:scr, manager:mgr });
+          });
+        });
+      });
+    }).catch(function(e){
+      btn.disabled=false; btn.textContent="Create venue";
+      var msg=(e&&e.message)?e.message:"Could not create the venue.";
+      if(/duplicate|unique/i.test(msg)) msg="That slug is already taken. Pick a different slug.";
+      else if(/foreign key|violates/i.test(msg) && bill==="founding") msg="That founding record id was not found. Check the uuid in venueplay_founding.";
+      else if(/foreign key|violates/i.test(msg)) msg="A referenced record was not found. Check the group / founding id.";
+      $("err").textContent=msg;
+    });
+  });
+
+  function done(v, extra){
+    $("formWrap").classList.add("hidden");
+    $("doneWrap").classList.remove("hidden");
+    $("dName").textContent=v.name;
+    $("dSlug").textContent=v.slug;
+    $("dTv").textContent="screen.venueplay.com.au/"+v.slug;
+    $("dScreen").textContent=(extra.screen&&!extra.screen.error)?"Default screen created: Main TV":"Screen row not created (add one later).";
+    $("dSettings").textContent=(extra.settings&&!extra.settings.error)?"Default settings created.":"Settings row not created (open Settings to create it).";
+    if(extra.manager&&extra.manager.skipped){ $("dManager").textContent="No manager linked yet. Add one from HQ / Supabase when their Auth user exists."; }
+    else if(extra.manager&&extra.manager.ok){ $("dManager").textContent="First manager linked."; }
+    else { $("dManager").innerHTML='<span style="color:var(--roll)">Manager NOT linked: '+(extra.manager&&extra.manager.error&&extra.manager.error.message?extra.manager.error.message:"check the UID")+'. The venue itself was created fine.</span>'; }
+    $("settingsLink").href="settings.html?venue="+encodeURIComponent(v.id);
+  }
+})();
+</script>
+</body>
+</html>

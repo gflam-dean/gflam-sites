@@ -161,7 +161,7 @@
         <span class="word">VenuePlay</span>
       </div>
       <div class="authbig">Host sign in</div>
-      <div class="authsub">Sign in with a text code to your mobile. Skip for demo is there if text sign-in is not switched on yet.</div>
+      <div class="authsub">Sign in with a text code to your mobile.</div>
 
       <div class="authcard">
         <div id="stepMobile">
@@ -176,16 +176,9 @@
           <input id="otpIn" class="otpin" inputmode="numeric" maxlength="6" placeholder="------" autocomplete="one-time-code">
           <div class="cerr" id="otpErr"></div>
           <button class="btn pink big" id="verifyBtn" style="margin-top:4px">Verify</button>
-          <p class="note" style="text-align:center;margin-top:10px">We sent a code to <b id="sentTo" style="color:var(--muted)"></b>. Enter it below, or use Skip for demo.</p>
+          <p class="note" style="text-align:center;margin-top:10px">We sent a code to <b id="sentTo" style="color:var(--muted)"></b>. Enter it below.</p>
         </div>
 
-        <div style="text-align:center"><span class="skiplink" id="skipDemo">Skip for demo</span></div>
-
-        <div class="demolbl">Demo shortcuts</div>
-        <div class="demorow">
-          <button class="btn ghost" id="demoStaff">I am venue staff</button>
-          <button class="btn ghost" id="demoAdmin">I am Gflam admin</button>
-        </div>
       </div>
     </div>
   </div>
@@ -202,6 +195,22 @@
         <p style="font-size:14px;color:var(--text);line-height:1.6">Gflam HQ admin lands here.</p>
         <p class="note" style="margin-top:12px">The full admin (venues, billing, discounts) plugs in here. For this first cut the venue host path is the focus.</p>
         <div style="text-align:center"><span class="skiplink" id="adminBack" style="margin-top:20px">Back to sign in</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SIGNED IN, NO VENUE ============ -->
+  <div id="vNoVenue" class="hidden">
+    <div class="authwrap">
+      <div class="authlogo">
+        <svg width="26" height="30" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+        <span class="word">VenuePlay</span>
+      </div>
+      <div class="authbig">You are signed in</div>
+      <div class="authcard" style="text-align:center">
+        <p style="font-size:14px;color:var(--text);line-height:1.6">This login is not linked to a venue yet.</p>
+        <p class="note" style="margin-top:12px">Ask Gflam to add you as staff at your venue, then sign in again. If you are Gflam, check your admin record.</p>
+        <div style="text-align:center"><span class="skiplink" id="noVenueOut" style="margin-top:20px">Sign out</span></div>
       </div>
     </div>
   </div>
@@ -311,6 +320,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="vp-session.js"></script>
 <script>
 (function(){
   "use strict";
@@ -325,6 +335,9 @@
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
 
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  // Share this one client (and its auth session) with the shared session helper,
+  // so role resolution and gameplay broadcast run on a single client.
+  if(window.VP){ VP.useClient(client); }
   var ch=null, subscribed=false, sendQueue=[];
   function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
@@ -340,8 +353,29 @@
   function pairedCode(){ try{ var c=localStorage.getItem("vpPairCode"); return (c&&CODE_RE.test(c))?c:""; }catch(e){ return ""; } }
 
   // ================= VIEW ROUTER =================
-  var VIEWS=["vSignIn","vAdmin","vPair","vConsole"];
+  var VIEWS=["vSignIn","vAdmin","vNoVenue","vPair","vConsole"];
   function go(view){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==view); } }
+
+  // ---- post-login routing: resolve the real role, then send them on ----
+  // Gflam admin -> Gflam HQ; venue staff -> their venue's host flow (TV pair
+  // then console); signed in but unlinked -> a friendly "no venue" notice.
+  // The demo shortcut buttons deliberately bypass this (no real role).
+  function applyRoute(ctx){
+    if(!ctx || !ctx.authed){ go("vSignIn"); return; }
+    if(ctx.isAdmin){ window.location.href="hq.html"; return; }
+    if(ctx.scope==="staff"){
+      var vn=(ctx.venue&&ctx.venue.name)?ctx.venue.name:"your venue";
+      $("headerTag").textContent="Host console";
+      $("statusText").textContent="Signed in · "+vn;
+      proceedVenue();   // existing TV-pair -> console flow, scoped to their venue
+      return;
+    }
+    go("vNoVenue");
+  }
+  function routeAfterAuth(){
+    if(!window.VP){ proceedVenue(); return; }   // fallback if the helper failed to load
+    VP.refresh().then(applyRoute);
+  }
 
   // ================= SIGN IN (real Supabase phone OTP) =================
   var E164="";
@@ -386,13 +420,12 @@
     client.auth.verifyOtp({ phone:E164, token:code, type:"sms" }).then(function(res){
       btn.disabled=false; btn.textContent="Verify";
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
-      proceedVenue();
+      routeAfterAuth();
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });
   });
-  $("skipDemo").addEventListener("click", proceedVenue);
-  $("demoStaff").addEventListener("click", proceedVenue);
-  $("demoAdmin").addEventListener("click", function(){ $("headerTag").textContent="Gflam admin"; $("statusText").textContent="Admin"; go("vAdmin"); });
+  // demo bypass shortcuts removed 2026-07-29: sign-in is text-code only (no Skip for demo, no role shortcuts)
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent="Host"; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
+  $("noVenueOut").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
 
   // ---- always land on the pair step, code pre-filled and visible ----
   function proceedVenue(){
@@ -788,6 +821,8 @@
   // ================= INIT =================
   if(pairedCode()){ $("statusText").textContent="Paired, sign in to start"; }
   go("vSignIn");
+  // If a session already exists (returning manager/admin), route them straight in.
+  if(window.VP){ VP.ready().then(function(ctx){ if(ctx && ctx.authed){ applyRoute(ctx); } }); }
 })();
 </script>
 </body>
