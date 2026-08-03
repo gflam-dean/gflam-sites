@@ -1,0 +1,101 @@
+<!--
+  VenuePlay transactional email: WELCOME / CONFIRMATION (GROUP version)
+  Sent once, right after a GROUP (multiple venues on one account) signs up.
+  Simple merge fields:
+    {{venue_count}}       e.g. "3"
+    {{total_players}}     total players across all venues, e.g. "210"
+    {{monthly_total}}     group total, e.g. "$504.00"
+    {{first_charge_date}} e.g. "24 September 2026"
+    {{calendly_url}}      onboarding-call booking link
+    {{support_email}}     e.g. "hello@venueplay.com.au"
+  Repeatable block:
+    {{VENUE_BLOCKS}}      the Worker replaces this with one venue block per venue,
+                          each built from this template (see the commented block below):
+      venue name, its player count, its monthly cost, its host-console link and its TV link.
+      Per-venue tokens: {{venue_name}} {{player_count}} {{venue_monthly}} {{console_url}} {{tv_url}}
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <tr><td align="center" style="padding:24px 12px">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your venues are set up. Here is how to get each screen live.</div>
+
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
+      <tr><td style="background:#12101a;padding:20px 32px">
+        <img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto">
+      </td></tr>
+
+      <tr><td style="padding:36px 32px 8px">
+        <h1 style="margin:0;font-size:26px;line-height:1.25;color:#12101a;font-weight:800">Welcome to VenuePlay.</h1>
+        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">All {{venue_count}} of your venues are set up and your founding rate, 20% off for life, is locked in. Each venue below has its own screen code and host login. Here is everything you need to get them live.</p>
+      </td></tr>
+
+      <!-- login box -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your login</p>
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It is your <strong>mobile number</strong>. No password. From your console you can switch between all {{venue_count}} venues, and each venue can have its own host added.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- per-venue blocks -->
+      <tr><td style="padding:26px 32px 0">
+        <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#12101a">Your venues</p>
+        {{VENUE_BLOCKS}}
+        <!--
+          VENUE BLOCK TEMPLATE (Worker repeats this once per venue, tokens per venue:
+          {{venue_name}} {{player_count}} {{console_url}} {{tv_url}}):
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:12px">
+            <tr><td style="padding:16px 20px">
+              <p style="margin:0;font-size:17px;font-weight:700;color:#12101a">{{venue_name}}</p>
+              <p style="margin:4px 0 12px;font-size:14px;color:#6a6a75">{{player_count}} players &middot; {{venue_monthly}} a month</p>
+              <a href="{{console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:10px 20px;border-radius:8px;margin-right:8px">Host console</a>
+              <a href="{{tv_url}}" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:8.5px 20px;border-radius:8px">TV screen</a>
+            </td></tr>
+          </table>
+        -->
+      </td></tr>
+
+      <!-- billing summary -->
+      <tr><td style="padding:22px 32px 0">
+        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">Across your group that is <strong>{{total_players}} players</strong>, {{monthly_total}} a month. Your first month is free{{launch_phrase}}, so you are <strong>free until {{first_charge_date}}</strong>, your first payment. Nothing is charged before then.</p>
+      </td></tr>
+
+      <!-- 3 steps -->
+      <tr><td style="padding:26px 32px 0">
+        <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#12101a">Three steps at each venue</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">1</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Set up each screen.</strong> Any TV works, a Fire Stick, a smart TV, or an HDMI cable. Open that venue's TV link and its join code appears.</td>
+          </tr></table></td></tr>
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">2</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Add each host.</strong> Whoever runs the night at each venue gets their own login.</td>
+          </tr></table></td></tr>
+          <tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">3</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Run a test game.</strong> Play a quick round at each venue so it all feels familiar before the first real night.</td>
+          </tr></table></td></tr>
+        </table>
+      </td></tr>
+
+      <!-- onboarding call -->
+      <tr><td style="padding:26px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#12101a;border-radius:12px">
+          <tr><td style="padding:22px 24px">
+            <p style="margin:0;font-size:17px;font-weight:700;color:#ffffff">Rolling out across a few venues?</p>
+            <p style="margin:8px 0 16px;font-size:15px;line-height:1.55;color:#c9c7d4">Book a free onboarding call and we will help you get every screen set up and your hosts trained.</p>
+            <a href="{{calendly_url}}" style="display:inline-block;background:#ffffff;color:#12101a;text-decoration:none;font-size:15px;font-weight:700;padding:12px 26px;border-radius:9px">Book my onboarding call</a>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <tr><td style="padding:30px 32px 34px">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#8a8a95">Any questions, just reply to this email or reach us at <a href="mailto:{{support_email}}" style="color:#FF1F8E;text-decoration:none">{{support_email}}</a>. We are glad to have you on board.</p>
+        <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>

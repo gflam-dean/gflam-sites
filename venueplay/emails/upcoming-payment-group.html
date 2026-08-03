@@ -1,0 +1,80 @@
+<!--
+  VenuePlay transactional email: UPCOMING PAYMENT (GROUP version)
+  Sent 5 days before each renewal charge, for a GROUP (multiple venues on one account).
+  Simple merge fields:
+    {{per_player_rate}}   e.g. "2.40"
+    {{grand_total}}       group total, e.g. "$504.00"
+    {{due_date}}          e.g. "24 September 2026"
+    {{billing_url}}       link to the in-app billing screen
+    {{host_console_url}}  link to the app host console
+    {{support_email}}     e.g. "hello@venueplay.com.au"
+  Repeatable rows:
+    {{VENUE_ROWS}}        the Worker replaces this with one table row per venue,
+                          built from the row template in the comment below
+                          (venue name, its player count, its subtotal).
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <tr><td align="center" style="padding:24px 12px">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your next VenuePlay payment across your venues is coming up.</div>
+
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
+      <tr><td style="background:#12101a;padding:20px 32px">
+        <img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto">
+      </td></tr>
+
+      <tr><td style="padding:36px 32px 6px">
+        <h1 style="margin:0;font-size:24px;line-height:1.3;color:#12101a;font-weight:800">Your next payment is coming up.</h1>
+        <p style="margin:14px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Here is your group total for all venues, charged to your card on file on <strong>{{due_date}}</strong>. No action is needed unless you want to change something.</p>
+      </td></tr>
+
+      <!-- per-venue breakdown -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:6px 22px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding:12px 0;border-bottom:2px solid #eee;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a95">Venue</td>
+                <td align="center" style="padding:12px 0;border-bottom:2px solid #eee;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a95">Players</td>
+                <td align="right" style="padding:12px 0;border-bottom:2px solid #eee;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#8a8a95">Subtotal</td>
+              </tr>
+              {{VENUE_ROWS}}
+              <!--
+                VENUE ROW TEMPLATE (Worker repeats this once per venue, tokens per venue:
+                {{venue_name}} {{player_count}} {{subtotal}}):
+
+                <tr>
+                  <td style="padding:12px 0;border-bottom:1px solid #f0f0f3;font-size:15px;color:#12101a">{{venue_name}}</td>
+                  <td align="center" style="padding:12px 0;border-bottom:1px solid #f0f0f3;font-size:15px;color:#3a3a44">{{player_count}}</td>
+                  <td align="right" style="padding:12px 0;border-bottom:1px solid #f0f0f3;font-size:15px;font-weight:600;color:#12101a">{{subtotal}}</td>
+                </tr>
+              -->
+              <tr>
+                <td style="padding:16px 0;font-size:16px;font-weight:700;color:#12101a">Total</td>
+                <td></td>
+                <td align="right" style="padding:16px 0;font-size:20px;font-weight:800;color:#FF1F8E">{{grand_total}}</td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+        <p style="margin:12px 4px 0;font-size:13px;color:#8a8a95">All venues are on your founding rate of ${{per_player_rate}} per player per month.</p>
+      </td></tr>
+
+      <tr><td style="padding:26px 32px 0">
+        <p style="margin:0 0 8px;font-size:16px;font-weight:700;color:#12101a">Need to change players at a venue?</p>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#3a3a44">You can adjust each venue's players anytime from your billing page. Adding players applies straight away and is charged pro rata. Reducing players applies from your next renewal, so you are never left short mid month.</p>
+      </td></tr>
+
+      <tr><td align="center" style="padding:24px 32px 6px">
+        <a href="{{billing_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Manage players and billing</a>
+      </td></tr>
+      <tr><td align="center" style="padding:4px 32px 0">
+        <a href="{{host_console_url}}" style="display:inline-block;color:#12101a;text-decoration:none;font-size:15px;font-weight:600;padding:10px 22px">Open your host console</a>
+      </td></tr>
+
+      <tr><td style="padding:26px 32px 34px">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#8a8a95">Questions about your bill? Just reply, or reach us at <a href="mailto:{{support_email}}" style="color:#FF1F8E;text-decoration:none">{{support_email}}</a>.</p>
+        <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>

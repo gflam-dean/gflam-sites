@@ -1,0 +1,93 @@
+<!--
+  VenuePlay transactional email: WELCOME / CONFIRMATION
+  Sent once, right after a venue signs up (Stripe checkout.session.completed).
+  Merge fields (replaced by the Worker before sending):
+    {{host_console_url}}  link to the app host console sign-in
+    {{tv_url}}            link to open the venue TV screen (shows the join code)
+    {{calendly_url}}      the onboarding-call booking link
+    {{player_count}}      seats they signed up for, e.g. "80"
+    {{monthly_total}}     e.g. "$192.00"
+    {{first_charge_date}} e.g. "24 September 2026"
+    {{support_email}}     e.g. "hello@venueplay.com.au"
+  For GROUPS (multiple venues on one account), use welcome-group.html instead.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <tr><td align="center" style="padding:24px 12px">
+    <!-- preheader (hidden) -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">You are in. Here is how to get your first game live.</div>
+
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
+      <!-- header -->
+      <tr><td style="background:#12101a;padding:20px 32px">
+        <img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto">
+      </td></tr>
+
+      <!-- hero -->
+      <tr><td style="padding:36px 32px 8px">
+        <h1 style="margin:0;font-size:26px;line-height:1.25;color:#12101a;font-weight:800">Welcome to VenuePlay.</h1>
+        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is live and your founding rate, 20% off for life, is locked in. Here is everything you need to get your first game on the screen.</p>
+      </td></tr>
+
+      <!-- login box -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">Your login</p>
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">It is your <strong>mobile number</strong>. No password to remember. Enter your mobile on the host console and we text you a code to sign in.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- free until -->
+      <tr><td style="padding:22px 32px 0">
+        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">Your first month is free{{launch_phrase}}. You are <strong>free until {{first_charge_date}}</strong>, your first payment: {{player_count}} players at {{player_rate}} each, {{monthly_total}} a month. Nothing is charged before then, and you can cancel anytime before it.</p>
+      </td></tr>
+
+      <!-- 3 steps -->
+      <tr><td style="padding:26px 32px 0">
+        <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#12101a">Three steps to get ready</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">1</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Set up your screen.</strong> Any TV works, a Fire Stick, a smart TV, or an HDMI cable from a laptop. Open the TV link and a join code appears for players.</td>
+          </tr></table></td></tr>
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">2</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Add your host.</strong> Whoever runs the night gets their own login. Add them in your settings.</td>
+          </tr></table></td></tr>
+          <tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">3</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Run a test game.</strong> Play a quick round yourself so it all feels familiar before your first real night.</td>
+          </tr></table></td></tr>
+        </table>
+      </td></tr>
+
+      <!-- CTA -->
+      <tr><td align="center" style="padding:30px 32px 4px">
+        <a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Open your host console</a>
+      </td></tr>
+      <!-- TV link -->
+      <tr><td align="center" style="padding:6px 32px 0">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#6a6a75">Putting it on the big screen? Open your TV link on the telly to show your join code:</p>
+        <a href="{{tv_url}}" style="display:inline-block;margin-top:8px;color:#12101a;text-decoration:none;font-size:15px;font-weight:700;border:1.5px solid #12101a;padding:11px 26px;border-radius:9px">Open your TV screen</a>
+      </td></tr>
+
+      <!-- onboarding call -->
+      <tr><td style="padding:20px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#12101a;border-radius:12px">
+          <tr><td style="padding:22px 24px">
+            <p style="margin:0;font-size:17px;font-weight:700;color:#ffffff">Want a hand getting started?</p>
+            <p style="margin:8px 0 16px;font-size:15px;line-height:1.55;color:#c9c7d4">Book a free 20 minute onboarding call and we will walk you through your first setup, screen and all.</p>
+            <a href="{{calendly_url}}" style="display:inline-block;background:#ffffff;color:#12101a;text-decoration:none;font-size:15px;font-weight:700;padding:12px 26px;border-radius:9px">Book my onboarding call</a>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- footer -->
+      <tr><td style="padding:30px 32px 34px">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#8a8a95">Any questions, just reply to this email or reach us at <a href="mailto:{{support_email}}" style="color:#FF1F8E;text-decoration:none">{{support_email}}</a>. We are glad to have you on board.</p>
+        <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>

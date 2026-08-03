@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VenuePlay · Billing</title>
+<style>
+  :root{ --bg:#0A0A0B; --card:#141418; --card2:#1b1b21; --ink:#fff; --muted:#9A9AA4; --muted2:#6E6E78; --line:rgba(255,255,255,.12); --pink:#FF1F8E; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+  .wrap{max-width:680px;margin:0 auto;padding:26px 18px 90px}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .brand{font-size:20px;font-weight:800;letter-spacing:-.02em}
+  .brand span{color:var(--pink)}
+  .signout{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  h1{font-size:24px;font-weight:800;margin:14px 0 2px}
+  .lede{color:var(--muted);font-size:14px;margin:0 0 22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:12px 0}
+  .sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .sumgrid .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2)}
+  .sumgrid .v{font-size:20px;font-weight:800;margin-top:3px}
+  .sumgrid .v.pink{color:var(--pink)}
+  .label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .venue{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:9px 0}
+  .venue .nm{flex:1 1 150px;min-width:0}
+  .venue .nm b{display:block;font-size:16px}
+  .venue .nm small{color:var(--muted);font-size:12.5px}
+  .venue .pend{color:var(--pink);font-size:12px;margin-top:2px}
+  .stepper{display:flex;align-items:center;gap:8px}
+  .stepper button{width:34px;height:34px;border:1px solid var(--line);background:var(--card2);color:#fff;border-radius:9px;font-size:19px;line-height:1;cursor:pointer}
+  .stepper input{width:64px;text-align:center;background:var(--card2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 6px;font-size:15px;font-family:inherit}
+  .save{background:var(--pink);color:#fff;border:0;border-radius:9px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;display:none}
+  .save.show{display:inline-block}
+  .addbtn{background:transparent;border:1px dashed var(--line);color:#fff;padding:12px 16px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
+  .addform{display:none;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .addform.show{display:flex}
+  .addform input{flex:1 1 140px;background:var(--card2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:12px 13px;font-size:15px;font-family:inherit}
+  .addform .seats{flex:0 0 120px}
+  .addform .go{flex:0 0 auto;background:var(--pink);color:#fff;border:0;border-radius:10px;padding:12px 20px;font-weight:700;cursor:pointer}
+  .toggle{display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .toggle .t{font-size:15px}
+  .toggle .t small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+  .sw{position:relative;width:50px;height:29px;flex:0 0 auto;cursor:pointer}
+  .sw input{opacity:0;width:0;height:0}
+  .sl{position:absolute;inset:0;background:#33333b;border-radius:999px;transition:.15s}
+  .sl:before{content:"";position:absolute;height:23px;width:23px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.15s}
+  .sw input:checked + .sl{background:var(--pink)}
+  .sw input:checked + .sl:before{transform:translateX(21px)}
+  .note{color:var(--muted);font-size:12.5px;margin-top:8px}
+  .msg{margin-top:14px;font-size:13.5px;min-height:18px}
+  .msg.err{color:#ff6b6b}
+  .msg.ok{color:#33d17a}
+  .muted{color:var(--muted)}
+  .hostvenues{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 2px}
+  .hostchk{display:inline-flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13.5px;cursor:pointer}
+  .hostchk input{accent-color:var(--pink);width:16px;height:16px}
+  .hostrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:9px 0}
+  .hostrow .hn{flex:1 1 150px;min-width:0}
+  .hostrow .hn b{display:block;font-size:15px}
+  .hostrow .hn small{color:var(--muted);font-size:12.5px}
+  .hostrow .rm{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+  .hostrow .own{color:var(--muted2);font-size:12px;font-family:'JetBrains Mono',ui-monospace,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">Venue<span>Play</span></div>
+    <button class="signout" id="signout">Sign out</button>
+  </div>
+  <h1>Billing</h1>
+  <p class="lede">Your players, venues and next payment. Add players anytime (charged pro rata), and reductions apply from your next renewal so you are never left short.</p>
+
+  <div id="loading" class="card">Loading your account…</div>
+  <div id="content" style="display:none">
+
+    <div class="card">
+      <div class="sumgrid">
+        <div><div class="k">Total players</div><div class="v" id="s-players">–</div></div>
+        <div><div class="k">Per month</div><div class="v pink" id="s-total">–</div></div>
+        <div><div class="k">Next payment</div><div class="v" id="s-next" style="font-size:16px">–</div></div>
+        <div><div class="k">Card</div><div class="v" id="s-card" style="font-size:16px">–</div></div>
+      </div>
+    </div>
+
+    <div class="label">Your venues</div>
+    <div id="venues"></div>
+
+    <button class="addbtn" id="addToggle">+ Add another venue</button>
+    <div class="addform" id="addForm">
+      <input type="text" id="add-name" placeholder="Venue name" autocomplete="organization">
+      <input type="number" class="seats" id="add-seats" min="1" placeholder="Max players">
+      <button class="go" id="add-go">Add venue</button>
+    </div>
+    <p class="note">Adding a venue puts it on this same account and bill, on your current rate.</p>
+
+    <div class="label">Payment reminders</div>
+    <div class="card toggle">
+      <div class="t">Email me before each payment<small>A heads-up a few days before your card is charged.</small></div>
+      <label class="sw"><input type="checkbox" id="reminders"><span class="sl"></span></label>
+    </div>
+
+    <div class="label">Hosts</div>
+    <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in with a text code, no app to install.</p>
+    <div id="hosts"></div>
+    <button class="addbtn" id="hostToggle">+ Add a host</button>
+    <div class="addform" id="hostForm" style="flex-direction:column;align-items:stretch">
+      <input type="text" id="host-name" placeholder="Name (optional)" autocomplete="name">
+      <input type="tel" id="host-mobile" placeholder="Mobile (04...)" autocomplete="tel">
+      <div class="note" style="margin:2px 0 0">Which venues can they run?</div>
+      <div class="hostvenues" id="host-venues"></div>
+      <button class="go" id="host-go" style="align-self:flex-start">Add host</button>
+    </div>
+
+    <p class="msg" id="msg"></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="vp-session.js"></script>
+<script>
+(function(){
+  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
+  var $ = function(id){ return document.getElementById(id); };
+  var rate = 2.40;
+
+  function tokenThen(){ return VP.getClient().auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||null; }); }
+  function api(path, body){
+    // Always resolves to an object; on any network/parse failure it resolves to {error:...}
+    // so every caller's r.error branch runs and buttons never get stuck disabled.
+    return tokenThen().then(function(tok){
+      var h = { "Content-Type":"application/json" };
+      if (tok) h["Authorization"] = "Bearer " + tok;
+      return fetch(VP_WORKER + path, { method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(function(r){ return r.json(); });
+    }).catch(function(){ return { error: "Something went wrong. Please check your connection and try again." }; });
+  }
+  function money(n){ return "$" + (n).toFixed(2); }
+  function showMsg(t, ok){ var m=$("msg"); m.textContent=t; m.className = "msg " + (ok?"ok":"err"); if(ok) setTimeout(function(){ if(m.textContent===t){m.textContent="";m.className="msg";} }, 3500); }
+
+  function render(d){
+    rate = d.rate || 2.40;
+    $("s-players").textContent = d.total_players;
+    $("s-total").textContent = d.monthly_total;
+    $("s-next").textContent = d.next_charge
+      ? (d.next_charge + (d.next_charge_amount ? "  ·  " + d.next_charge_amount : ""))
+      : "at launch";
+    $("s-card").textContent = d.card_last4 ? ("•••• " + d.card_last4) : "on file";
+    $("reminders").checked = d.payment_reminders !== false;
+
+    var wrap = $("venues"); wrap.innerHTML = "";
+    d.venues.forEach(function(v){
+      var row = document.createElement("div"); row.className = "venue";
+      var pend = (v.pending != null && v.pending !== v.players)
+        ? '<div class="pend">Reducing to ' + v.pending + ' players at your next renewal &middot; <a href="#" class="cancelpend" style="color:var(--pink);text-decoration:underline">cancel</a></div>' : '';
+      row.innerHTML =
+        '<div class="nm"><b>' + esc(v.name) + '</b><small>' + v.monthly + ' a month</small>' + pend + '</div>' +
+        '<div class="stepper">' +
+          '<button data-d="-1" aria-label="Fewer">−</button>' +
+          '<input type="number" min="1" value="' + v.players + '">' +
+          '<button data-d="1" aria-label="More">+</button>' +
+        '</div>' +
+        '<button class="save">Save</button>';
+      var input = row.querySelector("input");
+      var save = row.querySelector(".save");
+      var orig = v.players;
+      function sync(){ save.classList.toggle("show", (parseInt(input.value,10)||0) !== orig); }
+      row.querySelectorAll(".stepper button").forEach(function(b){
+        b.addEventListener("click", function(){ var n=(parseInt(input.value,10)||0)+parseInt(b.getAttribute("data-d"),10); if(n<1)n=1; input.value=n; sync(); });
+      });
+      input.addEventListener("input", sync);
+      var cancelLink = row.querySelector(".cancelpend");
+      if (cancelLink){
+        cancelLink.addEventListener("click", function(e){
+          e.preventDefault();
+          api("/account/players", { venue_id:v.id, players:v.players }).then(function(r){
+            if (r.error){ showMsg(r.error); return; }
+            showMsg("Scheduled reduction cancelled.", true); load();
+          });
+        });
+      }
+      save.addEventListener("click", function(){
+        var n = parseInt(input.value,10)||0; if(n<1){ showMsg("Enter at least 1 player."); return; }
+        save.disabled = true; save.textContent = "Saving…";
+        api("/account/players", { venue_id:v.id, players:n }).then(function(r){
+          if (r.error){ showMsg(r.error); save.disabled=false; save.textContent="Save"; return; }
+          if (r.applied === "next_renewal"){ showMsg("Reduction to " + n + " players scheduled for your next renewal.", true); }
+          else { showMsg("Players updated. The extra is charged pro rata.", true); }
+          save.disabled=false; save.textContent="Save";
+          load();
+        });
+      });
+      wrap.appendChild(row);
+    });
+  }
+
+  function esc(s){ return String(s==null?"":s).replace(/[<>&]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]; }); }
+
+  function load(){
+    return api("/account/summary", {}).then(function(d){
+      if (d.error){
+        // On first load show it in the loading panel; after that the panel is hidden, so
+        // surface refresh errors visibly instead of writing to a hidden element.
+        if ($("content").style.display === "none") $("loading").textContent = d.error;
+        else showMsg(d.error);
+        return;
+      }
+      $("loading").style.display = "none";
+      $("content").style.display = "";
+      render(d);
+    }).catch(function(){
+      if ($("content").style.display === "none") $("loading").textContent = "Could not load your billing. Please try again.";
+      else showMsg("Could not refresh just now. Please reload the page.");
+    });
+  }
+
+  // Add venue
+  $("addToggle").addEventListener("click", function(){ $("addForm").classList.toggle("show"); });
+  $("add-go").addEventListener("click", function(){
+    var name = $("add-name").value.trim();
+    var seats = parseInt($("add-seats").value,10)||0;
+    if (!name){ showMsg("Enter a venue name."); return; }
+    if (seats < 1){ showMsg("Enter the max players for the new venue."); return; }
+    $("add-go").disabled = true; $("add-go").textContent = "Adding…";
+    api("/account/add-venue", { name:name, players:seats }).then(function(r){
+      $("add-go").disabled = false; $("add-go").textContent = "Add venue";
+      if (r.error){ showMsg(r.error); return; }
+      $("add-name").value=""; $("add-seats").value=""; $("addForm").classList.remove("show");
+      showMsg(name + " added to your account.", true);
+      load();
+    });
+  });
+
+  // Reminders toggle
+  $("reminders").addEventListener("change", function(){
+    var on = $("reminders").checked;
+    api("/account/reminders", { enabled:on }).then(function(r){
+      if (r.error){ showMsg(r.error); $("reminders").checked = !on; return; }
+      showMsg(on ? "Reminders on." : "Reminders off.", true);
+    });
+  });
+
+  // ---- Hosts ----
+  var acctVenues = [];
+  function loadHosts(){
+    return api("/account/hosts", {}).then(function(d){
+      if (d.error){ return; }   // leave the panel quiet if the endpoint is unavailable
+      acctVenues = d.venues || [];
+      renderHosts(d.hosts || [], acctVenues);
+      buildHostVenuePicker(acctVenues);
+    });
+  }
+  function renderHosts(hosts, venues){
+    var vmap = {}; venues.forEach(function(v){ vmap[v.id] = v.name; });
+    var wrap = $("hosts"); wrap.innerHTML = "";
+    if (!hosts.length){ wrap.innerHTML = '<p class="note" style="margin:0 0 6px">Just you so far, and you can host every venue.</p>'; return; }
+    hosts.forEach(function(h){
+      var names = (h.venue_ids || []).map(function(id){ return vmap[id]; }).filter(Boolean);
+      var scope = (venues.length && names.length >= venues.length) ? "All venues"
+                : (names.length ? names.join(", ") : "No venues");
+      var row = document.createElement("div"); row.className = "hostrow";
+      row.innerHTML = '<div class="hn"><b>' + esc(h.label || "Host") + '</b><small>' + esc(scope) + '</small></div>' +
+        (h.is_owner ? '<span class="own">Owner</span>' : '<button class="rm">Remove</button>');
+      var rm = row.querySelector(".rm");
+      if (rm){
+        rm.addEventListener("click", function(){
+          rm.disabled = true; rm.textContent = "Removing…";
+          api("/account/host-remove", { auth_user_id: h.auth_user_id, all_venues: true }).then(function(r){
+            if (r.error){ showMsg(r.error); rm.disabled = false; rm.textContent = "Remove"; return; }
+            showMsg("Host removed.", true); loadHosts();
+          });
+        });
+      }
+      wrap.appendChild(row);
+    });
+  }
+  function buildHostVenuePicker(venues){
+    var box = $("host-venues"); box.innerHTML = "";
+    var all = document.createElement("label"); all.className = "hostchk";
+    all.innerHTML = '<input type="checkbox" id="host-all"><span>All venues</span>';
+    box.appendChild(all);
+    venues.forEach(function(v){
+      var l = document.createElement("label"); l.className = "hostchk";
+      l.innerHTML = '<input type="checkbox" class="host-v" value="' + esc(v.id) + '"><span>' + esc(v.name) + '</span>';
+      box.appendChild(l);
+    });
+    $("host-all").addEventListener("change", function(){
+      var on = $("host-all").checked;
+      box.querySelectorAll(".host-v").forEach(function(c){ c.checked = on; c.parentNode.style.opacity = on ? .5 : 1; });
+    });
+  }
+  $("hostToggle").addEventListener("click", function(){ $("hostForm").classList.toggle("show"); });
+  $("host-go").addEventListener("click", function(){
+    var mobile = $("host-mobile").value.trim();
+    var name = $("host-name").value.trim();
+    var all = $("host-all") && $("host-all").checked;
+    var ids = [];
+    $("host-venues").querySelectorAll(".host-v:checked").forEach(function(c){ ids.push(c.value); });
+    if (!mobile){ showMsg("Enter the host's mobile."); return; }
+    if (!all && !ids.length){ showMsg("Tick at least one venue for this host."); return; }
+    $("host-go").disabled = true; $("host-go").textContent = "Adding…";
+    api("/account/host-add", { mobile:mobile, label:name, venue_ids:ids, all_venues: !!all }).then(function(r){
+      $("host-go").disabled = false; $("host-go").textContent = "Add host";
+      if (r.error){ showMsg(r.error); return; }
+      $("host-mobile").value = ""; $("host-name").value = ""; $("hostForm").classList.remove("show");
+      showMsg("Host added. They can sign in with their mobile.", true);
+      loadHosts();
+    });
+  });
+
+  $("signout").addEventListener("click", function(){ VP.signOut(); });
+
+  // Require sign-in, then load.
+  VP.requireAuth().then(function(ctx){
+    if (!ctx){ return; } // requireAuth handles redirect when signed out
+    load();
+  }).catch(function(){ load(); });
+})();
+</script>
+</body>
+</html>
