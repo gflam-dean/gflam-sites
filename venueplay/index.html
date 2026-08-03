@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VenuePlay: Run a packed Tuesday. Every Tuesday.</title>
-<meta name="description" content="Bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One pub, one platform, every format on one screen. Players join from their phone, no app, no login. Founding venues lock in 20% off for life.">
+<meta name="description" content="Bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One pub, one platform, every format on one screen. Players join from their phone, no app, no login. Founding venues lock in $2.50 per player, for life.">
 
 <!-- Open Graph -->
 <meta property="og:title" content="VenuePlay: Run a packed Tuesday. Every Tuesday.">
-<meta property="og:description" content="One pub, one platform. Every format, one screen. Founding venues lock in 20% off for life.">
+<meta property="og:description" content="One pub, one platform. Every format, one screen. Founding venues lock in $2.50 per player, for life.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.venueplay.com.au">
 
@@ -317,6 +317,15 @@
 
   /* Number-of-venues field hint + group-enquiry note */
   .field-hint{display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.01em}
+  /* Group signup: repeatable venue rows */
+  #vp-venue-list{display:flex;flex-direction:column;gap:9px}
+  .venue-row{display:flex;gap:8px;align-items:stretch}
+  .venue-row .v-name{flex:1 1 auto;min-width:0}
+  .venue-row .v-seats{width:120px;flex:0 0 auto}
+  .venue-row .v-remove{flex:0 0 auto;width:46px;border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:11px;font-size:22px;line-height:1;cursor:pointer;transition:border-color .15s ease,color .15s ease}
+  .venue-row .v-remove:hover{border-color:var(--pink);color:var(--pink)}
+  .add-venue{margin:10px 0 2px;background:transparent;border:1px dashed var(--line-2);color:#fff;padding:11px 16px;border-radius:11px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:border-color .15s ease}
+  .add-venue:hover{border-color:var(--pink)}
   .group-note{margin:2px 0 16px;padding:13px 15px;border:1px solid rgba(255,31,142,.3);background:rgba(255,31,142,.07);border-radius:12px;font-size:13.5px;line-height:1.55;color:#e8e8ec}
 </style>
 <style>
@@ -758,7 +767,7 @@
     <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
     <p class="lede">Bingo, trivia, musical bingo and raffles, run from one screen. Your crowd plays from their own phones, <b>no app and no login</b>. You just press go. Built for pubs, clubs and bowls clubs that want a full room on a quiet night.</p>
     <div class="hero-cta">
-      <a class="btn btn-primary" href="#claim">Lock in 20% off for life</a>
+      <a class="btn btn-primary" href="#claim">Lock in your founding price</a>
       <a class="btn btn-ghost" href="#modes">See the game modes</a>
     </div>
     <p class="hero-note">First 100 venues only · launching August 2026 · price locked for life</p>
@@ -887,10 +896,22 @@
   <div class="wrap" style="text-align:center">
     <div class="label">The trivia bank</div>
     <div class="counter" style="margin-top:14px">
-      <div class="big"><span id="vp-trivia-count">19,946</span></div>
+      <div class="big"><span id="vp-trivia-count">21,021</span></div>
       <div class="sub">trivia questions and counting</div>
     </div>
     <p class="sec-sub" style="margin:18px auto 0;max-width:640px">Fact-checked, Aussie-friendly questions across every category, and the bank grows every week. It is all included, no extra packs to buy.</p>
+  </div>
+</section>
+
+<!-- ===================== MUSIC LIBRARY COUNTER ===================== -->
+<section class="sec" id="music-bank">
+  <div class="wrap" style="text-align:center">
+    <div class="label">The music library</div>
+    <div class="counter" style="margin-top:14px">
+      <div class="big"><span id="vp-music-count">3,172</span></div>
+      <div class="sub">musical bingo songs and counting</div>
+    </div>
+    <p class="sec-sub" style="margin:18px auto 0;max-width:640px">From Aussie anthems to disco, motown, country and modern hits, every track ready to play. It is all included, no extra packs to buy.</p>
   </div>
 </section>
 
@@ -900,8 +921,8 @@
       <div class="offer-grid">
         <div>
           <div class="label">Founding venues</div>
-          <h2 class="sec-title">20% off.<br>For life.</h2>
-          <p class="sec-sub">The first 100 venues to sign up lock in 20% off, that's $2.40 per player a month, set and locked for life. After 100, founding pricing closes for good.</p>
+          <h2 class="sec-title">$2.50 per player.<br>Locked for life.</h2>
+          <p class="sec-sub">The first 100 venues to sign up lock in $2.50 per player a month (normally $3), set and locked for life. After 100, founding pricing closes for good.</p>
           <div class="counter">
             <div class="big" id="vp-claimed"><span id="vp-count">…</span><span class="of"> / 100</span></div>
             <div class="bar"><i id="vp-bar"></i></div>
@@ -915,12 +936,12 @@
             <div class="pv">$3.00</div>
           </div>
           <div class="price-row found">
-            <div class="pl"><b>Founding, monthly</b>20% off, locked for life</div>
-            <div class="pv">$2.40</div>
+            <div class="pl"><b>Founding, monthly</b>Founding, locked for life</div>
+            <div class="pv"><s>$3.00</s> $2.50</div>
           </div>
           <div class="price-row found">
             <div class="pl"><b>Founding, annual</b>billed yearly · best value</div>
-            <div class="pv">$2.00</div>
+            <div class="pv"><s>$2.85</s> $2.30</div>
           </div>
           <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and the extra players are added at the same monthly rate. Your founding rate is set and locked for life. It never goes up.</p>
         </div>
@@ -942,7 +963,7 @@
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Plays on any screen</strong><span>A smart TV, a projector, a laptop via HDMI, or a streaming stick, your call.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Unlimited nights</strong><span>Run it as often as you like, no per-event fees on your plan.</span></div></li>
       <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Built for your bar staff</strong><span>Set up and run a round without a tech in the room.</span></div></li>
-      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Founding price, locked</strong><span>Your 20% discount stays for as long as you're with us.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Founding price, locked</strong><span>Your founding price stays for as long as you're with us.</span></div></li>
     </ul>
   </div>
 </section>
@@ -984,41 +1005,34 @@
         <div id="vp-form">
           <div class="form-grid">
             <div class="field full">
-              <label for="vp-venue">Venue name</label>
-              <input id="vp-venue" type="text" placeholder="Tugun Bowls Club" autocomplete="organization">
-            </div>
-            <div class="field full">
               <label for="vp-email">Contact email</label>
               <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
             </div>
             <div class="field full">
-              <label for="vp-venues">Number of venues</label>
-              <input id="vp-venues" type="number" min="1" step="1" inputmode="numeric" value="1">
-              <span class="field-hint">Running more than two? We set groups up personally, no card needed now.</span>
+              <label>Your venues</label>
+              <div id="vp-venue-list"></div>
+              <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
+              <span class="field-hint">For each venue, enter the most players it would have in one game on a busy night, that venue's own number, not the group total. One card, one bill for the lot.</span>
             </div>
             <div class="field">
-              <label for="vp-mobile">Mobile (optional)</label>
-              <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel">
+              <label for="vp-mobile">Mobile</label>
+              <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel" required>
+              <span class="field-hint">This is how you sign in to run your games, so we need a mobile that can receive a text.</span>
             </div>
             <div class="field">
               <label for="vp-postcode">Postcode</label>
               <input id="vp-postcode" type="text" inputmode="numeric" placeholder="4224" autocomplete="postal-code">
             </div>
-            <div class="field">
-              <label for="vp-seats">Max players / session</label>
-              <input id="vp-seats" type="number" min="1" step="1" inputmode="numeric" placeholder="75">
-            </div>
-            <div class="field">
+            <div class="field full">
               <label>Plan</label>
               <div class="seg" id="vp-plan">
-                <button type="button" class="on" data-plan="monthly">Monthly<small>$2.40 / player</small></button>
-                <button type="button" data-plan="annual">Annual<small>$2 / player</small></button>
+                <button type="button" class="on" data-plan="monthly">Monthly<small>$2.50 / player</small></button>
+                <button type="button" data-plan="annual">Annual<small>$2.30 / player</small></button>
               </div>
             </div>
           </div>
           <p class="estimate" id="vp-estimate">Enter your max players for a price estimate.</p>
           <p class="overage-note">Set your usual max. If a night runs bigger, the extra players are added at the same per-player monthly rate, and your plan just grows to match what you use.</p>
-          <p class="group-note" id="vp-group-note" style="display:none">You're running more than two venues, so this one comes to us directly. Leave your details and we'll call you within one business day to set your group up with pricing to match. No card needed now.</p>
           <div class="consent">
             <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
             <label class="ck"><input type="checkbox" id="vp-marketing" checked> <span>Send me VenuePlay news, tips and launch updates. You can unsubscribe anytime.</span></label>
@@ -1031,14 +1045,9 @@
         <div class="success" id="vp-success">
           <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <h3>Your spot is held</h3>
-          <p>Your founding spot is locked in and your card's on file. Your first month is free from the August launch, so your first payment is on 24 September 2026. We'll be in touch before then to get you set up, and you can cancel any time before your first payment.</p>
+          <p>Your founding spot is locked in and your card's on file. Check your inbox, we've sent your login and a few quick setup steps. Your first month is free from the August launch, so your first payment is on 24 September 2026, and you can cancel any time before then.</p>
         </div>
 
-        <div class="success" id="vp-group-success">
-          <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-          <h3>Thanks, we'll be in touch</h3>
-          <p>Your group enquiry is in. We'll call you within one business day to set your venues up and sort founding pricing that fits. No card needed yet.</p>
-        </div>
       </div>
     </div>
   </div>
@@ -1053,13 +1062,13 @@
     </div>
     <div class="faq">
       <details class="q"><summary>When does VenuePlay launch?<span class="pm"></span></summary><div class="a">VenuePlay launches August 2026. Founding venues get first access, and we'll be in touch before then to get you set up.</div></details>
-      <details class="q"><summary>What does "founding venue" actually mean?<span class="pm"></span></summary><div class="a">The first 100 venues to sign up lock in 20% off for life: $2.40 per player a month instead of $3. Once 100 spots are gone, founding pricing closes for good.</div></details>
+      <details class="q"><summary>What does "founding venue" actually mean?<span class="pm"></span></summary><div class="a">The first 100 venues to sign up lock in $2.50 per player a month instead of $3, for life. Once 100 spots are gone, founding pricing closes for good.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
-      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.40 a player, or yearly for $2 a player, and your founding pricing is locked for life either way. Your first month is free from the August launch, then billing recurs at your founding rate. Cancel any time before your first payment and you are never charged.</div></details>
+      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.50 a player, or yearly for $2.30 a player, and your founding pricing is locked for life either way. Your first month is free from the August launch, then billing recurs at your founding rate. Cancel any time before your first payment and you are never charged.</div></details>
       <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">No problem and no surprise fees. Set your max to your usual room. If a night runs bigger, the extra players are simply added at your per-player monthly rate, so your plan grows to match what you actually use. The screen flags it the moment you go over.</div></details>
       <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the display onto that screen: a smart TV with a browser, a streaming stick, or an HDMI cable from a laptop or tablet all work. Players bring their own phones. For a rock-solid night we'd point you toward a stick or a cable over wireless casting, since that doesn't lean on venue wifi.</div></details>
-      <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your founding 20% discount stays locked for as long as you're with us, and if you cancel before your first payment, you're never charged.</div></details>
+      <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your founding price stays locked for as long as you're with us, and if you cancel before your first payment, you're never charged.</div></details>
       <details class="q"><summary>What support do I get?<span class="pm"></span></summary><div class="a">Founding venues get hands-on onboarding to get your first night running, plus ongoing support if anything comes up. The whole thing is built so your bar staff can run it without a tech in the room.</div></details>
       <details class="q"><summary>Can players win prizes?<span class="pm"></span></summary><div class="a">Yep, you set the prizes, exactly like you do now. Bar tabs, meat trays, members jackpots, vouchers, whatever suits your venue. VenuePlay runs the game and calls the winners; the prizes are yours to decide.</div></details>
       <details class="q"><summary>Is players' data safe?<span class="pm"></span></summary><div class="a">Players join with just a name, no account, no login, nothing they have to hand over. Anything captured is opt-in and handled under Australian privacy rules. We don't sell player data, full stop.</div></details>
@@ -1145,7 +1154,8 @@
   var _SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
 
   var CAP = 100;
-  var PRICE = { monthly: 2.40, annual: 2.00 };
+  var PRICE = { monthly: 2.50, annual: 2.30 };
+  var foundingClosed = false;
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
   var keyReady = _SBK.indexOf('PASTE_') === -1;
   var plan = 'monthly';
@@ -1160,6 +1170,17 @@
     document.getElementById('vp-bar').style.width = ((c / CAP) * 100) + '%';
     document.getElementById('vp-remaining').textContent =
       remaining > 0 ? (remaining + ' founding spots open') : 'founding spots closed';
+    // Founding closes at the cap: flip the quote to standard so it matches what checkout
+    // will actually charge (checkout picks the price by this same live count).
+    if (remaining <= 0 && !foundingClosed){
+      foundingClosed = true;
+      PRICE = { monthly: 3.00, annual: 2.85 };
+      var mb = document.querySelector('#vp-plan button[data-plan="monthly"] small');
+      var ab = document.querySelector('#vp-plan button[data-plan="annual"] small');
+      if (mb) mb.textContent = '$3.00 / player';
+      if (ab) ab.textContent = '$2.85 / player';
+      if (typeof renderEstimate === 'function') renderEstimate();
+    }
   }
   function loadCount(){
     if (!keyReady) { paintCounter(0); return; }
@@ -1182,7 +1203,7 @@
     var done = false;
     function animateTo(target){
       if (done) return; done = true;
-      var start = Math.max(0, target - 400), t0 = null, dur = 1400;
+      var start = 0, t0 = null, dur = 1400;
       function step(ts){
         if (!t0) t0 = ts;
         var p = Math.min(1, (ts - t0) / dur);
@@ -1197,7 +1218,7 @@
       if (!n) return;
       el.textContent = n.toLocaleString('en-AU');
       if (sec && 'IntersectionObserver' in window){
-        el.textContent = Math.max(0, n - 400).toLocaleString('en-AU');
+        el.textContent = '0';
         var io = new IntersectionObserver(function(entries){
           for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
         }, { threshold: 0.4 });
@@ -1208,42 +1229,110 @@
     }).catch(function(){});
   })();
 
-  /* ---------- Plan toggle + live estimate ---------- */
-  var planWrap = document.getElementById('vp-plan');
-  var seatsEl = document.getElementById('vp-seats');
-  var estEl = document.getElementById('vp-estimate');
-
-  function renderEstimate(){
-    var seats = parseInt(seatsEl.value, 10);
-    if (!seats || seats < 1){ estEl.innerHTML = 'Enter your max players for a price estimate.'; return; }
-    if (plan === 'monthly'){
-      estEl.innerHTML = '<b>$' + (seats * PRICE.monthly).toFixed(2) + '</b> / month after your free first month (' + seats + ' players × $2.40)';
-    } else {
-      var perYear = seats * PRICE.annual * 12;
-      estEl.innerHTML = '<b>$' + perYear.toFixed(2) + '</b> / year after your free first month (' + seats + ' players × $2 × 12)';
+  /* ---------- Live music library counter (reads /data/music-count.json) ---------- */
+  (function(){
+    var el = document.getElementById('vp-music-count');
+    var sec = document.getElementById('music-bank');
+    if (!el) return;
+    var done = false;
+    function animateTo(target){
+      if (done) return; done = true;
+      var start = 0, t0 = null, dur = 1400;
+      function step(ts){
+        if (!t0) t0 = ts;
+        var p = Math.min(1, (ts - t0) / dur);
+        var ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(start + (target - start) * ease).toLocaleString('en-AU');
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
     }
-  }
+    fetch('/data/music-count.json').then(function(r){ return r.json(); }).then(function(d){
+      var n = parseInt(d && d.count, 10) || 0;
+      if (!n) return;
+      el.textContent = n.toLocaleString('en-AU');
+      if (sec && 'IntersectionObserver' in window){
+        el.textContent = '0';
+        var io = new IntersectionObserver(function(entries){
+          for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
+        }, { threshold: 0.4 });
+        io.observe(sec);
+      } else {
+        animateTo(n);
+      }
+    }).catch(function(){});
+  })();
+
+  /* ---------- Plan toggle ---------- */
+  var planWrap = document.getElementById('vp-plan');
+  var estEl = document.getElementById('vp-estimate');
   planWrap.addEventListener('click', function(e){
     var b = e.target.closest('button'); if (!b) return;
     plan = b.getAttribute('data-plan');
     Array.prototype.forEach.call(planWrap.children, function(c){ c.classList.toggle('on', c === b); });
     renderEstimate();
   });
-  seatsEl.addEventListener('input', renderEstimate);
 
-  /* ---------- Group mode: more than 2 venues routes to a call, not self-serve checkout ---------- */
-  var venuesEl = document.getElementById('vp-venues');
-  var groupNote = document.getElementById('vp-group-note');
-  var fineEl = document.getElementById('vp-fine');
-  var groupSuccess = document.getElementById('vp-group-success');
-  function isGroup(){ return (parseInt(venuesEl.value, 10) || 1) > 2; }
-  function syncMode(){
-    var g = isGroup();
-    groupNote.style.display = g ? '' : 'none';
-    submitBtn.textContent = g ? 'Request a group call' : 'Hold my spot, add card';
-    if (fineEl) fineEl.style.display = g ? 'none' : '';
+  /* ---------- Venue rows: one venue, or many (a group is simply more than one) ---------- */
+  var venueList = document.getElementById('vp-venue-list');
+  var addVenueBtn = document.getElementById('vp-add-venue');
+  function venueRows(){ return Array.prototype.slice.call(venueList.querySelectorAll('.venue-row')); }
+  function totalSeats(){
+    var t = 0;
+    venueRows().forEach(function(r){ t += parseInt(r.querySelector('.v-seats').value, 10) || 0; });
+    return t;
   }
-  venuesEl.addEventListener('input', syncMode);
+  function refreshRemoveButtons(){
+    var rows = venueRows();
+    rows.forEach(function(r){ r.querySelector('.v-remove').style.visibility = rows.length > 1 ? 'visible' : 'hidden'; });
+    if (addVenueBtn){
+      addVenueBtn.disabled = rows.length >= 20;
+      addVenueBtn.textContent = rows.length >= 20 ? 'Up to 20 venues at signup, add the rest once you are in' : '+ Add another venue';
+    }
+  }
+  function addVenueRow(name, seats){
+    var row = document.createElement('div');
+    row.className = 'venue-row';
+    var nm = document.createElement('input');
+    nm.type = 'text'; nm.className = 'v-name'; nm.placeholder = 'Venue name'; nm.setAttribute('autocomplete', 'organization');
+    if (name) nm.value = name;
+    var st = document.createElement('input');
+    st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players';
+    if (seats) st.value = seats;
+    var rm = document.createElement('button');
+    rm.type = 'button'; rm.className = 'v-remove'; rm.setAttribute('aria-label', 'Remove venue'); rm.textContent = '×';
+    rm.addEventListener('click', function(){ row.remove(); refreshRemoveButtons(); renderEstimate(); });
+    st.addEventListener('input', renderEstimate);
+    row.appendChild(nm); row.appendChild(st); row.appendChild(rm);
+    venueList.appendChild(row);
+    refreshRemoveButtons();
+  }
+  addVenueBtn.addEventListener('click', function(){ if (venueRows().length >= 20) return; addVenueRow(); renderEstimate(); });
+  addVenueRow(); // start with one venue
+
+  // Post-founding volume tiers (must match the Worker). Only applies once founding closes.
+  function groupTier(players){
+    if (players >= 10000) return { pct:10, label:'Major group' };
+    if (players >= 4000)  return { pct:5,  label:'Large group' };
+    return null;
+  }
+  function renderEstimate(){
+    var seats = totalSeats();
+    var n = venueRows().length;
+    var suffix = n > 1 ? ' across ' + n + ' venues' : '';
+    if (!seats){ estEl.innerHTML = 'Add your max players for a price estimate.'; return; }
+    var tier = foundingClosed ? groupTier(seats) : null; // volume discount only applies post-founding
+    var mRate = PRICE.monthly * (tier ? (1 - tier.pct/100) : 1);
+    var aRate = PRICE.annual  * (tier ? (1 - tier.pct/100) : 1);
+    var reason = tier ? ('<br><span style="color:var(--pink)">You qualify for ' + tier.pct + '% off, ' + tier.label + ' (' + seats + ' players)</span>') : '';
+    if (plan === 'monthly'){
+      estEl.innerHTML = '<b>$' + (seats * mRate).toFixed(2) + '</b> / month after your free first month (' + seats + ' players × $' + mRate.toFixed(2) + suffix + ')' + reason;
+    } else {
+      var perYear = seats * aRate * 12;
+      estEl.innerHTML = '<b>$' + perYear.toFixed(2) + '</b> / year after your free first month (' + seats + ' players × $' + aRate.toFixed(2) + ' × 12' + suffix + ')' + reason;
+    }
+  }
+  renderEstimate();
 
   /* ---------- Founding signup → Stripe checkout (card on file) ---------- */
   var submitBtn = document.getElementById('vp-submit');
@@ -1251,55 +1340,51 @@
   function showErr(msg){ errEl.textContent = msg; errEl.classList.add('show'); }
   function clearErr(){ errEl.classList.remove('show'); }
 
+  /* AU mobile check: strips spaces, country code (+61 / 61) and the trunk 0,
+     then expects a mobile (9 digits starting with 4). Rejects landlines. The
+     mobile is the ONLY sign-in method, so we never let a bad number through. */
+  function isAuMobile(raw){
+    var m = String(raw || '').replace(/[^\d+]/g, '');
+    if (m.charAt(0) === '+') m = m.slice(1);
+    if (m.slice(0, 2) === '61') m = m.slice(2);
+    else if (m.charAt(0) === '0') m = m.slice(1);
+    return /^4\d{8}$/.test(m);
+  }
+
   submitBtn.addEventListener('click', function(){
     clearErr();
-    var venue = document.getElementById('vp-venue').value.trim();
     var email = document.getElementById('vp-email').value.trim();
     var mobile = document.getElementById('vp-mobile').value.trim();
     var postcode = document.getElementById('vp-postcode').value.trim();
-    var seats = parseInt(seatsEl.value, 10);
-    var venues = parseInt(venuesEl.value, 10) || 1;
 
-    if (!venue) { showErr('Please enter your venue name.'); return; }
+    // Collect every venue (name + max players). One venue or many, it is the same flow.
+    var venues = [];
+    var rows = venueRows();
+    var namesLower = {};
+    for (var i = 0; i < rows.length; i++){
+      var vn = rows[i].querySelector('.v-name').value.trim();
+      var vs = parseInt(rows[i].querySelector('.v-seats').value, 10);
+      if (!vn) { showErr('Please enter a name for every venue.'); return; }
+      if (!vs || vs < 1) { showErr('Please enter the max players for ' + vn + '.'); return; }
+      if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.'); return; }
+      if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.'); return; }
+      namesLower[vn.toLowerCase()] = true;
+      venues.push({ name: vn, seats: vs });
+    }
+    if (!venues.length) { showErr('Please add at least one venue.'); return; }
+
     if (email.indexOf('@') === -1) { showErr('Please enter a valid contact email.'); return; }
+
+    /* Mobile is the only sign-in method for the host, so it is required and
+       must be a real Australian mobile (starts 04). A landline can never
+       receive the sign-in text, so we block it here before checkout. */
+    if (!mobile) { showErr('Please enter your mobile number. It is how you sign in to run your games.'); return; }
+    if (!isAuMobile(mobile)) { showErr('Please enter a valid Australian mobile (starts 04). It is the only way to sign in, and it needs to receive a text.'); return; }
 
     var consentEl = document.getElementById('vp-consent');
     if (consentEl && !consentEl.checked) { showErr('Please agree to the Terms and Privacy Policy to continue.'); return; }
     var marketingEl = document.getElementById('vp-marketing');
     var marketingOptIn = marketingEl ? marketingEl.checked : false;
-
-    /* More than two venues is a group: route to a call, not self-serve checkout. */
-    if (venues > 2) {
-      if (!workerReady) { showErr('Group enquiries are not connected yet. For now, email hello@venueplay.com.au and we will set your group up.'); return; }
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Sending...';
-      var gmsg = 'GROUP ENQUIRY: ' + venues + ' venues\n'
-        + 'Venue / group: ' + venue + '\n'
-        + 'Email: ' + email + '\n'
-        + 'Mobile: ' + (mobile || '-') + '\n'
-        + 'Postcode: ' + (postcode || '-') + '\n'
-        + 'Max players per session: ' + (seats || '-') + '\n'
-        + 'Plan interest: ' + plan + '\n'
-        + 'Marketing opt-in: ' + (marketingOptIn ? 'yes' : 'no');
-      fetch(VP_WORKER + '/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: venue, email: email, message: gmsg })
-      })
-      .then(function(r){ if (!r.ok) throw new Error('send failed');
-        document.getElementById('vp-form').style.display = 'none';
-        groupSuccess.classList.add('show');
-        groupSuccess.scrollIntoView({ behavior:'smooth', block:'center' });
-        if (typeof gtag === 'function') gtag('event', 'generate_lead', { method: 'venueplay_group' });
-      })
-      .catch(function(){
-        submitBtn.disabled = false; syncMode();
-        showErr('That did not send. Please try again, or email hello@venueplay.com.au.');
-      });
-      return;
-    }
-
-    if (!seats || seats < 1) { showErr('Please enter your max players per session.'); return; }
 
     if (!workerReady) { showErr('Payments aren\u2019t connected yet, the Worker URL still needs to be set on this page.'); return; }
 
@@ -1309,12 +1394,14 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ venue: venue, email: email, mobile: mobile, postcode: postcode, seats: seats, plan: plan, venues: venues, marketing_opt_in: marketingOptIn })
+      body: JSON.stringify({ email: email, mobile: mobile, postcode: postcode, plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if (data && data.url) { window.location.href = data.url; }
-      else { throw new Error(data && data.error ? data.error : 'no checkout url'); }
+      if (data && data.url) { window.location.href = data.url; return; }
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Hold my spot, add card';
+      showErr((data && data.error) ? data.error : 'Something went wrong starting checkout. Please try again, or email hello@venueplay.com.au.');
     })
     .catch(function(){
       submitBtn.disabled = false;
@@ -1407,11 +1494,11 @@
     }
   }
 
-  /* ---- Group invoice rows: standard $3.00/player, 20% founding discount,
-          add-ons are extra players on big nights at $2.40/player ---- */
+  /* ---- Group invoice rows: standard $3.00/player, founding rate,
+          add-ons are extra players on big nights at $2.50/player ---- */
   var body = document.getElementById('vps-invrows');
   if (body) {
-    var STD = 3.00, RATE = 2.40;
+    var STD = 3.00, RATE = 2.50;
     var venues = [
       /* [name, plan players, extra players on the month's biggest night] */
       ['The Anchor, Southport', 78, 6],
