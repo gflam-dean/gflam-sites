@@ -466,19 +466,21 @@
     }
   }
 
-  /* Host: iPad style bezel with a camera dot, landscape tablet */
+  /* Host: iPad style bezel with a camera dot, landscape tablet.
+     Even, slim bezels all round so it reads as a modern iPad rather
+     than a picture frame. */
   .vp-tabletframe{
-    width:100%;max-width:520px;margin:0 auto;
-    background:#050506;
-    border:1px solid #202024;
-    border-radius:26px;
-    padding:34px 20px;
-    box-shadow:0 30px 70px -30px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,0.03) inset;
+    width:100%;max-width:560px;margin:0 auto;
+    background:linear-gradient(180deg,#0c0c0f,#050506);
+    border:1px solid #26262b;
+    border-radius:30px;
+    padding:24px 26px;
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,0.04) inset;
     position:relative;
   }
   .vp-tabletframe::before{
-    content:"";position:absolute;top:15px;left:50%;transform:translateX(-50%);
-    width:8px;height:8px;border-radius:50%;
+    content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);
+    width:7px;height:7px;border-radius:50%;
     background:#1c1c20;box-shadow:inset 0 0 0 2px #2a2a30;
   }
   .vp-tabletframe .vps-console{ box-shadow:0 20px 50px -30px rgba(0,0,0,.9); }
@@ -487,8 +489,18 @@
   .vp-phoneframe{ display:flex; justify-content:center; }
 
   @media (max-width: 560px){
-    .vp-tabletframe{ padding:30px 14px; }
+    .vp-tabletframe{ padding:20px 14px; }
     .vps-con-grid{ grid-template-columns:1fr; }
+  }
+
+  /* Desktop: give the host console an iPad-ish minimum height so it
+     reads as a landscape tablet, and the big screen a widescreen
+     minimum. These are MINIMUMS only (min-height, never a fixed
+     height), so a busy screen simply grows and text can never end up
+     sitting over the top of other text. */
+  @media (min-width:601px){
+    .vp-modal.is-host .vps-console{ min-height:360px; }
+    .vp-modal.is-tv .vps-tv{ min-height:440px; }
   }
 
   /* ============================================================
@@ -1192,6 +1204,15 @@ block (all classes prefixed .vpd-)
   }
   .vpd-roster svg{flex:none;display:block}
   .vpd-roster b{color:#e8e8ec;font-weight:700}
+
+  /* Members host is the busiest console, so stack it into a single
+     readable column on the tablet instead of two narrow ones. The two
+     decision buttons sit side by side to keep the height in check.
+     min-width:0 lets long lines wrap rather than push into other text. */
+  .vpd-host-single{grid-template-columns:1fr}
+  .vpd-host-single > div{min-width:0}
+  .vpd-host-single .vpd-decide{grid-template-columns:1fr 1fr;margin-top:0}
+  @media(max-width:560px){ .vpd-host-single .vpd-decide{grid-template-columns:1fr} }
 
   /* ---- Player: light status view ---- */
   .vpd-p-hero{
@@ -2254,12 +2275,6 @@ block (all classes prefixed .vpa-)
     tv:
       '<div class="vp-tvframe">' +
         '<div class="vps-tv">' +
-          '<div class="vps-tv-top">' +
-            '<span class="vps-tv-venue">Tugun Bowls Club &middot; Raffle</span>' +
-            '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
-              '<span class="vps-pill vps-live"><span class="vps-dot"></span>Raffle</span>' +
-            '</span>' +
-          '</div>' +
           '<div class="vpr-tv-body">' +
             '<span class="vpr-drawlabel"><span class="vps-dot"></span>Winning ticket</span>' +
             '<div class="vpr-stage">' +
@@ -2416,13 +2431,6 @@ block (all classes prefixed .vpa-)
     tv:
       '<div class="vp-tvframe">' +
         '<div class="vps-tv">' +
-          '<div class="vps-tv-top">' +
-            '<span class="vps-tv-venue">Tugun Bowls Club &middot; Members Draw</span>' +
-            '<span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
-              '<span class="vps-pill vps-live"><span class="vps-dot"></span>Members Draw</span>' +
-              '<span class="vps-pill">Friday Members Jackpot</span>' +
-            '</span>' +
-          '</div>' +
           '<div class="vpd-tv-body">' +
             '<div class="vpd-jackpot">' +
               '<span class="vpd-jlabel"><span class="vps-dot"></span>Live jackpot</span>' +
@@ -2476,7 +2484,7 @@ block (all classes prefixed .vpa-)
             '</div>' +
             '<span class="vps-pill vps-live"><span class="vps-dot"></span>Live</span>' +
           '</div>' +
-          '<div class="vps-con-grid">' +
+          '<div class="vps-con-grid vpd-host-single">' +
             '<div>' +
               '<div class="vpd-hjackpot">' +
                 '<div class="vpd-hj-l">' +
