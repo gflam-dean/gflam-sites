@@ -1017,7 +1017,6 @@
             <div class="field">
               <label for="vp-mobile">Mobile</label>
               <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel" required>
-              <span class="field-hint">This is how you sign in to run your games, so we need a mobile that can receive a text.</span>
             </div>
             <div class="field">
               <label for="vp-postcode">Postcode</label>
@@ -1378,8 +1377,8 @@
     /* Mobile is the only sign-in method for the host, so it is required and
        must be a real Australian mobile (starts 04). A landline can never
        receive the sign-in text, so we block it here before checkout. */
-    if (!mobile) { showErr('Please enter your mobile number. It is how you sign in to run your games.'); return; }
-    if (!isAuMobile(mobile)) { showErr('Please enter a valid Australian mobile (starts 04). It is the only way to sign in, and it needs to receive a text.'); return; }
+    if (!mobile) { showErr('Please enter your mobile number.'); return; }
+    if (!isAuMobile(mobile)) { showErr('Please enter a valid Australian mobile (starts 04).'); return; }
 
     var consentEl = document.getElementById('vp-consent');
     if (consentEl && !consentEl.checked) { showErr('Please agree to the Terms and Privacy Policy to continue.'); return; }
