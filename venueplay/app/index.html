@@ -394,10 +394,9 @@
     try{ if(ctx){ if(ctx.staff && ctx.staff[0] && ctx.staff[0].display_name) n = ctx.staff[0].display_name; if((!n || /manager$/i.test(n)) && ctx.venue && ctx.venue.name) n = ctx.venue.name; } }catch(e){}
     return String(n||"").trim();
   }
-  function showToast(msg){ var t=$("greetToast"); if(!t||!msg) return; t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove("show"); }, 4500); }
+  function showToast(msg){ var t=$("greetToast"); if(!t||!msg) return; t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove("show"); }, 6500); }
   function greetOnce(ctx){
     vpWho = pickName(ctx);
-    try{ if(sessionStorage.getItem("vpGreeted")) return; sessionStorage.setItem("vpGreeted","1"); }catch(e){}
     showToast(greetWord() + (vpWho ? (", " + vpWho) : ""));
   }
 
