@@ -113,6 +113,7 @@
 
     <div class="label">Your venues</div>
     <div id="venues"></div>
+    <p class="note" id="players-note" style="margin:10px 0 0"></p>
 
     <button class="addbtn" id="addToggle">+ Add another venue</button>
     <div class="addform" id="addForm">
@@ -169,6 +170,8 @@
 
   function render(d){
     rate = d.rate || 2.40;
+    var pn = $("players-note");
+    if (pn) pn.textContent = "Extra players are added to your plan for the billing month they are added in, and charged a full month at " + money(rate) + " per player.";
     $("s-players").textContent = d.total_players;
     $("s-total").textContent = d.monthly_total;
     $("s-next").textContent = d.next_charge
