@@ -82,7 +82,7 @@
       <svg width="17" height="19" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
-    <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span> &middot; Room <span class="mono" id="roomLabel">------</span></div>
+    <div class="venue" id="venueStatus" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span> &middot; Room <span class="mono" id="roomLabel">------</span></div>
   </div>
 
   <!-- NO ROOM -->
@@ -300,6 +300,7 @@
     P.room=room;
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
+    $("venueStatus").style.display=""; // only show the "Room XXXXXX" status once we have a real room
     P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
     // a saved name means this player already joined this room: auto-rejoin on reload so
     // they land back on their card (or the wait screen), not the Join screen
@@ -346,7 +347,7 @@
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
     var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
     if(room && CODE_RE.test(room)){ connect(room); }
-    else { $("statusText").textContent="No room"; show("vNoRoom"); }
+    else { show("vNoRoom"); } // no code yet: just show the "enter the game code" screen, no status line
   })();
 })();
 </script>
