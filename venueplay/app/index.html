@@ -58,6 +58,10 @@
   .btn.pink:hover{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
   .btn.ghost:hover{border-color:var(--pink);color:#fff}
+  /* uniform header action buttons (Account / Sign out), grouped on the right */
+  .hactions{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
+  .hact:hover{border-color:var(--pink);color:#fff}
   .btn.win{background:var(--win);color:#04120a}
   .btn.win:hover{filter:brightness(1.08)}
   .btn.roll{background:var(--roll);color:#1a1000}
@@ -148,7 +152,10 @@
     </div>
     <span class="tag" id="headerTag"></span>
     <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
-    <a id="billingLink" href="billing.html" style="display:none;margin-left:14px;font-size:12px;font-weight:700;color:var(--pink);text-decoration:none">Account</a>
+    <span class="hactions" id="hactions" style="display:none">
+      <a id="billingLink" class="hact" href="billing.html">Account</a>
+      <button type="button" id="signoutBtn" class="hact">Sign out</button>
+    </span>
   </div>
 </header>
 
@@ -389,7 +396,7 @@
         $("headerTag").textContent="Host console";
         $("statusText").textContent="Gflam HQ · "+(imp.name||"venue");
         $("who").style.display="flex";
-        $("billingLink").style.display="inline";
+        $("hactions").style.display="flex";
         proceedVenue();
         return;
       }
@@ -398,7 +405,7 @@
     }
     if(ctx.scope==="staff"){
       $("headerTag").textContent="";
-      $("billingLink").style.display="inline"; // owner can reach their account/hosts from anywhere
+      $("hactions").style.display="flex"; // owner can reach their account/hosts from anywhere
       proceedVenue();   // existing TV-pair -> console flow, scoped to their venue
       return;
     }
@@ -466,6 +473,7 @@
   // demo bypass shortcuts removed 2026-07-29: sign-in is text-code only (no Skip for demo, no role shortcuts)
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
   $("noVenueOut").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
+  20 20 12 61 79 80 81 98 701 33 100 204 250 395 398 399 400"signoutBtn").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
 
   // ---- always land on the pair step, code pre-filled and visible ----
   function proceedVenue(){
