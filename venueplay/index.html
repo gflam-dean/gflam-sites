@@ -1021,6 +1021,10 @@
         <div id="vp-form">
           <div class="form-grid">
             <div class="field full">
+              <label for="vp-name">Your name</label>
+              <input id="vp-name" type="text" placeholder="Dean Tindale" autocomplete="name">
+            </div>
+            <div class="field full">
               <label for="vp-email">Contact email</label>
               <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
             </div>
@@ -1420,6 +1424,7 @@
 
   submitBtn.addEventListener('click', function(){
     clearErr();
+    var name = document.getElementById('vp-name').value.trim();
     var email = document.getElementById('vp-email').value.trim();
     var mobile = document.getElementById('vp-mobile').value.trim();
     var postcode = document.getElementById('vp-postcode').value.trim();
@@ -1440,6 +1445,7 @@
     }
     if (!venues.length) { showErr('Please add at least one venue.'); return; }
 
+    if (!name) { showErr('Please enter your name so we know who we are speaking to.'); return; }
     if (email.indexOf('@') === -1) { showErr('Please enter a valid contact email.'); return; }
 
     /* Mobile is the only sign-in method for the host, so it is required and
@@ -1465,7 +1471,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, mobile: mobile, postcode: postcode, plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: postcode, plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
