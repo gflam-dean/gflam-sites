@@ -1312,8 +1312,10 @@
       }
       requestAnimationFrame(step);
     }
-    fetch('/data/music-count.json').then(function(r){ return r.json(); }).then(function(d){
-      var n = parseInt(d && d.count, 10) || 0;
+    // Live count: read the real song library and count it, so the number is always accurate and
+    // updates itself whenever songs are added. The library is small (~64KB) so this is cheap.
+    fetch('/data/musical-library.json').then(function(r){ return r.json(); }).then(function(d){
+      var n = (d && d.songs && d.songs.length) || 0;
       if (!n) return;
       el.textContent = n.toLocaleString('en-AU');
       if (sec && 'IntersectionObserver' in window){
