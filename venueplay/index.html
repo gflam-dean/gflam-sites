@@ -1202,6 +1202,7 @@
   var _SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
 
   var CAP = 100;
+  var COUNT_DUR = 4000; // roll-up time in ms, shared by all counters so they animate in step
   var PRICE = { monthly: 2.50, annual: 2.30 };
   var foundingClosed = false;
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
@@ -1228,7 +1229,7 @@
   function paintCounter(claimed){
     var c = Math.max(0, Math.min(CAP, claimed));
     var remaining = Math.max(0, CAP - c);
-    rollCount(document.getElementById('vp-count'), c, 900);
+    rollCount(document.getElementById('vp-count'), c, COUNT_DUR);
     document.getElementById('vp-bar').style.width = ((c / CAP) * 100) + '%';
     document.getElementById('vp-remaining').textContent =
       remaining > 0 ? (remaining + ' founding spots open') : 'founding spots closed';
@@ -1266,7 +1267,7 @@
     var done = false;
     function animateTo(target){
       if (done) return; done = true;
-      var start = 0, t0 = null, dur = 1400;
+      var start = 0, t0 = null, dur = COUNT_DUR;
       function step(ts){
         if (!t0) t0 = ts;
         var p = Math.min(1, (ts - t0) / dur);
@@ -1301,7 +1302,7 @@
     var done = false;
     function animateTo(target){
       if (done) return; done = true;
-      var start = 0, t0 = null, dur = 1400;
+      var start = 0, t0 = null, dur = COUNT_DUR;
       function step(ts){
         if (!t0) t0 = ts;
         var p = Math.min(1, (ts - t0) / dur);
