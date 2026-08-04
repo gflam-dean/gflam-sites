@@ -118,6 +118,7 @@
     <button class="addbtn" id="addToggle">+ Add another venue</button>
     <div class="addform" id="addForm">
       <input type="text" id="add-name" placeholder="Venue name" autocomplete="organization">
+      <input type="text" id="add-postcode" class="seats" inputmode="numeric" maxlength="4" placeholder="Postcode" autocomplete="postal-code">
       <input type="number" class="seats" id="add-seats" min="1" placeholder="Max players">
       <button class="go" id="add-go">Add venue</button>
     </div>
@@ -252,14 +253,16 @@
   $("addToggle").addEventListener("click", function(){ $("addForm").classList.toggle("show"); });
   $("add-go").addEventListener("click", function(){
     var name = $("add-name").value.trim();
+    var postcode = ($("add-postcode").value||"").replace(/\D/g,"");
     var seats = parseInt($("add-seats").value,10)||0;
     if (!name){ showMsg("Enter a venue name."); return; }
+    if (!/^\d{4}$/.test(postcode)){ showMsg("Enter a 4-digit postcode for the new venue."); return; }
     if (seats < 1){ showMsg("Enter the max players for the new venue."); return; }
     $("add-go").disabled = true; $("add-go").textContent = "Adding…";
-    api("/account/add-venue", { name:name, players:seats }).then(function(r){
+    api("/account/add-venue", { name:name, players:seats, postcode:postcode }).then(function(r){
       $("add-go").disabled = false; $("add-go").textContent = "Add venue";
       if (r.error){ showMsg(r.error); return; }
-      $("add-name").value=""; $("add-seats").value=""; $("addForm").classList.remove("show");
+      $("add-name").value=""; $("add-postcode").value=""; $("add-seats").value=""; $("addForm").classList.remove("show");
       showMsg(name + " added to your account.", true);
       load();
     });
