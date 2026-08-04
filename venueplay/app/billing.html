@@ -131,14 +131,16 @@
     </div>
 
     <div class="label">Hosts</div>
-    <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in with a text code, no app to install.</p>
+    <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code, no app to install.</p>
     <div id="hosts"></div>
     <button class="addbtn" id="hostToggle">+ Add a host</button>
     <div class="addform" id="hostForm" style="flex-direction:column;align-items:stretch">
-      <div class="ffield"><label class="flabel" for="host-name">Name</label>
-        <input type="text" id="host-name" placeholder="Dean Tindale" autocomplete="name"></div>
-      <div class="ffield"><label class="flabel" for="host-mobile">Mobile</label>
-        <input type="tel" id="host-mobile" placeholder="0400 000 000" autocomplete="tel"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="host-name">Name</label>
+          <input type="text" id="host-name" placeholder="Dean Tindale" autocomplete="name"></div>
+        <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="host-mobile">Mobile</label>
+          <input type="tel" id="host-mobile" placeholder="0400 000 000" autocomplete="tel"></div>
+      </div>
       <label class="flabel" style="margin-top:2px">Venues they can run</label>
       <div class="hostvenues" id="host-venues"></div>
       <button class="go" id="host-go" style="align-self:flex-start">Add host</button>
