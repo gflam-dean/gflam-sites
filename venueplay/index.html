@@ -335,9 +335,10 @@
   .field-hint{display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.01em}
   /* Group signup: repeatable venue rows */
   #vp-venue-list{display:flex;flex-direction:column;gap:9px}
-  .venue-row{display:flex;gap:8px;align-items:stretch}
-  .venue-row .v-name{flex:1 1 auto;min-width:0}
-  .venue-row .v-seats{width:150px;flex:0 0 auto}
+  .venue-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+  .venue-row .v-name{flex:2 1 160px;min-width:120px}
+  .venue-row .v-postcode{flex:1 1 90px;min-width:80px}
+  .venue-row .v-seats{flex:1 1 120px;min-width:100px}
   .venue-row .v-remove{flex:0 0 auto;width:46px;border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:11px;font-size:22px;line-height:1;cursor:pointer;transition:border-color .15s ease,color .15s ease}
   .venue-row .v-remove:hover{border-color:var(--pink);color:var(--pink)}
   .add-venue{margin:10px 0 2px;background:transparent;border:1px dashed var(--line-2);color:#fff;padding:11px 16px;border-radius:11px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:border-color .15s ease}
@@ -887,7 +888,7 @@
           </div>
           <div class="vps-swap">
             <div class="vps-swap-k">The host</div>
-            <h3>Any bar staffer</h3>
+            <h3>Any bar staff member</h3>
             <p>Whoever's on shift presses go. Calls, cards and winner checks are handled, so nobody needs a mic voice or a run sheet.</p>
           </div>
           <div class="vps-swap">
@@ -992,7 +993,7 @@
     </div>
     <div class="vps-note">
       <div class="vps-note-inner">
-        <p>We're Gflam Touring. We run bingo, live music and entertainment at venues across Australia, and we've seen what a good entertainment night does for a venue on a quiet night: a full room, a busy kitchen, regulars who come back next week. We've also wrestled the tools it takes to pull one off, and honestly, they're clunky. Paper books, a borrowed laptop, a different system for every game. So we built the platform we kept wishing every venue had: <b>one system for the whole night, simple enough that any bar staffer can run it</b>. That's VenuePlay.</p>
+        <p>We're Gflam Touring. We run bingo, live music and entertainment at venues across Australia, and we've seen what a good entertainment night does for a venue on a quiet night: a full room, a busy kitchen, regulars who come back next week. We've also wrestled the tools it takes to pull one off, and honestly, they're clunky. Paper books, a borrowed laptop, a different system for every game. So we built the platform we kept wishing every venue had: <b>one system for the whole night, simple enough that any bar staff member can run it</b>. That's VenuePlay.</p>
         <div class="vps-note-sign">
           <span class="vps-note-mark">
             <svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>
@@ -1029,18 +1030,14 @@
               <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
             </div>
             <div class="field full">
-              <label>Your venues</label>
-              <div id="vp-venue-list"></div>
-              <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
-              <span class="field-hint" style="text-align:center">For each venue, enter the most players it would have in one game on a busy night, that venue's own number, not the group total. One card, one bill for the lot.</span>
-            </div>
-            <div class="field">
               <label for="vp-mobile">Mobile</label>
               <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel" required>
             </div>
-            <div class="field">
-              <label for="vp-postcode">Postcode</label>
-              <input id="vp-postcode" type="text" inputmode="numeric" placeholder="4224" autocomplete="postal-code">
+            <div class="field full">
+              <label>Your venues</label>
+              <div id="vp-venue-list"></div>
+              <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
+              <span class="field-hint" style="text-align:center">For each venue, enter its postcode and the most players it would have in one game on a busy night, that venue's own number, not the group total. One card, one bill for the lot.</span>
             </div>
             <div class="field full">
               <label>Plan</label>
@@ -1363,12 +1360,15 @@
       addVenueBtn.textContent = rows.length >= 20 ? 'Up to 20 venues at signup, add the rest once you are in' : '+ Add another venue';
     }
   }
-  function addVenueRow(name, seats){
+  function addVenueRow(name, seats, postcode){
     var row = document.createElement('div');
     row.className = 'venue-row';
     var nm = document.createElement('input');
     nm.type = 'text'; nm.className = 'v-name'; nm.placeholder = 'Venue name'; nm.setAttribute('autocomplete', 'organization');
     if (name) nm.value = name;
+    var pc = document.createElement('input');
+    pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = 'Postcode'; pc.setAttribute('autocomplete', 'postal-code');
+    if (postcode) pc.value = postcode;
     var st = document.createElement('input');
     st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players';
     if (seats) st.value = seats;
@@ -1376,7 +1376,7 @@
     rm.type = 'button'; rm.className = 'v-remove'; rm.setAttribute('aria-label', 'Remove venue'); rm.textContent = '×';
     rm.addEventListener('click', function(){ row.remove(); refreshRemoveButtons(); renderEstimate(); });
     st.addEventListener('input', renderEstimate);
-    row.appendChild(nm); row.appendChild(st); row.appendChild(rm);
+    row.appendChild(nm); row.appendChild(pc); row.appendChild(st); row.appendChild(rm);
     venueList.appendChild(row);
     refreshRemoveButtons();
   }
@@ -1429,21 +1429,22 @@
     var name = document.getElementById('vp-name').value.trim();
     var email = document.getElementById('vp-email').value.trim();
     var mobile = document.getElementById('vp-mobile').value.trim();
-    var postcode = document.getElementById('vp-postcode').value.trim();
 
-    // Collect every venue (name + max players). One venue or many, it is the same flow.
+    // Collect every venue (name + postcode + max players). One venue or many, same flow.
     var venues = [];
     var rows = venueRows();
     var namesLower = {};
     for (var i = 0; i < rows.length; i++){
       var vn = rows[i].querySelector('.v-name').value.trim();
+      var vpc = (rows[i].querySelector('.v-postcode').value || '').replace(/\D/g, '');
       var vs = parseInt(rows[i].querySelector('.v-seats').value, 10);
       if (!vn) { showErr('Please enter a name for every venue.'); return; }
+      if (!/^\d{4}$/.test(vpc)) { showErr('Please enter a 4-digit postcode for ' + vn + '.'); return; }
       if (!vs || vs < 1) { showErr('Please enter the max players for ' + vn + '.'); return; }
       if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.'); return; }
       if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.'); return; }
       namesLower[vn.toLowerCase()] = true;
-      venues.push({ name: vn, seats: vs });
+      venues.push({ name: vn, seats: vs, postcode: vpc });
     }
     if (!venues.length) { showErr('Please add at least one venue.'); return; }
 
@@ -1473,7 +1474,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: postcode, plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){

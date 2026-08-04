@@ -177,7 +177,9 @@
     $("s-next").textContent = d.next_charge
       ? (d.next_charge + (d.next_charge_amount ? "  ·  " + d.next_charge_amount : ""))
       : "at launch";
-    $("s-card").textContent = d.card_last4 ? ("•••• " + d.card_last4) : "on file";
+    $("s-card").textContent = d.card_last4
+      ? ((d.card_brand ? (d.card_brand.charAt(0).toUpperCase() + d.card_brand.slice(1) + " ") : "") + "•••• " + d.card_last4)
+      : "on file";
     $("reminders").checked = d.payment_reminders !== false;
 
     var wrap = $("venues"); wrap.innerHTML = "";
