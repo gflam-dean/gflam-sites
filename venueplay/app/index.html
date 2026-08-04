@@ -473,7 +473,7 @@
   // demo bypass shortcuts removed 2026-07-29: sign-in is text-code only (no Skip for demo, no role shortcuts)
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
   $("noVenueOut").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
-  20 20 12 61 79 80 81 98 701 33 100 204 250 395 398 399 400"signoutBtn").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
+  $("signoutBtn").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
 
   // ---- always land on the pair step, code pre-filled and visible ----
   function proceedVenue(){
