@@ -1,5 +1,5 @@
 {
-  "count": 3172,
+  "count": 125,
   "updated": "2026-08-04",
-  "note": "Number shown on the music library counter. NOTE: musical-library.json currently holds 125 playable songs across 4 playlists. Confirm the real number to display here."
+  "note": "Real playable song count from musical-library.json. Bump this whenever songs are added so the counter climbs like the trivia bank."
 }
