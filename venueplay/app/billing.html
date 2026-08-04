@@ -4,41 +4,57 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VenuePlay · Account</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --bg:#0A0A0B; --card:#141418; --card2:#1b1b21; --ink:#fff; --muted:#9A9AA4; --muted2:#6E6E78; --line:rgba(255,255,255,.12); --pink:#FF1F8E; }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+  :root{
+    --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A;
+    --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524;
+    --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  header{border-bottom:1px solid var(--line);background:rgba(10,10,11,.7);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+  .bar{max-width:680px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9)) drop-shadow(0 0 8px rgba(255,31,142,.4))}
+  .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;letter-spacing:-.01em}
+  .brand .div{width:1px;height:20px;background:var(--line)}
+  .tag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:11px;color:var(--pink)}
+  .hactions{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
+  .hact:hover{border-color:var(--pink);color:#fff}
   .wrap{max-width:680px;margin:0 auto;padding:26px 18px 90px}
-  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .brand{font-size:20px;font-weight:800;letter-spacing:-.02em}
-  .brand span{color:var(--pink)}
-  .signout{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
-  h1{font-size:24px;font-weight:800;margin:14px 0 2px}
+  h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:30px;color:#fff;letter-spacing:.005em;line-height:1.04;margin:22px 0 4px}
   .lede{color:var(--muted);font-size:14px;margin:0 0 22px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:12px 0}
+  .card{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:18px 20px;margin:12px 0}
   .sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .sumgrid .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2)}
-  .sumgrid .v{font-size:20px;font-weight:800;margin-top:3px}
+  .sumgrid .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumgrid .v{font-size:20px;font-weight:800;margin-top:3px;color:#fff}
   .sumgrid .v.pink{color:var(--pink)}
   .label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
-  .venue{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:9px 0}
+  .venue{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0}
   .venue .nm{flex:1 1 150px;min-width:0}
-  .venue .nm b{display:block;font-size:16px}
+  .venue .nm b{display:block;font-size:16px;color:#fff}
   .venue .nm small{color:var(--muted);font-size:12.5px}
   .venue .pend{color:var(--pink);font-size:12px;margin-top:2px}
   .stepper{display:flex;align-items:center;gap:8px}
-  .stepper button{width:34px;height:34px;border:1px solid var(--line);background:var(--card2);color:#fff;border-radius:9px;font-size:19px;line-height:1;cursor:pointer}
-  .stepper input{width:64px;text-align:center;background:var(--card2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 6px;font-size:15px;font-family:inherit}
-  .save{background:var(--pink);color:#fff;border:0;border-radius:9px;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;display:none}
+  .stepper button{width:34px;height:34px;border:1px solid var(--line);background:var(--ink-3);color:#fff;border-radius:10px;font-size:19px;line-height:1;cursor:pointer}
+  .stepper input{width:64px;text-align:center;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:9px 6px;font-size:15px;font-family:'Manrope',sans-serif}
+  .save{background:var(--pink);color:#fff;border:0;border-radius:12px;padding:9px 16px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:none}
   .save.show{display:inline-block}
-  .addbtn{background:transparent;border:1px dashed var(--line);color:#fff;padding:12px 16px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
+  .addbtn{background:transparent;border:1px dashed var(--line);color:#fff;padding:12px 16px;border-radius:12px;font-family:'Hanken Grotesk',sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%}
   .addform{display:none;gap:10px;margin-top:10px;flex-wrap:wrap}
   .addform.show{display:flex}
-  .addform input{flex:1 1 140px;background:var(--card2);border:1px solid var(--line);color:#fff;border-radius:10px;padding:12px 13px;font-size:15px;font-family:inherit}
+  .addform input{flex:1 1 140px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:12px 13px;font-size:15px;font-family:'Manrope',sans-serif}
   .addform .seats{flex:0 0 120px}
-  .addform .go{flex:0 0 auto;background:var(--pink);color:#fff;border:0;border-radius:10px;padding:12px 20px;font-weight:700;cursor:pointer}
+  .addform .go{flex:0 0 auto;background:var(--pink);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer}
   .toggle{display:flex;align-items:center;justify-content:space-between;gap:14px}
-  .toggle .t{font-size:15px}
+  .toggle .t{font-size:15px;color:var(--text)}
   .toggle .t small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
   .sw{position:relative;width:50px;height:29px;flex:0 0 auto;cursor:pointer}
   .sw input{opacity:0;width:0;height:0}
@@ -49,25 +65,34 @@
   .note{color:var(--muted);font-size:12.5px;margin-top:8px}
   .msg{margin-top:14px;font-size:13.5px;min-height:18px}
   .msg.err{color:#ff6b6b}
-  .msg.ok{color:#33d17a}
+  .msg.ok{color:var(--win)}
   .muted{color:var(--muted)}
   .hostvenues{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 2px}
-  .hostchk{display:inline-flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13.5px;cursor:pointer}
+  .hostchk{display:inline-flex;align-items:center;gap:7px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;cursor:pointer}
   .hostchk input{accent-color:var(--pink);width:16px;height:16px}
-  .hostrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:9px 0}
+  .hostrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0}
   .hostrow .hn{flex:1 1 150px;min-width:0}
-  .hostrow .hn b{display:block;font-size:15px}
+  .hostrow .hn b{display:block;font-size:15px;color:#fff}
   .hostrow .hn small{color:var(--muted);font-size:12.5px}
-  .hostrow .rm{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:7px 12px;font-size:12.5px;cursor:pointer}
-  .hostrow .own{color:var(--muted2);font-size:12px;font-family:'JetBrains Mono',ui-monospace,monospace}
+  .hostrow .rm{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+  .hostrow .own{color:var(--faint);font-size:12px;font-family:'JetBrains Mono',ui-monospace,monospace}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div class="brand">Venue<span>Play</span></div>
-    <button class="signout" id="signout">Sign out</button>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+      <span class="div"></span><span class="word">VenuePlay</span>
+    </div>
+    <span class="tag">Account</span>
+    <span class="hactions">
+      <a class="hact" href="index.html">Console</a>
+      <button type="button" class="hact" id="signout">Sign out</button>
+    </span>
   </div>
+</header>
+<div class="wrap">
   <h1>Your account</h1>
   <p class="lede">Your plan, venues, hosts and next payment. Add players anytime (charged pro rata), and reductions apply from your next renewal so you are never left short.</p>
 
