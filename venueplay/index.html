@@ -1195,10 +1195,24 @@
   document.getElementById('vp-year').textContent = new Date().getFullYear();
 
   /* ---------- Live founding counter (secure RPC, no PII exposed) ---------- */
+  // Roll a number up from 0 to target (used so the counters animate rather than snap).
+  function rollCount(el, target, dur){
+    if (!el) return;
+    el.textContent = '0';
+    var t0 = null;
+    function step(ts){
+      if (!t0) t0 = ts;
+      var p = Math.min(1, (ts - t0) / dur);
+      var ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * ease);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
   function paintCounter(claimed){
     var c = Math.max(0, Math.min(CAP, claimed));
     var remaining = Math.max(0, CAP - c);
-    document.getElementById('vp-count').textContent = c;
+    rollCount(document.getElementById('vp-count'), c, 900);
     document.getElementById('vp-bar').style.width = ((c / CAP) * 100) + '%';
     document.getElementById('vp-remaining').textContent =
       remaining > 0 ? (remaining + ' founding spots open') : 'founding spots closed';
@@ -1232,6 +1246,7 @@
     var el = document.getElementById('vp-trivia-count');
     var sec = document.getElementById('trivia-bank');
     if (!el) return;
+    el.textContent = '0'; // start at 0 straight away, then roll up
     var done = false;
     function animateTo(target){
       if (done) return; done = true;
@@ -1266,6 +1281,7 @@
     var el = document.getElementById('vp-music-count');
     var sec = document.getElementById('music-bank');
     if (!el) return;
+    el.textContent = '0'; // start at 0 straight away, then roll up
     var done = false;
     function animateTo(target){
       if (done) return; done = true;
