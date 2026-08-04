@@ -62,6 +62,8 @@
   .hactions{margin-left:auto;display:flex;align-items:center;gap:8px}
   .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
   .hact:hover{border-color:var(--pink);color:#fff}
+  .gtoast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-18px);background:var(--ink-2);border:1px solid var(--line);color:var(--text);padding:11px 20px;border-radius:999px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;box-shadow:0 14px 34px -12px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:60;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gtoast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .btn.win{background:var(--win);color:#04120a}
   .btn.win:hover{filter:brightness(1.08)}
   .btn.roll{background:var(--roll);color:#1a1000}
@@ -158,6 +160,7 @@
     </span>
   </div>
 </header>
+<div id="greetToast" class="gtoast" role="status" aria-live="polite"></div>
 
 <div class="wrap">
 
@@ -382,6 +385,22 @@
     document.getElementById("vpImpBack").addEventListener("click", function(){ clearImp(); window.location.href="hq.html"; });
   }
 
+  // ---- time-based greeting / farewell (uses the device's local time) ----
+  var vpWho = "";
+  function greetWord(){ var h=new Date().getHours(); return h<12?"Good morning":(h<18?"Good afternoon":"Good evening"); }
+  function dayNight(){ return new Date().getHours()<18?"day":"night"; }
+  function pickName(ctx){
+    var n = "";
+    try{ if(ctx){ if(ctx.staff && ctx.staff[0] && ctx.staff[0].display_name) n = ctx.staff[0].display_name; if((!n || /manager$/i.test(n)) && ctx.venue && ctx.venue.name) n = ctx.venue.name; } }catch(e){}
+    return String(n||"").trim();
+  }
+  function showToast(msg){ var t=$("greetToast"); if(!t||!msg) return; t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove("show"); }, 4500); }
+  function greetOnce(ctx){
+    vpWho = pickName(ctx);
+    try{ if(sessionStorage.getItem("vpGreeted")) return; sessionStorage.setItem("vpGreeted","1"); }catch(e){}
+    showToast(greetWord() + (vpWho ? (", " + vpWho) : ""));
+  }
+
   // ---- post-login routing: resolve the real role, then send them on ----
   // Gflam admin -> Gflam HQ; venue staff -> their venue's host flow (TV pair
   // then console); signed in but unlinked -> a friendly "no venue" notice.
@@ -397,6 +416,7 @@
         $("statusText").textContent="Gflam HQ · "+(imp.name||"venue");
         $("who").style.display="flex";
         $("hactions").style.display="flex";
+        greetOnce(ctx);
         proceedVenue();
         return;
       }
@@ -406,6 +426,7 @@
     if(ctx.scope==="staff"){
       $("headerTag").textContent="";
       $("hactions").style.display="flex"; // owner can reach their account/hosts from anywhere
+      greetOnce(ctx);
       proceedVenue();   // existing TV-pair -> console flow, scoped to their venue
       return;
     }
@@ -473,7 +494,11 @@
   // demo bypass shortcuts removed 2026-07-29: sign-in is text-code only (no Skip for demo, no role shortcuts)
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
   $("noVenueOut").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
-  $("signoutBtn").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
+  $("signoutBtn").addEventListener("click", function(){
+    showToast("Thanks for using VenuePlay" + (vpWho ? (", " + vpWho) : "") + ". Have a great " + dayNight() + ".");
+    try{ sessionStorage.removeItem("vpGreeted"); }catch(e){}
+    setTimeout(function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } }, 1600);
+  });
 
   // ---- always land on the pair step, code pre-filled and visible ----
   function proceedVenue(){
