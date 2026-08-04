@@ -167,7 +167,7 @@
       <div class="authcard">
         <div id="stepMobile" style="text-align:center">
           <label class="flabel">Mobile number</label>
-          <input id="mobileIn" type="tel" placeholder="0400 000 000" autocomplete="tel">
+          <input id="mobileIn" type="tel" placeholder="0400 000 000" autocomplete="tel" style="text-align:center">
           <div class="cerr" id="mobileErr"></div>
           <button class="btn pink big" id="sendCodeBtn" style="margin-top:4px">Send code</button>
         </div>
@@ -397,11 +397,8 @@
       window.location.href="hq.html"; return;
     }
     if(ctx.scope==="staff"){
-      var vn=(ctx.venue&&ctx.venue.name)?ctx.venue.name:"your venue";
-      $("headerTag").textContent="Host console";
-      $("statusText").textContent="Signed in · "+vn;
-      $("who").style.display="flex"; // status only appears once actually signed in
-      $("billingLink").style.display="inline";
+      $("headerTag").textContent="";
+      $("billingLink").style.display="inline"; // owner can reach their account/hosts from anywhere
       proceedVenue();   // existing TV-pair -> console flow, scoped to their venue
       return;
     }
