@@ -50,7 +50,7 @@
     padding:14px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s}
   input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
   input.codein{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;text-align:center;letter-spacing:.22em;text-transform:uppercase}
-  input.otpin{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;text-align:center;letter-spacing:.3em}
+  input.otpin{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;text-align:center;letter-spacing:.3em;text-indent:.3em}
   .cerr{color:var(--roll);font-size:12.5px;min-height:18px;margin-top:8px}
 
   .btn{border:none;border-radius:12px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
@@ -147,7 +147,7 @@
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
     <span class="tag" id="headerTag">Host</span>
-    <span class="who"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
+    <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
   </div>
 </header>
 
@@ -171,12 +171,13 @@
           <button class="btn pink big" id="sendCodeBtn" style="margin-top:4px">Send code</button>
         </div>
 
-        <div id="stepCode" class="hidden">
+        <div id="stepCode" class="hidden" style="text-align:center">
           <label class="flabel">Enter the 6-digit code</label>
           <input id="otpIn" class="otpin" inputmode="numeric" maxlength="6" placeholder="------" autocomplete="one-time-code">
           <div class="cerr" id="otpErr"></div>
           <button class="btn pink big" id="verifyBtn" style="margin-top:4px">Verify</button>
-          <p class="note" style="text-align:center;margin-top:10px">We sent a code to <b id="sentTo" style="color:var(--muted)"></b>. Enter it below.</p>
+          <p class="note" style="text-align:center;margin-top:10px">We sent a code to <b id="sentTo" style="color:var(--muted)"></b>. It lasts a few minutes.</p>
+          <div style="text-align:center;margin-top:8px"><span class="skiplink" id="resendBtn">Resend code</span></div>
         </div>
 
       </div>
@@ -386,6 +387,7 @@
         showImpBanner(imp.name);
         $("headerTag").textContent="Host console";
         $("statusText").textContent="Gflam HQ · "+(imp.name||"venue");
+        $("who").style.display="flex";
         proceedVenue();
         return;
       }
@@ -396,6 +398,7 @@
       var vn=(ctx.venue&&ctx.venue.name)?ctx.venue.name:"your venue";
       $("headerTag").textContent="Host console";
       $("statusText").textContent="Signed in · "+vn;
+      $("who").style.display="flex"; // status only appears once actually signed in
       proceedVenue();   // existing TV-pair -> console flow, scoped to their venue
       return;
     }
@@ -451,6 +454,14 @@
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
       routeAfterAuth();
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });
+  });
+  $("resendBtn").addEventListener("click", function(){
+    if(!E164){ return; }
+    var el=this; el.textContent="Sending..."; $("otpErr").textContent="";
+    client.auth.signInWithOtp({ phone:E164 }).then(function(res){
+      if(res && res.error){ el.textContent="Resend code"; $("otpErr").textContent="Could not resend, give it a moment and try again."; return; }
+      el.textContent="Code sent"; setTimeout(function(){ el.textContent="Resend code"; }, 3000);
+    }).catch(function(){ el.textContent="Resend code"; $("otpErr").textContent="Could not resend, give it a moment and try again."; });
   });
   // demo bypass shortcuts removed 2026-07-29: sign-in is text-code only (no Skip for demo, no role shortcuts)
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent="Host"; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
@@ -848,7 +859,7 @@
   });
 
   // ================= INIT =================
-  if(pairedCode()){ $("statusText").textContent="Paired, sign in to start"; }
+  // (removed "Paired, sign in to start" header chip — the status only shows once actually signed in)
   go("vSignIn");
   // If a session already exists (returning manager/admin), route them straight in.
   if(window.VP){ VP.ready().then(function(ctx){ if(ctx && ctx.authed){ applyRoute(ctx); } }); }
