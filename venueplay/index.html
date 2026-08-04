@@ -1052,6 +1052,34 @@
   </div>
 </section>
 
+<!-- ===== Embedded checkout overlay (card form stays on venueplay.com.au) ===== -->
+<div id="vp-embed-overlay" role="dialog" aria-modal="true" aria-label="Secure card details">
+  <div class="vp-embed-card">
+    <div class="vp-embed-head">
+      <div class="vp-embed-brand"><span class="vp-embed-tri"></span> <b>VenuePlay</b> <span class="vp-embed-lock">Secure checkout by Stripe</span></div>
+      <button type="button" id="vp-embed-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="vp-embedded"></div>
+  </div>
+</div>
+<style>
+  #vp-embed-overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:flex-start;justify-content:center;
+    background:rgba(8,7,12,.72);backdrop-filter:blur(4px);overflow-y:auto;padding:24px 16px 40px}
+  #vp-embed-overlay.show{display:flex}
+  .vp-embed-card{width:100%;max-width:640px;background:#fff;border-radius:18px;overflow:hidden;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.6);margin:auto}
+  .vp-embed-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 18px;border-bottom:1px solid #ececf2;background:#faf9fc}
+  .vp-embed-brand{display:flex;align-items:center;gap:8px;font-size:15px;color:#16141d}
+  .vp-embed-brand b{letter-spacing:-.01em}
+  .vp-embed-tri{width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid #FF1F8E}
+  .vp-embed-lock{font-size:12px;color:#6a6875;margin-left:2px}
+  #vp-embed-close{border:0;background:none;font-size:26px;line-height:1;color:#8a8896;cursor:pointer;padding:2px 6px;border-radius:8px}
+  #vp-embed-close:hover{background:#efeef4;color:#16141d}
+  #vp-embedded{padding:6px 10px 14px;min-height:280px}
+  @media (max-width:520px){ .vp-embed-lock{display:none} }
+</style>
+
 <!-- ===================== FAQ ===================== -->
 <section class="sec" id="faq">
   <div class="wrap">
@@ -1137,6 +1165,8 @@
 </footer>
 
 <!-- ===================== SCRIPT ===================== -->
+<!-- Stripe.js: powers the embedded (on-page) card form. Harmless if embedded is off. -->
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 (function(){
   /* ============================================================
@@ -1149,6 +1179,9 @@
         venueplay_spots_taken RPC. Never put the service key here.
      ============================================================ */
   var VP_WORKER = 'https://venueplay-api.dean-tindale.workers.dev';
+  /* Stripe PUBLISHABLE key (public by design, safe in the page). When set, signup uses the
+     embedded card form on this page; leave it as PASTE_ to fall back to the Stripe redirect. */
+  var VP_STRIPE_PK = 'pk_live_51TqKo55JnH4tsSwMnjhYGLGjeWyaWykfV5RQxNKDmyfsHMrwCCgOi5cad9e6sGEbc7XgcWkfWLsIF9lyjFAQE5Gw00LPF5viFj';
   var _SBU = 'https://gpoolavkghnxedzrmtmc.supabase.co';
   var _SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
 
@@ -1387,16 +1420,23 @@
 
     if (!workerReady) { showErr('Payments aren\u2019t connected yet, the Worker URL still needs to be set on this page.'); return; }
 
+    // Use embedded checkout (card form on our own page) only when the publishable key is set
+    // AND Stripe.js loaded. Otherwise ask for the classic redirect, exactly as before.
+    var wantEmbedded = VP_STRIPE_PK.indexOf('pk_') === 0 && typeof window.Stripe === 'function';
+
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Taking you to Stripe…';
+    submitBtn.textContent = wantEmbedded ? 'Loading secure card form…' : 'Taking you to Stripe…';
 
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, mobile: mobile, postcode: postcode, plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn })
+      body: JSON.stringify({ email: email, mobile: mobile, postcode: postcode, plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
+      // Embedded: mount Stripe's card form in our overlay. (If the worker isn't updated yet it
+      // returns a url instead of a client_secret, so we fall through to the redirect below.)
+      if (wantEmbedded && data && data.client_secret) { openEmbeddedCheckout(data.client_secret); return; }
       if (data && data.url) { window.location.href = data.url; return; }
       submitBtn.disabled = false;
       submitBtn.textContent = 'Hold my spot, add card';
@@ -1409,9 +1449,44 @@
     });
   });
 
+  /* ---------- Embedded checkout: mount Stripe's card form on this page ---------- */
+  var _vpStripe = null, _vpCheckout = null;
+  var embedOverlay = document.getElementById('vp-embed-overlay');
+  var embedClose = document.getElementById('vp-embed-close');
+
+  function resetSubmit(){
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Hold my spot, add card';
+  }
+  function closeEmbeddedCheckout(){
+    if (_vpCheckout) { try { _vpCheckout.destroy(); } catch (e) {} _vpCheckout = null; }
+    embedOverlay.classList.remove('show');
+    document.body.style.overflow = '';
+    resetSubmit();
+  }
+  function openEmbeddedCheckout(clientSecret){
+    try {
+      if (!_vpStripe) _vpStripe = Stripe(VP_STRIPE_PK);
+      embedOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden'; // stop the page scrolling behind the modal
+      _vpStripe.initEmbeddedCheckout({ clientSecret: clientSecret }).then(function(checkout){
+        _vpCheckout = checkout;
+        checkout.mount('#vp-embedded');
+        // On completion Stripe redirects to our return_url (?vp=return), handled below.
+      }).catch(function(){
+        closeEmbeddedCheckout();
+        showErr('Something went wrong loading the card form. Please try again, or email hello@venueplay.com.au.');
+      });
+    } catch (e) {
+      closeEmbeddedCheckout();
+      showErr('Something went wrong loading the card form. Please try again, or email hello@venueplay.com.au.');
+    }
+  }
+  if (embedClose) embedClose.addEventListener('click', closeEmbeddedCheckout);
+
   /* ---------- Return from Stripe ---------- */
   var params = new URLSearchParams(window.location.search);
-  if (params.get('vp') === 'success') {
+  if (params.get('vp') === 'success' || params.get('vp') === 'return') {
     var f = document.getElementById('vp-form'); if (f) f.style.display = 'none';
     var s = document.getElementById('vp-success'); if (s) { s.classList.add('show'); s.scrollIntoView({ behavior:'smooth', block:'center' }); }
     if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'venueplay_founding' });
