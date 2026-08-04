@@ -1267,6 +1267,7 @@
     var el = document.getElementById('vp-trivia-count');
     var sec = document.getElementById('trivia-bank');
     if (!el) return;
+    var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
     el.textContent = '0'; // start at 0 straight away, then roll up
     var done = false;
     function animateTo(target){
@@ -1283,7 +1284,7 @@
     }
     fetch('/data/trivia-count.json').then(function(r){ return r.json(); }).then(function(d){
       var n = parseInt(d && d.count, 10) || 0;
-      if (!n) return;
+      if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
       el.textContent = n.toLocaleString('en-AU');
       if (sec && 'IntersectionObserver' in window){
         el.textContent = '0';
@@ -1294,14 +1295,15 @@
       } else {
         animateTo(n);
       }
-    }).catch(function(){});
+    }).catch(function(){ if (fallback) el.textContent = fallback.toLocaleString('en-AU'); });
   })();
 
-  /* ---------- Live music library counter (reads /data/music-count.json) ---------- */
+  /* ---------- Live music library counter (counts /data/musical-library.json songs) ---------- */
   (function(){
     var el = document.getElementById('vp-music-count');
     var sec = document.getElementById('music-bank');
     if (!el) return;
+    var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
     el.textContent = '0'; // start at 0 straight away, then roll up
     var done = false;
     function animateTo(target){
@@ -1320,7 +1322,7 @@
     // updates itself whenever songs are added. The library is small (~64KB) so this is cheap.
     fetch('/data/musical-library.json').then(function(r){ return r.json(); }).then(function(d){
       var n = (d && d.songs && d.songs.length) || 0;
-      if (!n) return;
+      if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
       el.textContent = n.toLocaleString('en-AU');
       if (sec && 'IntersectionObserver' in window){
         el.textContent = '0';
@@ -1331,7 +1333,7 @@
       } else {
         animateTo(n);
       }
-    }).catch(function(){});
+    }).catch(function(){ if (fallback) el.textContent = fallback.toLocaleString('en-AU'); });
   })();
 
   /* ---------- Plan toggle ---------- */
@@ -1524,6 +1526,7 @@
     }
   }
   if (embedClose) embedClose.addEventListener('click', closeEmbeddedCheckout);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && embedOverlay && embedOverlay.classList.contains('show')) closeEmbeddedCheckout(); });
 
   /* ---------- Return from Stripe ---------- */
   var params = new URLSearchParams(window.location.search);
