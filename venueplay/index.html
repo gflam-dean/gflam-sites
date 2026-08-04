@@ -1354,7 +1354,7 @@
   }
   function refreshRemoveButtons(){
     var rows = venueRows();
-    rows.forEach(function(r){ r.querySelector('.v-remove').style.visibility = rows.length > 1 ? 'visible' : 'hidden'; });
+    rows.forEach(function(r){ r.querySelector('.v-remove').style.display = rows.length > 1 ? '' : 'none'; });
     if (addVenueBtn){
       addVenueBtn.disabled = rows.length >= 20;
       addVenueBtn.textContent = rows.length >= 20 ? 'Up to 20 venues at signup, add the rest once you are in' : '+ Add another venue';
