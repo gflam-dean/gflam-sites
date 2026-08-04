@@ -121,6 +121,8 @@
   .mini.roll:hover{border-color:var(--roll);color:var(--roll)}
   .mini.win{border-color:rgba(53,208,127,.4);color:var(--win)}
   .link{color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:inherit}
+  .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
+  .hact:hover{border-color:var(--pink);color:#fff}
   .link:hover{color:var(--pink)}
 
   input[type=text],input[type=email],input[type=number],select,textarea{
@@ -239,7 +241,7 @@
     <span class="div"></span><span class="word">VenuePlay</span>
   </div>
   <span class="tag">Gflam HQ</span>
-  <div class="who"><span id="whoLabel"></span> <button class="link" id="signOut">Sign out</button></div>
+  <div class="who"><span id="whoLabel"></span> <button type="button" class="hact" id="signOut">Sign out</button></div>
 </div></div>
 
 <div class="wrap" id="app" style="display:none">
