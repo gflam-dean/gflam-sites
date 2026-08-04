@@ -148,6 +148,7 @@
     </div>
     <span class="tag" id="headerTag"></span>
     <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
+    <a id="billingLink" href="billing.html" style="display:none;margin-left:14px;font-size:12px;font-weight:700;color:var(--pink);text-decoration:none">Billing</a>
   </div>
 </header>
 
@@ -164,7 +165,7 @@
       <div class="authsub">Sign in with a text code to your mobile.</div>
 
       <div class="authcard">
-        <div id="stepMobile">
+        <div id="stepMobile" style="text-align:center">
           <label class="flabel">Mobile number</label>
           <input id="mobileIn" type="tel" placeholder="0400 000 000" autocomplete="tel">
           <div class="cerr" id="mobileErr"></div>
@@ -221,7 +222,7 @@
     <div class="authwrap">
       <div class="authbig">Pair to your TV</div>
       <div class="authsub">This is the code on your venue screen. Check it matches, then connect.</div>
-      <div class="authcard">
+      <div class="authcard" style="text-align:center">
         <label class="flabel">Screen code</label>
         <input id="pairIn" class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <div class="cerr" id="pairErr"></div>
@@ -388,6 +389,7 @@
         $("headerTag").textContent="Host console";
         $("statusText").textContent="Gflam HQ · "+(imp.name||"venue");
         $("who").style.display="flex";
+        $("billingLink").style.display="inline";
         proceedVenue();
         return;
       }
@@ -399,6 +401,7 @@
       $("headerTag").textContent="Host console";
       $("statusText").textContent="Signed in · "+vn;
       $("who").style.display="flex"; // status only appears once actually signed in
+      $("billingLink").style.display="inline";
       proceedVenue();   // existing TV-pair -> console flow, scoped to their venue
       return;
     }
