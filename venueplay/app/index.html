@@ -540,13 +540,19 @@
         var b=document.createElement("button"); b.className="btn pink big"; b.textContent=v.name;
         b.addEventListener("click", function(){
           markVenuePick(v.id);
-          VP.setCurrentVenue(v.id).then(function(ctx){ __ctx=ctx; var slug=(ctx&&ctx.venue&&ctx.venue.slug)||v.slug; if(!pairToVenue(slug)){ go("vPair"); } });
+          VP.setCurrentVenue(v.id).then(function(ctx){ __ctx=ctx; updateAccountLink(); var slug=(ctx&&ctx.venue&&ctx.venue.slug)||v.slug; if(!pairToVenue(slug)){ go("vPair"); } });
         });
         box.appendChild(b);
       });
     }).catch(function(){ box.innerHTML="<div class='cerr'>Could not load venues. Reload to try again.</div>"; });
   }
+  // The Account link is for owners and managers only; a host never sees it.
+  function updateAccountLink(){
+    var link=$("billingLink"); if(!link) return;
+    link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
+  }
   function proceedVenue(){
+    updateAccountLink();
     var venue=__ctx&&__ctx.venue, staff=(__ctx&&__ctx.staff)||[];
     if(staff.length>1 && !venuePickFresh()){ showVenuePick(); return; }   // ask which venue this shift
     if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
