@@ -8,6 +8,10 @@
     {{billing_url}}       link to the in-app billing screen
     {{host_console_url}}  link to the app host console
     {{support_email}}     e.g. "hello@venueplay.com.au"
+  Overage block (only when a venue went over plan this cycle; else strip OVERAGE_START..OVERAGE_END):
+    {{overage_licences}}  total player licences over plan across venues, e.g. "3"
+    {{overage_nights}}    nights it went over, e.g. "2"
+    {{overage_amount}}    extra charged, e.g. "$7.20"
   Repeatable rows:
     {{VENUE_ROWS}}        the Worker replaces this with one table row per venue,
                           built from the row template in the comment below
@@ -58,6 +62,17 @@
         </table>
         <p style="margin:12px 4px 0;font-size:13px;color:#8a8a95">All venues are billed at ${{per_player_rate}} per player per month.</p>
       </td></tr>
+
+      <!--OVERAGE_START: include only when one or more venues went over plan this cycle; else strip START..END -->
+      <tr><td style="padding:20px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff7ec;border:1px solid #f6d9a6;border-radius:12px">
+          <tr><td style="padding:16px 20px">
+            <p style="margin:0;font-size:15px;font-weight:700;color:#12101a">A few extra players across your venues</p>
+            <p style="margin:8px 0 0;font-size:14.5px;line-height:1.6;color:#3a3a44">Your venues ran <strong>{{overage_licences}}</strong> player licences over plan this month, across <strong>{{overage_nights}}</strong> nights. That adds <strong>{{overage_amount}}</strong> to this bill. If the busy venues are regularly over, bumping their plan up usually works out cheaper per player.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+      <!--OVERAGE_END-->
 
       <tr><td style="padding:26px 32px 0">
         <p style="margin:0 0 8px;font-size:16px;font-weight:700;color:#12101a">Need to change players at a venue?</p>
