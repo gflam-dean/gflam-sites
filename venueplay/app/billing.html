@@ -188,25 +188,6 @@
     <p class="note" style="margin:0 0 10px">What players are asked for when they join, and how their name shows on the TV (John S, J Smith or John Smith). Opens that venue's settings.</p>
     <div id="playerData"></div>
 
-    <div class="label">Advertising</div>
-    <p class="note" style="margin:0 0 10px">Upload your own promo images to play on the venue TV between games, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds.</p>
-    <div id="screenPickWrap" class="screenpick" style="display:none">
-      <label class="flabel" for="screenVenue">Screen for</label>
-      <select id="screenVenue"></select>
-    </div>
-
-    <div class="scard">
-      <div class="scardhead">Slides</div>
-      <p class="snote">Each slide is one image. Set how long it stays on screen, and optional dates so a promo ends itself. Up to 12.</p>
-      <div id="slides"></div>
-      <button class="addbtn" id="addSlide" style="margin-top:8px">+ Add a slide</button>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
-      <button class="go" id="screenSave">Save screen</button>
-      <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview this screen</a>
-    </div>
-
     <div class="label">Raffles</div>
     <p class="note" style="margin:0 0 10px">Set your raffle routine and your usual prizes once. The running total of prizes given away shows here too.</p>
     <div id="rfPickWrap" class="screenpick" style="display:none">
@@ -265,6 +246,25 @@
       <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
       <input type="file" id="md-csv" accept=".csv,text/csv" style="display:none">
       <button class="addbtn" id="md-csvbtn" style="margin-top:8px">Or upload a CSV file</button>
+    </div>
+
+    <div class="label">Advertising</div>
+    <p class="note" style="margin:0 0 10px">Upload your own promo images to play on the venue TV between games, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds.</p>
+    <div id="screenPickWrap" class="screenpick" style="display:none">
+      <label class="flabel" for="screenVenue">Screen for</label>
+      <select id="screenVenue"></select>
+    </div>
+
+    <div class="scard">
+      <div class="scardhead">Slides</div>
+      <p class="snote">Each slide is one image. Set how long it stays on screen, and optional dates so a promo ends itself. Up to 12.</p>
+      <div id="slides"></div>
+      <button class="addbtn" id="addSlide" style="margin-top:8px">+ Add a slide</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
+      <button class="go" id="screenSave">Save screen</button>
+      <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview this screen</a>
     </div>
 
     <p class="msg" id="msg"></p>
