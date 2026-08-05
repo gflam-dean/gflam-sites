@@ -48,6 +48,12 @@
   .stepper input{width:64px;text-align:center;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:9px 6px;font-size:15px;font-family:'Manrope',sans-serif}
   .save{background:var(--pink);color:#fff;border:0;border-radius:12px;padding:9px 16px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:none}
   .save.show{display:inline-block}
+  .venue .canx{flex-basis:100%;display:flex;justify-content:flex-end;margin-top:-2px}
+  .canxlink{background:none;border:0;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit}
+  .canxlink:hover{color:var(--pink)}
+  .venue.cancelling{opacity:.9}
+  .cxbanner{flex-basis:100%;background:rgba(255,60,120,.08);border:1px solid var(--line-2);border-radius:10px;padding:10px 13px;color:var(--pink);font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .cxbanner .keep{background:none;border:0;color:#fff;text-decoration:underline;cursor:pointer;font-size:12.5px;font-family:inherit;white-space:nowrap}
   .addbtn{background:transparent;border:1px dashed var(--line);color:var(--text);padding:9px 15px;border-radius:11px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
   .addbtn:hover{border-color:var(--pink);color:#fff}
   .addform{display:none;gap:10px;margin-top:10px;flex-wrap:wrap}
@@ -188,8 +194,25 @@
     $("reminders").checked = d.payment_reminders !== false;
 
     var wrap = $("venues"); wrap.innerHTML = "";
+    var multi = d.venues.length > 1;
     d.venues.forEach(function(v){
-      var row = document.createElement("div"); row.className = "venue";
+      var row = document.createElement("div"); row.className = "venue" + (v.cancelling ? " cancelling" : "");
+      if (v.cancelling){
+        // Cancelled venues keep access until the period ends; offer a one-click "keep it".
+        var until = d.next_charge ? (" until " + d.next_charge) : " until the end of your paid period";
+        row.innerHTML =
+          '<div class="nm"><b>' + esc(v.name) + '</b><small>Cancelling</small></div>' +
+          '<div class="cxbanner"><span>This venue is set to cancel. It stays live' + until + '.</span>' +
+          '<button class="keep" type="button">Keep this venue</button></div>';
+        row.querySelector(".keep").addEventListener("click", function(){
+          if (!confirm("Keep " + v.name + " on your account? Billing continues as normal.")) return;
+          api("/account/cancel-venue", { venue_id:v.id, undo:true }).then(function(r){
+            if (r.error){ showMsg(r.error); return; }
+            showMsg(v.name + " will stay on your account.", true); load();
+          });
+        });
+        wrap.appendChild(row); return;
+      }
       var pend = (v.pending != null && v.pending !== v.players)
         ? '<div class="pend">Reducing to ' + v.pending + ' players at your next renewal &middot; <a href="#" class="cancelpend" style="color:var(--pink);text-decoration:underline">cancel</a></div>' : '';
       row.innerHTML =
@@ -199,7 +222,8 @@
           '<input type="number" min="1" value="' + v.players + '">' +
           '<button data-d="1" aria-label="More">+</button>' +
         '</div>' +
-        '<button class="save">Save</button>';
+        '<button class="save">Save</button>' +
+        '<div class="canx"><button class="canxlink" type="button">Cancel this venue</button></div>';
       var input = row.querySelector("input");
       var save = row.querySelector(".save");
       var orig = v.players;
@@ -229,6 +253,22 @@
           load();
         });
       });
+      var canx = row.querySelector(".canxlink");
+      if (canx){
+        canx.addEventListener("click", function(){
+          var lastOne = !multi;
+          var warn = lastOne
+            ? "Cancel your VenuePlay subscription?\n\n" + v.name + " stays live until the end of your current paid period, then your subscription ends. You can undo this anytime before then."
+            : "Cancel " + v.name + "?\n\nIt stays live until the end of your current paid period, then it is removed and you stop paying for it. Your other venues are unaffected. You can undo this anytime before then.";
+          if (!confirm(warn)) return;
+          canx.disabled = true; canx.textContent = "Cancelling…";
+          api("/account/cancel-venue", { venue_id:v.id }).then(function(r){
+            if (r.error){ showMsg(r.error); canx.disabled=false; canx.textContent="Cancel this venue"; return; }
+            var when = r.ends ? (" It stays live until " + r.ends + ".") : "";
+            showMsg(v.name + " is set to cancel." + when, true); load();
+          });
+        });
+      }
       wrap.appendChild(row);
     });
   }
