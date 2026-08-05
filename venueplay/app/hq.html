@@ -183,6 +183,7 @@
 
   <div class="navpills" id="hqNav">
     <button data-pane="venues" class="on">Venues</button>
+    <button data-pane="live">Live now</button>
     <button data-pane="billing">Billing</button>
     <button data-pane="groups">Groups</button>
     <button data-pane="usage">Usage</button>
@@ -240,6 +241,19 @@
       <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
       <tbody id="venueRows"></tbody>
     </table></div></div>
+  </div>
+
+  <!-- ============ LIVE NOW ============ -->
+  <div id="paneLive" class="hidden">
+    <div class="rowbetween">
+      <div class="lblk" style="margin:0">Venues playing right now <span id="liveCount" class="mono" style="color:var(--win)"></span></div>
+      <button class="btn ghost sp" id="liveRefresh">Refresh</button>
+    </div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>Venue</th><th>Game</th><th>State</th><th>Since</th><th></th></tr></thead>
+      <tbody id="liveRows"></tbody>
+    </table></div></div>
+    <div class="note">"Live now" means a hosted game session is open (in the lobby, running or paused). Click <b>Watch TV</b> to open that venue's TV screen in a new tab and check the game is really showing. This reads open sessions from <b>vp_sessions</b>; broadcast bingo and members draws do not open a session, so a venue running only those will not appear here.</div>
   </div>
 
   <!-- ============ BILLING ============ -->
@@ -391,7 +405,7 @@
   /* ---- state ---- */
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
-          admins:[], audit:[], live:{}, spots:null,
+          admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null,
           vFilter:"all", vSearch:"", openVenue:null, openBilling:null, openGroup:null };
 
   function canBilling(){ return S.adminRole==="owner" || S.adminRole==="accounts"; }
@@ -423,8 +437,9 @@
       c.from("vp_billing_usage").select("*").order("period_month",{ascending:false}),
       c.from("vp_platform_admins").select("*"),
       c.from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250),
-      c.from("vp_sessions").select("venue_id,status").in("status",["lobby","running","paused"]),
-      c.rpc("venueplay_spots_taken")
+      c.from("vp_sessions").select("id,venue_id,status,opened_at,started_at").in("status",["lobby","running","paused"]),
+      c.rpc("venueplay_spots_taken"),
+      c.from("vp_games").select("session_id,format,started_at,status").eq("status","running")
     ]).then(function(r){
       S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
       S.groups=(r[1] && r[1].data) || [];
@@ -433,11 +448,13 @@
       S.usage=(r[3] && r[3].data) || [];
       S.admins=(r[4] && r[4].data) || [];
       S.audit=(r[5] && r[5].data) || [];
-      S.live={}; ((r[6] && r[6].data)||[]).forEach(function(s){ S.live[s.venue_id]=true; });
+      S.liveSessions=(r[6] && r[6].data)||[];
+      S.live={}; S.liveSessions.forEach(function(s){ S.live[s.venue_id]=true; });
       S.spots=(r[7] && typeof r[7].data==="number") ? r[7].data : null;
+      S.gameBySession={}; ((r[8] && r[8].data)||[]).forEach(function(g){ if(!S.gameBySession[g.session_id]) S.gameBySession[g.session_id]=g; });
       // latest usage month present
       S.usageMonth = S.usage.length ? S.usage[0].period_month : null;
-      renderStats(); renderVenues(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderAudit(); populateGroupSelect();
+      renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderAudit(); populateGroupSelect();
     }).catch(function(e){
       $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(e&&e.message||e)+'</td></tr>';
     });
@@ -463,8 +480,69 @@
     }
   }
 
+  /* ================= LIVE NOW ================= */
+  function agoLabel(iso){
+    if(!iso) return "—";
+    var t=new Date(iso).getTime(); if(isNaN(t)) return "—";
+    var s=Math.max(0,Math.floor((Date.now()-t)/1000));
+    if(s<60) return "just now";
+    var m=Math.floor(s/60); if(m<60) return m+" min ago";
+    var h=Math.floor(m/60), rm=m%60; return h+" hr"+(h>1?"s":"")+(rm?(" "+rm+" min"):"")+" ago";
+  }
+  function gameLabel(fmt){
+    switch(fmt){
+      case "trivia": return "Trivia";
+      case "musical_bingo": return "Musical bingo";
+      case "raffle": return "Raffle";
+      case "bingo90": return "Bingo";
+      default: return fmt ? esc(fmt) : "";
+    }
+  }
+  function venueById(id){ for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i]; } return null; }
+  function renderLive(){
+    var b=$("liveRows"); if(!b) return; b.innerHTML="";
+    var sessions=(S.liveSessions||[]).slice();
+    sessions.sort(function(a,b){ return String(b.started_at||b.opened_at||"").localeCompare(String(a.started_at||a.opened_at||"")); });
+    if($("liveCount")) $("liveCount").textContent = sessions.length ? ("· "+sessions.length) : "";
+    if(!sessions.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">No venues are live right now.</div></td></tr>'; return; }
+    sessions.forEach(function(s){
+      var v=venueById(s.venue_id);
+      var name=v?v.name:"(unknown venue)";
+      var slug=v?(v.slug||""):"";
+      var g=S.gameBySession[s.id];
+      var gLbl = g ? gameLabel(g.format) : (s.status==="lobby" ? "In lobby" : "No game running");
+      var stateBadge = s.status==="running" ? '<span class="badge live">Running</span>'
+                     : (s.status==="paused" ? '<span class="badge suspend">Paused</span>'
+                     : '<span class="badge idle">Lobby</span>');
+      var since = agoLabel(s.started_at||s.opened_at);
+      var tvUrl = slug ? ("https://www.venueplay.com.au/tv?venue="+encodeURIComponent(slug)) : "";
+      var watch = tvUrl ? '<a class="mini win" href="'+esc(tvUrl)+'" target="_blank" rel="noopener">&#9654; Watch TV</a>' : '<span class="vt">no screen slug</span>';
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td><div class="vn">'+esc(name)+'</div><div class="vt mono">'+esc(slug||"(no slug)")+'</div></td>'+
+        '<td>'+gLbl+'</td>'+
+        '<td>'+stateBadge+'</td>'+
+        '<td class="vt">'+esc(since)+'</td>'+
+        '<td><div class="actcell">'+watch+'</div></td>';
+      b.appendChild(tr);
+    });
+  }
+  function loadLiveOnly(){
+    var c=VP.getClient(), btn=$("liveRefresh");
+    if(btn){ btn.disabled=true; btn.textContent="Refreshing…"; }
+    return Promise.all([
+      c.from("vp_sessions").select("id,venue_id,status,opened_at,started_at").in("status",["lobby","running","paused"]),
+      c.from("vp_games").select("session_id,format,started_at,status").eq("status","running")
+    ]).then(function(r){
+      S.liveSessions=(r[0] && r[0].data)||[];
+      S.live={}; S.liveSessions.forEach(function(s){ S.live[s.venue_id]=true; });
+      S.gameBySession={}; ((r[1] && r[1].data)||[]).forEach(function(g){ if(!S.gameBySession[g.session_id]) S.gameBySession[g.session_id]=g; });
+      renderStats(); renderVenues(); renderLive();
+    }).catch(function(){}).then(function(){ if(btn){ btn.disabled=false; btn.textContent="Refresh"; } });
+  }
+
   /* ================= NAV ================= */
-  var PANES=["venues","billing","groups","usage","team","audit"];
+  var PANES=["venues","live","billing","groups","usage","team","audit"];
+  $("liveRefresh").addEventListener("click", loadLiveOnly);
   $("hqNav").addEventListener("click", function(e){
     var b=e.target.closest("button"); if(!b) return;
     var pane=b.getAttribute("data-pane");
