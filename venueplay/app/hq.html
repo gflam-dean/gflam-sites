@@ -304,10 +304,12 @@
     <div class="panel pad">
       <div class="addrow3">
         <input type="text" id="tmName" placeholder="Full name">
-        <input type="email" id="tmEmail" placeholder="name@venueplay.com.au">
+        <input type="tel" id="tmMobile" placeholder="Mobile e.g. 0412 345 678" class="mono">
         <select id="tmRole"><option value="staff">Staff</option><option value="accounts">Accounts</option><option value="owner">Owner</option></select>
         <button class="btn pink" id="tmAdd">Add</button>
       </div>
+      <input type="email" id="tmEmail" placeholder="Email (optional, for our records only)" style="margin-top:8px;width:100%">
+      <div class="note" style="margin:8px 0 0">They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code to this mobile. No app to install.</div>
       <div id="teamGate" class="restrict hidden">Only an Owner can add or remove VenuePlay staff logins.</div>
       <div class="okflash" id="tmOk"><span>&#10003;</span> <span></span></div>
       <div class="errflash" id="tmErr"></div>
@@ -800,7 +802,7 @@
       b.appendChild(tr);
     });
     show("teamGate", !canTeam());
-    $("tmName").disabled=$("tmEmail").disabled=$("tmRole").disabled=$("tmAdd").disabled=!canTeam();
+    $("tmName").disabled=$("tmMobile").disabled=$("tmEmail").disabled=$("tmRole").disabled=$("tmAdd").disabled=!canTeam();
   }
   $("teamRows").addEventListener("click", function(e){
     var b=e.target.closest("button[data-rmadmin]"); if(!b || !canTeam()) return;
@@ -817,14 +819,14 @@
   });
   $("tmAdd").addEventListener("click", function(){
     if(!canTeam()) return;
-    var name=$("tmName").value.trim(), email=$("tmEmail").value.trim(), role=$("tmRole").value;
-    if(!name||!email){ errFlash("tmErr","Enter a name and email."); return; }
+    var name=$("tmName").value.trim(), mobile=$("tmMobile").value.trim(), email=$("tmEmail").value.trim(), role=$("tmRole").value;
+    if(!name||!mobile){ errFlash("tmErr","Enter a name and mobile."); return; }
     var btn=$("tmAdd"); btn.disabled=true;
-    workerPost("/admin/staff", { name:name, email:email, role:role }).then(function(res){
+    workerPost("/admin/staff", { name:name, mobile:mobile, email:email, role:role }).then(function(res){
       btn.disabled=false;
       if(res.error){ errFlash("tmErr",res.error); return; }
-      $("tmName").value=""; $("tmEmail").value="";
-      flash("tmOk","Invited "+name+" as "+role+".");
+      $("tmName").value=""; $("tmMobile").value=""; $("tmEmail").value="";
+      flash("tmOk","Added "+name+" as "+role+". They can now sign in at venueplay.com.au/app.");
       // refresh admins + audit
       VP.getClient().from("vp_platform_admins").select("*").then(function(r){ S.admins=(r&&r.data)||[]; renderTeam(); });
       loadAuditOnly();
