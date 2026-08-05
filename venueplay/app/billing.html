@@ -65,6 +65,9 @@
   .mdf label{display:block;margin:0 0 5px}
   .mdf input{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif}
   @media(max-width:520px){.mdgrid{grid-template-columns:1fr}}
+  .rfchip{display:inline-flex;align-items:center;gap:6px;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;margin:0 6px 6px 0;font-size:13px;color:#fff}
+  .rfx{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
+  .rfx:hover{color:var(--pink)}
   .srow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
   .srow input[type=text]{flex:1 1 120px;min-width:0;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 10px;font-size:14px;font-family:'Manrope',sans-serif}
   .srow .sfull{flex-basis:100%}
@@ -197,6 +200,36 @@
     <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
       <button class="go" id="screenSave">Save screen</button>
       <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview this screen</a>
+    </div>
+
+    <div class="label">Raffles</div>
+    <p class="note" style="margin:0 0 10px">Set your raffle routine and your usual prizes once. The running total of prizes given away shows here too.</p>
+    <div id="rfPickWrap" class="screenpick" style="display:none">
+      <label class="flabel" for="rfVenue">Raffle for</label>
+      <select id="rfVenue"></select>
+    </div>
+    <div class="scard">
+      <div class="scardhead">Routine</div>
+      <p class="snote">When your raffle runs. Shows on the TV as "drawn [day] [time]".</p>
+      <div class="mdgrid">
+        <div class="mdf"><label class="flabel" for="rf-label">Raffle name</label><input type="text" id="rf-label" placeholder="e.g. Meat Raffle"></div>
+        <div class="mdf"><label class="flabel" for="rf-day">Draw day</label><input type="text" id="rf-day" placeholder="e.g. Friday"></div>
+        <div class="mdf"><label class="flabel" for="rf-time">Draw time</label><input type="text" id="rf-time" placeholder="e.g. 6:30pm"></div>
+      </div>
+      <button class="go" id="rfSave" style="margin-top:12px">Save routine</button>
+    </div>
+    <div class="scard">
+      <div class="scardhead">Your usual prizes</div>
+      <p class="snote">Add the prizes you run each week so the host can pick them fast on the night.</p>
+      <div id="rfPrizes"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <input type="text" id="rf-newprize" placeholder="e.g. Meat tray" style="flex:1 1 160px;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:14px;font-family:'Manrope',sans-serif">
+        <button class="go" id="rfAddPrize">Add prize</button>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scardhead">Prizes given away</div>
+      <p class="snote" id="rfTally">No prizes recorded yet.</p>
     </div>
 
     <div class="label">Members draws</div>
@@ -665,6 +698,80 @@
       loadMembersDrawFor(mdCurrent);
     });
   }
+  // ---- Raffles: routine (vp_venue_screen) + reusable prize list (vp_raffle_prizes) + tally ----
+  var rfCurrent = null;
+  function loadRafflePrizes(venueId){
+    VP.getClient().from("vp_raffle_prizes").select("id,label").eq("venue_id", venueId).order("created_at",{ascending:false}).then(function(r){
+      var box = $("rfPrizes"); box.innerHTML = "";
+      var rows = (r && r.data) || [];
+      if (!rows.length){ box.innerHTML = '<p class="snote" style="margin:0">No prizes yet.</p>'; return; }
+      rows.forEach(function(p){
+        var chip = document.createElement("span"); chip.className = "rfchip";
+        chip.innerHTML = esc(p.label) + ' <button class="rfx" data-id="' + esc(p.id) + '" title="Remove" type="button">&times;</button>';
+        box.appendChild(chip);
+      });
+    });
+  }
+  function loadRafflesFor(venueId){
+    rfCurrent = venueId;
+    api("/account/screen-get", { venue_id: venueId }).then(function(d){
+      if (d.error) return;
+      var r = d.raffle || {};
+      $("rf-label").value = r.label || ""; $("rf-day").value = r.day || ""; $("rf-time").value = r.time || "";
+    });
+    loadRafflePrizes(venueId);
+    // Prizes-given tally: sum any *_cents field on the venue's rows (defensive about the view's shape).
+    VP.getClient().from("v_vp_prizes_given").select("*").eq("venue_id", venueId).then(function(r){
+      var rows = (r && r.data) || [], cents = 0;
+      rows.forEach(function(row){ for (var k in row){ if (/cents/.test(k) && typeof row[k] === "number") cents += row[k]; } });
+      $("rfTally").textContent = cents > 0 ? ("$" + (cents/100).toFixed(2) + " given away in prizes so far.") : "No prizes recorded yet.";
+    });
+  }
+  function saveRaffleRoutine(){
+    if (!rfCurrent){ showMsg("Pick a venue first."); return; }
+    var raffle = { label:$("rf-label").value.trim(), day:$("rf-day").value.trim(), time:$("rf-time").value.trim() };
+    var btn=$("rfSave"); btn.disabled=true; btn.textContent="Saving…";
+    api("/account/screen-save", { venue_id:rfCurrent, raffle:raffle }).then(function(r){
+      btn.disabled=false; btn.textContent="Save routine";
+      if (r.error){ showMsg(r.error); return; }
+      showMsg("Raffle routine saved.", true);
+    });
+  }
+  function addRafflePrize(){
+    if (!rfCurrent){ showMsg("Pick a venue first."); return; }
+    var label = $("rf-newprize").value.trim();
+    if (!label){ showMsg("Enter a prize."); return; }
+    var btn=$("rfAddPrize"); btn.disabled=true; btn.textContent="Adding…";
+    gameApi("/host/raffle/prize-add", { venue_id:rfCurrent, label:label }).then(function(r){
+      btn.disabled=false; btn.textContent="Add prize";
+      if (r.error){ showMsg(r.error); return; }
+      $("rf-newprize").value = "";
+      loadRafflePrizes(rfCurrent);
+    });
+  }
+  function removeRafflePrize(id){
+    gameApi("/host/raffle/prize-remove", { prize_id:id }).then(function(r){
+      if (r.error){ showMsg(r.error); return; }
+      loadRafflePrizes(rfCurrent);
+    });
+  }
+  function initRaffles(){
+    $("rfSave").addEventListener("click", saveRaffleRoutine);
+    $("rfAddPrize").addEventListener("click", addRafflePrize);
+    $("rfPrizes").addEventListener("click", function(e){ var b=e.target.closest(".rfx"); if (b) removeRafflePrize(b.getAttribute("data-id")); });
+    api("/account/summary", {}).then(function(d){
+      var venues = (d && d.venues) || [];
+      if (!venues.length) return;
+      var pick = $("rfPickWrap"), sel = $("rfVenue");
+      if (venues.length > 1){
+        sel.innerHTML = "";
+        venues.forEach(function(v){ var o=document.createElement("option"); o.value=v.id; o.textContent=v.name; sel.appendChild(o); });
+        pick.style.display = "";
+        sel.onchange = function(){ loadRafflesFor(sel.value); };
+      } else { pick.style.display = "none"; }
+      loadRafflesFor(venues[0].id);
+    });
+  }
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);
     $("mdImport").addEventListener("click", importMembers);
@@ -704,6 +811,7 @@
     load();
     loadHosts();   // populate the hosts list AND the "venues they can run" picker on page load
     initScreen();
+    initRaffles();
     initMembersDraws();
   }).catch(function(){ load(); });
 })();
