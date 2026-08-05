@@ -258,7 +258,18 @@
 
   <!-- ============ BILLING ============ -->
   <div id="paneBilling" class="hidden">
-    <div class="lblk" style="margin-top:0">Billing health</div>
+    <div class="lblk" style="margin-top:0">Export for Xero</div>
+    <div class="panel pad" style="margin-bottom:14px">
+      <div class="filterbar" style="align-items:flex-end">
+        <div class="field" style="margin:0"><label>From (month)</label><input type="month" id="xeroFrom" style="width:auto"></div>
+        <div class="field" style="margin:0"><label>To (month)</label><input type="month" id="xeroTo" style="width:auto"></div>
+        <button class="btn ghost" id="xeroCsv">Download CSV</button>
+      </div>
+      <div class="note">One row per venue per billed month, from metered usage (<b>vp_billing_usage</b>). Amounts are GST-inclusive estimates using the group's negotiated rate; independent-venue amounts are worked out by the billing Worker and left blank here. For your final payment figures, cross-check the matching Stripe invoices. Columns are laid out for a Xero sales-invoice import.</div>
+      <div class="errflash" id="xeroErr"></div>
+    </div>
+
+    <div class="lblk">Billing health</div>
     <div id="healthList"></div>
 
     <div class="lblk">This month by venue <span id="billMonth" class="mono" style="color:var(--gold)"></span></div>
@@ -646,6 +657,9 @@
   function usageByVenue(id){ var rows=usageForMonth(); for(var i=0;i<rows.length;i++){ if(rows[i].venue_id===id) return rows[i]; } return null; }
 
   function renderBilling(){
+    // Default the Xero month range to the latest usage month on first render.
+    var xf=$("xeroFrom"), xt=$("xeroTo");
+    if(xf && !xf.value){ var dv=(S.usageMonth?String(S.usageMonth).slice(0,7):new Date().toISOString().slice(0,7)); xf.value=dv; if(xt && !xt.value) xt.value=dv; }
     // health: not browser-readable
     $("healthList").innerHTML='<div class="empty">Payment health (declined cards, overdue) comes from Stripe and the founding records, which are not readable from this page. It appears here once the billing Worker feeds it. Suspended venues: '+S.venues.filter(function(v){return v.status==="suspended";}).length+'.</div>';
 
@@ -745,6 +759,40 @@
   $("billingRows").addEventListener("click", function(e){
     var det=e.target.closest("button[data-bdet]");
     if(det){ var id=det.getAttribute("data-bdet"); S.openBilling=(S.openBilling===id?null:id); renderBilling(); }
+  });
+
+  /* ---- Xero export (date-ranged, from vp_billing_usage) ---- */
+  function auDate(pm){ if(!pm) return ""; var d=new Date(String(pm).slice(0,10)+"T00:00:00"); if(isNaN(d)) return String(pm); var dd=("0"+d.getDate()).slice(-2), mm=("0"+(d.getMonth()+1)).slice(-2); return dd+"/"+mm+"/"+d.getFullYear(); }
+  $("xeroCsv").addEventListener("click", function(){
+    var from=($("xeroFrom").value||"").slice(0,7);
+    var to=($("xeroTo").value||"").slice(0,7);
+    var rows=(S.usage||[]).filter(function(u){
+      var pm=String(u.period_month||"").slice(0,7); if(!pm) return false;
+      if(from && pm<from) return false;
+      if(to && pm>to) return false;
+      return true;
+    });
+    if(!rows.length){ errFlash("xeroErr", (S.usage&&S.usage.length)?"No billing rows in that date range.":"No metered usage recorded yet, so there is nothing to export. Rows appear here once the metering job runs."); return; }
+    rows.sort(function(a,b){ var pa=String(a.period_month||""), pb=String(b.period_month||""); if(pa!==pb) return pa<pb?-1:1; return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
+    var out=[["Date","Venue","Description","Reference","Amount (GST inc)","GST","Status"]];
+    rows.forEach(function(u){
+      var v=venueById(u.venue_id);
+      var rate=v?groupRate(v):null;
+      var billable=(u.plan_cap||0)+(u.overage_players||0);
+      var amount = rate!=null ? billable*rate : null;
+      var gst = amount!=null ? amount/11 : null;
+      var peak = (u.peak_billable_players!=null)?u.peak_billable_players:"?";
+      out.push([
+        auDate(u.period_month),
+        venueName(u.venue_id),
+        "VenuePlay games - "+monthLabel(u.period_month)+" (peak "+peak+" players)",
+        "VP-"+String(u.period_month||"").slice(0,7)+"-"+String(u.venue_id||"").slice(0,8),
+        amount!=null?amount.toFixed(2):"",
+        gst!=null?gst.toFixed(2):"",
+        amount!=null?"Estimate":"Worker-invoiced"
+      ]);
+    });
+    downloadCSV("venueplay-xero-"+(from||"start")+"-to-"+(to||"end")+".csv", out);
   });
 
   function reloadDiscounts(){
