@@ -195,16 +195,16 @@
     </div>
   </div>
 
-  <!-- ============ GFLAM ADMIN STUB ============ -->
+  <!-- ============ ADMIN STUB ============ -->
   <div id="vAdmin" class="hidden">
     <div class="authwrap">
       <div class="authlogo">
         <svg width="26" height="30" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
         <span class="word">VenuePlay</span>
       </div>
-      <div class="authbig">Gflam HQ admin</div>
+      <div class="authbig">VenuePlay HQ admin</div>
       <div class="authcard" style="text-align:center">
-        <p style="font-size:14px;color:var(--text);line-height:1.6">Gflam HQ admin lands here.</p>
+        <p style="font-size:14px;color:var(--text);line-height:1.6">VenuePlay HQ admin lands here.</p>
         <p class="note" style="margin-top:12px">The full admin (venues, billing, discounts) plugs in here. For this first cut the venue host path is the focus.</p>
         <div style="text-align:center"><span class="skiplink" id="adminBack" style="margin-top:20px">Back to sign in</span></div>
       </div>
@@ -221,7 +221,7 @@
       <div class="authbig">You are signed in</div>
       <div class="authcard" style="text-align:center">
         <p style="font-size:14px;color:var(--text);line-height:1.6">This login is not linked to a venue yet.</p>
-        <p class="note" style="margin-top:12px">Ask Gflam to add you as staff at your venue, then sign in again. If you are Gflam, check your admin record.</p>
+        <p class="note" style="margin-top:12px">Ask your venue owner to add you as staff, then sign in again.</p>
         <div style="text-align:center"><span class="skiplink" id="noVenueOut" style="margin-top:20px">Sign out</span></div>
       </div>
     </div>
@@ -368,7 +368,7 @@
   var VIEWS=["vSignIn","vAdmin","vNoVenue","vPair","vConsole"];
   function go(view){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==view); } }
 
-  // ---- Gflam HQ "View as" (impersonation) handoff ----
+  // ---- VenuePlay HQ "View as" (impersonation) handoff ----
   // hq.html sets localStorage "vpImpersonate" = {"id","name"} and opens this
   // page. An admin whose current venue matches drops into that venue's console
   // behind a gold banner, instead of being bounced back to HQ.
@@ -379,8 +379,8 @@
     var bar=document.createElement("div");
     bar.id="vpImpBar";
     bar.style.cssText="position:sticky;top:0;z-index:60;background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
-    bar.innerHTML='<span>Viewing <b>'+String(name||"this venue").replace(/[<>&]/g,"")+'</b> from Gflam HQ</span>'+
-      '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to Gflam HQ</a>';
+    bar.innerHTML='<span>Viewing <b>'+String(name||"this venue").replace(/[<>&]/g,"")+'</b> from VenuePlay HQ</span>'+
+      '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to VenuePlay HQ</a>';
     document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById("vpImpBack").addEventListener("click", function(){ clearImp(); window.location.href="hq.html"; });
   }
@@ -401,7 +401,7 @@
   }
 
   // ---- post-login routing: resolve the real role, then send them on ----
-  // Gflam admin -> Gflam HQ; venue staff -> their venue's host flow (TV pair
+  // VenuePlay admin -> VenuePlay HQ; venue staff -> their venue's host flow (TV pair
   // then console); signed in but unlinked -> a friendly "no venue" notice.
   // The demo shortcut buttons deliberately bypass this (no real role).
   function applyRoute(ctx){
@@ -409,10 +409,10 @@
     if(ctx.isAdmin){
       var imp=impFlag();
       if(imp && imp.id && ctx.currentVenueId===imp.id){
-        // Impersonating a venue from Gflam HQ: show the console for that venue.
+        // Impersonating a venue from VenuePlay HQ: show the console for that venue.
         showImpBanner(imp.name);
         $("headerTag").textContent="Host console";
-        $("statusText").textContent="Gflam HQ · "+(imp.name||"venue");
+        $("statusText").textContent="VenuePlay HQ · "+(imp.name||"venue");
         $("who").style.display="flex";
         $("hactions").style.display="flex";
         greetOnce(ctx);
