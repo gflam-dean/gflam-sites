@@ -709,15 +709,15 @@
   connectRealtime(); // realtime is best-effort and retries; the ads are already showing
   validateVenue(); // warn if this screen link isn't tied to a real venue
 
-  // Unified TV (OPT-IN with ?unified=1 while we test it - off by default, so the normal /tv is
-  // completely untouched). When on, /tv also watches the venue's other games and, the moment a
-  // host puts one ON AIR (t:"mode" - not mere presence, so a lingering idle host won't grab it),
-  // switches this screen to that game. Redirect-back on idle + the loop polish come once it's
-  // proven live; for now this shows the forward switch safely.
+  // Unified TV: ONE /tv?venue link follows whatever game is on air. /tv (the bingo + ads screen)
+  // also watches the venue's other games and, the moment a host puts one ON AIR (t:"mode", or a
+  // reply to our tv_here ping if a game is already running when this screen loads), switches to
+  // that game's screen. The game screens run the same watcher so you can hop between games and
+  // back to bingo without ever touching the link.
   (function unifiedRouter(){
-    if(!VENUE_SLUG || !/[?&]unified=1/.test(window.location.search)) return;
+    if(!VENUE_SLUG) return;
     var GAMES=["trivia","musical","raffle","members"], switched=false;
-    function goTo(game){ if(switched) return; switched=true; window.location.href="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG)+"&unified=1"; }
+    function goTo(game){ if(switched) return; switched=true; window.location.href="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG); }
     GAMES.forEach(function(game){
       var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
       c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(m && m.t==="mode") goTo(game); });
