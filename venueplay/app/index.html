@@ -295,6 +295,18 @@
             <label>Prize</label>
             <input type="text" class="hostinput" id="prizeInput" value="$50 bar tab" placeholder="e.g. $50 bar tab">
           </div>
+          <div class="field">
+            <label>Tickets each player</label>
+            <select id="cardsSel">
+              <option value="1">1 ticket</option>
+              <option value="2">2 tickets</option>
+              <option value="3">3 tickets</option>
+              <option value="4">4 tickets</option>
+              <option value="5">5 tickets</option>
+              <option value="6">6 tickets (a full book)</option>
+            </select>
+            <div class="fieldnote" style="font-size:11.5px;color:var(--faint);margin-top:5px">The default for this game. Players can still change how many they take on their phone.</div>
+          </div>
           <div class="stat">
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
@@ -591,11 +603,12 @@
 
   // ================= GAME STATE (bingo) =================
   var G={
-    code:"", status:"setup", pattern:"one", prize:"the prize",
+    code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1,
     draw:[], idx:-1, called:{},
     players:{}, order:[],
     claim:null, won:false
   };
+  function clampCards(n){ n=parseInt(n,10); if(!n||n<1) return 1; if(n>6) return 6; return n; }
   var currentGame="bingo";
 
   // ---- persist the running game so a host reload (battery, refresh) recovers ----
@@ -719,8 +732,12 @@
   function calledArray(){ var a=[]; for(var i=0;i<=G.idx;i++) a.push(G.draw[i]); return a; }
   function playerCount(){ return G.order.length; }
 
-  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, called:calledArray(), active:(G.status==="running"), playerCount:playerCount() }); }
-  function sendCard(pid){ var p=G.players[pid]; if(!p) return; send({ t:"card", pid:pid, cells:p.card, cardNo:p.cardNo }); }
+  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, called:calledArray(), active:(G.status==="running"), playerCount:playerCount() }); }
+  function dealFor(p){
+    var want=clampCards(p.reqCards||G.defaultCards);
+    p.cards=[]; for(var k=0;k<want;k++){ p.cards.push({ card:makeCard(), cardNo:100+cryptoInt(900) }); }
+  }
+  function sendCards(pid){ var p=G.players[pid]; if(!p||!p.cards) return; send({ t:"cards", pid:pid, cards:p.cards.map(function(c){ return { cells:c.card, cardNo:c.cardNo }; }) }); }
   function sendPlayers(){ send({ t:"players", count:playerCount() }); }
 
   // ---- board ----
@@ -789,17 +806,18 @@
   // ---- actions ----
   function dealCards(){
     for(var i=0;i<G.order.length;i++){ var pid=G.order[i]; var p=G.players[pid];
-      p.card=makeCard(); p.cardNo=100+cryptoInt(900); sendCard(pid); }
+      dealFor(p); sendCards(pid); }
   }
   function startGame(){
     G.pattern=$("patternSel").value;
     G.prize=($("prizeInput").value||"").trim()||"the prize";
+    G.defaultCards=clampCards($("cardsSel").value);
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
     G.status="running"; G.won=false; G.claim=null;
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Next number";
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to bingo first
-    send({ t:"started", pattern:G.pattern, prize:G.prize });
+    send({ t:"started", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards });
     sendState();
     saveGame();
     renderConsole();
@@ -810,7 +828,7 @@
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Next number";
     send({ t:"mode", mode:"bingo" });
-    send({ t:"started", pattern:G.pattern, prize:G.prize });
+    send({ t:"started", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards });
     sendState();
     saveGame();
     renderConsole();
@@ -867,13 +885,17 @@
     if(m.t==="tv_here"){ tvHere(m); return; }
     if(m.t==="join"){
       if(!m.pid) return;
+      var want=clampCards(m.cards||G.defaultCards);
       var isNew=!G.players[m.pid];
-      if(isNew){ G.players[m.pid]={ name:(m.name||"Player"), card:null, cardNo:0 }; G.order.push(m.pid); }
-      else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
+      if(isNew){ G.players[m.pid]={ name:(m.name||"Player"), cards:null, reqCards:want }; G.order.push(m.pid); }
+      else { var pp=G.players[m.pid]; pp.name=(m.name||pp.name); if(m.cards) pp.reqCards=want; }
       if(G.status==="running"){
         var p=G.players[m.pid];
-        if(!p.card){ p.card=makeCard(); p.cardNo=100+cryptoInt(900); }
-        sendCard(m.pid);
+        var need=clampCards(p.reqCards||G.defaultCards);
+        // deal only when they have none yet, or they changed how many they want. A plain
+        // reconnect re-announces the same count, so their tickets are never wiped.
+        if(!p.cards || !p.cards.length || p.cards.length!==need){ p.reqCards=need; dealFor(p); }
+        sendCards(m.pid);
       }
       sendPlayers();
       sendState();
@@ -883,9 +905,13 @@
     else if(m.t==="claim"){
       if(G.status!=="running" || G.won || G.claim) return;
       var pl=G.players[m.pid];
-      if(!pl || !pl.card) return;
-      if(checkPattern(pl.card)){
-        G.claim={ pid:m.pid, name:pl.name, cardNo:pl.cardNo, card:pl.card };
+      if(!pl || !pl.cards || !pl.cards.length) return;
+      // find the exact ticket they claimed on; fall back to any winning ticket they hold
+      var tk=null, j;
+      for(j=0;j<pl.cards.length;j++){ if(pl.cards[j].cardNo===m.cardNo){ tk=pl.cards[j]; break; } }
+      if(!tk){ for(j=0;j<pl.cards.length;j++){ if(checkPattern(pl.cards[j].card)){ tk=pl.cards[j]; break; } } }
+      if(tk && checkPattern(tk.card)){
+        G.claim={ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card };
         send({ t:"claim_pending", name:pl.name });
         saveGame();
         renderClaimQueue();

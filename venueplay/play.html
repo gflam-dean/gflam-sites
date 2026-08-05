@@ -69,8 +69,23 @@
   .bingoBtn{background:var(--pink);color:#fff;box-shadow:0 8px 24px rgba(255,31,142,.4);font-size:22px;text-transform:uppercase;letter-spacing:.06em;padding:20px}
   .bingoBtn:active{background:var(--pink-deep)}
 
+  /* ticket count picker */
+  .cardpick{margin-top:16px}
+  .cplabel{font-size:13px;color:var(--muted);margin-bottom:9px}
+  .cprow{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .cpbtn{width:50px;height:50px;border-radius:12px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;cursor:pointer;transition:.12s}
+  .cpbtn.sel{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(255,31,142,.3)}
+  /* stacked tickets (a book) */
+  .ticket{margin-bottom:16px}
+  .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:left}
+
   .lastcalled{text-align:center;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
   .lastcalled b{color:#fff;font-size:18px}
+  .lcnum{font-family:'Anton',sans-serif;color:var(--gold);font-size:46px;line-height:1;letter-spacing:.01em}
+  .lcsub{display:block;font-size:12px;color:var(--faint);margin-top:4px;text-transform:uppercase;letter-spacing:.1em}
+  .assisttog{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;color:var(--muted);font-size:13.5px;cursor:pointer}
+  .assisttog input{width:20px;height:20px;flex:none;accent-color:var(--pink)}
 
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
   .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
@@ -102,9 +117,13 @@
     <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
     <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name"></div>
     <div id="joinExtra"></div>
+    <div class="field cardpick">
+      <div class="cplabel">How many tickets?</div>
+      <div class="cprow" id="cpRow"></div>
+    </div>
     <div class="cerr" id="joinErr"></div>
     <div class="field"><button class="btn pink" id="joinBtn">Join</button></div>
-    <div class="pnote">No app and no account. Your card appears here when the host starts.</div>
+    <div class="pnote">No app and no account. Your tickets appear here when the host starts.</div>
   </div>
 
   <!-- WAIT -->
@@ -119,9 +138,10 @@
   <div class="view hidden" id="vCard">
     <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line</span></div>
     <div class="lastcalled" id="lastCalled">No numbers called yet</div>
-    <div class="card9" id="cardGrid"></div>
+    <div id="cardStack"></div>
     <div class="pmsg" id="pMsg">Numbers light up as they are called.</div>
     <button class="btn bingoBtn" id="bingoBtn">BINGO!</button>
+    <label class="assisttog"><input type="checkbox" id="assistChk"> <span>Easy mode: mark my numbers for me</span></label>
   </div>
 
   <!-- WON -->
@@ -185,9 +205,9 @@
   // are the real server identity/handles; the ticket + verdict come from the Worker.
   var P={
     room:"", pid:"", name:"", joined:false, hostSeen:false,
-    card:null, cardNo:0,
-    pattern:"one", prize:"the prize", called:[], active:false,
-    daubs:{}, claimPending:false, won:false, ended:false, capture:null
+    cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
+    pattern:"one", prize:"the prize", called:[], active:false, assist:false,
+    claimPending:false, won:false, ended:false, capture:null
   };
 
   // ---- pid persistence (keep the cosmetic identity across reconnects) ----
@@ -201,55 +221,64 @@
 
   // ---- verification (from the called set only, ignore cosmetic daubs) ----
   function calledSet(){ var s={}; for(var i=0;i<P.called.length;i++) s[P.called[i]]=true; return s; }
-  function rowDone(set,card,row){ for(var c=0;c<9;c++){ var v=card[row][c]; if(v && !set[v]) return false; } return true; }
-  function checkPattern(){
-    if(!P.card) return false;
-    var set=calledSet(), rows=0, r;
-    for(r=0;r<3;r++){ if(rowDone(set,P.card,r)) rows++; }
-    switch(P.pattern){
-      case "one": return rows>=1;
-      case "two": return rows>=2;
-      case "full": return rows>=3;
-    }
+  function rowDone(set,cells,row){ for(var c=0;c<9;c++){ var v=cells[row][c]; if(v && !set[v]) return false; } return true; }
+  function cardMeetsPattern(cells,set){
+    var rows=0,r; for(r=0;r<3;r++){ if(rowDone(set,cells,r)) rows++; }
+    if(P.pattern==="one") return rows>=1;
+    if(P.pattern==="two") return rows>=2;
+    if(P.pattern==="full") return rows>=3;
     return false;
+  }
+  // the cardNo of the first ticket that completes the pattern, or 0 if none do
+  function winningCardNo(){
+    var set=calledSet();
+    for(var i=0;i<P.cards.length;i++){ if(cardMeetsPattern(P.cards[i].cells,set)) return P.cards[i].cardNo; }
+    return 0;
   }
 
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
   function route(){
-    if(P.won){ $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo; show("vWon"); return; }
+    if(P.won){ $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+(P.wonCardNo||""); show("vWon"); return; }
     if(P.ended){ show("vLost"); return; }
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
-    if(P.active && P.card){ renderCard(); show("vCard"); return; }
+    if(P.active && P.cards.length){ renderCards(); show("vCard"); return; }
     $("waitName").textContent=P.name; show("vWait");
   }
 
   // ---- card render ----
   function autoDaub(){
-    if(!P.card) return; var set=calledSet();
-    for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=P.card[r][c]; if(n && set[n]) P.daubs[n]=true; } }
+    if(!P.assist) return;   // manual play by default: the player dabs their own numbers, we never mark for them
+    var set=calledSet();
+    for(var i=0;i<P.cards.length;i++){ var cd=P.cards[i];
+      for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=cd.cells[r][c]; if(n && set[n]) cd.daubs[n]=true; } } }
   }
-  function renderCard(){
+  function renderCards(){
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
     var last=P.called.length ? P.called[P.called.length-1] : 0;
-    $("lastCalled").innerHTML = last ? ("Last called <b>"+last+"</b> &middot; "+P.called.length+" of 90") : "No numbers called yet";
+    $("lastCalled").innerHTML = last ? ('<span class="lcnum">'+last+'</span><span class="lcsub">'+P.called.length+' of 90 called</span>') : "No numbers called yet";
     var set=calledSet();
-    var wrap=$("cardGrid"); wrap.innerHTML="";
-    for(var r=0;r<3;r++){ for(var c=0;c<9;c++){
-      var n=P.card[r][c]; var blank=!n; var cell=document.createElement("div");
-      if(blank){ cell.className="cc blank"; wrap.appendChild(cell); continue; }
-      cell.className="cc";
-      cell.setAttribute("data-n",n);
-      cell.textContent=n;
-      if(P.daubs[n]) cell.classList.add("daub");
-      if(set[n]) cell.classList.add("on");
-      wrap.appendChild(cell);
-    } }
-    if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); }
-    else { $("bingoBtn").disabled=false; setMsg("Tap a number to daub it. Numbers you have are outlined in green. Hit BINGO when you have the pattern.",""); }
+    var stack=$("cardStack"); stack.innerHTML="";
+    for(var i=0;i<P.cards.length;i++){
+      var cd=P.cards[i];
+      var tk=document.createElement("div"); tk.className="ticket";
+      if(P.cards.length>1){ var lab=document.createElement("div"); lab.className="tklabel"; lab.textContent="Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo; tk.appendChild(lab); }
+      var grid=document.createElement("div"); grid.className="card9";
+      for(var r=0;r<3;r++){ for(var c=0;c<9;c++){
+        var n=cd.cells[r][c]; var cell=document.createElement("div");
+        if(!n){ cell.className="cc blank"; grid.appendChild(cell); continue; }
+        cell.className="cc"; cell.setAttribute("data-card",i); cell.setAttribute("data-n",n); cell.textContent=n;
+        if(cd.daubs[n]) cell.classList.add("daub");
+        if(set[n]) cell.classList.add("on");
+        grid.appendChild(cell);
+      } }
+      tk.appendChild(grid); stack.appendChild(tk);
+    }
+    if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
+    else { $("bingoBtn").disabled=false; setMsg("Your numbers mark off as they are called. Hit BINGO when any ticket completes the pattern.",""); }
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
 
@@ -289,9 +318,9 @@
     P.name=nm.slice(0,20);
     P.capture=gatherCapture(nm);
     P.joined=true; saveName(P.room, P.name);
-    // Bingo runs on the live link: tell the host we're here. It adds us to the night
-    // and deals our card straight back (t:"card"). No game server is in the loop.
-    send({ t:"join", pid:P.pid, name:P.name });
+    // Bingo runs on the live link: tell the host we're here and how many tickets we want.
+    // It adds us to the night and deals our tickets straight back (t:"cards").
+    send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards });
     saveCapture();                 // best-effort: store opt-in details for the venue
     setConn(P.hostSeen ? "live" : "waiting");
     route();
@@ -306,28 +335,48 @@
     }catch(e){}
   }
   function pressBingo(){
-    if(!P.active || !P.card || P.claimPending || P.won) return;
-    // Local gate; the host holds the master copy of our card and makes the final call.
-    if(!checkPattern()){ setMsg("Not yet, keep playing. That pattern is not complete on your card yet.","no"); return; }
-    P.claimPending=true; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait");
-    send({ t:"claim", pid:P.pid, name:P.name, cardNo:P.cardNo });
+    if(!P.active || !P.cards.length || P.claimPending || P.won) return;
+    // Local gate; the host holds the master copies of our tickets and makes the final call.
+    var win=winningCardNo();
+    if(!win){ setMsg("Not yet, keep playing. That pattern is not complete on any of your tickets yet.","no"); return; }
+    P.claimPending=true; P.wonCardNo=win; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait");
+    send({ t:"claim", pid:P.pid, name:P.name, cardNo:win });
   }
+  // ---- ticket count picker + host default ----
+  function renderPicker(){
+    var row=$("cpRow"); if(!row) return; row.innerHTML="";
+    for(var k=1;k<=6;k++){ (function(kk){
+      var b=document.createElement("button"); b.type="button"; b.className="cpbtn"+(kk===P.numCards?" sel":""); b.textContent=kk;
+      b.addEventListener("click", function(){ P.numCards=kk; P.pickedCount=true; renderPicker(); });
+      row.appendChild(b);
+    })(k); }
+  }
+  function setHostDefault(n){
+    n=parseInt(n,10)||1; if(n<1)n=1; if(n>6)n=6;
+    P.defaultCards=n;
+    if(!P.pickedCount){ P.numCards=n; renderPicker(); }   // follow the host's default until the player picks
+  }
+  // ---- assist mode (older players): auto-mark called numbers. Off by default, so normally
+  // the player dabs their own numbers and we never flash them pink for them. ----
+  function loadAssist(){ try{ return localStorage.getItem("vp-assist")==="1"; }catch(e){ return false; } }
+  function setAssist(on){ P.assist=!!on; try{ localStorage.setItem("vp-assist", on?"1":"0"); }catch(e){} if(on) autoDaub(); if(P.cards.length) renderCards(); }
 
   // ---- incoming ----
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
+    if(typeof m.defaultCards==="number"){ setHostDefault(m.defaultCards); }
     if(m.t==="rollcall" || m.t==="host_here"){
-      // the host (re)connected and is rebuilding the night. re-announce ourselves so it
-      // re-adds us and re-deals our card. We only reply to explicit host presence.
-      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); }
+      // host (re)connected and is rebuilding the night. re-announce so it re-adds us and
+      // re-deals our tickets. We only reply to explicit host presence.
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); }
       markHost(); return;
     }
-    markHost();   // any message below is proof a live host is on this channel
-    if(m.t==="card"){
-      if(m.pid && m.pid!==P.pid) return;   // that ticket is for another player
-      P.card=m.cells||P.card; P.cardNo=m.cardNo||P.cardNo; P.active=true; P.daubs={};
-      autoDaub(); if(!P.won && !P.ended) route();
+    markHost();   // any message below proves a live host is on this channel
+    if(m.t==="cards"){
+      if(m.pid && m.pid!==P.pid) return;   // those tickets are for another player
+      P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:{} }; });
+      P.active=true; autoDaub(); if(!P.won && !P.ended) route();
     }
     else if(m.t==="state"){
       if(m.pattern) P.pattern=m.pattern;
@@ -338,15 +387,16 @@
     else if(m.t==="started"){
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
-      // fresh round: the host deals a new card (t:"card") just before this; reset the
-      // round state but keep the card it just handed us.
-      P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={};
+      // fresh round: the host deals new tickets (t:"cards") just before this. Reset the
+      // round but keep whatever tickets we're holding.
+      P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0;
+      for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
       route();
     }
     else if(m.t==="ball"){
       P.called=m.called||P.called; P.active=true;
       autoDaub();
-      if(P.joined && !P.won && !P.ended && P.card){ renderCard(); show("vCard"); }
+      if(P.joined && !P.won && !P.ended && P.cards.length){ renderCards(); show("vCard"); }
     }
     else if(m.t==="claim_pending"){
       // another player (or me) claimed; nothing to change locally
@@ -360,7 +410,11 @@
       else { P.ended=true; route(); }
     }
     else if(m.t==="idle"){
-      P.active=false;   // host sent the TV back to ads; wait for the next round
+      // host ended the round / went back to ads. Clear the game but keep the player "in"
+      // for the next round (this fixes the screen being stuck mid-game). A winner keeps
+      // their prize screen so they can still show it at the bar.
+      P.active=false; P.cards=[]; P.called=[]; P.claimPending=false;
+      if(!P.won){ P.ended=false; route(); }
     }
   }
 
@@ -379,14 +433,15 @@
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true; flushQueue();
-        // re-announce on every (re)connect so the host rebuilds our seat and re-deals our card
-        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); setConn("waiting"); }
+        // re-announce on every (re)connect so the host rebuilds our seat and re-deals our tickets
+        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); setConn("waiting"); }
         else { setConn("ready"); }
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         setConn("reconnecting");
       }
     });
     if(!P.joined) loadJoinInfo();   // show any extra fields this venue collects
+    renderPicker();                 // ticket-count buttons (default to the host's number)
     route();
   }
 
@@ -403,15 +458,18 @@
   $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
   $("joinBtn").addEventListener("click", join);
   $("bingoBtn").addEventListener("click", pressBingo);
-  $("cardGrid").addEventListener("click", function(e){
+  $("cardStack").addEventListener("click", function(e){
     var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("blank")) return;
-    var n=parseInt(cell.getAttribute("data-n"),10);
-    if(P.daubs[n]){ delete P.daubs[n]; cell.classList.remove("daub"); }
-    else { P.daubs[n]=true; cell.classList.add("daub"); }
+    var ci=parseInt(cell.getAttribute("data-card"),10), n=parseInt(cell.getAttribute("data-n"),10);
+    var cd=P.cards[ci]; if(!cd) return;
+    if(cd.daubs[n]){ delete cd.daubs[n]; cell.classList.remove("daub"); }
+    else { cd.daubs[n]=true; cell.classList.add("daub"); }
   });
+  var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
 
   // ---- init: read ?room ----
   (function(){
+    P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
     var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
     if(room && CODE_RE.test(room)){ connect(room); }
