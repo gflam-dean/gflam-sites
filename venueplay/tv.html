@@ -293,7 +293,7 @@
   // a host reconnects this session.
   var hostConnected=false;
   function drawPairQR(){ drawQR($("qrPair"), pairURL, 320); }
-  function showPairPanel(){ var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR(); }
+  function showPairPanel(){ if(VENUE_SLUG){ hidePairPanel(); return; } var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR(); }
   function hidePairPanel(){ $("pairPanel").classList.add("hidden"); }
   function markHostConnected(){ hostConnected=true; hidePairPanel(); }
 

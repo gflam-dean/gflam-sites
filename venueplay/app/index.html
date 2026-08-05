@@ -231,7 +231,7 @@
   <div id="vVenuePick" class="hidden">
     <div class="authwrap">
       <div class="authbig">Which venue are you at?</div>
-      <div class="authsub">Pick tonight's venue. The game goes straight to that venue's screen, no code to type.</div>
+      <div class="authsub">Pick tonight's venue. The game goes straight to that venue's screen.</div>
       <div class="authcard" id="venuePickList" style="display:flex;flex-direction:column;gap:10px;text-align:center"></div>
     </div>
   </div>
@@ -400,9 +400,22 @@
   function greetWord(){ var h=new Date().getHours(); return h<12?"Good morning":(h<18?"Good afternoon":"Good evening"); }
   function dayNight(){ return new Date().getHours()<18?"day":"night"; }
   function pickName(ctx){
+    // Greet the PERSON, not the venue: prefer the signed-in user's name, then a staff display
+    // name that is a real person (not "<venue> manager"). No venue fallback.
     var n = "";
-    try{ if(ctx){ if(ctx.staff && ctx.staff[0] && ctx.staff[0].display_name) n = ctx.staff[0].display_name; if((!n || /manager$/i.test(n)) && ctx.venue && ctx.venue.name) n = ctx.venue.name; } }catch(e){}
-    return String(n||"").trim();
+    try{
+      if(ctx){
+        var u = ctx.user, m = u && u.user_metadata;
+        if(m) n = m.name || m.full_name || m.contact_name || "";
+        if(!n && ctx.staff && ctx.staff[0] && ctx.staff[0].display_name){
+          var d = ctx.staff[0].display_name;
+          if(!/\bmanager$/i.test(d) && !(ctx.venue && d===ctx.venue.name)) n = d;
+        }
+      }
+    }catch(e){}
+    n = String(n||"").trim();
+    if(n.indexOf(" ")>0) n = n.split(/\s+/)[0];   // first name only
+    return n;
   }
   function showToast(msg){ var t=$("greetToast"); if(!t||!msg) return; t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(function(){ t.classList.remove("show"); }, 6500); }
   function greetOnce(ctx){
