@@ -521,6 +521,7 @@
     client.auth.verifyOtp({ phone:E164, token:code, type:"sms" }).then(function(res){
       btn.disabled=false; btn.textContent="Verify";
       if(res && res.error){ $("otpErr").textContent="That code did not match"; return; }
+      try{ localStorage.setItem("vpShiftStart", String(Date.now())); }catch(e){}   // fresh 4h shift starts now
       routeAfterAuth();
     }).catch(function(){ btn.disabled=false; btn.textContent="Verify"; $("otpErr").textContent="That code did not match"; });
   });
@@ -534,7 +535,7 @@
   });
   // demo bypass shortcuts removed 2026-07-29: sign-in is text-code only (no Skip for demo, no role shortcuts)
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
-  $("noVenueOut").addEventListener("click", function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
+  $("noVenueOut").addEventListener("click", function(){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
   $("signoutBtn").addEventListener("click", function(){
     showToast("Thanks for using VenuePlay" + (vpWho ? (", " + vpWho) : "") + ". Have a great " + dayNight() + ".");
     try{ sessionStorage.removeItem("vpGreeted"); }catch(e){}
@@ -584,7 +585,20 @@
     var link=$("billingLink"); if(link) link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
     var sw=$("switchVenue"); if(sw) sw.style.display = (__ctx&&__ctx.staff&&__ctx.staff.length>1) ? "" : "none";
   }
+  // Forced shift timeout: a host is signed out 4 hours after signing in, so a bar device isn't
+  // left logged in forever. Reset on a fresh sign-in; survives page reloads.
+  var shiftTimer=null;
+  function endShift(){ try{ localStorage.removeItem("vpShiftStart"); }catch(e){} if(shiftTimer){ clearTimeout(shiftTimer); shiftTimer=null; } }
+  function enforceShift(){
+    var MAX=4*3600*1000, now=Date.now(), start=0;
+    try{ start=parseInt(localStorage.getItem("vpShiftStart"),10)||0; }catch(e){}
+    if(start && (now-start)>MAX){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } return; }
+    if(!start){ start=now; try{ localStorage.setItem("vpShiftStart", String(start)); }catch(e){} }
+    if(shiftTimer) clearTimeout(shiftTimer);
+    shiftTimer=setTimeout(function(){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } }, Math.max(1000, MAX-(now-start)));
+  }
   function proceedVenue(){
+    enforceShift();
     updateAccountLink();
     var venue=__ctx&&__ctx.venue, staff=(__ctx&&__ctx.staff)||[];
     if(staff.length>1 && !venuePickFresh()){ showVenuePick(); return; }   // ask which venue this shift
