@@ -2301,7 +2301,7 @@ async function verifyHostJwt(request, env) {
   const auth = request.headers.get('Authorization') || '';
   const m = auth.match(/^Bearer\s+(.+)$/i);
   if (!m) throw httpError(401, 'Missing Authorization bearer token');
-  const payload = await verifyJwtHS256(m[1], env.SUPABASE_JWT_SECRET);
+  const payload = await verifyJwtHS256(m[1], env.SUPABASE_JWT_SECRET, env);
   if (!payload.sub) throw httpError(401, 'Token has no subject');
   return payload.sub;   // auth.users.id
 }
@@ -2811,18 +2811,47 @@ function b64urlToBytes(b64) {
   return bytes;
 }
 
-// Verify a Supabase Auth JWT (HS256) against SUPABASE_JWT_SECRET and return the
-// decoded payload. Throws on a bad signature or an expired token.
-async function verifyJwtHS256(token, secret) {
-  if (!secret) throw httpError(500, 'SUPABASE_JWT_SECRET is not configured');
+// Supabase's asymmetric (ES256) signing keys, cached per isolate (they rotate rarely).
+let _gameJwks = null;
+async function fetchJwks(env) {
+  if (_gameJwks && (Date.now() - _gameJwks.at) < 3600000) return _gameJwks.keys;
+  try {
+    const url = (env.SUPABASE_URL || '').replace(/\/+$/, '') + '/auth/v1/.well-known/jwks.json';
+    const res = await fetch(url);
+    if (!res.ok) return _gameJwks ? _gameJwks.keys : [];
+    const data = await res.json();
+    const keys = (data && data.keys) || [];
+    _gameJwks = { keys: keys, at: Date.now() };
+    return keys;
+  } catch (e) { return _gameJwks ? _gameJwks.keys : []; }
+}
+
+// Verify a Supabase Auth JWT and return the decoded payload. Handles BOTH the legacy shared
+// secret (HS256 against SUPABASE_JWT_SECRET) and the new asymmetric signing keys (ES256 against
+// the published JWKS). Throws on a bad signature or an expired token.
+async function verifyJwtHS256(token, secret, env) {
   if (!token) throw httpError(401, 'Missing token');
   const parts = token.split('.');
   if (parts.length !== 3) throw httpError(401, 'Malformed token');
 
   const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  const header = JSON.parse(b64urlToString(parts[0]));
+  const signed = enc.encode(parts[0] + '.' + parts[1]);
   const sigBytes = b64urlToBytes(parts[2]);
-  const ok = await crypto.subtle.verify('HMAC', key, sigBytes, enc.encode(parts[0] + '.' + parts[1]));
+  let ok = false;
+  if (header.alg === 'HS256') {
+    if (!secret) throw httpError(500, 'SUPABASE_JWT_SECRET is not configured');
+    const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+    ok = await crypto.subtle.verify('HMAC', key, sigBytes, signed);
+  } else if (header.alg === 'ES256') {
+    const keys = env ? await fetchJwks(env) : [];
+    const jwk = keys.find(function (k) { return k.kid === header.kid; }) || keys[0];
+    if (!jwk) throw httpError(401, 'No verification key available');
+    const key = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+    ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, sigBytes, signed);
+  } else {
+    throw httpError(401, 'Unsupported token algorithm');   // block alg:none / anything unexpected
+  }
   if (!ok) throw httpError(401, 'Bad token signature');
 
   let payload;
