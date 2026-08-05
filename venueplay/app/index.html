@@ -851,7 +851,7 @@
     $("setupPlayers").textContent=playerCount();
     var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
     if(_ob){
-      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. The extra will be added to this month's bill when you start."; }
+      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be added to this month's bill when you start."); }
       else _ob.style.display="none";
     }
     $("setupCode").textContent=G.code;
@@ -934,6 +934,11 @@
   }
   // Over-plan players: if more joined than the plan includes, get one clear OK at Start.
   function playerCap(){ return (__ctx && __ctx.venue && __ctx.venue.included_players) || 0; }
+  function inFirstMonth(){   // first month from sign-up is free, so no charge popup then (banner only)
+    var c=__ctx && __ctx.venue && __ctx.venue.created_at; if(!c) return false;
+    var end=new Date(c); if(isNaN(end.getTime())) return false; end.setMonth(end.getMonth()+1);
+    return new Date() < end;
+  }
   var overageAcked=false;
   function showOverage(cnt, cap, onGo){
     var extra=cnt-cap;
@@ -944,7 +949,7 @@
   }
   function startGame(){
     var _cnt=playerCount(), _cap=playerCap();
-    if(_cap>0 && _cnt>_cap && !overageAcked){ showOverage(_cnt, _cap, startGame); return; }
+    if(_cap>0 && _cnt>_cap && !inFirstMonth() && !overageAcked){ showOverage(_cnt, _cap, startGame); return; }
     G.pattern=$("patternSel").value;
     G.prize=($("prizeInput").value||"").trim()||"the prize";
     G.defaultCards=clampCards($("cardsSel").value);
