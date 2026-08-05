@@ -671,12 +671,8 @@
   // /tv?venue=<slug> loads that venue's own promo slides, draw schedule and raffle
   // (set from the Account page). Plain /tv keeps the built-in sample loop. Best-effort:
   // any failure just leaves the samples showing.
-  function venueSlug(){
-    var m=/[?&]venue=([^&]+)/.exec(window.location.search);
-    return m ? decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,"") : "";
-  }
   (function loadVenueScreen(){
-    var slug=venueSlug(); if(!slug) return;
+    var slug=VENUE_SLUG; if(!slug) return;   // the already-parsed slug (handles /tv?venue= AND /tv?bare-slug AND the remembered one)
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
     function refreshAds(){ adBuilt=false; buildAds(); if(!hostConnected) startAds(); } // only rebuild while idle
     // Advertising slides (images) + the raffle routine, from the venue's screen config.
