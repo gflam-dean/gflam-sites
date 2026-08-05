@@ -98,12 +98,13 @@
       <div class="sublbl">Only ask for what you will use. Less is friendlier and joins faster.</div>
       <div class="row"><div class="t"><div class="n">First name</div><div class="d">Shown on the TV and leaderboards.</div></div><div class="sw" data-k="collect_first_name"></div></div>
       <div class="row"><div class="t"><div class="n">Last name</div><div class="d">Only if you display or export full names.</div></div><div class="sw" data-k="collect_last_name"></div></div>
-      <div class="row"><div class="t"><div class="n">Postcode</div><div class="d">Handy for local marketing insight.</div></div><div class="sw" data-k="collect_postcode"></div></div>
-      <div class="row"><div class="t"><div class="n">Email</div><div class="d">For your marketing list (with opt-in below).</div></div><div class="sw" data-k="collect_email"></div></div>
-      <div class="row"><div class="t"><div class="n">Mobile</div><div class="d">For your marketing list (with opt-in below).</div></div><div class="sw" data-k="collect_mobile"></div></div>
+      <div class="row mktrow"><div class="t"><div class="n">Postcode</div><div class="d">Handy for local marketing insight.</div></div><div class="sw" data-k="collect_postcode"></div></div>
+      <div class="row mktrow"><div class="t"><div class="n">Email</div><div class="d">For your marketing list (with opt-in below).</div></div><div class="sw" data-k="collect_email"></div></div>
+      <div class="row mktrow"><div class="t"><div class="n">Mobile</div><div class="d">For your marketing list (with opt-in below).</div></div><div class="sw" data-k="collect_mobile"></div></div>
+      <div class="sublbl" id="mktNote" style="display:none;margin-top:6px">Email, mobile and marketing opt-in unlock once your account is approved to hold customer data. Venues are approved automatically; if you run games at venues you don't own, email hello@venueplay.com.au.</div>
     </div>
 
-    <div class="card">
+    <div class="card mktrow">
       <div class="lbl">Marketing opt-in</div>
       <div class="sublbl">Whether the join screen asks the player to opt in to your venue's marketing.</div>
       <div class="row"><div class="t"><div class="n">Ask players to opt in</div><div class="d">Default OFF. When on, the tick is always shown UNTICKED, and the player must tick it themselves (this is a locked rule, never pre-ticked).</div></div><div class="sw" data-k="collect_marketing_optin"></div></div>
@@ -145,8 +146,18 @@
     $("vTitle").textContent=(ctx.venue&&ctx.venue.name)?ctx.venue.name:"Venue settings";
     $("vSub").textContent="Settings"+(ctx.venue&&ctx.venue.slug?(" for "+ctx.venue.slug):"")+(ctx.isAdmin?" (admin)":(" ("+ctx.role+")"));
     fill(ctx.settings||{});
+    gateMarketing(ctx);
     $("body").classList.remove("hidden");
   });
+
+  // Unapproved accounts (name doesn't read like a venue) can only collect first/last name; the
+  // marketing fields are hidden here and enforced at the database (migration 21).
+  var VENUE_RE=/\b(hotel|tavern|rsl|club|pub|bowls|bowlo|bowling|leagues|sports|surf|golf|services|inn|arms)\b/i;
+  function gateMarketing(ctx){
+    var ok=VENUE_RE.test((ctx&&ctx.venue&&ctx.venue.name)||"") || (ctx&&ctx.isAdmin);
+    document.querySelectorAll(".mktrow").forEach(function(el){ el.style.display=ok?"":"none"; });
+    var n=$("mktNote"); if(n) n.style.display=ok?"none":"";
+  }
 
   function fill(s){
     state.name_display = s.name_display || "abbrev_last";
