@@ -240,7 +240,6 @@
       <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
       <tbody id="venueRows"></tbody>
     </table></div></div>
-    <div class="note">One row per venue, sorted A&ndash;Z, scales to 400+. Open <b>Details</b> for the screen address and caps. <b>View as</b> drops into that venue's console from HQ.</div>
   </div>
 
   <!-- ============ BILLING ============ -->
@@ -490,9 +489,15 @@
     var list=S.venues.filter(venuePasses);
     $("venuesLbl").textContent="All venues ("+list.length+(list.length===S.venues.length?"":" of "+S.venues.length)+")";
     if(!list.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'+(S.venues.length?"No venues match that filter.":"No venues yet. Use Add venue to onboard the first one.")+'</div></td></tr>'; return; }
+    // Venues that share a founding account (a self-serve multi-venue account) are one account,
+    // even without a negotiated operator group. Count them so they read as merged, not separate.
+    var acctCount={}; S.venues.forEach(function(x){ if(x.founding_id) acctCount[x.founding_id]=(acctCount[x.founding_id]||0)+1; });
     list.forEach(function(v){
       var suspended=v.status==="suspended";
-      var billBadge=v.group_id ? '<span class="badge grouped">'+esc(groupName(v.group_id))+'</span>' : '<span class="badge indep">Independent</span>';
+      var inAccount = !v.group_id && v.founding_id && acctCount[v.founding_id]>1;
+      var billBadge=v.group_id ? '<span class="badge grouped">'+esc(groupName(v.group_id))+'</span>'
+        : (inAccount ? '<span class="badge grouped">Account &middot; '+acctCount[v.founding_id]+' venues</span>'
+        : '<span class="badge indep">Independent</span>');
       var statusCell = suspended ? '<span class="badge suspend">Suspended</span>'
                        : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
       var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
@@ -506,15 +511,16 @@
         '<td>'+statusCell+'</td>'+
         '<td><div class="actcell">'+actions+'</div></td>';
       b.appendChild(tr);
-      var cap = v.group_id ? (v.included_players!=null?(v.included_players+" players"):"cap not set") : "from founding record (Worker)";
+      var billTxt = v.group_id ? ("group: "+esc(groupName(v.group_id)))
+        : (inAccount ? ("one account, "+acctCount[v.founding_id]+" venues") : "independent (card)");
+      var players = v.max_players!=null ? esc(v.max_players) : (v.included_players!=null ? esc(v.included_players) : "not set");
       var dt=document.createElement("tr"); dt.className="detail"+(S.openVenue===v.id?"":" hidden");
       dt.innerHTML='<td colspan="5">'+
-        'Screen address <b>screen.venueplay.com.au/'+esc(v.slug||"")+'</b> &middot; '+
-        'timezone <b>'+esc(v.timezone||"")+'</b> &middot; '+
-        'billing <b>'+(v.group_id?("group: "+esc(groupName(v.group_id))):"independent (card)")+'</b> &middot; '+
-        'included players <b>'+esc(cap)+'</b> &middot; '+
-        'created <b>'+esc(fmtWhen(v.created_at))+'</b>'+
-        (v.group_id?"":' &middot; <span style="color:var(--faint)">plan tier (Founding/Standard) lives in the founding record, not readable here</span>')+
+        '<b>Screen address</b> screen.venueplay.com.au/'+esc(v.slug||"")+' &middot; '+
+        '<b>Timezone</b> '+esc(v.timezone||"")+' &middot; '+
+        '<b>Total players</b> '+players+' &middot; '+
+        '<b>Billing</b> '+billTxt+' &middot; '+
+        '<b>Created</b> '+esc(fmtWhen(v.created_at))+
         '</td>';
       b.appendChild(dt);
     });

@@ -254,7 +254,7 @@
   function listVenues() {
     // RLS scopes this: admins see all, staff see only their own venues.
     return getClient().from("vp_venues")
-      .select("id,name,slug,timezone,status,founding_id,group_id,included_players,logo_url,created_at")
+      .select("id,name,slug,timezone,status,founding_id,group_id,included_players,max_players,logo_url,created_at")
       .order("created_at", { ascending: false })
       .then(function (r) { return (r && r.data) || []; });
   }
