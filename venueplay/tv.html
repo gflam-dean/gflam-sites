@@ -257,7 +257,13 @@
   // Venue-derived code: identical to VP.venueCode() in vp-session.js (keep in lockstep). When
   // the TV is opened as /tv?venue=<slug>, the host derives the SAME code from the same venue, so
   // they share a channel with no pairing step; it also shows as the players' join code.
-  function tvVenueSlug(){ var m=/[?&]venue=([^&]+)/.exec(window.location.search); return m?decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,""):""; }
+  function tvVenueSlug(){
+    var q=window.location.search||"";
+    var m=/[?&]venue=([^&]+)/.exec(q);                       // /tv?venue=your-venue
+    var raw = m ? m[1] : "";
+    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }  // /tv?your-venue (shorter)
+    return raw ? decodeURIComponent(raw).toLowerCase().replace(/[^a-z0-9-]/g,"") : "";
+  }
   function venueCode(slug){
     var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
     for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
@@ -498,12 +504,14 @@
   function enterAds(){
     tvMode="ads"; stopCelebrate();
     hideBingoLayers();
+    $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
     $("adsRoot").classList.remove("hidden");
     if(hostConnected) hidePairPanel(); else showPairPanel();
     startAds();
   }
   function enterBingo(){
     tvMode="bingo"; stopAds();
+    $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
     applyBingo();
