@@ -213,6 +213,10 @@
     <p class="note" style="margin:0 0 10px">What players are asked for when they join, and how their name shows on the TV (John S, J Smith or John Smith). Opens that venue's settings.</p>
     <div id="playerData"></div>
 
+    <div class="label">Marketing opt-ins</div>
+    <p class="note" style="margin:0 0 10px">Players who ticked "keep me posted" when they joined. The download is only ever your own venues.</p>
+    <button class="addbtn" id="optinExport">Download opt-in list (CSV)</button>
+
     <div class="label">Raffles</div>
     <p class="note" style="margin:0 0 10px">Set your raffle routine and your usual prizes once. The running total of prizes given away shows here too.</p>
     <div id="rfPickWrap" class="screenpick" style="display:none">
@@ -455,6 +459,7 @@
     function setSec(labelText, show){ section(labelText).forEach(function(el){ el.style.display = show?"":"none"; }); }
     // Toggle-gated sections.
     setSec("Hosts", p.add_hosts!==false);
+    setSec("Marketing opt-ins", p.players_optin!==false);
     setSec("Raffles", p.draws_raffles!==false);
     setSec("Members draws", p.draws_raffles!==false);
     setSec("Advertising", p.advertising!==false);
@@ -838,6 +843,19 @@
       loadManagers();
     });
   }
+  function exportOptins(){
+    var btn = $("optinExport"); btn.disabled = true; btn.textContent = "Preparing…";
+    api("/account/optin-export", {}).then(function(r){
+      btn.disabled = false; btn.textContent = "Download opt-in list (CSV)";
+      if (r.error){ showMsg(r.error); return; }
+      if (!r.count){ showMsg("No opt-ins to download yet.", true); return; }
+      var blob = new Blob([r.csv || ""], { type:"text/csv" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a"); a.href = url; a.download = "venueplay-optins.csv";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      showMsg(r.count + " opt-in" + (r.count===1?"":"s") + " downloaded.", true);
+    });
+  }
   function initManagers(){
     $("mgrToggle").addEventListener("click", function(){ $("mgrForm").classList.toggle("show"); });
     $("mgr-go").addEventListener("click", addManager);
@@ -960,6 +978,7 @@
     initRaffles();
     initMembersDraws();
     initManagers();
+    $("optinExport").addEventListener("click", exportOptins);
   }).catch(function(){ load(); });
 })();
 </script>
