@@ -561,8 +561,10 @@
       $("statusText").textContent="Signed in";
       loadQuestionSets();
       var tv=tvFromUrl();
+      var slug=(ctx.venue && ctx.venue.slug) || "";
       if(tv){ connect(tv); }
-      else { $("connectView").classList.remove("hidden"); }
+      else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode(slug)); }   // auto-pair by venue, like bingo - no code to type
+      else { $("connectView").classList.remove("hidden"); }                          // fallback: manual code entry
     }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
   } else {
     showSignIn("Sign in helper failed to load. Try reloading.");

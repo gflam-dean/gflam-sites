@@ -148,7 +148,7 @@
       </div>
     </div>
     <div class="jsub" id="lobbySub">Waiting for the host to connect&hellip;</div>
-    <div class="hostline">Host, open venueplay.com.au/app/trivia/host and enter code <b id="hostLineCode">------</b></div>
+    <div class="hostline" id="hostLine">Host, open venueplay.com.au/app/trivia/host and enter code <b id="hostLineCode">------</b></div>
   </div>
 
   <!-- question -->
@@ -210,9 +210,26 @@
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
 
-  // Stable screen code, persisted so the pairing link never changes across refreshes.
+  // Opened with ?venue=<slug> (the normal case), the pairing code is DERIVED from the venue,
+  // so the host auto-pairs with no code to type - exactly like bingo. A screen with no venue
+  // link falls back to a random persisted code + the manual pairing shown on screen.
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  var VENUE_SLUG=(function(){
+    var m=/[?&]venue=([^&]+)/.exec(window.location.search);
+    var v=m?decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,""):"";
+    if(v){ try{ localStorage.setItem("vpTvVenueTrivia", v); }catch(e){} return v; }
+    try{ var s=localStorage.getItem("vpTvVenueTrivia"); if(s) return s; }catch(e){}
+    return "";
+  })();
   var CODE=(function(){
+    if(VENUE_SLUG) return venueCode(VENUE_SLUG);
     try{ var c=localStorage.getItem("vpTvCodeTrivia"); if(c && CODE_RE.test(c)) return c; }catch(e){}
     var nc=makeCode(); try{ localStorage.setItem("vpTvCodeTrivia", nc); }catch(e){} return nc;
   })();
@@ -242,7 +259,8 @@
   }
   function renderLobby(){
     $("lobbyCode").textContent = joinCode || "------";
-    $("hostLineCode").textContent=CODE;
+    if(VENUE_SLUG){ $("hostLine").textContent="Linked to your venue – just open the trivia host to start."; }
+    else { $("hostLineCode").textContent=CODE; }
     $("tvJoinCode").textContent = joinCode || "------";
     $("lobbyPlaying").textContent=state.playerCount;
     if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
