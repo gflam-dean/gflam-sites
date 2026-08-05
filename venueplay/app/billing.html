@@ -184,6 +184,31 @@
       <button class="go" id="host-go" style="align-self:flex-start">Add host</button>
     </div>
 
+    <div id="managersSection" style="display:none">
+      <div class="label">Managers</div>
+      <p class="note" style="margin:0 0 10px">For groups: a manager runs and sets up the venues you give them. Tick what each can do. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code. Billing and the player-data rules below stay with you.</p>
+      <div id="managers"></div>
+      <button class="addbtn" id="mgrToggle">+ Add a manager</button>
+      <div class="addform" id="mgrForm" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="mgr-name">Name</label>
+            <input type="text" id="mgr-name" placeholder="Full name" autocomplete="name"></div>
+          <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="mgr-mobile">Mobile</label>
+            <input type="tel" id="mgr-mobile" placeholder="0400 000 000" autocomplete="tel"></div>
+        </div>
+        <label class="flabel" style="margin-top:2px">Venues they manage</label>
+        <div class="hostvenues" id="mgr-venues"></div>
+        <label class="flabel" style="margin-top:8px">What they can do</label>
+        <div class="hostvenues" id="mgr-perms">
+          <label class="hostchk"><input type="checkbox" class="mgr-p" value="advertising" checked><span>Advertising</span></label>
+          <label class="hostchk"><input type="checkbox" class="mgr-p" value="draws_raffles" checked><span>Draws &amp; raffles</span></label>
+          <label class="hostchk"><input type="checkbox" class="mgr-p" value="players_optin" checked><span>Players &amp; opt-in export</span></label>
+          <label class="hostchk"><input type="checkbox" class="mgr-p" value="add_hosts" checked><span>Add hosts</span></label>
+        </div>
+        <button class="go" id="mgr-go" style="align-self:flex-start;margin-top:8px">Add manager</button>
+      </div>
+    </div>
+
     <div class="label">Player data &amp; name display</div>
     <p class="note" style="margin:0 0 10px">What players are asked for when they join, and how their name shows on the TV (John S, J Smith or John Smith). Opens that venue's settings.</p>
     <div id="playerData"></div>
@@ -719,6 +744,77 @@
       loadMembersDrawFor(mdCurrent);
     });
   }
+  // ---- Managers (group accounts): add a manager with per-manager toggles ----
+  var mgrVenues = [];
+  function buildMgrVenuePicker(venues){
+    var box = $("mgr-venues"); box.innerHTML = "";
+    venues.forEach(function(v){
+      var l = document.createElement("label"); l.className = "hostchk";
+      l.innerHTML = '<input type="checkbox" class="mgr-v" value="' + esc(v.id) + '"><span>' + esc(v.name) + '</span>';
+      box.appendChild(l);
+    });
+  }
+  function renderManagers(managers, venues){
+    var vmap = {}; venues.forEach(function(v){ vmap[v.id] = v.name; });
+    var box = $("managers"); box.innerHTML = "";
+    if (!managers.length){ box.innerHTML = '<p class="note" style="margin:0 0 8px">No managers yet.</p>'; return; }
+    managers.forEach(function(m){
+      var names = (m.venue_ids||[]).map(function(id){ return vmap[id]; }).filter(Boolean);
+      var scope = (names.length >= venues.length) ? "All venues" : (names.join(", ") || "No venues");
+      var p = m.permissions || {}, on = [];
+      if (p.advertising !== false) on.push("Advertising");
+      if (p.draws_raffles !== false) on.push("Draws & raffles");
+      if (p.players_optin !== false) on.push("Players");
+      if (p.add_hosts !== false) on.push("Add hosts");
+      var row = document.createElement("div"); row.className = "venue";
+      row.innerHTML = '<div class="nm"><b>' + esc(m.label||"Manager") + '</b><small>' + esc(scope) + ' &middot; ' + esc(on.join(", ")||"no permissions") + '</small></div>' +
+        '<button class="canxlink" data-rmmgr="' + esc(m.auth_user_id) + '">Remove</button>';
+      box.appendChild(row);
+    });
+    box.querySelectorAll("[data-rmmgr]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        if (!confirm("Remove this manager from all your venues?")) return;
+        api("/account/host-remove", { auth_user_id: btn.getAttribute("data-rmmgr"), all_venues:true }).then(function(r){
+          if (r.error){ showMsg(r.error); return; }
+          showMsg("Manager removed.", true); loadManagers();
+        });
+      });
+    });
+  }
+  function loadManagers(){
+    return api("/account/managers", {}).then(function(d){
+      if (d.error){ return; }
+      mgrVenues = d.venues || [];
+      if (mgrVenues.length <= 1){ $("managersSection").style.display = "none"; return; } // managers are a group feature
+      $("managersSection").style.display = "";
+      renderManagers(d.managers || [], mgrVenues);
+      buildMgrVenuePicker(mgrVenues);
+    });
+  }
+  function addManager(){
+    var name = $("mgr-name").value.trim(), mobile = $("mgr-mobile").value.trim();
+    if (!name){ showMsg("Enter the manager's name."); return; }
+    if (!mobile){ showMsg("Enter the manager's mobile."); return; }
+    var ids = [];
+    $("mgr-venues").querySelectorAll(".mgr-v:checked").forEach(function(c){ ids.push(c.value); });
+    if (!ids.length){ showMsg("Tick at least one venue for this manager."); return; }
+    var perms = { advertising:false, draws_raffles:false, players_optin:false, add_hosts:false };
+    $("mgr-perms").querySelectorAll(".mgr-p:checked").forEach(function(c){ perms[c.value] = true; });
+    var btn = $("mgr-go"); btn.disabled = true; btn.textContent = "Adding…";
+    api("/account/manager-add", { label:name, mobile:mobile, venue_ids:ids, permissions:perms }).then(function(r){
+      btn.disabled = false; btn.textContent = "Add manager";
+      if (r.error){ showMsg(r.error); return; }
+      $("mgr-name").value = ""; $("mgr-mobile").value = ""; $("mgrForm").classList.remove("show");
+      showMsg("Manager added. They can sign in with their mobile.", true);
+      loadManagers();
+    });
+  }
+  function initManagers(){
+    $("mgrToggle").addEventListener("click", function(){ $("mgrForm").classList.toggle("show"); });
+    $("mgr-go").addEventListener("click", addManager);
+    loadManagers();
+  }
+
   // ---- Raffles: routine (vp_venue_screen) + reusable prize list (vp_raffle_prizes) + tally ----
   var rfCurrent = null;
   function loadRafflePrizes(venueId){
@@ -834,6 +930,7 @@
     initScreen();
     initRaffles();
     initMembersDraws();
+    initManagers();
   }).catch(function(){ load(); });
 })();
 </script>
