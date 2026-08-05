@@ -667,20 +667,9 @@
   enterAds(); // shows + draws the pair QR while in ads with no host connected
   validateVenue(); // warn if this screen link isn't tied to a real venue
 
-  // ---- unified TV: /tv is the ONE venue screen. Bingo shows inline (above); besides that, this
-  // page WATCHES the venue's other games and, the moment a host puts one on air (mode/session/
-  // started/question), switches this TV straight to that game's screen. So the venue only ever
-  // sets up /tv?<slug> and it follows whatever game is being run.
-  (function gameRouter(){
-    if(!VENUE_SLUG) return;
-    var GAMES=["trivia","musical","raffle","members"], switched=false;
-    function goTo(game){ if(switched) return; switched=true; window.location.href="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG); }
-    GAMES.forEach(function(game){
-      var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
-      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(m && (m.t==="mode"||m.t==="session"||m.t==="started"||m.t==="question")) goTo(game); });
-      c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
-    });
-  })();
+  // (Unified-TV router removed for now: it was switching /tv to any game a host was broadcasting,
+  // which yanked the screen off bingo mid-test. The one-link-for-all-games TV will be rebuilt as a
+  // proper, tested piece - see the venueplay-unified-tv note.)
 
   // ---- per-venue screen content ----
   // /tv?venue=<slug> loads that venue's own promo slides, draw schedule and raffle
