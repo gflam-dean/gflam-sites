@@ -124,15 +124,25 @@
 
 <div class="wrap">
 
-  <!-- CONNECT -->
-  <div id="connectView">
+  <!-- SIGN IN NEEDED -->
+  <div id="signinView" class="hidden">
     <div class="connect">
-      <div class="big">Connect to the room</div>
-      <div class="sub">Enter the 6-character code shown on the venue TV.</div>
+      <div class="big">Sign in to run trivia</div>
+      <div class="sub" id="signinSub">You need your venue host login to start a live quiz.</div>
+      <a class="btn pink big" id="signinLink" href="../index.html" style="display:inline-block;text-decoration:none;margin-top:6px">Go to sign in</a>
+      <p class="note" style="margin-top:14px">Trivia reads your venue's own question sets and the VenuePlay library. The answers are held on the server and never reach a phone before you reveal.</p>
+    </div>
+  </div>
+
+  <!-- CONNECT (pair with the venue screen) -->
+  <div id="connectView" class="hidden">
+    <div class="connect">
+      <div class="big">Connect to the screen</div>
+      <div class="sub">Enter the 6-character code shown on the venue TV, or scan its setup QR.</div>
       <input id="codeIn" class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
       <div class="cerr" id="codeErr"></div>
       <button class="btn pink big" id="connectBtn" style="margin-top:6px">Connect</button>
-      <p class="note" style="margin-top:14px">The TV opens the room. This console runs the quiz and holds the answers, which never reach a phone before the reveal. Players join by scanning the QR on the screen.</p>
+      <p class="note" style="margin-top:14px">The TV shows the room. This console runs the quiz and holds the answers, which never reach a phone before the reveal. Players join by scanning the QR on the screen.</p>
     </div>
   </div>
 
@@ -144,6 +154,10 @@
       <!-- left: run -->
       <div class="panel">
         <div id="setupBlock">
+          <div class="field">
+            <label>Question set</label>
+            <select id="setSel"><option value="">Loading your question sets&hellip;</option></select>
+          </div>
           <div class="stat">
             <div class="box"><div class="k">Questions</div><div class="v" id="setupQs">0</div></div>
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
@@ -187,6 +201,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../vp-session.js"></script>
 <script>
 (function(){
   "use strict";
@@ -198,58 +213,74 @@
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
-  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
 
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  // Share this one client (and its auth session) with the session helper, so role
+  // resolution, the question-set reads and the game broadcast all run on one client.
+  if(window.VP){ VP.useClient(client); }
+
+  // ---- the game Worker (server-authoritative referee) ------------------
+  // EVERY real write (open session, start the game, next question, reveal) goes through
+  // this Worker with the host's Supabase access token. The broadcasts below are only for
+  // instant UX and are re-derivable from /snapshot. The Worker is the ONLY holder of the
+  // correct answers before a reveal: correct_index is never broadcast, and the anon key
+  // cannot read vp_questions. Confirm this matches the deployed venueplay-game Worker URL.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function getToken(){
+    var c=(window.VP&&VP.getClient)?VP.getClient():client;
+    return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
+  }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; if(!window.confirm("Full house! You are over your allowance of "+cap+" players.\n\nThe extra "+extra+" player"+(extra===1?"":"s")+" will be added for this month and billed a full month at your per-player rate.\n\nTap OK to start the game with everyone in.")){ var ec=new Error("Over your allowance - game not started."); ec.status=402; throw ec; } return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
+
+  // TWO broadcast channels for instant UX (the DB is the source of truth):
+  //   ch  = PAIRING channel "vp-"+pairCode: host <-> venue screen (handoff + presence).
+  //   gch = GAME channel "vp-"+join_code: host <-> players (their phones).
+  // Game messages go to BOTH via bcast() so the screen never has to switch channels.
   var ch=null, subscribed=false, sendQueue=[];
   function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  var gch=null, gsub=false, gQueue=[];
+  function gsend(obj){ if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:obj }); } else { gQueue.push(obj); } }
+  function gflush(){ while(gQueue.length && gch){ gch.send({ type:"broadcast", event:"msg", payload:gQueue.shift() }); } }
+  function bcast(obj){ send(obj); gsend(obj); }
+  function openGameChannel(joinCode){
+    if(gch){ try{ client.removeChannel(gch); }catch(e){} gch=null; gsub=false; }
+    gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });
+    gch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+    gch.subscribe(function(status){ if(status==="SUBSCRIBED"){ gsub=true; gflush(); } });
+  }
 
-  // ---- sample question library (answers held here only) ----
-  var QUESTIONS=[
-    { q:"What is the capital city of Australia?", a:["Sydney","Canberra","Melbourne","Perth"], c:1 },
-    { q:"Which two animals feature on the Australian coat of arms?", a:["Koala and emu","Kangaroo and emu","Wombat and kookaburra","Dingo and platypus"], c:1 },
-    { q:"What is the largest living structure on Earth, off the Queensland coast?", a:["Ningaloo Reef","The Great Barrier Reef","The Coral Sea Shelf","The Whitsunday Passage"], c:1 },
-    { q:"Who painted the Mona Lisa?", a:["Michelangelo","Raphael","Leonardo da Vinci","Vincent van Gogh"], c:2 },
-    { q:"In which state or territory is Kakadu National Park?", a:["Queensland","Western Australia","Northern Territory","South Australia"], c:2 },
-    { q:"What is the longest river in Australia?", a:["The Darling River","The Murray River","The Murrumbidgee River","The Fitzroy River"], c:1 },
-    { q:"Which planet is known as the Red Planet?", a:["Venus","Jupiter","Mars","Saturn"], c:2 },
-    { q:"What is the chemical symbol for gold?", a:["Gd","Au","Ag","Go"], c:1 }
-  ];
-
-  // ---- authoritative game state ----
+  // ---- host game state ----
+  // The Worker is authoritative; this is the console's view of it. correct_index arrives
+  // ONLY in the /host/question response (host-only) and is used solely to highlight the
+  // answer on THIS console. It is never placed on any channel before the host reveals.
   var G={
-    code:"", status:"setup",
+    venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
+    status:"setup",                 // setup | ready | question | reveal | ended
+    setId:"", questionCount:0, qtotal:0,
     timePerQ:20, base:100, speedBonus:true, colour:true,
-    players:{}, order:[],           // pid -> {name, score, lastPts, lastChoice}
-    qIndex:-1, qseq:0, current:null, endsAt:0,
-    answers:{},                     // pid -> {choice, remaining}
-    tick:null, autoLock:null
+    current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
+    board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
+    players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
+    answeredPids:{}, answeredQseq:0,
+    busy:false, tick:null
   };
 
   function playerCount(){ return G.order.length; }
-  function sortedPlayers(){
-    var arr=[]; for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p) arr.push(p); }
-    arr.sort(function(a,b){ if(b.score!==a.score) return b.score-a.score; return a.name.localeCompare(b.name); });
-    return arr;
-  }
-  function leaderboard(limit){
-    var s=sortedPlayers(), out=[];
-    for(var i=0;i<Math.min(limit,s.length);i++){ out.push({ name:s[i].name, points:s[i].score }); }
-    return out;
-  }
-
-  // ---- broadcasts ----
-  function sendState(){ send({ t:"state", playerCount:playerCount(), phase:(G.status==="setup"?"lobby":G.status), colour:G.colour }); }
+  function answeredCount(){ var n=0,k; for(k in G.answeredPids){ if(G.answeredPids.hasOwnProperty(k)) n++; } return n; }
+  function remainingSecs(){ return G.current ? Math.max(0, Math.ceil((G.current.endsAt-Date.now())/1000)) : 0; }
+  function hostError(msg){ $("statusText").textContent=msg||"Something went wrong"; }
 
   // ---- render console ----
   function renderConsole(){
     var live=G.status!=="setup";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
-    $("setupQs").textContent=QUESTIONS.length;
+    $("setupQs").textContent=G.questionCount;
     $("setupPlayers").textContent=playerCount();
-    $("setupCode").textContent=G.code;
+    $("setupCode").textContent=G.joinCode||"------";
     $("playerCount").textContent=playerCount();
     renderPlayers();
     renderBoard();
@@ -263,18 +294,15 @@
     elx.innerHTML=html;
   }
   function renderBoard(){
-    var box=$("hostBoard"); var s=sortedPlayers();
-    if(!s.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
+    var box=$("hostBoard");
+    if(!G.board.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
     box.innerHTML="";
-    for(var i=0;i<Math.min(8,s.length);i++){
+    for(var i=0;i<Math.min(8,G.board.length);i++){
       var row=el("div","brow-h"+(i===0?" top1":""));
-      row.innerHTML='<span class="rk">'+(i+1)+'</span><span class="nm">'+esc(s[i].name)+'</span><span class="sc">'+s[i].score+'</span>';
+      row.innerHTML='<span class="rk">'+(i+1)+'</span><span class="nm">'+esc(G.board[i].name)+'</span><span class="sc">'+G.board[i].points+'</span>';
       box.appendChild(row);
     }
   }
-
-  function answeredCount(){ var n=0,k; for(k in G.answers){ if(G.answers.hasOwnProperty(k)) n++; } return n; }
-  function remainingSecs(){ return Math.max(0, Math.ceil((G.endsAt-Date.now())/1000)); }
 
   function renderRun(){
     var body=$("runBody"); body.innerHTML="";
@@ -282,7 +310,7 @@
     if(G.status==="ready"){
       var rd=el("div","qwrap");
       rd.innerHTML='<div class="qmeta"><span class="qn">Round armed</span></div>'+
-        '<div class="qtext-h">'+QUESTIONS.length+' questions loaded</div>'+
+        '<div class="qtext-h">'+G.questionCount+' questions loaded</div>'+
         '<div class="since" style="margin:0">Players are joining on their phones. Show the first question when the room is ready.</div>';
       body.appendChild(rd);
       var nb=el("button","btn pink big","First question"); nb.addEventListener("click", nextQuestion); body.appendChild(nb);
@@ -290,16 +318,16 @@
       return;
     }
 
-    if(G.status==="question" || G.status==="locked"){
+    if(G.status==="question"){
       var q=G.current;
       var w=el("div","qwrap");
-      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(G.qIndex+1)+' of '+QUESTIONS.length+'</span>'+
+      w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+'</span>'+
         '<span class="live"><span><b id="hAns">'+answeredCount()+'</b> answered</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
-        '<div class="qtext-h">'+esc(q.q)+'</div>';
-      for(var i=0;i<q.a.length;i++){
-        var correct=(i===q.c);
+        '<div class="qtext-h">'+esc(q.text)+'</div>';
+      for(var i=0;i<q.options.length;i++){
+        var correct=(i===q.correctIndex);
         var o=el("div","opt"+(correct?" correct":""));
-        o.innerHTML='<span class="ol">'+LETTERS[i]+'</span><span class="otx">'+esc(q.a[i])+'</span>'+(correct?'<span class="ck">&#10003; correct</span>':'');
+        o.innerHTML='<span class="ol">'+LETTERS[i]+'</span><span class="otx">'+esc(q.options[i])+'</span>'+(correct?'<span class="ck">&#10003; correct</span>':'');
         w.appendChild(o);
       }
       body.appendChild(w);
@@ -311,13 +339,12 @@
     if(G.status==="reveal"){
       var q2=G.current;
       var rw=el("div","qwrap");
-      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(G.qIndex+1)+' of '+QUESTIONS.length+' &middot; revealed</span></div>'+
-        '<div class="qtext-h">Correct: '+LETTERS[q2.c]+' &middot; '+esc(q2.a[q2.c])+'</div>';
+      rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+' &middot; revealed</span></div>'+
+        '<div class="qtext-h">Correct: '+LETTERS[q2.correctIndex]+' &middot; '+esc(q2.options[q2.correctIndex])+'</div>';
       body.appendChild(rw);
-      var more=(G.qIndex < QUESTIONS.length-1);
       var brow=el("div","btnrow");
-      if(more){ var nb2=el("button","btn pink big","Next question"); nb2.addEventListener("click", nextQuestion); brow.appendChild(nb2); }
-      var fin=el("button","btn "+(more?"ghost":"win")+" big", more?"Final podium":"Show podium"); fin.addEventListener("click", finish); brow.appendChild(fin);
+      var nb2=el("button","btn pink big","Next question"); nb2.addEventListener("click", nextQuestion); brow.appendChild(nb2);
+      var fin=el("button","btn ghost big","Show podium"); fin.addEventListener("click", finish); brow.appendChild(fin);
       body.appendChild(brow);
       return;
     }
@@ -327,127 +354,173 @@
       done.innerHTML='<div class="qmeta"><span class="qn">Round finished</span></div>'+
         '<div class="qtext-h">The winners are on the big screen.</div>';
       body.appendChild(done);
-      var again=el("button","btn pink big","Start a new round"); again.addEventListener("click", startRound); body.appendChild(again);
+      var again=el("button","btn pink big","Start a new round"); again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
     }
   }
-  function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", finish); return b; }
+  function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", function(){ endRound(); }); return b; }
 
   function updateLive(){
     var e=$("hAns"), c=$("hCd");
     if(e) e.textContent=answeredCount();
     if(c) c.textContent=remainingSecs()+"s";
   }
+  function clearTick(){ if(G.tick){ clearInterval(G.tick); G.tick=null; } }
 
-  // ---- game flow ----
+  // ---- game flow (every write goes through the Worker) ----
   function readSettings(){
     G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||20));
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
+    G.setId=$("setSel").value||"";
+  }
+  function openSession(){
+    if(!G.venueId){ return Promise.reject(new Error("no venue linked to this login")); }
+    if(G.sessionId && G.joinCode){ return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode }); }
+    return apiPost("/session",{ venue_id:G.venueId }).then(function(r){
+      G.sessionId=r.session_id; G.joinCode=r.join_code;
+      openGameChannel(G.joinCode);                                        // players' channel
+      send({ t:"session", session_id:G.sessionId, join_code:G.joinCode }); // hand the real code to the screen
+      $("setupCode").textContent=G.joinCode;
+      return r;
+    });
   }
   function startRound(){
-    clearTimers();
+    if(G.busy) return;
     readSettings();
-    G.players={}; G.order=[]; G.qIndex=-1; G.qseq=0; G.current=null; G.answers={};
-    G.status="ready";
-    sendState();
-    renderConsole();
+    if(!G.setId){ hostError("Pick a question set first"); return; }
+    G.busy=true;
+    var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
+    openSession().then(function(){
+      bcast({ t:"mode", mode:"trivia" });
+      return apiPost("/host/game",{
+        session_id:G.sessionId, format:"trivia", question_set_id:G.setId,
+        time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour
+      });
+    }).then(function(r){
+      G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
+      G.status="ready"; G.board=[]; G.current=null;
+      bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour });
+      bcast({ t:"players", count:playerCount() });
+      renderConsole();
+    }).catch(function(e){ hostError(e.message); }).then(function(){
+      G.busy=false; if(btn){ btn.disabled=false; btn.textContent="Start round"; }
+    });
   }
   function nextQuestion(){
-    clearTimers();
-    if(G.qIndex>=QUESTIONS.length-1){ finish(); return; }
-    G.qIndex++; G.qseq++; G.current=QUESTIONS[G.qIndex]; G.answers={};
-    G.endsAt=Date.now()+G.timePerQ*1000;
-    G.status="question";
-    send({ t:"question", qseq:G.qseq, text:G.current.q, options:G.current.a.slice(), endsAt:G.endsAt, secs:G.timePerQ, colour:G.colour, qi:(G.qIndex+1), qtotal:QUESTIONS.length });
-    renderRun();
-    G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ autoLock(); } }, 500);
-    G.autoLock=setTimeout(autoLock, G.timePerQ*1000+200);
-  }
-  function autoLock(){
-    if(G.status!=="question") return;
-    if(G.tick){ clearInterval(G.tick); G.tick=null; }
-    if(G.autoLock){ clearTimeout(G.autoLock); G.autoLock=null; }
-    G.status="locked";
-    send({ t:"lock" });
-    renderRun();
+    if(G.busy || !G.gameId) return; G.busy=true; clearTick();
+    apiPost("/host/question",{ game_id:G.gameId }).then(function(r){
+      if(r && r.done){ finish(); return; }
+      G.current={ qseq:r.qseq, qi:r.qi, qtotal:r.qtotal, text:r.text, options:r.options||[],
+        correctIndex:r.correct_index, endsAt:Date.parse(r.ends_at), secs:r.secs };
+      G.qtotal=r.qtotal||G.qtotal;
+      G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq;
+      // PUBLIC broadcast: text + options, NEVER correct_index.
+      bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
+        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour });
+      renderRun();
+      G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
   function reveal(){
-    if(G.status!=="question" && G.status!=="locked") return;
-    clearTimers();
-    if(G.status==="question"){ send({ t:"lock" }); }
-    G.status="reveal";
-    var q=G.current, split=[0,0,0,0], results={};
-    for(var i=0;i<G.order.length;i++){
-      var pid=G.order[i], p=G.players[pid]; if(!p) continue;
-      var a=G.answers[pid], choice=(a?a.choice:null), remaining=(a?a.remaining:0);
-      if(choice!=null && choice>=0 && choice<4) split[choice]++;
-      var pts=0;
-      if(choice===q.c){ pts=G.base + (G.speedBonus ? Math.round(G.base*0.5*(remaining/G.timePerQ)) : 0); }
-      p.lastPts=pts; p.lastChoice=choice; p.score+=pts;
-    }
-    // rank + per-player results
-    var s=sortedPlayers(), rankOf={};
-    for(var r=0;r<s.length;r++){ rankOf[s[r].pid]=r+1; }
-    for(var j=0;j<G.order.length;j++){ var pj=G.players[G.order[j]]; if(!pj) continue;
-      results[pj.pid]={ pts:pj.lastPts||0, total:pj.score, rank:rankOf[pj.pid]||playerCount() }; }
-    send({ t:"reveal", qseq:G.qseq, correctIndex:q.c, options:q.a.slice(), split:split, leaderboard:leaderboard(10), players:results });
-    renderConsole();
-    // authoritative roll to the full leaderboard on the TV
-    G.autoLock=setTimeout(function(){ if(G.status==="reveal"){ send({ t:"leaderboard", title:"Leaderboard", rows:leaderboard(10) }); } }, 5000);
+    if(G.busy || G.status!=="question" || !G.gameId) return; G.busy=true; clearTick();
+    apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
+      G.status="reveal"; G.board=r.leaderboard||[];
+      if(G.current) G.current.correctIndex=r.correct_index;
+      // Safe to send correct_index now, the reveal has happened.
+      bcast({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
+        options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board });
+      renderConsole();
+      setTimeout(function(){ if(G.status==="reveal"){ bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); } }, 5200);
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
   function finish(){
-    clearTimers();
+    clearTick();
     G.status="ended";
-    var s=sortedPlayers(), top=[];
-    for(var i=0;i<Math.min(3,s.length);i++){ top.push({ name:s[i].name, points:s[i].score }); }
-    send({ t:"podium", top:top });
-    send({ t:"leaderboard", title:"Final scores", rows:leaderboard(10) });
-    sendState();
+    bcast({ t:"podium", top:G.board.slice(0,3), rows:G.board });
+    bcast({ t:"leaderboard", title:"Final scores", rows:G.board });
     renderConsole();
   }
-  function clearTimers(){ if(G.tick){ clearInterval(G.tick); G.tick=null; } if(G.autoLock){ clearTimeout(G.autoLock); G.autoLock=null; } }
+  function endRound(){
+    clearTick();
+    var gid=G.gameId;
+    G.status="setup"; G.current=null; G.answeredPids={};
+    bcast({ t:"idle" });   // screen returns to the join/lobby state
+    renderConsole();
+    if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
+  }
 
-  // ---- incoming ----
+  // ---- incoming (screen presence on the pairing channel; player join + answer on the
+  //      game channel; both flow through onMsg) ----
   function onMsg(m){
     if(!m||!m.t) return;
+    if(m.t==="tv_here"){
+      $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      if(m.hello){
+        // A freshly (re)loaded screen: re-hand the session + replay the running state.
+        send({ t:"host_here" });
+        if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
+        if(G.status!=="setup"){ send({ t:"mode", mode:"trivia" }); send({ t:"players", count:playerCount() }); }
+      }
+      return;
+    }
     if(m.t==="join"){
-      if(!m.pid) return;
-      if(!G.players[m.pid]){ G.players[m.pid]={ pid:m.pid, name:(m.name||"Player"), score:0, lastPts:0, lastChoice:null }; G.order.push(m.pid); }
+      if(!m.pid) return;                       // cosmetic roster only; the Worker meters vp_players
+      if(!G.players[m.pid]){ G.players[m.pid]={ name:(m.name||"Player") }; G.order.push(m.pid); }
       else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
-      sendState();
+      bcast({ t:"players", count:playerCount() });
       renderConsole();
     }
     else if(m.t==="answer"){
-      if(G.status!=="question") return;
-      if(m.qseq!==G.qseq) return;
-      if(!m.pid || !G.players[m.pid]) return;
-      if(G.answers[m.pid]) return;                 // reject a second answer
-      if(Date.now()>G.endsAt) return;              // reject after time is up
-      var choice=parseInt(m.choice,10);
-      if(!(choice>=0 && choice<4)) return;
-      var remaining=Math.max(0, (G.endsAt-Date.now())/1000);
-      G.answers[m.pid]={ choice:choice, remaining:remaining };
-      updateLive();
+      if(G.status!=="question" || m.qseq!==G.answeredQseq || !m.pid) return;   // cosmetic "answered" ticker
+      G.answeredPids[m.pid]=true; updateLive();
+      send({ t:"answered", count:answeredCount() });   // the TV is on the pair channel, so push the tally to it
     }
   }
 
-  // ---- connect ----
+  // ---- pair with the venue screen ----
   function connect(code){
-    G.code=code;
-    ch=client.channel("vp-trivia-"+code, { config:{ broadcast:{ self:false } } });
+    G.pairCode=code;
+    ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
-        subscribed=true; flushQueue();
-        $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
-        sendState();
+        subscribed=true; send({ t:"host_here" }); flushQueue();
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });
+    $("signinView").classList.add("hidden");
     $("connectView").classList.add("hidden");
     $("consoleView").classList.remove("hidden");
     $("roomCode").textContent=code;
     renderConsole();
+  }
+
+  // ---- question sets (venue's own + the VenuePlay library, via RLS on the authed client) ----
+  function loadQuestionSets(){
+    var sel=$("setSel");
+    client.from("vp_question_sets")
+      .select("id,title,question_count,visibility,owner_venue_id,status")
+      .eq("status","active")
+      .then(function(r){
+        var rows=(r&&r.data)||[];
+        var mine=[], lib=[];
+        rows.forEach(function(s){ if(s.owner_venue_id===G.venueId) mine.push(s); else lib.push(s); });
+        function opt(s){ var o=document.createElement("option"); o.value=s.id;
+          o.textContent=(s.title||"Untitled set")+(s.question_count!=null?(" ("+s.question_count+")"):"");
+          o.setAttribute("data-count", s.question_count!=null?s.question_count:0); return o; }
+        sel.innerHTML="";
+        if(!rows.length){ var o0=document.createElement("option"); o0.value=""; o0.textContent="No question sets found"; sel.appendChild(o0); G.questionCount=0; $("setupQs").textContent="0"; return; }
+        if(mine.length){ var g1=document.createElement("optgroup"); g1.label="Your sets"; mine.forEach(function(s){ g1.appendChild(opt(s)); }); sel.appendChild(g1); }
+        if(lib.length){ var g2=document.createElement("optgroup"); g2.label="VenuePlay library"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
+        syncSetCount();
+      }, function(){ sel.innerHTML='<option value="">Could not load question sets</option>'; });
+  }
+  function syncSetCount(){
+    var sel=$("setSel"), opt=sel.options[sel.selectedIndex];
+    var c=opt?parseInt(opt.getAttribute("data-count"),10):0;
+    G.setId=sel.value||""; G.questionCount=(c>=0?c:0);
+    $("setupQs").textContent=G.questionCount;
   }
 
   // ---- events ----
@@ -459,11 +532,12 @@
   codeIn.addEventListener("keydown", function(e){ if(e.key==="Enter") tryConnect(); });
   function tryConnect(){
     var code=codeIn.value.toUpperCase().trim();
-    if(code.length!==6){ $("codeErr").textContent="Enter all 6 characters from the TV."; return; }
+    if(!CODE_RE.test(code)){ $("codeErr").textContent="Enter all 6 characters from the TV."; return; }
     connect(code);
   }
   $("connectBtn").addEventListener("click", tryConnect);
   $("startBtn").addEventListener("click", startRound);
+  $("setSel").addEventListener("change", syncSetCount);
 
   document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
     G.speedBonus=b.getAttribute("data-v")==="on";
@@ -474,8 +548,25 @@
     document.querySelectorAll("#cfgColour button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
   }); });
 
-  // prefill code from ?room if present (handy for testing)
-  (function(){ var m=/[?&]room=([^&]+)/.exec(window.location.search); if(m){ codeIn.value=decodeURIComponent(m[1]).toUpperCase().slice(0,6); } })();
+  // ---- boot: resolve the host login, then let them pair + run ----
+  function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); }
+  function tvFromUrl(){ var m=/[?&]tv=([^&]+)/.exec(window.location.search); if(!m) return ""; var c=decodeURIComponent(m[1]).toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); return CODE_RE.test(c)?c:""; }
+
+  $("statusText").textContent="Checking sign in";
+  if(window.VP){
+    VP.ready().then(function(ctx){
+      if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live quiz."); return; }
+      if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
+      G.venueId=ctx.currentVenueId;
+      $("statusText").textContent="Signed in";
+      loadQuestionSets();
+      var tv=tvFromUrl();
+      if(tv){ connect(tv); }
+      else { $("connectView").classList.remove("hidden"); }
+    }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
+  } else {
+    showSignIn("Sign in helper failed to load. Try reloading.");
+  }
 })();
 </script>
 </body>

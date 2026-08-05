@@ -40,8 +40,8 @@
 
   /* lobby */
   .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
-  .qrbig{width:26cqw;max-width:280px;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
-  .qrbig canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
+  .qrbig canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
   .lobbytxt{text-align:left}
   .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,52px);color:#fff;line-height:1}
   .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,26px);color:var(--pink);margin-top:1cqw}
@@ -66,7 +66,7 @@
   /* join corner (running only) */
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
   .qrmini{width:clamp(44px,8cqw,96px);height:clamp(44px,8cqw,96px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
-  .qrmini canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .qrmini canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
   .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
   .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,24px);color:var(--gold);letter-spacing:.08em}
 
@@ -200,7 +200,7 @@
   // this screen), then flips to the player join link built from the real DB join code.
   function drawLobbyQR(){
     var url = joinCode ? playURLFor(joinCode) : hostURL;
-    drawQR($("qrBig"), 512, url);
+    drawQR($("qrBig"), 720, url);
     drawQR($("qrMini"), 220, joinCode ? playURLFor(joinCode) : url);
   }
   function renderLobby(){
