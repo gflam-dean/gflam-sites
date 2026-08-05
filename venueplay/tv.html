@@ -50,6 +50,7 @@
   .ad .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(12px,2.4cqw,22px);color:var(--pink)}
   .ad .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,9cqw,96px);color:#fff;line-height:.98;margin:1.6cqw 0}
   .ad .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,3cqw,32px);color:var(--text);max-width:82cqw}
+  .ad .adhelp{position:absolute;bottom:3.5cqw;font-family:'Manrope',sans-serif;font-weight:500;font-size:clamp(11px,1.5cqw,17px);color:var(--faint)}
   .ad-a{background:radial-gradient(760px 420px at 50% 18%, rgba(255,194,75,.20), transparent 60%), linear-gradient(160deg,#151007,#050506)}
   .ad-b{background:radial-gradient(760px 420px at 30% 30%, rgba(255,31,142,.18), transparent 60%), linear-gradient(160deg,#12060d,#050506)}
   .ad-c{background:radial-gradient(760px 420px at 70% 25%, rgba(53,208,127,.16), transparent 60%), linear-gradient(160deg,#06120c,#050506)}
@@ -415,9 +416,12 @@
       return '<div class="adtag">'+esc(r.tag||"")+'</div><div class="adbig">'+escBr(r.head||"")+'</div><div class="adsub">'+esc(r.sub||"")+'</div>';
     }
     if(e.type==="holding"){   // shown when a venue has no ads/draws/raffle yet, so the screen is never blank
+      // The help line covers the "our issue" case: if a set-up venue's screen is sitting here,
+      // their promos/game did not load, so point them to support rather than only cheering.
       return '<div class="adtag" style="color:'+accentHex("pink")+'">VenuePlay</div>'+
              '<div class="adbig">Game on here tonight</div>'+
-             '<div class="adsub">Grab your phone, the fun starts soon</div>';
+             '<div class="adsub">Grab your phone, the fun starts soon</div>'+
+             '<div class="adhelp">Screen not showing your promos or game? Email hello@venueplay.com.au</div>';
     }
     var s=e.slide;
     // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
