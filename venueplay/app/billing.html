@@ -225,6 +225,8 @@
       <textarea id="md-import" rows="6" placeholder="142, Jane Smith
 143, Sam Taylor" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:14px;font-family:'Manrope',sans-serif;resize:vertical"></textarea>
       <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
+      <input type="file" id="md-csv" accept=".csv,text/csv" style="display:none">
+      <button class="addbtn" id="md-csvbtn" style="margin-top:8px">Or upload a CSV file</button>
     </div>
 
     <p class="msg" id="msg"></p>
@@ -666,6 +668,22 @@
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);
     $("mdImport").addEventListener("click", importMembers);
+    $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });
+    $("md-csv").addEventListener("change", function(){
+      var f = this.files && this.files[0]; if (!f) return;
+      if (f.size > 2*1024*1024){ showMsg("That file is a bit big. Keep it under 2MB."); this.value=""; return; }
+      var reader = new FileReader();
+      reader.onload = function(){
+        var lines = String(reader.result||"").split(/\r?\n/);
+        // Drop a header row (a first line that does not start with a number).
+        if (lines.length && !/^\s*\d/.test(lines[0])) lines.shift();
+        var cur = $("md-import").value.trim();
+        $("md-import").value = (cur ? cur + "\n" : "") + lines.join("\n").trim();
+        showMsg("CSV loaded. Check it looks right, then Add to members list.", true);
+      };
+      reader.readAsText(f);
+      this.value = "";
+    });
     api("/account/summary", {}).then(function(d){
       var venues = (d && d.venues) || [];
       if (!venues.length) return;
