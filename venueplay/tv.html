@@ -107,6 +107,15 @@
   .runright{flex:1;min-width:0}
   .balleye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(9px,1.7cqw,14px);color:var(--muted)}
   .curball{display:flex;flex-direction:column;align-items:center;line-height:.85;margin:.6cqw 0}
+
+  /* big-ball reveal */
+  .ballreveal{position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .brball{width:min(38cqw,58vh);height:min(38cqw,58vh);border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
+    color:#0A0A0B;font-family:'Anton',sans-serif;font-size:min(20cqw,30vh);line-height:1;
+    box-shadow:0 0 100px rgba(255,31,142,.55), inset 0 -1.2cqw 3cqw rgba(0,0,0,.16)}
+  @keyframes brpop{ 0%{transform:scale(.2);opacity:0} 45%{transform:scale(1.06);opacity:1} 70%{transform:scale(.98)} 100%{transform:scale(1);opacity:1} }
+  @keyframes brgo{ 0%{transform:scale(1);opacity:1} 100%{transform:translate(-30cqw,-15cqw) scale(.16);opacity:0} }
   .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
   .cbnum{font-family:'Anton',sans-serif;font-size:clamp(48px,20cqw,168px);color:#fff;line-height:.82;text-shadow:0 0 46px rgba(255,255,255,.22)}
   .prevballs{display:flex;gap:.8cqw;justify-content:center;flex-wrap:wrap;margin-top:1cqw}
@@ -187,6 +196,9 @@
       <div class="bvtext">This link doesn't seem to be linked to an account. You can sign up at <b>www.venueplay.com.au</b>, or contact us at <b>hello@venueplay.com.au</b> if you think this is wrong.</div>
     </div>
   </div>
+
+  <!-- ball reveal: a big ball pops in the centre, then flies down to the board -->
+  <div class="ballreveal hidden" id="ballReveal"><div class="brball" id="brBall">--</div></div>
 
   <!-- BINGO: lobby -->
   <div class="layer hidden" id="tvLobby">
@@ -481,6 +493,21 @@
     drawQR($("qrBig"), playURL, 720);   // draw now the lobby is actually visible (not blank)
     drawQR($("qrMini"), playURL, 240);
   }
+  // Big-ball reveal: pop the new number up large in the centre, hold, then shrink it away
+  // toward the board (which updates behind it). Only during a live bingo game.
+  var revealT1=null, revealT2=null;
+  function revealBall(n){
+    n=parseInt(n,10); if(!n || tvMode!=="bingo") return;
+    var el=$("ballReveal"), b=$("brBall"); if(!el||!b) return;
+    b.textContent=n; el.classList.remove("hidden");
+    b.style.animation="none"; void b.offsetWidth;   // restart the animation
+    b.style.animation="brpop .55s cubic-bezier(.2,.9,.3,1.2) forwards";
+    if(revealT1) clearTimeout(revealT1); if(revealT2) clearTimeout(revealT2);
+    revealT1=setTimeout(function(){
+      b.style.animation="brgo .55s ease-in forwards";
+      revealT2=setTimeout(function(){ el.classList.add("hidden"); }, 560);
+    }, 1300);
+  }
   function renderRun(){
     var n=state.called.length ? state.called[state.called.length-1] : 0;
     $("cbNum").textContent = n ? n : "--";
@@ -602,6 +629,7 @@
     else if(m.t==="ball"){
       state.called=m.called||state.called;
       state.phase="running"; applyBingo();
+      revealBall(m.number);   // big-ball reveal for the freshly called number
     }
     else if(m.t==="players"){
       if(typeof m.count==="number") state.playerCount=m.count;
