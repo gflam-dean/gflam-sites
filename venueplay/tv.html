@@ -82,8 +82,8 @@
   .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
   .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
   .jsub b{color:var(--gold)}
-  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:2.4cqw}
-  .qrbig{width:26cqw;max-width:320px;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.4cqw;flex:none;box-shadow:0 0 30px rgba(255,255,255,.12)}
+  .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:1.6cqw}
+  .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.6cqw;flex:none;box-shadow:0 0 44px rgba(255,255,255,.16)}
   .qrbig canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
   .lobbytxt{text-align:left}
   .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,64px);color:#fff;line-height:1}
@@ -441,16 +441,16 @@
     if(code && CODE_RE.test(code)){ joinCode=code; playURL=playURLFor(code); }
     $("lobbyCode").textContent=joinCode;
     $("tvJoinCode").textContent=joinCode;
-    drawQR($("qrBig"), playURL, 512);
+    drawQR($("qrBig"), playURL, 720);
     drawQR($("qrMini"), playURL, 240);
-    drawQR($("qrBig"), playURL, 512);
+    drawQR($("qrBig"), playURL, 720);
     drawQR($("qrMini"), playURL, 240);
   }
   function renderLobby(){
     $("lobbyCode").textContent=joinCode;
     $("tvJoinCode").textContent=joinCode;
     $("lobbyPlaying").textContent=state.playerCount;
-    drawQR($("qrBig"), playURL, 512);   // draw now the lobby is actually visible (not blank)
+    drawQR($("qrBig"), playURL, 720);   // draw now the lobby is actually visible (not blank)
     drawQR($("qrMini"), playURL, 240);
   }
   function renderRun(){
@@ -598,7 +598,7 @@
   $("pairCode").textContent=CODE;
   $("lobbyCode").textContent=joinCode;
   $("tvJoinCode").textContent=joinCode;
-  drawQR($("qrBig"), playURL, 512);
+  drawQR($("qrBig"), playURL, 720);
   drawQR($("qrMini"), playURL, 240);
   enterAds(); // shows + draws the pair QR while in ads with no host connected
 

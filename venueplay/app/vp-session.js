@@ -200,8 +200,11 @@
 
   function build() {
     var client = getClient();
-    return client.auth.getUser().then(function (r) {
-      var user = (r && r.data && r.data.user) || null;
+    // getSession() reads the persisted session (instant, refreshes only if expired) instead of
+    // getUser() which always hits the network. Routing/role only needs identity; every real
+    // action still re-verifies the token at the Worker, so this is safe and much faster.
+    return client.auth.getSession().then(function (r) {
+      var user = (r && r.data && r.data.session && r.data.session.user) || null;
       if (!user) { _ctx = emptyCtx(client); return _ctx; }
 
       return resolveRole(client, user).then(function (role) {
