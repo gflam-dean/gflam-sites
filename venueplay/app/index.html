@@ -286,9 +286,12 @@
           <div class="field">
             <label>Winning pattern</label>
             <select id="patternSel">
-              <option value="one">One line</option>
+              <option value="one">One line (any row)</option>
               <option value="two">Two lines</option>
               <option value="full">Full house</option>
+              <option value="corners">Four corners</option>
+              <option value="top">Top line</option>
+              <option value="bottom">Bottom line</option>
             </select>
           </div>
           <div class="field">
@@ -362,7 +365,7 @@
   function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
-  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house"};
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",bottom:"Bottom line"};
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
@@ -720,12 +723,22 @@
   function isCalled(n){ return !!G.called[n]; }
   function rowComplete(card,row){ for(var c=0;c<9;c++){ var v=card[row][c]; if(v && !isCalled(v)) return false; } return true; }
   function completeRows(card){ var n=0; for(var r=0;r<3;r++){ if(rowComplete(card,r)) n++; } return n; }
+  // the four "corners" of a 3x9 ticket = the first and last actual number of the top and bottom rows
+  function cornerNums(card){
+    var out=[]; [0,2].forEach(function(r){ var row=card[r], first=0, last=0;
+      for(var c=0;c<9;c++){ if(row[c]){ if(!first) first=row[c]; last=row[c]; } }
+      if(first) out.push(first); if(last && last!==first) out.push(last); });
+    return out;
+  }
   function checkPattern(card){
     if(!card) return false;
     switch(G.pattern){
       case "one": return completeRows(card)>=1;
       case "two": return completeRows(card)>=2;
       case "full": return completeRows(card)>=3;
+      case "top": return rowComplete(card,0);
+      case "bottom": return rowComplete(card,2);
+      case "corners": var cn=cornerNums(card); if(!cn.length) return false; for(var i=0;i<cn.length;i++){ if(!isCalled(cn[i])) return false; } return true;
     }
     return false;
   }

@@ -245,7 +245,7 @@
   function escBr(s){ return esc(s).replace(/\r?\n/g,"<br>"); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
-  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house"};
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",bottom:"Bottom line"};
 
   var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
