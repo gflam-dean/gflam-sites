@@ -303,7 +303,9 @@
   // the host pair-input filter. NOTE: tv.html inlines an identical copy (it does not load VP);
   // keep the two in lockstep.
   function venueCode(slug) {
-    var s = String(slug || "").toLowerCase(), h = 2166136261 >>> 0;
+    // Strip to [a-z0-9] so the host and the TV always feed venueCode the SAME string, no matter
+    // how the slug is punctuated (the TV pre-sanitises differently). Then hash to 6 chars.
+    var s = String(slug || "").toLowerCase().replace(/[^a-z0-9]/g, ""), h = 2166136261 >>> 0;
     for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
     var A = "ACDEFGHJKMNPQRSTUVWXYZ2345679", out = "", x = h || 1;
     for (var j = 0; j < 6; j++) { x = (Math.imul(x, 1103515245) + 12345) >>> 0; out += A[x % A.length]; }

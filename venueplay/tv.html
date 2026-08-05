@@ -146,7 +146,7 @@
 <div class="tv" id="tv">
   <div class="winburst" id="winBurst"></div>
 
-  <div class="tv-status"><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <div class="tv-status" style="display:none"><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
   <div class="tv-corner" id="tvCorner">
     <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
     <span class="vn">VenuePlay</span>
@@ -260,7 +260,7 @@
   // they share a channel with no pairing step; it also shows as the players' join code.
   function tvVenueSlug(){ var m=/[?&]venue=([^&]+)/.exec(window.location.search); return m?decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,""):""; }
   function venueCode(slug){
-    var s=String(slug||"").toLowerCase(), h=2166136261>>>0;
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
     for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
     var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
     for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
@@ -306,19 +306,14 @@
   function markHostConnected(){ hostConnected=true; hidePairPanel(); }
 
   // ================= ADVERTISING LOOP =================
+  // No fake sample adverts: a venue only ever shows what it has actually set up (its uploaded
+  // slides, real members-draw jackpots and its own raffle). Everything below is populated from
+  // the venue's own screen config; it starts empty so nothing false is ever on the screen.
   var ADS={
     rotationSecs:7,
-    slides:[
-      {kind:"built",tag:"Tonight &middot; drawn 7:00pm",head:"Wednesday\nMembers Draw",sub:"$1,240 jackpot, be here when your number is drawn",accent:"gold"},
-      {kind:"built",tag:"Bistro",head:"Schnitzel\nWednesday",sub:"Chicken or veal, chips and salad &middot; $18",accent:"gold"},
-      {kind:"built",tag:"Live music",head:"Friday\nSundowners",sub:"On the green from 5pm &middot; free entry",accent:"green"},
-      {kind:"built",tag:"Membership",head:"Join at\nthe bar",sub:"Weekly members draws, bar perks and more",accent:"blue"}
-    ],
-    draws:[
-      {day:"Wednesday",jackpot:"$1,240",time:"7:00pm",tonight:true},
-      {day:"Friday",jackpot:"$3,800",time:"7:30pm",tonight:false}
-    ],
-    raffle:{tag:"Tonight &middot; drawn 6:30pm",head:"Meat Raffle",sub:"Tickets at the bar &middot; trays of meat and seafood"}
+    slides:[],
+    draws:[],
+    raffle:null
   };
   var ACCENT={pink:"ad-b",gold:"ad-a",green:"ad-c",blue:"ad-d"};
   var ACCENT_COLOR={pink:"#FF1F8E",gold:"#FFC24B",green:"#35D07F",blue:"#4C8DFF"};
