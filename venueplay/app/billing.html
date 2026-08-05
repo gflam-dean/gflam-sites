@@ -54,6 +54,23 @@
   .venue.cancelling{opacity:.9}
   .cxbanner{flex-basis:100%;background:rgba(255,60,120,.08);border:1px solid var(--line-2);border-radius:10px;padding:10px 13px;color:var(--pink);font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .cxbanner .keep{background:none;border:0;color:#fff;text-decoration:underline;cursor:pointer;font-size:12.5px;font-family:inherit;white-space:nowrap}
+  .screenpick{margin:0 0 12px}
+  .screenpick .flabel{display:block;margin:0 0 5px}
+  .screenpick select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:15px;font-family:'Manrope',sans-serif}
+  .scard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:15px 16px;margin:10px 0}
+  .scardhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;letter-spacing:.01em}
+  .snote{color:var(--muted);font-size:12.5px;margin:3px 0 10px}
+  .srow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
+  .srow input[type=text]{flex:1 1 120px;min-width:0;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 10px;font-size:14px;font-family:'Manrope',sans-serif}
+  .srow .sfull{flex-basis:100%}
+  .srow .accent{display:flex;gap:6px;align-items:center}
+  .swatch{width:26px;height:26px;border-radius:8px;border:2px solid transparent;cursor:pointer;padding:0}
+  .swatch.on{border-color:#fff}
+  .srow .rm{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 4px;flex:none}
+  .srow .rm:hover{color:var(--pink)}
+  .drow{align-items:center}
+  .drow label.tn{display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px;white-space:nowrap;flex:none}
+  .drow input[type=text]{flex:1 1 90px}
   .addbtn{background:transparent;border:1px dashed var(--line);color:var(--text);padding:9px 15px;border-radius:11px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer}
   .addbtn:hover{border-color:var(--pink);color:#fff}
   .addform{display:none;gap:10px;margin-top:10px;flex-wrap:wrap}
@@ -152,6 +169,38 @@
       <label class="flabel" style="margin-top:2px">Venues they can run</label>
       <div class="hostvenues" id="host-venues"></div>
       <button class="go" id="host-go" style="align-self:flex-start">Add host</button>
+    </div>
+
+    <div class="label">Your venue screen</div>
+    <p class="note" style="margin:0 0 10px">What plays on your venue TV between games. Set it here, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds.</p>
+    <div id="screenPickWrap" class="screenpick" style="display:none">
+      <label class="flabel" for="screenVenue">Editing screen for</label>
+      <select id="screenVenue"></select>
+    </div>
+
+    <div class="scard">
+      <div class="scardhead">Promo slides</div>
+      <p class="snote">Your own promos: happy hour, bistro specials, live music, membership. Up to 8.</p>
+      <div id="slides"></div>
+      <button class="addbtn" id="addSlide" style="margin-top:8px">+ Add a slide</button>
+    </div>
+
+    <div class="scard">
+      <div class="scardhead">Weekly members draws</div>
+      <p class="snote">The nights your draw runs, shown as a week-at-a-glance. Tick "tonight" for tonight's draw.</p>
+      <div id="draws"></div>
+      <button class="addbtn" id="addDraw" style="margin-top:8px">+ Add a draw night</button>
+    </div>
+
+    <div class="scard">
+      <div class="scardhead">Meat raffle</div>
+      <p class="snote">Leave blank if you do not run one.</p>
+      <div id="raffleBox"></div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
+      <button class="go" id="screenSave">Save screen</button>
+      <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview this screen</a>
     </div>
 
     <p class="msg" id="msg"></p>
@@ -392,10 +441,153 @@
 
   $("signout").addEventListener("click", function(){ VP.signOut(); });
 
+  // ---- Venue screen editor (Promo slides + Weekly draws + Meat raffle) ----
+  var ACCENTS = [["gold","#FFC24B"],["pink","#FF1F8E"],["green","#35D07F"],["blue","#4C8DFF"]];
+  var screenVenues = [], screenCurrent = null, screenOrigin = "";
+
+  function slideRow(s){
+    s = s || { accent:"gold" };
+    var row = document.createElement("div"); row.className = "srow";
+    row.innerHTML =
+      '<input type="text" class="s-tag sfull" placeholder="Small label (e.g. Bistro, Live music)" maxlength="60">' +
+      '<input type="text" class="s-head sfull" placeholder="Big headline (e.g. Schnitzel Wednesday)" maxlength="60">' +
+      '<input type="text" class="s-sub sfull" placeholder="One line of detail" maxlength="140">' +
+      '<div class="accent" data-accent="' + esc(s.accent||"gold") + '"></div>' +
+      '<button class="rm" title="Remove slide" type="button">&times;</button>';
+    row.querySelector(".s-tag").value = s.tag || "";
+    row.querySelector(".s-head").value = s.head || "";
+    row.querySelector(".s-sub").value = s.sub || "";
+    var acc = row.querySelector(".accent");
+    ACCENTS.forEach(function(a){
+      var b = document.createElement("button"); b.type = "button";
+      b.className = "swatch" + (a[0]===(s.accent||"gold") ? " on" : ""); b.style.background = a[1];
+      b.addEventListener("click", function(){
+        acc.setAttribute("data-accent", a[0]);
+        acc.querySelectorAll(".swatch").forEach(function(x){ x.classList.remove("on"); });
+        b.classList.add("on");
+      });
+      acc.appendChild(b);
+    });
+    row.querySelector(".rm").addEventListener("click", function(){ row.remove(); });
+    return row;
+  }
+  function drawRow(d){
+    d = d || {};
+    var row = document.createElement("div"); row.className = "srow drow";
+    row.innerHTML =
+      '<input type="text" class="d-day" placeholder="Day (e.g. Wednesday)" maxlength="20">' +
+      '<input type="text" class="d-jack" placeholder="Jackpot (e.g. $1,240)" maxlength="20">' +
+      '<input type="text" class="d-time" placeholder="Time (e.g. 7:00pm)" maxlength="20">' +
+      '<label class="tn"><input type="checkbox" class="d-tonight"> tonight</label>' +
+      '<button class="rm" title="Remove draw" type="button">&times;</button>';
+    row.querySelector(".d-day").value = d.day || "";
+    row.querySelector(".d-jack").value = d.jackpot || "";
+    row.querySelector(".d-time").value = d.time || "";
+    row.querySelector(".d-tonight").checked = !!d.tonight;
+    row.querySelector(".rm").addEventListener("click", function(){ row.remove(); });
+    return row;
+  }
+  function raffleRow(r){
+    r = r || {};
+    var box = $("raffleBox"); box.innerHTML = "";
+    var row = document.createElement("div"); row.className = "srow";
+    row.innerHTML =
+      '<input type="text" class="r-tag sfull" placeholder="Small label (e.g. Tonight, drawn 6:30pm)" maxlength="60">' +
+      '<input type="text" class="r-head sfull" placeholder="Headline (e.g. Meat Raffle)" maxlength="60">' +
+      '<input type="text" class="r-sub sfull" placeholder="One line of detail" maxlength="140">';
+    row.querySelector(".r-tag").value = r.tag || "";
+    row.querySelector(".r-head").value = r.head || "";
+    row.querySelector(".r-sub").value = r.sub || "";
+    box.appendChild(row);
+  }
+  function fillScreen(cfg){
+    var sl = $("slides"); sl.innerHTML = "";
+    (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
+    if (!(cfg.slides||[]).length) sl.appendChild(slideRow());
+    var dr = $("draws"); dr.innerHTML = "";
+    (cfg.draws||[]).forEach(function(d){ dr.appendChild(drawRow(d)); });
+    if (!(cfg.draws||[]).length) dr.appendChild(drawRow());
+    raffleRow(cfg.raffle || {});
+  }
+  function tvHref(slug){ return (screenOrigin||"") + "/tv" + (slug ? ("?venue=" + encodeURIComponent(slug)) : ""); }
+  function setTvLinks(slug){
+    $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?venue=" + slug) : "");
+    $("screenPreview").href = tvHref(slug);
+  }
+  function loadScreenFor(venueId){
+    return api("/account/screen-get", venueId ? { venue_id:venueId } : {}).then(function(d){
+      if (d.error){ showMsg("Screen: " + d.error); return; }
+      screenCurrent = d.venue;
+      setTvLinks(d.venue && d.venue.slug);
+      fillScreen(d);
+    });
+  }
+  function gatherScreen(){
+    var slides = [];
+    $("slides").querySelectorAll(".srow").forEach(function(r){
+      var tag=r.querySelector(".s-tag").value.trim(), head=r.querySelector(".s-head").value.trim(), sub=r.querySelector(".s-sub").value.trim();
+      var accent=r.querySelector(".accent").getAttribute("data-accent") || "gold";
+      if (tag||head||sub) slides.push({ tag:tag, head:head, sub:sub, accent:accent });
+    });
+    var draws = [];
+    $("draws").querySelectorAll(".srow").forEach(function(r){
+      var day=r.querySelector(".d-day").value.trim();
+      if (!day) return;
+      draws.push({ day:day, jackpot:r.querySelector(".d-jack").value.trim(), time:r.querySelector(".d-time").value.trim(), tonight:r.querySelector(".d-tonight").checked });
+    });
+    var raffle = null, rb = $("raffleBox").querySelector(".srow");
+    if (rb){
+      var rt=rb.querySelector(".r-tag").value.trim(), rh=rb.querySelector(".r-head").value.trim(), rs=rb.querySelector(".r-sub").value.trim();
+      if (rt||rh||rs) raffle = { tag:rt, head:rh, sub:rs };
+    }
+    return { slides:slides, draws:draws, raffle:raffle };
+  }
+  function saveScreen(){
+    if (!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
+    var data = gatherScreen(), btn = $("screenSave");
+    btn.disabled = true; btn.textContent = "Saving…";
+    api("/account/screen-save", { venue_id:screenCurrent.id, slides:data.slides, draws:data.draws, raffle:data.raffle }).then(function(r){
+      btn.disabled = false; btn.textContent = "Save screen";
+      if (r.error){ showMsg(r.error); return; }
+      showMsg("Screen saved. It updates on your TV within a few seconds.", true);
+    });
+  }
+  function initScreen(){
+    try{ screenOrigin = window.location.origin; }catch(e){}
+    api("/account/screen-get", {}).then(function(d){
+      if (d.error){ showMsg("Screen: " + d.error); return; }
+      screenVenues = d.venues || [];
+      screenCurrent = d.venue;
+      var pick = $("screenPickWrap"), sel = $("screenVenue");
+      if (screenVenues.length > 1){
+        sel.innerHTML = "";
+        screenVenues.forEach(function(v){
+          var o = document.createElement("option"); o.value = v.id; o.textContent = v.name;
+          if (d.venue && v.id === d.venue.id) o.selected = true;
+          sel.appendChild(o);
+        });
+        pick.style.display = "";
+        sel.onchange = function(){ loadScreenFor(sel.value); };
+      } else { pick.style.display = "none"; }
+      setTvLinks(d.venue && d.venue.slug);
+      fillScreen(d);
+    });
+    $("addSlide").addEventListener("click", function(){
+      if ($("slides").querySelectorAll(".srow").length >= 8){ showMsg("Up to 8 slides."); return; }
+      $("slides").appendChild(slideRow());
+    });
+    $("addDraw").addEventListener("click", function(){
+      if ($("draws").querySelectorAll(".srow").length >= 7){ showMsg("Up to 7 draw nights."); return; }
+      $("draws").appendChild(drawRow());
+    });
+    $("screenSave").addEventListener("click", saveScreen);
+  }
+
   // Require sign-in, then load.
   VP.requireAuth().then(function(ctx){
     if (!ctx){ return; } // requireAuth handles redirect when signed out
     load();
+    initScreen();
   }).catch(function(){ load(); });
 })();
 </script>

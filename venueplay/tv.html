@@ -266,8 +266,13 @@
     return window.location.href.replace(/\/[^\/?#]*([?#].*)?$/,"");
   }
   var ORIGIN=siteOrigin();
-  var pairURL=ORIGIN+"/app?tv="+CODE;
-  var playURL=ORIGIN+"/play?room="+CODE;
+  var pairURL=ORIGIN+"/app?tv="+CODE;        // pairing link for the host iPad: stays the venue's own screen code
+  // The code PLAYERS use is the DB join_code, handed over by the host once it opens
+  // a session through the game Worker. Until then it defaults to this screen's code.
+  var joinCode=CODE;
+  var sessionId="";
+  function playURLFor(code){ return ORIGIN+"/play?room="+code; }
+  var playURL=playURLFor(joinCode);
 
   // show the pair QR whenever this screen is in ads mode and no host has connected
   // THIS session. no permanent "paired forever" flag: a reload shows it again until
@@ -300,9 +305,9 @@
 
   function loopEntries(){
     var arr=[];
-    ADS.slides.forEach(function(s){ arr.push({type:"slide",slide:s}); });
-    arr.push({type:"auto-draws"});
-    arr.push({type:"auto-raffle"});
+    (ADS.slides||[]).forEach(function(s){ arr.push({type:"slide",slide:s}); });
+    if(ADS.draws && ADS.draws.length) arr.push({type:"auto-draws"});
+    if(ADS.raffle) arr.push({type:"auto-raffle"});
     return arr;
   }
   function entryClass(e){
@@ -384,9 +389,18 @@
     $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun");
   }
 
+  // Apply the real DB join code the host handed us: update the on-screen code and
+  // redraw the player QR/codes to point at /play?room=<join_code>.
+  function setJoinCode(code){
+    if(code && CODE_RE.test(code)){ joinCode=code; playURL=playURLFor(code); }
+    $("lobbyCode").textContent=joinCode;
+    $("tvJoinCode").textContent=joinCode;
+    drawQR($("qrBig"), playURL, 512);
+    drawQR($("qrMini"), playURL, 240);
+  }
   function renderLobby(){
-    $("lobbyCode").textContent=CODE;
-    $("tvJoinCode").textContent=CODE;
+    $("lobbyCode").textContent=joinCode;
+    $("tvJoinCode").textContent=joinCode;
     $("lobbyPlaying").textContent=state.playerCount;
   }
   function renderRun(){
@@ -474,7 +488,7 @@
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
   });
 
-  var HOST_TYPES={host_here:1,mode:1,idle:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
+  var HOST_TYPES={host_here:1,session:1,mode:1,idle:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here") return; // ignore our own presence pings
@@ -482,6 +496,7 @@
     // and reply so the host can flip to "connected"
     if(HOST_TYPES[m.t]){ markHostConnected(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ return; }
+    if(m.t==="session"){ sessionId=m.session_id||sessionId; if(m.join_code) setJoinCode(m.join_code); return; }
     if(m.t==="mode"){
       if(m.mode==="bingo") enterBingo();
       else enterHolding(m.mode);
@@ -529,11 +544,35 @@
   buildBoard();
   buildAds();
   $("pairCode").textContent=CODE;
-  $("lobbyCode").textContent=CODE;
-  $("tvJoinCode").textContent=CODE;
+  $("lobbyCode").textContent=joinCode;
+  $("tvJoinCode").textContent=joinCode;
   drawQR($("qrBig"), playURL, 512);
   drawQR($("qrMini"), playURL, 240);
   enterAds(); // shows + draws the pair QR while in ads with no host connected
+
+  // ---- per-venue screen content ----
+  // /tv?venue=<slug> loads that venue's own promo slides, draw schedule and raffle
+  // (set from the Account page). Plain /tv keeps the built-in sample loop. Best-effort:
+  // any failure just leaves the samples showing.
+  function venueSlug(){
+    var m=/[?&]venue=([^&]+)/.exec(window.location.search);
+    return m ? decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,"") : "";
+  }
+  (function loadVenueScreen(){
+    var slug=venueSlug(); if(!slug) return;
+    fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select=slides,draws,raffle&limit=1",
+      { headers:{ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON } })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(rows){
+        var c=rows&&rows[0]; if(!c) return;
+        if(Array.isArray(c.slides)) ADS.slides=c.slides;
+        if(Array.isArray(c.draws))  ADS.draws=c.draws;
+        ADS.raffle = c.raffle || null;
+        adBuilt=false; buildAds();
+        if(!hostConnected) startAds(); // only re-run the loop if we are still on the idle screen
+      })
+      .catch(function(){});
+  })();
 
   // ================= FULLSCREEN (additive setup control) =================
   // Purely additive: lets a staff member tap once to fill the TV. Does not touch
