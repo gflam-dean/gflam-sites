@@ -598,15 +598,24 @@
   }
 
   // ================= REALTIME =================
-  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
-  var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
-  var tvSubscribed=false;
-  function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
-  ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
-  ch.subscribe(function(status){
-    if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
-    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
-  });
+  // Guarded: if the Supabase library fails to load (flaky venue wifi, Fire Stick), the whole
+  // script must NOT die here - the ads have to keep showing. Realtime just reconnects later.
+  var client=null, ch=null, tvSubscribed=false;
+  function tvSend(obj){ if(tvSubscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); }catch(e){} } }
+  function connectRealtime(){
+    if(typeof supabase==="undefined" || !supabase.createClient){
+      $("statusText").textContent="Reconnecting"; setTimeout(connectRealtime, 3000); return;   // library not here yet, keep trying
+    }
+    try{
+      client=supabase.createClient(SUPA_URL, SUPA_ANON);
+      ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
+      ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+      ch.subscribe(function(status){
+        if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
+        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+      });
+    }catch(err){ $("statusText").textContent="Reconnecting"; setTimeout(connectRealtime, 3000); }
+  }
 
   var HOST_TYPES={host_here:1,session:1,mode:1,idle:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
   function onMsg(m){
@@ -667,14 +676,15 @@
   // ================= INIT =================
   function drawQR(el, url, size){ if(window.QRCode&&el){ QRCode.toCanvas(el, url, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
 
-  buildBoard();
   buildAds();
+  enterAds(); // ads up FIRST, before anything external can fail - the screen is never black
+  buildBoard();
   $("pairCode").textContent=CODE;
   $("lobbyCode").textContent=joinCode;
   $("tvJoinCode").textContent=joinCode;
   drawQR($("qrBig"), playURL, 720);
   drawQR($("qrMini"), playURL, 240);
-  enterAds(); // shows + draws the pair QR while in ads with no host connected
+  connectRealtime(); // realtime is best-effort and retries; the ads are already showing
   validateVenue(); // warn if this screen link isn't tied to a real venue
 
   // Unified TV (OPT-IN with ?unified=1 while we test it - off by default, so the normal /tv is
