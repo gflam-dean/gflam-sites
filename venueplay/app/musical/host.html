@@ -183,6 +183,7 @@
   <!-- CONSOLE -->
   <div id="consoleView" class="hidden">
     <div class="lbl">Room <span class="mono" style="color:var(--gold)" id="roomCode">------</span> &middot; host console</div>
+    <div id="overBanner" style="display:none;margin:0 0 14px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px"></div>
     <div class="console">
 
       <!-- left: run -->
@@ -356,7 +357,7 @@
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
-  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; if(!window.confirm("Full house! You are over your allowance of "+cap+" players.\n\nThe extra "+extra+" player"+(extra===1?"":"s")+" will be added for this month and billed a full month at your per-player rate.\n\nTap OK to start the game with everyone in.")){ var ec=new Error("Over your allowance - game not started."); ec.status=402; throw ec; } return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
+  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(inFirstMonth()) return ackAndGo(); if(!window.confirm("You have more players than your plan includes ("+cap+"). The extra "+extra+" player licence"+(extra===1?"":"s")+" will be charged to your nominated card, and stay valid for the rest of your billing period.\n\nTap OK to start with everyone in.")){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
 
   // TWO broadcast channels for instant UX (the DB is the source of truth), same as the
   // bingo/trivia host:
@@ -399,6 +400,8 @@
   }
   function playedArray(){ return G.playedOrder.slice(); }
   function playerCount(){ return G.order.length; }
+  function playerCap(){ return (G.venue && G.venue.included_players) || 0; }
+  function inFirstMonth(){ var c=G.venue && G.venue.created_at; if(!c) return false; var e=new Date(c); if(isNaN(e.getTime())) return false; e.setMonth(e.getMonth()+1); return new Date()<e; }
   function hostError(msg){ $("statusText").textContent=msg||"Something went wrong"; }
 
   // ---- broadcasts (instant UX only; the DB is the source of truth) ----
@@ -491,6 +494,11 @@
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
     $("setupPlayers").textContent=playerCount();
+    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
+    if(_ob){
+      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
+      else _ob.style.display="none";
+    }
     $("setupCode").textContent=G.joinCode||"------";
     $("playerCount").textContent=playerCount();
     if(!live){
@@ -838,7 +846,7 @@
     VP.ready().then(function(ctx){
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live game."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
-      G.venueId=ctx.currentVenueId;
+      G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       $("statusText").textContent="Signed in";
       if(tv){ libReady.then(function(){ connect(tv); }); }   // paired from the screen QR
       else if(ctx.venue && ctx.venue.slug && window.VP && VP.venueCode){ libReady.then(function(){ connect(VP.venueCode("musical-"+ctx.venue.slug)); }); }
