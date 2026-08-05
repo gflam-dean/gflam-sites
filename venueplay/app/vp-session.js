@@ -297,6 +297,19 @@
     });
   }
 
+  // Deterministic 6-char code from a venue slug. The host and the TV both compute this from
+  // the same venue, so they land on the same channel with NO pairing step. It doubles as the
+  // players' join code (shown on the TV). Alphabet excludes ambiguous characters and matches
+  // the host pair-input filter. NOTE: tv.html inlines an identical copy (it does not load VP);
+  // keep the two in lockstep.
+  function venueCode(slug) {
+    var s = String(slug || "").toLowerCase(), h = 2166136261 >>> 0;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    var A = "ACDEFGHJKMNPQRSTUVWXYZ2345679", out = "", x = h || 1;
+    for (var j = 0; j < 6; j++) { x = (Math.imul(x, 1103515245) + 12345) >>> 0; out += A[x % A.length]; }
+    return out;
+  }
+
   root.VP = {
     getClient: getClient,
     useClient: useClient,
@@ -309,6 +322,7 @@
     saveSettings: saveSettings,
     requireAuth: requireAuth,
     signOut: signOut,
-    homeHref: homeHref
+    homeHref: homeHref,
+    venueCode: venueCode
   };
 })(window);

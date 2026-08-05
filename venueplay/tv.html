@@ -255,8 +255,21 @@
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
 
+  // Venue-derived code: identical to VP.venueCode() in vp-session.js (keep in lockstep). When
+  // the TV is opened as /tv?venue=<slug>, the host derives the SAME code from the same venue, so
+  // they share a channel with no pairing step; it also shows as the players' join code.
+  function tvVenueSlug(){ var m=/[?&]venue=([^&]+)/.exec(window.location.search); return m?decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,""):""; }
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase(), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  var VENUE_SLUG=tvVenueSlug();
   // ---- stable code, persists across refreshes so the link works forever ----
   var CODE=(function(){
+    if(VENUE_SLUG) return venueCode(VENUE_SLUG);   // venue link: derive the shared code, no pairing
     try{ var c=localStorage.getItem("vpTvCode"); if(c && CODE_RE.test(c)) return c; }catch(e){}
     var nc=makeCode(); try{ localStorage.setItem("vpTvCode", nc); }catch(e){} return nc;
   })();

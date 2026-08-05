@@ -227,7 +227,16 @@
     </div>
   </div>
 
-  <!-- ============ PAIR PROMPT ============ -->
+  <!-- ============ VENUE PICK (multi-venue staff) ============ -->
+  <div id="vVenuePick" class="hidden">
+    <div class="authwrap">
+      <div class="authbig">Which venue are you at?</div>
+      <div class="authsub">Pick tonight's venue. The game goes straight to that venue's screen, no code to type.</div>
+      <div class="authcard" id="venuePickList" style="display:flex;flex-direction:column;gap:10px;text-align:center"></div>
+    </div>
+  </div>
+
+  <!-- ============ PAIR PROMPT (fallback) ============ -->
   <div id="vPair" class="hidden">
     <div class="authwrap">
       <div class="authbig">Pair to your TV</div>
@@ -365,7 +374,8 @@
   function pairedCode(){ try{ var c=localStorage.getItem("vpPairCode"); return (c&&CODE_RE.test(c))?c:""; }catch(e){ return ""; } }
 
   // ================= VIEW ROUTER =================
-  var VIEWS=["vSignIn","vAdmin","vNoVenue","vPair","vConsole"];
+  var VIEWS=["vSignIn","vAdmin","vNoVenue","vVenuePick","vPair","vConsole"];
+  var __ctx=null;   // last resolved auth context (for venue-based auto-pairing)
   function go(view){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==view); } }
 
   // ---- VenuePlay HQ "View as" (impersonation) handoff ----
@@ -405,6 +415,7 @@
   // then console); signed in but unlinked -> a friendly "no venue" notice.
   // The demo shortcut buttons deliberately bypass this (no real role).
   function applyRoute(ctx){
+    __ctx = ctx;
     if(!ctx || !ctx.authed){ go("vSignIn"); return; }
     if(ctx.isAdmin){
       var imp=impFlag();
@@ -500,11 +511,42 @@
   });
 
   // ---- always land on the pair step, code pre-filled and visible ----
+  // Auto-pair by venue: the host derives the SAME code the venue's TV derives (VP.venueCode),
+  // so there is no code to type. Multi-venue staff pick their venue first (re-asked each shift).
+  function venuePickFresh(){
+    try{ var v=JSON.parse(localStorage.getItem("vpVenuePick")||"null");
+      if(v && __ctx && v.id===__ctx.currentVenueId && (Date.now()-v.at) < 4*3600*1000) return true; }catch(e){}
+    return false;   // >4h old or a different venue: re-ask (the shift timeout)
+  }
+  function markVenuePick(id){ try{ localStorage.setItem("vpVenuePick", JSON.stringify({ id:id, at:Date.now() })); }catch(e){} }
+  function pairToVenue(slug){
+    if(VP && VP.venueCode && slug){ connect(VP.venueCode(slug)); return true; }
+    return false;
+  }
+  function showVenuePick(){
+    go("vVenuePick");
+    var box=$("venuePickList"); box.innerHTML="<div class='note'>Loading your venues…</div>";
+    VP.listVenues().then(function(vs){
+      var ids={}; ((__ctx&&__ctx.staff)||[]).forEach(function(s){ ids[s.venue_id]=true; });
+      var mine=(vs||[]).filter(function(v){ return ids[v.id]; });
+      box.innerHTML="";
+      if(!mine.length){ box.innerHTML="<div class='cerr'>No venues linked to this login.</div>"; return; }
+      mine.forEach(function(v){
+        var b=document.createElement("button"); b.className="btn pink big"; b.textContent=v.name;
+        b.addEventListener("click", function(){
+          markVenuePick(v.id);
+          VP.setCurrentVenue(v.id).then(function(ctx){ __ctx=ctx; var slug=(ctx&&ctx.venue&&ctx.venue.slug)||v.slug; if(!pairToVenue(slug)){ go("vPair"); } });
+        });
+        box.appendChild(b);
+      });
+    }).catch(function(){ box.innerHTML="<div class='cerr'>Could not load venues. Reload to try again.</div>"; });
+  }
   function proceedVenue(){
-    go("vPair");
-    $("pairIn").value=pairedCode();
-    $("pairErr").textContent="";
-    $("pairIn").focus();
+    var venue=__ctx&&__ctx.venue, staff=(__ctx&&__ctx.staff)||[];
+    if(staff.length>1 && !venuePickFresh()){ showVenuePick(); return; }   // ask which venue this shift
+    if(venue && venue.slug && pairToVenue(venue.slug)){ return; }          // single venue: straight in
+    // Fallback (no venue slug / helper missing): the old type-the-code screen.
+    go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus();
   }
   $("diffTv").addEventListener("click", function(){ try{ localStorage.removeItem("vpPairCode"); }catch(e){} $("pairIn").value=""; $("pairErr").textContent=""; $("pairIn").focus(); });
 
