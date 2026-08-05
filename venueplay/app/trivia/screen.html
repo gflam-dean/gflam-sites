@@ -222,8 +222,10 @@
     return out;
   }
   var VENUE_SLUG=(function(){
-    var m=/[?&]venue=([^&]+)/.exec(window.location.search);
-    var v=m?decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,""):"";
+    var q=window.location.search||"";
+    var m=/[?&]venue=([^&]+)/.exec(q); var raw=m?m[1]:"";
+    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }  // /screen.html?bare-slug
+    var v=raw?decodeURIComponent(raw).toLowerCase().replace(/[^a-z0-9-]/g,""):"";
     if(v){ try{ localStorage.setItem("vpTvVenueTrivia", v); }catch(e){} return v; }
     try{ var s=localStorage.getItem("vpTvVenueTrivia"); if(s) return s; }catch(e){}
     return "";
