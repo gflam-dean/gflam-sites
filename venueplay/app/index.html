@@ -322,6 +322,10 @@
             </select>
             <div class="fieldnote" style="font-size:11.5px;color:var(--faint);margin-top:5px">Everyone gets this many tickets this game.</div>
           </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="allowEarlyChk" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
+            <div class="fieldnote" style="font-size:11.5px;color:var(--faint);margin-top:5px">Lets players call BINGO even when it is not a win yet. A bit of fun for the room. A wrong call still lands with you, so you just tap Play on.</div>
+          </div>
           <div class="stat">
             <div class="box"><div class="k">Players joined</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
@@ -638,7 +642,7 @@
 
   // ================= GAME STATE (bingo) =================
   var G={
-    code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1,
+    code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1, allowEarly:false,
     draw:[], idx:-1, called:{},
     players:{}, order:[],
     claim:null, won:false, lastWin:null, prizesWon:[], startedAt:null
@@ -799,7 +803,7 @@
   function calledArray(){ var a=[]; for(var i=0;i<=G.idx;i++) a.push(G.draw[i]); return a; }
   function playerCount(){ return G.order.length; }
 
-  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, called:calledArray(), active:(G.status==="running"), playerCount:playerCount() }); }
+  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount() }); }
   function dealFor(p){
     var want=clampCards(G.defaultCards);   // the host decides how many tickets everyone gets
     p.cards=[]; for(var k=0;k<want;k++){ p.cards.push({ card:makeCard(), cardNo:100+cryptoInt(900) }); }
@@ -893,10 +897,14 @@
     }
     if(!G.claim){ q.innerHTML='<div class="claimempty">No claims yet. When a player hits BINGO and the pattern checks out, it lands here to confirm.</div>'; return; }
     var c=G.claim;
-    q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+
-      '<span class="vbadge valid">Valid</span></div>'+
+    var valid=c.valid!==false;   // older claims carry no flag and were only ever queued when valid
+    var badge=valid ? '<span class="vbadge valid">Valid</span>'
+                    : '<span class="vbadge" style="background:#F5A524;color:#180d00">Not a win yet</span>';
+    var sub=valid ? (PATTERN_NAMES[G.pattern]+' &middot; verified against '+(G.idx+1)+' called numbers &middot; card #'+c.cardNo)
+                  : ('Called early &middot; '+PATTERN_NAMES[G.pattern]+' is not complete on card #'+c.cardNo+'. Tap Play on to wave it off.');
+    q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+badge+'</div>'+
       '<div class="card9" id="claimCard"></div>'+
-      '<div class="claimsub">'+PATTERN_NAMES[G.pattern]+' &middot; verified against '+(G.idx+1)+' called numbers &middot; card #'+c.cardNo+'</div>'+
+      '<div class="claimsub">'+sub+'</div>'+
       '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm">Confirm winner</button>'+
       '<button class="btn roll" data-act="reject">Play on</button></div></div>';
     renderClaimCard($("claimCard"), c.card);
@@ -1032,8 +1040,11 @@
       var tk=null, j;
       for(j=0;j<pl.cards.length;j++){ if(pl.cards[j].cardNo===m.cardNo){ tk=pl.cards[j]; break; } }
       if(!tk){ for(j=0;j<pl.cards.length;j++){ if(checkPattern(pl.cards[j].card)){ tk=pl.cards[j]; break; } } }
-      if(tk && checkPattern(tk.card)){
-        G.claim={ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card };
+      if(!tk && G.allowEarly){ tk=pl.cards[0]; }   // early-call venues: register their first ticket even with no win
+      if(!tk) return;
+      var valid=checkPattern(tk.card);
+      if(valid || G.allowEarly){
+        G.claim={ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card, valid:valid };
         send({ t:"claim_pending", name:pl.name });
         saveGame();
         renderClaimQueue();
@@ -1130,6 +1141,7 @@
   // ================= EVENTS =================
   $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
+  $("allowEarlyChk").addEventListener("change", function(){ G.allowEarly=this.checked; sendState(); });
   $("nextBtn").addEventListener("click", nextBall);
   $("newGameBtn").addEventListener("click", newGame);
   $("endGameBtn").addEventListener("click", endGame);

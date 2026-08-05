@@ -236,7 +236,7 @@
   var P={
     room:"", pid:"", name:"", joined:false, hostSeen:false,
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
-    pattern:"one", prize:"the prize", called:[], active:false, assist:false,
+    pattern:"one", prize:"the prize", called:[], active:false, assist:false, allowEarly:false,
     claimPending:false, won:false, ended:false, capture:null
   };
 
@@ -379,9 +379,10 @@
     if(!P.active || !P.cards.length || P.claimPending || P.won) return;
     // Local gate; the host holds the master copies of our tickets and makes the final call.
     var win=winningCardNo();
-    if(!win){ setMsg("Not yet, keep playing. That pattern is not complete on any of your tickets yet.","no"); return; }
-    P.claimPending=true; P.wonCardNo=win; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait");
-    send({ t:"claim", pid:P.pid, name:P.name, cardNo:win });
+    if(!win && !P.allowEarly){ setMsg("Not yet, keep playing. That pattern is not complete on any of your tickets yet.","no"); return; }
+    var claimNo = win || (P.cards[0] && P.cards[0].cardNo) || 0;   // early-call venues: claim on their first ticket
+    P.claimPending=true; P.wonCardNo=claimNo; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait");
+    send({ t:"claim", pid:P.pid, name:P.name, cardNo:claimNo });
   }
   // ---- ticket count picker + host default ----
   function renderPicker(){
@@ -407,6 +408,7 @@
     if(!m||!m.t) return;
     if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
     if(typeof m.defaultCards==="number"){ setHostDefault(m.defaultCards); }
+    if(typeof m.allowEarly==="boolean"){ P.allowEarly=m.allowEarly; }
     if(m.t==="rollcall" || m.t==="host_here"){
       // host (re)connected and is rebuilding the night. re-announce so it re-adds us and
       // re-deals our tickets. We only reply to explicit host presence.
