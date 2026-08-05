@@ -45,10 +45,11 @@
   .venue .pend{color:var(--pink);font-size:12px;margin-top:2px}
   .stepper{display:flex;align-items:center;gap:8px}
   .stepper button{width:34px;height:34px;border:1px solid var(--line);background:var(--ink-3);color:#fff;border-radius:10px;font-size:19px;line-height:1;cursor:pointer}
-  .stepper input{width:64px;text-align:center;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:9px 6px;font-size:15px;font-family:'Manrope',sans-serif}
+  .stepper input{width:64px;text-align:center;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:10px;padding:9px 6px;font-size:15px;font-family:'Manrope',sans-serif;-moz-appearance:textfield;appearance:textfield}
+  .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .save{background:var(--pink);color:#fff;border:0;border-radius:12px;padding:9px 16px;font-family:'Hanken Grotesk',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:none}
   .save.show{display:inline-block}
-  .venue .canx{flex-basis:100%;display:flex;justify-content:flex-end;margin-top:-2px}
+  .venue .canx{flex-basis:100%;display:flex;justify-content:flex-end;margin-top:4px}
   .canxlink{background:none;border:0;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit}
   .canxlink:hover{color:var(--pink)}
   .venue.cancelling{opacity:.9}
