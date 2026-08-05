@@ -171,6 +171,10 @@
       <button class="go" id="host-go" style="align-self:flex-start">Add host</button>
     </div>
 
+    <div class="label">Player data &amp; name display</div>
+    <p class="note" style="margin:0 0 10px">What players are asked for when they join, and how their name shows on the TV (John S, J Smith or John Smith). Opens that venue's settings.</p>
+    <div id="playerData"></div>
+
     <div class="label">Your venue screen</div>
     <p class="note" style="margin:0 0 10px">What plays on your venue TV between games. Set it here, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds.</p>
     <div id="screenPickWrap" class="screenpick" style="display:none">
@@ -320,6 +324,20 @@
       }
       wrap.appendChild(row);
     });
+
+    // Player data + name display: reuse the existing per-venue settings page (what players are
+    // asked for at join, and how their name shows on the TV). One link per venue.
+    var pd = $("playerData");
+    if (pd){
+      pd.innerHTML = "";
+      d.venues.forEach(function(v){
+        var a = document.createElement("a"); a.className = "venue"; a.style.textDecoration = "none";
+        a.href = "settings.html?venue=" + encodeURIComponent(v.id);
+        a.innerHTML = '<div class="nm"><b>' + esc(v.name) + '</b><small>What you collect, and how names show on the screen</small></div>' +
+          '<span class="canxlink" style="color:var(--muted);pointer-events:none">Open &rsaquo;</span>';
+        pd.appendChild(a);
+      });
+    }
   }
 
   function esc(s){ return String(s==null?"":s).replace(/[<>&]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]; }); }
