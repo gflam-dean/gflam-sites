@@ -162,7 +162,7 @@
     <div class="addform" id="hostForm" style="flex-direction:column;align-items:stretch">
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="host-name">Name</label>
-          <input type="text" id="host-name" placeholder="Dean Tindale" autocomplete="name"></div>
+          <input type="text" id="host-name" placeholder="Full name" autocomplete="name"></div>
         <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="host-mobile">Mobile</label>
           <input type="tel" id="host-mobile" placeholder="0400 000 000" autocomplete="tel"></div>
       </div>
@@ -234,10 +234,20 @@
 
   function render(d){
     rate = d.rate || 2.40;
-    var pn = $("players-note");
-    if (pn) pn.textContent = "Extra players are added to your plan for the billing month they are added in, and charged a full month at " + money(rate) + " per player.";
     $("s-players").textContent = d.total_players;
     $("s-total").textContent = d.monthly_total;
+    // Make it clear when the tiles above show current cover but a change is scheduled: reductions
+    // (and a venue you cancel) only take effect at your next renewal, so the totals hold until then.
+    var pn = $("players-note");
+    if (pn){
+      var pending = (d.venues || []).filter(function(v){ return (v.pending != null && v.pending !== v.players) || v.cancelling; });
+      var note = "Extra players are charged a full month at " + money(rate) + " per player from the day you add them, and the totals above update straight away.";
+      if (pending.length){
+        note = "The totals above are your current cover. A scheduled change (a player reduction or a venue you cancelled) takes effect at your next renewal" +
+               (d.next_charge ? " on " + d.next_charge : "") + ", and the figures update then. Adding players or a venue applies straight away.";
+      }
+      pn.textContent = note;
+    }
     $("s-next").textContent = d.next_charge
       ? (d.next_charge + (d.next_charge_amount ? "  ·  " + d.next_charge_amount : ""))
       : "at launch";
@@ -605,6 +615,7 @@
   VP.requireAuth().then(function(ctx){
     if (!ctx){ return; } // requireAuth handles redirect when signed out
     load();
+    loadHosts();   // populate the hosts list AND the "venues they can run" picker on page load
     initScreen();
   }).catch(function(){ load(); });
 })();
