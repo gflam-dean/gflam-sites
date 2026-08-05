@@ -377,11 +377,13 @@
     (ADS.slides||[]).forEach(function(s){ if(slideVisible(s)) arr.push({type:"slide",slide:s}); });
     if(ADS.draws && ADS.draws.length) arr.push({type:"auto-draws"});
     if(ADS.raffle) arr.push({type:"auto-raffle"});
+    if(!arr.length) arr.push({type:"holding"});   // never leave the screen blank/black
     return arr;
   }
   function entryClass(e){
     if(e.type==="auto-draws") return "ad-e";
     if(e.type==="auto-raffle") return "ad-b";
+    if(e.type==="holding") return "ad-a";
     return accentClass(e.slide.accent);
   }
   function entryInner(e){
@@ -566,6 +568,7 @@
     $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
     $("adsRoot").classList.remove("hidden");
     if(hostConnected) hidePairPanel(); else showPairPanel();
+    adBuilt=false;   // rebuild from the latest loaded slides so the ads always come back (never black)
     startAds();
   }
   function enterBingo(){
