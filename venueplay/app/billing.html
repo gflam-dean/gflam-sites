@@ -266,6 +266,7 @@
         <div class="mdf"><label class="flabel" for="md-start">Start date</label><input type="date" id="md-start"></div>
         <div class="mdf"><label class="flabel" for="md-day">Draw day</label><input type="text" id="md-day" readonly placeholder="from your start date"></div>
         <div class="mdf"><label class="flabel" for="md-time">Draw time</label><input type="text" id="md-time" placeholder="e.g. 7:30pm"></div>
+        <div class="mdf"><label class="flabel" for="md-claim">Time to claim (seconds)</label><input type="number" id="md-claim" min="0" step="1" inputmode="numeric" placeholder="e.g. 120"></div>
         <div class="mdf"><label class="flabel" for="md-startjp">Starting jackpot ($)</label><input type="number" id="md-startjp" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-inc">Weekly increase ($)</label><input type="number" id="md-inc" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric"></div>
@@ -624,17 +625,45 @@
     row.querySelector(".ad-rm").addEventListener("click", function(){ row.remove(); });
     return row;
   }
+  // Shrink an uploaded promo to the TV's real size before we store it. A phone photo can be
+  // 3-5MB and far more detail than any screen shows; this drops it to a few hundred KB with no
+  // visible difference on the TV, so it is never a manual job and storage stays small. Animated
+  // GIFs are left untouched (a canvas would flatten them to one frame).
+  function resizeAdImage(dataUrl, cb){
+    if (dataUrl.indexOf("data:image/gif")===0){ cb(dataUrl); return; }   // keep animated GIFs as-is
+    var MAXW=1920, MAXH=1080, Q=0.85;
+    var img = new Image();
+    img.onload = function(){
+      try{
+        var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        if(!w||!h){ cb(dataUrl); return; }
+        var scale=Math.min(1, MAXW/w, MAXH/h);            // only ever shrink, never enlarge a small image
+        var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+        var cv=document.createElement("canvas"); cv.width=cw; cv.height=ch;
+        var cx=cv.getContext("2d");
+        cx.fillStyle="#000"; cx.fillRect(0,0,cw,ch);      // TV background is black, so any transparency reads seamlessly
+        cx.drawImage(img,0,0,cw,ch);
+        var out=cv.toDataURL("image/webp", Q);
+        if(out.indexOf("data:image/webp")!==0){ out=cv.toDataURL("image/jpeg", Q); }   // WebP unsupported -> JPEG
+        cb(out && out.length < dataUrl.length ? out : dataUrl);   // never send something bigger than the original
+      }catch(e){ cb(dataUrl); }
+    };
+    img.onerror = function(){ cb(dataUrl); };
+    img.src = dataUrl;
+  }
   function uploadSlideImage(file, row){
     if (!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
-    if (file.size > 5*1024*1024){ showMsg("That image is too big. Keep it under 5MB."); return; }
+    if (file.size > 8*1024*1024){ showMsg("That image is too big. Keep it under 8MB."); return; }   // we shrink it anyway
     var thumb = row.querySelector(".adthumb"); thumb.style.backgroundImage = ""; thumb.textContent = "Uploading…";
     var reader = new FileReader();
     reader.onload = function(){
-      api("/account/screen-upload", { venue_id: screenCurrent.id, data: String(reader.result) }).then(function(r){
-        if (r.error){ showMsg(r.error); thumb.textContent = "No image yet"; return; }
-        row.setAttribute("data-url", r.url);
-        thumb.textContent = ""; thumb.style.backgroundImage = "url(" + r.url + ")";
-        row.querySelector(".ad-change").textContent = "Change image";
+      resizeAdImage(String(reader.result), function(data){
+        api("/account/screen-upload", { venue_id: screenCurrent.id, data: data }).then(function(r){
+          if (r.error){ showMsg(r.error); thumb.textContent = "No image yet"; return; }
+          row.setAttribute("data-url", r.url);
+          thumb.textContent = ""; thumb.style.backgroundImage = "url(" + r.url + ")";
+          row.querySelector(".ad-change").textContent = "Change image";
+        });
       });
     };
     reader.readAsDataURL(file);
@@ -724,6 +753,7 @@
     $("md-start").value = d.date_started || "";
     $("md-day").value = d.draw_day || "";
     $("md-time").value = d.draw_time || "";
+    $("md-claim").value = d.time_to_claim_seconds!=null ? d.time_to_claim_seconds : "";
     $("md-startjp").value = toDollars(d.starting_amount_cents);
     $("md-inc").value = toDollars(d.increment_cents);
     $("md-curjp").value = toDollars(d.current_jackpot_cents);
@@ -755,6 +785,7 @@
     var cj=toCents($("md-curjp").value);   if(cj!==undefined) body.current_jackpot_cents=cj;
     var dd=$("md-day").value.trim();  if(dd) body.draw_day=dd;
     var dt=$("md-time").value.trim(); if(dt) body.draw_time=dt;
+    var tc=parseInt($("md-claim").value,10); if(!isNaN(tc)) body.time_to_claim_seconds=tc;
     var ds=$("md-start").value.trim(); if(ds) body.date_started=ds;
     var btn=$("mdSave"); btn.disabled=true; btn.textContent="Saving…";
     gameApi("/host/members/settings", body).then(function(r){
