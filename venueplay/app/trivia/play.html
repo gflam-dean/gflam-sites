@@ -41,9 +41,11 @@
   .psub{color:var(--muted);font-size:14px}
   .pnote{font-size:12px;color:var(--faint);margin-top:16px}
   .field{margin-top:14px}
-  input[type=text]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
+  input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
     padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
   input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  .optin{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:14px;text-align:left;cursor:pointer}
+  .optin input{width:18px;height:18px;flex:none;accent-color:var(--pink)}
   input.code{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:24px}
 
   .btn{border:none;border-radius:12px;padding:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%}
@@ -111,10 +113,11 @@
   <div class="view center hidden" id="vJoin">
     <div class="pbig">Join the<br>trivia</div>
     <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
-    <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="off"></div>
+    <div class="field"><input type="text" id="nameIn" placeholder="Team name" maxlength="20" autocomplete="off"></div>
+    <div id="joinExtra"></div>
     <div class="cerr" id="joinErr"></div>
     <div class="field"><button class="btn pink" id="joinBtn">Join</button></div>
-    <div class="pnote">No app and no account. Questions pop up here when the host starts.</div>
+    <div class="pnote">No app and no account. Pick a team name, then questions pop up here when the host starts.</div>
   </div>
 
   <!-- WAIT -->
@@ -175,21 +178,43 @@
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
 
+  // ---- the game Worker (server-authoritative) --------------------------
+  // The phone joins, submits answers and pulls its own score through this Worker;
+  // the broadcasts below only give instant visual updates. The correct answer is
+  // NEVER available to the phone before the host reveals: it is not in the question
+  // broadcast, not in /snapshot while asking, and the anon key cannot read
+  // vp_questions at all (RLS). Must match the deployed venueplay-game Worker URL.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
+  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi); }
+
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=null, subscribed=false, sendQueue=[];
   function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
 
   // ---- player state ----
+  // pid/name are cosmetic (the TV "answered" ticker + host roster). token is the real
+  // metered server identity; game_id + the score come from the Worker.
   var P={
     room:"", pid:"", name:"", joined:false,
-    colour:true, score:0, rank:0, total:0,
+    token:"", sessionId:"", gameId:"",
+    colour:true, total:0, rank:0,
     q:null, choice:null, locked:false,
-    lastPts:0, lastCorrect:false, lastAnswered:false, cdTimer:null, ended:false
+    lastPts:0, cdTimer:null, ended:false
   };
 
   function loadPid(room){ try{ return sessionStorage.getItem("vp-tpid-"+room)||""; }catch(e){ return ""; } }
   function savePid(room,pid){ try{ sessionStorage.setItem("vp-tpid-"+room, pid); }catch(e){} }
+  function loadName(room){ try{ return sessionStorage.getItem("vp-tname-"+room)||""; }catch(e){ return ""; } }
+  function saveName(room,nm){ try{ sessionStorage.setItem("vp-tname-"+room, nm); }catch(e){} }
+  // the player token IS the metered server identity: persist it so a reload reuses the
+  // same vp_players row instead of minting a new metered one.
+  function loadToken(room){ try{ return localStorage.getItem("vp-ttoken-"+room)||""; }catch(e){ return ""; } }
+  function saveToken(room,tok){ try{ if(tok) localStorage.setItem("vp-ttoken-"+room, tok); }catch(e){} }
+  function loadSess(room){ try{ return localStorage.getItem("vp-tsess-"+room)||""; }catch(e){ return ""; } }
+  function saveSess(room,sid){ try{ if(sid) localStorage.setItem("vp-tsess-"+room, sid); }catch(e){} }
 
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal"];
@@ -215,10 +240,13 @@
     if(P.q.endsAt-Date.now()<=0){ stopCd(); lockOut(); }
   }
 
+  // Accepts either a live broadcast (endsAt in ms) or a /snapshot question (ends_at ISO).
   function renderQuestion(m){
     stopCd();
-    P.q={ qseq:m.qseq, options:m.options||[], endsAt:m.endsAt };
+    var endsAt = (typeof m.endsAt==="number") ? m.endsAt : (m.ends_at ? Date.parse(m.ends_at) : (Date.now()+ (m.secs||20)*1000));
+    P.q={ qseq:m.qseq, options:m.options||[], endsAt:endsAt };
     P.choice=null; P.locked=false;
+    if(m.game_id) P.gameId=m.game_id;
     if(typeof m.colour==="boolean") P.colour=m.colour;
     show("vQ");
     $("pqCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
@@ -240,7 +268,12 @@
     if(!P.q || P.locked) return;
     if(P.q.endsAt-Date.now()<=0){ lockOut(); return; }
     P.choice=i; P.locked=true;
+    // Cosmetic broadcast for the TV "answered" ticker; the real, scored answer goes to
+    // the Worker, which decides first-answer-final and rejects anything after the deadline.
     send({ t:"answer", pid:P.pid, qseq:P.q.qseq, choice:i });
+    if(P.gameId){
+      playerPost("/player/answer",{ game_id:P.gameId, answer_index:i, qseq:P.q.qseq }).catch(function(){ /* deadline/duplicate: the Worker is the authority, UI stays locked */ });
+    }
     var btns=document.querySelectorAll("#pAnswers .pans");
     for(var k=0;k<btns.length;k++){
       var bi=parseInt(btns[k].getAttribute("data-i"),10);
@@ -259,28 +292,68 @@
     }
   }
 
+  // The reveal broadcast carries the correct index (safe: the host has revealed). The
+  // exact points + running total + rank come authoritatively from the Worker.
   function showResult(m){
     stopCd();
-    var mine=(m.players && m.players[P.pid]) ? m.players[P.pid] : { pts:0, total:P.total, rank:P.rank };
-    P.lastPts=mine.pts||0; P.total=mine.total; P.rank=mine.rank; P.score=mine.total;
     var answered=(P.choice!=null);
-    var correct=(answered && P.choice===m.correctIndex);
-    show("vRes");
-    $("pResEmoji").innerHTML = correct ? "&#127881;" : (answered ? "&#10060;" : "&#9203;");
-    $("pResTag").className="rtag "+(correct?"good":"bad");
-    $("pResTag").textContent = correct ? "Correct!" : (answered ? "Not this time" : "No answer");
-    $("pResPts").textContent = (P.lastPts>0?"+":"")+P.lastPts;
-    $("pResPts").style.color = correct ? "var(--gold)" : "var(--faint)";
-    $("pResTot").textContent = P.total;
-    $("pResRank").textContent = "Rank "+P.rank;
+    var ci=m.correctIndex;
+    function paint(correct, pts){
+      show("vRes");
+      $("pResEmoji").innerHTML = correct ? "&#127881;" : (answered ? "&#10060;" : "&#9203;");
+      $("pResTag").className="rtag "+(correct?"good":"bad");
+      $("pResTag").textContent = correct ? "Correct!" : (answered ? "Not this time" : "No answer");
+      $("pResPts").textContent = ((pts>0)?"+":"")+(pts||0);
+      $("pResPts").style.color = correct ? "var(--gold)" : "var(--faint)";
+      $("pResTot").textContent = P.total;
+      $("pResRank").textContent = "Rank "+P.rank;
+    }
+    // Optimistic paint from the broadcast, then correct it with the Worker's numbers.
+    paint(answered && P.choice===ci, 0);
+    if(P.gameId){
+      playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
+        if(typeof r.total==="number") P.total=r.total;
+        if(typeof r.rank==="number") P.rank=r.rank;
+        var last=r.last||{};
+        var correct=(last.is_correct===true);
+        paint(correct, last.points_awarded||0);
+      }).catch(function(){});
+    }
+  }
+
+  function showFinal(){
+    P.ended=true; show("vFinal");
+    $("finalScore").textContent=P.total+" points";
+    $("finalRank").textContent = P.rank ? ("You finished rank "+P.rank) : "";
+    if(P.gameId){
+      playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
+        if(typeof r.total==="number") P.total=r.total;
+        if(typeof r.rank==="number") P.rank=r.rank;
+        $("finalScore").textContent=P.total+" points";
+        $("finalRank").textContent = P.rank ? ("You finished rank "+P.rank) : "";
+      }).catch(function(){});
+    }
   }
 
   // ---- incoming ----
   function onMsg(m){
     if(!m||!m.t) return;
+    if(m.t==="rollcall" || m.t==="host_here"){
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); }
+      return;
+    }
+    if(m.t==="session"){ return; }   // host<->TV handoff; players ignore it
+    if(m.t==="mode"){ return; }
     if(m.t==="state"){
       if(typeof m.colour==="boolean") P.colour=m.colour;
+      if(m.game_id) P.gameId=m.game_id;
       if(m.phase==="lobby"){ P.q=null; P.ended=false; if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); } }
+    }
+    else if(m.t==="started"){
+      if(m.game_id) P.gameId=m.game_id;
+      if(typeof m.colour==="boolean") P.colour=m.colour;
+      P.q=null; P.ended=false; P.total=0; P.rank=0;
+      if(P.joined) showWait("The quiz is starting. Your questions will pop up here.");
     }
     else if(m.t==="question"){
       if(!P.joined) return;
@@ -291,31 +364,97 @@
       stopCd(); lockOut();
     }
     else if(m.t==="reveal"){
-      if(!P.joined){ return; }
+      if(!P.joined) return;
       showResult(m);
     }
     else if(m.t==="leaderboard"){
-      if(!P.joined) return;
-      if(P.ended || P.won) return;                                  // game over: podium screen owns the display
-      if(m.title && m.title.indexOf("Final")===0) return;           // final scores are handled by the podium message
+      if(!P.joined || P.ended) return;
+      if(m.title && m.title.indexOf("Final")===0) return;           // final scores handled by the podium message
       showWait("Next question coming up. Watch the big screen.");
     }
     else if(m.t==="podium"){
       if(!P.joined) return;
-      P.ended=true;
-      show("vFinal");
-      $("finalScore").textContent=P.total+" points";
-      $("finalRank").textContent = P.rank ? ("You finished rank "+P.rank) : "";
+      showFinal();
+    }
+    else if(m.t==="idle"){
+      if(P.joined){ P.q=null; showWait("Thanks for playing. Sit tight, the host may start another round."); }
     }
   }
 
   // ---- actions ----
+  function applySnap(s){
+    if(!s) return;
+    P.sessionId=s.session_id||P.sessionId;
+    if(P.sessionId) saveSess(P.room, P.sessionId);
+    var g=s.game;
+    if(g && g.format==="trivia" && g.game_id){
+      P.gameId=g.game_id;
+      if(typeof g.colour==="boolean") P.colour=g.colour;
+      if(g.question && g.phase==="asking"){ P.pendingQ=g.question; }
+    }
+  }
+  // Rebuild any in-progress game from the Worker's public snapshot (late join / reload).
+  function rebuildFromSnapshot(){
+    if(!P.sessionId) return;
+    fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(P.sessionId))
+      .then(function(res){ return res.json(); })
+      .then(function(s){
+        applySnap(s);
+        if(P.joined && P.pendingQ){ var q=P.pendingQ; P.pendingQ=null; renderQuestion(q); }
+      }).catch(function(){});
+  }
+  // Register with the Worker (mints/reuses a vp_players row + a device token). The
+  // team name is stored as the player's display_name, which the leaderboard groups on.
+  function ensureJoined(){
+    if(P.token){ return Promise.resolve(); }
+    var body={ code:P.room, name:P.name };
+    if(P.capture){ for(var k in P.capture){ body[k]=P.capture[k]; } }
+    return playerPost("/join", body).then(function(r){
+      P.token=r.token; saveToken(P.room, P.token);
+      applySnap(r.snapshot);
+    });
+  }
+  function loadJoinInfo(){
+    if(!P.room) return;
+    playerPost("/join/info",{ code:P.room }).then(function(r){
+      var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
+      function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
+      var h="";
+      if(c.last_name) h+=f("xLast","text","Last name","family-name",40);
+      if(c.postcode)  h+=f("xPost","text","Postcode","postal-code",4);
+      if(c.email)     h+=f("xEmail","email","Email","email",120);
+      if(c.mobile)    h+=f("xMobile","tel","Mobile","tel",20);
+      box.innerHTML=h;
+      if(c.marketing_optin){
+        var l=document.createElement("label"); l.className="optin";
+        l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>';
+        box.appendChild(l);
+      }
+    }).catch(function(){});
+  }
+  function gatherCapture(nm){
+    var cap={ first_name:nm.slice(0,80) }, v;
+    if((v=$("xLast"))&&v.value.trim())  cap.last_name=v.value.trim();
+    if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
+    if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
+    if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
+    var o=$("xOptin"); if(o&&o.checked) cap.marketing_optin=true;
+    return cap;
+  }
   function join(){
     var nm=($("nameIn").value||"").trim();
-    if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
-    P.name=nm.slice(0,20); P.joined=true;
-    send({ t:"join", pid:P.pid, name:P.name });
-    showWait("Watch the big screen. Your questions will pop up here.");
+    if(!nm){ $("joinErr").textContent="Pop your team name in first."; return; }
+    P.name=nm.slice(0,20);
+    P.capture=gatherCapture(nm);
+    var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
+    ensureJoined().then(function(){
+      P.joined=true; saveName(P.room, P.name);
+      send({ t:"join", pid:P.pid, name:P.name });   // cosmetic roster on the host + TV
+      if(P.pendingQ){ var q=P.pendingQ; P.pendingQ=null; renderQuestion(q); }
+      else showWait("Watch the big screen. Your questions will pop up here.");
+    }).catch(function(e){
+      $("joinErr").textContent=(e && e.message) ? e.message : "Could not join, check the code and try again.";
+    }).then(function(){ btn.disabled=false; btn.textContent="Join"; });
   }
 
   // ---- connect ----
@@ -324,17 +463,23 @@
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
     P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
-    ch=client.channel("vp-trivia-"+room, { config:{ broadcast:{ self:false } } });
+    P.token=loadToken(room);
+    P.sessionId=loadSess(room);
+    var savedName=loadName(room);
+    if(savedName && P.token){ P.name=savedName; P.joined=true; }
+    ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true; flushQueue();
+        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); rebuildFromSnapshot(); }
         $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });
-    show("vJoin");
+    if(P.joined) showWait("Watch the big screen. Your questions will pop up here.");
+    else { loadJoinInfo(); show("vJoin"); }
   }
 
   // ---- events ----

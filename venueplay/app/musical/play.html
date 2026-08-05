@@ -41,9 +41,11 @@
   .psub{color:var(--muted);font-size:14px}
   .pnote{font-size:12px;color:var(--faint);margin-top:16px}
   .field{margin-top:14px}
-  input[type=text]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
+  input[type=text],input[type=email],input[type=tel]{width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:12px;
     padding:15px;font-family:'Manrope',sans-serif;font-size:16px;outline:none;transition:.15s;text-align:center}
   input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
+  .optin{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:14px;text-align:left;cursor:pointer}
+  .optin input{width:18px;height:18px;flex:none;accent-color:var(--pink)}
   input.code{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:24px}
 
   .btn{border:none;border-radius:12px;padding:16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;cursor:pointer;transition:.15s;letter-spacing:.02em;width:100%}
@@ -105,6 +107,7 @@
     <div class="pbig">Join the<br>game</div>
     <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
     <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="off"></div>
+    <div id="joinExtra"></div>
     <div class="cerr" id="joinErr"></div>
     <div class="field"><button class="btn pink" id="joinBtn">Join</button></div>
     <div class="pnote">No app and no account. Your card of song titles appears here when the host starts.</div>
@@ -152,12 +155,24 @@
   function $(id){ return document.getElementById(id); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
   function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
+  function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
   var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+  // The Worker sends vp_music_games pattern values; map to the UI labels/keys.
+  var PAT_FROM_WORKER={one_line:"one",two_lines:"two",four_corners:"corners",full_house:"full"};
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+
+  // ---- the game Worker (server-authoritative) --------------------------
+  // The phone joins, is dealt its card, and claims BINGO through this Worker; the broadcasts
+  // below are only for instant visual updates (played songs to daub, winner banner). The
+  // Worker judges every claim against its own copy of the card and the songs actually played.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
+  function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi); }
 
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=null, subscribed=false, sendQueue=[];
@@ -165,22 +180,32 @@
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
 
   // ---- player state ----
+  // pid/name are cosmetic (host roster + TV). token is the real metered server identity;
+  // cells (each { song_id, title }) + gameId come from the Worker.
   var P={
     room:"", pid:"", name:"", joined:false,
+    token:"", sessionId:"", gameId:"", claimId:"",
     cells:null, cardNo:0,
     pattern:"one", prize:"the prize", played:[], active:false, autoDaub:true,
     daubs:{}, claimPending:false, won:false, ended:false
   };
 
-  // ---- pid + name persistence (keep identity + seat across reconnects/reloads) ----
+  // ---- identity persistence (keep seat + metered identity across reloads) ----
   function loadPid(room){ try{ return sessionStorage.getItem("vp-mpid-"+room)||""; }catch(e){ return ""; } }
   function savePid(room,pid){ try{ sessionStorage.setItem("vp-mpid-"+room, pid); }catch(e){} }
   function loadName(room){ try{ return sessionStorage.getItem("vp-mname-"+room)||""; }catch(e){ return ""; } }
   function saveName(room,nm){ try{ sessionStorage.setItem("vp-mname-"+room, nm); }catch(e){} }
+  // the player token IS the metered identity: persist it so a reload reuses the same
+  // vp_players row instead of minting a new metered one.
+  function loadToken(room){ try{ return localStorage.getItem("vp-mtoken-"+room)||""; }catch(e){ return ""; } }
+  function saveToken(room,tok){ try{ if(tok) localStorage.setItem("vp-mtoken-"+room, tok); }catch(e){} }
+  function loadSess(room){ try{ return localStorage.getItem("vp-msess-"+room)||""; }catch(e){ return ""; } }
+  function saveSess(room,sid){ try{ if(sid) localStorage.setItem("vp-msess-"+room, sid); }catch(e){} }
 
-  // ---- verification (from played set + FREE, ignore cosmetic daubs) ----
+  // ---- cover check (cosmetic UI; the Worker is authoritative on the claim) ----
+  function cellTitle(i){ var c=P.cells?P.cells[i]:null; return (c&&typeof c==="object")?(c.title||""):(c||""); }
   function playedSet(){ var s={}; for(var i=0;i<P.played.length;i++) s[P.played[i]]=true; return s; }
-  function isCovered(set,i){ if(i===12) return true; var t=P.cells[i]; return !!t && !!set[t]; }
+  function isCovered(set,i){ if(i===12) return true; var t=cellTitle(i); return !!t && !!set[t]; }
   function checkPattern(){
     if(!P.cells) return false;
     var set=playedSet(), c, r;
@@ -212,7 +237,7 @@
   // ---- card render ----
   function autoDaub(){
     if(!P.cells || !P.autoDaub) return; var set=playedSet();
-    for(var i=0;i<25;i++){ if(i!==12){ var t=P.cells[i]; if(t && set[t]) P.daubs[i]=true; } }
+    for(var i=0;i<25;i++){ if(i!==12){ var t=cellTitle(i); if(t && set[t]) P.daubs[i]=true; } }
   }
   function fitCells(){
     var cells=document.querySelectorAll("#cardGrid .cc");
@@ -235,7 +260,7 @@
     for(var i=0;i<25;i++){
       var cell=document.createElement("div");
       if(i===12){ cell.className="cc free daub"; cell.textContent="FREE"; wrap.appendChild(cell); continue; }
-      var t=P.cells[i]||"";
+      var t=cellTitle(i);
       cell.className="cc";
       cell.setAttribute("data-i",i);
       cell.textContent=t;
@@ -247,58 +272,141 @@
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); }
     else { $("bingoBtn").disabled=false; setMsg("Tap a title when you hear it. Songs played are outlined in green. Hit BINGO when you have the pattern.",""); }
   }
-  function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
 
-  // ---- actions ----
+  // ---- join + card (via the Worker) ----
+  function applySnap(s){
+    if(!s) return;
+    P.sessionId=s.session_id||P.sessionId;
+    if(P.sessionId) saveSess(P.room, P.sessionId);
+    var g=s.game;
+    if(g && g.format==="musical_bingo"){
+      if(g.game_id) P.gameId=g.game_id;
+      if(g.pattern) P.pattern=PAT_FROM_WORKER[g.pattern]||P.pattern;
+      if(typeof g.prize==="string" && g.prize) P.prize=g.prize;
+      if(typeof g.auto_daub==="boolean") P.autoDaub=g.auto_daub;
+      if(g.played_songs){ P.played=g.played_songs.map(function(x){ return x.title; }); }
+      P.active=true;
+    }
+  }
+  // Register with the Worker (mints/reuses a vp_players row + a device token).
+  function ensureJoined(){
+    if(P.token){ return Promise.resolve(); }
+    var body={ code:P.room, name:P.name };
+    if(P.capture){ for(var k in P.capture){ body[k]=P.capture[k]; } }
+    return playerPost("/join", body).then(function(r){
+      P.token=r.token; saveToken(P.room, P.token);
+      applySnap(r.snapshot);
+    });
+  }
+  function loadJoinInfo(){
+    if(!P.room) return;
+    playerPost("/join/info",{ code:P.room }).then(function(r){
+      var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
+      function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
+      var h="";
+      if(c.last_name) h+=f("xLast","text","Last name","family-name",40);
+      if(c.postcode)  h+=f("xPost","text","Postcode","postal-code",4);
+      if(c.email)     h+=f("xEmail","email","Email","email",120);
+      if(c.mobile)    h+=f("xMobile","tel","Mobile","tel",20);
+      box.innerHTML=h;
+      if(c.marketing_optin){
+        var l=document.createElement("label"); l.className="optin";
+        l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>';
+        box.appendChild(l);
+      }
+    }).catch(function(){});
+  }
+  function gatherCapture(nm){
+    var cap={ first_name:nm.slice(0,80) }, v;
+    if((v=$("xLast"))&&v.value.trim())  cap.last_name=v.value.trim();
+    if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
+    if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
+    if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
+    var o=$("xOptin"); if(o&&o.checked) cap.marketing_optin=true;
+    return cap;
+  }
+  // Fetch (or lazily be dealt) this player's 5x5 card for the running game.
+  function fetchCard(){
+    if(!P.token) return Promise.resolve();
+    return playerGet("/player/card").then(function(r){
+      if(!r || r.game===null || !r.game_id){ P.active=false; P.cells=null; route(); return; }
+      P.gameId=r.game_id;
+      P.cells=r.cells||[];
+      P.cardNo=r.card_no;
+      P.pattern=PAT_FROM_WORKER[r.pattern]||P.pattern;
+      if(r.played_songs){ P.played=r.played_songs.map(function(x){ return x.title; }); }
+      P.active=true;
+      if(!P.won && !P.ended){ P.claimPending=false; }
+      autoDaub(); route();
+    }).catch(function(){ /* transient; a started/played event re-triggers the fetch */ });
+  }
   function join(){
     var nm=($("nameIn").value||"").trim();
     if(!nm){ $("joinErr").textContent="Pop your name in first."; return; }
-    P.name=nm.slice(0,20); P.joined=true;
-    saveName(P.room, P.name);
-    send({ t:"join", pid:P.pid, name:P.name });
-    route();
+    P.name=nm.slice(0,20);
+    P.capture=gatherCapture(nm);
+    var btn=$("joinBtn"); btn.disabled=true; btn.textContent="Joining...";
+    ensureJoined().then(function(){
+      P.joined=true; saveName(P.room, P.name);
+      send({ t:"join", pid:P.pid, name:P.name });   // cosmetic roster on the host + TV
+      return fetchCard();
+    }).catch(function(e){
+      $("joinErr").textContent=(e && e.message) ? e.message : "Could not join, check the code and try again.";
+    }).then(function(){ btn.disabled=false; btn.textContent="Join"; route(); });
   }
   function pressBingo(){
-    if(!P.active || !P.cells || P.claimPending || P.won) return;
-    if(checkPattern()){
-      P.claimPending=true;
-      send({ t:"claim", pid:P.pid });
-      $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait");
-    } else {
-      setMsg("Not yet, keep listening. That pattern is not complete on your card yet.","no");
-    }
+    if(!P.active || !P.cells || P.claimPending || P.won || !P.gameId) return;
+    // Quick local gate to avoid a needless server call; the Worker is the authority.
+    if(!checkPattern()){ setMsg("Not yet, keep listening. That pattern is not complete on your card yet.","no"); return; }
+    P.claimPending=true; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait");
+    playerPost("/player/claim",{ game_id:P.gameId }).then(function(r){
+      if(r && r.auto_verdict==="valid"){
+        P.claimId=r.claim_id;
+        // Only a Worker-verified claim is broadcast, so the host can hand over the prize.
+        send({ t:"claim", claim_id:r.claim_id, pid:P.pid, name:P.name, cardNo:(r.card_no||P.cardNo), cells:P.cells });
+      } else {
+        P.claimPending=false; $("bingoBtn").disabled=false;
+        setMsg("Not yet, keep listening. The songs for that pattern have not all been played.","no");
+      }
+    }).catch(function(e){
+      P.claimPending=false; $("bingoBtn").disabled=false;
+      setMsg((e && e.status===429) ? "One moment, try that again in a few seconds." : "Could not send that, try again.","no");
+    });
   }
 
-  // ---- incoming ----
+  // ---- incoming (broadcasts are cosmetic; the Worker is the source of truth) ----
   function onMsg(m){
     if(!m||!m.t) return;
-    if(m.t==="card"){
-      if(m.pid!==P.pid) return;
-      P.cells=m.cells; P.cardNo=m.cardNo; P.daubs={}; P.daubs[12]=true; P.won=false; P.ended=false; P.claimPending=false;
-      autoDaub(); route();
+    if(m.t==="rollcall" || m.t==="host_here"){
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); if(!P.cells) fetchCard(); }
+      return;
     }
-    else if(m.t==="state"){
+    if(m.t==="session"){ return; }   // host<->TV handoff; players ignore it
+    if(m.t==="mode"){ return; }
+    if(m.t==="state"){
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
+      if(m.game_id) P.gameId=m.game_id;
       P.played=m.played||[]; P.active=!!m.active;
-      if(P.active){ autoDaub(); }
+      if(P.active){ autoDaub(); if(P.joined && !P.cells){ fetchCard(); return; } }
       if(!P.won && !P.ended) route();
     }
     else if(m.t==="started"){
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
-      P.played=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true;
-      // a fresh card is on its way from the host; show wait until it lands
-      route();
+      if(m.game_id) P.gameId=m.game_id;
+      // a fresh round: clear the old card and pull the new one from the Worker
+      P.played=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null;
+      if(P.joined){ fetchCard(); } else { route(); }
     }
     else if(m.t==="played"){
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
       P.played=m.played||P.played; P.active=true;
       autoDaub();
-      if(P.joined && !P.won && !P.ended){ if(P.cells){ renderCard(); show("vCard"); } }
+      if(P.joined && !P.won && !P.ended){ if(P.cells){ renderCard(); show("vCard"); } else { fetchCard(); } }
     }
     else if(m.t==="claim_pending"){
       // another player (or me) claimed; nothing to change locally unless it is my pending
@@ -311,6 +419,9 @@
       if(m.pid===P.pid){ P.won=true; route(); }
       else { P.ended=true; $("lostName").textContent=(m.name||"Someone")+" won"; route(); }
     }
+    else if(m.t==="idle"){
+      if(P.joined){ P.active=false; P.cells=null; route(); }   // host sent the TV back to ads; wait for the next round
+    }
   }
 
   // ---- connect ----
@@ -319,22 +430,24 @@
     $("roomLabel").textContent=room;
     $("joinCode").textContent=room;
     P.pid=loadPid(room); if(!P.pid){ P.pid=randId(); savePid(room, P.pid); }
-    // restore a saved name so a reload rejoins straight to the card, no re-typing
+    P.token=loadToken(room);
+    P.sessionId=loadSess(room);
     var savedName=loadName(room);
-    if(savedName){ P.name=savedName; P.joined=true; }
-    ch=client.channel("vp-musical-"+room, { config:{ broadcast:{ self:false } } });
+    if(savedName && P.token){ P.name=savedName; P.joined=true; }
+    ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true; flushQueue();
-        // re-announce on every (re)connect so the host rebuilds our seat and re-deals
-        // the current card if it lost the roster (idempotent on the host by pid)
-        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); }
+        // re-announce on every (re)connect so the host rebuilds our seat, and pull our
+        // card from the Worker in case a game is already running.
+        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name }); fetchCard(); }
         $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });
+    if(!P.joined) loadJoinInfo();   // show any extra fields this venue collects
     route();
   }
 
