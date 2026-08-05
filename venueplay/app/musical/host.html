@@ -217,8 +217,9 @@
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
           </div>
-          <button class="btn pink big" id="startBtn">Start game</button>
-          <p class="note" style="text-align:center;margin-top:10px">Deals every phone a fresh card of 24 song titles plus a free centre, and shows the join screen on the TV.</p>
+          <button class="btn pink big" id="startBtn">Open lobby</button>
+          <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
+          <p class="note" style="text-align:center;margin-top:10px" id="startNote">Opens the join screen on the TV so players can scan in. Deal the cards and start when everyone is on.</p>
           <div class="compliance">
             <div class="ct">How the music plays</div>
             <p>This device plays a short preview of each song. Plug it into your PA by aux cable or Bluetooth and set it loud. VenuePlay never hosts or streams the recording itself, so the music playing in the room sits under your venue's own OneMusic licence, the same as any other track you play.</p>
@@ -486,12 +487,19 @@
 
   // ---- render console ----
   function renderConsole(){
-    var live=G.status==="running";
+    var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
     $("setupPlayers").textContent=playerCount();
     $("setupCode").textContent=G.joinCode||"------";
     $("playerCount").textContent=playerCount();
+    if(!live){
+      $("startBtn").textContent = lobby ? "Start game" : "Open lobby";
+      var cl=$("cancelLobbyBtn"); if(cl) cl.style.display = lobby ? "" : "none";
+      var sn=$("startNote"); if(sn) sn.textContent = lobby
+        ? "Players are scanning in on their phones. Deal the cards and start the game when you are ready."
+        : "Opens the join screen on the TV so players can scan in. Deal the cards and start when everyone is on.";
+    }
     renderPlayers();
     if(live) renderLive();
   }
@@ -590,13 +598,33 @@
     var songs=songsForPlaylist(G.playlistId||"all");
     return { name:G.playlistName, songs:songs.map(function(s){ return { title:s.title, artist:s.artist }; }) };
   }
+  // Open the join lobby first (same flow as bingo): the TV shows the QR + code and players
+  // scan in and see "you're in" before any card is dealt. Then "Start game" deals + begins.
+  function openLobby(){
+    if(!libLoaded || G.busy) return;
+    G.busy=true; var btn=$("startBtn"); btn.disabled=true; btn.textContent="Opening...";
+    openSession().then(function(){
+      bcast({ t:"mode", mode:"musical" });   // TV switches to the musical join screen
+      G.status="lobby";
+      sendState();                            // active:false -> screen shows the join QR + code + player count
+    }).catch(function(e){ hostError(e.message); }).then(function(){
+      G.busy=false; btn.disabled=false; renderConsole();
+    });
+  }
+  function cancelLobby(){
+    if(G.busy) return;
+    G.status="setup";
+    bcast({ t:"idle" });   // TV back to the idle join screen
+    sendState();
+    renderConsole();
+  }
   function startGame(){
     if(!libLoaded || G.busy) return;
     G.playlistId=$("playlistSel").value;
     G.playlistName=(G.playlistId==="all")?"All songs":((LIB.plById[G.playlistId]||{}).name||"Playlist");
     G.pattern=$("patternSel").value;
     G.prize=($("prizeInput").value||"").trim()||"the prize";
-    beginRound($("startBtn"),"Start game");
+    beginRound($("startBtn"),"Open lobby");
   }
   function newGame(){ if(G.busy) return; beginRound($("newGameBtn"),"New game"); }
   // Open the session (once), start a musical game on the Worker (which deals every card),
@@ -769,7 +797,8 @@
       document.querySelectorAll("#autoSeg button").forEach(function(x){ x.classList.remove("on"); }); b.classList.add("on");
     });
   });
-  $("startBtn").addEventListener("click", startGame);
+  $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
+  $("cancelLobbyBtn").addEventListener("click", cancelLobby);
   $("newGameBtn").addEventListener("click", newGame);
   $("endGameBtn").addEventListener("click", endGame);
   $("playNextBtn").addEventListener("click", playNext);
