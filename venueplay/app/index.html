@@ -62,7 +62,7 @@
   .hactions{margin-left:auto;display:flex;align-items:center;gap:8px}
   .hact{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;background:var(--ink-3);color:var(--text);border:1px solid var(--line);text-decoration:none;cursor:pointer;transition:.15s;white-space:nowrap}
   .hact:hover{border-color:var(--pink);color:#fff}
-  .gtoast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-18px);background:var(--ink-2);border:1px solid var(--line);color:var(--text);padding:11px 20px;border-radius:999px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;box-shadow:0 14px 34px -12px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:60;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gtoast{position:fixed;top:4px;left:50%;transform:translateX(-50%) translateY(-18px);background:var(--ink-2);border:1px solid var(--line);color:var(--text);padding:11px 20px;border-radius:999px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;box-shadow:0 14px 34px -12px rgba(0,0,0,.7);opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;z-index:60;max-width:92vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .gtoast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .btn.win{background:var(--win);color:#04120a}
   .btn.win:hover{filter:brightness(1.08)}
@@ -255,8 +255,8 @@
   <!-- ============ HOST CONSOLE ============ -->
   <div id="vConsole" class="hidden">
     <div class="lbl">
-      Paired to screen <span class="mono" style="color:var(--gold)" id="roomCode">------</span>
-      <span class="pairedchip" id="pairedChip">&middot; connecting</span>
+      <span id="roomCode" style="display:none"></span>
+      On your venue screen <span class="pairedchip" id="pairedChip">&middot; connecting</span>
     </div>
 
     <div class="lbl" style="margin-top:4px">Tonight's game</div>
@@ -296,7 +296,7 @@
           </div>
           <div class="stat">
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
-            <div class="box"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
+            <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
           </div>
           <button class="btn pink big" id="startBtn">Start game</button>
           <p class="note" style="text-align:center;margin-top:10px">Puts Bingo on the TV, deals a fresh card to every phone, and shows the join QR on the screen.</p>
@@ -530,7 +530,12 @@
       var ids={}; ((__ctx&&__ctx.staff)||[]).forEach(function(s){ ids[s.venue_id]=true; });
       var mine=(vs||[]).filter(function(v){ return ids[v.id]; });
       box.innerHTML="";
-      if(!mine.length){ box.innerHTML="<div class='cerr'>No venues linked to this login.</div>"; return; }
+      if(mine.length===1){ var one=mine[0]; markVenuePick(one.id); if(pairToVenue(one.slug)) return; }  // only one after all: just go in
+      if(!mine.length){
+        // Don't dead-end: fall back to the current venue, else the manual pair screen.
+        if(__ctx && __ctx.venue && __ctx.venue.slug && pairToVenue(__ctx.venue.slug)) return;
+        go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus(); return;
+      }
       mine.forEach(function(v){
         var b=document.createElement("button"); b.className="btn pink big"; b.textContent=v.name;
         b.addEventListener("click", function(){
