@@ -453,7 +453,7 @@
       if(imp && imp.id && ctx.currentVenueId===imp.id){
         // Impersonating a venue from VenuePlay HQ: show the console for that venue.
         showImpBanner(imp.name);
-        $("headerTag").textContent="Host console";
+        $("headerTag").textContent="Bingo";
         $("statusText").textContent="VenuePlay HQ · "+(imp.name||"venue");
         $("who").style.display="flex";
         $("hactions").style.display="flex";
@@ -1021,7 +1021,7 @@
   // ================= CONNECT =================
   function connect(code){
     G.code=code;
-    $("headerTag").textContent="Host console";
+    $("headerTag").textContent="Bingo";
     // if this screen has a saved RUNNING game (host reloaded mid game), bring it back
     // before we subscribe, so the draw, called set, roster and cards all survive.
     restoreGame(code);
