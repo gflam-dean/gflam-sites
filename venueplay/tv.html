@@ -443,11 +443,15 @@
     $("tvJoinCode").textContent=joinCode;
     drawQR($("qrBig"), playURL, 512);
     drawQR($("qrMini"), playURL, 240);
+    drawQR($("qrBig"), playURL, 512);
+    drawQR($("qrMini"), playURL, 240);
   }
   function renderLobby(){
     $("lobbyCode").textContent=joinCode;
     $("tvJoinCode").textContent=joinCode;
     $("lobbyPlaying").textContent=state.playerCount;
+    drawQR($("qrBig"), playURL, 512);   // draw now the lobby is actually visible (not blank)
+    drawQR($("qrMini"), playURL, 240);
   }
   function renderRun(){
     var n=state.called.length ? state.called[state.called.length-1] : 0;
