@@ -1,0 +1,17 @@
+# venueplay.com.au cache rules (Cloudflare Pages).
+#
+# This site had no _headers file, which is why new deploys only showed up in an
+# incognito window: browsers were serving the old cached HTML. The rule below makes
+# every page and app file revalidate with the server before it is used, so venues
+# always get the latest version (a quick 304 when nothing changed).
+#
+# We use "no-cache" (revalidate), not "no-store" (never cache), on purpose: the home
+# page and the musical game load /data/musical-library.json in the browser, and
+# no-store would force that whole file to download again every single time.
+
+/*
+  Cache-Control: no-cache, must-revalidate
+
+# Brand logos never change under a given filename, so cache them hard for a year.
+/logos/*
+  Cache-Control: public, max-age=31536000, immutable
