@@ -171,6 +171,7 @@ export default {
       if (method === 'POST' && path === '/join/info')          return await handleJoinInfo(request, env, json);
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
+      if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
@@ -353,6 +354,16 @@ async function handleCapture(request, env, json) {
   if (!row.first_name && !row.last_name && !row.email && !row.mobile) return json({ ok: true, stored: false });
   await sbInsert(env, 'vp_captures', row, false);
   return json({ ok: true, stored: true });
+}
+
+/* Does this screen code map to a real venue? Lets the TV warn a venue that mistyped its
+   screen link (/tv?venue=...) instead of silently sitting on a dead channel. */
+async function handleVenueLookup(request, env, json) {
+  const url = new URL(request.url);
+  const venueId = await venueByCode(env, url.searchParams.get('code') || '');
+  if (!venueId) return json({ exists: false });
+  const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
+  return json({ exists: true, name: (rows && rows[0] && rows[0].name) || '' });
 }
 
 /* End-of-game figures for reporting. Host posts once per completed game. Keyed by venue_id. */

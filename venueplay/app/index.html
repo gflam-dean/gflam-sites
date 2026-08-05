@@ -982,6 +982,13 @@
         renderClaimQueue();
       }
     }
+    else if(m.t==="leave"){
+      if(m.pid && G.players[m.pid]){
+        delete G.players[m.pid];
+        var li=G.order.indexOf(m.pid); if(li>=0) G.order.splice(li,1);
+        sendPlayers(); sendState(); saveGame(); renderConsole();
+      }
+    }
   }
 
   // ================= CONNECT =================

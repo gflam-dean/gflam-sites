@@ -84,8 +84,22 @@
   .lastcalled b{color:#fff;font-size:18px}
   .lcnum{font-family:'Anton',sans-serif;color:var(--gold);font-size:46px;line-height:1;letter-spacing:.01em}
   .lcsub{display:block;font-size:12px;color:var(--faint);margin-top:4px;text-transform:uppercase;letter-spacing:.1em}
-  .assisttog{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:16px;color:var(--muted);font-size:13.5px;cursor:pointer}
-  .assisttog input{width:20px;height:20px;flex:none;accent-color:var(--pink)}
+  /* menu (top-right of the bar): Easy mode + Leave game */
+  .menubtn{position:absolute;top:12px;right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
+  .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:216px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
+  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
+  .menuitem:hover{background:var(--ink-3)}
+  .menuitem span{display:flex;flex-direction:column;gap:2px}
+  .menuitem small{color:var(--faint);font-size:11.5px}
+  .menuitem input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
+  .menuleave{color:var(--roll);font-weight:700;justify-content:flex-start}
+
+  /* light mode (menu toggle) */
+  body.light{ --ink:#F3EFF5; --ink-2:#FFFFFF; --ink-3:#EFEAF2; --text:#191420; --muted:#5c5666; --faint:#8b8594; --line:rgba(0,0,0,.12); --line-2:rgba(0,0,0,.06);
+    background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #F3EFF5; }
+  body.light .ptop{ background:rgba(255,255,255,.9) }
+  body.light .brand .word, body.light .pbig, body.light .cardhead .pn, body.light .lastcalled b{ color:#191420 }
+  body.light .card9 .cc{ box-shadow:0 1px 2px rgba(0,0,0,.06) }
 
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
   .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
@@ -100,6 +114,12 @@
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
     <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span> &middot; Room <span class="mono" id="roomLabel">------</span></div>
+    <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
+    <div class="menupanel hidden" id="menuPanel">
+      <label class="menuitem"><span>Easy mode<small>Mark my numbers for me</small></span><input type="checkbox" id="assistChk"></label>
+      <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
+      <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
+    </div>
   </div>
 
   <!-- NO ROOM -->
@@ -137,7 +157,6 @@
     <div id="cardStack"></div>
     <div class="pmsg" id="pMsg">Numbers light up as they are called.</div>
     <button class="btn bingoBtn" id="bingoBtn">BINGO!</button>
-    <label class="assisttog"><input type="checkbox" id="assistChk"> <span>Easy mode: mark my numbers for me</span></label>
   </div>
 
   <!-- WON -->
@@ -286,7 +305,7 @@
       tk.appendChild(grid); stack.appendChild(tk);
     }
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
-    else { $("bingoBtn").disabled=false; setMsg("Your numbers mark off as they are called. Hit BINGO when any ticket completes the pattern.",""); }
+    else { $("bingoBtn").disabled=false; setMsg("Mark off your numbers as they are called. Hit BINGO when your ticket completes the pattern.",""); }
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
 
@@ -483,10 +502,29 @@
     else { cd.daubs[n]=true; cell.classList.add("daub"); }
   });
   var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
+  // ---- menu (Easy mode / Light mode / Leave game) ----
+  var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
+  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); menuPanel.classList.toggle("hidden"); }); }
+  document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
+  function loadLight(){ try{ return localStorage.getItem("vp-light")==="1"; }catch(e){ return false; } }
+  function setLight(on){ document.body.classList.toggle("light", !!on); try{ localStorage.setItem("vp-light", on?"1":"0"); }catch(e){} }
+  var lightChk=$("lightChk"); if(lightChk){ lightChk.addEventListener("change", function(){ setLight(lightChk.checked); }); }
+  var leaveBtn=$("leaveBtn"); if(leaveBtn){ leaveBtn.addEventListener("click", leaveGame); }
+  function leaveGame(){
+    if(menuPanel) menuPanel.classList.add("hidden");
+    try{ send({ t:"leave", pid:P.pid }); }catch(e){}   // tell the host to drop us from the roster
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    subscribed=false;
+    try{ sessionStorage.removeItem("vp-name-"+P.room); }catch(e){}
+    P.joined=false; P.cards=[]; P.active=false; P.won=false; P.ended=false; P.claimPending=false;
+    setConn("");
+    show("vNoRoom");
+  }
 
   // ---- init: read ?room ----
   (function(){
     P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;
+    if(loadLight()) setLight(true); var lc=$("lightChk"); if(lc) lc.checked=loadLight();
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
     var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
     if(room && CODE_RE.test(room)){ connect(room); }

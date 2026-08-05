@@ -72,6 +72,13 @@
   .pt-lbl{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(9px,1.4cqw,14px);color:var(--muted);margin-top:.4cqw;max-width:24cqw}
   .pt-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(11px,1.9cqw,18px);color:var(--gold);letter-spacing:.1em;margin-top:.6cqw}
 
+  /* ---- wrong-link prompt (full overlay) ---- */
+  .badvenue{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,5,6,.93);backdrop-filter:blur(4px);padding:6cqw}
+  .bvcard{max-width:64cqw;text-align:center;background:var(--ink-2);border:1px solid var(--line);border-radius:2cqw;padding:4cqw 4.5cqw}
+  .bvtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,4.4cqw,52px);color:var(--pink);line-height:1.05;margin-bottom:2cqw}
+  .bvtext{font-family:'Manrope',sans-serif;font-size:clamp(13px,2.1cqw,26px);color:var(--text);line-height:1.5}
+  .bvtext b{color:#fff}
+
   /* ---- holding card ---- */
   #tvHold .heye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
   #tvHold .hbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(30px,8cqw,84px);color:#fff;line-height:1;margin:1.4cqw 0}
@@ -170,6 +177,14 @@
       <div class="pt-head">Link this screen</div>
       <div class="pt-lbl">Open <b style="color:#fff">venueplay.com.au/tv?venue=your-venue</b> on this screen once. It remembers after that.</div>
       <div class="pt-code" style="display:none"><span id="pairCode">------</span></div>
+    </div>
+  </div>
+
+  <!-- WRONG-LINK PROMPT (screen link doesn't match a venue) -->
+  <div class="badvenue hidden" id="badVenue">
+    <div class="bvcard">
+      <div class="bvtitle">Not linked to an account</div>
+      <div class="bvtext">This link doesn't seem to be linked to an account. You can sign up at <b>www.venueplay.com.au</b>, or contact us at <b>hello@venueplay.com.au</b> if you think this is wrong.</div>
     </div>
   </div>
 
@@ -300,6 +315,19 @@
   var sessionId="";
   function playURLFor(code){ return ORIGIN+"/play?room="+code; }
   var playURL=playURLFor(joinCode);
+
+  // If this screen has a venue link, check it maps to a real venue. If not, the venue almost
+  // certainly mistyped the address, so we say so rather than sit forever on a dead channel.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function showBadVenue(){ var el=$("badVenue"); if(el) el.classList.remove("hidden"); }
+  function validateVenue(){
+    if(!VENUE_SLUG) return;   // no venue linked: the pair panel already prompts them
+    try{
+      fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)).then(function(r){ return r.ok?r.json():null; }).then(function(d){
+        if(d && d.exists===false) showBadVenue();
+      }).catch(function(){});   // worker unreachable/old: don't false-alarm, just carry on
+    }catch(e){}
+  }
 
   // show the pair QR whenever this screen is in ads mode and no host has connected
   // THIS session. no permanent "paired forever" flag: a reload shows it again until
@@ -606,6 +634,7 @@
   drawQR($("qrBig"), playURL, 720);
   drawQR($("qrMini"), playURL, 240);
   enterAds(); // shows + draws the pair QR while in ads with no host connected
+  validateVenue(); // warn if this screen link isn't tied to a real venue
 
   // ---- per-venue screen content ----
   // /tv?venue=<slug> loads that venue's own promo slides, draw schedule and raffle
