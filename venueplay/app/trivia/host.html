@@ -563,7 +563,7 @@
       var tv=tvFromUrl();
       var slug=(ctx.venue && ctx.venue.slug) || "";
       if(tv){ connect(tv); }
-      else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode(slug)); }   // auto-pair by venue, like bingo - no code to type
+      else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("trivia-"+slug)); }   // auto-pair by venue (game-namespaced so it can't collide with bingo)
       else { $("connectView").classList.remove("hidden"); }                          // fallback: manual code entry
     }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
   } else {

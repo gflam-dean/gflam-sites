@@ -177,7 +177,22 @@
   // is the code the host types/scans; it is NOT the player join code. The real join code is
   // handed over by the host (a {t:"session"} message) once it opens a Worker session, and
   // the lobby + QR flip to that. Matches the bingo/trivia two-code screen model.
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  var VENUE_SLUG=(function(){
+    var m=/[?&]venue=([^&]+)/.exec(window.location.search);
+    var v=m?decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,""):"";
+    if(v){ try{ localStorage.setItem("vpTvVenueMusical", v); }catch(e){} return v; }
+    try{ var s=localStorage.getItem("vpTvVenueMusical"); if(s) return s; }catch(e){}
+    return "";
+  })();
   var CODE=(function(){
+    if(VENUE_SLUG) return venueCode("musical-"+VENUE_SLUG);   // auto-pair by venue (game-namespaced)
     try{ var c=localStorage.getItem("vpMusicalTvCode"); if(c && CODE_RE.test(c)) return c; }catch(e){}
     var nc=makeCode(); try{ localStorage.setItem("vpMusicalTvCode", nc); }catch(e){} return nc;
   })();

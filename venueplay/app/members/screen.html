@@ -44,6 +44,19 @@
   .hostline{position:absolute;left:0;right:0;bottom:2.6cqw;text-align:center;font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.5cqw,20px);color:var(--faint);z-index:6}
   .hostline b{color:var(--pink)}
 
+  /* members-draws advertising board (auto-includes the week's draws) */
+  .boardhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(12px,2.4cqw,34px);color:var(--pink);margin-bottom:2.4cqw}
+  .board{width:min(88cqw,1500px);display:flex;flex-direction:column;gap:1.4cqw}
+  .drow{display:flex;align-items:center;justify-content:space-between;gap:2cqw;background:var(--ink-2);border:1px solid var(--line-2);border-radius:2cqw;padding:2cqw 3cqw}
+  .drow.hot{border-color:var(--pink);background:linear-gradient(100deg,rgba(255,31,142,.12),rgba(255,31,142,.02));box-shadow:0 0 34px rgba(255,31,142,.18)}
+  .drow .dn{text-align:left;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(14px,2.8cqw,40px);color:#fff;line-height:1.05;display:flex;flex-direction:column;gap:.5cqw}
+  .drow .dc{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:clamp(10px,1.6cqw,22px);color:var(--muted);letter-spacing:.02em}
+  .drow .tn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(8px,1.2cqw,16px);letter-spacing:.14em;color:#fff;background:var(--pink);border-radius:1cqw;padding:.4cqw 1cqw;margin-left:1.2cqw;vertical-align:middle}
+  .drow .dj{font-family:'Anton',sans-serif;font-size:clamp(26px,6cqw,96px);line-height:.9;white-space:nowrap;
+    background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 32%,#FFF0C6 50%,#FFC24B 68%,#E9A93A 100%);background-size:220% auto;
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 16px rgba(255,194,75,.28));animation:shimmer 4.5s linear infinite}
+
   .spin{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(56px,20cqw,360px);color:#fff;line-height:1;text-shadow:0 0 40px rgba(255,255,255,.2)}
   .drawing{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(16px,3.4cqw,48px);color:var(--pink);letter-spacing:.1em;margin-top:1.4cqw}
   .winnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(60px,22cqw,380px);color:#fff;line-height:.95;text-shadow:0 0 60px rgba(255,31,142,.35)}
@@ -91,11 +104,21 @@
 
   <!-- idle / advertising -->
   <div id="tvIdle">
-    <div class="layer ad ad-a">
-      <div class="eyebrow">Members draw</div>
-      <div class="drawname" id="idleDrawName">Members Draw</div>
-      <div class="jack" id="idleJack">$0</div>
-      <div class="jsub">Be here when your number is drawn</div>
+    <!-- ad-a: members draws board (auto-includes the week's draws + live jackpots + drawn time) -->
+    <div class="layer ad ad-a" id="adBoard">
+      <!-- single-draw fallback (used until the host sends the draws list) -->
+      <div id="idleSingle">
+        <div class="eyebrow">Members draw</div>
+        <div class="drawname" id="idleDrawName">Members Draw</div>
+        <div class="jack" id="idleJack">$0</div>
+        <div class="jsub">Be here when your number is drawn</div>
+      </div>
+      <!-- multi-draw board -->
+      <div id="idleBoardWrap" class="hidden">
+        <div class="boardhead">This week&rsquo;s members draws</div>
+        <div class="board" id="idleBoard"></div>
+        <div class="jsub" style="margin-top:2.4cqw">Be here when your number is drawn</div>
+      </div>
     </div>
     <div class="layer ad ad-b"><div class="adtag">Bistro</div><div class="adbig">Schnitzel<br>Wednesday</div><div class="adsub">Chicken or veal, chips &amp; salad &middot; $18</div></div>
     <div class="layer ad ad-c"><div class="adtag">Live music</div><div class="adbig">Friday<br>Sundowners</div><div class="adsub">On the green from 5pm &middot; free entry</div></div>
@@ -140,25 +163,66 @@
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
-  function money(cents){ return "$"+(cents/100).toLocaleString("en-AU",{minimumFractionDigits:0,maximumFractionDigits:0}); }
+  function money(cents){ return "$"+((cents||0)/100).toLocaleString("en-AU",{minimumFractionDigits:0,maximumFractionDigits:0}); }
 
   var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
   function makeCode(){ var s=""; for(var i=0;i<6;i++) s+=CODE_ALPHABET.charAt(cryptoInt(CODE_ALPHABET.length)); return s; }
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
 
-  var CODE=makeCode();
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  var VENUE_SLUG=(function(){
+    var m=/[?&]venue=([^&]+)/.exec(window.location.search);
+    var v=m?decodeURIComponent(m[1]).toLowerCase().replace(/[^a-z0-9-]/g,""):"";
+    if(v){ try{ localStorage.setItem("vpTvVenueMembers", v); }catch(e){} return v; }
+    try{ var s=localStorage.getItem("vpTvVenueMembers"); if(s) return s; }catch(e){}
+    return "";
+  })();
+  var CODE=(function(){
+    if(VENUE_SLUG) return venueCode("members-"+VENUE_SLUG);   // auto-pair by venue (game-namespaced)
+    try{ var c=localStorage.getItem("vpTvCodeMembers"); if(c && CODE_RE.test(c)) return c; }catch(e){}
+    var nc=makeCode(); try{ localStorage.setItem("vpTvCodeMembers", nc); }catch(e){} return nc;
+  })();
 
-  var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0 };
+  var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0, draws:[] };
   var adTimer=null, adIdx=0, spinTimer=null, nameTimer=null, celebrateTimer=null, countTimer=null;
 
   // ---- layers ----
   function hideAll(){ ["tvIdle","tvDraw","tvWin","tvResult"].forEach(function(k){ $(k).classList.add("hidden"); }); }
 
   // ---- idle / ads ----
-  function fillIdle(){ $("idleDrawName").textContent=state.drawName; $("idleJack").textContent=money(state.jackpotCents); }
+  function fillIdle(){
+    // single-draw fallback stays in sync
+    $("idleDrawName").textContent=state.drawName; $("idleJack").textContent=money(state.jackpotCents);
+    // if the host has sent the week's draws, show the multi-draw board instead
+    var hasBoard=Array.isArray(state.draws) && state.draws.length>0;
+    $("idleSingle").classList.toggle("hidden", hasBoard);
+    $("idleBoardWrap").classList.toggle("hidden", !hasBoard);
+    if(hasBoard) fillBoard();
+  }
+  function fillBoard(){
+    var wrap=$("idleBoard"); var html="";
+    for(var i=0;i<state.draws.length;i++){
+      var d=state.draws[i];
+      var clock=((d.drawDay||"")+(d.drawTime?(" "+d.drawTime):"")).trim();
+      var badge=d.tonight?'<span class="tn">Tonight</span>':'';
+      html+='<div class="drow'+(d.tonight?' hot':'')+'">'+
+              '<div class="dn"><span>'+esc(d.name)+badge+'</span>'+(clock?'<div class="dc">'+esc(clock)+'</div>':'')+'</div>'+
+              '<div class="dj">'+money(d.jackpotCents)+'</div>'+
+            '</div>';
+    }
+    wrap.innerHTML=html;
+  }
   function stopAds(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
   function startAds(){
     stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.remove("hidden");
@@ -186,7 +250,7 @@
   function showWinner(number, name){
     stopAds(); stopSpin(); $("hostLine").classList.add("hidden");
     hideAll(); $("winTitle").textContent=state.drawName; $("tvWin").classList.remove("hidden");
-    $("tvWinNum").textContent = (number==null?"--":number);
+    $("tvWinNum").textContent = (number==null?"--":("#"+number));
     var nm=$("tvWinName"), pr=$("tvPresent");
     nm.classList.add("hidden"); pr.classList.add("hidden");
     nameTimer=setTimeout(function(){
@@ -242,7 +306,7 @@
     $("resJack").classList.remove("hidden"); $("resJack").textContent=money(nextJackpotCents||0);
     $("resSub").innerHTML="Grew by "+money(incrementCents||0)+" &middot; be here next week";
     var mm=$("resMissed"); mm.classList.remove("hidden");
-    mm.innerHTML="Drawn tonight: <b>#"+(missedNumber==null?"--":missedNumber)+" "+(missedName||"")+"</b>, not present in time";
+    mm.innerHTML="Drawn tonight: <b>#"+(missedNumber==null?"--":missedNumber)+" "+esc(missedName||"")+"</b>, not present in time";
   }
 
   // ---- realtime ----
@@ -250,22 +314,31 @@
   var ch=client.channel("vp-members-"+CODE, { config:{ broadcast:{ self:false } } });
   ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
   ch.subscribe(function(status){
-    if(status==="SUBSCRIBED"){ $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
+    if(status==="SUBSCRIBED"){
+      $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      // announce ourselves so the host replays the current jackpot + draws list
+      ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } });
+    }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
   });
 
+  function applyDraws(m){ if(Array.isArray(m.draws)) state.draws=m.draws; }
+
   function onMsg(m){
     if(!m||!m.t) return;
+    if(m.t==="host_here"){ /* host present; wait for state */ return; }
     if(m.t==="state"){
       if(typeof m.drawName==="string") state.drawName=m.drawName;
       if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents;
+      applyDraws(m);
       if(!m.playing){ state.phase="idle"; startAds(); }
+      else if(state.phase==="idle"){ fillIdle(); }   // refresh board while still idle
     }
-    else if(m.t==="drawing"){ state.phase="drawing"; showDrawing(); }
+    else if(m.t==="drawing"){ if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="drawing"; showDrawing(); }
     else if(m.t==="winner"){ state.phase="winner"; showWinner(m.number, m.name); }
     else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
     else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName); }
-    else if(m.t==="idle"){ state.phase="idle"; startAds(); }
+    else if(m.t==="idle"){ applyDraws(m); if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents; if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="idle"; startAds(); }
   }
 
   // ---- init ----

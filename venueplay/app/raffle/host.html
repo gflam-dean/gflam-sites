@@ -117,8 +117,18 @@
 
 <div class="wrap">
 
-  <!-- CONNECT -->
-  <div id="connectView">
+  <!-- SIGN IN NEEDED -->
+  <div id="signinView" class="hidden">
+    <div class="connect">
+      <div class="big">Sign in to run a raffle</div>
+      <div class="sub" id="signinSub">You need your venue host login to draw a raffle.</div>
+      <a class="btn pink big" id="signinLink" href="../index.html" style="display:inline-block;text-decoration:none;margin-top:6px">Go to sign in</a>
+      <p class="note" style="margin-top:14px">The draw runs on the VenuePlay server so every winning ticket is fair and logged. Your saved prizes load from your venue automatically.</p>
+    </div>
+  </div>
+
+  <!-- CONNECT (pair with the venue screen) -->
+  <div id="connectView" class="hidden">
     <div class="connect">
       <div class="big">Connect to the room</div>
       <div class="sub">Enter the 6-character code shown on the venue TV.</div>
@@ -187,34 +197,55 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../vp-session.js"></script>
 <script>
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
   function show(el,on){ $(el).classList.toggle("hidden", !on); }
-  function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
   function secsToClock(s){ var m=Math.floor(s/60),r=s%60; return m+":"+(r<10?"0":"")+r; }
   function money(d){ return "$"+Number(d||0).toLocaleString("en-AU"); }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
-  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
 
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  // Share the one client (and its auth session) with the session helper.
+  if(window.VP){ VP.useClient(client); }
+
+  // ---- the game Worker (server-authoritative referee) ------------------
+  // Every real write (open session, create the raffle, DRAW the winner) goes through this
+  // Worker with the host's Supabase access token. The draw itself is done on the SERVER with
+  // an unbiased CSPRNG and persisted to vp_raffle_results, so the winning ticket is fair and
+  // logged. The broadcasts below are only for instant UX on the TV. Confirm this matches the
+  // deployed venueplay-game Worker URL (same one bingo/trivia/musical use).
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function getToken(){
+    var c=(window.VP&&VP.getClient)?VP.getClient():client;
+    return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
+  }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(readApi); }
+
+  // ---- pairing channel (host <-> venue screen), same convention as the raffle TV ----
   var ch=null, subscribed=false, sendQueue=[];
   function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
 
-  // ---- authoritative raffle state ----
-  var G={ code:"", prize:"Meat Tray", min:1, max:150, winnersCount:1, time:180, drawLength:4,
+  // ---- console state (the Worker is authoritative; this is the console's view) ----
+  var G={ venueId:null, code:"", sessionId:"", gameId:"", gameSig:"",
+          prize:"Meat Tray", min:1, max:150, winnersCount:1, time:180, drawLength:4,
           jackOn:false, jackAmt:500, allowRedraw:true,
           savedPrizes:["Meat Tray","$100 Bar Tab","Seafood Platter","Bottle of Whisky"],
-          drawn:{}, round:null, results:[],
-          spinTimer:null, countdownTimer:null, celebrateWait:null };
+          serverPad:null, drawn:{}, round:null, results:[],
+          busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null };
 
   function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (G.prize||"Prize"); }
-  function padWidth(){ return String(Math.max(G.max||0,1)).length; }
+  function padWidth(){ return G.serverPad || String(Math.max(G.max||0,1)).length; }
   function pad(n){ var s=String(n); var w=padWidth(); while(s.length<w) s="0"+s; return s; }
+  function hostStatus(msg){ if(msg) $("statusText").textContent=msg; }
 
   // ---- inputs ----
   function readInputs(){
@@ -238,21 +269,21 @@
     line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"+(G.winnersCount>1?" · "+G.winnersCount+" winners":"")+(drew?" · "+drew+" already drawn":"");
     if(!G.round) sendIdle();
   }
-  function pickNumbers(n){
-    var out=[], span=G.max-G.min+1, guard=0;
-    while(out.length<n && guard<span*6){ guard++; var x=G.min+cryptoInt(span); if(!G.drawn[x] && out.indexOf(x)<0) out.push(x); }
-    return out;
-  }
 
-  // ---- saved prizes ----
+  // ---- saved prizes (READ from vp_raffle_prizes for this venue; new prizes stay local) ----
+  function loadSavedPrizes(){
+    if(!G.venueId) return;
+    client.from("vp_raffle_prizes").select("label").eq("venue_id",G.venueId).order("created_at",{ascending:false})
+      .then(function(r){ var rows=(r&&r.data)||[]; if(rows.length){ G.savedPrizes=rows.map(function(x){ return x.label; }).slice(0,12); } renderPresets(); }, function(){});
+  }
   function renderPresets(){
     var w=$("prizePresets"); w.innerHTML="";
-    if(!G.savedPrizes.length){ w.innerHTML='<span class="empty">None yet. Type a prize and it saves for next time.</span>'; return; }
+    if(!G.savedPrizes.length){ w.innerHTML='<span class="empty">None yet. Type a prize and it saves for this session.</span>'; return; }
     for(var i=0;i<G.savedPrizes.length;i++){ var p=G.savedPrizes[i]; var b=document.createElement("button"); b.type="button"; b.setAttribute("data-p",p); b.textContent=p; w.appendChild(b); }
   }
-  function savePrize(p){ if(!p) return; var i=G.savedPrizes.indexOf(p); if(i>-1) G.savedPrizes.splice(i,1); G.savedPrizes.unshift(p); if(G.savedPrizes.length>8) G.savedPrizes.length=8; renderPresets(); }
+  function savePrize(p){ if(!p) return; var i=G.savedPrizes.indexOf(p); if(i>-1) G.savedPrizes.splice(i,1); G.savedPrizes.unshift(p); if(G.savedPrizes.length>12) G.savedPrizes.length=12; renderPresets(); }
 
-  // ---- broadcasts ----
+  // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
   function sendIdle(){ send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
@@ -260,15 +291,51 @@
   // ---- draw button modes ----
   function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw the winner"; b.classList.remove("nextmode"); }
   function drawBtnNext(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw the next prize"; b.classList.add("nextmode"); }
+  function drawBtnBusy(){ var b=$("drawBtn"); b.disabled=true; b.textContent="Drawing…"; b.classList.remove("nextmode"); }
 
   // ---- timers ----
   function stopSpin(){ if(G.spinTimer){ clearInterval(G.spinTimer); G.spinTimer=null; } }
   function stopCountdown(){ if(G.countdownTimer){ clearInterval(G.countdownTimer); G.countdownTimer=null; } }
   function stopWait(){ if(G.celebrateWait){ clearTimeout(G.celebrateWait); G.celebrateWait=null; } }
   function clearTimers(){ stopSpin(); stopCountdown(); stopWait(); }
+  // The TV drives the spin animation off the 'drawing' broadcast; the console just shows the
+  // "Drawing…" button state until the server returns the winner, so no local spin is needed.
+  function startLocalSpin(){ stopSpin(); }
 
-  // ---- draw ----
+  // ---- ensure a raffle game exists for the current range/jackpot (a changed range = new raffle) ----
+  // Range, jackpot, allow-redraw and time-to-present are fixed on the raffle game when it is
+  // created, so a change to any of them starts a fresh raffle. Prize + winners are per-draw.
+  function raffleSig(){ return G.min+"-"+G.max+"-"+(G.jackOn?("J"+G.jackAmt):"N")+"-"+(G.allowRedraw?"R":"n")+"-"+G.time; }
+  function openSession(){
+    if(!G.venueId) return Promise.reject(new Error("No venue linked to this login"));
+    if(G.sessionId) return Promise.resolve(G.sessionId);
+    return apiPost("/session",{ venue_id:G.venueId }).then(function(r){ G.sessionId=r.session_id; return G.sessionId; });
+  }
+  function ensureRaffleGame(){
+    var sig=raffleSig();
+    if(G.gameId && G.gameSig===sig) return Promise.resolve();
+    return openSession().then(function(){
+      return apiPost("/host/game",{
+        session_id:G.sessionId, format:"raffle",
+        range_min:G.min, range_max:G.max,
+        winners:G.winnersCount, time_to_present:G.time,
+        allow_redraw:G.allowRedraw, leading_zeros:true,
+        jackpot_on:G.jackOn, jackpot_amount_cents:G.jackOn?Math.round(G.jackAmt*100):null,
+        prize:G.jackOn?null:G.prize, prize_type:G.jackOn?"cash":"other",
+        prizes:G.savedPrizes
+      });
+    }).then(function(r){ G.gameId=r.game_id; G.gameSig=sig; G.drawn={}; if(r.pad) G.serverPad=r.pad; });
+  }
+  function drawBody(){
+    var body={ game_id:G.gameId, winners:G.winnersCount };
+    if(G.jackOn){ body.prize="Cash jackpot"; body.prize_type="cash"; body.prize_value_cents=Math.round(G.jackAmt*100); }
+    else { body.prize=G.prize; body.prize_type="other"; }
+    return body;
+  }
+
+  // ---- draw (through the Worker; the winning number comes from the SERVER) ----
   function startDraw(){
+    if(G.busy) return;
     readInputs();
     if(!validRange()){ alert("Enter a valid ticket range first."); return; }
     if(G.jackOn && G.jackAmt<=0){ alert("Enter a jackpot amount."); return; }
@@ -276,23 +343,32 @@
     if(remainingCount()<G.winnersCount){ alert("Not enough undrawn tickets for "+G.winnersCount+" winners. Tap New raffle to start again."); return; }
     if(!G.jackOn) savePrize(G.prize);
 
-    clearTimers();
+    G.busy=true; clearTimers();
     $("winnerCard").classList.remove("show");
-    $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…"; $("drawBtn").classList.remove("nextmode");
+    drawBtnBusy();
+    sendDrawing(); startLocalSpin();
 
-    sendDrawing();
-    var ticks=0, total=Math.max(8, Math.round(G.drawLength*1000/90));
-    G.spinTimer=setInterval(function(){ ticks++; if(ticks>=total){ stopSpin(); reveal(); } },90);
+    var wait=new Promise(function(res){ setTimeout(res, Math.max(1200, G.drawLength*1000)); });
+    ensureRaffleGame()
+      .then(function(){ return apiPost("/host/draw", drawBody()); })
+      .then(function(r){ return wait.then(function(){ return r; }); })
+      .then(function(r){ revealServer(r); })
+      .catch(function(e){ stopSpin(); G.busy=false; drawBtnIdle(); hostStatus(e.message||"Draw failed"); sendIdle(); });
   }
 
-  function reveal(){
-    var nums=pickNumbers(G.winnersCount);
-    if(!nums.length){ alert("No tickets left to draw."); sendIdle(); drawBtnIdle(); return; }
-    G.round={ numbers:nums, remaining:G.time, resolved:false, prize:prizeLabel() };
+  // reveal the SERVER's drawn ticket(s)
+  function revealServer(r){
+    stopSpin(); G.busy=false;
+    var nums=(r.tickets||[]).slice();
+    if(r.pad) G.serverPad=r.pad;
+    if(!nums.length){ drawBtnIdle(); hostStatus("No tickets left to draw"); sendIdle(); return; }
+    var allowRedraw=(r.allow_redraw!==false);   // the game's stored setting is authoritative
+    var t=(r.time_to_present!=null)?r.time_to_present:G.time;
+    G.round={ seq:r.seq, numbers:nums, remaining:t, resolved:false, prize:(r.prize||prizeLabel()) };
     var multi=nums.length>1;
 
-    // broadcast winner to the TV
-    send({ t:"winner", numbers:nums, prizeLabel:G.round.prize, allowRedraw:G.allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(G.allowRedraw?G.time:0) });
+    // broadcast the winner to the TV
+    send({ t:"winner", numbers:nums, prizeLabel:G.round.prize, allowRedraw:allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(allowRedraw?t:0) });
 
     // local winner card
     var wc=$("winnerCard"); wc.classList.add("show"); $("wcPrize").textContent=G.round.prize;
@@ -301,7 +377,7 @@
       for(var i=0;i<nums.length;i++){ var sp=document.createElement("span"); sp.textContent=pad(nums[i]); wl.appendChild(sp); }
     } else { show("wcNum",true); show("wcList",false); $("wcNum").textContent=pad(nums[0]); }
 
-    if(G.allowRedraw){
+    if(allowRedraw){
       show("wcResolve",true);
       updateCd();
       G.countdownTimer=setInterval(function(){ G.round.remaining--; updateCd();
@@ -313,6 +389,7 @@
   }
   function updateCd(){ var t=secsToClock(Math.max(0,G.round.remaining)); $("wcCd").innerHTML="Come to the bar within <b>"+t+"</b>"; }
 
+  // no redraw allowed: the draw already recorded outcome 'drawn' (counts as given). Celebrate.
   function finalizeSimple(){
     if(!G.round) return;
     logResults("drawn");
@@ -320,37 +397,48 @@
     var nums=G.round.numbers.slice(), pz=G.round.prize;
     $("wcCd").innerHTML='<span style="color:var(--win)">Winner drawn. Hand over the prize.</span>';
     G.round=null; renderRange(); drawBtnNext();
-    // celebrate on the TV
     stopWait(); G.celebrateWait=setTimeout(function(){ send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max }); }, 1200);
   }
 
+  // winner presented -> mark claimed on the server
   function onClaim(){
     if(!G.round||G.round.resolved) return;
     G.round.resolved=true; clearTimers();
-    var nums=G.round.numbers.slice(), pz=G.round.prize;
+    var nums=G.round.numbers.slice(), pz=G.round.prize, seq=G.round.seq;
     logResults("claimed");
     for(var i=0;i<nums.length;i++){ G.drawn[nums[i]]=true; }
     send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max });
     $("wcCd").innerHTML='<span style="color:var(--win)">Claimed · '+esc(pz)+'</span>';
     show("wcResolve",false);
     G.round=null; renderRange(); drawBtnNext();
+    if(G.gameId && seq!=null){ apiPost("/host/draw/resolve",{ game_id:G.gameId, seq:seq, outcome:"claimed" }).catch(function(e){ hostStatus(e.message); }); }
   }
+  // winner not here -> mark that round no_show on the server and draw a replacement
   function onRedraw(auto){
-    if(!G.round||G.round.resolved) return;
+    if(!G.round||G.round.resolved||G.busy) return;
     G.round.resolved=true; clearTimers();
     logResults("no_show");
     for(var i=0;i<G.round.numbers.length;i++){ G.drawn[G.round.numbers[i]]=true; }
-    G.round=null; renderRange();
+    var seq=G.round.seq; G.round=null; renderRange();
     send({ t:"redraw", pad:padWidth(), min:G.min, max:G.max, prizeLabel:prizeLabel() });
-    setTimeout(function(){ startDraw(); }, auto?1200:0);
+
+    G.busy=true; drawBtnBusy(); sendDrawing(); startLocalSpin();
+    var wait=new Promise(function(res){ setTimeout(res, Math.max(1200, G.drawLength*1000)); });
+    var body=drawBody(); body.redraw_of_seq=seq;
+    apiPost("/host/draw", body)
+      .then(function(r){ return wait.then(function(){ return r; }); })
+      .then(function(r){ revealServer(r); })
+      .catch(function(e){ stopSpin(); G.busy=false; drawBtnNext(); hostStatus(e.message||"Redraw failed"); sendIdle(); });
   }
+  // start a fresh raffle: end the current game so drawn tickets clear
   function newRaffle(){
-    G.drawn={}; clearTimers(); G.round=null;
+    clearTimers(); G.round=null; G.drawn={};
+    var gid=G.gameId; G.gameId=""; G.gameSig=""; G.serverPad=null;
     $("winnerCard").classList.remove("show"); drawBtnIdle(); renderRange(); sendIdle();
+    if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(){}); }
   }
 
-  // ---- audit log ----
-  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  // ---- audit log (mirrors the server-recorded results for the host's own view) ----
   function logResults(outcome){
     if(!G.round) return; var now=new Date();
     for(var i=0;i<G.round.numbers.length;i++){ var n=G.round.numbers[i];
@@ -372,24 +460,36 @@
     }
   }
 
-  // ---- connect ----
+  // ---- pair with the venue screen ----
   function connect(code){
     G.code=code;
     ch=client.channel("vp-raffle-"+code, { config:{ broadcast:{ self:false } } });
-    ch.on("broadcast", { event:"msg" }, function(e){ /* host is authority; TV does not talk back */ });
+    ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
-        subscribed=true; flushQueue();
-        $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
-        sendState(); // announce presence + prize so the TV catches up
+        subscribed=true; send({ t:"host_here" }); flushQueue();
+        $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });
+    $("signinView").classList.add("hidden");
     $("connectView").classList.add("hidden");
     $("consoleView").classList.remove("hidden");
     $("roomCode").textContent=code;
     renderPresets(); renderRange(); renderResults();
+  }
+  // the screen announces itself; on a fresh (re)load we re-announce and replay the state
+  function onPair(m){
+    if(!m||!m.t) return;
+    if(m.t==="tv_here"){
+      $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+      if(m.hello){
+        send({ t:"host_here" });
+        if(G.round){ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:G.allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(G.allowRedraw?Math.max(0,G.round.remaining):0) }); }
+        else { sendState(); }
+      }
+    }
   }
 
   // ---- events ----
@@ -401,7 +501,7 @@
   codeIn.addEventListener("keydown", function(e){ if(e.key==="Enter") tryConnect(); });
   function tryConnect(){
     var code=codeIn.value.toUpperCase().trim();
-    if(code.length!==6){ $("codeErr").textContent="Enter all 6 characters from the TV."; return; }
+    if(!CODE_RE.test(code)){ $("codeErr").textContent="Enter all 6 characters from the TV."; return; }
     connect(code);
   }
   $("connectBtn").addEventListener("click", tryConnect);
@@ -420,8 +520,26 @@
   ["rfPrize","rfStart","rfEnd","rfWinners","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", renderRange); });
   $("rfAllowRedraw").addEventListener("change", readInputs);
 
-  // prefill code from ?room if present (handy for testing)
-  (function(){ var m=/[?&]room=([^&]+)/.exec(window.location.search); if(m){ codeIn.value=decodeURIComponent(m[1]).toUpperCase().slice(0,6); } })();
+  // ---- boot: resolve the host login, load saved prizes, then pair with the screen ----
+  function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); }
+  function tvFromUrl(){ var m=/[?&](?:tv|room)=([^&]+)/.exec(window.location.search); if(!m) return ""; var c=decodeURIComponent(m[1]).toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); return CODE_RE.test(c)?c:""; }
+
+  $("statusText").textContent="Checking sign in";
+  if(window.VP){
+    VP.ready().then(function(ctx){
+      if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to draw a raffle."); return; }
+      if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
+      G.venueId=ctx.currentVenueId;
+      $("statusText").textContent="Signed in";
+      loadSavedPrizes();
+      var tv=tvFromUrl();
+      if(tv){ connect(tv); }
+      else if(ctx.venue && ctx.venue.slug && window.VP && VP.venueCode){ connect(VP.venueCode("raffle-"+ctx.venue.slug)); }
+      else { $("connectView").classList.remove("hidden"); }
+    }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
+  } else {
+    showSignIn("Sign in helper failed to load. Try reloading.");
+  }
 })();
 </script>
 </body>

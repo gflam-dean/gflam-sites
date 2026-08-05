@@ -229,7 +229,7 @@
     return "";
   })();
   var CODE=(function(){
-    if(VENUE_SLUG) return venueCode(VENUE_SLUG);
+    if(VENUE_SLUG) return venueCode("trivia-"+VENUE_SLUG);   // game-namespaced so trivia can't share bingo's channel
     try{ var c=localStorage.getItem("vpTvCodeTrivia"); if(c && CODE_RE.test(c)) return c; }catch(e){}
     var nc=makeCode(); try{ localStorage.setItem("vpTvCodeTrivia", nc); }catch(e){} return nc;
   })();

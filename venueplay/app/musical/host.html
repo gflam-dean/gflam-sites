@@ -157,8 +157,18 @@
 
 <div class="wrap">
 
+  <!-- SIGN IN NEEDED -->
+  <div id="signinView" class="hidden">
+    <div class="connect">
+      <div class="big">Sign in to run musical bingo</div>
+      <div class="sub" id="signinSub">You need your venue host login to start a live game.</div>
+      <a class="btn pink big" id="signinLink" href="../index.html" style="display:inline-block;text-decoration:none;margin-top:6px">Go to sign in</a>
+      <p class="note" style="margin-top:14px">Musical bingo deals every card and judges every winner on the server. The songs play from this device through your PA under your venue's own OneMusic licence.</p>
+    </div>
+  </div>
+
   <!-- CONNECT -->
-  <div id="connectView">
+  <div id="connectView" class="hidden">
     <div class="connect">
       <div class="big">Connect to the room</div>
       <div class="sub">Enter the 6-character code shown on the venue TV.</div>
@@ -275,6 +285,7 @@
 <audio id="clip" preload="auto" playsinline></audio>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../vp-session.js"></script>
 <script>
 (function(){
   "use strict";
@@ -283,6 +294,8 @@
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
   var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+  // Host UI pattern value -> the vp_music_games pattern the Worker expects.
+  var PAT_TO_WORKER={one:"one_line",two:"two_lines",corners:"four_corners",full:"full_house"};
 
   // ---- song library (loaded from data/musical-library.json) ----
   // Only the host loads the library. Players and the TV receive song titles and
@@ -321,69 +334,76 @@
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
-  var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
 
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  // Share this one client (and its auth session) with the session helper so role
+  // resolution and the game broadcast run on one client, matching the trivia host.
+  if(window.VP){ VP.useClient(client); }
+
+  // ---- the game Worker (server-authoritative referee) ------------------
+  // EVERY real write (open session, start the game, play a song, resolve a claim) goes
+  // through this Worker with the host's Supabase access token. The Worker deals every card
+  // and judges every winner. The broadcasts below are only for instant UX and are
+  // re-derivable from /snapshot. AUDIO STAYS ON THIS DEVICE: the ~30s preview clip is played
+  // by the audio engine further down; the Worker only tracks which song was played. Confirm
+  // this matches the deployed venueplay-game Worker URL.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function getToken(){
+    var c=(window.VP&&VP.getClient)?VP.getClient():client;
+    return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
+  }
+  function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
+  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; if(!window.confirm("Full house! You are over your allowance of "+cap+" players.\n\nThe extra "+extra+" player"+(extra===1?"":"s")+" will be added for this month and billed a full month at your per-player rate.\n\nTap OK to start the game with everyone in.")){ var ec=new Error("Over your allowance - game not started."); ec.status=402; throw ec; } return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
+
+  // TWO broadcast channels for instant UX (the DB is the source of truth), same as the
+  // bingo/trivia host:
+  //   ch  = PAIRING channel "vp-"+pairCode: host <-> venue screen (handoff + presence).
+  //   gch = GAME channel "vp-"+join_code: host <-> players (their phones).
+  // Every game message goes to BOTH via bcast() so the screen never switches channels.
   var ch=null, subscribed=false, sendQueue=[];
   function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  var gch=null, gsub=false, gQueue=[];
+  function gsend(obj){ if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:obj }); } else { gQueue.push(obj); } }
+  function gflush(){ while(gQueue.length && gch){ gch.send({ type:"broadcast", event:"msg", payload:gQueue.shift() }); } }
+  function bcast(obj){ send(obj); gsend(obj); }
+  function openGameChannel(joinCode){
+    if(gch){ try{ client.removeChannel(gch); }catch(e){} gch=null; gsub=false; }
+    gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });
+    gch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+    gch.subscribe(function(status){ if(status==="SUBSCRIBED"){ gsub=true; gflush(); gsend({ t:"rollcall" }); } });
+  }
 
-  // ---- authoritative game state ----
+  // ---- host game state (the Worker is authoritative; this is the console's view) ----
+  // Cards are dealt by the Worker and fetched by each phone via /player/card, so the host
+  // no longer generates or broadcasts cards. It DOES keep the played set (by title) to drive
+  // the song list, the "now playing" panel and the cosmetic daub broadcast.
   var G={
-    code:"", status:"setup", pattern:"one", prize:"the prize", autoDaub:true,
+    venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
+    status:"setup", pattern:"one", prize:"the prize", autoDaub:true,
     playlistId:"", playlistName:"All songs",
-    songs:[],              // song objects in play for this game (fixed at start)
+    songs:[],              // song objects in play this game (each gains song_id from the Worker at start)
+    byTitle:{},            // normTitle -> song object (with song_id + previewUrl), for playSong/claim render
     queue:[], qIdx:-1,     // shuffled play order for the "Play next" button
     played:{}, playedOrder:[], hostNow:null, nowSong:null,
-    players:{}, order:[],  // pid -> {name, cells, cardNo}
-    claim:null, won:false
+    players:{}, order:[],  // cosmetic roster: pid -> {name}
+    claim:null, won:false, busy:false
   };
   function curSongs(){ return G.songs; }
   function findSong(title){
-    var s=LIB.byTitle[normTitle(title)];
-    return s || { id:"", title:title, artist:"", previewUrl:"", artworkUrl:"" };
-  }
-
-  // ---- musical bingo card (25 cells, index 12 FREE) ----
-  function makeCard(){
-    var pool=G.songs.slice(), titles=[];
-    for(var i=0;i<24 && pool.length;i++){ var idx=cryptoInt(pool.length); titles.push(pool[idx].title); pool.splice(idx,1); }
-    var cells=[], ti=0;
-    for(var p=0;p<25;p++){ if(p===12){ cells.push(null); } else { cells.push(titles[ti++]||""); } }
-    return cells;
-  }
-  function shuffledQueue(){
-    var a=[]; for(var i=0;i<G.songs.length;i++) a.push(i);
-    for(var j=a.length-1;j>0;j--){ var k=cryptoInt(j+1); var t=a[j]; a[j]=a[k]; a[k]=t; }
-    return a;
-  }
-  function isCovered(cells,i){ return i===12 || (!!cells[i] && !!G.played[cells[i]]); }
-  function rowComplete(cells,r){ for(var c=0;c<5;c++){ if(!isCovered(cells,r*5+c)) return false; } return true; }
-  function completeRows(cells){ var n=0; for(var r=0;r<5;r++){ if(rowComplete(cells,r)) n++; } return n; }
-  function checkPattern(cells){
-    if(!cells) return false;
-    switch(G.pattern){
-      case "one": return completeRows(cells)>=1;
-      case "two": return completeRows(cells)>=2;
-      case "corners": return isCovered(cells,0)&&isCovered(cells,4)&&isCovered(cells,20)&&isCovered(cells,24);
-      case "full":
-        for(var i=0;i<25;i++){ if(!isCovered(cells,i)) return false; }
-        return true;
-    }
-    return false;
+    var s=G.byTitle[normTitle(title)] || LIB.byTitle[normTitle(title)];
+    return s || { id:"", song_id:"", title:title, artist:"", previewUrl:"", artworkUrl:"" };
   }
   function playedArray(){ return G.playedOrder.slice(); }
   function playerCount(){ return G.order.length; }
+  function hostError(msg){ $("statusText").textContent=msg||"Something went wrong"; }
 
-  // ---- broadcasts ----
+  // ---- broadcasts (instant UX only; the DB is the source of truth) ----
   function sendState(){
-    send({ t:"state", pattern:G.pattern, prize:G.prize, played:playedArray(), active:(G.status==="running"), autoDaub:G.autoDaub, playerCount:playerCount() });
+    bcast({ t:"state", pattern:G.pattern, prize:G.prize, played:playedArray(), active:(G.status==="running"), autoDaub:G.autoDaub, playerCount:playerCount(), game_id:G.gameId });
   }
-  function sendCard(pid){
-    var p=G.players[pid]; if(!p) return;
-    send({ t:"card", pid:pid, cells:p.cells, cardNo:p.cardNo });
-  }
-  function sendPlayers(){ send({ t:"players", count:playerCount() }); }
+  function sendPlayers(){ bcast({ t:"players", count:playerCount() }); }
 
   // ================= AUDIO ENGINE (this device is plugged into the PA) =================
   var audio=$("clip"), prefetchEl=null;
@@ -411,13 +431,20 @@
     if(song && song.previewUrl){ try{ prefetchEl=new Audio(); prefetchEl.preload="auto"; prefetchEl.src=song.previewUrl; prefetchEl.load(); }catch(e){} }
   }
 
-  // play a song: it counts as called the instant it starts (host-authoritative),
-  // the clip plays here, and every player card + the TV update over broadcast
+  // play a song: the Worker records the play (server-authoritative for claims), the ~30s
+  // preview clip plays HERE through this device into the PA, and every player card + the TV
+  // update over broadcast. Audio never touches the Worker: it only tracks which song played.
   function playSong(song){
     if(!song || G.status!=="running") return;
     if(!G.played[song.title]){ G.played[song.title]=true; G.playedOrder.push(song.title); }
     G.nowSong=song; G.hostNow=song.title;
-    send({ t:"played", title:song.title, artist:song.artist, artworkUrl:song.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub });
+    // Tell the Worker this song was played (idempotent per song). song_id came back from
+    // /host/game. If it is missing (a title with no library match), the play still shows
+    // locally and broadcasts, but cannot be server-verified, so warn in the console log.
+    if(G.gameId && song.song_id){
+      apiPost("/host/play",{ game_id:G.gameId, song_id:song.song_id }).catch(function(e){ hostError(e.message); });
+    }
+    bcast({ t:"played", title:song.title, artist:song.artist, artworkUrl:song.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub });
     var warn=$("clipWarn");
     if(song.previewUrl){
       warn.classList.add("hidden");
@@ -462,7 +489,7 @@
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
     $("setupPlayers").textContent=playerCount();
-    $("setupCode").textContent=G.code;
+    $("setupCode").textContent=G.joinCode||"------";
     $("playerCount").textContent=playerCount();
     renderPlayers();
     if(live) renderLive();
@@ -511,12 +538,16 @@
       box.appendChild(row);
     }
   }
+  // cells come from the claimant's phone: each square is { song_id, title } (0 at centre).
+  // A square is "hit" if its title is in the played set. The Worker already judged the
+  // claim valid before the phone broadcast it, so this is only the confirm-view render.
+  function cellTitle(c){ return (c && typeof c==="object") ? (c.title||"") : (c||""); }
   function renderClaimCard(container, cells){
     container.innerHTML="";
     for(var i=0;i<25;i++){
       var cell=document.createElement("div");
       if(i===12){ cell.className="mc free"; cell.textContent="FREE"; }
-      else { cell.className="mc"+(isCovered(cells,i)?" hit":""); cell.textContent=cells[i]||""; }
+      else { var t=cellTitle(cells[i]); cell.className="mc"+(t&&G.played[t]?" hit":""); cell.textContent=t; }
       container.appendChild(cell);
     }
   }
@@ -533,62 +564,116 @@
     renderClaimCard($("claimCard"), c.cells);
   }
 
-  // ---- game actions ----
-  function dealCards(){
-    for(var i=0;i<G.order.length;i++){ var pid=G.order[i]; var p=G.players[pid];
-      p.cells=makeCard(); p.cardNo=100+cryptoInt(900); sendCard(pid); }
+  // ---- game flow (every real write goes through the Worker) ----
+  // Build the local play queue + play-order shuffle from the songs in this game.
+  function shuffledQueue(){
+    var a=[]; for(var i=0;i<G.songs.length;i++) a.push(i);
+    for(var j=a.length-1;j>0;j--){ var k=cryptoInt(j+1); var t=a[j]; a[j]=a[k]; a[k]=t; }
+    return a;
   }
-  function beginRound(){
-    G.songs=songsForPlaylist(G.playlistId||"all");
-    G.queue=shuffledQueue(); G.qIdx=-1;
-    G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null;
-    G.won=false; G.claim=null;
-    stopAudio();
-    $("playNextBtn").disabled=false; $("playNextBtn").textContent="Play next song";
-    dealCards();
-    send({ t:"started", pattern:G.pattern, prize:G.prize, autoDaub:G.autoDaub });
-    sendState();
-    renderConsole();
+  // Idempotent open: reuse the live session if one already exists (host reload / re-pair).
+  function openSession(){
+    if(!G.venueId){ return Promise.reject(new Error("no venue linked to this login")); }
+    if(G.sessionId && G.joinCode){ return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode }); }
+    return apiPost("/session",{ venue_id:G.venueId }).then(function(r){
+      G.sessionId=r.session_id; G.joinCode=r.join_code;
+      openGameChannel(G.joinCode);                                          // players' channel
+      send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });  // hand the real code to the screen
+      $("setupCode").textContent=G.joinCode;
+      return r;
+    });
+  }
+  // The inline playlist the Worker materialises into vp_playlists/vp_playlist_songs. Songs
+  // are metadata only (title + artist [+ hint]); the previewUrl is never sent (licensing).
+  function playlistPayload(){
+    var songs=songsForPlaylist(G.playlistId||"all");
+    return { name:G.playlistName, songs:songs.map(function(s){ return { title:s.title, artist:s.artist }; }) };
   }
   function startGame(){
-    if(!libLoaded){ return; }
+    if(!libLoaded || G.busy) return;
     G.playlistId=$("playlistSel").value;
     G.playlistName=(G.playlistId==="all")?"All songs":((LIB.plById[G.playlistId]||{}).name||"Playlist");
     G.pattern=$("patternSel").value;
     G.prize=($("prizeInput").value||"").trim()||"the prize";
-    G.status="running";
-    beginRound();
+    beginRound($("startBtn"),"Start game");
   }
-  function newGame(){ if(G.status!=="running"){ G.status="running"; } beginRound(); }
+  function newGame(){ if(G.busy) return; beginRound($("newGameBtn"),"New game"); }
+  // Open the session (once), start a musical game on the Worker (which deals every card),
+  // then rebuild G.songs from the Worker response so each song carries its DB song_id for
+  // /host/play. Phones fetch their own cards via /player/card off the "started" broadcast.
+  function beginRound(btn, label){
+    G.busy=true; if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
+    openSession().then(function(){
+      bcast({ t:"mode", mode:"musical" });
+      return apiPost("/host/game",{
+        session_id:G.sessionId, format:"musical", pattern:PAT_TO_WORKER[G.pattern],
+        prize:G.prize, auto_daub:G.autoDaub, playlist:playlistPayload()
+      });
+    }).then(function(r){
+      G.gameId=r.game_id;
+      // Merge the Worker's songs (song_id, title, artist) with the library (previewUrl,
+      // artworkUrl) by title, so playSong has both the audio clip and the DB id.
+      G.songs=(r.songs||[]).map(function(w){
+        var lib=LIB.byTitle[normTitle(w.title)]||{};
+        return { id:lib.id||"", song_id:w.song_id, title:w.title, artist:w.artist||lib.artist||"",
+                 previewUrl:lib.previewUrl||"", artworkUrl:lib.artworkUrl||"" };
+      });
+      G.byTitle={}; for(var i=0;i<G.songs.length;i++){ G.byTitle[normTitle(G.songs[i].title)]=G.songs[i]; }
+      G.queue=shuffledQueue(); G.qIdx=-1;
+      G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null; G.won=false; G.claim=null;
+      G.status="running";
+      stopAudio();
+      $("playNextBtn").disabled=false; $("playNextBtn").textContent="Play next song";
+      bcast({ t:"started", pattern:G.pattern, prize:G.prize, autoDaub:G.autoDaub, game_id:G.gameId });
+      bcast({ t:"players", count:playerCount() });
+      sendState();
+      renderConsole();
+    }).catch(function(e){ hostError(e.message); }).then(function(){
+      G.busy=false; if(btn){ btn.disabled=false; btn.textContent=label; }
+    });
+  }
   function endGame(){
-    G.status="setup"; G.claim=null; G.won=false; G.nowSong=null; G.hostNow=null;
+    if(G.busy) return;
+    var gid=G.gameId;
+    G.status="setup"; G.claim=null; G.won=false; G.nowSong=null; G.hostNow=null; G.gameId="";
     stopAudio();
+    bcast({ t:"idle" });   // screen returns to the join/lobby state
     sendState();
     renderConsole();
+    if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
   }
   function hostConfirm(){
-    if(!G.claim) return;
-    var c=G.claim;
-    G.won=true; G.claim=null;
-    send({ t:"winner", pid:c.pid, name:c.name, cardNo:c.cardNo });
-    renderClaimQueue();
+    if(!G.claim || G.busy) return;
+    var c=G.claim; G.busy=true;
+    apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"confirm" }).then(function(){
+      G.won=true; G.claim=null; G.status="setup";   // the round is finished server-side on confirm
+      stopAudio();
+      bcast({ t:"winner", pid:c.pid, name:c.name, cardNo:c.cardNo });
+      renderConsole();   // back to the setup view so the host can start the next round
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
   function hostReject(){
-    if(!G.claim) return;
-    G.claim=null;
-    send({ t:"resume" });
-    renderClaimQueue();
+    if(!G.claim || G.busy) return;
+    var c=G.claim; G.busy=true;
+    apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"reject" }).then(function(){
+      G.claim=null;
+      bcast({ t:"resume" });
+      renderClaimQueue();
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
 
   // ---- incoming messages ----
+  // Screen presence arrives on the pairing channel; player join + claim arrive on the game
+  // channel. Both flow through onMsg.
   function tvHere(m){
     $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
-    // a freshly (re)loaded screen announces itself with hello:true. Re-announce the
-    // host and, if a game is live, replay state + the current song so the TV catches
-    // up instead of sitting in the lobby.
+    // A freshly (re)loaded screen announces itself with hello:true. Re-hand the session and,
+    // if a game is live, replay state + the current song so the TV catches up.
     if(m && m.hello){
       send({ t:"host_here" });
+      if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
       if(G.status==="running"){
+        send({ t:"mode", mode:"musical" });
         sendState();
         if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
         if(G.claim) send({ t:"claim_pending", name:G.claim.name });
@@ -600,36 +685,30 @@
     if(m.t==="tv_here"){ tvHere(m); return; }
     if(m.t==="host_here") return; // ignore our own presence pings
     if(m.t==="join"){
+      // Cosmetic roster only: the Worker meters vp_players and deals the card. The phone
+      // fetches its own card via /player/card off the "started"/"state" broadcast.
       if(!m.pid) return;
-      var isNew=!G.players[m.pid];
-      if(isNew){ G.players[m.pid]={ name:(m.name||"Player"), cells:null, cardNo:0 }; G.order.push(m.pid); }
+      if(!G.players[m.pid]){ G.players[m.pid]={ name:(m.name||"Player") }; G.order.push(m.pid); }
       else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
-      if(G.status==="running"){
-        var p=G.players[m.pid];
-        if(!p.cells){ p.cells=makeCard(); p.cardNo=100+cryptoInt(900); }
-        sendCard(m.pid);
-      }
       sendPlayers();
-      sendState();
+      if(G.status==="running") sendState();   // nudge a late joiner's phone to fetch its card
       renderConsole();
     }
     else if(m.t==="claim"){
-      if(G.status!=="running" || G.won || G.claim) return;
-      var pl=G.players[m.pid];
-      if(!pl || !pl.cells) return;
-      if(checkPattern(pl.cells)){
-        G.claim={ pid:m.pid, name:pl.name, cardNo:pl.cardNo, cells:pl.cells };
-        send({ t:"claim_pending", name:pl.name });
-        renderClaimQueue();
-      }
-      // invalid claims are ignored authoritatively (nothing broadcast, no celebration)
+      // A phone only broadcasts a claim the Worker already judged VALID (it carries the
+      // claim_id from /player/claim). The host confirms/rejects that claim_id via the Worker,
+      // which re-checks ownership + venue before it writes.
+      if(G.status!=="running" || G.won || G.claim || !m.claim_id) return;
+      G.claim={ claimId:m.claim_id, pid:m.pid, name:(m.name||"Player"), cardNo:(m.cardNo||"000"), cells:(m.cells||[]) };
+      bcast({ t:"claim_pending", name:G.claim.name });
+      renderClaimQueue();
     }
   }
 
-  // ---- connect ----
+  // ---- pair with the venue screen (pairing channel "vp-"+screen code) ----
   function connect(code){
-    G.code=code;
-    ch=client.channel("vp-musical-"+code, { config:{ broadcast:{ self:false } } });
+    G.pairCode=code;
+    ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
@@ -637,8 +716,10 @@
         send({ t:"host_here" });   // announce to the screen; it replies with tv_here
         flushQueue();
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
-        // replay state so a screen/players who joined before us (or reloaded) catch up
+        // replay so a screen/players who joined before us (or reloaded) catch up
+        if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
         if(G.status==="running"){
+          send({ t:"mode", mode:"musical" });
           sendState();
           if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
           if(G.claim) send({ t:"claim_pending", name:G.claim.name });
@@ -647,6 +728,7 @@
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });
+    $("signinView").classList.add("hidden");
     $("connectView").classList.add("hidden");
     $("consoleView").classList.remove("hidden");
     $("roomCode").textContent=code;
@@ -701,19 +783,40 @@
     if(b.getAttribute("data-act")==="confirm") hostConfirm(); else hostReject();
   });
 
-  // prefill code from ?room if present (handy for testing)
-  (function(){ var m=/[?&]room=([^&]+)/.exec(window.location.search); if(m){ codeIn.value=decodeURIComponent(m[1]).toUpperCase().slice(0,6); } })();
+  // ---- boot: resolve the host login, load the library, then pair + run ----
+  function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); }
+  function tvFromUrl(){
+    var m=/[?&](?:tv|room)=([^&]+)/.exec(window.location.search); if(!m) return "";
+    var c=decodeURIComponent(m[1]).toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6);
+    return CODE_RE.test(c)?c:"";
+  }
 
-  // init: load the song library, then fill the playlist picker
+  // Load the song library in parallel with the sign-in check.
   $("startBtn").disabled=true;
   var plSel=$("playlistSel"); plSel.innerHTML='<option>Loading songs...</option>'; plSel.disabled=true;
-  loadLibrary().then(function(){
+  var libReady=loadLibrary().then(function(){
     plSel.disabled=false; fillPlaylists(); $("startBtn").disabled=false;
   }).catch(function(){
     libError=true; plSel.innerHTML='<option>Could not load songs</option>'; $("startBtn").disabled=true;
     var note=document.querySelector("#setupBlock .note");
     if(note){ note.textContent="Could not load the song library. Check you are online, then reload this page."; }
   });
+
+  $("statusText").textContent="Checking sign in";
+  var tv=tvFromUrl(); if(tv){ codeIn.value=tv; }
+  if(window.VP){
+    VP.ready().then(function(ctx){
+      if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live game."); return; }
+      if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
+      G.venueId=ctx.currentVenueId;
+      $("statusText").textContent="Signed in";
+      if(tv){ libReady.then(function(){ connect(tv); }); }   // paired from the screen QR
+      else if(ctx.venue && ctx.venue.slug && window.VP && VP.venueCode){ libReady.then(function(){ connect(VP.venueCode("musical-"+ctx.venue.slug)); }); }
+      else { $("connectView").classList.remove("hidden"); }
+    }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
+  } else {
+    showSignIn("Sign in helper failed to load. Try reloading.");
+  }
 })();
 </script>
 </body>

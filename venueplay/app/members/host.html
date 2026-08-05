@@ -558,6 +558,7 @@
         renderNameSeg(); applyRoleGates();
         var tv=tvFromUrl();
         if(tv){ connect(tv); }
+        else if(ctx.venue && ctx.venue.slug && window.VP && VP.venueCode){ connect(VP.venueCode("members-"+ctx.venue.slug)); }
         else { $("connectView").classList.remove("hidden"); }
       });
     }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
