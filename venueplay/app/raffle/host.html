@@ -464,7 +464,7 @@
   // ---- pair with the venue screen ----
   function connect(code){
     G.code=code;
-    ch=client.channel("vp-raffle-"+code, { config:{ broadcast:{ self:false } } });
+    ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });   // same convention as trivia/musical so the unified TV finds it
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){

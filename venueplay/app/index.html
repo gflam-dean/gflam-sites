@@ -291,6 +291,7 @@
 
     <!-- bingo console -->
     <div id="bingoView" class="console hidden">
+      <div id="overBanner" style="grid-column:1/-1;display:none;margin:0 0 4px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px"></div>
       <!-- left: run -->
       <div class="panel">
         <div id="setupBlock">
@@ -373,6 +374,17 @@
 
 </div>
 
+<!-- Over-plan players popup: shown at Start when more players joined than the plan includes -->
+<div id="ovgModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
+  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px">More players than your plan</div>
+    <div id="ovgBody" style="font-size:14.5px;color:var(--text);line-height:1.55"></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button type="button" id="ovgGo" class="btn pink big" style="flex:1">Start game</button>
+      <button type="button" id="ovgCancel" class="btn ghost big" style="flex:0 0 auto">Cancel</button>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
 <script>
@@ -837,6 +849,11 @@
       ? "Players are scanning in on their phones. Start calling numbers when you are ready."
       : "Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.";
     $("setupPlayers").textContent=playerCount();
+    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
+    if(_ob){
+      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. The extra will be added to this month's bill when you start."; }
+      else _ob.style.display="none";
+    }
     $("setupCode").textContent=G.code;
     $("playerCount").textContent=playerCount();
     renderPlayers();
@@ -915,7 +932,19 @@
     for(var i=0;i<G.order.length;i++){ var pid=G.order[i]; var p=G.players[pid];
       dealFor(p); sendCards(pid); }
   }
+  // Over-plan players: if more joined than the plan includes, get one clear OK at Start.
+  function playerCap(){ return (__ctx && __ctx.venue && __ctx.venue.included_players) || 0; }
+  var overageAcked=false;
+  function showOverage(cnt, cap, onGo){
+    var extra=cnt-cap;
+    $("ovgBody").innerHTML="You have <b>"+cnt+"</b> players and your plan includes <b>"+cap+"</b>. The extra <b>"+extra+"</b> player licence"+(extra===1?"":"s")+" will be charged to your nominated card. They stay valid for the rest of your billing period.";
+    var m=$("ovgModal"); m.classList.remove("hidden");
+    $("ovgGo").onclick=function(){ overageAcked=true; m.classList.add("hidden"); onGo(); };
+    $("ovgCancel").onclick=function(){ m.classList.add("hidden"); };
+  }
   function startGame(){
+    var _cnt=playerCount(), _cap=playerCap();
+    if(_cap>0 && _cnt>_cap && !overageAcked){ showOverage(_cnt, _cap, startGame); return; }
     G.pattern=$("patternSel").value;
     G.prize=($("prizeInput").value||"").trim()||"the prize";
     G.defaultCards=clampCards($("cardsSel").value);

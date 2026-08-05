@@ -272,7 +272,7 @@
       c.subscribe();
     });
   })();
-  var ch=client.channel("vp-raffle-"+CODE, { config:{ broadcast:{ self:false } } });
+  var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });   // match the host + the unified TV convention
   var tvSubscribed=false;
   function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
   ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });

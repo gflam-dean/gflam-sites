@@ -329,7 +329,7 @@
       c.subscribe();
     });
   })();
-  var ch=client.channel("vp-members-"+CODE, { config:{ broadcast:{ self:false } } });
+  var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });   // match the host + the unified TV convention
   ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
   ch.subscribe(function(status){
     if(status==="SUBSCRIBED"){
