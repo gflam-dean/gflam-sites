@@ -88,6 +88,16 @@
   .scorebox{margin-top:18px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:22px}
   .rankline{color:var(--muted);font-size:13px;margin-top:2px}
   .finalwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(255,194,75,.16), transparent 65%)}
+  /* menu (top-right): Light mode + Leave */
+  .menubtn{position:absolute;top:12px;right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer;z-index:20}
+  .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:200px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
+  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
+  .menuitem:hover{background:var(--ink-3)}
+  .menuitem input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
+  .menuleave{color:var(--roll);font-weight:700;justify-content:flex-start}
+  body.light{ --ink:#F3EFF5; --ink-2:#FFFFFF; --ink-3:#EFEAF2; --text:#191420; --muted:#5c5666; --faint:#8b8594; --line:rgba(0,0,0,.12); --line-2:rgba(0,0,0,.06); background:#F3EFF5 }
+  body.light .ptop{ background:rgba(255,255,255,.92) }
+  body.light .brand .word, body.light .pbig{ color:#191420 }
 </style>
 </head>
 <body>
@@ -98,6 +108,11 @@
       <span class="div"></span><span class="word">VenuePlay Trivia</span>
     </div>
     <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span> &middot; Room <span class="mono" id="roomLabel">------</span></div>
+    <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
+    <div class="menupanel hidden" id="menuPanel">
+      <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
+      <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
+    </div>
   </div>
 
   <!-- NO ROOM -->
@@ -494,6 +509,18 @@
   $("roomBtn").addEventListener("click", roomGo);
   $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
   $("joinBtn").addEventListener("click", join);
+  // ---- menu (Light mode / Leave) ----
+  var menuBtn=$("menuBtn"), menuPanel=$("menuPanel");
+  if(menuBtn){ menuBtn.addEventListener("click", function(e){ e.stopPropagation(); menuPanel.classList.toggle("hidden"); }); }
+  document.addEventListener("click", function(e){ if(menuPanel && !menuPanel.classList.contains("hidden") && !menuPanel.contains(e.target) && e.target!==menuBtn){ menuPanel.classList.add("hidden"); } });
+  function loadLight(){ try{ return localStorage.getItem("vp-light")==="1"; }catch(e){ return false; } }
+  function setLight(on){ document.body.classList.toggle("light", !!on); try{ localStorage.setItem("vp-light", on?"1":"0"); }catch(e){} }
+  var lightChk=$("lightChk"); if(lightChk){ lightChk.checked=loadLight(); lightChk.addEventListener("change", function(){ setLight(lightChk.checked); }); }
+  if(loadLight()) setLight(true);
+  var leaveBtn=$("leaveBtn"); if(leaveBtn){ leaveBtn.addEventListener("click", function(){
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    window.location.href=window.location.pathname;   // drop ?room -> back to the enter-code screen
+  }); }
 
   // ---- init: read ?room ----
   (function(){
