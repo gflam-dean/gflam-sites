@@ -143,8 +143,8 @@
     var m=/[?&]venue=([^&]+)/.exec(q); var raw=m?m[1]:"";
     if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }
     var v=raw?decodeURIComponent(raw).toLowerCase().replace(/[^a-z0-9-]/g,""):"";
-    if(v){ try{ localStorage.setItem("vpTvVenueRaffle", v); }catch(e){} return v; }
-    try{ var s=localStorage.getItem("vpTvVenueRaffle"); if(s) return s; }catch(e){}
+    if(v){ try{ localStorage.setItem("vpTvVenue", v); }catch(e){} return v; }
+    try{ var s=localStorage.getItem("vpTvVenue"); if(s) return s; }catch(e){}
     return "";
   })();
   var CODE=(function(){
