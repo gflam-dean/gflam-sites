@@ -157,7 +157,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -173,15 +173,18 @@
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
 
-  // stable code, persists across refreshes so the join link + pairing survive a
-  // screen reload (matches the venue TV pattern). A reloaded screen re-subscribes on
-  // the same channel and the host replays state via the hello handshake.
+  // Stable PAIRING code, persisted so the pairing link never changes across refreshes. This
+  // is the code the host types/scans; it is NOT the player join code. The real join code is
+  // handed over by the host (a {t:"session"} message) once it opens a Worker session, and
+  // the lobby + QR flip to that. Matches the bingo/trivia two-code screen model.
   var CODE=(function(){
     try{ var c=localStorage.getItem("vpMusicalTvCode"); if(c && CODE_RE.test(c)) return c; }catch(e){}
     var nc=makeCode(); try{ localStorage.setItem("vpMusicalTvCode", nc); }catch(e){} return nc;
   })();
-  var base=window.location.href.replace(/\/[^\/]*(\?.*)?$/,"");
-  var joinURL=base+"/play.html?room="+CODE;
+  function absUrl(rel){ try{ return new URL(rel, window.location.href).href; }catch(e){ return rel; } }
+  var hostURL=absUrl("host.html?tv="+CODE);   // the host opens this to run the game on this screen
+  var joinCode="";                            // the real DB join code, handed over once a session opens
+  function playURLFor(code){ return absUrl("play.html?room="+code); }
 
   var state={ phase:"lobby", pattern:"one", prize:"the prize", played:[], playerCount:0, hostSeen:false, winner:null };
   var revealTimer=null;
@@ -193,13 +196,22 @@
     $("tvJoinCorner").classList.toggle("hidden", which!=="tvRun");
   }
 
+  // The QR shows the HOST pairing link until a session opens (so the host can scan to set up
+  // this screen), then flips to the player join link built from the real DB join code.
+  function drawLobbyQR(){
+    var url = joinCode ? playURLFor(joinCode) : hostURL;
+    drawQR($("qrBig"), 512, url);
+    drawQR($("qrMini"), 220, joinCode ? playURLFor(joinCode) : url);
+  }
   function renderLobby(){
-    $("lobbyCode").textContent=CODE;
-    $("hostLineCode").textContent=CODE;
-    $("tvJoinCode").textContent=CODE;
+    $("lobbyCode").textContent = joinCode || "------";
+    $("hostLineCode").textContent = CODE;
+    $("tvJoinCode").textContent = joinCode || "------";
     $("lobbyPlaying").textContent=state.playerCount;
     if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
-    else $("lobbySub").innerHTML="Host is connected. Grab your phone and join, the game is about to start&hellip;";
+    else if(!joinCode) $("lobbySub").innerHTML="Host is connected, setting up the game&hellip;";
+    else $("lobbySub").innerHTML="Grab your phone and join, the game is about to start&hellip;";
+    drawLobbyQR();
   }
   function renderMeta(){
     $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
@@ -262,7 +274,9 @@
 
   // ---- realtime ----
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
-  var ch=client.channel("vp-musical-"+CODE, { config:{ broadcast:{ self:false } } });
+  // Pairing channel (screen <-> host), same convention as the bingo/trivia TV: vp-<screen code>.
+  // The host dual-broadcasts every game message here, so this one channel is enough.
+  var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
   var tvSubscribed=false;
   function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
   ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
@@ -272,13 +286,16 @@
   });
 
   // any host broadcast means the host is live: reply so it can flip to "connected"
-  var HOST_TYPES={host_here:1,state:1,started:1,played:1,players:1,claim_pending:1,resume:1,winner:1};
+  var HOST_TYPES={host_here:1,session:1,mode:1,state:1,started:1,played:1,players:1,claim_pending:1,resume:1,winner:1,idle:1};
 
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here") return;                 // ignore our own presence pings
     if(HOST_TYPES[m.t]){ state.hostSeen=true; tvSend({ t:"tv_here" }); }
-    if(m.t==="host_here") return;
+    if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
+    if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
+    if(m.t==="mode"){ return; }                 // format handshake; the layers below drive the view
+    if(m.t==="idle"){ state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); return; }
     if(m.t==="state"){
       state.hostSeen=true;
       if(m.pattern) state.pattern=m.pattern;
@@ -333,11 +350,9 @@
   }
 
   // ---- init ----
-  renderLobby();
+  function drawQR(el, size, url){ if(window.QRCode&&el&&url){ QRCode.toCanvas(el, url, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
   show("tvLobby");
-  function drawQR(el, size){ if(window.QRCode&&el){ QRCode.toCanvas(el, joinURL, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
-  drawQR($("qrBig"), 512);
-  drawQR($("qrMini"), 220);
+  renderLobby();   // draws the pairing QR (flips to the player QR once a session opens)
 })();
 </script>
 </body>
