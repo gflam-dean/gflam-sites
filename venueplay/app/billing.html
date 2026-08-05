@@ -68,6 +68,11 @@
   .rfchip{display:inline-flex;align-items:center;gap:6px;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;margin:0 6px 6px 0;font-size:13px;color:#fff}
   .rfx{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
   .rfx:hover{color:var(--pink)}
+  .adslide{display:flex;gap:12px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;flex-wrap:wrap}
+  .adthumb{flex:0 0 120px;height:72px;border-radius:8px;background:var(--ink-2);background-size:cover;background-position:center;background-repeat:no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;text-align:center}
+  .adfields{flex:1 1 200px;min-width:0}
+  .adfields input[type=number],.adfields input[type=date]{width:100%;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:8px 10px;font-size:14px;font-family:'Manrope',sans-serif}
+  .adfields .flabel{display:block;margin:0 0 4px}
   .srow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
   .srow input[type=text]{flex:1 1 120px;min-width:0;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 10px;font-size:14px;font-family:'Manrope',sans-serif}
   .srow .sfull{flex-basis:100%}
@@ -183,16 +188,16 @@
     <p class="note" style="margin:0 0 10px">What players are asked for when they join, and how their name shows on the TV (John S, J Smith or John Smith). Opens that venue's settings.</p>
     <div id="playerData"></div>
 
-    <div class="label">Your venue screen</div>
-    <p class="note" style="margin:0 0 10px">What plays on your venue TV between games. Set it here, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds.</p>
+    <div class="label">Advertising</div>
+    <p class="note" style="margin:0 0 10px">Upload your own promo images to play on the venue TV between games, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds.</p>
     <div id="screenPickWrap" class="screenpick" style="display:none">
-      <label class="flabel" for="screenVenue">Editing screen for</label>
+      <label class="flabel" for="screenVenue">Screen for</label>
       <select id="screenVenue"></select>
     </div>
 
     <div class="scard">
-      <div class="scardhead">Promo slides</div>
-      <p class="snote">Your own promos: happy hour, bistro specials, live music, membership. Up to 8.</p>
+      <div class="scardhead">Slides</div>
+      <p class="snote">Each slide is one image. Set how long it stays on screen, and optional dates so a promo ends itself. Up to 12.</p>
       <div id="slides"></div>
       <button class="addbtn" id="addSlide" style="margin-top:8px">+ Add a slide</button>
     </div>
@@ -524,40 +529,52 @@
 
   $("signout").addEventListener("click", function(){ VP.signOut(); });
 
-  // ---- Venue screen editor (Promo slides + Weekly draws + Meat raffle) ----
-  var ACCENTS = [["gold","#FFC24B"],["pink","#FF1F8E"],["green","#35D07F"],["blue","#4C8DFF"]];
+  // ---- Advertising: image slides (upload) + per-slide seconds and optional dates ----
   var screenVenues = [], screenCurrent = null, screenOrigin = "";
 
   function slideRow(s){
-    s = s || { accent:"gold" };
-    var row = document.createElement("div"); row.className = "srow";
+    s = s || {};
+    var row = document.createElement("div"); row.className = "adslide"; row.setAttribute("data-url", s.image_url || "");
     row.innerHTML =
-      '<input type="text" class="s-tag sfull" placeholder="Small label (e.g. Bistro, Live music)" maxlength="60">' +
-      '<input type="text" class="s-head sfull" placeholder="Big headline (e.g. Schnitzel Wednesday)" maxlength="60">' +
-      '<input type="text" class="s-sub sfull" placeholder="One line of detail" maxlength="140">' +
-      '<div class="accent" data-accent="' + esc(s.accent||"gold") + '"></div>' +
-      '<button class="rm" title="Remove slide" type="button">&times;</button>';
-    row.querySelector(".s-tag").value = s.tag || "";
-    row.querySelector(".s-head").value = s.head || "";
-    row.querySelector(".s-sub").value = s.sub || "";
-    var acc = row.querySelector(".accent");
-    ACCENTS.forEach(function(a){
-      var b = document.createElement("button"); b.type = "button";
-      b.className = "swatch" + (a[0]===(s.accent||"gold") ? " on" : ""); b.style.background = a[1];
-      b.addEventListener("click", function(){
-        acc.setAttribute("data-accent", a[0]);
-        acc.querySelectorAll(".swatch").forEach(function(x){ x.classList.remove("on"); });
-        b.classList.add("on");
-      });
-      acc.appendChild(b);
-    });
-    row.querySelector(".rm").addEventListener("click", function(){ row.remove(); });
+      '<div class="adthumb">' + (s.image_url ? '' : 'No image yet') + '</div>' +
+      '<div class="adfields">' +
+        '<label class="flabel">Seconds on screen</label>' +
+        '<input type="number" class="ad-secs" min="3" max="60" value="' + (parseInt(s.seconds,10)||7) + '">' +
+        '<div style="display:flex;gap:8px;margin-top:6px">' +
+          '<div style="flex:1"><label class="flabel">Show from</label><input type="date" class="ad-starts" value="' + (s.starts||"") + '"></div>' +
+          '<div style="flex:1"><label class="flabel">Show until</label><input type="date" class="ad-ends" value="' + (s.ends||"") + '"></div>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;align-items:center;margin-top:8px">' +
+          '<button class="addbtn ad-change" type="button">' + (s.image_url ? "Change image" : "Choose image") + '</button>' +
+          '<button class="canxlink ad-rm" type="button">Remove</button>' +
+        '</div>' +
+      '</div>' +
+      '<input type="file" class="ad-file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none">';
+    if (s.image_url) row.querySelector(".adthumb").style.backgroundImage = "url(" + s.image_url + ")";
+    var file = row.querySelector(".ad-file");
+    row.querySelector(".ad-change").addEventListener("click", function(){ file.click(); });
+    file.addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) uploadSlideImage(f, row); this.value=""; });
+    row.querySelector(".ad-rm").addEventListener("click", function(){ row.remove(); });
     return row;
+  }
+  function uploadSlideImage(file, row){
+    if (!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
+    if (file.size > 5*1024*1024){ showMsg("That image is too big. Keep it under 5MB."); return; }
+    var thumb = row.querySelector(".adthumb"); thumb.style.backgroundImage = ""; thumb.textContent = "Uploading…";
+    var reader = new FileReader();
+    reader.onload = function(){
+      api("/account/screen-upload", { venue_id: screenCurrent.id, data: String(reader.result) }).then(function(r){
+        if (r.error){ showMsg(r.error); thumb.textContent = "No image yet"; return; }
+        row.setAttribute("data-url", r.url);
+        thumb.textContent = ""; thumb.style.backgroundImage = "url(" + r.url + ")";
+        row.querySelector(".ad-change").textContent = "Change image";
+      });
+    };
+    reader.readAsDataURL(file);
   }
   function fillScreen(cfg){
     var sl = $("slides"); sl.innerHTML = "";
     (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
-    if (!(cfg.slides||[]).length) sl.appendChild(slideRow());
   }
   function tvHref(slug){ return (screenOrigin||"") + "/tv" + (slug ? ("?venue=" + encodeURIComponent(slug)) : ""); }
   function setTvLinks(slug){
@@ -574,10 +591,14 @@
   }
   function gatherScreen(){
     var slides = [];
-    $("slides").querySelectorAll(".srow").forEach(function(r){
-      var tag=r.querySelector(".s-tag").value.trim(), head=r.querySelector(".s-head").value.trim(), sub=r.querySelector(".s-sub").value.trim();
-      var accent=r.querySelector(".accent").getAttribute("data-accent") || "gold";
-      if (tag||head||sub) slides.push({ tag:tag, head:head, sub:sub, accent:accent });
+    $("slides").querySelectorAll(".adslide").forEach(function(row){
+      var url = row.getAttribute("data-url");
+      if (!url) return; // a slide with no image uploaded yet is skipped
+      var secs = parseInt(row.querySelector(".ad-secs").value,10) || 7;
+      var s = { image_url:url, seconds:secs };
+      var st = row.querySelector(".ad-starts").value; if (st) s.starts = st;
+      var en = row.querySelector(".ad-ends").value; if (en) s.ends = en;
+      slides.push(s);
     });
     return { slides:slides };
   }
@@ -612,7 +633,7 @@
       fillScreen(d);
     });
     $("addSlide").addEventListener("click", function(){
-      if ($("slides").querySelectorAll(".srow").length >= 8){ showMsg("Up to 8 slides."); return; }
+      if ($("slides").querySelectorAll(".adslide").length >= 12){ showMsg("Up to 12 slides."); return; }
       $("slides").appendChild(slideRow());
     });
     $("screenSave").addEventListener("click", saveScreen);

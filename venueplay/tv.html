@@ -46,6 +46,7 @@
   #adsRoot{position:absolute;inset:0;z-index:1}
   .ad{opacity:0;transition:opacity .8s ease}
   .ad.show{opacity:1}
+  .ad .adimg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat}
   .ad .adtag{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.24em;font-size:clamp(12px,2.4cqw,22px);color:var(--pink)}
   .ad .adbig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(34px,9cqw,96px);color:#fff;line-height:.98;margin:1.6cqw 0}
   .ad .adsub{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(14px,3cqw,32px);color:var(--text);max-width:82cqw}
@@ -303,9 +304,16 @@
   function accentClass(a){ return ACCENT[a]||"ad-b"; }
   function accentHex(a){ return ACCENT_COLOR[a]||"#FF1F8E"; }
 
+  function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function slideVisible(s){
+    var t=todayStr();
+    if(s.starts && t < s.starts) return false;   // not started yet
+    if(s.ends && t > s.ends) return false;         // finished
+    return true;
+  }
   function loopEntries(){
     var arr=[];
-    (ADS.slides||[]).forEach(function(s){ arr.push({type:"slide",slide:s}); });
+    (ADS.slides||[]).forEach(function(s){ if(slideVisible(s)) arr.push({type:"slide",slide:s}); });
     if(ADS.draws && ADS.draws.length) arr.push({type:"auto-draws"});
     if(ADS.raffle) arr.push({type:"auto-raffle"});
     return arr;
@@ -327,10 +335,20 @@
       return '<div class="adtag">This week’s members draws</div><div class="adweek">'+rows+'</div>';
     }
     if(e.type==="auto-raffle"){
-      var r=ADS.raffle;
-      return '<div class="adtag">'+r.tag+'</div><div class="adbig">'+escBr(r.head)+'</div><div class="adsub">'+r.sub+'</div>';
+      var r=ADS.raffle||{};
+      // Raffle "routine" set on the Account page: {label, day, time}. (Older screens used
+      // {tag, head, sub}; fall back to those so an un-migrated venue still renders.)
+      if(r.label || r.day || r.time){
+        var when=[r.day, r.time].filter(Boolean).join(" ");
+        return '<div class="adtag" style="color:'+accentHex("pink")+'">'+(when?("Drawn "+esc(when)):"Tonight")+'</div>'+
+               '<div class="adbig">'+escBr(r.label||"Meat Raffle")+'</div>'+
+               '<div class="adsub">Tickets at the bar</div>';
+      }
+      return '<div class="adtag">'+esc(r.tag||"")+'</div><div class="adbig">'+escBr(r.head||"")+'</div><div class="adsub">'+esc(r.sub||"")+'</div>';
     }
     var s=e.slide;
+    // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
+    if(s.image_url){ return '<div class="adimg" style="background-image:url('+encodeURI(s.image_url)+')"></div>'; }
     return (s.tag?'<div class="adtag" style="color:'+accentHex(s.accent)+'">'+s.tag+'</div>':"")+
            '<div class="adbig">'+escBr(s.head)+'</div>'+
            (s.sub?'<div class="adsub">'+s.sub+'</div>':"");
@@ -344,21 +362,28 @@
     });
     adBuilt=true;
   }
-  function stopAds(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
+  function stopAds(){ if(adTimer){ clearTimeout(adTimer); clearInterval(adTimer); adTimer=null; } }
   function startAds(){
     if(!adBuilt) buildAds();
     stopAds();
     var slides=$("tvAds").querySelectorAll(".ad");
     if(!slides.length) return;
+    var entries=loopEntries(); // same order buildAds used, so seconds line up per slide
     adIdx=0;
     slides.forEach(function(s,i){ s.classList.toggle("show", i===0); });
     if(slides.length<2) return;
-    var ms=Math.max(2,ADS.rotationSecs)*1000;
-    adTimer=setInterval(function(){
+    function secsFor(i){
+      var e=entries[i];
+      var sec=(e && e.type==="slide" && e.slide && e.slide.seconds) ? e.slide.seconds : ADS.rotationSecs;
+      return Math.max(2, sec||7)*1000;
+    }
+    function advance(){
       slides[adIdx].classList.remove("show");
       adIdx=(adIdx+1)%slides.length;
       slides[adIdx].classList.add("show");
-    }, ms);
+      adTimer=setTimeout(advance, secsFor(adIdx));
+    }
+    adTimer=setTimeout(advance, secsFor(0));
   }
 
   // ================= BINGO SCREEN =================
