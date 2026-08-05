@@ -336,7 +336,7 @@
       if(c.email)     h+=f("xEmail","email","Email","email",120);
       if(c.mobile)    h+=f("xMobile","tel","Mobile","tel",20);
       box.innerHTML=h;
-      if(c.marketing_optin){
+      if(c.marketing_optin && (c.email || c.mobile)){   // no point asking to keep them posted with no email or phone
         var l=document.createElement("label"); l.className="optin";
         l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>';
         box.appendChild(l);
@@ -349,7 +349,7 @@
     if((v=$("xPost"))&&v.value.trim())  cap.postcode=v.value.trim();
     if((v=$("xEmail"))&&v.value.trim()) cap.email=v.value.trim();
     if((v=$("xMobile"))&&v.value.trim())cap.mobile=v.value.trim();
-    var o=$("xOptin"); if(o&&o.checked) cap.marketing_optin=true;   // only ever true if THEY ticked it
+    var o=$("xOptin"); if(o&&o.checked && (cap.email||cap.mobile)) cap.marketing_optin=true;   // opt-in only counts with a contact method
     return cap;
   }
   // Fetch (or lazily be dealt) this player's ticket for the running game.
