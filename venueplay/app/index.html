@@ -610,11 +610,25 @@
     code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1,
     draw:[], idx:-1, called:{},
     players:{}, order:[],
-    claim:null, won:false, lastWin:null
+    claim:null, won:false, lastWin:null, prizesWon:[], startedAt:null
   };
   // the natural next prize in a progressive housie game (line -> two lines -> full house)
   function nextPattern(cur){ if(cur==="one") return "two"; if(cur==="two") return "full"; if(cur==="full") return ""; return "full"; }
   var ALL_PATTERNS=[["one","One line"],["two","Two lines"],["full","Full house"],["corners","Four corners"],["top","Top line"],["middle","Middle line"],["bottom","Bottom line"]];
+
+  // Broadcast bingo has no game server, so once a game finishes the host posts its figures
+  // (players, tickets, prizes) to the backend for reporting. Keyed by the venue code = G.code.
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function postReport(){
+    try{
+      if(!G.code || !G.startedAt) return;
+      var players=G.order.length, tickets=0;
+      for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p&&p.cards) tickets+=p.cards.length; }
+      fetch(VP_GAME_API+"/report",{ method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({
+        code:G.code, format:"bingo", players:players, tickets:tickets, prizes:G.prizesWon||[], started_at:G.startedAt, ended_at:new Date().toISOString()
+      }) }).catch(function(){});
+    }catch(e){}
+  }
   function clampCards(n){ n=parseInt(n,10); if(!n||n<1) return 1; if(n>6) return 6; return n; }
   var currentGame="bingo";
 
@@ -841,7 +855,8 @@
     G.prize=($("prizeInput").value||"").trim()||"the prize";
     G.defaultCards=clampCards($("cardsSel").value);
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
-    G.status="running"; G.won=false; G.claim=null;
+    G.status="running"; G.won=false; G.claim=null; G.lastWin=null;
+    G.prizesWon=[]; G.startedAt=new Date().toISOString();
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Next number";
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to bingo first
@@ -851,8 +866,10 @@
     renderConsole();
   }
   function newGame(){
+    postReport();   // report the round just finished before a fresh one begins
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
-    G.won=false; G.claim=null;
+    G.won=false; G.claim=null; G.lastWin=null;
+    G.prizesWon=[]; G.startedAt=new Date().toISOString();
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Next number";
     send({ t:"mode", mode:"bingo" });
@@ -862,7 +879,8 @@
     renderConsole();
   }
   function endGame(){
-    G.status="setup"; G.claim=null; G.won=false;
+    postReport();   // send this game's figures to the backend before returning to ads
+    G.status="setup"; G.claim=null; G.won=false; G.lastWin=null;
     send({ t:"idle" });   // TV returns to the advertising loop
     sendState();
     saveGame();   // status is now "setup", so this clears the saved game for this code
@@ -892,6 +910,7 @@
     var w=G.lastWin, sel=$("nextPatternSel"), nxt=(sel&&sel.value)||nextPattern(w.pattern)||"full";
     // announce the stage win and the next target together; players keep the same tickets
     send({ t:"winner", pid:w.pid, name:w.name, cardNo:w.cardNo, pattern:w.pattern, cont:true, next:nxt });
+    G.prizesWon.push({ pattern:w.pattern, prize:G.prize, winner_name:w.name, card_no:w.cardNo });
     G.pattern=nxt; G.won=false; G.lastWin=null;
     $("nextBtn").disabled=(G.idx>=89);
     saveGame(); renderConsole();
@@ -900,6 +919,7 @@
     if(!G.lastWin) return;
     var w=G.lastWin;
     send({ t:"winner", pid:w.pid, name:w.name, cardNo:w.cardNo, pattern:w.pattern, cont:false });
+    G.prizesWon.push({ pattern:w.pattern, prize:G.prize, winner_name:w.name, card_no:w.cardNo });
     G.won=true; G.lastWin=null;
     saveGame(); renderConsole();
   }

@@ -1,5 +1,13 @@
 /**
- * VenuePlay GAME Worker  (venueplay-game)  -- DRAFT FOR REVIEW, NOT FOR DEPLOY
+ * VenuePlay GAME Worker  (venueplay-game)  -- REVIEWED + HARDENED 4 Aug 2026.
+ * Review blockers fixed: a failed start no longer ends the live game; overage is HOST-APPROVED
+ * (a game over the plan cap will NOT start until the host taps OK via /host/overage/ack, and
+ * only approved overage is billed - tier read from subscription metadata, failures logged);
+ * members double-resolve guarded; one card per player; raffle draw double-tap guarded; a
+ * round-number clash returns a clean retryable 409. Billing basis is joiners = players (a
+ * phone reload reuses its stored token, so no new row). NEEDS AN END-TO-END TEST PASS before
+ * production. Requires migrations 13 + 14.
+ * Remaining (not a blocker): a musical /host/play double-tap can nudge played_count by one (low).
  * ----------------------------------------------------------------------------
  * The server-authoritative referee for the live game. This Worker is the ONLY
  * writer of game state. It holds the service_role key (which bypasses RLS by
@@ -12,14 +20,89 @@
  * This is a separate Worker from the billing one (venueplay-api). That Worker
  * keeps owning /checkout, /webhook and /contact. This one owns the game.
  *
- * ROUTES (all JSON; CORS enabled)
- *   POST /session            (host)   create a lobby session for the host's venue
- *   POST /join               (player) join by code, mint a player token
- *   POST /host/game          (host)   start a 90-ball bingo game: draw order + deal tickets
- *   POST /host/ball          (host)   draw the next ball
- *   POST /player/claim       (player) claim a win; server verifies against its card
- *   POST /host/claim/resolve (host)   confirm or reject a claim
- *   GET  /snapshot?session=  (public) PUBLIC projection only, for TV and late joiners
+ * ROUTES  (all JSON; CORS enabled).  "host" = Authorization: Bearer <Supabase
+ * access token>, verified against SUPABASE_JWT_SECRET AND confirmed to be staff/
+ * admin of the venue before any write.  "player" = X-Player-Token header (the
+ * raw token handed out by /join).  "public" = no auth (read-only projection).
+ *
+ *   METHOD PATH                 WHO      BODY (JSON)                       -> RESPONSE
+ *   POST  /session              host     {venue_id}                        -> {session_id, join_code, tv_pairing_code, reused?}
+ *   POST  /session/close        host     {session_id}                      -> {session_id, status:'finished'}
+ *   POST  /join                 player   {code, name?}                     -> {token, snapshot}
+ *   POST  /host/game            host     {session_id, pattern,             -> {game_id, seq, pattern, cards_dealt}
+ *                                          prize?, title?, cards_per_player?}
+ *                                         BINGO (format omitted or 'bingo90') as above; TRIVIA below.
+ *   POST  /host/game (trivia)   host     {session_id, format:'trivia',     -> {game_id, seq, format:'trivia', question_count}
+ *                                          question_set_id, title?, prize?,
+ *                                          time_limit_s?, base_points?, speed_bonus?, colour?}
+ *   POST  /host/game (musical)  host     {session_id, format:'musical',    -> {game_id, seq, format:'musical_bingo', pattern,
+ *                                          pattern, playlist_id? | playlist/    cards_dealt, playlist_id, playlist_name,
+ *                                          songs[], prize?, title?, auto_daub?} song_count, songs:[{song_id,title,artist}]}
+ *   POST  /host/game (raffle)   host     {session_id, format:'raffle',     -> {game_id, seq, format:'raffle', range_min,
+ *                                          range_min, range_max, winners?,      range_max, winners, allow_redraw,
+ *                                          time_to_present?, allow_redraw?,      time_to_present, pad, jackpot_on}
+ *                                          leading_zeros?, jackpot_on?,
+ *                                          jackpot_amount_cents?, prize?}
+ *                                         RAFFLE is HOST-ONLY and NOT metered: no /join, no vp_players. The venue
+ *                                         sells its own PAPER tickets; the host types the START/END number sold.
+ *   POST  /host/draw            host     {game_id, winners?, prize?,       -> {game_id, seq, tickets:[..], pad,
+ *                                          prize_type?, prize_value_cents?,     allow_redraw, time_to_present, prize, prize_type}
+ *                                          redraw_of_seq?}
+ *                                         Picks winner ticket number(s) UNIFORMLY at random in [range_min,range_max]
+ *                                         with a rejection-sampled CSPRNG (randInt; NOT modulo-biased), excluding
+ *                                         numbers already drawn. Writes vp_raffle_results, emits 'raffle.winner'.
+ *                                         redraw_of_seq marks that round no_show (drops it from prizes-given) then
+ *                                         draws a replacement (only when the raffle allows a redraw).
+ *   POST  /host/draw/resolve    host     {game_id, seq, outcome}           -> {game_id, seq, outcome, tickets}
+ *                                         Records whether the drawn winner(s) presented: outcome 'claimed' or
+ *                                         'no_show' (raffle's parallel to /host/claim/resolve).
+ *   POST  /host/members/draw    host     {draw_id}                         -> {draw_id, member_id, member_number,
+ *                                          winner_name, jackpot_cents, valid_count, ...}
+ *                                         MEMBERS DRAW is HOST-ONLY and NOT metered (no /join, no vp_players, no
+ *                                         session/vp_games row). Picks a random VALID vp_members row (status 'valid')
+ *                                         from the draw's roster UNIFORMLY via the unbiased CSPRNG randInt, formats the
+ *                                         name per the venue name_display setting, stamps last_drawn_date.
+ *   POST  /host/members/draw/resolve  host {draw_id, member_id?,            -> {draw_id, outcome, amount_cents,
+ *                                          member_number?, outcome}             new_jackpot_cents, increment_cents}
+ *                                         claim -> write vp_member_draw_results 'claimed' + RESET current_jackpot_cents
+ *                                         to starting_amount_cents; rollover -> write 'jackpot_rolled' + GROW jackpot by
+ *                                         increment_cents. (Result row is written here, not at draw: outcome is NOT NULL
+ *                                         with no 'pending' value.)
+ *   POST  /host/members/settings host*   {draw_id?|venue_id, name?,        -> {draw}
+ *                                          starting_amount_cents?, increment_cents?, current_jackpot_cents?,
+ *                                          time_to_claim_seconds?, draw_length_seconds?, draw_day?, draw_time?, roster_id?}
+ *                                         *MANAGER/OWNER ONLY. The draw/jackpot SETTINGS-write path. With draw_id it
+ *                                         updates a recurring draw; without one it creates a new one. Hosts are refused.
+ *   POST  /host/members/roster  host     {member_id, status}               -> {member_id, status}
+ *                                         Roster management (host-allowed): enable ('valid') / disable ('excluded') a
+ *                                         saved member for the draw.
+ *   POST  /host/game/end        host     {game_id}                         -> {game_id, status:'finished'}
+ *   POST  /host/ball            host     {game_id}                         -> {number, index}
+ *   POST  /host/play            host     {game_id, song_id}                -> {song_id, title, artist, seq, played_count}
+ *                                         Musical bingo's equivalent of /host/ball: the host plays (reveals)
+ *                                         the next song. Records vp_music_plays and emits PUBLIC 'music.song_played'
+ *                                         (title + artist are public; players daub by ear). Idempotent per song.
+ *   POST  /host/question        host     {game_id}                         -> {qseq, qi, qtotal, text, options, correct_index, ends_at, secs} | {done:true}
+ *                                         Advances the trivia game to the next question. The PUBLIC broadcast
+ *                                         'trivia.question' carries options but NEVER correct_index; correct_index
+ *                                         is returned ONLY in this host-only (authenticated) response.
+ *   POST  /host/reveal          host     {game_id}                         -> {qseq, correct_index, split, leaderboard}
+ *                                         Stamps is_correct + points_awarded server-side, then emits 'trivia.reveal'.
+ *   GET   /player/card          player   ?game=<id> (optional)             -> BINGO:   {game_id, card_no, cells, pattern, called_numbers}
+ *                                         Serves BINGO tickets AND musical cards           MUSICAL: {game_id, format:'musical_bingo', card_no,
+ *                                         (branches on the running game format).                     cells, pattern, played_songs} | {game:null}
+ *   POST  /player/claim         player   {game_id}                         -> {claim_id, auto_verdict, winning_cells, card_no}
+ *                                         Works for BINGO (drawn numbers) AND musical bingo (played songs);
+ *                                         the Worker loads its own card + play log and computes the verdict.
+ *   POST  /player/answer        player   {game_id, answer_index, qseq?}    -> {ok:true, recorded} (first answer is final; NO correctness returned)
+ *   GET   /player/score         player   ?game=<id>                        -> {total, rank, players_count, last:{answered,is_correct,points_awarded}}
+ *   POST  /host/claim/resolve   host     {claim_id, decision:confirm|reject} -> {claim_id, status}
+ *   GET   /snapshot?session=<id> public  (query only)                      -> public projection (no secrets), for TV + late joiners
+ *
+ *   pattern is one of: one_line | two_lines | full_house  (90-ball has no four_corners).
+ *   The DB is the source of truth for EVERY write above. Pages may also mirror
+ *   these changes over a Supabase Realtime broadcast for instant UX, but nothing
+ *   a client broadcasts is authoritative; it is re-derivable from /snapshot.
  *
  * ENV VARS (set in the Worker: Settings -> Variables; use a TEST project first)
  *   SUPABASE_URL           https://gpoolavkghnxedzrmtmc.supabase.co
@@ -60,6 +143,7 @@
 const JOIN_MAX_PER_IP = 300;      // joins per 60s per network. Generous: a whole venue shares one NAT IP. Raise for big venues.
 const JOIN_MAX_PER_DEVICE = 8;    // joins per 60s per device hint. One phone should not join many times a minute.
 const CLAIM_MAX_PER_PLAYER = 20;  // claims per 60s per player. Stops a joined attacker spamming BINGO + the TV overlay.
+const ANSWER_MAX_PER_PLAYER = 30; // trivia answers per 60s per player. One answer per question is normal; this only blocks a flood.
 const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered, so a rapid re-join reuses its row.
 
 export default {
@@ -82,10 +166,31 @@ export default {
 
     try {
       if (method === 'POST' && path === '/session')            return await handleCreateSession(request, env, json);
+      if (method === 'POST' && path === '/session/close')      return await handleSessionClose(request, env, json);
       if (method === 'POST' && path === '/join')               return await handleJoin(request, env, json);
+      if (method === 'POST' && path === '/join/info')          return await handleJoinInfo(request, env, json);
+      if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
+      if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
+      if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
+      if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
       if (method === 'POST' && path === '/host/ball')          return await handleHostBall(request, env, json);
+      if (method === 'POST' && path === '/host/play')          return await handleHostPlay(request, env, json);
+      if (method === 'POST' && path === '/host/question')      return await handleHostQuestion(request, env, json);
+      if (method === 'POST' && path === '/host/reveal')        return await handleHostReveal(request, env, json);
+      if (method === 'POST' && path === '/host/draw')          return await handleHostDraw(request, env, json);
+      if (method === 'POST' && path === '/host/draw/resolve')  return await handleDrawResolve(request, env, json);
+      if (method === 'POST' && path === '/host/members/draw')         return await handleMembersDraw(request, env, json);
+      if (method === 'POST' && path === '/host/members/draw/resolve') return await handleMembersResolve(request, env, json);
+      if (method === 'POST' && path === '/host/members/settings')     return await handleMembersSettings(request, env, json);
+      if (method === 'POST' && path === '/host/members/roster')       return await handleMembersRoster(request, env, json);
+      if (method === 'POST' && path === '/host/members/import')        return await handleMembersImport(request, env, json);
+      if (method === 'POST' && path === '/host/raffle/prize-add')      return await handleRafflePrizeAdd(request, env, json);
+      if (method === 'POST' && path === '/host/raffle/prize-remove')   return await handleRafflePrizeRemove(request, env, json);
+      if (method === 'GET'  && path === '/player/card')        return await handlePlayerCard(request, env, json);
       if (method === 'POST' && path === '/player/claim')       return await handlePlayerClaim(request, env, json);
+      if (method === 'POST' && path === '/player/answer')      return await handlePlayerAnswer(request, env, json);
+      if (method === 'GET'  && path === '/player/score')       return await handlePlayerScore(request, env, json);
       if (method === 'POST' && path === '/host/claim/resolve') return await handleClaimResolve(request, env, json);
       if (method === 'GET'  && path === '/snapshot')           return await handleSnapshot(request, env, json);
       return json({ error: 'not found' }, 404);
@@ -94,7 +199,8 @@ export default {
       // curated, safe message) are echoed to the client. Anything unexpected is
       // logged server-side under an opaque ref and returned as a generic 500, so
       // no stack, constraint, column or SQL detail ever leaks.
-      if (e && e.status) return json({ error: String(e.message) }, e.status);
+      const err = /** @type {any} */ (e);
+      if (err && err.status) return json({ error: String(err.message) }, err.status);
       const code = errRef();
       console.log('[' + code + '] unhandled: ' + String((e && e.stack) || (e && e.message) || e));
       return json({ error: 'Something went wrong', code }, 500);
@@ -118,6 +224,17 @@ async function handleCreateSession(request, env, json) {
   assertUuid(venueId, 'venue_id');                                // reject anything that is not a UUID before it reaches PostgREST
 
   const staff = await requireStaff(env, authUserId, venueId);     // ENFORCED: staff at THIS venue (also enforces the kill-switch)
+
+  // Idempotent open: the schema allows only ONE live session per venue
+  // (partial unique index vp_sessions_one_live_per_venue). If the host already
+  // has a live session tonight (they reloaded, re-tapped Start, or re-paired a
+  // TV), return THAT session instead of failing on the unique index. This makes
+  // "open the session" safe to call repeatedly from the host console.
+  const liveNow = await sbGet(env, 'vp_sessions',
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code&order=created_at.desc&limit=1');
+  if (liveNow.length) {
+    return json({ session_id: liveNow[0].id, join_code: liveNow[0].join_code, tv_pairing_code: liveNow[0].tv_pairing_code, reused: true });
+  }
 
   // Freeze the plan cap into the session so historical metering stays stable.
   // Independent venues: cap = venueplay_founding.max_seats. Grouped venues:
@@ -164,13 +281,105 @@ async function handleCreateSession(request, env, json) {
  * Player joins with a code. No auth. The Worker mints a 256-bit token, stores
  * ONLY its sha256, and returns the raw token once plus a public snapshot.
  */
+/* POST /join/info  (anon) : which fields the join screen should ask for at this venue.
+   body: { code }  -> { collect: {first_name,last_name,postcode,email,mobile,marketing_optin} }
+   The Worker reads vp_venue_settings with the service key (the anon player can't), and returns
+   ONLY the collect_* flags, never any venue data. */
+async function handleJoinInfo(request, env, json) {
+  const b = await readJson(request);
+  const code = String(b.code || '').trim().toUpperCase();
+  if (!code) return json({ collect: null });
+  let venueId = null;
+  const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=venue_id&limit=1');
+  if (sessions.length) venueId = sessions[0].venue_id;
+  else venueId = await venueByCode(env, code);   // broadcast bingo has no session: resolve by venue code
+  if (!venueId) return json({ collect: null }); // unknown code; join screen falls back to name only
+  const rows = await sbGet(env, 'vp_venue_settings',
+    'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
+  const cfg = (rows && rows[0]) || {};
+  return json({ collect: {
+    first_name: cfg.collect_first_name !== false, // first name defaults on
+    last_name: !!cfg.collect_last_name,
+    postcode: !!cfg.collect_postcode,
+    email: !!cfg.collect_email,
+    mobile: !!cfg.collect_mobile,
+    marketing_optin: !!cfg.collect_marketing_optin,
+  } });
+}
+
+/* Resolve a broadcast venueCode (6 chars, derived from the venue slug on the host + TV) to a
+   venue_id. Bingo has no session to look up, so we recompute the code for every venue and match.
+   Keyed by the unique slug/id, so two same-named venues never collide. The venue list is cached
+   ~60s in the isolate to avoid a full scan on every capture. */
+let _vcMap = null, _vcAt = 0;
+function fnvVenueCode(slug) {
+  let s = String(slug || '').toLowerCase().replace(/[^a-z0-9]/g, ''), h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const A = 'ACDEFGHJKMNPQRSTUVWXYZ2345679'; let out = '', x = h || 1;
+  for (let j = 0; j < 6; j++) { x = (Math.imul(x, 1103515245) + 12345) >>> 0; out += A[x % A.length]; }
+  return out;
+}
+async function venueByCode(env, code) {
+  code = String(code || '').trim().toUpperCase();
+  if (!/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/.test(code)) return null;
+  const now = Date.now();
+  if (!_vcMap || now - _vcAt > 60000) {
+    const rows = await sbGet(env, 'vp_venues', 'select=id,slug&limit=5000');
+    const map = {};
+    for (const v of rows) { if (v && v.slug) map[fnvVenueCode(v.slug)] = v.id; }
+    _vcMap = map; _vcAt = now;
+  }
+  return _vcMap[code] || null;
+}
+
+/* Opt-in capture for a broadcast game. Anon; best-effort. Stores ONLY the fields the venue's
+   settings allow (which migration 21 already forces off for unapproved accounts), always keyed
+   by venue_id, never by name. Unknown code = silently ignored so a player is never blocked. */
+async function handleCapture(request, env, json) {
+  const b = await readJson(request);
+  const venueId = await venueByCode(env, b.code);
+  if (!venueId) return json({ ok: false, stored: false });
+  const rows = await sbGet(env, 'vp_venue_settings',
+    'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
+  const cfg = (rows && rows[0]) || {};
+  const s = v => (v == null ? null : String(v).slice(0, 120));
+  const row = { venue_id: venueId, source: 'bingo' };
+  if (cfg.collect_first_name !== false) row.first_name = s(b.first_name);
+  if (cfg.collect_last_name)  row.last_name = s(b.last_name);
+  if (cfg.collect_postcode)   row.postcode  = s(b.postcode);
+  if (cfg.collect_email)      row.email     = s(b.email);
+  if (cfg.collect_mobile)     row.mobile    = s(b.mobile);
+  if (cfg.collect_marketing_optin && b.marketing_optin === true) { row.marketing_optin = true; row.marketing_optin_at = new Date().toISOString(); }
+  if (!row.first_name && !row.last_name && !row.email && !row.mobile) return json({ ok: true, stored: false });
+  await sbInsert(env, 'vp_captures', row, false);
+  return json({ ok: true, stored: true });
+}
+
+/* End-of-game figures for reporting. Host posts once per completed game. Keyed by venue_id. */
+async function handleReport(request, env, json) {
+  const b = await readJson(request);
+  const venueId = await venueByCode(env, b.code);
+  if (!venueId) return json({ ok: false });
+  const row = {
+    venue_id: venueId,
+    format: String(b.format || 'bingo').slice(0, 20),
+    players: Math.max(0, parseInt(b.players, 10) || 0),
+    tickets: Math.max(0, parseInt(b.tickets, 10) || 0),
+    prizes: Array.isArray(b.prizes) ? b.prizes.slice(0, 20) : [],
+    started_at: b.started_at || null,
+    ended_at: b.ended_at || null
+  };
+  await sbInsert(env, 'vp_game_reports', row, false);
+  return json({ ok: true });
+}
+
 async function handleJoin(request, env, json) {
   const b = await readJson(request);
   const code = String(b.code || '').trim().toUpperCase();
   assertJoinCode(code);   // reject anything not in the 6-char, no-lookalike alphabet before it reaches PostgREST
 
   // Salted, coarse abuse signals. Raw IP / UA are NEVER stored; only these hashes.
-  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip') || '';
+  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; x-real-ip is client-suppliable so not trusted for the rate-limit bucket
   const salt = env.IP_HASH_SALT || 'venueplay';
   const ipHash = ip ? await sha256Hex(salt + ':' + ip) : null;
   const ua = request.headers.get('user-agent') || '';
@@ -200,6 +409,18 @@ async function handleJoin(request, env, json) {
   await assertVenueActive(env, session.venue_id);
 
   const name = cleanName(b.name);
+
+  // Optional player data, per the venue's collect_* settings on the join screen. Stored on the
+  // player row. The marketing opt-in is ONLY ever recorded true if the player ticked it
+  // themselves (a locked rule: never pre-ticked, never defaulted on).
+  const capStr = (v, n) => { const s = String(v == null ? '' : v).trim().slice(0, n); return s || null; };
+  const cap = {};
+  if (b.first_name != null) cap.first_name = capStr(b.first_name, 80);
+  if (b.last_name != null) cap.last_name = capStr(b.last_name, 80);
+  if (b.email != null) cap.email = capStr(b.email, 200);
+  if (b.mobile != null) cap.mobile = capStr(b.mobile, 40);
+  if (b.postcode != null) cap.postcode = capStr(b.postcode, 10);
+  if (b.marketing_optin === true) { cap.marketing_optin = true; cap.marketing_optin_at = new Date().toISOString(); }
 
   // Soft dedup (LIVE only with env.RL): a rapid re-join from the same network +
   // device hint reuses that device's existing player row instead of minting a new
@@ -240,6 +461,7 @@ async function handleJoin(request, env, json) {
   };
   if (ipHash) playerRow.ip_hash = ipHash;          // salted hash only, never a raw IP
   if (deviceHint) playerRow.device_hint = deviceHint;  // coarse fingerprint, soft dedup signal only
+  Object.assign(playerRow, cap);                        // optional first/last/email/mobile/postcode + opt-in
   const inserted = await sbInsert(env, 'vp_players', playerRow, true);
   const newPlayer = Array.isArray(inserted) ? inserted[0] : inserted;
 
@@ -263,15 +485,39 @@ async function handleJoin(request, env, json) {
  * Fisher-Yates draw order (CSPRNG), stores it (never sent to clients), and deals
  * a valid 3-row x 9-column ticket to every current non-kicked player.
  */
+// Finish every OTHER game still marked running in this session (all except keepGameId), so
+// /snapshot and the ball draw point at the newest round. Run AFTER the new game row exists,
+// so a start that fails validation never touches the game already in progress.
+async function finishOtherRunningGames(env, sessionId, keepGameId) {
+  await sbPatch(env, 'vp_games',
+    'session_id=eq.' + enc(sessionId) + '&status=eq.running&id=neq.' + enc(keepGameId),
+    { status: 'finished', ended_at: new Date().toISOString() });
+}
 async function handleHostGame(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
   const b = await readJson(request);
   const sessionId = String(b.session_id || '').trim();
-  const pattern = b.pattern;
-  const validPatterns = ['one_line', 'two_lines', 'full_house'];   // 90-ball patterns; no four_corners
   if (!sessionId) return json({ error: 'Missing session_id' }, 400);
   assertUuid(sessionId, 'session_id');   // reject non-UUID before it reaches PostgREST
-  if (!validPatterns.includes(pattern)) return json({ error: 'Invalid pattern' }, 400);
+
+  // The format decides which per-format tables we write. Bingo is the default so the
+  // existing bingo host (which sends no format) is unchanged. Pattern is a bingo-only
+  // concept, so it is only required/validated on the bingo path.
+  const format = String(b.format || 'bingo90');
+  const bingoFormats = ['bingo90', 'bingo'];
+  const isTrivia = format === 'trivia';
+  const isMusical = format === 'musical' || format === 'musical_bingo';
+  const isRaffle = format === 'raffle';
+  if (!isTrivia && !isMusical && !isRaffle && !bingoFormats.includes(format)) return json({ error: 'Unsupported format' }, 400);
+  // Pattern is validated per-format: 90-ball has three patterns and NO four_corners;
+  // musical bingo is a 5x5 grid that DOES include four_corners (see hostStartMusical).
+  // Raffle has no pattern at all (a random ticket number in a range).
+  let pattern = null;
+  if (!isTrivia && !isMusical && !isRaffle) {
+    pattern = b.pattern;
+    const validPatterns = ['one_line', 'two_lines', 'full_house'];   // 90-ball patterns; no four_corners
+    if (!validPatterns.includes(pattern)) return json({ error: 'Invalid pattern' }, 400);
+  }
 
   const sessions = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(sessionId) + '&select=*');
   if (!sessions.length) return json({ error: 'Session not found' }, 404);
@@ -279,13 +525,58 @@ async function handleHostGame(request, env, json) {
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
   const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the session's venue (also kill-switch)
 
+  // Once-a-week limit for trivia + musical bingo, checked BEFORE the rollover below so a
+  // blocked start can never finish the game already running. Extra rounds within THIS
+  // session are always allowed; bingo, raffle and members draw are unlimited.
+  if (isTrivia || isMusical) {
+    const limitMsg = await checkWeeklyFormatLimit(env, session, isTrivia);
+    if (limitMsg) return json({ error: limitMsg }, 429);
+  }
+
+  // Overage approval gate: if the room is already over the venue's plan cap and the host has
+  // not approved the overage yet, the game will NOT start. The host UI catches this response,
+  // shows "you are over your X-player plan, the extra Z players are billed at your per-player
+  // rate this month - OK?", and on OK calls POST /host/overage/ack, which sets the flag for
+  // the night so games start freely (and chargeNightOverage will then bill at close).
+  if (!session.overage_approved) {
+    const planCap = Number(session.plan_cap_at_start || 0);
+    if (planCap > 0) {
+      const roster = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id');
+      const count = (roster && roster.length) || 0;
+      if (count > planCap) {
+        return json({ error: 'overage_approval_required', needs_overage_ack: true,
+          players: count, plan_cap: planCap, extra: count - planCap }, 402);
+      }
+    }
+  }
+
+  // NOTE: the old running game is NOT finished here. Each start path finishes the OTHER
+  // running games (via finishOtherRunningGames) only AFTER its new game row is safely
+  // inserted, so a start that fails validation (empty question set, short playlist, bad
+  // raffle range, weekly limit) can never destroy the game already in progress.
+
   // Next game sequence number within the session.
   const existing = await sbGet(env, 'vp_games', 'session_id=eq.' + enc(sessionId) + '&select=seq&order=seq.desc&limit=1');
   const seq = existing.length ? existing[0].seq + 1 : 1;
 
+  // TRIVIA + MUSICAL branches reuse everything above (auth, staff, kill-switch,
+  // rollover, seq) and only differ in the per-format tables they write.
+  if (isTrivia) return await hostStartTrivia(env, json, b, session, staff, seq);
+  if (isMusical) return await hostStartMusical(env, json, b, session, staff, seq);
+  if (isRaffle) return await hostStartRaffle(env, json, b, session, staff, seq);
+
   const config = {};
   if (b.prize) config.prize = String(b.prize).slice(0, 120);   // host-typed prize text, shown on TV
   if (b.title) config.title = String(b.title).slice(0, 120);
+
+  // Cards per player: the host may ask for more than one card. SCHEMA LIMIT:
+  // vp_cards has a unique index (game_id, player_id) plus vp_cards_one_per_player_game,
+  // so at most ONE card per player per game can exist today. We therefore deal
+  // exactly one and record the requested number in config, so when that index is
+  // relaxed (a later slice) this endpoint can honour it without a client change.
+  let cardsPerPlayer = parseInt(b.cards_per_player, 10);
+  if (!(cardsPerPlayer >= 1)) cardsPerPlayer = 1;
+  if (cardsPerPlayer > 1) { config.cards_per_player_requested = cardsPerPlayer; cardsPerPlayer = 1; }
 
   const gameRows = await sbInsert(env, 'vp_games', {
     session_id: sessionId,
@@ -296,6 +587,13 @@ async function handleHostGame(request, env, json) {
     started_at: new Date().toISOString(),
   }, true);
   const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
+  await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
+
+  // The night is now underway: move the session from 'lobby' to 'running' on the
+  // first game so the status reflects reality (and stamps started_at once).
+  if (session.status === 'lobby') {
+    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId), { status: 'running', started_at: new Date().toISOString() });
+  }
 
   // Server draw: a full CSPRNG Fisher-Yates permutation of 1..90. Stored in
   // vp_bingo_games.draw_order and NEVER sent to any client.
@@ -327,6 +625,1039 @@ async function handleHostGame(request, env, json) {
   }, 'host:' + staff.id);
 
   return json({ game_id: game.id, seq, pattern, cards_dealt: cards.length });
+}
+
+/* ------------------------------ TRIVIA: start a game ------------------------------
+ * Called from /host/game when format='trivia'. Writes the vp_games row and the
+ * vp_trivia_games row for the chosen question set. The set must belong to THIS venue
+ * or be a VenuePlay library set (owner_venue_id null + visibility='library'); a
+ * private set from another venue is rejected here even though service_role bypasses
+ * RLS. No question content (and never a correct_index) is read or emitted at start.
+ */
+async function hostStartTrivia(env, json, b, session, staff, seq) {
+  const setId = String(b.question_set_id || '').trim();
+  if (!setId) return json({ error: 'Missing question_set_id' }, 400);
+  assertUuid(setId, 'question_set_id');
+
+  const sets = await sbGet(env, 'vp_question_sets',
+    'id=eq.' + enc(setId) + '&select=id,owner_venue_id,visibility,title,question_count');
+  if (!sets.length) return json({ error: 'Question set not found' }, 404);
+  const set = sets[0];
+  const ownedHere = set.owner_venue_id === session.venue_id;
+  const isLibrary = set.owner_venue_id == null && set.visibility === 'library';
+  if (!ownedHere && !isLibrary) return json({ error: 'That question set is not available to this venue' }, 403);
+
+  // Count the questions now: it drives qtotal on the phones/TV and the end-of-round
+  // check in /host/question. We select only ids, never correct_index.
+  const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=id');
+  const questionCount = qs.length;
+  if (!questionCount) return json({ error: 'That question set has no questions' }, 409);
+
+  // vp_trivia_games has no per-game points/time/prize columns, so the host's overrides
+  // and display text live in vp_games.config (same place bingo keeps prize/title).
+  const config = { question_set_id: setId, question_count: questionCount };
+  if (b.title) config.title = String(b.title).slice(0, 120);
+  if (b.prize) config.prize = String(b.prize).slice(0, 120);
+  const base = parseInt(b.base_points, 10);
+  if (base >= 0 && base <= 100000) config.base_points = base;
+  const tl = parseInt(b.time_limit_s, 10);
+  if (tl >= 3 && tl <= 300) config.time_limit_s = tl;
+  if (typeof b.colour === 'boolean') config.colour = b.colour;
+  const speedBonus = b.speed_bonus !== false;   // default on
+  config.speed_bonus = speedBonus;
+
+  const gameRows = await sbInsert(env, 'vp_games', {
+    session_id: session.id, seq, format: 'trivia', status: 'running', config,
+    started_at: new Date().toISOString(),
+  }, true);
+  const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
+  await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
+
+  await sbInsert(env, 'vp_trivia_games', {
+    game_id: game.id, question_set_id: setId, current_seq: 0, phase: 'idle', speed_bonus: speedBonus,
+  }, false);
+  await stampWeeklyFormat(env, session, true);   // once-a-week slot used only now the game exists
+
+  if (session.status === 'lobby') {
+    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { status: 'running', started_at: new Date().toISOString() });
+  }
+
+  await emitEvent(env, session, 'game.started', {
+    game_id: game.id, seq, format: 'trivia',
+    question_count: questionCount, title: config.title || null, prize: config.prize || null,
+    colour: config.colour !== false,
+  }, 'host:' + staff.id);
+
+  return json({ game_id: game.id, seq, format: 'trivia', question_count: questionCount });
+}
+
+/* ------------------------------ MUSICAL BINGO: start a game ------------------------------
+ * Called from /host/game when format='musical' (or 'musical_bingo'). Musical bingo is
+ * BINGO WITH SONGS: the "balls" are songs the host plays in the room, and a card cell is
+ * a song title instead of a number. This writes the vp_games row and the vp_music_games
+ * row, then deals a 5x5 card (index 12 is the FREE centre) of song titles to every player.
+ *
+ * WHERE THE SONGS COME FROM. vp_music_plays.song_id is a FOREIGN KEY to
+ * vp_playlist_songs(id), so a played song must be a real vp_playlist_songs row. This
+ * endpoint accepts EITHER:
+ *   - playlist_id : an existing vp_playlists uuid (venue-authored, owned here, OR a
+ *                   VenuePlay library playlist with owner_venue_id null), the exact
+ *                   parallel to trivia's question_set_id; OR
+ *   - playlist    : an inline { name, songs:[{title, artist, hint?}] } which the Worker
+ *                   MATERIALISES into vp_playlists + vp_playlist_songs (reused on replay).
+ * The inline path is what the host page uses today: the 430-song library lives in
+ * data/musical-library.json (client asset for the audio previews) and is not seeded into
+ * the DB, so the Worker turns the chosen playlist into real rows the FK can point at.
+ * AUDIO IS A CLIENT CONCERN: the host device plays the ~30s previewUrl clip through the
+ * PA. The Worker never stores or streams audio; it only tracks WHICH song was played.
+ */
+async function hostStartMusical(env, json, b, session, staff, seq) {
+  // Pattern: accept the host UI values (one/two/corners/full) and the DB values, map to
+  // the four vp_music_games patterns. Musical bingo DOES have four_corners (5x5 grid).
+  const patternMap = {
+    one: 'one_line', two: 'two_lines', corners: 'four_corners', full: 'full_house',
+    one_line: 'one_line', two_lines: 'two_lines', four_corners: 'four_corners', full_house: 'full_house',
+  };
+  const pattern = patternMap[String(b.pattern || '')];
+  if (!pattern) return json({ error: 'Invalid pattern' }, 400);
+
+  // Resolve the playlist to a vp_playlists id whose vp_playlist_songs the card is dealt
+  // from and the host plays against. Either an existing id or an inline materialise.
+  let playlistId = null;
+  let playlistName = b.playlist_name ? String(b.playlist_name).slice(0, 120) : null;
+  if (b.playlist_id) {
+    playlistId = String(b.playlist_id).trim();
+    assertUuid(playlistId, 'playlist_id');
+    const pls = await sbGet(env, 'vp_playlists', 'id=eq.' + enc(playlistId) + '&select=id,owner_venue_id,title');
+    if (!pls.length) return json({ error: 'Playlist not found' }, 404);
+    const pl = pls[0];
+    const ownedHere = pl.owner_venue_id === session.venue_id;
+    const isLibrary = pl.owner_venue_id == null;   // library playlists have a null owner
+    if (!ownedHere && !isLibrary) return json({ error: 'That playlist is not available to this venue' }, 403);
+    if (!playlistName) playlistName = pl.title || 'Playlist';
+  } else {
+    // Inline materialise. songs is metadata only (title + artist [+ hint]); previewUrl is
+    // never sent here or stored (licensing: VenuePlay hosts no audio).
+    const raw = Array.isArray(b.songs) ? b.songs : (b.playlist && Array.isArray(b.playlist.songs) ? b.playlist.songs : null);
+    if (!raw) return json({ error: 'Provide a playlist_id or an inline songs list' }, 400);
+    const clean = [];
+    for (let i = 0; i < Math.min(raw.length, 500); i++) {   // cap materialised songs at 500
+      const t = raw[i] && raw[i].title != null ? String(raw[i].title).trim().slice(0, 200) : '';
+      const a = raw[i] && raw[i].artist != null ? String(raw[i].artist).trim().slice(0, 200) : '';
+      if (t && a) clean.push({ title: t, artist: a, hint: raw[i].hint ? String(raw[i].hint).slice(0, 200) : null });
+    }
+    if (!playlistName) playlistName = (b.playlist && b.playlist.name) ? String(b.playlist.name).slice(0, 120) : 'Playlist';
+    if (!clean.length) return json({ error: 'The playlist has no valid songs' }, 400);
+    playlistId = await ensureMusicPlaylist(env, session.venue_id, playlistName, clean);
+  }
+
+  // Read the playlist's songs (with their real uuids) once. These uuids are what the host
+  // plays (/host/play) and what the claim check matches; the card stores them per cell.
+  const songs = await sbGet(env, 'vp_playlist_songs',
+    'playlist_id=eq.' + enc(playlistId) + '&select=id,title,artist&order=seq.asc.nullslast,title.asc');
+  if (songs.length < 24) return json({ error: 'A musical bingo playlist needs at least 24 songs' }, 409);
+
+  const autoDaub = b.auto_daub !== false;   // default on; maps to reveal_mode
+  const config = { pattern, playlist_id: playlistId, playlist_name: playlistName, song_count: songs.length, auto_daub: autoDaub };
+  if (b.prize) config.prize = String(b.prize).slice(0, 120);
+  if (b.title) config.title = String(b.title).slice(0, 120);
+
+  const gameRows = await sbInsert(env, 'vp_games', {
+    session_id: session.id, seq, format: 'musical_bingo', status: 'running', config,
+    started_at: new Date().toISOString(),
+  }, true);
+  const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
+  await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
+
+  await sbInsert(env, 'vp_music_games', {
+    game_id: game.id, playlist_id: playlistId, pattern,
+    reveal_mode: autoDaub ? 'instant' : 'manual',   // auto-daub on = titles reveal on every card the instant a song is played
+  }, false);
+  await stampWeeklyFormat(env, session, false);   // once-a-week slot used only now the game exists
+
+  if (session.status === 'lobby') {
+    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { status: 'running', started_at: new Date().toISOString() });
+  }
+
+  // Deal one 5x5 card of song titles to every current non-kicked player.
+  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
+  const cards = players.map((p, i) => ({
+    game_id: game.id, player_id: p.id, card_no: i + 1, cells: generateMusicCard(songs),
+  }));
+  if (cards.length) await sbInsert(env, 'vp_cards', cards, false);
+
+  await emitEvent(env, session, 'game.started', {
+    game_id: game.id, seq, format: 'musical_bingo', pattern,
+    prize: config.prize || null, title: config.title || null,
+    playlist_name: playlistName, song_count: songs.length, auto_daub: autoDaub,
+  }, 'host:' + staff.id);
+
+  // The host response carries the playlist's songs WITH their uuids so the host page can
+  // map each to its previewUrl/artwork from the library (client-side) and send song_id to
+  // /host/play. The card contents dealt to phones stay private (fetched via /player/card).
+  return json({
+    game_id: game.id, seq, format: 'musical_bingo', pattern,
+    cards_dealt: cards.length, playlist_id: playlistId, playlist_name: playlistName,
+    song_count: songs.length,
+    songs: songs.map((s) => ({ song_id: s.id, title: s.title, artist: s.artist })),
+  });
+}
+
+/* ------------------------------ RAFFLE: start a game ------------------------------
+ * Called from /host/game when format='raffle'. RAFFLE IS HOST-ONLY and is NEVER metered:
+ * the venue sells its own PAPER tickets, so there is no /join, no vp_players and nothing
+ * that the peak-player billing view counts (that view only counts players dealt a bingo/
+ * musical card or who answered a trivia question; a raffle creates none of those). It is a
+ * free selling point. This writes the vp_games row (format='raffle') and the vp_raffle_games
+ * row in number_range mode: the host types the START (range_min) and END (range_max) ticket
+ * number they sold, plus how many winners, a time-to-present countdown, allow-redraw, and an
+ * optional cash jackpot. The prize text/type lives in vp_games.config (vp_raffle_games has no
+ * prize column) and is stamped onto each vp_raffle_results row at draw time. leading_zeros is
+ * DERIVED from range_max at render time (schema note: no column); we carry the host's toggle
+ * in config purely so the screen pads consistently.
+ */
+async function hostStartRaffle(env, json, b, session, staff, seq) {
+  // number_range mode only. player_pool (auto-numbered tickets on join) is a dormant schema
+  // seam and is deliberately not wired: raffle has no player join and must stay unmetered.
+  const rangeMin = parseInt(b.range_min, 10);
+  const rangeMax = parseInt(b.range_max, 10);
+  if (isNaN(rangeMin) || isNaN(rangeMax)) return json({ error: 'Enter a valid ticket range (first and last number)' }, 400);
+  if (rangeMin < 0 || rangeMax < rangeMin) return json({ error: 'The last ticket number must be at or above the first' }, 400);
+  const span = rangeMax - rangeMin + 1;
+  if (span > 1000000) return json({ error: 'That ticket range is too large' }, 400);
+
+  const jackpotOn = b.jackpot_on === true;
+  let jackpotCents = null;
+  if (jackpotOn) {
+    jackpotCents = parseInt(b.jackpot_amount_cents, 10);
+    if (isNaN(jackpotCents) || jackpotCents <= 0) return json({ error: 'Enter a cash jackpot amount' }, 400);
+  }
+
+  // Winners: cap 50; a cash-jackpot raffle forces exactly 1 winner (locked).
+  let winners = parseInt(b.winners != null ? b.winners : b.draws_count, 10);
+  if (!(winners >= 1)) winners = 1;
+  if (winners > 50) winners = 50;
+  if (jackpotOn) winners = 1;
+  if (winners > span) return json({ error: 'Not enough tickets in that range for ' + winners + ' winners' }, 400);
+
+  let timeToPresent = parseInt(b.time_to_present != null ? b.time_to_present : b.time_to_claim_seconds, 10);
+  if (!(timeToPresent >= 0)) timeToPresent = null;
+
+  const allowRedraw = b.allow_redraw !== false;    // default on
+  const leadingZeros = b.leading_zeros !== false;  // default on; display width is derived from range_max
+
+  // Prize text + type live in vp_games.config (same place bingo/trivia keep prize/title).
+  const config = { leading_zeros: leadingZeros };
+  if (b.prize) config.prize = String(b.prize).slice(0, 120);
+  if (b.title) config.title = String(b.title).slice(0, 120);
+  const pt = String(b.prize_type || '').toLowerCase();
+  if (pt === 'cash' || pt === 'other') config.prize_type = pt;
+  if (jackpotOn) { config.prize_type = 'cash'; config.jackpot_amount_cents = jackpotCents; }
+  if (Array.isArray(b.prizes)) config.prizes = b.prizes.slice(0, 12).map((p) => String(p).slice(0, 120));
+
+  const gameRows = await sbInsert(env, 'vp_games', {
+    session_id: session.id, seq, format: 'raffle', status: 'running', config,
+    started_at: new Date().toISOString(),
+  }, true);
+  const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
+  await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
+
+  const rngSeed = randomTokenHex(16);   // stored for audit ("prove the draw was fair")
+  await sbInsert(env, 'vp_raffle_games', {
+    game_id: game.id,
+    mode: 'number_range',
+    range_min: rangeMin,
+    range_max: rangeMax,
+    draws_count: winners,
+    time_to_claim_seconds: timeToPresent,
+    allow_redraw: allowRedraw,
+    jackpot_on: jackpotOn,
+    jackpot_amount_cents: jackpotCents,
+    rng_seed: rngSeed,
+  }, false);
+
+  if (session.status === 'lobby') {
+    await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id), { status: 'running', started_at: new Date().toISOString() });
+  }
+
+  const padWidth = leadingZeros ? String(Math.max(rangeMax, 1)).length : 1;
+  await emitEvent(env, session, 'game.started', {
+    game_id: game.id, seq, format: 'raffle',
+    range_min: rangeMin, range_max: rangeMax, winners,
+    prize: config.prize || null, prize_type: config.prize_type || null,
+    allow_redraw: allowRedraw, time_to_present: timeToPresent, pad: padWidth,
+    jackpot_on: jackpotOn, jackpot_amount_cents: jackpotCents,
+  }, 'host:' + staff.id);
+
+  return json({
+    game_id: game.id, seq, format: 'raffle',
+    range_min: rangeMin, range_max: rangeMax, winners,
+    allow_redraw: allowRedraw, time_to_present: timeToPresent, pad: padWidth,
+    jackpot_on: jackpotOn,
+  });
+}
+
+/* ------------------------------ POST /host/draw ------------------------------
+ * The host taps Draw. The Worker (NOT the phone or the TV) picks the winning ticket
+ * number(s) UNIFORMLY at random in [range_min, range_max] with a rejection-sampled CSPRNG
+ * (randInt over crypto.getRandomValues), so the draw is unbiased and NOT modulo-biased. It
+ * excludes any number already drawn in this raffle, writes vp_raffle_results (prize_text +
+ * prize_type + optional value for the cash-given-away rollup), and emits 'raffle.winner' to
+ * the screen. Optional redraw_of_seq marks that earlier round no_show (dropping it from the
+ * prizes-given view) before drawing a replacement, only when the raffle allows a redraw.
+ * NOT metered: this writes no vp_players and touches nothing the peak-player view counts.
+ */
+async function handleHostDraw(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  if (game.format !== 'raffle') return json({ error: 'Not a raffle game' }, 400);
+  if (game.status !== 'running') return json({ error: 'This raffle is not running' }, 409);
+  const session = await getSession(env, game.session_id);
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the venue (also kill-switch)
+
+  const rg = await sbGet(env, 'vp_raffle_games',
+    'game_id=eq.' + enc(gameId) + '&select=range_min,range_max,draws_count,allow_redraw,time_to_claim_seconds,jackpot_on,jackpot_amount_cents');
+  if (!rg.length) return json({ error: 'Not a raffle game' }, 404);
+  const raffle = rg[0];
+  const min = raffle.range_min, max = raffle.range_max;
+  if (min == null || max == null || max < min) return json({ error: 'This raffle has no ticket range' }, 409);
+
+  // Optional redraw: mark the previous round a no_show (which drops it from the prizes-given
+  // rollup) before drawing its replacement. Honoured only when the raffle allows a redraw.
+  const redrawSeq = (b.redraw_of_seq != null) ? parseInt(b.redraw_of_seq, 10) : NaN;
+  const isRedraw = !isNaN(redrawSeq);
+  if (isRedraw) {
+    if (!raffle.allow_redraw) return json({ error: 'This raffle does not allow a redraw' }, 409);
+    await sbPatch(env, 'vp_raffle_results', 'game_id=eq.' + enc(gameId) + '&seq=eq.' + redrawSeq,
+      { status: 'no_show', outcome: 'no_show' });
+  }
+
+  // Numbers already drawn in this raffle (ANY outcome) are never drawn again.
+  const prior = await sbGet(env, 'vp_raffle_results', 'game_id=eq.' + enc(gameId) + '&select=ticket_number,seq,drawn_at&order=seq.desc');
+  const drawn = {};
+  let maxSeq = 0;
+  for (let i = 0; i < prior.length; i++) {
+    if (prior[i].ticket_number != null) drawn[prior[i].ticket_number] = true;
+    if (prior[i].seq != null && prior[i].seq > maxSeq) maxSeq = prior[i].seq;
+  }
+
+  // Double-tap guard: if a draw for this raffle just happened (<3s ago), treat a second tap as
+  // the same click and do NOT draw again - stops duplicate winners / a colliding round number
+  // from a fast double-click. A deliberate later draw is unaffected. (A redraw is a separate,
+  // explicit action and is not gated here.)
+  if (!isRedraw && prior.length && prior[0].drawn_at) {
+    const since = Date.now() - new Date(prior[0].drawn_at).getTime();
+    if (since >= 0 && since < 3000) {
+      return json({ error: 'A draw just happened. Give it a second before drawing again.' }, 429);
+    }
+  }
+
+  const span = max - min + 1;
+  let winners = raffle.draws_count || 1;
+  if (b.winners != null) { const w = parseInt(b.winners, 10); if (w >= 1) winners = w; }   // per-draw override
+  winners = Math.max(1, Math.min(50, winners));
+  if (raffle.jackpot_on) winners = 1;   // a cash-jackpot raffle always draws exactly one
+  const drawnCount = Object.keys(drawn).length;
+  if (span - drawnCount < winners) return json({ error: 'Not enough undrawn tickets left for ' + winners + ' winner(s)' }, 409);
+
+  // UNBIASED uniform draw: randInt(span) is rejection-sampled over crypto.getRandomValues,
+  // so every ticket in [min,max] is equally likely (no modulo bias). Reject duplicates and
+  // already-drawn numbers.
+  const picks = [];
+  const chosen = {};
+  let guard = 0;
+  const guardMax = span * 8 + 100;
+  while (picks.length < winners && guard < guardMax) {
+    guard++;
+    const n = min + randInt(span);
+    if (drawn[n] || chosen[n]) continue;
+    chosen[n] = true;
+    picks.push(n);
+  }
+  if (picks.length < winners) return json({ error: 'Could not draw enough unique tickets, please try again' }, 409);
+
+  // Prize for THIS round: body override, else the game config. A cash jackpot is always cash.
+  const cfg = game.config || {};
+  let prizeText = (b.prize != null) ? String(b.prize).slice(0, 120) : (cfg.prize || null);
+  let prizeType = null;
+  const bpt = String(b.prize_type || '').toLowerCase();
+  if (bpt === 'cash' || bpt === 'other') prizeType = bpt;
+  else if (cfg.prize_type === 'cash' || cfg.prize_type === 'other') prizeType = cfg.prize_type;
+  let prizeValueCents = null;
+  if (b.prize_value_cents != null) { const v = parseInt(b.prize_value_cents, 10); if (v >= 0) prizeValueCents = v; }
+  if (raffle.jackpot_on) {
+    prizeType = 'cash';
+    if (prizeValueCents == null) prizeValueCents = raffle.jackpot_amount_cents;
+    if (!prizeText) prizeText = 'Cash jackpot';
+  }
+
+  const newSeq = maxSeq + 1;
+  const now = new Date().toISOString();
+  const rows = picks.map((n) => {
+    const row = { game_id: gameId, seq: newSeq, ticket_number: n, status: 'winner', outcome: 'drawn', drawn_at: now };
+    if (prizeText) row.prize_text = prizeText;
+    if (prizeType) row.prize_type = prizeType;
+    if (prizeValueCents != null) row.prize_value_cents = prizeValueCents;
+    return row;
+  });
+  await sbInsert(env, 'vp_raffle_results', rows, false);
+
+  const leadingZeros = cfg.leading_zeros !== false;
+  const padWidth = leadingZeros ? String(Math.max(max, 1)).length : 1;
+  await emitEvent(env, session, 'raffle.winner', {
+    game_id: gameId, seq: newSeq, tickets: picks,
+    prize: prizeText || null, prize_type: prizeType || null,
+    allow_redraw: raffle.allow_redraw, time_to_present: raffle.time_to_claim_seconds,
+    range_min: min, range_max: max, pad: padWidth, redraw: isRedraw,
+  }, 'host:' + staff.id);
+
+  return json({
+    game_id: gameId, seq: newSeq, tickets: picks, pad: padWidth,
+    allow_redraw: raffle.allow_redraw, time_to_present: raffle.time_to_claim_seconds,
+    prize: prizeText || null, prize_type: prizeType || null,
+  });
+}
+
+/* ------------------------------ POST /host/draw/resolve ------------------------------
+ * Records whether the drawn winner(s) actually presented at the bar. Raffle's parallel to
+ * /host/claim/resolve. outcome 'claimed' (presented, prize handed over) or 'no_show'. A
+ * no_show drops that round from the prizes-given rollup; the host can then draw again via
+ * /host/draw (with or without redraw_of_seq). Host JWT + venue staff + kill-switch enforced.
+ */
+async function handleDrawResolve(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+  const seq = parseInt(b.seq, 10);
+  if (isNaN(seq)) return json({ error: 'Missing or invalid seq' }, 400);
+  const outcome = b.outcome;
+  if (outcome !== 'claimed' && outcome !== 'no_show') return json({ error: 'outcome must be "claimed" or "no_show"' }, 400);
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  if (games[0].format !== 'raffle') return json({ error: 'Not a raffle game' }, 400);
+  const session = await getSession(env, games[0].session_id);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the venue (also kill-switch)
+
+  const results = await sbGet(env, 'vp_raffle_results',
+    'game_id=eq.' + enc(gameId) + '&seq=eq.' + seq + '&select=id,ticket_number');
+  if (!results.length) return json({ error: 'No draw with that seq' }, 404);
+
+  const patch = { outcome };
+  patch.status = (outcome === 'no_show') ? 'no_show' : 'winner';
+  await sbPatch(env, 'vp_raffle_results', 'game_id=eq.' + enc(gameId) + '&seq=eq.' + seq, patch);
+
+  const tickets = results.map((r) => r.ticket_number);
+  await emitEvent(env, session, 'raffle.result', { game_id: gameId, seq, outcome, tickets }, 'host:' + staff.id);
+  return json({ game_id: gameId, seq, outcome, tickets });
+}
+
+/* =====================================================================
+ * MEMBERS DRAW  (HOST-ONLY, NOT metered, runs off the saved member ROSTER)
+ * ---------------------------------------------------------------------
+ * Members draw is unlike the other four formats: it does NOT open a vp_sessions
+ * row or a vp_games row and is NEVER metered (no /join, no vp_players, nothing the
+ * peak-player billing view counts). It runs directly off a venue's PERSISTENT data:
+ *   - vp_member_rosters + vp_members : the saved member "database" (name + badge
+ *     number). A member with status 'excluded' is barred from the draw; only
+ *     status 'valid' members are ever picked (that IS the saved exclude list).
+ *   - vp_member_draws               : the NAMED, RECURRING draws a venue runs (e.g.
+ *     "Friday Members Badge Draw"), each carrying its own live current_jackpot_cents,
+ *     the starting_amount_cents it resets to on a win, and the increment_cents it
+ *     grows by on a rollover.
+ *   - vp_member_draw_results        : the previous-winners audit log.
+ *
+ * Because there is no session, the Worker emits nothing to vp_session_events here;
+ * the TV/host pair over the pages' Realtime broadcast channel ("vp-members-"+CODE)
+ * exactly like the raffle screen does, and the Worker stays the authoritative PICKER
+ * and WRITER (unbiased CSPRNG pick; jackpot maths; the durable audit row).
+ *
+ * ROLE SPLIT: a host may RUN a draw (/host/members/draw + /resolve) and MANAGE the
+ * roster (/host/members/roster, enable/disable a member). Only a manager or owner
+ * may change the draw/jackpot SETTINGS numbers (/host/members/settings) -- that gate
+ * is enforced on the write path below, not just in the UI.
+ *
+ * SCHEMA NOTE (flagged, not faked): vp_member_draw_results.outcome is NOT NULL and
+ * checks in ('claimed','jackpot_rolled'). There is no 'pending' value to write when
+ * the winner is first drawn, so the DRAW does not insert a result row; the durable
+ * row is written at RESOLVE once the outcome (claim or rollover) is known. The draw
+ * only stamps last_drawn_date and returns the winner for the host + TV.
+ */
+
+/* ------------------------------ POST /host/members/draw ------------------------------
+ * The host taps Draw on a chosen recurring draw. The Worker (NOT the page) reads the
+ * draw's roster, keeps only status 'valid' members (respecting the saved exclude list),
+ * and picks ONE UNIFORMLY at random with the rejection-sampled CSPRNG randInt (NOT
+ * modulo-biased). The winner's name is formatted per the venue's name_display setting
+ * (default abbreviate last name -> "John S"). It stamps last_drawn_date and returns the
+ * winning member number + name. NOT metered: writes only last_drawn_date, no vp_players.
+ */
+async function handleMembersDraw(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const drawId = String(b.draw_id || '').trim();
+  if (!drawId) return json({ error: 'Missing draw_id' }, 400);
+  assertUuid(drawId, 'draw_id');
+
+  const draws = await sbGet(env, 'vp_member_draws',
+    'id=eq.' + enc(drawId) + '&select=id,venue_id,roster_id,name,current_jackpot_cents,starting_amount_cents,increment_cents,draw_length_seconds,time_to_claim_seconds');
+  if (!draws.length) return json({ error: 'Draw not found' }, 404);
+  const draw = draws[0];
+  await requireStaff(env, authUserId, draw.venue_id);            // ENFORCED: staff at the draw's venue (also kill-switch)
+
+  const members = await validMembers(env, draw);
+  if (!members.length) return json({ error: 'No valid members to draw from' }, 409);
+
+  // UNBIASED uniform pick over the valid members, using the SAME rejection-sampled
+  // CSPRNG (randInt over crypto.getRandomValues) the ball/raffle draws use.
+  const winner = members[randInt(members.length)];
+  const nameDisplay = await venueNameDisplay(env, draw.venue_id);
+  const winnerName = formatMemberName(winner.first_name, winner.last_name, nameDisplay);
+
+  // Once-per-day schedule audit stamp (schema column last_drawn_date). Host-allowed,
+  // not metered. We stamp it rather than hard-block a re-draw so testing stays easy.
+  const today = new Date().toISOString().slice(0, 10);
+  await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId), { last_drawn_date: today });
+
+  return json({
+    draw_id: drawId, draw_name: draw.name,
+    member_id: winner.id, member_number: winner.member_number,
+    first_name: winner.first_name, last_name: winner.last_name,
+    winner_name: winnerName,
+    jackpot_cents: draw.current_jackpot_cents != null ? draw.current_jackpot_cents : 0,
+    time_to_claim_seconds: draw.time_to_claim_seconds != null ? draw.time_to_claim_seconds : null,
+    draw_length_seconds: draw.draw_length_seconds != null ? draw.draw_length_seconds : null,
+    valid_count: members.length,
+  });
+}
+
+/* ------------------------------ POST /host/members/draw/resolve ------------------------------
+ * The host confirms the outcome of the drawn member: 'claim' (present at the bar, jackpot
+ * handed over) or 'rollover' ("jackpot to next week", not present). This is where the durable
+ * vp_member_draw_results row is written (see the schema note above) AND the jackpot maths runs:
+ *   - claim    -> record outcome 'claimed', then RESET current_jackpot_cents to starting_amount_cents.
+ *   - rollover -> record outcome 'jackpot_rolled', then GROW current_jackpot_cents by increment_cents.
+ * The jackpot amount and the reset/increment maths are re-read from vp_member_draws server-side
+ * (never trusted from the client); a supplied member_id must belong to this draw's roster and its
+ * name is re-formatted per the venue setting. Host JWT + venue staff + kill-switch enforced.
+ */
+async function handleMembersResolve(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const drawId = String(b.draw_id || '').trim();
+  if (!drawId) return json({ error: 'Missing draw_id' }, 400);
+  assertUuid(drawId, 'draw_id');
+
+  // Accept the host words (claim / rollover) OR the raw DB enum values.
+  const raw = String(b.outcome || '').toLowerCase();
+  let outcome = null;
+  if (raw === 'claim' || raw === 'claimed') outcome = 'claimed';
+  else if (raw === 'rollover' || raw === 'roll' || raw === 'jackpot_rolled') outcome = 'jackpot_rolled';
+  if (!outcome) return json({ error: 'outcome must be "claim" or "rollover"' }, 400);
+
+  const draws = await sbGet(env, 'vp_member_draws',
+    'id=eq.' + enc(drawId) + '&select=id,venue_id,roster_id,current_jackpot_cents,starting_amount_cents,increment_cents,last_resolved_at');
+  if (!draws.length) return json({ error: 'Draw not found' }, 404);
+  const draw = draws[0];
+  await requireStaff(env, authUserId, draw.venue_id);            // ENFORCED: staff at the draw's venue (also kill-switch)
+
+  // Idempotency: a double-tap (or retry) on resolve must not write a second audit row or
+  // advance the jackpot twice. If this draw was resolved in the last 30s, treat it as the
+  // same action and return the current state unchanged. A genuine re-resolve after the next
+  // draw (minutes later) proceeds normally.
+  const lastResolved = draw.last_resolved_at ? new Date(draw.last_resolved_at).getTime() : 0;
+  if (lastResolved && (Date.now() - lastResolved) < 30000) {
+    return json({ draw_id: drawId, outcome, amount_cents: draw.current_jackpot_cents,
+      new_jackpot_cents: draw.current_jackpot_cents,
+      increment_cents: draw.increment_cents != null ? draw.increment_cents : 0, duplicate: true });
+  }
+
+  // Re-derive the winner server-side. A supplied member_id MUST belong to this draw's roster
+  // (never trust a client-named winner); the name is re-formatted per the venue setting. A drawn
+  // number that is not a member (member_id absent) is recorded from member_number/winner_name.
+  let memberId = null, memberNumber = null, winnerName = null;
+  if (b.member_id != null && String(b.member_id).trim()) {
+    memberId = String(b.member_id).trim();
+    assertUuid(memberId, 'member_id');
+    const mem = await memberInDraw(env, draw, memberId);
+    if (!mem) return json({ error: 'That member is not in this draw' }, 400);
+    memberNumber = mem.member_number;
+    const nameDisplay = await venueNameDisplay(env, draw.venue_id);
+    winnerName = formatMemberName(mem.first_name, mem.last_name, nameDisplay);
+  } else {
+    if (b.member_number != null) { const n = parseInt(b.member_number, 10); if (!isNaN(n)) memberNumber = n; }
+    if (b.winner_name != null) winnerName = String(b.winner_name).slice(0, 80);
+  }
+
+  const jackpotAtDraw = draw.current_jackpot_cents != null ? draw.current_jackpot_cents : 0;
+
+  // Durable audit row (written HERE at resolve; see the schema note). amount_cents = the jackpot
+  // that was on offer at the draw; v_vp_prizes_given totals ONLY the 'claimed' rows.
+  const resultRow = { draw_id: drawId, outcome, amount_cents: jackpotAtDraw };
+  if (memberId) resultRow.member_id = memberId;
+  if (memberNumber != null) resultRow.member_number = memberNumber;
+  if (winnerName) resultRow.winner_name = winnerName;
+  await sbInsert(env, 'vp_member_draw_results', resultRow, false);
+
+  // Jackpot maths, computed server-side from the stored numbers.
+  let newJackpot;
+  if (outcome === 'claimed') {
+    newJackpot = draw.starting_amount_cents != null ? draw.starting_amount_cents : jackpotAtDraw;
+  } else {
+    newJackpot = jackpotAtDraw + (draw.increment_cents != null ? draw.increment_cents : 0);
+  }
+  await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId),
+    { current_jackpot_cents: newJackpot, last_resolved_at: new Date().toISOString() });
+
+  return json({
+    draw_id: drawId, outcome,
+    amount_cents: jackpotAtDraw,
+    new_jackpot_cents: newJackpot,
+    increment_cents: draw.increment_cents != null ? draw.increment_cents : 0,
+  });
+}
+
+/* ------------------------------ POST /host/members/settings ------------------------------
+ * MANAGER/OWNER ONLY. This is the SETTINGS-WRITE path: the draw/jackpot numbers a host must not
+ * be able to change (starting amount, weekly increment, the live jackpot, claim/draw-length
+ * seconds, the day/time shown on ads, and which roster the draw uses). With a draw_id it updates
+ * that recurring draw; without one it creates a new recurring draw (name required). The role gate
+ * is enforced HERE in code, not just hidden in the UI. requireStaff also enforces the kill-switch.
+ */
+async function handleMembersSettings(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+
+  const drawId = b.draw_id != null ? String(b.draw_id).trim() : '';
+  let venueId, existing = null;
+  if (drawId) {
+    assertUuid(drawId, 'draw_id');
+    const rows = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id');
+    if (!rows.length) return json({ error: 'Draw not found' }, 404);
+    existing = rows[0]; venueId = existing.venue_id;
+  } else {
+    venueId = String(b.venue_id || '').trim();
+    if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+    assertUuid(venueId, 'venue_id');
+  }
+
+  // MANAGER GATE: hosts run draws + manage the roster, but only a manager/owner may change the
+  // draw and jackpot SETTINGS numbers. requireStaff returns the staff row (with .role).
+  const staff = await requireStaff(env, authUserId, venueId);
+  if (staff.role !== 'owner' && staff.role !== 'manager') {
+    return json({ error: 'Only a manager or owner can change the draw and jackpot settings' }, 403);
+  }
+
+  // Build the patch from the numeric/schedule columns only.
+  const patch = {};
+  const intField = (key) => { if (b[key] != null) { const n = parseInt(b[key], 10); if (!isNaN(n)) patch[key] = n; } };
+  intField('starting_amount_cents');
+  intField('increment_cents');
+  intField('current_jackpot_cents');
+  intField('time_to_claim_seconds');
+  intField('draw_length_seconds');
+  if (b.draw_day != null) patch.draw_day = String(b.draw_day).slice(0, 20);
+  if (b.draw_time != null) patch.draw_time = String(b.draw_time).slice(0, 20);
+  // The owner sets when the draw started running (shown as "running since" on the TV). Only a
+  // real YYYY-MM-DD is accepted so a bad value can never overwrite it.
+  if (b.date_started != null) { const ds = String(b.date_started).slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) patch.date_started = ds; }
+  if (b.roster_id != null && String(b.roster_id).trim()) {
+    const rid = String(b.roster_id).trim(); assertUuid(rid, 'roster_id'); patch.roster_id = rid;
+  }
+
+  if (existing) {
+    if (Object.keys(patch).length) await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId), patch);
+    const rows = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=*');
+    return json({ draw: rows[0] });
+  }
+  // Create a new recurring draw (manager-only). A name is required.
+  const name = b.name != null ? String(b.name).slice(0, 120).trim() : '';
+  if (!name) return json({ error: 'A draw needs a name' }, 400);
+  const row = Object.assign({ venue_id: venueId, name }, patch);
+  if (row.current_jackpot_cents == null && row.starting_amount_cents != null) row.current_jackpot_cents = row.starting_amount_cents;
+  if (row.date_started == null) row.date_started = new Date().toISOString().slice(0, 10);
+  const inserted = await sbInsert(env, 'vp_member_draws', row, true);
+  return json({ draw: Array.isArray(inserted) ? inserted[0] : inserted });
+}
+
+/* ------------------------------ POST /host/members/roster ------------------------------
+ * Roster management (HOST-ALLOWED, not metered): enable or disable a saved member for the draw.
+ * status 'valid' puts them back in the draw; status 'excluded' bars them (barred / not financial).
+ * The member's roster must belong to the caller's venue. This is deliberately host-allowed to
+ * prove the role split: a host CAN write the roster but CANNOT write the settings numbers above.
+ */
+async function handleMembersRoster(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const memberId = String(b.member_id || '').trim();
+  if (!memberId) return json({ error: 'Missing member_id' }, 400);
+  assertUuid(memberId, 'member_id');
+  const status = String(b.status || '').toLowerCase();
+  if (status !== 'valid' && status !== 'excluded') return json({ error: 'status must be "valid" or "excluded"' }, 400);
+
+  const rows = await sbGet(env, 'vp_members', 'id=eq.' + enc(memberId) + '&select=id,roster_id');
+  if (!rows.length) return json({ error: 'Member not found' }, 404);
+  const rosters = await sbGet(env, 'vp_member_rosters',
+    'id=eq.' + enc(rows[0].roster_id) + '&select=id,venue_id');
+  if (!rosters.length) return json({ error: 'Member not found' }, 404);
+  await requireStaff(env, authUserId, rosters[0].venue_id);      // ENFORCED: staff at the roster's venue (roster mgmt is host-allowed)
+
+  await sbPatch(env, 'vp_members', 'id=eq.' + enc(memberId), { status, updated_at: new Date().toISOString() });
+  return json({ member_id: memberId, status });
+}
+
+/* POST /host/members/import  (MANAGER/OWNER) : bulk-add to the venue's members list.
+   body: { draw_id?|venue_id, members:[{number, name}] }  -> { added }
+   Members with a number already in the list are skipped (idempotent re-paste). A venue draw
+   with no roster of its own draws from every member at the venue, so we add to (or create) one
+   members list for the venue. */
+async function handleMembersImport(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const members = Array.isArray(b.members) ? b.members : [];
+  if (!members.length) return json({ error: 'No members to add' }, 400);
+
+  let venueId, rosterId = null;
+  const drawId = b.draw_id != null ? String(b.draw_id).trim() : '';
+  if (drawId) {
+    assertUuid(drawId, 'draw_id');
+    const dr = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=venue_id,roster_id');
+    if (!dr.length) return json({ error: 'Draw not found' }, 404);
+    venueId = dr[0].venue_id; rosterId = dr[0].roster_id || null;
+  } else {
+    venueId = String(b.venue_id || '').trim();
+    if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+    assertUuid(venueId, 'venue_id');
+  }
+
+  const staff = await requireStaff(env, authUserId, venueId);
+  if (staff.role !== 'owner' && staff.role !== 'manager') {
+    return json({ error: 'Only a manager or owner can add to the members list' }, 403);
+  }
+
+  // Find (or create) one members list for the venue.
+  if (!rosterId) {
+    const rosters = await sbGet(env, 'vp_member_rosters', 'venue_id=eq.' + enc(venueId) + '&select=id&limit=1');
+    if (rosters.length) rosterId = rosters[0].id;
+    else {
+      const made = await sbInsert(env, 'vp_member_rosters', { venue_id: venueId, name: 'Members list' }, true);
+      rosterId = Array.isArray(made) ? made[0].id : made.id;
+    }
+  }
+
+  // Skip numbers already present; insert the rest as valid (pickable) members.
+  const existing = await sbGet(env, 'vp_members', 'roster_id=eq.' + enc(rosterId) + '&select=member_number');
+  const have = {}; existing.forEach((m) => { have[String(m.member_number)] = true; });
+  const rows = [];
+  members.forEach((m) => {
+    const num = parseInt(m.number, 10);
+    if (isNaN(num) || have[String(num)]) return;
+    have[String(num)] = true;
+    // vp_members stores first_name/last_name; split the pasted name on the first space.
+    const nm = String(m.name || '').trim();
+    const sp = nm.indexOf(' ');
+    const first = (sp === -1 ? nm : nm.slice(0, sp)).slice(0, 80);
+    const last = (sp === -1 ? '' : nm.slice(sp + 1).trim()).slice(0, 80);
+    rows.push({ roster_id: rosterId, member_number: num, first_name: first, last_name: last, status: 'valid' });
+  });
+  if (rows.length) await sbInsert(env, 'vp_members', rows, false);
+  return json({ ok: true, added: rows.length, roster_id: rosterId });
+}
+
+/* POST /host/raffle/prize-add  (MANAGER/OWNER) : add a reusable prize to the venue's list.
+   body: { venue_id, label }  -> { prize } */
+async function handleRafflePrizeAdd(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const venueId = String(b.venue_id || '').trim();
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  assertUuid(venueId, 'venue_id');
+  const label = String(b.label || '').trim().slice(0, 120);
+  if (!label) return json({ error: 'Enter a prize' }, 400);
+  const staff = await requireStaff(env, authUserId, venueId);
+  if (staff.role !== 'owner' && staff.role !== 'manager') {
+    return json({ error: 'Only a manager or owner can change the prize list' }, 403);
+  }
+  const made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label }, true);
+  return json({ ok: true, prize: Array.isArray(made) ? made[0] : made });
+}
+
+/* POST /host/raffle/prize-remove  (MANAGER/OWNER) : remove a prize from the venue's list.
+   body: { prize_id }  -> { ok } */
+async function handleRafflePrizeRemove(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const prizeId = String(b.prize_id || '').trim();
+  if (!prizeId) return json({ error: 'Missing prize_id' }, 400);
+  assertUuid(prizeId, 'prize_id');
+  const rows = await sbGet(env, 'vp_raffle_prizes', 'id=eq.' + enc(prizeId) + '&select=id,venue_id');
+  if (!rows.length) return json({ error: 'Prize not found' }, 404);
+  const staff = await requireStaff(env, authUserId, rows[0].venue_id);
+  if (staff.role !== 'owner' && staff.role !== 'manager') {
+    return json({ error: 'Only a manager or owner can change the prize list' }, 403);
+  }
+  await sbDelete(env, 'vp_raffle_prizes', 'id=eq.' + enc(prizeId));
+  return json({ ok: true });
+}
+
+/* ---- MEMBERS DRAW helpers ---- */
+
+// The valid (drawable) members for a draw. If the draw names a roster, use it; otherwise use
+// every roster at the venue. Only status 'valid' members are returned (the exclude list is
+// encoded as status 'excluded' rows, which are never drawable).
+async function validMembers(env, draw) {
+  let rosterIds = [];
+  if (draw.roster_id) rosterIds = [draw.roster_id];
+  else {
+    const rosters = await sbGet(env, 'vp_member_rosters', 'venue_id=eq.' + enc(draw.venue_id) + '&select=id');
+    rosterIds = rosters.map((r) => r.id);
+  }
+  if (!rosterIds.length) return [];
+  const inList = '(' + rosterIds.map((id) => enc(id)).join(',') + ')';
+  return await sbGet(env, 'vp_members',
+    'roster_id=in.' + inList + '&status=eq.valid&select=id,roster_id,member_number,first_name,last_name');
+}
+
+// Confirm a member belongs to this draw's roster (or, when the draw names no roster, to any
+// roster at the draw's venue). Returns the member row or null.
+async function memberInDraw(env, draw, memberId) {
+  const rows = await sbGet(env, 'vp_members',
+    'id=eq.' + enc(memberId) + '&select=id,roster_id,member_number,first_name,last_name');
+  if (!rows.length) return null;
+  const m = rows[0];
+  if (draw.roster_id) return m.roster_id === draw.roster_id ? m : null;
+  const rosters = await sbGet(env, 'vp_member_rosters',
+    'id=eq.' + enc(m.roster_id) + '&venue_id=eq.' + enc(draw.venue_id) + '&select=id');
+  return rosters.length ? m : null;
+}
+
+// The venue's name_display preference (how a winner's name shows on the TV). Default 'abbrev_last'.
+async function venueNameDisplay(env, venueId) {
+  const s = await sbGet(env, 'vp_venue_settings', 'venue_id=eq.' + enc(venueId) + '&select=name_display&limit=1');
+  return (s.length && s[0].name_display) ? s[0].name_display : 'abbrev_last';
+}
+
+// Format a member's name per the venue's name_display setting.
+//   abbrev_last  (default) -> "John S"
+//   abbrev_first          -> "J Smith"
+//   full                  -> "John Smith"
+function formatMemberName(first, last, mode) {
+  const f = (first || '').trim();
+  const l = (last || '').trim();
+  if (mode === 'full') return (f + ' ' + l).trim();
+  if (mode === 'abbrev_first') return ((f ? f[0] + ' ' : '') + l).trim();
+  return (f + ' ' + (l ? l[0] : '')).trim();
+}
+
+/* ------------------------------ POST /host/play ------------------------------
+ * The musical-bingo equivalent of /host/ball: the host plays (reveals) the next song.
+ * The Worker records it in vp_music_plays (played_at, which is what counts toward claim
+ * checks) and broadcasts 'music.song_played' with the title + artist so every card can
+ * daub the matching square and the TV shows what is playing. The song title is PUBLIC by
+ * design (players daub it by ear), unlike a trivia correct_index. AUDIO STAYS ON THE HOST:
+ * this endpoint only tracks which song was played; the ~30s preview clip plays through the
+ * host device into the PA and is never touched here.
+ */
+async function handleHostPlay(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+  const songId = String(b.song_id || '').trim();
+  if (!songId) return json({ error: 'Missing song_id' }, 400);
+  assertUuid(songId, 'song_id');
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  if (game.format !== 'musical_bingo') return json({ error: 'Not a musical game' }, 400);
+  if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
+  const session = await getSession(env, game.session_id);
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
+
+  const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=playlist_id');
+  if (!mg.length) return json({ error: 'Not a musical game' }, 404);
+
+  // The song must belong to THIS game's playlist (so a played song is always a real
+  // vp_playlist_songs row the FK can point at, and never a song from another playlist).
+  const songRows = await sbGet(env, 'vp_playlist_songs',
+    'id=eq.' + enc(songId) + '&playlist_id=eq.' + enc(mg[0].playlist_id) + '&select=id,title,artist&limit=1');
+  if (!songRows.length) return json({ error: 'That song is not in this game playlist' }, 404);
+  const song = songRows[0];
+
+  // Idempotent: if this song was already played in this game, return its position rather
+  // than logging it twice or re-broadcasting (a host double-tap must not double-count).
+  const existing = await sbGet(env, 'vp_music_plays',
+    'game_id=eq.' + enc(gameId) + '&song_id=eq.' + enc(songId) + '&select=id,seq&order=seq.asc&limit=1');
+  const totalPlayed = await sbGet(env, 'vp_music_plays', 'game_id=eq.' + enc(gameId) + '&select=seq&order=seq.desc&limit=1');
+  if (existing.length) {
+    const count = totalPlayed.length ? totalPlayed[0].seq : existing[0].seq;
+    return json({ song_id: songId, title: song.title, artist: song.artist, seq: existing[0].seq, played_count: count, replayed: true });
+  }
+
+  const nextSeq = totalPlayed.length ? totalPlayed[0].seq + 1 : 1;
+  const now = new Date().toISOString();
+  await sbInsert(env, 'vp_music_plays', {
+    game_id: gameId, song_id: songId, seq: nextSeq, played_at: now, revealed_at: now,
+  }, false);
+
+  await emitEvent(env, session, 'music.song_played', {
+    song_id: songId, title: song.title, artist: song.artist, seq: nextSeq, played_count: nextSeq,
+  }, 'host:' + staff.id);
+
+  return json({ song_id: songId, title: song.title, artist: song.artist, seq: nextSeq, played_count: nextSeq });
+}
+
+/* ------------------------------ POST /host/question ------------------------------
+ * Host advances the trivia game to the next question. The Worker reads the question
+ * (including correct_index) server-side, sets the shared answer deadline, and emits a
+ * PUBLIC 'trivia.question' event carrying the text + OPTIONS but NEVER the correct_index.
+ * correct_index is returned ONLY in this response, which reaches the authenticated host
+ * console alone (host staff legitimately hold the answers). Scoring stays server-side.
+ */
+async function handleHostQuestion(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
+  if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
+  const session = await getSession(env, game.session_id);
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
+
+  const tg = await sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId) + '&select=question_set_id,current_seq,phase');
+  if (!tg.length) return json({ error: 'Not a trivia game' }, 404);
+  const setId = tg[0].question_set_id;
+  const curSeq = tg[0].current_seq || 0;
+
+  // The next question is the lowest seq strictly greater than the current one. Using
+  // seq > current (not current+1) is robust to gaps if a question was ever removed.
+  const nextQs = await sbGet(env, 'vp_questions',
+    'set_id=eq.' + enc(setId) + '&seq=gt.' + curSeq +
+    '&select=id,seq,question,options,correct_index,time_limit_s,points&order=seq.asc&limit=1');
+  if (!nextQs.length) return json({ done: true });   // no more questions; host shows the podium
+  const q = nextQs[0];
+
+  const cfg = game.config || {};
+  const secs = (cfg.time_limit_s != null) ? cfg.time_limit_s : (q.time_limit_s || 20);
+  const endsAt = new Date(Date.now() + secs * 1000).toISOString();
+  const options = Array.isArray(q.options) ? q.options : [];
+  const qtotal = (cfg.question_count != null) ? cfg.question_count : null;
+
+  await sbPatch(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId),
+    { current_seq: q.seq, phase: 'asking', question_ends_at: endsAt });
+
+  // PUBLIC broadcast: options only, NEVER correct_index.
+  await emitEvent(env, session, 'trivia.question', {
+    qseq: q.seq, qi: q.seq, qtotal,
+    text: q.question, options, ends_at: endsAt, secs,
+    colour: cfg.colour !== false,
+  }, 'host:' + staff.id);
+
+  // HOST-ONLY response (authenticated staff): may include correct_index for the console.
+  return json({
+    qseq: q.seq, qi: q.seq, qtotal,
+    text: q.question, options, correct_index: q.correct_index,
+    ends_at: endsAt, secs,
+  });
+}
+
+/* ------------------------------ POST /host/reveal ------------------------------
+ * Host reveals the answer to the current question. The Worker is the ONLY place that
+ * decides correctness and points: it reads correct_index server-side, stamps is_correct
+ * and points_awarded onto every answer for this question, flips the phase to 'revealed',
+ * and only THEN emits the correct_index + updated leaderboard on the PUBLIC channel.
+ */
+async function handleHostReveal(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
+  const session = await getSession(env, game.session_id);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
+  if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+
+  const tg = await sbGet(env, 'vp_trivia_games',
+    'game_id=eq.' + enc(gameId) + '&select=question_set_id,current_seq,phase,question_ends_at');
+  if (!tg.length) return json({ error: 'Not a trivia game' }, 404);
+  const t = tg[0];
+  if (!t.current_seq) return json({ error: 'No question to reveal' }, 409);
+  const already = t.phase === 'revealed';   // idempotent: do not re-stamp or double-broadcast
+
+  const qrows = await sbGet(env, 'vp_questions',
+    'set_id=eq.' + enc(t.question_set_id) + '&seq=eq.' + t.current_seq +
+    '&select=id,options,correct_index,points,time_limit_s&limit=1');
+  if (!qrows.length) return json({ error: 'Question not found' }, 404);
+  const q = qrows[0];
+  const cfg = game.config || {};
+  const base = (cfg.base_points != null) ? cfg.base_points : (q.points || 100);
+  const secs = (cfg.time_limit_s != null) ? cfg.time_limit_s : (q.time_limit_s || 20);
+  const speedBonus = cfg.speed_bonus !== false;
+  const options = Array.isArray(q.options) ? q.options : [];
+  const endsAtMs = t.question_ends_at ? Date.parse(t.question_ends_at) : 0;
+
+  const answers = await sbGet(env, 'vp_trivia_answers',
+    'game_id=eq.' + enc(gameId) + '&question_id=eq.' + enc(q.id) +
+    '&select=id,player_id,answer_index,answered_at,is_correct,points_awarded');
+
+  // Answer distribution for the TV/host, plus per-answer scoring (server-authoritative).
+  const split = new Array(options.length).fill(0);
+  for (let i = 0; i < answers.length; i++) {
+    const a = answers[i];
+    if (a.answer_index >= 0 && a.answer_index < split.length) split[a.answer_index]++;
+    if (already) continue;
+    const correct = a.answer_index === q.correct_index;
+    let pts = 0;
+    if (correct) {
+      let bonus = 0;
+      if (speedBonus && endsAtMs && a.answered_at && secs > 0) {
+        // Faster answers keep more of the +50% bonus: remaining/secs of base*0.5.
+        const remaining = Math.max(0, Math.min(secs, (endsAtMs - Date.parse(a.answered_at)) / 1000));
+        bonus = Math.round(base * 0.5 * (remaining / secs));
+      }
+      pts = base + bonus;
+    }
+    await sbPatch(env, 'vp_trivia_answers', 'id=eq.' + enc(a.id), { is_correct: correct, points_awarded: pts });
+  }
+
+  if (!already) await sbPatch(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId), { phase: 'revealed' });
+
+  // Running totals from the leaderboard view (sums points_awarded per player).
+  const board = await sbGet(env, 'v_vp_trivia_leaderboard',
+    'game_id=eq.' + enc(gameId) + '&select=player_id,display_name,points&order=points.desc&limit=50');
+  const leaderboard = board.map((r) => ({ name: r.display_name || 'Player', points: r.points || 0 }));
+
+  // PUBLIC broadcast: NOW it is safe to send correct_index, the reveal has happened.
+  await emitEvent(env, session, 'trivia.reveal', {
+    qseq: t.current_seq, correct_index: q.correct_index, options, split, leaderboard,
+  }, 'host:' + staff.id);
+
+  return json({ qseq: t.current_seq, correct_index: q.correct_index, split, leaderboard });
 }
 
 /* ------------------------------ POST /host/ball ------------------------------
@@ -383,7 +1714,7 @@ async function handlePlayerClaim(request, env, json) {
   const rl = await rateLimit(env, 'claim:player:' + player.id, CLAIM_MAX_PER_PLAYER, 60);
   if (!rl.ok) return json({ error: 'Too many claims right now, please wait a moment' }, 429);
 
-  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status');
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format');
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const game = games[0];
   if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
@@ -412,15 +1743,27 @@ async function handlePlayerClaim(request, env, json) {
     return json({ claim_id: p.id, auto_verdict: p.auto_verdict, winning_cells: p.winning_cells || null, card_no: card.card_no });
   }
 
-  const bg = await sbGet(env, 'vp_bingo_games', 'game_id=eq.' + enc(gameId) + '&select=draw_order,draw_index,pattern');
-  if (!bg.length) return json({ error: 'Not a bingo game' }, 404);
-  const order = bg[0].draw_order || [];
-  const drawnSet = new Set(order.slice(0, bg[0].draw_index || 0));   // only numbers actually drawn
-
-  // Server-authoritative verdict: does the pattern complete on the server ticket
-  // using the drawn numbers alone (there is no free centre in 90-ball)? Daubs and
-  // anything client-side are irrelevant.
-  const result = checkPattern(bg[0].pattern, card.cells, drawnSet);
+  // Server-authoritative verdict. The phone is NEVER trusted: the Worker loads its own
+  // copy of the card and its own record of what has been played, and computes the pattern
+  // itself. BINGO checks drawn numbers on a 3x9 ticket; MUSICAL checks played songs on a
+  // 5x5 card (FREE centre). Daubs and anything client-side are irrelevant either way.
+  let result;
+  let claimEvent = 'bingo.claim_submitted';
+  if (game.format === 'musical_bingo') {
+    const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=pattern');
+    if (!mg.length) return json({ error: 'Not a musical game' }, 404);
+    // Only songs actually played (played_at set) count toward the claim.
+    const plays = await sbGet(env, 'vp_music_plays', 'game_id=eq.' + enc(gameId) + '&played_at=not.is.null&select=song_id');
+    const playedSet = new Set(plays.map((p) => p.song_id));
+    result = checkMusicPattern(mg[0].pattern, card.cells, playedSet);
+    claimEvent = 'music.claim_submitted';
+  } else {
+    const bg = await sbGet(env, 'vp_bingo_games', 'game_id=eq.' + enc(gameId) + '&select=draw_order,draw_index,pattern');
+    if (!bg.length) return json({ error: 'Not a bingo game' }, 404);
+    const order = bg[0].draw_order || [];
+    const drawnSet = new Set(order.slice(0, bg[0].draw_index || 0));   // only numbers actually drawn
+    result = checkPattern(bg[0].pattern, card.cells, drawnSet);        // no free centre in 90-ball
+  }
   const verdict = result.valid ? 'valid' : 'invalid';
 
   const claimRows = await sbInsert(env, 'vp_claims', {
@@ -434,11 +1777,117 @@ async function handlePlayerClaim(request, env, json) {
   }, true);
   const claim = Array.isArray(claimRows) ? claimRows[0] : claimRows;
 
-  await emitEvent(env, session, 'bingo.claim_submitted', {
+  await emitEvent(env, session, claimEvent, {
     claim_id: claim.id, display_name: player.display_name || null, card_no: card.card_no,
+    // A bingo/musical card is not secret, so the public claim event carries the card
+    // and the matched cells. That lets the TV/host render the claimant's card for
+    // the suspense/confirm view straight off the broadcast, with no extra read.
+    cells: card.cells,
+    winning_cells: result.valid ? result.cells : null,
   }, 'player:' + player.id);
 
   return json({ claim_id: claim.id, auto_verdict: verdict, winning_cells: result.valid ? result.cells : null, card_no: card.card_no });
+}
+
+/* ------------------------------ POST /player/answer ------------------------------
+ * Player taps an option in trivia. The Worker resolves WHICH question is open from
+ * vp_trivia_games server-side (the phone cannot answer a different or stale question),
+ * rejects anything after the shared deadline, and stores the FIRST answer only. The
+ * (game_id, question_id, player_id) unique index makes a second answer a no-op. No
+ * correctness is ever returned here; scoring happens only at /host/reveal.
+ */
+async function handlePlayerAnswer(request, env, json) {
+  const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+  const answerIndex = parseInt(b.answer_index, 10);
+  if (!(answerIndex >= 0 && answerIndex <= 9)) return json({ error: 'Invalid answer_index' }, 400);
+
+  // Anti-abuse rate limit (LIVE with env.RL, else allow-and-warn).
+  const rl = await rateLimit(env, 'answer:player:' + player.id, ANSWER_MAX_PER_PLAYER, 60);
+  if (!rl.ok) return json({ error: 'Too many answers right now, please wait a moment' }, 429);
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
+  if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
+  if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
+  const session = await getSession(env, game.session_id);
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  await assertVenueActive(env, session.venue_id);   // kill-switch: an answer is a metered event
+
+  const tg = await sbGet(env, 'vp_trivia_games',
+    'game_id=eq.' + enc(gameId) + '&select=question_set_id,current_seq,phase,question_ends_at');
+  if (!tg.length) return json({ error: 'Not a trivia game' }, 404);
+  const t = tg[0];
+  if (t.phase !== 'asking' || !t.current_seq) return json({ error: 'No question is open' }, 409);
+  // Late answers are rejected by the SERVER clock and never stored.
+  if (t.question_ends_at && Date.now() > Date.parse(t.question_ends_at)) return json({ error: 'Time is up for this question' }, 409);
+  // Stale-question guard: the phone tags its answer with the qseq it saw.
+  if (b.qseq != null && parseInt(b.qseq, 10) !== t.current_seq) return json({ error: 'That question has moved on' }, 409);
+
+  const qrows = await sbGet(env, 'vp_questions',
+    'set_id=eq.' + enc(t.question_set_id) + '&seq=eq.' + t.current_seq + '&select=id,options&limit=1');
+  if (!qrows.length) return json({ error: 'Question not found' }, 404);
+  const q = qrows[0];
+  const optCount = Array.isArray(q.options) ? q.options.length : 0;
+  if (!(answerIndex < optCount)) return json({ error: 'Invalid answer_index' }, 400);
+
+  // First answer is final: rely on the unique index. A 409 means this player already
+  // answered this question, which we report as recorded:false rather than an error.
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_trivia_answers', {
+    method: 'POST',
+    headers: { ...sbHeaders(env), 'Prefer': 'return=minimal' },
+    body: JSON.stringify({
+      game_id: gameId, question_id: q.id, player_id: player.id,
+      answer_index: answerIndex, answered_at: new Date().toISOString(),
+    }),
+  });
+  if (res.status === 409) return json({ ok: true, recorded: false, reason: 'already_answered' });
+  if (!res.ok) throw dbError('insert', 'vp_trivia_answers', await res.text());
+  return json({ ok: true, recorded: true });   // NO correctness: that is only known after reveal
+}
+
+/* ------------------------------ GET /player/score ------------------------------
+ * A player pulls its OWN authoritative trivia result: running total, rank, and how the
+ * last question went. The phone knows only its token (never its player_id or any answer
+ * key), so this is how it learns its score after a reveal. Correctness is computed
+ * server-side and only exists here once the host has revealed (is_correct is null before).
+ */
+async function handlePlayerScore(request, env, json) {
+  const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
+  const url = new URL(request.url);
+  const gameId = (url.searchParams.get('game') || '').trim();
+  if (!gameId) return json({ error: 'Missing game' }, 400);
+  assertUuid(gameId, 'game');
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,format');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
+  if (game.session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
+
+  // Whole leaderboard for this game, so we can derive both this player's total and rank.
+  const board = await sbGet(env, 'v_vp_trivia_leaderboard',
+    'game_id=eq.' + enc(gameId) + '&select=player_id,points&order=points.desc&limit=1000');
+  let total = 0, rank = board.length ? board.length : 1, found = false;
+  for (let i = 0; i < board.length; i++) {
+    if (board[i].player_id === player.id) { total = board[i].points || 0; rank = i + 1; found = true; break; }
+  }
+  if (!found) { total = 0; rank = board.length + 1; }
+
+  // The player's most recent stamped answer (its last-question result), if any.
+  const last = await sbGet(env, 'vp_trivia_answers',
+    'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) +
+    '&select=answer_index,is_correct,points_awarded,answered_at&order=answered_at.desc&limit=1');
+  const lastRow = last.length
+    ? { answered: true, answer_index: last[0].answer_index, is_correct: last[0].is_correct, points_awarded: last[0].points_awarded }
+    : { answered: false, is_correct: null, points_awarded: null };
+
+  return json({ total, rank, players_count: board.length, last: lastRow });
 }
 
 /* ------------------------------ POST /host/claim/resolve ------------------------------
@@ -462,7 +1911,7 @@ async function handleClaimResolve(request, env, json) {
   // bingo.claim_result to the TV overlay.
   if (claim.status !== 'pending') return json({ error: 'This claim has already been resolved' }, 409);
 
-  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(claim.game_id) + '&select=id,session_id');
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(claim.game_id) + '&select=id,session_id,format');
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const session = await getSession(env, games[0].session_id);
   const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the claim's venue (also kill-switch)
@@ -471,6 +1920,16 @@ async function handleClaimResolve(request, env, json) {
   await sbPatch(env, 'vp_claims', 'id=eq.' + enc(claimId), {
     status, resolved_by: staff.id, resolved_at: new Date().toISOString(),
   });
+
+  // WRITE THE RESULT. There is no separate bingo winners table: the confirmed
+  // vp_claims row IS the durable winner record (who, which card, which cells,
+  // resolved by whom, when). On a confirm we also finish the game, so the round
+  // is closed in the DB and /snapshot stops treating it as running. A reject
+  // leaves the game running so play continues.
+  if (decision === 'confirm') {
+    await sbPatch(env, 'vp_games', 'id=eq.' + enc(claim.game_id) + '&status=eq.running',
+      { status: 'finished', ended_at: new Date().toISOString() });
+  }
 
   // Enrich the broadcast for the TV overlay.
   const players = await sbGet(env, 'vp_players', 'id=eq.' + enc(claim.player_id) + '&select=display_name');
@@ -481,7 +1940,9 @@ async function handleClaimResolve(request, env, json) {
     card_no: cards.length ? cards[0].card_no : null,
   };
   if (status === 'confirmed' && claim.winning_cells) payload.winning_cells = claim.winning_cells;
-  await emitEvent(env, session, 'bingo.claim_result', payload, 'host:' + staff.id);
+  // The result event name matches the game format so each TV/host listens for its own.
+  const resultEvent = games[0].format === 'musical_bingo' ? 'music.claim_result' : 'bingo.claim_result';
+  await emitEvent(env, session, resultEvent, payload, 'host:' + staff.id);
 
   return json({ claim_id: claimId, status });
 }
@@ -496,6 +1957,326 @@ async function handleSnapshot(request, env, json) {
   if (!sessionId) return json({ error: 'Missing session' }, 400);
   const snapshot = await getPublicSnapshot(env, sessionId);
   return json(snapshot);
+}
+
+/* ------------------------------ GET /player/card ------------------------------
+ * A joined player fetches THEIR ticket for the running game. The Worker deals
+ * cards (never the phone), so this is how a phone learns its ticket. It also
+ * covers the late-joiner case (design 5.1): a player who joined after the game
+ * started has no card yet, so if none exists and a game is running we deal one
+ * on the spot. Returns {game:null} when no bingo game is running (the phone then
+ * shows the lobby/wait screen). Auth: valid player token only.
+ */
+async function handlePlayerCard(request, env, json) {
+  const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
+  const url = new URL(request.url);
+
+  // Resolve the game: an explicit ?game= (validated) or the latest running BINGO or
+  // MUSICAL game in this player's session. Both formats deal a vp_cards row, so this one
+  // endpoint serves both and branches on the format below.
+  let gameId = (url.searchParams.get('game') || '').trim();
+  let fmt = '';
+  if (gameId) {
+    assertUuid(gameId, 'game');
+    const g = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format');
+    if (!g.length) return json({ error: 'Game not found' }, 404);
+    if (g[0].session_id !== player.session_id) return json({ error: 'Player is not in this game' }, 403);
+    if (g[0].status !== 'running') return json({ game: null });
+    fmt = g[0].format;
+  } else {
+    const games = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(player.session_id) + '&format=in.(bingo90,musical_bingo)&status=eq.running&select=id,format&order=seq.desc&limit=1');
+    if (!games.length) return json({ game: null });   // nothing running yet; phone waits
+    gameId = games[0].id;
+    fmt = games[0].format;
+  }
+
+  const session = await getSession(env, player.session_id);
+  await assertVenueActive(env, session.venue_id);   // kill-switch: a late-join deal is a metered write
+
+  // MUSICAL: a 5x5 card of song titles. Deals on demand for late joiners, same as bingo.
+  if (fmt === 'musical_bingo') return await playerMusicCard(env, json, gameId, player);
+
+  const bg = await sbGet(env, 'vp_bingo_games', 'game_id=eq.' + enc(gameId) + '&select=pattern,draw_order,draw_index');
+  if (!bg.length) return json({ error: 'Not a bingo game' }, 404);
+
+  // Find this player's ticket, dealing one if they joined after the deal. The
+  // retry loop copes with the two unique indexes on vp_cards: (game_id, player_id)
+  // -- if a concurrent call already dealt us a card we re-read and use it -- and
+  // (game_id, card_no) -- if another late joiner took the next number we retry.
+  let card = null;
+  for (let attempt = 0; attempt < 6 && !card; attempt++) {
+    const mine = await sbGet(env, 'vp_cards',
+      'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) + '&select=id,card_no,cells');
+    if (mine.length) { card = mine[0]; break; }
+
+    const top = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&select=card_no&order=card_no.desc&limit=1');
+    const nextNo = top.length ? top[0].card_no + 1 : 1;
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_cards', {
+      method: 'POST',
+      headers: { ...sbHeaders(env), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ game_id: gameId, player_id: player.id, card_no: nextNo, cells: generateTicket() }),
+    });
+    if (res.ok) { const d = await res.json(); card = Array.isArray(d) ? d[0] : d; break; }
+    if (res.status === 409) continue;   // either index clashed; loop re-reads then retries
+    throw dbError('insert', 'vp_cards', await res.text());
+  }
+  if (!card) return json({ error: 'Could not deal a card, please try again' }, 409);
+
+  const order = bg[0].draw_order || [];
+  const called = order.slice(0, bg[0].draw_index || 0);   // only numbers actually drawn; never the whole order
+  return json({
+    game_id: gameId,
+    card_no: card.card_no,
+    cells: card.cells,
+    pattern: bg[0].pattern,
+    called_numbers: called,
+  });
+}
+
+/* ------------------------------ MUSICAL: a player's 5x5 card ------------------------------
+ * Called from /player/card when the running game is musical bingo. Returns this player's
+ * card of song titles, dealing one on demand for a late joiner (design 5.1), plus the
+ * songs already played so a reloading phone can rebuild its daubs. Cells are stored as
+ * { song_id, title } per square, with index 12 the FREE centre (0). The song_id lets the
+ * claim check match the card against played songs; the title is what the phone renders.
+ */
+async function playerMusicCard(env, json, gameId, player) {
+  const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=playlist_id,pattern');
+  if (!mg.length) return json({ error: 'Not a musical game' }, 404);
+  const songs = await sbGet(env, 'vp_playlist_songs',
+    'playlist_id=eq.' + enc(mg[0].playlist_id) + '&select=id,title,artist&order=seq.asc.nullslast,title.asc');
+  if (!songs.length) return json({ error: 'This playlist has no songs' }, 409);
+
+  // Reuse this player's card or deal one. The retry loop copes with the (game_id, card_no)
+  // unique index if a concurrent late-join deal took the next number.
+  let card = null;
+  for (let attempt = 0; attempt < 6 && !card; attempt++) {
+    const mine = await sbGet(env, 'vp_cards',
+      'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) + '&select=id,card_no,cells&order=card_no.asc&limit=1');
+    if (mine.length) { card = mine[0]; break; }
+
+    const top = await sbGet(env, 'vp_cards', 'game_id=eq.' + enc(gameId) + '&select=card_no&order=card_no.desc&limit=1');
+    const nextNo = top.length ? top[0].card_no + 1 : 1;
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_cards', {
+      method: 'POST',
+      headers: { ...sbHeaders(env), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ game_id: gameId, player_id: player.id, card_no: nextNo, cells: generateMusicCard(songs) }),
+    });
+    if (res.ok) { const d = await res.json(); card = Array.isArray(d) ? d[0] : d; break; }
+    if (res.status === 409) continue;   // card_no clash under a concurrent late-join; re-read then retry
+    throw dbError('insert', 'vp_cards', await res.text());
+  }
+  if (!card) return json({ error: 'Could not deal a card, please try again' }, 409);
+
+  // Songs already played, titled from the playlist, so a reloading phone rebuilds daubs.
+  const titleById = {};
+  for (let i = 0; i < songs.length; i++) titleById[songs[i].id] = songs[i].title;
+  const plays = await sbGet(env, 'vp_music_plays',
+    'game_id=eq.' + enc(gameId) + '&played_at=not.is.null&select=song_id,seq&order=seq.asc');
+  const played = plays.map((p) => ({ song_id: p.song_id, title: titleById[p.song_id] || '' }));
+
+  return json({
+    game_id: gameId, format: 'musical_bingo', card_no: card.card_no,
+    cells: card.cells, pattern: mg[0].pattern, played_songs: played,
+  });
+}
+
+/* ------------------------------ POST /host/game/end ------------------------------
+ * Host ends the current round and returns the TV to the ad loop, without closing
+ * the night. Marks the game finished (if still running) and broadcasts game.ended.
+ * The session stays live so the next round reuses it. Auth: host JWT + venue staff.
+ */
+async function handleGameEnd(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const session = await getSession(env, games[0].session_id);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
+
+  if (games[0].status === 'running') {
+    await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId), { status: 'finished', ended_at: new Date().toISOString() });
+  }
+  await emitEvent(env, session, 'game.ended', { game_id: gameId }, 'host:' + staff.id);
+  return json({ game_id: gameId, status: 'finished' });
+}
+
+/* ------------------------------ POST /session/close ------------------------------
+ * Host closes the night. Finishes any running game, marks the session finished and
+ * stamps ended_at. This frees the one-live-session-per-venue index so the venue can
+ * open a fresh session next time. Auth: host JWT + venue staff.
+ */
+// POST /host/overage/ack — the host has accepted going over their plan cap for this night.
+// Sets a flag on the session so games can start over cap AND chargeNightOverage will bill the
+// extra players (at the monthly rate) at close. One tap covers the whole night.
+async function handleOverageAck(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const sessionId = String(b.session_id || '').trim();
+  if (!sessionId) return json({ error: 'Missing session_id' }, 400);
+  assertUuid(sessionId, 'session_id');
+  const session = await getSession(env, sessionId);
+  await requireStaff(env, authUserId, session.venue_id);         // ENFORCED: staff at the session's venue (also kill-switch)
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId),
+    { overage_approved: true, overage_approved_at: new Date().toISOString() });
+  return json({ ok: true, overage_approved: true });
+}
+
+async function handleSessionClose(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const sessionId = String(b.session_id || '').trim();
+  if (!sessionId) return json({ error: 'Missing session_id' }, 400);
+  assertUuid(sessionId, 'session_id');
+
+  const session = await getSession(env, sessionId);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the session's venue
+  if (session.status === 'finished' || session.status === 'cancelled') {
+    return json({ session_id: sessionId, status: session.status });
+  }
+
+  await sbPatch(env, 'vp_games', 'session_id=eq.' + enc(sessionId) + '&status=eq.running',
+    { status: 'finished', ended_at: new Date().toISOString() });
+  await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId),
+    { status: 'finished', ended_at: new Date().toISOString() });
+  await emitEvent(env, session, 'session.closed', {}, 'host:' + staff.id);
+  // Busy-night overage: if this night's metered headcount beat the plan cap, add the
+  // extra players to the next Stripe invoice. Wrapped so a billing hiccup never blocks close.
+  try { await chargeNightOverage(env, session); } catch (e) { /* billing never blocks session close */ }
+  return json({ session_id: sessionId, status: 'finished' });
+}
+
+/* ============================================================
+   Busy-night overage billing.
+   A night's "peak" is the count of metered players who joined this session (bingo,
+   trivia and musical bingo mint vp_players; raffle and members draw do not, so a
+   host-only night naturally has zero overage). If peak beats the plan cap that was
+   frozen at session start, the extra players are billed at the MONTHLY per-player
+   rate (even on an annual plan) as a pending Stripe invoice item, so they land on
+   the venue's next normal invoice. One charge per session, made idempotent by the
+   Stripe idempotency key so a double close can never double charge. Comp/test venues
+   (no Stripe subscription) are skipped. Requires STRIPE_SECRET_KEY in this Worker's
+   env; if it is absent, overage billing is simply off.
+   ============================================================ */
+async function stripeGet(env, path) {
+  const res = await fetch('https://api.stripe.com/v1/' + path, {
+    headers: { 'Authorization': 'Bearer ' + env.STRIPE_SECRET_KEY },
+  });
+  return await res.json();
+}
+async function stripePost(env, path, params, idemKey) {
+  const form = new URLSearchParams();
+  for (const k in params) form.set(k, String(params[k]));
+  const headers = {
+    'Authorization': 'Bearer ' + env.STRIPE_SECRET_KEY,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+  if (idemKey) headers['Idempotency-Key'] = idemKey;
+  const res = await fetch('https://api.stripe.com/v1/' + path, { method: 'POST', headers, body: form.toString() });
+  return await res.json();
+}
+async function chargeNightOverage(env, session) {
+  if (!env.STRIPE_SECRET_KEY) return;                          // overage billing not configured
+  const cap = Number(session.plan_cap_at_start || 0);
+  if (!cap) return;
+  // Overage is charged ONLY when the host approved it on the night: when the room passed the
+  // plan cap they saw a "you are over your plan, extra players are $X each" warning and tapped
+  // OK (POST /host/overage/ack). No approval means no charge, so a fake-join flood can never
+  // bill a venue, and a host is never surprised by an overage they did not consent to.
+  if (!session.overage_approved) return;
+  const players = await sbGet(env, 'vp_players',
+    'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
+  const peak = (players && players.length) || 0;
+  const overage = peak - cap;
+  if (overage <= 0) return;                                    // stayed within the plan cap (nothing to bill)
+
+  const venues = await sbGet(env, 'vp_venues',
+    'id=eq.' + enc(session.venue_id) + '&select=id,name,founding_id');
+  const venue = venues && venues[0];
+  if (!venue || !venue.founding_id) return;
+  const accts = await sbGet(env, 'venueplay_founding',
+    'id=eq.' + enc(venue.founding_id) + '&select=id,stripe_customer_id,stripe_subscription_id');
+  const acct = accts && accts[0];
+  if (!acct || !acct.stripe_customer_id || !acct.stripe_subscription_id) return;   // comp/test venue: never charge
+
+  // Tier ('founding' | 'standard') comes from the subscription metadata we set at checkout,
+  // the authoritative source (no price-id guessing, no extra env vars). If we cannot read a
+  // known tier, do NOT guess a rate on real money: log and skip for manual handling.
+  let tier = '';
+  try {
+    const sub = await stripeGet(env, 'subscriptions/' + enc(acct.stripe_subscription_id));
+    tier = (sub && sub.metadata && sub.metadata.tier) || '';
+  } catch (e) { tier = ''; }
+  if (tier !== 'founding' && tier !== 'standard') {
+    console.log('[overage] session ' + session.id + ' unknown tier (metadata.tier="' + tier +
+                '"): skipping charge for manual review');
+    return;
+  }
+  const rateDollars = tier === 'standard' ? 3.00 : 2.50;       // overage always at the MONTHLY rate
+  const amountCents = Math.round(overage * rateDollars * 100);
+  if (amountCents <= 0) return;
+
+  const when = new Date().toISOString().slice(0, 10);
+  const res = await stripePost(env, 'invoiceitems', {
+    customer: acct.stripe_customer_id,
+    subscription: acct.stripe_subscription_id,
+    currency: 'aud',
+    amount: amountCents,
+    description: 'Big night extra players - ' + (venue.name || 'venue') + ' - ' + when +
+                 ' - ' + overage + ' over ' + cap,
+  }, 'overage_' + session.id);
+  if (!res || res.error) {
+    console.log('[overage] session ' + session.id + ' Stripe invoiceitem FAILED: ' +
+                ((res && res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
+  }
+}
+
+/* Once-a-week limit for Trivia and Musical Bingo. A venue may only start a NEW
+   night of that format once per rolling 7 days. Tracking by session id means
+   more rounds within the SAME night never count. Returns an error message to
+   show the host if blocked, otherwise stamps this session as the current night
+   and returns null. */
+async function checkWeeklyFormatLimit(env, session, isTrivia) {
+  const col = isTrivia ? 'last_trivia' : 'last_musical';
+  const label = isTrivia ? 'Trivia' : 'Musical bingo';
+  const venues = await sbGet(env, 'vp_venues',
+    'id=eq.' + enc(session.venue_id) + '&select=id,' + col + '_at,' + col + '_session_id');
+  const v = venues && venues[0];
+  if (!v) return null;
+  const lastAt = v[col + '_at'];
+  const lastSession = v[col + '_session_id'];
+  const WEEK = 7 * 24 * 60 * 60 * 1000;
+
+  // Already running this format in THIS session: it is the same night, always allow.
+  if (lastSession && lastSession === session.id) return null;
+
+  // Ran this format in a DIFFERENT session within the last 7 days: block.
+  if (lastAt) {
+    const elapsed = Date.now() - new Date(lastAt).getTime();
+    if (elapsed >= 0 && elapsed < WEEK) {
+      // Display the "available from" day in Brisbane (UTC+10, no DST in QLD).
+      const nextDay = new Date(new Date(lastAt).getTime() + WEEK + 10 * 3600 * 1000).toISOString().slice(0, 10);
+      return label + ' runs once a week per venue. Your next ' + label.toLowerCase() +
+             ' night is available from ' + nextDay + '.';
+    }
+  }
+  return null;   // allowed; the slot is stamped by stampWeeklyFormat AFTER the game starts
+}
+
+// Stamp this session as the venue's current trivia/musical night. Called AFTER the game row
+// is inserted, so a start that fails validation never burns the once-a-week slot.
+async function stampWeeklyFormat(env, session, isTrivia) {
+  const col = isTrivia ? 'last_trivia' : 'last_musical';
+  const patch = {};
+  patch[col + '_at'] = new Date().toISOString();
+  patch[col + '_session_id'] = session.id;
+  await sbPatch(env, 'vp_venues', 'id=eq.' + enc(session.venue_id), patch);
 }
 
 /* =====================================================================
@@ -633,6 +2414,113 @@ async function getPublicSnapshot(env, sessionId) {
       };
     }
   }
+
+  // Current running trivia game, public state only (used by a reconnecting TV or a
+  // late-joining phone). The correct_index is exposed ONLY once the phase is
+  // 'revealed'; while a question is 'asking'/'locked' it is never in the projection.
+  if (!snap.game) {
+    const tgames = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(sessionId) + '&format=eq.trivia&status=eq.running&select=id,seq,config&order=seq.desc&limit=1');
+    if (tgames.length) {
+      const g = tgames[0];
+      const cfg = g.config || {};
+      const game = {
+        game_id: g.id, seq: g.seq, format: 'trivia',
+        title: cfg.title || null, prize: cfg.prize || null,
+        question_count: cfg.question_count != null ? cfg.question_count : null,
+        colour: cfg.colour !== false, phase: 'idle', question: null,
+      };
+      const tg = await sbGet(env, 'vp_trivia_games',
+        'game_id=eq.' + enc(g.id) + '&select=question_set_id,current_seq,phase,question_ends_at');
+      if (tg.length) {
+        const t = tg[0];
+        game.phase = t.phase;
+        if (t.current_seq) {
+          const qrows = await sbGet(env, 'vp_questions',
+            'set_id=eq.' + enc(t.question_set_id) + '&seq=eq.' + t.current_seq +
+            '&select=question,options,correct_index&limit=1');
+          if (qrows.length) {
+            const q = qrows[0];
+            const pub = {
+              qseq: t.current_seq, qi: t.current_seq,
+              text: q.question, options: Array.isArray(q.options) ? q.options : [],
+              ends_at: t.question_ends_at || null,
+            };
+            if (t.phase === 'revealed') pub.correct_index = q.correct_index;   // only after reveal
+            game.question = pub;
+          }
+        }
+      }
+      snap.game = game;
+    }
+  }
+
+  // Current running musical bingo game, public state only (a reconnecting TV or a
+  // late-joining/reloading phone). Song titles ARE public (players daub them by ear), so
+  // the projection exposes the songs played so far; the per-player card is fetched by the
+  // phone via /player/card, never here.
+  if (!snap.game) {
+    const mgames = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(sessionId) + '&format=eq.musical_bingo&status=eq.running&select=id,seq,config&order=seq.desc&limit=1');
+    if (mgames.length) {
+      const g = mgames[0];
+      const cfg = g.config || {};
+      const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(g.id) + '&select=playlist_id,pattern,reveal_mode');
+      let played = [];
+      if (mg.length) {
+        const songs = await sbGet(env, 'vp_playlist_songs', 'playlist_id=eq.' + enc(mg[0].playlist_id) + '&select=id,title');
+        const titleById = {};
+        for (let i = 0; i < songs.length; i++) titleById[songs[i].id] = songs[i].title;
+        const plays = await sbGet(env, 'vp_music_plays',
+          'game_id=eq.' + enc(g.id) + '&played_at=not.is.null&select=song_id,seq&order=seq.asc');
+        played = plays.map((p) => ({ song_id: p.song_id, title: titleById[p.song_id] || '' }));
+      }
+      snap.game = {
+        game_id: g.id, seq: g.seq, format: 'musical_bingo',
+        pattern: mg.length ? mg[0].pattern : null,
+        prize: cfg.prize || null, title: cfg.title || null,
+        playlist_name: cfg.playlist_name || null, song_count: cfg.song_count != null ? cfg.song_count : null,
+        auto_daub: cfg.auto_daub !== false,
+        played_songs: played, played_count: played.length,
+      };
+    }
+  }
+
+  // Current running raffle, public projection only. Raffle is HOST-ONLY (no players), so
+  // this is purely so a reconnecting TV can redraw the prize and the latest winning ticket(s).
+  if (!snap.game) {
+    const rgames = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(sessionId) + '&format=eq.raffle&status=eq.running&select=id,seq,config&order=seq.desc&limit=1');
+    if (rgames.length) {
+      const g = rgames[0];
+      const cfg = g.config || {};
+      const rg = await sbGet(env, 'vp_raffle_games',
+        'game_id=eq.' + enc(g.id) + '&select=range_min,range_max,draws_count,allow_redraw,time_to_claim_seconds,jackpot_on,jackpot_amount_cents');
+      const r = rg.length ? rg[0] : {};
+      const leadingZeros = cfg.leading_zeros !== false;
+      const padWidth = leadingZeros ? String(Math.max(r.range_max || 1, 1)).length : 1;
+      // The latest draw round's winning tickets (for a TV that reconnected after a draw).
+      const last = await sbGet(env, 'vp_raffle_results',
+        'game_id=eq.' + enc(g.id) + '&select=seq,ticket_number&order=seq.desc&limit=50');
+      let lastSeq = null;
+      const lastTickets = [];
+      for (let i = 0; i < last.length; i++) {
+        if (lastSeq == null) lastSeq = last[i].seq;
+        if (last[i].seq === lastSeq && last[i].ticket_number != null) lastTickets.push(last[i].ticket_number);
+      }
+      snap.game = {
+        game_id: g.id, seq: g.seq, format: 'raffle',
+        prize: cfg.prize || null, prize_type: cfg.prize_type || null,
+        range_min: r.range_min != null ? r.range_min : null,
+        range_max: r.range_max != null ? r.range_max : null,
+        winners: r.draws_count != null ? r.draws_count : null,
+        allow_redraw: r.allow_redraw !== false,
+        time_to_present: r.time_to_claim_seconds != null ? r.time_to_claim_seconds : null,
+        jackpot_on: !!r.jackpot_on,
+        pad: padWidth, last_seq: lastSeq, last_tickets: lastTickets,
+      };
+    }
+  }
   return snap;
 }
 
@@ -763,6 +2651,105 @@ function checkPattern(pattern, cells, drawnSet) {
   return { valid: false, cells: [] };
 }
 
+/* ---- MUSICAL BINGO card + pattern (5x5, FREE centre) ---- */
+
+// Deal a 5x5 musical bingo card: 24 distinct songs plus a FREE centre (index 12 = 0).
+// Each non-free cell is { song_id, title }; song_id (a vp_playlist_songs uuid) is what the
+// claim check matches against played songs, title is what the phone renders. songs is the
+// playlist's rows [{id,title,artist}]. CSPRNG pick, order does not matter on the card.
+function generateMusicCard(songs) {
+  const pool = songs.slice();
+  const picks = [];
+  const need = Math.min(24, pool.length);
+  for (let i = 0; i < need; i++) {
+    const idx = randInt(pool.length);
+    picks.push(pool[idx]);
+    pool.splice(idx, 1);
+  }
+  const cells = new Array(25).fill(0);
+  let ti = 0;
+  for (let p = 0; p < 25; p++) {
+    if (p === 12) { cells[p] = 0; continue; }   // FREE centre
+    const s = picks[ti++];
+    cells[p] = s ? { song_id: s.id, title: s.title } : { song_id: null, title: '' };
+  }
+  return cells;
+}
+
+// Server-authoritative pattern check for a 5x5 musical card. cells is the 25-value grid
+// ({song_id,title} per square, 0 at the FREE centre); playedSet is a Set of song_ids
+// actually played. A square is covered if it is the FREE centre or its song_id has been
+// played. Line patterns check ROWS only (matching the host/player UI: "any full row").
+// Returns {valid, cells:[covered indices]}.
+function checkMusicPattern(pattern, cells, playedSet) {
+  const covered = (i) => {
+    if (i === 12) return true;                  // FREE centre
+    const c = cells[i];
+    const sid = c && (c.song_id || c.s);        // tolerate a compact {s,t} shape too
+    return !!sid && playedSet.has(sid);
+  };
+  const rowCells = [];
+  const rowComplete = [];
+  for (let r = 0; r < 5; r++) {
+    const idxs = [];
+    let all = true;
+    for (let col = 0; col < 5; col++) {
+      const i = r * 5 + col;
+      idxs.push(i);
+      if (!covered(i)) all = false;
+    }
+    rowCells.push(idxs);
+    rowComplete.push(all);
+  }
+  if (pattern === 'one_line') {
+    for (let r = 0; r < 5; r++) if (rowComplete[r]) return { valid: true, cells: rowCells[r] };
+    return { valid: false, cells: [] };
+  }
+  if (pattern === 'two_lines') {
+    const done = [0, 1, 2, 3, 4].filter((r) => rowComplete[r]);
+    if (done.length >= 2) {
+      const cs = [];
+      done.slice(0, 2).forEach((r) => rowCells[r].forEach((i) => cs.push(i)));
+      return { valid: true, cells: cs };
+    }
+    return { valid: false, cells: [] };
+  }
+  if (pattern === 'four_corners') {
+    const cor = [0, 4, 20, 24];
+    if (cor.every(covered)) return { valid: true, cells: cor };
+    return { valid: false, cells: [] };
+  }
+  if (pattern === 'full_house') {
+    const cs = [];
+    for (let i = 0; i < 25; i++) { if (!covered(i)) return { valid: false, cells: [] }; cs.push(i); }
+    return { valid: true, cells: cs };
+  }
+  return { valid: false, cells: [] };
+}
+
+// Materialise an inline library playlist into vp_playlists + vp_playlist_songs so the
+// vp_music_plays FK has real rows to point at (the library JSON is a client asset, not
+// seeded). Idempotent-ish: if this venue already has a playlist with the same title AND
+// song_count AND that many song rows, reuse it rather than duplicating on every replay.
+// songs is [{title, artist, hint?}], already validated (title + artist present).
+async function ensureMusicPlaylist(env, venueId, name, songs) {
+  const existing = await sbGet(env, 'vp_playlists',
+    'owner_venue_id=eq.' + enc(venueId) + '&title=eq.' + enc(name) +
+    '&song_count=eq.' + songs.length + '&select=id&order=created_at.desc&limit=1');
+  if (existing.length) {
+    const have = await sbGet(env, 'vp_playlist_songs', 'playlist_id=eq.' + enc(existing[0].id) + '&select=id');
+    if (have.length === songs.length) return existing[0].id;   // exact reuse
+  }
+  const plRows = await sbInsert(env, 'vp_playlists',
+    { owner_venue_id: venueId, title: name, song_count: songs.length }, true);
+  const pl = Array.isArray(plRows) ? plRows[0] : plRows;
+  const songRows = songs.map((s, i) => ({
+    playlist_id: pl.id, seq: i + 1, title: s.title, artist: s.artist, hint: s.hint || null,
+  }));
+  await sbInsert(env, 'vp_playlist_songs', songRows, false);
+  return pl.id;
+}
+
 // Basic profanity filter + length cap for names shown on the TV.
 function cleanName(name) {
   if (!name) return null;
@@ -875,6 +2862,12 @@ async function sbInsert(env, table, obj, returnRep) {
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table, {
     method: 'POST', headers, body: JSON.stringify(obj),
   });
+  if (res.status === 409) {
+    // Unique-constraint clash: almost always a double-tap race (a duplicate round number, or
+    // the one-card-per-player guard). Surface a clean, retryable 409 rather than a generic 502.
+    // Callers that already catch conflicts (join-code loop, player card/answer) are unaffected.
+    throw httpError(409, 'That was already starting. Please try again.');
+  }
   if (!res.ok) throw dbError('insert', table, await res.text());   // M5: log detail, return generic + code
   if (returnRep) return await res.json();
   return null;
@@ -885,6 +2878,13 @@ async function sbPatch(env, table, filter, obj) {
     method: 'PATCH', headers: sbHeaders(env), body: JSON.stringify(obj),
   });
   if (!res.ok) throw dbError('update', table, await res.text());   // M5: log detail, return generic + code
+}
+
+async function sbDelete(env, table, filter) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + filter, {
+    method: 'DELETE', headers: sbHeaders(env),
+  });
+  if (!res.ok) throw dbError('delete', table, await res.text());
 }
 
 // Call a Postgres function over PostgREST RPC with the service_role headers.
@@ -914,7 +2914,7 @@ async function readJson(request) {
 }
 
 function httpError(status, message) {
-  const e = new Error(message);
+  const e = /** @type {any} */ (new Error(message));   // carry a numeric .status the router echoes
   e.status = status;
   return e;
 }
@@ -990,79 +2990,211 @@ function dbError(op, target, detail) {
 }
 
 /* =====================================================================
- * REVIEW NOTES  (endpoints, env vars, what a human must do, assumptions)
- * ---------------------------------------------------------------------
- * ENDPOINTS
- *   POST /session            host   -> {session_id, join_code, tv_pairing_code}
- *   POST /join               player -> {token, snapshot}
- *   POST /host/game          host   -> {game_id, seq, pattern, cards_dealt}
- *   POST /host/ball          host   -> {number, index}
- *   POST /player/claim       player -> {claim_id, auto_verdict, winning_cells, card_no}
- *   POST /host/claim/resolve host   -> {claim_id, status}
- *   GET  /snapshot?session=  public -> public projection (no secrets)
+ * DEPLOY + REVIEW NOTES  (endpoints, env vars, exact Cloudflare setup,
+ * the reusable pattern for the other four formats, assumptions)
+ * =====================================================================
  *
- * ENV VARS
- *   SUPABASE_URL, SUPABASE_SERVICE_KEY (service_role), SUPABASE_JWT_SECRET,
- *   SITE_URL, ALLOW_ORIGIN (optional), IP_HASH_SALT (optional).
+ * ENDPOINTS (full contract is in the header at the top of this file)
+ *   POST /session              host   -> {session_id, join_code, tv_pairing_code, reused?}
+ *   POST /session/close        host   -> {session_id, status}
+ *   POST /join                 player -> {token, snapshot}
+ *   POST /host/game            host   -> {game_id, seq, pattern, cards_dealt}
+ *   POST /host/game/end        host   -> {game_id, status}
+ *   POST /host/ball            host   -> {number, index}
+ *   POST /host/play            host   -> {song_id, title, artist, seq, played_count}   (musical bingo)
+ *   GET  /player/card          player -> {game_id, card_no, cells, pattern, called_numbers} | {game:null}
+ *   POST /player/claim         player -> {claim_id, auto_verdict, winning_cells, card_no}
+ *   POST /host/claim/resolve   host   -> {claim_id, status}
+ *   GET  /snapshot?session=    public -> public projection (no secrets)
+ *
+ * ENV VARS (secrets: use `wrangler secret put`; plain vars: `[vars]` or the dashboard)
+ *   SUPABASE_URL           https://gpoolavkghnxedzrmtmc.supabase.co   (plain var)
+ *   SUPABASE_SERVICE_KEY   service_role key            (SECRET -- never in any page)
+ *   SUPABASE_JWT_SECRET    Supabase JWT secret         (SECRET -- host-login verify)
+ *   SITE_URL               https://www.venueplay.com.au  (plain var)
+ *   ALLOW_ORIGIN           https://www.venueplay.com.au  (plain var; locks CORS. Use * only while testing)
+ *   IP_HASH_SALT           any long random string       (SECRET; salts the coarse abuse hashes)
  *
  * WORKER BINDINGS
- *   RL   Workers KV namespace (recommended). Powers the /join + /player/claim
- *        rate limit and the /join soft dedup. Present = live; absent = degraded
- *        (warn + allow). Add before launch.
- *   TURNSTILE_SECRET  optional future escalation (see header).
+ *   RL   Workers KV namespace binding named exactly RL. Powers the /join +
+ *        /player/claim rate limit and the /join soft dedup. Present = live;
+ *        absent = degraded (warn + allow, everything still works). Add before launch.
+ *   TURNSTILE_SECRET  optional future escalation (see the file header).
  *
- * WHAT A HUMAN MUST CONFIGURE BEFORE THIS RUNS
- *   1. Run venueplay-game-schema.sql on the Supabase project first (tables,
- *      the vp_session_events broadcast trigger, RLS). This Worker assumes it exists.
- *      Also run venueplay-07-bingo90-format.sql so vp_games_format_check allows
- *      'bingo90' (this Worker stores/broadcasts that format).
- *   2. Set SUPABASE_JWT_SECRET to the project's JWT secret (Supabase: Settings ->
- *      API -> JWT Settings). This is what host logins are verified against.
- *   3. Set SUPABASE_SERVICE_KEY to the service_role key (secret; never in page source).
- *   4. Set SUPABASE_URL and SITE_URL (and ALLOW_ORIGIN to lock CORS to the site).
- *   5. Add a Workers KV namespace binding named RL (Settings -> Variables ->
- *      KV Namespace Bindings). Without it the anti-abuse limiter/dedup run in
- *      degraded (allow) mode and a scripted /join flood is unthrottled.
- *   6. Onboard a venue: create the Supabase Auth user(s), a vp_venues row, and a
- *      vp_venue_staff row linking them (this is the existing admin runbook). The
- *      host console signs in with supabase.auth and sends the JWT as Bearer.
- *   7. Deploy as its own Worker (separate from venueplay-api). NOT DONE HERE.
+ * EXACT CLOUDFLARE SETUP DEAN MUST DO TO DEPLOY + TEST  (nothing here deploys)
+ *   This is its OWN Worker, separate from the billing Worker (venueplay-api). It
+ *   sits at, e.g., https://venueplay-game.dean-tindale.workers.dev (same account
+ *   subdomain the billing Worker already uses). The pages call it via a VP_GAME_API
+ *   constant -- confirm that constant matches the deployed URL.
  *
- * ASSUMPTIONS MADE
- *   - Supabase legacy HS256 JWTs (verified with the JWT secret). If the project is
- *     moved to asymmetric (ES256/JWKS) signing keys, swap verifyJwtHS256 for a
- *     JWKS verify. The rest is unchanged.
- *   - draw_order round-trips as a JSON array via PostgREST; we always index it in
- *     JS (0-based slice), which matches the DB's draw_order[1..draw_index].
- *   - The state_version bump (emitEvent) and the ball draw (handleHostBall) are
- *     now atomic Postgres functions (vp_emit_event, vp_draw_next_ball) called via
- *     RPC, so concurrent Worker calls can no longer collide. See the add-on
- *     migration venueplay-05-atomic-events.sql (run it after the main migration).
- *   - /session takes venue_id in the body; the host console knows its venue.
+ *   Option A -- Wrangler CLI (recommended). From the worker/ folder:
+ *     1. Create a minimal wrangler.toml next to this file:
+ *          name = "venueplay-game"
+ *          main = "venueplay-game.js"
+ *          compatibility_date = "2024-11-01"
+ *          [vars]
+ *          SITE_URL = "https://www.venueplay.com.au"
+ *          ALLOW_ORIGIN = "https://www.venueplay.com.au"
+ *          SUPABASE_URL = "https://gpoolavkghnxedzrmtmc.supabase.co"
+ *          [[kv_namespaces]]
+ *          binding = "RL"
+ *          id = "<paste the id from step 3>"
+ *     2. Log in once:                       wrangler login
+ *     3. Make the KV namespace:             wrangler kv namespace create RL
+ *          -> copy the printed id into the [[kv_namespaces]] block above.
+ *     4. Put the three secrets (you are prompted to paste each value):
+ *          wrangler secret put SUPABASE_SERVICE_KEY
+ *          wrangler secret put SUPABASE_JWT_SECRET
+ *          wrangler secret put IP_HASH_SALT
+ *     5. Deploy:                            wrangler deploy
+ *     6. Note the deployed URL it prints and set VP_GAME_API in app/index.html,
+ *        tv.html and play.html to that URL (they default to the venueplay-game
+ *        subdomain shown above).
+ *
+ *   Option B -- Cloudflare dashboard. Create a Worker named venueplay-game, paste
+ *   this file, then under Settings -> Variables add SUPABASE_URL / SITE_URL /
+ *   ALLOW_ORIGIN as plain text and SUPABASE_SERVICE_KEY / SUPABASE_JWT_SECRET /
+ *   IP_HASH_SALT as encrypted secrets; under KV Namespace Bindings add one named RL.
+ *
+ *   Database prerequisites (run in the Supabase SQL editor, in this order, ONCE):
+ *     venueplay-01-tables.sql, -02-views.sql, -03-security.sql,
+ *     venueplay-05-atomic-events.sql  (vp_emit_event + vp_draw_next_ball RPCs),
+ *     venueplay-06-bingo90.sql        (90-ball patterns on vp_bingo_games),
+ *     venueplay-07-bingo90-format.sql (allows format='bingo90' on vp_games).
+ *   (venueplay-game-schema.sql is the same content as 01/02/03 combined; either path is fine.)
+ *   TRIVIA needs NO new infra: it reuses this same venueplay-game Worker and the trivia
+ *   tables already in 01/02/03 (vp_question_sets, vp_questions, vp_trivia_games,
+ *   vp_trivia_answers + the v_vp_trivia_leaderboard view). Load venueplay-seed-trivia-library.sql
+ *   once for the shared VenuePlay library sets; a venue's own sets come through the app.
+ *   MUSICAL BINGO also needs NO new infra and NO seed: it reuses this Worker and the musical
+ *   tables already in 01/02/03 (vp_playlists, vp_playlist_songs, vp_cards, vp_music_games,
+ *   vp_music_plays). vp_games.format='musical_bingo' is already allowed by -07's CHECK. The
+ *   host page sends the chosen library playlist inline and the Worker materialises it into
+ *   vp_playlists/vp_playlist_songs on first use (reused after), so nothing must be pre-seeded.
+ *   NOTE: migration -09 dropped vp_cards_one_per_player_game, so the (game_id, card_no) unique
+ *   index is the only one left on vp_cards; the on-demand card deal relies on that.
+ *
+ *   Quick smoke test after deploy (a real host JWT is needed for host routes):
+ *     - Sign into app/index.html on a real venue-staff login, pair a TV (tv.html),
+ *       tap Start, draw a few balls, join on a phone (play.html), press BINGO,
+ *       confirm on the host. Then check the Supabase tables: vp_sessions (1 row,
+ *       status running->finished), vp_games, vp_bingo_games.draw_index advancing,
+ *       vp_players, vp_cards, vp_claims (status confirmed, resolved_by set).
+ *
+ * HOW THE OTHER FOUR FORMATS REUSE THIS  (this is a pattern, not a bingo one-off)
+ *   Everything above the format line is shared and already generic:
+ *     - /session, /session/close, /join, /snapshot, verifyHostJwt, requireStaff,
+ *       assertVenueActive (kill-switch), the RL rate-limit/dedup, and emitEvent
+ *       (the atomic state_version bump + vp_session_events insert that IS the
+ *       Realtime broadcast). None of these know or care what the game is.
+ *   To add trivia / musical bingo / raffle / members draw, add ONE per-format
+ *   handler set that writes to that format's tables and emits public events. The
+ *   session, player, join-code, metering and broadcast plumbing do NOT change:
+ *     - vp_games.format carries the format string ('trivia','musical_bingo',
+ *       'raffle','members_draw'); create the vp_games row exactly like /host/game.
+ *     - TRIVIA (BUILT, this slice): /host/game with format='trivia' inserts vp_trivia_games
+ *       (question_set_id). /host/question advances current_seq + sets phase 'asking' +
+ *       question_ends_at and emits 'trivia.question' with options but NEVER correct_index
+ *       (correct_index is returned only in the authenticated host response). /player/answer
+ *       writes vp_trivia_answers (first answer final, late answers rejected by the server
+ *       clock, no correctness returned). /host/reveal stamps is_correct/points_awarded and
+ *       emits 'trivia.reveal' with the correct_index + leaderboard. /player/score lets a
+ *       phone pull its own total/rank/last-result. Leaderboard is v_vp_trivia_leaderboard.
+ *       TEAM NAME: the schema has no team_name column, so the team name captured at /join
+ *       is stored in vp_players.display_name (which the leaderboard view already groups on).
+ *     - MUSICAL BINGO (BUILT, this slice): same skeleton as bingo but the "draw" is a song.
+ *       /host/game with format='musical' inserts vp_music_games (playlist_id, pattern,
+ *       reveal_mode) and deals a 5x5 vp_cards grid of song titles (FREE centre; each cell is
+ *       {song_id,title}). /host/play records vp_music_plays (played_at) and emits PUBLIC
+ *       'music.song_played' (title+artist are public, players daub by ear; idempotent per song).
+ *       /player/card serves the musical card + played songs (deals on demand for late joiners).
+ *       /player/claim checks the card's song_ids against played songs (checkMusicPattern:
+ *       one_line/two_lines/four_corners/full_house, rows only, FREE centre) and reuses the SAME
+ *       claim + /host/claim/resolve flow as bingo (confirmed vp_claims row IS the winner;
+ *       confirm finishes the game). Emits music.claim_submitted / music.claim_result.
+ *       PLAYLIST SOURCE: vp_music_plays.song_id is a FK to vp_playlist_songs, so songs must be
+ *       real rows. /host/game accepts either an existing playlist_id (venue-owned or a library
+ *       playlist with owner null, the trivia-parallel) OR an inline {name, songs[]} that the
+ *       Worker MATERIALISES into vp_playlists + vp_playlist_songs (reused on replay). The
+ *       430-song library (data/musical-library.json) is a CLIENT asset for the audio previews
+ *       and is not seeded, so the host page uses the inline path. AUDIO IS HOST-SIDE ONLY: the
+ *       host device plays the ~30s previewUrl clip through the PA; the Worker only tracks which
+ *       song was played and never stores or streams audio (licensing: OneMusic at the venue).
+ *     - RAFFLE (BUILT, this slice): HOST-ONLY and NOT metered. The venue sells its own PAPER
+ *       tickets, so there is NO /join, NO vp_players and nothing the peak-player billing view
+ *       counts (that view only counts bingo/musical cards + trivia answers). /host/game with
+ *       format='raffle' inserts vp_raffle_games in number_range mode (range_min/range_max,
+ *       draws_count [cap 50; a cash jackpot forces 1 winner], time_to_claim_seconds,
+ *       allow_redraw, jackpot_on/amount, rng_seed for audit); the prize text/type and the
+ *       leading_zeros toggle live in vp_games.config (no columns for them). /host/draw picks
+ *       the winning ticket number(s) UNIFORMLY at random in [range_min,range_max] with the
+ *       rejection-sampled CSPRNG randInt (NOT modulo-biased), excluding already-drawn numbers,
+ *       writes vp_raffle_results (prize_text + prize_type cash|other + optional prize_value_cents
+ *       for the cash-given-away rollup) and emits 'raffle.winner'. redraw_of_seq marks the prior
+ *       round no_show then draws a replacement (when allow_redraw). /host/draw/resolve records
+ *       claimed|no_show (raffle's parallel to /host/claim/resolve). NO new infra and NO seed:
+ *       reuses this Worker and the raffle tables already in 01/02/03 (+ prize_type from 04).
+ *       leading_zeros display width is DERIVED from range_max (schema note: no column).
+ *     - MEMBERS DRAW (BUILT, this slice): HOST-ONLY and NOT metered, and unlike the other four it opens
+ *       NO session and NO vp_games row -- it runs directly off the venue's persistent roster
+ *       (vp_member_rosters + vp_members) and its named recurring draws (vp_member_draws). /host/members/draw
+ *       reads the draw's roster, keeps only status 'valid' members (the saved exclude list is the status
+ *       'excluded' rows) and picks ONE UNIFORMLY with the rejection-sampled CSPRNG randInt (NOT modulo-biased),
+ *       formats the winner name per the venue name_display setting (default abbrev_last -> "John S"), stamps
+ *       last_drawn_date and returns the winner. /host/members/draw/resolve writes the durable
+ *       vp_member_draw_results row (claim -> 'claimed', rollover -> 'jackpot_rolled') and runs the jackpot maths
+ *       server-side: a claim RESETS current_jackpot_cents to starting_amount_cents, a rollover GROWS it by
+ *       increment_cents. SCHEMA NOTE: vp_member_draw_results.outcome is NOT NULL and checks
+ *       ('claimed','jackpot_rolled'), so there is no result row at draw time (no 'pending' value to write); the
+ *       row is written at resolve. /host/members/settings is the MANAGER/OWNER-ONLY settings-write path for the
+ *       draw/jackpot numbers (hosts are refused in code); /host/members/roster lets a host enable/disable a member.
+ *       Because there is no session the Worker emits nothing to vp_session_events; the host + TV pair over the
+ *       page Realtime broadcast channel ("vp-members-"+CODE), with the Worker the authoritative picker/writer.
+ *       NO new infra and NO seed: reuses the members tables already in 01/02/03 and v_vp_prizes_given (which totals
+ *       ONLY the 'claimed' members-draw rows). Host reads (roster/draws/results) are direct via RLS (03-security
+ *       grants host SELECT on all four member tables); every write goes through this Worker (service_role).
+ *   In every case: the Worker stays the ONLY writer, re-checks host JWT + venue
+ *   staff + kill-switch, keeps secrets (correct_index, draw_order, rng_seed) out of
+ *   every payload, and pushes to clients only by inserting a vp_session_events row.
+ *
+ * ASSUMPTIONS + THINGS TO KNOW
+ *   - Supabase legacy HS256 JWTs (verified with SUPABASE_JWT_SECRET). If the project
+ *     moves to asymmetric (ES256/JWKS) signing, swap verifyJwtHS256 for a JWKS verify;
+ *     nothing else changes.
+ *   - draw_order round-trips as a JSON array via PostgREST; we index it in JS (0-based
+ *     slice), which matches the DB's 1-indexed draw_order[1..draw_index].
+ *   - The state_version bump (emitEvent) and the ball draw (handleHostBall) are atomic
+ *     Postgres functions (vp_emit_event, vp_draw_next_ball) via RPC, so concurrent
+ *     Worker calls cannot collide. See venueplay-05-atomic-events.sql.
+ *   - /session is IDEMPOTENT: if a live session already exists for the venue (the
+ *     one-live-per-venue partial index), it is returned rather than erroring, so the
+ *     host can re-tap Start / reload / re-pair safely.
  *   - plan_cap_at_start reads venueplay_founding.max_seats for independent venues,
- *     falling back to vp_venues.included_players for grouped venues.
+ *     falling back to vp_venues.included_players for grouped venues, frozen at open.
+ *   - Cards: exactly ONE ticket per player per game. SCHEMA LIMIT -- vp_cards has a
+ *     unique index (game_id, player_id) plus vp_cards_one_per_player_game, so more
+ *     than one card per player per game is IMPOSSIBLE without dropping that index.
+ *     /host/game accepts cards_per_player and records the request in config, but
+ *     deals one. Multi-card is a schema change (a later slice), flagged here, not faked.
+ *   - Late joiners ARE handled now: GET /player/card deals a ticket on demand if the
+ *     player has none for the running game (design 5.1), inside the same unique-index
+ *     retry loop, so a patron who scans in mid-game still gets a valid ticket.
+ *   - Winner persistence: bingo has no separate winners table -- the CONFIRMED
+ *     vp_claims row is the durable winner (player, card, winning_cells, resolved_by,
+ *     resolved_at). Confirming also finishes the game (vp_games.status='finished').
+ *   - Kill-switch (assertVenueActive) is re-checked on /join, /player/card and
+ *     /player/claim as well as the host routes. /snapshot is intentionally unchecked:
+ *     read-only public projection, writes nothing metered.
  *   - /join and /player/claim are rate-limited and /join is soft-deduped using the
- *     salted ip_hash + device_hint. This is LIVE when the env.RL KV binding exists
- *     and degrades to warn-and-allow when absent (add RL before launch). The
- *     Turnstile escalation (design section 7) is left as a documented future hook
- *     (TURNSTILE_SECRET). The soft dedup reuses a device's player row within a
- *     JOIN_DEDUP_TTL window only, so two distinct patrons who share a NAT IP AND
- *     browser AND join inside that window could be merged onto one row: a
- *     HUMAN DECISION on the TTL / whether to pass a stable client device id for a
- *     stronger key. Thresholds (JOIN_MAX_*, CLAIM_MAX_*) are tunable constants at
- *     the top of the file; the per-IP cap is deliberately generous because a whole
- *     venue shares one NAT IP.
- *   - Kill-switch (assertVenueActive) is re-checked on /join and /player/claim as
- *     well as the host routes, so a suspended venue/group accrues no more metered
- *     rows/events. /snapshot is left unchecked on purpose: it is a read-only public
- *     projection and writes nothing metered.
- *   - One ticket per player per game (MVP), card_no assigned 1..N in player order.
- *   - Tickets are dealt at game start to all current non-kicked players. Dealing a
- *     ticket to a player who joins AFTER a game has started is a separate join-time
- *     path (design 5.1) and is not wired in this draft.
- *   - checkPattern covers the 90-ball patterns one_line, two_lines, full_house.
- *     Custom jsonb masks are a later extension (per schema).
- *   - Only the 90-ball bingo format is implemented here, plus shared plumbing.
- *     Members draws, raffles, trivia and musical bingo are separate handlers to add.
+ *     salted ip_hash + device_hint. LIVE when env.RL exists, else warn-and-allow. The
+ *     soft dedup reuses a device's player row within JOIN_DEDUP_TTL only, so two
+ *     patrons sharing a NAT IP AND browser AND joining inside that window could be
+ *     merged onto one row: a HUMAN DECISION on the TTL / a stronger device key.
+ *   - Broadcast model: the pages ALSO mirror state over a Supabase client broadcast
+ *     channel ("vp-"+join_code) for instant UX, but the Worker's DB writes are
+ *     authoritative and re-derivable via /snapshot. The Worker additionally emits
+ *     every change to the DB Realtime topic session:<id> via vp_session_events, so a
+ *     future TV/host can move entirely onto that server-authoritative feed.
+ *   - checkPattern covers one_line, two_lines, full_house. Custom jsonb masks later.
  *   - profanity filter is a minimal wordlist; extend before launch.
  * ===================================================================== */
