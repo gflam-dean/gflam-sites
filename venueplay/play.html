@@ -63,6 +63,14 @@
   .card9 .cc.blank{background:transparent;border-color:transparent;cursor:default;box-shadow:none}
   .card9 .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
   .card9 .cc.on{outline:2px solid var(--win);outline-offset:-2px}
+  /* Player zoom: --cz widens/narrows the card so numbers can be made big (scroll to pan) or small (see every ticket). */
+  #cardStack{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .card9{width:calc(100% * var(--cz,1));min-width:0}
+  .cardctl{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px}
+  .czbtn:active{background:var(--pink);color:#fff;border-color:transparent}
+  .czbtn.fs{font-size:13px;min-width:0}
+  .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint)}
   .pmsg{font-size:13px;color:var(--muted);text-align:center;margin:16px 0;min-height:38px;line-height:1.4}
   .pmsg.no{color:var(--roll)}
   .pmsg.wait{color:var(--gold)}
@@ -154,6 +162,12 @@
   <div class="view hidden" id="vCard">
     <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line</span></div>
     <div class="lastcalled" id="lastCalled">No numbers called yet</div>
+    <div class="cardctl">
+      <span class="czlbl">Size</span>
+      <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller numbers">&#8722;</button>
+      <button type="button" id="zoomIn" class="czbtn" aria-label="Bigger numbers">&#43;</button>
+      <button type="button" id="fsBtn" class="czbtn fs">Full screen</button>
+    </div>
     <div id="cardStack"></div>
     <div class="pmsg" id="pMsg">Numbers light up as they are called.</div>
     <button class="btn bingoBtn" id="bingoBtn">BINGO!</button>
@@ -494,6 +508,20 @@
   $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
   $("joinBtn").addEventListener("click", join);
   $("bingoBtn").addEventListener("click", pressBingo);
+  // Card zoom + full screen: older players struggle to read a 9-wide card, or to see several
+  // tickets at once. Zoom bigger (scroll to pan) or smaller (fit every ticket); full screen
+  // hides the browser bars for maximum room. The size is remembered for next time.
+  var cz=1; try{ var sz=parseFloat(localStorage.getItem("vp-cardzoom")); if(sz) cz=sz; }catch(e){}
+  function applyZoom(){ cz=Math.max(0.6, Math.min(2.2, Math.round(cz*10)/10)); $("cardStack").style.setProperty("--cz", cz); try{ localStorage.setItem("vp-cardzoom", String(cz)); }catch(e){} }
+  $("zoomIn").addEventListener("click", function(){ cz+=0.2; applyZoom(); });
+  $("zoomOut").addEventListener("click", function(){ cz-=0.2; applyZoom(); });
+  applyZoom();
+  $("fsBtn").addEventListener("click", function(){
+    var d=document, el=d.documentElement;
+    var fsel=d.fullscreenElement||d.webkitFullscreenElement;
+    if(!fsel){ var rq=el.requestFullscreen||el.webkitRequestFullscreen; if(rq){ try{ rq.call(el); }catch(e){} } }
+    else { var ex=d.exitFullscreen||d.webkitExitFullscreen; if(ex){ try{ ex.call(d); }catch(e){} } }
+  });
   $("cardStack").addEventListener("click", function(e){
     var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("blank")) return;
     var ci=parseInt(cell.getAttribute("data-card"),10), n=parseInt(cell.getAttribute("data-n"),10);
