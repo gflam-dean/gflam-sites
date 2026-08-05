@@ -66,7 +66,7 @@
   /* ---- pair panel (ads mode only) ---- */
   .pairpanel{position:absolute;right:2.4cqw;bottom:2.4cqw;z-index:7;display:flex;align-items:center;gap:1.4cqw;background:rgba(0,0,0,.5);border:1px solid var(--line-2);border-radius:1.4cqw;padding:1.2cqw 1.8cqw 1.2cqw 1.2cqw;backdrop-filter:blur(6px)}
   .pairpanel .qrp{width:clamp(74px,11cqw,150px);height:clamp(74px,11cqw,150px);background:#fff;border-radius:.8cqw;padding:.5cqw;flex:none}
-  .pairpanel .qrp canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .pairpanel .qrp canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
   .pairtxt{text-align:left}
   .pt-head{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:clamp(10px,1.5cqw,15px);color:#fff}
   .pt-lbl{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(9px,1.4cqw,14px);color:var(--muted);margin-top:.4cqw;max-width:24cqw}
@@ -84,7 +84,7 @@
   .jsub b{color:var(--gold)}
   .lobbyrow{display:flex;align-items:center;gap:4cqw;margin-top:1.6cqw}
   .qrbig{width:min(46cqw,64vh);max-width:none;aspect-ratio:1;background:#fff;border-radius:2cqw;padding:1.6cqw;flex:none;box-shadow:0 0 44px rgba(255,255,255,.16)}
-  .qrbig canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .qrbig canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
   .lobbytxt{text-align:left}
   .lobbyname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,64px);color:#fff;line-height:1}
   .joinurl{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,28px);color:var(--pink);margin-top:1cqw}
@@ -120,7 +120,7 @@
 
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
   .qrmini{width:clamp(44px,8cqw,110px);height:clamp(44px,8cqw,110px);background:#fff;border-radius:.6cqw;padding:.4cqw;flex:none}
-  .qrmini canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+  .qrmini canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
   .tv-join .tjl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.3cqw,13px);color:var(--muted)}
   .tv-join .tjc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,2.4cqw,26px);color:var(--gold);letter-spacing:.08em}
 
@@ -245,7 +245,7 @@
   function escBr(s){ return esc(s).replace(/\r?\n/g,"<br>"); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
-  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",bottom:"Bottom line"};
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
 
   var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
@@ -586,7 +586,12 @@
       state.phase="running"; applyBingo();
     }
     else if(m.t==="winner"){
-      state.winner=m; state.phase="win"; state.celebrated=false; applyBingo();
+      state.winner=m;
+      if(m.cont && m.next) state.pattern=m.next;   // game plays on for the next prize
+      state.phase="win"; state.celebrated=false; applyBingo();
+      // on a play-on win, celebrate then return to the board so the round continues
+      // (the next called ball also brings the board back, whichever comes first)
+      if(m.cont){ setTimeout(function(){ if(tvMode==="bingo" && state.phase==="win"){ state.phase="running"; applyBingo(); } }, 7000); }
     }
   }
 

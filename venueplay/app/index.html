@@ -291,6 +291,7 @@
               <option value="full">Full house</option>
               <option value="corners">Four corners</option>
               <option value="top">Top line</option>
+              <option value="middle">Middle line</option>
               <option value="bottom">Bottom line</option>
             </select>
           </div>
@@ -365,7 +366,7 @@
   function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
-  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",bottom:"Bottom line"};
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
@@ -609,8 +610,11 @@
     code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1,
     draw:[], idx:-1, called:{},
     players:{}, order:[],
-    claim:null, won:false
+    claim:null, won:false, lastWin:null
   };
+  // the natural next prize in a progressive housie game (line -> two lines -> full house)
+  function nextPattern(cur){ if(cur==="one") return "two"; if(cur==="two") return "full"; if(cur==="full") return ""; return "full"; }
+  var ALL_PATTERNS=[["one","One line"],["two","Two lines"],["full","Full house"],["corners","Four corners"],["top","Top line"],["middle","Middle line"],["bottom","Bottom line"]];
   function clampCards(n){ n=parseInt(n,10); if(!n||n<1) return 1; if(n>6) return 6; return n; }
   var currentGame="bingo";
 
@@ -737,6 +741,7 @@
       case "two": return completeRows(card)>=2;
       case "full": return completeRows(card)>=3;
       case "top": return rowComplete(card,0);
+      case "middle": return rowComplete(card,1);
       case "bottom": return rowComplete(card,2);
       case "corners": var cn=cornerNums(card); if(!cn.length) return false; for(var i=0;i<cn.length;i++){ if(!isCalled(cn[i])) return false; } return true;
     }
@@ -747,7 +752,7 @@
 
   function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, called:calledArray(), active:(G.status==="running"), playerCount:playerCount() }); }
   function dealFor(p){
-    var want=clampCards(p.reqCards||G.defaultCards);
+    var want=clampCards(G.defaultCards);   // the host decides how many tickets everyone gets
     p.cards=[]; for(var k=0;k<want;k++){ p.cards.push({ card:makeCard(), cardNo:100+cryptoInt(900) }); }
   }
   function sendCards(pid){ var p=G.players[pid]; if(!p||!p.cards) return; send({ t:"cards", pid:pid, cards:p.cards.map(function(c){ return { cells:c.card, cardNo:c.cardNo }; }) }); }
@@ -805,6 +810,16 @@
   }
   function renderClaimQueue(){
     var q=$("claimQueue");
+    if(G.lastWin && !G.claim && !G.won){
+      var w=G.lastWin, nxt=nextPattern(w.pattern), opts="";
+      for(var i=0;i<ALL_PATTERNS.length;i++){ var p=ALL_PATTERNS[i]; if(p[0]===w.pattern) continue; opts+='<option value="'+p[0]+'"'+(p[0]===nxt?" selected":"")+'>'+p[1]+'</option>'; }
+      q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+esc(w.name)+' won '+PATTERN_NAMES[w.pattern]+'! 🎉</span></div>'+
+        '<div class="claimsub">Same tickets, same numbers. Play on for another prize, or finish the game.</div>'+
+        '<div style="margin-top:12px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Next prize</label><select id="nextPatternSel">'+opts+'</select></div>'+
+        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="keepplaying">Keep playing</button>'+
+        '<button class="btn ghost" data-act="finish">Finish game</button></div></div>';
+      return;
+    }
     if(!G.claim){ q.innerHTML='<div class="claimempty">No claims yet. When a player hits BINGO and the pattern checks out, it lands here to confirm.</div>'; return; }
     var c=G.claim;
     q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+
@@ -865,10 +880,28 @@
   function hostConfirm(){
     if(!G.claim) return;
     var c=G.claim;
-    G.won=true; G.claim=null;
-    send({ t:"winner", pid:c.pid, name:c.name, cardNo:c.cardNo });
+    G.lastWin={ pid:c.pid, name:c.name, cardNo:c.cardNo, pattern:G.pattern };
+    G.claim=null;
+    // Don't broadcast yet: the host now chooses to play on for another prize or finish,
+    // which decides whether players keep their tickets or see the final result.
     saveGame();
     renderClaimQueue();
+  }
+  function keepPlaying(){
+    if(!G.lastWin) return;
+    var w=G.lastWin, sel=$("nextPatternSel"), nxt=(sel&&sel.value)||nextPattern(w.pattern)||"full";
+    // announce the stage win and the next target together; players keep the same tickets
+    send({ t:"winner", pid:w.pid, name:w.name, cardNo:w.cardNo, pattern:w.pattern, cont:true, next:nxt });
+    G.pattern=nxt; G.won=false; G.lastWin=null;
+    $("nextBtn").disabled=(G.idx>=89);
+    saveGame(); renderConsole();
+  }
+  function finishGame(){
+    if(!G.lastWin) return;
+    var w=G.lastWin;
+    send({ t:"winner", pid:w.pid, name:w.name, cardNo:w.cardNo, pattern:w.pattern, cont:false });
+    G.won=true; G.lastWin=null;
+    saveGame(); renderConsole();
   }
   function hostReject(){
     if(!G.claim) return;
@@ -898,16 +931,15 @@
     if(m.t==="tv_here"){ tvHere(m); return; }
     if(m.t==="join"){
       if(!m.pid) return;
-      var want=clampCards(m.cards||G.defaultCards);
       var isNew=!G.players[m.pid];
-      if(isNew){ G.players[m.pid]={ name:(m.name||"Player"), cards:null, reqCards:want }; G.order.push(m.pid); }
-      else { var pp=G.players[m.pid]; pp.name=(m.name||pp.name); if(m.cards) pp.reqCards=want; }
+      if(isNew){ G.players[m.pid]={ name:(m.name||"Player"), cards:null }; G.order.push(m.pid); }
+      else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
       if(G.status==="running"){
         var p=G.players[m.pid];
-        var need=clampCards(p.reqCards||G.defaultCards);
-        // deal only when they have none yet, or they changed how many they want. A plain
-        // reconnect re-announces the same count, so their tickets are never wiped.
-        if(!p.cards || !p.cards.length || p.cards.length!==need){ p.reqCards=need; dealFor(p); }
+        var need=clampCards(G.defaultCards);
+        // deal when they have none yet, or the host changed the ticket count. A plain
+        // reconnect re-announces and re-sends the same tickets, so nothing is wiped.
+        if(!p.cards || !p.cards.length || p.cards.length!==need){ dealFor(p); }
         sendCards(m.pid);
       }
       sendPlayers();
@@ -916,7 +948,7 @@
       renderConsole();
     }
     else if(m.t==="claim"){
-      if(G.status!=="running" || G.won || G.claim) return;
+      if(G.status!=="running" || G.won || G.claim || G.lastWin) return;
       var pl=G.players[m.pid];
       if(!pl || !pl.cards || !pl.cards.length) return;
       // find the exact ticket they claimed on; fall back to any winning ticket they hold
@@ -995,7 +1027,11 @@
   $("endGameBtn").addEventListener("click", endGame);
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;
-    if(b.getAttribute("data-act")==="confirm") hostConfirm(); else hostReject();
+    var act=b.getAttribute("data-act");
+    if(act==="confirm") hostConfirm();
+    else if(act==="keepplaying") keepPlaying();
+    else if(act==="finish") finishGame();
+    else hostReject();
   });
 
   // ================= INIT =================

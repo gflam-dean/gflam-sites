@@ -117,10 +117,6 @@
     <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
     <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name"></div>
     <div id="joinExtra"></div>
-    <div class="field cardpick">
-      <div class="cplabel">How many tickets?</div>
-      <div class="cprow" id="cpRow"></div>
-    </div>
     <div class="cerr" id="joinErr"></div>
     <div class="field"><button class="btn pink" id="joinBtn">Join</button></div>
     <div class="pnote">No app and no account. Your tickets appear here when the host starts.</div>
@@ -170,7 +166,8 @@
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
   function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
 
-  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",bottom:"Bottom line"};
+  var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
@@ -231,6 +228,7 @@
   }
   function cardMeetsPattern(cells,set){
     if(P.pattern==="top") return rowDone(set,cells,0);
+    if(P.pattern==="middle") return rowDone(set,cells,1);
     if(P.pattern==="bottom") return rowDone(set,cells,2);
     if(P.pattern==="corners"){ var cn=cornerNums(cells); if(!cn.length) return false; for(var i=0;i<cn.length;i++){ if(!set[cn[i]]) return false; } return true; }
     var rows=0,r; for(r=0;r<3;r++){ if(rowDone(set,cells,r)) rows++; }
@@ -416,8 +414,17 @@
     }
     else if(m.t==="winner"){
       P.claimPending=false;
-      if(m.pid===P.pid){ P.won=true; route(); }
-      else { P.ended=true; route(); }
+      if(m.cont){
+        // a stage was won; the game plays on for the next prize with the same tickets
+        if(m.next) P.pattern=m.next;
+        P.wonCardNo=0;
+        if(P.cards.length){ renderCards(); show("vCard"); }
+        var mine=(m.pid===P.pid);
+        setMsg((mine ? "You won "+(PATTERN_NAMES[m.pattern]||"a prize")+"! " : esc(m.name||"A player")+" won "+(PATTERN_NAMES[m.pattern]||"a prize")+". ")+"Now playing for "+(PATTERN_NAMES[P.pattern]||"the next prize")+".", mine?"wait":"");
+      } else {
+        if(m.pid===P.pid){ P.won=true; P.wonCardNo=m.cardNo||P.wonCardNo; route(); }
+        else { P.ended=true; route(); }
+      }
     }
     else if(m.t==="idle"){
       // host ended the round / went back to ads. Clear the game but keep the player "in"
