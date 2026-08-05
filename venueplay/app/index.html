@@ -263,10 +263,10 @@
     <div class="lbl" style="margin-top:4px">Tonight's game</div>
     <div class="picker" id="gamePicker">
       <button class="pk" data-game="bingo">Bingo</button>
-      <button class="pk" data-game="members-draw">Members Draw<span class="soon">Opening soon</span></button>
-      <button class="pk" data-game="raffle">Raffle<span class="soon">Opening soon</span></button>
-      <button class="pk" data-game="trivia">Trivia<span class="soon">Opening soon</span></button>
-      <button class="pk" data-game="musical-bingo">Musical Bingo<span class="soon">Opening soon</span></button>
+      <button class="pk" data-game="trivia">Trivia</button>
+      <button class="pk" data-game="musical-bingo">Musical Bingo</button>
+      <button class="pk" data-game="raffle">Raffle</button>
+      <button class="pk" data-game="members-draw">Members Draw</button>
     </div>
 
     <!-- opening soon placeholder -->
@@ -1059,15 +1059,21 @@
   }
 
   // ================= GAME PICKER =================
-  var SOON_LABELS={"members-draw":"Members Draw","raffle":"Raffle","trivia":"Trivia","musical-bingo":"Musical Bingo"};
+  // Each game runs in its own console. /app is the single front door: Bingo lives here,
+  // the others launch their own page (carrying the current venue so a multi-venue host lands
+  // on the right one). This is why there is no separate link to remember.
+  var GAME_PATHS={ "trivia":"/app/trivia/host.html", "musical-bingo":"/app/musical/host.html", "raffle":"/app/raffle/host.html", "members-draw":"/app/members/host.html" };
   function selectGame(game){
+    if(game!=="bingo" && GAME_PATHS[game]){
+      var q=""; try{ var v=(typeof __ctx!=="undefined"&&__ctx&&__ctx.venue&&__ctx.venue.slug)||""; if(v) q="?venue="+encodeURIComponent(v); }catch(e){}
+      window.location.href=GAME_PATHS[game]+q;
+      return;
+    }
     currentGame=game;
     var btns=document.querySelectorAll("#gamePicker .pk");
     for(var i=0;i<btns.length;i++){ btns[i].classList.toggle("on", btns[i].getAttribute("data-game")===game); }
-    var isBingo=(game==="bingo");
-    $("bingoView").classList.toggle("hidden", !isBingo);
-    $("soonView").classList.toggle("hidden", isBingo);
-    if(!isBingo){ $("soonName").textContent=SOON_LABELS[game]||"This game"; }
+    $("bingoView").classList.remove("hidden");
+    var sv=$("soonView"); if(sv) sv.classList.add("hidden");
   }
   $("gamePicker").addEventListener("click", function(e){
     var b=e.target.closest(".pk"); if(!b) return;
