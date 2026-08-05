@@ -3,95 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VenuePlay: Gflam HQ</title>
+<title>VenuePlay HQ</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<!--
-=======================================================================
-  VenuePlay "Gflam HQ" admin console  (hq.html)
-  Real Supabase data via window.VP (vp-session.js). No demo venues.
------------------------------------------------------------------------
-  WHAT IS LIVE FROM THE BROWSER (admin JWT, RLS-scoped, read + some writes)
-    - Venues list ............ VP.listVenues()            (vp_venues)
-    - Live-now flags ......... vp_sessions (admin select)
-    - Founding tracker ....... rpc venueplay_spots_taken()
-    - Groups list/create ..... vp_venue_groups (admin FOR ALL)
-    - Assign venue to group .. vp_venues.group_id update  (admin FOR ALL)
-    - Usage / billing table .. vp_billing_usage (admin FOR ALL)
-    - Active discounts (read). vp_discounts (admin FOR ALL)
-    - Team list / remove ..... vp_platform_admins (admin FOR ALL)
-    - Audit log .............. vp_admin_audit (admin FOR ALL)
-
-  WHAT NEEDS A SERVICE-ROLE WORKER (browser CANNOT do these safely)
-    These POST to the existing Worker origin. The browser sends the
-    caller's Supabase access token as a Bearer header; the Worker MUST
-    verify the token, confirm the caller is a platform admin, and (where
-    noted) that adminRole is 'owner' or 'accounts' before acting. If an
-    endpoint is missing the UI degrades: it says "not deployed yet" and
-    changes nothing. NEVER put the service_role key in this page.
-
-    Worker origin: VP_WORKER (below).  All bodies/responses are JSON.
-
-    1) POST /admin/venue         (owner|accounts)
-       Onboard a venue: creates the vp_venues row, its vp_venue_settings +
-       vp_screens defaults, and — for an independent venue — the
-       venueplay_founding subscription record, and (optional) the first
-       manager's Supabase Auth user + vp_venue_staff row, then an audit row.
-       body: {
-         name, slug, timezone,
-         billing: { type:'founding'|'group',
-                    group_id?, included_players?,        // group only
-                    founding?: { contact_email, mobile, postcode,
-                                 max_seats, plan:'monthly'|'annual' } },
-         manager?: { mobile?, email?, display_name }
-       }
-       -> { ok:true, venue:{id,name,slug}, founding_id?, manager?:{auth_user_id} }
-          | { error:"..." }
-
-    2) POST /admin/discount      (owner|accounts)
-       Writes vp_discounts + a vp_admin_audit row (both service-role).
-       body: { target_type:'venue'|'group', target_id,
-               kind:'percent'|'dollar', value_numeric, months|null, note }
-       -> { ok:true, discount:{id} } | { error:"..." }
-
-    3) POST /admin/venue-status  (owner|accounts)
-       Suspend / reactivate. Writes vp_venues.status + a vp_admin_audit row.
-       body: { venue_id, status:'active'|'suspended', reason? }
-       -> { ok:true } | { error:"..." }
-
-    4) POST /admin/staff         (owner)
-       Add a Gflam staff login: creates the Supabase Auth user (invite),
-       inserts vp_platform_admins {auth_user_id, role, label}, audit row.
-       body: { name, email, role:'owner'|'accounts'|'staff' }
-       -> { ok:true, auth_user_id } | { error:"..." }
-
-    5) POST /admin/audit         (any admin) — optional, best-effort
-       Records a view-as / read action. Fire-and-forget from the browser.
-       body: { action, target?, detail? }  -> { ok:true } | { error }
-
-  VIEW-AS (impersonation) contract — see the block below and index.html:
-    "View as" calls VP.setCurrentVenue(id), writes localStorage
-    "vpImpersonate" = {"id","name"} and opens index.html. index.html reads
-    that flag: an admin whose current venue matches drops into that venue's
-    host console behind a gold "Viewing <venue> from Gflam HQ / Back to
-    Gflam HQ" banner instead of being bounced back to HQ.
-
-  MOCKUP ITEMS WITH NO REAL COLUMN (shown honestly, never faked):
-    - Venue "type" (Pub/RSL/Bowls): no column on vp_venues -> omitted.
-    - Venue suburb/state: no column -> timezone shown as the locality proxy.
-    - Independent venue plan tier (Founding vs Standard) + its player cap:
-      live in venueplay_founding, which is RLS-locked to the Worker, so the
-      browser cannot read them. Independent venues show "Independent (card)"
-      and the cap/plan come from the onboarding Worker, not this page.
-    - Billing "health" (declined cards / overdue): lives in Stripe /
-      venueplay_founding.status, not browser-readable -> shows an empty
-      state until the billing Worker feeds it.
-    - Per-venue dollar charges: no rate column is browser-readable for
-      independent venues; grouped venues use vp_venue_groups.negotiated_rate_cents.
-=======================================================================
--->
 <style>
   :root{
     --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --pink-deep:#C70F69;
@@ -240,12 +156,12 @@
     <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
     <span class="div"></span><span class="word">VenuePlay</span>
   </div>
-  <span class="tag">Gflam HQ</span>
+  <span class="tag">VenuePlay HQ</span>
   <div class="who"><span id="whoLabel"></span> <button type="button" class="hact" id="signOut">Sign out</button></div>
 </div></div>
 
 <div class="wrap" id="app" style="display:none">
-  <div class="titlerow"><div class="h2">Gflam HQ</div></div>
+  <div class="titlerow"><div class="h2">VenuePlay HQ</div></div>
   <div class="subh">Every VenuePlay venue in one place</div>
 
   <div class="stats">
@@ -270,7 +186,7 @@
     <button data-pane="billing">Billing</button>
     <button data-pane="groups">Groups</button>
     <button data-pane="usage">Usage</button>
-    <button data-pane="team">Team</button>
+    <button data-pane="team">Staff</button>
     <button data-pane="audit">Audit</button>
   </div>
 
@@ -314,7 +230,7 @@
         <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly">Founding monthly</option><option value="annual">Founding annual</option></select></div>
       </div>
       <button class="btn pink" id="addVenueSubmit">Create venue</button>
-      <div class="note">Onboarding creates the founding subscription record and the first manager's login. That needs service-role access, so it runs on the VenuePlay Worker (<span class="mono">POST /admin/venue</span>), not from this page.</div>
+      <div class="note">Onboarding sets up the venue's subscription and its first manager login.</div>
       <div class="okflash" id="addVenueOk"><span>&#10003;</span> <span></span></div>
       <div class="errflash" id="addVenueErr"></div>
     </div>
@@ -379,21 +295,20 @@
 
   <!-- ============ TEAM ============ -->
   <div id="paneTeam" class="hidden">
-    <div class="lblk">Gflam staff logins</div>
+    <div class="lblk">VenuePlay staff logins</div>
     <div class="panel"><div class="tscroll"><table>
       <thead><tr><th>Login</th><th>Role</th><th>Auth user</th><th></th></tr></thead>
       <tbody id="teamRows"></tbody>
     </table></div></div>
-    <div class="lblk">Add a Gflam staff member</div>
+    <div class="lblk">Add a VenuePlay staff login</div>
     <div class="panel pad">
       <div class="addrow3">
         <input type="text" id="tmName" placeholder="Full name">
-        <input type="email" id="tmEmail" placeholder="name@gflam.com.au">
+        <input type="email" id="tmEmail" placeholder="name@venueplay.com.au">
         <select id="tmRole"><option value="staff">Staff</option><option value="accounts">Accounts</option><option value="owner">Owner</option></select>
         <button class="btn pink" id="tmAdd">Add</button>
       </div>
-      <div class="note"><b>Owner</b> and <b>Accounts</b> can apply discounts, edit billing and suspend venues. <b>Staff</b> see everything else but no billing changes. Adding a login creates a Supabase Auth user, so it runs on the Worker (<span class="mono">POST /admin/staff</span>).</div>
-      <div id="teamGate" class="restrict hidden">Only an Owner can add or remove Gflam staff logins.</div>
+      <div id="teamGate" class="restrict hidden">Only an Owner can add or remove VenuePlay staff logins.</div>
       <div class="okflash" id="tmOk"><span>&#10003;</span> <span></span></div>
       <div class="errflash" id="tmErr"></div>
     </div>
@@ -410,7 +325,6 @@
   </div>
 </div>
 
-<div class="foot">Gflam HQ is your view across every venue. Reads run live on Supabase (RLS-scoped to admins). Privileged writes (onboarding, discounts, suspend, staff) run on the VenuePlay Worker with a service-role key, never from this page.</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
@@ -492,7 +406,9 @@
     // Landing on HQ normally clears any stale impersonation flag.
     try{ localStorage.removeItem("vpImpersonate"); }catch(e){}
     S.ctx=ctx; S.adminRole=ctx.adminRole||"staff";
-    $("whoLabel").innerHTML = "Gflam admin &middot; <b>"+esc(ctx.adminRole||"staff")+"</b>";
+    $("whoLabel").innerHTML = "VenuePlay admin &middot; <b>"+esc(ctx.adminRole||"staff")+"</b>";
+    // Audit is visible only to Owner + Accounts.
+    if(!(S.adminRole==="owner"||S.adminRole==="accounts")){ var _ab=document.querySelector('[data-pane="audit"]'); if(_ab) _ab.style.display="none"; }
     $("app").style.display="block";
     loadAll();
   });
@@ -889,7 +805,7 @@
   $("teamRows").addEventListener("click", function(e){
     var b=e.target.closest("button[data-rmadmin]"); if(!b || !canTeam()) return;
     var uid=b.getAttribute("data-rmadmin"), label=b.getAttribute("data-label");
-    if(!confirm("Remove the Gflam login "+(label||uid)+"? This strips their admin access.")) return;
+    if(!confirm("Remove the VenuePlay staff login "+(label||uid)+"? This strips their admin access.")) return;
     b.disabled=true;
     // Direct browser delete allowed by RLS (admin FOR ALL on vp_platform_admins). The auth user
     // itself is left intact; the Worker can fully delete it later.
