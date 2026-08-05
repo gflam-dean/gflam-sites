@@ -11,12 +11,12 @@
 --    suspends it and it stops being billed. Clearing the flag (Undo) restores normal billing.
 --
 -- 2) vp_venue_screen
---    One row per venue holding what shows on that venue's TV (/tv?venue=<slug>): custom promo
---    slides, the weekly members-draw schedule, and the meat-raffle blurb. Owners edit it from
---    the Account page through the Worker (service key). The TV reads it unauthenticated by
---    slug, so anon SELECT is allowed; there is no anon write.
---    slides shape: [{tag,head,sub,accent}]   draws shape: [{day,jackpot,time,tonight}]
---    raffle shape: {tag,head,sub} or null to hide.
+--    One row per venue holding what shows on that venue's TV (/tv?venue=<slug>): uploaded
+--    advertising images and the raffle routine. Owners edit it from the Account page through
+--    the Worker (service key). The TV reads it unauthenticated by slug, so anon SELECT is
+--    allowed; there is no anon write.
+--    slides shape: [{image_url,seconds,starts?,ends?}]   raffle shape: {label,day,time} or null.
+--    draws is legacy/unused (the members board reads vp_member_draws directly).
 
 ALTER TABLE vp_venues ADD COLUMN IF NOT EXISTS cancel_at_period_end boolean NOT NULL DEFAULT false;
 

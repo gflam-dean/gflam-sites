@@ -585,18 +585,31 @@
   }
   (function loadVenueScreen(){
     var slug=venueSlug(); if(!slug) return;
-    fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select=slides,draws,raffle&limit=1",
-      { headers:{ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON } })
+    var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
+    function refreshAds(){ adBuilt=false; buildAds(); if(!hostConnected) startAds(); } // only rebuild while idle
+    // Advertising slides (images) + the raffle routine, from the venue's screen config.
+    fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select=slides,raffle&limit=1", { headers:hdr })
       .then(function(r){ return r.ok ? r.json() : []; })
       .then(function(rows){
         var c=rows&&rows[0]; if(!c) return;
         if(Array.isArray(c.slides)) ADS.slides=c.slides;
-        if(Array.isArray(c.draws))  ADS.draws=c.draws;
         ADS.raffle = c.raffle || null;
-        adBuilt=false; buildAds();
-        if(!hostConnected) startAds(); // only re-run the loop if we are still on the idle screen
-      })
-      .catch(function(){});
+        refreshAds();
+      }).catch(function(){});
+    // Live members-draw board (name + current jackpot + day/time) from the public view.
+    fetch(SUPA_URL+"/rest/v1/v_vp_screen_draws?slug=eq."+encodeURIComponent(slug)+"&select=name,current_jackpot_cents,draw_day,draw_time", { headers:hdr })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(rows){
+        if(!Array.isArray(rows)) return;
+        var wd=new Date().toLocaleDateString("en-AU",{weekday:"long"}).toLowerCase();
+        ADS.draws = rows.filter(function(d){ return d.draw_day; }).map(function(d){
+          return { day:d.draw_day,
+                   jackpot:"$"+Math.round((d.current_jackpot_cents||0)/100).toLocaleString("en-AU"),
+                   time:d.draw_time||"",
+                   tonight:(d.draw_day||"").toLowerCase()===wd };
+        });
+        refreshAds();
+      }).catch(function(){});
   })();
 
   // ================= FULLSCREEN (additive setup control) =================
