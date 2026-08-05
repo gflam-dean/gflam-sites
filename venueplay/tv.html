@@ -106,7 +106,11 @@
   .runleft{flex:0 0 41%;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .runright{flex:1;min-width:0}
   .balleye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(9px,1.7cqw,14px);color:var(--muted)}
-  .curball{display:flex;flex-direction:column;align-items:center;line-height:.85;margin:.6cqw 0}
+  /* the resting "number called" is itself a bingo ball, so the big reveal settles into an
+     identical ball with no visible handoff */
+  .curball{width:min(30cqw,46vh);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:1.4cqw 0;
+    background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
+    box-shadow:0 0 60px rgba(255,31,142,.45), inset 0 -1cqw 2.4cqw rgba(0,0,0,.16)}
 
   /* big-ball reveal */
   .ballreveal{position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;pointer-events:none}
@@ -115,9 +119,10 @@
     color:#0A0A0B;font-family:'Anton',sans-serif;font-size:min(26cqw,44vh);line-height:1;
     box-shadow:0 0 100px rgba(255,31,142,.55), inset 0 -1.2cqw 3cqw rgba(0,0,0,.16)}
   @keyframes brpop{ 0%{transform:scale(.2);opacity:0} 45%{transform:scale(1.06);opacity:1} 70%{transform:scale(.98)} 100%{transform:scale(1);opacity:1} }
-  @keyframes brgo{ 0%{transform:scale(1);opacity:1} 84%{opacity:1} 100%{transform:translate(-24cqw,-16cqw) scale(.22);opacity:0} }
+  /* the reveal ball glides left into the resting ball (roughly its spot) and fades as it arrives */
+  @keyframes brgo{ 0%{transform:scale(1);opacity:1} 82%{opacity:1} 100%{transform:translate(-30cqw,2cqw) scale(.62);opacity:0} }
   .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
-  .cbnum{font-family:'Anton',sans-serif;font-size:clamp(64px,30cqw,340px);color:#fff;line-height:.82;text-shadow:0 0 46px rgba(255,255,255,.22)}
+  .cbnum{font-family:'Anton',sans-serif;font-size:min(17cqw,25vh);color:#0A0A0B;line-height:1}
   .prevballs{display:flex;gap:.8cqw;justify-content:center;flex-wrap:wrap;margin-top:1cqw}
   .prevball{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.8cqw,15px);color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:.6cqw;padding:.3cqw .9cqw}
   .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,15px);color:var(--muted);margin-top:1cqw}
