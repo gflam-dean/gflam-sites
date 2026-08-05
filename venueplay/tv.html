@@ -160,17 +160,16 @@
     <button type="button" class="tv-fs" id="tvFsBtn" aria-label="Go fullscreen">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15"/></svg>
       <span class="fslabel">Go fullscreen</span>
-      <span class="fshint">or press F11</span>
     </button>
   </div>
 
-  <!-- PAIR PANEL (ads mode only; venue-linked screens never show it) -->
+  <!-- NO-VENUE PROMPT (only shows when this screen has no venue linked) -->
   <div class="pairpanel hidden" id="pairPanel">
-    <div class="qrp"><canvas id="qrPair"></canvas></div>
+    <canvas id="qrPair" style="display:none"></canvas>
     <div class="pairtxt">
-      <div class="pt-head">Set up this screen</div>
-      <div class="pt-lbl">Scan on your iPad to run a game</div>
-      <div class="pt-code">Code <span id="pairCode">------</span></div>
+      <div class="pt-head">Link this screen</div>
+      <div class="pt-lbl">Open <b style="color:#fff">venueplay.com.au/tv?venue=your-venue</b> on this screen once. It remembers after that.</div>
+      <div class="pt-code" style="display:none"><span id="pairCode">------</span></div>
     </div>
   </div>
 
