@@ -516,12 +516,30 @@
     n=parseInt(n,10); if(!n || tvMode!=="bingo") return;
     var el=$("ballReveal"), b=$("brBall"); if(!el||!b) return;
     b.textContent=n; el.classList.remove("hidden");
+    b.style.transition="none"; b.style.transform=""; b.style.opacity="";
     b.style.animation="none"; void b.offsetWidth;   // restart the animation
     b.style.animation="brpop .55s cubic-bezier(.2,.9,.3,1.2) forwards";
     if(revealT1) clearTimeout(revealT1); if(revealT2) clearTimeout(revealT2);
     revealT1=setTimeout(function(){
-      b.style.animation="brgo .85s cubic-bezier(.4,0,.2,1) forwards";   // smooth glide to the called-number spot
-      revealT2=setTimeout(function(){ el.classList.add("hidden"); }, 860);
+      // Settle the big ball EXACTLY onto the resting called-number ball. We measure both live so
+      // it lands right at any TV size/aspect, instead of a fixed guess that drifts off into space.
+      var rest=document.querySelector("#tvRun .curball");
+      b.style.animation="none"; void b.offsetWidth;   // freeze at full size, then transition onto the resting ball
+      if(rest){
+        var rb=rest.getBoundingClientRect(), bb=b.getBoundingClientRect();
+        if(bb.width && rb.width){
+          var dx=(rb.left+rb.width/2)-(bb.left+bb.width/2);
+          var dy=(rb.top+rb.height/2)-(bb.top+bb.height/2);
+          var sc=rb.width/bb.width;
+          b.style.transition="transform .8s cubic-bezier(.4,0,.2,1), opacity .8s ease";
+          void b.offsetWidth;
+          b.style.transform="translate("+dx+"px,"+dy+"px) scale("+sc+")";
+          b.style.opacity="0";   // fades out just as it lands on the identical resting ball underneath
+        }
+      } else {
+        b.style.transition="opacity .6s ease"; void b.offsetWidth; b.style.opacity="0";
+      }
+      revealT2=setTimeout(function(){ el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity=""; }, 850);
     }, 1300);
   }
   function renderRun(){
