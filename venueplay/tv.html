@@ -414,6 +414,11 @@
       }
       return '<div class="adtag">'+esc(r.tag||"")+'</div><div class="adbig">'+escBr(r.head||"")+'</div><div class="adsub">'+esc(r.sub||"")+'</div>';
     }
+    if(e.type==="holding"){   // shown when a venue has no ads/draws/raffle yet, so the screen is never blank
+      return '<div class="adtag" style="color:'+accentHex("pink")+'">VenuePlay</div>'+
+             '<div class="adbig">Game on here tonight</div>'+
+             '<div class="adsub">Grab your phone, the fun starts soon</div>';
+    }
     var s=e.slide;
     // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
     if(s.image_url){ return '<div class="adimg" style="background-image:url('+encodeURI(s.image_url)+')"></div>'; }
