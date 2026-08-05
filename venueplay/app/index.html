@@ -152,6 +152,7 @@
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
+    <button type="button" id="gamesBack" style="display:none;background:none;border:none;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);padding:0">&#8592; Games</button>
     <span class="tag" id="headerTag"></span>
     <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
     <span class="hactions" id="hactions" style="display:none">
@@ -260,13 +261,23 @@
       On your venue screen <span class="pairedchip" id="pairedChip">&middot; connecting</span>
     </div>
 
-    <div class="lbl" style="margin-top:4px">Tonight's game</div>
-    <div class="picker" id="gamePicker">
-      <button class="pk" data-game="bingo">Bingo</button>
-      <button class="pk" data-game="trivia">Trivia</button>
-      <button class="pk" data-game="musical-bingo">Musical Bingo</button>
-      <button class="pk" data-game="raffle">Raffle</button>
-      <button class="pk" data-game="members-draw">Members Draw</button>
+    <!-- game selection landing: /app opens here, you pick a game, every game has a Games button back -->
+    <div id="gameSelect">
+      <div id="venueBanner" style="display:none;margin-top:6px;padding:12px 14px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);font-weight:700;font-family:'Hanken Grotesk',sans-serif">You are running games at</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:3px;flex-wrap:wrap">
+          <span id="venueBannerName" style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff"></span>
+          <button type="button" id="venueSwitchInline" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;color:var(--muted)">Not this one? Switch venue</button>
+        </div>
+      </div>
+      <div class="lbl" style="margin-top:12px">Choose your game</div>
+      <div class="picker" id="gamePicker">
+        <button class="pk" data-game="bingo">Bingo</button>
+        <button class="pk" data-game="trivia">Trivia</button>
+        <button class="pk" data-game="musical-bingo">Musical Bingo</button>
+        <button class="pk" data-game="raffle">Raffle</button>
+        <button class="pk" data-game="members-draw">Members Draw</button>
+      </div>
     </div>
 
     <!-- opening soon placeholder -->
@@ -279,7 +290,7 @@
     </div>
 
     <!-- bingo console -->
-    <div id="bingoView" class="console">
+    <div id="bingoView" class="console hidden">
       <!-- left: run -->
       <div class="panel">
         <div id="setupBlock">
@@ -583,7 +594,12 @@
   // shows for staff who cover more than one venue.
   function updateAccountLink(){
     var link=$("billingLink"); if(link) link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
-    var sw=$("switchVenue"); if(sw) sw.style.display = (__ctx&&__ctx.staff&&__ctx.staff.length>1) ? "" : "none";
+    var multi = !!(__ctx&&__ctx.staff&&__ctx.staff.length>1);
+    var sw=$("switchVenue"); if(sw) sw.style.display = multi ? "" : "none";
+    // Multi-venue hosts: name the venue on the selection screen so they notice a wrong pick.
+    var vname=(__ctx&&__ctx.venue&&__ctx.venue.name)||"";
+    var vn=$("venueBannerName"); if(vn) vn.textContent=vname;
+    var vb=$("venueBanner"); if(vb) vb.style.display = (multi && vname) ? "" : "none";
   }
   // Forced shift timeout: a host is signed out 4 hours after signing in, so a bar device isn't
   // left logged in forever. Reset on a fresh sign-in; survives page reloads.
@@ -1067,7 +1083,8 @@
     $("roomCode").textContent=code;
     $("setupCode").textContent=code;
     buildBoard();
-    selectGame("bingo");
+    // Land on the game selection. If the host reloaded mid-game, drop straight back into the live bingo board.
+    if(G.status==="running" || G.status==="lobby"){ selectGame("bingo"); } else { showGameSelect(); }
     renderConsole();
     syncNextBtn();
   }
@@ -1086,13 +1103,29 @@
     currentGame=game;
     var btns=document.querySelectorAll("#gamePicker .pk");
     for(var i=0;i<btns.length;i++){ btns[i].classList.toggle("on", btns[i].getAttribute("data-game")===game); }
+    $("gameSelect").classList.add("hidden");      // hide the picker while in a game (Games button brings it back)
     $("bingoView").classList.remove("hidden");
     var sv=$("soonView"); if(sv) sv.classList.add("hidden");
+    $("gamesBack").style.display="";
+    $("headerTag").textContent="Bingo";
+  }
+  // The selection landing: /app shows this first, and every game's "Games" button returns here.
+  function showGameSelect(){
+    currentGame="";
+    $("gameSelect").classList.remove("hidden");
+    $("bingoView").classList.add("hidden");
+    var sv=$("soonView"); if(sv) sv.classList.add("hidden");
+    $("gamesBack").style.display="none";
+    $("headerTag").textContent="";
+    var btns=document.querySelectorAll("#gamePicker .pk");
+    for(var i=0;i<btns.length;i++){ btns[i].classList.remove("on"); }
   }
   $("gamePicker").addEventListener("click", function(e){
     var b=e.target.closest(".pk"); if(!b) return;
     selectGame(b.getAttribute("data-game"));
   });
+  $("gamesBack").addEventListener("click", showGameSelect);
+  $("venueSwitchInline").addEventListener("click", function(){ try{ localStorage.removeItem("vpVenuePick"); }catch(e){} showVenuePick(); });
 
   // ================= EVENTS =================
   $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
