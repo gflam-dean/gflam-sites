@@ -61,6 +61,10 @@
   .scard{background:var(--ink-2);border:1px solid var(--line-2);border-radius:16px;padding:15px 16px;margin:10px 0}
   .scardhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;letter-spacing:.01em}
   .snote{color:var(--muted);font-size:12.5px;margin:3px 0 10px}
+  .mdgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .mdf label{display:block;margin:0 0 5px}
+  .mdf input{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif}
+  @media(max-width:520px){.mdgrid{grid-template-columns:1fr}}
   .srow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
   .srow input[type=text]{flex:1 1 120px;min-width:0;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 10px;font-size:14px;font-family:'Manrope',sans-serif}
   .srow .sfull{flex-basis:100%}
@@ -190,22 +194,37 @@
       <button class="addbtn" id="addSlide" style="margin-top:8px">+ Add a slide</button>
     </div>
 
-    <div class="scard">
-      <div class="scardhead">Weekly members draws</div>
-      <p class="snote">The nights your draw runs, shown as a week-at-a-glance. Tick "tonight" for tonight's draw.</p>
-      <div id="draws"></div>
-      <button class="addbtn" id="addDraw" style="margin-top:8px">+ Add a draw night</button>
-    </div>
-
-    <div class="scard">
-      <div class="scardhead">Meat raffle</div>
-      <p class="snote">Leave blank if you do not run one.</p>
-      <div id="raffleBox"></div>
-    </div>
-
     <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
       <button class="go" id="screenSave">Save screen</button>
       <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview this screen</a>
+    </div>
+
+    <div class="label">Members draws</div>
+    <p class="note" style="margin:0 0 10px">Set your members draw once and it runs every week. The live jackpot and the next draw show on your TV automatically.</p>
+    <div id="mdPickWrap" class="screenpick" style="display:none">
+      <label class="flabel" for="mdVenue">Draw for</label>
+      <select id="mdVenue"></select>
+    </div>
+    <div class="scard">
+      <div class="scardhead" id="mdHead">Your members draw</div>
+      <div class="mdgrid">
+        <div class="mdf"><label class="flabel" for="md-name">Draw name</label><input type="text" id="md-name" placeholder="e.g. Friday Members Draw"></div>
+        <div class="mdf"><label class="flabel" for="md-start">Start date</label><input type="date" id="md-start"></div>
+        <div class="mdf"><label class="flabel" for="md-day">Draw day</label><input type="text" id="md-day" placeholder="e.g. Friday"></div>
+        <div class="mdf"><label class="flabel" for="md-time">Draw time</label><input type="text" id="md-time" placeholder="e.g. 7:30pm"></div>
+        <div class="mdf"><label class="flabel" for="md-startjp">Starting jackpot ($)</label><input type="number" id="md-startjp" min="0" step="1" inputmode="numeric"></div>
+        <div class="mdf"><label class="flabel" for="md-inc">Weekly increase ($)</label><input type="number" id="md-inc" min="0" step="1" inputmode="numeric"></div>
+        <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric"></div>
+      </div>
+      <button class="go" id="mdSave" style="margin-top:12px">Save draw</button>
+    </div>
+    <div class="scard">
+      <div class="scardhead">Your members list</div>
+      <p class="snote" id="mdCount">No members yet.</p>
+      <p class="snote">Paste your members below, one per line as <b style="color:var(--text)">number, name</b> (e.g. <span class="mono">142, Jane Smith</span>). We add any new numbers to your members list.</p>
+      <textarea id="md-import" rows="6" placeholder="142, Jane Smith
+143, Sam Taylor" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:14px;font-family:'Manrope',sans-serif;resize:vertical"></textarea>
+      <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
     </div>
 
     <p class="msg" id="msg"></p>
@@ -500,43 +519,10 @@
     row.querySelector(".rm").addEventListener("click", function(){ row.remove(); });
     return row;
   }
-  function drawRow(d){
-    d = d || {};
-    var row = document.createElement("div"); row.className = "srow drow";
-    row.innerHTML =
-      '<input type="text" class="d-day" placeholder="Day (e.g. Wednesday)" maxlength="20">' +
-      '<input type="text" class="d-jack" placeholder="Jackpot (e.g. $1,240)" maxlength="20">' +
-      '<input type="text" class="d-time" placeholder="Time (e.g. 7:00pm)" maxlength="20">' +
-      '<label class="tn"><input type="checkbox" class="d-tonight"> tonight</label>' +
-      '<button class="rm" title="Remove draw" type="button">&times;</button>';
-    row.querySelector(".d-day").value = d.day || "";
-    row.querySelector(".d-jack").value = d.jackpot || "";
-    row.querySelector(".d-time").value = d.time || "";
-    row.querySelector(".d-tonight").checked = !!d.tonight;
-    row.querySelector(".rm").addEventListener("click", function(){ row.remove(); });
-    return row;
-  }
-  function raffleRow(r){
-    r = r || {};
-    var box = $("raffleBox"); box.innerHTML = "";
-    var row = document.createElement("div"); row.className = "srow";
-    row.innerHTML =
-      '<input type="text" class="r-tag sfull" placeholder="Small label (e.g. Tonight, drawn 6:30pm)" maxlength="60">' +
-      '<input type="text" class="r-head sfull" placeholder="Headline (e.g. Meat Raffle)" maxlength="60">' +
-      '<input type="text" class="r-sub sfull" placeholder="One line of detail" maxlength="140">';
-    row.querySelector(".r-tag").value = r.tag || "";
-    row.querySelector(".r-head").value = r.head || "";
-    row.querySelector(".r-sub").value = r.sub || "";
-    box.appendChild(row);
-  }
   function fillScreen(cfg){
     var sl = $("slides"); sl.innerHTML = "";
     (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
     if (!(cfg.slides||[]).length) sl.appendChild(slideRow());
-    var dr = $("draws"); dr.innerHTML = "";
-    (cfg.draws||[]).forEach(function(d){ dr.appendChild(drawRow(d)); });
-    if (!(cfg.draws||[]).length) dr.appendChild(drawRow());
-    raffleRow(cfg.raffle || {});
   }
   function tvHref(slug){ return (screenOrigin||"") + "/tv" + (slug ? ("?venue=" + encodeURIComponent(slug)) : ""); }
   function setTvLinks(slug){
@@ -558,24 +544,13 @@
       var accent=r.querySelector(".accent").getAttribute("data-accent") || "gold";
       if (tag||head||sub) slides.push({ tag:tag, head:head, sub:sub, accent:accent });
     });
-    var draws = [];
-    $("draws").querySelectorAll(".srow").forEach(function(r){
-      var day=r.querySelector(".d-day").value.trim();
-      if (!day) return;
-      draws.push({ day:day, jackpot:r.querySelector(".d-jack").value.trim(), time:r.querySelector(".d-time").value.trim(), tonight:r.querySelector(".d-tonight").checked });
-    });
-    var raffle = null, rb = $("raffleBox").querySelector(".srow");
-    if (rb){
-      var rt=rb.querySelector(".r-tag").value.trim(), rh=rb.querySelector(".r-head").value.trim(), rs=rb.querySelector(".r-sub").value.trim();
-      if (rt||rh||rs) raffle = { tag:rt, head:rh, sub:rs };
-    }
-    return { slides:slides, draws:draws, raffle:raffle };
+    return { slides:slides };
   }
   function saveScreen(){
     if (!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
     var data = gatherScreen(), btn = $("screenSave");
     btn.disabled = true; btn.textContent = "Saving…";
-    api("/account/screen-save", { venue_id:screenCurrent.id, slides:data.slides, draws:data.draws, raffle:data.raffle }).then(function(r){
+    api("/account/screen-save", { venue_id:screenCurrent.id, slides:data.slides }).then(function(r){
       btn.disabled = false; btn.textContent = "Save screen";
       if (r.error){ showMsg(r.error); return; }
       showMsg("Screen saved. It updates on your TV within a few seconds.", true);
@@ -605,11 +580,104 @@
       if ($("slides").querySelectorAll(".srow").length >= 8){ showMsg("Up to 8 slides."); return; }
       $("slides").appendChild(slideRow());
     });
-    $("addDraw").addEventListener("click", function(){
-      if ($("draws").querySelectorAll(".srow").length >= 7){ showMsg("Up to 7 draw nights."); return; }
-      $("draws").appendChild(drawRow());
-    });
     $("screenSave").addEventListener("click", saveScreen);
+  }
+
+  // ---- Members draws: real settings + members list, wired to the game Worker + vp_member_draws ----
+  var VP_GAME_API = "https://venueplay-game.dean-tindale.workers.dev";
+  function gameApi(path, body){
+    return tokenThen().then(function(tok){
+      var h = { "Content-Type":"application/json" };
+      if (tok) h["Authorization"] = "Bearer " + tok;
+      return fetch(VP_GAME_API + path, { method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(function(r){ return r.json(); });
+    }).catch(function(){ return { error:"Could not reach the game service. Please try again." }; });
+  }
+  var mdCurrent = null, mdDraw = null;
+  function toCents(v){ if(v===""||v==null) return undefined; var n=Math.round(parseFloat(v)*100); return isNaN(n)?undefined:n; }
+  function toDollars(c){ return (c==null)?"":String(Math.round(c/100)); }
+  function fillMembersDraw(d){
+    d = d || {};
+    $("md-name").value = d.name || "";
+    $("md-start").value = d.date_started || "";
+    $("md-day").value = d.draw_day || "";
+    $("md-time").value = d.draw_time || "";
+    $("md-startjp").value = toDollars(d.starting_amount_cents);
+    $("md-inc").value = toDollars(d.increment_cents);
+    $("md-curjp").value = toDollars(d.current_jackpot_cents);
+  }
+  function loadMembersDrawFor(venueId){
+    mdCurrent = venueId; mdDraw = null;
+    var client = VP.getClient();
+    return client.from("vp_member_draws").select("*").eq("venue_id", venueId).order("created_at",{ascending:true}).limit(1)
+      .then(function(r){
+        mdDraw = (r && r.data && r.data[0]) || null;
+        fillMembersDraw(mdDraw);
+        return client.from("vp_member_rosters").select("id").eq("venue_id", venueId);
+      }).then(function(r){
+        var ids = ((r && r.data) || []).map(function(x){ return x.id; });
+        if (!ids.length){ $("mdCount").textContent = "No members yet."; return; }
+        return client.from("vp_members").select("id",{ count:"exact", head:true }).in("roster_id", ids).then(function(rc){
+          var n = rc && rc.count;
+          $("mdCount").textContent = n ? (n + " member" + (n===1?"":"s") + " in your list.") : "No members yet.";
+        });
+      }).catch(function(){ $("mdCount").textContent = "No members yet."; });
+  }
+  function saveMembersDraw(){
+    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    var name = $("md-name").value.trim();
+    if (!name){ showMsg("Give your draw a name."); return; }
+    var body = mdDraw ? { draw_id: mdDraw.id, name:name } : { venue_id: mdCurrent, name:name };
+    var sj=toCents($("md-startjp").value); if(sj!==undefined) body.starting_amount_cents=sj;
+    var ic=toCents($("md-inc").value);     if(ic!==undefined) body.increment_cents=ic;
+    var cj=toCents($("md-curjp").value);   if(cj!==undefined) body.current_jackpot_cents=cj;
+    var dd=$("md-day").value.trim();  if(dd) body.draw_day=dd;
+    var dt=$("md-time").value.trim(); if(dt) body.draw_time=dt;
+    var ds=$("md-start").value.trim(); if(ds) body.date_started=ds;
+    var btn=$("mdSave"); btn.disabled=true; btn.textContent="Saving…";
+    gameApi("/host/members/settings", body).then(function(r){
+      btn.disabled=false; btn.textContent="Save draw";
+      if (r.error){ showMsg(r.error); return; }
+      mdDraw = r.draw || mdDraw;
+      showMsg("Members draw saved.", true);
+    });
+  }
+  function importMembers(){
+    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    var raw = $("md-import").value.trim();
+    if (!raw){ showMsg("Paste your members first."); return; }
+    var members = [];
+    raw.split(/\r?\n/).forEach(function(line){
+      line = line.trim(); if (!line) return;
+      var m = line.match(/^(\d+)\s*[,\t]\s*(.+)$/);
+      if (m){ members.push({ number: parseInt(m[1],10), name: m[2].trim().slice(0,120) }); }
+      else { var m2 = line.match(/^(\d+)$/); if (m2) members.push({ number: parseInt(m2[1],10), name:"" }); }
+    });
+    if (!members.length){ showMsg("Could not read any members. Use 'number, name' on each line."); return; }
+    var payload = mdDraw ? { draw_id: mdDraw.id, members: members } : { venue_id: mdCurrent, members: members };
+    var btn=$("mdImport"); btn.disabled=true; btn.textContent="Adding…";
+    gameApi("/host/members/import", payload).then(function(r){
+      btn.disabled=false; btn.textContent="Add to members list";
+      if (r.error){ showMsg(r.error); return; }
+      $("md-import").value = "";
+      showMsg((r.added!=null?r.added:members.length) + " added to your members list.", true);
+      loadMembersDrawFor(mdCurrent);
+    });
+  }
+  function initMembersDraws(){
+    $("mdSave").addEventListener("click", saveMembersDraw);
+    $("mdImport").addEventListener("click", importMembers);
+    api("/account/summary", {}).then(function(d){
+      var venues = (d && d.venues) || [];
+      if (!venues.length) return;
+      var pick = $("mdPickWrap"), sel = $("mdVenue");
+      if (venues.length > 1){
+        sel.innerHTML = "";
+        venues.forEach(function(v){ var o=document.createElement("option"); o.value=v.id; o.textContent=v.name; sel.appendChild(o); });
+        pick.style.display = "";
+        sel.onchange = function(){ loadMembersDrawFor(sel.value); };
+      } else { pick.style.display = "none"; }
+      loadMembersDrawFor(venues[0].id);
+    });
   }
 
   // Require sign-in, then load.
@@ -618,6 +686,7 @@
     load();
     loadHosts();   // populate the hosts list AND the "venues they can run" picker on page load
     initScreen();
+    initMembersDraws();
   }).catch(function(){ load(); });
 })();
 </script>
