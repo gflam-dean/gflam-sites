@@ -155,6 +155,7 @@
     <span class="tag" id="headerTag"></span>
     <span class="who" id="who" style="display:none"><span class="dot" id="statusDot"></span> <span id="statusText">Sign in to start</span></span>
     <span class="hactions" id="hactions" style="display:none">
+      <button type="button" id="switchVenue" class="hact" style="display:none">Switch venue</button>
       <a id="billingLink" class="hact" href="billing.html">Account</a>
       <button type="button" id="signoutBtn" class="hact">Sign out</button>
     </span>
@@ -522,6 +523,7 @@
     try{ sessionStorage.removeItem("vpGreeted"); }catch(e){}
     setTimeout(function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } }, 1600);
   });
+  $("switchVenue").addEventListener("click", function(){ try{ localStorage.removeItem("vpVenuePick"); }catch(e){} showVenuePick(); });
 
   // ---- always land on the pair step, code pre-filled and visible ----
   // Auto-pair by venue: the host derives the SAME code the venue's TV derives (VP.venueCode),
@@ -559,10 +561,11 @@
       });
     }).catch(function(){ box.innerHTML="<div class='cerr'>Could not load venues. Reload to try again.</div>"; });
   }
-  // The Account link is for owners and managers only; a host never sees it.
+  // The Account link is for owners and managers only; a host never sees it. Switch venue only
+  // shows for staff who cover more than one venue.
   function updateAccountLink(){
-    var link=$("billingLink"); if(!link) return;
-    link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
+    var link=$("billingLink"); if(link) link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
+    var sw=$("switchVenue"); if(sw) sw.style.display = (__ctx&&__ctx.staff&&__ctx.staff.length>1) ? "" : "none";
   }
   function proceedVenue(){
     updateAccountLink();

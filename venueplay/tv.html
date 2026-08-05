@@ -266,7 +266,15 @@
     for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
     return out;
   }
-  var VENUE_SLUG=tvVenueSlug();
+  // Remember the venue on this screen so the slug only ever gets typed once. After that, plain
+  // venueplay.com.au/tv works (nobody has to peck a slug into a TV remote). ?venue= in the URL
+  // always wins and updates what's remembered.
+  var VENUE_SLUG=(function(){
+    var fromUrl=tvVenueSlug();
+    if(fromUrl){ try{ localStorage.setItem("vpTvVenue", fromUrl); }catch(e){} return fromUrl; }
+    try{ var s=localStorage.getItem("vpTvVenue"); if(s) return s; }catch(e){}
+    return "";
+  })();
   // ---- stable code, persists across refreshes so the link works forever ----
   var CODE=(function(){
     if(VENUE_SLUG) return venueCode(VENUE_SLUG);   // venue link: derive the shared code, no pairing
