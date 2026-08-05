@@ -63,7 +63,8 @@
   .snote{color:var(--muted);font-size:12.5px;margin:3px 0 10px}
   .mdgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .mdf label{display:block;margin:0 0 5px}
-  .mdf input{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif}
+  .mdf input,.mdf select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif}
+  .mdf input[readonly]{opacity:.75;cursor:default}
   @media(max-width:520px){.mdgrid{grid-template-columns:1fr}}
   .rfchip{display:inline-flex;align-items:center;gap:6px;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;margin:0 6px 6px 0;font-size:13px;color:#fff}
   .rfx{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
@@ -233,7 +234,7 @@
       <p class="snote">When your raffle runs. Shows on the TV as "drawn [day] [time]".</p>
       <div class="mdgrid">
         <div class="mdf"><label class="flabel" for="rf-label">Raffle name</label><input type="text" id="rf-label" placeholder="e.g. Meat Raffle"></div>
-        <div class="mdf"><label class="flabel" for="rf-day">Draw day</label><input type="text" id="rf-day" placeholder="e.g. Friday"></div>
+        <div class="mdf"><label class="flabel" for="rf-day">Draw day</label><select id="rf-day"><option value="">Pick a day</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
         <div class="mdf"><label class="flabel" for="rf-time">Draw time</label><input type="text" id="rf-time" placeholder="e.g. 6:30pm"></div>
       </div>
       <button class="go" id="rfSave" style="margin-top:12px">Save routine</button>
@@ -263,12 +264,13 @@
       <div class="mdgrid">
         <div class="mdf"><label class="flabel" for="md-name">Draw name</label><input type="text" id="md-name" placeholder="e.g. Friday Members Draw"></div>
         <div class="mdf"><label class="flabel" for="md-start">Start date</label><input type="date" id="md-start"></div>
-        <div class="mdf"><label class="flabel" for="md-day">Draw day</label><input type="text" id="md-day" placeholder="e.g. Friday"></div>
+        <div class="mdf"><label class="flabel" for="md-day">Draw day</label><input type="text" id="md-day" readonly placeholder="from your start date"></div>
         <div class="mdf"><label class="flabel" for="md-time">Draw time</label><input type="text" id="md-time" placeholder="e.g. 7:30pm"></div>
         <div class="mdf"><label class="flabel" for="md-startjp">Starting jackpot ($)</label><input type="number" id="md-startjp" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-inc">Weekly increase ($)</label><input type="number" id="md-inc" min="0" step="1" inputmode="numeric"></div>
         <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric"></div>
       </div>
+      <p class="snote" style="margin:8px 0 0">The draw day comes from your start date, and the current jackpot is worked out from the start date, starting jackpot and weekly increase. You can still adjust the jackpot if you need to.</p>
       <button class="go" id="mdSave" style="margin-top:12px">Save draw</button>
     </div>
     <div class="scard">
@@ -942,9 +944,17 @@
       loadRafflesFor(venues[0].id);
     });
   }
+  function mdWeekday(dateStr){ if(!dateStr) return ""; var p=dateStr.split("-"); if(p.length<3) return ""; var d=new Date(+p[0],+p[1]-1,+p[2]); return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d.getDay()]||""; }
+  function mdWeeksSince(dateStr){ if(!dateStr) return 0; var p=dateStr.split("-"); if(p.length<3) return 0; var d=new Date(+p[0],+p[1]-1,+p[2]); var w=Math.floor((Date.now()-d.getTime())/(7*86400000)); return w>0?w:0; }
+  function mdRecalc(){
+    $("md-day").value = mdWeekday($("md-start").value);
+    var start=parseFloat($("md-startjp").value)||0, inc=parseFloat($("md-inc").value)||0;
+    $("md-curjp").value = Math.round(start + inc*mdWeeksSince($("md-start").value));
+  }
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);
     $("mdImport").addEventListener("click", importMembers);
+    ["md-start","md-startjp","md-inc"].forEach(function(id){ $(id).addEventListener("input", mdRecalc); $(id).addEventListener("change", mdRecalc); });
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });
     $("md-csv").addEventListener("change", function(){
       var f = this.files && this.files[0]; if (!f) return;
