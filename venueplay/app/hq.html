@@ -682,19 +682,58 @@
   }
 
   /* ================= GROUPS ================= */
+  // A self-serve multi-venue "account" is a set of venues that share one founding_id (one owner,
+  // one card, one subscription) but have NO negotiated operator group. These never had a
+  // vp_venue_groups row, so they only ever showed as an "Account · N venues" badge on the Venues
+  // tab and were invisible here. Surface them as read-only account cards so a real 2-venue account
+  // shows up in the Groups tab.
+  function foundingClusters(){
+    var by={};
+    S.venues.forEach(function(v){ if(!v.group_id && v.founding_id){ (by[v.founding_id]=by[v.founding_id]||[]).push(v); } });
+    var out=[];
+    Object.keys(by).forEach(function(fid){ if(by[fid].length>1) out.push({ founding_id:fid, members:by[fid] }); });
+    out.sort(function(a,b){ return String(a.members[0].name||"").localeCompare(String(b.members[0].name||"")); });
+    return out;
+  }
+  function accountClusterCard(c){
+    var members=c.members.slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
+    var panel=document.createElement("div"); panel.className="panel"; panel.style.marginBottom="16px";
+    var h='';
+    h+='<div class="grouphead"><div style="flex:1;min-width:200px"><div class="gn">Account &middot; '+members.length+' venues</div>'+
+       '<div class="gm">Self-serve multi-venue account &middot; billed together on one card &middot; '+members.length+' venue'+(members.length===1?"":"s")+'</div></div>'+
+       '<span class="badge grouped">Account</span></div>';
+    h+='<div style="padding:12px 16px"><div class="tscroll"><table style="min-width:420px"><thead><tr><th>Venue</th><th>Screen</th><th>Total players</th></tr></thead><tbody>';
+    members.forEach(function(v){ h+='<tr><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+(v.max_players!=null?v.max_players:(v.included_players!=null?v.included_players:"—"))+'</td></tr>'; });
+    h+='</tbody></table></div><div class="note" style="margin-top:8px">This is one owner\'s account that holds more than one venue (a second venue was added from their account page). It is billed as a single subscription, not a negotiated operator group, so there is no group rate to set here. Its venues and billing are managed from the owner\'s account page.</div></div>';
+    panel.innerHTML=h; return panel;
+  }
+  function renameGroup(id){
+    var g=S.groupById[id]; if(!g) return;
+    var name=prompt("Group name", (g.name&&g.name.trim())?g.name:"");
+    if(name==null) return;
+    name=name.trim();
+    if(!name){ alert("Enter a group name."); return; }
+    VP.getClient().from("vp_venue_groups").update({ name:name }).eq("id",id).then(function(r){
+      if(r.error){ alert("Could not rename: "+(r.error.message||r.error)); return; }
+      g.name=name; renderStats(); renderVenues(); renderGroups(); populateGroupSelect();
+    });
+  }
   function renderGroups(){
     var wrap=$("groupList"); wrap.innerHTML="";
-    if(!S.groups.length){ wrap.innerHTML='<div class="empty">No groups yet. Use Create group.</div>'; return; }
+    var clusters=foundingClusters();
+    if(!S.groups.length && !clusters.length){ wrap.innerHTML='<div class="empty">No groups or multi-venue accounts yet. Use Create group, or add a second venue to an account from the account page.</div>'; return; }
     S.groups.forEach(function(g){
+      var gname=(g.name&&g.name.trim())?g.name:"Unnamed group";
       var members=S.venues.filter(function(v){ return v.group_id===g.id; });
       var neg=g.negotiated_rate_cents!=null?aud(g.negotiated_rate_cents/100):"—";
       var rack=g.rack_rate_cents!=null?aud(g.rack_rate_cents/100):"—";
       var ds=S.discounts.filter(function(d){ return d.target_type==="group" && d.target_id===g.id; });
       var panel=document.createElement("div"); panel.className="panel"; panel.style.marginBottom="16px";
       var h='';
-      h+='<div class="grouphead"><div style="flex:1;min-width:200px"><div class="gn">'+esc(g.name)+'</div>'+
+      h+='<div class="grouphead"><div style="flex:1;min-width:200px"><div class="gn">'+esc(gname)+'</div>'+
         '<div class="gm">'+esc(g.billing_email||"no billing email")+' &middot; '+members.length+' venue'+(members.length===1?"":"s")+' &middot; negotiated '+neg+'/player &middot; rack '+rack+'</div></div>'+
         '<span class="badge '+(g.status==="suspended"?"suspend":"grouped")+'">'+esc(g.status||"active")+'</span>'+
+        '<button class="mini" data-grename="'+esc(g.id)+'">Rename</button>'+
         '<button class="mini" data-gedit="'+esc(g.id)+'">Assign venues</button></div>';
       // member list
       h+='<div style="padding:12px 16px">';
@@ -711,6 +750,10 @@
          '<div class="note">Only venues already in a group appear here (moving them just changes which group). Independent card-billed venues are converted at onboarding.</div></div>';
       panel.innerHTML=h; wrap.appendChild(panel);
     });
+    if(clusters.length){
+      var lbl=document.createElement("div"); lbl.className="lblk"; lbl.textContent="Multi-venue accounts"; wrap.appendChild(lbl);
+      clusters.forEach(function(c){ wrap.appendChild(accountClusterCard(c)); });
+    }
   }
   function venueCheckboxes(g){
     // Only grouped venues are safe to reassign (independent venues carry a founding_id and the
@@ -724,6 +767,8 @@
     }).join("");
   }
   $("groupList").addEventListener("click", function(e){
+    var rn=e.target.closest("button[data-grename]");
+    if(rn){ renameGroup(rn.getAttribute("data-grename")); return; }
     var ed=e.target.closest("button[data-gedit]");
     if(ed){ var id=ed.getAttribute("data-gedit"); S.openGroup=(S.openGroup===id?null:id); renderGroups(); }
   });
