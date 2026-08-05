@@ -68,11 +68,16 @@
   .rfchip{display:inline-flex;align-items:center;gap:6px;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;margin:0 6px 6px 0;font-size:13px;color:#fff}
   .rfx{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
   .rfx:hover{color:var(--pink)}
-  .adslide{display:flex;gap:12px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;flex-wrap:wrap}
-  .adthumb{flex:0 0 120px;height:72px;border-radius:8px;background:var(--ink-2);background-size:cover;background-position:center;background-repeat:no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;text-align:center}
-  .adfields{flex:1 1 200px;min-width:0}
+  .adslide{display:flex;gap:14px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;flex-wrap:wrap;align-items:flex-start}
+  .adcol{flex:0 0 120px;display:flex;flex-direction:column;gap:6px}
+  .adthumb{width:120px;height:72px;border-radius:8px;background:var(--ink-2);background-size:cover;background-position:center;background-repeat:no-repeat;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;text-align:center}
+  .adthumbbtns{display:flex;flex-direction:column;gap:4px;align-items:center}
+  .adthumbbtns .ad-change{width:120px}
+  .adfields{flex:1 1 220px;min-width:0}
+  .adline{display:flex;gap:8px;flex-wrap:wrap}
+  .adf{flex:1 1 90px;min-width:0}
+  .adf .flabel{display:block;margin:0 0 4px}
   .adfields input[type=number],.adfields input[type=date]{width:100%;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:8px 10px;font-size:14px;font-family:'Manrope',sans-serif}
-  .adfields .flabel{display:block;margin:0 0 4px}
   .srow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0}
   .srow input[type=text]{flex:1 1 120px;min-width:0;background:var(--ink-2);border:1px solid var(--line);color:#fff;border-radius:9px;padding:9px 10px;font-size:14px;font-family:'Manrope',sans-serif}
   .srow .sfull{flex-basis:100%}
@@ -214,7 +219,7 @@
     <div id="playerData"></div>
 
     <div class="label">Marketing opt-ins</div>
-    <p class="note" style="margin:0 0 10px">Players who ticked "keep me posted" when they joined. The download is only ever your own venues.</p>
+    <p class="note" style="margin:0 0 10px">Players who ticked "keep me posted" when they joined. Download them as a CSV for your own marketing.</p>
     <button class="addbtn" id="optinExport">Download opt-in list (CSV)</button>
 
     <div class="label">Raffles</div>
@@ -286,14 +291,14 @@
 
     <div class="scard">
       <div class="scardhead">Slides</div>
-      <p class="snote">Each slide is one image. Set how long it stays on screen, and optional dates so a promo ends itself. Up to 12.</p>
+      <p class="snote">Each slide is one image. Set how long it stays on screen, and optional dates so a promo ends itself (leave the dates blank to show it all the time). Up to 12.</p>
       <div id="slides"></div>
-      <button class="addbtn" id="addSlide" style="margin-top:8px">+ Add a slide</button>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">
-      <button class="go" id="screenSave">Save screen</button>
-      <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview this screen</a>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <button class="addbtn" id="addSlide">+ Add a slide</button>
+        <span style="flex:1"></span>
+        <button class="go" id="screenSave">Save screen</button>
+        <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview</a>
+      </div>
     </div>
 
     <p class="msg" id="msg"></p>
@@ -595,17 +600,18 @@
     s = s || {};
     var row = document.createElement("div"); row.className = "adslide"; row.setAttribute("data-url", s.image_url || "");
     row.innerHTML =
-      '<div class="adthumb">' + (s.image_url ? '' : 'No image yet') + '</div>' +
-      '<div class="adfields">' +
-        '<label class="flabel">Seconds on screen</label>' +
-        '<input type="number" class="ad-secs" min="3" max="60" value="' + (parseInt(s.seconds,10)||7) + '">' +
-        '<div style="display:flex;gap:8px;margin-top:6px">' +
-          '<div style="flex:1"><label class="flabel">Show from</label><input type="date" class="ad-starts" value="' + (s.starts||"") + '"></div>' +
-          '<div style="flex:1"><label class="flabel">Show until</label><input type="date" class="ad-ends" value="' + (s.ends||"") + '"></div>' +
-        '</div>' +
-        '<div style="display:flex;gap:10px;align-items:center;margin-top:8px">' +
+      '<div class="adcol">' +
+        '<div class="adthumb">' + (s.image_url ? '' : 'No image yet') + '</div>' +
+        '<div class="adthumbbtns">' +
           '<button class="addbtn ad-change" type="button">' + (s.image_url ? "Change image" : "Choose image") + '</button>' +
           '<button class="canxlink ad-rm" type="button">Remove</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="adfields">' +
+        '<div class="adline">' +
+          '<div class="adf"><label class="flabel">Seconds</label><input type="number" class="ad-secs" min="3" max="60" value="' + (parseInt(s.seconds,10)||7) + '"></div>' +
+          '<div class="adf"><label class="flabel">Show from</label><input type="date" class="ad-starts" value="' + (s.starts||"") + '"></div>' +
+          '<div class="adf"><label class="flabel">Show until</label><input type="date" class="ad-ends" value="' + (s.ends||"") + '"></div>' +
         '</div>' +
       '</div>' +
       '<input type="file" class="ad-file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none">';
