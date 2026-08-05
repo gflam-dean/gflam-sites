@@ -661,8 +661,11 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   // Count the questions now: it drives qtotal on the phones/TV and the end-of-round
   // check in /host/question. We select only ids, never correct_index.
   const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=id');
-  const questionCount = qs.length;
+  let questionCount = qs.length;
   if (!questionCount) return json({ error: 'That question set has no questions' }, 409);
+  // Host can play fewer than the whole set this round (default = whole set).
+  const wantN = parseInt(b.question_count, 10);
+  if (wantN >= 1 && wantN < questionCount) questionCount = wantN;
 
   // vp_trivia_games has no per-game points/time/prize columns, so the host's overrides
   // and display text live in vp_games.config (same place bingo keeps prize/title).
@@ -1558,6 +1561,11 @@ async function handleHostQuestion(request, env, json) {
   if (!tg.length) return json({ error: 'Not a trivia game' }, 404);
   const setId = tg[0].question_set_id;
   const curSeq = tg[0].current_seq || 0;
+
+  // Stop once the round's chosen number of questions has been played. Questions are seq
+  // 1..N, current_seq is the last one served, so served-so-far == curSeq.
+  const roundLimit = (game.config && typeof game.config.question_count === 'number') ? game.config.question_count : null;
+  if (roundLimit != null && curSeq >= roundLimit) return json({ done: true });
 
   // The next question is the lowest seq strictly greater than the current one. Using
   // seq > current (not current+1) is robust to gaps if a question was ever removed.

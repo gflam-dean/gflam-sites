@@ -103,7 +103,7 @@ for cat, items in sorted(by_cat.items()):
     if st not in (200, 201) or not isinstance(res, list) or not res:
         sys.exit("ERROR creating set '%s': %s %s\n(send me this exact message and I'll fix the mapping)" % (cat, st, res))
     set_id = res[0]["id"]
-    rows = [{"set_id": set_id, "seq": i, "question": q["question"],
+    rows = [{"set_id": set_id, "seq": i + 1, "question": q["question"],
              "options": q["options"], "correct_index": q["correctIndex"]}
             for i, q in enumerate(items)]
     for b in range(0, len(rows), 500):

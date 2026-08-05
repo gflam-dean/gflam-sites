@@ -159,6 +159,11 @@
             <label>Question set</label>
             <select id="setSel"><option value="">Loading your question sets&hellip;</option></select>
           </div>
+          <div class="field">
+            <label>Questions this round</label>
+            <input type="number" id="cfgCount" class="mono" min="1" max="50" value="10">
+            <div class="note" style="margin-top:4px">How many questions to play from the set this round.</div>
+          </div>
           <div class="stat">
             <div class="box"><div class="k">Questions</div><div class="v" id="setupQs">0</div></div>
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
@@ -166,7 +171,7 @@
           </div>
           <div class="two">
             <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="20"></div>
-            <div class="field"><label>Base points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
+            <div class="field"><label>Correct answer points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
           </div>
           <div class="field">
             <label>Speed bonus (faster answers score more, up to +50%)</label>
@@ -178,6 +183,10 @@
           </div>
           <button class="btn pink big" id="startBtn">Start round</button>
           <p class="note" style="text-align:center;margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
+          <div style="margin-top:14px;padding:12px 14px;background:var(--ink-3);border:1px solid var(--line-2);border-radius:11px">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint);margin-bottom:6px">How scoring works</div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.5">A correct answer scores <b style="color:#fff" id="scBase">100</b> points. With the speed bonus on, answering fast adds up to <b style="color:var(--gold)">+50%</b> (a lightning-fast correct answer = <b style="color:#fff" id="scMax">150</b>). A wrong answer scores 0.</div>
+          </div>
         </div>
 
         <div id="liveBlock" class="hidden">
@@ -261,7 +270,7 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    timePerQ:20, base:100, speedBonus:true, colour:true,
+    timePerQ:20, base:100, count:10, speedBonus:true, colour:true,
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
     players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
@@ -371,6 +380,7 @@
   function readSettings(){
     G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||20));
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
+    G.count=Math.max(1, Math.min(50, parseInt($("cfgCount").value,10)||10));
     G.setId=$("setSel").value||"";
   }
   function openSession(){
@@ -394,7 +404,8 @@
       bcast({ t:"mode", mode:"trivia" });
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"trivia", question_set_id:G.setId,
-        time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour
+        time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour,
+        question_count:G.count
       });
     }).then(function(r){
       G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
@@ -539,6 +550,7 @@
   $("connectBtn").addEventListener("click", tryConnect);
   $("startBtn").addEventListener("click", startRound);
   $("setSel").addEventListener("change", syncSetCount);
+  var cfgBaseEl=$("cfgBase"); if(cfgBaseEl){ cfgBaseEl.addEventListener("input", function(){ var b=Math.max(0,parseInt(cfgBaseEl.value,10)||0); if($("scBase")) $("scBase").textContent=b; if($("scMax")) $("scMax").textContent=Math.round(b*1.5); }); }
 
   document.querySelectorAll("#cfgSpeed button").forEach(function(b){ b.addEventListener("click", function(){
     G.speedBonus=b.getAttribute("data-v")==="on";
