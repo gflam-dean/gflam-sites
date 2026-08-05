@@ -309,14 +309,15 @@
               <option value="5">5 tickets</option>
               <option value="6">6 tickets (a full book)</option>
             </select>
-            <div class="fieldnote" style="font-size:11.5px;color:var(--faint);margin-top:5px">The default for this game. Players can still change how many they take on their phone.</div>
+            <div class="fieldnote" style="font-size:11.5px;color:var(--faint);margin-top:5px">Everyone gets this many tickets this game.</div>
           </div>
           <div class="stat">
-            <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
+            <div class="box"><div class="k">Players joined</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
           </div>
-          <button class="btn pink big" id="startBtn">Start game</button>
-          <p class="note" style="text-align:center;margin-top:10px">Puts Bingo on the TV, deals a fresh card to every phone, and shows the join QR on the screen.</p>
+          <button class="btn pink big" id="startBtn">Open lobby</button>
+          <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
+          <p class="note" id="startNote" style="text-align:center;margin-top:10px">Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.</p>
         </div>
 
         <div id="liveBlock" class="hidden">
@@ -644,6 +645,7 @@
         localStorage.setItem(gameKey(G.code), JSON.stringify({
           v:1, ts:Date.now(),
           status:G.status, pattern:G.pattern, prize:G.prize,
+          defaultCards:G.defaultCards, prizesWon:G.prizesWon, startedAt:G.startedAt,
           draw:G.draw, idx:G.idx, called:G.called,
           players:G.players, order:G.order,
           claim:G.claim, won:G.won
@@ -664,6 +666,9 @@
       G.status="running";
       G.pattern=s.pattern||"one";
       G.prize=(typeof s.prize==="string")?s.prize:"the prize";
+      G.defaultCards=clampCards(s.defaultCards||1);
+      G.prizesWon=Array.isArray(s.prizesWon)?s.prizesWon:[];
+      G.startedAt=s.startedAt||null;
       G.draw=Array.isArray(s.draw)?s.draw:[];
       G.idx=(typeof s.idx==="number")?s.idx:-1;
       G.called=s.called||{};
@@ -789,15 +794,37 @@
 
   // ---- render ----
   function renderConsole(){
-    var live=G.status==="running";
+    var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
+    $("startBtn").textContent = lobby ? "Start calling numbers" : "Open lobby";
+    $("cancelLobbyBtn").style.display = lobby ? "" : "none";
+    $("startNote").textContent = lobby
+      ? "Players are scanning in on their phones. Start calling numbers when you are ready."
+      : "Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.";
     $("setupPlayers").textContent=playerCount();
     $("setupCode").textContent=G.code;
     $("playerCount").textContent=playerCount();
     renderPlayers();
     if(live) renderLive();
     updateBoard();
+  }
+  // Open the join lobby: the TV shows the big QR + code and players can scan in and see
+  // "You're in" before any numbers are called. The button then becomes Start.
+  function openLobby(){
+    G.pattern=$("patternSel").value;
+    G.prize=($("prizeInput").value||"").trim()||"the prize";
+    G.defaultCards=clampCards($("cardsSel").value);
+    G.status="lobby"; G.won=false; G.claim=null; G.lastWin=null;
+    send({ t:"mode", mode:"bingo" });   // TV switches from ads to the join screen
+    sendState();                         // active:false -> TV shows the lobby (QR)
+    saveGame(); renderConsole();
+  }
+  function cancelLobby(){
+    G.status="setup";
+    send({ t:"idle" });                  // TV back to the advertising loop
+    sendState();
+    saveGame(); renderConsole();
   }
   function renderPlayers(){
     var el=$("playerList");
@@ -939,8 +966,8 @@
     // live, replay the current state so the screen catches up instead of showing ads.
     if(m && m.hello){
       send({ t:"host_here" });
-      if(G.status==="running"){
-        send({ t:"mode", mode:"bingo" });
+      if(G.status==="running" || G.status==="lobby"){
+        send({ t:"mode", mode:"bingo" });   // running OR an open lobby: replay so the TV shows the game/QR
         sendState();
         if(G.claim) send({ t:"claim_pending", name:G.claim.name });
       }
@@ -1048,7 +1075,8 @@
   });
 
   // ================= EVENTS =================
-  $("startBtn").addEventListener("click", startGame);
+  $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
+  $("cancelLobbyBtn").addEventListener("click", cancelLobby);
   $("nextBtn").addEventListener("click", nextBall);
   $("newGameBtn").addEventListener("click", newGame);
   $("endGameBtn").addEventListener("click", endGame);
