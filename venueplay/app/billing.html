@@ -340,6 +340,7 @@
       ? ((d.card_brand ? (d.card_brand.charAt(0).toUpperCase() + d.card_brand.slice(1) + " ") : "") + "•••• " + d.card_last4)
       : "on file";
     $("reminders").checked = d.payment_reminders !== false;
+    gateSections(d);
 
     var wrap = $("venues"); wrap.innerHTML = "";
     var multi = d.venues.length > 1;
@@ -436,6 +437,34 @@
   }
 
   function esc(s){ return String(s==null?"":s).replace(/[<>&]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]; }); }
+
+  // Restricted managers only see the sections their toggles allow; owner-only sections are
+  // hidden. (The Worker independently blocks the actions, so this is UX, not the security line.)
+  function gateSections(d){
+    if (d.is_owner) return; // the account owner sees everything
+    var p = d.perms || {};
+    function section(labelText){
+      var out=[], started=false, kids=$("content").children, lt=labelText.toLowerCase();
+      for (var i=0;i<kids.length;i++){
+        var el=kids[i], isLabel=el.classList&&el.classList.contains("label");
+        if (isLabel && el.textContent.trim().toLowerCase()===lt){ started=true; out.push(el); continue; }
+        if (started){ if (isLabel || el.id==="msg") break; out.push(el); }
+      }
+      return out;
+    }
+    function setSec(labelText, show){ section(labelText).forEach(function(el){ el.style.display = show?"":"none"; }); }
+    // Toggle-gated sections.
+    setSec("Hosts", p.add_hosts!==false);
+    setSec("Raffles", p.draws_raffles!==false);
+    setSec("Members draws", p.draws_raffles!==false);
+    setSec("Advertising", p.advertising!==false);
+    // Owner-only sections, hidden last so any overlap ends hidden.
+    var firstCard=$("content").querySelector(".card"); if(firstCard) firstCard.style.display="none"; // billing summary
+    setSec("Your venues", false);
+    setSec("Payment reminders", false);
+    setSec("Player data & name display", false);
+    var mgr=$("managersSection"); if(mgr) mgr.style.display="none";
+  }
 
   function load(){
     return api("/account/summary", {}).then(function(d){
