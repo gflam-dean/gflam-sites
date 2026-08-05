@@ -531,10 +531,13 @@
           var dx=(rb.left+rb.width/2)-(bb.left+bb.width/2);
           var dy=(rb.top+rb.height/2)-(bb.top+bb.height/2);
           var sc=rb.width/bb.width;
-          b.style.transition="transform .8s cubic-bezier(.4,0,.2,1), opacity .8s ease";
+          b.style.transition="transform .8s cubic-bezier(.4,0,.2,1)";   // travels FULLY OPAQUE, no fade
           void b.offsetWidth;
           b.style.transform="translate("+dx+"px,"+dy+"px) scale("+sc+")";
-          b.style.opacity="0";   // fades out just as it lands on the identical resting ball underneath
+          // When it lands it sits exactly on the identical resting ball; we hide it then, so the big
+          // ball simply "becomes" the called-number ball - no see-through mid-flight.
+          revealT2=setTimeout(function(){ el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity=""; }, 820);
+          return;
         }
       } else {
         b.style.transition="opacity .6s ease"; void b.offsetWidth; b.style.opacity="0";

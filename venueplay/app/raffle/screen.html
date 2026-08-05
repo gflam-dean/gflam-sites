@@ -256,6 +256,22 @@
 
   // ---- realtime ----
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same
+  // /tv link. Listen only (no tv_here ping) so two games that are both live can't ping-pong.
+  (function unifiedRouter(){
+    if(!VENUE_SLUG) return;
+    var SELF="raffle";
+    var CH={ bingo:venueCode(VENUE_SLUG), trivia:venueCode("trivia-"+VENUE_SLUG), musical:venueCode("musical-"+VENUE_SLUG), raffle:venueCode("raffle-"+VENUE_SLUG), members:venueCode("members-"+VENUE_SLUG) };
+    var URL={ bingo:"/tv?venue=", trivia:"/app/trivia/screen.html?venue=", musical:"/app/musical/screen.html?venue=", raffle:"/app/raffle/screen.html?venue=", members:"/app/members/screen.html?venue=" };
+    var switched=false;
+    function goTo(game){ if(switched||game===SELF) return; switched=true; window.location.href=URL[game]+encodeURIComponent(VENUE_SLUG); }
+    Object.keys(CH).forEach(function(game){
+      if(game===SELF) return;
+      var c=client.channel("vp-"+CH[game], { config:{ broadcast:{ self:false } } });
+      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(m && m.t==="mode") goTo(game); });
+      c.subscribe();
+    });
+  })();
   var ch=client.channel("vp-raffle-"+CODE, { config:{ broadcast:{ self:false } } });
   var tvSubscribed=false;
   function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
