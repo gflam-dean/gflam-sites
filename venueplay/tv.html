@@ -110,14 +110,14 @@
 
   /* big-ball reveal */
   .ballreveal{position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;pointer-events:none}
-  .brball{width:min(38cqw,58vh);height:min(38cqw,58vh);border-radius:50%;display:flex;align-items:center;justify-content:center;
+  .brball{width:min(46cqw,66vh);height:min(46cqw,66vh);border-radius:50%;display:flex;align-items:center;justify-content:center;
     background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
-    color:#0A0A0B;font-family:'Anton',sans-serif;font-size:min(20cqw,30vh);line-height:1;
+    color:#0A0A0B;font-family:'Anton',sans-serif;font-size:min(26cqw,44vh);line-height:1;
     box-shadow:0 0 100px rgba(255,31,142,.55), inset 0 -1.2cqw 3cqw rgba(0,0,0,.16)}
   @keyframes brpop{ 0%{transform:scale(.2);opacity:0} 45%{transform:scale(1.06);opacity:1} 70%{transform:scale(.98)} 100%{transform:scale(1);opacity:1} }
   @keyframes brgo{ 0%{transform:scale(1);opacity:1} 100%{transform:translate(-30cqw,-15cqw) scale(.16);opacity:0} }
   .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
-  .cbnum{font-family:'Anton',sans-serif;font-size:clamp(48px,20cqw,168px);color:#fff;line-height:.82;text-shadow:0 0 46px rgba(255,255,255,.22)}
+  .cbnum{font-family:'Anton',sans-serif;font-size:clamp(64px,30cqw,340px);color:#fff;line-height:.82;text-shadow:0 0 46px rgba(255,255,255,.22)}
   .prevballs{display:flex;gap:.8cqw;justify-content:center;flex-wrap:wrap;margin-top:1cqw}
   .prevball{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.8cqw,15px);color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:.6cqw;padding:.3cqw .9cqw}
   .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,15px);color:var(--muted);margin-top:1cqw}
@@ -666,6 +666,21 @@
   drawQR($("qrMini"), playURL, 240);
   enterAds(); // shows + draws the pair QR while in ads with no host connected
   validateVenue(); // warn if this screen link isn't tied to a real venue
+
+  // ---- unified TV: /tv is the ONE venue screen. Bingo shows inline (above); besides that, this
+  // page WATCHES the venue's other games and, the moment a host puts one on air (mode/session/
+  // started/question), switches this TV straight to that game's screen. So the venue only ever
+  // sets up /tv?<slug> and it follows whatever game is being run.
+  (function gameRouter(){
+    if(!VENUE_SLUG) return;
+    var GAMES=["trivia","musical","raffle","members"], switched=false;
+    function goTo(game){ if(switched) return; switched=true; window.location.href="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG); }
+    GAMES.forEach(function(game){
+      var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
+      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(m && (m.t==="mode"||m.t==="session"||m.t==="started"||m.t==="question")) goTo(game); });
+      c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
+    });
+  })();
 
   // ---- per-venue screen content ----
   // /tv?venue=<slug> loads that venue's own promo slides, draw schedule and raffle
