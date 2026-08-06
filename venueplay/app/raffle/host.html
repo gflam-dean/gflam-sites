@@ -78,6 +78,21 @@
   .presets button:hover{border-color:var(--pink);color:#fff}
   .presets .empty{color:var(--faint);font-size:11.5px;padding:2px 0}
   .presetlbl{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:5px}
+  .addrow{display:flex;gap:8px;align-items:stretch}
+  .addrow input{flex:1}
+  .addbtn{flex:none;border:none;border-radius:10px;padding:0 16px;background:var(--pink);color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif}
+  .addbtn:active{background:var(--pink-deep)}
+  .prizelist{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .prizelist:empty{display:none}
+  .prow{display:flex;align-items:center;gap:10px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px}
+  .prow .pi{font-family:'JetBrains Mono',monospace;color:var(--muted);font-weight:700;min-width:18px}
+  .prow .pl{flex:1;color:#fff;font-weight:600}
+  .prow .pd{font-size:11px;color:var(--win);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+  .prow .px{background:none;border:none;color:var(--faint);font-size:18px;cursor:pointer;line-height:1;padding:0 4px}
+  .prow .px:hover{color:var(--pink)}
+  .prow.done{opacity:.55}
+  .prow.done .pl{text-decoration:line-through}
+  .prow.next{border-color:var(--pink)}
 
   .rangeline{font-size:12px;color:var(--faint);margin:-2px 0 14px}
   .rangeline .warn{color:var(--roll)}
@@ -145,11 +160,15 @@
     <div class="lbl">Raffle host<span id="roomCode" style="display:none"></span></div>
 
     <div class="panel">
-      <div class="field">
+      <div class="field" id="prizeField">
         <label>What are you drawing for?</label>
-        <div class="presetlbl">Your saved prizes</div>
+        <div class="presetlbl">Tap a saved prize to add it, or type your own</div>
         <div class="presets" id="prizePresets"></div>
-        <input type="text" id="rfPrize" placeholder="e.g. Meat Tray">
+        <div class="addrow">
+          <input type="text" id="rfPrize" placeholder="e.g. Meat Tray">
+          <button type="button" class="addbtn" id="addPrizeBtn">+ Add</button>
+        </div>
+        <div class="prizelist" id="prizeList"></div>
       </div>
       <div class="two">
         <div class="field"><label>First ticket number</label><input type="number" id="rfStart" class="mono" value="1" min="0"></div>
@@ -235,13 +254,13 @@
 
   // ---- console state (the Worker is authoritative; this is the console's view) ----
   var G={ venueId:null, code:"", sessionId:"", gameId:"", gameSig:"",
-          prize:"Meat Tray", min:1, max:150, winnersCount:1, time:180, drawLength:4,
+          prize:"Meat Tray", prizes:[], prizeIdx:0, min:1, max:150, winnersCount:1, time:180, drawLength:4,
           jackOn:false, jackAmt:500, allowRedraw:true,
           savedPrizes:["Meat Tray","$100 Bar Tab","Seafood Platter","Bottle of Whisky"],
           serverPad:null, drawn:{}, round:null, results:[],
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null };
 
-  function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (G.prize||""); }
+  function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (drawingPrize() || G.prize || ""); }
   function padWidth(){ return G.serverPad || String(Math.max(G.max||0,1)).length; }
   function pad(n){ var s=String(n); var w=padWidth(); while(s.length<w) s="0"+s; return s; }
   function hostStatus(msg){ if(msg) $("statusText").textContent=msg; }
@@ -271,7 +290,7 @@
         if(g.range_max!=null) $("rfEnd").value=g.range_max;
         if(g.time_to_present!=null) $("rfTime").value=g.time_to_present;
         $("rfAllowRedraw").checked=(g.allow_redraw!==false);
-        $("rfJackOn").checked=jackOn; show("rfJackWrap", jackOn);
+        $("rfJackOn").checked=jackOn; show("rfJackWrap", jackOn); show("prizeField", !jackOn);
         if(jackOn && g.jackpot_amount_cents!=null) $("rfJackAmt").value=Math.round(g.jackpot_amount_cents/100);
         if(!jackOn && g.prize) $("rfPrize").value=g.prize;
         readInputs();                       // sync G from the inputs so raffleSig() matches the live game
@@ -324,14 +343,52 @@
     if(isNew && G.venueId){ apiPost("/host/raffle/prize-add",{ venue_id:G.venueId, label:p }).catch(function(){}); }   // persist so it's there next week, not just this session
   }
 
+  // ---- tonight's prize list (build it up front, then draw one winner per prize in order) ----
+  function drawingPrize(){   // the prize for the NEXT draw
+    if(G.jackOn) return "";
+    if(G.prizeIdx < G.prizes.length) return G.prizes[G.prizeIdx];
+    return ($("rfPrize").value||"").trim();   // fallback: whatever's typed (single-prize quick draw)
+  }
+  function addPrize(label){
+    label=(label||"").trim(); if(!label || G.jackOn) return;
+    G.prizes.push(label); savePrize(label);   // also remember it as a saved preset for next time
+    $("rfPrize").value="";
+    renderPrizeList();
+  }
+  function removePrize(i){
+    if(i<G.prizeIdx) return;   // can't remove one already drawn
+    G.prizes.splice(i,1);
+    renderPrizeList();
+  }
+  function advancePrize(){ if(!G.jackOn && G.prizeIdx < G.prizes.length){ G.prizeIdx++; renderPrizeList(); } }
+  function renderPrizeList(){
+    var w=$("prizeList"); if(!w) return;
+    w.innerHTML="";
+    for(var i=0;i<G.prizes.length;i++){
+      var done=(i<G.prizeIdx);
+      var row=document.createElement("div");
+      row.className="prow"+(done?" done":"")+(i===G.prizeIdx?" next":"");
+      row.innerHTML='<span class="pi">'+(i+1)+'</span><span class="pl">'+esc(G.prizes[i])+'</span>'+
+        (done?'<span class="pd">drawn</span>':'<button class="px" type="button" data-rm="'+i+'">&times;</button>');
+      w.appendChild(row);
+    }
+    if(!G.round && !G.busy){ drawBtnIdle(); sendIdle(); }   // keep the Draw button + TV showing the next prize
+  }
+
   // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
   function sendIdle(){ send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
 
   // ---- draw button modes ----
-  function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw the winner"; b.classList.remove("nextmode"); }
-  function drawBtnNext(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw the next prize"; b.classList.add("nextmode"); }
+  function drawLabel(){
+    if(!G.jackOn && G.prizeIdx < G.prizes.length){
+      return "Draw: "+G.prizes[G.prizeIdx]+"  ("+(G.prizeIdx+1)+" of "+G.prizes.length+")";
+    }
+    return G.prizeIdx>0 ? "Draw the next prize" : "Draw the winner";
+  }
+  function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent=drawLabel(); b.classList.remove("nextmode"); }
+  function drawBtnNext(){ var b=$("drawBtn"); b.disabled=false; b.textContent=drawLabel(); b.classList.add("nextmode"); }
   function drawBtnBusy(){ var b=$("drawBtn"); b.disabled=true; b.textContent="Drawing…"; b.classList.remove("nextmode"); }
 
   // ---- timers ----
@@ -377,7 +434,7 @@
   function drawBody(){
     var body={ game_id:G.gameId, winners:G.winnersCount };
     if(G.jackOn){ body.prize="Cash jackpot"; body.prize_type="cash"; body.prize_value_cents=Math.round(G.jackAmt*100); }
-    else { body.prize=G.prize; body.prize_type="other"; }
+    else { body.prize=drawingPrize(); body.prize_type="other"; }
     return body;
   }
 
@@ -387,9 +444,9 @@
     readInputs();
     if(!validRange()){ alert("Enter a valid ticket range first."); return; }
     if(G.jackOn && G.jackAmt<=0){ alert("Enter a jackpot amount."); return; }
-    if(!G.jackOn && !G.prize){ alert("Type what you're drawing for."); return; }
-    if(remainingCount()<G.winnersCount){ alert("Not enough undrawn tickets for "+G.winnersCount+" winners. Tap New raffle to start again."); return; }
-    if(!G.jackOn) savePrize(G.prize);
+    if(!G.jackOn && G.prizeIdx>=G.prizes.length){ var typed=($("rfPrize").value||"").trim(); if(typed) addPrize(typed); }   // single-prize quick draw: add what's typed
+    if(!G.jackOn && !drawingPrize()){ alert("Add at least one prize to draw for."); return; }
+    if(remainingCount()<1){ alert("No undrawn tickets left. Tap New raffle to start again."); return; }
 
     G.busy=true; clearTimers();
     $("winnerCard").classList.remove("show");
@@ -444,7 +501,7 @@
     for(var i=0;i<G.round.numbers.length;i++){ G.drawn[G.round.numbers[i]]=true; }
     var nums=G.round.numbers.slice(), pz=G.round.prize;
     $("wcCd").innerHTML='<span style="color:var(--win)">Winner drawn. Hand over the prize.</span>';
-    G.round=null; renderRange(); drawBtnNext();
+    G.round=null; advancePrize(); renderRange(); drawBtnNext();
     stopWait(); G.celebrateWait=setTimeout(function(){ send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max }); }, 1200);
   }
 
@@ -458,7 +515,7 @@
     send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max });
     $("wcCd").innerHTML='<span style="color:var(--win)">Claimed · '+esc(pz)+'</span>';
     show("wcResolve",false);
-    G.round=null; renderRange(); drawBtnNext();
+    G.round=null; advancePrize(); renderRange(); drawBtnNext();
     if(G.gameId && seq!=null){ apiPost("/host/draw/resolve",{ game_id:G.gameId, seq:seq, outcome:"claimed" }).catch(function(e){ hostStatus(e.message); }); }
   }
   // winner not here -> mark that round no_show on the server and draw a replacement
@@ -481,6 +538,7 @@
   // start a fresh raffle: end the current game so drawn tickets clear
   function newRaffle(){
     clearTimers(); G.round=null; G.drawn={};
+    G.prizes=[]; G.prizeIdx=0; renderPrizeList();   // a brand new raffle starts with a fresh prize list
     var gid=G.gameId; G.gameId=""; G.gameSig=""; G.serverPad=null;
     $("winnerCard").classList.remove("show"); drawBtnIdle(); renderRange(); sendIdle();
     if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(){}); }
@@ -525,7 +583,7 @@
     $("connectView").classList.add("hidden");
     $("consoleView").classList.remove("hidden");
     $("roomCode").textContent=code;
-    renderPresets(); renderRange(); renderResults();
+    renderPresets(); renderPrizeList(); renderRange(); renderResults();
   }
   // the screen announces itself; on a fresh (re)load we re-announce and replay the state
   function onPair(m){
@@ -563,12 +621,18 @@
     $("drawLenLbl").textContent=G.drawLength;
   });
   $("rfJackOn").addEventListener("change", function(){
-    show("rfJackWrap", this.checked); renderRange();
+    show("rfJackWrap", this.checked); show("prizeField", !this.checked); renderRange();   // cash jackpot: hide the prize list
   });
   $("prizePresets").addEventListener("click", function(e){
     var b=e.target.closest("button[data-p]"); if(!b) return;
-    $("rfJackOn").checked=false; show("rfJackWrap",false);
-    $("rfPrize").value=b.getAttribute("data-p"); renderRange();
+    $("rfJackOn").checked=false; show("rfJackWrap",false); show("prizeField",true);
+    addPrize(b.getAttribute("data-p"));   // clicking a saved prize adds it to tonight's list
+  });
+  $("addPrizeBtn").addEventListener("click", function(){ addPrize($("rfPrize").value); });
+  $("rfPrize").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addPrize(this.value); } });
+  $("prizeList").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-rm]"); if(!b) return;
+    removePrize(parseInt(b.getAttribute("data-rm"),10));
   });
   ["rfPrize","rfStart","rfEnd","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", renderRange); });
   $("rfAllowRedraw").addEventListener("change", readInputs);
