@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>VenuePlay: print your Scan to play signs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0A0B;
+    --pink:#FF1F8E;
+    --pink-deep:#C70F69;
+    --paper:#ffffff;
+    --wash:#FFF2F8;
+    --text:#171719;
+    --muted:#5A5A63;
+    --line:#E4E4EA;
+    --line-pink:rgba(255,31,142,0.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#EDEDF0;color:var(--text);
+    font-family:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.4}
+  ::selection{background:var(--pink);color:#fff}
+  .hidden{display:none!important}
+
+  /* ============ SET-UP BAR (screen only) ============ */
+  .setup{background:var(--ink);color:#fff;padding:20px 22px 22px}
+  .setup .wrap{max-width:940px;margin:0 auto}
+  .setup .brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .setup .brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em}
+  .setup .brand .div{width:1px;height:18px;background:rgba(255,255,255,.2)}
+  .setup .brand .tag{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--pink)}
+  .setup h1{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:26px;line-height:1.02;margin-bottom:6px}
+  .setup .lede{font-size:13.5px;color:#B9B9C2;max-width:64ch;line-height:1.5}
+  .setup .lede a{color:var(--pink)}
+
+  .row{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px;align-items:flex-end}
+  .fld{display:flex;flex-direction:column;gap:5px;flex:1 1 210px;min-width:180px}
+  .fld label{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4}
+  .fld input{background:#17171A;border:1px solid rgba(255,255,255,.14);color:#fff;border-radius:10px;
+    padding:11px 13px;font-family:'Manrope',sans-serif;font-size:14.5px;outline:none;transition:.15s;width:100%}
+  .fld input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.16)}
+  .fld .hint{font-size:11px;color:#7A7A84}
+
+  .picks{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .pick{background:#17171A;border:1px solid rgba(255,255,255,.14);color:#D7D7DE;border-radius:999px;
+    padding:9px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
+  .pick:hover{border-color:rgba(255,255,255,.32)}
+  .pick.on{background:var(--pink);border-color:var(--pink);color:#fff}
+
+  .acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;align-items:center}
+  .btn{border:none;border-radius:10px;padding:12px 22px;font-family:'Hanken Grotesk',sans-serif;
+    font-weight:700;font-size:14.5px;cursor:pointer;transition:.15s}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.28)}
+  .btn.pink:hover{background:var(--pink-deep)}
+  .btn.ghost{background:transparent;color:#D7D7DE;border:1px solid rgba(255,255,255,.2)}
+  .btn.ghost:hover{border-color:rgba(255,255,255,.42);color:#fff}
+
+  .status{font-size:12.5px;margin-top:12px;min-height:19px;line-height:1.45}
+  .status.ok{color:#35D07F}
+  .status.warn{color:#FFC24B}
+  .status .code{font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;letter-spacing:.06em}
+
+  .tips{margin-top:18px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .tip{font-size:12px;color:#9A9AA4;line-height:1.5}
+  .tip b{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:12.5px;margin-bottom:3px}
+
+  /* ============ SHEETS ============ */
+  .stage{padding:22px 0 40px}
+  .sheet{
+    width:210mm;height:297mm;margin:0 auto 18px;background:var(--paper);
+    box-shadow:0 12px 40px -12px rgba(0,0,0,.35);
+    position:relative;overflow:hidden;
+  }
+
+  /* ---- shared sign guts ----
+     Every sign is the same markup at a different scale. One length unit (--u) drives the whole
+     layout, so a sign that balances on A4 still balances on an A6 table card: only --u changes. */
+  .sign{height:100%;position:relative;overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:calc(var(--u)*1.2);text-align:center;padding:calc(var(--u)*3) calc(var(--u)*2.6)}
+  .sign .kick{font-family:'JetBrains Mono',monospace;font-weight:700;
+    font-size:calc(var(--u)*1);letter-spacing:.2em;text-transform:uppercase;color:var(--pink-deep);line-height:1.4}
+  .sign .venue{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+    font-size:calc(var(--u)*2);letter-spacing:-.02em;color:var(--ink);line-height:1.1;
+    margin-top:calc(var(--u)*.35);overflow-wrap:anywhere}
+  /* nowrap: the headline is the loudest thing on the sign and must stay on one line. The fit
+     then grows the sign until this line reaches the paper width, which is what we want. */
+  .sign h2{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:calc(var(--u)*4.2);line-height:.92;letter-spacing:.005em;color:var(--ink);
+    margin-top:calc(var(--u)*.85);white-space:nowrap}
+  .sign h2 em{font-style:normal;color:var(--pink-deep)}
+  .sign .qrbox{background:#fff;border:calc(var(--u)*.16) solid var(--ink);
+    border-radius:calc(var(--u)*.8);padding:calc(var(--u)*.7);line-height:0;flex:none}
+  /* !important: QRCode.toCanvas writes its own inline width/height, which would otherwise
+     size every sign at the raster resolution instead of the print size. */
+  .sign .qrbox canvas{display:block;image-rendering:pixelated;
+    width:calc(var(--u)*13)!important;height:calc(var(--u)*13)!important}
+  .sign .no{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+    font-size:calc(var(--u)*1.4);color:var(--ink);line-height:1.3}
+  .sign .whats{margin-top:calc(var(--u)*.6);font-size:calc(var(--u)*1.15);color:var(--muted);
+    line-height:1.35;overflow-wrap:anywhere}
+  .sign .fallback{margin-top:calc(var(--u)*.7);font-size:calc(var(--u)*1);color:var(--muted);line-height:1.45}
+  .sign .fallback b{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink);letter-spacing:.08em}
+  .sign .mark{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*1);
+    display:flex;align-items:center;gap:calc(var(--u)*.5);opacity:.6}
+  .sign .mark .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+    font-size:calc(var(--u)*.95);letter-spacing:-.02em;color:var(--ink)}
+  .sign .mark svg{display:block;height:calc(var(--u)*1.05);width:auto}
+
+  /* wide variant: a folded tent face is landscape, so the QR sits beside the words, not under them */
+  .sign.wide{display:grid;grid-template-columns:auto minmax(0,1fr);
+    grid-template-areas:"qr head" "qr tail";
+    align-content:center;justify-content:center;align-items:center;
+    column-gap:calc(var(--u)*2.2);row-gap:calc(var(--u)*.9);
+    text-align:left;padding:calc(var(--u)*2.4)}
+  .sign.wide .qrbox{grid-area:qr}
+  .sign.wide .head{grid-area:head;align-self:end}
+  .sign.wide .tail{grid-area:tail;align-self:start}
+  .sign.wide .qrbox canvas{width:calc(var(--u)*11)!important;height:calc(var(--u)*11)!important}
+  .sign.wide h2{font-size:calc(var(--u)*3.4)}
+  .sign.wide .mark{left:auto;right:calc(var(--u)*2.4);transform:none;bottom:calc(var(--u)*1.1)}
+
+  /* Each sign's parent is a size container, so --u can be expressed in cqh (a percent of the
+     sign's own height). One fitted ratio then holds on screen AND at A4 print size. */
+  #sheetPoster, #sheetCards .cell, #sheetTents .face{container-type:size}
+
+  /* ---- A4 poster: one big sign ---- */
+  #sheetPoster .sign{--u:2.1cqh}
+
+  /* ---- table cards: 4 up on A4 (A6 each), with cut guides ---- */
+  #sheetCards{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+  #sheetCards .cell{position:relative;overflow:hidden;outline:.2mm dashed #C9C9D2;outline-offset:-.1mm}
+  #sheetCards .sign{--u:2.1cqh}
+
+  /* ---- table tents: 2 up on A4, each folds in half so it reads from both sides ---- */
+  #sheetTents{display:grid;grid-template-rows:1fr 1fr}
+  #sheetTents .tent{position:relative;display:grid;grid-template-rows:1fr 1fr;overflow:hidden;
+    outline:.2mm dashed #C9C9D2;outline-offset:-.1mm}
+  #sheetTents .face{position:relative;overflow:hidden}
+  #sheetTents .face.flip{transform:rotate(180deg)}
+  #sheetTents .sign{--u:3.3mm}
+  #sheetTents .foldline{position:absolute;left:0;right:0;top:50%;border-top:.25mm dashed #B9B9C2;z-index:3}
+  #sheetTents .foldlbl{position:absolute;left:2.5mm;top:50%;transform:translateY(-50%);
+    background:#fff;padding:0 1.6mm;font-family:'JetBrains Mono',monospace;font-size:6.4pt;
+    letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4;z-index:4}
+
+  /* ---- print ---- */
+  @page{size:A4 portrait;margin:0}
+  @media print{
+    html,body{background:#fff}
+    .no-print{display:none!important}
+    .stage{padding:0}
+    .sheet{width:210mm;height:297mm;margin:0;box-shadow:none;break-after:page;page-break-after:always}
+    .sheet:last-child{break-after:auto;page-break-after:auto}
+    .sign,.sign .kick,.sign h2 em,.sign .qrbox,.sign .mark,
+    #sheetCards .cell,#sheetTents .tent{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+
+  @media (max-width:760px){
+    .sheet{width:100%;height:auto;aspect-ratio:210/297}
+    .setup h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SET-UP (screen only) ==================== -->
+<div class="setup no-print">
+ <div class="wrap">
+  <div class="brand">
+    <svg width="19" height="22" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span class="word">VenuePlay</span>
+    <span class="div"></span>
+    <span class="tag">Scan to play signs</span>
+  </div>
+  <h1>Print your <em style="font-style:normal;color:var(--pink)">scan to play</em> signs</h1>
+  <div class="lede">
+    Put one on every table. The QR code goes to <b>your venue</b>, not to one night's game, so the
+    same sign works every week and for every format you run. Print it once and leave it out.
+  </div>
+
+  <div class="row">
+    <div class="fld">
+      <label for="slugIn">Your venue link</label>
+      <input id="slugIn" type="text" placeholder="the-tugun-hotel" autocomplete="off" autocapitalize="none" spellcheck="false">
+      <span class="hint">The bit after the slash in your screen link, venueplay.com.au/tv?<b>your-venue</b></span>
+    </div>
+    <div class="fld">
+      <label for="nameIn">Venue name on the sign</label>
+      <input id="nameIn" type="text" placeholder="The Tugun Hotel" autocomplete="off" maxlength="42">
+      <span class="hint">Filled in for you once we find your venue.</span>
+    </div>
+    <div class="fld">
+      <label for="whatsIn">Your line at the bottom (optional)</label>
+      <input id="whatsIn" type="text" placeholder="Bingo Wednesdays, trivia Thursdays, from 7pm" autocomplete="off" maxlength="80">
+      <span class="hint">Leave blank and the sign stays generic.</span>
+    </div>
+  </div>
+
+  <div class="picks" id="picks">
+    <button class="pick on" data-kind="poster" type="button">A4 poster</button>
+    <button class="pick" data-kind="cards" type="button">Table cards, 4 a page</button>
+    <button class="pick" data-kind="tents" type="button">Table tents, 2 a page</button>
+  </div>
+
+  <div class="acts">
+    <button class="btn pink" id="printBtn" type="button">Print</button>
+    <button class="btn ghost" id="checkBtn" type="button">Check my venue link</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div class="tips">
+    <div class="tip"><b>Print settings</b>Choose A4, portrait, and turn ON background graphics so the pink prints.</div>
+    <div class="tip"><b>Table cards</b>Cut along the dashed lines. A6, so four fit on one page.</div>
+    <div class="tip"><b>Table tents</b>Cut the page in half, then fold each half across the middle. The top is printed upside down on purpose so it reads from both sides of the table.</div>
+    <div class="tip"><b>No QR scanner?</b>Every sign also prints your permanent 6-character code, so anyone can type it in instead.</div>
+  </div>
+ </div>
+</div>
+
+<!-- ==================== SHEETS ==================== -->
+<div class="stage">
+
+  <!-- A4 poster -->
+  <section class="sheet" id="sheetPoster">
+    <div class="sign" data-sign>
+      <div class="head">
+        <div class="kick">Live games here tonight</div>
+        <div class="venue" data-venue>Your venue</div>
+        <h2>Scan to <em>play</em></h2>
+      </div>
+      <div class="qrbox"><canvas data-qr></canvas></div>
+      <div class="tail">
+        <div class="no">No app. No account. Just your phone.</div>
+        <div class="whats" data-whats hidden></div>
+        <div class="fallback">No scanner? Go to <b>venueplay.com.au/play</b> and enter code <b data-code>------</b></div>
+      </div>
+      <div class="mark">
+        <svg viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="3" stroke-linejoin="round"/></svg>
+        <span class="word">VenuePlay</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 table cards -->
+  <section class="sheet hidden" id="sheetCards"></section>
+
+  <!-- 2 table tents -->
+  <section class="sheet hidden" id="sheetTents"></section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $=function(id){ return document.getElementById(id); };
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  var SITE='https://venueplay.com.au';
+
+  // The venue code is a pure hash of the slug, identical to VP.venueCode() in vp-session.js,
+  // tvVenueSlug/venueCode in tv.html and fnvVenueCode() in the Worker. Keep all four in lockstep.
+  // Because it never changes, it is safe to PRINT: this sign works next week and next year.
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  function cleanSlug(v){ return String(v||"").toLowerCase().trim().replace(/^.*[?\/]/,"").replace(/[^a-z0-9-]/g,""); }
+
+  // ---- build the repeated sheets from the poster's markup so there is one source of truth ----
+  var POSTER=$("sheetPoster");
+  function signHTML(){ return POSTER.querySelector("[data-sign]").outerHTML; }
+  (function buildSheets(){
+    var cards="", i;
+    for(i=0;i<4;i++) cards+='<div class="cell">'+signHTML()+'</div>';
+    $("sheetCards").innerHTML=cards;
+    var wide=signHTML().replace('class="sign"','class="sign wide"');
+    var tents="";
+    for(i=0;i<2;i++){
+      tents+='<div class="tent">'
+           +   '<div class="face flip">'+wide+'</div>'
+           +   '<div class="face">'+wide+'</div>'
+           +   '<div class="foldline"></div><div class="foldlbl">Fold</div>'
+           + '</div>';
+    }
+    $("sheetTents").innerHTML=tents;
+  })();
+
+  // ---- paint every sign on the page ----
+  var state={ slug:"", name:"", whats:"" };
+  function drawQR(el, url, px){
+    if(!window.QRCode || !el || !url) return;
+    // level M with a healthy quiet zone: still reads off a beer-splashed table card.
+    QRCode.toCanvas(el, url, { width:px, margin:2, errorCorrectionLevel:'M',
+      color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(){});
+  }
+  // ---- auto-fit ----
+  // Every length on a sign is a multiple of --u, so the whole thing scales linearly. Rather than
+  // hard-code a unit per paper size and hope, we measure what the content actually needs and
+  // solve for the --u that fills the sign without spilling. That matters because the venue name
+  // and the venue's own bottom line are free text: "The Kurrawa Surf Life Saving Supporters Club"
+  // has to fit the same A6 card as "The Pub".
+  function px(v){ return parseFloat(v)||0; }
+  function textWidth(el){
+    if(!el) return 0;
+    try{ var r=document.createRange(); r.selectNodeContents(el); var w=r.getBoundingClientRect().width; r.detach&&r.detach(); return w||el.scrollWidth; }
+    catch(e){ return el.scrollWidth; }
+  }
+  function contentSize(el){
+    var cs=getComputedStyle(el);
+    var padY=px(cs.paddingTop)+px(cs.paddingBottom), padX=px(cs.paddingLeft)+px(cs.paddingRight);
+    var gapY=px(cs.rowGap), gapX=px(cs.columnGap);
+    var u=px(cs.getPropertyValue("--u"));
+    var qr=el.querySelector(".qrbox"), head=el.querySelector(".head"), tail=el.querySelector(".tail");
+    var hQ=qr.getBoundingClientRect().height, wQ=qr.getBoundingClientRect().width;
+    var hH=head.getBoundingClientRect().height, hT=tail.getBoundingClientRect().height;
+    // Only the headline is measured for width: it is the one line that must not wrap. The venue
+    // name and the venue's own line are allowed to wrap, and the height check picks that up.
+    // Measured with a Range, NOT scrollWidth: on the tent the headline sits in a 1fr grid track,
+    // so its box is the full track width and scrollWidth would report the track, not the words.
+    var h2=el.querySelector("h2"), wH=textWidth(h2);
+    if(el.classList.contains("wide")){
+      return { h: padY + Math.max(hQ, hH+gapY+hT), w: padX + wQ + gapX + Math.max(wH, u*16) };
+    }
+    return { h: padY + hH + gapY + hQ + gapY + hT, w: padX + Math.max(wQ, wH) };
+  }
+  // Binary search rather than a fixed-point iteration: a smaller --u also narrows the sign, so
+  // text can rewrap onto an extra line and make the content TALLER. That is not monotone enough
+  // for "scale by the ratio and re-measure" to settle, but "does this size fit, yes or no" is.
+  function fitsAt(el, u, box){
+    el.style.setProperty("--u", u.toFixed(3)+"px");
+    var c=contentSize(el);
+    return c.h<=box.height && c.w<=box.width;
+  }
+  function fitSign(el){
+    var box=el.getBoundingClientRect();
+    if(!box.height || !box.width) return;             // sheet is hidden: it gets fitted when shown
+    var lo=box.height/140, hi=box.height/15;
+    for(var i=0;i<14;i++){ var mid=(lo+hi)/2; if(fitsAt(el, mid, box)) lo=mid; else hi=mid; }
+    // Store the answer as a FRACTION OF THE SIGN (cqh), not as pixels. The fit is measured on
+    // screen but the sign is printed at A4, a different pixel size: a px value would come out
+    // under-filled on paper, where a container-relative one scales to whatever it lands on.
+    el.style.setProperty("--u", (lo/box.height*100*0.985).toFixed(4)+"cqh");
+  }
+
+  function render(){
+    var slug=state.slug;
+    var code=slug ? venueCode(slug) : "------";
+    var url = slug ? (SITE+"/play?venue="+encodeURIComponent(slug)) : "";
+    var name=state.name || (slug ? slug.replace(/-/g," ").replace(/\b\w/g,function(c){ return c.toUpperCase(); }) : "Your venue");
+    var signs=document.querySelectorAll("[data-sign]");
+    for(var i=0;i<signs.length;i++){
+      var s=signs[i];
+      s.querySelector("[data-venue]").textContent=name;
+      s.querySelector("[data-code]").textContent=code;
+      var w=s.querySelector("[data-whats]");
+      if(state.whats){ w.textContent=state.whats; w.hidden=false; } else { w.textContent=""; w.hidden=true; }
+      // 720px of QR is well past what an A4 poster needs, so the card and tent sizes are sharp too.
+      drawQR(s.querySelector("[data-qr]"), url, 720);
+    }
+    for(var j=0;j<signs.length;j++) fitSign(signs[j]);   // fit AFTER the text is in
+  }
+
+  // ---- inputs ----
+  var slugIn=$("slugIn"), nameIn=$("nameIn"), whatsIn=$("whatsIn");
+  var typed=false;   // once the venue types a name, a lookup must not overwrite it
+  function onSlug(){
+    state.slug=cleanSlug(slugIn.value);
+    if(!typed) state.name="";
+    render(); setStatus("", "");
+  }
+  slugIn.addEventListener("input", onSlug);
+  slugIn.addEventListener("change", function(){ slugIn.value=state.slug; check(); });
+  nameIn.addEventListener("input", function(){ typed=!!nameIn.value.trim(); state.name=nameIn.value.trim(); render(); });
+  whatsIn.addEventListener("input", function(){ state.whats=whatsIn.value.trim(); render(); });
+
+  // ---- which sheet ----
+  var KINDS={ poster:"sheetPoster", cards:"sheetCards", tents:"sheetTents" };
+  function showKind(kind){
+    for(var k in KINDS){ $(KINDS[k]).classList.toggle("hidden", k!==kind); }
+    var b=document.querySelectorAll("#picks .pick");
+    for(var i=0;i<b.length;i++) b[i].classList.toggle("on", b[i].getAttribute("data-kind")===kind);
+    render();   // canvases in a hidden sheet may not have painted, so redraw on reveal
+  }
+  document.getElementById("picks").addEventListener("click", function(e){
+    var t=e.target.closest ? e.target.closest(".pick") : null;
+    if(t) showKind(t.getAttribute("data-kind"));
+  });
+
+  // ---- check the link before they print fifty copies ----
+  function setStatus(msg, cls){ var s=$("status"); s.textContent=msg; s.className="status"+(cls?" "+cls:""); }
+  // Same, but for the one message that mixes plain words with a highlighted code. Built from
+  // text nodes rather than innerHTML so a venue name is never treated as markup.
+  function setFound(name, code){
+    var s=$("status"); s.className="status ok"; s.textContent="";
+    s.appendChild(document.createTextNode("Found "+name+". Your permanent code is "));
+    var b=document.createElement("span"); b.className="code"; b.textContent=code;
+    s.appendChild(b); s.appendChild(document.createTextNode("."));
+  }
+  function check(){
+    if(!state.slug){ setStatus("Type your venue link first.", "warn"); return; }
+    var code=venueCode(state.slug);
+    setStatus("Checking…", "");
+    fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(code))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        if(!d){ setStatus("Could not check right now. The sign is still correct if your venue link is spelt the way it is on your screen link.", "warn"); return; }
+        if(d.exists===false){ setStatus("No venue found for “"+state.slug+"”. Check the spelling against your screen link before you print.", "warn"); return; }
+        if(d.name && !typed){ state.name=d.name; nameIn.value=d.name; render(); }
+        setFound(d.name||"your venue", code);
+      })
+      .catch(function(){ setStatus("Could not check right now. The sign is still correct if your venue link matches your screen link.", "warn"); });
+  }
+  $("checkBtn").addEventListener("click", check);
+  $("printBtn").addEventListener("click", function(){ render(); setTimeout(function(){ window.print(); }, 60); });
+
+  // ---- open with ?venue=<slug> (the account page links straight here) ----
+  (function init(){
+    var q=window.location.search||"";
+    var m=/[?&]venue=([^&]+)/.exec(q);
+    var raw = m ? m[1] : "";
+    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }
+    var slug = raw ? cleanSlug(decodeURIComponent(raw)) : "";
+    var sk=/[?&]sheet=(poster|cards|tents)/.exec(q);
+    if(slug){ slugIn.value=slug; state.slug=slug; }
+    showKind(sk ? sk[1] : "poster");
+    if(slug) check();
+
+    // Re-fit once the webfonts land. Anton is very condensed, so a headline measured in the
+    // fallback face comes out far wider than the real one and the first fit lands too small.
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ render(); });
+    // and whenever the sign's box changes size under us
+    var rt=null;
+    window.addEventListener("resize", function(){ clearTimeout(rt); rt=setTimeout(render, 120); });
+    window.addEventListener("beforeprint", render);
+  })();
+})();
+</script>
+</body>
+</html>

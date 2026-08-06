@@ -172,6 +172,7 @@ export default {
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
+      if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
@@ -364,6 +365,34 @@ async function handleVenueLookup(request, env, json) {
   if (!venueId) return json({ exists: false });
   const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
   return json({ exists: true, name: (rows && rows[0] && rows[0].name) || '' });
+}
+
+/* What is on at this venue right now?  (anon)
+ *   GET /play/live?code=<venue code>  ->  { exists, name, live, format, join_code }
+ *
+ * This is what makes a PRINTED sign possible. The venue code is a pure hash of the venue
+ * slug, so venueplay.com.au/play?venue=<slug> never changes and can go on a table talker.
+ * Bingo needs nothing here (host, TV and phones all meet on the venue code), but trivia and
+ * musical open a session and hand out a RANDOM join code, so a phone arriving from a printed
+ * sign has to ask which room it is tonight. Unknown/quiet venue = live:false, and the play
+ * page just waits on the venue code, which is exactly right for broadcast bingo.
+ */
+async function handlePlayLive(request, env, json) {
+  const url = new URL(request.url);
+  const venueId = await venueByCode(env, url.searchParams.get('code') || '');
+  if (!venueId) return json({ exists: false, live: false });
+  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
+  const name = (vrows && vrows[0] && vrows[0].name) || '';
+  const sessions = await sbGet(env, 'vp_sessions',
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code&order=created_at.desc&limit=1');
+  if (!sessions.length) return json({ exists: true, name, live: false });
+  const games = await sbGet(env, 'vp_games',
+    'session_id=eq.' + enc(sessions[0].id) + '&status=eq.running&select=format&order=seq.desc&limit=1');
+  return json({
+    exists: true, name, live: true,
+    join_code: sessions[0].join_code,
+    format: (games && games[0] && games[0].format) || '',
+  });
 }
 
 /* End-of-game figures for reporting. Host posts once per completed game. Keyed by venue_id. */

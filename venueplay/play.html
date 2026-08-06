@@ -146,6 +146,7 @@
   <!-- JOIN -->
   <div class="view center hidden" id="vJoin">
     <div class="pbig">Join the<br>game</div>
+    <div class="psub hidden" id="joinVenue" style="color:var(--pink);font-weight:700"></div>
     <div class="psub">You are joining room <b class="mono" id="joinCode" style="color:var(--gold)">------</b></div>
     <div class="field"><input type="text" id="nameIn" placeholder="Your name" maxlength="20" autocomplete="given-name"></div>
     <div id="joinExtra"></div>
@@ -599,13 +600,59 @@
     show("vNoRoom");
   }
 
-  // ---- init: read ?room ----
+  // ---- permanent venue link: /play?venue=<slug> (also /play?<slug>) ----
+  // A printed sign on a table cannot carry tonight's room code, so it carries the VENUE
+  // instead. The venue code is a pure hash of the slug - the same one VP.venueCode() and the
+  // Worker's fnvVenueCode() produce - so the code never changes and one sign works every week.
+  // Bingo needs nothing more: host, TV and phones all meet on that code. Trivia and musical
+  // open a session with a RANDOM join code, so we ask the Worker what is on tonight and hop
+  // the phone over to the right player screen.
+  function venueSlugFromURL(){
+    var q=window.location.search||"";
+    var m=/[?&]venue=([^&]+)/.exec(q);
+    var raw = m ? m[1] : "";
+    if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }
+    return raw ? decodeURIComponent(raw).toLowerCase().replace(/[^a-z0-9-]/g,"") : "";
+  }
+  function venueCode(slug){
+    var s=String(slug||"").toLowerCase().replace(/[^a-z0-9]/g,""), h=2166136261>>>0;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+    var A="ACDEFGHJKMNPQRSTUVWXYZ2345679", out="", x=h||1;
+    for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
+    return out;
+  }
+  function watchVenue(slug){
+    var code=venueCode(slug);
+    connect(code);                              // broadcast bingo is live on this code right now
+    var hopped=false;
+    function look(){
+      if(hopped || P.joined || P.active) return;   // already in a game here: never yank them away
+      try{
+        fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
+          .then(function(r){ return r.ok?r.json():null; })
+          .then(function(d){
+            if(!d || hopped || P.joined || P.active) return;
+            if(d.name){ var jv=$("joinVenue"); if(jv){ jv.textContent=d.name; jv.classList.remove("hidden"); } }
+            if(!d.live || !d.join_code || d.join_code===code) return;
+            var f=String(d.format||"");
+            var to = f.indexOf("trivia")===0  ? "/app/trivia/play.html"
+                   : f.indexOf("musical")===0 ? "/app/musical/play.html" : "";
+            if(to){ hopped=true; window.location.replace(to+"?room="+encodeURIComponent(d.join_code)); }
+          }).catch(function(){});               // worker unreachable/old: bingo still works
+      }catch(e){}
+    }
+    look(); setInterval(look, 8000);
+  }
+
+  // ---- init: read ?room, or a permanent ?venue link off a printed sign ----
   (function(){
     P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;
     if(loadLight()) setLight(true); var lc=$("lightChk"); if(lc) lc.checked=loadLight();
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
     var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
+    var slug = room ? "" : venueSlugFromURL();
     if(room && CODE_RE.test(room)){ connect(room); }
+    else if(slug){ watchVenue(slug); }
     else { $("statusText").textContent="No room"; show("vNoRoom"); }
   })();
 })();
