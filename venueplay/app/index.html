@@ -283,7 +283,7 @@
       </div>
       <div id="runNight" style="margin-top:14px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff">Run the night</div>
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff">Run the night help guide</div>
           <button type="button" id="runHelpToggle" style="background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer">How it works</button>
         </div>
         <div id="runHelp" class="hidden" style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.7">
@@ -293,14 +293,6 @@
           4. Swap games whenever the room is ready. Tick them off here as you go.
         </div>
         <div id="runSheet" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
-      </div>
-      <div class="lbl" style="margin-top:16px">Or jump straight to a game</div>
-      <div class="picker" id="gamePicker">
-        <button class="pk" data-game="bingo">Bingo</button>
-        <button class="pk" data-game="trivia">Trivia</button>
-        <button class="pk" data-game="musical-bingo">Musical Bingo</button>
-        <button class="pk" data-game="raffle">Raffle</button>
-        <button class="pk" data-game="members-draw">Members Draw</button>
       </div>
     </div>
 
@@ -1221,10 +1213,6 @@
     var btns=document.querySelectorAll("#gamePicker .pk");
     for(var i=0;i<btns.length;i++){ btns[i].classList.remove("on"); }
   }
-  $("gamePicker").addEventListener("click", function(e){
-    var b=e.target.closest(".pk"); if(!b) return;
-    selectGame(b.getAttribute("data-game"));
-  });
   $("gamesBack").addEventListener("click", showGameSelect);
   $("venueSwitchInline").addEventListener("click", function(){ try{ localStorage.removeItem("vpVenuePick"); }catch(e){} showVenuePick(); });
 
