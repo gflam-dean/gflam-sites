@@ -82,7 +82,7 @@
   <div class="authsub" id="vSub">Loading...</div>
 
   <div id="body" class="hidden">
-    <div id="migWarn" class="warn hidden">Player-data toggles need the schema update (migration <b>venueplay-08</b>) applied first. Until then only the display-name style below saves.</div>
+    <div id="migWarn" class="warn hidden">The player-data options are still being switched on for your venue. Until then, only the name style below saves.</div>
 
     <div class="card">
       <div class="lbl">Name display on the TV</div>
@@ -204,13 +204,13 @@
         // migration 08 not applied: retry with just name_display so at least that saves
         VP.saveSettings(venueId, { name_display:state.name_display }).then(function(){
           $("migWarn").classList.remove("hidden");
-          msg.className="msg ok"; msg.textContent="Display name saved. Apply migration venueplay-08 to save the player-data toggles.";
+          msg.className="msg ok"; msg.textContent="Name style saved. The player-data options are still being switched on for your venue.";
         }).catch(function(e2){
           msg.className="msg err"; msg.textContent=(e2&&e2.message)||"Could not save.";
         });
         return;
       }
-      if(/permission|rls|policy|denied/i.test(m)) m="Not allowed. Manager access + migration venueplay-08 are needed to save settings.";
+      if(/permission|rls|policy|denied/i.test(m)) m="You need manager access to change these settings.";
       msg.className="msg err"; msg.textContent=m;
     });
   });
