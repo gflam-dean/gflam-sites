@@ -120,9 +120,9 @@
         <div class="jsub" style="margin-top:2.4cqw">Be here when your number is drawn</div>
       </div>
     </div>
-    <div class="layer ad ad-b"><div class="adtag">Bistro</div><div class="adbig">Schnitzel<br>Wednesday</div><div class="adsub">Chicken or veal, chips &amp; salad &middot; $18</div></div>
-    <div class="layer ad ad-c"><div class="adtag">Live music</div><div class="adbig">Friday<br>Sundowners</div><div class="adsub">On the green from 5pm &middot; free entry</div></div>
-    <div class="layer ad ad-d"><div class="adtag">Membership</div><div class="adbig">Join at<br>the bar</div><div class="adsub">Weekly members draws, bar perks &amp; more</div></div>
+<!-- demo ad slides removed 2026-08-06: they were baked-in placeholders (Schnitzel/Live music/Join
+     at the bar) that showed on live venue screens with no way to turn them off. The idle screen now
+     shows only the real members-draw board; the venue's own promo images are a follow-up. -->
   </div>
 
   <!-- drawing -->
@@ -232,6 +232,7 @@
     var slides=document.querySelectorAll("#tvIdle .ad"); adIdx=0;
     for(var i=0;i<slides.length;i++){ slides[i].classList.toggle("show", i===0); }
     stopAds();
+    if(slides.length<2){ return; }   // just the members board now: show it, no cycling/flicker
     adTimer=setInterval(function(){
       slides[adIdx].classList.remove("show");
       adIdx=(adIdx+1)%slides.length; if(adIdx===0) fillIdle();
