@@ -52,6 +52,7 @@
   .drow .dn{text-align:left;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(14px,2.8cqw,40px);color:#fff;line-height:1.05;display:flex;flex-direction:column;gap:.5cqw}
   .drow .dc{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:clamp(10px,1.6cqw,22px);color:var(--muted);letter-spacing:.02em}
   .drow .tn{display:inline-block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(8px,1.2cqw,16px);letter-spacing:.14em;color:#fff;background:var(--pink);border-radius:1cqw;padding:.4cqw 1cqw;margin-left:1.2cqw;vertical-align:middle}
+  .drow .tn.done{background:rgba(53,208,127,.18);color:var(--win)}   /* already drawn tonight: shows next week's jackpot */
   .drow .dj{font-family:'Anton',sans-serif;font-size:clamp(26px,6cqw,96px);line-height:.9;white-space:nowrap;
     background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 32%,#FFF0C6 50%,#FFC24B 68%,#E9A93A 100%);background-size:220% auto;
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
@@ -227,7 +228,7 @@
     for(var i=0;i<state.draws.length;i++){
       var d=state.draws[i];
       var clock=((d.drawDay||"")+(d.drawTime?(" "+d.drawTime):"")).trim();
-      var badge=d.tonight?'<span class="tn">Tonight</span>':'';
+      var badge=d.tonight?'<span class="tn">Tonight</span>':(d.drawnToday?'<span class="tn done">Drawn</span>':'');
       html+='<div class="drow'+(d.tonight?' hot':'')+'">'+
               '<div class="dn"><span>'+esc(d.name)+badge+'</span>'+(clock?'<div class="dc">'+esc(clock)+'</div>':'')+'</div>'+
               '<div class="dj">'+money(d.jackpotCents)+'</div>'+

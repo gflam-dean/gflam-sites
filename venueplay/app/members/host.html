@@ -290,11 +290,13 @@
 
   // draws list for the TV advertising board (each with its live jackpot + clock time + tonight flag)
   function drawsForScreen(){
-    var wd=todayWeekday();
+    var wd=todayWeekday(), todayISO=new Date().toISOString().slice(0,10);   // UTC date, matching the Worker's last_drawn_date stamp
     return G.draws.map(function(d){
+      var isDrawDay=!!(d.draw_day && d.draw_day.toLowerCase()===wd.toLowerCase());
+      var doneToday=(d.last_drawn_date===todayISO);   // already drawn tonight: drop the "tonight" badge so it does not read as still-to-come
       return { id:d.id, name:d.name, jackpotCents:d.current_jackpot_cents||0,
                drawDay:d.draw_day||"", drawTime:d.draw_time||"",
-               tonight: !!(d.draw_day && d.draw_day.toLowerCase()===wd.toLowerCase()) };
+               tonight: isDrawDay && !doneToday, drawnToday: doneToday };
     });
   }
 
@@ -383,6 +385,7 @@
   function revealWinner(r){
     G.busy=false;
     var d=curDraw();
+    if(d) d.last_drawn_date=new Date().toISOString().slice(0,10);   // mark drawn-today so the board drops its "tonight" badge when it returns to idle
     var claimSecs = (d && d.time_to_claim_seconds!=null) ? (d.time_to_claim_seconds|0) : 0;
     G.round={ drawId:r.draw_id, memberId:r.member_id, number:r.member_number, name:r.winner_name, prizeCents:(r.jackpot_cents!=null?r.jackpot_cents:(d?d.current_jackpot_cents:0)), remaining:claimSecs };
     // broadcast the winner to the TV (claimSecs drives the TV countdown too)
