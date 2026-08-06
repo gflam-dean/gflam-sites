@@ -353,7 +353,7 @@
   function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw"; }
 
   function startDraw(){
-    if(!subscribed){ return; }
+    if(!subscribed){ alert("No TV connected yet. Open venueplay.com.au/tv on your screen, then tap Draw."); return; }   // was a silent no-op
     if(G.busy || G.round) return;
     var d=curDraw();
     if(!d){ alert("No draw set up yet. Fill in the draw name + settings on the right and tap Save to create one, then draw."); return; }
@@ -388,6 +388,7 @@
   }
   function onClaim(){
     if(!G.round) return;
+    var cb=$("claimBtn"), rb=$("rollBtn"); if(cb.disabled) return; cb.disabled=true; rb.disabled=true;   // guard double-tap
     var round=G.round, d=curDraw();
     apiPost("/host/members/draw/resolve", { draw_id:round.drawId, member_id:round.memberId, member_number:round.number, outcome:"claim" })
       .then(function(r){
@@ -397,10 +398,11 @@
         $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week.";
         scheduleIdle(9000);
       })
-      .catch(function(e){ $("drawNote").textContent=e.message||"Could not record the claim"; });
+      .catch(function(e){ cb.disabled=false; rb.disabled=false; $("drawNote").textContent=e.message||"Could not record the claim"; });
   }
   function onRollover(){
     if(!G.round) return;
+    var cb=$("claimBtn"), rb=$("rollBtn"); if(rb.disabled) return; cb.disabled=true; rb.disabled=true;   // guard double-tap
     var round=G.round, d=curDraw();
     apiPost("/host/members/draw/resolve", { draw_id:round.drawId, member_id:round.memberId, member_number:round.number, outcome:"rollover" })
       .then(function(r){
@@ -410,7 +412,7 @@
         $("drawNote").textContent="Not claimed. Jackpot grew by "+money(r.increment_cents)+" to "+money(d?d.current_jackpot_cents:0)+".";
         scheduleIdle(7000);
       })
-      .catch(function(e){ $("drawNote").textContent=e.message||"Could not roll the jackpot over"; });
+      .catch(function(e){ cb.disabled=false; rb.disabled=false; $("drawNote").textContent=e.message||"Could not roll the jackpot over"; });
   }
   function scheduleIdle(delay){
     drawBtnIdle();
