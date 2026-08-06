@@ -174,7 +174,9 @@
   var LAYERS=["tvIdle","tvDraw","tvWin","tvResult"];
   function showLayer(which){
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
-    $("hostLine").classList.toggle("hidden", which!=="tvIdle");
+    // The host link + code line is only for a screen paired by hand. A venue-linked screen
+    // auto-pairs, so never show it there (it was popping up after a claim).
+    $("hostLine").classList.toggle("hidden", which!=="tvIdle" || !!VENUE_SLUG);
   }
 
   // ---- spin ----
@@ -272,6 +274,7 @@
       c.subscribe();
     });
   })();
+  if(VENUE_SLUG){ var _tvs=document.querySelector(".tv-status"); if(_tvs) _tvs.style.display="none"; }   // no "connected" pill on a live venue screen
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });   // match the host + the unified TV convention
   var tvSubscribed=false;
   function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }

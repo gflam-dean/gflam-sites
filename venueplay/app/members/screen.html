@@ -227,7 +227,7 @@
   }
   function stopAds(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
   function startAds(){
-    stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.remove("hidden");
+    stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.toggle("hidden", !!VENUE_SLUG);   // no host code on a live venue screen
     hideAll(); $("tvIdle").classList.remove("hidden"); fillIdle();
     var slides=document.querySelectorAll("#tvIdle .ad"); adIdx=0;
     for(var i=0;i<slides.length;i++){ slides[i].classList.toggle("show", i===0); }
@@ -330,6 +330,7 @@
       c.subscribe();
     });
   })();
+  if(VENUE_SLUG){ var _tvs=document.querySelector(".tv-status"); if(_tvs) _tvs.style.display="none"; }   // no "connected" pill on a live venue screen
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });   // match the host + the unified TV convention
   ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
   ch.subscribe(function(status){
