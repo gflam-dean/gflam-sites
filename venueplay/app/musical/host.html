@@ -342,6 +342,11 @@
   function songsForPlaylist(plId){
     var ids, out=[], seen={};
     if(plId==="all"){ for(var i=0;i<LIB.songs.length;i++){ out.push(LIB.songs[i]); } return out; }
+    if(plId==="surprise"){   // a fresh random draw from the whole library each game
+      var pool=LIB.songs.slice(), n=Math.min(50,pool.length);
+      for(var q=0;q<n;q++){ var idx=cryptoInt(pool.length); out.push(pool[idx]); pool.splice(idx,1); }
+      return out;
+    }
     var p=LIB.plById[plId]; ids=p?p.songIds:[];
     for(var k=0;k<ids.length;k++){ var s=LIB.byId[ids[k]]; if(s && !seen[s.id]){ seen[s.id]=true; out.push(s); } }
     return out;
@@ -707,7 +712,7 @@
   function startGame(){
     if(!libLoaded || G.busy) return;
     G.playlistId=$("playlistSel").value;
-    G.playlistName=(G.playlistId==="all")?"All songs":((LIB.plById[G.playlistId]||{}).name||"Playlist");
+    G.playlistName=(G.playlistId==="all")?"All songs":(G.playlistId==="surprise")?"Surprise Mix":((LIB.plById[G.playlistId]||{}).name||"Playlist");
     G.pattern=$("patternSel").value;
     G.prize=($("prizeInput").value||"").trim()||"the prize";
     beginRound($("startBtn"),"Open lobby");
@@ -861,6 +866,7 @@
       var o=document.createElement("option"); o.value=p.id; o.textContent=p.name+" ("+(p.songIds||[]).length+" songs)";
       s.appendChild(o);
     }
+    var sm=document.createElement("option"); sm.value="surprise"; sm.textContent="Surprise Mix (random each game)"; s.appendChild(sm);
     var all=document.createElement("option"); all.value="all"; all.textContent="All songs ("+LIB.songs.length+" songs)"; s.appendChild(all);
     if(LIB.playlists.length){ G.playlistId=LIB.playlists[0].id; s.value=G.playlistId; }
     else { G.playlistId="all"; s.value="all"; }
