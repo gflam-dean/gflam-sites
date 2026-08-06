@@ -149,7 +149,7 @@
         <label>What are you drawing for?</label>
         <div class="presetlbl">Your saved prizes</div>
         <div class="presets" id="prizePresets"></div>
-        <input type="text" id="rfPrize" placeholder="e.g. Meat Tray" value="Meat Tray">
+        <input type="text" id="rfPrize" placeholder="e.g. Meat Tray">
       </div>
       <div class="two">
         <div class="field"><label>First ticket number</label><input type="number" id="rfStart" class="mono" value="1" min="0"></div>
@@ -243,7 +243,7 @@
           serverPad:null, drawn:{}, round:null, results:[],
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null };
 
-  function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (G.prize||"Prize"); }
+  function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (G.prize||""); }
   function padWidth(){ return G.serverPad || String(Math.max(G.max||0,1)).length; }
   function pad(n){ var s=String(n); var w=padWidth(); while(s.length<w) s="0"+s; return s; }
   function hostStatus(msg){ if(msg) $("statusText").textContent=msg; }
@@ -291,7 +291,7 @@
 
   // ---- inputs ----
   function readInputs(){
-    G.prize=($("rfPrize").value||"").trim()||"Prize";
+    G.prize=($("rfPrize").value||"").trim();   // empty until the host types one, so the TV never shows a placeholder prize
     G.min=parseInt($("rfStart").value,10); G.max=parseInt($("rfEnd").value,10);
     G.jackOn=$("rfJackOn").checked; G.jackAmt=Math.max(0,parseInt($("rfJackAmt").value,10)||0);
     G.winnersCount = G.jackOn ? 1 : Math.max(1, Math.min(50, parseInt($("rfWinners").value,10)||1));
