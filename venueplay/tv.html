@@ -351,6 +351,9 @@
   // THIS session. no permanent "paired forever" flag: a reload shows it again until
   // a host reconnects this session.
   var hostConnected=false;
+  // Today's weekday in Australian (venue) time, NOT the TV/device timezone - a screen set to UTC
+  // reads the wrong day. Computed fresh each time so an always-on TV updates at midnight.
+  function todayAU(){ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:"Australia/Brisbane"}).toLowerCase(); }
   function drawPairQR(){ drawQR($("qrPair"), pairURL, 320); }
   function showPairPanel(){ if(VENUE_SLUG){ hidePairPanel(); return; } var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR(); }
   function hidePairPanel(){ $("pairPanel").classList.add("hidden"); }
@@ -394,10 +397,11 @@
   }
   function entryInner(e){
     if(e.type==="auto-draws"){
-      var rows="";
+      var rows="", wd=todayAU();   // recompute the day at render so it flips correctly at midnight
       ADS.draws.forEach(function(d){
-        rows+='<div class="wkrow'+(d.tonight?" tonight":"")+'">'+
-              '<span class="wkday">'+esc(d.day)+(d.tonight?'<span class="tn">Tonight</span>':'')+'</span>'+
+        var tn=(d.day||"").toLowerCase()===wd;
+        rows+='<div class="wkrow'+(tn?" tonight":"")+'">'+
+              '<span class="wkday">'+esc(d.day)+(tn?'<span class="tn">Tonight</span>':'')+'</span>'+
               '<span class="wkjack">'+esc(d.jackpot)+'</span>'+
               '<span class="wktime">'+esc(d.time)+'</span></div>';
       });
@@ -774,17 +778,25 @@
       .then(function(r){ return r.ok ? r.json() : []; })
       .then(function(rows){
         if(!Array.isArray(rows)) return;
-        // Use Australian time, not the TV/device timezone. A screen set to UTC reads "Thursday" on a
-        // Friday morning here (UTC is 10h behind), which wrongly lit up the previous night's draw.
-        var wd=new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:"Australia/Brisbane"}).toLowerCase();
+        // "Tonight" is decided at render time (entryInner, in Australian time), so the board is correct
+        // even on a TV left running past midnight. Here we just store each draw's day/jackpot/time.
         ADS.draws = rows.filter(function(d){ return d.draw_day; }).map(function(d){
           return { day:d.draw_day,
                    jackpot:"$"+Math.round((d.current_jackpot_cents||0)/100).toLocaleString("en-AU"),
-                   time:d.draw_time||"",
-                   tonight:(d.draw_day||"").toLowerCase()===wd };
+                   time:d.draw_time||"" };
         });
         refreshAds();
       }).catch(function(){});
+  })();
+
+  // An always-on venue TV must flip "Tonight" when the day rolls over. buildAds() bakes the board once,
+  // so re-run it the moment the Australian weekday actually changes (checked once a minute, idle only).
+  (function(){
+    var day=todayAU();
+    setInterval(function(){
+      var d=todayAU();
+      if(d!==day){ day=d; if(tvMode==="ads"){ adBuilt=false; buildAds(); if(!hostConnected) startAds(); } }
+    }, 60000);
   })();
 
   // ================= FULLSCREEN (additive setup control) =================
