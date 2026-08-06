@@ -468,7 +468,7 @@
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
-        subscribed=true; send({ t:"host_here" }); flushQueue();
+        subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"raffle" }); flushQueue();   // put the raffle screen on the unified /tv
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
@@ -487,6 +487,7 @@
       $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
       if(m.hello){
         send({ t:"host_here" });
+        send({ t:"mode", mode:"raffle" });   // so a /tv that just pinged switches to the raffle screen
         if(G.round){ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:G.allowRedraw, pad:padWidth(), min:G.min, max:G.max, time:(G.allowRedraw?Math.max(0,G.round.remaining):0) }); }
         else { sendState(); }
       }

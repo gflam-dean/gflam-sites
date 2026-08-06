@@ -686,7 +686,7 @@
       sendState();
       renderConsole();
     }).catch(function(e){ hostError(e.message); }).then(function(){
-      G.busy=false; if(btn){ btn.disabled=false; btn.textContent=label; }
+      G.busy=false; if(btn){ btn.disabled=false; btn.textContent=label; } renderConsole();   // re-sync the button label to G.status (e.g. still 'lobby' after a cancelled/failed start)
     });
   }
   function endGame(){

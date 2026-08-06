@@ -718,7 +718,7 @@
   // that game's screen. The game screens run the same watcher so you can hop between games and
   // back to bingo without ever touching the link.
   (function unifiedRouter(){
-    if(!VENUE_SLUG) return;
+    if(!VENUE_SLUG || !client) return;   // client is null if the Supabase lib failed to load; keep ads + slides alive
     var GAMES=["trivia","musical","raffle","members"], switched=false;
     function goTo(game){ if(switched) return; switched=true; window.location.href="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG); }
     GAMES.forEach(function(game){

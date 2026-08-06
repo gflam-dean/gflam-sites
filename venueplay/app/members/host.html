@@ -483,7 +483,7 @@
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
-        subscribed=true; send({ t:"host_here" }); flushQueue();
+        subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"members" }); flushQueue();   // put the members-draw screen on the unified /tv
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
         sendState();
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
@@ -503,6 +503,7 @@
       $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
       if(m.hello){
         send({ t:"host_here" });
+        send({ t:"mode", mode:"members" });   // so a /tv that just pinged switches to the members-draw screen
         if(G.round){ send({ t:"winner", number:G.round.number, name:G.round.name }); }
         else { sendState(); }
       }
