@@ -248,6 +248,47 @@
   function pad(n){ var s=String(n); var w=padWidth(); while(s.length<w) s="0"+s; return s; }
   function hostStatus(msg){ if(msg) $("statusText").textContent=msg; }
 
+  // ---- reload-recovery: a host refresh keeps drawing the SAME raffle (same pattern as trivia/musical) ----
+  // Stash only the session id; the Worker's /snapshot is the source of truth. The Worker also refuses to
+  // redraw a number already drawn, so even a partial grid can never produce a duplicate winner.
+  var RAFFLE_SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
+  function raffleKey(){ return "vpRaffleGame-"+(G.venueId||""); }
+  function saveRaffle(){
+    try{ if(G.gameId && G.sessionId){ localStorage.setItem(raffleKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId })); } }catch(e){}
+  }
+  function clearRaffle(){ try{ localStorage.removeItem(raffleKey()); }catch(e){} }
+  function restoreRaffle(){
+    var raw; try{ raw=localStorage.getItem(raffleKey()); }catch(e){ return Promise.resolve(false); }
+    if(!raw) return Promise.resolve(false);
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearRaffle(); return Promise.resolve(false); }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>RAFFLE_SAVE_MAX_AGE){ clearRaffle(); return Promise.resolve(false); }
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(snap){
+        if(!snap || snap.status!=="running" || !snap.game || snap.game.format!=="raffle"){ clearRaffle(); return false; }
+        var g=snap.game, jackOn=!!g.jackpot_on;
+        // Put the recovered settings back into the FORM inputs first: the host reads settings from the DOM
+        // (readInputs), so leaving the inputs at defaults would fork a fresh raffle on the next draw.
+        if(g.range_min!=null) $("rfStart").value=g.range_min;
+        if(g.range_max!=null) $("rfEnd").value=g.range_max;
+        if(g.winners!=null) $("rfWinners").value=g.winners;
+        if(g.time_to_present!=null) $("rfTime").value=g.time_to_present;
+        $("rfAllowRedraw").checked=(g.allow_redraw!==false);
+        $("rfJackOn").checked=jackOn; show("rfJackWrap", jackOn); $("rfWinners").disabled=jackOn;
+        if(jackOn && g.jackpot_amount_cents!=null) $("rfJackAmt").value=Math.round(g.jackpot_amount_cents/100);
+        if(!jackOn && g.prize) $("rfPrize").value=g.prize;
+        readInputs();                       // sync G from the inputs so raffleSig() matches the live game
+        G.sessionId=snap.session_id; G.gameId=g.game_id; G.gameSig=raffleSig(); if(g.pad) G.serverPad=g.pad;
+        // rebuild the drawn grid: all_tickets = every number drawn so far, last_tickets is the fallback
+        G.drawn={}; var dt=(Array.isArray(g.all_tickets)&&g.all_tickets.length)?g.all_tickets:(g.last_tickets||[]);
+        for(var i=0;i<dt.length;i++){ if(dt[i]!=null) G.drawn[dt[i]]=true; }
+        hostStatus("Recovered your raffle");
+        renderRange(); renderResults();     // sendIdle() (queued) redraws the prize + range on the TV once paired
+        return true;
+      })
+      .catch(function(){ return false; });
+  }
+
   // ---- inputs ----
   function readInputs(){
     G.prize=($("rfPrize").value||"").trim()||"Prize";
@@ -334,7 +375,7 @@
         prize:G.jackOn?null:G.prize, prize_type:G.jackOn?"cash":"other",
         prizes:G.savedPrizes
       });
-    }).then(function(r){ G.gameId=r.game_id; G.gameSig=sig; G.drawn={}; if(r.pad) G.serverPad=r.pad; });
+    }).then(function(r){ G.gameId=r.game_id; G.gameSig=sig; G.drawn={}; if(r.pad) G.serverPad=r.pad; saveRaffle(); });
   }
   function drawBody(){
     var body={ game_id:G.gameId, winners:G.winnersCount };
@@ -547,10 +588,13 @@
       G.venueId=ctx.currentVenueId;
       $("statusText").textContent="Signed in";
       loadSavedPrizes();
-      var tv=tvFromUrl();
-      if(tv){ connect(tv); }
-      else if(ctx.venue && ctx.venue.slug && window.VP && VP.venueCode){ connect(VP.venueCode("raffle-"+ctx.venue.slug)); }
-      else { $("connectView").classList.remove("hidden"); }
+      var slug=(ctx.venue && ctx.venue.slug) || "";
+      restoreRaffle().then(function(){   // recover a live raffle first (accidental reload), then pair the TV as normal
+        var tv=tvFromUrl();
+        if(tv){ connect(tv); }
+        else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("raffle-"+slug)); }
+        else { $("connectView").classList.remove("hidden"); }
+      });
     }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
   } else {
     showSignIn("Sign in helper failed to load. Try reloading.");

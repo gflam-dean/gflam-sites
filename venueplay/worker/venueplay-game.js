@@ -2515,10 +2515,12 @@ async function getPublicSnapshot(env, sessionId) {
       const cfg = g.config || {};
       const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(g.id) + '&select=playlist_id,pattern,reveal_mode');
       let played = [];
+      let allSongs = [];   // the whole game's song list (id + title) so a reloading HOST can rebuild its play queue
       if (mg.length) {
         const songs = await sbGet(env, 'vp_playlist_songs', 'playlist_id=eq.' + enc(mg[0].playlist_id) + '&select=id,title');
         const titleById = {};
         for (let i = 0; i < songs.length; i++) titleById[songs[i].id] = songs[i].title;
+        allSongs = songs.map((s) => ({ song_id: s.id, title: s.title }));
         const plays = await sbGet(env, 'vp_music_plays',
           'game_id=eq.' + enc(g.id) + '&played_at=not.is.null&select=song_id,seq&order=seq.asc');
         played = plays.map((p) => ({ song_id: p.song_id, title: titleById[p.song_id] || '' }));
@@ -2530,6 +2532,7 @@ async function getPublicSnapshot(env, sessionId) {
         playlist_name: cfg.playlist_name || null, song_count: cfg.song_count != null ? cfg.song_count : null,
         auto_daub: cfg.auto_daub !== false,
         played_songs: played, played_count: played.length,
+        all_songs: allSongs,   // titles are already public (players daub by ear); no secrets here
       };
     }
   }
@@ -2552,9 +2555,11 @@ async function getPublicSnapshot(env, sessionId) {
         'game_id=eq.' + enc(g.id) + '&select=seq,ticket_number&order=seq.desc&limit=50');
       let lastSeq = null;
       const lastTickets = [];
+      const allTickets = [];   // every number drawn so far (up to 50) so a reloading HOST rebuilds its drawn grid
       for (let i = 0; i < last.length; i++) {
         if (lastSeq == null) lastSeq = last[i].seq;
         if (last[i].seq === lastSeq && last[i].ticket_number != null) lastTickets.push(last[i].ticket_number);
+        if (last[i].ticket_number != null) allTickets.push(last[i].ticket_number);
       }
       snap.game = {
         game_id: g.id, seq: g.seq, format: 'raffle',
@@ -2565,7 +2570,8 @@ async function getPublicSnapshot(env, sessionId) {
         allow_redraw: r.allow_redraw !== false,
         time_to_present: r.time_to_claim_seconds != null ? r.time_to_claim_seconds : null,
         jackpot_on: !!r.jackpot_on,
-        pad: padWidth, last_seq: lastSeq, last_tickets: lastTickets,
+        jackpot_amount_cents: r.jackpot_amount_cents != null ? r.jackpot_amount_cents : null,
+        pad: padWidth, last_seq: lastSeq, last_tickets: lastTickets, all_tickets: allTickets,
       };
     }
   }

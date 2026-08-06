@@ -424,6 +424,56 @@
   }
   function hostError(msg){ $("statusText").textContent=msg||"Something went wrong"; }
 
+  // ---- reload-recovery: a host refresh mid-game picks the live game back up (same pattern as trivia/host) ----
+  // We stash only the session id; the Worker's /snapshot is the source of truth and rebuilds the rest.
+  var MUSIC_SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
+  var WORKER_TO_PAT={ one_line:"one", two_lines:"two", four_corners:"corners", full_house:"full" };
+  function musicKey(){ return "vpMusicGame-"+(G.venueId||""); }
+  function saveMusic(){
+    try{ if(G.gameId && G.sessionId && G.status==="running"){ localStorage.setItem(musicKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId })); } }catch(e){}
+  }
+  function clearMusic(){ try{ localStorage.removeItem(musicKey()); }catch(e){} }
+  function restoreMusic(){
+    var raw; try{ raw=localStorage.getItem(musicKey()); }catch(e){ return Promise.resolve(false); }
+    if(!raw) return Promise.resolve(false);
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearMusic(); return Promise.resolve(false); }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>MUSIC_SAVE_MAX_AGE){ clearMusic(); return Promise.resolve(false); }
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(snap){
+        if(!snap || snap.status!=="running" || !snap.game || snap.game.format!=="musical_bingo"){ clearMusic(); return false; }
+        var g=snap.game;
+        G.sessionId=snap.session_id; G.joinCode=snap.join_code||""; G.gameId=g.game_id;
+        G.pattern=WORKER_TO_PAT[g.pattern]||"one";
+        G.prize=g.prize||"the prize";
+        G.autoDaub=(g.auto_daub!==false);
+        G.playlistName=g.playlist_name||"All songs";
+        // Rebuild the game's song list: song_id comes from the Worker (all_songs), the preview clip
+        // + artwork come from the local library by title. Falls back to just the played songs if an
+        // older Worker (pre all_songs) is deployed - degraded, but never worse than a lost game.
+        var src=(Array.isArray(g.all_songs)&&g.all_songs.length)?g.all_songs:(g.played_songs||[]);
+        G.songs=src.map(function(w){
+          var lib=LIB.byTitle[normTitle(w.title)]||{};
+          return { id:lib.id||"", song_id:w.song_id, title:w.title, artist:lib.artist||"", previewUrl:lib.previewUrl||"", artworkUrl:lib.artworkUrl||"" };
+        });
+        G.byTitle={}; for(var i=0;i<G.songs.length;i++){ G.byTitle[normTitle(G.songs[i].title)]=G.songs[i]; }
+        // mark the songs already played (by title, matching how playedArray/daubs work)
+        G.played={}; G.playedOrder=[];
+        var pl=g.played_songs||[];
+        for(var j=0;j<pl.length;j++){ var t=pl[j].title; if(t){ G.played[t]=true; G.playedOrder.push(t); } }
+        G.nowSong=G.playedOrder.length ? (G.byTitle[normTitle(G.playedOrder[G.playedOrder.length-1])]||findSong(G.playedOrder[G.playedOrder.length-1])) : null;
+        G.hostNow=G.nowSong;
+        G.queue=shuffledQueue(); G.qIdx=-1;   // peekNextInQueue skips already-played titles, so a fresh shuffle is fine
+        G.won=false; G.claim=null; G.status="running";
+        if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel
+        $("playNextBtn").disabled=false; $("playNextBtn").textContent="Play next song";
+        $("statusText").textContent="Recovered your live game";
+        renderConsole();   // connect() replays the running state to the TV once it (re)subscribes
+        return true;
+      })
+      .catch(function(){ return false; });
+  }
+
   // ---- broadcasts (instant UX only; the DB is the source of truth) ----
   function sendState(){
     bcast({ t:"state", pattern:G.pattern, prize:G.prize, played:playedArray(), active:(G.status==="running"), autoDaub:G.autoDaub, playerCount:playerCount(), game_id:G.gameId });
@@ -679,6 +729,7 @@
       G.queue=shuffledQueue(); G.qIdx=-1;
       G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null; G.won=false; G.claim=null;
       G.status="running";
+      saveMusic();
       stopAudio();
       $("playNextBtn").disabled=false; $("playNextBtn").textContent="Play next song";
       bcast({ t:"started", pattern:G.pattern, prize:G.prize, autoDaub:G.autoDaub, game_id:G.gameId });
@@ -691,6 +742,7 @@
   }
   function endGame(){
     if(G.busy) return;
+    clearMusic();
     var gid=G.gameId;
     G.status="setup"; G.claim=null; G.won=false; G.nowSong=null; G.hostNow=null; G.gameId="";
     stopAudio();
@@ -704,6 +756,7 @@
     var c=G.claim; G.busy=true;
     apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"confirm" }).then(function(){
       G.won=true; G.claim=null; G.status="setup";   // the round is finished server-side on confirm
+      clearMusic();
       stopAudio();
       bcast({ t:"winner", pid:c.pid, name:c.name, cardNo:c.cardNo });
       renderConsole();   // back to the setup view so the host can start the next round
@@ -868,9 +921,14 @@
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       $("statusText").textContent="Signed in";
-      if(tv){ libReady.then(function(){ connect(tv); }); }   // paired from the screen QR
-      else if(ctx.venue && ctx.venue.slug && window.VP && VP.venueCode){ libReady.then(function(){ connect(VP.venueCode("musical-"+ctx.venue.slug)); }); }
-      else { $("connectView").classList.remove("hidden"); }
+      var slug=(ctx.venue && ctx.venue.slug) || "";
+      libReady.then(function(){                 // library must be loaded before we rebuild a game's song list
+        restoreMusic().then(function(){         // recover a live game first (accidental reload), then pair the TV as normal
+          if(tv){ connect(tv); }                // paired from the screen QR
+          else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("musical-"+slug)); }
+          else { $("connectView").classList.remove("hidden"); }
+        });
+      });
     }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
   } else {
     showSignIn("Sign in helper failed to load. Try reloading.");
