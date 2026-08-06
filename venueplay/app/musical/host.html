@@ -291,6 +291,19 @@
     </div>
   </div>
 </div>
+
+<div id="carryModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
+  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
+    <div id="carryTitle" style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:6px">Winner!</div>
+    <div id="carryBody" style="font-size:14.5px;color:var(--muted);line-height:1.55;margin-bottom:14px"></div>
+    <label style="font-size:12px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px">Prize for the next round</label>
+    <input type="text" id="carryPrize" placeholder="e.g. $50 bar tab" style="width:100%;margin-bottom:16px">
+    <div style="display:flex;gap:10px">
+      <button type="button" id="carryGo" class="btn pink big" style="flex:1">Carry on</button>
+      <button type="button" id="carryEnd" class="btn ghost big" style="flex:0 0 auto">End game</button>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
 <script>
@@ -756,15 +769,44 @@
     renderConsole();
     if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
   }
+  // Progressive prizes: after a win we can carry the SAME cards on to the next pattern with a new
+  // prize (one line -> two lines -> full house). A full house is the end, so no carry-on from there.
+  function nextPat(cur){ return cur==="one"?"two":cur==="two"?"full":""; }
   function hostConfirm(){
     if(!G.claim || G.busy) return;
     var c=G.claim; G.busy=true;
-    apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"confirm" }).then(function(){
-      G.won=true; G.claim=null; G.status="setup";   // the round is finished server-side on confirm
-      clearMusic();
-      stopAudio();
-      bcast({ t:"winner", pid:c.pid, name:c.name, cardNo:c.cardNo });
-      renderConsole();   // back to the setup view so the host can start the next round
+    var np=nextPat(G.pattern);
+    // continue:true keeps the game running on the server when there's a next round to play
+    apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"confirm", continue:(np?true:false) }).then(function(){
+      G.claim=null;
+      bcast({ t:"winner", pid:c.pid, name:c.name, cardNo:c.cardNo });   // celebrate on the TV + phones
+      if(np){
+        G._nextPat=np;
+        $("carryTitle").innerHTML="&#127881; "+esc(c.name||"Player")+" won!";
+        $("carryBody").innerHTML="They took <b>"+esc(G.prize)+"</b> on "+esc(PATTERN_NAMES[G.pattern]||G.pattern)+". Keep the same cards going for <b>"+esc(PATTERN_NAMES[np]||np)+"</b> with a new prize, or end the game.";
+        $("carryPrize").value="";
+        $("carryModal").classList.remove("hidden");
+        stopAudio();   // pause the music between rounds
+      } else {
+        endGameNow();  // full house: the game is over
+      }
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
+  }
+  function endGameNow(){
+    G.won=true; G.status="setup"; clearMusic(); stopAudio();
+    $("carryModal").classList.add("hidden");
+    if(G.gameId){ apiPost("/host/game/end",{ game_id:G.gameId }).catch(function(){}); }
+    renderConsole();   // back to setup for the next game
+  }
+  function carryOn(){
+    if(!G._nextPat || G.busy) return;
+    var np=G._nextPat, newPrize=($("carryPrize").value||"").trim()||G.prize; G.busy=true;
+    apiPost("/host/game/pattern",{ game_id:G.gameId, pattern:np, prize:newPrize }).then(function(){
+      G.pattern=np; G.prize=newPrize; G.status="running"; G.won=false; G.claim=null;
+      $("carryModal").classList.add("hidden");
+      bcast({ t:"carryon", pattern:G.pattern, prize:G.prize, played:playedArray() });   // phones + TV resume on the new pattern/prize
+      saveMusic();
+      renderConsole();   // back to live; tap Play next to keep the songs going
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
   function hostReject(){
@@ -899,6 +941,8 @@
     var b=e.target.closest("button[data-act]"); if(!b) return;
     if(b.getAttribute("data-act")==="confirm") hostConfirm(); else hostReject();
   });
+  $("carryGo").addEventListener("click", carryOn);
+  $("carryEnd").addEventListener("click", endGameNow);
 
   // ---- boot: resolve the host login, load the library, then pair + run ----
   function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); }

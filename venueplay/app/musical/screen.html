@@ -433,6 +433,13 @@
       $("winCard").textContent="#"+(m.cardNo||"000");
       celebrate(9000);
     }
+    else if(m.t==="carryon"){   // progressive round: resume the running view on the new pattern + prize
+      if(m.pattern) state.pattern=m.pattern;
+      if(typeof m.prize==="string") state.prize=m.prize;
+      if(m.played) state.played=m.played;
+      state.winner=null; state.phase="running"; stopCelebrate();
+      show("tvRun"); renderRun();
+    }
   }
 
   // ---- init ----

@@ -174,6 +174,7 @@ export default {
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
+      if (method === 'POST' && path === '/host/game/pattern')  return await handleMusicPattern(request, env, json);
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
       if (method === 'POST' && path === '/host/ball')          return await handleHostBall(request, env, json);
@@ -1534,6 +1535,42 @@ function formatMemberName(first, last, mode) {
  * this endpoint only tracks which song was played; the ~30s preview clip plays through the
  * host device into the PA and is never touched here.
  */
+// POST /host/game/pattern {game_id, pattern, prize?} - advance the pattern (and new prize) on a RUNNING
+// musical game so players can "carry on" to the next prize (one line -> two lines -> full house) on the
+// SAME cards. Claims are verified against vp_music_games.pattern, so this must update it server-side.
+async function handleMusicPattern(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+  const patternMap = {
+    one: 'one_line', two: 'two_lines', corners: 'four_corners', full: 'full_house',
+    one_line: 'one_line', two_lines: 'two_lines', four_corners: 'four_corners', full_house: 'full_house',
+  };
+  const pattern = patternMap[String(b.pattern || '')];
+  if (!pattern) return json({ error: 'Invalid pattern' }, 400);
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  if (game.format !== 'musical_bingo') return json({ error: 'Not a musical game' }, 400);
+  if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
+  const session = await getSession(env, game.session_id);
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  await requireStaff(env, authUserId, session.venue_id);           // ENFORCED: staff at the game's venue
+
+  const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=game_id');
+  if (!mg.length) return json({ error: 'Not a musical game' }, 404);
+
+  await sbPatch(env, 'vp_music_games', 'game_id=eq.' + enc(gameId), { pattern });
+  const config = Object.assign({}, game.config || {});
+  if (typeof b.prize === 'string' && b.prize.trim()) config.prize = b.prize.trim().slice(0, 120);
+  await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId), { config });
+
+  return json({ ok: true, game_id: gameId, pattern, prize: config.prize || null });
+}
+
 async function handleHostPlay(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
   const b = await readJson(request);
@@ -2012,7 +2049,10 @@ async function handleClaimResolve(request, env, json) {
   // resolved by whom, when). On a confirm we also finish the game, so the round
   // is closed in the DB and /snapshot stops treating it as running. A reject
   // leaves the game running so play continues.
-  if (decision === 'confirm') {
+  // b.continue === true means the host is carrying the game on to the next prize (musical bingo:
+  // one line -> two lines -> full house on the SAME cards), so record the winner but keep the game
+  // running. Otherwise a confirmed win finishes the game as usual.
+  if (decision === 'confirm' && b.continue !== true) {
     await sbPatch(env, 'vp_games', 'id=eq.' + enc(claim.game_id) + '&status=eq.running',
       { status: 'finished', ended_at: new Date().toISOString() });
   }
