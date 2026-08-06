@@ -155,10 +155,8 @@
         <div class="field"><label>First ticket number</label><input type="number" id="rfStart" class="mono" value="1" min="0"></div>
         <div class="field"><label>Last ticket number</label><input type="number" id="rfEnd" class="mono" value="150" min="0" max="999999"></div>
       </div>
-      <div class="two">
-        <div class="field"><label>Winners to draw</label><input type="number" id="rfWinners" class="mono" value="1" min="1" max="50"></div>
-        <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" min="0"></div>
-      </div>
+      <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" min="0"></div>
+      <p class="note" style="margin-top:10px">Draws <b>one winner at a time</b>. For another prize, change the prize above and tap <b>Draw the next prize</b>.</p>
       <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
       <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0"></div>
       <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
@@ -271,10 +269,9 @@
         // (readInputs), so leaving the inputs at defaults would fork a fresh raffle on the next draw.
         if(g.range_min!=null) $("rfStart").value=g.range_min;
         if(g.range_max!=null) $("rfEnd").value=g.range_max;
-        if(g.winners!=null) $("rfWinners").value=g.winners;
         if(g.time_to_present!=null) $("rfTime").value=g.time_to_present;
         $("rfAllowRedraw").checked=(g.allow_redraw!==false);
-        $("rfJackOn").checked=jackOn; show("rfJackWrap", jackOn); $("rfWinners").disabled=jackOn;
+        $("rfJackOn").checked=jackOn; show("rfJackWrap", jackOn);
         if(jackOn && g.jackpot_amount_cents!=null) $("rfJackAmt").value=Math.round(g.jackpot_amount_cents/100);
         if(!jackOn && g.prize) $("rfPrize").value=g.prize;
         readInputs();                       // sync G from the inputs so raffleSig() matches the live game
@@ -294,7 +291,7 @@
     G.prize=($("rfPrize").value||"").trim();   // empty until the host types one, so the TV never shows a placeholder prize
     G.min=parseInt($("rfStart").value,10); G.max=parseInt($("rfEnd").value,10);
     G.jackOn=$("rfJackOn").checked; G.jackAmt=Math.max(0,parseInt($("rfJackAmt").value,10)||0);
-    G.winnersCount = G.jackOn ? 1 : Math.max(1, Math.min(50, parseInt($("rfWinners").value,10)||1));
+    G.winnersCount = 1;   // one winner per draw; the host draws again (with a new prize) for each additional prize
     G.time=parseInt($("rfTime").value,10); if(isNaN(G.time)||G.time<0) G.time=180;
     G.drawLength=4;
     G.allowRedraw=$("rfAllowRedraw").checked;
@@ -308,7 +305,7 @@
     var line=$("rangeLine");
     if(!validRange()){ line.innerHTML='<span class="warn">Enter a valid ticket range.</span>'; return; }
     var drew=drawnCount();
-    line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"+(G.winnersCount>1?" · "+G.winnersCount+" winners":"")+(drew?" · "+drew+" already drawn":"");
+    line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"+(drew?" · "+drew+" already drawn":"");
     if(!G.round) sendIdle();
   }
 
@@ -566,14 +563,14 @@
     $("drawLenLbl").textContent=G.drawLength;
   });
   $("rfJackOn").addEventListener("change", function(){
-    show("rfJackWrap", this.checked); $("rfWinners").disabled=this.checked; if(this.checked) $("rfWinners").value=1; renderRange();
+    show("rfJackWrap", this.checked); renderRange();
   });
   $("prizePresets").addEventListener("click", function(e){
     var b=e.target.closest("button[data-p]"); if(!b) return;
-    $("rfJackOn").checked=false; show("rfJackWrap",false); $("rfWinners").disabled=false;
+    $("rfJackOn").checked=false; show("rfJackWrap",false);
     $("rfPrize").value=b.getAttribute("data-p"); renderRange();
   });
-  ["rfPrize","rfStart","rfEnd","rfWinners","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", renderRange); });
+  ["rfPrize","rfStart","rfEnd","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", renderRange); });
   $("rfAllowRedraw").addEventListener("change", readInputs);
 
   // ---- boot: resolve the host login, load saved prizes, then pair with the screen ----
