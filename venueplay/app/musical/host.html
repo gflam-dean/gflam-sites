@@ -243,6 +243,7 @@
               <button class="btn ghost" id="playPauseBtn" disabled>Pause</button>
               <button class="btn pink" id="playNextBtn">Play song</button>
             </div>
+            <button class="btn ghost" id="monitorBtn" style="width:100%;margin-top:8px;font-size:13px">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
             <div class="clipwarn hidden" id="clipWarn">No preview clip for this one. Play it yourself through the PA, then tap Mark called.</div>
             <div class="spotrow">
               <button class="btn ghost" id="spotifyBtn">Copy Spotify links</button>
@@ -402,7 +403,8 @@
     queue:[], qIdx:-1,     // shuffled play order for the "Play next" button
     played:{}, playedOrder:[], hostNow:null, nowSong:null,
     players:{}, order:[],  // cosmetic roster: pid -> {name}
-    claim:null, won:false, busy:false
+    claim:null, won:false, busy:false,
+    hostMonitor:false     // false = the venue sound comes from the TV screen and THIS device stays quiet
   };
   function curSongs(){ return G.songs; }
   function findSong(title){
@@ -519,11 +521,11 @@
     if(G.gameId && song.song_id){
       apiPost("/host/play",{ game_id:G.gameId, song_id:song.song_id }).catch(function(e){ hostError(e.message); });
     }
-    bcast({ t:"played", title:song.title, artist:song.artist, artworkUrl:song.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub });
+    bcast({ t:"played", title:song.title, artist:song.artist, previewUrl:song.previewUrl||"", artworkUrl:song.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub });
     var warn=$("clipWarn");
     if(song.previewUrl){
       warn.classList.add("hidden");
-      audio.src=song.previewUrl; audio.volume=1.0; resetClipUI();
+      audio.src=song.previewUrl; audio.volume=1.0; audio.muted=!G.hostMonitor; resetClipUI();   // sound plays on the TV screen; this device stays quiet unless monitoring
       var pr=audio.play(); if(pr && pr.catch){ pr.catch(function(){}); }
       $("playPauseBtn").disabled=false; $("playPauseBtn").textContent="Pause";
     } else {
@@ -544,7 +546,10 @@
     // nothing left unplayed
     $("playNextBtn").disabled=true; $("playNextBtn").textContent="All songs played";
   }
-  function togglePlayPause(){ if(!audio.src) return; if(audio.paused){ var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); } else { audio.pause(); } }
+  function togglePlayPause(){ if(!audio.src) return;
+    if(audio.paused){ var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); bcast({ t:"clipctl", action:"play" }); }
+    else { audio.pause(); bcast({ t:"clipctl", action:"pause" }); }
+  }
   function stopAudio(){ try{ audio.pause(); }catch(e){} try{ audio.removeAttribute("src"); audio.load(); }catch(e){} resetClipUI(); $("playPauseBtn").disabled=true; $("playPauseBtn").textContent="Pause"; }
 
   // ---- Spotify affordance (for venues who prefer full tracks off their own subscription) ----
@@ -788,7 +793,7 @@
       if(G.status==="running"){
         send({ t:"mode", mode:"musical" });
         sendState();
-        if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
+        if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
         if(G.claim) send({ t:"claim_pending", name:G.claim.name });
       }
     }
@@ -834,7 +839,7 @@
         if(G.status==="running"){
           send({ t:"mode", mode:"musical" });
           sendState();
-          if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
+          if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
           if(G.claim) send({ t:"claim_pending", name:G.claim.name });
         } else { sendState(); }
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
@@ -887,6 +892,11 @@
   $("endGameBtn").addEventListener("click", endGame);
   $("playNextBtn").addEventListener("click", playNext);
   $("playPauseBtn").addEventListener("click", togglePlayPause);
+  $("monitorBtn").addEventListener("click", function(){
+    G.hostMonitor=!G.hostMonitor; audio.muted=!G.hostMonitor;
+    this.innerHTML = G.hostMonitor ? "&#128266; Also playing here &middot; tap to mute this device"
+                                   : "&#128263; Sound is on the TV &middot; tap to also hear it here";
+  });
   $("spotifyBtn").addEventListener("click", copySpotify);
   $("songList").addEventListener("click", function(e){
     var pill=e.target.closest(".pill"); if(!pill) return;

@@ -156,6 +156,8 @@
   </div>
 </div>
 
+<!-- venue sound source: this screen plays the musical-bingo clips (the host device stays quiet) -->
+<audio id="clipAudio" playsinline></audio>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script>
@@ -357,6 +359,13 @@
   var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
   function cancelBackToAds(){ if(_backToAdsT){ clearTimeout(_backToAdsT); _backToAdsT=null; } }
   function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
+  // ---- clip audio: this screen is the venue's sound source (whichever screen is wired to the amp) ----
+  var clipAudio=$("clipAudio"), _clipUnlocked=false;
+  function unlockClip(){ if(_clipUnlocked) return; _clipUnlocked=true; try{ var p=clipAudio.play(); if(p&&p.then){ p.then(function(){ clipAudio.pause(); }).catch(function(){}); } }catch(e){} }
+  document.addEventListener("pointerdown", unlockClip, { once:true });   // browsers need one gesture before audio; Fully Kiosk autoplay covers a hands-off TV
+  function playClip(url){ if(!url) return; try{ clipAudio.src=url; clipAudio.currentTime=0; clipAudio.volume=1.0; var pr=clipAudio.play(); if(pr&&pr.catch) pr.catch(function(){}); }catch(e){} }
+  function stopClip(){ try{ clipAudio.pause(); clipAudio.removeAttribute("src"); clipAudio.load(); }catch(e){} }
+
   function onMsg(m){
     if(!m||!m.t) return;
     if(!_adsKeep[m.t]) cancelBackToAds();
@@ -365,7 +374,7 @@
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
     if(m.t==="mode"){ return; }                 // format handshake; the layers below drive the view
-    if(m.t==="idle"){ state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
+    if(m.t==="idle"){ stopClip(); state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
     if(m.t==="state"){
       state.hostSeen=true;
       if(m.pattern) state.pattern=m.pattern;
@@ -397,6 +406,11 @@
       state.played=m.played||state.played;
       state.phase="running";
       revealSong(m.title, m.artist, m.artworkUrl);
+      playClip(m.previewUrl);   // the venue hears the clip from this screen
+    }
+    else if(m.t==="clipctl"){   // host pause/resume follows through to the venue sound
+      if(m.action==="pause"){ try{ clipAudio.pause(); }catch(e){} }
+      else if(m.action==="play"){ try{ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
     }
     else if(m.t==="players"){
       if(typeof m.count==="number") state.playerCount=m.count;
@@ -404,6 +418,7 @@
       else if(state.phase==="running"){ renderMeta(); }
     }
     else if(m.t==="claim_pending"){
+      try{ clipAudio.pause(); }catch(e){}   // quiet the room while the host checks the claim
       state.phase="claim"; show("tvClaim");
       $("claimName").textContent=m.name||"Player";
     }
@@ -411,6 +426,7 @@
       state.phase="running"; show("tvRun"); renderRun();
     }
     else if(m.t==="winner"){
+      stopClip();
       state.winner=m; state.phase="win"; show("tvWin");
       $("winName").textContent=m.name||"Player";
       $("winPrizeVal").textContent=state.prize;
