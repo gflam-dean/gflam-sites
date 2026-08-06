@@ -155,9 +155,9 @@
 
     <div class="tabs" role="tablist">
       <button class="on" data-tab="billing">Billing</button>
-      <button data-tab="team">Team</button>
-      <button data-tab="players">Players</button>
-      <button data-tab="setup">Venue setup</button>
+      <button data-tab="screen">Screen</button>
+      <button data-tab="draws">Draws</button>
+      <button data-tab="settings">Game settings</button>
     </div>
 
     <div class="tabpanel on" id="tp-billing">
@@ -188,9 +188,7 @@
       <div class="t">Email me before each payment<small>A heads-up a few days before your card is charged.</small></div>
       <label class="sw"><input type="checkbox" id="reminders"><span class="sl"></span></label>
     </div>
-    </div><!-- /tp-billing -->
 
-    <div class="tabpanel" id="tp-team">
     <div class="label">Hosts</div>
     <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code, no app to install.</p>
     <div id="hosts"></div>
@@ -231,9 +229,9 @@
         <button class="go" id="mgr-go" style="align-self:flex-start;margin-top:8px">Add manager</button>
       </div>
     </div>
-    </div><!-- /tp-team -->
+    </div><!-- /tp-billing -->
 
-    <div class="tabpanel" id="tp-players">
+    <div class="tabpanel" id="tp-settings">
     <div class="label">Player data &amp; name display</div>
     <p class="note" style="margin:0 0 10px">What players are asked for when they join, and how their name shows on the TV (John S, J Smith or John Smith). Opens that venue's settings.</p>
     <div id="playerData"></div>
@@ -241,9 +239,9 @@
     <div class="label">Marketing opt-ins</div>
     <p class="note" style="margin:0 0 10px">Players who ticked "keep me posted" when they joined. Download them as a CSV for your own marketing.</p>
     <button class="addbtn" id="optinExport">Download opt-in list (CSV)</button>
-    </div><!-- /tp-players -->
+    </div><!-- /tp-settings -->
 
-    <div class="tabpanel" id="tp-setup">
+    <div class="tabpanel" id="tp-draws">
     <div class="label">Raffles</div>
     <p class="note" style="margin:0 0 10px">Set your raffle routine and your usual prizes once. The running total of prizes given away shows here too.</p>
     <div id="rfPickWrap" class="screenpick" style="display:none">
@@ -305,7 +303,9 @@
       <input type="file" id="md-csv" accept=".csv,text/csv" style="display:none">
       <button class="addbtn" id="md-csvbtn" style="margin-top:8px">Or upload a CSV file</button>
     </div>
+    </div><!-- /tp-draws -->
 
+    <div class="tabpanel" id="tp-screen">
     <div class="label">Advertising</div>
     <p class="note" style="margin:0 0 10px">Upload your own promo images to play on the venue TV between games, then open <b id="tvLink" style="color:var(--text)">venueplay.com.au/tv</b> on your screen. Changes appear within a few seconds.</p>
     <div id="screenPickWrap" class="screenpick" style="display:none">
@@ -324,7 +324,7 @@
         <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview</a>
       </div>
     </div>
-    </div><!-- /tp-setup -->
+    </div><!-- /tp-screen -->
 
     <p class="msg" id="msg"></p>
   </div>
