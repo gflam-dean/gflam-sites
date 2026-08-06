@@ -272,7 +272,7 @@
     if(gch){ try{ client.removeChannel(gch); }catch(e){} gch=null; gsub=false; }
     gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });
     gch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
-    gch.subscribe(function(status){ if(status==="SUBSCRIBED"){ gsub=true; gflush(); } });
+    gch.subscribe(function(status){ if(status==="SUBSCRIBED"){ gsub=true; gflush(); gsend({ t:"rollcall" }); } });   // ask connected players to re-announce so the roster rebuilds
   }
 
   // ---- host game state ----
@@ -366,7 +366,7 @@
       var q=G.current;
       var w=el("div","qwrap");
       w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+'</span>'+
-        '<span class="live"><span><b id="hAns">'+answeredCount()+'</b> answered</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
+        '<span class="live"><span id="hAnsWrap" style="font-weight:700"><b id="hAns">'+answeredCount()+'</b>/<span id="hTot">'+playerCount()+'</span> in</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
         '<div class="qtext-h">'+esc(q.text)+'</div>';
       for(var i=0;i<q.options.length;i++){
         var correct=(i===q.correctIndex);
@@ -384,11 +384,16 @@
       var q2=G.current;
       var rw=el("div","qwrap");
       rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+' &middot; revealed</span></div>'+
-        '<div class="qtext-h">Correct: '+LETTERS[q2.correctIndex]+' &middot; '+esc(q2.options[q2.correctIndex])+'</div>';
+        '<div class="qtext-h">'+esc(q2.text)+'</div>'+
+        '<div class="opt correct" style="margin-top:8px"><span class="ol">'+LETTERS[q2.correctIndex]+'</span><span class="otx">'+esc(q2.options[q2.correctIndex])+'</span><span class="ck">&#10003; correct</span></div>';
       body.appendChild(rw);
+      // On the last question turn the button into "Reveal leaderboard" (which shows the podium);
+      // the podium never appears mid-round now.
+      var isLast = G.qtotal && (q2.qi||q2.qseq) >= G.qtotal;
       var brow=el("div","btnrow");
-      var nb2=el("button","btn pink big","Next question"); nb2.addEventListener("click", nextQuestion); brow.appendChild(nb2);
-      var fin=el("button","btn ghost big","Show podium"); fin.addEventListener("click", finish); brow.appendChild(fin);
+      var main=el("button","btn pink big", isLast ? "Reveal leaderboard" : "Next question");
+      main.addEventListener("click", isLast ? finish : nextQuestion); brow.appendChild(main);
+      var endb=el("button","btn ghost big","End round"); endb.addEventListener("click", function(){ endRound(); }); brow.appendChild(endb);
       body.appendChild(brow);
       return;
     }
@@ -404,8 +409,11 @@
   function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", function(){ endRound(); }); return b; }
 
   function updateLive(){
-    var e=$("hAns"), c=$("hCd");
-    if(e) e.textContent=answeredCount();
+    var e=$("hAns"), c=$("hCd"), t=$("hTot"), w=$("hAnsWrap");
+    var a=answeredCount(), p=playerCount();
+    if(e) e.textContent=a;
+    if(t) t.textContent=p;
+    if(w) w.style.color=(p>0 && a>=p) ? "var(--win)" : "";   // all teams in -> light up green
     if(c) c.textContent=remainingSecs()+"s";
   }
   function clearTick(){ if(G.tick){ clearInterval(G.tick); G.tick=null; } }
@@ -436,6 +444,7 @@
     openSession().then(function(){
       bcast({ t:"mode", mode:"trivia" });   // TV shows the trivia join screen
       G.status="lobby";
+      gsend({ t:"rollcall" });               // new round: pull the still-connected players back onto the roster
       bcast({ t:"players", count:playerCount() });
     }).catch(function(e){ hostError(e.message); }).then(function(){
       G.busy=false; if(btn){ btn.disabled=false; } renderConsole();
@@ -494,7 +503,10 @@
       bcast({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
         options:(G.current?G.current.options:[]), split:r.split||[], leaderboard:G.board });
       renderConsole();
-      setTimeout(function(){ if(G.status==="reveal"){ bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); } }, 5200);
+      // Between-question leaderboard, but NOT after the last question - there the host reveals
+      // the leaderboard/podium manually with the button.
+      var isLast = G.qtotal && G.current && (G.current.qi||G.current.qseq) >= G.qtotal;
+      if(!isLast){ setTimeout(function(){ if(G.status==="reveal"){ bcast({ t:"leaderboard", title:"Leaderboard", rows:G.board }); } }, 5200); }
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
   function finish(){
