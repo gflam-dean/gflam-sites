@@ -1790,7 +1790,7 @@ async function handleHostQuestion(request, env, json) {
     const nextSeqVal = seqList[nextIdx];
     const rows = await sbGet(env, 'vp_questions',
       'set_id=eq.' + enc(setId) + '&seq=eq.' + nextSeqVal +
-      '&select=id,seq,question,options,correct_index,time_limit_s,points&limit=1');
+      '&select=id,seq,question,options,correct_index,time_limit_s,points,image_url&limit=1');
     if (!rows.length) return json({ done: true });
     q = rows[0];
     qi = nextIdx + 1;
@@ -1800,7 +1800,7 @@ async function handleHostQuestion(request, env, json) {
     if (roundLimit != null && curSeq >= roundLimit) return json({ done: true });
     const nextQs = await sbGet(env, 'vp_questions',
       'set_id=eq.' + enc(setId) + '&seq=gt.' + curSeq +
-      '&select=id,seq,question,options,correct_index,time_limit_s,points&order=seq.asc&limit=1');
+      '&select=id,seq,question,options,correct_index,time_limit_s,points,image_url&order=seq.asc&limit=1');
     if (!nextQs.length) return json({ done: true });
     q = nextQs[0];
     qi = q.seq;
@@ -1818,6 +1818,7 @@ async function handleHostQuestion(request, env, json) {
   await emitEvent(env, session, 'trivia.question', {
     qseq: q.seq, qi, qtotal,
     text: q.question, options, ends_at: endsAt, secs,
+    image_url: q.image_url || null,   // picture rounds: the phones + TV show the image with the question
     colour: cfg.colour !== false,
   }, 'host:' + staff.id);
 
@@ -1825,7 +1826,7 @@ async function handleHostQuestion(request, env, json) {
   return json({
     qseq: q.seq, qi, qtotal,
     text: q.question, options, correct_index: q.correct_index,
-    ends_at: endsAt, secs,
+    ends_at: endsAt, secs, image_url: q.image_url || null,
   });
 }
 

@@ -54,6 +54,7 @@
   /* question layer */
   .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
   .qtext{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5.4cqw,54px);color:#fff;line-height:1.03;margin:1.6cqw 0 2.4cqw;max-width:92cqw}
+  .qimg{max-width:min(54cqw,52vh);max-height:34cqw;object-fit:contain;border-radius:2cqw;margin:1cqw auto 0;display:block;box-shadow:0 0 42px rgba(0,0,0,.55)}
   .answers{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqw;width:100%;max-width:82cqw}
   .answers.rev4{grid-template-columns:repeat(4,1fr);max-width:94cqw;gap:1.6cqw}
   .ans{--ac:154,154,164;background:rgba(var(--ac),.12);border:0.32cqw solid rgba(var(--ac),.55);border-radius:2cqw;padding:2cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1cqw;min-height:14cqw;overflow:hidden;transition:opacity .3s,box-shadow .3s}
@@ -154,6 +155,7 @@
   <!-- question -->
   <div class="layer hidden" id="tvQ">
     <div class="qcount" id="tvQCount">Question 1</div>
+    <img class="qimg hidden" id="tvQImg" alt="">
     <div class="qtext" id="tvQText">Question</div>
     <div class="answers" id="tvAnswers"></div>
     <div class="qfoot">
@@ -299,6 +301,7 @@
     answeredPids={};
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
+    var qi=$("tvQImg"); if(m.imageUrl){ qi.src=m.imageUrl; qi.classList.remove("hidden"); } else { qi.classList.add("hidden"); qi.removeAttribute("src"); }
     $("tvQText").textContent = m.text||"";
     var wrap=$("tvAnswers"); wrap.className="answers"; wrap.innerHTML="";
     for(var i=0;i<curQ.options.length;i++){

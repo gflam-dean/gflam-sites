@@ -538,13 +538,13 @@
     apiPost("/host/question",{ game_id:G.gameId }).then(function(r){
       if(r && r.done){ finish(); return; }
       G.current={ qseq:r.qseq, qi:r.qi, qtotal:r.qtotal, text:r.text, options:r.options||[],
-        correctIndex:r.correct_index, endsAt:Date.parse(r.ends_at), secs:r.secs };
+        correctIndex:r.correct_index, endsAt:Date.parse(r.ends_at), secs:r.secs, imageUrl:r.image_url||"" };
       G.qtotal=r.qtotal||G.qtotal;
       G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq;
       saveTrivia();
-      // PUBLIC broadcast: text + options, NEVER correct_index.
+      // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
       bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
-        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour });
+        text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour, imageUrl:r.image_url||"" });
       renderRun();
       G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });

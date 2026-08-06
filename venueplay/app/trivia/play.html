@@ -148,6 +148,7 @@
   <!-- QUESTION -->
   <div class="view hidden" id="vQ">
     <div class="pq-count" id="pqCount">Question</div>
+    <img id="pqImg" alt="" class="hidden" style="max-width:100%;max-height:38vh;object-fit:contain;border-radius:12px;margin:8px auto 0;display:block">
     <div class="pq-text" id="pqText">Question</div>
     <div class="pq-cd" id="pqCd">Answer in 20s</div>
     <div class="panswers" id="pAnswers"></div>
@@ -265,6 +266,7 @@
     if(typeof m.colour==="boolean") P.colour=m.colour;
     show("vQ");
     $("pqCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
+    var pqi=$("pqImg"); if(m.imageUrl){ pqi.src=m.imageUrl; pqi.classList.remove("hidden"); } else { pqi.classList.add("hidden"); pqi.removeAttribute("src"); }
     $("pqText").textContent = m.text||"";
     var wrap=$("pAnswers"); wrap.innerHTML="";
     wrap.classList.toggle("neutral", !P.colour);
