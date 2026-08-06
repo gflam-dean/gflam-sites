@@ -774,7 +774,9 @@
       .then(function(r){ return r.ok ? r.json() : []; })
       .then(function(rows){
         if(!Array.isArray(rows)) return;
-        var wd=new Date().toLocaleDateString("en-AU",{weekday:"long"}).toLowerCase();
+        // Use Australian time, not the TV/device timezone. A screen set to UTC reads "Thursday" on a
+        // Friday morning here (UTC is 10h behind), which wrongly lit up the previous night's draw.
+        var wd=new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:"Australia/Brisbane"}).toLowerCase();
         ADS.draws = rows.filter(function(d){ return d.draw_day; }).map(function(d){
           return { day:d.draw_day,
                    jackpot:"$"+Math.round((d.current_jackpot_cents||0)/100).toLocaleString("en-AU"),
