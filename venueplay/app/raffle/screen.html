@@ -147,6 +147,13 @@
     try{ var s=localStorage.getItem("vpTvVenue"); if(s) return s; }catch(e){}
     return "";
   })();
+  // ---- divert guard: a venue screen is NEVER a landing page. The only entry is the unified /tv link,
+  //      which hops here (sessionStorage vpTvHop) the moment a game goes on air. A direct or bookmarked
+  //      open is bounced straight to /tv so a screen is only ever the live link. ----
+  if(VENUE_SLUG){
+    var _hop=""; try{ _hop=sessionStorage.getItem("vpTvHop")||""; }catch(e){}
+    if(_hop!==VENUE_SLUG){ window.location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }
+  }
   var CODE=(function(){
     if(VENUE_SLUG) return venueCode("raffle-"+VENUE_SLUG);   // auto-pair by venue (game-namespaced)
     try{ var c=localStorage.getItem("vpTvCodeRaffle"); if(c && CODE_RE.test(c)) return c; }catch(e){}
