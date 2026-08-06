@@ -660,12 +660,26 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
 
   // Count the questions now: it drives qtotal on the phones/TV and the end-of-round
   // check in /host/question. We select only ids, never correct_index.
-  const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=id');
-  let questionCount = qs.length;
-  if (!questionCount) return json({ error: 'That question set has no questions' }, 409);
+  const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=seq');
+  const allSeqs = qs.map((r) => r.seq).filter((s) => s != null);
+  if (!allSeqs.length) return json({ error: 'That question set has no questions' }, 409);
   // Host can play fewer than the whole set this round (default = whole set).
+  let questionCount = allSeqs.length;
   const wantN = parseInt(b.question_count, 10);
   if (wantN >= 1 && wantN < questionCount) questionCount = wantN;
+
+  // VARIETY: pick this round's questions AT RANDOM, and skip ones already used earlier this
+  // session so a new round never replays the same questions. When the set is exhausted for the
+  // night it resets and reuses. The chosen order is stored on the game (config.question_seqs)
+  // and served from there, so no schema change is needed.
+  const priorTrivia = await sbGet(env, 'vp_games',
+    'session_id=eq.' + enc(session.id) + '&format=eq.trivia&select=config');
+  const used = {};
+  priorTrivia.forEach((g) => { const sq = g && g.config && g.config.question_seqs; if (Array.isArray(sq)) sq.forEach((s) => { used[s] = true; }); });
+  let pool = allSeqs.filter((s) => !used[s]);
+  if (pool.length < questionCount) pool = allSeqs.slice();   // whole set used this session -> reset
+  const chosenSeqs = shuffleArray(pool.slice()).slice(0, questionCount);
+  questionCount = chosenSeqs.length;
 
   // vp_trivia_games has no per-game points/time/prize columns, so the host's overrides
   // and display text live in vp_games.config (same place bingo keeps prize/title).
@@ -1561,39 +1575,54 @@ async function handleHostQuestion(request, env, json) {
   if (!tg.length) return json({ error: 'Not a trivia game' }, 404);
   const setId = tg[0].question_set_id;
   const curSeq = tg[0].current_seq || 0;
-
-  // Stop once the round's chosen number of questions has been played. Questions are seq
-  // 1..N, current_seq is the last one served, so served-so-far == curSeq.
-  const roundLimit = (game.config && typeof game.config.question_count === 'number') ? game.config.question_count : null;
-  if (roundLimit != null && curSeq >= roundLimit) return json({ done: true });
-
-  // The next question is the lowest seq strictly greater than the current one. Using
-  // seq > current (not current+1) is robust to gaps if a question was ever removed.
-  const nextQs = await sbGet(env, 'vp_questions',
-    'set_id=eq.' + enc(setId) + '&seq=gt.' + curSeq +
-    '&select=id,seq,question,options,correct_index,time_limit_s,points&order=seq.asc&limit=1');
-  if (!nextQs.length) return json({ done: true });   // no more questions; host shows the podium
-  const q = nextQs[0];
-
   const cfg = game.config || {};
+  const seqList = Array.isArray(cfg.question_seqs) ? cfg.question_seqs : null;
+
+  let q, qi, qtotal;
+  if (seqList) {
+    // Randomised game: config.question_seqs is this round's order (a shuffle, no repeats vs
+    // earlier rounds tonight). current_seq stores the SEQ of the last question served so
+    // /host/reveal still finds it; we advance by POSITION in the list.
+    qtotal = seqList.length;
+    const nextIdx = seqList.indexOf(curSeq) + 1;   // curSeq=0 at start -> indexOf=-1 -> idx 0
+    if (nextIdx >= seqList.length) return json({ done: true });
+    const nextSeqVal = seqList[nextIdx];
+    const rows = await sbGet(env, 'vp_questions',
+      'set_id=eq.' + enc(setId) + '&seq=eq.' + nextSeqVal +
+      '&select=id,seq,question,options,correct_index,time_limit_s,points&limit=1');
+    if (!rows.length) return json({ done: true });
+    q = rows[0];
+    qi = nextIdx + 1;
+  } else {
+    // Legacy game started before the randomiser: serve seq 1..N in order.
+    const roundLimit = (typeof cfg.question_count === 'number') ? cfg.question_count : null;
+    if (roundLimit != null && curSeq >= roundLimit) return json({ done: true });
+    const nextQs = await sbGet(env, 'vp_questions',
+      'set_id=eq.' + enc(setId) + '&seq=gt.' + curSeq +
+      '&select=id,seq,question,options,correct_index,time_limit_s,points&order=seq.asc&limit=1');
+    if (!nextQs.length) return json({ done: true });
+    q = nextQs[0];
+    qi = q.seq;
+    qtotal = (cfg.question_count != null) ? cfg.question_count : null;
+  }
+
   const secs = (cfg.time_limit_s != null) ? cfg.time_limit_s : (q.time_limit_s || 20);
   const endsAt = new Date(Date.now() + secs * 1000).toISOString();
   const options = Array.isArray(q.options) ? q.options : [];
-  const qtotal = (cfg.question_count != null) ? cfg.question_count : null;
 
   await sbPatch(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId),
     { current_seq: q.seq, phase: 'asking', question_ends_at: endsAt });
 
   // PUBLIC broadcast: options only, NEVER correct_index.
   await emitEvent(env, session, 'trivia.question', {
-    qseq: q.seq, qi: q.seq, qtotal,
+    qseq: q.seq, qi, qtotal,
     text: q.question, options, ends_at: endsAt, secs,
     colour: cfg.colour !== false,
   }, 'host:' + staff.id);
 
   // HOST-ONLY response (authenticated staff): may include correct_index for the console.
   return json({
-    qseq: q.seq, qi: q.seq, qtotal,
+    qseq: q.seq, qi, qtotal,
     text: q.question, options, correct_index: q.correct_index,
     ends_at: endsAt, secs,
   });
@@ -2563,6 +2592,14 @@ function randInt(max) {
 function shuffle1to90() {
   const a = [];
   for (let i = 1; i <= 90; i++) a.push(i);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+// Fair (CSPRNG) in-place Fisher-Yates shuffle for any array. Used to randomise trivia questions.
+function shuffleArray(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = randInt(i + 1);
     const t = a[i]; a[i] = a[j]; a[j] = t;
