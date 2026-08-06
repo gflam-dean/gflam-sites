@@ -104,7 +104,10 @@ for cat, items in sorted(by_cat.items()):
         sys.exit("ERROR creating set '%s': %s %s\n(send me this exact message and I'll fix the mapping)" % (cat, st, res))
     set_id = res[0]["id"]
     rows = [{"set_id": set_id, "seq": i + 1, "question": q["question"],
-             "options": q["options"], "correct_index": q["correctIndex"]}
+             "options": q["options"], "correct_index": q["correctIndex"],
+             "category": q.get("category") or cat,
+             "difficulty": (q.get("difficulty") if q.get("difficulty") in ("easy", "medium", "hard") else "medium"),
+             "image_url": q.get("image_url") or q.get("imageUrl")}
             for i, q in enumerate(items)]
     for b in range(0, len(rows), 500):
         st, r = req("POST", "vp_questions", rows[b:b + 500], prefer="return=minimal")
