@@ -212,6 +212,17 @@
   </div>
 </div>
 
+<!-- Over-plan players popup (branded, same as bingo): shown at Start when over the plan -->
+<div id="ovgModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
+  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:10px">More players than your plan</div>
+    <div id="ovgBody" style="font-size:14.5px;color:var(--text);line-height:1.55"></div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button type="button" id="ovgGo" class="btn pink big" style="flex:1">Start game</button>
+      <button type="button" id="ovgCancel" class="btn ghost big" style="flex:0 0 auto">Cancel</button>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
 <script>
@@ -244,7 +255,7 @@
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
-  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(inFirstMonth()) return ackAndGo(); if(!window.confirm("You have more players than your plan includes ("+cap+"). The extra "+extra+" player licence"+(extra===1?"":"s")+" will be charged to your nominated card, and stay valid for the rest of your billing period.\n\nTap OK to start with everyone in.")){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
+  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(inFirstMonth()) return ackAndGo(); return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return data; }); }); }
 
   // TWO broadcast channels for instant UX (the DB is the source of truth):
   //   ch  = PAIRING channel "vp-"+pairCode: host <-> venue screen (handoff + presence).
@@ -283,6 +294,15 @@
   function playerCount(){ return G.order.length; }
   function playerCap(){ return (G.venue && G.venue.included_players) || 0; }
   function inFirstMonth(){ var c=G.venue && G.venue.created_at; if(!c) return false; var e=new Date(c); if(isNaN(e.getTime())) return false; e.setMonth(e.getMonth()+1); return new Date()<e; }
+  function confirmOverage(cap, extra){   // branded popup, resolves true=start / false=cancel
+    return new Promise(function(resolve){
+      var total=cap+extra;
+      $("ovgBody").innerHTML="You have <b>"+total+"</b> players and your plan includes <b>"+cap+"</b>. The extra <b>"+extra+"</b> player licence"+(extra===1?"":"s")+" will be charged to your nominated card. They stay valid for the rest of your billing period.";
+      var m=$("ovgModal"); m.classList.remove("hidden");
+      $("ovgGo").onclick=function(){ m.classList.add("hidden"); resolve(true); };
+      $("ovgCancel").onclick=function(){ m.classList.add("hidden"); resolve(false); };
+    });
+  }
   function answeredCount(){ var n=0,k; for(k in G.answeredPids){ if(G.answeredPids.hasOwnProperty(k)) n++; } return n; }
   function remainingSecs(){ return G.current ? Math.max(0, Math.ceil((G.current.endsAt-Date.now())/1000)) : 0; }
   function hostError(msg){ $("statusText").textContent=msg||"Something went wrong"; }
