@@ -131,7 +131,7 @@
       <div class="big">Sign in to run trivia</div>
       <div class="sub" id="signinSub">You need your venue host login to start a live quiz.</div>
       <a class="btn pink big" id="signinLink" href="../index.html" style="display:inline-block;text-decoration:none;margin-top:6px">Go to sign in</a>
-      <p class="note" style="margin-top:14px">Trivia reads your venue's own question sets and the VenuePlay library. The answers are held on the server and never reach a phone before you reveal.</p>
+      <p class="note" style="margin-top:14px">Trivia reads your venue's own question sets and the VenuePlay Trivia Library. The answers are held on the server and never reach a phone before you reveal.</p>
     </div>
   </div>
 
@@ -644,7 +644,7 @@
         sel.innerHTML="";
         if(!rows.length){ var o0=document.createElement("option"); o0.value=""; o0.textContent="No question sets found"; sel.appendChild(o0); G.questionCount=0; $("setupQs").textContent="0"; return; }
         if(mine.length){ var g1=document.createElement("optgroup"); g1.label="Your sets"; mine.forEach(function(s){ g1.appendChild(opt(s)); }); sel.appendChild(g1); }
-        if(lib.length){ var g2=document.createElement("optgroup"); g2.label="VenuePlay library"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
+        if(lib.length){ var g2=document.createElement("optgroup"); g2.label="VenuePlay Trivia Library"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
         syncSetCount();
       }, function(){ sel.innerHTML='<option value="">Could not load question sets</option>'; });
   }
