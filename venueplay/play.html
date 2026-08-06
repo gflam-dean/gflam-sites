@@ -112,6 +112,12 @@
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
   .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
   .biglose .pbig{color:var(--gold)}
+  /* near-win tension */
+  .tension{margin:10px 0 2px;text-align:center;font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--gold);line-height:1}
+  .tension.two{font-size:16px;color:var(--muted);animation:none}
+  .tension.hot{font-size:30px;color:var(--pink);text-shadow:0 0 18px rgba(255,31,142,.5);animation:tensionPulse 1s ease-in-out infinite}
+  @keyframes tensionPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.09);opacity:.85}}
+  @media (prefers-reduced-motion: reduce){ .tension.hot{animation:none} }
   /* win celebration */
   .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
   @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
@@ -167,6 +173,7 @@
   <div class="view hidden" id="vCard">
     <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line</span></div>
     <div class="lastcalled" id="lastCalled">No numbers called yet</div>
+    <div class="tension hidden" id="tension"></div>
     <div class="cardctl">
       <span class="czlbl">Size</span>
       <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller numbers">&#8722;</button>
@@ -282,6 +289,32 @@
     return 0;
   }
 
+  // ---- near-win tension: how many more numbers until the pattern completes on the best ticket ----
+  function rowMissing(set,cells,row){ var m=0; for(var c=0;c<9;c++){ var v=cells[row][c]; if(v && !set[v]) m++; } return m; }
+  function cardShort(cells,set){
+    if(P.pattern==="top") return rowMissing(set,cells,0);
+    if(P.pattern==="middle") return rowMissing(set,cells,1);
+    if(P.pattern==="bottom") return rowMissing(set,cells,2);
+    if(P.pattern==="corners"){ var cn=cornerNums(cells),m=0; for(var i=0;i<cn.length;i++){ if(!set[cn[i]]) m++; } return m; }
+    var miss=[rowMissing(set,cells,0),rowMissing(set,cells,1),rowMissing(set,cells,2)].sort(function(a,b){return a-b;});
+    if(P.pattern==="one") return miss[0];
+    if(P.pattern==="two") return miss[0]+miss[1];
+    if(P.pattern==="full") return miss[0]+miss[1]+miss[2];
+    return 99;
+  }
+  function marksShort(set){ var best=99; for(var i=0;i<P.cards.length;i++){ var s=cardShort(P.cards[i].cells,set); if(s<best) best=s; } return best; }
+  var _lastShort=99;
+  function updateTension(set){
+    var el=$("tension"); if(!el) return;
+    if(P.claimPending||P.won||P.ended||!P.active||!P.cards.length){ el.classList.add("hidden"); _lastShort=99; return; }
+    var n=marksShort(set);
+    if(n===1){ el.classList.remove("hidden"); el.className="tension hot"; el.innerHTML="&#128293; One to go!";
+      if(_lastShort>1){ try{ if(navigator.vibrate) navigator.vibrate([0,70,50,70]); }catch(e){} } }   // buzz once, on the transition
+    else if(n===2){ el.classList.remove("hidden"); el.className="tension two"; el.textContent="2 numbers away"; }
+    else { el.classList.add("hidden"); el.className="tension hidden"; }
+    _lastShort=n;
+  }
+
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
@@ -323,6 +356,7 @@
       } }
       tk.appendChild(grid); stack.appendChild(tk);
     }
+    updateTension(set);
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
     else { $("bingoBtn").disabled=false; setMsg("Mark off your numbers as they are called. Hit BINGO when your ticket completes the pattern.",""); }
   }
