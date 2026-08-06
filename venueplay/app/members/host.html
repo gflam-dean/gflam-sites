@@ -272,8 +272,17 @@
   var G={
     venueId:null, role:null, canManage:false, code:"", nameDisplay:"abbrev_last",
     draws:[], members:[], currentDrawId:"",
-    round:null, busy:false, drawTimer:null, idleTimer:null
+    round:null, busy:false, drawTimer:null, idleTimer:null, claimTimer:null
   };
+  function mmss(s){ s=Math.max(0,s|0); var m=Math.floor(s/60), ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
+  function stopClaimTimer(){ if(G.claimTimer){ clearInterval(G.claimTimer); G.claimTimer=null; } }
+  function updateClaimCd(){
+    if(!G.round) return;
+    var base="Playing for <b>"+money(G.round.prizeCents)+"</b>";
+    $("wcCd").innerHTML = G.round.remaining>0
+      ? base+" &middot; claim within <b>"+mmss(G.round.remaining)+"</b>"
+      : base+" &middot; present at the bar to claim";
+  }
 
   function curDraw(){ if(G.currentDrawId==="__new") return null; for(var i=0;i<G.draws.length;i++){ if(G.draws[i].id===G.currentDrawId) return G.draws[i]; } return G.draws[0]||null; }
   function drawMembers(d){ if(!d) return []; return G.members.filter(function(m){ return !d.roster_id || m.roster_id===d.roster_id; }); }
@@ -348,7 +357,7 @@
   }
 
   // ---- draw flow ----
-  function clearTimers(){ if(G.drawTimer){ clearTimeout(G.drawTimer); G.drawTimer=null; } if(G.idleTimer){ clearTimeout(G.idleTimer); G.idleTimer=null; } }
+  function clearTimers(){ if(G.drawTimer){ clearTimeout(G.drawTimer); G.drawTimer=null; } if(G.idleTimer){ clearTimeout(G.idleTimer); G.idleTimer=null; } stopClaimTimer(); }
   function hideWinnerCard(){ $("winnerCard").classList.remove("show"); $("rollBtn").classList.remove("pulse"); }
   function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw"; }
 
@@ -374,21 +383,32 @@
   function revealWinner(r){
     G.busy=false;
     var d=curDraw();
-    G.round={ drawId:r.draw_id, memberId:r.member_id, number:r.member_number, name:r.winner_name, prizeCents:(r.jackpot_cents!=null?r.jackpot_cents:(d?d.current_jackpot_cents:0)) };
-    // broadcast the winner to the TV
-    send({ t:"winner", number:r.member_number, name:r.winner_name });
+    var claimSecs = (d && d.time_to_claim_seconds!=null) ? (d.time_to_claim_seconds|0) : 0;
+    G.round={ drawId:r.draw_id, memberId:r.member_id, number:r.member_number, name:r.winner_name, prizeCents:(r.jackpot_cents!=null?r.jackpot_cents:(d?d.current_jackpot_cents:0)), remaining:claimSecs };
+    // broadcast the winner to the TV (claimSecs drives the TV countdown too)
+    send({ t:"winner", number:r.member_number, name:r.winner_name, claimSecs:claimSecs });
     // console winner card
     $("wcNum").textContent="#"+r.member_number;
     $("wcName").textContent=r.winner_name||"·";
-    $("wcCd").innerHTML="Playing for <b>"+money(G.round.prizeCents)+"</b> &middot; present at the bar to claim";
+    updateClaimCd();
     $("winnerCard").classList.add("show");
     $("rollBtn").classList.add("pulse");
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call…";
     $("drawNote").textContent="Confirm below: Claim if they are present, or roll the jackpot to next week.";
+    // if a claim time is set, count it down and auto-roll to next week when it runs out
+    stopClaimTimer();
+    if(claimSecs>0){
+      G.claimTimer=setInterval(function(){
+        if(!G.round){ stopClaimTimer(); return; }
+        G.round.remaining--; updateClaimCd();
+        if(G.round.remaining<=0){ stopClaimTimer(); $("drawNote").textContent="No claim in time — rolling the jackpot to next week."; onRollover(); }
+      }, 1000);
+    }
   }
   function onClaim(){
     if(!G.round) return;
     var cb=$("claimBtn"), rb=$("rollBtn"); if(cb.disabled) return; cb.disabled=true; rb.disabled=true;   // guard double-tap
+    stopClaimTimer();
     var round=G.round, d=curDraw();
     apiPost("/host/members/draw/resolve", { draw_id:round.drawId, member_id:round.memberId, member_number:round.number, outcome:"claim" })
       .then(function(r){
@@ -403,6 +423,7 @@
   function onRollover(){
     if(!G.round) return;
     var cb=$("claimBtn"), rb=$("rollBtn"); if(rb.disabled) return; cb.disabled=true; rb.disabled=true;   // guard double-tap
+    stopClaimTimer();
     var round=G.round, d=curDraw();
     apiPost("/host/members/draw/resolve", { draw_id:round.drawId, member_id:round.memberId, member_number:round.number, outcome:"rollover" })
       .then(function(r){
@@ -522,7 +543,7 @@
       if(m.hello){
         send({ t:"host_here" });
         send({ t:"mode", mode:"members" });   // so a /tv that just pinged switches to the members-draw screen
-        if(G.round){ send({ t:"winner", number:G.round.number, name:G.round.name }); }
+        if(G.round){ send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:(G.round.remaining>0?G.round.remaining:0) }); }
         else { sendState(); }
       }
     }

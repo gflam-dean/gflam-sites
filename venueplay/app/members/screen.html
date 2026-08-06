@@ -140,6 +140,7 @@
     <div class="winnum" id="tvWinNum">00</div>
     <div class="wname hidden" id="tvWinName">&middot;</div>
     <div class="present hidden" id="tvPresent">Come to the bar now to claim your <b>jackpot</b></div>
+    <div class="present hidden" id="tvClaimCd" style="margin-top:.5cqw;opacity:.92">Claim within <b id="tvClaimT">0:00</b></div>
   </div>
 
   <!-- result: claimed or rollover -->
@@ -197,10 +198,12 @@
   })();
 
   var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0, draws:[] };
-  var adTimer=null, adIdx=0, spinTimer=null, nameTimer=null, celebrateTimer=null, countTimer=null;
+  var adTimer=null, adIdx=0, spinTimer=null, nameTimer=null, celebrateTimer=null, countTimer=null, claimCdTimer=null;
+  function mmss(s){ s=Math.max(0,s|0); var m=Math.floor(s/60), ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
+  function stopClaimCd(){ if(claimCdTimer){ clearInterval(claimCdTimer); claimCdTimer=null; } $("tvClaimCd").classList.add("hidden"); }
 
   // ---- layers ----
-  function hideAll(){ ["tvIdle","tvDraw","tvWin","tvResult"].forEach(function(k){ $(k).classList.add("hidden"); }); }
+  function hideAll(){ stopClaimCd(); ["tvIdle","tvDraw","tvWin","tvResult"].forEach(function(k){ $(k).classList.add("hidden"); }); }
 
   // ---- idle / ads ----
   function fillIdle(){
@@ -250,15 +253,23 @@
   }
 
   // ---- winner ----
-  function showWinner(number, name){
-    stopAds(); stopSpin(); $("hostLine").classList.add("hidden");
+  function showWinner(number, name, claimSecs){
+    stopAds(); stopSpin(); stopClaimCd(); $("hostLine").classList.add("hidden");
     hideAll(); $("winTitle").textContent=state.drawName; $("tvWin").classList.remove("hidden");
     $("tvWinNum").textContent = (number==null?"--":("#"+number));
-    var nm=$("tvWinName"), pr=$("tvPresent");
-    nm.classList.add("hidden"); pr.classList.add("hidden");
+    var nm=$("tvWinName"), pr=$("tvPresent"), cd=$("tvClaimCd"), cdT=$("tvClaimT");
+    nm.classList.add("hidden"); pr.classList.add("hidden"); cd.classList.add("hidden");
+    var secs=(claimSecs|0);
     nameTimer=setTimeout(function(){
       nm.textContent=name||"·"; nm.classList.remove("hidden");
       pr.classList.remove("hidden");
+      if(secs>0){
+        cdT.textContent=mmss(secs); cd.classList.remove("hidden");
+        claimCdTimer=setInterval(function(){
+          secs--; cdT.textContent=mmss(secs);
+          if(secs<=0){ clearInterval(claimCdTimer); claimCdTimer=null; }   // host broadcasts the rollover result
+        }, 1000);
+      }
     }, 1500);
   }
 
@@ -355,7 +366,7 @@
       else if(state.phase==="idle"){ fillIdle(); }   // refresh board while still idle
     }
     else if(m.t==="drawing"){ if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="drawing"; showDrawing(); }
-    else if(m.t==="winner"){ state.phase="winner"; showWinner(m.number, m.name); }
+    else if(m.t==="winner"){ state.phase="winner"; showWinner(m.number, m.name, m.claimSecs); }
     else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
     else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName); }
     else if(m.t==="idle"){ applyDraws(m); if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents; if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="idle"; startAds(); }
