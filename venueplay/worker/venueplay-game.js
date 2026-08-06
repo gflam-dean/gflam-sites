@@ -175,6 +175,12 @@ export default {
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       if (method === 'POST' && path === '/host/game/pattern')  return await handleMusicPattern(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/set')                return await handleTriviaSet(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/set/delete')         return await handleTriviaSetDelete(request, env, json);
+      if (method === 'GET'  && path === '/host/trivia/set/questions')      return await handleTriviaSetQuestions(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/questions/add')      return await handleTriviaAdd(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/questions/from-library') return await handleTriviaFromLibrary(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/questions/remove')   return await handleTriviaRemove(request, env, json);
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
       if (method === 'POST' && path === '/host/ball')          return await handleHostBall(request, env, json);
@@ -1569,6 +1575,126 @@ async function handleMusicPattern(request, env, json) {
   await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId), { config });
 
   return json({ ok: true, game_id: gameId, pattern, prize: config.prize || null });
+}
+
+/* ---- Trivia night builder: venue-owned question sets (create, fill from the library, write your own) ----
+ * All host-authed. A venue can only touch its OWN sets (owner_venue_id === venue); library sets are read-only. */
+async function triviaSetForVenue(env, setId, authUserId) {
+  setId = String(setId || '').trim();
+  assertUuid(setId, 'set_id');
+  const sets = await sbGet(env, 'vp_question_sets', 'id=eq.' + enc(setId) + '&select=id,owner_venue_id,visibility,title,question_count');
+  if (!sets.length) throw httpError(404, 'Set not found');
+  const set = sets[0];
+  if (!set.owner_venue_id) throw httpError(403, 'That is a library set and cannot be edited');
+  await requireStaff(env, authUserId, set.owner_venue_id);        // ENFORCED: staff at the set's venue
+  return set;
+}
+async function nextTriviaSeq(env, setId) {
+  const rows = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=seq&order=seq.desc&limit=1');
+  return rows.length ? (rows[0].seq || 0) + 1 : 1;
+}
+async function retagSetCount(env, setId) {
+  const rows = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=seq');
+  await sbPatch(env, 'vp_question_sets', 'id=eq.' + enc(setId), { question_count: rows.length });
+}
+async function handleTriviaSet(request, env, json) {              // create a new set, or rename an existing one
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const title = (String(b.title || '').trim().slice(0, 80)) || 'My trivia night';
+  if (b.set_id) {
+    const set = await triviaSetForVenue(env, b.set_id, authUserId);
+    await sbPatch(env, 'vp_question_sets', 'id=eq.' + enc(set.id), { title });
+    return json({ ok: true, set_id: set.id, title });
+  }
+  const venueId = String(b.venue_id || '').trim();
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  assertUuid(venueId, 'venue_id');
+  await requireStaff(env, authUserId, venueId);
+  const rows = await sbInsert(env, 'vp_question_sets',
+    { owner_venue_id: venueId, visibility: 'venue', title, status: 'active', question_count: 0 }, true);
+  return json({ ok: true, set_id: rows[0].id, title });
+}
+async function handleTriviaSetDelete(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const set = await triviaSetForVenue(env, b.set_id, authUserId);
+  await sbDelete(env, 'vp_questions', 'set_id=eq.' + enc(set.id));
+  await sbDelete(env, 'vp_question_sets', 'id=eq.' + enc(set.id));
+  return json({ ok: true });
+}
+async function handleTriviaSetQuestions(request, env, json) {     // list a venue set's questions for editing
+  const authUserId = await verifyHostJwt(request, env);
+  const setId = new URL(request.url).searchParams.get('set') || '';
+  await triviaSetForVenue(env, setId, authUserId);
+  const rows = await sbGet(env, 'vp_questions',
+    'set_id=eq.' + enc(String(setId).trim()) + '&select=id,seq,question,options,correct_index,category,difficulty,image_url&order=seq.asc');
+  return json({ questions: rows });
+}
+function sanitizeQuestion(q) {                                    // -> a valid row shape or null
+  const options = Array.isArray(q.options) ? q.options.map((o) => String(o || '').slice(0, 200)) : [];
+  const ci = parseInt(q.correct_index, 10);
+  const question = String(q.question || '').trim();
+  if (!question || options.length !== 4 || !options.every((o) => o.trim()) || !(ci >= 0 && ci < 4)) return null;
+  return {
+    question: question.slice(0, 500), options, correct_index: ci,
+    category: q.category ? String(q.category).slice(0, 60) : null,
+    difficulty: ['easy', 'medium', 'hard'].includes(q.difficulty) ? q.difficulty : 'medium',
+    image_url: q.image_url ? String(q.image_url).slice(0, 600) : null,
+  };
+}
+async function handleTriviaAdd(request, env, json) {              // write your own questions (bulk)
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const set = await triviaSetForVenue(env, b.set_id, authUserId);
+  const items = (Array.isArray(b.questions) ? b.questions : []).map(sanitizeQuestion).filter(Boolean);
+  if (!items.length) return json({ error: 'No valid questions (each needs 4 answers and a correct one)' }, 400);
+  let seq = await nextTriviaSeq(env, set.id);
+  const rows = items.map((q) => Object.assign({ set_id: set.id, seq: seq++ }, q));
+  await sbInsert(env, 'vp_questions', rows);
+  await retagSetCount(env, set.id);
+  return json({ ok: true, added: rows.length });
+}
+async function handleTriviaFromLibrary(request, env, json) {     // copy N library questions into the set
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const set = await triviaSetForVenue(env, b.set_id, authUserId);
+  const count = Math.max(1, Math.min(100, parseInt(b.count, 10) || 20));
+  // library sets are one-per-category, titled by category
+  let setQ = 'visibility=eq.library&select=id';
+  if (b.category) setQ += '&title=eq.' + enc(String(b.category));
+  const libSets = await sbGet(env, 'vp_question_sets', setQ);
+  if (!libSets.length) return json({ error: 'No matching library category' }, 404);
+  const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
+  let q = 'set_id=in.' + inList + '&select=question,options,correct_index,category,difficulty,image_url';
+  if (['easy', 'medium', 'hard'].includes(b.difficulty)) q += '&difficulty=eq.' + enc(b.difficulty);
+  q += '&limit=' + (count * 5);   // over-fetch, then shuffle + take count (PostgREST has no cheap random order)
+  const pool = await sbGet(env, 'vp_questions', q);
+  if (!pool.length) return json({ error: 'No library questions match that filter' }, 404);
+  for (let i = pool.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+  let seq = await nextTriviaSeq(env, set.id);
+  const rows = pool.slice(0, count).map((p) => ({
+    set_id: set.id, seq: seq++, question: p.question, options: p.options, correct_index: p.correct_index,
+    category: p.category, difficulty: p.difficulty, image_url: p.image_url,
+  }));
+  await sbInsert(env, 'vp_questions', rows);
+  await retagSetCount(env, set.id);
+  return json({ ok: true, added: rows.length });
+}
+async function handleTriviaRemove(request, env, json) {           // remove one question, then re-sequence 1..N
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const qid = String(b.question_id || '').trim();
+  assertUuid(qid, 'question_id');
+  const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id');
+  if (!qrows.length) return json({ error: 'Question not found' }, 404);
+  const set = await triviaSetForVenue(env, qrows[0].set_id, authUserId);
+  await sbDelete(env, 'vp_questions', 'id=eq.' + enc(qid));
+  const rest = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(set.id) + '&select=id,seq&order=seq.asc');
+  for (let i = 0; i < rest.length; i++) {
+    if (rest[i].seq !== i + 1) await sbPatch(env, 'vp_questions', 'id=eq.' + enc(rest[i].id), { seq: i + 1 });
+  }
+  await sbPatch(env, 'vp_question_sets', 'id=eq.' + enc(set.id), { question_count: rest.length });
+  return json({ ok: true });
 }
 
 async function handleHostPlay(request, env, json) {
