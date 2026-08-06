@@ -195,6 +195,7 @@
         <!-- draw / jackpot settings (MANAGER-ONLY write path) -->
         <div class="panel" style="margin-bottom:20px" id="settingsPanel">
           <div class="lbl" style="margin-bottom:12px">Draw &amp; jackpot settings</div>
+          <div class="field"><label>Draw name</label><input type="text" id="setName" placeholder="e.g. Friday Members Draw"></div>
           <div class="two">
             <div class="field"><label>Starting jackpot ($)</label><input type="number" id="setStart" class="mono" min="0" step="1"></div>
             <div class="field"><label>Weekly increment ($)</label><input type="number" id="setInc" class="mono" min="0" step="1"></div>
@@ -274,7 +275,7 @@
     round:null, busy:false, drawTimer:null, idleTimer:null
   };
 
-  function curDraw(){ for(var i=0;i<G.draws.length;i++){ if(G.draws[i].id===G.currentDrawId) return G.draws[i]; } return G.draws[0]||null; }
+  function curDraw(){ if(G.currentDrawId==="__new") return null; for(var i=0;i<G.draws.length;i++){ if(G.draws[i].id===G.currentDrawId) return G.draws[i]; } return G.draws[0]||null; }
   function drawMembers(d){ if(!d) return []; return G.members.filter(function(m){ return !d.roster_id || m.roster_id===d.roster_id; }); }
   function activeMembers(d){ return drawMembers(d).filter(function(m){ return m.status==="valid"; }); }
 
@@ -306,8 +307,10 @@
   }
   function renderDrawSelect(){
     var sel=$("drawSel"); sel.innerHTML="";
-    if(!G.draws.length){ var o=document.createElement("option"); o.textContent="No draws set up yet"; o.value=""; sel.appendChild(o); return; }
     G.draws.forEach(function(d){ var o=document.createElement("option"); o.value=d.id; o.textContent=d.name; if(d.id===G.currentDrawId) o.selected=true; sel.appendChild(o); });
+    var nw=document.createElement("option"); nw.value="__new"; nw.textContent=(G.draws.length?"+ New draw":"+ Set up your first draw");
+    if(G.currentDrawId==="__new" || !G.draws.length) nw.selected=true;
+    sel.appendChild(nw);
   }
   function renderMembers(){
     var el=$("memberList"); el.innerHTML=""; var d=curDraw();
@@ -322,7 +325,10 @@
     });
   }
   function renderSettings(){
-    var d=curDraw(); if(!d) return;
+    var d=curDraw();
+    var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : "Create draw";
+    if(!d){ ["setName","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).value=""; }); return; }   // creating a new draw: blank form
+    $("setName").value  = d.name||"";
     $("setStart").value = d.starting_amount_cents!=null ? Math.round(d.starting_amount_cents/100) : "";
     $("setInc").value   = d.increment_cents!=null ? Math.round(d.increment_cents/100) : "";
     $("setCur").value   = d.current_jackpot_cents!=null ? Math.round(d.current_jackpot_cents/100) : "";
@@ -336,7 +342,7 @@
   }
   function applyRoleGates(){
     var lock=!G.canManage;
-    ["setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).disabled=lock; });
+    ["setName","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).disabled=lock; });
     $("saveSettingsBtn").disabled=lock;
     show("settingsLock", lock);
   }
@@ -350,7 +356,7 @@
     if(!subscribed){ return; }
     if(G.busy || G.round) return;
     var d=curDraw();
-    if(!d){ alert("No draw is set up yet. A manager can add one in Draw & jackpot settings."); return; }
+    if(!d){ alert("No draw set up yet. Fill in the draw name + settings on the right and tap Save to create one, then draw."); return; }
     if(activeMembers(d).length < 1){ alert("No active members to draw from. Enable at least one member."); return; }
     clearTimers(); hideWinnerCard();
     G.busy=true;
@@ -431,10 +437,17 @@
   // ---- settings (MANAGER/OWNER only; the Worker enforces the same gate) ----
   function saveSettings(){
     if(!G.canManage) return;
-    var d=curDraw(); if(!d){ $("settingsMsg").textContent="No draw selected."; return; }
+    var d=curDraw();
+    var name=$("setName").value.trim();
     function dollarsToCents(id){ var v=$(id).value; if(v===""||v==null) return undefined; var n=Math.round(parseFloat(v)*100); return isNaN(n)?undefined:n; }
     function intOf(id){ var v=$(id).value; if(v===""||v==null) return undefined; var n=parseInt(v,10); return isNaN(n)?undefined:n; }
-    var body={ draw_id:d.id };
+    // No draw yet (or "+ New draw" picked): CREATE one (venue_id + name). Otherwise edit it.
+    var body;
+    if(d){ body={ draw_id:d.id }; if(name) body.name=name; }
+    else {
+      if(!name){ $("settingsMsg").textContent="Give your draw a name first."; $("setName").focus(); return; }
+      body={ venue_id:G.venueId, name:name };
+    }
     var sa=dollarsToCents("setStart"); if(sa!==undefined) body.starting_amount_cents=sa;
     var ic=dollarsToCents("setInc");   if(ic!==undefined) body.increment_cents=ic;
     var cj=dollarsToCents("setCur");   if(cj!==undefined) body.current_jackpot_cents=cj;
@@ -445,9 +458,10 @@
     apiPost("/host/members/settings", body)
       .then(function(r){
         var nd=r.draw||{};
-        for(var k in nd){ d[k]=nd[k]; }
-        $("settingsMsg").textContent="Saved."; $("saveSettingsBtn").disabled=false;
-        renderStats(); renderSettings(); renderDrawSelect(); sendState();
+        if(d){ for(var k in nd){ d[k]=nd[k]; } }
+        else if(nd.id){ G.draws.push(nd); G.currentDrawId=nd.id; }   // created: add it and switch to it
+        $("settingsMsg").textContent=d?"Saved.":"Draw created."; $("saveSettingsBtn").disabled=false;
+        renderStats(); renderDrawSelect(); renderSettings(); renderMembers(); sendState();
         setTimeout(function(){ $("settingsMsg").textContent=""; }, 2500);
       })
       .catch(function(e){ $("saveSettingsBtn").disabled=false; $("settingsMsg").textContent=e.message||"Could not save settings"; });
@@ -461,6 +475,8 @@
         var wd=todayWeekday(), pick=G.draws[0].id;
         for(var i=0;i<G.draws.length;i++){ if((G.draws[i].draw_day||"").toLowerCase()===wd.toLowerCase()){ pick=G.draws[i].id; break; } }
         G.currentDrawId=pick;
+      } else if(!G.draws.length){
+        G.currentDrawId="__new";   // fresh venue: land on the create form
       }
       renderDrawSelect(); renderStats(); renderMembers(); renderSettings();
     });
