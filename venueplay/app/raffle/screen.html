@@ -83,7 +83,7 @@
   <div class="layer" id="tvIdle">
     <div class="eyebrow">Raffle tonight</div>
     <div class="prizebig" id="idlePrize">Get your tickets</div>
-    <div class="jsub">Tickets at the bar &middot; drawn tonight</div>
+    <div class="jsub">Drawn tonight</div>
   </div>
 
   <!-- drawing -->
@@ -100,7 +100,7 @@
     <div class="eyebrow" id="tvWinEye">Winning ticket</div>
     <div class="winnum" id="tvWinNum">0</div>
     <div class="winlist hidden" id="tvWinList"></div>
-    <div class="present" id="tvPresent">Bring your ticket to the bar</div>
+    <div class="present" id="tvPresent">Bring your winning ticket to claim</div>
   </div>
 
   <!-- result / claimed -->
@@ -152,7 +152,7 @@
   //      open is bounced straight to /tv so a screen is only ever the live link. ----
   if(VENUE_SLUG){
     var _hop=""; try{ _hop=sessionStorage.getItem("vpTvHop")||""; }catch(e){}
-    if(_hop!==VENUE_SLUG){ window.location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }
+    if(!_hop){ window.location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }   // bounce only a genuine cold/bookmarked open; any live /tv hop leaves a marker so it never flickers
   }
   var CODE=(function(){
     if(VENUE_SLUG) return venueCode("raffle-"+VENUE_SLUG);   // auto-pair by venue (game-namespaced)
@@ -280,10 +280,10 @@
     }
     if(allowRedraw && time>0){
       S.remaining=time;
-      $("tvPresent").innerHTML='Come to the bar within <b id="tvCd">'+secsToClock(S.remaining)+'</b>';
+      $("tvPresent").innerHTML='Claim within <b id="tvCd">'+secsToClock(S.remaining)+'</b>';
       S.countdownTimer=setInterval(function(){ S.remaining--; updateCd(); if(S.remaining<=0){ stopCountdown(); } },1000);
     } else {
-      $("tvPresent").innerHTML='<span style="color:var(--win)">Bring your ticket to the bar</span>';
+      $("tvPresent").innerHTML='<span style="color:var(--win)">Bring your winning ticket to claim</span>';
     }
     showLayer("tvWin");
     scheduleAdsReturn();

@@ -235,7 +235,7 @@
   //      open is bounced straight to /tv so a screen is only ever the live link. ----
   if(VENUE_SLUG){
     var _hop=""; try{ _hop=sessionStorage.getItem("vpTvHop")||""; }catch(e){}
-    if(_hop!==VENUE_SLUG){ window.location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }
+    if(!_hop){ window.location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); return; }   // bounce only a genuine cold/bookmarked open; any live /tv hop leaves a marker so it never flickers
   }
   var CODE=(function(){
     if(VENUE_SLUG) return venueCode("trivia-"+VENUE_SLUG);   // game-namespaced so trivia can't share bingo's channel
