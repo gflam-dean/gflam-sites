@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay Trivia: Night Builder</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0B'/%3E%3Cpath d='M13 9 L24 16 L13 23 Z' fill='none' stroke='%23FF1F8E' stroke-width='2.4'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --pink-deep:#C70F69;
+    --gold:#FFC24B; --win:#35D07F; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+    color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 60px}
+  .top{display:flex;align-items:center;gap:12px;padding:6px 0 14px}
+  .back{background:none;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-weight:700;font-size:13px;padding:7px 12px;cursor:pointer;text-decoration:none}
+  .brand{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
+  h1{font-family:'Anton',sans-serif;font-size:30px;text-transform:uppercase;color:#fff;line-height:1;margin:6px 0 4px}
+  .sub{color:var(--muted);font-size:13.5px;margin-bottom:18px}
+  .card{background:var(--ink-3);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+  .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;margin-bottom:4px}
+  .hint{font-size:12px;color:var(--faint);margin-bottom:12px}
+  label.f{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:10px 0 5px}
+  select,input[type=text],textarea{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px;font-family:'Manrope',sans-serif;font-size:15px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--pink)}
+  textarea{resize:vertical;min-height:64px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:120px}
+  .btn{border:none;border-radius:10px;padding:12px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;cursor:pointer}
+  .btn.pink{background:var(--pink);color:#fff}
+  .btn.pink:active{background:var(--pink-deep)}
+  .btn.ghost{background:var(--ink);color:var(--muted);border:1px solid var(--line)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .opts .orow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .opts .orow input[type=text]{flex:1}
+  .opts .orow label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer}
+  .qcount{font-family:'JetBrains Mono',monospace;color:var(--gold);font-weight:700}
+  .qlist{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .qrow{display:flex;gap:10px;align-items:flex-start;background:var(--ink);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px}
+  .qrow .qi{font-family:'JetBrains Mono',monospace;color:var(--muted);font-weight:700;min-width:22px}
+  .qrow .qt{flex:1;font-size:13.5px}
+  .qrow .qa{color:var(--win);font-size:12px;margin-top:2px}
+  .qrow .qmeta{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+  .qrow .qx{background:none;border:none;color:var(--faint);font-size:18px;cursor:pointer;line-height:1}
+  .qrow .qx:hover{color:var(--pink)}
+  .status{font-size:13px;color:var(--muted);min-height:18px;margin-top:6px}
+  .status.ok{color:var(--win)} .status.err{color:var(--gold)}
+  .hidden{display:none!important}
+  .signin{text-align:center;padding:60px 20px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="back" href="/app/">&larr; Games</a>
+    <span class="brand">VenuePlay</span>
+  </div>
+
+  <div id="signinView" class="signin hidden">You need your venue host login to build a trivia night.</div>
+
+  <div id="builderView" class="hidden">
+    <h1>Trivia night builder</h1>
+    <div class="sub">Build a set from the VenuePlay Trivia Library, write your own questions, or mix both. Saved nights show up in the trivia game's set list.</div>
+
+    <div class="card">
+      <div class="lbl">Your night</div>
+      <div class="hint">Pick a saved night to keep editing, or start a new one.</div>
+      <div class="row">
+        <select id="setSel"><option value="__new">+ New night</option></select>
+      </div>
+      <div id="nameRow" class="row" style="margin-top:10px">
+        <input type="text" id="setName" placeholder="Name this night (e.g. Thursday Quiz)" maxlength="80">
+        <button type="button" id="createBtn" class="btn pink" style="flex:0 0 auto">Create</button>
+      </div>
+    </div>
+
+    <div id="editArea" class="hidden">
+      <div class="card">
+        <div class="lbl">Add from the Trivia Library</div>
+        <div class="hint">Grab a batch from our 37,000+ question bank.</div>
+        <div class="row">
+          <div><label class="f">Category</label><select id="libCat"></select></div>
+          <div><label class="f">Difficulty</label>
+            <select id="libDiff"><option value="">Any</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
+          <div style="flex:0 0 90px"><label class="f">How many</label><input type="text" id="libCount" value="20"></div>
+        </div>
+        <button type="button" id="addLibBtn" class="btn pink" style="width:100%;margin-top:12px">Add to night</button>
+        <div id="libStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <div class="lbl">Write your own</div>
+        <div class="hint">Type a question, four answers, and tick the correct one.</div>
+        <label class="f">Question</label>
+        <textarea id="ownQ" placeholder="e.g. Which pub is the oldest in this town?"></textarea>
+        <div class="opts" id="ownOpts" style="margin-top:10px">
+          <div class="orow"><input type="text" data-o="0" placeholder="Answer A"><label><input type="radio" name="correct" value="0" checked> Correct</label></div>
+          <div class="orow"><input type="text" data-o="1" placeholder="Answer B"><label><input type="radio" name="correct" value="1"> Correct</label></div>
+          <div class="orow"><input type="text" data-o="2" placeholder="Answer C"><label><input type="radio" name="correct" value="2"> Correct</label></div>
+          <div class="orow"><input type="text" data-o="3" placeholder="Answer D"><label><input type="radio" name="correct" value="3"> Correct</label></div>
+        </div>
+        <div class="row">
+          <div><label class="f">Category (optional)</label><input type="text" id="ownCat" placeholder="e.g. Local"></div>
+          <div><label class="f">Difficulty</label>
+            <select id="ownDiff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+        </div>
+        <label class="f">Picture URL (optional, for a picture round)</label>
+        <input type="text" id="ownImg" placeholder="https://...">
+        <button type="button" id="addOwnBtn" class="btn pink" style="width:100%;margin-top:12px">Add question</button>
+        <div id="ownStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <div class="lbl">This night <span class="qcount" id="qCount">(0 questions)</span></div>
+        <div class="qlist" id="qList"></div>
+        <div id="listStatus" class="status"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../vp-session.js"></script>
+<script>
+(function(){
+  "use strict";
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+  var client=supabase.createClient(SUPA_URL, SUPA_ANON);
+  if(window.VP){ VP.useClient(client); }
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  function getToken(){ var c=(window.VP&&VP.getClient)?VP.getClient():client; return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }); }
+  function req(method, path, body){ return getToken().then(function(t){
+    var opts={ method:method, headers:{ "Authorization":"Bearer "+t } };
+    if(body){ opts.headers["Content-Type"]="application/json"; opts.body=JSON.stringify(body); }
+    return fetch(VP_GAME_API+path, opts);
+  }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); throw e; } return d; }); }); }
+
+  var G={ venueId:null, setId:"" };
+
+  function setStatus(id, msg, cls){ var e=$(id); if(!e) return; e.textContent=msg||""; e.className="status"+(cls?" "+cls:""); }
+
+  function loadCategories(){
+    client.from("vp_question_sets").select("title,question_count").eq("visibility","library").order("title")
+      .then(function(r){ var rows=(r&&r.data)||[]; var s=$("libCat"); s.innerHTML="";
+        var any=document.createElement("option"); any.value=""; any.textContent="All categories"; s.appendChild(any);
+        rows.forEach(function(row){ var o=document.createElement("option"); o.value=row.title; o.textContent=row.title+" ("+(row.question_count||0)+")"; s.appendChild(o); });
+      }, function(){});
+  }
+  function loadMySets(keepId){
+    client.from("vp_question_sets").select("id,title,question_count").eq("owner_venue_id",G.venueId).order("created_at",{ascending:false})
+      .then(function(r){ var rows=(r&&r.data)||[]; var s=$("setSel"); s.innerHTML='<option value="__new">+ New night</option>';
+        rows.forEach(function(row){ var o=document.createElement("option"); o.value=row.id; o.textContent=row.title+" ("+(row.question_count||0)+")"; s.appendChild(o); });
+        if(keepId){ s.value=keepId; onSetChange(); }
+      }, function(){});
+  }
+  function onSetChange(){
+    var v=$("setSel").value;
+    if(v==="__new"){ G.setId=""; $("nameRow").classList.remove("hidden"); $("editArea").classList.add("hidden"); $("setName").value=""; }
+    else { G.setId=v; $("nameRow").classList.add("hidden"); $("editArea").classList.remove("hidden"); loadQuestions(); }
+  }
+  function createSet(){
+    var name=($("setName").value||"").trim(); if(!name){ $("setName").focus(); return; }
+    $("createBtn").disabled=true;
+    req("POST","/host/trivia/set",{ venue_id:G.venueId, title:name }).then(function(r){
+      loadMySets(r.set_id);
+    }).catch(function(e){ alert(e.message||"Could not create the night"); }).then(function(){ $("createBtn").disabled=false; });
+  }
+  function loadQuestions(){
+    if(!G.setId) return;
+    setStatus("listStatus","Loading…","");
+    req("GET","/host/trivia/set/questions?set="+encodeURIComponent(G.setId)).then(function(r){
+      renderQuestions(r.questions||[]);
+    }).catch(function(e){ setStatus("listStatus", e.message||"Could not load", "err"); });
+  }
+  function renderQuestions(qs){
+    $("qCount").textContent="("+qs.length+" question"+(qs.length===1?"":"s")+")";
+    var w=$("qList"); w.innerHTML="";
+    if(!qs.length){ w.innerHTML='<div class="hint">No questions yet. Add some from the library or write your own above.</div>'; setStatus("listStatus",""); return; }
+    qs.forEach(function(q){
+      var ans=(Array.isArray(q.options)&&q.options[q.correct_index])||"";
+      var row=document.createElement("div"); row.className="qrow";
+      row.innerHTML='<span class="qi">'+q.seq+'</span>'+
+        '<div class="qt">'+esc(q.question)+
+          (q.image_url?' &#128247;':'')+
+          '<div class="qa">&#10003; '+esc(ans)+'</div>'+
+          '<div class="qmeta">'+esc(q.category||"")+(q.difficulty?" &middot; "+esc(q.difficulty):"")+'</div>'+
+        '</div>'+
+        '<button class="qx" type="button" data-rm="'+q.id+'" title="Remove">&times;</button>';
+      w.appendChild(row);
+    });
+    setStatus("listStatus","");
+  }
+  function addFromLibrary(){
+    if(!G.setId) return;
+    var count=parseInt($("libCount").value,10)||20;
+    $("addLibBtn").disabled=true; setStatus("libStatus","Adding…","");
+    req("POST","/host/trivia/questions/from-library",{ set_id:G.setId, category:$("libCat").value||undefined, difficulty:$("libDiff").value||undefined, count:count })
+      .then(function(r){ setStatus("libStatus","Added "+r.added+" questions.","ok"); loadQuestions(); loadMySets(G.setId); })
+      .catch(function(e){ setStatus("libStatus", e.message||"Could not add", "err"); })
+      .then(function(){ $("addLibBtn").disabled=false; });
+  }
+  function addOwn(){
+    if(!G.setId) return;
+    var q=($("ownQ").value||"").trim();
+    var opts=[]; document.querySelectorAll("#ownOpts input[data-o]").forEach(function(i){ opts.push((i.value||"").trim()); });
+    var ci=parseInt((document.querySelector('input[name="correct"]:checked')||{}).value,10);
+    if(!q || opts.some(function(o){ return !o; }) || !(ci>=0&&ci<4)){ setStatus("ownStatus","Fill the question, all four answers, and tick the correct one.","err"); return; }
+    $("addOwnBtn").disabled=true; setStatus("ownStatus","Adding…","");
+    req("POST","/host/trivia/questions/add",{ set_id:G.setId, questions:[{ question:q, options:opts, correct_index:ci, category:($("ownCat").value||"").trim()||undefined, difficulty:$("ownDiff").value, image_url:($("ownImg").value||"").trim()||undefined }] })
+      .then(function(r){ setStatus("ownStatus","Added.","ok");
+        $("ownQ").value=""; document.querySelectorAll("#ownOpts input[data-o]").forEach(function(i){ i.value=""; }); $("ownImg").value="";
+        loadQuestions(); loadMySets(G.setId); })
+      .catch(function(e){ setStatus("ownStatus", e.message||"Could not add", "err"); })
+      .then(function(){ $("addOwnBtn").disabled=false; });
+  }
+  function removeQuestion(qid){
+    req("POST","/host/trivia/questions/remove",{ question_id:qid }).then(function(){ loadQuestions(); loadMySets(G.setId); }).catch(function(e){ setStatus("listStatus", e.message||"Could not remove", "err"); });
+  }
+
+  $("setSel").addEventListener("change", onSetChange);
+  $("createBtn").addEventListener("click", createSet);
+  $("setName").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); createSet(); } });
+  $("addLibBtn").addEventListener("click", addFromLibrary);
+  $("addOwnBtn").addEventListener("click", addOwn);
+  $("qList").addEventListener("click", function(e){ var b=e.target.closest("button[data-rm]"); if(b) removeQuestion(b.getAttribute("data-rm")); });
+
+  // ---- boot ----
+  if(window.VP){
+    VP.ready().then(function(ctx){
+      if(!ctx.authed){ $("signinView").classList.remove("hidden"); return; }
+      if(!ctx.currentVenueId){ $("signinView").textContent="This login is not linked to a venue yet."; $("signinView").classList.remove("hidden"); return; }
+      G.venueId=ctx.currentVenueId;
+      $("builderView").classList.remove("hidden");
+      loadCategories(); loadMySets();
+    }).catch(function(){ $("signinView").textContent="Could not check your sign in. Try reloading."; $("signinView").classList.remove("hidden"); });
+  } else { $("signinView").classList.remove("hidden"); }
+})();
+</script>
+</body>
+</html>
