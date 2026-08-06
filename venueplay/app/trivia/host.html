@@ -307,6 +307,57 @@
   function remainingSecs(){ return G.current ? Math.max(0, Math.ceil((G.current.endsAt-Date.now())/1000)) : 0; }
   function hostError(msg){ $("statusText").textContent=msg||"Something went wrong"; }
 
+  // ---- reload-recovery: a host refresh (battery, accidental reload) picks the live quiz back up ----
+  // The Worker's /snapshot is the source of truth, so we only stash a pointer (the session id)
+  // plus a timestamp. A stale pointer from an earlier night, or a game that has since ended, is ignored.
+  var TRIVIA_SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
+  function triviaKey(){ return "vpTriviaGame-"+(G.venueId||""); }
+  function saveTrivia(){
+    try{
+      if(G.gameId && G.sessionId && G.status!=="setup" && G.status!=="lobby"){
+        localStorage.setItem(triviaKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId }));
+      }
+    }catch(e){}
+  }
+  function clearTrivia(){ try{ localStorage.removeItem(triviaKey()); }catch(e){} }
+  function restoreTrivia(){
+    var raw; try{ raw=localStorage.getItem(triviaKey()); }catch(e){ return Promise.resolve(false); }
+    if(!raw) return Promise.resolve(false);
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearTrivia(); return Promise.resolve(false); }
+    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>TRIVIA_SAVE_MAX_AGE){ clearTrivia(); return Promise.resolve(false); }
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(snap){
+        if(!snap || snap.status!=="running" || !snap.game || snap.game.format!=="trivia"){ clearTrivia(); return false; }
+        var g=snap.game, q=g.question||null, phase=g.phase||"idle";
+        G.sessionId=snap.session_id; G.joinCode=snap.join_code||""; G.gameId=g.game_id;
+        if(g.question_count!=null){ G.questionCount=g.question_count; G.qtotal=g.question_count; }
+        if(typeof g.colour==="boolean") G.colour=g.colour;
+        if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel so answers still land
+        // Re-sync the TV only (the pairing channel). Connected phones are left alone; a phone that
+        // also reloaded recovers itself from /snapshot, so we must not replay "started" to the game channel.
+        send({ t:"mode", mode:"trivia" });
+        send({ t:"started", game_id:G.gameId, question_count:G.questionCount, colour:G.colour });
+        if(q && (phase==="asking"||phase==="locked")){
+          var endsAt=Date.parse(q.ends_at)||0;
+          G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0 };
+          G.status="question"; G.answeredQseq=q.qseq; G.answeredPids={};
+          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour });
+          if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); } }, 500); }
+          else { send({ t:"lock" }); }
+        } else if(q && phase==="revealed"){
+          G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:(q.correct_index!=null?q.correct_index:-1), endsAt:0, secs:0 };
+          G.status="reveal"; G.board=[];   // the TV recovers the leaderboard from its own snapshot
+        } else {
+          G.status="ready"; G.current=null; G.board=[];   // game running, between questions
+        }
+        $("statusText").textContent="Recovered your live quiz";
+        renderConsole();
+        return true;
+      })
+      .catch(function(){ return false; });
+  }
+
   // ---- render console ----
   function renderConsole(){
     var live=(G.status!=="setup" && G.status!=="lobby");   // lobby keeps the setup panel visible
@@ -472,6 +523,7 @@
     }).then(function(r){
       G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
       G.status="ready"; G.board=[]; G.current=null;
+      saveTrivia();
       bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour });
       bcast({ t:"players", count:playerCount() });
       renderConsole();
@@ -487,6 +539,7 @@
         correctIndex:r.correct_index, endsAt:Date.parse(r.ends_at), secs:r.secs };
       G.qtotal=r.qtotal||G.qtotal;
       G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq;
+      saveTrivia();
       // PUBLIC broadcast: text + options, NEVER correct_index.
       bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
         text:r.text, options:r.options||[], endsAt:G.current.endsAt, secs:r.secs, colour:G.colour });
@@ -498,6 +551,7 @@
     if(G.busy || G.status!=="question" || !G.gameId) return; G.busy=true; clearTick();
     apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
       G.status="reveal"; G.board=r.leaderboard||[];
+      saveTrivia();
       if(G.current) G.current.correctIndex=r.correct_index;
       // Safe to send correct_index now, the reveal has happened.
       bcast({ t:"reveal", qseq:r.qseq, correctIndex:r.correct_index,
@@ -518,6 +572,7 @@
   }
   function endRound(){
     clearTick();
+    clearTrivia();
     var gid=G.gameId;
     G.status="setup"; G.current=null; G.answeredPids={};
     bcast({ t:"idle" });   // screen returns to the join/lobby state
@@ -639,11 +694,13 @@
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       $("statusText").textContent="Signed in";
       loadQuestionSets();
-      var tv=tvFromUrl();
-      var slug=(ctx.venue && ctx.venue.slug) || "";
-      if(tv){ connect(tv); }
-      else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("trivia-"+slug)); }   // auto-pair by venue (game-namespaced so it can't collide with bingo)
-      else { $("connectView").classList.remove("hidden"); }                          // fallback: manual code entry
+      restoreTrivia().then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal
+        var tv=tvFromUrl();
+        var slug=(ctx.venue && ctx.venue.slug) || "";
+        if(tv){ connect(tv); }
+        else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("trivia-"+slug)); }   // auto-pair by venue (game-namespaced so it can't collide with bingo)
+        else { $("connectView").classList.remove("hidden"); }                          // fallback: manual code entry
+      });
     }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
   } else {
     showSignIn("Sign in helper failed to load. Try reloading.");
