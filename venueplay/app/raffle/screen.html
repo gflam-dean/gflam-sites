@@ -213,12 +213,21 @@
   }
 
   // ---- renders ----
+  // After a win is shown, drift back to the venue ads after ~1 minute (single-draw case). Any
+  // new draw activity cancels it. On a venue screen we return to /tv (the real venue ads).
+  var _adsRet=null;
+  function cancelAdsReturn(){ if(_adsRet){ clearTimeout(_adsRet); _adsRet=null; } }
+  function scheduleAdsReturn(){ cancelAdsReturn(); _adsRet=setTimeout(function(){
+    if(VENUE_SLUG){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); } else { renderIdle(); }
+  }, 60000); }
   function renderIdle(){
+    cancelAdsReturn();
     stopSpin(); stopCountdown(); stopCelebrate();
     $("idlePrize").textContent=S.prizeLabel;
     showLayer("tvIdle");
   }
   function renderDrawing(){
+    cancelAdsReturn();
     stopCountdown(); stopCelebrate();
     $("tvDrawPrize").textContent=S.prizeLabel;
     showLayer("tvDraw");
@@ -246,6 +255,7 @@
       $("tvPresent").innerHTML='<span style="color:var(--win)">Bring your ticket to the bar</span>';
     }
     showLayer("tvWin");
+    scheduleAdsReturn();
   }
   function renderClaimed(nums){
     stopSpin(); stopCountdown();
@@ -254,6 +264,7 @@
     $("tvResPrize").textContent=S.prizeLabel;
     showLayer("tvResult");
     celebrate(30000);
+    scheduleAdsReturn();
   }
 
   // ---- realtime ----
