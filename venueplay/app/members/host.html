@@ -336,6 +336,7 @@
     });
   }
   function renderSettings(){
+    if(!G.round && !G.busy) drawBtnIdle();   // reflect "Drawn tonight" for the selected draw (not while a round is live)
     var d=curDraw();
     var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : "Create draw";
     if(!d){ ["setName","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).value=""; }); return; }   // creating a new draw: blank form
@@ -361,10 +362,18 @@
   // ---- draw flow ----
   function clearTimers(){ if(G.drawTimer){ clearTimeout(G.drawTimer); G.drawTimer=null; } if(G.idleTimer){ clearTimeout(G.idleTimer); G.idleTimer=null; } stopClaimTimer(); }
   function hideWinnerCard(){ $("winnerCard").classList.remove("show"); $("rollBtn").classList.remove("pulse"); }
-  function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent="Draw"; }
+  // A draw runs once a week. Once it's been drawn tonight (claimed OR rolled to next week), lock the
+  // Draw button so you can't accidentally draw the same members draw again the same night.
+  function alreadyDrawnTonight(){ var d=curDraw(); return !!(d && d.last_drawn_date===new Date().toISOString().slice(0,10)); }
+  function drawBtnIdle(){
+    var b=$("drawBtn");
+    if(alreadyDrawnTonight()){ b.disabled=true; b.textContent="Drawn tonight"; }
+    else { b.disabled=false; b.textContent="Draw"; }
+  }
 
   function startDraw(){
     if(!subscribed){ alert("No TV connected yet. Open venueplay.com.au/tv on your screen, then tap Draw."); return; }   // was a silent no-op
+    if(alreadyDrawnTonight()){ alert("This draw has already been done tonight. It runs again next week."); return; }
     if(G.busy || G.round) return;
     var d=curDraw();
     if(!d){ alert("No draw set up yet. Fill in the draw name + settings on the right and tap Save to create one, then draw."); return; }
