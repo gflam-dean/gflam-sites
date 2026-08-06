@@ -293,8 +293,8 @@
   function renderCard(){
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
-    var last=P.played.length ? P.played[P.played.length-1] : "";
-    $("lastCalled").innerHTML = last ? ("Now playing <b>"+esc(last)+"</b> &middot; "+P.played.length+" played") : "No songs played yet";
+    // we never name the song - the player recognises it by ear and taps it on their card (or turns on Easy mode)
+    $("lastCalled").innerHTML = P.played.length ? ("<b>"+P.played.length+"</b> played &middot; listen and tap it on your card") : "No songs played yet";
     var set=playedSet();
     var wrap=$("cardGrid"); wrap.innerHTML="";
     for(var i=0;i<25;i++){

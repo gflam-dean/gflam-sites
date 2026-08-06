@@ -164,7 +164,7 @@
       <div class="big">Sign in to run musical bingo</div>
       <div class="sub" id="signinSub">You need your venue host login to start a live game.</div>
       <a class="btn pink big" id="signinLink" href="../index.html" style="display:inline-block;text-decoration:none;margin-top:6px">Go to sign in</a>
-      <p class="note" style="margin-top:14px">Musical bingo deals every card and judges every winner on the server. The songs play from this device through your PA under your venue's own OneMusic licence.</p>
+      <p class="note" style="margin-top:14px">Musical bingo deals every card and judges every winner on the server. The song clips play from the TV screen, so route that into your venue's sound system.</p>
     </div>
   </div>
 
@@ -206,14 +206,6 @@
             <label>Prize</label>
             <input type="text" id="prizeInput" value="$50 bar tab" placeholder="e.g. $50 bar tab">
           </div>
-          <div class="field">
-            <label>Auto-daub player cards</label>
-            <div class="seg" id="autoSeg">
-              <button data-auto="on" class="on">On</button>
-              <button data-auto="off">Off</button>
-            </div>
-            <p class="note" style="margin-top:8px">On highlights the title on every player's card the moment you mark it played. Off makes players find it by ear, the classic way to play.</p>
-          </div>
           <div class="stat">
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
@@ -223,7 +215,7 @@
           <p class="note" style="text-align:center;margin-top:10px" id="startNote">Opens the join screen on the TV so players can scan in. Deal the cards and start when everyone is on.</p>
           <div class="compliance">
             <div class="ct">How the music plays</div>
-            <p>This device plays a short preview of each song. Plug it into your PA by aux cable or Bluetooth and set it loud. VenuePlay never hosts or streams the recording itself, so the music playing in the room sits under your venue's own OneMusic licence, the same as any other track you play.</p>
+            <p>The song clips play from the TV screen, so route that screen's sound into your venue's system (HDMI to your soundbar or amp, or through your AV rack) and it plays across the room. To hear it on this device too, tap the sound button once a game is running.</p>
           </div>
         </div>
 
@@ -234,7 +226,7 @@
               <div class="nowart blank" id="nowArt">&#9834;</div>
               <div class="nowinfo">
                 <div class="nt" id="hostNow">Tap Play next to start</div>
-                <div class="na" id="hostNowArtist">The clip plays through this device</div>
+                <div class="na" id="hostNowArtist">The clip plays on the TV</div>
               </div>
             </div>
             <div class="clipbar"><div class="clipfill" id="clipFill"></div></div>
@@ -886,12 +878,7 @@
   }
   $("connectBtn").addEventListener("click", tryConnect);
   $("playlistSel").addEventListener("change", function(){ G.playlistId=this.value; });
-  document.querySelectorAll("#autoSeg button").forEach(function(b){
-    b.addEventListener("click", function(){
-      G.autoDaub=b.getAttribute("data-auto")==="on";
-      document.querySelectorAll("#autoSeg button").forEach(function(x){ x.classList.remove("on"); }); b.classList.add("on");
-    });
-  });
+  // auto-daub is a per-player choice (Easy mode on the phone), not a host setting
   $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
   $("newGameBtn").addEventListener("click", newGame);
