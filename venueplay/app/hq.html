@@ -300,8 +300,17 @@
       <div class="okflash" id="addGroupOk"><span>&#10003;</span> <span></span></div>
       <div class="errflash" id="addGroupErr"></div>
     </div>
+    <div class="filterbar" style="margin-bottom:12px">
+      <input type="text" id="gSearch" placeholder="Search group or account name">
+      <select id="gFilter">
+        <option value="all">All</option>
+        <option value="active">Active only</option>
+        <option value="inactive">Inactive only</option>
+      </select>
+      <span class="note" id="gCount" style="margin-left:auto"></span>
+    </div>
     <div id="groupList"></div>
-    <div class="note">Grouped venues are billed on one consolidated invoice, never card-charged. Only grouped venues can be reassigned here; moving an independent (card) venue into a group is a billing-parent change handled at onboarding.</div>
+    <div class="note">Click a row to expand its venues and settings. Grouped venues are billed on one consolidated invoice, never card-charged. Only grouped venues can be reassigned here; moving an independent (card) venue into a group is a billing-parent change handled at onboarding.</div>
   </div>
 
   <!-- ============ USAGE ============ -->
@@ -417,7 +426,8 @@
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
           admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null,
-          vFilter:"all", vSearch:"", openVenue:null, openBilling:null, openGroup:null };
+          vFilter:"all", vSearch:"", openVenue:null, openBilling:null, openGroup:null,
+          gFilter:"all", gSearch:"" };
 
   function canBilling(){ return S.adminRole==="owner" || S.adminRole==="accounts"; }
   function canTeam(){ return S.adminRole==="owner"; }
@@ -848,34 +858,42 @@
     var wrap=$("groupList"); wrap.innerHTML="";
     var clusters=foundingClusters();
     if(!S.groups.length && !clusters.length){ wrap.innerHTML='<div class="empty">No groups or multi-venue accounts yet. Use Create group, or add a second venue to an account from the account page.</div>'; return; }
+    var q=(S.gSearch||"").toLowerCase(), shown=0;
     S.groups.forEach(function(g){
       var gname=(g.name&&g.name.trim())?g.name:"Unnamed group";
       var members=S.venues.filter(function(v){ return v.group_id===g.id; });
-      var neg=g.negotiated_rate_cents!=null?aud(g.negotiated_rate_cents/100):"—";
-      var rack=g.rack_rate_cents!=null?aud(g.rack_rate_cents/100):"—";
+      var active=(g.status||"active")!=="suspended";
+      if(S.gFilter==="active" && !active) return;
+      if(S.gFilter==="inactive" && active) return;
+      if(q && gname.toLowerCase().indexOf(q)<0) return;
+      shown++;
+      var neg=g.negotiated_rate_cents!=null?aud(g.negotiated_rate_cents/100):"n/a";
       var ds=S.discounts.filter(function(d){ return d.target_type==="group" && d.target_id===g.id; });
-      var panel=document.createElement("div"); panel.className="panel"; panel.style.marginBottom="16px";
+      var open=(S.openGroup===g.id);
+      var panel=document.createElement("div"); panel.className="panel"; panel.style.marginBottom="10px";
       var h='';
-      h+='<div class="grouphead"><div style="flex:1;min-width:200px"><div class="gn">'+esc(gname)+'</div>'+
-        '<div class="gm">'+esc(g.billing_email||"no billing email")+' &middot; '+members.length+' venue'+(members.length===1?"":"s")+' &middot; negotiated '+neg+'/player &middot; rack '+rack+'</div></div>'+
-        '<span class="badge '+(g.status==="suspended"?"suspend":"grouped")+'">'+esc(g.status||"active")+'</span>'+
-        '<button class="mini" data-grename="'+esc(g.id)+'">Rename</button>'+
-        '<button class="mini" data-gedit="'+esc(g.id)+'">Assign venues</button></div>';
-      // member list
-      h+='<div style="padding:12px 16px">';
-      if(members.length){
-        h+='<div class="tscroll"><table style="min-width:420px"><thead><tr><th>Venue</th><th>Screen</th><th>Included</th></tr></thead><tbody>';
-        members.forEach(function(v){ h+='<tr><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+(v.included_players!=null?v.included_players:"—")+'</td></tr>'; });
-        h+='</tbody></table></div>';
-      } else { h+='<div style="color:var(--muted);font-size:12.5px">No venues assigned yet.</div>'; }
-      if(ds.length){ h+='<div style="margin-top:8px">'+ds.map(discLine).join("")+'</div>'; }
-      h+='</div>';
-      // assign editor
-      h+='<div class="detail'+(S.openGroup===g.id?"":" hidden")+'" style="padding:14px 16px"><div class="lblk" style="margin:0 0 8px">Assign grouped venues to '+esc(g.name)+'</div><div class="checklist">'+venueCheckboxes(g)+'</div>'+
-         (canBilling()?'<div class="dform" data-target="group" data-id="'+esc(g.id)+'" style="margin-top:12px"><div class="lblk" style="margin:0 0 8px">Whole-group discount</div>'+discountFormHtml()+'</div>':'')+
-         '<div class="note">Only venues already in a group appear here (moving them just changes which group). Independent card-billed venues are converted at onboarding.</div></div>';
+      // compact clickable row: name, venue count, active/inactive. Expands on click.
+      h+='<div class="grouphead" data-gtoggle="'+esc(g.id)+'" style="cursor:pointer">'+
+        '<span style="color:var(--muted);font-size:11px;width:12px;flex:none">'+(open?"▼":"▶")+'</span>'+
+        '<div style="flex:1;min-width:180px"><div class="gn">'+esc(gname)+'</div>'+
+        '<div class="gm">'+members.length+' venue'+(members.length===1?"":"s")+' &middot; negotiated '+neg+'/player</div></div>'+
+        '<span class="badge '+(active?"grouped":"suspend")+'">'+(active?"Active":"Inactive")+'</span>'+
+        '<button class="mini" data-grename="'+esc(g.id)+'">Rename</button></div>';
+      if(open){
+        h+='<div style="padding:12px 16px">';
+        if(members.length){
+          h+='<div class="tscroll"><table style="min-width:460px"><thead><tr><th>Venue</th><th>Screen</th><th>Included</th><th>Status</th></tr></thead><tbody>';
+          members.forEach(function(v){ var va=v.status!=="suspended"; h+='<tr><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+(v.included_players!=null?v.included_players:"-")+'</td><td>'+(va?'<span class="badge grouped">Active</span>':'<span class="badge suspend">Suspended</span>')+'</td></tr>'; });
+          h+='</tbody></table></div>';
+        } else { h+='<div style="color:var(--muted);font-size:12.5px">No venues assigned yet.</div>'; }
+        if(ds.length){ h+='<div style="margin-top:8px">'+ds.map(discLine).join("")+'</div>'; }
+        h+='<div style="margin-top:14px"><div class="lblk" style="margin:0 0 8px">Assign grouped venues to '+esc(gname)+'</div><div class="checklist">'+venueCheckboxes(g)+'</div>'+
+           (canBilling()?'<div class="dform" data-target="group" data-id="'+esc(g.id)+'" style="margin-top:12px"><div class="lblk" style="margin:0 0 8px">Whole-group discount</div>'+discountFormHtml()+'</div>':'')+'</div>';
+        h+='</div>';
+      }
       panel.innerHTML=h; wrap.appendChild(panel);
     });
+    var gc=$("gCount"); if(gc) gc.textContent=shown+" group"+(shown===1?"":"s")+(S.gFilter!=="all"?" ("+S.gFilter+")":"");
     if(clusters.length){
       var lbl=document.createElement("div"); lbl.className="lblk"; lbl.textContent="Multi-venue accounts"; wrap.appendChild(lbl);
       clusters.forEach(function(c){ wrap.appendChild(accountClusterCard(c)); });
@@ -894,10 +912,12 @@
   }
   $("groupList").addEventListener("click", function(e){
     var rn=e.target.closest("button[data-grename]");
-    if(rn){ renameGroup(rn.getAttribute("data-grename")); return; }
-    var ed=e.target.closest("button[data-gedit]");
-    if(ed){ var id=ed.getAttribute("data-gedit"); S.openGroup=(S.openGroup===id?null:id); renderGroups(); }
+    if(rn){ renameGroup(rn.getAttribute("data-grename")); return; }   // rename wins over the row toggle
+    var tg=e.target.closest("[data-gtoggle]");
+    if(tg){ var id=tg.getAttribute("data-gtoggle"); S.openGroup=(S.openGroup===id?null:id); renderGroups(); }
   });
+  $("gFilter").addEventListener("change", function(){ S.gFilter=this.value; renderGroups(); });
+  $("gSearch").addEventListener("input", function(){ S.gSearch=this.value; renderGroups(); });
   $("groupList").addEventListener("change", function(e){
     var chk=e.target.closest(".gvchk"); if(!chk) return;
     var gid=chk.getAttribute("data-gid"), vid=chk.getAttribute("data-vid");
