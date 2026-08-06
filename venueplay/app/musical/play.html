@@ -104,6 +104,10 @@
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
   .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
   .biglose .pbig{color:var(--gold)}
+  /* win celebration */
+  .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
+  @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
+  @media (prefers-reduced-motion: reduce){ .cfetti{display:none} }
 </style>
 </head>
 <body>
@@ -310,6 +314,49 @@
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
 
+  // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file to host) ----
+  var _ac=null;
+  function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", unlockAudio, { once:true });
+  function playFanfare(){
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+      if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume();
+      var ctx=_ac, now=ctx.currentTime;
+      var notes=[523.25,659.25,783.99,1046.50];
+      for(var i=0;i<notes.length;i++){
+        var t=now+i*0.11, o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="triangle"; o.frequency.value=notes[i];
+        g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.55);
+      }
+      var chord=[1046.50,1318.51,1567.98], tc=now+notes.length*0.11;
+      for(var j=0;j<chord.length;j++){
+        var oc=ctx.createOscillator(), gc=ctx.createGain();
+        oc.type="sine"; oc.frequency.value=chord[j];
+        gc.gain.setValueAtTime(0.0001,tc); gc.gain.exponentialRampToValueAtTime(0.2,tc+0.04); gc.gain.exponentialRampToValueAtTime(0.0001,tc+0.9);
+        oc.connect(gc); gc.connect(ctx.destination); oc.start(tc); oc.stop(tc+0.95);
+      }
+    }catch(e){}
+  }
+  function confettiBurst(){
+    try{
+      var colors=["#FF1F8E","#FFC24B","#35D07F","#48C9FF","#C70F69","#FFFFFF"];
+      for(var i=0;i<44;i++){
+        var c=document.createElement("div"); c.className="cfetti";
+        c.style.left=Math.random()*100+"vw";
+        c.style.background=colors[i%colors.length];
+        c.style.animationDuration=(2+Math.random()*1.6)+"s";
+        c.style.animationDelay=(Math.random()*0.25)+"s";
+        c.style.transform="translateY(0) rotate("+(Math.random()*360)+"deg)";
+        document.body.appendChild(c);
+        (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 4200); })(c);
+      }
+    }catch(e){}
+  }
+  var _celebrated=false;
+  function celebrate(){ if(_celebrated) return; _celebrated=true; try{ if(navigator.vibrate) navigator.vibrate([0,90,60,90,60,150]); }catch(e){} playFanfare(); confettiBurst(); }
+
   // ---- join + card (via the Worker) ----
   function applySnap(s){
     if(!s) return;
@@ -435,7 +482,7 @@
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
       if(m.game_id) P.gameId=m.game_id;
       // a fresh round: clear the old card and pull the new one from the Worker
-      P.played=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null;
+      P.played=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null; _celebrated=false;
       if(P.joined){ fetchCard(); } else { route(); }
     }
     else if(m.t==="played"){
@@ -452,7 +499,7 @@
     }
     else if(m.t==="winner"){
       P.claimPending=false;
-      if(m.pid===P.pid){ P.won=true; route(); }
+      if(m.pid===P.pid){ P.won=true; route(); celebrate(); }
       else { P.ended=true; $("lostName").textContent=(m.name||"Someone")+" won"; route(); }
     }
     else if(m.t==="idle"){
