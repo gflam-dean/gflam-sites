@@ -93,6 +93,17 @@
   .pk.on{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(255,31,142,.3)}
   .pk .soon{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-top:2px}
   .pk.on .soon{color:rgba(255,255,255,.75)}
+  /* run the night */
+  .runrow{display:flex;align-items:center;gap:10px;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .runrow.next{border-color:var(--pink);box-shadow:0 0 0 1px var(--pink) inset}
+  .runrow.done{opacity:.6}
+  .runname{flex:1;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:#fff}
+  .runrow.done .runname{text-decoration:line-through}
+  .runtick{width:26px;height:26px;flex:none;border:1px solid var(--line);background:var(--ink-3);border-radius:7px;color:var(--win);font-size:15px;font-weight:800;cursor:pointer;line-height:1}
+  .runrow.done .runtick{background:rgba(53,208,127,.18);border-color:var(--win)}
+  .runstart{border:none;background:var(--pink);color:#fff;border-radius:8px;padding:6px 14px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;cursor:pointer}
+  .runstart.alt{background:var(--ink-3);color:var(--muted);border:1px solid var(--line)}
+  .rundone{font-size:12px;font-weight:700;color:var(--win);text-transform:uppercase;letter-spacing:.06em}
 
   .soonbox{background:var(--ink-2);border:1px dashed var(--line);border-radius:14px;padding:28px 20px;text-align:center}
   .soonbox .st{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
@@ -270,7 +281,20 @@
           <button type="button" id="venueSwitchInline" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;color:var(--muted)">Not this one? Switch venue</button>
         </div>
       </div>
-      <div class="lbl" style="margin-top:12px">Choose your game</div>
+      <div id="runNight" style="margin-top:14px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff">Run the night</div>
+          <button type="button" id="runHelpToggle" style="background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer">How it works</button>
+        </div>
+        <div id="runHelp" class="hidden" style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.7">
+          1. Turn on the TV and open <b style="color:#fff">venueplay.com.au/tv</b><br>
+          2. Pick a game and open the lobby<br>
+          3. When it wraps, tap <b style="color:#fff">Games</b> (top left) and start the next<br>
+          4. Swap games whenever the room is ready. Tick them off here as you go.
+        </div>
+        <div id="runSheet" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div class="lbl" style="margin-top:16px">Or jump straight to a game</div>
       <div class="picker" id="gamePicker">
         <button class="pk" data-game="bingo">Bingo</button>
         <button class="pk" data-game="trivia">Trivia</button>
@@ -1154,9 +1178,41 @@
     $("gamesBack").style.display="";
     $("headerTag").textContent="Bingo";
   }
+  // ---- Run the night: a per-day checklist so a host can see what they've run and what's next.
+  // Kept in localStorage keyed by venue + Australian date, so it survives the jumps to each game's
+  // own page and resets fresh each day.
+  var RUN_GAMES=[["bingo","Bingo"],["trivia","Trivia"],["musical-bingo","Musical Bingo"],["raffle","Raffle"],["members-draw","Members Draw"]];
+  function runKey(){ var vid="v"; try{ vid=(typeof __ctx!=="undefined"&&__ctx&&__ctx.currentVenueId)||"v"; }catch(e){}
+    var d=new Date().toLocaleDateString("en-CA",{timeZone:"Australia/Brisbane"}); return "vpRunNight-"+vid+"-"+d; }
+  function runState(){ try{ return JSON.parse(localStorage.getItem(runKey())||"{}"); }catch(e){ return {}; } }
+  function saveRun(st){ try{ localStorage.setItem(runKey(), JSON.stringify(st)); }catch(e){} }
+  function renderRunSheet(){
+    var wrap=$("runSheet"); if(!wrap) return;
+    var st=runState(), done=st.done||{}, firstUndone=null;
+    for(var i=0;i<RUN_GAMES.length;i++){ if(!done[RUN_GAMES[i][0]]){ firstUndone=RUN_GAMES[i][0]; break; } }
+    var html="";
+    for(var j=0;j<RUN_GAMES.length;j++){ var g=RUN_GAMES[j][0], nm=RUN_GAMES[j][1], dn=!!done[g], nx=(g===firstUndone);
+      html+='<div class="runrow'+(dn?" done":"")+(nx?" next":"")+'">'+
+            '<button type="button" class="runtick" data-tick="'+g+'" title="Mark done">'+(dn?"&#10003;":"")+'</button>'+
+            '<span class="runname">'+nm+'</span>'+
+            (dn?'<span class="rundone">Done</span>':'<button type="button" class="runstart'+(nx?"":" alt")+'" data-start="'+g+'">'+(nx?"Start":"Open")+'</button>')+
+            '</div>';
+    }
+    wrap.innerHTML=html;
+  }
+  (function(){
+    var rs=$("runSheet"); if(rs){ rs.addEventListener("click", function(e){
+      var t=e.target.closest("[data-tick]"), s=e.target.closest("[data-start]");
+      if(t){ var g=t.getAttribute("data-tick"), st=runState(); st.done=st.done||{}; st.done[g]=!st.done[g]; saveRun(st); renderRunSheet(); return; }
+      if(s){ selectGame(s.getAttribute("data-start")); }
+    }); }
+    var ht=$("runHelpToggle"); if(ht){ ht.addEventListener("click", function(){ $("runHelp").classList.toggle("hidden"); }); }
+  })();
+
   // The selection landing: /app shows this first, and every game's "Games" button returns here.
   function showGameSelect(){
     currentGame="";
+    renderRunSheet();
     $("gameSelect").classList.remove("hidden");
     $("bingoView").classList.add("hidden");
     var sv=$("soonView"); if(sv) sv.classList.add("hidden");
