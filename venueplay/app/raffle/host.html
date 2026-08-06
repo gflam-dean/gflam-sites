@@ -177,8 +177,8 @@
       </div>
 
       <div class="resolve" style="margin-top:16px">
-        <button class="btn ghost" id="drawLenWrap" style="pointer-events:none;background:transparent;border:none;padding:0;text-align:left">
-          <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s</span>
+        <button type="button" class="btn ghost" id="drawLenWrap" style="text-align:left">
+          <span class="note">Draw spin length: <span id="drawLenLbl">4</span>s &middot; tap to change</span>
         </button>
         <button class="btn ghost" id="newRaffleBtn">New raffle &middot; clear drawn</button>
       </div>
@@ -282,7 +282,9 @@
     if(!G.savedPrizes.length){ w.innerHTML='<span class="empty">None yet. Type a prize and it saves for this session.</span>'; return; }
     for(var i=0;i<G.savedPrizes.length;i++){ var p=G.savedPrizes[i]; var b=document.createElement("button"); b.type="button"; b.setAttribute("data-p",p); b.textContent=p; w.appendChild(b); }
   }
-  function savePrize(p){ if(!p) return; var i=G.savedPrizes.indexOf(p); if(i>-1) G.savedPrizes.splice(i,1); G.savedPrizes.unshift(p); if(G.savedPrizes.length>12) G.savedPrizes.length=12; renderPresets(); }
+  function savePrize(p){ if(!p) return; var i=G.savedPrizes.indexOf(p); var isNew=(i<0); if(i>-1) G.savedPrizes.splice(i,1); G.savedPrizes.unshift(p); if(G.savedPrizes.length>12) G.savedPrizes.length=12; renderPresets();
+    if(isNew && G.venueId){ apiPost("/host/raffle/prize-add",{ venue_id:G.venueId, label:p }).catch(function(){}); }   // persist so it's there next week, not just this session
+  }
 
   // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
   function sendIdle(){ send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
@@ -315,6 +317,13 @@
   function ensureRaffleGame(){
     var sig=raffleSig();
     if(G.gameId && G.gameSig===sig) return Promise.resolve();
+    // A range/jackpot change bakes a fresh raffle, which RESETS the drawn tickets. If some have
+    // already been drawn tonight, never do that silently - warn, or already-drawn numbers repeat.
+    if(G.gameId && G.drawn && Object.keys(G.drawn).length>0){
+      if(!window.confirm("You've changed the raffle settings. That starts a FRESH raffle, so the numbers already drawn tonight can come up again.\n\nStart a fresh raffle?")){
+        return Promise.reject(new Error("Kept the current raffle - change the settings back to keep drawing."));
+      }
+    }
     return openSession().then(function(){
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"raffle",
@@ -511,6 +520,10 @@
   $("claimBtn").addEventListener("click", onClaim);
   $("redrawBtn").addEventListener("click", function(){ onRedraw(false); });
   $("newRaffleBtn").addEventListener("click", newRaffle);
+  $("drawLenWrap").addEventListener("click", function(){   // now a real control: tap to cycle the spin length
+    var opts=[3,4,5,6,8]; var i=opts.indexOf(G.drawLength); G.drawLength=opts[(i+1)%opts.length];
+    $("drawLenLbl").textContent=G.drawLength;
+  });
   $("rfJackOn").addEventListener("change", function(){
     show("rfJackWrap", this.checked); $("rfWinners").disabled=this.checked; if(this.checked) $("rfWinners").value=1; renderRange();
   });
