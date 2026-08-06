@@ -1509,8 +1509,17 @@ async function venueNameDisplay(env, venueId) {
 //   abbrev_first          -> "J Smith"
 //   full                  -> "John Smith"
 function formatMemberName(first, last, mode) {
-  const f = (first || '').trim();
-  const l = (last || '').trim();
+  let f = (first || '').trim();
+  let l = (last || '').trim();
+  // Robustness: if a member was imported as a single field ("John Smith" all in first_name,
+  // last_name empty), split the last word off so the abbreviation options still work. Without
+  // this, "first initial + last name" shows only "J" and "first name + last initial" shows the
+  // whole name.
+  if (!l && f.indexOf(' ') !== -1) {
+    const parts = f.split(/\s+/);
+    l = parts.pop();
+    f = parts.join(' ');
+  }
   if (mode === 'full') return (f + ' ' + l).trim();
   if (mode === 'abbrev_first') return ((f ? f[0] + ' ' : '') + l).trim();
   return (f + ' ' + (l ? l[0] : '')).trim();
