@@ -376,7 +376,7 @@
   }
 
   // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
-  function sendIdle(){ send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
+  function sendIdle(){ send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length) }); }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
 

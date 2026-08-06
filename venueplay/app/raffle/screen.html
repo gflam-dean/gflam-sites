@@ -81,9 +81,9 @@
 
   <!-- idle -->
   <div class="layer" id="tvIdle">
-    <div class="eyebrow">Raffle tonight</div>
+    <div class="eyebrow" id="idleEye">Raffle tonight</div>
     <div class="prizebig" id="idlePrize">Get your tickets</div>
-    <div class="jsub">Drawn tonight</div>
+    <div class="jsub" id="idleSub">Drawn tonight</div>
   </div>
 
   <!-- drawing -->
@@ -161,7 +161,7 @@
   })();
 
   // ---- screen state ----
-  var S={ padW:3, min:1, max:150, prizeLabel:"", hostSeen:false,
+  var S={ padW:3, min:1, max:150, prizeLabel:"", nextUp:false, hostSeen:false,
           spinTimer:null, countdownTimer:null, remaining:0, celebrateTimer:null };
 
   function pad(n){ var s=String(n); while(s.length<S.padW) s="0"+s; return s; }
@@ -254,7 +254,12 @@
   function renderIdle(){
     cancelAdsReturn();
     stopSpin(); stopCountdown(); stopCelebrate();
-    $("idlePrize").textContent=S.prizeLabel||"Get your tickets";   // neutral until the host sets a prize (never a placeholder like "Meat Tray")
+    var pz=S.prizeLabel||"";
+    if(S.nextUp && pz){   // a prize was just drawn and there are more to come
+      $("idleEye").textContent="Next prize is"; $("idlePrize").textContent=pz; $("idleSub").textContent="Drawn shortly";
+    } else {
+      $("idleEye").textContent="Raffle tonight"; $("idlePrize").textContent=pz||"Get your tickets"; $("idleSub").textContent="Drawn tonight";
+    }
     showLayer("tvIdle");
   }
   function renderDrawing(){
@@ -335,6 +340,7 @@
     if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here" }); }
 
     if(typeof m.prizeLabel==="string") S.prizeLabel=m.prizeLabel;
+    if(m.t==="idle") S.nextUp=!!m.next;   // showing the next prize after a draw, vs the raffle's first prize
     if(typeof m.pad==="number") S.padW=m.pad;
     if(typeof m.min==="number") S.min=m.min;
     if(typeof m.max==="number") S.max=m.max;
