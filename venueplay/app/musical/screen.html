@@ -321,14 +321,20 @@
   // any host broadcast means the host is live: reply so it can flip to "connected"
   var HOST_TYPES={host_here:1,session:1,mode:1,state:1,started:1,played:1,players:1,claim_pending:1,resume:1,winner:1,idle:1};
 
+  // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
+  // real game activity cancels it, so a quick next round or restart never bounces.
+  var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
+  function cancelBackToAds(){ if(_backToAdsT){ clearTimeout(_backToAdsT); _backToAdsT=null; } }
+  function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
   function onMsg(m){
     if(!m||!m.t) return;
+    if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                 // ignore our own presence pings
     if(HOST_TYPES[m.t]){ state.hostSeen=true; tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
     if(m.t==="mode"){ return; }                 // format handshake; the layers below drive the view
-    if(m.t==="idle"){ state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); return; }
+    if(m.t==="idle"){ state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
     if(m.t==="state"){
       state.hostSeen=true;
       if(m.pattern) state.pattern=m.pattern;
