@@ -327,6 +327,14 @@
         <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview</a>
       </div>
     </div>
+
+    <div class="scard">
+      <div class="scardhead">Table signs</div>
+      <p class="snote">Print a "Scan to play" sign for your tables. The QR code goes to your venue, not to one night's game, so the same sign works every week and for every game you run. Choose an A4 poster, table cards four to a page, or fold-over table tents.</p>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <a id="signageLink" href="/signage.html" target="_blank" rel="noopener" class="go" style="text-decoration:none;display:inline-block">Print table signs</a>
+      </div>
+    </div>
     </div><!-- /tp-screen -->
 
     <p class="msg" id="msg"></p>
@@ -701,6 +709,8 @@
   function setTvLinks(slug){
     $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?venue=" + slug) : "");
     $("screenPreview").href = tvHref(slug);
+    var sg=$("signageLink");
+    if(sg) sg.href = (screenOrigin||"") + "/signage.html" + (slug ? ("?venue=" + encodeURIComponent(slug)) : "");
   }
   function loadScreenFor(venueId){
     return api("/account/screen-get", venueId ? { venue_id:venueId } : {}).then(function(d){
