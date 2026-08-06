@@ -305,7 +305,7 @@
       cell.setAttribute("data-i",i);
       cell.textContent=t;
       if(P.daubs[i]) cell.classList.add("daub");
-      if(t && set[t]) cell.classList.add("on");
+      if(P.assist && t && set[t]) cell.classList.add("on");   // no song hint on the card unless Easy mode is on
       wrap.appendChild(cell);
     }
     fitCells();

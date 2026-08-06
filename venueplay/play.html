@@ -351,7 +351,7 @@
         if(!n){ cell.className="cc blank"; grid.appendChild(cell); continue; }
         cell.className="cc"; cell.setAttribute("data-card",i); cell.setAttribute("data-n",n); cell.textContent=n;
         if(cd.daubs[n]) cell.classList.add("daub");
-        if(set[n]) cell.classList.add("on");
+        if(P.assist && set[n]) cell.classList.add("on");   // only hint which numbers are called in Easy mode; otherwise the player tracks their own
         grid.appendChild(cell);
       } }
       tk.appendChild(grid); stack.appendChild(tk);
