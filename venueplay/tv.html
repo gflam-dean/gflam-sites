@@ -351,9 +351,11 @@
   // THIS session. no permanent "paired forever" flag: a reload shows it again until
   // a host reconnects this session.
   var hostConnected=false;
-  // Today's weekday in Australian (venue) time, NOT the TV/device timezone - a screen set to UTC
-  // reads the wrong day. Computed fresh each time so an always-on TV updates at midnight.
-  function todayAU(){ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:"Australia/Brisbane"}).toLowerCase(); }
+  // The venue's own timezone (from its postcode), loaded from the members-draw view below. Defaults to
+  // QLD until it loads. Used so "Tonight" is decided in the VENUE's time, not the TV device's timezone.
+  var VENUE_TZ="Australia/Brisbane";
+  // Today's weekday in the venue's time. Computed fresh each render so an always-on TV updates at midnight.
+  function todayAU(){ try{ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:VENUE_TZ}).toLowerCase(); }catch(e){ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:"Australia/Brisbane"}).toLowerCase(); } }
   function drawPairQR(){ drawQR($("qrPair"), pairURL, 320); }
   function showPairPanel(){ if(VENUE_SLUG){ hidePairPanel(); return; } var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR(); }
   function hidePairPanel(){ $("pairPanel").classList.add("hidden"); }
@@ -773,20 +775,26 @@
         ADS.raffle = c.raffle || null;
         refreshAds();
       }).catch(function(){});
-    // Live members-draw board (name + current jackpot + day/time) from the public view.
-    fetch(SUPA_URL+"/rest/v1/v_vp_screen_draws?slug=eq."+encodeURIComponent(slug)+"&select=name,current_jackpot_cents,draw_day,draw_time", { headers:hdr })
-      .then(function(r){ return r.ok ? r.json() : []; })
-      .then(function(rows){
-        if(!Array.isArray(rows)) return;
-        // "Tonight" is decided at render time (entryInner, in Australian time), so the board is correct
-        // even on a TV left running past midnight. Here we just store each draw's day/jackpot/time.
-        ADS.draws = rows.filter(function(d){ return d.draw_day; }).map(function(d){
-          return { day:d.draw_day,
-                   jackpot:"$"+Math.round((d.current_jackpot_cents||0)/100).toLocaleString("en-AU"),
-                   time:d.draw_time||"" };
-        });
-        refreshAds();
-      }).catch(function(){});
+    // Live members-draw board (name + current jackpot + day/time + venue timezone) from the public view.
+    // We request timezone but fall back without it, so it works before AND after the view is migrated
+    // to expose timezone (older view -> no column -> retry without it, defaulting the tz to QLD).
+    function loadDrawBoard(withTz){
+      var sel="name,current_jackpot_cents,draw_day,draw_time"+(withTz?",timezone":"");
+      fetch(SUPA_URL+"/rest/v1/v_vp_screen_draws?slug=eq."+encodeURIComponent(slug)+"&select="+sel, { headers:hdr })
+        .then(function(r){ if(!r.ok){ if(withTz) loadDrawBoard(false); return null; } return r.json(); })
+        .then(function(rows){
+          if(!rows || !Array.isArray(rows)) return;
+          if(rows[0] && rows[0].timezone) VENUE_TZ=rows[0].timezone;   // decide "Tonight" in the venue's own time
+          // "Tonight" is decided at render time (entryInner), so the board stays correct past midnight.
+          ADS.draws = rows.filter(function(d){ return d.draw_day; }).map(function(d){
+            return { day:d.draw_day,
+                     jackpot:"$"+Math.round((d.current_jackpot_cents||0)/100).toLocaleString("en-AU"),
+                     time:d.draw_time||"" };
+          });
+          refreshAds();
+        }).catch(function(){});
+    }
+    loadDrawBoard(true);
   })();
 
   // An always-on venue TV must flip "Tonight" when the day rolls over. buildAds() bakes the board once,

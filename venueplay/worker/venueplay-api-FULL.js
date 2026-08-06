@@ -1141,7 +1141,7 @@ async function vpaProvisionFromCheckout(env, session) {
         postcode: f.postcode || null,
         au_state: vpaStateFromPostcode(f.postcode),
         status: 'active',
-        timezone: 'Australia/Brisbane',
+        timezone: vpaTimezoneFromPostcode(f.postcode),
       });
       stepsDone.push('venue');
     }
@@ -1274,6 +1274,20 @@ function vpaStateFromPostcode(pc) {
   if (n >= 7000 && n <= 7799) return 'TAS';
   if (n >= 800 && n <= 999) return 'NT';
   return null;
+}
+
+// AU postcode -> IANA timezone (best-effort; QLD fallback). Same postcode->state map as above, so a
+// venue's members-draw "Tonight" shows on the right day in the venue's own time.
+function vpaTimezoneFromPostcode(pc) {
+  switch (vpaStateFromPostcode(pc)) {
+    case 'NSW': case 'ACT': return 'Australia/Sydney';
+    case 'VIC': return 'Australia/Melbourne';
+    case 'SA':  return 'Australia/Adelaide';
+    case 'WA':  return 'Australia/Perth';
+    case 'TAS': return 'Australia/Hobart';
+    case 'NT':  return 'Australia/Darwin';
+    default:    return 'Australia/Brisbane';
+  }
 }
 
 async function vpaProvisionOneVenue(env, opts) {
