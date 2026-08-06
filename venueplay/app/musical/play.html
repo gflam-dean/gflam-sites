@@ -73,7 +73,7 @@
   .cc.free{background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;border-color:transparent;
     font-family:'Anton',sans-serif;font-size:13px;letter-spacing:.04em;cursor:default}
   .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
-  .cc.on{outline:2px solid var(--win);outline-offset:-2px}
+  /* played songs show via the green daub only - no outline (per Dean) */
   .cc.free.daub{background:linear-gradient(135deg,var(--pink),var(--pink-deep));box-shadow:none}
   .pmsg{font-size:13px;color:var(--muted);text-align:center;margin:16px 0;min-height:38px;line-height:1.4}
   .pmsg.no{color:var(--roll)}
@@ -173,7 +173,7 @@
   <div class="view center hidden wonwrap" id="vWon">
     <div style="font-size:52px">&#127881;</div>
     <div class="pbig" style="color:var(--win)">You won!</div>
-    <div class="psub">Show this screen at the bar to claim</div>
+    <div class="psub">Show your card to the host to claim</div>
     <div class="prizebox" id="wonPrize">the prize</div>
     <div class="pnote">Card <b id="wonCard" style="color:var(--muted)">#000</b></div>
   </div>
@@ -310,7 +310,7 @@
     }
     fitCells();
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); }
-    else { $("bingoBtn").disabled=false; setMsg("Tap a title when you hear it. Songs played are outlined in green. Hit BINGO when you have the pattern.",""); }
+    else { $("bingoBtn").disabled=false; setMsg("Tap a title when you hear it. Hit BINGO when you have the pattern.",""); }
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
 
