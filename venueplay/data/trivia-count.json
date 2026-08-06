@@ -1,5 +1,5 @@
 {
-  "count": 34654,
-  "updated": "2026-08-04",
-  "note": "Live VenuePlay trivia question count. The weekly top-up refreshes this from the real bank (questions array length) and pushes it, so the on-site counter climbs on its own."
+  "count": 37370,
+  "updated": "2026-08-06",
+  "note": "Live VenuePlay trivia question count. Regenerate whenever the bank changes."
 }
