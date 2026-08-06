@@ -38,6 +38,13 @@
   .sumgrid .v{font-size:20px;font-weight:800;margin-top:3px;color:#fff}
   .sumgrid .v.pink{color:var(--pink)}
   .label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+  .tabs{display:flex;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow-x:auto}
+  .tabs button{flex:1 0 auto;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:14px;padding:11px 16px;border-radius:10px;cursor:pointer;transition:.15s}
+  .tabs button.on{background:var(--pink);color:#fff}
+  .tabs button:hover:not(.on){color:var(--text)}
+  .tabpanel{display:none}
+  .tabpanel.on{display:block}
+  .tabpanel > .label:first-child{margin-top:4px}
   .venue{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0}
   .venue .nm{flex:1 1 150px;min-width:0}
   .venue .nm b{display:block;font-size:16px;color:#fff}
@@ -146,6 +153,14 @@
   <div id="loading" class="card">Loading your account…</div>
   <div id="content" style="display:none">
 
+    <div class="tabs" role="tablist">
+      <button class="on" data-tab="billing">Billing</button>
+      <button data-tab="team">Team</button>
+      <button data-tab="players">Players</button>
+      <button data-tab="setup">Venue setup</button>
+    </div>
+
+    <div class="tabpanel on" id="tp-billing">
     <div class="card">
       <div class="sumgrid">
         <div><div class="k">Total players</div><div class="v" id="s-players">–</div></div>
@@ -173,7 +188,9 @@
       <div class="t">Email me before each payment<small>A heads-up a few days before your card is charged.</small></div>
       <label class="sw"><input type="checkbox" id="reminders"><span class="sl"></span></label>
     </div>
+    </div><!-- /tp-billing -->
 
+    <div class="tabpanel" id="tp-team">
     <div class="label">Hosts</div>
     <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code, no app to install.</p>
     <div id="hosts"></div>
@@ -214,7 +231,9 @@
         <button class="go" id="mgr-go" style="align-self:flex-start;margin-top:8px">Add manager</button>
       </div>
     </div>
+    </div><!-- /tp-team -->
 
+    <div class="tabpanel" id="tp-players">
     <div class="label">Player data &amp; name display</div>
     <p class="note" style="margin:0 0 10px">What players are asked for when they join, and how their name shows on the TV (John S, J Smith or John Smith). Opens that venue's settings.</p>
     <div id="playerData"></div>
@@ -222,7 +241,9 @@
     <div class="label">Marketing opt-ins</div>
     <p class="note" style="margin:0 0 10px">Players who ticked "keep me posted" when they joined. Download them as a CSV for your own marketing.</p>
     <button class="addbtn" id="optinExport">Download opt-in list (CSV)</button>
+    </div><!-- /tp-players -->
 
+    <div class="tabpanel" id="tp-setup">
     <div class="label">Raffles</div>
     <p class="note" style="margin:0 0 10px">Set your raffle routine and your usual prizes once. The running total of prizes given away shows here too.</p>
     <div id="rfPickWrap" class="screenpick" style="display:none">
@@ -303,6 +324,7 @@
         <a id="screenPreview" href="/tv" target="_blank" rel="noopener" class="canxlink" style="color:var(--muted)">Preview</a>
       </div>
     </div>
+    </div><!-- /tp-setup -->
 
     <p class="msg" id="msg"></p>
   </div>
@@ -708,6 +730,20 @@
       showMsg("Screen saved. It updates on your TV within a few seconds.", true);
     });
   }
+  // Account tabs: one page was too long, so the sections live under Billing / Team / Players /
+  // Venue setup. Static markup, so wire the buttons once on load.
+  (function initTabs(){
+    var tabs=document.querySelectorAll('.tabs button');
+    if(!tabs.length) return;
+    for(var i=0;i<tabs.length;i++){
+      tabs[i].addEventListener('click', function(){
+        var id=this.getAttribute('data-tab'), t=document.querySelectorAll('.tabs button'), p=document.querySelectorAll('.tabpanel');
+        for(var a=0;a<t.length;a++) t[a].classList.toggle('on', t[a]===this);
+        for(var b=0;b<p.length;b++) p[b].classList.toggle('on', p[b].id==='tp-'+id);
+        try{ window.scrollTo(0,0); }catch(e){}
+      });
+    }
+  })();
   function initScreen(){
     try{ screenOrigin = window.location.origin; }catch(e){}
     api("/account/screen-get", {}).then(function(d){
