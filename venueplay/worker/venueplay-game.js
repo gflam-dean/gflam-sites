@@ -247,9 +247,9 @@ async function handleCreateSession(request, env, json) {
   // TV), return THAT session instead of failing on the unique index. This makes
   // "open the session" safe to call repeatedly from the host console.
   const liveNow = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code&order=created_at.desc&limit=1');
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code,plan_cap_at_start&order=created_at.desc&limit=1');
   if (liveNow.length) {
-    return json({ session_id: liveNow[0].id, join_code: liveNow[0].join_code, tv_pairing_code: liveNow[0].tv_pairing_code, reused: true });
+    return json({ session_id: liveNow[0].id, join_code: liveNow[0].join_code, tv_pairing_code: liveNow[0].tv_pairing_code, plan_cap: (liveNow[0].plan_cap_at_start != null ? liveNow[0].plan_cap_at_start : null), reused: true });
   }
 
   // Freeze the plan cap into the session so historical metering stays stable.
@@ -290,7 +290,7 @@ async function handleCreateSession(request, env, json) {
   }
   if (!session) return json({ error: 'Could not allocate a unique join code, or a session is already live for this venue' }, 409);
 
-  return json({ session_id: session.id, join_code: session.join_code, tv_pairing_code: session.tv_pairing_code });
+  return json({ session_id: session.id, join_code: session.join_code, tv_pairing_code: session.tv_pairing_code, plan_cap: (planCap != null ? planCap : null) });
 }
 
 /* ------------------------------ POST /join ------------------------------
@@ -1878,49 +1878,52 @@ async function handleHostQuestion(request, env, json) {
   if (!gameId) return json({ error: 'Missing game_id' }, 400);
   assertUuid(gameId, 'game_id');
 
-  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config');
+  // Two independent reads (both keyed by the game) run in parallel to cut per-question latency.
+  const [games, tg] = await Promise.all([
+    sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format,config'),
+    sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId) + '&select=question_set_id,current_seq,phase'),
+  ]);
   if (!games.length) return json({ error: 'Game not found' }, 404);
   const game = games[0];
   if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
   if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
-  const session = await getSession(env, game.session_id);
-  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
-  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
-
-  const tg = await sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId) + '&select=question_set_id,current_seq,phase');
   if (!tg.length) return json({ error: 'Not a trivia game' }, 404);
   const setId = tg[0].question_set_id;
   const curSeq = tg[0].current_seq || 0;
   const cfg = game.config || {};
   const seqList = Array.isArray(cfg.question_seqs) ? cfg.question_seqs : null;
 
-  let q, qi, qtotal;
-  if (seqList) {
-    // Randomised game: config.question_seqs is this round's order (a shuffle, no repeats vs
-    // earlier rounds tonight). current_seq stores the SEQ of the last question served so
-    // /host/reveal still finds it; we advance by POSITION in the list.
-    qtotal = seqList.length;
-    const nextIdx = seqList.indexOf(curSeq) + 1;   // curSeq=0 at start -> indexOf=-1 -> idx 0
-    if (nextIdx >= seqList.length) return json({ done: true });
-    const nextSeqVal = seqList[nextIdx];
-    const rows = await sbGet(env, 'vp_questions',
-      'set_id=eq.' + enc(setId) + '&seq=eq.' + nextSeqVal +
-      '&select=id,seq,question,options,correct_index,time_limit_s,points,image_url&limit=1');
-    if (!rows.length) return json({ done: true });
-    q = rows[0];
-    qi = nextIdx + 1;
-  } else {
+  // Pick the next question IN PARALLEL with the session read. Which question is served does not
+  // depend on who is calling, so overlapping the two reads is safe; auth still gates the response
+  // (nothing is broadcast or returned until requireStaff passes, below).
+  const pickNext = async () => {
+    if (seqList) {
+      // Randomised game: config.question_seqs is this round's order (a shuffle, no repeats vs
+      // earlier rounds tonight). current_seq stores the SEQ of the last question served so
+      // /host/reveal still finds it; we advance by POSITION in the list.
+      const nextIdx = seqList.indexOf(curSeq) + 1;   // curSeq=0 at start -> indexOf=-1 -> idx 0
+      if (nextIdx >= seqList.length) return { done: true };
+      const rows = await sbGet(env, 'vp_questions',
+        'set_id=eq.' + enc(setId) + '&seq=eq.' + seqList[nextIdx] +
+        '&select=id,seq,question,options,correct_index,time_limit_s,points,image_url&limit=1');
+      if (!rows.length) return { done: true };
+      return { q: rows[0], qi: nextIdx + 1, qtotal: seqList.length };
+    }
     // Legacy game started before the randomiser: serve seq 1..N in order.
     const roundLimit = (typeof cfg.question_count === 'number') ? cfg.question_count : null;
-    if (roundLimit != null && curSeq >= roundLimit) return json({ done: true });
+    if (roundLimit != null && curSeq >= roundLimit) return { done: true };
     const nextQs = await sbGet(env, 'vp_questions',
       'set_id=eq.' + enc(setId) + '&seq=gt.' + curSeq +
       '&select=id,seq,question,options,correct_index,time_limit_s,points,image_url&order=seq.asc&limit=1');
-    if (!nextQs.length) return json({ done: true });
-    q = nextQs[0];
-    qi = q.seq;
-    qtotal = (cfg.question_count != null) ? cfg.question_count : null;
-  }
+    if (!nextQs.length) return { done: true };
+    return { q: nextQs[0], qi: nextQs[0].seq, qtotal: (cfg.question_count != null) ? cfg.question_count : null };
+  };
+
+  const [session, sel] = await Promise.all([ getSession(env, game.session_id), pickNext() ]);
+  if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the game's venue (also kill-switch)
+  if (sel.done) return json({ done: true });
+  const q = sel.q, qi = sel.qi, qtotal = sel.qtotal;
 
   const secs = (cfg.time_limit_s != null) ? cfg.time_limit_s : (q.time_limit_s || 20);
   const endsAt = new Date(Date.now() + secs * 1000).toISOString();

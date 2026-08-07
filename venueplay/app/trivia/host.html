@@ -304,7 +304,7 @@
   };
 
   function playerCount(){ return G.order.length; }
-  function playerCap(){ return (G.venue && G.venue.included_players) || 0; }
+  function playerCap(){ return (G.planCap!=null ? G.planCap : ((G.venue && G.venue.included_players) || 0)); }
   function inFirstMonth(){ var c=G.venue && G.venue.created_at; if(!c) return false; var e=new Date(c); if(isNaN(e.getTime())) return false; e.setMonth(e.getMonth()+1); return new Date()<e; }
   function confirmOverage(cap, extra){   // branded popup, resolves true=start / false=cancel
     return new Promise(function(resolve){
@@ -493,6 +493,8 @@
     if(G.sessionId && G.joinCode){ return Promise.resolve({ session_id:G.sessionId, join_code:G.joinCode }); }
     return apiPost("/session",{ venue_id:G.venueId }).then(function(r){
       G.sessionId=r.session_id; G.joinCode=r.join_code;
+      if(typeof r.plan_cap==="number") G.planCap=r.plan_cap;   // authoritative cap from the worker (covers group + founding), so the banner can't disagree
+      renderConsole();
       openGameChannel(G.joinCode);                                        // players' channel
       send({ t:"session", session_id:G.sessionId, join_code:G.joinCode }); // hand the real code to the screen
       $("setupCode").textContent=G.joinCode;
