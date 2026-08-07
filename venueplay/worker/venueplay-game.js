@@ -181,6 +181,8 @@ export default {
       if (method === 'POST' && path === '/host/trivia/questions/add')      return await handleTriviaAdd(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/from-library') return await handleTriviaFromLibrary(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/search')       return await handleTriviaSearch(request, env, json);
+      if (method === 'POST' && path === '/admin/trivia/submissions')           return await handleAdminSubmissions(request, env, json);
+      if (method === 'POST' && path === '/admin/trivia/submissions/resolve')   return await handleAdminResolve(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/remove')   return await handleTriviaRemove(request, env, json);
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
@@ -1674,7 +1676,53 @@ async function handleTriviaAdd(request, env, json) {              // write your 
   const rows = items.map((q) => Object.assign({ set_id: set.id, seq: seq++ }, q));
   await sbInsert(env, 'vp_questions', rows);
   await retagSetCount(env, set.id);
+  // Also queue these host-written questions for review so the weekly run can fact-check +
+  // improve them and promote the good ones into the shared library. Best-effort (never blocks
+  // the host adding their question, and no-ops if the submissions table is not migrated yet).
+  try {
+    const subs = rows.map((r) => ({
+      venue_id: set.owner_venue_id || null, question: r.question, options: r.options,
+      correct_index: r.correct_index, category: r.category || null,
+      difficulty: r.difficulty || null, image_url: r.image_url || null, status: 'pending',
+    }));
+    if (subs.length) await sbInsert(env, 'vp_question_submissions', subs, false);
+  } catch (e) { /* non-fatal: the review queue is best-effort */ }
   return json({ ok: true, added: rows.length });
+}
+
+// --- Review queue admin (used by the weekly fact-check run). Gated by env.ADMIN_KEY. ---
+async function handleAdminSubmissions(request, env, json) {
+  const b = await readJson(request);
+  if (!env.ADMIN_KEY || b.key !== env.ADMIN_KEY) return json({ error: 'Not authorised' }, 401);
+  const limit = Math.max(1, Math.min(200, parseInt(b.limit, 10) || 50));
+  const rows = await sbGet(env, 'vp_question_submissions',
+    'status=eq.pending&select=id,venue_id,question,options,correct_index,category,difficulty,image_url&order=created_at.asc&limit=' + limit);
+  return json({ ok: true, pending: rows });
+}
+
+async function handleAdminResolve(request, env, json) {
+  const b = await readJson(request);
+  if (!env.ADMIN_KEY || b.key !== env.ADMIN_KEY) return json({ error: 'Not authorised' }, 401);
+  const id = String(b.id || '').trim();
+  if (!id) return json({ error: 'Missing id' }, 400);
+  const status = ['approved', 'rejected', 'review'].includes(b.status) ? b.status : 'review';
+  // On approve, copy the (weekly-run-improved) question into the named library theme set.
+  if (status === 'approved' && b.question && Array.isArray(b.options) && b.options.length === 4 && b.correct_index >= 0 && b.correct_index <= 3) {
+    const theme = String(b.theme || 'General Knowledge').trim();
+    const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&title=eq.' + enc(theme) + '&select=id&limit=1');
+    if (libSets.length) {
+      const seq = await nextTriviaSeq(env, libSets[0].id);
+      await sbInsert(env, 'vp_questions', [{
+        set_id: libSets[0].id, seq, question: String(b.question), options: b.options, correct_index: b.correct_index,
+        category: b.category || theme, difficulty: ['easy', 'medium', 'hard'].includes(b.difficulty) ? b.difficulty : 'medium',
+        image_url: b.image_url || null,
+      }], false);
+      await retagSetCount(env, libSets[0].id);
+    }
+  }
+  await sbPatch(env, 'vp_question_submissions', 'id=eq.' + enc(id),
+    { status, review_note: (String(b.review_note || '').slice(0, 500)) || null, reviewed_at: new Date().toISOString() });
+  return json({ ok: true, id, status });
 }
 async function handleTriviaFromLibrary(request, env, json) {     // copy N library questions into the set
   const authUserId = await verifyHostJwt(request, env);
