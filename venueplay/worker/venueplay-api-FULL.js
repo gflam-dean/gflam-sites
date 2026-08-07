@@ -189,15 +189,12 @@ async function handleCheckout(request, env, json) {
     return json({ error: 'Sorry, we could not save your details just then. Please try again.' }, 502);
   }
 
-  // 2) First charge fires after a rolling ONE-MONTH free trial. Everyone gets a full free
-  // month of ACTUAL use: sign up before we go live (24 Aug) and the month counts from
-  // go-live; sign up after and it counts from signup. Stripe needs a future trial_end, so
-  // never below now+1h. (env GO_LIVE_TS overrides the default go-live date.)
-  const goLive = parseInt(env.GO_LIVE_TS, 10) || 1787493600; // 24 Aug 2026 00:00 Brisbane
+  // 2) First charge fires after a rolling ONE-MONTH free trial that starts the day they sign
+  // up. Every new venue gets a full free month from signup. Stripe needs a future trial_end.
   const nowTs = Math.floor(Date.now() / 1000);
   const ONE_MONTH = 30 * 24 * 60 * 60;
   const MIN_TRIAL = nowTs + 3 * 24 * 60 * 60; // Stripe rejects any trial_end under ~2 days out
-  const launchTs = Math.max(Math.max(nowTs, goLive) + ONE_MONTH, MIN_TRIAL);
+  const launchTs = Math.max(nowTs + ONE_MONTH, MIN_TRIAL);
   // Returning-venue guard: an email/mobile that already had a (non-pending) account does
   // NOT get another free month (the free month is for NEW venues) - they are billed from
   // signup on whatever price is current, and flagged for HQ via subscription metadata.
@@ -1445,12 +1442,10 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
     const rate = tier === 'standard' ? (plan === 'annual' ? 2.85 : 3.00)
                                      : (plan === 'annual' ? 2.30 : 2.50);
     const money = (n) => '$' + Number(n).toFixed(2);
-    const goLive = parseInt(env.GO_LIVE_TS, 10) || 1787493600; // 24 Aug 2026, matches checkout
     const nowSecs = Math.floor(Date.now() / 1000);
-    const firstChargeTs = Math.max(nowSecs, goLive) + 30 * 24 * 60 * 60;
+    const firstChargeTs = nowSecs + 30 * 24 * 60 * 60;
     const firstCharge = vpaFmtDate(firstChargeTs);
-    // Before go-live everyone's free month starts at the 24 Aug launch, so say so.
-    const launchPhrase = nowSecs < goLive ? ' from our launch on 24 August 2026' : '';
+    const launchPhrase = '';
     const consoleUrl = site + '/app';
     const tvUrl = site + '/tv';
     const calendly = env.CALENDLY_URL || (site + '/#contact');

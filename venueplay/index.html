@@ -780,14 +780,14 @@
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="top">
   <div class="wrap">
-    <span class="eyebrow"><span class="live-dot"></span> Launching 24 August 2026</span>
+    <span class="eyebrow"><span class="live-dot"></span> Now open</span>
     <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
     <p class="lede">Bingo, trivia, musical bingo and raffles, run from one screen. Your crowd plays from their own phones, <b>no app and no login</b>. You just press go. Built for pubs, clubs and bowls clubs that want a full room on a quiet night.</p>
     <div class="hero-cta">
       <a class="btn btn-primary" href="#claim">Get started</a>
       <a class="btn btn-ghost" href="#modes">See the game modes</a>
     </div>
-    <p class="hero-note">Launching 24 August 2026 · $3 per player, per month · cancel anytime</p>
+    <p class="hero-note">Now open · $3 per player, per month · cancel anytime</p>
   </div>
 </section>
 
@@ -1101,7 +1101,7 @@
       <h2 class="sec-title">Questions</h2>
     </div>
     <div class="faq">
-      <details class="q"><summary>When does VenuePlay launch?<span class="pm"></span></summary><div class="a">VenuePlay launches 24 August 2026. We'll be in touch before then to get you set up.</div></details>
+      <details class="q"><summary>When can I start?<span class="pm"></span></summary><div class="a">Right away. Sign up, get your free first month, and we'll help you get your first night running.</div></details>
       <details class="q"><summary>How much does it cost?<span class="pm"></span></summary><div class="a">$3 per player a month, based on your venue's max players per session. Pay monthly, or save with annual at $2.85 a player. No setup fees, no packs to buy, no lock-in.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
@@ -1312,10 +1312,10 @@
       }
       requestAnimationFrame(step);
     }
-    // Live count: read the real song library and count it, so the number is always accurate and
-    // updates itself whenever songs are added. The library is small (~64KB) so this is cheap.
-    fetch('/data/musical-library.json').then(function(r){ return r.json(); }).then(function(d){
-      var n = (d && d.songs && d.songs.length) || 0;
+    // Live count: read the small backend count file (regenerated whenever songs are added),
+    // so the homepage never downloads the whole song library just to show a number.
+    fetch('/data/music-count.json').then(function(r){ return r.json(); }).then(function(d){
+      var n = (d && d.count) || 0;
       if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
       el.textContent = n.toLocaleString('en-AU');
       if (sec && 'IntersectionObserver' in window){
