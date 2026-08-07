@@ -1642,7 +1642,10 @@ async function handleTriviaSet(request, env, json) {              // create a ne
   assertUuid(venueId, 'venue_id');
   await requireStaff(env, authUserId, venueId);
   const rows = await sbInsert(env, 'vp_question_sets',
-    { owner_venue_id: venueId, visibility: 'venue', title, status: 'active', question_count: 0 }, true);
+    // visibility MUST be one of the DB CHECK values ('private','library'); a venue's own night is
+    // 'private'. Using 'venue' here violated the constraint and made "create a night" fail with a DB
+    // error. Venue ownership is tracked by owner_venue_id, never by a 'venue' visibility value.
+    { owner_venue_id: venueId, visibility: 'private', title, status: 'active', question_count: 0 }, true);
   return json({ ok: true, set_id: rows[0].id, title });
 }
 async function handleTriviaSetDelete(request, env, json) {

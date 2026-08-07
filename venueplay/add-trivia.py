@@ -122,6 +122,18 @@ print("After validate + dedupe: %d new, %d duplicates skipped." % (len(fresh), d
 if not fresh:
     sys.exit("Nothing new to add.")
 
+# 3b) SHUFFLE options on ingest. Generated questions often put the correct answer first
+#     (correct_index=0), which makes pulled rounds come out all-A. Randomise every incoming
+#     question's option order here so no future batch can reintroduce that bias, regardless
+#     of how it was written. Deterministic per question (seeded by its text) = reproducible.
+import random as _rnd
+for q in fresh:
+    o = q["options"]; ci = q["correctIndex"]; correct_val = o[ci]
+    r = _rnd.Random(q["question"]); no = o[:]; r.shuffle(no)
+    q["options"] = no; q["correctIndex"] = no.index(correct_val)
+    if "answer" in q:
+        q["answer"] = correct_val
+
 # 4) group by theme + fetch each theme's library set id
 by_theme = {}
 for q in fresh:
