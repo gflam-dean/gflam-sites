@@ -1643,5 +1643,34 @@
   }
 })();
 </script>
+<style>
+.vp-float-cta{position:fixed;right:22px;bottom:22px;z-index:60;display:inline-flex;align-items:center;gap:9px;
+  padding:14px 24px;border-radius:999px;background:#FF1F8E;color:#fff;font-weight:800;font-size:15px;
+  font-family:'Hanken Grotesk',sans-serif;text-decoration:none;box-shadow:0 12px 34px rgba(255,31,142,.45);
+  opacity:0;transform:translateY(16px);pointer-events:none;transition:opacity .25s ease,transform .25s ease}
+.vp-float-cta.show{opacity:1;transform:none;pointer-events:auto}
+.vp-float-cta:hover{background:#ff3d9e}
+@media(max-width:560px){.vp-float-cta{right:14px;left:14px;bottom:14px;justify-content:center;padding:15px 20px}}
+@media(prefers-reduced-motion:reduce){.vp-float-cta{transition:opacity .25s ease}}
+</style>
+<a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Get started">
+  <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
+  Get started
+</a>
+<script>
+(function(){
+  var cta=document.getElementById('vpFloatCta'); if(!cta) return;
+  var claim=document.getElementById('claim');
+  function upd(){
+    var y=window.pageYOffset||document.documentElement.scrollTop;
+    var show=y>560;
+    if(show && claim){ var r=claim.getBoundingClientRect(); if(r.top < window.innerHeight && r.bottom > 0) show=false; }
+    cta.classList.toggle('show', show);
+  }
+  window.addEventListener('scroll', upd, {passive:true});
+  window.addEventListener('resize', upd);
+  upd();
+})();
+</script>
 </body>
 </html>
