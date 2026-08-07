@@ -188,6 +188,7 @@
     <button data-pane="groups">Groups</button>
     <button data-pane="usage">Usage</button>
     <button data-pane="team">Team</button>
+    <button data-pane="flagged">Flagged</button>
     <button data-pane="audit">Audit</button>
   </div>
 
@@ -358,6 +359,16 @@
     </table></div></div>
     <div class="note">Every discount, suspension, new venue and staff change the Worker records lands here, newest first.</div>
   </div>
+
+  <!-- ============ FLAGGED SIGNUPS ============ -->
+  <div id="paneFlagged" class="hidden">
+    <div class="lblk">Flagged signups</div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>When</th><th>Venue</th><th>Email</th><th>Decision</th></tr></thead>
+      <tbody id="flaggedRows"></tbody>
+    </table></div></div>
+    <div class="note">Signups whose <b>email</b> does not look like a venue land here (a trivia host, a personal Gmail). They can run games on team names only and collect <b>no</b> player data until you Approve. "Keep locked" records your decision and leaves them name-only.</div>
+  </div>
 </div>
 
 
@@ -444,7 +455,7 @@
     S.ctx=ctx; S.adminRole=ctx.adminRole||"staff";
     $("whoLabel").innerHTML = "VenuePlay admin &middot; <b>"+esc(ctx.adminRole||"staff")+"</b>";
     // Audit is visible only to Owner + Accounts.
-    if(!(S.adminRole==="owner"||S.adminRole==="accounts")){ var _ab=document.querySelector('[data-pane="audit"]'); if(_ab) _ab.style.display="none"; }
+    if(!(S.adminRole==="owner"||S.adminRole==="accounts")){ ['audit','flagged'].forEach(function(p){ var _ab=document.querySelector('[data-pane="'+p+'"]'); if(_ab) _ab.style.display="none"; }); }
     $("app").style.display="block";
     loadAll();
   });
@@ -475,7 +486,7 @@
       S.gameBySession={}; ((r[8] && r[8].data)||[]).forEach(function(g){ if(!S.gameBySession[g.session_id]) S.gameBySession[g.session_id]=g; });
       // latest usage month present
       S.usageMonth = S.usage.length ? S.usage[0].period_month : null;
-      renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderAudit(); populateGroupSelect();
+      renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderAudit(); populateGroupSelect();
     }).catch(function(e){
       $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(e&&e.message||e)+'</td></tr>';
     });
@@ -562,7 +573,7 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","live","billing","groups","usage","team","audit"];
+  var PANES=["venues","live","billing","groups","usage","team","flagged","audit"];
   $("liveRefresh").addEventListener("click", loadLiveOnly);
   $("hqNav").addEventListener("click", function(e){
     var b=e.target.closest("button"); if(!b) return;
@@ -1043,6 +1054,48 @@
       b.appendChild(tr);
     });
   }
+
+  /* ---- Flagged signups (non-venue emails held from collecting opt-in data) ---- */
+  function flaggedAccounts(){
+    var resolved={};
+    S.audit.forEach(function(a){ if((a.action==="optin_approved"||a.action==="optin_revoked") && a.target){ resolved[a.target]=true; } });
+    var out=[], seen={};
+    S.audit.forEach(function(a){
+      if(a.action!=="signup_flagged" || !a.target || resolved[a.target] || seen[a.target]) return;
+      seen[a.target]=true; out.push(a);
+    });
+    return out;
+  }
+  function renderFlagged(){
+    var b=$("flaggedRows"); if(!b) return; b.innerHTML="";
+    var rows=flaggedAccounts();
+    if(!rows.length){ b.innerHTML='<tr><td colspan="4"><div class="empty" style="border:none;background:none">No signups waiting for review. Non-venue emails show up here.</div></td></tr>'; return; }
+    rows.forEach(function(a){
+      var fid=String(a.target||"").replace(/^account:/,""), d=a.detail||{};
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td style="white-space:nowrap">'+esc(fmtWhen(a.created_at))+'</td>'+
+        '<td><div class="vn">'+esc(d.venue||"(venue)")+'</div></td>'+
+        '<td>'+esc(d.email||"")+'</td>'+
+        '<td style="white-space:nowrap">'+
+          '<button data-appr="'+esc(fid)+'" style="border:none;background:#FF1F8E;color:#fff;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Approve opt-ins</button> '+
+          '<button data-lock="'+esc(fid)+'" style="border:1px solid #2a2a33;background:none;color:#9a9aa4;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Keep locked</button>'+
+        '</td>';
+      b.appendChild(tr);
+    });
+  }
+  (function(){
+    var fr=$("flaggedRows"); if(!fr) return;
+    fr.addEventListener("click", function(e){
+      var ap=e.target.closest("button[data-appr]"), lk=e.target.closest("button[data-lock]");
+      if(!ap && !lk) return;
+      var btn=ap||lk, fid=btn.getAttribute(ap?"data-appr":"data-lock"), approved=!!ap;
+      btn.disabled=true;
+      workerPost("/admin/optin-approve",{ founding_id:fid, approved:approved }).then(function(r){
+        if(r && r.error){ alert(r.error); btn.disabled=false; return; }
+        VP.getClient().from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250).then(function(rr){ S.audit=(rr&&rr.data)||[]; renderFlagged(); renderAudit(); });
+      });
+    });
+  })();
 
   /* ================= ADD VENUE (Worker) ================= */
   function populateGroupSelect(){
