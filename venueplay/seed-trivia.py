@@ -61,6 +61,41 @@ questions = lib.get("questions") or []
 print("Loaded %d questions from the library." % len(questions))
 
 
+# --- Broad-theme mapping: the ~570 fine categories roll up into 20 clean themes, which become the
+#     host's set list. Each question ALSO keeps its own fine category (in the category column) as a
+#     search tag, so a host can search any topic (e.g. "Neighbours") to build a themed night.
+THEME_RULES = [
+    ("Australiana", ["australia", "aussie", "aboriginal", "anzac", "outback"]),
+    ("Space & Astronomy", ["space", "astronom", "meteor", "eclipse", " moon", "planet", "galaxy", "comet", "asteroid", "night sky", "solar system", "cosmos", "nebula", "orbit", "telescope", "constellation", "satellite", "rocket", "spacecraft"]),
+    ("Music", ["music", "song", "band", "album", "singer", "rock", "pop ", "hip hop", "jazz", "opera", "mtv", "eurovision", "lyric", "musician", "instrument", "choir", "dj"]),
+    ("Film & TV", ["film", "movie", "cinema", " tv", "television", "sitcom", "netflix", "disney", "oscar", "hollywood", "james bond", "star wars", "blockbuster", "franchise", "actor", "director", "screen", "soap opera", "documentar"]),
+    ("Anime, Comics & Cartoons", ["anime", "manga", "cartoon", "animation", "comic", "superhero", "pixar", "pokemon", "marvel", "animated"]),
+    ("Video Games", ["video game", "gaming", "game boy", "nintendo", "playstation", "xbox", "esports", "minecraft", "arcade", "console"]),
+    ("Sport", ["sport", "football", "cricket", "rugby", "soccer", "tennis", "olympic", "afl", "nrl", "athlet", "basketball", "golf", "boxing", "racing", "cycling", "swimming", "formula 1", "marathon", "surfing", "skateboard"]),
+    ("Food & Drink", ["food", "drink", "cuisine", "cocktail", "wine", "beer", "cooking", "chef", "restaurant", "dish", "culinary", "breakfast", "pastr", "pudding", "dessert", "cheese", "olive", "antipasto", "soup", "broth", "stew", "cake", "chocolate", "coffee", " tea ", "fruit", "vegetable", "spice", "snack", "candy", "sweet", "bread", "baking", "pizza", "meat", "seafood", "whisky", "bourbon", " rum", "spirit", "distiller", "rice", "noodle", "grain", " jam", "honey", "preserve", "pickle"]),
+    ("Technology & Transport", ["computer", "technolog", "internet", "software", "aviation", "gadget", "engineering", "robot", "invention", "machine", "windmill", "waterwheel", "engine", "mechanical", "electric", "train", "railway", "tram", "truck", " bus ", "ship", "sailing", " car ", "motoring", "vehicle", "boat", "plane", "aircraft", "locomotive", "underground", "flight", "balloon"]),
+    ("Science & Nature", ["science", "physic", "chemis", "biolog", "nature", "animal", "medicine", "human body", "plant", "dinosaur", "weather", "anatomy", "element", "insect", "creature", "wildlife", "pet", " dog", " cat ", "frog", "newt", " bat", "moth", " bee", "butterfly", "pollinator", "pond", "deep-sea", "abyss", "zoo", "aquarium", "bird", "fish", "reptile", "mammal", "marine", "tree", "flower", "chemical", "atom", "forest", "jungle", "coral", "spider", "scorpion", "snake", "viper", "venom", "creepy", "colour", "light and", "senses"]),
+    ("History", ["history", " war", "ancient", "medieval", "empire", "century", "revolution", "dynasty", "historical", "wild west", "outlaw", "gold rush", "pirate", "age of sail", "colonial", "viking", "explorer", "exploration", "castle", "monarch", "battle", "roman", "egypt", "samurai", "feudal", "aztec", "maya", "inca", "civilis", "civiliz"]),
+    ("Geography", ["geograph", "countr", "capital", "flag", "cities", "river", "mountain", "island", "continent", " map", "landmark", "volcano", "harbour", "coast", "lighthouse", " sea", "desert", "border", "nation", "glacier", "iceberg", "ice cap", "cave", "grotto", "stalactite", "lake", "peak", "alps"]),
+    ("Books & Literature", ["book", "literat", "author", "novel", "poet", "shakespeare", "writer", "fiction", "fairy tale", "story"]),
+    ("Art & Culture", ["art", "photograph", "fashion", "clothing", "style", "design", "architect", "sculpture", "painting", "museum", "festival", "holiday", "tradition", "circus", "magic", "carnival", "brand", "logo", "slogan", "mascot", "advertis", "jingle"]),
+    ("Mythology & Religion", ["myth", "religio", " god", "bible", "norse", "legend", "greek myth", "saint", "church"]),
+    ("Maths & Puzzles", ["math", "brain teaser", "puzzle", "logic", "riddle", "statistic", "time, clocks", "calendar"]),
+    ("Language & Words", ["language", "alphabet", "vocabular", " word", "grammar", "etymolog", "phrase", "idiom"]),
+    ("People & Celebrities", ["celebrit", "famous", "royal", "president", "politic", "leader", "people", "biograph", "inventor", "nobel"]),
+    ("Hobbies & Collectables", ["hobby", "hobbies", "board game", "card game", "chess", "craft", " toy", "collectable", "coin", "stamp", "garden", "knitting", "pastime", "cards and"]),
+]
+
+
+def theme(cat):
+    c = " " + (cat or "").lower() + " "
+    for t, kws in THEME_RULES:
+        for k in kws:
+            if k in c:
+                return t
+    return "General Knowledge"
+
+
 def valid(q):
     o = q.get("options")
     ci = q.get("correctIndex")
@@ -69,12 +104,13 @@ def valid(q):
             and bool(q.get("question")))
 
 
-# group by category
-by_cat = {}
+# group by broad THEME (20 themes) so the host picks from a short list; each question keeps its
+# own fine category as a searchable tag (written into the category column below).
+by_theme = {}
 for q in questions:
     if valid(q):
-        by_cat.setdefault(q.get("category") or "General Knowledge", []).append(q)
-print("Grouped into %d categories." % len(by_cat))
+        by_theme.setdefault(theme(q.get("category")), []).append(q)
+print("Grouped into %d themes." % len(by_theme))
 
 # 2. optional clean reset of our library sets (never touches venue-owned sets)
 if RESET:
@@ -88,33 +124,33 @@ if RESET:
     else:
         print("  (could not list existing sets: %s %s)" % (st, sets))
 
-# 3. create a set per category and bulk-insert its questions
+# 3. create one set per THEME and bulk-insert its questions (each row keeps its fine category tag)
 total = 0
-for cat, items in sorted(by_cat.items()):
+for th, items in sorted(by_theme.items()):
     random.shuffle(items)
     if PERCAT_LIMIT:
         items = items[:PERCAT_LIMIT]
     if not items:
         continue
     st, res = req("POST", "vp_question_sets",
-                  {"title": cat, "visibility": "library", "owner_venue_id": None,
+                  {"title": th, "visibility": "library", "owner_venue_id": None,
                    "status": "active", "question_count": len(items)},
                   prefer="return=representation")
     if st not in (200, 201) or not isinstance(res, list) or not res:
-        sys.exit("ERROR creating set '%s': %s %s\n(send me this exact message and I'll fix the mapping)" % (cat, st, res))
+        sys.exit("ERROR creating set '%s': %s %s\n(send me this exact message and I'll fix the mapping)" % (th, st, res))
     set_id = res[0]["id"]
     rows = [{"set_id": set_id, "seq": i + 1, "question": q["question"],
              "options": q["options"], "correct_index": q["correctIndex"],
-             "category": q.get("category") or cat,
+             "category": q.get("category") or th,   # the FINE category, kept as a search tag
              "difficulty": (q.get("difficulty") if q.get("difficulty") in ("easy", "medium", "hard") else "medium"),
              "image_url": q.get("image_url") or q.get("imageUrl")}
             for i, q in enumerate(items)]
     for b in range(0, len(rows), 500):
         st, r = req("POST", "vp_questions", rows[b:b + 500], prefer="return=minimal")
         if st not in (200, 201):
-            sys.exit("ERROR inserting '%s' (batch at %d): %s %s\n(send me this and I'll fix it)" % (cat, b, st, r))
+            sys.exit("ERROR inserting '%s' (batch at %d): %s %s\n(send me this and I'll fix it)" % (th, b, st, r))
     total += len(rows)
-    print("  %-28s %d questions" % (cat, len(rows)))
+    print("  %-26s %d questions" % (th, len(rows)))
 
-print("\nDone. Inserted %d questions across %d category sets." % (total, len(by_cat)))
-print("Open the trivia host - the question-set dropdown should now be full.")
+print("\nDone. Inserted %d questions across %d theme sets." % (total, len(by_theme)))
+print("Open the trivia host - the question-set dropdown should now be 20 clean themes.")

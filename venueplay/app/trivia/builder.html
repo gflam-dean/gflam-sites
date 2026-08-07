@@ -91,6 +91,19 @@
       </div>
 
       <div class="card">
+        <div class="lbl">Search for a theme</div>
+        <div class="hint">Type any topic to build a themed night &mdash; e.g. Neighbours, the 90s, Taylor Swift. Searches all 37,000+ questions.</div>
+        <div class="row">
+          <div style="flex:1"><label class="f">Topic</label><input type="text" id="searchQ" placeholder="e.g. Neighbours"></div>
+          <div><label class="f">Difficulty</label>
+            <select id="searchDiff"><option value="">Any</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
+          <div style="flex:0 0 90px"><label class="f">How many</label><input type="text" id="searchCount" value="20"></div>
+        </div>
+        <button type="button" id="searchBtn" class="btn pink" style="width:100%;margin-top:12px">Search &amp; add to night</button>
+        <div id="searchStatus" class="status"></div>
+      </div>
+
+      <div class="card">
         <div class="lbl">Write your own</div>
         <div class="hint">Type a question, four answers, and tick the correct one.</div>
         <label class="f">Question</label>
@@ -204,6 +217,20 @@
       .catch(function(e){ setStatus("libStatus", e.message||"Could not add", "err"); })
       .then(function(){ $("addLibBtn").disabled=false; });
   }
+  function searchLibrary(){
+    if(!G.setId) return;
+    var query=($("searchQ").value||"").trim();
+    if(query.length<2){ setStatus("searchStatus","Type a topic to search (at least 2 letters).","err"); return; }
+    var count=parseInt($("searchCount").value,10)||20;
+    $("searchBtn").disabled=true; setStatus("searchStatus","Searching…","");
+    req("POST","/host/trivia/questions/search",{ set_id:G.setId, query:query, difficulty:$("searchDiff").value||undefined, count:count })
+      .then(function(r){
+        if(!r.added){ setStatus("searchStatus",'No questions found for "'+query+'". Try another word.',"err"); }
+        else { setStatus("searchStatus",'Added '+r.added+' question'+(r.added==1?"":"s")+' about "'+query+'".',"ok"); loadQuestions(); loadMySets(G.setId); }
+      })
+      .catch(function(e){ setStatus("searchStatus", e.message||"Could not search", "err"); })
+      .then(function(){ $("searchBtn").disabled=false; });
+  }
   function addOwn(){
     if(!G.setId) return;
     var q=($("ownQ").value||"").trim();
@@ -226,6 +253,8 @@
   $("createBtn").addEventListener("click", createSet);
   $("setName").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); createSet(); } });
   $("addLibBtn").addEventListener("click", addFromLibrary);
+  $("searchBtn").addEventListener("click", searchLibrary);
+  $("searchQ").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); searchLibrary(); } });
   $("addOwnBtn").addEventListener("click", addOwn);
   $("qList").addEventListener("click", function(e){ var b=e.target.closest("button[data-rm]"); if(b) removeQuestion(b.getAttribute("data-rm")); });
 

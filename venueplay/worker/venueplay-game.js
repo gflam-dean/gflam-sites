@@ -180,6 +180,7 @@ export default {
       if (method === 'GET'  && path === '/host/trivia/set/questions')      return await handleTriviaSetQuestions(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/add')      return await handleTriviaAdd(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/from-library') return await handleTriviaFromLibrary(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/questions/search')       return await handleTriviaSearch(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/remove')   return await handleTriviaRemove(request, env, json);
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
@@ -696,26 +697,47 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
 
   // Count the questions now: it drives qtotal on the phones/TV and the end-of-round
   // check in /host/question. We select only ids, never correct_index.
-  const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=seq');
+  const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=id,seq');
   const allSeqs = qs.map((r) => r.seq).filter((s) => s != null);
   if (!allSeqs.length) return json({ error: 'That question set has no questions' }, 409);
+  const seqToId = {};
+  qs.forEach((r) => { if (r.seq != null) seqToId[r.seq] = r.id; });
   // Host can play fewer than the whole set this round (default = whole set).
   let questionCount = allSeqs.length;
   const wantN = parseInt(b.question_count, 10);
   if (wantN >= 1 && wantN < questionCount) questionCount = wantN;
 
-  // VARIETY: pick this round's questions AT RANDOM, and skip ones already used earlier this
-  // session so a new round never replays the same questions. When the set is exhausted for the
-  // night it resets and reuses. The chosen order is stored on the game (config.question_seqs)
-  // and served from there, so no schema change is needed.
+  // VARIETY + NO-REPEAT: pick this round's questions AT RANDOM, skipping (a) ones already used
+  // earlier THIS session, and (b) ones this VENUE has asked in the last 12 months (per-venue
+  // "already asked" memory in vp_asked_questions). A question recycles 12 months after its last
+  // ask. If that leaves too few, we relax the 12-month rule rather than block the game. Chosen
+  // seqs are stored on the game (config.question_seqs) and served from there.
   const priorTrivia = await sbGet(env, 'vp_games',
     'session_id=eq.' + enc(session.id) + '&format=eq.trivia&select=config');
   const used = {};
   priorTrivia.forEach((g) => { const sq = g && g.config && g.config.question_seqs; if (Array.isArray(sq)) sq.forEach((s) => { used[s] = true; }); });
-  let pool = allSeqs.filter((s) => !used[s]);
-  if (pool.length < questionCount) pool = allSeqs.slice();   // whole set used this session -> reset
+  // Cross-night memory: ids this venue asked within the last 365 days. Wrapped so that if the
+  // vp_asked_questions table is not migrated yet, we simply fall back to session-only variety.
+  const askedIds = {};
+  if (session.venue_id) {
+    const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+    try {
+      const askedRows = await sbGet(env, 'vp_asked_questions',
+        'venue_id=eq.' + enc(session.venue_id) + '&asked_at=gt.' + enc(cutoff) + '&select=question_id');
+      askedRows.forEach((r) => { if (r.question_id) askedIds[r.question_id] = true; });
+    } catch (e) { /* table not migrated yet -> session-only variety */ }
+  }
+  let pool = allSeqs.filter((s) => !used[s] && !askedIds[seqToId[s]]);
+  if (pool.length < questionCount) pool = allSeqs.filter((s) => !used[s]);   // relax the 12-month rule (recycle early)
+  if (pool.length < questionCount) pool = allSeqs.slice();                   // whole set used this session -> reset
   const chosenSeqs = shuffleArray(pool.slice()).slice(0, questionCount);
   questionCount = chosenSeqs.length;
+  // Record what we're about to ask so it won't recur at this venue for 12 months. Best-effort:
+  // a logging failure must never stop the game starting.
+  if (session.venue_id) {
+    const askedInsert = chosenSeqs.map((s) => ({ venue_id: session.venue_id, question_id: seqToId[s] })).filter((r) => r.question_id);
+    if (askedInsert.length) { try { await sbInsert(env, 'vp_asked_questions', askedInsert, false); } catch (e) { /* non-fatal */ } }
+  }
 
   // vp_trivia_games has no per-game points/time/prize columns, so the host's overrides
   // and display text live in vp_games.config (same place bingo keeps prize/title).
@@ -1679,6 +1701,37 @@ async function handleTriviaFromLibrary(request, env, json) {     // copy N libra
   await sbInsert(env, 'vp_questions', rows);
   await retagSetCount(env, set.id);
   return json({ ok: true, added: rows.length });
+}
+
+// Search the WHOLE library by keyword (question text or tag) and copy N matches into the venue's
+// set - this is what powers a themed night on any topic (e.g. "Neighbours", "the 90s").
+async function handleTriviaSearch(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const set = await triviaSetForVenue(env, b.set_id, authUserId);
+  const query = String(b.query || '').replace(/[(),]/g, ' ').trim().slice(0, 60);
+  if (query.length < 2) return json({ error: 'Type at least 2 characters to search' }, 400);
+  const count = Math.max(1, Math.min(100, parseInt(b.count, 10) || 20));
+  const libSets = await sbGet(env, 'vp_question_sets', 'visibility=eq.library&select=id');
+  if (!libSets.length) return json({ error: 'The question library is empty' }, 404);
+  const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
+  const like = enc('*' + query + '*');
+  let q = 'set_id=in.' + inList
+        + '&or=(question.ilike.' + like + ',category.ilike.' + like + ')'
+        + '&select=question,options,correct_index,category,difficulty,image_url';
+  if (['easy', 'medium', 'hard'].includes(b.difficulty)) q += '&difficulty=eq.' + enc(b.difficulty);
+  q += '&limit=' + (count * 6);
+  const pool = await sbGet(env, 'vp_questions', q);
+  if (!pool.length) return json({ ok: true, added: 0, matched: 0 });
+  for (let i = pool.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+  let seq = await nextTriviaSeq(env, set.id);
+  const rows = pool.slice(0, count).map((p) => ({
+    set_id: set.id, seq: seq++, question: p.question, options: p.options, correct_index: p.correct_index,
+    category: p.category, difficulty: p.difficulty, image_url: p.image_url,
+  }));
+  await sbInsert(env, 'vp_questions', rows);
+  await retagSetCount(env, set.id);
+  return json({ ok: true, added: rows.length, matched: pool.length });
 }
 async function handleTriviaRemove(request, env, json) {           // remove one question, then re-sequence 1..N
   const authUserId = await verifyHostJwt(request, env);
