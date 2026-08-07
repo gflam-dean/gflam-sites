@@ -367,7 +367,7 @@
       <thead><tr><th>When</th><th>Venue</th><th>Email</th><th>Decision</th></tr></thead>
       <tbody id="flaggedRows"></tbody>
     </table></div></div>
-    <div class="note">Signups whose <b>email</b> does not look like a venue land here (a trivia host, a personal Gmail). They can run games on team names only and collect <b>no</b> player data until you Approve. "Keep locked" records your decision and leaves them name-only.</div>
+    <div class="note">Signups whose <b>email</b> does not look like a venue land here (a trivia host, a personal Gmail). They can run games on team names only and collect <b>no</b> player data until you Approve. "No opt-ins" records your decision and leaves them running games on team names, just without collecting player data.</div>
   </div>
 </div>
 
@@ -1078,7 +1078,7 @@
         '<td>'+esc(d.email||"")+'</td>'+
         '<td style="white-space:nowrap">'+
           '<button data-appr="'+esc(fid)+'" style="border:none;background:#FF1F8E;color:#fff;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Approve opt-ins</button> '+
-          '<button data-lock="'+esc(fid)+'" style="border:1px solid #2a2a33;background:none;color:#9a9aa4;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">Keep locked</button>'+
+          '<button data-lock="'+esc(fid)+'" style="border:1px solid #2a2a33;background:none;color:#9a9aa4;border-radius:7px;padding:5px 11px;font-weight:700;cursor:pointer;font-size:12px">No opt-ins</button>'+
         '</td>';
       b.appendChild(tr);
     });
