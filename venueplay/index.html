@@ -918,6 +918,22 @@
   </div>
 </section>
 
+<!-- ===================== TRUSTED BY ===================== -->
+<style>
+  #trusted .marquee{overflow:hidden;position:relative;margin-top:22px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+  #trusted .track{display:flex;gap:48px;align-items:center;width:max-content;animation:trustedScroll 45s linear infinite}
+  #trusted .marquee:hover .track{animation-play-state:paused}
+  .trustedlogo{height:46px;width:auto;max-width:160px;object-fit:contain;opacity:.85}
+  @keyframes trustedScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media(prefers-reduced-motion:reduce){#trusted .track{animation:none;flex-wrap:wrap;justify-content:center}}
+</style>
+<section class="sec" id="trusted" style="display:none">
+  <div class="wrap">
+    <div class="sec-head"><div class="label">Trusted by</div><h2 class="sec-title">Venues already running VenuePlay</h2></div>
+    <div class="marquee"><div class="track" id="trustedTrack"></div></div>
+  </div>
+</section>
+
 <!-- ===================== FOUNDING OFFER ===================== -->
 <!-- ===================== TRIVIA BANK COUNTER ===================== -->
 <section class="sec" id="trivia-bank">
@@ -1214,6 +1230,20 @@
   var foundingClosed = false;
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
   var keyReady = _SBK.indexOf('PASTE_') === -1;
+  // "Trusted by" strip: active venues that have uploaded a logo (public view v_vp_trusted).
+  // Hidden until there are 6+, so it never looks sparse at launch; fills itself as venues sign on.
+  if (keyReady) {
+    fetch(_SBU + '/rest/v1/v_vp_trusted?select=name,logo_url&limit=60', { headers: { 'apikey': _SBK, 'Authorization': 'Bearer ' + _SBK } })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(rows){
+        if (!Array.isArray(rows) || rows.length < 6) return;
+        var track = document.getElementById('trustedTrack'); if (!track) return;
+        var html = '';
+        [rows, rows].forEach(function(set){ set.forEach(function(v){ html += '<img class="trustedlogo" src="' + v.logo_url + '" alt="' + String(v.name || '').replace(/[<">]/g, '') + '" loading="lazy">'; }); });
+        track.innerHTML = html;
+        var sec = document.getElementById('trusted'); if (sec) sec.style.display = '';
+      }).catch(function(){});
+  }
   var plan = 'monthly';
 
   document.getElementById('vp-year').textContent = new Date().getFullYear();
