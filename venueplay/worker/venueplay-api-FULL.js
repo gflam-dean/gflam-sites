@@ -195,6 +195,44 @@ async function handleCheckout(request, env, json) {
     return json({ error: 'Sorry, we could not save your details just then. Please try again.' }, 502);
   }
 
+  // OPT-IN GATE (see memory venueplay-optin-gate): if the signup EMAIL does not look like a real
+  // venue, it is likely a third-party trivia host, not the venue that owns the players' data. Flag
+  // it: email Dean + drop a flag in HQ. Opt-in collection then stays LOCKED (cannot be switched on
+  // in settings) until Dean approves this account (optin_release_approved). A flagged venue still
+  // runs games fully - players join with just a team name - so nothing breaks; there is simply no
+  // opt-in data collected until it is unlocked. Substring test because email domains concatenate
+  // (e.g. "sandsrsl.com" should pass).
+  const VENUE_EMAIL_RE = /hotel|tavern|rsl|club|pub|bowls|bowlo|bowling|leagues|surf|golf|hospitality/i;
+  if (!VENUE_EMAIL_RE.test(String(email).toLowerCase())) {
+    try {
+      await vpaInsert(env, 'vp_admin_audit', {
+        action: 'signup_flagged',
+        target: 'account:' + rowId,
+        detail: { reason: 'email_not_venue', email: email, venue: venues[0].name, is_group: isGroup, seats: totalSeats },
+      }, false);
+    } catch (e) { /* audit is best-effort, never block signup */ }
+    if (env.RESEND_API_KEY) {
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'VenuePlay <hello@send.venueplay.com.au>',
+            to: ['dean@venueplay.com.au'],
+            reply_to: email,
+            subject: 'Review needed: signup ' + venues[0].name + ' (' + email + ')',
+            html: '<h2>Signup flagged for review</h2>'
+              + '<p>This signup email does not look like a venue, so opt-in collection is <b>LOCKED</b> until you approve it. They can still run games (team names only), but collect no player data.</p>'
+              + '<p><b>Venue:</b> ' + esc(venues[0].name) + '</p>'
+              + '<p><b>Email:</b> ' + esc(email) + '</p>'
+              + '<p><b>Players / plan:</b> ' + totalSeats + ' players, ' + plan + '</p>'
+              + '<p>Approve them, or lock them out, in HQ under Flagged signups.</p>',
+          }),
+        });
+      } catch (e) { /* email is best-effort, never block signup */ }
+    }
+  }
+
   // 2) First charge fires after a rolling ONE-MONTH free trial that starts the day they sign
   // up. Every new venue gets a full free month from signup. Stripe needs a future trial_end.
   const nowTs = Math.floor(Date.now() / 1000);
