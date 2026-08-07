@@ -141,13 +141,19 @@ async function handleCheckout(request, env, json) {
     return json({ error: 'That is a huge group. Email us at hello@venueplay.com.au and we will set it up for you.' }, 400);
   }
 
-  // Founding is INVITE-ONLY via a state founding link (e.g. /qld), which sends a founding_code.
-  // A venue gets the founding rate ONLY if that code is currently active (env FOUNDING_CODES =
-  // comma-separated list, e.g. "QLD-AUG-2026,NSW-SEP-2026"). Cold visitors on the public site
-  // send no code and pay the standard rate. A group's code covers all of its venues.
+  // Founding is INVITE-ONLY via a state founding link (e.g. /qld), which sends a founding_code,
+  // AND state-gated by postcode: the venue's postcode must be in the code's state or they pay
+  // full price. Codes look like "QLD-AUG-2026"; the state prefix maps to the leading postcode
+  // digit (QLD=4, NSW/ACT=2, VIC=3, SA=5, WA=6, TAS=7, NT=0). env FOUNDING_CODES = the active
+  // codes (comma-separated). Cold visitors send no code and pay standard.
+  const STATE_DIGIT = { QLD: '4', NSW: '2', ACT: '2', VIC: '3', SA: '5', WA: '6', TAS: '7', NT: '0' };
   const activeCodes = (env.FOUNDING_CODES || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
   const foundingCode = (b.founding_code || '').trim();
-  const founding = foundingCode !== '' && activeCodes.indexOf(foundingCode) !== -1;
+  const codeActive = foundingCode !== '' && activeCodes.indexOf(foundingCode) !== -1;
+  const codeState = foundingCode.split('-')[0].toUpperCase();
+  const reqDigit = STATE_DIGIT[codeState] || '';
+  const foundingPostcode = ((b.postcode || (venues[0] && venues[0].postcode) || '') + '').trim();
+  const founding = codeActive && reqDigit !== '' && foundingPostcode.charAt(0) === reqDigit;
   const price = founding
     ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
     : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
