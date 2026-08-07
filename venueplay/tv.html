@@ -185,6 +185,13 @@
     </button>
   </div>
 
+  <!-- LIVE GAME SURFACE: trivia / musical / raffle / members render HERE, in place, instead of the
+       TV navigating to their page. A page navigation always drops browser fullscreen (and can't
+       silently re-enter), so venues running the TV in a browser lost fullscreen every game. Loading
+       the game into this iframe keeps the top page put, so fullscreen holds. Bingo still renders
+       natively above this. -->
+  <iframe id="gameFrame" title="Live game" allow="fullscreen; autoplay" style="display:none;position:fixed;inset:0;width:100%;height:100%;border:0;z-index:40;background:#000"></iframe>
+
   <!-- NO-VENUE PROMPT (only shows when this screen has no venue linked) -->
   <div class="pairpanel hidden" id="pairPanel">
     <canvas id="qrPair" style="display:none"></canvas>
@@ -627,8 +634,38 @@
     k=String(k||"the game").replace(/[-_]+/g," ");
     return k.replace(/\b\w/g,function(c){ return c.toUpperCase(); });
   }
+  // ---- live-game surface (iframe): games render in place so browser fullscreen survives a game start ----
+  function hideGameFrame(){
+    var f=document.getElementById("gameFrame"); if(!f) return;
+    f.style.display="none";
+    var cur=f.getAttribute("src"); if(cur && cur!=="about:blank"){ try{ f.src="about:blank"; }catch(e){} }
+  }
+  function enterEmbed(game){
+    tvMode="embed"; stopAds(); stopCelebrate();
+    hideBingoLayers();
+    $("tvCorner").style.display="";
+    $("adsRoot").classList.add("hidden");
+    $("pairPanel").classList.add("hidden");
+    try{ sessionStorage.setItem("vpTvHop", VENUE_SLUG); }catch(e){}   // shared with the iframe, so the game screen never bounces to /tv
+    var f=document.getElementById("gameFrame");
+    var url="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG);
+    if(f.getAttribute("src")!==url){ try{ f.src=url; }catch(e){} }
+    f.style.display="block";
+  }
+  // When the embedded game screen drops back to /tv (host went to bingo, or it idled out), the iframe
+  // navigates ITSELF to /tv. Catch that here and hand back to the native ads/bingo screen rather than
+  // nesting a whole /tv inside the frame. (If the host chose bingo, the main channel's mode:bingo then
+  // overrides ads a beat later.)
+  (function bindGameFrame(){
+    var f=document.getElementById("gameFrame"); if(!f) return;
+    f.addEventListener("load", function(){
+      if(f.style.display==="none") return;   // about:blank / hidden loads
+      var path=""; try{ path=f.contentWindow.location.pathname||""; }catch(e){ return; }
+      if(/(^|\/)tv(\.html)?$/i.test(path) && tvMode==="embed") enterAds();
+    });
+  })();
   function enterAds(){
-    tvMode="ads"; stopCelebrate();
+    tvMode="ads"; stopCelebrate(); hideGameFrame();
     hideBingoLayers();
     $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
     $("adsRoot").classList.remove("hidden");
@@ -637,14 +674,14 @@
     startAds();
   }
   function enterBingo(){
-    tvMode="bingo"; stopAds();
+    tvMode="bingo"; stopAds(); hideGameFrame();
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
     applyBingo();
   }
   function enterHolding(mode){
-    tvMode="holding"; stopAds(); stopCelebrate();
+    tvMode="holding"; stopAds(); stopCelebrate(); hideGameFrame();
     hideBingoLayers();
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
@@ -749,11 +786,14 @@
   // back to bingo without ever touching the link.
   (function unifiedRouter(){
     if(!VENUE_SLUG || !client) return;   // client is null if the Supabase lib failed to load; keep ads + slides alive
-    var GAMES=["trivia","musical","raffle","members"], switched=false;
-    function goTo(game){ if(switched) return; switched=true; try{ sessionStorage.setItem("vpTvHop", VENUE_SLUG); }catch(e){} window.location.href="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG); }
+    var GAMES=["trivia","musical","raffle","members"];
+    function onGameMode(game){
+      if(tvMode==="embed") return;   // a game is already on screen; the embedded screen handles hops between games itself
+      enterEmbed(game);              // load it IN PLACE (iframe) instead of navigating, so browser fullscreen is kept
+    }
     GAMES.forEach(function(game){
       var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
-      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(m && m.t==="mode") goTo(game); });
+      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(m && m.t==="mode") onGameMode(game); });
       c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
     });
   })();
