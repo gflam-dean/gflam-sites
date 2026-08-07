@@ -577,14 +577,17 @@
   });
 
   // Invoices + card: open the Stripe Customer Portal (self-serve invoices/PDFs + card update).
+  // Best path: /account/portal auto-signs the venue into THEIR OWN portal (no email step) - needs the
+  // billing worker deployed. Fallback: Stripe's hosted login link (venue enters their email), which
+  // works even before the worker redeploy. So this is live either way.
+  var PORTAL_LOGIN_LINK = "https://billing.stripe.com/p/login/cNi5kwdyD6Mq79f7537Zu00";
   var _pb = $("portalBtn");
   if (_pb) _pb.addEventListener("click", function(){
     _pb.disabled = true; _pb.textContent = "Opening…";
     api("/account/portal", {}).then(function(r){
-      if (r.error){ showMsg(r.error); _pb.disabled = false; _pb.textContent = "Open"; return; }
-      if (r.url){ window.location.href = r.url; }
-      else { _pb.disabled = false; _pb.textContent = "Open"; }
-    }).catch(function(){ showMsg("Could not open the billing portal."); _pb.disabled = false; _pb.textContent = "Open"; });
+      if (r && r.url){ window.location.href = r.url; return; }   // seamless: signed straight into this venue's portal
+      window.location.href = PORTAL_LOGIN_LINK;                  // fallback: hosted login (enter email)
+    }).catch(function(){ window.location.href = PORTAL_LOGIN_LINK; });
   });
 
   // ---- Hosts ----
