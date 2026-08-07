@@ -58,6 +58,14 @@
   .btn.win{background:var(--win);color:#04120a}
   .btn.win:hover{filter:brightness(1.08)}
   .btn.roll{background:var(--roll);color:#1a1000}
+  /* Theme picker (mirrors the trivia builder's library cards): searchable named playlists. */
+  .plgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+  .plcard{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:12px 13px;cursor:pointer;transition:.12s;text-align:left}
+  .plcard:hover{border-color:var(--pink)}
+  .plcard.on{border-color:var(--pink);background:rgba(255,31,142,.10);box-shadow:0 0 0 2px rgba(255,31,142,.15)}
+  .plcard .nm{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--text);line-height:1.2}
+  .plcard .ct{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .plnone{color:var(--faint);font-size:13px;padding:8px 2px}
   .btn.roll:hover{filter:brightness(1.08)}
   .btn.big{width:100%;padding:16px;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
   .btn.full{width:100%;text-align:center}
@@ -190,8 +198,10 @@
       <div class="panel">
         <div id="setupBlock">
           <div class="field">
-            <label>Playlist</label>
-            <select id="playlistSel"></select>
+            <label>Playlist / theme</label>
+            <input type="text" id="plSearch" placeholder="Search a theme&hellip; e.g. 80s, rock, aussie" autocomplete="off" style="margin-bottom:10px">
+            <div id="plGrid" class="plgrid"><div class="plnone">Loading songs&hellip;</div></div>
+            <select id="playlistSel" style="display:none"></select>
           </div>
           <div class="field">
             <label>Winning pattern</label>
@@ -893,17 +903,37 @@
   }
 
   // ---- playlist select ----
+  // The theme picker: searchable named playlists shown as cards (mirrors the trivia builder). The
+  // hidden <select id="playlistSel"> is kept in lockstep so every downstream read is unchanged.
+  var PL_OPTS=[];
   function fillPlaylists(){
     var s=$("playlistSel"); s.innerHTML="";
-    for(var i=0;i<LIB.playlists.length;i++){
-      var p=LIB.playlists[i];
-      var o=document.createElement("option"); o.value=p.id; o.textContent=p.name+" ("+(p.songIds||[]).length+" songs)";
-      s.appendChild(o);
+    PL_OPTS=[];
+    for(var i=0;i<LIB.playlists.length;i++){ var p=LIB.playlists[i]; PL_OPTS.push({id:p.id,name:p.name,count:(p.songIds||[]).length}); }
+    PL_OPTS.push({id:"surprise",name:"Surprise Mix",count:null,sub:"random each game"});
+    PL_OPTS.push({id:"all",name:"All songs",count:LIB.songs.length});
+    for(var j=0;j<PL_OPTS.length;j++){ var o=document.createElement("option"); o.value=PL_OPTS[j].id; o.textContent=PL_OPTS[j].name; s.appendChild(o); }
+    selectPlaylist(LIB.playlists.length ? LIB.playlists[0].id : "all");
+    renderPlCards($("plSearch") ? $("plSearch").value : "");
+  }
+  function selectPlaylist(id){
+    G.playlistId=id; $("playlistSel").value=id;
+    var cards=document.querySelectorAll("#plGrid .plcard");
+    for(var i=0;i<cards.length;i++){ cards[i].classList.toggle("on", cards[i].getAttribute("data-id")===id); }
+  }
+  function renderPlCards(q){
+    var g=$("plGrid"); if(!g) return; g.innerHTML=""; q=(q||"").toLowerCase().trim();
+    var shown=0;
+    for(var i=0;i<PL_OPTS.length;i++){ var o=PL_OPTS[i];
+      if(q && o.name.toLowerCase().indexOf(q)===-1) continue;
+      shown++;
+      var c=document.createElement("div"); c.className="plcard"+(o.id===G.playlistId?" on":""); c.setAttribute("data-id",o.id);
+      var nm=document.createElement("div"); nm.className="nm"; nm.textContent=o.name; c.appendChild(nm);
+      var ct=document.createElement("div"); ct.className="ct"; ct.textContent=(o.count!=null?(o.count+" songs"):(o.sub||"")); c.appendChild(ct);
+      c.addEventListener("click", function(){ selectPlaylist(this.getAttribute("data-id")); });
+      g.appendChild(c);
     }
-    var sm=document.createElement("option"); sm.value="surprise"; sm.textContent="Surprise Mix (random each game)"; s.appendChild(sm);
-    var all=document.createElement("option"); all.value="all"; all.textContent="All songs ("+LIB.songs.length+" songs)"; s.appendChild(all);
-    if(LIB.playlists.length){ G.playlistId=LIB.playlists[0].id; s.value=G.playlistId; }
-    else { G.playlistId="all"; s.value="all"; }
+    if(!shown){ var n=document.createElement("div"); n.className="plnone"; n.textContent='No theme matches "'+q+'".'; g.appendChild(n); }
   }
 
   // ---- events ----
@@ -920,6 +950,7 @@
   }
   $("connectBtn").addEventListener("click", tryConnect);
   $("playlistSel").addEventListener("change", function(){ G.playlistId=this.value; });
+  if($("plSearch")) $("plSearch").addEventListener("input", function(){ renderPlCards(this.value); });
   // auto-daub is a per-player choice (Easy mode on the phone), not a host setting
   $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
@@ -959,6 +990,7 @@
     plSel.disabled=false; fillPlaylists(); $("startBtn").disabled=false;
   }).catch(function(){
     libError=true; plSel.innerHTML='<option>Could not load songs</option>'; $("startBtn").disabled=true;
+    if($("plGrid")) $("plGrid").innerHTML='<div class="plnone">Could not load songs. Check you are online, then reload.</div>';
     var note=document.querySelector("#setupBlock .note");
     if(note){ note.textContent="Could not load the song library. Check you are online, then reload this page."; }
   });
