@@ -188,8 +188,14 @@
 
     <div class="label">Payment reminders</div>
     <div class="card toggle">
-      <div class="t">Email me before each payment<small>A heads-up a few days before your card is charged.</small></div>
+      <div class="t">Email me before each payment<small>A heads-up 5 days before your card is charged.</small></div>
       <label class="sw"><input type="checkbox" id="reminders"><span class="sl"></span></label>
+    </div>
+
+    <div class="label">Invoices &amp; card</div>
+    <div class="card toggle">
+      <div class="t">Your invoices &amp; payment card<small>View or download every invoice, or update the card we bill.</small></div>
+      <button class="addbtn" id="portalBtn" style="margin:0;flex:0 0 auto">Open</button>
     </div>
 
     <div class="label">Hosts</div>
@@ -568,6 +574,17 @@
       if (r.error){ showMsg(r.error); $("reminders").checked = !on; return; }
       showMsg(on ? "Reminders on." : "Reminders off.", true);
     });
+  });
+
+  // Invoices + card: open the Stripe Customer Portal (self-serve invoices/PDFs + card update).
+  var _pb = $("portalBtn");
+  if (_pb) _pb.addEventListener("click", function(){
+    _pb.disabled = true; _pb.textContent = "Opening…";
+    api("/account/portal", {}).then(function(r){
+      if (r.error){ showMsg(r.error); _pb.disabled = false; _pb.textContent = "Open"; return; }
+      if (r.url){ window.location.href = r.url; }
+      else { _pb.disabled = false; _pb.textContent = "Open"; }
+    }).catch(function(){ showMsg("Could not open the billing portal."); _pb.disabled = false; _pb.textContent = "Open"; });
   });
 
   // ---- Hosts ----

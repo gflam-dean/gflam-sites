@@ -58,6 +58,7 @@ export default {
       if (request.method === 'POST' && path === '/account/players'   && typeof vpbSetPlayers === 'function')     return await vpbSetPlayers(request, env, json);
       if (request.method === 'POST' && path === '/account/add-venue' && typeof vpbAddVenue === 'function')       return await vpbAddVenue(request, env, json);
       if (request.method === 'POST' && path === '/account/reminders' && typeof vpbSetReminders === 'function')   return await vpbSetReminders(request, env, json);
+      if (request.method === 'POST' && path === '/account/portal'    && typeof vpbBillingPortal === 'function')  return await vpbBillingPortal(request, env, json);
       if (request.method === 'POST' && path === '/account/cancel-venue' && typeof vpbCancelVenue === 'function')  return await vpbCancelVenue(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-get'  && typeof vpbScreenGet === 'function')    return await vpbScreenGet(request, env, json);
       if (request.method === 'POST' && path === '/account/screen-save' && typeof vpbScreenSave === 'function')   return await vpbScreenSave(request, env, json);
@@ -1706,6 +1707,23 @@ async function vpbStripePost(env, path, params) {
     body: form.toString(),
   });
   return await res.json();
+}
+
+/* POST /account/portal : open the Stripe Customer Portal so a venue can see + download every past
+   invoice (Stripe-hosted PDFs) and update their card. Requires the Customer Portal to be enabled
+   once in the Stripe dashboard (Settings -> Billing -> Customer portal). */
+async function vpbBillingPortal(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status || 403);
+  const customer = o.account && o.account.stripe_customer_id;
+  if (!customer) return json({ error: 'Your billing account links up once your first payment goes through. Invoices will appear here after that.' }, 400);
+  const origin = request.headers.get('Origin') || 'https://venueplay.com.au';
+  const sess = await vpbStripePost(env, 'billing_portal/sessions', {
+    customer: customer,
+    return_url: origin + '/app/billing.html',
+  });
+  if (!sess || !sess.url) return json({ error: (sess && sess.error && sess.error.message) || 'Could not open the billing portal. Please try again.' }, 502);
+  return json({ url: sess.url });
 }
 
 // Per-player monthly rate from the subscription's price + the plan.
