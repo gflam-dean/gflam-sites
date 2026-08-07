@@ -141,11 +141,13 @@ async function handleCheckout(request, env, json) {
     return json({ error: 'That is a huge group. Email us at hello@venueplay.com.au and we will set it up for you.' }, 400);
   }
 
-  // Founding closes after the first 100 committed venues. A group counts as ALL
-  // of its venues, so a group only gets founding if the whole group fits inside
-  // the first 100. Venue 101+ (or a group that would straddle it) pays standard.
-  const spotsTaken = await sbSpotsTaken(env);
-  const founding = (spotsTaken + venueCount) <= 100;
+  // Founding is INVITE-ONLY via a state founding link (e.g. /qld), which sends a founding_code.
+  // A venue gets the founding rate ONLY if that code is currently active (env FOUNDING_CODES =
+  // comma-separated list, e.g. "QLD-AUG-2026,NSW-SEP-2026"). Cold visitors on the public site
+  // send no code and pay the standard rate. A group's code covers all of its venues.
+  const activeCodes = (env.FOUNDING_CODES || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  const foundingCode = (b.founding_code || '').trim();
+  const founding = foundingCode !== '' && activeCodes.indexOf(foundingCode) !== -1;
   const price = founding
     ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
     : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
@@ -213,6 +215,7 @@ async function handleCheckout(request, env, json) {
   form.set('subscription_data[metadata][venue]', label);
   form.set('subscription_data[metadata][row_id]', rowId || '');
   form.set('subscription_data[metadata][tier]', founding ? 'founding' : 'standard');
+  form.set('subscription_data[metadata][founding_code]', founding ? foundingCode : '');
   form.set('subscription_data[metadata][is_group]', isGroup ? '1' : '0');
   form.set('subscription_data[metadata][venue_count]', String(venueCount));
   form.set('subscription_data[metadata][returning]', returning ? '1' : '0');
