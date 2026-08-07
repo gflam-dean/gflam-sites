@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VenuePlay: Run a packed Tuesday. Every Tuesday.</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One pub, one platform, every format on one screen. Players join from their phone, no app, no login. Founding venues lock in $2.50 per player, for life.">
+
+<!-- Open Graph -->
+<meta property="og:title" content="VenuePlay: Run a packed Tuesday. Every Tuesday.">
+<meta property="og:description" content="One pub, one platform. Every format, one screen. Founding venues lock in $2.50 per player, for life.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.venueplay.com.au">
+<meta property="og:image" content="https://www.venueplay.com.au/logos/venueplay_appicon_rebuilt.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.venueplay.com.au/logos/venueplay_appicon_rebuilt.png">
+
+<!-- Favicon: neon play triangle on stage black -->
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="apple-touch-icon" href="/logos/venueplay_appicon_rebuilt.png">
+
+<!-- ============================================================
+     TRACKING: VenuePlay has NO GA4 / Meta Pixel of its own yet.
+     Paste the VenuePlay snippets here once created.
+     Do NOT paste another Gflam brand's IDs (touring / vending) here.
+     ============================================================ -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#0A0A0B;
+    --ink-2:#121214;
+    --ink-3:#17171B;
+    --pink:#FF1F8E;
+    --pink-deep:#C70F69;
+    --white:#FFFFFF;
+    --muted:#9A9AA4;
+    --muted-2:#6E6E78;
+    --line:rgba(255,255,255,0.08);
+    --line-2:rgba(255,255,255,0.14);
+    --glow:rgba(255,31,142,0.55);
+    --maxw:1120px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:clip}
+
+  body{
+    background:var(--ink);
+    color:var(--white);
+    font-family:'Manrope',system-ui,sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  ::selection{background:var(--pink);color:#fff}
+
+  a{color:inherit;text-decoration:none}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:saturate(140%) blur(14px);
+    background:rgba(10,10,11,0.72);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+
+  /* logo lockup: glowing play triangle | divider | wordmark */
+  .logo{display:flex;align-items:center;gap:13px}
+  .logo svg{display:block;filter:drop-shadow(0 0 9px var(--glow))}
+  .logo .div{width:1px;height:24px;background:var(--line-2)}
+  .logo .word{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-weight:800;font-size:22px;letter-spacing:-0.03em;
+    color:#fff;line-height:1;
+  }
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:15px;
+    border:0;cursor:pointer;border-radius:999px;
+    padding:13px 24px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
+  }
+  .btn-primary{background:var(--pink);color:#0A0A0B;box-shadow:0 0 0 0 var(--glow)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 30px -8px var(--glow)}
+  .btn-ghost{background:transparent;color:#fff;border:1px solid var(--line-2)}
+  .btn-ghost:hover{border-color:var(--pink);color:var(--pink)}
+  .nav .btn{padding:10px 20px;font-size:14px}
+
+  .nav-links{display:flex;align-items:center;gap:28px;margin-left:auto;margin-right:24px}
+  .nav-links a{font-size:14.5px;font-weight:600;color:var(--muted);transition:color .15s ease}
+  .nav-links a:hover{color:#fff}
+
+  /* plan toggle + seat estimate (founding form) */
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:5px}
+  .seg button{border:0;cursor:pointer;border-radius:8px;padding:12px 10px;background:transparent;color:var(--muted);
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:14.5px;transition:background .15s ease,color .15s ease;text-align:center;line-height:1.2}
+  .seg button small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:11px;margin-top:3px;opacity:.85}
+  .seg button.on{background:var(--pink);color:#0A0A0B}
+  .estimate{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-top:14px;text-align:center}
+  .estimate b{color:#fff;font-weight:700}
+  .overage-note{font-size:13px;color:var(--muted-2);text-align:center;margin-top:10px;max-width:46ch;margin-left:auto;margin-right:auto;line-height:1.5}
+  .field textarea{
+    background:var(--ink);border:1px solid var(--line-2);border-radius:11px;
+    color:#fff;font-family:'Manrope',sans-serif;font-size:16px;padding:14px 15px;width:100%;min-height:120px;resize:vertical;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .field textarea::placeholder{color:var(--muted-2)}
+  .field textarea:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  .form-err{color:var(--pink);font-size:13px;text-align:center;margin-top:12px;min-height:0;display:none}
+  .form-err.show{display:block}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;padding:96px 0 88px;overflow:hidden}
+  .hero::before{
+    content:"";position:absolute;inset:0;z-index:0;
+    background:
+      radial-gradient(900px 520px at 50% -10%, rgba(255,31,142,0.18), transparent 60%),
+      radial-gradient(600px 400px at 85% 30%, rgba(255,31,142,0.07), transparent 60%);
+    pointer-events:none;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;z-index:0;opacity:.4;
+    background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px);
+    background-size:100% 38px;
+    mask-image:linear-gradient(to bottom,#000,transparent 70%);
+    -webkit-mask-image:linear-gradient(to bottom,#000,transparent 70%);
+    pointer-events:none;
+  }
+  .hero .wrap{position:relative;z-index:1}
+
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--pink);
+    border:1px solid var(--line-2);border-radius:999px;padding:7px 15px;margin-bottom:26px;
+  }
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink);animation:pulse 1.8s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+  h1{
+    font-family:'Anton',sans-serif;font-weight:400;
+    text-transform:uppercase;
+    font-size:clamp(46px,8.5vw,104px);
+    line-height:0.92;letter-spacing:0.005em;
+    max-width:14ch;
+  }
+  h1 .accent{color:var(--pink)}
+
+  .lede{
+    margin-top:26px;max-width:56ch;
+    font-size:clamp(17px,2.1vw,20px);color:#D8D8DD;font-weight:500;
+  }
+  .lede b{color:#fff;font-weight:700}
+
+  .hero-cta{margin-top:36px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .hero-note{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);margin-top:18px}
+
+  /* ---------- SECTION SCAFFOLD ---------- */
+  section{position:relative}
+  .sec{padding:84px 0}
+  .sec-head{margin-bottom:46px}
+  .label{
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--pink);font-weight:500;
+    display:flex;align-items:center;gap:12px;margin-bottom:18px;
+  }
+  .label::before{content:"";width:26px;height:1px;background:var(--pink)}
+  .sec-title{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;
+    font-size:clamp(30px,4.4vw,52px);line-height:1;letter-spacing:.01em}
+  .sec-sub{margin-top:18px;max-width:54ch;color:var(--muted);font-size:17px}
+
+  /* ---------- GAME MODES ---------- */
+  .modes{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:16px}
+  .modes .mode{flex:1 1 280px;max-width:340px}
+  .mode{
+    background:var(--ink-2);border:1px solid var(--line);border-radius:16px;
+    padding:26px 22px 24px;transition:border-color .2s ease,transform .2s ease,background .2s ease;
+    position:relative;overflow:hidden;
+  }
+  .mode:hover{border-color:var(--line-2);transform:translateY(-3px);background:var(--ink-3)}
+  .mode .ico{
+    width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.3);margin-bottom:20px;
+  }
+  .mode .ico svg{display:block}
+  .mode h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.01em;margin-bottom:8px}
+  .mode p{color:var(--muted);font-size:14.5px;line-height:1.5}
+
+  /* ---------- FOUNDING OFFER ---------- */
+  .offer{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line);border-radius:22px;
+    padding:clamp(28px,4vw,52px);position:relative;overflow:hidden;
+  }
+  .offer::before{
+    content:"";position:absolute;top:-40%;right:-10%;width:480px;height:480px;
+    background:radial-gradient(circle,rgba(255,31,142,0.16),transparent 65%);pointer-events:none;
+  }
+  .offer-grid{position:relative;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center}
+
+  .counter{font-family:'JetBrains Mono',monospace;margin-top:8px}
+  .counter .big{font-size:clamp(40px,6vw,68px);font-weight:700;color:#fff;line-height:1;letter-spacing:-.02em}
+  .counter .big .of{color:var(--pink)}
+  .counter .sub{color:var(--muted);font-size:13px;letter-spacing:.06em;margin-top:12px;text-transform:uppercase}
+  .bar{height:8px;border-radius:999px;background:var(--ink-3);overflow:hidden;margin-top:22px;border:1px solid var(--line)}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink-deep),var(--pink));box-shadow:0 0 14px var(--glow);transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+  .price-card{background:var(--ink);border:1px solid var(--line-2);border-radius:16px;padding:26px}
+  .price-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding-bottom:16px;margin-bottom:2px;border-bottom:1px solid var(--line)}
+  .price-row{display:flex;align-items:baseline;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line)}
+  .price-row:last-child{border-bottom:0;padding-bottom:0}
+  .price-row:first-child{padding-top:0}
+  .price-row .pl{font-size:14.5px;color:var(--muted)}
+  .price-row .pl b{display:block;color:#fff;font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .price-row .pv{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px}
+  .price-row.list .pv{color:var(--muted-2);text-decoration:line-through;text-decoration-color:var(--pink)}
+  .price-row.found .pv{color:var(--pink)}
+  .price-foot{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);margin-top:20px;line-height:1.6}
+
+  /* ---------- INCLUDED ---------- */
+  .incl{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 40px;max-width:860px;margin-left:auto;margin-right:auto}
+  .incl li{list-style:none;display:flex;gap:14px;align-items:flex-start;padding:6px 0}
+  .incl .tick{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.35);margin-top:2px}
+  .incl b{font-weight:700;color:#fff}
+  .incl span{color:var(--muted);font-size:14.5px;display:block}
+  .incl strong{display:block;font-size:15.5px;color:#fff;font-weight:700;margin-bottom:1px}
+
+  /* ---------- SIGNUP ---------- */
+  #claim{padding-top:8px}
+  .form-shell{background:var(--ink-2);border:1px solid var(--line);border-radius:22px;
+    padding:clamp(28px,4vw,48px);max-width:680px;margin:0 auto;position:relative;overflow:hidden}
+  .form-shell::before{content:"";position:absolute;top:-30%;left:-10%;width:360px;height:360px;
+    background:radial-gradient(circle,rgba(255,31,142,0.13),transparent 65%);pointer-events:none}
+  .form-shell .inner{position:relative}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:26px}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field.full{grid-column:1 / -1}
+  .field label{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted)}
+  .field input{
+    background:var(--ink);border:1px solid var(--line-2);border-radius:11px;
+    color:#fff;font-family:'Manrope',sans-serif;font-size:16px;padding:14px 15px;width:100%;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  .field input::placeholder{color:var(--muted-2)}
+  .field input:focus{outline:none;border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,0.18)}
+  /* Chrome/Safari autofill paints its own pale background over our dark fields, which hides the
+     white text so filled fields look blank. Force our dark field + white text when autofilled. */
+  .field input:-webkit-autofill,
+  .field input:-webkit-autofill:hover,
+  .field input:-webkit-autofill:focus,
+  .field input:-webkit-autofill:active,
+  .field textarea:-webkit-autofill,
+  .field textarea:-webkit-autofill:hover,
+  .field textarea:-webkit-autofill:focus{
+    -webkit-text-fill-color:#fff;
+    -webkit-box-shadow:0 0 0 1000px var(--ink) inset;
+    box-shadow:0 0 0 1000px var(--ink) inset;
+    caret-color:#fff;
+    border:1px solid var(--line-2);
+    transition:background-color 9999s ease-in-out 0s;
+  }
+  #vp-submit{width:100%;margin-top:20px;padding:16px;font-size:16px}
+  #vp-submit:disabled{opacity:.6;cursor:default;transform:none}
+  .form-fine{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);text-align:center;margin-top:16px}
+  .consent{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+  .consent .ck{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--muted);line-height:1.45;cursor:pointer}
+  .consent .ck input{margin-top:1px;accent-color:var(--pink);width:16px;height:16px;flex:0 0 auto;cursor:pointer}
+  .consent .ck a{color:var(--pink)}
+
+  .success{display:none;text-align:center;padding:16px 0}
+  .success.show{display:block}
+  .success .ring{width:64px;height:64px;border-radius:50%;margin:0 auto 22px;display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.4);box-shadow:0 0 26px -4px var(--glow)}
+  .success h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;font-weight:400;letter-spacing:.01em}
+  .success p{color:var(--muted);margin-top:12px;max-width:42ch;margin-left:auto;margin-right:auto}
+
+  /* ---------- FAQ ---------- */
+  .faq{max-width:780px;margin:0 auto}
+  .q{border-bottom:1px solid var(--line)}
+  .q summary{
+    cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:24px;
+    padding:22px 4px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.01em;
+  }
+  .q summary::-webkit-details-marker{display:none}
+  .q summary .pm{flex:0 0 auto;width:22px;height:22px;position:relative;transition:transform .2s ease}
+  .q summary .pm::before,.q summary .pm::after{content:"";position:absolute;background:var(--pink);border-radius:2px}
+  .q summary .pm::before{left:0;right:0;top:10px;height:2px}
+  .q summary .pm::after{top:0;bottom:0;left:10px;width:2px;transition:opacity .2s ease}
+  .q[open] summary .pm::after{opacity:0}
+  .q .a{padding:0 4px 24px;color:var(--muted);font-size:15.5px;max-width:64ch}
+
+  /* ---------- FOOTER ---------- */
+  footer{border-top:1px solid var(--line);padding:54px 0 64px;margin-top:40px}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap}
+  .foot-brand{display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center}
+  .foot-brand .div{display:none}
+  .foot-brand svg{display:block;filter:drop-shadow(0 0 7px var(--glow))}
+  .foot-brand .div{width:1px;height:20px;background:var(--line-2)}
+  .foot-brand .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em;color:#fff;line-height:1}
+  .foot-meta{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--muted);line-height:1.9;text-align:right}
+  .foot-meta a:hover{color:var(--pink)}
+  .powered{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.08em;text-transform:uppercase}
+  .powered b{color:var(--muted);font-weight:500}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:900px){
+    .offer-grid{grid-template-columns:1fr;gap:34px}
+    .incl{grid-template-columns:1fr;gap:6px}
+  }
+  @media(max-width:760px){
+    .nav-links{display:none}
+  }
+  @media(max-width:560px){
+    .sec{padding:64px 0}
+    .hero{padding:64px 0 56px}
+    .form-grid{grid-template-columns:1fr}
+    .nav .ghost-cta{display:none}
+    .foot{flex-direction:column;align-items:flex-start}
+    .foot-meta{text-align:left}
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  }
+
+  /* Number-of-venues field hint + group-enquiry note */
+  .field-hint{display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);letter-spacing:.01em}
+  /* Group signup: repeatable venue rows */
+  #vp-venue-list{display:flex;flex-direction:column;gap:9px}
+  .venue-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+  .venue-row .v-name{flex:2 1 160px;min-width:120px}
+  .venue-row .v-postcode{flex:1 1 90px;min-width:80px}
+  .venue-row .v-seats{flex:1 1 120px;min-width:100px}
+  .venue-row .v-remove{flex:0 0 auto;width:46px;border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:11px;font-size:22px;line-height:1;cursor:pointer;transition:border-color .15s ease,color .15s ease}
+  .venue-row .v-remove:hover{border-color:var(--pink);color:var(--pink)}
+  .add-venue{margin:10px 0 2px;background:transparent;border:1px dashed var(--line-2);color:#fff;padding:11px 16px;border-radius:11px;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:border-color .15s ease}
+  .add-venue:hover{border-color:var(--pink)}
+  .group-note{margin:2px 0 16px;padding:13px 15px;border:1px solid rgba(255,31,142,.3);background:rgba(255,31,142,.07);border-radius:12px;font-size:13.5px;line-height:1.55;color:#e8e8ec}
+</style>
+<style>
+  /* ---------- shared ---------- */
+  .vps-balance{text-wrap:balance}
+
+  /* ============================================================
+     1. HOW A NIGHT RUNS  (#how)
+     ============================================================ */
+  .vps-steps{
+    display:grid;
+    grid-template-columns:repeat(3,1fr); /* explicit: never auto-fill/minmax here */
+    gap:16px;
+  }
+  .vps-step{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:28px 24px 26px;
+    position:relative;
+    overflow:hidden;
+    transition:border-color .2s ease,transform .2s ease,background .2s ease;
+  }
+  .vps-step:hover{border-color:var(--line-2);background:var(--ink-3);transform:translateY(-3px)}
+  .vps-step-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;font-weight:700;letter-spacing:.16em;
+    color:var(--pink);
+    display:flex;align-items:center;gap:12px;
+    margin-bottom:18px;
+  }
+  .vps-step-num::after{content:"";flex:1;height:1px;background:var(--line)}
+  .vps-step h3{
+    font-family:'Hanken Grotesk',sans-serif;
+    font-weight:800;font-size:21px;letter-spacing:-.01em;
+    margin-bottom:10px;text-wrap:balance;
+  }
+  .vps-step p{color:var(--muted);font-size:15px;line-height:1.58}
+  .vps-step p b{color:#fff;font-weight:700}
+
+  /* ============================================================
+     2. SEE A NIGHT ON VENUEPLAY  (#preview)
+     ============================================================ */
+  .vps-stage{display:flex;flex-direction:column;gap:34px}
+  .vps-stage-row{
+    display:grid;
+    grid-template-columns:300px minmax(0,1fr);
+    gap:28px;
+    align-items:start;
+  }
+  .vps-device-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted-2);margin-bottom:12px;text-align:center;
+  }
+  .vps-caption{
+    color:var(--muted);font-size:14px;line-height:1.55;
+    text-align:center;margin-top:14px;
+    max-width:52ch;margin-left:auto;margin-right:auto;
+  }
+  .vps-caption b{color:#fff;font-weight:700}
+  .vps-concept-note{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;letter-spacing:.04em;color:var(--muted-2);
+    text-align:center;margin-top:38px;
+  }
+
+  /* ---- TV ---- */
+  .vps-tv{
+    aspect-ratio:16/9;border-radius:14px;
+    background:linear-gradient(160deg,#101013,#0b0b0d);
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506,0 0 60px -24px var(--glow);
+    padding:clamp(12px,2.4vw,22px);
+    display:flex;flex-direction:column;gap:clamp(8px,1.6vw,14px);
+    position:relative;overflow:hidden;
+  }
+  .vps-tv::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.05),transparent 55%);
+    pointer-events:none;
+  }
+  .vps-tv-top{display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:1;flex-wrap:wrap}
+  .vps-tv-venue{font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.4vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .vps-pill{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);
+    letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--line-2);
+    color:var(--muted);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  }
+  .vps-pill.vps-live{color:var(--pink);border-color:rgba(255,31,142,.45)}
+  .vps-pill.vps-prize{color:#fff;background:rgba(255,31,142,.12);border-color:rgba(255,31,142,.4)}
+  .vps-dot{width:7px;height:7px;border-radius:50%;background:var(--pink);box-shadow:0 0 9px var(--pink)}
+  @media(prefers-reduced-motion:no-preference){
+    .vps-dot{animation:vps-pulse 2.4s ease-in-out infinite}
+    .vps-tv.vps-inview .vps-ball{animation:vps-ballreveal 1.9s cubic-bezier(.16,1,.3,1) both,vps-ballglow 2.8s ease-in-out 1.9s infinite}
+  }
+  @keyframes vps-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes vps-ballreveal{
+    0%{transform:scale(.35);opacity:0}
+    32%{transform:scale(2.25);opacity:1}
+    58%{transform:scale(2.25);opacity:1}
+    100%{transform:scale(1);opacity:1}
+  }
+  @keyframes vps-ballglow{
+    0%,100%{box-shadow:0 0 40px -6px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
+    50%{box-shadow:0 0 60px 0 var(--glow),inset 0 -8px 22px rgba(0,0,0,.32)}
+  }
+  .vps-tv-body{display:grid;grid-template-columns:auto 1fr;gap:clamp(12px,2.6vw,24px);flex:1;z-index:1;min-height:0;align-items:center}
+  .vps-ball-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .vps-ball-idx{font-family:'JetBrains Mono',monospace;font-size:clamp(8.5px,1.2vw,11px);letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-ball{
+    width:clamp(78px,13vw,148px);height:clamp(78px,13vw,148px);border-radius:50%;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 45%,var(--pink-deep));
+    box-shadow:0 0 46px -4px var(--glow),inset 0 -8px 22px rgba(0,0,0,.32);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;
+  }
+  .vps-ball .vps-nm{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(32px,6vw,62px);line-height:.9;letter-spacing:.01em}
+  .vps-ball-chip{
+    font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(11px,1.5vw,15px);
+    letter-spacing:.04em;color:#fff;line-height:1;
+    padding:5px 11px;border-radius:999px;display:inline-flex;align-items:center;
+    background:radial-gradient(circle at 34% 30%,#ff5cae,var(--pink) 55%,var(--pink-deep));
+    box-shadow:0 0 16px -5px var(--glow),inset 0 -3px 8px rgba(0,0,0,.3);white-space:nowrap;
+  }
+  .vps-ball-prev{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:6px}
+  .vps-tv-recent{display:flex;align-items:center;gap:7px;z-index:1;flex-wrap:wrap}
+  .vps-tv-recent .vps-ball-chip{font-size:clamp(9px,1.2vw,12px);padding:3px 9px}
+  .vps-chip-lbl{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10px);letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-cell{
+    font-family:'JetBrains Mono',monospace;font-size:clamp(6.5px,1vw,10.5px);
+    text-align:center;padding:2px 0;border-radius:4px;
+    color:var(--muted-2);background:rgba(255,255,255,.03);
+  }
+  .vps-cell.vps-on{
+    color:#fff;background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    box-shadow:0 0 10px -2px var(--glow);font-weight:600;
+  }
+  .vps-tv-foot{
+    display:flex;align-items:center;gap:clamp(10px,2vw,16px);
+    background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:11px;padding:clamp(8px,1.6vw,12px) clamp(10px,2vw,16px);z-index:1;
+  }
+  .vps-qr{width:clamp(40px,6vw,56px);height:clamp(40px,6vw,56px);border-radius:8px;background:#fff;padding:4px;flex:none}
+  .vps-qr canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+  .vps-join{flex:1;min-width:0}
+  .vps-join .vps-l{font-family:'JetBrains Mono',monospace;font-size:clamp(8px,1.1vw,10.5px);letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-join .vps-u{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(11px,1.6vw,15px);margin-top:2px}
+  .vps-code{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(16px,3vw,28px);letter-spacing:.14em;color:var(--pink);text-shadow:0 0 18px var(--glow)}
+
+  /* ---- Phone ---- */
+  .vps-phone{
+    width:270px;max-width:100%;margin:0 auto;aspect-ratio:9/19;border-radius:34px;background:#0d0d10;
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 0 8px #050506,0 0 50px -24px var(--glow);
+    padding:14px 13px;display:flex;flex-direction:column;gap:10px;position:relative;
+  }
+  .vps-notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:92px;height:21px;background:#050506;border-radius:0 0 13px 13px;z-index:3}
+  .vps-ph-head{display:flex;align-items:center;justify-content:space-between;padding-top:15px}
+  .vps-ph-head .vps-v{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .vps-mini-mark{display:flex;align-items:center;gap:6px}
+  .vps-mini-mark svg{display:block;filter:drop-shadow(0 0 6px var(--glow))}
+  .vps-mini-mark .vps-w{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:13px;letter-spacing:-.02em}
+  .vps-ticker{
+    background:rgba(255,31,142,.1);border:1px solid rgba(255,31,142,.32);border-radius:9px;
+    padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#fff;
+    display:flex;align-items:center;gap:6px;
+  }
+  .vps-ticker b{color:var(--pink)}
+  .vps-pcell{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;border-radius:7px;
+    background:rgba(255,255,255,.04);color:#e8e8ec;position:relative;
+  }
+  .vps-pcell.vps-marked{color:#fff;font-weight:700}
+  .vps-pcell.vps-marked::after{
+    content:"";position:absolute;inset:4px;border-radius:50%;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    box-shadow:0 0 10px -1px var(--glow);z-index:0;
+  }
+  .vps-pcell.vps-marked span{position:relative;z-index:1}
+  .vps-draw-chip{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;padding:2px}
+  .vps-draw-chip b{color:#fff}
+  .vps-bingo-btn{
+    margin-top:auto;background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    color:var(--ink);font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    letter-spacing:.06em;font-size:20px;border:0;border-radius:13px;padding:14px;
+    box-shadow:0 0 30px -6px var(--glow);cursor:default;
+  }
+
+  /* ---- Host console ---- */
+  .vps-console{
+    border-radius:14px;background:linear-gradient(160deg,#101013,#0b0b0d);
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506;
+    padding:18px;display:flex;flex-direction:column;gap:14px;
+  }
+  .vps-con-top{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:13px}
+  .vps-con-top .vps-g{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:16px;letter-spacing:.02em}
+  .vps-con-top .vps-g small{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted-2);text-transform:none;margin-top:4px}
+  .vps-con-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+  .vps-next-ball{
+    display:block;width:100%;
+    background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+    border:0;border-radius:12px;color:var(--ink);padding:22px 14px;cursor:default;
+    text-align:center;box-shadow:0 0 34px -8px var(--glow);
+  }
+  .vps-next-ball .vps-k{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:21px;letter-spacing:.04em}
+  .vps-next-ball .vps-s{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;margin-top:5px;opacity:.85}
+  .vps-recent{margin-top:12px}
+  .vps-recent .vps-rl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin-bottom:7px}
+  .vps-recent .vps-balls{display:flex;gap:6px;flex-wrap:wrap}
+  .vps-rb{
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+    padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.05);
+    border:1px solid var(--line);color:#e8e8ec;
+  }
+  .vps-rb.vps-cur{background:rgba(255,31,142,.16);border-color:rgba(255,31,142,.45);color:#fff}
+  .vps-claim{background:var(--ink-3);border:1px solid rgba(47,210,122,.32);border-radius:12px;padding:14px}
+  .vps-claim .vps-cl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#2FD27A;margin-bottom:8px}
+  .vps-claim .vps-who{font-family:'Anton',sans-serif;font-weight:400;font-size:16px;text-transform:uppercase;letter-spacing:.02em}
+  .vps-claim .vps-verdict{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#2FD27A;margin-top:6px;display:flex;align-items:center;gap:6px}
+  .vps-claim .vps-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+  .vps-cbtn{font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;border:0;border-radius:9px;padding:10px 6px;cursor:default}
+  .vps-cbtn.vps-ok{background:#2FD27A;color:#04160c}
+  .vps-cbtn.vps-no{background:transparent;border:1px solid #FF5A6E;color:#FF5A6E}
+  .vps-con-foot{display:flex;gap:9px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:13px}
+  .vps-ghost{font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:9px;border:1px solid var(--line-2);color:var(--muted);background:transparent;cursor:default}
+  .vps-con-foot .vps-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+  .vps-con-foot .vps-count b{color:#fff}
+
+
+  /* ---- Admin / finance ---- */
+  .vps-browser{
+    border-radius:13px;background:var(--ink-2);border:1px solid var(--line-2);
+    box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 7px #050506;overflow:hidden;
+  }
+  .vps-bbar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0d0d10;border-bottom:1px solid var(--line)}
+  .vps-bbar i{width:10px;height:10px;border-radius:50%;background:var(--line-2);display:block}
+  .vps-bbar .vps-url{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted-2);background:rgba(255,255,255,.04);border-radius:6px;padding:4px 12px}
+  .vps-admin{padding:18px}
+  .vps-admin-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+  .vps-admin-h .vps-t{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:15px;letter-spacing:.03em}
+  .vps-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
+  .vps-tile{background:var(--ink-3);border:1px solid var(--line);border-radius:11px;padding:13px}
+  .vps-tile .vps-l{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2)}
+  .vps-tile .vps-n{font-family:'Anton',sans-serif;font-weight:400;font-size:24px;margin-top:7px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  .vps-tile .vps-n small{font-size:13px;color:var(--muted-2)}
+  .vps-tile .vps-n.vps-pink{color:var(--pink)}
+  .vps-inv{background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:15px}
+  .vps-inv-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .vps-inv-h .vps-t{font-family:'Manrope',sans-serif;font-weight:700;font-size:14px}
+  .vps-inv-h .vps-t small{display:block;font-family:'JetBrains Mono',monospace;font-weight:400;font-size:10.5px;color:var(--muted-2);margin-top:3px}
+  .vps-pend{
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:#FFB13D;border:1px solid rgba(255,177,61,.4);background:rgba(255,177,61,.1);
+    border-radius:999px;padding:4px 10px;white-space:nowrap;
+  }
+  .vps-tbl-scroll{overflow-x:auto}
+  .vps-tbl{width:100%;min-width:480px;border-collapse:collapse;font-size:12.5px}
+  .vps-tbl th{
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted-2);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:400;
+  }
+  .vps-tbl th:first-child{text-align:left}
+  .vps-tbl td{
+    font-family:'JetBrains Mono',monospace;padding:8px;border-bottom:1px solid var(--line);
+    text-align:right;font-variant-numeric:tabular-nums;color:#dcdce2;white-space:nowrap;
+  }
+  .vps-tbl td:first-child{font-family:'Manrope',sans-serif;text-align:left;color:#fff}
+  .vps-tbl td.vps-disc{color:#2FD27A}
+  .vps-tbl td.vps-add{color:var(--pink)}
+  .vps-tbl tr.vps-tot td{border-bottom:0;font-weight:700;color:#fff;padding-top:11px}
+  .vps-tbl tr.vps-tot td:first-child{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .vps-inv-act{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+  .vps-inv-act .vps-ok{background:#2FD27A;color:#04160c;font-family:'Manrope',sans-serif;font-weight:700;font-size:12.5px;border:0;border-radius:9px;padding:9px 16px;cursor:default}
+  .vps-inv-act .vps-ed{background:transparent;border:1px solid var(--line-2);color:var(--muted);font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;border-radius:9px;padding:9px 16px;cursor:default}
+
+  /* ============================================================
+     3. WHY WE BUILT IT  (#why)
+     ============================================================ */
+  .vps-note{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line);border-radius:22px;
+    padding:clamp(30px,4.5vw,54px);
+    max-width:760px;margin:0 auto;
+    position:relative;overflow:hidden;
+  }
+  .vps-note::before{
+    content:"";position:absolute;top:-35%;right:-12%;width:420px;height:420px;
+    background:radial-gradient(circle,rgba(255,31,142,0.13),transparent 65%);
+    pointer-events:none;
+  }
+  .vps-note-inner{position:relative}
+  .vps-note p{
+    color:#D8D8DD;font-size:clamp(17px,2vw,19px);line-height:1.7;font-weight:500;
+  }
+  .vps-note p b{color:#fff;font-weight:700}
+  .vps-note-sign{
+    margin-top:26px;display:flex;align-items:center;gap:14px;
+    border-top:1px solid var(--line);padding-top:24px;
+  }
+  .vps-note-mark{
+    width:44px;height:44px;border-radius:50%;flex:none;
+    display:grid;place-items:center;
+    background:rgba(255,31,142,0.12);border:1px solid rgba(255,31,142,0.35);
+    box-shadow:0 0 22px -6px var(--glow);
+  }
+  .vps-note-sign .vps-sig-name{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.01em}
+  .vps-note-sign .vps-sig-role{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-top:3px}
+
+  /* ============================================================
+     4. ONE SCREEN, LESS CLUTTER  (#replaces)
+     ============================================================ */
+  .vps-strip{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line);border-radius:22px;
+    padding:clamp(28px,4vw,50px);
+    position:relative;overflow:hidden;
+  }
+  .vps-strip::before{
+    content:"";position:absolute;top:-45%;left:-8%;width:460px;height:460px;
+    background:radial-gradient(circle,rgba(255,31,142,0.12),transparent 65%);
+    pointer-events:none;
+  }
+  .vps-strip-inner{position:relative}
+  .vps-strip-title{
+    font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:clamp(26px,3.6vw,42px);line-height:1.05;letter-spacing:.01em;
+    max-width:22ch;text-wrap:balance;
+  }
+  .vps-strip-title .vps-accent{color:var(--pink)}
+  .vps-swaps{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px;
+  }
+  .vps-swap{
+    background:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px 18px;
+    transition:border-color .2s ease;
+  }
+  .vps-swap:hover{border-color:var(--line-2)}
+  .vps-swap .vps-swap-k{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--pink);display:flex;align-items:center;gap:9px;margin-bottom:12px;
+  }
+  .vps-swap .vps-swap-k::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--glow);flex:none}
+  .vps-swap h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16.5px;letter-spacing:-.01em;margin-bottom:7px;text-wrap:balance}
+  .vps-swap p{color:var(--muted);font-size:13.5px;line-height:1.55}
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media(max-width:900px){
+    .vps-stage-row{grid-template-columns:1fr}
+    .vps-tiles{grid-template-columns:repeat(2,1fr)}
+    .vps-swaps{grid-template-columns:repeat(2,1fr)}
+    .vps-con-grid{grid-template-columns:1fr}
+  }
+  @media(max-width:760px){
+    .vps-steps{grid-template-columns:1fr}
+  }
+  @media(max-width:560px){
+    .vps-swaps{grid-template-columns:1fr}
+    .vps-tv{aspect-ratio:auto}
+    .vps-tv-body{grid-template-columns:1fr;justify-items:center}
+    .vps-code{display:none}
+  }
+
+  /* VenuePlay neon hollow-triangle logo */
+  .logo svg,.foot-brand svg,.vps-mini-mark svg{overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9)) drop-shadow(0 0 6px rgba(255,31,142,.45))}
+
+  /* Interactive demo teaser (replaces the static preview panels) */
+  .vps-explore{display:flex;flex-direction:column;align-items:center;text-align:center;gap:15px;max-width:640px;margin:0 auto;padding:clamp(30px,5vw,54px) clamp(20px,4vw,40px);border:1px solid var(--line-2);border-radius:22px;background:radial-gradient(120% 100% at 50% 0%,rgba(255,31,142,.1),rgba(18,18,20,.55));box-shadow:0 40px 90px -40px rgba(255,31,142,.4);text-decoration:none;transition:transform .18s ease,border-color .18s ease}
+  .vps-explore:hover{transform:translateY(-4px);border-color:rgba(255,31,142,.5)}
+  .vps-explore-eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);display:inline-flex;align-items:center;gap:8px}
+  .vps-explore-title{font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;color:#fff;font-size:clamp(28px,5vw,44px);line-height:1.02;letter-spacing:.01em}
+  .vps-explore-sub{color:var(--muted);font-size:clamp(14px,2vw,17px);line-height:1.55;max-width:46ch}
+  .vps-explore-btn{display:inline-flex;align-items:center;gap:9px;margin-top:6px;background:linear-gradient(180deg,var(--pink),var(--pink-deep));color:#12030b;font-family:'Manrope',sans-serif;font-weight:800;font-size:15px;padding:14px 24px;border-radius:12px;box-shadow:0 0 34px -8px var(--glow)}
+  a.mode{text-decoration:none;color:inherit;cursor:pointer;transition:transform .16s ease,border-color .16s ease}
+  a.mode:hover{transform:translateY(-3px);border-color:rgba(255,31,142,.45)}
+</style>
+<style>
+  /* ============================================================
+     MOBILE POLISH: tighten the vertical rhythm and remove dead
+     space on phones, keep every section responsive. Desktop layout
+     is unchanged. Australian English, no em dashes.
+     ============================================================ */
+  img{max-width:100%;height:auto}
+
+  @media (max-width:560px){
+    .sec{padding:54px 0}
+    .sec-head{margin-bottom:30px}
+    .hero{padding:54px 0 46px}
+    .hero .lede{margin-top:20px}
+    .hero-cta{margin-top:28px}
+    .modes{gap:12px}
+    .vps-steps{gap:12px}
+    .vps-swaps{margin-top:26px}
+    footer{padding:40px 0 46px;margin-top:26px}
+  }
+
+  @media (max-width:430px){
+    .wrap{padding:0 18px}
+    .sec{padding:44px 0}
+    .sec-head{margin-bottom:24px}
+    .hero{padding:46px 0 40px}
+    h1{font-size:clamp(38px,11vw,52px)}
+    .hero-cta .btn{flex:1 1 100%}
+    .nav .btn{padding:9px 15px;font-size:13px}
+    .eyebrow{margin-bottom:20px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#top" aria-label="VenuePlay home">
+      <svg width="26" height="30" viewBox="0 0 26 30" fill="none" aria-hidden="true">
+        <path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/>
+      </svg>
+      <span class="div"></span>
+      <span class="word">VenuePlay</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/play">Play</a>
+      <a href="#modes">Game modes</a>
+      <a href="#faq">FAQs</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a class="btn btn-ghost" href="/app/index.html">Venue log in</a>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow"><span class="live-dot"></span> Northern Territory founding, now open</span>
+    <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
+    <p class="lede">Bingo, trivia, musical bingo and raffles, run from one screen. Your crowd plays from their own phones, <b>no app and no login</b>. You just press go. Built for pubs, clubs and bowls clubs that want a full room on a quiet night.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#claim">Lock in your founding price</a>
+      <a class="btn btn-ghost" href="#modes">See the game modes</a>
+    </div>
+    <p class="hero-note">Northern Territory venues · founding closes 30 November 2026 · locked for life while you stay</p>
+  </div>
+</section>
+
+<!-- ===================== GAME MODES ===================== -->
+<section class="sec" id="modes">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="label">One pub, one platform</div>
+      <h2 class="sec-title">Every format. And your own screen ads.</h2>
+      <p class="sec-sub">Swap formats on the night or run a different one each week. It all plays on the screen you've already got: a smart TV, a projector, a laptop via HDMI, or a streaming stick.</p>
+    </div>
+    <div class="modes">
+      <a class="mode" href="/see-a-night?mode=bingo" target="_blank" rel="noopener">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#FF1F8E" stroke-width="1.6"/><circle cx="6.5" cy="6.5" r="1.4" fill="#FF1F8E"/><circle cx="13.5" cy="6.5" r="1.4" fill="#FF1F8E"/><circle cx="10" cy="10" r="1.4" fill="#FF1F8E"/><circle cx="6.5" cy="13.5" r="1.4" fill="#FF1F8E"/><circle cx="13.5" cy="13.5" r="1.4" fill="#FF1F8E"/></svg></div>
+        <h3>Bingo</h3>
+        <p>Classic numbers night with a big-screen caller. Digital cards on every phone, auto-marked, instant winner checks.</p>
+      </a>
+      <a class="mode" href="/see-a-night?mode=trivia" target="_blank" rel="noopener">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2.5a4 4 0 0 0-2.5 7.1c.5.4.7.9.7 1.4v.5h3.6v-.5c0-.5.2-1 .7-1.4A4 4 0 0 0 10 2.5Z" stroke="#FF1F8E" stroke-width="1.6"/><path d="M8 15.5h4M8.5 17.5h3" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <h3>Trivia</h3>
+        <p>Rounds, teams and a live leaderboard. Questions, scoring and tie-breaks all handled. You just host.</p>
+      </a>
+      <a class="mode" href="/see-a-night?mode=musical" target="_blank" rel="noopener">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7 14.5V5l8-1.5v9" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="14.5" r="2" stroke="#FF1F8E" stroke-width="1.6"/><circle cx="13" cy="12.5" r="2" stroke="#FF1F8E" stroke-width="1.6"/></svg></div>
+        <h3>Musical Bingo</h3>
+        <p>Songs instead of numbers, players mark the track when it drops. Built-in playlists or bring your own theme.</p>
+      </a>
+      <a class="mode" href="/see-a-night?mode=raffle" target="_blank" rel="noopener">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 8.5 10 3l6 5.5" stroke="#FF1F8E" stroke-width="1.6" stroke-linejoin="round"/><rect x="4.5" y="8.5" width="11" height="8" rx="1.5" stroke="#FF1F8E" stroke-width="1.6"/><path d="M10 11v3" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <h3>Raffles &amp; Members Draws</h3>
+        <p>Run the meat tray or the members jackpot on the same system. Tickets, draws and number checks done live on screen.</p>
+      </a>
+      <a class="mode" href="/see-a-night?mode=ads" target="_blank" rel="noopener">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="3.5" width="15" height="10" rx="1.5" stroke="#FF1F8E" stroke-width="1.6"/><path d="M7.5 16.5h5" stroke="#FF1F8E" stroke-width="1.6" stroke-linecap="round"/><path d="M10 13.5v3" stroke="#FF1F8E" stroke-width="1.6"/><path d="M8.5 6 L12.5 8.5 L8.5 11 Z" fill="#FF1F8E"/></svg></div>
+        <h3>Screen Ads</h3>
+        <p>Even with no game on, your screen earns its keep. Upload your own slides, drink specials, gigs, members offers, and VenuePlay loops them on the big screen. Set it and walk away.</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="label">Dead simple</div>
+      <h2 class="sec-title vps-balance">How a night runs</h2>
+      <p class="sec-sub">Three steps between a quiet room and a full one. No tech in the room, no run sheet, no rehearsal.</p>
+    </div>
+    <div class="vps-steps">
+      <div class="vps-step">
+        <div class="vps-step-num">01</div>
+        <h3>Pick your game</h3>
+        <p>Bingo, trivia, musical bingo or a raffle. It <b>plays on the screen you've already got</b>: a smart TV, or the projector behind the bar. The easy way in is a laptop with an HDMI lead, or a streaming stick.</p>
+      </div>
+      <div class="vps-step">
+        <div class="vps-step-num">02</div>
+        <h3>Your crowd scans a code</h3>
+        <p>Players join from their own phone in seconds. <b>No app, no login.</b> The join code sits on the big screen all night, so latecomers walk in and jump straight into the game.</p>
+      </div>
+      <div class="vps-step">
+        <div class="vps-step-num">03</div>
+        <h3>You press go</h3>
+        <p>You run the whole night from behind the bar, one tap at a time. When someone calls bingo, the <b>win is already checked for you</b>. You just confirm it and hand over the prize.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="preview">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="label">The whole night, one tap</div>
+      <h2 class="sec-title vps-balance">See a night on VenuePlay</h2>
+      <p class="sec-sub">Open the interactive demo, tap the big screen, the host and a player, and flick between all six formats.</p>
+    </div>
+
+    <a class="vps-explore" href="/see-a-night" target="_blank" rel="noopener" aria-label="Open the interactive VenuePlay demo">
+      <span class="vps-explore-eyebrow"><span class="vps-dot"></span>Interactive demo</span>
+      <span class="vps-explore-title">Tap through a real night</span>
+      <span class="vps-explore-sub">Open the big screen, the host's tablet and a player's phone, and switch between bingo, trivia, musical bingo, raffles, members draws and screen ads. Click anything.</span>
+      <span class="vps-explore-btn">See a night on VenuePlay <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="#12030b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+  </div>
+</section>
+
+<section class="sec" id="replaces">
+  <div class="wrap">
+    <div class="vps-strip">
+      <div class="vps-strip-inner">
+        <div class="label" style="justify-content:center">Less to set up, less to pack down</div>
+        <h2 class="vps-strip-title" style="text-align:center;margin-left:auto;margin-right:auto">One screen replaces the paper bingo books and the <span class="vps-accent">hired trivia host</span>.</h2>
+        <div class="vps-swaps">
+          <div class="vps-swap">
+            <div class="vps-swap-k">The screen</div>
+            <h3>Already on your wall</h3>
+            <p>It plays on the screen you've already got: a smart TV, or the projector behind the bar. The easy way is a laptop with an HDMI lead or a streaming stick.</p>
+          </div>
+          <div class="vps-swap">
+            <div class="vps-swap-k">The host</div>
+            <h3>Any bar staff member</h3>
+            <p>Whoever's on shift presses go. Calls, cards and winner checks are handled, so nobody needs a mic voice or a run sheet.</p>
+          </div>
+          <div class="vps-swap">
+            <div class="vps-swap-k">The formats</div>
+            <h3>Every night, one system</h3>
+            <p>Bingo, trivia, musical bingo, raffles, members draws and your own screen ads on the same platform. Swap formats week to week without changing anything in the room.</p>
+          </div>
+          <div class="vps-swap">
+            <div class="vps-swap-k">The bill</div>
+            <h3>Per player, no lock-in</h3>
+            <p>Priced per player on your usual max, and you can cancel anytime. Big night? The extra players just join at the same per-player rate.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOUNDING OFFER ===================== -->
+<!-- ===================== TRIVIA BANK COUNTER ===================== -->
+<section class="sec" id="trivia-bank">
+  <div class="wrap" style="text-align:center">
+    <div class="label" style="justify-content:center">The trivia bank</div>
+    <div class="counter" style="margin-top:14px">
+      <div class="big"><span id="vp-trivia-count">33,599</span></div>
+      <div class="sub">trivia questions and counting</div>
+    </div>
+    <p class="sec-sub" style="margin:18px auto 0;max-width:640px">Fact-checked, Aussie-friendly questions across every category, and the bank grows every week. Run a fresh trivia night once a week, all included, no extra packs to buy.</p>
+  </div>
+</section>
+
+<!-- ===================== MUSIC LIBRARY COUNTER ===================== -->
+<section class="sec" id="music-bank">
+  <div class="wrap" style="text-align:center">
+    <div class="label" style="justify-content:center">The music library</div>
+    <div class="counter" style="margin-top:14px">
+      <div class="big"><span id="vp-music-count">125</span></div>
+      <div class="sub">musical bingo songs and counting</div>
+    </div>
+    <p class="sec-sub" style="margin:18px auto 0;max-width:640px">From Aussie anthems to disco, motown, country and modern hits, every track ready to play. Run a fresh musical bingo night once a week, all included, no extra packs to buy.</p>
+  </div>
+</section>
+
+<section class="sec" id="offer">
+  <div class="wrap">
+    <div class="offer">
+      <div class="offer-grid">
+        <div>
+          <div class="label">Founding venues</div>
+          <h2 class="sec-title">$2.50 per player.<br>Locked for life.</h2>
+          <p class="sec-sub">Northern Territory venues that join before 30 November 2026 lock in $2.50 per player a month (normally $3), set and locked for life. Founding closes for Northern Territory at the end of November, and it will not come back.</p>
+          <div class="counter" style="display:none">
+            <div class="big" id="vp-claimed"><span id="vp-count">…</span><span class="of"> / 100</span></div>
+            <div class="bar"><i id="vp-bar"></i></div>
+            <div class="sub" id="vp-remaining">founding spots open</div>
+          </div>
+        </div>
+        <div class="price-card">
+          <div class="price-eyebrow">Per player · per month</div>
+          <div class="price-row list">
+            <div class="pl"><b>Standard</b>full rate</div>
+            <div class="pv">$3.00</div>
+          </div>
+          <div class="price-row found">
+            <div class="pl"><b>Founding, monthly</b>Founding, locked for life</div>
+            <div class="pv"><s>$3.00</s> $2.50</div>
+          </div>
+          <div class="price-row found">
+            <div class="pl"><b>Founding, annual</b>billed yearly · best value</div>
+            <div class="pv"><s>$2.85</s> $2.30</div>
+          </div>
+          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Your founding rate is locked for life while your subscription stays active. Cancel and the founding rate ends for good, so rejoining later is at the standard rate. Founding is for Northern Territory venues, so your postcode needs to start with 0.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHAT'S INCLUDED ===================== -->
+<section class="sec" id="included">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">What you get</div>
+      <h2 class="sec-title">Everything to run the night</h2>
+    </div>
+    <ul class="incl">
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Every game mode</strong><span>Bingo, trivia, musical bingo, raffles, members draws and screen ads on one screen.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Players join by phone</strong><span>Scan a code and play, no app to download, no account to make.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Plays on any screen</strong><span>A smart TV, a projector, a laptop via HDMI, or a streaming stick, your call.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Run it your way</strong><span>Bingo, raffles and members draws as often as you like. Trivia and musical bingo, a fresh night once a week.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Built for your bar staff</strong><span>Set up and run a round without a tech in the room.</span></div></li>
+      <li><span class="tick"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 5.8 4.3 8 9 2.5" stroke="#FF1F8E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>Founding price, locked</strong><span>Your founding price stays for as long as you're with us.</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section class="sec" id="why">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">From the people who run the nights</div>
+      <h2 class="sec-title vps-balance">Why we built it</h2>
+    </div>
+    <div class="vps-note">
+      <div class="vps-note-inner">
+        <p>We're Gflam Touring. We run bingo, live music and entertainment at venues across Australia, and we've seen what a good entertainment night does for a venue on a quiet night: a full room, a busy kitchen, regulars who come back next week. We've also wrestled the tools it takes to pull one off, and honestly, they're clunky. Paper books, a borrowed laptop, a different system for every game. So we built the platform we kept wishing every venue had: <b>one system for the whole night, simple enough that any bar staff member can run it</b>. That's VenuePlay.</p>
+        <div class="vps-note-sign">
+          <span class="vps-note-mark">
+            <svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>
+          </span>
+          <span>
+            <span class="vps-sig-name" style="display:block">Dean</span>
+            <span class="vps-sig-role" style="display:block">Gflam Touring</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SIGNUP ===================== -->
+<section class="sec" id="claim">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">Claim your spot</div>
+      <h2 class="sec-title">Lock in founding pricing</h2>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to lock in your Northern Territory founding price before 30 November. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
+    </div>
+
+    <div class="form-shell">
+      <div class="inner">
+        <div id="vp-form">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="vp-name">Your name</label>
+              <input id="vp-name" type="text" placeholder="Your full name" autocomplete="name">
+            </div>
+            <div class="field full">
+              <label for="vp-email">Contact email</label>
+              <input id="vp-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
+            </div>
+            <div class="field full">
+              <label for="vp-mobile">Mobile</label>
+              <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel" required>
+            </div>
+            <div class="field full">
+              <label>Your venues</label>
+              <div id="vp-venue-list"></div>
+              <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
+              <span class="field-hint" style="text-align:center">For each venue, enter its postcode and the most players it would have in one game on a busy night, that venue's own number, not the group total. One card, one bill for the lot.</span>
+            </div>
+            <div class="field full">
+              <label>Plan</label>
+              <div class="seg" id="vp-plan">
+                <button type="button" class="on" data-plan="monthly">Monthly<small>$2.50 / player</small></button>
+                <button type="button" data-plan="annual">Annual<small>$2.30 / player</small></button>
+              </div>
+            </div>
+          </div>
+          <p class="estimate" id="vp-estimate">Enter your max players for a price estimate.</p>
+          <p class="overage-note">Set your usual max. If a night runs bigger, the extra players are added at the same per-player monthly rate, and your plan just grows to match what you use.</p>
+          <div class="consent">
+            <label class="ck"><input type="checkbox" id="vp-consent"> <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+            <label class="ck"><input type="checkbox" id="vp-marketing" checked> <span>Send me VenuePlay news, tips and launch updates. You can unsubscribe anytime.</span></label>
+          </div>
+          <button class="btn btn-primary" id="vp-submit" type="button">Hold my spot, add card</button>
+          <p class="form-err" id="vp-err"></p>
+          <p class="form-fine" id="vp-fine">Secured by Stripe · first month free for new venues · cancel anytime before your first payment</p>
+        </div>
+
+        <div class="success" id="vp-success">
+          <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Your spot is held</h3>
+          <p>Your founding spot is locked in and your card's on file. Check your inbox, we've sent your login and a few quick setup steps. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Embedded checkout overlay (card form stays on venueplay.com.au) ===== -->
+<div id="vp-embed-overlay" role="dialog" aria-modal="true" aria-label="Secure card details">
+  <div class="vp-embed-card">
+    <div class="vp-embed-head">
+      <div class="vp-embed-brand"><span class="vp-embed-tri"></span> <b>VenuePlay</b> <span class="vp-embed-lock">Secure checkout by Stripe</span></div>
+      <button type="button" id="vp-embed-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="vp-embedded"></div>
+  </div>
+</div>
+<style>
+  #vp-embed-overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:flex-start;justify-content:center;
+    background:rgba(8,7,12,.72);backdrop-filter:blur(4px);overflow-y:auto;padding:24px 16px 40px}
+  #vp-embed-overlay.show{display:flex}
+  .vp-embed-card{width:100%;max-width:640px;background:#fff;border-radius:18px;overflow:hidden;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.6);margin:auto}
+  .vp-embed-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 18px;border-bottom:1px solid #ececf2;background:#faf9fc}
+  .vp-embed-brand{display:flex;align-items:center;gap:8px;font-size:15px;color:#16141d}
+  .vp-embed-brand b{letter-spacing:-.01em}
+  .vp-embed-tri{width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid #FF1F8E}
+  .vp-embed-lock{font-size:12px;color:#6a6875;margin-left:2px}
+  #vp-embed-close{border:0;background:none;font-size:26px;line-height:1;color:#8a8896;cursor:pointer;padding:2px 6px;border-radius:8px}
+  #vp-embed-close:hover{background:#efeef4;color:#16141d}
+  #vp-embedded{padding:6px 10px 14px;min-height:280px}
+  @media (max-width:520px){ .vp-embed-lock{display:none} }
+</style>
+
+<!-- ===================== FAQ ===================== -->
+<section class="sec" id="faq">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center">
+      <div class="label" style="justify-content:center">Good to know</div>
+      <h2 class="sec-title">Questions</h2>
+    </div>
+    <div class="faq">
+      <details class="q"><summary>When can I start?<span class="pm"></span></summary><div class="a">Right away. Sign up before 30 November to lock in your Northern Territory founding rate, get your free first month, and we'll help you get your first night running.</div></details>
+      <details class="q"><summary>What does "founding venue" actually mean?<span class="pm"></span></summary><div class="a">Northern Territory venues that join before 30 November 2026 lock in $2.50 per player a month instead of $3, for life. It stays locked while you are subscribed. If you cancel, the founding rate ends for good, and rejoining later is at the standard rate.</div></details>
+      <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
+      <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
+      <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.50 a player, or yearly for $2.30 a player, and your founding pricing is locked for life either way. New venues get a free first month, then billing recurs at your founding rate. Cancel any time before your first payment and you are never charged.</div></details>
+      <details class="q"><summary>What if more players turn up than my plan?<span class="pm"></span></summary><div class="a">No surprises. Set your max to your usual room, and the screen flags the moment a night runs over it. Each player above your max is just $2 for that night, and you know that number from day one. If you go over twice in the same month, that's your new crowd, so from the next month we lift your max to match, which works out cheaper than paying per head every week. You can drop back to your average any time from your account, and we always email before your bill ever changes.</div></details>
+      <details class="q"><summary>What do I need to run it?<span class="pm"></span></summary><div class="a">A screen, an internet connection, and a way to get the display onto that screen: a smart TV with a browser, a streaming stick, or an HDMI cable from a laptop or tablet all work. Players bring their own phones. For a rock-solid night we'd point you toward a stick or a cable over wireless casting, since that doesn't lean on venue wifi.</div></details>
+      <details class="q"><summary>Is there a lock-in contract?<span class="pm"></span></summary><div class="a">No lock-in. It's a rolling subscription you can cancel anytime. Your founding price stays locked for as long as you're with us, and if you cancel before your first payment, you're never charged.</div></details>
+      <details class="q"><summary>What support do I get?<span class="pm"></span></summary><div class="a">Founding venues get hands-on onboarding to get your first night running, plus ongoing support if anything comes up. The whole thing is built so your bar staff can run it without a tech in the room.</div></details>
+      <details class="q"><summary>Can players win prizes?<span class="pm"></span></summary><div class="a">Yep, you set the prizes, exactly like you do now. Bar tabs, meat trays, members jackpots, vouchers, whatever suits your venue. VenuePlay runs the game and calls the winners; the prizes are yours to decide.</div></details>
+      <details class="q"><summary>Is players' data safe?<span class="pm"></span></summary><div class="a">Players join with just a name, no account, no login, nothing they have to hand over. Anything captured is opt-in and handled under Australian privacy rules.</div></details>
+      <details class="q"><summary>If I run trivia at different venues, do I keep the players' details?<span class="pm"></span></summary><div class="a">No, and that's by design. A venue's player data belongs to that venue. If you run games at a venue you don't own, VenuePlay only ever collects a player's first and last name for the game itself: it can't switch on email, mobile, postcode or marketing opt-in, so there's no marketing list to take. Nothing is held on the side or handed over later. Each venue's opt-in players stay with that venue.</div></details>
+      <details class="q"><summary>Who's behind it?<span class="pm"></span></summary><div class="a">VenuePlay is built by Gflam Touring, who run bingo, live music and entertainment across Australia. It's the same show experience, built into a platform any venue can run.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONTACT ===================== -->
+<section class="sec" id="contact">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto">
+      <div class="label" style="justify-content:center">Get in touch</div>
+      <h2 class="sec-title">Talk to us</h2>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Question about your venue, the founding offer, or how it'd work on your night? Send it through and we'll get back to you.</p>
+    </div>
+
+    <div class="form-shell">
+      <div class="inner">
+        <div id="ct-form">
+          <div class="form-grid">
+            <div class="field">
+              <label for="ct-name">Your name</label>
+              <input id="ct-name" type="text" placeholder="Your name" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="ct-email">Email</label>
+              <input id="ct-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
+            </div>
+            <div class="field full">
+              <label for="ct-message">Message</label>
+              <textarea id="ct-message" placeholder="Tell us about your venue and what you'd like to know."></textarea>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="ct-submit" type="button" style="width:100%;margin-top:20px;padding:16px;font-size:16px">Send message</button>
+          <p class="form-err" id="ct-err"></p>
+          <p class="form-fine">Or email us directly at hello@venueplay.com.au</p>
+        </div>
+
+        <div class="success" id="ct-success">
+          <div class="ring"><svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 14.5 11.5 20 22 8" stroke="#FF1F8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Message sent</h3>
+          <p>Thanks, we've got it and we'll be in touch soon.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap foot">
+    <div>
+      <div class="foot-brand">
+        <img src="/logos/venueplay_primary_rebuilt.png" alt="VenuePlay" style="height:46px;width:auto;max-width:230px;display:block">
+      </div>
+      <p class="powered" style="margin-top:14px">Powered by <b>Gflam Touring</b></p>
+    </div>
+    <div class="foot-meta">
+      <a href="/play">Play</a> · <a href="#modes">Game modes</a> · <a href="#faq">FAQs</a> · <a href="#contact">Contact</a> · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a><br>
+      <a href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a><br>
+      &copy; <span id="vp-year"></span> VenuePlay
+    </div>
+  </div>
+</footer>
+
+<!-- ===================== SCRIPT ===================== -->
+<!-- Stripe.js: powers the embedded (on-page) card form. Harmless if embedded is off. -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+(function(){
+  /* ============================================================
+     CONFIG: live values, set 17 Jul 2026
+     ------------------------------------------------------------
+     1) VP_WORKER: the deployed venueplay-api Cloudflare Worker
+        (handles Stripe checkout + the contact form)
+     2) _SBK: Supabase anon key, same key as the other Gflam sites.
+        Public by design: it can only read the live counter via the
+        venueplay_spots_taken RPC. Never put the service key here.
+     ============================================================ */
+  var VP_WORKER = 'https://venueplay-api.dean-tindale.workers.dev';
+  /* Stripe PUBLISHABLE key (public by design, safe in the page). When set, signup uses the
+     embedded card form on this page; leave it as PASTE_ to fall back to the Stripe redirect. */
+  var VP_STRIPE_PK = 'pk_live_51TqKo55JnH4tsSwMnjhYGLGjeWyaWykfV5RQxNKDmyfsHMrwCCgOi5cad9e6sGEbc7XgcWkfWLsIF9lyjFAQE5Gw00LPF5viFj';
+  var _SBU = 'https://gpoolavkghnxedzrmtmc.supabase.co';
+  var _SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+
+  var CAP = 100;
+  var COUNT_DUR = 4000; // roll-up time in ms, shared by all counters so they animate in step
+  var PRICE = { monthly: 2.50, annual: 2.30 };
+  var foundingClosed = false;
+  var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
+  var keyReady = _SBK.indexOf('PASTE_') === -1;
+  var plan = 'monthly';
+
+  document.getElementById('vp-year').textContent = new Date().getFullYear();
+
+  /* ---------- Live founding counter (secure RPC, no PII exposed) ---------- */
+  // Roll a number up from 0 to target (used so the counters animate rather than snap).
+  function rollCount(el, target, dur){
+    if (!el) return;
+    el.textContent = '0';
+    var t0 = null;
+    function step(ts){
+      if (!t0) t0 = ts;
+      var p = Math.min(1, (ts - t0) / dur);
+      var ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * ease);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function paintCounter(claimed){
+    var c = Math.max(0, Math.min(CAP, claimed));
+    var remaining = Math.max(0, CAP - c);
+    rollCount(document.getElementById('vp-count'), c, COUNT_DUR);
+    document.getElementById('vp-bar').style.width = ((c / CAP) * 100) + '%';
+    document.getElementById('vp-remaining').textContent =
+      remaining > 0 ? (remaining + ' founding spots open') : 'founding spots closed';
+    // Founding closes at the cap: flip the quote to standard so it matches what checkout
+    // will actually charge (checkout picks the price by this same live count).
+    if (remaining <= 0 && !foundingClosed){
+      foundingClosed = true;
+      PRICE = { monthly: 3.00, annual: 2.85 };
+      var mb = document.querySelector('#vp-plan button[data-plan="monthly"] small');
+      var ab = document.querySelector('#vp-plan button[data-plan="annual"] small');
+      if (mb) mb.textContent = '$3.00 / player';
+      if (ab) ab.textContent = '$2.85 / player';
+      if (typeof renderEstimate === 'function') renderEstimate();
+    }
+  }
+  function loadCount(){
+    if (!keyReady) { paintCounter(0); return; }
+    fetch(_SBU + '/rest/v1/rpc/venueplay_spots_taken', {
+      method: 'POST',
+      headers: { 'apikey': _SBK, 'Authorization': 'Bearer ' + _SBK, 'Content-Type': 'application/json' },
+      body: '{}'
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(n){ paintCounter(parseInt(n, 10) || 0); })
+    .catch(function(){ paintCounter(0); });
+  }
+  loadCount();
+
+  /* ---------- Live trivia question counter (reads /data/trivia-count.json) ---------- */
+  (function(){
+    var el = document.getElementById('vp-trivia-count');
+    var sec = document.getElementById('trivia-bank');
+    if (!el) return;
+    var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
+    el.textContent = '0'; // start at 0 straight away, then roll up
+    var done = false;
+    function animateTo(target){
+      if (done) return; done = true;
+      var start = 0, t0 = null, dur = COUNT_DUR;
+      function step(ts){
+        if (!t0) t0 = ts;
+        var p = Math.min(1, (ts - t0) / dur);
+        var ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(start + (target - start) * ease).toLocaleString('en-AU');
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    fetch('/data/trivia-count.json').then(function(r){ return r.json(); }).then(function(d){
+      var n = parseInt(d && d.count, 10) || 0;
+      if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
+      el.textContent = n.toLocaleString('en-AU');
+      if (sec && 'IntersectionObserver' in window){
+        el.textContent = '0';
+        var io = new IntersectionObserver(function(entries){
+          for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
+        }, { threshold: 0.4 });
+        io.observe(sec);
+      } else {
+        animateTo(n);
+      }
+    }).catch(function(){ if (fallback) el.textContent = fallback.toLocaleString('en-AU'); });
+  })();
+
+  /* ---------- Live music library counter (counts /data/musical-library.json songs) ---------- */
+  (function(){
+    var el = document.getElementById('vp-music-count');
+    var sec = document.getElementById('music-bank');
+    if (!el) return;
+    var fallback = parseInt((el.textContent || '').replace(/[^\d]/g, ''), 10) || 0; // keep the HTML number as a safety net
+    el.textContent = '0'; // start at 0 straight away, then roll up
+    var done = false;
+    function animateTo(target){
+      if (done) return; done = true;
+      var start = 0, t0 = null, dur = COUNT_DUR;
+      function step(ts){
+        if (!t0) t0 = ts;
+        var p = Math.min(1, (ts - t0) / dur);
+        var ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(start + (target - start) * ease).toLocaleString('en-AU');
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    // Live count: read the real song library and count it, so the number is always accurate and
+    // updates itself whenever songs are added. The library is small (~64KB) so this is cheap.
+    fetch('/data/musical-library.json').then(function(r){ return r.json(); }).then(function(d){
+      var n = (d && d.songs && d.songs.length) || 0;
+      if (!n) { if (fallback) el.textContent = fallback.toLocaleString('en-AU'); return; }
+      el.textContent = n.toLocaleString('en-AU');
+      if (sec && 'IntersectionObserver' in window){
+        el.textContent = '0';
+        var io = new IntersectionObserver(function(entries){
+          for (var i = 0; i < entries.length; i++){ if (entries[i].isIntersecting){ animateTo(n); io.disconnect(); } }
+        }, { threshold: 0.4 });
+        io.observe(sec);
+      } else {
+        animateTo(n);
+      }
+    }).catch(function(){ if (fallback) el.textContent = fallback.toLocaleString('en-AU'); });
+  })();
+
+  /* ---------- Plan toggle ---------- */
+  var planWrap = document.getElementById('vp-plan');
+  var estEl = document.getElementById('vp-estimate');
+  planWrap.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    plan = b.getAttribute('data-plan');
+    Array.prototype.forEach.call(planWrap.children, function(c){ c.classList.toggle('on', c === b); });
+    renderEstimate();
+  });
+
+  /* ---------- Venue rows: one venue, or many (a group is simply more than one) ---------- */
+  var venueList = document.getElementById('vp-venue-list');
+  var addVenueBtn = document.getElementById('vp-add-venue');
+  function venueRows(){ return Array.prototype.slice.call(venueList.querySelectorAll('.venue-row')); }
+  function totalSeats(){
+    var t = 0;
+    venueRows().forEach(function(r){ t += parseInt(r.querySelector('.v-seats').value, 10) || 0; });
+    return t;
+  }
+  function refreshRemoveButtons(){
+    var rows = venueRows();
+    rows.forEach(function(r){ r.querySelector('.v-remove').style.display = rows.length > 1 ? '' : 'none'; });
+    if (addVenueBtn){
+      addVenueBtn.disabled = rows.length >= 20;
+      addVenueBtn.textContent = rows.length >= 20 ? 'Up to 20 venues at signup, add the rest once you are in' : '+ Add another venue';
+    }
+  }
+  function addVenueRow(name, seats, postcode){
+    var row = document.createElement('div');
+    row.className = 'venue-row';
+    var nm = document.createElement('input');
+    nm.type = 'text'; nm.className = 'v-name'; nm.placeholder = 'Venue name'; nm.setAttribute('autocomplete', 'organization');
+    if (name) nm.value = name;
+    var pc = document.createElement('input');
+    pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = 'Postcode'; pc.setAttribute('autocomplete', 'postal-code');
+    if (postcode) pc.value = postcode;
+    var st = document.createElement('input');
+    st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players';
+    if (seats) st.value = seats;
+    var rm = document.createElement('button');
+    rm.type = 'button'; rm.className = 'v-remove'; rm.setAttribute('aria-label', 'Remove venue'); rm.textContent = '×';
+    rm.addEventListener('click', function(){ row.remove(); refreshRemoveButtons(); renderEstimate(); });
+    st.addEventListener('input', renderEstimate);
+    row.appendChild(nm); row.appendChild(pc); row.appendChild(st); row.appendChild(rm);
+    venueList.appendChild(row);
+    refreshRemoveButtons();
+  }
+  addVenueBtn.addEventListener('click', function(){ if (venueRows().length >= 20) return; addVenueRow(); renderEstimate(); });
+  addVenueRow(); // start with one venue
+
+  // Post-founding volume tiers (must match the Worker). Only applies once founding closes.
+  function groupTier(players){
+    if (players >= 10000) return { pct:10, label:'Major group' };
+    if (players >= 4000)  return { pct:5,  label:'Large group' };
+    return null;
+  }
+  function renderEstimate(){
+    var seats = totalSeats();
+    var n = venueRows().length;
+    var suffix = n > 1 ? ' across ' + n + ' venues' : '';
+    if (!seats){ estEl.innerHTML = 'Add your max players for a price estimate.'; return; }
+    var tier = foundingClosed ? groupTier(seats) : null; // volume discount only applies post-founding
+    var mRate = PRICE.monthly * (tier ? (1 - tier.pct/100) : 1);
+    var aRate = PRICE.annual  * (tier ? (1 - tier.pct/100) : 1);
+    var reason = tier ? ('<br><span style="color:var(--pink)">You qualify for ' + tier.pct + '% off, ' + tier.label + ' (' + seats + ' players)</span>') : '';
+    if (plan === 'monthly'){
+      estEl.innerHTML = '<b>$' + (seats * mRate).toFixed(2) + '</b> / month after your free first month (' + seats + ' players × $' + mRate.toFixed(2) + suffix + ')' + reason;
+    } else {
+      var perYear = seats * aRate * 12;
+      estEl.innerHTML = '<b>$' + perYear.toFixed(2) + '</b> / year after your free first month (' + seats + ' players × $' + aRate.toFixed(2) + ' × 12' + suffix + ')' + reason;
+    }
+  }
+  renderEstimate();
+
+  /* ---------- Founding signup → Stripe checkout (card on file) ---------- */
+  var submitBtn = document.getElementById('vp-submit');
+  var errEl = document.getElementById('vp-err');
+  function showErr(msg){ errEl.textContent = msg; errEl.classList.add('show'); }
+  function clearErr(){ errEl.classList.remove('show'); }
+
+  /* AU mobile check: strips spaces, country code (+61 / 61) and the trunk 0,
+     then expects a mobile (9 digits starting with 4). Rejects landlines. The
+     mobile is the ONLY sign-in method, so we never let a bad number through. */
+  function isAuMobile(raw){
+    var m = String(raw || '').replace(/[^\d+]/g, '');
+    if (m.charAt(0) === '+') m = m.slice(1);
+    if (m.slice(0, 2) === '61') m = m.slice(2);
+    else if (m.charAt(0) === '0') m = m.slice(1);
+    return /^4\d{8}$/.test(m);
+  }
+
+  submitBtn.addEventListener('click', function(){
+    clearErr();
+    var name = document.getElementById('vp-name').value.trim();
+    var email = document.getElementById('vp-email').value.trim();
+    var mobile = document.getElementById('vp-mobile').value.trim();
+
+    // Collect every venue (name + postcode + max players). One venue or many, same flow.
+    var venues = [];
+    var rows = venueRows();
+    var namesLower = {};
+    for (var i = 0; i < rows.length; i++){
+      var vn = rows[i].querySelector('.v-name').value.trim();
+      var vpc = (rows[i].querySelector('.v-postcode').value || '').replace(/\D/g, '');
+      var vs = parseInt(rows[i].querySelector('.v-seats').value, 10);
+      if (!vn) { showErr('Please enter a name for every venue.'); return; }
+      if (!/^\d{4}$/.test(vpc)) { showErr('Please enter a 4-digit postcode for ' + vn + '.'); return; }
+      if (!vs || vs < 1) { showErr('Please enter the max players for ' + vn + '.'); return; }
+      if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.'); return; }
+      if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.'); return; }
+      namesLower[vn.toLowerCase()] = true;
+      venues.push({ name: vn, seats: vs, postcode: vpc });
+    }
+    if (!venues.length) { showErr('Please add at least one venue.'); return; }
+
+    if (!name) { showErr('Please enter your name so we know who we are speaking to.'); return; }
+    if (email.indexOf('@') === -1) { showErr('Please enter a valid contact email.'); return; }
+
+    /* Mobile is the only sign-in method for the host, so it is required and
+       must be a real Australian mobile (starts 04). A landline can never
+       receive the sign-in text, so we block it here before checkout. */
+    if (!mobile) { showErr('Please enter your mobile number.'); return; }
+    if (!isAuMobile(mobile)) { showErr('Please enter a valid Australian mobile (starts 04).'); return; }
+
+    var consentEl = document.getElementById('vp-consent');
+    if (consentEl && !consentEl.checked) { showErr('Please agree to the Terms and Privacy Policy to continue.'); return; }
+    var marketingEl = document.getElementById('vp-marketing');
+    var marketingOptIn = marketingEl ? marketingEl.checked : false;
+
+    if (!workerReady) { showErr('Payments aren\u2019t connected yet, the Worker URL still needs to be set on this page.'); return; }
+
+    // Use embedded checkout (card form on our own page) only when the publishable key is set
+    // AND Stripe.js loaded. Otherwise ask for the classic redirect, exactly as before.
+    var wantEmbedded = VP_STRIPE_PK.indexOf('pk_') === 0 && typeof window.Stripe === 'function';
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = wantEmbedded ? 'Loading secure card form…' : 'Taking you to Stripe…';
+
+    fetch(VP_WORKER + '/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: 'NT-NOV-2026', venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      // Embedded: mount Stripe's card form in our overlay. (If the worker isn't updated yet it
+      // returns a url instead of a client_secret, so we fall through to the redirect below.)
+      if (wantEmbedded && data && data.client_secret) { openEmbeddedCheckout(data.client_secret); return; }
+      if (data && data.url) { window.location.href = data.url; return; }
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Hold my spot, add card';
+      showErr((data && data.error) ? data.error : 'Something went wrong starting checkout. Please try again, or email hello@venueplay.com.au.');
+    })
+    .catch(function(){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Hold my spot, add card';
+      showErr('Something went wrong starting checkout. Please try again, or email hello@venueplay.com.au.');
+    });
+  });
+
+  /* ---------- Embedded checkout: mount Stripe's card form on this page ---------- */
+  var _vpStripe = null, _vpCheckout = null;
+  var embedOverlay = document.getElementById('vp-embed-overlay');
+  var embedClose = document.getElementById('vp-embed-close');
+
+  function resetSubmit(){
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Hold my spot, add card';
+  }
+  function closeEmbeddedCheckout(){
+    if (_vpCheckout) { try { _vpCheckout.destroy(); } catch (e) {} _vpCheckout = null; }
+    embedOverlay.classList.remove('show');
+    document.body.style.overflow = '';
+    resetSubmit();
+  }
+  function openEmbeddedCheckout(clientSecret){
+    try {
+      if (!_vpStripe) _vpStripe = Stripe(VP_STRIPE_PK);
+      embedOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden'; // stop the page scrolling behind the modal
+      _vpStripe.initEmbeddedCheckout({ clientSecret: clientSecret }).then(function(checkout){
+        _vpCheckout = checkout;
+        checkout.mount('#vp-embedded');
+        // On completion Stripe redirects to our return_url (?vp=return), handled below.
+      }).catch(function(){
+        closeEmbeddedCheckout();
+        showErr('Something went wrong loading the card form. Please try again, or email hello@venueplay.com.au.');
+      });
+    } catch (e) {
+      closeEmbeddedCheckout();
+      showErr('Something went wrong loading the card form. Please try again, or email hello@venueplay.com.au.');
+    }
+  }
+  if (embedClose) embedClose.addEventListener('click', closeEmbeddedCheckout);
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && embedOverlay && embedOverlay.classList.contains('show')) closeEmbeddedCheckout(); });
+
+  /* ---------- Return from Stripe ---------- */
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('vp') === 'success' || params.get('vp') === 'return') {
+    var f = document.getElementById('vp-form'); if (f) f.style.display = 'none';
+    var s = document.getElementById('vp-success'); if (s) { s.classList.add('show'); s.scrollIntoView({ behavior:'smooth', block:'center' }); }
+    if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'venueplay_founding' });
+    if (typeof fbq === 'function') fbq('track', 'StartTrial');
+    loadCount();
+  } else if (params.get('vp') === 'cancel') {
+    showErr('No worries, your card wasn\u2019t added. Your spot isn\u2019t held until you finish checkout.');
+    document.getElementById('claim').scrollIntoView({ behavior:'smooth' });
+  }
+
+  /* ---------- Contact form → Worker → email ---------- */
+  var ctBtn = document.getElementById('ct-submit');
+  var ctErr = document.getElementById('ct-err');
+  ctBtn.addEventListener('click', function(){
+    ctErr.classList.remove('show');
+    var name = document.getElementById('ct-name').value.trim();
+    var email = document.getElementById('ct-email').value.trim();
+    var message = document.getElementById('ct-message').value.trim();
+
+    if (!name) { ctErr.textContent = 'Please enter your name.'; ctErr.classList.add('show'); return; }
+    if (email.indexOf('@') === -1) { ctErr.textContent = 'Please enter a valid email.'; ctErr.classList.add('show'); return; }
+    if (!message) { ctErr.textContent = 'Please enter a message.'; ctErr.classList.add('show'); return; }
+
+    if (!workerReady) { ctErr.textContent = 'Contact isn\u2019t connected yet, the Worker URL still needs to be set. For now, email hello@venueplay.com.au.'; ctErr.classList.add('show'); return; }
+
+    ctBtn.disabled = true; ctBtn.textContent = 'Sending…';
+    function ctDone(){
+      document.getElementById('ct-form').style.display = 'none';
+      var s = document.getElementById('ct-success'); s.classList.add('show');
+      s.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+    fetch(VP_WORKER + '/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, email: email, message: message })
+    })
+    .then(function(r){ if (!r.ok) throw new Error('send failed'); ctDone(); })
+    .catch(function(){
+      ctBtn.disabled = false; ctBtn.textContent = 'Send message';
+      ctErr.textContent = 'Couldn\u2019t send that. Please try again, or email hello@venueplay.com.au.'; ctErr.classList.add('show');
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  /* ---- Faux QR: finder squares + seeded noise on canvas (decorative) ---- */
+  var qc = document.getElementById('vps-qr');
+  if (qc && qc.getContext) {
+    var ctx = qc.getContext('2d'), N = 23, s = qc.width / N;
+    var seed = 20260901;
+    function rnd(){ seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+    ctx.clearRect(0, 0, qc.width, qc.height);
+    ctx.fillStyle = '#0A0A0B';
+    function finder(ox, oy){
+      for (var yy = 0; yy < 7; yy++) for (var xx = 0; xx < 7; xx++) {
+        var edge = (xx === 0 || xx === 6 || yy === 0 || yy === 6);
+        var core = (xx >= 2 && xx <= 4 && yy >= 2 && yy <= 4);
+        if (edge || core) ctx.fillRect((ox + xx) * s, (oy + yy) * s, s, s);
+      }
+    }
+    for (var yy = 0; yy < N; yy++) for (var xx = 0; xx < N; xx++) {
+      var inF = (xx < 7 && yy < 7) || (xx > N - 8 && yy < 7) || (xx < 7 && yy > N - 8);
+      if (!inF && rnd() > 0.55) ctx.fillRect(xx * s, yy * s, s, s);
+    }
+    finder(0, 0); finder(N - 7, 0); finder(0, N - 7);
+  }
+
+  /* ---- Play the ball reveal each time the TV scrolls into view ---- */
+  var vpsTv = document.querySelector('.vps-tv');
+  if (vpsTv) {
+    if ('IntersectionObserver' in window) {
+      var vpsIo = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){ vpsTv.classList.toggle('vps-inview', e.isIntersecting); });
+      }, { threshold: 0.4 });
+      vpsIo.observe(vpsTv);
+    } else {
+      vpsTv.classList.add('vps-inview');
+    }
+  }
+
+  /* ---- Group invoice rows: standard $3.00/player, founding rate,
+          add-ons are extra players on big nights at $2.50/player ---- */
+  var body = document.getElementById('vps-invrows');
+  if (body) {
+    var STD = 3.00, RATE = 2.50;
+    var venues = [
+      /* [name, plan players, extra players on the month's biggest night] */
+      ['The Anchor, Southport', 78, 6],
+      ['Harbourview Tavern', 60, 0],
+      ['The Sands RSL', 120, 14]
+    ];
+    function money(v){ return '$' + v.toFixed(2); }
+    var tStd = 0, tDisc = 0, tAdd = 0, tTot = 0;
+    venues.forEach(function(v){
+      var std = v[1] * STD;
+      var disc = std * 0.20;
+      var add = v[2] * RATE;
+      var tot = std - disc + add;
+      tStd += std; tDisc += disc; tAdd += add; tTot += tot;
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + v[0] + '</td><td>' + v[1] + '</td><td>' + money(std) +
+        '</td><td class="vps-disc">-' + money(disc) + '</td><td class="vps-add">' + money(add) +
+        '</td><td>' + money(tot) + '</td>';
+      body.appendChild(tr);
+    });
+    var t = document.createElement('tr'); t.className = 'vps-tot';
+    t.innerHTML = '<td>Total inc GST</td><td></td><td>' + money(tStd) +
+      '</td><td class="vps-disc">-' + money(tDisc) + '</td><td class="vps-add">' + money(tAdd) +
+      '</td><td>' + money(tTot) + '</td>';
+    body.appendChild(t);
+  }
+})();
+</script>
+<style>
+.vp-float-cta{position:fixed;right:22px;bottom:22px;z-index:60;display:inline-flex;align-items:center;gap:9px;
+  padding:14px 24px;border-radius:999px;background:#FF1F8E;color:#fff;font-weight:800;font-size:15px;
+  font-family:'Hanken Grotesk',sans-serif;text-decoration:none;box-shadow:0 12px 34px rgba(255,31,142,.45);
+  opacity:0;transform:translateY(16px);pointer-events:none;transition:opacity .25s ease,transform .25s ease}
+.vp-float-cta.show{opacity:1;transform:none;pointer-events:auto}
+.vp-float-cta:hover{background:#ff3d9e}
+@media(max-width:560px){.vp-float-cta{right:14px;left:14px;bottom:14px;justify-content:center;padding:15px 20px}}
+@media(prefers-reduced-motion:reduce){.vp-float-cta{transition:opacity .25s ease}}
+</style>
+<a href="#claim" class="vp-float-cta" id="vpFloatCta" aria-label="Lock in founding">
+  <svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#fff" stroke-width="2.8" stroke-linejoin="round"/></svg>
+  Lock in founding
+</a>
+<script>
+(function(){
+  var cta=document.getElementById('vpFloatCta'); if(!cta) return;
+  var claim=document.getElementById('claim');
+  function upd(){
+    var y=window.pageYOffset||document.documentElement.scrollTop;
+    var show=y>560;
+    if(show && claim){ var r=claim.getBoundingClientRect(); if(r.top < window.innerHeight && r.bottom > 0) show=false; }
+    cta.classList.toggle('show', show);
+  }
+  window.addEventListener('scroll', upd, {passive:true});
+  window.addEventListener('resize', upd);
+  upd();
+})();
+</script>
+</body>
+</html>
