@@ -2074,13 +2074,13 @@ async function vpbScreenGet(request, env, json) {
   const venue = o.venues.filter(function (v) { return v.id === venueId; })[0];
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
   const rows = await vpaSelect(env, 'vp_venue_screen',
-    'venue_id=eq.' + encodeURIComponent(venueId) + '&select=slides,draws,raffle');
+    'venue_id=eq.' + encodeURIComponent(venueId) + '&select=slides,draws,raffle,logo_url');
   const cfg = (rows && rows[0]) || {};
   return json({
     ok: true,
     venue: { id: venue.id, name: venue.name, slug: venue.slug },
     venues: o.venues.map(function (v) { return { id: v.id, name: v.name, slug: v.slug }; }),
-    slides: cfg.slides || [], draws: cfg.draws || [], raffle: cfg.raffle || null,
+    slides: cfg.slides || [], draws: cfg.draws || [], raffle: cfg.raffle || null, logo_url: cfg.logo_url || null,
   });
 }
 
@@ -2101,6 +2101,7 @@ async function vpbScreenSave(request, env, json) {
   if (b.slides !== undefined) row.slides = vpbCleanSlides(b.slides);
   if (b.draws !== undefined) row.draws = vpbCleanDraws(b.draws);
   if (b.raffle !== undefined) row.raffle = vpbCleanRaffle(b.raffle);
+  if (b.logo_url !== undefined) row.logo_url = (typeof b.logo_url === 'string' && b.logo_url.slice(0, 4) === 'http') ? b.logo_url.slice(0, 500) : null;
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venue_screen', {
     method: 'POST',
     headers: { ...vpaHeaders(env), 'Prefer': 'resolution=merge-duplicates,return=minimal' },

@@ -766,13 +766,23 @@
     var slug=VENUE_SLUG; if(!slug) return;   // the already-parsed slug (handles /tv?venue= AND /tv?bare-slug AND the remembered one)
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
     function refreshAds(){ adBuilt=false; buildAds(); if(!hostConnected) startAds(); } // only rebuild while idle
+    // Venue logo: top-left corner, over games and ads. Injected once so no HTML anchor is needed.
+    function setVenueLogo(url){
+      var el=document.getElementById("venueLogo");
+      if(!url){ if(el) el.style.display="none"; return; }
+      if(!el){ el=document.createElement("img"); el.id="venueLogo";
+        el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
+        document.body.appendChild(el); }
+      el.src=url; el.style.display="block";
+    }
     // Advertising slides (images) + the raffle routine, from the venue's screen config.
-    fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select=slides,raffle&limit=1", { headers:hdr })
+    fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select=slides,raffle,logo_url&limit=1", { headers:hdr })
       .then(function(r){ return r.ok ? r.json() : []; })
       .then(function(rows){
         var c=rows&&rows[0]; if(!c) return;
         if(Array.isArray(c.slides)) ADS.slides=c.slides;
         ADS.raffle = c.raffle || null;
+        setVenueLogo(c.logo_url || "");
         refreshAds();
       }).catch(function(){});
     // Live members-draw board (name + current jackpot + day/time + venue timezone) from the public view.

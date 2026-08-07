@@ -317,6 +317,18 @@
     </div>
 
     <div class="scard">
+      <div class="scardhead">Venue logo</div>
+      <p class="snote">Shows in the top-left corner of your TV, over games and between them. Use a PNG with a transparent background so it sits cleanly on the screen.</p>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div id="logoThumb" style="width:130px;height:64px;border:1px solid var(--line);border-radius:10px;background:#0d0d12 center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px">No logo</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="addbtn" style="cursor:pointer">Upload logo<input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp" style="display:none"></label>
+          <button class="addbtn" id="logoRemove" type="button" style="display:none">Remove</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="scard">
       <div class="scardhead">Slides</div>
       <p class="snote">Each slide is one image. Set how long it stays on screen, and optional dates so a promo ends itself (leave the dates blank to show it all the time). Up to 12.</p>
       <div id="slides"></div>
@@ -684,6 +696,39 @@
     img.onerror = function(){ cb(dataUrl); };
     img.src = dataUrl;
   }
+  var screenLogoUrl = "";
+  function renderLogo(){
+    var thumb=$("logoThumb"), rm=$("logoRemove"); if(!thumb) return;
+    if(screenLogoUrl){ thumb.textContent=""; thumb.style.backgroundImage="url("+screenLogoUrl+")"; if(rm) rm.style.display=""; }
+    else { thumb.textContent="No logo"; thumb.style.backgroundImage=""; if(rm) rm.style.display="none"; }
+  }
+  function uploadLogo(file){
+    if(!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
+    if(file.size > 3*1024*1024){ showMsg("Keep the logo under 3MB."); return; }
+    var thumb=$("logoThumb"); if(thumb){ thumb.textContent="Uploading…"; thumb.style.backgroundImage=""; }
+    var reader=new FileReader();
+    reader.onload=function(){
+      api("/account/screen-upload",{ venue_id:screenCurrent.id, data:String(reader.result) }).then(function(r){
+        if(r.error){ showMsg(r.error); renderLogo(); return; }
+        screenLogoUrl=r.url;
+        api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:screenLogoUrl }).then(function(s){
+          if(s.error){ showMsg(s.error); return; }
+          renderLogo(); showMsg("Logo saved. It shows on your TV within a few seconds.");
+        });
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+  function removeLogo(){
+    if(!screenCurrent) return;
+    screenLogoUrl=""; renderLogo();
+    api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:"" }).then(function(s){ if(s.error) showMsg(s.error); else showMsg("Logo removed."); });
+  }
+  (function(){
+    var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove");
+    if(lf) lf.addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) uploadLogo(f); this.value=""; });
+    if(lr) lr.addEventListener("click", removeLogo);
+  })();
   function uploadSlideImage(file, row){
     if (!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
     if (file.size > 8*1024*1024){ showMsg("That image is too big. Keep it under 8MB."); return; }   // we shrink it anyway
@@ -704,6 +749,7 @@
   function fillScreen(cfg){
     var sl = $("slides"); sl.innerHTML = "";
     (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
+    screenLogoUrl = cfg.logo_url || ""; renderLogo();
   }
   function tvHref(slug){ return (screenOrigin||"") + "/tv" + (slug ? ("?venue=" + encodeURIComponent(slug)) : ""); }
   function setTvLinks(slug){
