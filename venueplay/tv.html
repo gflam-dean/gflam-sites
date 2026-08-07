@@ -776,15 +776,22 @@
       el.src=url; el.style.display="block";
     }
     // Advertising slides (images) + the raffle routine, from the venue's screen config.
-    fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select=slides,raffle,logo_url&limit=1", { headers:hdr })
-      .then(function(r){ return r.ok ? r.json() : []; })
-      .then(function(rows){
-        var c=rows&&rows[0]; if(!c) return;
-        if(Array.isArray(c.slides)) ADS.slides=c.slides;
-        ADS.raffle = c.raffle || null;
-        setVenueLogo(c.logo_url || "");
-        refreshAds();
-      }).catch(function(){});
+    // We request logo_url but fall back without it, so ads keep working before AND after the
+    // logo_url column is migrated in. A missing column must NEVER take the slides down with it.
+    function loadScreen(withLogo){
+      var sel="slides,raffle"+(withLogo?",logo_url":"");
+      fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select="+sel+"&limit=1", { headers:hdr })
+        .then(function(r){ if(!r.ok){ if(withLogo) loadScreen(false); return null; } return r.json(); })
+        .then(function(rows){
+          if(!rows) return;
+          var c=rows&&rows[0]; if(!c) return;
+          if(Array.isArray(c.slides)) ADS.slides=c.slides;
+          ADS.raffle = c.raffle || null;
+          if(withLogo) setVenueLogo(c.logo_url || "");
+          refreshAds();
+        }).catch(function(){});
+    }
+    loadScreen(true);
     // Live members-draw board (name + current jackpot + day/time + venue timezone) from the public view.
     // We request timezone but fall back without it, so it works before AND after the view is migrated
     // to expose timezone (older view -> no column -> retry without it, defaulting the tz to QLD).

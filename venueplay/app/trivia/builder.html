@@ -109,7 +109,7 @@
         <label class="f">Question</label>
         <textarea id="ownQ" placeholder="e.g. Which pub is the oldest in this town?"></textarea>
         <div class="opts" id="ownOpts" style="margin-top:10px">
-          <div class="orow"><input type="text" data-o="0" placeholder="Answer A"><label><input type="radio" name="correct" value="0" checked> Correct</label></div>
+          <div class="orow"><input type="text" data-o="0" placeholder="Answer A"><label><input type="radio" name="correct" value="0"> Correct</label></div>
           <div class="orow"><input type="text" data-o="1" placeholder="Answer B"><label><input type="radio" name="correct" value="1"> Correct</label></div>
           <div class="orow"><input type="text" data-o="2" placeholder="Answer C"><label><input type="radio" name="correct" value="2"> Correct</label></div>
           <div class="orow"><input type="text" data-o="3" placeholder="Answer D"><label><input type="radio" name="correct" value="3"> Correct</label></div>
@@ -241,6 +241,7 @@
     req("POST","/host/trivia/questions/add",{ set_id:G.setId, questions:[{ question:q, options:opts, correct_index:ci, category:($("ownCat").value||"").trim()||undefined, difficulty:$("ownDiff").value, image_url:($("ownImg").value||"").trim()||undefined }] })
       .then(function(r){ setStatus("ownStatus","Added.","ok");
         $("ownQ").value=""; document.querySelectorAll("#ownOpts input[data-o]").forEach(function(i){ i.value=""; }); $("ownImg").value="";
+        document.querySelectorAll('#ownOpts input[name="correct"]').forEach(function(r){ r.checked=false; });  // force an explicit "correct" pick per question - no sticky A default
         loadQuestions(); loadMySets(G.setId); })
       .catch(function(e){ setStatus("ownStatus", e.message||"Could not add", "err"); })
       .then(function(){ $("addOwnBtn").disabled=false; });
