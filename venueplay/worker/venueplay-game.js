@@ -1,12 +1,16 @@
 /**
- * VenuePlay GAME Worker  (venueplay-game)  -- REVIEWED + HARDENED 4 Aug 2026.
+ * VenuePlay GAME Worker  (venueplay-game)  -- REVIEWED + HARDENED 4 Aug 2026; FIXES 7 Aug 2026.
  * Review blockers fixed: a failed start no longer ends the live game; overage is HOST-APPROVED
  * (a game over the plan cap will NOT start until the host taps OK via /host/overage/ack, and
  * only approved overage is billed - tier read from subscription metadata, failures logged);
  * members double-resolve guarded; one card per player; raffle draw double-tap guarded; a
  * round-number clash returns a clean retryable 409. Billing basis is joiners = players (a
- * phone reload reuses its stored token, so no new row). NEEDS AN END-TO-END TEST PASS before
- * production. Requires migrations 13 + 14.
+ * phone reload reuses its stored token, so no new row).
+ * 7 Aug 2026 fixes: "create a night" inserted visibility='venue' which the DB CHECK rejects -> now
+ * 'private'; overage is a flat $2/head (no cap); venue+host suspend kill-switch; trivia no-repeat
+ * (365-day memory, graceful if that table is unmigrated) + theme search.
+ * MIGRATIONS: needs through 27 for the trivia features (24 venue timezone, 25 question meta,
+ * 26 vp_asked_questions no-repeat, 27 vp_question_submissions). (Old note said "13 + 14" - stale.)
  * Remaining (not a blocker): a musical /host/play double-tap can nudge played_count by one (low).
  * ----------------------------------------------------------------------------
  * The server-authoritative referee for the live game. This Worker is the ONLY
