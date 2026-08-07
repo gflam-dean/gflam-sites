@@ -179,6 +179,9 @@
 <div class="wrap">
 
   <!-- ============ SIGN IN ============ -->
+  <!-- Neutral splash shown on load until the auth check resolves, so the sign-in screen never
+       flashes for someone who is already signed in. Just the page's dark background. -->
+  <div id="vBoot" class="hidden" aria-hidden="true"></div>
   <div id="vSignIn" class="hidden">
     <div class="authwrap">
       <div class="authlogo">
@@ -453,7 +456,7 @@
   function pairedCode(){ try{ var c=localStorage.getItem("vpPairCode"); return (c&&CODE_RE.test(c))?c:""; }catch(e){ return ""; } }
 
   // ================= VIEW ROUTER =================
-  var VIEWS=["vSignIn","vAdmin","vNoVenue","vVenuePick","vPair","vConsole"];
+  var VIEWS=["vBoot","vSignIn","vAdmin","vNoVenue","vVenuePick","vPair","vConsole"];
   var __ctx=null;   // last resolved auth context (for venue-based auto-pairing)
   function go(view){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==view); } }
 
@@ -1253,9 +1256,11 @@
 
   // ================= INIT =================
   // (removed "Paired, sign in to start" header chip — the status only shows once actually signed in)
-  go("vSignIn");
-  // If a session already exists (returning manager/admin), route them straight in.
-  if(window.VP){ VP.ready().then(function(ctx){ if(ctx && ctx.authed){ applyRoute(ctx); } }); }
+  // Show a neutral splash until auth resolves, THEN route — the sign-in screen never flashes for
+  // someone who is actually signed in. Signed-out users fall through to vSignIn once ready resolves.
+  go("vBoot");
+  if(window.VP){ VP.ready().then(function(ctx){ __ctx=ctx; applyRoute(ctx); }).catch(function(){ go("vSignIn"); }); }
+  else { go("vSignIn"); }
 })();
 </script>
 </body>
