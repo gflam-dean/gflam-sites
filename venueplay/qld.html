@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VenuePlay: Run a packed Tuesday. Every Tuesday.</title>
+<meta name="robots" content="noindex,nofollow">
 <meta name="description" content="Bingo, trivia, musical bingo and raffles for pubs, clubs and bowls clubs. One pub, one platform, every format on one screen. Players join from their phone, no app, no login. Founding venues lock in $2.50 per player, for life.">
 
 <!-- Open Graph -->
@@ -780,14 +781,14 @@
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="top">
   <div class="wrap">
-    <span class="eyebrow"><span class="live-dot"></span> Founding 100, now open</span>
+    <span class="eyebrow"><span class="live-dot"></span> Queensland founding, now open</span>
     <h1>Run a packed <span class="accent">Tuesday</span>.<br>Every&nbsp;Tuesday.</h1>
     <p class="lede">Bingo, trivia, musical bingo and raffles, run from one screen. Your crowd plays from their own phones, <b>no app and no login</b>. You just press go. Built for pubs, clubs and bowls clubs that want a full room on a quiet night.</p>
     <div class="hero-cta">
       <a class="btn btn-primary" href="#claim">Lock in your founding price</a>
       <a class="btn btn-ghost" href="#modes">See the game modes</a>
     </div>
-    <p class="hero-note">First 100 venues only · launching 24 August 2026 · price locked for life</p>
+    <p class="hero-note">Queensland venues · founding closes 31 August 2026 · locked for life while you stay</p>
   </div>
 </section>
 
@@ -939,8 +940,8 @@
         <div>
           <div class="label">Founding venues</div>
           <h2 class="sec-title">$2.50 per player.<br>Locked for life.</h2>
-          <p class="sec-sub">The first 100 venues to sign up lock in $2.50 per player a month (normally $3), set and locked for life. After 100, founding pricing closes for good.</p>
-          <div class="counter">
+          <p class="sec-sub">Queensland venues that join before 31 August 2026 lock in $2.50 per player a month (normally $3), set and locked for life. Founding closes for Queensland at the end of August, and it will not come back.</p>
+          <div class="counter" style="display:none">
             <div class="big" id="vp-claimed"><span id="vp-count">…</span><span class="of"> / 100</span></div>
             <div class="bar"><i id="vp-bar"></i></div>
             <div class="sub" id="vp-remaining">founding spots open</div>
@@ -960,7 +961,7 @@
             <div class="pl"><b>Founding, annual</b>billed yearly · best value</div>
             <div class="pv"><s>$2.85</s> $2.30</div>
           </div>
-          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Your founding rate is set and locked for life. It never goes up.</p>
+          <p class="price-foot">Priced per player, on your venue's max players per session. Go over on a big night and it's just $2 per extra player that night. Your founding rate is locked for life while your subscription stays active. Cancel and the founding rate ends for good, so rejoining later is at the standard rate.</p>
         </div>
       </div>
     </div>
@@ -1014,7 +1015,7 @@
     <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
       <div class="label" style="justify-content:center">Claim your spot</div>
       <h2 class="sec-title">Lock in founding pricing</h2>
-      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to hold one of the 100 founding spots. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
+      <p class="sec-sub" style="margin-left:auto;margin-right:auto">Add your card to lock in your Queensland founding price before 31 August. Nothing is charged today. New venues get a free first month, then your first payment is one month later, and you can cancel any time before then.</p>
     </div>
 
     <div class="form-shell">
@@ -1106,7 +1107,7 @@
     </div>
     <div class="faq">
       <details class="q"><summary>When does VenuePlay launch?<span class="pm"></span></summary><div class="a">VenuePlay launches 24 August 2026. Founding venues get first access, and we'll be in touch before then to get you set up.</div></details>
-      <details class="q"><summary>What does "founding venue" actually mean?<span class="pm"></span></summary><div class="a">The first 100 venues to sign up lock in $2.50 per player a month instead of $3, for life. Once 100 spots are gone, founding pricing closes for good.</div></details>
+      <details class="q"><summary>What does "founding venue" actually mean?<span class="pm"></span></summary><div class="a">Queensland venues that join before 31 August 2026 lock in $2.50 per player a month instead of $3, for life. It stays locked while you are subscribed. If you cancel, the founding rate ends for good, and rejoining later is at the standard rate.</div></details>
       <details class="q"><summary>Do players need to download an app?<span class="pm"></span></summary><div class="a">No. They scan a code and play straight from their phone's browser. No app, no login, no fuss, which means more of the room actually joins in.</div></details>
       <details class="q"><summary>What kind of venues is it for?<span class="pm"></span></summary><div class="a">Pubs, clubs, bowls clubs and RSLs: anyone running a regular entertainment night, or wanting to start one. If you've got a screen and a crowd, you're set.</div></details>
       <details class="q"><summary>How does billing work?<span class="pm"></span></summary><div class="a">A simple subscription priced per player, per month, based on your venue's max players per session. Pay monthly at $2.50 a player, or yearly for $2.30 a player, and your founding pricing is locked for life either way. New venues get a free first month, then billing recurs at your founding rate. Cancel any time before your first payment and you are never charged.</div></details>
@@ -1475,7 +1476,7 @@
     fetch(VP_WORKER + '/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
+      body: JSON.stringify({ name: name, email: email, mobile: mobile, postcode: (venues[0] && venues[0].postcode) || '', plan: plan, founding_code: 'QLD-AUG-2026', venues: venues, venue: venues[0].name, seats: venues[0].seats, marketing_opt_in: marketingOptIn, embedded: wantEmbedded })
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
