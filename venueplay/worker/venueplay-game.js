@@ -570,6 +570,13 @@ async function handleHostGame(request, env, json) {
   }
 
   const sessions = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(sessionId) + '&select=*');
+  // SUSPEND kill-switch: a suspended venue's hosts cannot start any game (blocks the venue AND its hosts).
+  if (sessions && sessions[0] && sessions[0].venue_id) {
+    const _sv = await sbGet(env, 'vp_venues', 'id=eq.' + enc(sessions[0].venue_id) + '&select=status');
+    if (_sv && _sv[0] && _sv[0].status === 'suspended') {
+      return json({ error: 'This venue is suspended. Contact VenuePlay to reactivate it.' }, 403);
+    }
+  }
   if (!sessions.length) return json({ error: 'Session not found' }, 404);
   const session = sessions[0];
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
