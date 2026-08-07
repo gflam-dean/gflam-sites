@@ -2572,7 +2572,7 @@ async function chargeNightOverage(env, session) {
                 '"): skipping charge for manual review');
     return;
   }
-  const rateDollars = tier === 'standard' ? 3.00 : 2.50;       // overage always at the MONTHLY rate
+  const rateDollars = 2.00;   // flat $2 per extra player, per night - Dean's locked overage model (no cap)
   const amountCents = Math.round(overage * rateDollars * 100);
   if (amountCents <= 0) return;
 
