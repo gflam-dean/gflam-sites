@@ -342,6 +342,11 @@ async function handleWebhook(request, env, cors) {
   if (event.type === 'invoice.paid' && typeof vpaFireInvoiceEmail === 'function') {
     await vpaFireInvoiceEmail(env, event.data.object);
   }
+  // 5 days before each renewal (Stripe invoice.upcoming), email the venue a heads-up. Set the lead
+  // time to 5 days in Stripe: Settings -> Billing -> Automatic collection -> upcoming invoice webhook.
+  if (event.type === 'invoice.upcoming' && typeof vpaFireUpcomingEmail === 'function') {
+    await vpaFireUpcomingEmail(env, event.data.object);
+  }
   return new Response('ok', { status: 200, headers: cors });
 }
 
@@ -1585,6 +1590,59 @@ async function vpaFireInvoiceEmail(env, invoice) {
       }),
     });
   } catch (_) { /* invoice email is best-effort */ }
+}
+
+/* 5-day payment reminder, sent on Stripe's invoice.upcoming event (set the lead time to 5 days in
+   Stripe billing settings). Respects the venue's payment_reminders opt-out. Best-effort. */
+async function vpaFireUpcomingEmail(env, invoice) {
+  try {
+    if (!env.RESEND_API_KEY) return;
+    if (!invoice) return;
+    const email = invoice.customer_email;
+    if (!email) return;
+    const amountDue = Number(invoice.amount_due || 0);
+    if (amountDue <= 0) return;   // $0 upcoming (still in the free month) -> no reminder
+    const customer = invoice.customer;
+    if (customer) {
+      try {
+        const accts = await vpaSelect(env, 'venueplay_founding',
+          'stripe_customer_id=eq.' + encodeURIComponent(customer) + '&select=payment_reminders&limit=1');
+        if (accts && accts[0] && accts[0].payment_reminders === false) return;   // opted out
+      } catch (_) { /* can't check -> still send; a reminder is safer than silence */ }
+    }
+    const amount = '$' + (amountDue / 100).toFixed(2);
+    const whenTs = invoice.next_payment_attempt || invoice.period_end || 0;
+    const when = whenTs ? vpaFmtDate(whenTs) : '';
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+    const logo = site + '/logos/venueplay_primary_rebuilt.png';
+    const billing = site + '/app/billing.html';
+    const html =
+      '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+      + '<img src="' + logo + '" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
+      + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">A heads-up: your next payment is coming up.</p>'
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">In about 5 days' + (when ? ' (on ' + vpaEsc(when) + ')' : '') + ' we\'ll charge the card on file for your VenuePlay subscription.</p>'
+      + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
+      +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount due</p>'
+      +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
+      +   (when ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">On ' + vpaEsc(when) + '</p>' : '')
+      + '</td></tr></table>'
+      + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Manage your plan</a>'
+      + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">You can add or reduce players anytime from your billing page. Adding applies straight away (pro rata); reducing applies from your next renewal, so you are never left short mid-month.</p>'
+      + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact hello@venueplay.com.au</p>'
+      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au</p>'
+      + '</div>';
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'VenuePlay <hello@send.venueplay.com.au>',
+        reply_to: 'hello@venueplay.com.au',
+        to: [email],
+        subject: 'Your VenuePlay payment is coming up' + (when ? ' - ' + when : '') + ' (' + amount + ')',
+        html: html,
+      }),
+    });
+  } catch (_) { /* reminder email is best-effort */ }
 }
 
 function vpaEsc(s) {
