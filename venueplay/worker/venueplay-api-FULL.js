@@ -1551,6 +1551,26 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
 /* Branded VenuePlay invoice email, sent on every real payment (invoice.paid).
    Links to the Stripe-hosted invoice + PDF (which carry your Stripe branding).
    Skips $0 trial invoices and is best-effort so it never affects the webhook. */
+// Read the busy-night overage off an invoice's own line items. chargeNightOverage (game worker)
+// adds one Stripe invoiceitem per over-cap night, described "Big night extra players ...", at the
+// flat $2/head rate. So the invoice itself is the source of truth - no re-aggregation, no double
+// count. Returns { nights, players (total extra player-nights), cents }.
+function vpaOverageFromInvoice(invoice) {
+  const out = { nights: 0, players: 0, cents: 0 };
+  const lines = invoice && invoice.lines && invoice.lines.data;
+  if (!Array.isArray(lines)) return out;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    const desc = String((l && l.description) || '');
+    if (/extra players/i.test(desc) && Number(l.amount) > 0) {
+      out.nights += 1;
+      out.cents += Number(l.amount);
+    }
+  }
+  out.players = Math.round(out.cents / 200);   // $2.00 = 200 cents per extra player, per night
+  return out;
+}
+
 async function vpaFireInvoiceEmail(env, invoice) {
   try {
     if (!env.RESEND_API_KEY) return;                                  // Resend not configured yet
@@ -1560,6 +1580,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const logo = site + '/logos/venueplay_primary_rebuilt.png';
     const amount = '$' + (Number(invoice.amount_paid) / 100).toFixed(2);
+    const ov = vpaOverageFromInvoice(invoice);
     const number = invoice.number ? String(invoice.number) : '';
     const view = invoice.hosted_invoice_url || '';
     const pdf = invoice.invoice_pdf || '';
@@ -1572,7 +1593,11 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount paid</p>'
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
+      +   (ov.nights > 0
+            ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#12101a">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#12101a">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
+            : '')
       + '</td></tr></table>'
+      + (ov.nights > 0 ? '<p style="font-size:13px;color:#6a6a75;margin:0 0 18px">Running over most weeks? A bigger plan usually works out cheaper than the per-night rate - adjust it anytime on your billing page.</p>' : '')
       + (btn ? '<a href="' + btn + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">View invoice</a>' : '')
       + (pdf ? ' <a href="' + pdf + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:9.5px 22px;border-radius:8px">Download PDF</a>' : '')
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:26px 0 0">Questions about your bill? Reply to this email or contact hello@venueplay.com.au</p>'
@@ -1611,6 +1636,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       } catch (_) { /* can't check -> still send; a reminder is safer than silence */ }
     }
     const amount = '$' + (amountDue / 100).toFixed(2);
+    const ov = vpaOverageFromInvoice(invoice);
     const whenTs = invoice.next_payment_attempt || invoice.period_end || 0;
     const when = whenTs ? vpaFmtDate(whenTs) : '';
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
@@ -1626,6 +1652,12 @@ async function vpaFireUpcomingEmail(env, invoice) {
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
       +   (when ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">On ' + vpaEsc(when) + '</p>' : '')
       + '</td></tr></table>'
+      + (ov.nights > 0
+          ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
+            + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">Busy month! This bill includes extra players.</p>'
+            + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">You went over your plan on <b>' + ov.nights + ' night' + (ov.nights === 1 ? '' : 's') + '</b> this cycle (<b>' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b>), adding <b>$' + (ov.cents / 100).toFixed(2) + '</b> at $2/head. If that\'s your normal, a bigger plan usually works out cheaper - you can bump it on your billing page before this charge.</p>'
+            + '</td></tr></table>'
+          : '')
       + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Manage your plan</a>'
       + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">You can add or reduce players anytime from your billing page. Adding applies straight away (pro rata); reducing applies from your next renewal, so you are never left short mid-month.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact hello@venueplay.com.au</p>'
