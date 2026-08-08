@@ -32,6 +32,10 @@
   .btn.pink{background:var(--pink);color:#fff}
   .btn.pink:active{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink);color:var(--muted);border:1px solid var(--line)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.12s;font-family:'Manrope',sans-serif}
+  .chip:hover{border-color:var(--pink);color:#fff}
+  .chip:disabled{opacity:.5;cursor:default}
   .btn:disabled{opacity:.45;cursor:not-allowed}
   .opts .orow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
   .opts .orow input[type=text]{flex:1}
@@ -74,6 +78,13 @@
         <input type="text" id="setName" placeholder="Name this night (e.g. Thursday Quiz)" maxlength="80">
         <button type="button" id="createBtn" class="btn pink" style="flex:0 0 auto">Create</button>
       </div>
+    </div>
+
+    <div class="card" id="quickCard">
+      <div class="lbl">One-tap themed night</div>
+      <div class="hint">Tap a theme and we&rsquo;ll build a ready-to-run 20-question night for you. Edit or add more after.</div>
+      <div id="quickChips" class="chips"><span class="hint">Loading themes&hellip;</span></div>
+      <div id="quickStatus" class="status"></div>
     </div>
 
     <div id="editArea" class="hidden">
@@ -162,7 +173,35 @@
       .then(function(r){ var rows=(r&&r.data)||[]; var s=$("libCat"); s.innerHTML="";
         var any=document.createElement("option"); any.value=""; any.textContent="All categories"; s.appendChild(any);
         rows.forEach(function(row){ var o=document.createElement("option"); o.value=row.title; o.textContent=row.title+" ("+(row.question_count||0)+")"; s.appendChild(o); });
+        renderQuickChips(rows);
       }, function(){});
+  }
+  // One-tap themed night: a chip per library theme; tapping it creates the night + pulls 20 of that
+  // theme in a single action (vs New night -> name -> add-from-library). Reuses the same endpoints.
+  function renderQuickChips(rows){
+    var w=$("quickChips"); if(!w) return; w.innerHTML="";
+    var themes=(rows||[]).filter(function(row){ return row && row.title; });
+    if(!themes.length){ w.innerHTML='<span class="hint">No themes yet.</span>'; return; }
+    themes.forEach(function(row){
+      var b=document.createElement("button"); b.type="button"; b.className="chip";
+      b.textContent=row.title+" Night";
+      b.addEventListener("click", function(){ quickNight(row.title); });
+      w.appendChild(b);
+    });
+  }
+  function quickNight(theme){
+    if(!G.venueId){ setStatus("quickStatus","No venue linked to this login.","err"); return; }
+    var chips=document.querySelectorAll("#quickChips .chip");
+    for(var i=0;i<chips.length;i++){ chips[i].disabled=true; }
+    setStatus("quickStatus","Building your "+theme+" night…","");
+    req("POST","/host/trivia/set",{ venue_id:G.venueId, title:theme+" Night" }).then(function(r){
+      var sid=r.set_id;
+      return req("POST","/host/trivia/questions/from-library",{ set_id:sid, category:theme, count:20 }).then(function(res){
+        setStatus("quickStatus","Your "+theme+" Night is ready — "+((res&&res.added)||0)+" questions added. Edit below, or run it from the trivia game.","ok");
+        loadMySets(sid);   // selects the new night + opens its editor with the questions loaded
+      });
+    }).catch(function(e){ setStatus("quickStatus", (e&&e.message)||"Could not build the night","err"); })
+      .then(function(){ var c=document.querySelectorAll("#quickChips .chip"); for(var j=0;j<c.length;j++){ c[j].disabled=false; } });
   }
   function loadMySets(keepId){
     client.from("vp_question_sets").select("id,title,question_count").eq("owner_venue_id",G.venueId).order("created_at",{ascending:false})
