@@ -88,8 +88,8 @@
     </div>
 
     <div id="editArea" class="hidden">
-      <div class="card">
-        <div class="lbl">Add from the Trivia Library</div>
+      <details class="card">
+        <summary class="lbl" style="cursor:pointer">Add from the Trivia Library</summary>
         <div class="hint">Grab a batch from our 37,000+ question bank.</div>
         <div class="row">
           <div><label class="f">Category</label><select id="libCat"></select></div>
@@ -99,10 +99,10 @@
         </div>
         <button type="button" id="addLibBtn" class="btn pink" style="width:100%;margin-top:12px">Add to night</button>
         <div id="libStatus" class="status"></div>
-      </div>
+      </details>
 
-      <div class="card">
-        <div class="lbl">Search for a theme</div>
+      <details class="card">
+        <summary class="lbl" style="cursor:pointer">Search for a theme</summary>
         <div class="hint">Type any topic to build a themed night &mdash; e.g. Neighbours, the 90s, Taylor Swift. Searches all 37,000+ questions.</div>
         <div class="row">
           <div style="flex:1"><label class="f">Topic</label><input type="text" id="searchQ" placeholder="e.g. Neighbours"></div>
@@ -112,10 +112,10 @@
         </div>
         <button type="button" id="searchBtn" class="btn pink" style="width:100%;margin-top:12px">Search &amp; add to night</button>
         <div id="searchStatus" class="status"></div>
-      </div>
+      </details>
 
-      <div class="card">
-        <div class="lbl">Write your own</div>
+      <details class="card">
+        <summary class="lbl" style="cursor:pointer">Write your own</summary>
         <div class="hint">Type a question, four answers, and tick the correct one.</div>
         <label class="f">Question</label>
         <textarea id="ownQ" placeholder="e.g. Which pub is the oldest in this town?"></textarea>
@@ -134,7 +134,7 @@
         <input type="text" id="ownImg" placeholder="https://...">
         <button type="button" id="addOwnBtn" class="btn pink" style="width:100%;margin-top:12px">Add question</button>
         <div id="ownStatus" class="status"></div>
-      </div>
+      </details>
 
       <div class="card">
         <div class="lbl">This night <span class="qcount" id="qCount">(0 questions)</span></div>
