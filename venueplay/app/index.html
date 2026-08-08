@@ -459,7 +459,7 @@
   var VIEWS=["vBoot","vSignIn","vAdmin","vNoVenue","vVenuePick","vPair","vConsole"];
   var __ctx=null;   // last resolved auth context (for venue-based auto-pairing)
   function go(view){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==view); }
-    var rh=$("bingoSteps"); if(rh) rh.classList.toggle("hidden", view!=="vConsole");   // the bottom "How it runs" steps belong on the console only, never the sign-in page
+    var rh=$("bingoSteps"); if(rh) rh.classList.add("hidden");   // bottom bingo "How it runs" only appears once actually running bingo (selectGame); never sign-in, venue pick, or game select
   }
 
   // ---- VenuePlay HQ "View as" (impersonation) handoff ----
@@ -1189,6 +1189,7 @@
     for(var i=0;i<btns.length;i++){ btns[i].classList.toggle("on", btns[i].getAttribute("data-game")===game); }
     $("gameSelect").classList.add("hidden");      // hide the picker while in a game (Games button brings it back)
     $("bingoView").classList.remove("hidden");
+    if($("bingoSteps")) $("bingoSteps").classList.remove("hidden");   // bingo walkthrough shows only while actually running bingo
     var sv=$("soonView"); if(sv) sv.classList.add("hidden");
     $("gamesBack").style.display="";
     $("headerTag").textContent="Bingo";
@@ -1230,6 +1231,7 @@
     renderRunSheet();
     $("gameSelect").classList.remove("hidden");
     $("bingoView").classList.add("hidden");
+    if($("bingoSteps")) $("bingoSteps").classList.add("hidden");
     var sv=$("soonView"); if(sv) sv.classList.add("hidden");
     $("gamesBack").style.display="none";
     $("headerTag").textContent="";
