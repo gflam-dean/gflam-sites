@@ -164,8 +164,8 @@
           </div>
           <div class="field">
             <label>Questions this round</label>
-            <input type="number" id="cfgCount" class="mono" min="1" max="50" value="10">
-            <div class="note" style="margin-top:4px">How many questions to play from the set this round.</div>
+            <input type="number" id="cfgCount" class="mono" min="1" max="100" value="10">
+            <div class="note" style="margin-top:4px">Auto-fills to the whole set when you pick one. Lower it to play fewer.</div>
           </div>
           <div class="stat">
             <div class="box"><div class="k">Questions</div><div class="v" id="setupQs">0</div></div>
@@ -179,10 +179,6 @@
           <div class="field">
             <label>Speed bonus (faster answers score more, up to +50%)</label>
             <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
-          </div>
-          <div class="field">
-            <label>Four-colour answers (A red, B blue, C gold, D green)</label>
-            <div class="seg" id="cfgColour"><button data-v="on" class="on">On</button><button data-v="off">Off (neutral)</button></div>
           </div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
@@ -295,7 +291,7 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    timePerQ:20, base:100, count:10, speedBonus:true, colour:true,
+    timePerQ:20, base:100, count:10, speedBonus:true, colour:false,
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
     players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
@@ -485,7 +481,7 @@
   function readSettings(){
     G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||20));
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
-    G.count=Math.max(1, Math.min(50, parseInt($("cfgCount").value,10)||10));
+    G.count=Math.max(1, Math.min(100, parseInt($("cfgCount").value,10)||10));
     G.setId=$("setSel").value||"";
   }
   function openSession(){
@@ -668,6 +664,8 @@
     var c=opt?parseInt(opt.getAttribute("data-count"),10):0;
     G.setId=sel.value||""; G.questionCount=(c>=0?c:0);
     $("setupQs").textContent=G.questionCount;
+    // Default the round to the WHOLE set so a host's questions all play (was stuck at 10). They can lower it.
+    if($("cfgCount") && G.questionCount>0){ $("cfgCount").value=Math.min(100, G.questionCount); }
   }
 
   // ---- events ----
