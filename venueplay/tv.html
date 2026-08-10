@@ -864,6 +864,39 @@
     }, 60000);
   })();
 
+  // An always-on screen has nobody watching it. If the stick sleeps, the browser suspends the
+  // tab, or an uncaught error stops the ad rotation, the TV can sit black for days and the venue
+  // just sees a dead screen. Three guards, and EVERY one of them refuses to act unless the screen
+  // is idle, so none of this can ever interrupt a live game.
+  (function selfHeal(){
+    var HEAL_AFTER = 6 * 60 * 60 * 1000;   // a routine reload, only after six idle hours
+    var lastLoad = Date.now();
+    function idle(){ return !hostConnected && tvMode === "ads"; }
+
+    // Waking from sleep: the frame on screen is stale, so rebuild the board rather than sit on it.
+    document.addEventListener("visibilitychange", function(){
+      if(document.visibilityState !== "visible" || !idle()) return;
+      adBuilt = false; buildAds(); startAds();
+    });
+
+    // Long-run reset. Reloading a browser that has been rendering for days clears leaks and any
+    // realtime channel that never came back, and it is free when nothing is on.
+    setInterval(function(){
+      if(!idle() || (Date.now() - lastLoad) < HEAL_AFTER) return;
+      lastLoad = Date.now();
+      location.reload();
+    }, 60000);
+
+    // An uncaught error can stop the rotation dead with the screen still lit. Recover once, and
+    // only once, so a reload loop can never take the TV down harder than the original fault.
+    var recovered = false;
+    window.addEventListener("error", function(){
+      if(recovered || !idle()) return;
+      recovered = true;
+      setTimeout(function(){ if(idle()) location.reload(); }, 5000);
+    });
+  })();
+
   // ================= FULLSCREEN (additive setup control) =================
   // Purely additive: lets a staff member tap once to fill the TV. Does not touch
   // the game, realtime, pairing or ad logic above.
