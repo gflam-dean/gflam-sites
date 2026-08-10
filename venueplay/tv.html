@@ -432,7 +432,7 @@
       // The help line covers the "our issue" case: if a set-up venue's screen is sitting here,
       // their promos/game did not load, so point them to support rather than only cheering.
       return '<div class="adtag" style="color:'+accentHex("pink")+'">VenuePlay</div>'+
-             '<div class="adbig">Game on here tonight</div>'+
+             '<div class="adbig">Game on here</div>'+
              '<div class="adsub">Grab your phone, the fun starts soon</div>'+
              '<div class="adhelp">Screen not showing your promos or game? Email hello@venueplay.com.au</div>';
     }
@@ -805,7 +805,12 @@
   (function loadVenueScreen(){
     var slug=VENUE_SLUG; if(!slug) return;   // the already-parsed slug (handles /tv?venue= AND /tv?bare-slug AND the remembered one)
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
-    function refreshAds(){ adBuilt=false; buildAds(); if(!hostConnected) startAds(); } // only rebuild while idle
+    // buildAds() empties the container and recreates every slide with no "show" class, so
+    // whatever rebuilds MUST restart the rotation or the screen is left black. The old guard
+    // was !hostConnected, but hostConnected is never reset once a host has paired, so after
+    // one game night this went black and stayed black. tvMode is the real question: if ads
+    // are what is on screen, show them.
+    function refreshAds(){ if(tvMode!=="ads") { adBuilt=false; return; } adBuilt=false; buildAds(); startAds(); }
     // Venue logo: top-left corner, over games and ads. Injected once so no HTML anchor is needed.
     function setVenueLogo(url){
       var el=document.getElementById("venueLogo");
@@ -860,7 +865,7 @@
     var day=todayAU();
     setInterval(function(){
       var d=todayAU();
-      if(d!==day){ day=d; if(tvMode==="ads"){ adBuilt=false; buildAds(); if(!hostConnected) startAds(); } }
+      if(d!==day){ day=d; if(tvMode==="ads"){ adBuilt=false; buildAds(); startAds(); } }
     }, 60000);
   })();
 
@@ -871,7 +876,9 @@
   (function selfHeal(){
     var HEAL_AFTER = 6 * 60 * 60 * 1000;   // a routine reload, only after six idle hours
     var lastLoad = Date.now();
-    function idle(){ return !hostConnected && tvMode === "ads"; }
+    // tvMode is the reliable signal. hostConnected is never reset once a host pairs, so
+    // using it here would switch the self-healing off for the rest of the page's life.
+    function idle(){ return tvMode === "ads"; }
 
     // Waking from sleep: the frame on screen is stale, so rebuild the board rather than sit on it.
     document.addEventListener("visibilitychange", function(){
