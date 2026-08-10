@@ -1,0 +1,5 @@
+# The trivia bank is the product, not a public asset. Nothing in the browser loads it
+# (the homepage counter reads /data/trivia-count.json instead), so serve a 404 rather
+# than handing the whole question bank to anyone who guesses the URL.
+/data/trivia-library.json    /404  404
+/data/trivia-review-*.json   /404  404

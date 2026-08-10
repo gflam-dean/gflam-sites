@@ -855,9 +855,107 @@
   function playerCount(){ return G.order.length; }
 
   function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount() }); }
+  /* ---- strips ----
+     Paper bingo is sold in STRIPS of six: between them the six tickets carry all 90
+     numbers exactly once, so every number called marks exactly one of your tickets.
+     Dealing six independent tickets instead meant about a third of calls landed on
+     none of a player's tickets and about a quarter landed on two, which is both
+     unfamiliar to anyone who has played on paper and miserable on a phone, where
+     you cannot see six tickets at once.
+
+     COL_TOTAL is how many numbers each column contributes to a whole strip
+     (column 0 is 1-9, column 8 is 80-90, the rest are ten each) and sums to 90. */
+  var COL_TOTAL=[9,10,10,10,10,10,10,10,11];
+
+  // 6 x 9 grid of per-ticket column counts: every entry 1-3, every ticket totals 15,
+  // every column totals COL_TOTAL. That is what makes the six tickets a true strip.
+  function stripCounts(){
+    for(var attempt=0;attempt<600;attempt++){
+      var extra=[],rowLeft=[],r,c;
+      for(r=0;r<6;r++){ extra.push([0,0,0,0,0,0,0,0,0]); rowLeft.push(6); }  // 15 - 9 baseline
+      var cols=[0,1,2,3,4,5,6,7,8];
+      for(var i=cols.length-1;i>0;i--){ var j=cryptoInt(i+1),t=cols[i]; cols[i]=cols[j]; cols[j]=t; }
+      var ok=true;
+      for(var ci=0;ci<cols.length;ci++){
+        c=cols[ci];
+        var need=COL_TOTAL[c]-6;
+        // fill from the tickets with most room left, so nothing gets stranded
+        var order=[0,1,2,3,4,5].sort(function(a,b){ return rowLeft[b]-rowLeft[a] || (cryptoInt(2)?1:-1); });
+        for(var oi=0;oi<order.length && need>0;oi++){
+          r=order[oi];
+          var take=Math.min(2-extra[r][c], rowLeft[r], need);
+          if(take<=0) continue;
+          extra[r][c]+=take; rowLeft[r]-=take; need-=take;
+        }
+        if(need>0){ ok=false; break; }
+      }
+      if(!ok) continue;
+      var clean=true;
+      for(r=0;r<6;r++) if(rowLeft[r]!==0) clean=false;
+      if(!clean) continue;
+      var out=[];
+      for(r=0;r<6;r++){ var row=[]; for(c=0;c<9;c++) row.push(1+extra[r][c]); out.push(row); }
+      return out;
+    }
+    return null;
+  }
+
+  // place one ticket's nine column counts into three rows holding exactly five each
+  function stripRows(counts){
+    for(var attempt=0;attempt<400;attempt++){
+      var assign=[],tally=[0,0,0],c,i;
+      for(c=0;c<9;c++){
+        var pick=[0,1,2];
+        for(i=pick.length-1;i>0;i--){ var j=cryptoInt(i+1),t=pick[i]; pick[i]=pick[j]; pick[j]=t; }
+        pick=pick.slice(0,counts[c]).sort();
+        assign.push(pick);
+        for(i=0;i<pick.length;i++) tally[pick[i]]++;
+      }
+      if(tally[0]===5 && tally[1]===5 && tally[2]===5) return assign;
+    }
+    return null;
+  }
+
+  // a full strip of six tickets covering 1-90 exactly once
+  function makeStrip(){
+    for(var attempt=0;attempt<200;attempt++){
+      var m=stripCounts(); if(!m) continue;
+      var assigns=[],t,ok=true;
+      for(t=0;t<6;t++){ var a=stripRows(m[t]); if(!a){ ok=false; break; } assigns.push(a); }
+      if(!ok) continue;
+      var pools=[],c,i,j,tmp;
+      for(c=0;c<9;c++){
+        var rg=colRange(c),p=[];
+        for(i=rg[0];i<=rg[1];i++) p.push(i);
+        for(i=p.length-1;i>0;i--){ j=cryptoInt(i+1); tmp=p[i]; p[i]=p[j]; p[j]=tmp; }
+        pools.push(p);
+      }
+      var tickets=[];
+      for(t=0;t<6;t++) tickets.push([[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]);
+      for(c=0;c<9;c++){
+        var at=0;
+        for(t=0;t<6;t++){
+          var chunk=pools[c].slice(at, at+m[t][c]).sort(function(a,b){ return a-b; });
+          at+=m[t][c];
+          var rows=assigns[t][c];
+          for(i=0;i<rows.length;i++) tickets[t][rows[i]][c]=chunk[i];
+        }
+      }
+      return tickets;
+    }
+    return null;
+  }
+
   function dealFor(p){
     var want=clampCards(G.defaultCards);   // the host decides how many tickets everyone gets
-    p.cards=[]; for(var k=0;k<want;k++){ p.cards.push({ card:makeCard(), cardNo:100+cryptoInt(900) }); }
+    p.cards=[];
+    // Deal from a strip so a called number can never appear on two of the same
+    // player's tickets. Fewer than six is simply the front of the strip.
+    var strip=makeStrip();
+    for(var k=0;k<want;k++){
+      var card = strip ? strip[k] : makeCard();   // makeCard is the fallback if a strip cannot be built
+      p.cards.push({ card:card, cardNo:100+cryptoInt(900) });
+    }
   }
   function sendCards(pid){ var p=G.players[pid]; if(!p||!p.cards) return; send({ t:"cards", pid:pid, cards:p.cards.map(function(c){ return { cells:c.card, cardNo:c.cardNo }; }) }); }
   function sendPlayers(){ send({ t:"players", count:playerCount() }); }
