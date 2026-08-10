@@ -39,7 +39,7 @@ export default {
       'Access-Control-Allow-Origin': origin,
       'Vary': 'Origin',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Stripe-Signature, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Stripe-Signature, Authorization, X-VP-Venue',
     };
     const json = (obj, status = 200) =>
       new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json', ...cors } });
@@ -473,7 +473,7 @@ async function verifyStripeSig(payload, header, secret) {
  * ----------------------------------------------------------------------------
  * PASTE STEP 1 — allow the admin token through CORS.
  *   In the existing `cors` object, add Authorization to Allow-Headers:
- *     'Access-Control-Allow-Headers': 'Content-Type, Stripe-Signature, Authorization',
+ *     'Access-Control-Allow-Headers': 'Content-Type, Stripe-Signature, Authorization, X-VP-Venue',
  *   (Without this the browser preflight blocks every /admin/* call.)
  *
  * PASTE STEP 2 — add the five admin routes.
@@ -1730,9 +1730,23 @@ async function vpbRequireOwner(request, env) {
   // not-yet-run migration 17 can never make a real owner read as "no venues".
   const staff = await vpaSelect(env, 'vp_venue_staff',
     'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&role=in.(manager,owner)&select=venue_id,role');
-  if (!staff || !staff.length) return { error: 'This login has no venues.', status: 403 };
 
-  const ids = staff.map((s) => s.venue_id);
+  let ids;
+  if (staff && staff.length) {
+    ids = staff.map((s) => s.venue_id);
+  } else {
+    // Gflam HQ admin using "View as". They are staff nowhere, so there is no venue to infer
+    // from the token alone: the console names the venue it is acting on in X-VP-Venue.
+    // Anyone who is not a platform admin still gets the normal refusal.
+    const admins = await vpaSelect(env, 'vp_platform_admins',
+      'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id');
+    if (!admins || !admins.length) return { error: 'This login has no venues.', status: 403 };
+    const target = (request.headers.get('X-VP-Venue') || '').trim();
+    if (!UUID_RE.test(target)) {
+      return { error: 'Open this from VenuePlay HQ using View as, so we know which venue you mean.', status: 400 };
+    }
+    ids = [target];
+  }
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')' +
     '&order=founding_id.asc,created_at.asc' +
@@ -2497,7 +2511,16 @@ async function vpbMyVenues(request, env, json) {
   if (!payload || !payload.sub) return json({ error: 'Not signed in.' }, 401);
   const staff = await vpaSelect(env, 'vp_venue_staff',
     'auth_user_id=eq.' + encodeURIComponent(payload.sub) + '&select=venue_id');
-  if (!staff || !staff.length) return json({ venues: [] });
+  if (!staff || !staff.length) {
+    // A Gflam HQ admin is staff nowhere, but must be able to pick any venue to view as.
+    const admins = await vpaSelect(env, 'vp_platform_admins',
+      'auth_user_id=eq.' + encodeURIComponent(payload.sub) + '&select=auth_user_id');
+    if (admins && admins.length) {
+      const all = await vpaSelect(env, 'vp_venues', 'select=id,name,slug&order=name.asc');
+      return json({ venues: all || [] });
+    }
+    return json({ venues: [] });
+  }
   const ids = staff.map((s) => s.venue_id);
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')&select=id,name,slug&order=name.asc');
