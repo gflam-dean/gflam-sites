@@ -1742,7 +1742,9 @@ async function vpbRequireOwner(request, env) {
       'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id');
     if (!admins || !admins.length) return { error: 'This login has no venues.', status: 403 };
     const target = (request.headers.get('X-VP-Venue') || '').trim();
-    if (!UUID_RE.test(target)) {
+    // Local on purpose: this Worker has no shared UUID_RE (that one lives in the game Worker).
+    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (!isUuid.test(target)) {
       return { error: 'Open this from VenuePlay HQ using View as, so we know which venue you mean.', status: 400 };
     }
     ids = [target];
