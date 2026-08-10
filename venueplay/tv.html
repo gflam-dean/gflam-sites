@@ -44,6 +44,10 @@
 
   /* ---- advertising loop (default state) ---- */
   #adsRoot{position:absolute;inset:0;z-index:1}
+  /* The branded floor sits under the ad rotation. buildAds() only ever clears #tvAds,
+     so if the rotation renders nothing, the room sees this rather than a black screen. */
+  #tvFloor{z-index:0}
+  #tvAds{z-index:1}
   .ad{opacity:0;transition:opacity .8s ease}
   .ad.show{opacity:1}
   .ad .adimg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat}
@@ -176,6 +180,13 @@
 
   <!-- ADVERTISING LOOP (default) -->
   <div id="adsRoot">
+    <!-- WATCHDOG FLOOR: do not remove. This is the screen a venue sees if everything
+         above it fails. Checked by tools/check-tv-watchdog.py -->
+    <div id="tvFloor" class="layer ad-a" aria-hidden="true">
+      <div class="adtag" style="color:var(--pink)">VenuePlay</div>
+      <div class="adbig">Game on here</div>
+      <div class="adsub">Grab your phone, the fun starts soon</div>
+    </div>
     <div id="tvAds" style="position:absolute;inset:0"></div>
     <!-- Fullscreen setup control: lives inside adsRoot so it only shows on the
          idle/advertising and pairing states (adsRoot is hidden during a game). -->
@@ -713,6 +724,13 @@
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here") return; // ignore our own presence pings
+    // Remote recovery: lets us push a reload to every screen at once rather than ask 400 venues
+    // to find the remote. Rate limited by the watchdog, and refused while a game is on air.
+    if(m.t==="tv_reload"){
+      if(tvMode!=="ads") return;
+      if(window.__vpTvReload) window.__vpTvReload("remote"); else location.reload();
+      return;
+    }
     // any host broadcast means a host is connected this session: hide the pair QR
     // and reply so the host can flip to "connected"
     if(HOST_TYPES[m.t]){ markHostConnected(); tvSend({ t:"tv_here" }); }
@@ -869,39 +887,81 @@
     }, 60000);
   })();
 
-  // An always-on screen has nobody watching it. If the stick sleeps, the browser suspends the
-  // tab, or an uncaught error stops the ad rotation, the TV can sit black for days and the venue
-  // just sees a dead screen. Three guards, and EVERY one of them refuses to act unless the screen
-  // is idle, so none of this can ever interrupt a live game.
-  (function selfHeal(){
-    var HEAL_AFTER = 6 * 60 * 60 * 1000;   // a routine reload, only after six idle hours
-    var lastLoad = Date.now();
-    // tvMode is the reliable signal. hostConnected is never reset once a host pairs, so
-    // using it here would switch the self-healing off for the rest of the page's life.
-    function idle(){ return tvMode === "ads"; }
+  // ================= WATCHDOG: DO NOT REMOVE =================
+  // Guarded by tools/check-tv-watchdog.py. If you change this, run that script.
+  // A venue TV runs unattended for weeks, in a room where nobody is going to notice it has gone
+  // black and nobody is going to walk over and refresh it. At any real number of venues, "reload
+  // the page" is not a fix that exists. So the screen has to notice, repair itself, and pull down
+  // new code on its own.
+  //
+  // It deliberately judges the DOM, not our own state flags. Whatever the cause, the only question
+  // worth asking is "is anything actually on the screen right now". That is what caught the last
+  // one: every slide was built and none was visible, and every internal flag said fine.
+  //
+  // Nothing here fires while a game is on air: tvMode is checked first, every time.
+  (function watchdog(){
+    var CHECK_MS = 20000;                   // how often we look
+    var MAX_AGE  = 4 * 60 * 60 * 1000;      // reload at least this often, idle only
+    var MIN_GAP  = 3 * 60 * 1000;           // a broken page must never thrash reloads
+    var loadedAt = Date.now();
+    var strikes  = 0;
 
-    // Waking from sleep: the frame on screen is stale, so rebuild the board rather than sit on it.
+    function idle(){ try { return tvMode === "ads"; } catch(e){ return true; } }
+
+    function reload(why){
+      // Offline, a reload swaps a stale but branded screen for a browser error page, which is
+      // strictly worse in a public room. Wait for the network to come back instead.
+      try{ if(navigator.onLine === false) return; }catch(e){}
+      try{
+        var last = parseInt(sessionStorage.getItem("vpTvReloadAt") || "0", 10);
+        if(Date.now() - last < MIN_GAP) return;
+        sessionStorage.setItem("vpTvReloadAt", String(Date.now()));
+        sessionStorage.setItem("vpTvReloadWhy", why || "");   // survives the reload, for diagnosis
+      }catch(e){}
+      location.reload();
+    }
+    window.__vpTvReload = reload;   // a remote command reuses this, rate limit included
+
+    // A game on screen is its own proof of life. Otherwise there must be a slide that is
+    // genuinely visible, not merely built.
+    function screenIsAlive(){
+      if(!idle()) return true;
+      var host = document.getElementById("tvAds");
+      if(!host) return false;
+      if(!host.querySelector(".ad")) return false;         // nothing was built
+      if(!host.querySelector(".ad.show")) return false;    // built, but nothing is showing
+      return true;
+    }
+
+    setInterval(function(){
+      try{
+        // Pick up new code by itself. This is the part that means a fix reaches a venue we are
+        // never going to physically visit.
+        if(idle() && (Date.now() - loadedAt) > MAX_AGE){ reload("max-age"); return; }
+
+        if(screenIsAlive()){ strikes = 0; return; }
+
+        strikes++;
+        if(strikes < 2) return;                 // one bad sample can just be a slide swapping over
+        if(strikes === 2){                      // cheap repair first: rebuild in place
+          try{ adBuilt = false; buildAds(); startAds(); }catch(e){}
+          return;
+        }
+        reload("black-screen");                 // the repair did not take, so start clean
+      }catch(e){
+        reload("watchdog-error");
+      }
+    }, CHECK_MS);
+
+    // Waking from sleep leaves a stale frame on screen.
     document.addEventListener("visibilitychange", function(){
       if(document.visibilityState !== "visible" || !idle()) return;
-      adBuilt = false; buildAds(); startAds();
+      try{ adBuilt = false; buildAds(); startAds(); }catch(e){ reload("wake"); }
     });
 
-    // Long-run reset. Reloading a browser that has been rendering for days clears leaks and any
-    // realtime channel that never came back, and it is free when nothing is on.
-    setInterval(function(){
-      if(!idle() || (Date.now() - lastLoad) < HEAL_AFTER) return;
-      lastLoad = Date.now();
-      location.reload();
-    }, 60000);
-
-    // An uncaught error can stop the rotation dead with the screen still lit. Recover once, and
-    // only once, so a reload loop can never take the TV down harder than the original fault.
-    var recovered = false;
-    window.addEventListener("error", function(){
-      if(recovered || !idle()) return;
-      recovered = true;
-      setTimeout(function(){ if(idle()) location.reload(); }, 5000);
-    });
+    // An uncaught error can stop the rotation with the last slide still lit, which looks alive to
+    // the check above. Move the watchdog along rather than wait for a slide to fail to advance.
+    window.addEventListener("error", function(){ if(strikes < 2) strikes = 2; });
   })();
 
   // ================= FULLSCREEN (additive setup control) =================
