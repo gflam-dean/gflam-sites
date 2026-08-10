@@ -224,8 +224,8 @@ async function handleCheckout(request, env, json) {
             subject: 'Review needed: signup ' + venues[0].name + ' (' + email + ')',
             html: '<h2>Signup flagged for review</h2>'
               + '<p>This signup email does not look like a venue, so opt-in collection is <b>LOCKED</b> until you approve it. They can still run games (team names only), but collect no player data.</p>'
-              + '<p><b>Venue:</b> ' + esc(venues[0].name) + '</p>'
-              + '<p><b>Email:</b> ' + esc(email) + '</p>'
+              + '<p><b>Venue:</b> ' + vpaEsc(venues[0].name) + '</p>'
+              + '<p><b>Email:</b> ' + vpaEsc(email) + '</p>'
               + '<p><b>Players / plan:</b> ' + totalSeats + ' players, ' + plan + '</p>'
               + '<p>Approve them, or lock them out, in HQ under Flagged signups.</p>',
           }),
