@@ -169,16 +169,7 @@
     <div class="scard"><div class="k">Live now</div><div class="v g" id="stLive">0</div><div class="d">running a game</div></div>
     <div class="scard"><div class="k">Groups</div><div class="v" id="stGroups">0</div><div class="d">pub / operator groups</div></div>
     <div class="scard"><div class="k">Suspended</div><div class="v" id="stSusp">0</div><div class="d">kill-switch off</div></div>
-    <div class="scard"><div class="k">Founding spots left</div><div class="v g" id="stSpots">&mdash;</div><div class="d">of 100</div></div>
-  </div>
-
-  <div class="panel pad" style="margin-top:13px">
-    <div class="rowbetween" style="margin-bottom:8px">
-      <div class="lblk" style="margin:0">Founding spots</div>
-      <div class="mono" style="color:var(--gold);font-weight:700" id="foundText">&hellip;</div>
-    </div>
-    <div class="prog"><span id="foundBar" style="width:0%"></span></div>
-    <div class="note">At 100 founding venues, new venues roll to the standard <b>$3.00 per player</b> automatically. Founding venues keep <b>$2.40 per player</b> for life.</div>
+    <div class="scard"><div class="k">Founding venues</div><div class="v g" id="stSpots">&mdash;</div><div class="d">signed up</div></div>
   </div>
 
   <div class="navpills" id="hqNav">
@@ -503,13 +494,9 @@
     $("stLive").textContent=liveN;
     $("stGroups").textContent=S.groups.length;
     $("stSusp").textContent=susp;
-    if(S.spots==null){ $("stSpots").textContent="—"; $("foundText").textContent="Founding count unavailable"; $("foundBar").style.width="0%"; }
-    else {
-      var left=Math.max(0,100-S.spots);
-      $("stSpots").textContent=left;
-      $("foundText").textContent=S.spots+" of 100 used";
-      $("foundBar").style.width=Math.min(100,S.spots)+"%";
-    }
+    // The countdown to 100 is gone from HQ, but the number itself is still worth having.
+    // venueplay_spots_taken is the count of founding venues signed up.
+    $("stSpots").textContent = (S.spots==null) ? "—" : S.spots;
   }
 
   /* ================= LIVE NOW ================= */
