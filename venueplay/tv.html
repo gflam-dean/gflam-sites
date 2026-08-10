@@ -180,8 +180,18 @@
 
   <!-- ADVERTISING LOOP (default) -->
   <div id="adsRoot">
-    <!-- WATCHDOG FLOOR: do not remove. This is the screen a venue sees if everything
-         above it fails. Checked by tools/check-tv-watchdog.py -->
+    <!-- ======================================================================
+         DO NOT DELETE THIS DIV. It looks like an unused placeholder. It is not.
+
+         This is the LAST thing standing between a venue and a black screen. The
+         ad rotation is built into #tvAds below and is wiped and rebuilt often. If
+         that rebuild ever renders nothing, this is what the room sees instead: your
+         branding, rather than a dead black rectangle in a pub full of customers.
+
+         It is deliberately behind the ads (#tvFloor z-index 0, #tvAds z-index 1)
+         so it never covers anything. It costs nothing and it has already been the
+         difference twice. Checked by tools/check-tv-watchdog.py
+         ====================================================================== -->
     <div id="tvFloor" class="layer ad-a" aria-hidden="true">
       <div class="adtag" style="color:var(--pink)">VenuePlay</div>
       <div class="adbig">Game on here</div>
@@ -887,8 +897,29 @@
     }, 60000);
   })();
 
+  /* ==========================================================================
+     STOP. READ THIS BEFORE YOU DELETE ANYTHING BELOW.
+
+     This block does NOTHING visible when the product is working. That is exactly
+     why it keeps looking deletable, and exactly why it must not be deleted.
+
+     This screen hangs on a wall in a pub. Nobody is sitting in front of it. When
+     it breaks it does not throw an error that anyone sees. It just goes black,
+     and it STAYS black, for days, in front of paying customers, until somebody
+     physically drives to the venue.
+
+     That has already happened TWICE (10 and 11 August 2026). Both times every
+     internal flag reported the screen was perfectly healthy while the room stared
+     at a black rectangle. That is why the watchdog below checks the DOM and never
+     our own state.
+
+     If you remove this, nothing breaks in your browser. Nothing fails in review.
+     You find out months later, from a publican, on a Friday night, at scale.
+
+     Changing it is fine. Deleting it is not. Either way, run this first:
+         python3 tools/check-tv-watchdog.py
+     ========================================================================== */
   // ================= WATCHDOG: DO NOT REMOVE =================
-  // Guarded by tools/check-tv-watchdog.py. If you change this, run that script.
   // A venue TV runs unattended for weeks, in a room where nobody is going to notice it has gone
   // black and nobody is going to walk over and refresh it. At any real number of venues, "reload
   // the page" is not a fix that exists. So the screen has to notice, repair itself, and pull down
@@ -907,6 +938,13 @@
     var strikes  = 0;
 
     function idle(){ try { return tvMode === "ads"; } catch(e){ return true; } }
+
+    // Anyone who opens devtools on a real venue screen should be able to see this is armed,
+    // and see why it last reloaded. Costs nothing and answers the first question every time.
+    try{
+      console.info("[VenuePlay] TV watchdog armed. Last reload:",
+        sessionStorage.getItem("vpTvReloadWhy") || "none this session");
+    }catch(e){}
 
     function reload(why){
       // Offline, a reload swaps a stale but branded screen for a browser error page, which is

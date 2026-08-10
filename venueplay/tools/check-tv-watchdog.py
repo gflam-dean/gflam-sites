@@ -73,6 +73,10 @@ for name, ok, why in CHECKS:
         print("     -> " + why)
 
 if bad:
-    print("\n%d check(s) failed. Do not deploy tv.html until these are back." % bad)
+    print("\n%d check(s) failed. DO NOT DEPLOY tv.html until these are back.\n" % bad)
+    print("  This code does nothing visible when the product is working, which is why it")
+    print("  looks safe to delete. It is the only thing that stops a venue screen going")
+    print("  black and staying black for days with nobody there to notice.")
+    print("  It has already happened twice. Put it back.")
     sys.exit(1)
 print("\nAll good. The screen can still repair itself and pull down new code.")
