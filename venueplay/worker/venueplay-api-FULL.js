@@ -174,7 +174,7 @@ async function handleCheckout(request, env, json) {
   }
 
   // Post-founding VOLUME discount: a group past the founding cap gets a Stripe coupon based
-  // on total players. During founding everyone is already at $2.40, so no tier coupon then.
+  // on total players. A founding venue is already on the founding rate, so no tier coupon then.
   // The coupon's NAME (set in Stripe) is what shows the reason at checkout AND on the invoice.
   // Two tiers only (post-founding): Large 4,000+ players = 5% off, Major 10,000+ = 10% off.
   // Annual gets a further 5% via the annual price; rollover credits apply to annual.

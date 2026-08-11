@@ -139,6 +139,12 @@
   .claimcard .cn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:16px}
   .vbadge{margin-left:auto;font-size:10.5px;font-weight:700;font-family:'Hanken Grotesk',sans-serif;text-transform:uppercase;letter-spacing:.06em;padding:4px 11px;border-radius:20px}
   .vbadge.valid{background:rgba(53,208,127,.14);color:var(--win)}
+  /* a tie: more than one player called on the same number */
+  .tiebar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:8px;padding:13px 15px;
+    border:1px solid rgba(255,194,75,.4);background:rgba(255,194,75,.09);border-radius:12px;
+    font-size:13.5px;color:var(--text);line-height:1.45}
+  .tiebar b{color:#fff}
+  .tiebar .btn{margin-left:auto;flex:none}
   .claimsub{font-size:11px;color:var(--faint);margin-top:12px;text-align:center}
 
   .card9{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
@@ -732,8 +738,15 @@
     code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1, allowEarly:false,
     draw:[], idx:-1, called:{},
     players:{}, order:[],
-    claim:null, won:false, lastWin:null, prizesWon:[], startedAt:null
+    // TIES. Two people calling on the same number is normal bingo, not an edge case, and the
+    // old single-claim model silently threw the second one away: the host never saw it and the
+    // player sat on "checking your ticket" until someone else was announced. Claims are a LIST
+    // now, and a claim only joins the tie if it lands on the SAME ball (claimIdx), which is
+    // exactly the real-world rule: the caller stops on a number, and whoever calls on that
+    // number is in. Anyone calling after the next ball is late.
+    claims:[], claimIdx:-1, won:false, lastWins:[], prizesWon:[], startedAt:null
   };
+  var MAX_TIE=8;   // a sane ceiling on one ball; a real tie is two or three
   // the natural next prize in a progressive housie game (line -> two lines -> full house)
   function nextPattern(cur){ if(cur==="one") return "two"; if(cur==="two") return "full"; if(cur==="full") return ""; return "full"; }
   var ALL_PATTERNS=[["one","One line"],["two","Two lines"],["full","Full house"],["corners","Four corners"],["top","Top line"],["middle","Middle line"],["bottom","Bottom line"]];
@@ -769,7 +782,7 @@
           defaultCards:G.defaultCards, prizesWon:G.prizesWon, startedAt:G.startedAt,
           draw:G.draw, idx:G.idx, called:G.called,
           players:G.players, order:G.order,
-          claim:G.claim, won:G.won
+          claims:G.claims, claimIdx:G.claimIdx, lastWins:G.lastWins, won:G.won
         }));
       } else {
         localStorage.removeItem(gameKey(G.code));
@@ -795,7 +808,10 @@
       G.called=s.called||{};
       G.players=s.players||{};
       G.order=Array.isArray(s.order)?s.order:[];
-      G.claim=s.claim||null;
+      // Accept the pre-tie shape too, so a host mid-game when this ships still recovers.
+      G.claims=Array.isArray(s.claims)?s.claims:(s.claim?[s.claim]:[]);
+      G.claimIdx=(typeof s.claimIdx==="number")?s.claimIdx:(G.claims.length?G.idx:-1);
+      G.lastWins=Array.isArray(s.lastWins)?s.lastWins:(s.lastWin?[s.lastWin]:[]);
       G.won=!!s.won;
       return true;
     }catch(e){ return false; }
@@ -993,6 +1009,13 @@
       p.cards.push({ card:card, cardNo:100+cryptoInt(900) });
     }
   }
+  // The TV's "Bingo claimed" card. names[] carries everyone who called on this ball; name stays
+  // as the first so a screen still running the old shape shows something sensible.
+  function sendClaimPending(){
+    if(!G.claims.length) return;
+    var names=G.claims.map(function(c){ return c.name; });
+    send({ t:"claim_pending", name:names[0], names:names });
+  }
   function sendCards(pid){ var p=G.players[pid]; if(!p||!p.cards) return; send({ t:"cards", pid:pid, cards:p.cards.map(function(c){ return { cells:c.card, cardNo:c.cardNo }; }) }); }
   function sendPlayers(){ send({ t:"players", count:playerCount() }); }
 
@@ -1039,7 +1062,7 @@
     G.pattern=$("patternSel").value;
     G.prize=($("prizeInput").value||"").trim()||"the prize";
     G.defaultCards=clampCards($("cardsSel").value);
-    G.status="lobby"; G.won=false; G.claim=null; G.lastWin=null;
+    G.status="lobby"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to the join screen
     sendState();                         // active:false -> TV shows the lobby (QR)
     saveGame(); renderConsole();
@@ -1073,31 +1096,57 @@
       var blank=!n; var cov=blank?false:isCalled(n);
       cell.className="cc"+(blank?" blank":"")+(cov?" on":""); cell.textContent=blank?"":n; container.appendChild(cell); } }
   }
+  function winnerNames(list){
+    var n=list.map(function(w){ return esc(w.name); });
+    if(n.length<=1) return n[0]||"";
+    return n.slice(0,-1).join(", ")+" and "+n[n.length-1];
+  }
   function renderClaimQueue(){
-    var q=$("claimQueue");
-    if(G.lastWin && !G.claim && !G.won){
-      var w=G.lastWin, nxt=nextPattern(w.pattern), opts="";
-      for(var i=0;i<ALL_PATTERNS.length;i++){ var p=ALL_PATTERNS[i]; if(p[0]===w.pattern) continue; opts+='<option value="'+p[0]+'"'+(p[0]===nxt?" selected":"")+'>'+p[1]+'</option>'; }
-      q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+esc(w.name)+' won '+PATTERN_NAMES[w.pattern]+'! 🎉</span></div>'+
-        '<div class="claimsub">Same tickets, same numbers. Play on for another prize, or finish the game.</div>'+
+    var q=$("claimQueue"), i, p;
+    // Resolved: one or more confirmed winners, nothing left waiting on the host.
+    if(G.lastWins.length && !G.claims.length && !G.won){
+      var pat=G.lastWins[0].pattern, nxt=nextPattern(pat), opts="";
+      for(i=0;i<ALL_PATTERNS.length;i++){ p=ALL_PATTERNS[i]; if(p[0]===pat) continue; opts+='<option value="'+p[0]+'"'+(p[0]===nxt?" selected":"")+'>'+p[1]+'</option>'; }
+      var many=G.lastWins.length>1;
+      q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+winnerNames(G.lastWins)+' won '+PATTERN_NAMES[pat]+'! 🎉</span></div>'+
+        '<div class="claimsub">'+(many?('A tie on the same number, so '+G.lastWins.length+' winners share the prize. '):'')+
+        'Same tickets, same numbers. Play on for another prize, or finish the game.</div>'+
         '<div style="margin-top:12px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Next prize</label><select id="nextPatternSel">'+opts+'</select></div>'+
         '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="keepplaying">Keep playing</button>'+
         '<button class="btn ghost" data-act="finish">Finish game</button></div></div>';
       return;
     }
-    if(!G.claim){ q.innerHTML='<div class="claimempty">No claims yet. When a player hits BINGO and the pattern checks out, it lands here to confirm.</div>'; return; }
-    var c=G.claim;
-    var valid=c.valid!==false;   // older claims carry no flag and were only ever queued when valid
-    var badge=valid ? '<span class="vbadge valid">Valid</span>'
-                    : '<span class="vbadge" style="background:#F5A524;color:#180d00">Not a win yet</span>';
-    var sub=valid ? (PATTERN_NAMES[G.pattern]+' &middot; verified against '+(G.idx+1)+' called numbers &middot; card #'+c.cardNo)
-                  : ('Called early &middot; '+PATTERN_NAMES[G.pattern]+' is not complete on card #'+c.cardNo+'. Tap Play on to wave it off.');
-    q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+badge+'</div>'+
-      '<div class="card9" id="claimCard"></div>'+
-      '<div class="claimsub">'+sub+'</div>'+
-      '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm">Confirm winner</button>'+
-      '<button class="btn roll" data-act="reject">Play on</button></div></div>';
-    renderClaimCard($("claimCard"), c.card);
+    if(!G.claims.length){ q.innerHTML='<div class="claimempty">No claims yet. When a player hits BINGO and the pattern checks out, it lands here to confirm.</div>'; return; }
+
+    var validCount=0;
+    for(i=0;i<G.claims.length;i++){ if(G.claims[i].valid!==false) validCount++; }
+    var html="";
+    // More than one call on the same ball is a tie, which in bingo splits the prize. Say so up
+    // front and give the host one button for it, so the normal case is a single tap.
+    if(G.claims.length>1){
+      html+='<div class="tiebar">'+
+        '<div><b>'+G.claims.length+' called on number '+(G.idx>=0?G.draw[G.idx]:"")+'.</b> '+
+        (validCount>1 ? 'That is a tie, and a tie splits the prize.' : 'Only one of them checks out.')+'</div>'+
+        (validCount>1 ? '<button class="btn win" data-act="confirmall">Split between the '+validCount+' valid</button>' : '')+
+        '</div>';
+    }
+    if(G.lastWins.length){
+      html+='<div class="claimsub" style="margin:6px 0 2px">Already confirmed: <b>'+winnerNames(G.lastWins)+'</b></div>';
+    }
+    G.claims.forEach(function(c,ci){
+      var valid=c.valid!==false;
+      var badge=valid ? '<span class="vbadge valid">Valid</span>'
+                      : '<span class="vbadge" style="background:#F5A524;color:#180d00">Not a win yet</span>';
+      var sub=valid ? (PATTERN_NAMES[G.pattern]+' &middot; verified against '+(G.idx+1)+' called numbers &middot; card #'+c.cardNo)
+                    : ('Called early &middot; '+PATTERN_NAMES[G.pattern]+' is not complete on card #'+c.cardNo+'. Wave it off to keep the game moving.');
+      html+='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+badge+'</div>'+
+        '<div class="card9" id="claimCard-'+ci+'"></div>'+
+        '<div class="claimsub">'+sub+'</div>'+
+        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'">Confirm winner</button>'+
+        '<button class="btn roll" data-act="reject" data-i="'+ci+'">'+(G.claims.length>1?"Not this one":"Play on")+'</button></div></div>';
+    });
+    q.innerHTML=html;
+    G.claims.forEach(function(c,ci){ renderClaimCard($("claimCard-"+ci), c.card); });
   }
 
   // ---- actions ----
@@ -1127,7 +1176,7 @@
     G.prize=($("prizeInput").value||"").trim()||"the prize";
     G.defaultCards=clampCards($("cardsSel").value);
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
-    G.status="running"; G.won=false; G.claim=null; G.lastWin=null;
+    G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Next number";
@@ -1140,7 +1189,7 @@
   function newGame(){
     postReport();   // report the round just finished before a fresh one begins
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
-    G.won=false; G.claim=null; G.lastWin=null;
+    G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Next number";
@@ -1152,7 +1201,7 @@
   }
   function endGame(){
     postReport();   // send this game's figures to the backend before returning to ads
-    G.status="setup"; G.claim=null; G.won=false; G.lastWin=null;
+    G.status="setup"; G.claims=[]; G.claimIdx=-1; G.won=false; G.lastWins=[];
     send({ t:"idle" });   // TV returns to the advertising loop
     sendState();
     saveGame();   // status is now "setup", so this clears the saved game for this code
@@ -1167,40 +1216,73 @@
     renderLive(); updateBoard();
     if(G.idx>=89){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
   }
-  function hostConfirm(){
-    if(!G.claim) return;
-    var c=G.claim;
-    G.lastWin={ pid:c.pid, name:c.name, cardNo:c.cardNo, pattern:G.pattern };
-    G.claim=null;
-    // Don't broadcast yet: the host now chooses to play on for another prize or finish,
-    // which decides whether players keep their tickets or see the final result.
+  // Move one queued claim into the confirmed list. Nothing is broadcast yet: the host still has
+  // to decide play on or finish, and with a tie they may confirm two or three people first.
+  function hostConfirm(i){
+    var c=G.claims[i]; if(!c) return;
+    for(var k=0;k<G.lastWins.length;k++){ if(G.lastWins[k].pid===c.pid) return; }   // no double-confirm
+    G.lastWins.push({ pid:c.pid, name:c.name, cardNo:c.cardNo, pattern:G.pattern });
+    G.claims.splice(i,1);
+    if(!G.claims.length) G.claimIdx=-1;
     saveGame();
     renderClaimQueue();
   }
+  // The tie shortcut: confirm every claim that actually checks out, in one tap.
+  // Confirm in CALL ORDER, not backwards. Iterating in reverse to keep the splice simple put the
+  // second caller first, which reads wrong to the room and, because the compatibility pid/name
+  // fields on the broadcast are the first winner, named the wrong player on any screen still
+  // running the pre-tie code.
+  function hostConfirmAll(){
+    for(var i=0;i<G.claims.length;){
+      if(G.claims[i].valid!==false) hostConfirm(i);   // hostConfirm splices, so do NOT advance
+      else i++;
+    }
+  }
+  function hostReject(i){
+    var c=G.claims[i]; if(!c) return;
+    G.claims.splice(i,1);
+    if(!G.claims.length && !G.lastWins.length){
+      G.claimIdx=-1;
+      send({ t:"resume" });          // nobody left waiting and nobody won: whole room plays on
+    } else {
+      // Someone else is still in the running (or has already won), so the game is NOT resuming.
+      // Release just this player's phone, or they sit on "checking your ticket" forever.
+      if(!G.claims.length) G.claimIdx=-1;
+      send({ t:"resume", pid:c.pid });
+    }
+    saveGame();
+    renderClaimQueue();
+  }
+  // Announce whoever the host confirmed. winners[] carries the whole tie; the top-level
+  // pid/name/cardNo repeat the first winner so any screen still on the old shape keeps working.
+  function announce(cont, nxt){
+    if(!G.lastWins.length) return null;
+    var ws=G.lastWins, first=ws[0], pat=first.pattern;
+    var msg={ t:"winner", pid:first.pid, name:first.name, cardNo:first.cardNo, pattern:pat,
+              winners:ws.map(function(w){ return { pid:w.pid, name:w.name, cardNo:w.cardNo }; }),
+              shared:ws.length>1, cont:!!cont };
+    if(cont) msg.next=nxt;
+    send(msg);
+    ws.forEach(function(w){
+      G.prizesWon.push({ pattern:pat, prize:G.prize, winner_name:w.name, card_no:w.cardNo, shared:ws.length>1 });
+    });
+    G.lastWins=[];
+    return pat;
+  }
   function keepPlaying(){
-    if(!G.lastWin) return;
-    var w=G.lastWin, sel=$("nextPatternSel"), nxt=(sel&&sel.value)||nextPattern(w.pattern)||"full";
-    // announce the stage win and the next target together; players keep the same tickets
-    send({ t:"winner", pid:w.pid, name:w.name, cardNo:w.cardNo, pattern:w.pattern, cont:true, next:nxt });
-    G.prizesWon.push({ pattern:w.pattern, prize:G.prize, winner_name:w.name, card_no:w.cardNo });
-    G.pattern=nxt; G.won=false; G.lastWin=null;
+    if(!G.lastWins.length) return;
+    var sel=$("nextPatternSel"), pat=G.lastWins[0].pattern;
+    var nxt=(sel&&sel.value)||nextPattern(pat)||"full";
+    announce(true, nxt);
+    G.pattern=nxt; G.won=false;
     $("nextBtn").disabled=(G.idx>=89);
     saveGame(); renderConsole();
   }
   function finishGame(){
-    if(!G.lastWin) return;
-    var w=G.lastWin;
-    send({ t:"winner", pid:w.pid, name:w.name, cardNo:w.cardNo, pattern:w.pattern, cont:false });
-    G.prizesWon.push({ pattern:w.pattern, prize:G.prize, winner_name:w.name, card_no:w.cardNo });
-    G.won=true; G.lastWin=null;
+    if(!G.lastWins.length) return;
+    announce(false);
+    G.won=true;
     saveGame(); renderConsole();
-  }
-  function hostReject(){
-    if(!G.claim) return;
-    G.claim=null;
-    send({ t:"resume" });
-    saveGame();
-    renderClaimQueue();
   }
 
   // ---- incoming ----
@@ -1214,7 +1296,7 @@
       if(G.status==="running" || G.status==="lobby"){
         send({ t:"mode", mode:"bingo" });   // running OR an open lobby: replay so the TV shows the game/QR
         sendState();
-        if(G.claim) send({ t:"claim_pending", name:G.claim.name });
+        if(G.claims.length) sendClaimPending();
       }
     }
   }
@@ -1240,7 +1322,13 @@
       renderConsole();
     }
     else if(m.t==="claim"){
-      if(G.status!=="running" || G.won || G.claim || G.lastWin) return;
+      if(G.status!=="running" || G.won) return;
+      // A claim joins the queue while the host is still resolving THIS ball. Once the host has
+      // moved on (or the caller has called another number) a late claim is just late.
+      if(G.claims.length && G.claimIdx!==G.idx) return;
+      if(!G.claims.length && G.lastWins.length) return;   // already announced-in-waiting
+      if(G.claims.length>=MAX_TIE) return;
+      for(var q=0;q<G.claims.length;q++){ if(G.claims[q].pid===m.pid) return; }   // one claim per player per ball
       var pl=G.players[m.pid];
       if(!pl || !pl.cards || !pl.cards.length) return;
       // find the exact ticket they claimed on; fall back to any winning ticket they hold
@@ -1251,8 +1339,9 @@
       if(!tk) return;
       var valid=checkPattern(tk.card);
       if(valid || G.allowEarly){
-        G.claim={ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card, valid:valid };
-        send({ t:"claim_pending", name:pl.name });
+        G.claims.push({ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card, valid:valid });
+        G.claimIdx=G.idx;
+        sendClaimPending();
         saveGame();
         renderClaimQueue();
       }
@@ -1287,7 +1376,7 @@
         // a TV that stayed up (or came back) shows the running game, not the ads loop
         if(G.status==="running"){ send({ t:"mode", mode:"bingo" }); }
         sendState();
-        if(G.status==="running" && G.claim){ send({ t:"claim_pending", name:G.claim.name }); }
+        if(G.status==="running" && G.claims.length){ sendClaimPending(); }
         // roll call: ask every joined phone to re-announce so we rebuild seats and
         // re-deal the current card. players answer with a join; we answer that join with
         // card/state (never another roll call), so the exchange terminates and cannot loop.
@@ -1385,11 +1474,12 @@
   $("endGameBtn").addEventListener("click", endGame);
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;
-    var act=b.getAttribute("data-act");
-    if(act==="confirm") hostConfirm();
+    var act=b.getAttribute("data-act"), i=parseInt(b.getAttribute("data-i"),10);
+    if(act==="confirm") hostConfirm(i);
+    else if(act==="confirmall") hostConfirmAll();
     else if(act==="keepplaying") keepPlaying();
     else if(act==="finish") finishGame();
-    else hostReject();
+    else if(act==="reject") hostReject(i);
   });
 
   // ================= INIT =================

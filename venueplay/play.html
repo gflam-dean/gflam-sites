@@ -88,6 +88,36 @@
   .ticket{margin-bottom:16px}
   .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:left}
 
+  /* ---- LAYOUT: three across, two down (menu option "Three across") ----
+     All six tickets on screen with no scrolling. Each one is small, so the ticket holding the
+     number just called lifts and scales over its neighbours: that pop is what makes tickets
+     this size workable, not a decoration. */
+  #cardStack.lay-grid{overflow-x:hidden}
+  .lay-grid .stackwrap{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .lay-grid .ticket{margin-bottom:0;background:var(--ink-2);border:1px solid var(--line-2);border-radius:9px;
+    padding:5px 4px 4px;transition:transform .3s cubic-bezier(.2,.9,.3,1.25),box-shadow .3s ease,border-color .3s ease}
+  .lay-grid .ticket .tklabel{font-size:8px;text-align:center;margin-bottom:3px;letter-spacing:.06em}
+  .lay-grid .card9{width:100%;gap:1.5px}
+  .lay-grid .card9 .cc{font-size:8.5px;border-radius:3px}
+  .lay-grid .ticket.pop{position:relative;z-index:6;transform:scale(1.62);
+    border-color:rgba(255,194,75,.55);box-shadow:0 16px 40px rgba(0,0,0,.72),0 0 30px rgba(255,194,75,.22)}
+  .lay-grid .ticket.pop .tklabel{color:var(--gold)}
+  @media (prefers-reduced-motion: reduce){ .lay-grid .ticket.pop{transform:none;border-color:var(--gold)} }
+
+  /* ---- LAYOUT: all six, columns aligned (menu option "Columns lined up") ----
+     Tickets flush with no gutter, so the nine columns run as unbroken bands down all six the way
+     a paper strip reads. A number called lights its column top to bottom, so you scan one band. */
+  #cardStack.lay-align{overflow-x:hidden}
+  .lay-align .stackwrap{display:flex;flex-direction:column;gap:0}
+  .lay-align .ticket{margin-bottom:0}
+  .lay-align .ticket + .ticket{border-top:1px solid var(--line-2);padding-top:3px;margin-top:3px}
+  .lay-align .ticket .tklabel{display:none}
+  .lay-align .card9{width:100%;gap:2px}
+  .colband{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin-bottom:7px}
+  .colband i{height:4px;border-radius:2px;background:var(--ink-3);transition:background .2s ease}
+  .colband i.lit{background:var(--gold);box-shadow:0 0 10px rgba(255,194,75,.55)}
+  .card9 .cc.incol{border-color:rgba(255,194,75,.34)}
+
   .lastcalled{text-align:center;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
   .lastcalled b{color:#fff;font-size:18px}
   .lcnum{font-family:'Anton',sans-serif;color:var(--gold);font-size:46px;line-height:1;letter-spacing:.01em}
@@ -100,6 +130,8 @@
   .menuitem span{display:flex;flex-direction:column;gap:2px}
   .menuitem small{color:var(--faint);font-size:11.5px}
   .menuitem input{width:22px;height:22px;flex:none;accent-color:var(--pink)}
+  .menuitem select{flex:none;background:var(--ink-3);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:7px 9px;font-family:'Manrope',sans-serif;font-size:13px;max-width:47%}
   .menuleave{color:var(--roll);font-weight:700;justify-content:flex-start}
 
   /* light mode (menu toggle) */
@@ -110,6 +142,8 @@
   body.light .card9 .cc{ box-shadow:0 1px 2px rgba(0,0,0,.06) }
 
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
+  .sharenote{margin-top:12px;font-size:13.5px;color:var(--muted);line-height:1.45}
+  .sharenote b{color:var(--text)}
   .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
   .biglose .pbig{color:var(--gold)}
   /* near-win tension */
@@ -136,6 +170,12 @@
     <div class="menupanel hidden" id="menuPanel">
       <label class="menuitem"><span>Easy mode<small>Mark my numbers for me</small></span><input type="checkbox" id="assistChk"></label>
       <label class="menuitem"><span>Light mode</span><input type="checkbox" id="lightChk"></label>
+      <label class="menuitem"><span>Ticket layout<small>How your tickets sit on screen</small></span>
+        <select id="laySel">
+          <option value="stack">Stacked</option>
+          <option value="grid">Three across</option>
+          <option value="align">Columns lined up</option>
+        </select></label>
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
     </div>
   </div>
@@ -191,6 +231,7 @@
     <div class="pbig" style="color:var(--win)">You won!</div>
     <div class="psub">Show this screen at the bar to claim</div>
     <div class="prizebox" id="wonPrize">the prize</div>
+    <div class="sharenote hidden" id="wonShare"></div>
     <div class="pnote">Card <b id="wonCard" style="color:var(--muted)">#000</b></div>
   </div>
 
@@ -249,7 +290,8 @@
     room:"", pid:"", name:"", joined:false, hostSeen:false,
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
     pattern:"one", prize:"the prize", called:[], active:false, assist:false, allowEarly:false,
-    claimPending:false, won:false, ended:false, capture:null
+    claimPending:false, won:false, ended:false, capture:null,
+    shared:false, sharedWith:[], layout:"stack"
   };
 
   // ---- pid persistence (keep the cosmetic identity across reconnects) ----
@@ -319,7 +361,20 @@
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
   function route(){
-    if(P.won){ $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+(P.wonCardNo||""); show("vWon"); return; }
+    if(P.won){
+      $("wonPrize").textContent=P.prize;
+      $("wonCard").textContent="#"+(P.wonCardNo||"");
+      // A tie splits the prize. Say so on the phone, so nobody walks to the bar expecting the lot.
+      var sw=$("wonShare");
+      if(sw){
+        if(P.shared && P.sharedWith.length){
+          sw.innerHTML="A tie on the same number, so you share this one with <b>"+
+            esc(P.sharedWith.length<2 ? P.sharedWith[0] : P.sharedWith.slice(0,-1).join(", ")+" and "+P.sharedWith[P.sharedWith.length-1])+"</b>.";
+          sw.classList.remove("hidden");
+        } else { sw.classList.add("hidden"); }
+      }
+      show("vWon"); return;
+    }
     if(P.ended){ show("vLost"); return; }
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
@@ -334,6 +389,10 @@
     for(var i=0;i<P.cards.length;i++){ var cd=P.cards[i];
       for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ var n=cd.cells[r][c]; if(n && set[n]) cd.daubs[n]=true; } } }
   }
+  // Which column of the 3x9 ticket a number sits in. The bands are 1-9, 10-19, ... 70-79, 80-90,
+  // so it is floor(n/10), NOT floor((n-1)/10): the first column is nine numbers wide, not ten,
+  // and the last is eleven. Getting this wrong lights the column next door.
+  function colOfNum(n){ return n>=80 ? 8 : Math.floor(n/10); }
   function renderCards(){
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
@@ -341,10 +400,23 @@
     $("lastCalled").innerHTML = last ? ('<span class="lcnum">'+last+'</span><span class="lcsub">'+P.called.length+' of 90 called</span>') : "No numbers called yet";
     var set=calledSet();
     var stack=$("cardStack"); stack.innerHTML="";
+    // One layout applies to the whole stack. With a single ticket they all look the same, so the
+    // setting only really bites once the host deals a book.
+    var lay=(P.cards.length>1) ? P.layout : "stack";
+    stack.className = lay==="grid" ? "lay-grid" : lay==="align" ? "lay-align" : "";
+    var curCol = (lay==="align" && last) ? colOfNum(last) : -1;
+    if(lay==="align"){
+      var band=document.createElement("div"); band.className="colband";
+      for(var b=0;b<9;b++){ var seg=document.createElement("i"); if(b===curCol) seg.className="lit"; band.appendChild(seg); }
+      stack.appendChild(band);
+    }
+    var wrap=document.createElement("div"); wrap.className="stackwrap";
     for(var i=0;i<P.cards.length;i++){
       var cd=P.cards[i];
-      var tk=document.createElement("div"); tk.className="ticket";
-      if(P.cards.length>1){ var lab=document.createElement("div"); lab.className="tklabel"; lab.textContent="Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo; tk.appendChild(lab); }
+      var tk=document.createElement("div"); tk.className="ticket"; tk.setAttribute("data-ti",i);
+      if(P.cards.length>1){ var lab=document.createElement("div"); lab.className="tklabel";
+        lab.textContent = (lay==="grid") ? ("Ticket "+(i+1)) : ("Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo);
+        tk.appendChild(lab); }
       var grid=document.createElement("div"); grid.className="card9";
       for(var r=0;r<3;r++){ for(var c=0;c<9;c++){
         var n=cd.cells[r][c]; var cell=document.createElement("div");
@@ -352,15 +424,53 @@
         cell.className="cc"; cell.setAttribute("data-card",i); cell.setAttribute("data-n",n); cell.textContent=n;
         if(cd.daubs[n]) cell.classList.add("daub");
         if(P.assist && set[n]) cell.classList.add("on");   // only hint which numbers are called in Easy mode; otherwise the player tracks their own
+        if(c===curCol) cell.classList.add("incol");
         grid.appendChild(cell);
       } }
-      tk.appendChild(grid); stack.appendChild(tk);
+      tk.appendChild(grid); wrap.appendChild(tk);
     }
+    stack.appendChild(wrap);
+    if(lay==="grid" && last) popTicketFor(last);
     updateTension(set);
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
     else { $("bingoBtn").disabled=false; setMsg("Mark off your numbers as they are called. Hit BINGO when your ticket completes the pattern.",""); }
   }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
+
+  // ---- "Three across" layout: lift the ticket holding the number just called ----
+  // Six tickets on one phone screen are necessarily small. Rather than ask the player to hunt,
+  // the ticket that actually matters jumps forward over the others for a couple of seconds.
+  var _popT=null;
+  function popTicketFor(n){
+    var hit=-1;
+    for(var i=0;i<P.cards.length && hit<0;i++){
+      var cells=P.cards[i].cells;
+      for(var r=0;r<3 && hit<0;r++){ for(var c=0;c<9;c++){ if(cells[r][c]===n){ hit=i; break; } } }
+    }
+    if(hit<0) return;
+    var stack=$("cardStack");
+    var els=stack.querySelectorAll(".ticket");
+    for(var k=0;k<els.length;k++) els[k].classList.remove("pop");
+    var el=els[hit]; if(!el) return;
+    // Scale from the edge nearest the screen edge, so a popped ticket never runs off it.
+    var col=hit%3, row=Math.floor(hit/3);
+    el.style.transformOrigin=(col===0?"left":col===2?"right":"center")+" "+(row===0?"top":"bottom");
+    el.classList.add("pop");
+    if(_popT) clearTimeout(_popT);
+    _popT=setTimeout(function(){ el.classList.remove("pop"); }, 2600);
+  }
+  // ---- layout choice (menu) ----
+  var LAYOUTS={ stack:"Stacked", grid:"Three across", align:"Columns lined up" };
+  function loadLayout(){ try{ var v=localStorage.getItem("vp-layout"); return LAYOUTS[v]?v:"stack"; }catch(e){ return "stack"; } }
+  function setLayout(v){
+    if(!LAYOUTS[v]) v="stack";
+    P.layout=v; try{ localStorage.setItem("vp-layout", v); }catch(e){}
+    var sel=$("laySel"); if(sel && sel.value!==v) sel.value=v;
+    // Zoom only means anything when tickets are stacked full width; the other two are fixed
+    // layouts, so hide the size buttons rather than leave controls that do nothing.
+    var ctl=document.querySelector(".cardctl"); if(ctl) ctl.style.display = (v==="stack") ? "" : "none";
+    if(P.cards.length) renderCards();
+  }
 
   // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file to host) ----
   // Phone speakers are often muted, so we lead with the confetti + vibrate and treat sound as a bonus.
@@ -516,6 +626,7 @@
       // fresh round: the host deals new tickets (t:"cards") just before this. Reset the
       // round but keep whatever tickets we're holding.
       P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; _celebrated=false;
+      P.shared=false; P.sharedWith=[];
       for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
       route();
     }
@@ -528,19 +639,33 @@
       // another player (or me) claimed; nothing to change locally
     }
     else if(m.t==="resume"){
+      // No pid means the whole room plays on. A pid means only that player was waved off,
+      // which happens when they called at the same time as someone whose ticket stood up.
+      if(m.pid && m.pid!==P.pid) return;
       if(P.claimPending){ P.claimPending=false; $("bingoBtn").disabled=false; setMsg("The host said not yet. Keep playing!","no"); }
     }
     else if(m.t==="winner"){
       P.claimPending=false;
+      // winners[] is the whole tie. Older hosts send only pid/name/cardNo, so fall back to those.
+      var ws=(m.winners&&m.winners.length) ? m.winners : [{ pid:m.pid, name:m.name, cardNo:m.cardNo }];
+      var me=null, i;
+      for(i=0;i<ws.length;i++){ if(ws[i].pid===P.pid){ me=ws[i]; break; } }
+      var names=ws.map(function(w){ return w.name; }).filter(Boolean);
+      var others=ws.filter(function(w){ return w.pid!==P.pid; }).map(function(w){ return w.name; }).filter(Boolean);
+      function list(a){ return a.length<2 ? (a[0]||"A player") : a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
+      P.shared=ws.length>1; P.sharedWith=others;
       if(m.cont){
         // a stage was won; the game plays on for the next prize with the same tickets
         if(m.next) P.pattern=m.next;
         P.wonCardNo=0;
         if(P.cards.length){ renderCards(); show("vCard"); }
-        var mine=(m.pid===P.pid);
-        setMsg((mine ? "You won "+(PATTERN_NAMES[m.pattern]||"a prize")+"! " : esc(m.name||"A player")+" won "+(PATTERN_NAMES[m.pattern]||"a prize")+". ")+"Now playing for "+(PATTERN_NAMES[P.pattern]||"the next prize")+".", mine?"wait":"");
+        var pn=PATTERN_NAMES[m.pattern]||"a prize";
+        var head = me
+          ? ("You won "+pn+"!"+(others.length ? " Shared with "+esc(list(others))+"." : ""))
+          : (esc(list(names))+" won "+pn+".");
+        setMsg(head+" Now playing for "+(PATTERN_NAMES[P.pattern]||"the next prize")+".", me?"wait":"");
       } else {
-        if(m.pid===P.pid){ P.won=true; P.wonCardNo=m.cardNo||P.wonCardNo; route(); celebrate(); }
+        if(me){ P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; route(); celebrate(); }
         else { P.ended=true; route(); }
       }
     }
@@ -622,6 +747,7 @@
   function loadLight(){ try{ return localStorage.getItem("vp-light")==="1"; }catch(e){ return false; } }
   function setLight(on){ document.body.classList.toggle("light", !!on); try{ localStorage.setItem("vp-light", on?"1":"0"); }catch(e){} }
   var lightChk=$("lightChk"); if(lightChk){ lightChk.addEventListener("change", function(){ setLight(lightChk.checked); }); }
+  var laySel=$("laySel"); if(laySel){ laySel.addEventListener("change", function(){ setLayout(laySel.value); }); }
   var leaveBtn=$("leaveBtn"); if(leaveBtn){ leaveBtn.addEventListener("click", leaveGame); }
   function leaveGame(){
     if(menuPanel) menuPanel.classList.add("hidden");
@@ -682,6 +808,7 @@
   (function(){
     P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;
     if(loadLight()) setLight(true); var lc=$("lightChk"); if(lc) lc.checked=loadLight();
+    setLayout(loadLayout());
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
     var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
     var slug = room ? "" : venueSlugFromURL();

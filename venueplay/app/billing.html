@@ -365,7 +365,7 @@
 (function(){
   var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
   var $ = function(id){ return document.getElementById(id); };
-  var rate = 2.40;
+  var rate = 3.00;   // standard per-player rate; the Worker sends the venue's real rate in render()
 
   function tokenThen(){ return VP.getClient().auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||null; }); }
   function api(path, body){
@@ -385,7 +385,7 @@
   function showMsg(t, ok){ var m=$("msg"); m.textContent=t; m.className = "msg " + (ok?"ok":"err"); if(ok) setTimeout(function(){ if(m.textContent===t){m.textContent="";m.className="msg";} }, 3500); }
 
   function render(d){
-    rate = d.rate || 2.40;
+    rate = d.rate || 3.00;
     $("s-players").textContent = d.total_players;
     $("s-total").textContent = d.monthly_total;
     // Make it clear when the tiles above show current cover but a change is scheduled: reductions

@@ -945,11 +945,6 @@
           <div class="label">Founding venues</div>
           <h2 class="sec-title">$2.50 per player.<br>Locked for life.</h2>
           <p class="sec-sub">Queensland venues that join before 31 August 2026 lock in $2.50 per player a month (normally $3), set and locked for life. Founding closes for Queensland at the end of August, and it will not come back.</p>
-          <div class="counter" style="display:none">
-            <div class="big" id="vp-claimed"><span id="vp-count">…</span><span class="of"> / 100</span></div>
-            <div class="bar"><i id="vp-bar"></i></div>
-            <div class="sub" id="vp-remaining">founding spots open</div>
-          </div>
         </div>
         <div class="price-card">
           <div class="price-eyebrow">Per player · per month</div>
@@ -1205,11 +1200,8 @@
   var VP_STRIPE_PK = 'pk_live_51TqKo55JnH4tsSwMnjhYGLGjeWyaWykfV5RQxNKDmyfsHMrwCCgOi5cad9e6sGEbc7XgcWkfWLsIF9lyjFAQE5Gw00LPF5viFj';
   var _SBU = 'https://gpoolavkghnxedzrmtmc.supabase.co';
   var _SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
-
-  var CAP = 100;
   var COUNT_DUR = 4000; // roll-up time in ms, shared by all counters so they animate in step
   var PRICE = { monthly: 2.50, annual: 2.30 };
-  var foundingClosed = false;
   var workerReady = VP_WORKER.indexOf('PASTE_') === -1;
   var keyReady = _SBK.indexOf('PASTE_') === -1;
   var plan = 'monthly';
@@ -1231,37 +1223,6 @@
     }
     requestAnimationFrame(step);
   }
-  function paintCounter(claimed){
-    var c = Math.max(0, Math.min(CAP, claimed));
-    var remaining = Math.max(0, CAP - c);
-    rollCount(document.getElementById('vp-count'), c, COUNT_DUR);
-    document.getElementById('vp-bar').style.width = ((c / CAP) * 100) + '%';
-    document.getElementById('vp-remaining').textContent =
-      remaining > 0 ? (remaining + ' founding spots open') : 'founding spots closed';
-    // Founding closes at the cap: flip the quote to standard so it matches what checkout
-    // will actually charge (checkout picks the price by this same live count).
-    if (remaining <= 0 && !foundingClosed){
-      foundingClosed = true;
-      PRICE = { monthly: 3.00, annual: 2.85 };
-      var mb = document.querySelector('#vp-plan button[data-plan="monthly"] small');
-      var ab = document.querySelector('#vp-plan button[data-plan="annual"] small');
-      if (mb) mb.textContent = '$3.00 / player';
-      if (ab) ab.textContent = '$2.85 / player';
-      if (typeof renderEstimate === 'function') renderEstimate();
-    }
-  }
-  function loadCount(){
-    if (!keyReady) { paintCounter(0); return; }
-    fetch(_SBU + '/rest/v1/rpc/venueplay_spots_taken', {
-      method: 'POST',
-      headers: { 'apikey': _SBK, 'Authorization': 'Bearer ' + _SBK, 'Content-Type': 'application/json' },
-      body: '{}'
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(n){ paintCounter(parseInt(n, 10) || 0); })
-    .catch(function(){ paintCounter(0); });
-  }
-  loadCount();
 
   /* ---------- Live trivia question counter (reads /data/trivia-count.json) ---------- */
   (function(){
@@ -1398,7 +1359,7 @@
     var n = venueRows().length;
     var suffix = n > 1 ? ' across ' + n + ' venues' : '';
     if (!seats){ estEl.innerHTML = 'Add your max players for a price estimate.'; return; }
-    var tier = foundingClosed ? groupTier(seats) : null; // volume discount only applies post-founding
+    var tier = null;   // founding link: the Worker applies no volume tier on top of a founding rate
     var mRate = PRICE.monthly * (tier ? (1 - tier.pct/100) : 1);
     var aRate = PRICE.annual  * (tier ? (1 - tier.pct/100) : 1);
     var reason = tier ? ('<br><span style="color:var(--pink)">You qualify for ' + tier.pct + '% off, ' + tier.label + ' (' + seats + ' players)</span>') : '';
@@ -1540,7 +1501,6 @@
     var s = document.getElementById('vp-success'); if (s) { s.classList.add('show'); s.scrollIntoView({ behavior:'smooth', block:'center' }); }
     if (typeof gtag === 'function') gtag('event', 'sign_up', { method: 'venueplay_founding' });
     if (typeof fbq === 'function') fbq('track', 'StartTrial');
-    loadCount();
   } else if (params.get('vp') === 'cancel') {
     showErr('No worries, your card wasn\u2019t added. Your spot isn\u2019t held until you finish checkout.');
     document.getElementById('claim').scrollIntoView({ behavior:'smooth' });
@@ -1617,37 +1577,6 @@
     }
   }
 
-  /* ---- Group invoice rows: standard $3.00/player, founding rate,
-          add-ons are extra players on big nights at $2.50/player ---- */
-  var body = document.getElementById('vps-invrows');
-  if (body) {
-    var STD = 3.00, RATE = 2.50;
-    var venues = [
-      /* [name, plan players, extra players on the month's biggest night] */
-      ['The Anchor, Southport', 78, 6],
-      ['Harbourview Tavern', 60, 0],
-      ['The Sands RSL', 120, 14]
-    ];
-    function money(v){ return '$' + v.toFixed(2); }
-    var tStd = 0, tDisc = 0, tAdd = 0, tTot = 0;
-    venues.forEach(function(v){
-      var std = v[1] * STD;
-      var disc = std * 0.20;
-      var add = v[2] * RATE;
-      var tot = std - disc + add;
-      tStd += std; tDisc += disc; tAdd += add; tTot += tot;
-      var tr = document.createElement('tr');
-      tr.innerHTML = '<td>' + v[0] + '</td><td>' + v[1] + '</td><td>' + money(std) +
-        '</td><td class="vps-disc">-' + money(disc) + '</td><td class="vps-add">' + money(add) +
-        '</td><td>' + money(tot) + '</td>';
-      body.appendChild(tr);
-    });
-    var t = document.createElement('tr'); t.className = 'vps-tot';
-    t.innerHTML = '<td>Total inc GST</td><td></td><td>' + money(tStd) +
-      '</td><td class="vps-disc">-' + money(tDisc) + '</td><td class="vps-add">' + money(tAdd) +
-      '</td><td>' + money(tTot) + '</td>';
-    body.appendChild(t);
-  }
 })();
 </script>
 <style>

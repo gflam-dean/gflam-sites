@@ -267,7 +267,7 @@
   <!-- BINGO: claim suspense -->
   <div class="layer hidden" id="tvClaim">
     <div class="eyebrow">Bingo claimed</div>
-    <div class="claimbig">BINGO?</div>
+    <div class="claimbig" id="claimBig">BINGO?</div>
     <div class="claimname" id="claimName">Player</div>
     <div class="jsub">Checking the card against the called numbers&hellip;</div>
   </div>
@@ -277,7 +277,7 @@
     <div class="eyebrow">&#127881; We have a winner</div>
     <div class="winbingo">BINGO!</div>
     <div class="wname" id="winName">Player</div>
-    <div class="winslabel">Wins</div>
+    <div class="winslabel" id="winsLabel">Wins</div>
     <div class="winprize" id="winPrizeVal">the prize</div>
     <div class="jsub">Card <b id="winCard">#000</b> &middot; show your phone at the bar</div>
   </div>
@@ -503,7 +503,7 @@
   }
 
   // ================= BINGO SCREEN =================
-  var state={ phase:"lobby", pattern:"one", prize:"the prize", called:[], playerCount:0, winner:null, claimName:"Player", celebrated:false };
+  var state={ phase:"lobby", pattern:"one", prize:"the prize", called:[], playerCount:0, winner:null, claimName:"Player", claimCount:1, celebrated:false };
 
   function buildBoard(){
     var wrap=$("tvBoard"); wrap.innerHTML="";
@@ -594,12 +594,27 @@
     $("tvPrize").textContent=state.prize;
     updateBoard();
   }
-  function renderClaim(){ $("claimName").textContent=state.claimName||"Player"; }
+  // "Ann", "Ann and Bob", "Ann, Bob and Cath"
+  function joinNames(list){
+    var n=(list||[]).filter(Boolean);
+    if(!n.length) return "Player";
+    if(n.length===1) return n[0];
+    return n.slice(0,-1).join(", ")+" and "+n[n.length-1];
+  }
+  function renderClaim(){
+    $("claimName").textContent=state.claimName||"Player";
+    $("claimBig").textContent=(state.claimCount>1) ? "TIE?" : "BINGO?";
+  }
   function renderWin(){
     var m=state.winner||{};
-    $("winName").textContent=m.name||"Player";
+    var ws=(m.winners&&m.winners.length) ? m.winners : [{ name:m.name, cardNo:m.cardNo }];
+    $("winName").textContent=joinNames(ws.map(function(w){ return w.name; }));
+    $("winsLabel").textContent = ws.length>1 ? "Share" : "Wins";
     $("winPrizeVal").textContent=state.prize;
-    $("winCard").textContent="#"+(m.cardNo||"000");
+    // One card number reads as one winner. With a tie, list them all.
+    $("winCard").textContent = ws.length>1
+      ? ws.map(function(w){ return "#"+(w.cardNo||"000"); }).join(" &middot; ").replace(/&middot;/g,"·")
+      : ("#"+(ws[0].cardNo||"000"));
   }
 
   // ---- confetti ----
@@ -794,9 +809,15 @@
       if(tvMode==="bingo" && state.phase==="lobby") $("lobbyPlaying").textContent=state.playerCount;
     }
     else if(m.t==="claim_pending"){
-      state.phase="claim"; state.claimName=m.name||"Player"; applyBingo();
+      // names[] when more than one player called on the same ball; name is the first, for
+      // hosts still running the pre-tie console.
+      var cn=(m.names&&m.names.length) ? m.names : [m.name||"Player"];
+      state.phase="claim"; state.claimName=joinNames(cn); state.claimCount=cn.length; applyBingo();
     }
     else if(m.t==="resume"){
+      // A resume aimed at ONE player (a tie partner waved off) is not the room playing on:
+      // someone else is still being checked, so the big screen must stay on the claim card.
+      if(m.pid) return;
       state.phase="running"; applyBingo();
     }
     else if(m.t==="winner"){
