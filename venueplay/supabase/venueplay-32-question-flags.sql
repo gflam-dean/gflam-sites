@@ -40,7 +40,8 @@ ALTER TABLE vp_questions ADD COLUMN IF NOT EXISTS retired_at timestamptz;
 CREATE INDEX IF NOT EXISTS idx_vp_questions_retired ON vp_questions (retired_at);
 
 -- How many DIFFERENT venues have to swap a question out before it is pulled.
--- 3 is deliberately low pre-launch so the signal shows up during testing; raise it later.
+-- 5 different venues (Dean's call). One or two swapping a question out is taste or a repeat;
+-- five separate rooms rejecting it is the question, not the crowd.
 CREATE OR REPLACE VIEW v_vp_question_flag_counts AS
   SELECT qkey,
          min(question)                AS question,
@@ -51,7 +52,7 @@ CREATE OR REPLACE VIEW v_vp_question_flag_counts AS
 
 -- Called by the Worker after each flag. Retires every copy of a question whose text has been
 -- swapped out by enough separate venues. Idempotent: already-retired rows are left alone.
-CREATE OR REPLACE FUNCTION vp_retire_flagged(min_venues int DEFAULT 3)
+CREATE OR REPLACE FUNCTION vp_retire_flagged(min_venues int DEFAULT 5)
 RETURNS int
 LANGUAGE plpgsql
 SECURITY DEFINER
