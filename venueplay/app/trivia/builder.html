@@ -141,6 +141,17 @@
         <div class="qlist" id="qList"></div>
         <div id="listStatus" class="status"></div>
       </div>
+
+      <!-- /host/trivia/set/delete existed in the Worker with nothing calling it, so a host could
+           create a night and never get rid of it. Placed last, well away from the controls used
+           every week, and it asks for the night's name because the Worker hard-deletes the set
+           AND its questions with no soft delete and no undo. -->
+      <div class="card" style="margin-top:16px">
+        <div class="lbl">Delete this night</div>
+        <div class="hint">Removes the night and every question in it. Questions you added from the Trivia Library are not affected, they stay in the library. This cannot be undone.</div>
+        <button type="button" id="delSetBtn" class="btn" style="margin-top:10px;border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--muted)">Delete night</button>
+        <div id="delStatus" class="status"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -215,12 +226,26 @@
     if(v==="__new"){ G.setId=""; $("nameRow").classList.remove("hidden"); $("editArea").classList.add("hidden"); $("setName").value=""; }
     else { G.setId=v; $("nameRow").classList.add("hidden"); $("editArea").classList.remove("hidden"); loadQuestions(); }
   }
+  (function(){ var d=document.getElementById("delSetBtn"); if(d) d.addEventListener("click", deleteSet); })();
   function createSet(){
     var name=($("setName").value||"").trim(); if(!name){ $("setName").focus(); return; }
     $("createBtn").disabled=true;
     req("POST","/host/trivia/set",{ venue_id:G.venueId, title:name }).then(function(r){
       loadMySets(r.set_id);
     }).catch(function(e){ alert(e.message||"Could not create the night"); }).then(function(){ $("createBtn").disabled=false; });
+  }
+  function deleteSet(){
+    if(!G.setId) return;
+    var sel=$("setSel"), name=sel.options[sel.selectedIndex].textContent.replace(/\s*\(\d+\)\s*$/,"");
+    var typed=prompt('Delete "'+name+'" and every question in it?\n\nThis cannot be undone.\nType the night\'s name to confirm:');
+    if(typed===null) return;
+    if(typed.trim().toLowerCase()!==name.trim().toLowerCase()){ setStatus("delStatus","That did not match the name, so nothing was deleted.","err"); return; }
+    var b=$("delSetBtn"); b.disabled=true; b.textContent="Deleting\u2026";
+    req("POST","/host/trivia/set/delete",{ set_id:G.setId }).then(function(){
+      G.setId=""; $("editArea").classList.add("hidden"); loadMySets();
+      setStatus("delStatus","Deleted.","ok");
+    }).catch(function(e){ setStatus("delStatus",(e&&e.message)||"Could not delete the night","err"); })
+      .then(function(){ b.disabled=false; b.textContent="Delete night"; });
   }
   function loadQuestions(){
     if(!G.setId) return;
