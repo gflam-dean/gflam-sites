@@ -626,10 +626,16 @@
     go("vVenuePick");
     var box=$("venuePickList"); box.innerHTML="<div class='note'>Loading your venues…</div>";
     VP.listVenues().then(function(vs){
+      // A Gflam HQ admin has no staff rows anywhere, so filtering to staff venues left them
+      // with an empty picker and no way back to a venue they had switched away from.
+      // listVenues() is already scoped by RLS, so for an admin the full list IS their list.
+      var isAdmin = !!(__ctx && __ctx.isAdmin);
       var ids={}; ((__ctx&&__ctx.staff)||[]).forEach(function(s){ ids[s.venue_id]=true; });
-      var mine=(vs||[]).filter(function(v){ return ids[v.id]; });
+      var mine = isAdmin ? (vs||[]) : (vs||[]).filter(function(v){ return ids[v.id]; });
       box.innerHTML="";
-      if(mine.length===1){ var one=mine[0]; markVenuePick(one.id); if(pairToVenue(one.slug)) return; }  // only one after all: just go in
+      // Auto-enter only when the person genuinely has just the one venue. An admin asked to
+      // switch has asked a question, so answer it rather than dropping them somewhere.
+      if(!isAdmin && mine.length===1){ var one=mine[0]; markVenuePick(one.id); if(pairToVenue(one.slug)) return; }
       if(!mine.length){
         // Don't dead-end: fall back to the current venue, else the manual pair screen.
         if(__ctx && __ctx.venue && __ctx.venue.slug && pairToVenue(__ctx.venue.slug)) return;
@@ -649,7 +655,8 @@
   // shows for staff who cover more than one venue.
   function updateAccountLink(){
     var link=$("billingLink"); if(link) link.style.display = ((__ctx&&__ctx.role)==="host") ? "none" : "";
-    var multi = !!(__ctx&&__ctx.staff&&__ctx.staff.length>1);
+    // An admin can reach every venue, so they always need the switcher, even with no staff rows.
+    var multi = !!(__ctx && (__ctx.isAdmin || (__ctx.staff && __ctx.staff.length>1)));
     var sw=$("switchVenue"); if(sw) sw.style.display = multi ? "" : "none";
     // Multi-venue hosts: name the venue on the selection screen so they notice a wrong pick.
     var vname=(__ctx&&__ctx.venue&&__ctx.venue.name)||"";
