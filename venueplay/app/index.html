@@ -626,16 +626,30 @@
     go("vVenuePick");
     var box=$("venuePickList"); box.innerHTML="<div class='note'>Loading your venues…</div>";
     VP.listVenues().then(function(vs){
-      // A Gflam HQ admin has no staff rows anywhere, so filtering to staff venues left them
-      // with an empty picker and no way back to a venue they had switched away from.
-      // listVenues() is already scoped by RLS, so for an admin the full list IS their list.
+      // Who should this list show?
+      //  - Venue staff: the venues they have a staff row for. Unchanged.
+      //  - HQ admin viewing as a venue: what THAT venue's owner would see, which is the other
+      //    venues on the same account or group. Never the whole database. This screen is the
+      //    host console, so it has to behave like the account being viewed as. To pick a
+      //    different account, go back to HQ and View as from there.
       var isAdmin = !!(__ctx && __ctx.isAdmin);
       var ids={}; ((__ctx&&__ctx.staff)||[]).forEach(function(s){ ids[s.venue_id]=true; });
-      var mine = isAdmin ? (vs||[]) : (vs||[]).filter(function(v){ return ids[v.id]; });
+      var mine;
+      if(isAdmin){
+        var curId = (__ctx && __ctx.currentVenueId) || null;
+        var cur = null;
+        (vs||[]).forEach(function(v){ if(v.id===curId) cur=v; });
+        mine = !cur ? (vs||[]).filter(function(v){ return v.id===curId; })
+                    : (vs||[]).filter(function(v){
+                        if(cur.founding_id && v.founding_id===cur.founding_id) return true;
+                        if(cur.group_id && v.group_id===cur.group_id) return true;
+                        return v.id===cur.id;
+                      });
+      } else {
+        mine = (vs||[]).filter(function(v){ return ids[v.id]; });
+      }
       box.innerHTML="";
-      // Auto-enter only when the person genuinely has just the one venue. An admin asked to
-      // switch has asked a question, so answer it rather than dropping them somewhere.
-      if(!isAdmin && mine.length===1){ var one=mine[0]; markVenuePick(one.id); if(pairToVenue(one.slug)) return; }
+      if(mine.length===1){ var one=mine[0]; markVenuePick(one.id); if(pairToVenue(one.slug)) return; }  // only one after all: just go in
       if(!mine.length){
         // Don't dead-end: fall back to the current venue, else the manual pair screen.
         if(__ctx && __ctx.venue && __ctx.venue.slug && pairToVenue(__ctx.venue.slug)) return;
