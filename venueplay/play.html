@@ -113,10 +113,16 @@
   .lay-align .ticket + .ticket{border-top:1px solid var(--line-2);padding-top:3px;margin-top:3px}
   .lay-align .ticket .tklabel{display:none}
   .lay-align .card9{width:100%;gap:2px}
-  .colband{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;margin-bottom:7px}
+  /* The band is the whole point of this layout, and six tickets are taller than a phone, so it
+     sticks: it used to scroll away exactly when you reached the tickets you had not checked. */
+  .colband{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(9,1fr);gap:2px;
+    padding:5px 0 6px;margin-bottom:2px;background:var(--ink)}
   .colband i{height:4px;border-radius:2px;background:var(--ink-3);transition:background .2s ease}
   .colband i.lit{background:var(--gold);box-shadow:0 0 10px rgba(255,194,75,.55)}
-  .card9 .cc.incol{border-color:rgba(255,194,75,.34)}
+  .card9 .cc.incol{border-color:rgba(255,194,75,.5);background:rgba(255,194,75,.07)}
+  /* the number just called, ringed on the ticket that popped forward */
+  .card9 .cc.justcalled{box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
+  .card9 .cc.daub.justcalled{box-shadow:inset 0 0 0 2px rgba(255,194,75,.9);color:#fff}
 
   .lastcalled{text-align:center;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
   .lastcalled b{color:#fff;font-size:18px}
@@ -140,6 +146,19 @@
   body.light .ptop{ background:rgba(255,255,255,.9) }
   body.light .brand .word, body.light .pbig, body.light .cardhead .pn, body.light .lastcalled b{ color:#191420 }
   body.light .card9 .cc{ box-shadow:0 1px 2px rgba(0,0,0,.06) }
+  /* Light mode is chosen by the players who most need the cues (older eyes, a bright room), and
+     gold on white is invisible: the lit column read FAINTER than an unlit one. Use the pink for
+     every "this is the one" signal here, and repaint the panel colours the layouts sit on. */
+  body.light .lay-grid .ticket{ background:#fff; border-color:rgba(0,0,0,.10) }
+  body.light .colband{ background:var(--ink) }
+  body.light .colband i{ background:rgba(0,0,0,.10) }
+  body.light .colband i.lit{ background:var(--pink); box-shadow:0 0 10px rgba(255,31,142,.45) }
+  body.light .card9 .cc.incol{ border-color:rgba(255,31,142,.55); background:rgba(255,31,142,.08) }
+  body.light .card9 .cc.justcalled{ box-shadow:inset 0 0 0 2px var(--pink); color:var(--pink-deep) }
+  body.light .card9 .cc.daub.justcalled{ box-shadow:inset 0 0 0 2px #7a0940; color:#fff }
+  body.light .lay-grid .ticket.pop{ border-color:var(--pink);
+    box-shadow:0 16px 34px rgba(0,0,0,.22), 0 0 26px rgba(255,31,142,.28) }
+  body.light .lay-grid .ticket.pop .tklabel{ color:var(--pink-deep) }
 
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
   .sharenote{margin-top:12px;font-size:13.5px;color:var(--muted);line-height:1.45}
@@ -402,8 +421,9 @@
     var stack=$("cardStack"); stack.innerHTML="";
     // One layout applies to the whole stack. With a single ticket they all look the same, so the
     // setting only really bites once the host deals a book.
-    var lay=(P.cards.length>1) ? P.layout : "stack";
+    var lay=effectiveLayout();
     stack.className = lay==="grid" ? "lay-grid" : lay==="align" ? "lay-align" : "";
+    syncCardCtl();
     var curCol = (lay==="align" && last) ? colOfNum(last) : -1;
     if(lay==="align"){
       var band=document.createElement("div"); band.className="colband";
@@ -415,7 +435,8 @@
       var cd=P.cards[i];
       var tk=document.createElement("div"); tk.className="ticket"; tk.setAttribute("data-ti",i);
       if(P.cards.length>1){ var lab=document.createElement("div"); lab.className="tklabel";
-        lab.textContent = (lay==="grid") ? ("Ticket "+(i+1)) : ("Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo);
+        // Always show the card number: it is how the host and the TV identify a winning ticket.
+        lab.textContent = (lay==="grid") ? ("#"+cd.cardNo) : ("Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo);
         tk.appendChild(lab); }
       var grid=document.createElement("div"); grid.className="card9";
       for(var r=0;r<3;r++){ for(var c=0;c<9;c++){
@@ -425,6 +446,10 @@
         if(cd.daubs[n]) cell.classList.add("daub");
         if(P.assist && set[n]) cell.classList.add("on");   // only hint which numbers are called in Easy mode; otherwise the player tracks their own
         if(c===curCol) cell.classList.add("incol");
+        // Three across shrinks a ticket to thumbnail size. Lifting the right TICKET is only half
+        // the job: without this the player still had to hunt 15 tiny numbers for the one that was
+        // called, with nothing marking it. Ring the number itself on the ticket that popped.
+        if(lay==="grid" && n===last) cell.classList.add("justcalled");
         grid.appendChild(cell);
       } }
       tk.appendChild(grid); wrap.appendChild(tk);
@@ -461,14 +486,23 @@
   }
   // ---- layout choice (menu) ----
   var LAYOUTS={ stack:"Stacked", grid:"Three across", align:"Columns lined up" };
-  function loadLayout(){ try{ var v=localStorage.getItem("vp-layout"); return LAYOUTS[v]?v:"stack"; }catch(e){ return "stack"; } }
+  // hasOwnProperty, not a truthy lookup: "constructor" and "toString" are truthy on any object,
+  // so a junk stored value used to sail through and leave the menu showing a blank selection.
+  function knownLayout(v){ return Object.prototype.hasOwnProperty.call(LAYOUTS, v); }
+  function loadLayout(){ try{ var v=localStorage.getItem("vp-layout"); return knownLayout(v)?v:"stack"; }catch(e){ return "stack"; } }
+  // With one ticket every layout looks the same, so we render stacked. The CONTROLS have to
+  // follow that, not the stored preference: hiding zoom because of a setting that is not in
+  // effect stranded a player at 220% zoom with no way to zoom back out.
+  function effectiveLayout(){ return (P.cards.length>1) ? P.layout : "stack"; }
+  function syncCardCtl(){
+    var ctl=document.querySelector(".cardctl");
+    if(ctl) ctl.style.display = (effectiveLayout()==="stack") ? "" : "none";
+  }
   function setLayout(v){
-    if(!LAYOUTS[v]) v="stack";
+    if(!knownLayout(v)) v="stack";
     P.layout=v; try{ localStorage.setItem("vp-layout", v); }catch(e){}
     var sel=$("laySel"); if(sel && sel.value!==v) sel.value=v;
-    // Zoom only means anything when tickets are stacked full width; the other two are fixed
-    // layouts, so hide the size buttons rather than leave controls that do nothing.
-    var ctl=document.querySelector(".cardctl"); if(ctl) ctl.style.display = (v==="stack") ? "" : "none";
+    syncCardCtl();
     if(P.cards.length) renderCards();
   }
 

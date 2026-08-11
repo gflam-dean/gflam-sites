@@ -413,8 +413,13 @@
   }
   function loopEntries(){
     var arr=[];
-    (ADS.slides||[]).forEach(function(s){ if(slideVisible(s)) arr.push({type:"slide",slide:s}); });
-    if(ADS.draws && ADS.draws.length) arr.push({type:"auto-draws"});
+    // Guard PER SLIDE. A single null or malformed row in the venue's JSON must cost that one
+    // slide, not the whole rotation: throwing here took every good slide down with it.
+    var slides=Array.isArray(ADS.slides)?ADS.slides:[];
+    slides.forEach(function(s){
+      try{ if(s && typeof s==="object" && slideVisible(s)) arr.push({type:"slide",slide:s}); }catch(e){}
+    });
+    if(Array.isArray(ADS.draws) && ADS.draws.length) arr.push({type:"auto-draws"});
     if(ADS.raffle) arr.push({type:"auto-raffle"});
     if(!arr.length) arr.push({type:"holding"});   // never leave the screen blank/black
     return arr;
@@ -459,9 +464,18 @@
     }
     var s=e.slide;
     // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
-    // encodeURI leaves ( ) ' and ; alone, which are enough to close the url() and append more CSS.
-    // Strip them: a real image URL never needs them, so nothing legitimate is lost.
-    if(s.image_url){ return '<div class="adimg" style="background-image:url('+encodeURI(s.image_url).replace(/[()';]/g,"")+')"></div>'; }
+    // Whitelist, not a blacklist. Stripping ( ) ' ; after encodeURI looked sufficient and was not:
+    // the value lands in an HTML ATTRIBUTE, so the parser decodes entities afterwards, and numeric
+    // references like &#41;&#59; do not even need their semicolons. That rebuilt the stripped
+    // characters and let a venue slide inject arbitrary CSS, including a full-screen black overlay
+    // that the watchdog would happily call healthy. Only a plain http(s) URL gets through now.
+    if(s.image_url){
+      var u=String(s.image_url);
+      if(/^https?:\/\/[A-Za-z0-9._~:\/?#@!$&*+,;=%-]+$/.test(u) && u.indexOf("&#")===-1){
+        return '<div class="adimg" style="background-image:url('+encodeURI(u).replace(/[()';]/g,"")+')"></div>';
+      }
+      return '';   // unusable URL: show nothing rather than trust it
+    }
     // Every field is venue-authored text, so every field gets escaped. head was already escaped and
     // tag/sub were not, which is the kind of gap that only shows up once someone types an apostrophe
     // or a "<" into a drink special and the slide renders as garbage (or worse) on the wall.
@@ -470,12 +484,25 @@
            (s.sub?'<div class="adsub">'+escBr(s.sub)+'</div>':"");
   }
   var adIdx=0, adTimer=null, adBuilt=false;
+  // Per-slide try/catch, and never finish with an empty container. One null row in the venue's
+  // slides JSON used to throw out of here AFTER innerHTML="" had already run, so the rotation was
+  // wiped, the watchdog saw no slides, its repair called this same failing code, and the screen
+  // reloaded every three minutes forever on identical data. One bad row must cost one slide.
   function buildAds(){
-    var host=$("tvAds"); host.innerHTML="";
-    loopEntries().forEach(function(e){
-      var div=document.createElement("div"); div.className="layer ad "+entryClass(e);
-      div.innerHTML=entryInner(e); host.appendChild(div);
+    var host=$("tvAds"), built=0;
+    host.innerHTML="";
+    var entries=[];
+    try{ entries=loopEntries(); }catch(e){ entries=[{type:"holding"}]; }
+    entries.forEach(function(e){
+      try{
+        var div=document.createElement("div"); div.className="layer ad "+entryClass(e);
+        div.innerHTML=entryInner(e); host.appendChild(div); built++;
+      }catch(err){}
     });
+    if(!built){
+      var d=document.createElement("div"); d.className="layer ad ad-a";
+      d.innerHTML=entryInner({type:"holding"}); host.appendChild(d);
+    }
     adBuilt=true;
   }
   function stopAds(){ if(adTimer){ clearTimeout(adTimer); clearInterval(adTimer); adTimer=null; } }
@@ -690,8 +717,12 @@
     try{ sessionStorage.setItem("vpTvHop", VENUE_SLUG); }catch(e){}   // shared with the iframe, so the game screen never bounces to /tv
     var f=document.getElementById("gameFrame");
     var url="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG);
-    if(f.getAttribute("src")!==url){ try{ f.src=url; }catch(e){} }
+    if(f.getAttribute("src")!==url){ embedLoaded=false; try{ f.src=url; }catch(e){} }
     f.style.display="block";
+    cancelEmbedWatch();
+    embedT=setTimeout(function(){
+      if(tvMode==="embed" && !embedLoaded){ try{ sessionStorage.setItem("vpTvReloadWhy","embed-never-loaded"); }catch(e){} enterAds(); }
+    }, EMBED_LOAD_MS);
   }
   // When the embedded game screen drops back to /tv (host went to bingo, or it idled out), the iframe
   // navigates ITSELF to /tv. Catch that here and hand back to the native ads/bingo screen rather than
@@ -701,12 +732,13 @@
     var f=document.getElementById("gameFrame"); if(!f) return;
     f.addEventListener("load", function(){
       if(f.style.display==="none") return;   // about:blank / hidden loads
+      embedLoaded=true; cancelEmbedWatch(); noteHostAlive();
       var path=""; try{ path=f.contentWindow.location.pathname||""; }catch(e){ return; }
       if(/(^|\/)tv(\.html)?$/i.test(path) && tvMode==="embed") enterAds();
     });
   })();
   function enterAds(){
-    tvMode="ads"; stopCelebrate(); cancelHolding(); hideGameFrame();
+    tvMode="ads"; stopCelebrate(); cancelHolding(); cancelEmbedWatch(); hideGameFrame();
     hideBingoLayers();
     $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
     $("adsRoot").classList.remove("hidden");
@@ -728,6 +760,27 @@
   // never arrives we fall back to them and the whole self-healing path switches back on.
   var HOLD_MAX_MS=5*60*1000, holdT=null;
   function cancelHolding(){ if(holdT){ clearTimeout(holdT); holdT=null; } }
+
+  // ---- the dead-host fallback ----------------------------------------------------------------
+  // The watchdog treats ANY non-ads mode as proof of life, and the 4 hour reload is idle-only. So
+  // every state except ads was a place a screen could be parked forever: a bingo lobby whose host
+  // got signed out by the 4 hour shift timeout, or an embedded game screen that never loaded (a
+  // full-bleed black iframe at z-index 40). Nothing sends t:"idle" when a tablet simply dies.
+  // A live game always produces host traffic, so silence for this long means nobody is running
+  // anything. Ads are always safe to show, and going there re-arms every other protection.
+  var HOST_SILENCE_MS=90*60*1000, lastHostAt=Date.now();
+  function noteHostAlive(){ lastHostAt=Date.now(); }
+  setInterval(function(){
+    if(tvMode==="ads") { lastHostAt=Date.now(); return; }
+    if(Date.now()-lastHostAt < HOST_SILENCE_MS) return;
+    try{ sessionStorage.setItem("vpTvReloadWhy","host-silent"); }catch(e){}
+    enterAds();
+  }, 60000);
+
+  // An embedded game screen that never loads leaves a black rectangle over everything, with the
+  // watchdog satisfied because tvMode is not "ads". Give the load a deadline and fall back.
+  var EMBED_LOAD_MS=25000, embedT=null, embedLoaded=false;
+  function cancelEmbedWatch(){ if(embedT){ clearTimeout(embedT); embedT=null; } }
   function enterHolding(mode){
     tvMode="holding"; stopAds(); stopCelebrate(); hideGameFrame();
     hideBingoLayers();
@@ -766,15 +819,16 @@
     // Remote recovery: lets us push a reload to every screen at once rather than ask 400 venues
     // to find the remote. Rate limited by the watchdog, and refused while a game is on air.
     if(m.t==="tv_reload"){
-      // Refused while a game is actually on air (bingo/embed). "holding" is allowed: it is the one
-      // state a screen can be stuck in with nothing playing, so it is exactly where we need to reach.
-      if(tvMode!=="ads" && tvMode!=="holding") return;
+      // Accepted in EVERY state. This is a deliberate command we send to recover a screen we
+      // cannot reach any other way, and the states most likely to need it are exactly the ones
+      // it used to refuse: a game left on air by a host whose tablet died, or an embedded game
+      // screen that never loaded. Refusing it there meant a wall screen nobody could fix.
       if(window.__vpTvReload) window.__vpTvReload("remote"); else location.reload();
       return;
     }
     // any host broadcast means a host is connected this session: hide the pair QR
     // and reply so the host can flip to "connected"
-    if(HOST_TYPES[m.t]){ markHostConnected(); tvSend({ t:"tv_here" }); }
+    if(HOST_TYPES[m.t]){ markHostConnected(); tvSend({ t:"tv_here" }); noteHostAlive(); }
     if(m.t==="host_here"){ return; }
     if(m.t==="session"){ sessionId=m.session_id||sessionId; if(m.join_code) setJoinCode(m.join_code); return; }
     if(m.t==="mode"){

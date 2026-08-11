@@ -281,10 +281,14 @@
 
   function signOut() {
     rememberVenue(null);
-    return getClient().auth.signOut().then(function () {
-      _ctx = null; _ready = null;
-      root.location.href = SIGNIN;
-    });
+    // Must ALWAYS end up at the sign-in screen. Without the catch, a sign-out that rejected left
+    // the host sitting on the page still authenticated while the shift clock had already been
+    // cleared, so the next page load handed them a fresh 4 hours: the control reset itself.
+    // getClient() can also throw outright if the Supabase script never loaded.
+    function bail() { _ctx = null; _ready = null; root.location.href = SIGNIN; }
+    try {
+      return getClient().auth.signOut().then(bail, bail);
+    } catch (e) { bail(); return Promise.resolve(); }
   }
 
   function requireAuth(opts) {
@@ -346,57 +350,129 @@
     try { add(JSON.parse(localStorage.getItem(LEGACY_KEY) || "null")); } catch (e) {}
     return out;
   }
+  function writeOpenSessions(list) {
+    // Keep the OLDEST on overflow: an old id is the one most likely to still be open and unbilled.
+    try {
+      if (list.length) localStorage.setItem(OPEN_KEY, JSON.stringify(list.slice(0, 10)));
+      else localStorage.removeItem(OPEN_KEY);
+      localStorage.removeItem(LEGACY_KEY);
+    } catch (e) {}
+  }
+  function currentUid() {
+    var c = _ctx && _ctx.user && _ctx.user.id;
+    return c || null;
+  }
   // Called when a console opens a night. Idempotent per session id.
   function noteOpenSession(id, venueId) {
     if (!id) return;
     var list = readOpenSessions();
-    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return; }
-    list.push({ id: id, venue: venueId || null });
-    try { localStorage.setItem(OPEN_KEY, JSON.stringify(list.slice(-10))); } catch (e) {}
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { list[i].closing = false; writeOpenSessions(list); return; } }
+    // uid so a shared bar tablet does not try to close the previous host's night with the
+    // current host's token (the Worker correctly refuses, and the id would be lost doing it).
+    list.push({ id: id, venue: venueId || null, uid: currentUid(), closing: false });
+    writeOpenSessions(list);
   }
-  // Close every night this device has open. Safe to call more than once: the Worker
-  // no-ops on an already-closed session and Stripe gets an idempotency key per session,
-  // so a night can never be billed twice.
-  function closeOpenSessions() {
-    var list = readOpenSessions();
-    try { localStorage.removeItem(OPEN_KEY); localStorage.removeItem(LEGACY_KEY); } catch (e) {}
-    if (!list.length) return Promise.resolve(0);
-    // getClient() THROWS if the Supabase CDN script has not loaded. This runs on the way out of the
-    // app (sign-out, shift timeout), so it must never throw back into the caller and stop the
-    // sign-out itself from happening.
+
+  // Close the nights THIS user opened on this device.
+  //
+  // The ordering here is the whole point. The first version cleared the stored ids and then fired
+  // the requests, so one flaky moment of pub wifi at sign-out meant a night stayed open forever
+  // and its host-approved overage was never charged, with nobody told. Nothing else in the product
+  // calls /session/close and there is no server-side sweeper, so a lost id is lost permanently.
+  // Now: POST first, and only drop an id when the server has actually answered. A network failure
+  // leaves it stored and flagged, and retryPendingCloses() picks it up on the next page load.
+  //
+  // Safe to call more than once: the Worker no-ops on an already-closed session and Stripe gets an
+  // idempotency key per session, so a night can never be billed twice.
+  function closeOpenSessions(onlyPending) {
+    var all = readOpenSessions();
+    if (!all.length) return Promise.resolve(0);
+    // getClient() THROWS if the Supabase CDN script has not loaded. This runs on the way out of
+    // the app, so it must never throw back into the caller and stop the sign-out happening.
     var c; try { c = getClient(); } catch (e) { return Promise.resolve(0); }
     return c.auth.getSession().then(function (r) {
-      var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
-      if (!tok) return 0;
-      return Promise.all(list.map(function (rec) {
+      var sess = r && r.data && r.data.session;
+      var tok = (sess && sess.access_token) || "";
+      var uid = (sess && sess.user && sess.user.id) || null;
+      if (!tok) return 0;   // no token: keep everything stored and try again later
+      var mine = [], keep = [];
+      all.forEach(function (rec) {
+        var ours = !rec.uid || !uid || rec.uid === uid;
+        if (ours && (!onlyPending || rec.closing)) mine.push(rec); else keep.push(rec);
+      });
+      if (!mine.length) return 0;
+      return Promise.all(mine.map(function (rec) {
         // keepalive so the request still goes out if the page is closing behind it
         return fetch(GAME_API + "/session/close", {
           method: "POST", keepalive: true,
           headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
           body: JSON.stringify({ session_id: rec.id })
-        }).catch(function () {});
-      })).then(function () { return list.length; });
+        }).then(function (res) {
+          // Any answer below 500 is final: closed, already closed, or refused. Only a network
+          // failure or a server error is worth keeping, because only those can succeed later.
+          if (res && res.status >= 500) { rec.closing = true; return rec; }
+          return null;
+        }).catch(function () { rec.closing = true; return rec; });
+      })).then(function (results) {
+        var failed = results.filter(Boolean);
+        writeOpenSessions(keep.concat(failed));
+        return mine.length - failed.length;
+      });
     }).catch(function () { return 0; });
   }
+  // Drain closes that failed earlier. Only touches records already flagged `closing`, so a night
+  // the host is still running is never closed out from under them.
+  function retryPendingCloses() {
+    var list = readOpenSessions();
+    for (var i = 0; i < list.length; i++) { if (list[i].closing) return closeOpenSessions(true); }
+    return Promise.resolve(0);
+  }
 
-  var _shiftTimer = null;
+  var _shiftIv = null;
   function endShift() {
+    if (_shiftIv) { clearInterval(_shiftIv); _shiftIv = null; }
     var p = closeOpenSessions();
     try { localStorage.removeItem(SHIFT_KEY); } catch (e) {}
-    if (_shiftTimer) { clearTimeout(_shiftTimer); _shiftTimer = null; }
     return p;
   }
-  // Arm (or re-arm) the forced sign-out. The start time lives in localStorage, so it is the
-  // SAME shift across every console and survives reloads: hopping /app -> trivia -> raffle
-  // does not hand anyone a fresh 4 hours.
+  // The forced 4 hour sign-out. The deadline lives in localStorage so it is ONE shift across every
+  // console: hopping /app -> trivia -> raffle does not hand anyone a fresh 4 hours.
+  //
+  // Deliberately an interval that re-reads the deadline every tick, not a single long setTimeout.
+  // A 4 hour timeout is frozen at page load, so a console left open in a background tab would
+  // still fire against the OLD deadline: it signed out whoever happened to be using the app at
+  // that moment, which after a handover is the NEXT host, mid-game. Re-reading also means tab
+  // sleep just delays the check instead of skipping it.
   function enforceShift() {
-    var now = Date.now(), start = 0;
+    var start = 0;
     try { start = parseInt(localStorage.getItem(SHIFT_KEY), 10) || 0; } catch (e) {}
-    function out() { endShift(); signOut(); }
-    if (start && (now - start) > SHIFT_MAX) { out(); return; }
-    if (!start) { start = now; try { localStorage.setItem(SHIFT_KEY, String(start)); } catch (e) {} }
-    if (_shiftTimer) clearTimeout(_shiftTimer);
-    _shiftTimer = setTimeout(out, Math.max(1000, SHIFT_MAX - (now - start)));
+    if (!start) { start = Date.now(); try { localStorage.setItem(SHIFT_KEY, String(start)); } catch (e) {} }
+    if (_shiftIv) clearInterval(_shiftIv);
+    _shiftIv = setInterval(checkShift, 30000);
+    checkShift();
+  }
+  function checkShift() {
+    var start = 0;
+    try { start = parseInt(localStorage.getItem(SHIFT_KEY), 10) || 0; } catch (e) {}
+    if (!start) return;                                   // signed out elsewhere; nothing to enforce
+    if (start > Date.now()) {                             // clock skew or a tampered value
+      try { localStorage.setItem(SHIFT_KEY, String(Date.now())); } catch (e) {}
+      return;
+    }
+    if ((Date.now() - start) <= SHIFT_MAX) return;
+    if (_shiftIv) { clearInterval(_shiftIv); _shiftIv = null; }
+    // Close the night BEFORE signing out. signOut() clears the local session, and after a 4 hour
+    // shift the access token has expired, so getSession() has to hit the network to refresh it:
+    // the old fire-and-forget pair lost that race almost every time, which is precisely when a
+    // night most needed billing. Capped, so a dead network can never leave a host signed in.
+    var done = false;
+    function finish() {
+      if (done) return; done = true;
+      try { localStorage.removeItem(SHIFT_KEY); } catch (e) {}
+      signOut();
+    }
+    setTimeout(finish, 2500);
+    closeOpenSessions().then(finish, finish);
   }
 
   root.VP = {
@@ -415,6 +491,7 @@
     venueCode: venueCode,
     noteOpenSession: noteOpenSession,
     closeOpenSessions: closeOpenSessions,
+    retryPendingCloses: retryPendingCloses,
     enforceShift: enforceShift,
     endShift: endShift
   };

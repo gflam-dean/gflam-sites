@@ -744,7 +744,7 @@
     // now, and a claim only joins the tie if it lands on the SAME ball (claimIdx), which is
     // exactly the real-world rule: the caller stops on a number, and whoever calls on that
     // number is in. Anyone calling after the next ball is late.
-    claims:[], claimIdx:-1, won:false, lastWins:[], prizesWon:[], startedAt:null
+    claims:[], claimIdx:-1, claimSeq:0, won:false, lastWins:[], prizesWon:[], startedAt:null
   };
   var MAX_TIE=8;   // a sane ceiling on one ball; a real tie is two or three
   // the natural next prize in a progressive housie game (line -> two lines -> full house)
@@ -1124,9 +1124,13 @@
     // More than one call on the same ball is a tie, which in bingo splits the prize. Say so up
     // front and give the host one button for it, so the normal case is a single tap.
     if(G.claims.length>1){
+      // Name the ball the CLAIMS were made on, not whatever is current.
+      var onBall=(G.claimIdx>=0 ? G.draw[G.claimIdx] : (G.idx>=0 ? G.draw[G.idx] : ""));
+      var say = validCount>1 ? 'That is a tie, and a tie splits the prize.'
+              : validCount===1 ? 'Only one of them checks out.'
+              : 'Neither ticket is a win yet.';   // allowEarly venues: both called early
       html+='<div class="tiebar">'+
-        '<div><b>'+G.claims.length+' called on number '+(G.idx>=0?G.draw[G.idx]:"")+'.</b> '+
-        (validCount>1 ? 'That is a tie, and a tie splits the prize.' : 'Only one of them checks out.')+'</div>'+
+        '<div><b>'+G.claims.length+' called on number '+onBall+'.</b> '+say+'</div>'+
         (validCount>1 ? '<button class="btn win" data-act="confirmall">Split between the '+validCount+' valid</button>' : '')+
         '</div>';
     }
@@ -1143,7 +1147,9 @@
         '<div class="card9" id="claimCard-'+ci+'"></div>'+
         '<div class="claimsub">'+sub+'</div>'+
         '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-i="'+ci+'">Confirm winner</button>'+
-        '<button class="btn roll" data-act="reject" data-i="'+ci+'">'+(G.claims.length>1?"Not this one":"Play on")+'</button></div></div>';
+        // "Play on" only when waving this one off actually resumes the ROOM. If anyone else is
+        // still queued or already confirmed, it only releases this player.
+        '<button class="btn roll" data-act="reject" data-i="'+ci+'">'+((G.claims.length>1||G.lastWins.length)?"Not this one":"Play on")+'</button></div></div>';
     });
     q.innerHTML=html;
     G.claims.forEach(function(c,ci){ renderClaimCard($("claimCard-"+ci), c.card); });
@@ -1209,6 +1215,10 @@
   }
   function nextBall(){
     if(G.status!=="running" || G.idx>=89) return;
+    // Never call over an unresolved claim. Moving the ball on left the queue stranded on the old
+    // number, and because the window is keyed to that ball, EVERY later claim was then refused in
+    // silence: the next genuine winner got "the host said not yet" for a call nobody ever saw.
+    if(G.claims.length){ showToast("Sort the bingo call first, then keep calling."); return; }
     G.idx++;
     var n=G.draw[G.idx]; G.called[n]=true;
     send({ t:"ball", number:n, called:calledArray(), index:G.idx });
@@ -1218,24 +1228,25 @@
   }
   // Move one queued claim into the confirmed list. Nothing is broadcast yet: the host still has
   // to decide play on or finish, and with a tie they may confirm two or three people first.
+  // Returns true if it actually confirmed. The caller MUST respect that: an early version looped
+  // "while there are claims, confirm index 0" on the assumption that confirming always splices.
+  // It does not (a duplicate pid returns early), so one duplicate spun the host console forever
+  // mid-game. Never write a loop here whose termination depends on what this function does.
   function hostConfirm(i){
-    var c=G.claims[i]; if(!c) return;
-    for(var k=0;k<G.lastWins.length;k++){ if(G.lastWins[k].pid===c.pid) return; }   // no double-confirm
-    G.lastWins.push({ pid:c.pid, name:c.name, cardNo:c.cardNo, pattern:G.pattern });
+    var c=G.claims[i]; if(!c) return false;
+    for(var k=0;k<G.lastWins.length;k++){ if(G.lastWins[k].pid===c.pid){ G.claims.splice(i,1); renderClaimQueue(); return false; } }
+    G.lastWins.push({ pid:c.pid, name:c.name, cardNo:c.cardNo, pattern:G.pattern, seq:c.seq });
     G.claims.splice(i,1);
-    if(!G.claims.length) G.claimIdx=-1;
     saveGame();
     renderClaimQueue();
+    return true;
   }
   // The tie shortcut: confirm every claim that actually checks out, in one tap.
-  // Confirm in CALL ORDER, not backwards. Iterating in reverse to keep the splice simple put the
-  // second caller first, which reads wrong to the room and, because the compatibility pid/name
-  // fields on the broadcast are the first winner, named the wrong player on any screen still
-  // running the pre-tie code.
+  // Advances on anything it did not confirm, so this terminates whatever hostConfirm decides.
   function hostConfirmAll(){
     for(var i=0;i<G.claims.length;){
-      if(G.claims[i].valid!==false) hostConfirm(i);   // hostConfirm splices, so do NOT advance
-      else i++;
+      if(G.claims[i].valid!==false && hostConfirm(i)) continue;   // spliced: same index is the next claim
+      i++;
     }
   }
   function hostReject(i){
@@ -1247,8 +1258,9 @@
     } else {
       // Someone else is still in the running (or has already won), so the game is NOT resuming.
       // Release just this player's phone, or they sit on "checking your ticket" forever.
-      if(!G.claims.length) G.claimIdx=-1;
       send({ t:"resume", pid:c.pid });
+      // and correct the big screen, which is still naming everyone who called on this ball
+      if(G.claims.length) sendClaimPending();
     }
     saveGame();
     renderClaimQueue();
@@ -1257,7 +1269,12 @@
   // pid/name/cardNo repeat the first winner so any screen still on the old shape keeps working.
   function announce(cont, nxt){
     if(!G.lastWins.length) return null;
-    var ws=G.lastWins, first=ws[0], pat=first.pattern;
+    // Order by who CALLED first, not by the order the host happened to tap Confirm. The legacy
+    // pid/name/cardNo below are the first winner, so an out-of-order confirm otherwise named the
+    // wrong player on any screen still running pre-tie code.
+    var ws=G.lastWins.slice().sort(function(a,b){ return (a.seq||0)-(b.seq||0); });
+    var first=ws[0], pat=first.pattern;
+    G.claimIdx=-1;   // the round is decided: the tie window on that ball closes here
     var msg={ t:"winner", pid:first.pid, name:first.name, cardNo:first.cardNo, pattern:pat,
               winners:ws.map(function(w){ return { pid:w.pid, name:w.name, cardNo:w.cardNo }; }),
               shared:ws.length>1, cont:!!cont };
@@ -1323,12 +1340,16 @@
     }
     else if(m.t==="claim"){
       if(G.status!=="running" || G.won) return;
-      // A claim joins the queue while the host is still resolving THIS ball. Once the host has
-      // moved on (or the caller has called another number) a late claim is just late.
-      if(G.claims.length && G.claimIdx!==G.idx) return;
-      if(!G.claims.length && G.lastWins.length) return;   // already announced-in-waiting
+      // The tie window is the BALL, and it stays open until the round is announced. Keying it on
+      // "are there still unresolved claims" closed it the moment the host tapped Confirm on the
+      // first caller, which is a second or two after the shout: a genuine tie partner calling on
+      // the very same number was then dropped with nothing shown to anyone. Only a claim on a
+      // LATER ball is actually late.
+      if(G.claimIdx!==-1 && G.claimIdx!==G.idx) return;
       if(G.claims.length>=MAX_TIE) return;
-      for(var q=0;q<G.claims.length;q++){ if(G.claims[q].pid===m.pid) return; }   // one claim per player per ball
+      var q;
+      for(q=0;q<G.claims.length;q++){ if(G.claims[q].pid===m.pid) return; }    // one claim per player per ball
+      for(q=0;q<G.lastWins.length;q++){ if(G.lastWins[q].pid===m.pid) return; } // already confirmed, awaiting announce
       var pl=G.players[m.pid];
       if(!pl || !pl.cards || !pl.cards.length) return;
       // find the exact ticket they claimed on; fall back to any winning ticket they hold
@@ -1339,7 +1360,9 @@
       if(!tk) return;
       var valid=checkPattern(tk.card);
       if(valid || G.allowEarly){
-        G.claims.push({ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card, valid:valid });
+        // seq preserves CALL order, so announcing is ordered by who shouted first even when the
+        // host confirms the cards in a different order (they often serve whoever is at the bar).
+        G.claims.push({ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card, valid:valid, seq:G.claimSeq++ });
         G.claimIdx=G.idx;
         sendClaimPending();
         saveGame();
@@ -1348,6 +1371,10 @@
     }
     else if(m.t==="leave"){
       if(m.pid && G.players[m.pid]){
+        // Drop any claim they had queued. Leaving it behind meant the host could still award a
+        // prize on a ticket that player no longer holds (rejoining deals them a fresh one).
+        for(var lv=G.claims.length-1;lv>=0;lv--){ if(G.claims[lv].pid===m.pid) G.claims.splice(lv,1); }
+        if(!G.claims.length && !G.lastWins.length) G.claimIdx=-1;
         delete G.players[m.pid];
         var li=G.order.indexOf(m.pid); if(li>=0) G.order.splice(li,1);
         sendPlayers(); sendState(); saveGame(); renderConsole();
