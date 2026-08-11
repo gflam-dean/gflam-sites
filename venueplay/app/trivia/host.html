@@ -491,7 +491,8 @@
       G.sessionId=r.session_id;
       // Remember the night so it can be CLOSED on sign-out. Closing is what marks the
       // session finished and bills any approved busy-night overage; nothing else does it.
-      try{ localStorage.setItem("vpOpenSession", JSON.stringify({ id:r.session_id, venue:G.venueId })); }catch(e){} G.joinCode=r.join_code;
+      VP.noteOpenSession(r.session_id, G.venueId);   // so the night is closed (and any approved overage billed) on sign-out
+      G.joinCode=r.join_code;
       if(typeof r.plan_cap==="number") G.planCap=r.plan_cap;   // authoritative cap from the worker (covers group + founding), so the banner can't disagree
       renderConsole();
       openGameChannel(G.joinCode);                                        // players' channel
@@ -708,6 +709,7 @@
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live quiz."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
+      VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
       $("statusText").textContent="Signed in";
       loadQuestionSets();
       restoreTrivia().then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal

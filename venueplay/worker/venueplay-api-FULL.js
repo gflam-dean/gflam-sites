@@ -154,7 +154,18 @@ async function handleCheckout(request, env, json) {
   const codeState = foundingCode.split('-')[0].toUpperCase();
   const reqDigit = STATE_DIGIT[codeState] || '';
   const foundingPostcode = ((b.postcode || (venues[0] && venues[0].postcode) || '') + '').trim();
-  const founding = codeActive && reqDigit !== '' && foundingPostcode.charAt(0) === reqDigit;
+  // The leading-digit test alone was WRONG for four states, and it failed SILENTLY: the venue saw
+  // the founding price on /qld or /vic, then got charged standard with no error and no explanation.
+  // This Worker's own vpaStateFromPostcode() already knows QLD is 4xxx AND 9xxx, VIC 3xxx AND 8xxx,
+  // NSW 1xxx-2xxx and ACT 02xx, so ask it. Kept as a UNION with the old digit test so this can only
+  // ever accept MORE venues than before, never newly reject one.
+  const pcState = vpaStateFromPostcode(foundingPostcode);
+  const stateOk = (reqDigit !== '' && foundingPostcode.charAt(0) === reqDigit) ||
+                  (pcState !== null && pcState === codeState) ||
+                  // ACT and NSW are one market for founding: an ACT venue on an NSW code qualifies.
+                  (pcState === 'ACT' && codeState === 'NSW') ||
+                  (pcState === 'NSW' && codeState === 'ACT');
+  const founding = codeActive && stateOk;
   const price = founding
     ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
     : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);

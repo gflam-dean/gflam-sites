@@ -459,10 +459,15 @@
     }
     var s=e.slide;
     // Venue-uploaded image slide fills the screen; built-in sample slides are still text.
-    if(s.image_url){ return '<div class="adimg" style="background-image:url('+encodeURI(s.image_url)+')"></div>'; }
-    return (s.tag?'<div class="adtag" style="color:'+accentHex(s.accent)+'">'+s.tag+'</div>':"")+
+    // encodeURI leaves ( ) ' and ; alone, which are enough to close the url() and append more CSS.
+    // Strip them: a real image URL never needs them, so nothing legitimate is lost.
+    if(s.image_url){ return '<div class="adimg" style="background-image:url('+encodeURI(s.image_url).replace(/[()';]/g,"")+')"></div>'; }
+    // Every field is venue-authored text, so every field gets escaped. head was already escaped and
+    // tag/sub were not, which is the kind of gap that only shows up once someone types an apostrophe
+    // or a "<" into a drink special and the slide renders as garbage (or worse) on the wall.
+    return (s.tag?'<div class="adtag" style="color:'+accentHex(s.accent)+'">'+esc(s.tag)+'</div>':"")+
            '<div class="adbig">'+escBr(s.head)+'</div>'+
-           (s.sub?'<div class="adsub">'+s.sub+'</div>':"");
+           (s.sub?'<div class="adsub">'+escBr(s.sub)+'</div>':"");
   }
   var adIdx=0, adTimer=null, adBuilt=false;
   function buildAds(){
@@ -662,7 +667,7 @@
     var cur=f.getAttribute("src"); if(cur && cur!=="about:blank"){ try{ f.src="about:blank"; }catch(e){} }
   }
   function enterEmbed(game){
-    tvMode="embed"; stopAds(); stopCelebrate();
+    tvMode="embed"; stopAds(); stopCelebrate(); cancelHolding();
     hideBingoLayers();
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
@@ -686,7 +691,7 @@
     });
   })();
   function enterAds(){
-    tvMode="ads"; stopCelebrate(); hideGameFrame();
+    tvMode="ads"; stopCelebrate(); cancelHolding(); hideGameFrame();
     hideBingoLayers();
     $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
     $("adsRoot").classList.remove("hidden");
@@ -695,12 +700,19 @@
     startAds();
   }
   function enterBingo(){
-    tvMode="bingo"; stopAds(); hideGameFrame();
+    tvMode="bingo"; stopAds(); cancelHolding(); hideGameFrame();
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
     applyBingo();
   }
+  // "Starting <game>..." is a HANDOVER card, never a resting state. It used to have no way out:
+  // the watchdog treats any non-ads mode as proof of life and the max-age reload is idle-only, so a
+  // host whose tablet died right after picking a game left the room staring at "Starting Trivia..."
+  // for days, with the remote tv_reload refused as well. Ads are always safe to show, so if the game
+  // never arrives we fall back to them and the whole self-healing path switches back on.
+  var HOLD_MAX_MS=5*60*1000, holdT=null;
+  function cancelHolding(){ if(holdT){ clearTimeout(holdT); holdT=null; } }
   function enterHolding(mode){
     tvMode="holding"; stopAds(); stopCelebrate(); hideGameFrame();
     hideBingoLayers();
@@ -708,6 +720,8 @@
     $("pairPanel").classList.add("hidden");
     $("holdGame").textContent=gameLabel(mode);
     showBingoLayer("tvHold");
+    cancelHolding();
+    holdT=setTimeout(function(){ if(tvMode==="holding") enterAds(); }, HOLD_MAX_MS);
   }
 
   // ================= REALTIME =================
@@ -737,7 +751,9 @@
     // Remote recovery: lets us push a reload to every screen at once rather than ask 400 venues
     // to find the remote. Rate limited by the watchdog, and refused while a game is on air.
     if(m.t==="tv_reload"){
-      if(tvMode!=="ads") return;
+      // Refused while a game is actually on air (bingo/embed). "holding" is allowed: it is the one
+      // state a screen can be stuck in with nothing playing, so it is exactly where we need to reach.
+      if(tvMode!=="ads" && tvMode!=="holding") return;
       if(window.__vpTvReload) window.__vpTvReload("remote"); else location.reload();
       return;
     }
@@ -813,7 +829,12 @@
   // that game's screen. The game screens run the same watcher so you can hop between games and
   // back to bingo without ever touching the link.
   (function unifiedRouter(){
-    if(!VENUE_SLUG || !client) return;   // client is null if the Supabase lib failed to load; keep ads + slides alive
+    if(!VENUE_SLUG) return;
+    // connectRealtime() retries every 3s until the Supabase library is there, so on flaky venue wifi
+    // `client` is still null when this first runs. It used to just return, permanently: bingo came
+    // back when realtime did, but the screen silently never followed trivia/musical/raffle/members
+    // again for the life of the page. Wait for the client instead of giving up on it.
+    if(!client){ setTimeout(unifiedRouter, 3000); return; }
     var GAMES=["trivia","musical","raffle","members"];
     function onGameMode(game){
       if(tvMode==="embed") return;   // a game is already on screen; the embedded screen handles hops between games itself

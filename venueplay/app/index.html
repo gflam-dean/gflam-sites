@@ -688,23 +688,12 @@
   // players are never charged and every venue stays "live" in HQ forever.
   // Safe to fire more than once: the Worker no-ops on an already-closed session, and Stripe is
   // given an idempotency key of overage_<session id>, so a night can never be billed twice.
+  // Now delegates to VP.closeOpenSessions() in vp-session.js, which every game console shares.
+  // The important difference: it closes ALL open nights, not just the most recent one. Trivia,
+  // musical and raffle each open their own session, and the old single-key store meant running
+  // two formats in a night silently orphaned the first one - left open forever, never billed.
   function closeOpenNight(){
-    var rec=null;
-    try{ rec=JSON.parse(localStorage.getItem("vpOpenSession")||"null"); }catch(e){}
-    if(!rec || !rec.id) return;
-    try{ localStorage.removeItem("vpOpenSession"); }catch(e){}
-    var c=(window.VP&&VP.getClient)?VP.getClient():null; if(!c) return;
-    c.auth.getSession().then(function(r){
-      var tok=(r&&r.data&&r.data.session&&r.data.session.access_token)||"";
-      if(!tok) return;
-      // keepalive so the request still goes out if the page is closing behind it
-      // Local, not VP_GAME_API: that is assigned further down the file, and enforceShift()
-      // can call this during init, before that line has run.
-      var API="https://venueplay-game.dean-tindale.workers.dev";
-      fetch(API+"/session/close",{ method:"POST", keepalive:true,
-        headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+tok },
-        body:JSON.stringify({ session_id:rec.id }) }).catch(function(){});
-    }).catch(function(){});
+    if(window.VP && VP.closeOpenSessions) VP.closeOpenSessions();
   }
   function endShift(){ closeOpenNight(); try{ localStorage.removeItem("vpShiftStart"); }catch(e){} if(shiftTimer){ clearTimeout(shiftTimer); shiftTimer=null; } }
   function enforceShift(){

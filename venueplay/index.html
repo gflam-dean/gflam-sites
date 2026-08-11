@@ -1238,8 +1238,13 @@
       .then(function(rows){
         if (!Array.isArray(rows) || rows.length < 6) return;
         var track = document.getElementById('trustedTrack'); if (!track) return;
+        // logo_url and name are VENUE-SUPPLIED (the Account page writes them, and the Worker only
+        // checks the URL starts with http). Dropped into src="..." raw, a logo URL ending in
+        // '" onerror="' runs script on the marketing site for every visitor. Escape both, and build
+        // the node rather than concatenating markup.
+        function attr(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
         var html = '';
-        [rows, rows].forEach(function(set){ set.forEach(function(v){ html += '<img class="trustedlogo" src="' + v.logo_url + '" alt="' + String(v.name || '').replace(/[<">]/g, '') + '" loading="lazy">'; }); });
+        [rows, rows].forEach(function(set){ set.forEach(function(v){ html += '<img class="trustedlogo" src="' + attr(v.logo_url) + '" alt="' + attr(v.name) + '" loading="lazy">'; }); });
         track.innerHTML = html;
         var sec = document.getElementById('trusted'); if (sec) sec.style.display = '';
       }).catch(function(){});

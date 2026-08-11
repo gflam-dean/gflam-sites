@@ -353,6 +353,11 @@ async function venueByCode(env, code) {
    by venue_id, never by name. Unknown code = silently ignored so a player is never blocked. */
 async function handleCapture(request, env, json) {
   const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'capture:ip:' + ipHash, CAPTURE_MAX_PER_IP, 60);
+    if (!rl.ok) return json({ error: 'Too many sign-ups from this network right now' }, 429);
+  }
   const venueId = await venueByCode(env, b.code);
   if (!venueId) return json({ ok: false, stored: false });
   const rows = await sbGet(env, 'vp_venue_settings',
@@ -410,8 +415,29 @@ async function handlePlayLive(request, env, json) {
 }
 
 /* End-of-game figures for reporting. Host posts once per completed game. Keyed by venue_id. */
+/* Both /report and /capture are reached with NOTHING but `code`, and `code` is not a secret: it is
+   fnvVenueCode(slug), a pure hash of the venue's PUBLIC slug, computed by code that ships in
+   play.html and tv.html. Anyone can derive any venue's code and post to these two routes. They are
+   the only unauthenticated writes the rate limiter did not cover (broadcast bingo has no game
+   Worker, so these are its only server calls). /capture is the one that matters: it writes
+   marketing_optin rows, and a poisoned opt-in list is exactly the Spam Act exposure the whole
+   unticked-by-default rule exists to avoid. Throttle both per network. */
+const REPORT_MAX_PER_IP = 30;    // game reports per 60s per network. A venue finishes a round every few minutes.
+const CAPTURE_MAX_PER_IP = 120;  // opt-in captures per 60s per network. A whole venue shares one NAT IP, so keep it generous.
+
+async function abuseIpHash(request, env) {
+  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; x-real-ip is client-suppliable
+  if (!ip) return null;
+  return await sha256Hex((env.IP_HASH_SALT || 'venueplay') + ':' + ip);
+}
+
 async function handleReport(request, env, json) {
   const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'report:ip:' + ipHash, REPORT_MAX_PER_IP, 60);
+    if (!rl.ok) return json({ error: 'Too many reports from this network right now' }, 429);
+  }
   const venueId = await venueByCode(env, b.code);
   if (!venueId) return json({ ok: false });
   const row = {

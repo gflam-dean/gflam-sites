@@ -315,6 +315,90 @@
     return out;
   }
 
+  /* ---- the night, and the shift ------------------------------------------
+     Two things used to live ONLY in app/index.html, and so only ever happened
+     if the host walked back to /app and signed out there:
+
+       1. POST /session/close. That is what marks the night finished AND bills
+          any overage the host approved. Trivia, musical bingo and raffle all
+          OPEN a session; none of them could close one. A host who ran the quiz
+          and shut the tablet left the night open forever: the approved overage
+          was never charged and the venue read "live" in HQ indefinitely.
+
+       2. The 4 hour forced sign-out. That timeout is a COMPLIANCE control -- the
+          venue's opt-in player details sit behind this login -- so a tablet
+          parked on the trivia console must not stay signed in for days.
+
+     They live here now so every console gets both. Note the plural: a venue that
+     runs trivia AND musical on the same night has TWO open sessions, and the old
+     single "vpOpenSession" key silently overwrote the first, leaving it unclosable.
+     ------------------------------------------------------------------------ */
+  var GAME_API   = "https://venueplay-game.dean-tindale.workers.dev";
+  var OPEN_KEY   = "vpOpenSessions";   // JSON array of {id, venue}
+  var LEGACY_KEY = "vpOpenSession";    // the old single-object key; still drained so nothing is orphaned
+  var SHIFT_KEY  = "vpShiftStart";
+  var SHIFT_MAX  = 4 * 3600 * 1000;
+
+  function readOpenSessions() {
+    var out = [], seen = {};
+    function add(r) { if (r && r.id && !seen[r.id]) { seen[r.id] = true; out.push(r); } }
+    try { var a = JSON.parse(localStorage.getItem(OPEN_KEY) || "[]"); if (Array.isArray(a)) a.forEach(add); } catch (e) {}
+    try { add(JSON.parse(localStorage.getItem(LEGACY_KEY) || "null")); } catch (e) {}
+    return out;
+  }
+  // Called when a console opens a night. Idempotent per session id.
+  function noteOpenSession(id, venueId) {
+    if (!id) return;
+    var list = readOpenSessions();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) return; }
+    list.push({ id: id, venue: venueId || null });
+    try { localStorage.setItem(OPEN_KEY, JSON.stringify(list.slice(-10))); } catch (e) {}
+  }
+  // Close every night this device has open. Safe to call more than once: the Worker
+  // no-ops on an already-closed session and Stripe gets an idempotency key per session,
+  // so a night can never be billed twice.
+  function closeOpenSessions() {
+    var list = readOpenSessions();
+    try { localStorage.removeItem(OPEN_KEY); localStorage.removeItem(LEGACY_KEY); } catch (e) {}
+    if (!list.length) return Promise.resolve(0);
+    // getClient() THROWS if the Supabase CDN script has not loaded. This runs on the way out of the
+    // app (sign-out, shift timeout), so it must never throw back into the caller and stop the
+    // sign-out itself from happening.
+    var c; try { c = getClient(); } catch (e) { return Promise.resolve(0); }
+    return c.auth.getSession().then(function (r) {
+      var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
+      if (!tok) return 0;
+      return Promise.all(list.map(function (rec) {
+        // keepalive so the request still goes out if the page is closing behind it
+        return fetch(GAME_API + "/session/close", {
+          method: "POST", keepalive: true,
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
+          body: JSON.stringify({ session_id: rec.id })
+        }).catch(function () {});
+      })).then(function () { return list.length; });
+    }).catch(function () { return 0; });
+  }
+
+  var _shiftTimer = null;
+  function endShift() {
+    var p = closeOpenSessions();
+    try { localStorage.removeItem(SHIFT_KEY); } catch (e) {}
+    if (_shiftTimer) { clearTimeout(_shiftTimer); _shiftTimer = null; }
+    return p;
+  }
+  // Arm (or re-arm) the forced sign-out. The start time lives in localStorage, so it is the
+  // SAME shift across every console and survives reloads: hopping /app -> trivia -> raffle
+  // does not hand anyone a fresh 4 hours.
+  function enforceShift() {
+    var now = Date.now(), start = 0;
+    try { start = parseInt(localStorage.getItem(SHIFT_KEY), 10) || 0; } catch (e) {}
+    function out() { endShift(); signOut(); }
+    if (start && (now - start) > SHIFT_MAX) { out(); return; }
+    if (!start) { start = now; try { localStorage.setItem(SHIFT_KEY, String(start)); } catch (e) {} }
+    if (_shiftTimer) clearTimeout(_shiftTimer);
+    _shiftTimer = setTimeout(out, Math.max(1000, SHIFT_MAX - (now - start)));
+  }
+
   root.VP = {
     getClient: getClient,
     useClient: useClient,
@@ -328,6 +412,10 @@
     requireAuth: requireAuth,
     signOut: signOut,
     homeHref: homeHref,
-    venueCode: venueCode
+    venueCode: venueCode,
+    noteOpenSession: noteOpenSession,
+    closeOpenSessions: closeOpenSessions,
+    enforceShift: enforceShift,
+    endShift: endShift
   };
 })(window);
