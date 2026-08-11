@@ -427,7 +427,7 @@
       G.claimTimer=setInterval(function(){
         if(!G.round){ stopClaimTimer(); return; }
         G.round.remaining--; updateClaimCd();
-        if(G.round.remaining<=0){ stopClaimTimer(); $("drawNote").textContent="No claim in time — rolling the jackpot to next week."; onRollover(); }
+        if(G.round.remaining<=0){ stopClaimTimer(); $("drawNote").textContent="No claim in time, rolling the jackpot to next week."; onRollover(); }
       }, 1000);
     }
   }

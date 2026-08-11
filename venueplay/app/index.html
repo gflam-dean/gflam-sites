@@ -336,7 +336,7 @@
           </div>
           <div class="field">
             <label>Prize</label>
-            <input type="text" class="hostinput" id="prizeInput" value="$50 bar tab" placeholder="e.g. $50 bar tab">
+            <input type="text" class="hostinput" id="prizeInput" placeholder="$50 bar tab" placeholder="e.g. $50 bar tab">
           </div>
           <div class="field">
             <label>Tickets each player</label>
@@ -559,7 +559,7 @@
     var msg=(err&&err.message)?String(err.message).toLowerCase():"";
     var off=(msg.indexOf("phone")>=0 || msg.indexOf("sms")>=0) &&
             (msg.indexOf("disabled")>=0 || msg.indexOf("not enabled")>=0 || msg.indexOf("unsupported")>=0 || msg.indexOf("provider")>=0);
-    if(off){ $("mobileErr").textContent="We could not send a code. Text sign-in needs to be switched on in Supabase. Use Skip for demo to keep going."; }
+    if(off){ $("mobileErr").textContent="We could not send a code. We could not text you a code. Try again in a moment, or email hello@venueplay.com.au and we will sort it out."; }
     else { $("mobileErr").textContent="We could not send a code, check the number or try again."; }
   }
 

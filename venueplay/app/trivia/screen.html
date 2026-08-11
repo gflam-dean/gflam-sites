@@ -270,7 +270,7 @@
   }
   function renderLobby(){
     $("lobbyCode").textContent = joinCode || "------";
-    if(VENUE_SLUG){ $("hostLine").textContent="Linked to your venue – just open the trivia host to start."; }
+    if(VENUE_SLUG){ $("hostLine").textContent="Linked to your venue. Just open the trivia host to start."; }
     else { $("hostLineCode").textContent=CODE; }
     $("tvJoinCode").textContent = joinCode || "------";
     $("lobbyPlaying").textContent=state.playerCount;

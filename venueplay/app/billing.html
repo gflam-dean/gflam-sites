@@ -378,7 +378,7 @@
       // admin is staff nowhere, so without this it cannot tell what account to act on.
       try { var _imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null");
             if (_imp && _imp.id) h["X-VP-Venue"] = _imp.id; } catch (e) {}
-      return fetch(VP_WORKER + path, { method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(function(r){ return r.json(); }).then(function(j){ if (j && j.error && j._detail){ j.error = j.error + " — " + j._detail; } return j; });
+      return fetch(VP_WORKER + path, { method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(function(r){ return r.json(); }).then(function(j){ if (j && j.error && j._detail){ j.error = j.error + ". " + j._detail; } return j; });
     }).catch(function(){ return { error: "Something went wrong. Please check your connection and try again." }; });
   }
   function money(n){ return "$" + (n).toFixed(2); }
