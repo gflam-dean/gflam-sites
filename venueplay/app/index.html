@@ -603,6 +603,9 @@
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
   $("noVenueOut").addEventListener("click", function(){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
   $("signoutBtn").addEventListener("click", function(){
+    // endShift() is what closes the night, which is what bills any approved overage. This is the
+    // button hosts actually press, so it has to be here and not only on the 4 hour timeout.
+    endShift();
     showToast("Thanks for using VenuePlay" + (vpWho ? (", " + vpWho) : "") + ". Have a great " + dayNight() + ".");
     try{ sessionStorage.removeItem("vpGreeted"); }catch(e){}
     setTimeout(function(){ if(window.VP){ VP.signOut(); } else { go("vSignIn"); } }, 1600);
