@@ -673,15 +673,24 @@
 
     $("billMonth").textContent = S.usageMonth ? ("· "+monthLabel(S.usageMonth)) : "";
     var b=$("billingRows"); b.innerHTML="";
-    if(!S.usageMonth){ b.innerHTML='<tr><td colspan="7"><div class="empty" style="border:none;background:none">No metered usage yet. Rows appear once the metering job runs.</div></td></tr>'; renderDiscounts(); return; }
-    var rows=usageForMonth();
+    // Before any metering has run there is no usage to show, but a venue still needs to be
+    // reachable: setting a rate for a period is done from a venue's Details, and with no rows
+    // there was nothing to open. So fall back to listing the venues themselves, with the
+    // metered columns blank. Every venue is actionable from day one, not from first invoice.
+    var rows = S.usageMonth ? usageForMonth() : S.venues.map(function(v){
+      return { venue_id:v.id, plan_cap:(v.max_players!=null?v.max_players:null),
+               overage_players:0, peak_billable_players:null, _noUsageYet:true };
+    });
+    if(!rows.length){ b.innerHTML='<tr><td colspan="7"><div class="empty" style="border:none;background:none">No venues yet.</div></td></tr>'; renderDiscounts(); return; }
+    if(!S.usageMonth) $("billMonth").textContent = "· no metered usage yet";
     rows.sort(function(a,b){ return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
     rows.forEach(function(u){
       var v=null; for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===u.venue_id){ v=S.venues[i]; break; } }
       var over=u.overage_players||0;
       var overCell=over>0?'<span class="badge gold">+'+over+' over</span>':'<span style="color:var(--muted)">None</span>';
       var rate=v?groupRate(v):null;
-      var est= rate!=null ? aud(((u.plan_cap||0)+over)*rate) : '<span style="color:var(--faint)">Worker</span>';
+      var est= u._noUsageYet ? '<span style="color:var(--faint)">Not metered yet</span>'
+             : (rate!=null ? aud(((u.plan_cap||0)+over)*rate) : '<span style="color:var(--faint)">Worker</span>');
       var hasDisc = S.discounts.some(function(d){ return d.target_type==="venue" && d.target_id===u.venue_id; });
       var tr=document.createElement("tr");
       tr.innerHTML='<td class="vn">'+esc(venueName(u.venue_id))+(hasDisc?' <span class="badge gold">Disc</span>':'')+'</td>'+
@@ -700,7 +709,9 @@
   }
   function billingDetailHtml(u,v,rate){
     var over=u.overage_players||0, h='';
-    if(rate!=null){
+    if(u._noUsageYet){
+      h+='<div class="note" style="margin:0 0 6px">This venue has not been metered yet, so there is no charge to break down. You can still set a rate for a period below and it applies from their next invoice.</div>';
+    } else if(rate!=null){
       h+='<div class="bkline"><span class="l">Included ('+(u.plan_cap||0)+' x '+aud(rate)+')</span><span class="r">'+aud((u.plan_cap||0)*rate)+'</span></div>';
       if(over>0) h+='<div class="bkline"><span class="l">Peak add-on ('+over+' over x '+aud(rate)+')</span><span class="r">'+aud(over*rate)+'</span></div>';
       h+='<div class="bkline tot"><span class="l">Estimated charge (GST inclusive)</span><span class="r">'+aud(((u.plan_cap||0)+over)*rate)+'</span></div>';
