@@ -909,8 +909,11 @@
       if(open){
         h+='<div style="padding:12px 16px">';
         if(members.length){
-          h+='<div class="tscroll"><table style="min-width:460px"><thead><tr><th>Venue</th><th>Screen</th><th>Included</th><th>Status</th></tr></thead><tbody>';
-          members.forEach(function(v){ var va=v.status!=="suspended"; h+='<tr><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+(v.included_players!=null?v.included_players:"-")+'</td><td>'+(va?'<span class="badge grouped">Active</span>':'<span class="badge suspend">Suspended</span>')+'</td></tr>'; });
+          h+='<div class="tscroll"><table style="min-width:520px"><thead><tr><th>Venue</th><th>Screen</th><th>Included</th><th>Status</th><th></th></tr></thead><tbody>';
+          // View as from here too: when someone rings up saying they are from a group, this is
+          // where you find them, so it is where you want to be able to go straight into them.
+          // The existing data-viewas handler picks these up, no new wiring needed.
+          members.forEach(function(v){ var va=v.status!=="suspended"; h+='<tr><td class="vn">'+esc(v.name)+'</td><td class="mono vt">'+esc(v.slug||"")+'</td><td class="num">'+(v.included_players!=null?v.included_players:"-")+'</td><td>'+(va?'<span class="badge grouped">Active</span>':'<span class="badge suspend">Suspended</span>')+'</td><td class="actcell"><button class="mini" data-viewas="'+esc(v.id)+'">View as</button></td></tr>'; });
           h+='</tbody></table></div>';
         } else { h+='<div style="color:var(--muted);font-size:12.5px">No venues assigned yet.</div>'; }
         if(ds.length){ h+='<div style="margin-top:8px">'+ds.map(discLine).join("")+'</div>'; }
