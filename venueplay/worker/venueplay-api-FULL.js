@@ -1941,21 +1941,75 @@ async function vpbAccountSummary(request, env, json) {
 }
 
 /* --- POST /account/players : change ONE venue's max players. --- */
-// Charge a FULL month for newly-added players (not prorated). The one-time item lands on the
-// upcoming invoice; the subscription quantity (raised with proration 'none') carries them forward
-// from then, so extras get a full month and are never under-charged. Best-effort by design.
-async function vpbBillFullMonthExtras(env, info, extra, planName, label) {
+
+/* How much of an ANNUAL term is still ahead of us, 0..1. An annual venue has already paid for
+   the whole year, so both the charge for adding players and the credit for giving them up are
+   worth exactly the unused remainder. Derived from the renewal date alone (a 365 day term), so
+   it does not depend on Stripe returning a period start. */
+function vpbYearFractionLeft(info) {
+  const end = info && info.periodEnd;
+  if (!end) return null;
+  const left = (end * 1000 - Date.now()) / (365 * 24 * 3600 * 1000);
+  return Math.max(0, Math.min(1, left));
+}
+
+/* The single money move for a player-count change. `delta` is measured against what the account
+   is CURRENTLY BILLED, not against max_players, which is what makes repeated changes compose:
+   reduce then restore charges back exactly what it credited, so it cannot mint free credit.
+
+   MONTHLY (unchanged): added players are charged one full month up front and the raised quantity
+   carries them from the next invoice. A reduction needs no money move; the lowered quantity lands
+   on the next invoice, which is the whole adjustment.
+
+   ANNUAL: the year is already paid, so
+     adding    -> charge the annual rate PRO RATA to the renewal date (what terms.html promises).
+                  This used to charge a single month, so a venue that doubled in February ran the
+                  extra players for the rest of the year almost free.
+     reducing  -> no refund, but the unused value is BANKED as a credit on the Stripe customer,
+                  which Stripe applies automatically to the next invoice. That is the annual perk:
+                  players you stop using carry over to the following year instead of being lost. */
+async function vpbAdjustPlayerBilling(env, info, delta, planName, label) {
   try {
-    if (!(extra > 0) || !info) return;
-    const rate = vpbRate(env, info.priceId, planName);
-    const cents = Math.round(rate * 100) * extra;
+    if (!delta || !info) return null;
     const customer = info.sub && info.sub.customer;
-    if (!customer || !(cents > 0)) return;
-    await vpbStripePost(env, 'invoiceitems', {
-      customer: customer, amount: cents, currency: 'aud',
-      description: (label ? label + ': ' : '') + extra + ' extra player' + (extra === 1 ? '' : 's') + ', full month',
+    if (!customer) return null;
+    const rate = vpbRate(env, info.priceId, planName);       // per player, per month
+    const annual = (planName === 'annual');
+    const n = Math.abs(delta);
+    const who = (label ? label + ': ' : '');
+    const players = n + ' player' + (n === 1 ? '' : 's');
+
+    if (!annual) {
+      if (delta < 0) return null;                            // monthly reductions need no money move
+      const cents = Math.round(rate * 100) * n;
+      if (!(cents > 0)) return null;
+      await vpbStripePost(env, 'invoiceitems', {
+        customer: customer, amount: cents, currency: 'aud',
+        description: who + n + ' extra ' + (n === 1 ? 'player' : 'players') + ', full month',
+      });
+      return { kind: 'charge', cents: cents };
+    }
+
+    const frac = vpbYearFractionLeft(info);
+    if (frac === null) return null;                          // no renewal date: do nothing rather than guess
+    const cents = Math.round(n * rate * 12 * frac * 100);
+    if (!(cents > 0)) return null;
+    const months = Math.round(frac * 12 * 10) / 10;
+
+    if (delta > 0) {
+      await vpbStripePost(env, 'invoiceitems', {
+        customer: customer, amount: cents, currency: 'aud',
+        description: who + players + ' added, pro rata to renewal (' + months + ' months)',
+      });
+      return { kind: 'charge', cents: cents, months: months };
+    }
+    // Negative balance on a Stripe customer IS a credit; it is consumed by the next invoice.
+    await vpbStripePost(env, 'customers/' + encodeURIComponent(customer) + '/balance_transactions', {
+      amount: -cents, currency: 'aud',
+      description: who + players + ' released, credit carried to your next renewal (' + months + ' months)',
     });
-  } catch (_) { /* the quantity change already guarantees ongoing billing */ }
+    return { kind: 'credit', cents: cents, months: months };
+  } catch (_) { return null; /* the quantity change still governs ongoing billing */ }
 }
 
 async function vpbSetPlayers(request, env, json) {
@@ -1974,6 +2028,10 @@ async function vpbSetPlayers(request, env, json) {
   const current = parseInt(venue.max_players, 10) || 0;
   const priorPending = (venue.pending_players == null) ? null : (parseInt(venue.pending_players, 10) || null);
   const foundingId = o.account.id;
+  // What this account is billed for TODAY. Every money move below is measured from here rather
+  // than from max_players, so a sequence of changes always nets out: a venue that reduces and
+  // then changes its mind is charged back exactly what it was credited.
+  const billedNow = (priorPending != null) ? priorPending : current;
 
   if (players === current) {
     if (venue.pending_players == null) return json({ ok: true, unchanged: true });
@@ -1985,9 +2043,12 @@ async function vpbSetPlayers(request, env, json) {
       await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(rinfo.itemId),
         { quantity: restoredTotal, proration_behavior: 'none' });
     }
+    // Take back the credit the scheduled reduction banked. Without this, an annual venue could
+    // reduce, pocket the credit, restore, and repeat.
+    const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - billedNow, o.account.plan, venue.name) : null;
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_reduction_cancelled',
-      target: 'venue:' + venueId, detail: { players: current, actor_user: o.authUserId },
+      target: 'venue:' + venueId, detail: { players: current, from_billed: billedNow, billing: rAdj, actor_user: o.authUserId },
     }, false).catch(() => {});
     return json({ ok: true, applied: 'cancelled_reduction', players: current });
   }
@@ -2009,11 +2070,12 @@ async function vpbSetPlayers(request, env, json) {
       await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { max_players: current, pending_players: priorPending });
       return json({ error: 'Could not update billing just now. Please try again.' }, 502);
     }
-    // Charge the added players a full month (lands on the upcoming invoice).
-    await vpbBillFullMonthExtras(env, info, players - current, o.account.plan, venue.name);
+    // Charge for the players they are actually gaining over what they are billed today. Using
+    // players-current understated it whenever a reduction was already scheduled.
+    const iAdj = await vpbAdjustPlayerBilling(env, info, players - billedNow, o.account.plan, venue.name);
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_increased',
-      target: 'venue:' + venueId, detail: { from: current, to: players, new_total: newTotal, actor_user: o.authUserId },
+      target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
     }, false).catch(() => {});
     return json({ ok: true, applied: 'now', players: players });
   }
@@ -2030,11 +2092,15 @@ async function vpbSetPlayers(request, env, json) {
     await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(dinfo.itemId),
       { quantity: Math.max(reducedTotal, 1), proration_behavior: 'none' });
   }
+  // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
+  // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
+  const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - billedNow, o.account.plan, venue.name) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
-    target: 'venue:' + venueId, detail: { from: current, to: players, actor_user: o.authUserId },
+    target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
   }, false).catch(() => {});
-  return json({ ok: true, applied: 'next_renewal', pending: players });
+  return json({ ok: true, applied: 'next_renewal', pending: players,
+                credit_cents: (dAdj && dAdj.kind === 'credit') ? dAdj.cents : 0 });
 }
 
 /* --- POST /account/add-venue : add a whole new venue to the account. --- */
@@ -2079,12 +2145,14 @@ async function vpbAddVenue(request, env, json) {
         { quantity: newTotal, proration_behavior: 'none' })
     : null;
   const billingOk = !!(info && info.itemId) && !(upd && upd.error);
-  if (billingOk) await vpbBillFullMonthExtras(env, info, players, o.account.plan, name);
+  // A whole new venue is an increase like any other: one month on monthly, pro rata to the
+  // renewal date on annual (it used to be charged a single month even on an annual account).
+  const aAdj = billingOk ? await vpbAdjustPlayerBilling(env, info, players, o.account.plan, name) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),
     action: billingOk ? 'venue_added' : 'venue_added_billing_pending',
     target: 'venue:' + (r.venue && r.venue.id),
-    detail: { name: name, players: players, new_total: newTotal, actor_user: o.authUserId },
+    detail: { name: name, players: players, new_total: newTotal, billing: aAdj, actor_user: o.authUserId },
   }, false).catch(() => {});
 
   return json({ ok: true, billing_synced: billingOk, venue: { id: r.venue && r.venue.id, name: name, slug: r.venue && r.venue.slug, players: players } });
