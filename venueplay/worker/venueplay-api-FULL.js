@@ -1732,6 +1732,7 @@ async function vpbRequireOwner(request, env) {
     'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&role=in.(manager,owner)&select=venue_id,role');
 
   let ids;
+  let actingAsAdmin = false;
   if (staff && staff.length) {
     ids = staff.map((s) => s.venue_id);
   } else {
@@ -1748,6 +1749,7 @@ async function vpbRequireOwner(request, env) {
       return { error: 'Open this from VenuePlay HQ using View as, so we know which venue you mean.', status: 400 };
     }
     ids = [target];
+    actingAsAdmin = true;
   }
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')' +
@@ -1762,7 +1764,17 @@ async function vpbRequireOwner(request, env) {
   const account = accounts && accounts[0];
   if (!account) return { error: 'No billing account found for this login.', status: 404 };
 
-  const accountVenues = venues.filter((v) => v.founding_id === foundingId);
+  // An HQ admin arrives with ONE venue (the one named in X-VP-Venue), so filtering that single
+  // row leaves a one-venue account and the other venues, and their TV links, disappear from the
+  // Account page. Re-read the whole account so they see exactly what the real owner would.
+  let accountVenues = venues.filter((v) => v.founding_id === foundingId);
+  if (actingAsAdmin) {
+    const all = await vpaSelect(env, 'vp_venues',
+      'founding_id=eq.' + encodeURIComponent(foundingId) +
+      '&order=created_at.asc' +
+      '&select=id,name,founding_id,group_id,max_players,pending_players,status,slug,cancel_at_period_end');
+    if (all && all.length) accountVenues = all;
+  }
   // Audit attribution: if the person making this owner-level change is actually a VenuePlay
   // platform admin (e.g. our staff helping an account), record THEM, not a generic "owner".
   let adminActor = null;
