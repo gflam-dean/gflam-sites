@@ -1,81 +1,88 @@
--- VenuePlay migration 32: let hosts vote a bad question out of the library.
+-- VenuePlay migration 32: hosts flag a weak question, and we IMPROVE it rather than bin it.
 --
--- When a host swaps a question out while building a night, that is a signal. One host doing it
--- means nothing (wrong theme for their crowd, seen it last week). Several DIFFERENT venues doing
--- it means the question is genuinely poor, and it should stop being served to anyone.
+-- When a host swaps a question out while building a night, that is a signal. One host means
+-- nothing (wrong theme for their crowd, they saw it last week). Five DIFFERENT venues means the
+-- question itself is the problem.
 --
--- WHY THE KEY IS THE QUESTION TEXT, NOT THE QUESTION ID
+-- We do not delete those. A question five rooms rejected is usually fixable: an ambiguous answer,
+-- a dated reference, a badly worded stem. So at five flags it is PARKED (pulled from circulation
+-- so it stops going out while it is wrong) and lands in the weekly review queue to be rewritten
+-- and put back.
+--
+-- WHY THE KEY IS THE QUESTION TEXT, NOT THE ID
 -- Library questions are COPIED into each venue's set with fresh ids. Flagging by id would only
--- ever flag that venue's private copy and the library original would keep going out to everyone.
--- So flags key on a normalised form of the question text, which follows the question everywhere.
+-- flag that venue's private copy while the library original kept going out to everyone.
 --
+-- RUN THIS IN TWO PARTS. The Supabase SQL editor splits on semicolons and mishandles dollar
+-- quoting, so each function is tagged separately and is meant to be run on its own.
 -- Safe to run more than once.
 
--- Normalise once, in the database, so the Worker and any script agree on what "the same
--- question" means. Lower case, strip punctuation, collapse whitespace.
+-- ============================ PART 1 ============================
+CREATE TABLE IF NOT EXISTS vp_question_flags (
+  qkey       text NOT NULL,                       -- normalised question text
+  venue_id   uuid NOT NULL,
+  reason     text NOT NULL DEFAULT 'swapped',     -- swapped | reported
+  question   text,                                -- kept so the review queue can show it
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (qkey, venue_id, reason)            -- one vote per venue, so no venue acts alone
+);
+
+CREATE INDEX IF NOT EXISTS idx_vp_qflags_qkey ON vp_question_flags (qkey);
+ALTER TABLE vp_question_flags ENABLE ROW LEVEL SECURITY;
+
+-- Parked, not retired: it is coming back once it has been rewritten.
+ALTER TABLE vp_questions ADD COLUMN IF NOT EXISTS parked_at    timestamptz;
+ALTER TABLE vp_questions ADD COLUMN IF NOT EXISTS improved_at  timestamptz;
+CREATE INDEX IF NOT EXISTS idx_vp_questions_parked ON vp_questions (parked_at);
+
+-- ============================ PART 2 ============================
 CREATE OR REPLACE FUNCTION vp_qkey(q text)
 RETURNS text
 LANGUAGE sql
 IMMUTABLE
-AS $fn$
+AS $qkey$
   SELECT trim(regexp_replace(regexp_replace(lower(coalesce(q, '')), '[^a-z0-9]+', ' ', 'g'), '\s+', ' ', 'g'))
-$fn$;
+$qkey$;
 
-CREATE TABLE IF NOT EXISTS vp_question_flags (
-  qkey       text NOT NULL,                       -- vp_qkey(question)
-  venue_id   uuid NOT NULL,
-  reason     text NOT NULL DEFAULT 'swapped',     -- swapped | reported
-  question   text,                                -- kept for review, so we can see what got binned
-  created_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (qkey, venue_id, reason)            -- one vote per venue per reason, so a single
-);                                                -- venue cannot bin a question on its own
+-- ============================ PART 3 ============================
+-- The weekly worklist: what venues are rejecting, worst first, with the question in front of you
+-- so it can be rewritten on the spot. Anything on 3 or 4 is the interesting part, it is on the way
+-- out and can still be saved.
+CREATE OR REPLACE VIEW v_vp_question_review_queue AS
+  SELECT f.qkey,
+         min(f.question)            AS question,
+         count(DISTINCT f.venue_id) AS venues,
+         max(f.created_at)          AS last_flagged
+  FROM vp_question_flags f
+  GROUP BY f.qkey
+  ORDER BY count(DISTINCT f.venue_id) DESC, max(f.created_at) DESC;
 
-CREATE INDEX IF NOT EXISTS idx_vp_qflags_qkey ON vp_question_flags (qkey);
-
-ALTER TABLE vp_question_flags ENABLE ROW LEVEL SECURITY;   -- service role only, same as the other queues
-
--- Retiring, rather than deleting. A retired question stays in the table so the weekly review can
--- see what was binned and why, and so it can be brought back if the flags turn out to be noise.
-ALTER TABLE vp_questions ADD COLUMN IF NOT EXISTS retired_at timestamptz;
-CREATE INDEX IF NOT EXISTS idx_vp_questions_retired ON vp_questions (retired_at);
-
--- How many DIFFERENT venues have to swap a question out before it is pulled.
--- 5 different venues (Dean's call). One or two swapping a question out is taste or a repeat;
--- five separate rooms rejecting it is the question, not the crowd.
-CREATE OR REPLACE VIEW v_vp_question_flag_counts AS
-  SELECT qkey,
-         min(question)                AS question,
-         count(DISTINCT venue_id)     AS venues,
-         max(created_at)              AS last_flagged
-  FROM vp_question_flags
-  GROUP BY qkey;
-
--- Called by the Worker after each flag. Retires every copy of a question whose text has been
--- swapped out by enough separate venues. Idempotent: already-retired rows are left alone.
-CREATE OR REPLACE FUNCTION vp_retire_flagged(min_venues int DEFAULT 5)
-RETURNS int
+-- ============================ PART 4 ============================
+CREATE OR REPLACE FUNCTION vp_park_flagged(min_venues int DEFAULT 5)
+RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
-AS $fn$
-DECLARE n int;
+AS $park$
+DECLARE n integer;
 BEGIN
   WITH bad AS (
-    SELECT qkey FROM v_vp_question_flag_counts WHERE venues >= min_venues
+    SELECT qkey FROM v_vp_question_review_queue WHERE venues >= min_venues
   )
   UPDATE vp_questions q
-     SET retired_at = now()
-   WHERE q.retired_at IS NULL
+     SET parked_at = now()
+   WHERE q.parked_at IS NULL
      AND vp_qkey(q.question) IN (SELECT qkey FROM bad);
   GET DIAGNOSTICS n = ROW_COUNT;
   RETURN n;
 END
-$fn$;
+$park$;
 
-REVOKE ALL ON FUNCTION vp_retire_flagged(int) FROM public;
+REVOKE ALL ON FUNCTION vp_park_flagged(integer) FROM public;
 
--- WHAT STILL HAS TO CHANGE IN CODE (not done by this migration):
---   1. handleTriviaSearch must add "&retired_at=is.null" so retired questions stop being served.
---   2. A swap endpoint records the flag and calls vp_retire_flagged().
--- Until then this table simply collects nothing and changes no behaviour, which is why it is
--- safe to run now and wire up after.
+-- STILL TO WIRE UP IN CODE (not done by this migration):
+--   1. handleTriviaSearch adds "&parked_at=is.null" so parked questions stop being served.
+--   2. The swap endpoint records the flag and calls vp_park_flagged().
+--   3. The weekly review reads v_vp_question_review_queue, rewrites them, clears parked_at and
+--      stamps improved_at, and the question goes back into circulation.
+-- Until then this collects nothing and changes no behaviour.
