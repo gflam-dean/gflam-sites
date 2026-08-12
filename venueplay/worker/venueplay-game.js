@@ -811,7 +811,18 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
 
   // vp_trivia_games has no per-game points/time/prize columns, so the host's overrides
   // and display text live in vp_games.config (same place bingo keeps prize/title).
-  const config = { question_set_id: setId, question_count: questionCount };
+  /* chosenSeqs has to be SAVED, and this line not existing is why none of the above did anything.
+     Everything around it was built and correct: the shuffle, the within-session no-repeat, the
+     twelve-month per-venue memory, and the server that serves a game by config.question_seqs
+     when it finds one. It never found one. So every round fell through to the legacy path and
+     played the set in plain seq order, which is why a venue running two rounds in a night got
+     the same questions in the same order both times.
+
+     It was also quietly poisoning the long memory. vp_asked_questions was written from
+     chosenSeqs, so we recorded questions as "asked at this venue" that the room had never been
+     asked, and then refused to ask them for twelve months. The bank was being burned through
+     without a single one of those questions reaching a player. */
+  const config = { question_set_id: setId, question_count: questionCount, question_seqs: chosenSeqs };
   if (b.title) config.title = String(b.title).slice(0, 120);
   if (b.prize) config.prize = String(b.prize).slice(0, 120);
   const base = parseInt(b.base_points, 10);

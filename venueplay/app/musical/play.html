@@ -225,7 +225,7 @@
     room:"", pid:"", name:"", joined:false,
     token:"", sessionId:"", gameId:"", claimId:"",
     cells:null, cardNo:0,
-    pattern:"one", prize:"the prize", played:[], active:false, autoDaub:true, assist:false,
+    pattern:"one", prize:"the prize", played:[], playedIds:[], active:false, autoDaub:true, assist:false,
     daubs:{}, claimPending:false, won:false, ended:false
   };
 
@@ -243,8 +243,28 @@
 
   // ---- cover check (cosmetic UI; the Worker is authoritative on the claim) ----
   function cellTitle(i){ var c=P.cells?P.cells[i]:null; return (c&&typeof c==="object")?(c.title||""):(c||""); }
-  function playedSet(){ var s={}; for(var i=0;i<P.played.length;i++) s[P.played[i]]=true; return s; }
-  function isCovered(set,i){ if(i===12) return true; var t=cellTitle(i); return !!t && !!set[t]; }
+  function cellId(i){ var c=P.cells?P.cells[i]:null; return (c&&typeof c==="object")?(c.song_id||""):""; }
+  /* Match on song_id, not title. Titles are not unique (Crazy is Patsy Cline, Gnarls Barkley and
+     Seal; Hurt and Forever Young are each several songs), so a title match marked every namesake
+     on the card the moment one of them played, and could hand somebody a line they had not won.
+     The title set stays as the fallback for a song the Worker gave no id for, and for a host
+     still on the previous build who broadcasts titles alone. */
+  function playedSet(){
+    var s={ id:{}, title:{}, hasIds:false };
+    for(var i=0;i<P.played.length;i++) s.title[P.played[i]]=true;
+    var ids=P.playedIds||[];
+    for(var j=0;j<ids.length;j++){ if(ids[j]){ s.id[ids[j]]=true; s.hasIds=true; } }
+    return s;
+  }
+  function isCovered(set,i){
+    if(i===12) return true;
+    var id=cellId(i);
+    // Only trust ids when ids are actually being sent. A host whose page loaded before this
+    // shipped broadcasts titles alone, and refusing to fall back would leave every card in the
+    // room blank for the rest of that night.
+    if(set.hasIds && id) return !!set.id[id];
+    var t=cellTitle(i); return !!t && !!set.title[t];
+  }
   function checkPattern(){
     if(!P.cells) return false;
     var set=playedSet(), c, r;
@@ -276,7 +296,7 @@
   // ---- card render ----
   function autoDaub(){
     if(!P.cells || !P.assist) return; var set=playedSet();   // Easy mode only: off by default, player marks by ear
-    for(var i=0;i<25;i++){ if(i!==12){ var t=cellTitle(i); if(t && set[t]) P.daubs[i]=true; } }
+    for(var i=0;i<25;i++){ if(i!==12 && isCovered(set,i)) P.daubs[i]=true; }
   }
   var cz=1;   // card zoom (older players): scales the card width AND the fit-to-cell font cap together
   function fitCells(){
@@ -370,7 +390,10 @@
       if(g.pattern) P.pattern=PAT_FROM_WORKER[g.pattern]||P.pattern;
       if(typeof g.prize==="string" && g.prize) P.prize=g.prize;
       if(typeof g.auto_daub==="boolean") P.autoDaub=g.auto_daub;
-      if(g.played_songs){ P.played=g.played_songs.map(function(x){ return x.title; }); }
+      if(g.played_songs){
+        P.played=g.played_songs.map(function(x){ return x.title; });
+        P.playedIds=g.played_songs.map(function(x){ return x.song_id||""; });
+      }
       P.active=true;
     }
   }
@@ -420,7 +443,10 @@
       P.cells=r.cells||[];
       P.cardNo=r.card_no;
       P.pattern=PAT_FROM_WORKER[r.pattern]||P.pattern;
-      if(r.played_songs){ P.played=r.played_songs.map(function(x){ return x.title; }); }
+      if(r.played_songs){
+        P.played=r.played_songs.map(function(x){ return x.title; });
+        P.playedIds=r.played_songs.map(function(x){ return x.song_id||""; });
+      }
       P.active=true;
       if(!P.won && !P.ended){ P.claimPending=false; }
       autoDaub(); route();
@@ -474,7 +500,7 @@
       if(typeof m.prize==="string") P.prize=m.prize;
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
       if(m.game_id) P.gameId=m.game_id;
-      P.played=m.played||[]; P.active=!!m.active;
+      P.played=m.played||[]; P.playedIds=m.played_ids||[]; P.active=!!m.active;
       if(P.active){ autoDaub(); if(P.joined && !P.cells){ fetchCard(); return; } }
       if(!P.won && !P.ended) route();
     }
@@ -484,12 +510,12 @@
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
       if(m.game_id) P.gameId=m.game_id;
       // a fresh round: clear the old card and pull the new one from the Worker
-      P.played=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null; _celebrated=false;
+      P.played=[]; P.playedIds=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.daubs={}; P.daubs[12]=true; P.cells=null; _celebrated=false;
       if(P.joined){ fetchCard(); } else { route(); }
     }
     else if(m.t==="played"){
       if(typeof m.autoDaub==="boolean") P.autoDaub=m.autoDaub;
-      P.played=m.played||P.played; P.active=true;
+      P.played=m.played||P.played; if(m.played_ids) P.playedIds=m.played_ids; P.active=true;
       autoDaub();
       if(P.joined && !P.won && !P.ended){ if(P.cells){ renderCard(); show("vCard"); } else { fetchCard(); } }
     }
@@ -508,6 +534,7 @@
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
       if(m.played) P.played=m.played;
+      if(m.played_ids) P.playedIds=m.played_ids;
       P.won=false; P.ended=false; P.claimPending=false; P.active=true;
       autoDaub();
       if(P.joined && P.cells){ renderCard(); show("vCard"); }

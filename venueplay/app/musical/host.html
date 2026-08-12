@@ -450,7 +450,12 @@
     playlistId:"", playlistName:"All songs",
     songs:[],              // song objects in play this game (each gains song_id from the Worker at start)
     byTitle:{},            // normTitle -> song object (with song_id + previewUrl), for playSong/claim render
+    byId:{},               // song_id -> song object; the identity that actually distinguishes two songs
     queue:[], qIdx:-1,     // shuffled play order for the "Play next" button
+    // played is keyed by songKey, and playedOrder holds {song_id,title} rather than bare titles.
+    // Titles are not unique: Crazy is Patsy Cline, Gnarls Barkley and Seal, and Hurt, Forever
+    // Young and Rise are each several different songs. Keying the played set by title meant
+    // playing one of them marked every namesake on every card in the room.
     played:{}, playedOrder:[], hostNow:null, nowSong:null,
     players:{}, order:[],  // cosmetic roster: pid -> {name}
     claim:null, won:false, busy:false,
@@ -466,9 +471,23 @@
        || LIB.byTitle[normTitle(title)];
     return s || { id:"", song_id:"", title:title, artist:artist||"", previewUrl:"", artworkUrl:"" };
   }
-  function playedArray(){ return G.playedOrder.slice(); }
+  // A song's identity is its song_id. Titles only stand in when the Worker gave us no id
+  // (a library song with no match), which is the one case where a title is all we have.
+  function songKey(s){
+    if(!s) return "";
+    return s.song_id ? ("id:"+s.song_id) : ("t:"+normTitle(s.title));
+  }
+  // played  = titles, kept so a player still on the previous build keeps working mid-game.
+  // playedIds = the real identity, which is what a current player marks against.
+  function playedArray(){ return G.playedOrder.map(function(p){ return p.title; }); }
+  function playedIdArray(){ return G.playedOrder.map(function(p){ return p.song_id||""; }); }
   function playerCount(){ return G.order.length; }
-  function playerCap(){ return (G.venue && G.venue.included_players) || 0; }
+  // max_players FIRST. included_players is null on a self-serve account, so reading it alone
+  // made the cap 0, which reads as "no cap", and musical bingo never charged a busy night.
+  function playerCap(){
+    var v=G.venue||{};
+    return parseInt(v.max_players,10) || parseInt(v.included_players,10) || 0;
+  }
   function inFirstMonth(){ var c=G.venue && G.venue.created_at; if(!c) return false; var e=new Date(c); if(isNaN(e.getTime())) return false; e.setMonth(e.getMonth()+1); return new Date()<e; }
   function confirmOverage(cap, extra){   // branded popup, resolves true=start / false=cancel
     return new Promise(function(resolve){
@@ -513,15 +532,21 @@
           var lib=LIB.byTitleArtist[taKey(w.title,w.artist)]||LIB.byTitle[normTitle(w.title)]||{};
           return { id:lib.id||"", song_id:w.song_id, title:w.title, artist:lib.artist||"", previewUrl:lib.previewUrl||"", artworkUrl:lib.artworkUrl||"" };
         });
-        G.byTitle={}; G.byTitleArtist={};
+        G.byTitle={}; G.byTitleArtist={}; G.byId={};
         for(var i=0;i<G.songs.length;i++){ var gs=G.songs[i];
           G.byTitleArtist[taKey(gs.title,gs.artist)]=gs;
+          if(gs.song_id) G.byId[gs.song_id]=gs;
           if(!G.byTitle[normTitle(gs.title)]) G.byTitle[normTitle(gs.title)]=gs; }
-        // mark the songs already played (by title, matching how playedArray/daubs work)
+        // mark the songs already played, by song_id where the Worker gave us one
         G.played={}; G.playedOrder=[];
         var pl=g.played_songs||[];
-        for(var j=0;j<pl.length;j++){ var t=pl[j].title; if(t){ G.played[t]=true; G.playedOrder.push(t); } }
-        G.nowSong=G.playedOrder.length ? (G.byTitle[normTitle(G.playedOrder[G.playedOrder.length-1])]||findSong(G.playedOrder[G.playedOrder.length-1])) : null;
+        for(var j=0;j<pl.length;j++){
+          var pr=pl[j]; if(!pr || (!pr.title && !pr.song_id)) continue;
+          var pk=songKey(pr);
+          if(!G.played[pk]){ G.played[pk]=true; G.playedOrder.push({ song_id:pr.song_id||"", title:pr.title||"" }); }
+        }
+        var _last=G.playedOrder.length ? G.playedOrder[G.playedOrder.length-1] : null;
+        G.nowSong=_last ? (G.byId[_last.song_id]||G.byTitle[normTitle(_last.title)]||findSong(_last.title)) : null;
         G.hostNow=G.nowSong;
         G.queue=shuffledQueue(); G.qIdx=-1;   // peekNextInQueue skips already-played titles, so a fresh shuffle is fine
         G.won=false; G.claim=null; G.status="running";
@@ -536,7 +561,7 @@
 
   // ---- broadcasts (instant UX only; the DB is the source of truth) ----
   function sendState(){
-    bcast({ t:"state", pattern:G.pattern, prize:G.prize, played:playedArray(), active:(G.status==="running"), autoDaub:G.autoDaub, playerCount:playerCount(), game_id:G.gameId });
+    bcast({ t:"state", pattern:G.pattern, prize:G.prize, played:playedArray(), played_ids:playedIdArray(), active:(G.status==="running"), autoDaub:G.autoDaub, playerCount:playerCount(), game_id:G.gameId });
   }
   function sendPlayers(){ bcast({ t:"players", count:playerCount() }); }
 
@@ -558,7 +583,7 @@
   audio.addEventListener("ended", function(){ setPlayPause(false); $("clipFill").style.width="100%"; });
 
   function peekNextInQueue(){
-    for(var i=G.qIdx+1;i<G.queue.length;i++){ var s=G.songs[G.queue[i]]; if(s && !G.played[s.title]) return s; }
+    for(var i=G.qIdx+1;i<G.queue.length;i++){ var s=G.songs[G.queue[i]]; if(s && !G.played[songKey(s)]) return s; }
     return null;
   }
   function prefetchNext(){
@@ -571,7 +596,8 @@
   // update over broadcast. Audio never touches the Worker: it only tracks which song played.
   function playSong(song){
     if(!song || G.status!=="running") return;
-    if(!G.played[song.title]){ G.played[song.title]=true; G.playedOrder.push(song.title); }
+    var _k=songKey(song);
+    if(!G.played[_k]){ G.played[_k]=true; G.playedOrder.push({ song_id:song.song_id||"", title:song.title }); }
     G.nowSong=song; G.hostNow=song.title;
     syncFlagBtn();
     // Tell the Worker this song was played (idempotent per song). song_id came back from
@@ -580,7 +606,7 @@
     if(G.gameId && song.song_id){
       apiPost("/host/play",{ game_id:G.gameId, song_id:song.song_id }).catch(function(e){ hostError(e.message); });
     }
-    bcast({ t:"played", title:song.title, artist:song.artist, previewUrl:song.previewUrl||"", artworkUrl:song.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub });
+    bcast({ t:"played", title:song.title, artist:song.artist, previewUrl:song.previewUrl||"", artworkUrl:song.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub });
     var warn=$("clipWarn");
     if(song.previewUrl){
       warn.classList.add("hidden");
@@ -809,9 +835,10 @@
         return { id:lib.id||"", song_id:w.song_id, title:w.title, artist:w.artist||lib.artist||"",
                  previewUrl:lib.previewUrl||"", artworkUrl:lib.artworkUrl||"" };
       });
-      G.byTitle={}; G.byTitleArtist={};
+      G.byTitle={}; G.byTitleArtist={}; G.byId={};
         for(var i=0;i<G.songs.length;i++){ var gs=G.songs[i];
           G.byTitleArtist[taKey(gs.title,gs.artist)]=gs;
+          if(gs.song_id) G.byId[gs.song_id]=gs;
           if(!G.byTitle[normTitle(gs.title)]) G.byTitle[normTitle(gs.title)]=gs; }
       G.queue=shuffledQueue(); G.qIdx=-1;
       G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null; G.won=false; G.claim=null;
