@@ -462,8 +462,26 @@ async function handleReport(request, env, json) {
     started_at: b.started_at || null,
     ended_at: b.ended_at || null
   };
-  await sbInsert(env, 'vp_game_reports', row, false);
-  return json({ ok: true });
+  /* A night that was PLAYED but never formally ended used to leave no trace whatsoever, because
+     the console only reported on "new game" and "end game". A host who shut the iPad mid-night,
+     or whose battery went, produced a venue that read as never having run a game at all. The
+     retention list then put that venue at the very top, most urgent, with an Archive button
+     sitting beside it: the cure for a busy venue was one click away from switching it off.
+
+     So the console now reports the moment a game STARTS and patches that same row when it
+     finishes. The trace exists from ball one, and there is still exactly one row per game. */
+  const reportId = String(b.report_id || '').trim();
+  if (reportId) {
+    if (!UUID_RE.test(reportId)) return json({ error: 'Invalid report_id' }, 400);
+    // Scoped to the venue the code resolved to, so a report id alone can never rewrite
+    // another venue's figures.
+    await sbPatch(env, 'vp_game_reports',
+      'id=eq.' + enc(reportId) + '&venue_id=eq.' + enc(venueId), row);
+    return json({ ok: true, id: reportId });
+  }
+  const ins = await sbInsert(env, 'vp_game_reports', row, true);
+  const created = Array.isArray(ins) ? ins[0] : ins;
+  return json({ ok: true, id: (created && created.id) || null });
 }
 
 async function handleJoin(request, env, json) {

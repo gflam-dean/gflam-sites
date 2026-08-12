@@ -748,14 +748,26 @@
   // Broadcast bingo has no game server, so once a game finishes the host posts its figures
   // (players, tickets, prizes) to the backend for reporting. Keyed by the venue code = G.code.
   var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
-  function postReport(){
+  // Report the night to the backend. Called TWICE per game on purpose: once the moment it starts
+  // (open=true, no end time yet) and once when it finishes. The first call is what makes a played
+  // night visible even if this iPad never gets as far as the second one, which is the normal way
+  // a bar night ends. The finishing call carries the id from the first, so the row is updated in
+  // place and each game is still one row.
+  function postReport(open){
     try{
       if(!G.code || !G.startedAt) return;
       var players=G.order.length, tickets=0;
       for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p&&p.cards) tickets+=p.cards.length; }
-      fetch(VP_GAME_API+"/report",{ method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({
-        code:G.code, format:"bingo", players:players, tickets:tickets, prizes:G.prizesWon||[], started_at:G.startedAt, ended_at:new Date().toISOString()
-      }) }).catch(function(){});
+      var body={ code:G.code, format:"bingo", players:players, tickets:tickets,
+                 prizes:G.prizesWon||[], started_at:G.startedAt,
+                 ended_at: open ? null : new Date().toISOString() };
+      if(!open && G.reportId) body.report_id=G.reportId;
+      var mine=G.startedAt;   // so a slow reply can't stamp an id onto the NEXT game
+      fetch(VP_GAME_API+"/report",{ method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
+        .then(function(r){ return r.json(); })
+        .then(function(j){ if(open && j && j.id && G.startedAt===mine) G.reportId=j.id; })
+        .catch(function(){});
+      if(!open) G.reportId=null;
     }catch(e){}
   }
   function clampCards(n){ n=parseInt(n,10); if(!n||n<1) return 1; if(n>6) return 6; return n; }
@@ -776,7 +788,8 @@
           defaultCards:G.defaultCards, prizesWon:G.prizesWon, startedAt:G.startedAt,
           draw:G.draw, idx:G.idx, called:G.called,
           players:G.players, order:G.order,
-          claims:G.claims, claimIdx:G.claimIdx, lastWins:G.lastWins, won:G.won
+          claims:G.claims, claimIdx:G.claimIdx, lastWins:G.lastWins, won:G.won,
+          reportId:G.reportId
         }));
       } else {
         localStorage.removeItem(gameKey(G.code));
@@ -807,6 +820,9 @@
       G.claimIdx=(typeof s.claimIdx==="number")?s.claimIdx:(G.claims.length?G.idx:-1);
       G.lastWins=Array.isArray(s.lastWins)?s.lastWins:(s.lastWin?[s.lastWin]:[]);
       G.won=!!s.won;
+      // Carry the report row forward, so a host who reloads mid-game still finishes the SAME
+      // row instead of leaving an open one behind and starting a second.
+      G.reportId=s.reportId||null;
       return true;
     }catch(e){ return false; }
   }
@@ -1243,6 +1259,7 @@
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
+    G.reportId=null; postReport(true);   // the night is on the record from ball one
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Start calling";
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to bingo first
@@ -1257,6 +1274,7 @@
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
+    G.reportId=null; postReport(true);   // the next round is on the record from ball one too
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Start calling";
     send({ t:"mode", mode:"bingo" });

@@ -1058,20 +1058,39 @@ async function vpaHandleQuietVenues(request, env, json) {
     if (!latest[id] || t > latest[id]) latest[id] = t;
   };
 
+  /* Bounded on purpose. This used to read EVERY session and EVERY game report ever written, on
+     every click of the tab, which grows without limit and is the sort of query that is fine all
+     through a launch and then is not. A year is far past any retention conversation, so nothing
+     useful is lost by not reading further back. */
+  const nowMs = Date.now();
+  const lookbackDays = Math.max(days, 365);
+  const cutoffMs = nowMs - lookbackDays * 86400000;
+  const cutoff = new Date(cutoffMs).toISOString();
+
   // Sessions carry the venue directly.
-  const sessions = await vpaSelect(env, 'vp_sessions', 'select=venue_id,opened_at,started_at,ended_at');
+  const sessions = await vpaSelect(env, 'vp_sessions',
+    'select=venue_id,opened_at,started_at,ended_at' +
+    '&or=(started_at.gte.' + cutoff + ',opened_at.gte.' + cutoff + ',ended_at.gte.' + cutoff + ')');
   for (const r of (sessions || [])) { note(r.venue_id, r.started_at || r.opened_at || r.ended_at); }
   // Broadcast bingo only ever appears here.
-  const reports = await vpaSelect(env, 'vp_game_reports', 'select=venue_id,ended_at,created_at');
+  const reports = await vpaSelect(env, 'vp_game_reports',
+    'select=venue_id,ended_at,created_at' +
+    '&or=(ended_at.gte.' + cutoff + ',created_at.gte.' + cutoff + ')');
   for (const r of (reports || [])) { note(r.venue_id, r.ended_at || r.created_at); }
 
-  const now = Date.now();
+  const now = nowMs;
   const out = [];
   for (const v of venues) {
     const last = latest[v.id] || null;
-    // Never played at all: measure from when they were set up, so a venue that signed up and
-    // never ran a night is the most urgent call on the list rather than missing from it.
-    const since = last || Date.parse(v.created_at || '') || now;
+    const madeMs = Date.parse(v.created_at || '') || now;
+    // "Never played" is only sayable about a venue we hold the FULL history for, which means one
+    // set up inside the lookback window. An older venue with nothing recent has simply not played
+    // in a long time, and saying "never" about a venue that ran nights two years ago would be a
+    // lie on the one screen where somebody decides whether to keep them.
+    const neverPlayed = !last && madeMs >= cutoffMs;
+    // Nothing at all to go on: measure from when they were set up, so a venue that signed up and
+    // never ran a night is on the list rather than missing from it.
+    const since = last || madeMs;
     const quiet = Math.floor((now - since) / 86400000);
     if (quiet < days) continue;
     out.push({
@@ -1079,7 +1098,9 @@ async function vpaHandleQuietVenues(request, env, json) {
       status: v.status, suspended_reason: v.suspended_reason || null,
       days_quiet: quiet,
       last_game: last ? new Date(last).toISOString().slice(0, 10) : null,
-      never_played: !last,
+      never_played: neverPlayed,
+      // No trace in the window, but they are older than it: we genuinely do not know.
+      long_gone: !last && !neverPlayed,
     });
   }
   out.sort((a, z) => a.days_quiet - z.days_quiet);   // soonest quiet first: the winnable ones
@@ -1103,19 +1124,51 @@ async function vpaHandleVenueStatus(request, env, json) {
     return json({ error: "status must be 'active', 'suspended' or 'archived'." }, 400);
   }
 
+  // What it was before, so reactivating an ARCHIVED venue can put its billing back and
+  // reactivating a merely suspended one leaves billing alone.
+  const priorRows = await vpaSelect(env, 'vp_venues',
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,founding_id,status,suspended_reason');
+  const prior = priorRows && priorRows[0];
+  if (!prior) return json({ error: 'That venue no longer exists.' }, 404);
+
   // Stamp WHY. A venue switched off from HQ is 'manual' and a later payment must never bring it
   // back on by itself; only a non-payment suspension is reversible automatically.
   const archiving = status === 'archived';
+  const unarchiving = status === 'active' && prior.suspended_reason === 'archived';
   await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), {
     status: archiving ? 'suspended' : status,
     suspended_reason: archiving ? 'archived' : (status === 'suspended' ? 'manual' : null),
   });
 
+  /* Archiving has to reach Stripe, which it never used to. A venue is archived once retention has
+     given up on it: the games stop and it drops off the active list. Leaving the subscription
+     untouched meant the account kept being invoiced every month for capacity that was switched
+     off at our end, which is the worst possible way to lose a customer twice.
+     Only ARCHIVE moves money. A plain suspension is short and reversible, and a non-payment
+     suspension must keep the debt exactly where it is, so neither touches the invoice. */
+  let billing = null;
+  if ((archiving || unarchiving) && prior.founding_id) {
+    try {
+      await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: archiving });
+      const accts = await vpaSelect(env, 'venueplay_founding',
+        'id=eq.' + encodeURIComponent(prior.founding_id) + '&select=id,stripe_subscription_id');
+      const acct = accts && accts[0];
+      if (acct && acct.stripe_subscription_id) {
+        const info = await vpaSyncAccountQuantity(env, prior.founding_id, acct.stripe_subscription_id);
+        billing = { changed: true, ends: (info && info.periodEnd) ? vpaFmtDate(info.periodEnd) : null };
+      }
+    } catch (e) {
+      // The status change already landed and is what stops the games. Never fail the whole call
+      // on Stripe: report it instead, so HQ can say the billing side still needs a look.
+      billing = { changed: false, error: String((e && e.message) || e) };
+    }
+  }
+
   await vpaAudit(env, actor,
     archiving ? 'venue_archived' : (status === 'suspended' ? 'venue_suspended' : 'venue_reactivated'),
-    'venue:' + venueId, { status: status, reason: reason });
+    'venue:' + venueId, { status: status, reason: reason, name: prior.name, billing: billing });
 
-  return json({ ok: true });
+  return json({ ok: true, billing: billing });
 }
 
 /* POST /admin/optin-approve  (owner/accounts)
@@ -2159,6 +2212,31 @@ async function vpbAccountTotal(env, foundingId) {
   }, 0);
 }
 
+/* Point the Stripe subscription at what this account should actually be paying for.
+ *
+ * Shared by the owner cancelling their own venue and by HQ archiving one, because that is the
+ * same money question asked by two different people and the two answers must not drift apart.
+ * Archiving used to skip it entirely: the venue went dark, every game stopped, and the invoice
+ * kept arriving every month for capacity nobody could use.
+ *
+ * Returns the subscription info so callers can still quote the period end date. */
+async function vpaSyncAccountQuantity(env, foundingId, subId) {
+  if (!subId) return null;
+  const total = await vpbAccountTotal(env, foundingId);
+  const info = await vpbSubItem(env, subId);
+  if (!info || !info.itemId) return info;
+  if (total <= 0) {
+    // Nothing left to bill: end the whole subscription when the period rolls over.
+    await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(subId), { cancel_at_period_end: 'true' });
+  } else {
+    // Keep it live, clear any full-cancel flag, and bill for the venues that remain.
+    await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(subId), { cancel_at_period_end: 'false' });
+    await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(info.itemId),
+      { quantity: Math.max(total, 1), proration_behavior: 'none' });
+  }
+  return info;
+}
+
 // Fetch the subscription's item id + price id (needed to change quantity).
 async function vpbSubItem(env, subId) {
   if (!subId) return null;
@@ -2396,12 +2474,22 @@ async function vpbSetPlayers(request, env, json) {
     return json({ ok: true, applied: 'now', players: players });
   }
 
-  // DECREASE: keep capacity (max_players) until renewal so they are never left short, and no
-  // mid-term refund. Lower the Stripe quantity NOW with proration_behavior 'none' so the
-  // reduction lands on the NEXT invoice. (Stripe bills in advance, so applying it only at
-  // invoice.paid would be one full cycle too late and overcharge them.)
+  /* DECREASE. The two plans genuinely differ here, and conflating them was minting credit.
+     MONTHLY: keep capacity (max_players) until renewal so they are never left short, and no
+     mid-term refund. Lower the Stripe quantity NOW with proration_behavior 'none' so the
+     reduction lands on the NEXT invoice. (Stripe bills in advance, so applying it only at
+     invoice.paid would be one full cycle too late and overcharge them.)
+
+     ANNUAL: the capacity has to go NOW, because the credit is paid out now. Keeping capacity
+     until renewal while banking a pro-rata credit for "unused" players handed back money for
+     players the venue carried on using all year. Worse, the payout shrank as the year ran down
+     while the capacity never moved, so dropping 50 players in January and restoring them in
+     November banked ten months of credit and gave up nothing: the restore only charged the two
+     months left. That was free money on a timer, and it did not even need a loop.
+     Releasing the capacity for real makes the credit honest. Give up 50 players in January, buy
+     them back in November, and you keep the value of the ten months you actually did without. */
   await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId),
-    { pending_players: players });
+    annualPlan ? { max_players: players, pending_players: null } : { pending_players: players });
   const reducedTotal = await vpbAccountTotal(env, foundingId); // effective total (already reflects this pending)
   const dinfo = await vpbSubItem(env, o.account.stripe_subscription_id);
   if (dinfo && dinfo.itemId) {
@@ -2415,7 +2503,10 @@ async function vpbSetPlayers(request, env, json) {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
   }, false).catch(() => {});
-  return json({ ok: true, applied: 'next_renewal', pending: players,
+  return json({ ok: true,
+                applied: annualPlan ? 'now' : 'next_renewal',
+                players: annualPlan ? players : undefined,
+                pending: annualPlan ? null : players,
                 credit_cents: (dAdj && dAdj.kind === 'credit') ? dAdj.cents : 0 });
 }
 
@@ -2495,21 +2586,9 @@ async function vpbCancelVenue(request, env, json) {
   await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: !undo });
 
   // Remaining billed total now EXCLUDES venues flagged to cancel (vpbAccountTotal skips them).
-  const total = await vpbAccountTotal(env, foundingId);
-  const info = await vpbSubItem(env, o.account.stripe_subscription_id);
+  // The credit for the removed players applies at renewal.
+  const info = await vpaSyncAccountQuantity(env, foundingId, o.account.stripe_subscription_id);
   const endsDate = info && info.periodEnd ? vpaFmtDate(info.periodEnd) : null;
-  if (info && info.itemId) {
-    if (!undo && total <= 0) {
-      // Nothing left to bill - end the whole subscription when the period rolls over.
-      await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(o.account.stripe_subscription_id), { cancel_at_period_end: 'true' });
-    } else {
-      // Keep the subscription live, clear any full-cancel flag, and set the quantity to
-      // the venues that remain. The credit for the removed players applies at renewal.
-      await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(o.account.stripe_subscription_id), { cancel_at_period_end: 'false' });
-      await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(info.itemId),
-        { quantity: Math.max(total, 1), proration_behavior: 'none' });
-    }
-  }
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),
     action: undo ? 'venue_cancel_undone' : 'venue_cancel_scheduled',

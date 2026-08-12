@@ -271,7 +271,7 @@
       <thead><tr><th>Venue</th><th>Quiet for</th><th>Last game</th><th>State</th><th></th></tr></thead>
       <tbody id="quietRows"></tbody>
     </table></div></div>
-    <div class="note">Sorted <b>shortest quiet first</b>, because a venue that missed one week is the one you can still win back. Last game counts every format: sessions for trivia, musical bingo and raffles, and game reports for broadcast bingo, which opens no session. A venue that has never run a night at all is measured from the day it was set up and sits at the top of the list.</div>
+    <div class="note">Sorted <b>shortest quiet first</b>, because a venue that missed one week is the one you can still win back. Last game counts every format: sessions for trivia, musical bingo and raffles, and game reports for broadcast bingo, which opens no session. Bingo is recorded from the first ball, so a night the host never formally ended still counts. A venue that has never run a night is measured from the day it was set up. We only look back a year, so an older venue with nothing in that window reads <b>over a year</b> rather than never.</div>
   </div>
 
   <!-- ============ BILLING ============ -->
@@ -620,7 +620,9 @@
                   : '<span class="badge">Active</span>';
         html += '<tr><td><b>'+esc(v.name||"Venue")+'</b></td>'
               + '<td class="mono">'+quiet+'</td>'
-              + '<td class="mono">'+(v.never_played ? '<span style="color:var(--roll)">never played</span>' : esc(v.last_game||""))+'</td>'
+              + '<td class="mono">'+(v.never_played ? '<span style="color:var(--roll)">never played</span>'
+                                    : v.long_gone ? '<span style="color:var(--roll)">over a year</span>'
+                                    : esc(v.last_game||""))+'</td>'
               + '<td>'+state+'</td>'
               + '<td><button class="mini" data-viewas="'+esc(v.id)+'">View as</button></td></tr>';
       });
@@ -725,11 +727,16 @@
   function archiveVenue(id, btn){
     if(!canBilling()) return;
     var name=venueName(id);
-    if(!confirm("Archive "+name+"?\n\nTheir games stop and they drop off the active list. Nothing is deleted and you can bring them back any time. Worth a retention call first.")) return;
+    if(!confirm("Archive "+name+"?\n\nTheir games stop, they drop off the active list, and we stop billing them at the end of the period they have already paid for. Nothing is deleted and you can bring them back any time, billing included. Worth a retention call first.")) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     workerPost("/admin/venue-status", { venue_id:id, status:"archived" }).then(function(res){
       btn.disabled=false; btn.textContent=old;
       if(res.error){ alert(res.error); return; }
+      // Stripe is best-effort inside the Worker so the games always stop. If it did not land,
+      // say so here rather than let the venue quietly keep paying.
+      if(res.billing && res.billing.changed===false){
+        alert("Archived, and their games have stopped.\n\nBut the billing change did not go through:\n"+(res.billing.error||"unknown error")+"\n\nCheck this one in Stripe so they are not charged again.");
+      }
       for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id){ S.venues[i].status="suspended"; S.venues[i].suspended_reason="archived"; } }
       renderStats(); renderVenues(); loadAuditOnly();
     });

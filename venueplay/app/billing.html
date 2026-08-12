@@ -151,7 +151,7 @@
 </header>
 <div class="wrap">
   <h1>Your account</h1>
-  <p class="lede">Your plan, venues, hosts and next payment. Add players or venues anytime; reductions apply from your next renewal so you are never left short.</p>
+  <p class="lede" id="lede">Your plan, venues, hosts and next payment. Add players or venues anytime.</p>
 
   <div id="loading" class="card">Loading your account…</div>
   <div id="content" style="display:none">
@@ -485,6 +485,11 @@
             showMsg("Reduction to " + n + " players scheduled for your next renewal. You keep " + v.players + " until then.", true);
           } else if (r.applied === "cancelled_reduction"){
             showMsg("Scheduled reduction cancelled. You stay on " + n + " players.", true);
+          } else if (n < v.players){
+            // Annual: the capacity goes now, which is what makes the credit honest.
+            var freed = v.players - n;
+            showMsg("Reduced to " + n + " players, releasing " + freed + " from today." +
+                    (r.credit_cents ? " $" + (r.credit_cents/100).toFixed(2) + " credited for the rest of your year; it comes off your next invoice." : ""), true);
           } else if (n > v.players){
             var extra = n - v.players;
             showMsg("Increased to " + n + " players, up " + extra + ". The extra " + extra +
@@ -570,6 +575,12 @@
       }
       $("loading").style.display = "none";
       $("content").style.display = "";
+      // The two plans reduce differently and the page has to say which one you are on.
+      var _l=$("lede");
+      if(_l) _l.textContent = "Your plan, venues, hosts and next payment. Add players or venues anytime. " +
+        (d.plan === "annual"
+          ? "Your year is already paid, so releasing players frees them straight away and credits the rest of the year to your next invoice."
+          : "Reductions apply from your next renewal, so you are never left short.");
       render(d);
     }).catch(function(){
       if ($("content").style.display === "none") $("loading").textContent = "Could not load your billing. Please try again.";
