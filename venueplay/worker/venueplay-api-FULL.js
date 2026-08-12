@@ -2843,12 +2843,11 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
     const slug = (opts && opts.slug) || '';
     // The TV link only makes sense for ONE venue. Someone added across several gets the sign-in
     // link and finds their screens from the console rather than a wrong guess.
-    const tv = slug ? (' TV: ' + site + '/tv?venue=' + slug) : '';
-    // Nothing about manager vs host here: it saves a whole segment, they will see what they can
-    // do the moment they sign in, and the words would mean nothing to them before then.
+    const tv = slug ? (' TV URL: ' + site + '/tv?venue=' + slug) : '';
+    // Nothing about manager vs host here: they will see what they can do the moment they sign in,
+    // and the words would mean nothing to them before then.
     const message =
-      venue + ' has set you up on VenuePlay. Sign in at ' + site
-      + '/app, we text a code to this number.' + tv;
+      venue + ' has set you up on VenuePlay. To sign in visit ' + site + '/app.' + tv;
     const basicAuth = 'Basic ' + btoa(env.MOBILEMESSAGE_USERNAME + ':' + env.MOBILEMESSAGE_PASSWORD);
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), 10000);
