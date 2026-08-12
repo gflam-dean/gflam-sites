@@ -77,6 +77,12 @@
   .stat .box .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:#fff;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stat .box .v.g{color:var(--gold)}
 
+  .nextup{margin-top:12px;padding:11px 13px;border:1px dashed rgba(255,194,75,.45);border-radius:11px;background:rgba(255,194,75,.06)}
+  .nuh{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--gold)}
+  .nut{font-size:14.5px;color:var(--text);margin-top:5px;line-height:1.4}
+  .nuopts{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+  .nuo{font-size:11.5px;color:var(--muted);background:var(--ink-3);border:1px solid var(--line-2);border-radius:14px;padding:3px 9px}
+  .nuo.ok{color:var(--win);border-color:rgba(53,208,127,.4)}
   .qwrap{background:var(--ink-3);border:1px solid var(--line-2);border-radius:13px;padding:14px;margin-bottom:14px}
   .qmeta{display:flex;align-items:center;gap:10px;margin-bottom:8px}
   .qmeta .qn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--faint)}
@@ -399,6 +405,24 @@
     }
   }
 
+  /* What is coming, for the host's eyes only. They read the question aloud, and until now they
+     first saw it at the same moment the room did, so every question started with a silent pause
+     while the host read it. Seeing it early also means the round trip on Next stops mattering:
+     they are already talking. Never broadcast. */
+  function nextUpPanel(){
+    if(!G.nextUp || !G.nextUp.text) return null;
+    var d=el("div","nextup");
+    var opts="";
+    var o=G.nextUp.options||[];
+    for(var i=0;i<o.length;i++){
+      opts+='<span class="nuo'+(i===G.nextUp.correct_index?" ok":"")+'">'+LETTERS[i]+" "+esc(o[i])+'</span>';
+    }
+    d.innerHTML='<div class="nuh">Coming up, for you to start reading</div>'+
+      '<div class="nut">'+esc(G.nextUp.text)+'</div>'+
+      (opts?'<div class="nuopts">'+opts+'</div>':'')+
+      (G.nextUp.image_url?'<div class="nuh" style="margin-top:6px">Picture question</div>':'');
+    return d;
+  }
   function renderRun(){
     var body=$("runBody"); body.innerHTML="";
 
@@ -427,6 +451,7 @@
       }
       body.appendChild(w);
       var rv=el("button","btn win big","Reveal answer"); rv.addEventListener("click", reveal); body.appendChild(rv);
+      var nu=nextUpPanel(); if(nu) body.appendChild(nu);
       body.appendChild(endBtn("End round"));
       return;
     }
@@ -446,6 +471,7 @@
       main.addEventListener("click", isLast ? finish : nextQuestion); brow.appendChild(main);
       var endb=el("button","btn ghost big","End round"); endb.addEventListener("click", function(){ endRound(); }); brow.appendChild(endb);
       body.appendChild(brow);
+      if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
       return;
     }
 
@@ -543,6 +569,7 @@
       if(r && r.done){ finish(); return; }
       G.current={ qseq:r.qseq, qi:r.qi, qtotal:r.qtotal, text:r.text, options:r.options||[],
         correctIndex:r.correct_index, endsAt:Date.parse(r.ends_at), secs:r.secs, imageUrl:r.image_url||"" };
+      G.nextUp = r.next_preview || null;   // host-only: what to start reading before tapping Next
       G.qtotal=r.qtotal||G.qtotal;
       G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq;
       saveTrivia();

@@ -433,8 +433,11 @@
         });
         wrap.appendChild(row); return;
       }
+      // Only a REDUCTION is pending, because an increase is applied on the spot. The row said
+      // nothing at all in that case, which read as though the save had not worked.
       var pend = (v.pending != null && v.pending !== v.players)
-        ? '<div class="pend">Reducing to ' + v.pending + ' players at your next renewal &middot; <a href="#" class="cancelpend" style="color:var(--pink);text-decoration:underline">cancel</a></div>' : '';
+        ? '<div class="pend">Reducing to ' + v.pending + ' players at your next renewal &middot; <a href="#" class="cancelpend" style="color:var(--pink);text-decoration:underline">cancel</a></div>'
+        : '<div class="pendup" style="display:none"></div>';
       row.innerHTML =
         '<div class="nm"><b>' + esc(v.name) + '</b><small>' + v.monthly + ' a month</small>' + pend + '</div>' +
         '<div class="stepper">' +
@@ -467,8 +470,15 @@
         save.disabled = true; save.textContent = "Saving…";
         api("/account/players", { venue_id:v.id, players:n }).then(function(r){
           if (r.error){ showMsg(r.error); save.disabled=false; save.textContent="Save"; return; }
-          if (r.applied === "next_renewal"){ showMsg("Reduction to " + n + " players scheduled for your next renewal.", true); }
-          else { showMsg("Players updated.", true); }
+          if (r.applied === "next_renewal"){
+            showMsg("Reduction to " + n + " players scheduled for your next renewal. You keep " + v.players + " until then.", true);
+          } else if (r.applied === "cancelled_reduction"){
+            showMsg("Scheduled reduction cancelled. You stay on " + n + " players.", true);
+          } else if (n > v.players){
+            var extra = n - v.players;
+            showMsg("Increased to " + n + " players, up " + extra + ". The extra " + extra +
+                    (extra === 1 ? " player is" : " players are") + " on your next bill and available right now.", true);
+          } else { showMsg("Players updated.", true); }
           save.disabled=false; save.textContent="Save";
           load();
         });

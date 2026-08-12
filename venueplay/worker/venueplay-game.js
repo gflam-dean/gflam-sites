@@ -2050,11 +2050,43 @@ async function handleHostQuestion(request, env, json) {
     colour: cfg.colour !== false,
   }, 'host:' + staff.id);
 
+  /* Read one further ahead, HOST ONLY, so the console can show what is coming.
+     A host reads the question aloud, and until now they first saw it at the same instant the room
+     did, so every question began with a pause while they read it to themselves. With the next one
+     in front of them they can start reading and tap Next as they finish, which also makes the
+     round trip on Next stop mattering. Never broadcast: this is the console's copy. */
+  let nextPreview = null;
+  try {
+    if (seqList) {
+      const afterIdx = seqList.indexOf(q.seq) + 1;
+      if (afterIdx > 0 && afterIdx < seqList.length) {
+        const rows = await sbGet(env, 'vp_questions',
+          'set_id=eq.' + enc(setId) + '&seq=eq.' + seqList[afterIdx] +
+          '&select=seq,question,options,correct_index,image_url&limit=1');
+        if (rows.length) nextPreview = rows[0];
+      }
+    } else {
+      const roundLimit = (typeof cfg.question_count === 'number') ? cfg.question_count : null;
+      if (roundLimit == null || q.seq < roundLimit) {
+        const rows = await sbGet(env, 'vp_questions',
+          'set_id=eq.' + enc(setId) + '&seq=gt.' + q.seq +
+          '&select=seq,question,options,correct_index,image_url&order=seq.asc&limit=1');
+        if (rows.length) nextPreview = rows[0];
+      }
+    }
+  } catch (e) { nextPreview = null; }   // a preview is a convenience; never fail the question on it
+
   // HOST-ONLY response (authenticated staff): may include correct_index for the console.
   return json({
     qseq: q.seq, qi, qtotal,
     text: q.question, options, correct_index: q.correct_index,
     ends_at: endsAt, secs, image_url: q.image_url || null,
+    next_preview: nextPreview ? {
+      qseq: nextPreview.seq, text: nextPreview.question,
+      options: Array.isArray(nextPreview.options) ? nextPreview.options : [],
+      correct_index: nextPreview.correct_index,
+      image_url: nextPreview.image_url || null,
+    } : null,
   });
 }
 
