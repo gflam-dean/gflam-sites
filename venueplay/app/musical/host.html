@@ -214,7 +214,7 @@
           </div>
           <div class="field">
             <label>Prize</label>
-            <input type="text" id="prizeInput" placeholder="$50 bar tab" placeholder="e.g. $50 bar tab">
+            <input type="text" id="prizeInput" placeholder="e.g. $50 bar tab">
           </div>
           <div class="stat">
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
@@ -335,17 +335,36 @@
   var LIB_URL="../../data/musical-library.json";
 
   function normTitle(t){ return (t==null?"":String(t)).trim().toLowerCase(); }
+  function taKey(title, artist){ return normTitle(title)+"|"+normTitle(artist); }
+  // How many songs ONE GAME uses. This is the number that decides whether musical bingo works.
+  // A card is 24 songs, so the chance any played song marks a cell is 24/playlist. Run a game
+  // off the whole 17,000-song library and that is 0.14%: about 700 songs before a player's first
+  // mark, which is exactly what happened on the first test night (40 songs, nobody marked one).
+  // At 60 it is 40%, so a line lands in the teens and a full house inside a normal night.
+  var GAME_SONGS=60;
+  function drawGameSet(list){
+    if(list.length<=GAME_SONGS) return list;
+    var pool=list.slice(), out=[];
+    for(var i=0;i<GAME_SONGS;i++){ var k=cryptoInt(pool.length); out.push(pool[k]); pool.splice(k,1); }
+    return out;
+  }
   function loadLibrary(){
     return fetch(LIB_URL, { cache:"no-store" }).then(function(r){
       if(!r.ok) throw new Error("http "+r.status);
       return r.json();
     }).then(function(data){
       LIB.songs=(data.songs||[]).slice();
-      LIB.byId={}; LIB.byTitle={};
+      LIB.byId={}; LIB.byTitle={}; LIB.byTitleArtist={};
       for(var i=0;i<LIB.songs.length;i++){
         var s=LIB.songs[i];
         LIB.byId[s.id]=s;
-        LIB.byTitle[normTitle(s.title)]=s;   // titles in the library are unique
+        // Titles are NOT unique: about 3,350 songs in this library share a title with another.
+        // "Time After Time" alone is Cyndi Lauper, Rod Stewart, Jessica Mauboy and one more, so
+        // a title-only index handed back whichever loaded last and the room heard Rod Stewart
+        // when the card said Cyndi Lauper. Key on title AND artist; keep the title-only map
+        // purely as a last resort for a song whose artist we somehow lost.
+        LIB.byTitleArtist[taKey(s.title, s.artist)]=s;
+        if(!LIB.byTitle[normTitle(s.title)]) LIB.byTitle[normTitle(s.title)]=s;
       }
       LIB.playlists=(data.playlists||[]).slice();
       LIB.plById={};
@@ -427,9 +446,14 @@
     hostMonitor:false     // false = the venue sound comes from the TV screen and THIS device stays quiet
   };
   function curSongs(){ return G.songs; }
-  function findSong(title){
-    var s=G.byTitle[normTitle(title)] || LIB.byTitle[normTitle(title)];
-    return s || { id:"", song_id:"", title:title, artist:"", previewUrl:"", artworkUrl:"" };
+  // Prefer THIS game's set: it is small and its artists are known, so a shared title resolves to
+  // the song actually on the cards rather than whichever namesake the library indexed last.
+  function findSong(title, artist){
+    var s=(artist ? G.byTitleArtist[taKey(title,artist)] : null)
+       || G.byTitle[normTitle(title)]
+       || (artist ? LIB.byTitleArtist[taKey(title,artist)] : null)
+       || LIB.byTitle[normTitle(title)];
+    return s || { id:"", song_id:"", title:title, artist:artist||"", previewUrl:"", artworkUrl:"" };
   }
   function playedArray(){ return G.playedOrder.slice(); }
   function playerCount(){ return G.order.length; }
@@ -475,10 +499,13 @@
         // older Worker (pre all_songs) is deployed - degraded, but never worse than a lost game.
         var src=(Array.isArray(g.all_songs)&&g.all_songs.length)?g.all_songs:(g.played_songs||[]);
         G.songs=src.map(function(w){
-          var lib=LIB.byTitle[normTitle(w.title)]||{};
+          var lib=LIB.byTitleArtist[taKey(w.title,w.artist)]||LIB.byTitle[normTitle(w.title)]||{};
           return { id:lib.id||"", song_id:w.song_id, title:w.title, artist:lib.artist||"", previewUrl:lib.previewUrl||"", artworkUrl:lib.artworkUrl||"" };
         });
-        G.byTitle={}; for(var i=0;i<G.songs.length;i++){ G.byTitle[normTitle(G.songs[i].title)]=G.songs[i]; }
+        G.byTitle={}; G.byTitleArtist={};
+        for(var i=0;i<G.songs.length;i++){ var gs=G.songs[i];
+          G.byTitleArtist[taKey(gs.title,gs.artist)]=gs;
+          if(!G.byTitle[normTitle(gs.title)]) G.byTitle[normTitle(gs.title)]=gs; }
         // mark the songs already played (by title, matching how playedArray/daubs work)
         G.played={}; G.playedOrder=[];
         var pl=g.played_songs||[];
@@ -705,7 +732,9 @@
   // The inline playlist the Worker materialises into vp_playlists/vp_playlist_songs. Songs
   // are metadata only (title + artist [+ hint]); the previewUrl is never sent (licensing).
   function playlistPayload(){
-    var songs=songsForPlaylist(G.playlistId||"all");
+    // Draw the night's set from whatever the host chose. A big library is good for variety across
+    // weeks and fatal as a single game's pool, so the game itself is always a manageable set.
+    var songs=drawGameSet(songsForPlaylist(G.playlistId||"all"));
     return { name:G.playlistName, songs:songs.map(function(s){ return { title:s.title, artist:s.artist }; }) };
   }
   // Open the join lobby first (same flow as bingo): the TV shows the QR + code and players
@@ -733,7 +762,18 @@
     G.playlistId=$("playlistSel").value;
     G.playlistName=(G.playlistId==="all")?"All songs":(G.playlistId==="surprise")?"Surprise Mix":((LIB.plById[G.playlistId]||{}).name||"Playlist");
     G.pattern=$("patternSel").value;
-    G.prize=($("prizeInput").value||"").trim()||"the prize";
+    // Required, not defaulted. "the prize" was going up on the venue's TV whenever a host
+    // skipped the field, which reads like the screen is broken.
+    var pz=($("prizeInput").value||"").trim();
+    if(!pz){
+      hostError("Put in what they are playing for first.");
+      var pe=$("prizeInput");
+      try{ pe.focus(); pe.select(); }catch(e){}
+      pe.style.borderColor="var(--roll)";
+      setTimeout(function(){ pe.style.borderColor=""; }, 2500);
+      return;
+    }
+    G.prize=pz;
     beginRound($("startBtn"),"Open lobby");
   }
   function newGame(){ if(G.busy) return; beginRound($("newGameBtn"),"New game"); }
@@ -753,11 +793,14 @@
       // Merge the Worker's songs (song_id, title, artist) with the library (previewUrl,
       // artworkUrl) by title, so playSong has both the audio clip and the DB id.
       G.songs=(r.songs||[]).map(function(w){
-        var lib=LIB.byTitle[normTitle(w.title)]||{};
+        var lib=LIB.byTitleArtist[taKey(w.title,w.artist)]||LIB.byTitle[normTitle(w.title)]||{};
         return { id:lib.id||"", song_id:w.song_id, title:w.title, artist:w.artist||lib.artist||"",
                  previewUrl:lib.previewUrl||"", artworkUrl:lib.artworkUrl||"" };
       });
-      G.byTitle={}; for(var i=0;i<G.songs.length;i++){ G.byTitle[normTitle(G.songs[i].title)]=G.songs[i]; }
+      G.byTitle={}; G.byTitleArtist={};
+        for(var i=0;i<G.songs.length;i++){ var gs=G.songs[i];
+          G.byTitleArtist[taKey(gs.title,gs.artist)]=gs;
+          if(!G.byTitle[normTitle(gs.title)]) G.byTitle[normTitle(gs.title)]=gs; }
       G.queue=shuffledQueue(); G.qIdx=-1;
       G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null; G.won=false; G.claim=null;
       G.status="running";

@@ -23,6 +23,11 @@
 
   .tv{position:fixed;inset:0;container-type:inline-size;background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506;overflow:hidden}
   .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
+  /* A game layer paints its own ground. These sit over the ad rotation, and while the rotation is
+     display:none during a game, anything that leaves even one frame of it showing put a ghost of
+     the venue's advertising behind the board. A game screen is never see-through now. */
+  #tvLobby,#tvRun,#tvClaim,#tvWin,#tvHold{
+    background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506}
   .hidden{display:none!important}
 
   .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
@@ -153,7 +158,9 @@
   /* ---- claim / win ---- */
   .claimbig{font-family:'Anton',sans-serif;font-size:clamp(40px,12cqw,150px);color:var(--pink);line-height:.9;text-shadow:0 0 40px rgba(255,31,142,.5);margin:1cqw 0}
   .claimname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(18px,4cqw,44px);color:#fff}
-  .winbingo{font-family:'Anton',sans-serif;font-size:clamp(44px,14cqw,180px);line-height:.85;margin-top:2.4cqw;
+  /* line-height .85 on a 180px Anton cap clipped the top of the B and the tail of the G, and a
+     background-clipped gradient cannot spill outside its own box. Give it room. */
+  .winbingo{font-family:'Anton',sans-serif;font-size:clamp(44px,14cqw,180px);line-height:1.06;padding:.06em 0 .1em;margin-top:2.4cqw;
     background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 28%,#FFF3D0 46%,#FFC24B 64%,#E9A93A 100%);background-size:220% auto;
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
     filter:drop-shadow(0 0 38px rgba(255,194,75,.42));animation:shimmer 3.2s linear infinite, winpop .6s ease-out}

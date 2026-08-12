@@ -446,6 +446,30 @@
   function drawQR(el, size, url){ if(window.QRCode&&el&&url){ QRCode.toCanvas(el, url, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
   show("tvLobby");
   renderLobby();   // draws the pairing QR (flips to the player QR once a session opens)
+
+  /* ---- the venue's own logo, top left ----------------------------------------------------
+     The main TV has carried this since the logo upload shipped; these four game screens never
+     did, so the moment a host put trivia or musical bingo on air the venue's branding vanished
+     from its own screen. Same source and same corner as tv.html, injected so no markup anchor
+     is needed. Best effort: any failure just leaves the screen as it was. */
+  (function venueLogo(){
+    if(!VENUE_SLUG) return;
+    function paint(url){
+      if(!url) return;
+      var el=document.getElementById("venueLogo");
+      if(!el){ el=document.createElement("img"); el.id="venueLogo";
+        el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
+        document.body.appendChild(el); }
+      el.src=url;
+    }
+    try{
+      fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(VENUE_SLUG)+"&select=logo_url&limit=1",
+        { headers:{ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON } })
+        .then(function(r){ return r.ok?r.json():null; })
+        .then(function(rows){ if(rows && rows[0]) paint(rows[0].logo_url||""); })
+        .catch(function(){});
+    }catch(e){}
+  })();
 })();
 </script>
 </body>

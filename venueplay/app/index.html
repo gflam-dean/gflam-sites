@@ -342,7 +342,7 @@
           </div>
           <div class="field">
             <label>Prize</label>
-            <input type="text" class="hostinput" id="prizeInput" placeholder="$50 bar tab" placeholder="e.g. $50 bar tab">
+            <input type="text" class="hostinput" id="prizeInput" placeholder="e.g. $50 bar tab">
           </div>
           <div class="field">
             <label>Tickets each player</label>
@@ -1058,9 +1058,24 @@
   }
   // Open the join lobby: the TV shows the big QR + code and players can scan in and see
   // "You're in" before any numbers are called. The button then becomes Start.
+  // The prize is what the whole room is playing for, so it goes on the TV in big gold letters.
+  // Defaulting it to the words "the prize" meant a host who tabbed past the field put exactly that
+  // on the screen in front of the venue. Make them fill it in.
+  function requirePrize(){
+    var el=$("prizeInput"), v=(el.value||"").trim();
+    if(!v){
+      showToast("Put in what they are playing for first.");
+      try{ el.focus(); el.select(); }catch(e){}
+      el.style.borderColor="var(--roll)";
+      setTimeout(function(){ el.style.borderColor=""; }, 2500);
+      return null;
+    }
+    return v;
+  }
   function openLobby(){
     G.pattern=$("patternSel").value;
-    G.prize=($("prizeInput").value||"").trim()||"the prize";
+    var _p=requirePrize(); if(_p===null) return;
+    G.prize=_p;
     G.defaultCards=clampCards($("cardsSel").value);
     G.status="lobby"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to the join screen
@@ -1183,7 +1198,8 @@
     var _cnt=playerCount(), _cap=playerCap();
     if(_cap>0 && _cnt>_cap && !inFirstMonth() && !overageAcked){ showOverage(_cnt, _cap, startGame); return; }
     G.pattern=$("patternSel").value;
-    G.prize=($("prizeInput").value||"").trim()||"the prize";
+    var _p=requirePrize(); if(_p===null) return;
+    G.prize=_p;
     G.defaultCards=clampCards($("cardsSel").value);
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
