@@ -1,0 +1,60 @@
+# Artists to keep OUT of the musical bingo library.
+#
+# This file is the human judgement in the curation. Everything else the script does is
+# mechanical. One artist per line. Anything after a # is a note. Case does not matter.
+#
+# After editing, run:   python3 tools/curate-library.py --write
+# To see who survived:  python3 tools/curate-library.py --artists
+#
+# Started 12 Aug 2026 after the first live test, where the room did not know half the songs.
+# These are the categories that clearly do not belong in a pub singalong. The judgement calls
+# about which artists an Australian crowd actually knows are yours to add.
+
+# ---- children's TV and film soundtracks ----
+Bluey & Joff Bush
+Joff Bush
+Cast - Elena of Ávalor
+Cast - Descendants
+Cast - High School Musical
+Cast - Sofia the First
+The Wiggles
+Hi-5
+
+# ---- worship and religious ----
+ELEVATION RHYTHM
+Elevation Worship
+Hillsong UNITED
+Hillsong Worship
+Hillsong Young & Free
+Bethel Music
+
+# ---- exercise, ambient and background music ----
+Workout Music
+Running Music
+Sleep Sounds
+Relaxing Music
+
+# ---- deep American country that does not land in an Australian pub ----
+# Kasey Chambers, Lee Kernaghan, James Blundell, Slim Dusty and the Australian country acts
+# are deliberately NOT here: they are pub staples. These are the US bench the library loaded
+# whole discographies of.
+Morgan Wallen
+Conway Twitty
+George Strait
+Alan Jackson
+Blake Shelton
+Tim McGraw
+Luke Combs
+Jason Aldean
+Zach Bryan
+Riley Green
+ERNEST
+Cody Johnson
+Parker McCollum
+Chris Stapleton
+Thomas Rhett
+Old Dominion
+Dustin Lynch
+Jon Pardi
+Hardy
+Bailey Zimmerman
