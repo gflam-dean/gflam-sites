@@ -621,6 +621,7 @@
       G.canManage = ctx.isAdmin || ctx.role==="owner" || ctx.role==="manager";
       G.nameDisplay = (ctx.settings && ctx.settings.name_display) || "abbrev_last";
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
+      if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       loadAll().then(function(){
         renderNameSeg(); applyRoleGates();

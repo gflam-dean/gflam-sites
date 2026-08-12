@@ -1086,7 +1086,22 @@
     }
     return v;
   }
+  /* THE KILL-SWITCH DOES NOT REACH BINGO ON ITS OWN.
+     Every other format goes through the game Worker, which refuses a suspended venue. Broadcast
+     bingo has no server call at all: the console just broadcasts on the venue channel. So a venue
+     whose card had failed could read the "settle up" banner, tap Start, and run bingo every week
+     forever, which is the format they run most. The console has to stop itself. */
+  function venueOnHold(){
+    var v = __ctx && __ctx.venue;
+    return !!(v && v.status === 'suspended');
+  }
+  function blockedByHold(){
+    if(!venueOnHold()) return false;
+    showToast("Your tab has run a bit long. Settle up on your account page and we will pour you another round of bingo.");
+    return true;
+  }
   function openLobby(){
+    if(blockedByHold()) return;
     G.pattern=$("patternSel").value;
     var _p=requirePrize(); if(_p===null) return;
     G.prize=_p;
@@ -1209,6 +1224,7 @@
     $("ovgCancel").onclick=function(){ m.classList.add("hidden"); };
   }
   function startGame(){
+    if(blockedByHold()) return;
     var _cnt=playerCount(), _cap=playerCap();
     if(_cap>0 && _cnt>_cap && !inFirstMonth() && !overageAcked){ showOverage(_cnt, _cap, startGame); return; }
     G.pattern=$("patternSel").value;
@@ -1227,6 +1243,7 @@
     renderConsole();
   }
   function newGame(){
+    if(blockedByHold()) return;
     postReport();   // report the round just finished before a fresh one begins
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
@@ -1253,6 +1270,11 @@
     // number, and because the window is keyed to that ball, EVERY later claim was then refused in
     // silence: the next genuine winner got "the host said not yet" for a call nobody ever saw.
     if(G.claims.length){ showToast("Sort the bingo call first, then keep calling."); return; }
+    // Same again for a winner who has been confirmed but not yet announced. The claim window is
+    // pinned to the ball it opened on, so calling past it left the host deaf: the next genuine
+    // bingo was refused as "late" with nothing shown to anyone, and that player sat on "the host
+    // is checking your ticket" until the round was finally announced for somebody else.
+    if(G.lastWins.length){ showToast("Announce the win first: keep playing, or finish the game."); return; }
     G.idx++;
     var n=G.draw[G.idx]; G.called[n]=true;
     send({ t:"ball", number:n, called:calledArray(), index:G.idx });

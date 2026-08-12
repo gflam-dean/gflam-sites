@@ -616,7 +616,7 @@
         var wks=Math.floor(v.days_quiet/7);
         var quiet = v.days_quiet<14 ? (v.days_quiet+" days") : (wks+" weeks");
         var state = (v.suspended_reason==="archived") ? '<span class="badge suspend">Archived</span>'
-                  : (v.status==="suspended") ? '<span class="badge suspend">'+(v.suspended_reason==="nonpayment"?"Unpaid":"Paused")+'</span>'
+                  : (v.status==="suspended") ? '<span class="badge suspend">'+(v.suspended_reason==="nonpayment"?"Unpaid":v.suspended_reason==="ended"?"Ended":"Paused")+'</span>'
                   : '<span class="badge">Active</span>';
         html += '<tr><td><b>'+esc(v.name||"Venue")+'</b></td>'
               + '<td class="mono">'+quiet+'</td>'
@@ -665,7 +665,7 @@
         : (inAccount ? '<span class="badge grouped">Account &middot; '+acctCount[v.founding_id]+' venues</span>'
         : '<span class="badge indep">Independent</span>');
       var statusCell = (v.suspended_reason==='archived') ? '<span class="badge suspend">Archived</span>'
-                     : suspended ? '<span class="badge suspend">'+(v.suspended_reason==='nonpayment'?'Unpaid':'Paused')+'</span>'
+                     : suspended ? '<span class="badge suspend">'+(v.suspended_reason==='nonpayment'?'Unpaid':v.suspended_reason==='ended'?'Ended':'Paused')+'</span>'
                        : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
       var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
                   '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+

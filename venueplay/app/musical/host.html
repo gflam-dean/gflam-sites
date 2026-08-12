@@ -1062,6 +1062,7 @@
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
+      if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       var slug=(ctx.venue && ctx.venue.slug) || "";
       libReady.then(function(){                 // library must be loaded before we rebuild a game's song list

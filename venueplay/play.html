@@ -726,8 +726,14 @@
     markHost();   // any message below proves a live host is on this channel
     if(m.t==="cards"){
       if(m.pid && m.pid!==P.pid) return;   // those tickets are for another player
+      // Being dealt tickets IS the start of a round for this phone, so it clears last round's
+      // result. Without this a phone that slept through t:"started" stayed on "Nice game!" or a
+      // stale "You won!" for the whole next game, ignoring its own new tickets, and the only way
+      // out was a reload that nothing on screen suggested.
+      P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0;
+      P.shared=false; P.sharedWith=[]; _celebrated=false;
       P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:{} }; });
-      P.active=true; autoDaub(); if(!P.won && !P.ended) route();
+      P.active=true; autoDaub(); route();
     }
     else if(m.t==="state"){
       if(m.pattern) P.pattern=m.pattern;

@@ -729,6 +729,7 @@
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
+      if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       loadQuestionSets();
       restoreTrivia().then(function(){   // recover a live quiz first (if this was an accidental reload), then pair the TV as normal

@@ -378,7 +378,11 @@ async function handleWebhook(request, env, cors) {
   }
   if (event.type === 'customer.subscription.deleted') {
     const cust = event.data.object && event.data.object.customer;
-    await vpaSuspendForNonpayment(env, cust);
+    // 'ended', NOT 'nonpayment'. This fires when an owner cancels as well as when Stripe gives
+    // up, and only 'nonpayment' is ever undone by a payment. Stamping a deliberate ending as
+    // non-payment meant one late invoice landing on that customer switched the whole account
+    // back on with no subscription behind it, playing free, with their credit already wiped.
+    await vpaSuspendForNonpayment(env, cust, 'ended');
     await vpaClearCreditOnEnd(env, cust);   // the subscription is over, so the credit is too
   }
   // Paid. Anything switched off for non-payment comes straight back on.
@@ -1846,7 +1850,7 @@ async function vpaVenuesForCustomer(env, customerId) {
   return [(venues || []), acct];
 }
 
-async function vpaSuspendForNonpayment(env, customerId) {
+async function vpaSuspendForNonpayment(env, customerId, reason) {
   try {
     const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
     if (!venues || !venues.length) return;
@@ -1854,14 +1858,14 @@ async function vpaSuspendForNonpayment(env, customerId) {
     for (const v of venues) {
       if (v.status === 'suspended') continue;              // already off, leave the reason alone
       await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
-        { status: 'suspended', suspended_reason: 'nonpayment' });
+        { status: 'suspended', suspended_reason: reason || 'nonpayment' });
       n++;
     }
     if (n) {
       await vpaInsert(env, 'vp_admin_audit', {
-        action: 'venue_suspended_nonpayment',
+        action: 'venue_suspended_' + (reason || 'nonpayment'),
         target: 'account:' + acct.id,
-        detail: { venues: n, customer: customerId },
+        detail: { venues: n, customer: customerId, reason: reason || 'nonpayment' },
       }, false).catch(() => {});
     }
   } catch (_) { /* never throw out of a webhook */ }

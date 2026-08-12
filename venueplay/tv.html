@@ -900,7 +900,12 @@
     }
     else if(m.t==="ball"){
       state.called=m.called||state.called;
-      state.phase="running"; applyBingo();
+      state.phase="running";
+      // Mark the ball in flight BEFORE the repaint, not after. applyBingo runs renderRun, and
+      // renderRun is the thing that has to keep showing the PREVIOUS number while one travels.
+      // Setting the flag afterwards meant the guard never fired on the paint it exists for.
+      if(m.number) ballInFlight=true;
+      applyBingo();
       revealBall(m.number);   // big-ball reveal for the freshly called number
     }
     else if(m.t==="players"){
