@@ -192,6 +192,7 @@ export default {
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
       if (method === 'POST' && path === '/host/ball')          return await handleHostBall(request, env, json);
       if (method === 'POST' && path === '/host/play')          return await handleHostPlay(request, env, json);
+      if (method === 'POST' && path === '/host/song/flag')      return await handleSongFlag(request, env, json);
       if (method === 'POST' && path === '/host/question')      return await handleHostQuestion(request, env, json);
       if (method === 'POST' && path === '/host/reveal')        return await handleHostReveal(request, env, json);
       if (method === 'POST' && path === '/host/draw')          return await handleHostDraw(request, env, json);
@@ -1821,6 +1822,50 @@ async function handleTriviaSearch(request, env, json) {
   await retagSetCount(env, set.id);
   return json({ ok: true, added: rows.length, matched: pool.length });
 }
+/* POST /host/song/flag  {game_id, song_id, reason?, note?}
+   The host taps "this song did not work" during a night. One flag never removes anything: a
+   single room can dislike a song for a hundred reasons that are not the song. It is one vote per
+   VENUE, keyed on artist+title rather than a row id, because songs are copied into each game's
+   playlist with fresh ids and flagging the copy would leave the library original going out to
+   everybody. Three separate venues is the signal, and tools/review-songs.py acts on it. */
+async function handleSongFlag(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  const songId = String(b.song_id || '').trim();
+  assertUuid(gameId, 'game_id');
+  assertUuid(songId, 'song_id');
+
+  const games = await sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id');
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const session = await getSession(env, games[0].session_id);
+  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at this venue
+
+  const mg = await sbGet(env, 'vp_music_games', 'game_id=eq.' + enc(gameId) + '&select=playlist_id');
+  if (!mg.length) return json({ error: 'That is not a musical bingo game' }, 409);
+  const rows = await sbGet(env, 'vp_playlist_songs',
+    'id=eq.' + enc(songId) + '&playlist_id=eq.' + enc(mg[0].playlist_id) + '&select=id,title,artist&limit=1');
+  if (!rows.length) return json({ error: 'That song is not in this game' }, 404);
+  const song = rows[0];
+
+  const skey = ((song.artist || '') + '|' + (song.title || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+  const allowed = { didnt_work: 1, wrong_track: 1, unknown_song: 1 };
+  const reason = allowed[String(b.reason || '')] ? String(b.reason) : 'didnt_work';
+
+  // One vote per venue: upsert on the primary key so a host tapping twice does not stack votes.
+  await sbUpsert(env, 'vp_song_flags', {
+    skey: skey, venue_id: session.venue_id, reason: reason,
+    title: song.title, artist: song.artist,
+    note: b.note ? String(b.note).slice(0, 300) : null,
+  }, 'skey,venue_id');
+
+  const counts = await sbGet(env, 'v_vp_song_flag_counts', 'skey=eq.' + enc(skey) + '&select=venues');
+  const venues = (counts && counts[0] && Number(counts[0].venues)) || 1;
+  await emitEvent(env, session, 'song.flagged',
+    { song_id: songId, title: song.title, venues: venues }, 'host:' + staff.id);
+  return json({ ok: true, title: song.title, artist: song.artist, venues: venues, retires_at: 3 });
+}
+
 async function handleTriviaRemove(request, env, json) {           // remove one question, then re-sequence 1..N
   const authUserId = await verifyHostJwt(request, env);
   const b = await readJson(request);
@@ -3377,6 +3422,19 @@ async function sbGet(env, table, query) {
 
 // obj may be a single object or an array of rows. returnRep=true asks Supabase
 // to return the inserted representation.
+/* Insert or update on the primary key. Used where a repeat is EXPECTED and must not be an error:
+   a host tapping "this song did not work" twice is one venue's single vote either way, not a
+   conflict. PostgREST does this with resolution=merge-duplicates plus the conflict columns. */
+async function sbUpsert(env, table, obj, onConflict) {
+  const headers = { ...sbHeaders(env), 'Prefer': 'resolution=merge-duplicates' };
+  const q = onConflict ? '?on_conflict=' + encodeURIComponent(onConflict) : '';
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + q, {
+    method: 'POST', headers, body: JSON.stringify(obj),
+  });
+  if (!res.ok) throw dbError('upsert', table, await res.text());
+  return null;
+}
+
 async function sbInsert(env, table, obj, returnRep) {
   const headers = { ...sbHeaders(env) };
   if (returnRep) headers['Prefer'] = 'return=representation';

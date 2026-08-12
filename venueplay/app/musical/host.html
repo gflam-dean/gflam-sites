@@ -142,6 +142,9 @@
   .cliptime{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);margin-top:5px}
   .audioctl{display:grid;grid-template-columns:auto 1fr;gap:8px;margin-top:12px}
   .audioctl .btn{margin:0}
+  .flagnote{margin-top:7px;font-size:12.5px;color:var(--muted);line-height:1.45}
+  .flagnote b{color:var(--text)}
+  #flagSongBtn.done{border-color:rgba(255,194,75,.5);color:var(--gold)}
   .clipwarn{margin-top:10px;font-size:12px;color:var(--roll);background:rgba(245,165,36,.1);border:1px solid rgba(245,165,36,.28);border-radius:9px;padding:9px 11px;line-height:1.45}
   .spotrow{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
   .spotrow .btn{flex:1;min-width:120px}
@@ -247,6 +250,8 @@
             </div>
             <button class="btn ghost" id="monitorBtn" style="width:100%;margin-top:8px;font-size:13px">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
             <div class="clipwarn hidden" id="clipWarn">No preview clip for this one. Play it yourself through the PA, then tap Mark called.</div>
+            <button class="btn ghost" id="flagSongBtn" style="width:100%;margin-top:8px;font-size:13px" disabled>&#9873; This song did not work</button>
+            <div class="flagnote hidden" id="flagNote"></div>
             <div class="spotrow">
               <button class="btn ghost" id="spotifyBtn">Copy Spotify links</button>
               <span class="copyok hidden" id="spotifyOk">Copied</span>
@@ -562,6 +567,7 @@
     if(!song || G.status!=="running") return;
     if(!G.played[song.title]){ G.played[song.title]=true; G.playedOrder.push(song.title); }
     G.nowSong=song; G.hostNow=song.title;
+    syncFlagBtn();
     // Tell the Worker this song was played (idempotent per song). song_id came back from
     // /host/game. If it is missing (a title with no library match), the play still shows
     // locally and broadcasts, but cannot be server-verified, so warn in the console log.
@@ -1063,6 +1069,42 @@
   } else {
     showSignIn("Sign in helper failed to load. Try reloading.");
   }
+
+  // ---- "this song did not work" -----------------------------------------------------------
+  // The host is the only person who can hear that a song died in the room, and only on the
+  // night. One tap, no dialogue, no interruption to the game. It is one vote per VENUE and it
+  // never removes anything on its own: three separate venues retires the song from the library.
+  var flagged={};
+  function syncFlagBtn(){
+    var b=$("flagSongBtn"); if(!b) return;
+    var song=G.nowSong;
+    var can=!!(song && song.song_id && G.gameId);
+    b.disabled=!can;
+    var done=can && flagged[song.song_id];
+    b.classList.toggle("done", !!done);
+    b.innerHTML = done ? "&#9873; Flagged, thanks" : "&#9873; This song did not work";
+  }
+  (function(){
+    var b=$("flagSongBtn"); if(!b) return;
+    b.addEventListener("click", function(){
+      var song=G.nowSong;
+      if(!song || !song.song_id || !G.gameId || flagged[song.song_id]) return;
+      flagged[song.song_id]=true; syncFlagBtn();
+      var note=$("flagNote");
+      apiPost("/host/song/flag",{ game_id:G.gameId, song_id:song.song_id, reason:"didnt_work" })
+        .then(function(r){
+          if(!note) return;
+          note.classList.remove("hidden");
+          note.innerHTML = (r && r.venues>1)
+            ? "<b>"+esc(song.title)+"</b> has now been flagged by "+r.venues+" venues. At 3 it comes out of the library."
+            : "<b>"+esc(song.title)+"</b> flagged. It keeps playing tonight; we review it after.";
+        })
+        .catch(function(){
+          flagged[song.song_id]=false; syncFlagBtn();
+          if(note){ note.classList.remove("hidden"); note.textContent="Could not send that just now. Try again in a moment."; }
+        });
+    });
+  })();
 })();
 </script>
 </body>

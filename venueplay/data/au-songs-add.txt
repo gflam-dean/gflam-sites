@@ -1,0 +1,109 @@
+# Songs to add to the musical bingo library.
+#
+# One per line:   Artist - Song title
+# Anything after a # is a note. Blank lines are ignored.
+#
+# Then run:  python3 tools/add-songs.py           (look them up)
+#            python3 tools/add-songs.py --write   (add them)
+#
+# It searches the AUSTRALIAN iTunes store, so you get the release the room would know, with the
+# real preview clip and artwork. Songs already in the library are skipped, so it is safe to
+# leave old lines here and re-run.
+#
+# Put an artist's BIGGEST song first: the curation keeps each artist's first few.
+
+# ---- acts that were missing entirely ----
+Tom Petty and the Heartbreakers - Free Fallin'
+Tom Petty and the Heartbreakers - I Won't Back Down
+Tom Petty - Learning to Fly
+Nick Cave & The Bad Seeds - Into My Arms
+Nick Cave & The Bad Seeds - Red Right Hand
+Vanessa Amorosi - Absolutely Everybody
+Vanessa Amorosi - Shine
+
+# ---- big Australian singalongs worth double checking are in ----
+The Angels - Am I Ever Gonna See Your Face Again
+Australian Crawl - Reckless
+Mental As Anything - Live It Up
+Moving Pictures - What About Me
+Richard Clapton - Girls On the Avenue
+Little River Band - Reminiscing
+The Easybeats - Friday On My Mind
+Russell Morris - The Real Thing
+Divinyls - Boys In Town
+Weddings Parties Anything - Father's Day
+Redgum - I Was Only Nineteen
+GANGgajang - Sounds of Then (This Is Australia)
+Sherbet - Howzat
+Ol' 55 - On the Prowl
+Dragon - April Sun In Cuba
+Dragon - Are You Old Enough
+Boom Crash Opera - Onion Skin
+Choirboys - Run To Paradise
+Hoodoo Gurus - What's My Scene
+1927 - That's When I Think of You
+Noiseworks - Take Me Back
+Southern Sons - Heart In Danger
+James Reyne - Fall of Rome
+Jenny Morris - She Has to Be Loved
+Wendy Matthews - The Day You Went Away
+Deborah Conway - It's Only the Beginning
+Ross Wilson - Bed of Nails
+Daddy Cool - Eagle Rock
+Skyhooks - Horror Movie
+Split Enz - I Got You
+Split Enz - Six Months In a Leaky Boat
+Crowded House - Better Be Home Soon
+Goanna - Solid Rock
+The Saints - Just Like Fire Would
+Bachelor Girl - Buses and Trains
+Killing Heidi - Mascara
+Frente! - Accidently Kelly Street
+Ratcat - That Ain't Bad
+The Superjesus - Down Again
+Magic Dirt - Dirty Jeans
+Sneaky Sound System - Pictures
+The Presets - My People
+Pnau - Chameleon
+Sheppard - Geronimo
+San Cisco - Awkward
+Client Liaison - World of Our Love
+Ball Park Music - It's Nice to Be Alive
+Spacey Jane - Booster Seat
+Lime Cordiale - Robbery
+
+# ---- global singalongs a pub crowd will always shout ----
+Journey - Don't Stop Believin'
+Bon Jovi - Livin' On a Prayer
+Neil Diamond - Sweet Caroline
+Bill Withers - Lean On Me
+The Proclaimers - I'm Gonna Be (500 Miles)
+Toto - Africa
+a-ha - Take On Me
+Rick Astley - Never Gonna Give You Up
+Whitney Houston - I Wanna Dance With Somebody
+Tina Turner - Simply the Best
+Bonnie Tyler - Total Eclipse of the Heart
+Cyndi Lauper - Girls Just Want to Have Fun
+Kenny Loggins - Footloose
+Survivor - Eye of the Tiger
+Europe - The Final Countdown
+Meat Loaf - Bat Out of Hell
+Queen - Bohemian Rhapsody
+The Killers - Mr. Brightside
+Oasis - Wonderwall
+Green Day - Basket Case
+Blink-182 - All the Small Things
+Smash Mouth - All Star
+Darude - Sandstorm
+Baha Men - Who Let the Dogs Out
+Los del Rio - Macarena
+Village People - Y.M.C.A.
+Gloria Gaynor - I Will Survive
+Abba - Dancing Queen
+Grease - Summer Nights
+Dolly Parton - 9 to 5
+Kenny Rogers - The Gambler
+John Denver - Take Me Home, Country Roads
+Garth Brooks - Friends In Low Places
+Shania Twain - Man! I Feel Like a Woman!
