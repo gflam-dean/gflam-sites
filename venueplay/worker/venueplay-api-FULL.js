@@ -2843,7 +2843,13 @@ async function vpbAddHost(request, env, json) {
   const have = new Set((existing || []).map((r) => r.venue_id));
   for (const vid of wanted) {
     if (have.has(vid)) continue;
-    await vpaInsert(env, 'vp_venue_staff', { venue_id: vid, auth_user_id: authUserId, role: 'manager', label: label || null }, false);
+    // ROLE 'host', not 'manager'. This inserted a manager row, and a manager row with no
+    // permissions object means FULL ACCESS everywhere: vpbCan returns true for every key when
+    // perms is null, and vpbOwnerOnly only blocks when perms is SET. So every person added with
+    // the Add host button could open the billing page, change the player count the venue pays
+    // for, add and remove other hosts, and edit settings, the members list and draw jackpots.
+    // A host runs the games. That is the whole job.
+    await vpaInsert(env, 'vp_venue_staff', { venue_id: vid, auth_user_id: authUserId, role: 'host', label: label || null }, false);
   }
   return json({ ok: true, auth_user_id: authUserId, venue_ids: wanted });
 }
