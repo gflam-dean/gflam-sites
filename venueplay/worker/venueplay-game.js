@@ -253,14 +253,26 @@ async function handleCreateSession(request, env, json) {
     return json({ session_id: liveNow[0].id, join_code: liveNow[0].join_code, tv_pairing_code: liveNow[0].tv_pairing_code, plan_cap: (liveNow[0].plan_cap_at_start != null ? liveNow[0].plan_cap_at_start : null), reused: true });
   }
 
-  // Freeze the plan cap into the session so historical metering stays stable.
-  // Independent venues: cap = venueplay_founding.max_seats. Grouped venues:
-  // cap = vp_venues.included_players.
-  const venues = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=id,founding_id,included_players');
+  /* Freeze THIS VENUE'S plan into the session so historical metering stays stable.
+     It used to prefer venueplay_founding.max_seats, which is written exactly twice, at signup and
+     by HQ create, and is the TOTAL ACROSS THE WHOLE ACCOUNT. Everything that actually changes a
+     plan writes vp_venues.max_players: the billing page, add-venue, and the three-big-nights
+     uplift. Three money faults came out of that one line.
+       - A ten venue group at 200 each froze a cap of 2000 at every venue, so no venue in a group
+         was ever over its plan and none was ever billed a cent of overage.
+       - A venue that PAID to go from 100 to 300 was still capped at 100, so it was billed overage
+         on 200 players it had already bought.
+       - The uplift raised max_players and the enforced cap did not move, so the venue paid the
+         bigger plan AND kept paying per head on the same crowd, forever, which is the opposite of
+         what the Terms and the welcome email both promise. */
+  const venues = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=id,founding_id,included_players,max_players');
   if (!venues.length) return json({ error: 'Venue not found' }, 404);
   const venue = venues[0];
-  let planCap = venue.included_players != null ? venue.included_players : null;
-  if (venue.founding_id) {
+  let planCap = null;
+  if (venue.max_players != null) planCap = parseInt(venue.max_players, 10) || 0;
+  else if (venue.included_players != null) planCap = parseInt(venue.included_players, 10) || 0;
+  else if (venue.founding_id) {
+    // Nothing on the venue at all: fall back to the signup figure rather than leave it uncapped.
     const f = await sbGet(env, 'venueplay_founding', 'id=eq.' + enc(venue.founding_id) + '&select=max_seats');
     if (f.length) planCap = f[0].max_seats;
   }
@@ -2719,6 +2731,15 @@ function upliftRate(tier, annual) {
 async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
   const current = parseInt(venue.max_players, 10) || 0;
   if (!(newMax > current)) return null;
+  // A venue with a reduction already scheduled has deliberately chosen a smaller plan for next
+  // renewal. Lifting it now is invisible to Stripe (the billed total uses pending_players, so the
+  // quantity never moves and the rollback never fires) and the renewal then overwrites
+  // max_players with the pending figure anyway, silently undoing it. Leave their choice alone.
+  if (venue.pending_players != null) {
+    console.log('[overage] venue ' + venue.id + ' uplift skipped: a reduction to ' +
+                venue.pending_players + ' is already scheduled');
+    return null;
+  }
   await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id), { max_players: newMax });
   let quantityOk = false, prorata = null;
   try {
@@ -2754,7 +2775,7 @@ async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
             amount: cents,
             description: (venue.name || 'Venue') + ': plan raised to ' + newMax + ' players after three big nights, '
                        + added + ' extra pro rata to renewal (' + months + ' months)',
-          }, 'uplift_' + venue.id + '_' + newMax);
+          }, 'uplift_' + venue.id + '_' + newMax + '_' + Math.floor(periodEnd / 86400));
           if (res && res.error) {
             console.log('[overage] venue ' + venue.id + ' annual pro rata FAILED: ' +
                         ((res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
@@ -2795,7 +2816,7 @@ async function chargeNightOverage(env, session) {
 
   const venues = await sbGet(env, 'vp_venues',
     'id=eq.' + enc(session.venue_id) +
-    '&select=id,name,founding_id,max_players,overage_streak,overage_streak_peaks');
+    '&select=id,name,founding_id,max_players,pending_players,overage_streak,overage_streak_peaks');
   const venue = venues && venues[0];
   if (!venue) return;
 

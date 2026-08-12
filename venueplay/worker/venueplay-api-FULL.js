@@ -2253,6 +2253,12 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label) {
     if (!delta || !info) return null;
     const customer = info.sub && info.sub.customer;
     if (!customer) return null;
+    /* STILL IN THE FREE MONTH: charge nothing extra. The quantity change carries no proration, so
+       the FIRST invoice already bills the raised number for that whole period. Adding an item on
+       top billed the same players twice, and the Terms say plainly that nothing is charged before
+       the first payment. A reduction during the trial has nothing to credit either. */
+    const status = info.sub && info.sub.status;
+    if (status === 'trialing') return null;
     const rate = vpbRate(env, info.priceId, planName);       // per player, per month
     const annual = (planName === 'annual');
     const n = Math.abs(delta);
@@ -2263,10 +2269,13 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label) {
       if (delta < 0) return null;                            // monthly reductions need no money move
       const cents = Math.round(rate * 100) * n;
       if (!(cents > 0)) return null;
-      await vpbStripePost(env, 'invoiceitems', {
+      const mRes = await vpbStripePost(env, 'invoiceitems', {
         customer: customer, amount: cents, currency: 'aud',
         description: who + n + ' extra ' + (n === 1 ? 'player' : 'players') + ', full month',
       });
+      // vpbStripePost never throws, so an unchecked call reported a Stripe refusal to the venue,
+      // and to the audit trail, as money successfully charged.
+      if (mRes && mRes.error) { console.log('[billing] monthly add FAILED: ' + (mRes.error.message || '')); return { kind: 'failed', cents: cents }; }
       return { kind: 'charge', cents: cents };
     }
 
@@ -2277,17 +2286,19 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label) {
     const months = Math.round(frac * 12 * 10) / 10;
 
     if (delta > 0) {
-      await vpbStripePost(env, 'invoiceitems', {
+      const aRes = await vpbStripePost(env, 'invoiceitems', {
         customer: customer, amount: cents, currency: 'aud',
         description: who + players + ' added, pro rata to renewal (' + months + ' months)',
       });
+      if (aRes && aRes.error) { console.log('[billing] annual pro rata FAILED: ' + (aRes.error.message || '')); return { kind: 'failed', cents: cents }; }
       return { kind: 'charge', cents: cents, months: months };
     }
     // Negative balance on a Stripe customer IS a credit; it is consumed by the next invoice.
-    await vpbStripePost(env, 'customers/' + encodeURIComponent(customer) + '/balance_transactions', {
+    const cRes = await vpbStripePost(env, 'customers/' + encodeURIComponent(customer) + '/balance_transactions', {
       amount: -cents, currency: 'aud',
       description: who + players + ' released, credit carried to your next renewal (' + months + ' months)',
     });
+    if (cRes && cRes.error) { console.log('[billing] credit FAILED: ' + (cRes.error.message || '')); return { kind: 'failed', cents: cents }; }
     return { kind: 'credit', cents: cents, months: months };
   } catch (_) { return null; /* the quantity change still governs ongoing billing */ }
 }

@@ -1205,7 +1205,16 @@
       dealFor(p); sendCards(pid); }
   }
   // Over-plan players: if more joined than the plan includes, get one clear OK at Start.
-  function playerCap(){ return (__ctx && __ctx.venue && __ctx.venue.included_players) || 0; }
+  /* The venue's plan. This read included_players, which is set only by HQ and by onboarding and
+     is NULL for every self-serve venue, so playerCap() returned 0, the over-plan banner never
+     appeared and the consent modal never fired. max_players is what signup, the billing page and
+     the uplift all write, so it is the number that means anything. */
+  function playerCap(){
+    var v = __ctx && __ctx.venue; if(!v) return 0;
+    if(v.max_players != null) return parseInt(v.max_players,10) || 0;
+    if(v.included_players != null) return parseInt(v.included_players,10) || 0;
+    return 0;
+  }
   function inFirstMonth(){   // first month from sign-up is free, so no charge popup then (banner only)
     var c=__ctx && __ctx.venue && __ctx.venue.created_at; if(!c) return false;
     var end=new Date(c); if(isNaN(end.getTime())) return false; end.setMonth(end.getMonth()+1);
