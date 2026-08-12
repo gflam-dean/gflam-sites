@@ -346,8 +346,9 @@
     if(!G.round && !G.busy) drawBtnIdle();   // reflect "Drawn tonight" for the selected draw (not while a round is live)
     var d=curDraw();
     var sb=$("saveSettingsBtn"); if(sb) sb.textContent = d ? "Save settings" : "Create draw";
-    if(!d){ ["setName","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).value=""; }); return; }   // creating a new draw: blank form
+    if(!d){ ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).value=""; }); return; }   // creating a new draw: blank form
     $("setName").value  = d.name||"";
+    $("setSince").value = d.date_started||"";
     $("setStart").value = d.starting_amount_cents!=null ? Math.round(d.starting_amount_cents/100) : "";
     $("setInc").value   = d.increment_cents!=null ? Math.round(d.increment_cents/100) : "";
     $("setCur").value   = d.current_jackpot_cents!=null ? Math.round(d.current_jackpot_cents/100) : "";
@@ -498,6 +499,7 @@
     var ic=dollarsToCents("setInc");   if(ic!==undefined) body.increment_cents=ic;
     var cj=dollarsToCents("setCur");   if(cj!==undefined) body.current_jackpot_cents=cj;
     var tc=intOf("setClaim");          if(tc!==undefined) body.time_to_claim_seconds=tc;
+    var ds=$("setSince").value.trim(); if(ds) body.date_started=ds;
     var dd=$("setDay").value.trim();   if(dd) body.draw_day=dd;
     var dt=$("setTime").value.trim();  if(dt) body.draw_time=dt;
     $("saveSettingsBtn").disabled=true; $("settingsMsg").textContent="Saving…";
