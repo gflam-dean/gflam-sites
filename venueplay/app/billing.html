@@ -683,7 +683,7 @@
       $("host-go").disabled = false; $("host-go").textContent = "Add host";
       if (r.error){ showMsg(r.error); return; }
       $("host-mobile").value = ""; $("host-name").value = ""; $("hostForm").classList.remove("show");
-      showMsg("Host added. They can sign in with their mobile.", true);
+      showMsg("Host added. We have texted them their sign-in link and your TV address.", true);
       loadHosts();
     });
   });
@@ -1075,7 +1075,7 @@
       btn.disabled = false; btn.textContent = "Add manager";
       if (r.error){ showMsg(r.error); return; }
       $("mgr-name").value = ""; $("mgr-mobile").value = ""; $("mgrForm").classList.remove("show");
-      showMsg("Manager added. They can sign in with their mobile.", true);
+      showMsg("Manager added. We have texted them their sign-in link and your TV address.", true);
       loadManagers();
     });
   }

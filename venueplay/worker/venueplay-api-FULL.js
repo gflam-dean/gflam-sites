@@ -2722,7 +2722,19 @@ async function vpbAddManager(request, env, json) {
     }
   }
   await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'manager_added', target: 'manager:' + authUserId, detail: { label: label, venues: wanted.length } }, false).catch(() => {});
+  await vpaStaffWelcome(env, o, wanted, mobile, true);   // manager
   return json({ ok: true, auth_user_id: authUserId, venue_ids: wanted });
+}
+
+/* One venue, one TV link. Across several, the console is the right starting point. */
+async function vpaStaffWelcome(env, o, venueIds, mobile, isManager) {
+  const only = (venueIds && venueIds.length === 1)
+    ? o.venues.filter((v) => v.id === venueIds[0])[0] : null;
+  await vpaSendStaffWelcomeSms(env, mobile, {
+    venueName: only ? only.name : ((o.venues[0] && o.venues[0].name) || 'Your venue'),
+    slug: only ? only.slug : '',
+    isManager: isManager,
+  });
 }
 
 /* --- POST /account/optin-export : CSV of marketing opt-ins, STRICTLY the caller's own venues.
@@ -2809,6 +2821,51 @@ async function vpbListHosts(request, env, json) {
 }
 
 // Add (or extend) a host: { mobile, label?, venue_ids?[], all_venues? }.
+/* Text a new host or manager so they know they have been set up.
+   Nothing was sent to them at all: their login and access were created and the owner was left to
+   explain the app over the phone. They sign in with a code to this number and have no email on
+   file, so a text is the only channel that reaches them.
+
+   Kept SHORT on purpose. Mobile Message bills per segment at 160 characters, so a chatty message
+   costs double for no benefit. Same provider and the same credentials as the sign-in codes.
+
+   Best-effort in every direction: the staff row is already written by the time this runs, so a
+   texting failure must never fail the request or lose someone their access. */
+async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager is accepted but not used in the wording
+  try {
+    if (!env.MOBILEMESSAGE_USERNAME || !env.MOBILEMESSAGE_PASSWORD || !mobile) return;
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    const venue = String((opts && opts.venueName) || 'Your venue').slice(0, 24);
+    const slug = (opts && opts.slug) || '';
+    // The TV link only makes sense for ONE venue. Someone added across several gets the sign-in
+    // link and finds their screens from the console rather than a wrong guess.
+    const tv = slug ? (' TV: ' + site + '/tv?venue=' + slug) : '';
+    // Nothing about manager vs host here: it saves a whole segment, they will see what they can
+    // do the moment they sign in, and the words would mean nothing to them before then.
+    const message =
+      venue + ' has set you up on VenuePlay. Sign in at ' + site
+      + '/app, we text a code to this number.' + tv;
+    const basicAuth = 'Basic ' + btoa(env.MOBILEMESSAGE_USERNAME + ':' + env.MOBILEMESSAGE_PASSWORD);
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 10000);
+    try {
+      await fetch('https://api.mobilemessage.com.au/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: basicAuth },
+        body: JSON.stringify({
+          messages: [{
+            to: mobile,
+            message: message,
+            sender: env.SMS_SENDER || 'VenuePlay',
+            custom_ref: 'staff-welcome',
+          }],
+        }),
+        signal: abort.signal,
+      });
+    } finally { clearTimeout(timer); }
+  } catch (_) { /* never fail adding someone because a text did not go out */ }
+}
+
 async function vpbAddHost(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
@@ -2851,6 +2908,7 @@ async function vpbAddHost(request, env, json) {
     // A host runs the games. That is the whole job.
     await vpaInsert(env, 'vp_venue_staff', { venue_id: vid, auth_user_id: authUserId, role: 'host', label: label || null }, false);
   }
+  await vpaStaffWelcome(env, o, wanted, mobile, false);   // host
   return json({ ok: true, auth_user_id: authUserId, venue_ids: wanted });
 }
 
