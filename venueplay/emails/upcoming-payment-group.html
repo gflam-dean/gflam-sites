@@ -1,4 +1,9 @@
 <!--
+  DESIGN REFERENCE ONLY. NOT THE EMAIL THAT IS SENT.
+  The live reminder is built inline by vpaFireUpcomingEmail() in worker/venueplay-api-FULL.js and
+  fires on Stripe's invoice.upcoming event. Nothing reads this file. Keep it as the layout
+  reference, but change the Worker if you want to change what venues receive.
+
   VenuePlay transactional email: UPCOMING PAYMENT (GROUP version)
   Sent 5 days before each renewal charge, for a GROUP (multiple venues on one account).
   Simple merge fields:

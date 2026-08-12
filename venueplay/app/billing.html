@@ -170,7 +170,9 @@
         <div><div class="k">Per month</div><div class="v pink" id="s-total">–</div></div>
         <div><div class="k">Next payment</div><div class="v" id="s-next" style="font-size:16px">–</div></div>
         <div><div class="k">Card</div><div class="v" id="s-card" style="font-size:16px">–</div></div>
+        <div id="s-credit-tile" style="display:none"><div class="k">Credit held</div><div class="v" id="s-credit" style="color:#35D07F">–</div></div>
       </div>
+      <div class="note" id="s-credit-note" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
     </div>
 
     <div class="label">Your venues</div>
@@ -390,6 +392,15 @@
 
   function render(d){
     rate = d.rate || 3.00;
+    // Credit only exists on annual, and only after a venue has reduced its maximum. Show the
+    // tile when there is something in it, and say plainly that it applies itself: a venue seeing
+    // a balance with no explanation will email asking how to spend it.
+    var ct=$("s-credit-tile"), cn=$("s-credit"), cnote=$("s-credit-note");
+    if (ct && (d.credit_cents || 0) > 0){
+      ct.style.display=""; cn.textContent = d.credit;
+      if (cnote) cnote.innerHTML = "You are holding <b>" + d.credit + "</b> in credit from players you released. " +
+        "It comes off your next renewal automatically, so there is nothing to claim.";
+    } else if (ct){ ct.style.display="none"; if(cnote) cnote.textContent=""; }
     $("s-players").textContent = d.total_players;
     $("s-total").textContent = d.monthly_total;
     // Make it clear when the tiles above show current cover but a change is scheduled: reductions

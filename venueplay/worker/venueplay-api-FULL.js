@@ -1652,6 +1652,11 @@ async function vpaFireUpcomingEmail(env, invoice) {
       } catch (_) { /* can't check -> still send; a reminder is safer than silence */ }
     }
     const amount = '$' + (amountDue / 100).toFixed(2);
+    // Credit being applied to THIS invoice. Stripe carries it as a negative starting_balance, so
+    // a venue that reduced its plan mid-year can see the money coming back rather than wondering
+    // where it went.
+    const creditApplied = Math.max(0, -Number(invoice.starting_balance || 0));
+    const creditLeft = Math.max(0, -Number(invoice.ending_balance || 0));
     const ov = vpaOverageFromInvoice(invoice);
     const whenTs = invoice.next_payment_attempt || invoice.period_end || 0;
     const when = whenTs ? vpaFmtDate(whenTs) : '';
@@ -1674,8 +1679,16 @@ async function vpaFireUpcomingEmail(env, invoice) {
             + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">You went over your plan on <b>' + ov.nights + ' night' + (ov.nights === 1 ? '' : 's') + '</b> this cycle (<b>' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b>), adding <b>$' + (ov.cents / 100).toFixed(2) + '</b> at $2/head. If that\'s your normal, a bigger plan usually works out cheaper - you can bump it on your billing page before this charge.</p>'
             + '</td></tr></table>'
           : '')
+      + (creditApplied > 0
+          ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2fbf6;border:1px solid #c9ecd8;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
+            + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">Your credit is coming off this bill.</p>'
+            + '<p style="margin:6px 0 0;font-size:13.5px;color:#3a3a44">We have applied <b>$' + (creditApplied / 100).toFixed(2) + '</b> from players you released earlier'
+            + (creditLeft > 0 ? ', and <b>$' + (creditLeft / 100).toFixed(2) + '</b> stays on your account for next time' : '')
+            + '. Nothing to claim, it happens on its own.</p>'
+            + '</td></tr></table>'
+          : '')
       + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Manage your plan</a>'
-      + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">You can add or reduce players anytime from your billing page. Adding applies straight away (pro rata); reducing applies from your next renewal, so you are never left short mid-month.</p>'
+      + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">You can add or reduce players anytime from your billing page. On monthly, added players are a full month and reductions start at your next renewal. On annual, added players are pro rata to your renewal, and if you reduce, the unused value is held as credit against next year rather than lost.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact hello@venueplay.com.au</p>'
       + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au</p>'
       + '</div>';
@@ -1926,6 +1939,20 @@ async function vpbAccountSummary(request, env, json) {
   const annual = o.account.plan === 'annual';
   const chargeAmount = annual ? (billedPlayers * rate * 12) : (billedPlayers * rate);
 
+  /* Credit held. Reducing a maximum on an annual plan does not refund; the unused value is banked
+     as a NEGATIVE balance on the Stripe customer, which Stripe subtracts from the next invoice on
+     its own. A venue had no way to see that it existed, so it looked like the money had simply
+     gone. Stripe holds it in the smallest currency unit and negative means credit, so flip it. */
+  let creditCents = 0;
+  try {
+    const custId = info && info.sub && info.sub.customer;
+    if (custId) {
+      const cust = await vpbStripeGet(env, 'customers/' + encodeURIComponent(custId));
+      const bal = cust && typeof cust.balance === 'number' ? cust.balance : 0;
+      if (bal < 0) creditCents = -bal;
+    }
+  } catch (e) { creditCents = 0; }   // never fail the whole page over a balance read
+
   return json({
     ok: true,
     plan: o.account.plan,
@@ -1939,6 +1966,8 @@ async function vpbAccountSummary(request, env, json) {
     next_charge_amount: '$' + chargeAmount.toFixed(2),
     card_last4: (info && info.last4) || null,
     card_brand: (info && info.brand) || null,
+    credit_cents: creditCents,
+    credit: '$' + (creditCents / 100).toFixed(2),
     payment_reminders: o.account.payment_reminders !== false,
     is_owner: vpbIsOwner(o),
     perms: o.perms || null,
