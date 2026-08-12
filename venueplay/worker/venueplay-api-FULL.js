@@ -2001,30 +2001,44 @@ async function vpbRequireOwner(request, env) {
   if (!payload || !payload.sub) return { error: 'Invalid or expired session. Please sign in again.', status: 401 };
   const authUserId = payload.sub;
 
+  // Is this a Gflam HQ admin? Resolved ONCE, before anything else, because it decides both whose
+  // account this call is about and who the audit entry names.
+  let adminRow = null;
+  try {
+    const admins = await vpaSelect(env, 'vp_platform_admins',
+      'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id,label,role');
+    adminRow = (admins && admins[0]) || null;
+  } catch (_) { adminRow = null; }
+
   // Select only columns that always exist here. permissions is fetched separately below so a
   // not-yet-run migration 17 can never make a real owner read as "no venues".
   const staff = await vpaSelect(env, 'vp_venue_staff',
     'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&role=in.(manager,owner)&select=venue_id,role');
 
+  // "View as" from HQ: the console names the venue it is acting on in X-VP-Venue. Honoured for
+  // platform admins ONLY, so a staff member naming someone else's venue changes nothing.
+  const target = (request.headers.get('X-VP-Venue') || '').trim();
+  // Local on purpose: this Worker has no shared UUID_RE (that one lives in the game Worker).
+  const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  const viewingAs = !!(adminRow && isUuid.test(target));
+
   let ids;
   let actingAsAdmin = false;
-  if (staff && staff.length) {
-    ids = staff.map((s) => s.venue_id);
-  } else {
-    // Gflam HQ admin using "View as". They are staff nowhere, so there is no venue to infer
-    // from the token alone: the console names the venue it is acting on in X-VP-Venue.
-    // Anyone who is not a platform admin still gets the normal refusal.
-    const admins = await vpaSelect(env, 'vp_platform_admins',
-      'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id');
-    if (!admins || !admins.length) return { error: 'This login has no venues.', status: 403 };
-    const target = (request.headers.get('X-VP-Venue') || '').trim();
-    // Local on purpose: this Worker has no shared UUID_RE (that one lives in the game Worker).
-    const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-    if (!isUuid.test(target)) {
-      return { error: 'Open this from VenuePlay HQ using View as, so we know which venue you mean.', status: 400 };
-    }
+  if (viewingAs) {
+    // The named venue WINS over the admin's own staff rows, and that ordering is the whole point.
+    // This used to run only when the admin was staff nowhere, which was true right up until the
+    // day a Gflam admin created a venue of their own. From then on their single staff row was
+    // preferred over the venue they had just clicked View as on, so HQ opened The Indypendent and
+    // the Account page showed a test venue instead, with no error to explain it. An admin's
+    // personal venue must never decide which account they are looking at.
     ids = [target];
     actingAsAdmin = true;
+  } else if (staff && staff.length) {
+    ids = staff.map((s) => s.venue_id);
+  } else if (adminRow) {
+    return { error: 'Open this from VenuePlay HQ using View as, so we know which venue you mean.', status: 400 };
+  } else {
+    return { error: 'This login has no venues.', status: 403 };
   }
   const venues = await vpaSelect(env, 'vp_venues',
     'id=in.(' + ids.map(encodeURIComponent).join(',') + ')' +
@@ -2052,22 +2066,25 @@ async function vpbRequireOwner(request, env) {
   }
   // Audit attribution: if the person making this owner-level change is actually a VenuePlay
   // platform admin (e.g. our staff helping an account), record THEM, not a generic "owner".
-  let adminActor = null;
-  try {
-    const admins = await vpaSelect(env, 'vp_platform_admins',
-      'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id,label,role');
-    if (admins && admins[0]) adminActor = { id: admins[0].auth_user_id, label: admins[0].label || ('staff:' + (admins[0].role || 'admin')) };
-  } catch (_) { /* attribution is best-effort; never block the action */ }
+  // Reuses the lookup done at the top, which is also one less Supabase round trip per call.
+  const adminActor = adminRow
+    ? { id: adminRow.auth_user_id, label: adminRow.label || ('staff:' + (adminRow.role || 'admin')) }
+    : null;
   // A restricted MANAGER carries a permissions object on their staff rows; the account owner
   // (and legacy full-access staff) carry none. perms === null therefore means full access.
   // Best-effort: if migration 17 has not run, this select yields nothing and everyone is treated
   // as full-access (safe) until it does.
   let perms = null;
-  try {
-    const pr = await vpaSelect(env, 'vp_venue_staff',
-      'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&role=in.(manager,owner)&select=permissions');
-    for (const s of (pr || [])) { if (s && s.permissions) { perms = s.permissions; break; } }
-  } catch (_) { /* permissions column not present yet */ }
+  // An admin viewing as a venue is not a manager OF it, so their own staff row's restrictions must
+  // not follow them in. Without this guard, a Gflam admin who happened to be a restricted manager
+  // somewhere would silently lose buttons on every OTHER venue they opened.
+  if (!actingAsAdmin) {
+    try {
+      const pr = await vpaSelect(env, 'vp_venue_staff',
+        'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&role=in.(manager,owner)&select=permissions');
+      for (const s of (pr || [])) { if (s && s.permissions) { perms = s.permissions; break; } }
+    } catch (_) { /* permissions column not present yet */ }
+  }
 
   return { authUserId: authUserId, account: account, venues: accountVenues, adminActor: adminActor, perms: perms };
 }
