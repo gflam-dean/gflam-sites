@@ -301,14 +301,9 @@
       <div id="runNight" style="margin-top:8px;background:var(--ink-3);border:1px solid var(--line);border-radius:12px;padding:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
           <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff">Run the night help guide</div>
-          <button type="button" id="runHelpToggle" style="background:none;border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer">How it works</button>
+
         </div>
-        <div id="runHelp" class="hidden" style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.7">
-          1. Turn on the TV and open <b style="color:#fff">venueplay.com.au/tv</b><br>
-          2. Pick a game and open the lobby<br>
-          3. When it wraps, tap <b style="color:#fff">Games</b> (top left) and start the next<br>
-          4. Swap games whenever the room is ready. Tick them off here as you go.
-        </div>
+        
         <div id="runSheet" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
       </div>
     </div>
@@ -324,6 +319,7 @@
 
     <!-- bingo console -->
     <div id="bingoView" class="console hidden">
+      <div id="coach" style="grid-column:1/-1;margin:0 0 4px;padding:11px 15px;background:rgba(255,31,142,.08);border:1px solid rgba(255,31,142,.28);border-radius:12px;color:var(--text);font-size:13.5px;line-height:1.5"></div>
       <div id="overBanner" style="grid-column:1/-1;display:none;margin:0 0 4px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px"></div>
       <!-- left: run -->
       <div class="panel">
@@ -418,16 +414,6 @@
     </div>
   </div>
 </div>
-<details id="bingoSteps" class="hidden" style="max-width:820px;margin:20px auto 44px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:0 18px">
-  <summary style="cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;color:#fff;padding:15px 0"><span style="color:var(--gold,#ffc24b)">How it runs</span> <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.45)">tap for a step-by-step</span></summary>
-  <ol style="margin:0 0 16px;padding-left:22px;line-height:1.75;font-size:14px;color:rgba(255,255,255,.82)">
-    <li>Pick your winning pattern, then tap <b>Open lobby</b>. The TV shows a join code.</li>
-    <li>Players scan it, grab their tickets, and you'll see them land in the players list.</li>
-    <li>Tap <b>Start game</b>, then call each number. The TV reveals the ball and players daub their cards.</li>
-    <li>When someone gets the pattern, their claim drops into your queue. Tap to confirm the win.</li>
-    <li>Set the next pattern or prize to carry on, or tap <b>End game</b> to finish.</li>
-  </ol>
-</details>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
 <script>
@@ -1036,7 +1022,26 @@
   }
 
   // ---- render ----
+  /* One line that always says what to do next, in the console, where the host is looking.
+     This replaces a collapsible "How it runs" that listed five generic steps: hosts do not read
+     a guide while a room waits, and the run sheet's buttons dropped them straight into a game
+     anyway, so it explained nothing at the moment it was needed. */
+  function setCoach(){
+    var el=$("coach"); if(!el) return;
+    var n=playerCount(), called=G.idx+1, txt;
+    if(G.claims.length) txt="Check the ticket below against the called numbers, then <b>Confirm winner</b>, or <b>Play on</b> if it is not there yet.";
+    else if(G.lastWins.length) txt="Announce it on the mic, then <b>Keep playing</b> for the next prize or <b>Finish game</b>.";
+    else if(G.won) txt="That game is done. <b>New game</b> deals fresh tickets, <b>End game</b> puts the ads back on the TV.";
+    else if(G.status==="running" && called===0) txt="Tickets are out. Tap <b>Start calling</b> and read each number to the room.";
+    else if(G.status==="running") txt="<b>"+called+" of 90</b> called. When someone calls bingo it lands here to check.";
+    else if(G.status==="lobby") txt = n
+      ? ("<b>"+n+"</b> "+(n===1?"player is":"players are")+" in. Start calling when the room is ready.")
+      : "The TV is showing the join code. Players scan it to get their tickets.";
+    else txt="Set the pattern and what they are playing for, then open the lobby to put the join code on the TV.";
+    el.innerHTML=txt;
+  }
   function renderConsole(){
+    setCoach();
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
     $("liveBlock").classList.toggle("hidden", !live);
@@ -1493,7 +1498,6 @@
       if(t){ var g=t.getAttribute("data-tick"), st=runState(); st.done=st.done||{}; st.done[g]=!st.done[g]; saveRun(st); renderRunSheet(); return; }
       if(s){ selectGame(s.getAttribute("data-start")); }
     }); }
-    var ht=$("runHelpToggle"); if(ht){ ht.addEventListener("click", function(){ $("runHelp").classList.toggle("hidden"); }); }
   })();
 
   // The selection landing: /app shows this first, and every game's "Games" button returns here.
