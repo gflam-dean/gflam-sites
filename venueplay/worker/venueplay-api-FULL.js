@@ -2834,7 +2834,11 @@ async function vpbListHosts(request, env, json) {
 async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager is accepted but not used in the wording
   try {
     if (!env.MOBILEMESSAGE_USERNAME || !env.MOBILEMESSAGE_PASSWORD || !mobile) return;
-    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    // Drop the www as well as the scheme. SITE_URL carries it, that is 8 characters twice, and
+    // it was enough on its own to push a normal venue over 160 and into a second segment. The
+    // TV lobby already shows players the apex, so this is the address the room sees anyway.
+    const site = (env.SITE_URL || 'https://venueplay.com.au')
+      .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '');
     const venue = String((opts && opts.venueName) || 'Your venue').slice(0, 24);
     const slug = (opts && opts.slug) || '';
     // The TV link only makes sense for ONE venue. Someone added across several gets the sign-in
