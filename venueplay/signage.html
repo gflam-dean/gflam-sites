@@ -154,14 +154,25 @@
     background:#fff;padding:0 1.6mm;font-family:'JetBrains Mono',monospace;font-size:6.4pt;
     letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4;z-index:4}
 
+  /* The venue's own logo, pulled from their screen settings so they never upload it twice.
+     Sits above the name; the sign is theirs, we are the small mark at the bottom. */
+  .sign .vlogo{max-height:14cqh;max-width:52cqw;object-fit:contain;margin:0 auto .6cqh;display:block}
+
   /* ---- print ---- */
+  /* The page margin was already zeroed, so the second sheet was NOT the margin. It was
+     :last-child below: the last .sheet in the markup is normally a hidden one, so whichever
+     sheet was actually printing still forced a page break after itself. */
   @page{size:A4 portrait;margin:0}
   @media print{
-    html,body{background:#fff}
+    html,body{background:#fff;width:210mm;height:297mm;margin:0;padding:0}
     .no-print{display:none!important}
     .stage{padding:0}
-    .sheet{width:210mm;height:297mm;margin:0;box-shadow:none;break-after:page;page-break-after:always}
-    .sheet:last-child{break-after:auto;page-break-after:auto}
+    .sheet{width:210mm;height:297mm;margin:0;box-shadow:none;overflow:hidden;
+      break-inside:avoid;page-break-inside:avoid;break-after:page;page-break-after:always}
+    /* :last-child was the OTHER blank page: the last sheet in the markup is usually a HIDDEN
+       one, so the sheet actually being printed still forced a break after itself. The last
+       VISIBLE sheet is marked in JS before printing. */
+    .sheet.is-last{break-after:auto;page-break-after:auto}
     .sign,.sign .kick,.sign h2 em,.sign .qrbox,.sign .mark,
     #sheetCards .cell,#sheetTents .tent{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
@@ -201,6 +212,16 @@
       <span class="hint">Filled in for you once we find your venue.</span>
     </div>
     <div class="fld">
+      <label for="headIn">Headline</label>
+      <input id="headIn" type="text" placeholder="Scan to play" autocomplete="off" maxlength="28">
+      <span class="hint">Say it however your room says it. "Scan to play bingo", "Join the quiz".</span>
+    </div>
+    <div class="fld">
+      <label for="lineIn">Small line under the code</label>
+      <input id="lineIn" type="text" placeholder="No app. No account. Just your phone." autocomplete="off" maxlength="60">
+      <span class="hint">Leave it as it is, or put your own words in.</span>
+    </div>
+    <div class="fld">
       <label for="whatsIn">Your line at the bottom (optional)</label>
       <input id="whatsIn" type="text" placeholder="Bingo Wednesdays, trivia Thursdays, from 7pm" autocomplete="off" maxlength="80">
       <span class="hint">Leave blank and the sign stays generic.</span>
@@ -235,13 +256,14 @@
   <section class="sheet" id="sheetPoster">
     <div class="sign" data-sign>
       <div class="head">
+        <img class="vlogo" data-logo hidden alt="">
         <div class="kick">Live games here</div>
         <div class="venue" data-venue>Your venue</div>
-        <h2>Scan to <em>play</em></h2>
+        <h2 data-head>Scan to <em>play</em></h2>
       </div>
       <div class="qrbox"><canvas data-qr></canvas></div>
       <div class="tail">
-        <div class="no">No app. No account. Just your phone.</div>
+        <div class="no" data-no>No app. No account. Just your phone.</div>
         <div class="whats" data-whats hidden></div>
         <div class="fallback">No scanner? Go to <b>venueplay.com.au/play</b> and enter code <b data-code>------</b></div>
       </div>
@@ -300,7 +322,7 @@
   })();
 
   // ---- paint every sign on the page ----
-  var state={ slug:"", name:"", whats:"" };
+  var state={ slug:"", name:"", whats:"", head:"", line:"", logo:"" };
   function drawQR(el, url, px){
     if(!window.QRCode || !el || !url) return;
     // level M with a healthy quiet zone: still reads off a beer-splashed table card.
@@ -356,6 +378,18 @@
     el.style.setProperty("--u", (lo/box.height*100*0.985).toFixed(4)+"cqh");
   }
 
+  /* Mark the last sheet that is actually going to print, so nothing forces a blank page after
+     it. Runs on every render and again on beforeprint, which covers Ctrl+P as well as our button. */
+  function markLastSheet(){
+    var sheets=document.querySelectorAll(".sheet");
+    var last=null;
+    for(var i=0;i<sheets.length;i++){
+      sheets[i].classList.remove("is-last");
+      if(!sheets[i].classList.contains("hidden")) last=sheets[i];
+    }
+    if(last) last.classList.add("is-last");
+  }
+  window.addEventListener("beforeprint", markLastSheet);
   function render(){
     var slug=state.slug;
     var code=slug ? venueCode(slug) : "------";
@@ -365,17 +399,28 @@
     for(var i=0;i<signs.length;i++){
       var s=signs[i];
       s.querySelector("[data-venue]").textContent=name;
+      var hd=s.querySelector("[data-head]");
+      if(hd) hd.innerHTML = state.head ? esc(state.head) : 'Scan to <em>play</em>';
+      var nl=s.querySelector("[data-no]");
+      if(nl) nl.textContent = state.line || "No app. No account. Just your phone.";
+      var lg=s.querySelector("[data-logo]");
+      if(lg){ if(state.logo){ lg.src=state.logo; lg.hidden=false; } else { lg.removeAttribute("src"); lg.hidden=true; } }
       s.querySelector("[data-code]").textContent=code;
       var w=s.querySelector("[data-whats]");
       if(state.whats){ w.textContent=state.whats; w.hidden=false; } else { w.textContent=""; w.hidden=true; }
       // 720px of QR is well past what an A4 poster needs, so the card and tent sizes are sharp too.
       drawQR(s.querySelector("[data-qr]"), url, 720);
     }
+    markLastSheet();
     for(var j=0;j<signs.length;j++) fitSign(signs[j]);   // fit AFTER the text is in
   }
 
   // ---- inputs ----
   var slugIn=$("slugIn"), nameIn=$("nameIn"), whatsIn=$("whatsIn");
+  var headIn=$("headIn"), lineIn=$("lineIn");
+  if(headIn) headIn.addEventListener("input", function(){ state.head=headIn.value.trim(); render(); });
+  if(lineIn) lineIn.addEventListener("input", function(){ state.line=lineIn.value.trim(); render(); });
+  function esc(t){ return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   var typed=false;   // once the venue types a name, a lookup must not overwrite it
   function onSlug(){
     state.slug=cleanSlug(slugIn.value);
@@ -410,6 +455,20 @@
     var b=document.createElement("span"); b.className="code"; b.textContent=code;
     s.appendChild(b); s.appendChild(document.createTextNode("."));
   }
+  var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
+  var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';
+  function loadVenueLogo(slug){
+    if(!slug) return;
+    try{
+      fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select=logo_url&limit=1",
+        { headers:{ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON } })
+        .then(function(r){ return r.ok?r.json():null; })
+        .then(function(rows){
+          var u=rows&&rows[0]&&rows[0].logo_url;
+          if(u){ state.logo=u; render(); }
+        }).catch(function(){});   // no logo is fine, the sign works without one
+    }catch(e){}
+  }
   function check(){
     if(!state.slug){ setStatus("Type your venue link first.", "warn"); return; }
     var code=venueCode(state.slug);
@@ -420,6 +479,7 @@
         if(!d){ setStatus("Could not check right now. The sign is still correct if your venue link is spelt the way it is on your screen link.", "warn"); return; }
         if(d.exists===false){ setStatus("No venue found for “"+state.slug+"”. Check the spelling against your screen link before you print.", "warn"); return; }
         if(d.name && !typed){ state.name=d.name; nameIn.value=d.name; render(); }
+        loadVenueLogo(state.slug);
         setFound(d.name||"your venue", code);
       })
       .catch(function(){ setStatus("Could not check right now. The sign is still correct if your venue link matches your screen link.", "warn"); });
