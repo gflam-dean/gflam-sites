@@ -175,6 +175,7 @@
   <div class="navpills" id="hqNav">
     <button data-pane="venues" class="on">Venues</button>
     <button data-pane="live">Live now</button>
+    <button data-pane="quiet">Quiet</button>
     <button data-pane="billing">Billing</button>
     <button data-pane="groups">Groups</button>
     <button data-pane="usage">Usage</button>
@@ -246,6 +247,31 @@
       <tbody id="liveRows"></tbody>
     </table></div></div>
     <div class="note">"Live now" means a hosted game session is open (in the lobby, running or paused). Click <b>Watch TV</b> to open that venue's TV screen in a new tab and check the game is really showing. This reads open sessions from <b>vp_sessions</b>; broadcast bingo and members draws do not open a session, so a venue running only those will not appear here.</div>
+  </div>
+
+
+  <!-- ============ QUIET ============ -->
+  <div id="paneQuiet" class="hidden">
+    <div class="rowbetween">
+      <div class="lblk" style="margin:0">Venues that have gone quiet <span id="quietCount" class="mono" style="color:var(--roll)"></span></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label class="note" for="quietDays" style="margin:0">Quiet for at least</label>
+        <select id="quietDays" style="width:auto">
+          <option value="7" selected>1 week</option>
+          <option value="14">2 weeks</option>
+          <option value="21">3 weeks</option>
+          <option value="30">1 month</option>
+          <option value="60">2 months</option>
+          <option value="90">3 months</option>
+        </select>
+        <button class="btn ghost sp" id="quietRefresh">Refresh</button>
+      </div>
+    </div>
+    <div class="panel"><div class="tscroll"><table>
+      <thead><tr><th>Venue</th><th>Quiet for</th><th>Last game</th><th>State</th><th></th></tr></thead>
+      <tbody id="quietRows"></tbody>
+    </table></div></div>
+    <div class="note">Sorted <b>shortest quiet first</b>, because a venue that missed one week is the one you can still win back. Last game counts every format: sessions for trivia, musical bingo and raffles, and game reports for broadcast bingo, which opens no session. A venue that has never run a night at all is measured from the day it was set up and sits at the top of the list.</div>
   </div>
 
   <!-- ============ BILLING ============ -->
@@ -560,14 +586,57 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","live","billing","groups","usage","team","flagged","audit"];
+  var PANES=["venues","live","quiet","billing","groups","usage","team","flagged","audit"];
   $("liveRefresh").addEventListener("click", loadLiveOnly);
   $("hqNav").addEventListener("click", function(e){
     var b=e.target.closest("button"); if(!b) return;
     var pane=b.getAttribute("data-pane");
     Array.prototype.forEach.call(this.children, function(x){ x.classList.toggle("on", x===b); });
     PANES.forEach(function(p){ show("pane"+p.charAt(0).toUpperCase()+p.slice(1), p===pane); });
+    if(pane==="quiet") loadQuiet();
   });
+
+
+  /* ================= QUIET ================= */
+  // The retention call list. Deliberately soonest-quiet first: a venue that missed last week is a
+  // check-in, a venue gone three months is a different conversation, and the winnable ones are the
+  // ones at the top. Served by the Worker because it has to read vp_game_reports, which is
+  // service-role only and stays that way.
+  function loadQuiet(){
+    var days=parseInt($("quietDays").value,10)||7;
+    var tb=$("quietRows");
+    tb.innerHTML='<tr><td colspan="5" class="empty">Looking…</td></tr>';
+    workerPost("/admin/quiet-venues", { days:days }).then(function(res){
+      if(res.error){ tb.innerHTML='<tr><td colspan="5" class="empty">'+esc(res.error)+'</td></tr>'; return; }
+      var list=res.venues||[];
+      $("quietCount").textContent = list.length ? (list.length+" to chase") : "none, all busy";
+      if(!list.length){ tb.innerHTML='<tr><td colspan="5" class="empty">Nobody has been quiet that long. Good sign.</td></tr>'; return; }
+      var html="";
+      list.forEach(function(v){
+        var wks=Math.floor(v.days_quiet/7);
+        var quiet = v.days_quiet<14 ? (v.days_quiet+" days") : (wks+" weeks");
+        var state = (v.suspended_reason==="archived") ? '<span class="badge suspend">Archived</span>'
+                  : (v.status==="suspended") ? '<span class="badge suspend">'+(v.suspended_reason==="nonpayment"?"Unpaid":"Paused")+'</span>'
+                  : '<span class="badge">Active</span>';
+        html += '<tr><td><b>'+esc(v.name||"Venue")+'</b></td>'
+              + '<td class="mono">'+quiet+'</td>'
+              + '<td class="mono">'+(v.never_played ? '<span style="color:var(--roll)">never played</span>' : esc(v.last_game||""))+'</td>'
+              + '<td>'+state+'</td>'
+              + '<td><button class="mini" data-viewas="'+esc(v.id)+'">View as</button></td></tr>';
+      });
+      tb.innerHTML=html;
+    }).catch(function(){ tb.innerHTML='<tr><td colspan="5" class="empty">Could not load that just now.</td></tr>'; });
+  }
+  (function(){
+    var d=$("quietDays"); if(d) d.addEventListener("change", loadQuiet);
+    var r=$("quietRefresh"); if(r) r.addEventListener("click", loadQuiet);
+    // The existing View as handler is bound to #venueRows, so this table needs its own.
+    var t=$("quietRows");
+    if(t) t.addEventListener("click", function(e){
+      var va=e.target.closest("button[data-viewas]");
+      if(va) viewAs(va.getAttribute("data-viewas"));
+    });
+  })();
 
   /* ================= VENUES ================= */
   function venuePasses(v){

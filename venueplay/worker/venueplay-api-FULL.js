@@ -74,6 +74,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount'        && typeof vpaHandleDiscount === 'function')       return await vpaHandleDiscount(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount-remove' && typeof vpaHandleDiscountRemove === 'function') return await vpaHandleDiscountRemove(request, env, json);
+      if (request.method === 'POST' && path === '/admin/quiet-venues'    && typeof vpaHandleQuietVenues === 'function')    return await vpaHandleQuietVenues(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
@@ -1017,6 +1018,67 @@ async function vpaHandleDiscountRemove(request, env, json) {
  *    body: { venue_id, status:'active'|'suspended', reason? }
  *    -> { ok:true }
  * ======================================================================== */
+/* POST /admin/quiet-venues  {days?}  (owner | accounts)
+   A retention call list: who has not run a game lately, soonest first, so the venue that went
+   quiet last week is rung before the one that has been gone three months. Quiet at a week is a
+   check-in; quiet at ninety is a different conversation.
+
+   THE TRAP THIS AVOIDS. "Live now" reads vp_sessions, and broadcast bingo opens NO session row.
+   A list built only from sessions would show every bingo-only venue as permanently quiet, which
+   is the exact opposite of a useful call list. Last activity is therefore the LATEST of three
+   places a game leaves a trace: vp_sessions (trivia, musical, raffle), vp_games, and
+   vp_game_reports (which is where broadcast bingo posts its figures).
+
+   Served from the Worker rather than read in the browser because vp_game_reports is service-role
+   only, and it stays that way. */
+async function vpaHandleQuietVenues(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+
+  const b = await request.json().catch(() => ({}));
+  let days = parseInt(b.days, 10);
+  if (!(days >= 1)) days = 7;
+
+  const venues = await vpaSelect(env, 'vp_venues',
+    'select=id,name,slug,status,suspended_reason,created_at&order=name.asc');
+  if (!venues || !venues.length) return json({ ok: true, days: days, venues: [] });
+
+  const latest = {};
+  const note = (id, ts) => {
+    if (!id || !ts) return;
+    const t = Date.parse(ts);
+    if (!isFinite(t)) return;
+    if (!latest[id] || t > latest[id]) latest[id] = t;
+  };
+
+  // Sessions carry the venue directly.
+  const sessions = await vpaSelect(env, 'vp_sessions', 'select=venue_id,opened_at,started_at,ended_at');
+  for (const r of (sessions || [])) { note(r.venue_id, r.started_at || r.opened_at || r.ended_at); }
+  // Broadcast bingo only ever appears here.
+  const reports = await vpaSelect(env, 'vp_game_reports', 'select=venue_id,ended_at,created_at');
+  for (const r of (reports || [])) { note(r.venue_id, r.ended_at || r.created_at); }
+
+  const now = Date.now();
+  const out = [];
+  for (const v of venues) {
+    const last = latest[v.id] || null;
+    // Never played at all: measure from when they were set up, so a venue that signed up and
+    // never ran a night is the most urgent call on the list rather than missing from it.
+    const since = last || Date.parse(v.created_at || '') || now;
+    const quiet = Math.floor((now - since) / 86400000);
+    if (quiet < days) continue;
+    out.push({
+      id: v.id, name: v.name, slug: v.slug,
+      status: v.status, suspended_reason: v.suspended_reason || null,
+      days_quiet: quiet,
+      last_game: last ? new Date(last).toISOString().slice(0, 10) : null,
+      never_played: !last,
+    });
+  }
+  out.sort((a, z) => a.days_quiet - z.days_quiet);   // soonest quiet first: the winnable ones
+  return json({ ok: true, days: days, count: out.length, venues: out });
+}
+
 async function vpaHandleVenueStatus(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
