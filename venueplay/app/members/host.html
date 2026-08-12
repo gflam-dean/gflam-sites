@@ -96,6 +96,7 @@
   .members{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
   .mchip{font-size:12.5px;font-weight:600;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:5px 12px;cursor:pointer;transition:.15s}
   .mchip:hover{border-color:var(--pink)}
+  .members.mchipLock .mchip{cursor:default;opacity:.75}
   .mchip.off{color:var(--faint);text-decoration:line-through;opacity:.6}
   .mchip .mn{font-family:'JetBrains Mono',monospace;color:var(--gold);margin-right:6px}
 
@@ -358,6 +359,10 @@
     show("nameLock", !G.canManage);
   }
   function applyRoleGates(){
+    // The members list moved to the Account page, so a host sees who is in it but cannot change
+    // it. The Worker refuses either way; this stops the console offering something that fails.
+    var ml=document.querySelector(".members");
+    if(ml){ ml.classList.toggle("mchipLock", !G.canManage); ml.title = G.canManage ? "" : "Your manager edits the members list on the Account page"; }
     var lock=!G.canManage;
     ["setName","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).disabled=lock; });
     $("saveSettingsBtn").disabled=lock;

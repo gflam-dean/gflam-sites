@@ -288,7 +288,11 @@
       <select id="mdVenue"></select>
     </div>
     <div class="scard">
-      <div class="scardhead" id="mdHead">Your members draw</div>
+      <div class="scardhead" id="mdHead">Your members draws</div>
+      <div class="mdf" id="mdPickWrap" style="margin-bottom:14px">
+        <label class="flabel" for="mdPick">Which draw</label>
+        <select id="mdPick"></select>
+      </div>
       <div class="mdgrid">
         <div class="mdf"><label class="flabel" for="md-name">Draw name</label><input type="text" id="md-name" placeholder="e.g. Friday Members Draw"></div>
         <div class="mdf"><label class="flabel" for="md-start">Start date</label><input type="date" id="md-start"></div>
@@ -896,12 +900,41 @@
     $("md-inc").value = toDollars(d.increment_cents);
     $("md-curjp").value = toDollars(d.current_jackpot_cents);
   }
+  var mdDraws = [];
+  /* A club can run more than one draw: a Friday members draw and a Sunday one, different
+     jackpots, different nights. The admin only ever loaded the first and saved over it, so the
+     second could not exist. Pick one here, or start a new one. */
+  function renderDrawPicker(){
+    var sel=$("mdPick"), wrap=$("mdPickWrap");
+    if(!sel) return;
+    sel.innerHTML="";
+    mdDraws.forEach(function(d){
+      var o=document.createElement("option"); o.value=d.id;
+      o.textContent=d.name||"Members draw";
+      if(mdDraw && d.id===mdDraw.id) o.selected=true;
+      sel.appendChild(o);
+    });
+    var add=document.createElement("option"); add.value="__new"; add.textContent="+ Add another draw";
+    sel.appendChild(add);
+    if(wrap) wrap.style.display = mdDraws.length ? "" : "none";
+    sel.onchange=function(){
+      if(sel.value==="__new"){
+        mdDraw=null; fillMembersDraw(null);
+        var n=$("md-name"); if(n){ n.value=""; try{ n.focus(); }catch(e){} }
+        showMsg("Fill this in and save to add a second draw.", true);
+        return;
+      }
+      for(var i=0;i<mdDraws.length;i++){ if(mdDraws[i].id===sel.value){ mdDraw=mdDraws[i]; fillMembersDraw(mdDraw); return; } }
+    };
+  }
   function loadMembersDrawFor(venueId){
-    mdCurrent = venueId; mdDraw = null;
+    mdCurrent = venueId; mdDraw = null; mdDraws = [];
     var client = VP.getClient();
-    return client.from("vp_member_draws").select("*").eq("venue_id", venueId).order("created_at",{ascending:true}).limit(1)
+    return client.from("vp_member_draws").select("*").eq("venue_id", venueId).order("created_at",{ascending:true})
       .then(function(r){
-        mdDraw = (r && r.data && r.data[0]) || null;
+        mdDraws = (r && r.data) || [];
+        mdDraw = mdDraws[0] || null;
+        renderDrawPicker();
         fillMembersDraw(mdDraw);
         return client.from("vp_member_rosters").select("id").eq("venue_id", venueId);
       }).then(function(r){

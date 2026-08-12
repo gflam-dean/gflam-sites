@@ -180,6 +180,11 @@
       <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
       <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0"></div>
       <label class="check"><input type="checkbox" id="rfAllowRedraw" checked> Allow a redraw if the winner isn't here</label>
+      <div class="field">
+        <label>Tickets that did not sell (optional)</label>
+        <input type="text" id="rfSkip" placeholder="e.g. 240-320, 512">
+        <div class="note" style="margin-top:5px">Two sellers working one book leaves a gap. Anything you put here is never drawn, so you are not re-drawing in front of the room. Use a dash for a block and commas between them.</div>
+      </div>
       <div class="rangeline" id="rangeLine"></div>
       <button class="btn pink big" id="drawBtn">Draw the winner</button>
 
@@ -261,6 +266,20 @@
           serverPad:null, drawn:{}, round:null, results:[],
           busy:false, spinTimer:null, countdownTimer:null, celebrateWait:null };
 
+  /* "240-320, 512" becomes [[240,320],[512,512]]. Anything unparseable is IGNORED rather than
+     guessed at: a wrong exclusion silently takes real tickets out of the draw. */
+  function parseSkips(){
+    var raw=($("rfSkip") && $("rfSkip").value || "").trim();
+    if(!raw) return [];
+    var out=[];
+    raw.split(",").forEach(function(part){
+      part=part.trim(); if(!part) return;
+      var m=part.match(/^(\d+)\s*(?:-|to|\u2013)\s*(\d+)$/i);
+      if(m){ out.push([parseInt(m[1],10), parseInt(m[2],10)]); return; }
+      if(/^\d+$/.test(part)){ var n=parseInt(part,10); out.push([n,n]); }
+    });
+    return out.slice(0,20);
+  }
   function prizeLabel(){ return G.jackOn ? money(G.jackAmt) : (drawingPrize() || G.prize || ""); }
   function padWidth(){ return G.serverPad || String(Math.max(G.max||0,1)).length; }
   function pad(n){ var s=String(n); var w=padWidth(); while(s.length<w) s="0"+s; return s; }
@@ -427,7 +446,7 @@
     return openSession().then(function(){
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"raffle",
-        range_min:G.min, range_max:G.max,
+        range_min:G.min, range_max:G.max, excluded_ranges:parseSkips(),
         winners:G.winnersCount, time_to_present:G.time,
         allow_redraw:G.allowRedraw, leading_zeros:true,
         jackpot_on:G.jackOn, jackpot_amount_cents:G.jackOn?Math.round(G.jackAmt*100):null,

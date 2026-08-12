@@ -988,6 +988,30 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
   const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
   await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
 
+  // Tickets that were never sold. Two sellers working from one book leaves a hole in the middle,
+  // and drawing a number nobody holds means standing there re-drawing in front of the room.
+  // Kept on the game config as [[from,to],...] so it needs no schema change.
+  const excluded = [];
+  if (Array.isArray(b.excluded_ranges)) {
+    for (const r of b.excluded_ranges.slice(0, 20)) {
+      const a = parseInt(Array.isArray(r) ? r[0] : r && r.from, 10);
+      const z = parseInt(Array.isArray(r) ? r[1] : r && r.to, 10);
+      if (isNaN(a) || isNaN(z)) continue;
+      const lo = Math.max(rangeMin, Math.min(a, z));
+      const hi = Math.min(rangeMax, Math.max(a, z));
+      if (hi >= lo) excluded.push([lo, hi]);
+    }
+  }
+  if (excluded.length) {
+    let out = 0;
+    for (const [lo, hi] of excluded) out += (hi - lo + 1);
+    if (rangeMax - rangeMin + 1 - out < 1) {
+      return json({ error: 'That excludes every ticket in the range' }, 400);
+    }
+    config.excluded_ranges = excluded;
+    await sbPatch(env, 'vp_games', 'id=eq.' + enc(game.id), { config: config });
+  }
+
   const rngSeed = randomTokenHex(16);   // stored for audit ("prove the draw was fair")
   await sbInsert(env, 'vp_raffle_games', {
     game_id: game.id,
@@ -1091,8 +1115,17 @@ async function handleHostDraw(request, env, json) {
   if (b.winners != null) { const w = parseInt(b.winners, 10); if (w >= 1) winners = w; }   // per-draw override
   winners = Math.max(1, Math.min(50, winners));
   if (raffle.jackpot_on) winners = 1;   // a cash-jackpot raffle always draws exactly one
+  // Unsold blocks count as already gone, so the draw never lands on a ticket nobody holds.
+  const excl = (game.config && Array.isArray(game.config.excluded_ranges)) ? game.config.excluded_ranges : [];
+  const inExcluded = (n) => { for (const r of excl) { if (n >= r[0] && n <= r[1]) return true; } return false; };
+  let excludedInRange = 0;
+  for (const r of excl) {
+    const lo = Math.max(min, r[0]), hi = Math.min(max, r[1]);
+    if (hi >= lo) excludedInRange += (hi - lo + 1);
+  }
   const drawnCount = Object.keys(drawn).length;
-  if (span - drawnCount < winners) return json({ error: 'Not enough undrawn tickets left for ' + winners + ' winner(s)' }, 409);
+  const available = span - drawnCount - excludedInRange;
+  if (available < winners) return json({ error: 'Not enough tickets left for ' + winners + ' winner(s). Check your sold ranges.' }, 409);
 
   // UNBIASED uniform draw: randInt(span) is rejection-sampled over crypto.getRandomValues,
   // so every ticket in [min,max] is equally likely (no modulo bias). Reject duplicates and
@@ -1104,7 +1137,7 @@ async function handleHostDraw(request, env, json) {
   while (picks.length < winners && guard < guardMax) {
     guard++;
     const n = min + randInt(span);
-    if (drawn[n] || chosen[n]) continue;
+    if (drawn[n] || chosen[n] || inExcluded(n)) continue;
     chosen[n] = true;
     picks.push(n);
   }
@@ -1436,7 +1469,13 @@ async function handleMembersRoster(request, env, json) {
   const rosters = await sbGet(env, 'vp_member_rosters',
     'id=eq.' + enc(rows[0].roster_id) + '&select=id,venue_id');
   if (!rosters.length) return json({ error: 'Member not found' }, 404);
-  await requireStaff(env, authUserId, rosters[0].venue_id);      // ENFORCED: staff at the roster's venue (roster mgmt is host-allowed)
+  // MANAGER GATE (Dean, 12 Aug 2026): the members list is edited in the Account page, not on the
+  // host console. A host runs the draw; who is on the list is an account decision. This matches
+  // the gate already on /host/members/settings and /host/members/import.
+  const _rstaff = await requireStaff(env, authUserId, rosters[0].venue_id);
+  if (_rstaff.role !== 'owner' && _rstaff.role !== 'manager') {
+    return json({ error: 'Only a manager or owner can change the members list' }, 403);
+  }
 
   await sbPatch(env, 'vp_members', 'id=eq.' + enc(memberId), { status, updated_at: new Date().toISOString() });
   return json({ member_id: memberId, status });
