@@ -488,10 +488,12 @@
     bar.style.cssText = 'position:sticky;top:0;z-index:9999;padding:12px 18px;background:#F5A524;' +
       'color:#180d00;font-family:Manrope,system-ui,sans-serif;font-size:14px;font-weight:600;' +
       'line-height:1.45;text-align:center';
+    // Never the word "suspended". A venue reads that as an accusation, and most of these are an
+    // expired card. Dean's line, in the voice the rest of the product uses.
     bar.innerHTML = nonpay
-      ? 'Your games are paused because the last payment did not go through. ' +
-        '<a href="billing.html" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on. Nothing has been lost.'
-      : 'Your games are paused. Nothing has been lost. Contact hello@venueplay.com.au and we will sort it out.';
+      ? 'Your tab has run a bit long. Settle up and we will pour you another round of bingo. ' +
+        '<a href="billing.html" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
+      : 'Your games are on hold for the moment. Nothing has been lost. Give us a shout at hello@venueplay.com.au and we will sort it out.';
     if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
     else document.body.appendChild(bar);
   }

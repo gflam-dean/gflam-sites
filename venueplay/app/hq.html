@@ -595,12 +595,18 @@
       var billBadge=v.group_id ? '<span class="badge grouped">'+esc(groupName(v.group_id))+'</span>'
         : (inAccount ? '<span class="badge grouped">Account &middot; '+acctCount[v.founding_id]+' venues</span>'
         : '<span class="badge indep">Independent</span>');
-      var statusCell = suspended ? '<span class="badge suspend">Suspended</span>'
+      var statusCell = (v.suspended_reason==='archived') ? '<span class="badge suspend">Archived</span>'
+                     : suspended ? '<span class="badge suspend">'+(v.suspended_reason==='nonpayment'?'Unpaid':'Paused')+'</span>'
                        : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
       var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
                   '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
                   '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
-      if(canBilling()) actions+='<button class="mini'+(suspended?' win':' roll')+'" data-suspend="'+esc(v.id)+'" data-to="'+(suspended?'active':'suspended')+'">'+(suspended?"Reactivate":"Suspend")+'</button>';
+      if(canBilling()){
+        actions+='<button class="mini'+(suspended?' win':' roll')+'" data-suspend="'+esc(v.id)+'" data-to="'+(suspended?'active':'suspended')+'">'+(suspended?"Reactivate":"Pause")+'</button>';
+        // Archive is deliberately a SEPARATE action from pausing, and deliberately manual. A quiet
+        // venue is a retention call before it is a filing job, so nothing archives itself.
+        if(v.suspended_reason!=='archived') actions+='<button class="mini" data-archive="'+esc(v.id)+'">Archive</button>';
+      }
       var tr=document.createElement("tr"); if(suspended) tr.className="off";
       tr.innerHTML='<td><div class="vn">'+esc(v.name)+'</div><div class="vt mono">'+esc(v.slug||"(no slug)")+'</div></td>'+
         '<td>'+esc(tzShort(v.timezone))+'</td>'+
@@ -631,6 +637,8 @@
     if(dt){ var id=dt.getAttribute("data-details"); S.openVenue=(S.openVenue===id?null:id); renderVenues(); return; }
     var sp=e.target.closest("button[data-suspend]");
     if(sp){ suspendVenue(sp.getAttribute("data-suspend"), sp.getAttribute("data-to"), sp); return; }
+    var ar=e.target.closest("button[data-archive]");
+    if(ar){ archiveVenue(ar.getAttribute("data-archive"), ar); return; }
   });
 
   /* ---- VIEW AS (impersonation) ---- */
@@ -645,6 +653,18 @@
   }
 
   /* ---- SUSPEND / REACTIVATE (Worker) ---- */
+  function archiveVenue(id, btn){
+    if(!canBilling()) return;
+    var name=venueName(id);
+    if(!confirm("Archive "+name+"?\n\nTheir games stop and they drop off the active list. Nothing is deleted and you can bring them back any time. Worth a retention call first.")) return;
+    btn.disabled=true; var old=btn.textContent; btn.textContent="…";
+    workerPost("/admin/venue-status", { venue_id:id, status:"archived" }).then(function(res){
+      btn.disabled=false; btn.textContent=old;
+      if(res.error){ alert(res.error); return; }
+      for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id){ S.venues[i].status="suspended"; S.venues[i].suspended_reason="archived"; } }
+      renderStats(); renderVenues(); loadAuditOnly();
+    });
+  }
   function suspendVenue(id, to, btn){
     if(!canBilling()) return;
     var name=venueName(id);

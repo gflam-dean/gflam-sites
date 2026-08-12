@@ -373,7 +373,9 @@ async function handleWebhook(request, env, cors) {
     }
   }
   if (event.type === 'customer.subscription.deleted') {
-    await vpaSuspendForNonpayment(env, event.data.object && event.data.object.customer);
+    const cust = event.data.object && event.data.object.customer;
+    await vpaSuspendForNonpayment(env, cust);
+    await vpaClearCreditOnEnd(env, cust);   // the subscription is over, so the credit is too
   }
   // Paid. Anything switched off for non-payment comes straight back on.
   if (event.type === 'invoice.paid') {
@@ -1025,14 +1027,23 @@ async function vpaHandleVenueStatus(request, env, json) {
   const reason = (b.reason || '').trim() || null;
 
   if (!venueId) return json({ error: 'venue_id is required.' }, 400);
-  if (status !== 'active' && status !== 'suspended') return json({ error: "status must be 'active' or 'suspended'." }, 400);
+  // 'archived' is a suspension with a reason, not a new status: the kill-switch, HQ's filters and
+  // every RLS policy already understand 'suspended', and nothing here is ever deleted. It is the
+  // resting place for a venue that has gone quiet, AFTER somebody has tried to win them back.
+  if (status !== 'active' && status !== 'suspended' && status !== 'archived') {
+    return json({ error: "status must be 'active', 'suspended' or 'archived'." }, 400);
+  }
 
   // Stamp WHY. A venue switched off from HQ is 'manual' and a later payment must never bring it
   // back on by itself; only a non-payment suspension is reversible automatically.
-  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId),
-    { status: status, suspended_reason: status === 'suspended' ? 'manual' : null });
+  const archiving = status === 'archived';
+  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), {
+    status: archiving ? 'suspended' : status,
+    suspended_reason: archiving ? 'archived' : (status === 'suspended' ? 'manual' : null),
+  });
 
-  await vpaAudit(env, actor, status === 'suspended' ? 'venue_suspended' : 'venue_reactivated',
+  await vpaAudit(env, actor,
+    archiving ? 'venue_archived' : (status === 'suspended' ? 'venue_suspended' : 'venue_reactivated'),
     'venue:' + venueId, { status: status, reason: reason });
 
   return json({ ok: true });
@@ -1811,6 +1822,32 @@ async function vpaReactivateOnPayment(env, customerId) {
         detail: { venues: n, customer: customerId },
       }, false).catch(() => {});
     }
+  } catch (_) { /* never throw out of a webhook */ }
+}
+
+/* When a subscription actually ENDS, clear any credit left on the account.
+   The Terms say credit carries from one invoice to the next while the subscription runs and does
+   not carry beyond it. Stripe does not know that: a customer balance sits there forever, so a
+   venue that lapsed holding $400 and came back a year later would have found it waiting, which is
+   not what they agreed to and not what the Account page told them.
+   Zeroing it here makes the system match the words. Deliberately NOT done on past_due: they have
+   not ended anything yet, they have a card that needs updating, and their credit must survive
+   that. Only a genuinely finished subscription clears it. */
+async function vpaClearCreditOnEnd(env, customerId) {
+  try {
+    if (!customerId || !env.STRIPE_SECRET_KEY) return;
+    const cust = await vpbStripeGet(env, 'customers/' + encodeURIComponent(customerId));
+    const bal = cust && typeof cust.balance === 'number' ? cust.balance : 0;
+    if (bal >= 0) return;                       // nothing owing to them
+    await vpbStripePost(env, 'customers/' + encodeURIComponent(customerId) + '/balance_transactions', {
+      amount: -bal, currency: 'aud',
+      description: 'Credit closed with the subscription (VenuePlay terms: credit does not carry beyond the subscription)',
+    });
+    await vpaInsert(env, 'vp_admin_audit', {
+      action: 'credit_cleared_on_subscription_end',
+      target: 'customer:' + customerId,
+      detail: { cleared_cents: -bal },
+    }, false).catch(() => {});
   } catch (_) { /* never throw out of a webhook */ }
 }
 
