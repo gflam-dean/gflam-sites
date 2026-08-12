@@ -1,5 +1,5 @@
 {
-  "count": 17188,
-  "updated": "2026-08-10",
-  "note": "Live VenuePlay song count. Regenerate whenever musical-library.json changes."
+  "count": 5146,
+  "updated": "2026-08-12",
+  "note": "Live VenuePlay song count. Regenerate with tools/curate-library.py, then update this."
 }

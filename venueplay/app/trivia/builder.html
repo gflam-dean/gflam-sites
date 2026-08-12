@@ -208,7 +208,7 @@
     req("POST","/host/trivia/set",{ venue_id:G.venueId, title:theme+" Night" }).then(function(r){
       var sid=r.set_id;
       return req("POST","/host/trivia/questions/from-library",{ set_id:sid, category:theme, count:20 }).then(function(res){
-        setStatus("quickStatus","Your "+theme+" Night is ready — "+((res&&res.added)||0)+" questions added. Edit below, or run it from the trivia game.","ok");
+        setStatus("quickStatus","Your "+theme+" Night is ready. "+((res&&res.added)||0)+" questions added. Edit below, or run it from the trivia game.","ok");
         loadMySets(sid);   // selects the new night + opens its editor with the questions loaded
       });
     }).catch(function(e){ setStatus("quickStatus", (e&&e.message)||"Could not build the night","err"); })

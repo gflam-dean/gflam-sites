@@ -2974,10 +2974,10 @@ async function assertVenueActive(env, venueId) {
   assertUuid(venueId, 'venue_id');   // re-derived per request; never trusted raw
   const venues = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=status,group_id');
   if (!venues.length) throw httpError(403, 'Venue not available');
-  if (venues[0].status !== 'active') throw httpError(403, 'This venue is currently suspended');
+  if (venues[0].status !== 'active') throw httpError(403, 'Games are paused here tonight. Have a word with the staff.');
   if (venues[0].group_id) {
     const groups = await sbGet(env, 'vp_venue_groups', 'id=eq.' + enc(venues[0].group_id) + '&select=status');
-    if (groups.length && groups[0].status !== 'active') throw httpError(403, 'This venue group is currently suspended');
+    if (groups.length && groups[0].status !== 'active') throw httpError(403, 'Games are paused here tonight. Have a word with the staff.');
   }
 }
 

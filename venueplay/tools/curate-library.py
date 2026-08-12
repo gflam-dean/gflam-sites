@@ -61,31 +61,42 @@ def load_excludes():
     return out
 
 
+def akey(artist):
+    """Group an artist case- and spacing-insensitively.
+
+    The library stores some acts twice: "Men at Work" (2 songs) alongside "Men At Work" (13),
+    "Icehouse" (1) alongside "ICEHOUSE" (26). Counting them separately meant the small variant
+    fell under the minimum and was deleted, and the small variant is where the hits were. That is
+    how Down Under and Great Southern Land were dropped from an Australian pub library.
+    """
+    return re.sub(r'\s+', ' ', (artist or '')).strip().lower()
+
+
 def curate(songs, cap, minimum, excludes):
-    counts = collections.Counter(s.get('artist', '') for s in songs)
+    counts = collections.Counter(akey(s.get('artist', '')) for s in songs)
     kept, dropped = [], collections.Counter()
     per_artist = collections.Counter()
     for s in songs:
         artist = s.get('artist') or ''
         title = s.get('title') or ''
-        key = re.sub(r'\s+', ' ', artist).lower()
+        key = akey(artist)
         if NON_LATIN.search(artist) or NON_LATIN.search(title):
             dropped['not in the Latin alphabet']+= 1
         elif VERSION.search(title) or VERSION.search(artist):
             dropped['remix, live or karaoke version']+= 1
-        elif counts[artist] < minimum:
-            # This catches the one-off dance features ("Sigala & Talia Mar") without needing to
-            # guess at ampersands. A first version dropped anything containing " & " as a collab
-            # credit and quietly binned Hunters & Collectors, Kool & The Gang, Hall & Oates and
-            # Nick Cave & The Bad Seeds. A real band has a back catalogue; a credit does not, so
-            # the song count is the honest signal and the punctuation is not.
-            dropped['artist has fewer than %d songs here' % minimum] += 1
+        elif counts[key] < minimum and COLLAB.search(artist):
+            # A thin artist is only dropped when the NAME also reads as a multi-artist credit,
+            # which is what a one-off dance feature looks like ("Sigala & Talia Mar"). Dropping
+            # every thin artist deleted the one-hit wonders instead, and a one-hit wonder is the
+            # backbone of pub musical bingo: Cotton Eye Joe, Kung Fu Fighting, Groove Is In the
+            # Heart. A real band survives on its catalogue either way.
+            dropped['one-off credit with fewer than %d songs' % minimum] += 1
         elif key in excludes:
             dropped['artist on your exclude list']+= 1
-        elif per_artist[artist] >= cap:
+        elif per_artist[key] >= cap:
             dropped['past this artist\'s top %d' % cap] += 1
         else:
-            per_artist[artist] += 1
+            per_artist[key] += 1
             kept.append(s)
     return kept, dropped, per_artist
 
@@ -93,8 +104,8 @@ def curate(songs, cap, minimum, excludes):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--cap', type=int, default=3, help="how many songs to keep per artist (default 3)")
-    ap.add_argument('--min', type=int, default=5, dest='minimum',
-                    help="ignore artists with fewer than this many songs in the library (default 5)")
+    ap.add_argument('--min', type=int, default=3, dest='minimum',
+                    help="drop MULTI-ARTIST CREDITS with fewer than this many songs (default 3). A solo act is never dropped for being thin: that is what one-hit wonders are.")
     ap.add_argument('--write', action='store_true', help="actually write the trimmed library")
     ap.add_argument('--artists', action='store_true', help="print the surviving artists and exit")
     a = ap.parse_args()
