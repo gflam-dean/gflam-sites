@@ -369,9 +369,12 @@ async function handleWebhook(request, env, cors) {
     const st = event.data.object && event.data.object.status;
     if (st === 'past_due' || st === 'unpaid') {
       await vpaSuspendForNonpayment(env, event.data.object.customer);
-    } else if (st === 'active' || st === 'trialing') {
-      await vpaReactivateOnPayment(env, event.data.object.customer);
     }
+    // NO reactivation here. Every subscription_items quantity write WE make raises this event
+    // with status 'active': setPlayers, addVenue, applyPendingOnInvoice, the plan uplift. So a
+    // venue suspended for non-payment could be switched back on simply by nudging its player
+    // count, without a cent being paid. Money coming in is the only thing that turns games back
+    // on, and invoice.paid below is the only place that says so.
   }
   if (event.type === 'customer.subscription.deleted') {
     const cust = event.data.object && event.data.object.customer;
@@ -2301,10 +2304,18 @@ async function vpbSetPlayers(request, env, json) {
   const current = parseInt(venue.max_players, 10) || 0;
   const priorPending = (venue.pending_players == null) ? null : (parseInt(venue.pending_players, 10) || null);
   const foundingId = o.account.id;
-  // What this account is billed for TODAY. Every money move below is measured from here rather
-  // than from max_players, so a sequence of changes always nets out: a venue that reduces and
-  // then changes its mind is charged back exactly what it was credited.
+  // What this account is billed for TODAY.
   const billedNow = (priorPending != null) ? priorPending : current;
+  // THE BASIS a money move is measured from, and it is NOT the same on both plans.
+  //   ANNUAL: measure from what they are billed, because a reduction BANKED A CREDIT. Restoring
+  //           charges back exactly what was credited and the two net to zero.
+  //   MONTHLY: measure from what they have PAID FOR this period (max_players), because a monthly
+  //           reduction banks nothing at all: it just lowers the quantity for the next invoice.
+  // Using the billed figure on monthly invented charges out of nothing. A venue that dropped
+  // 100 to 50 and changed its mind was billed a full month for 50 players it had never lost,
+  // and 100 to 50 to 120 charged a full month for 70 when only 20 were genuinely new.
+  const annualPlan = o.account.plan === 'annual';
+  const basis = annualPlan ? billedNow : current;
 
   if (players === current) {
     if (venue.pending_players == null) return json({ ok: true, unchanged: true });
@@ -2318,7 +2329,7 @@ async function vpbSetPlayers(request, env, json) {
     }
     // Take back the credit the scheduled reduction banked. Without this, an annual venue could
     // reduce, pocket the credit, restore, and repeat.
-    const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - billedNow, o.account.plan, venue.name) : null;
+    const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - basis, o.account.plan, venue.name) : null;
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_reduction_cancelled',
       target: 'venue:' + venueId, detail: { players: current, from_billed: billedNow, billing: rAdj, actor_user: o.authUserId },
@@ -2345,7 +2356,7 @@ async function vpbSetPlayers(request, env, json) {
     }
     // Charge for the players they are actually gaining over what they are billed today. Using
     // players-current understated it whenever a reduction was already scheduled.
-    const iAdj = await vpbAdjustPlayerBilling(env, info, players - billedNow, o.account.plan, venue.name);
+    const iAdj = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name);
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
@@ -2367,7 +2378,7 @@ async function vpbSetPlayers(request, env, json) {
   }
   // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
   // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
-  const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - billedNow, o.account.plan, venue.name) : null;
+  const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },

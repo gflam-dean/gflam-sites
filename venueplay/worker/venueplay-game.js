@@ -981,13 +981,6 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
   if (jackpotOn) { config.prize_type = 'cash'; config.jackpot_amount_cents = jackpotCents; }
   if (Array.isArray(b.prizes)) config.prizes = b.prizes.slice(0, 12).map((p) => String(p).slice(0, 120));
 
-  const gameRows = await sbInsert(env, 'vp_games', {
-    session_id: session.id, seq, format: 'raffle', status: 'running', config,
-    started_at: new Date().toISOString(),
-  }, true);
-  const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
-  await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
-
   // Tickets that were never sold. Two sellers working from one book leaves a hole in the middle,
   // and drawing a number nobody holds means standing there re-drawing in front of the room.
   // Kept on the game config as [[from,to],...] so it needs no schema change.
@@ -1008,9 +1001,15 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
     if (rangeMax - rangeMin + 1 - out < 1) {
       return json({ error: 'That excludes every ticket in the range' }, 400);
     }
-    config.excluded_ranges = excluded;
-    await sbPatch(env, 'vp_games', 'id=eq.' + enc(game.id), { config: config });
+    config.excluded_ranges = excluded;   // straight onto the config the game row is built from
   }
+
+  const gameRows = await sbInsert(env, 'vp_games', {
+    session_id: session.id, seq, format: 'raffle', status: 'running', config,
+    started_at: new Date().toISOString(),
+  }, true);
+  const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
+  await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
 
   const rngSeed = randomTokenHex(16);   // stored for audit ("prove the draw was fair")
   await sbInsert(env, 'vp_raffle_games', {
