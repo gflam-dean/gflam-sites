@@ -1543,6 +1543,11 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       .replace(/{{host_console_url}}/g, consoleUrl)
       .replace(/{{tv_url}}/g, tvUrl)
       .replace(/{{calendly_url}}/g, calendly)
+      // The welcome email now carries a plain-English summary of the plan and links the real
+      // agreement. Unfilled, these would go out to a paying customer as the literal text
+      // {{terms_url}}, which is worse than not linking them at all.
+      .replace(/{{terms_url}}/g, site + '/terms')
+      .replace(/{{privacy_url}}/g, site + '/privacy')
       .replace(/{{support_email}}/g, support);
 
     await fetch('https://api.resend.com/emails', {
