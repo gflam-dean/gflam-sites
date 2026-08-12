@@ -358,6 +358,27 @@ async function handleWebhook(request, env, cors) {
   if (event.type === 'invoice.upcoming' && typeof vpaFireUpcomingEmail === 'function') {
     await vpaFireUpcomingEmail(env, event.data.object);
   }
+  // A declined card: tell them, suspend nothing. Stripe keeps retrying for about a fortnight.
+  if (event.type === 'invoice.payment_failed') {
+    await vpaFirePaymentFailedEmail(env, event.data.object);
+  }
+  // The invoice is now OVERDUE, or Stripe has given up entirely. Games stop until it is paid.
+  // Nothing is deleted: the venue, its logins, its members list and its history all stay put.
+  if (event.type === 'customer.subscription.updated') {
+    const st = event.data.object && event.data.object.status;
+    if (st === 'past_due' || st === 'unpaid') {
+      await vpaSuspendForNonpayment(env, event.data.object.customer);
+    } else if (st === 'active' || st === 'trialing') {
+      await vpaReactivateOnPayment(env, event.data.object.customer);
+    }
+  }
+  if (event.type === 'customer.subscription.deleted') {
+    await vpaSuspendForNonpayment(env, event.data.object && event.data.object.customer);
+  }
+  // Paid. Anything switched off for non-payment comes straight back on.
+  if (event.type === 'invoice.paid') {
+    await vpaReactivateOnPayment(env, event.data.object && event.data.object.customer);
+  }
   return new Response('ok', { status: 200, headers: cors });
 }
 
@@ -715,15 +736,26 @@ async function vpaAuthCreateUser(env, body) {
 // Best-effort lookup used when a phone/email already has an auth user.
 // Launch-scale: one page of up to 200 users. Widen to real paging past ~200 users.
 async function vpaFindAuthUser(env, sel) {
-  const res = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users?per_page=200', { headers: vpaHeaders(env) });
-  if (!res.ok) return null;
-  const data = await res.json().catch(() => ({}));
-  const users = (data && data.users) || [];
+  // PAGE PROPERLY. This read one page of 200 users and stopped. It is used when a phone or email
+  // already has a login, which is exactly what happens when a venue signs up again or adds a
+  // second host, and past 200 logins it would simply fail to find people who were plainly there.
+  // At 100 venues with a few hosts each that is not a distant problem. Bounded so a bad response
+  // can never spin forever.
   const wantPhone = sel.phone ? String(sel.phone).replace(/[^\d]/g, '') : null;
   const wantEmail = sel.email ? String(sel.email).toLowerCase() : null;
-  for (const u of users) {
-    if (wantPhone && u.phone && String(u.phone).replace(/[^\d]/g, '') === wantPhone) return u;
-    if (wantEmail && u.email && String(u.email).toLowerCase() === wantEmail) return u;
+  if (!wantPhone && !wantEmail) return null;
+  const PER = 200, MAX_PAGES = 50;   // 10,000 logins
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const res = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users?per_page=' + PER + '&page=' + page,
+      { headers: vpaHeaders(env) });
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => ({}));
+    const users = (data && data.users) || [];
+    for (const u of users) {
+      if (wantPhone && u.phone && String(u.phone).replace(/[^\d]/g, '') === wantPhone) return u;
+      if (wantEmail && u.email && String(u.email).toLowerCase() === wantEmail) return u;
+    }
+    if (users.length < PER) return null;   // last page
   }
   return null;
 }
@@ -995,7 +1027,10 @@ async function vpaHandleVenueStatus(request, env, json) {
   if (!venueId) return json({ error: 'venue_id is required.' }, 400);
   if (status !== 'active' && status !== 'suspended') return json({ error: "status must be 'active' or 'suspended'." }, 400);
 
-  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { status: status });
+  // Stamp WHY. A venue switched off from HQ is 'manual' and a later payment must never bring it
+  // back on by itself; only a non-payment suspension is reversible automatically.
+  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId),
+    { status: status, suspended_reason: status === 'suspended' ? 'manual' : null });
 
   await vpaAudit(env, actor, status === 'suspended' ? 'venue_suspended' : 'venue_reactivated',
     'venue:' + venueId, { status: status, reason: reason });
@@ -1704,6 +1739,111 @@ async function vpaFireUpcomingEmail(env, invoice) {
       }),
     });
   } catch (_) { /* reminder email is best-effort */ }
+}
+
+/* ---------------------------------------------------------------------------
+   NON-PAYMENT: switching a venue off, and back on again.
+
+   Until now the webhook listened for three events, all of them happy ones, so a venue whose card
+   failed was never heard about again. Their status stayed active and they kept running bingo every
+   week for nothing, because the only thing that ever suspended a venue ran on a SUCCESSFUL payment.
+
+   Three things happen now:
+     invoice.payment_failed        -> tell them, change nothing. Stripe retries for a fortnight and
+                                      most of these are an expired card that fixes itself.
+     subscription past_due/unpaid  -> Stripe says the invoice is overdue. Suspend, reason
+     or subscription.deleted          'nonpayment'. Games stop; NOTHING is deleted.
+     invoice.paid                  -> anything suspended for nonpayment comes straight back on,
+                                      without anyone at VenuePlay having to notice.
+
+   The reason is the important part. A venue switched off by hand in HQ is never turned back on by
+   a passing payment; only 'nonpayment' is reversible automatically.
+   ------------------------------------------------------------------------- */
+async function vpaVenuesForCustomer(env, customerId) {
+  if (!customerId) return [];
+  const accts = await vpaSelect(env, 'venueplay_founding',
+    'stripe_customer_id=eq.' + encodeURIComponent(customerId) + '&select=id,contact_email&limit=1');
+  const acct = accts && accts[0];
+  if (!acct) return [];
+  const venues = await vpaSelect(env, 'vp_venues',
+    'founding_id=eq.' + encodeURIComponent(acct.id) + '&select=id,name,status,suspended_reason');
+  return [(venues || []), acct];
+}
+
+async function vpaSuspendForNonpayment(env, customerId) {
+  try {
+    const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
+    if (!venues || !venues.length) return;
+    let n = 0;
+    for (const v of venues) {
+      if (v.status === 'suspended') continue;              // already off, leave the reason alone
+      await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
+        { status: 'suspended', suspended_reason: 'nonpayment' });
+      n++;
+    }
+    if (n) {
+      await vpaInsert(env, 'vp_admin_audit', {
+        action: 'venue_suspended_nonpayment',
+        target: 'account:' + acct.id,
+        detail: { venues: n, customer: customerId },
+      }, false).catch(() => {});
+    }
+  } catch (_) { /* never throw out of a webhook */ }
+}
+
+async function vpaReactivateOnPayment(env, customerId) {
+  try {
+    const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
+    if (!venues || !venues.length) return;
+    let n = 0;
+    for (const v of venues) {
+      // ONLY the ones we switched off for non-payment. A venue VenuePlay turned off on purpose
+      // (suspended_reason null or 'manual') stays off until a person turns it back on.
+      if (v.status !== 'suspended' || v.suspended_reason !== 'nonpayment') continue;
+      await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id),
+        { status: 'active', suspended_reason: null });
+      n++;
+    }
+    if (n) {
+      await vpaInsert(env, 'vp_admin_audit', {
+        action: 'venue_reactivated_on_payment',
+        target: 'account:' + acct.id,
+        detail: { venues: n, customer: customerId },
+      }, false).catch(() => {});
+    }
+  } catch (_) { /* never throw out of a webhook */ }
+}
+
+/* A failed attempt is not an overdue invoice. Tell them and change nothing. */
+async function vpaFirePaymentFailedEmail(env, invoice) {
+  try {
+    if (!env.RESEND_API_KEY || !invoice) return;
+    const email = invoice.customer_email;
+    if (!email) return;
+    const amount = '$' + (Number(invoice.amount_due || 0) / 100).toFixed(2);
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+    const billing = site + '/app/billing.html';
+    const html =
+      '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+      + '<img src="' + site + '/logos/venueplay_primary_rebuilt.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
+      + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Your card did not go through.</p>'
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for your VenuePlay subscription and it was declined. Nine times out of ten it is an expired card.</p>'
+      + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">Nothing has changed at your venue and your games are running as normal. We will try again over the next few days. If it keeps failing your games will pause until it is sorted, so it is worth a minute now.</p>'
+      + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Update your card</a>'
+      + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact hello@venueplay.com.au</p>'
+      + '</div>';
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'VenuePlay <hello@send.venueplay.com.au>',
+        reply_to: 'hello@venueplay.com.au',
+        to: [email],
+        subject: 'Your VenuePlay payment did not go through',
+        html: html,
+      }),
+    });
+  } catch (_) { /* best-effort */ }
 }
 
 function vpaEsc(s) {

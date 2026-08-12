@@ -257,7 +257,7 @@
   function listVenues() {
     // RLS scopes this: admins see all, staff see only their own venues.
     return getClient().from("vp_venues")
-      .select("id,name,slug,timezone,status,founding_id,group_id,included_players,max_players,logo_url,created_at")
+      .select("id,name,slug,timezone,status,suspended_reason,founding_id,group_id,included_players,max_players,logo_url,created_at")
       .order("created_at", { ascending: false })
       .then(function (r) { return (r && r.data) || []; });
   }
@@ -475,6 +475,26 @@
     closeOpenSessions().then(finish, finish);
   }
 
+  /* A suspended venue used to look completely healthy until the host tapped Start in front of a
+     room and got "This venue is suspended". Nothing in the venue-facing app checked the status at
+     all. Any page can call this after ready() to say so on sign-in instead. */
+  function suspensionBanner(ctx) {
+    var v = ctx && ctx.venue;
+    if (!v || v.status !== 'suspended') return;
+    if (document.getElementById('vpSuspendBar')) return;
+    var nonpay = v.suspended_reason === 'nonpayment';
+    var bar = document.createElement('div');
+    bar.id = 'vpSuspendBar';
+    bar.style.cssText = 'position:sticky;top:0;z-index:9999;padding:12px 18px;background:#F5A524;' +
+      'color:#180d00;font-family:Manrope,system-ui,sans-serif;font-size:14px;font-weight:600;' +
+      'line-height:1.45;text-align:center';
+    bar.innerHTML = nonpay
+      ? 'Your games are paused because the last payment did not go through. ' +
+        '<a href="billing.html" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on. Nothing has been lost.'
+      : 'Your games are paused. Nothing has been lost. Contact hello@venueplay.com.au and we will sort it out.';
+    if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
+    else document.body.appendChild(bar);
+  }
   root.VP = {
     getClient: getClient,
     useClient: useClient,
@@ -489,6 +509,7 @@
     signOut: signOut,
     homeHref: homeHref,
     venueCode: venueCode,
+    suspensionBanner: suspensionBanner,
     noteOpenSession: noteOpenSession,
     closeOpenSessions: closeOpenSessions,
     retryPendingCloses: retryPendingCloses,

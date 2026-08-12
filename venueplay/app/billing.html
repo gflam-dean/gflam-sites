@@ -1215,6 +1215,7 @@
 
   // Require sign-in, then load.
   VP.requireAuth().then(function(ctx){
+    if (ctx) VP.suspensionBanner(ctx);
     if (!ctx){ return; } // requireAuth handles redirect when signed out
     load();
     loadHosts();   // populate the hosts list AND the "venues they can run" picker on page load

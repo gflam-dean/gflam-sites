@@ -1554,7 +1554,7 @@
   // Show a neutral splash until auth resolves, THEN route — the sign-in screen never flashes for
   // someone who is actually signed in. Signed-out users fall through to vSignIn once ready resolves.
   go("vBoot");
-  if(window.VP){ VP.ready().then(function(ctx){ __ctx=ctx; applyRoute(ctx); }).catch(function(){ go("vSignIn"); }); }
+  if(window.VP){ VP.ready().then(function(ctx){ __ctx=ctx; VP.suspensionBanner(ctx); applyRoute(ctx); }).catch(function(){ go("vSignIn"); }); }
   else { go("vSignIn"); }
 })();
 </script>
