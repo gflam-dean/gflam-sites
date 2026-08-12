@@ -70,7 +70,7 @@
     background:var(--ink-3);border:1px solid var(--line);border-radius:9px;cursor:pointer;user-select:none;
     transition:.12s;overflow:hidden;padding:3px;word-break:break-word;hyphens:auto}
   .cc:active{transform:scale(.94)}
-  .cc.free{background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;border-color:transparent;
+  .cc.free{cursor:default;background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;border-color:transparent;
     font-family:'Anton',sans-serif;font-size:13px;letter-spacing:.04em;cursor:default}
   .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
   /* played songs show via the green daub only - no outline (per Dean) */
@@ -299,7 +299,9 @@
     var wrap=$("cardGrid"); wrap.innerHTML="";
     for(var i=0;i<25;i++){
       var cell=document.createElement("div");
-      if(i===12){ cell.className="cc free daub"; cell.textContent="FREE"; wrap.appendChild(cell); continue; }
+      if(i===12){ cell.className="cc free daub"; cell.textContent="FREE";
+        cell.setAttribute("aria-label","Free square, already marked for you"); cell.title="This one is free, it is already marked";
+        wrap.appendChild(cell); continue; }
       var t=cellTitle(i);
       cell.className="cc";
       cell.setAttribute("data-i",i);

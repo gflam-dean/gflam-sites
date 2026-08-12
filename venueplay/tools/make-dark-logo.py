@@ -84,10 +84,26 @@ def write_png(path, w, h, rows):
     open(path, 'wb').write(png)
 
 
+# The play triangle carries a wide neon bloom. On black it reads as a glow. On white it is a
+# pink haze, and because it runs off the top, bottom and left of the canvas it ends in a straight
+# line: the logo looks cut off. An invoice is not a screen, so the invoice mark drops the bloom
+# and keeps the crisp stroke. Below FLOOR is haze and goes; above CEIL is the mark and goes solid;
+# between them is the anti-aliased edge and is stretched across the gap so it stays smooth.
+FLOOR, CEIL = 100, 200
+
+
+def debloom(alpha):
+    if alpha <= FLOOR:
+        return 0
+    if alpha >= CEIL:
+        return 255
+    return int(round((alpha - FLOOR) * 255.0 / (CEIL - FLOOR)))
+
+
 def main():
     w, h, raw = read_png(SRC)
     rows = unfilter(w, h, raw)
-    changed = 0
+    changed = haze = 0
     for r in rows:
         for x in range(0, w * 4, 4):
             red, green, blue, alpha = r[x], r[x + 1], r[x + 2], r[x + 3]
@@ -97,10 +113,15 @@ def main():
             if red > 190 and green > 190 and blue > 190:
                 r[x], r[x + 1], r[x + 2] = INK
                 changed += 1
+            a2 = debloom(alpha)
+            if alpha and not a2:
+                haze += 1
+            r[x + 3] = a2
     write_png(OUT, w, h, rows)
     print('read  %s  (%dx%d)' % (os.path.relpath(SRC, HERE), w, h))
     print('wrote %s' % os.path.relpath(OUT, HERE))
-    print('repainted %d white pixels to stage black; the pink triangle is untouched' % changed)
+    print('repainted %d white pixels to stage black; the pink triangle keeps its colour' % changed)
+    print('cleared %d pixels of glow haze, so nothing runs off the edge of the canvas' % haze)
 
 
 if __name__ == '__main__':

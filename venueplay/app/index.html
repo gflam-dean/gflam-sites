@@ -127,7 +127,12 @@
   .prizeline2{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-align:center;margin:0 0 14px}
   .prizeline2 b{color:var(--gold)}
 
-  .resolve{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  /* Two fixed columns squashed "Keep playing" and "Finish game" into each other on a tablet and
+     the labels wrapped mid-word. Let them share the row when there is room and stack when there
+     is not, never wrap the label, and keep a proper thumb-sized target either way. */
+  .resolve{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:10px}
+  .resolve .btn{display:flex;align-items:center;justify-content:center;text-align:center;
+    white-space:nowrap;min-height:46px;padding:11px 12px}
 
   .players{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
   .pchip{font-size:12.5px;font-weight:600;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:5px 12px}
@@ -366,6 +371,8 @@
         </div>
 
         <div id="liveBlock" class="hidden">
+          <label style="display:flex;align-items:center;gap:9px;cursor:pointer;margin:0 0 12px;padding:9px 12px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;font-size:13px;color:var(--text)">
+            <input type="checkbox" id="allowEarlyLive" style="width:auto;margin:0"><span>Allow early BINGO calls</span></label>
           <div class="stat">
             <div class="box"><div class="k">Called</div><div class="v" id="liveCount">0 of 90</div></div>
             <div class="box"><div class="k">Pattern</div><div class="v" style="font-size:13px" id="livePattern">One line</div></div>
@@ -1520,7 +1527,14 @@
   // ================= EVENTS =================
   $("startBtn").addEventListener("click", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
-  $("allowEarlyChk").addEventListener("change", function(){ G.allowEarly=this.checked; sendState(); });
+
+  // The same setting in two places, because the host needs it before the game AND during it.
+  (function(){
+    var a=$("allowEarlyChk"), b=$("allowEarlyLive");
+    function set(v){ G.allowEarly=v; if(a) a.checked=v; if(b) b.checked=v; sendState(); }
+    if(a) a.addEventListener("change", function(){ set(this.checked); });
+    if(b) b.addEventListener("change", function(){ set(this.checked); });
+  })();
   $("nextBtn").addEventListener("click", nextBall);
   $("newGameBtn").addEventListener("click", newGame);
   $("endGameBtn").addEventListener("click", endGame);
