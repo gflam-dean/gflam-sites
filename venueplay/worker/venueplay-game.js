@@ -2711,11 +2711,17 @@ async function accountBilledTotal(env, foundingId) {
    three, i.e. the crowd they proved every time; the bigger nights in the streak were spikes and
    stay as per-night overage. Charged from the NEXT invoice (proration 'none'), but the capacity
    is theirs immediately, so the following week they are simply not over any more. */
-async function upliftPlan(env, venue, acct, newMax, peaks) {
+/* Per player, per month. Mirrors vpbRate in the billing Worker; keep the two in step. */
+function upliftRate(tier, annual) {
+  if (annual) return tier === 'founding' ? 2.30 : 2.85;
+  return tier === 'founding' ? 2.50 : 3.00;
+}
+
+async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
   const current = parseInt(venue.max_players, 10) || 0;
   if (!(newMax > current)) return null;
   await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id), { max_players: newMax });
-  let quantityOk = false;
+  let quantityOk = false, prorata = null;
   try {
     const sub = await stripeGet(env, 'subscriptions/' + enc(acct.stripe_subscription_id));
     const item = sub && sub.items && sub.items.data && sub.items.data[0];
@@ -2724,6 +2730,40 @@ async function upliftPlan(env, venue, acct, newMax, peaks) {
       const upd = await stripePost(env, 'subscription_items/' + enc(item.id),
         { quantity: Math.max(total, 1), proration_behavior: 'none' });
       quantityOk = !(upd && upd.error);
+
+      /* ANNUAL. "From your next invoice" is next month on a monthly plan and up to ELEVEN MONTHS
+         away on an annual one, and the extra capacity is theirs the moment we lift it. Left as it
+         was, an annual venue that outgrew its plan in month two got the bigger plan, and an end to
+         paying per head, free until renewal. So the added players are charged PRO RATA to the
+         renewal date, which is the same rule the Account page already applies when a venue adds
+         players by hand, and the same one terms.html already promises for annual.
+         Nothing to claw back if they shrink again: dropping the maximum banks the unused value as
+         a credit against the next renewal, which is already how reductions work. */
+      const interval = item.price && item.price.recurring && item.price.recurring.interval;
+      const periodEnd = sub.current_period_end || item.current_period_end;
+      if (quantityOk && interval === 'year' && periodEnd) {
+        const left = (periodEnd * 1000 - Date.now()) / (365 * 24 * 3600 * 1000);
+        const frac = Math.max(0, Math.min(1, left));
+        const added = newMax - current;
+        const cents = Math.round(added * upliftRate(tier, true) * 12 * frac * 100);
+        if (cents > 0) {
+          const months = Math.round(frac * 12 * 10) / 10;
+          const res = await stripePost(env, 'invoiceitems', {
+            customer: acct.stripe_customer_id,
+            subscription: acct.stripe_subscription_id,
+            currency: 'aud',
+            amount: cents,
+            description: (venue.name || 'Venue') + ': plan raised to ' + newMax + ' players after three big nights, '
+                       + added + ' extra pro rata to renewal (' + months + ' months)',
+          }, 'uplift_' + venue.id + '_' + newMax);
+          if (res && res.error) {
+            console.log('[overage] venue ' + venue.id + ' annual pro rata FAILED: ' +
+                        ((res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
+          } else {
+            prorata = { cents: cents, months: months, added: added };
+          }
+        }
+      }
     }
   } catch (e) { quantityOk = false; }
   if (!quantityOk) {
@@ -2736,7 +2776,8 @@ async function upliftPlan(env, venue, acct, newMax, peaks) {
   await sbInsert(env, 'vp_admin_audit', {
     action: 'plan_uplift_after_three_big_nights',
     target: 'venue:' + venue.id,
-    detail: { from: current, to: newMax, nights: peaks, effective: 'next_invoice' },
+    detail: { from: current, to: newMax, nights: peaks,
+              effective: prorata ? 'pro_rata_now' : 'next_invoice', prorata: prorata },
   }, false).catch(() => {});
   return newMax;
 }
@@ -2826,7 +2867,7 @@ async function chargeNightOverage(env, session) {
   }
   // Third in a row: move them up to the crowd they proved every time, and start counting again.
   const newMax = Math.min.apply(null, peaks);
-  await upliftPlan(env, venue, acct, newMax, peaks);
+  await upliftPlan(env, venue, acct, newMax, peaks, tier);
   await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
     { overage_streak: 0, overage_streak_peaks: [] });
 }
