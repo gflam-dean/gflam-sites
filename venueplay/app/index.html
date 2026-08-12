@@ -1170,7 +1170,11 @@
   var overageAcked=false;
   function showOverage(cnt, cap, onGo){
     var extra=cnt-cap;
-    $("ovgBody").innerHTML="You have <b>"+cnt+"</b> players and your plan includes <b>"+cap+"</b>. The extra <b>"+extra+"</b> player licence"+(extra===1?"":"s")+" will be charged to your nominated card. They stay valid for the rest of your billing period.";
+    // Name the actual number. This modal is the venue's consent to a charge and it used to give
+    // no price at all, while implying the extras were a one-off for the rest of the period.
+    $("ovgBody").innerHTML="You have <b>"+cnt+"</b> players and your plan includes <b>"+cap+"</b>. "+
+      "Tonight's <b>"+extra+"</b> extra player"+(extra===1?"":"s")+" cost <b>$2 each</b>, so <b>$"+(extra*2).toFixed(2)+"</b> on your next bill. "+
+      "Go over three weeks running and the third night is $1 a head and we lift your plan to suit, so it never costs more than moving up.";
     var m=$("ovgModal"); m.classList.remove("hidden");
     $("ovgGo").onclick=function(){ overageAcked=true; m.classList.add("hidden"); onGo(); };
     $("ovgCancel").onclick=function(){ m.classList.add("hidden"); };
