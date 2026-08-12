@@ -584,10 +584,26 @@
   }
   // Big-ball reveal: pop the new number up large in the centre, hold, then shrink it away
   // toward the board (which updates behind it). Only during a live bingo game.
-  var revealT1=null, revealT2=null;
+  var revealT1=null, revealT2=null, ballInFlight=false;
+  /* The handover. The number that was resting fades out just as the travelling one lands on top
+     of it, so the new ball visibly takes the old one's place instead of the old one vanishing
+     the instant it was called. */
+  function landBall(n){
+    ballInFlight=false;
+    var el=document.querySelector("#tvRun .cbnum");
+    if(!el){ return; }
+    el.style.transition="opacity .18s ease";
+    el.style.opacity="0";
+    setTimeout(function(){
+      el.textContent=n;
+      el.style.opacity="1";
+      renderRun();                    // the two previous balls on the left move along now, not before
+    }, 180);
+  }
   function revealBall(n){
     n=parseInt(n,10); if(!n || tvMode!=="bingo") return;
     var el=$("ballReveal"), b=$("brBall"); if(!el||!b) return;
+    ballInFlight=true;
     b.textContent=n; el.classList.remove("hidden");
     b.style.transition="none"; b.style.transform=""; b.style.opacity="";
     b.style.animation="none"; void b.offsetWidth;   // restart the animation
@@ -609,18 +625,32 @@
           b.style.transform="translate("+dx+"px,"+dy+"px) scale("+sc+")";
           // When it lands it sits exactly on the identical resting ball; we hide it then, so the big
           // ball simply "becomes" the called-number ball - no see-through mid-flight.
-          revealT2=setTimeout(function(){ el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity=""; }, 820);
+          revealT2=setTimeout(function(){
+            landBall(n);                                   // the resting ball becomes the new number
+            el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity="";
+          }, 820);
           return;
         }
       } else {
         b.style.transition="opacity .6s ease"; void b.offsetWidth; b.style.opacity="0";
       }
-      revealT2=setTimeout(function(){ el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity=""; }, 850);
+      revealT2=setTimeout(function(){
+        landBall(n);
+        el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity="";
+      }, 850);
     }, 1300);
   }
   function renderRun(){
     var n=state.called.length ? state.called[state.called.length-1] : 0;
-    $("cbNum").textContent = n ? n : "--";
+    // While a ball is in flight the resting ball keeps showing the number it is about to
+    // replace. Setting it to the new number here meant the destination already read 47 before
+    // the 47 had finished travelling, so there was nothing to overtake, just a duplicate.
+    if(!ballInFlight){
+      $("cbNum").textContent = n ? n : "--";
+    } else {
+      var prevN = state.called.length>1 ? state.called[state.called.length-2] : 0;
+      $("cbNum").textContent = prevN ? prevN : "--";
+    }
     var prev=$("tvPrev"); prev.innerHTML="";
     for(var i=2;i<=3;i++){ var pi=state.called.length-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=state.called[pi]; prev.appendChild(d); } }
     $("tvBallCount").innerHTML="<b>"+state.called.length+"</b> of 90 called";
@@ -716,6 +746,7 @@
     var cur=f.getAttribute("src"); if(cur && cur!=="about:blank"){ try{ f.src="about:blank"; }catch(e){} }
   }
   function enterEmbed(game){
+    ballInFlight=false;
     tvMode="embed"; stopAds(); stopCelebrate(); cancelHolding();
     hideBingoLayers();
     $("tvCorner").style.display="";
@@ -745,6 +776,7 @@
     });
   })();
   function enterAds(){
+    ballInFlight=false;
     tvMode="ads"; stopCelebrate(); cancelHolding(); cancelEmbedWatch(); hideGameFrame();
     hideBingoLayers();
     $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
@@ -754,6 +786,7 @@
     startAds();
   }
   function enterBingo(){
+    ballInFlight=false;
     tvMode="bingo"; stopAds(); cancelHolding(); hideGameFrame();
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
@@ -789,6 +822,7 @@
   var EMBED_LOAD_MS=25000, embedT=null, embedLoaded=false;
   function cancelEmbedWatch(){ if(embedT){ clearTimeout(embedT); embedT=null; } }
   function enterHolding(mode){
+    ballInFlight=false;
     tvMode="holding"; stopAds(); stopCelebrate(); hideGameFrame();
     hideBingoLayers();
     $("adsRoot").classList.add("hidden");
@@ -861,7 +895,7 @@
     else if(m.t==="started"){
       if(m.pattern) state.pattern=m.pattern;
       if(typeof m.prize==="string") state.prize=m.prize;
-      state.called=[]; state.winner=null; stopCelebrate(); state.celebrated=false;
+      state.called=[]; state.winner=null; ballInFlight=false; stopCelebrate(); state.celebrated=false;
       state.phase="lobby"; applyBingo();
     }
     else if(m.t==="ball"){
