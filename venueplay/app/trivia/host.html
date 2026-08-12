@@ -173,7 +173,7 @@
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
           </div>
           <div class="two">
-            <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="20"></div>
+            <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="30"></div>
             <div class="field"><label>Correct answer points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
           </div>
           <div class="field">
@@ -291,7 +291,7 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    timePerQ:20, base:100, count:10, speedBonus:true, colour:false,
+    timePerQ:30, base:100, count:10, speedBonus:true, colour:false,
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
     players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
@@ -479,7 +479,7 @@
 
   // ---- game flow (every write goes through the Worker) ----
   function readSettings(){
-    G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||20));
+    G.timePerQ=Math.max(5, Math.min(60, parseInt($("cfgTime").value,10)||30));
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
     G.count=Math.max(1, Math.min(100, parseInt($("cfgCount").value,10)||10));
     G.setId=$("setSel").value||"";

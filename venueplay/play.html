@@ -90,22 +90,24 @@
   .ticket{margin-bottom:16px}
   .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:left}
 
-  /* ---- LAYOUT: three across, two down (menu option "Three across") ----
-     All six tickets on screen with no scrolling. Each one is small, so the ticket holding the
-     number just called lifts and scales over its neighbours: that pop is what makes tickets
-     this size workable, not a decoration. */
-  #cardStack.lay-grid{overflow-x:hidden}
-  .lay-grid .stackwrap{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-  .lay-grid .ticket{margin-bottom:0;background:var(--ink-2);border:1px solid var(--line-2);border-radius:9px;
-    padding:5px 4px 4px;transition:transform .3s cubic-bezier(.2,.9,.3,1.25),box-shadow .3s ease,border-color .3s ease}
-  .lay-grid .ticket .tklabel{font-size:8px;text-align:center;margin-bottom:3px;letter-spacing:.06em}
-  .lay-grid .card9{width:100%;gap:1.5px}
-  .lay-grid .card9 .cc{font-size:8.5px;border-radius:3px}
-  .lay-grid .ticket.pop{position:relative;z-index:6;transform:scale(1.62);
-    border-color:rgba(255,194,75,.55);box-shadow:0 16px 40px rgba(0,0,0,.72),0 0 30px rgba(255,194,75,.22)}
-  .lay-grid .ticket.pop .tklabel{color:var(--gold)}
-  @media (prefers-reduced-motion: reduce){ .lay-grid .ticket.pop{transform:none;border-color:var(--gold)} }
-
+  /* ---- LAYOUT: pages of three (menu option "Three at a time") ----
+     The first attempt put all six on one screen as thumbnails. At phone width that is a 9px cell
+     with two digits in it, too small to read and far too small to hit with a thumb, and the
+     ticket that popped forward covered its neighbours so marks landed on the wrong card.
+     What was actually wanted: three cards a screen at a readable size, and when a number is
+     called, the tab holding it comes to you. */
+  #cardStack.lay-pages{overflow-x:hidden}
+  .pagetabs{display:flex;gap:7px;margin-bottom:10px}
+  .pagetab{flex:1;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);
+    color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12.5px;
+    letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:.15s;position:relative}
+  .pagetab.on{background:var(--ink-2);color:var(--text);border-color:rgba(255,255,255,.22)}
+  .pagetab.has{border-color:var(--gold);color:var(--gold)}
+  .pagetab.has:after{content:"";position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;
+    background:var(--gold);box-shadow:0 0 7px var(--gold)}
+  .lay-pages .stackwrap{display:flex;flex-direction:column;gap:12px}
+  .lay-pages .ticket{margin-bottom:0}
+  .lay-pages .card9{width:100%}
   /* ---- LAYOUT: all six, columns aligned (menu option "Columns lined up") ----
      Tickets flush with no gutter, so the nine columns run as unbroken bands down all six the way
      a paper strip reads. A number called lights its column top to bottom, so you scan one band. */
@@ -131,6 +133,15 @@
   .lcnum{font-family:'Anton',sans-serif;color:var(--gold);font-size:46px;line-height:1;letter-spacing:.01em}
   .lcsub{display:block;font-size:12px;color:var(--faint);margin-top:4px;text-transform:uppercase;letter-spacing:.1em}
   /* menu (top-right of the bar): Easy mode + Leave game */
+  /* The called number lives in the sticky header, hard left, so a player never has to scroll
+     back up to see what was just called. The big one in the card view scrolls away; this does not. */
+  .hdrball{position:absolute;left:12px;top:10px;display:flex;flex-direction:column;align-items:center;
+    gap:1px;min-width:46px;padding:4px 8px;border-radius:10px;background:rgba(255,194,75,.12);
+    border:1px solid rgba(255,194,75,.34)}
+  .hdrball b{font-family:'Anton',sans-serif;font-size:22px;line-height:1;color:var(--gold)}
+  .hdrball span{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--faint);letter-spacing:.02em}
+  body.light .hdrball{ background:rgba(255,31,142,.10); border-color:rgba(255,31,142,.35) }
+  body.light .hdrball b{ color:var(--pink-deep) }
   .menubtn{position:absolute;top:12px;right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
   .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:216px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
   .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
@@ -143,24 +154,26 @@
   .menuleave{color:var(--roll);font-weight:700;justify-content:flex-start}
 
   /* light mode (menu toggle) */
-  body.light{ --ink:#F3EFF5; --ink-2:#FFFFFF; --ink-3:#EFEAF2; --text:#191420; --muted:#5c5666; --faint:#8b8594; --line:rgba(0,0,0,.12); --line-2:rgba(0,0,0,.06);
-    background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #F3EFF5; }
+  /* Light mode is for older eyes in a bright room, and the first version was so pale the cards
+     and the page were nearly the same white. Dimmer ground, whiter cards, darker text. */
+  body.light{ --ink:#DFD9E4; --ink-2:#FFFFFF; --ink-3:#FFFFFF; --text:#141019; --muted:#4a4453; --faint:#6f6878; --line:rgba(0,0,0,.20); --line-2:rgba(0,0,0,.10);
+    background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.10), transparent 60%), #DFD9E4; }
   body.light .ptop{ background:rgba(255,255,255,.9) }
   body.light .brand .word, body.light .pbig, body.light .cardhead .pn, body.light .lastcalled b{ color:#191420 }
   body.light .card9 .cc{ box-shadow:0 1px 2px rgba(0,0,0,.06) }
   /* Light mode is chosen by the players who most need the cues (older eyes, a bright room), and
      gold on white is invisible: the lit column read FAINTER than an unlit one. Use the pink for
      every "this is the one" signal here, and repaint the panel colours the layouts sit on. */
-  body.light .lay-grid .ticket{ background:#fff; border-color:rgba(0,0,0,.10) }
   body.light .colband{ background:var(--ink) }
   body.light .colband i{ background:rgba(0,0,0,.10) }
   body.light .colband i.lit{ background:var(--pink); box-shadow:0 0 10px rgba(255,31,142,.45) }
   body.light .card9 .cc.incol{ border-color:rgba(255,31,142,.55); background:rgba(255,31,142,.08) }
   body.light .card9 .cc.justcalled{ box-shadow:inset 0 0 0 2px var(--pink); color:var(--pink-deep) }
   body.light .card9 .cc.daub.justcalled{ box-shadow:inset 0 0 0 2px #7a0940; color:#fff }
-  body.light .lay-grid .ticket.pop{ border-color:var(--pink);
-    box-shadow:0 16px 34px rgba(0,0,0,.22), 0 0 26px rgba(255,31,142,.28) }
-  body.light .lay-grid .ticket.pop .tklabel{ color:var(--pink-deep) }
+  body.light .pagetab{ background:#fff; border-color:rgba(0,0,0,.12) }
+  body.light .pagetab.on{ background:#F3EFF5 }
+  body.light .pagetab.has{ border-color:var(--pink); color:var(--pink-deep) }
+  body.light .pagetab.has:after{ background:var(--pink); box-shadow:0 0 7px rgba(255,31,142,.6) }
 
   .prizebox{margin-top:16px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:22px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:12px;padding:16px}
   .sharenote{margin-top:12px;font-size:13.5px;color:var(--muted);line-height:1.45}
@@ -186,7 +199,8 @@
       <svg width="17" height="19" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
-    <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span> &middot; Room <span class="mono" id="roomLabel">------</span></div>
+    <div class="hdrball hidden" id="hdrBall"><b id="hdrBallNum">--</b><span id="hdrBallCount">0 of 90</span></div>
+    <div class="venue"><span class="dot" id="statusDot"></span> <span id="statusText">Connecting</span><span class="mono hidden" id="roomLabel">------</span></div>
     <button class="menubtn" id="menuBtn" aria-label="Menu">&#9776;</button>
     <div class="menupanel hidden" id="menuPanel">
       <label class="menuitem"><span>Easy mode<small>Mark my numbers for me</small></span><input type="checkbox" id="assistChk"></label>
@@ -194,7 +208,7 @@
       <label class="menuitem"><span>Ticket layout<small>How your tickets sit on screen</small></span>
         <select id="laySel">
           <option value="stack">Stacked</option>
-          <option value="grid">Three across</option>
+          <option value="pages">Three at a time</option>
           <option value="align">Columns lined up</option>
         </select></label>
       <button class="menuitem menuleave" id="leaveBtn">Leave game</button>
@@ -312,7 +326,7 @@
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
     pattern:"one", prize:"the prize", called:[], active:false, assist:false, allowEarly:false,
     claimPending:false, won:false, ended:false, capture:null,
-    shared:false, sharedWith:[], layout:"stack"
+    shared:false, sharedWith:[], layout:"stack", page:0, builtKey:""
   };
 
   // ---- pid persistence (keep the cosmetic identity across reconnects) ----
@@ -414,17 +428,34 @@
   // so it is floor(n/10), NOT floor((n-1)/10): the first column is nine numbers wide, not ten,
   // and the last is eleven. Getting this wrong lights the column next door.
   function colOfNum(n){ return n>=80 ? 8 : Math.floor(n/10); }
+  /* Rebuild ONLY when the tickets or the layout actually change.
+     Every called ball, and every join or leave by anyone in the room, used to run the whole
+     builder and wipe #cardStack with innerHTML="". Three things fell out of that, all reported
+     from the first live night: a tap was lost whenever a ball landed between the finger going
+     down and coming up, the screen visibly flickered, and any scroll position jumped back to the
+     top. Marks and highlights are just classes, so they get painted onto the cards already on
+     screen and the DOM is left alone. */
+  function structureKey(){
+    var k=effectiveLayout()+"|"+P.cards.length+"|"+P.page;
+    for(var i=0;i<P.cards.length;i++) k+="|"+P.cards[i].cardNo;
+    return k;
+  }
   function renderCards(){
+    if(structureKey()===P.builtKey){ paintCards(); return; }
+    buildCards();
+  }
+  function buildCards(){
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
     var last=P.called.length ? P.called[P.called.length-1] : 0;
     $("lastCalled").innerHTML = last ? ('<span class="lcnum">'+last+'</span><span class="lcsub">'+P.called.length+' of 90 called</span>') : "No numbers called yet";
     var set=calledSet();
     var stack=$("cardStack"); stack.innerHTML="";
+    P.builtKey=structureKey();
     // One layout applies to the whole stack. With a single ticket they all look the same, so the
     // setting only really bites once the host deals a book.
     var lay=effectiveLayout();
-    stack.className = lay==="grid" ? "lay-grid" : lay==="align" ? "lay-align" : "";
+    stack.className = lay==="pages" ? "lay-pages" : lay==="align" ? "lay-align" : "";
     syncCardCtl();
     var curCol = (lay==="align" && last) ? colOfNum(last) : -1;
     if(lay==="align"){
@@ -432,13 +463,30 @@
       for(var b=0;b<9;b++){ var seg=document.createElement("i"); if(b===curCol) seg.className="lit"; band.appendChild(seg); }
       stack.appendChild(band);
     }
+    // Pages of three. Everything else shows every ticket.
+    var PER=3, pages=1, from=0, to=P.cards.length;
+    if(lay==="pages"){
+      pages=Math.ceil(P.cards.length/PER);
+      if(P.page>=pages) P.page=0;
+      from=P.page*PER; to=Math.min(from+PER, P.cards.length);
+      var tabs=document.createElement("div"); tabs.className="pagetabs";
+      for(var pg=0;pg<pages;pg++){
+        var b=document.createElement("button"); b.type="button";
+        b.className="pagetab"+(pg===P.page?" on":"");
+        b.setAttribute("data-page",pg);
+        var a=pg*PER+1, z=Math.min(pg*PER+PER, P.cards.length);
+        b.textContent = (a===z) ? ("Ticket "+a) : ("Tickets "+a+"-"+z);
+        tabs.appendChild(b);
+      }
+      stack.appendChild(tabs);
+    }
     var wrap=document.createElement("div"); wrap.className="stackwrap";
-    for(var i=0;i<P.cards.length;i++){
+    for(var i=from;i<to;i++){
       var cd=P.cards[i];
       var tk=document.createElement("div"); tk.className="ticket"; tk.setAttribute("data-ti",i);
       if(P.cards.length>1){ var lab=document.createElement("div"); lab.className="tklabel";
         // Always show the card number: it is how the host and the TV identify a winning ticket.
-        lab.textContent = (lay==="grid") ? ("#"+cd.cardNo) : ("Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo);
+        lab.textContent = "Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo;
         tk.appendChild(lab); }
       var grid=document.createElement("div"); grid.className="card9";
       for(var r=0;r<3;r++){ for(var c=0;c<9;c++){
@@ -451,43 +499,74 @@
         // Three across shrinks a ticket to thumbnail size. Lifting the right TICKET is only half
         // the job: without this the player still had to hunt 15 tiny numbers for the one that was
         // called, with nothing marking it. Ring the number itself on the ticket that popped.
-        if(lay==="grid" && n===last) cell.classList.add("justcalled");
+        if(n===last) cell.classList.add("justcalled");
         grid.appendChild(cell);
       } }
       tk.appendChild(grid); wrap.appendChild(tk);
     }
     stack.appendChild(wrap);
-    if(lay==="grid" && last) popTicketFor(last);
+    paintCards();
+  }
+
+  /* Repaint what CHANGES, on the cards already on screen: marks, called highlights, the lit
+     column, the header, and which ticket is lifted. Touches classes and text only, so a finger
+     mid-tap and a scrolled page both survive a called number. */
+  function paintCards(){
+    var last=P.called.length ? P.called[P.called.length-1] : 0;
+    var set=calledSet(), lay=effectiveLayout();
+    var curCol = (lay==="align" && last) ? colOfNum(last) : -1;
+    $("cardName").textContent=P.name;
+    $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
+    $("lastCalled").innerHTML = last ? ('<span class="lcnum">'+last+'</span><span class="lcsub">'+P.called.length+' of 90 called</span>') : "No numbers called yet";
+    setHeaderBall(last);
+    var stack=$("cardStack");
+    var band=stack.querySelector(".colband");
+    if(band){ var segs=band.children; for(var b=0;b<segs.length;b++) segs[b].className = (b===curCol) ? "lit" : ""; }
+    var cells=stack.querySelectorAll(".cc[data-n]");
+    for(var i=0;i<cells.length;i++){
+      var cell=cells[i], n=+cell.getAttribute("data-n"), ci=+cell.getAttribute("data-card");
+      var cd=P.cards[ci];
+      cell.classList.toggle("daub", !!(cd && cd.daubs[n]));
+      cell.classList.toggle("on", !!(P.assist && set[n]));
+      cell.classList.toggle("incol", curCol>=0 && colOfNum(n)===curCol);
+      cell.classList.toggle("justcalled", n===last);
+    }
+    followCalled(last);
     updateTension(set);
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
     else { $("bingoBtn").disabled=false; setMsg("Mark off your numbers as they are called. Hit BINGO when your ticket completes the pattern.",""); }
   }
+  function setHeaderBall(n){
+    var box=$("hdrBall"); if(!box) return;
+    if(!n || !P.active){ box.classList.add("hidden"); return; }
+    box.classList.remove("hidden");
+    $("hdrBallNum").textContent=n;
+    $("hdrBallCount").textContent=P.called.length+" of 90";
+  }
   function setMsg(html,cls){ var m=$("pMsg"); m.innerHTML=html; m.className="pmsg"+(cls?" "+cls:""); }
 
-  // ---- "Three across" layout: lift the ticket holding the number just called ----
-  // Six tickets on one phone screen are necessarily small. Rather than ask the player to hunt,
-  // the ticket that actually matters jumps forward over the others for a couple of seconds.
-  var _popT=null;
-  function popTicketFor(n){
-    var hit=-1;
-    for(var i=0;i<P.cards.length && hit<0;i++){
+  // ---- pages: bring the ticket holding the called number to the player ----
+  // The point of paging is that you never hunt. When a number is called we work out which page
+  // it is on, mark that tab, and if the player is not already looking at it, turn to it. That is
+  // the "pull up the tab that has that number in it" behaviour, and it is why three readable
+  // cards a screen beats six unreadable ones.
+  function pageOf(n){
+    for(var i=0;i<P.cards.length;i++){
       var cells=P.cards[i].cells;
-      for(var r=0;r<3 && hit<0;r++){ for(var c=0;c<9;c++){ if(cells[r][c]===n){ hit=i; break; } } }
+      for(var r=0;r<3;r++){ for(var c=0;c<9;c++){ if(cells[r][c]===n) return Math.floor(i/3); } }
     }
-    if(hit<0) return;
-    var stack=$("cardStack");
-    var els=stack.querySelectorAll(".ticket");
-    for(var k=0;k<els.length;k++) els[k].classList.remove("pop");
-    var el=els[hit]; if(!el) return;
-    // Scale from the edge nearest the screen edge, so a popped ticket never runs off it.
-    var col=hit%3, row=Math.floor(hit/3);
-    el.style.transformOrigin=(col===0?"left":col===2?"right":"center")+" "+(row===0?"top":"bottom");
-    el.classList.add("pop");
-    if(_popT) clearTimeout(_popT);
-    _popT=setTimeout(function(){ el.classList.remove("pop"); }, 2600);
+    return -1;
   }
+  function followCalled(n){
+    if(effectiveLayout()!=="pages" || !n) return;
+    var pg=pageOf(n);
+    var tabs=$("cardStack").querySelectorAll(".pagetab");
+    for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle("has", i===pg);
+    if(pg>=0 && pg!==P.page){ P.page=pg; buildCards(); }
+  }
+
   // ---- layout choice (menu) ----
-  var LAYOUTS={ stack:"Stacked", grid:"Three across", align:"Columns lined up" };
+  var LAYOUTS={ stack:"Stacked", pages:"Three at a time", align:"Columns lined up" };
   // hasOwnProperty, not a truthy lookup: "constructor" and "toString" are truthy on any object,
   // so a junk stored value used to sail through and leave the menu showing a blank selection.
   function knownLayout(v){ return Object.prototype.hasOwnProperty.call(LAYOUTS, v); }
@@ -769,6 +848,8 @@
     else { var ex=d.exitFullscreen||d.webkitExitFullscreen; if(ex){ try{ ex.call(d); }catch(e){} } }
   });
   $("cardStack").addEventListener("click", function(e){
+    var tab=e.target.closest(".pagetab");
+    if(tab){ P.page=parseInt(tab.getAttribute("data-page"),10)||0; buildCards(); return; }
     var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("blank")) return;
     var ci=parseInt(cell.getAttribute("data-card"),10), n=parseInt(cell.getAttribute("data-n"),10);
     var cd=P.cards[ci]; if(!cd) return;

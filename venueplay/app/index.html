@@ -818,7 +818,8 @@
   }
   function syncNextBtn(){
     if(G.status==="running" && G.idx>=89){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
-    else { $("nextBtn").disabled=false; $("nextBtn").textContent="Next number"; }
+    // Before the first ball it is not "next", it is the start of the game. Hosts read the button.
+    else { $("nextBtn").disabled=false; $("nextBtn").textContent = (G.idx<0) ? "Start calling" : "Next number"; }
   }
 
   // ---- 90-ball ticket: 3 rows x 9 cols, 15 numbers, exactly 5 per row ----
@@ -1205,7 +1206,7 @@
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     dealCards();
-    $("nextBtn").disabled=false; $("nextBtn").textContent="Next number";
+    $("nextBtn").disabled=false; $("nextBtn").textContent="Start calling";
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to bingo first
     send({ t:"started", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards });
     sendState();
@@ -1218,7 +1219,7 @@
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     dealCards();
-    $("nextBtn").disabled=false; $("nextBtn").textContent="Next number";
+    $("nextBtn").disabled=false; $("nextBtn").textContent="Start calling";
     send({ t:"mode", mode:"bingo" });
     send({ t:"started", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards });
     sendState();
