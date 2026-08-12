@@ -825,6 +825,10 @@
     if(m.t==="tv_here") return; // ignore our own presence pings
     // Remote recovery: lets us push a reload to every screen at once rather than ask 400 venues
     // to find the remote. Rate limited by the watchdog, and refused while a game is on air.
+    if(m.t==="screen_refresh"){
+      if(reloadVenueScreen) reloadVenueScreen();
+      return;
+    }
     if(m.t==="tv_reload"){
       // Accepted in EVERY state. This is a deliberate command we send to recover a screen we
       // cannot reach any other way, and the states most likely to need it are exactly the ones
@@ -933,6 +937,7 @@
   // /tv?venue=<slug> loads that venue's own promo slides, draw schedule and raffle
   // (set from the Account page). Plain /tv keeps the built-in sample loop. Best-effort:
   // any failure just leaves the samples showing.
+  var reloadVenueScreen=null;
   (function loadVenueScreen(){
     var slug=VENUE_SLUG; if(!slug) return;   // the already-parsed slug (handles /tv?venue= AND /tv?bare-slug AND the remembered one)
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
@@ -967,6 +972,9 @@
           refreshAds();
         }).catch(function(){});
     }
+    // A venue that uploads a slide or a logo should see it on the wall now, not after the next
+    // four hourly reload. billing.html broadcasts t:"screen_refresh" the moment it saves.
+    reloadVenueScreen=function(){ try{ loadScreen(true); loadDrawBoard(true); }catch(e){} };
     loadScreen(true);
     // Live members-draw board (name + current jackpot + day/time + venue timezone) from the public view.
     // We request timezone but fall back without it, so it works before AND after the view is migrated

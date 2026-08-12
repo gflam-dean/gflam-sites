@@ -121,6 +121,7 @@
 <body>
 <header>
   <div class="bar">
+    <button type="button" id="toAdsBtn" title="Finish and put the venue ads back on the TV" style="background:none;border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;margin-right:10px;white-space:nowrap">End game</button>
     <a href="/app" title="Back to games" style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);text-decoration:none;margin-right:10px;white-space:nowrap">&#8592; Games</a>
     <div class="brand">
       <svg width="20" height="23" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
@@ -666,6 +667,17 @@
   } else {
     showSignIn("Sign in helper failed to load. Try reloading.");
   }
+
+  // Every game needs an obvious way out. Without this the only route back to the venue's
+  // own advertising was to end the round and wait for the screen to time out.
+  (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
+    b.addEventListener("click", function(){
+      try{ send({ t:"idle" }); }catch(e){}
+      try{ send({ t:"to_ads" }); }catch(e){}
+      b.textContent="Ads are back on";
+      setTimeout(function(){ b.textContent="End game"; }, 2500);
+    });
+  })();
 })();
 </script>
 </body>

@@ -460,6 +460,9 @@
     if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
     if(m.t==="mode"){ if(state.phase!=="lobby"){ /* stay */ } return; }
     if(m.t==="started"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); return; }
+    // The host tapped "Back to ads". Go now rather than sit through the 18 second
+    // wind-down: they have finished and the room should be looking at the venue again.
+    if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
     if(m.t==="idle"){ state.phase="lobby"; stopRing(); show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
     if(m.t==="players"){ if(typeof m.count==="number"){ state.playerCount=m.count; if(state.phase==="lobby") $("lobbyPlaying").textContent=state.playerCount; } return; }
     if(m.t==="state"){
@@ -512,6 +515,8 @@
      did, so the moment a host put trivia or musical bingo on air the venue's branding vanished
      from its own screen. Same source and same corner as tv.html, injected so no markup anchor
      is needed. Best effort: any failure just leaves the screen as it was. */
+  if(VENUE_SLUG){ var _tvs=document.querySelector(".tv-status"); if(_tvs) _tvs.style.display="none"; }   // no "connected" pill on a live venue screen: that corner is the venue's logo
+
   (function venueLogo(){
     if(!VENUE_SLUG) return;
     function paint(url){

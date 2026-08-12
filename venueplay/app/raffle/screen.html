@@ -340,6 +340,9 @@
     if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here" }); }
 
     if(typeof m.prizeLabel==="string") S.prizeLabel=m.prizeLabel;
+    // The host tapped "Back to ads". Go now rather than sit through the 18 second
+    // wind-down: they have finished and the room should be looking at the venue again.
+    if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
     if(m.t==="idle") S.nextUp=!!m.next;   // showing the next prize after a draw, vs the raffle's first prize
     if(typeof m.pad==="number") S.padW=m.pad;
     if(typeof m.min==="number") S.min=m.min;

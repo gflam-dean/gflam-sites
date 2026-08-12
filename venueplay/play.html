@@ -326,7 +326,7 @@
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
     pattern:"one", prize:"the prize", called:[], active:false, assist:false, allowEarly:false,
     claimPending:false, won:false, ended:false, capture:null,
-    shared:false, sharedWith:[], layout:"stack", page:0, builtKey:""
+    shared:false, sharedWith:[], layout:"stack", page:0, builtKey:"", venueSlug:""
   };
 
   // ---- pid persistence (keep the cosmetic identity across reconnects) ----
@@ -837,10 +837,24 @@
   // tickets at once. Zoom bigger (scroll to pan) or smaller (fit every ticket); full screen
   // hides the browser bars for maximum room. The size is remembered for next time.
   var cz=1; try{ var sz=parseFloat(localStorage.getItem("vp-cardzoom")); if(sz) cz=sz; }catch(e){}
-  function applyZoom(){ cz=Math.max(0.6, Math.min(2.2, Math.round(cz*10)/10)); $("cardStack").style.setProperty("--cz", cz); try{ localStorage.setItem("vp-cardzoom", String(cz)); }catch(e){} }
+  function applyZoom(){
+    cz=Math.max(0.6, Math.min(2.2, Math.round(cz*10)/10));
+    $("cardStack").style.setProperty("--cz", cz);
+    try{ localStorage.setItem("vp-cardzoom", String(cz)); }catch(e){}
+    var lbl=document.querySelector(".czlbl");
+    if(lbl) lbl.textContent = (cz===1) ? "Size" : (Math.round(cz*100)+"%");
+    var zi=$("zoomIn"), zo=$("zoomOut");
+    if(zi) zi.disabled = cz>=2.2;
+    if(zo) zo.disabled = cz<=0.6;
+  }
   $("zoomIn").addEventListener("click", function(){ cz+=0.2; applyZoom(); });
   $("zoomOut").addEventListener("click", function(){ cz-=0.2; applyZoom(); });
   applyZoom();
+  (function(){
+    var b=$("fsBtn"); if(!b) return;
+    var el=document.documentElement;
+    if(!(el.requestFullscreen||el.webkitRequestFullscreen)) b.style.display="none";
+  })();
   $("fsBtn").addEventListener("click", function(){
     var d=document, el=d.documentElement;
     var fsel=d.fullscreenElement||d.webkitFullscreenElement;
@@ -874,6 +888,10 @@
     try{ sessionStorage.removeItem("vp-name-"+P.room); }catch(e){}
     P.joined=false; P.cards=[]; P.active=false; P.won=false; P.ended=false; P.claimPending=false;
     setConn("");
+    // A player who scanned the sign on the table has no code and never typed one, so dropping
+    // them on "enter the game code" is a dead end. Send them back to the venue's own join screen,
+    // ready for the next game. Only someone who actually typed a code gets asked for one.
+    if(P.venueSlug){ window.location.replace("/play?venue="+encodeURIComponent(P.venueSlug)); return; }
     show("vNoRoom");
   }
 
@@ -899,6 +917,7 @@
     return out;
   }
   function watchVenue(slug){
+    P.venueSlug=slug;
     var code=venueCode(slug);
     connect(code);                              // broadcast bingo is live on this code right now
     var hopped=false;

@@ -389,6 +389,8 @@
 
   function onMsg(m){
     if(!m||!m.t) return;
+    // The host tapped "Back to ads". Go now rather than wait for a timeout.
+    if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
     if(m.t==="host_here"){ /* host present; wait for state */ return; }
     if(m.t==="state"){
       if(typeof m.drawName==="string") state.drawName=m.drawName;

@@ -737,7 +737,7 @@
         screenLogoUrl=r.url;
         api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:screenLogoUrl }).then(function(s){
           if(s.error){ showMsg(s.error); return; }
-          renderLogo(); showMsg("Logo saved. It shows on your TV within a few seconds.");
+          renderLogo(); pushToScreen(); showMsg("Logo saved. It shows on your TV within a few seconds.");
         });
       });
     };
@@ -746,7 +746,7 @@
   function removeLogo(){
     if(!screenCurrent) return;
     screenLogoUrl=""; renderLogo();
-    api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:"" }).then(function(s){ if(s.error) showMsg(s.error); else showMsg("Logo removed."); });
+    api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:"" }).then(function(s){ if(s.error){ showMsg(s.error); return; } pushToScreen(); showMsg("Logo removed. Your TV updates in a few seconds."); });
   }
   (function(){
     var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove");
@@ -810,6 +810,7 @@
     api("/account/screen-save", { venue_id:screenCurrent.id, slides:data.slides }).then(function(r){
       btn.disabled = false; btn.textContent = "Save screen";
       if (r.error){ showMsg(r.error); return; }
+      pushToScreen();
       showMsg("Screen saved. It updates on your TV within a few seconds.", true);
     });
   }
@@ -827,6 +828,24 @@
       });
     }
   })();
+  /* Tell the venue's TV that its screen content just changed.
+     Uploading a slide or a logo wrote to the database and nothing told the screen, so the venue
+     saw nothing until the TV's own four hourly reload came round: upload at lunchtime, appears
+     tomorrow morning. Meanwhile this page has been promising "it shows on your TV within a few
+     seconds" the whole time. The TV listens on the venue's channel and re-fetches on this. */
+  function pushToScreen(){
+    try{
+      var slug = screenCurrent && screenCurrent.slug;
+      if(!slug || !window.VP || !VP.venueCode) return;
+      var c = VP.getClient();
+      var ch = c.channel("vp-" + VP.venueCode(slug), { config:{ broadcast:{ self:false } } });
+      ch.subscribe(function(st){
+        if(st !== "SUBSCRIBED") return;
+        try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"screen_refresh" } }); }catch(e){}
+        setTimeout(function(){ try{ ch.unsubscribe(); }catch(e){} }, 1200);
+      });
+    }catch(e){}
+  }
   function initScreen(){
     try{ screenOrigin = window.location.origin; }catch(e){}
     api("/account/screen-get", {}).then(function(d){

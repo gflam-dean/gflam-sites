@@ -562,6 +562,11 @@
   function applyZoom(){ cz=Math.max(1, Math.min(2.4, Math.round(cz*10)/10)); $("cardGrid").style.setProperty("--cz", cz); try{ localStorage.setItem("vp-mzoom", String(cz)); }catch(e){} if(P.cells) fitCells(); }
   $("zoomIn").addEventListener("click", function(){ cz+=0.2; applyZoom(); });
   $("zoomOut").addEventListener("click", function(){ cz-=0.2; applyZoom(); });
+  (function(){
+    var b=$("fsBtn"); if(!b) return;
+    var el=document.documentElement;
+    if(!(el.requestFullscreen||el.webkitRequestFullscreen)) b.style.display="none";   // iPhone has no fullscreen API
+  })();
   $("fsBtn").addEventListener("click", function(){
     var d=document, el=d.documentElement, fsel=d.fullscreenElement||d.webkitFullscreenElement;
     if(!fsel){ var rq=el.requestFullscreen||el.webkitRequestFullscreen; if(rq){ try{ rq.call(el); }catch(e){} } }
