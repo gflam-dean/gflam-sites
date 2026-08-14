@@ -353,7 +353,13 @@
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
   var tvSubscribed=false;
   function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
-  ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+  ch.on("broadcast", { event:"msg" }, function(e){
+    var _m=e.payload;
+    // The venue saved a logo or a slide on the Account page. Re-read it now rather than
+    // leaving the screen showing whatever it happened to load with.
+    if(_m && _m.t==="screen_refresh"){ try{ reloadVenueLogo(); }catch(_){} return; }
+    onMsg(_m);
+  });
   ch.subscribe(function(status){
     if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
@@ -465,16 +471,22 @@
      is needed. Best effort: any failure just leaves the screen as it was. */
   if(VENUE_SLUG){ var _tvs=document.querySelector(".tv-status"); if(_tvs) _tvs.style.display="none"; }   // no "connected" pill on a live venue screen: that corner is the venue's logo
 
+  /* Re-runnable on purpose. This used to fetch once at load and never again, so a venue that
+     uploaded its logo while a game was on air saw it appear on the advertising loop (tv.html
+     re-fetches on screen_refresh) and NOT on the game screen, which had already loaded without
+     one. That reads as "the logo doesn't work in games". */
+  var reloadVenueLogo=function(){};
   (function venueLogo(){
     if(!VENUE_SLUG) return;
     function paint(url){
-      if(!url) return;
       var el=document.getElementById("venueLogo");
+      if(!url){ if(el) el.style.display="none"; return; }   // logo removed: take it off the wall
       if(!el){ el=document.createElement("img"); el.id="venueLogo";
         el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
         document.body.appendChild(el); }
-      el.src=url;
+      el.src=url; el.style.display="block";
     }
+    function load(){
     try{
       fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(VENUE_SLUG)+"&select=logo_url&limit=1",
         { headers:{ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON } })
@@ -482,6 +494,9 @@
         .then(function(rows){ if(rows && rows[0]) paint(rows[0].logo_url||""); })
         .catch(function(){});
     }catch(e){}
+    }
+    reloadVenueLogo=load;
+    load();
   })();
 })();
 </script>

@@ -874,11 +874,20 @@
       var slug = screenCurrent && screenCurrent.slug;
       if(!slug || !window.VP || !VP.venueCode) return;
       var c = VP.getClient();
-      var ch = c.channel("vp-" + VP.venueCode(slug), { config:{ broadcast:{ self:false } } });
-      ch.subscribe(function(st){
-        if(st !== "SUBSCRIBED") return;
-        try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"screen_refresh" } }); }catch(e){}
-        setTimeout(function(){ try{ ch.unsubscribe(); }catch(e){} }, 1200);
+      /* Every channel the venue's screens can be sitting on, not just bingo's. This used to
+         broadcast on the bare venue code alone, which is the BINGO channel, so a logo uploaded
+         while trivia or the members draw was on air never reached the screen actually on the
+         wall. The venue saw it work on the advertising loop and not "in the games", because the
+         four game screens are each on their own game-namespaced channel. */
+      var codes = [ VP.venueCode(slug) ];
+      ["trivia","musical","raffle","members"].forEach(function(g){ codes.push(VP.venueCode(g + "-" + slug)); });
+      codes.forEach(function(code){
+        var ch = c.channel("vp-" + code, { config:{ broadcast:{ self:false } } });
+        ch.subscribe(function(st){
+          if(st !== "SUBSCRIBED") return;
+          try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"screen_refresh" } }); }catch(e){}
+          setTimeout(function(){ try{ ch.unsubscribe(); }catch(e){} }, 1200);
+        });
       });
     }catch(e){}
   }
