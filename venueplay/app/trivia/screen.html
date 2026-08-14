@@ -263,15 +263,21 @@
   // The QR shows the HOST pairing link until a session opens (so the host can scan to
   // set up), then flips to the player join link built from the real DB join code.
   function drawLobbyQR(){
-    var url = joinCode ? playURLFor(joinCode) : hostURL;
-    drawQR($("qrBig"), 720, url);
-    drawQR($("qrMini"), 240, joinCode ? playURLFor(joinCode) : url);
-    $("lobbyJoinUrl").textContent = joinCode ? "venueplay.com.au/app/trivia/play" : "Host, scan to set up this screen";
+    // A linked screen must never put a host setup QR on the big screen: the room would scan it.
+    var url = joinCode ? playURLFor(joinCode) : (VENUE_SLUG ? "" : hostURL);
+    if(url){ drawQR($("qrBig"), 720, url); drawQR($("qrMini"), 240, joinCode ? playURLFor(joinCode) : url); }
+    $("lobbyJoinUrl").textContent = joinCode ? "venueplay.com.au/app/trivia/play"
+                                  : (VENUE_SLUG ? "Waiting for the host&hellip;" : "Host, scan to set up this screen");
   }
   function renderLobby(){
     $("lobbyCode").textContent = joinCode || "------";
-    if(VENUE_SLUG){ $("hostLine").textContent="Linked to your venue. Just open the trivia host to start."; }
-    else { $("hostLineCode").textContent=CODE; }
+    /* The host line is SETUP INSTRUCTION, and it was being shown to the pub. A screen that is
+       linked to a venue never needs pairing, and once a join code exists the host is plainly
+       already connected, so from either point on the only thing this screen should offer the
+       room is the player join link. */
+    var setupDone = !!VENUE_SLUG || !!joinCode;
+    $("hostLine").classList.toggle("hidden", setupDone);
+    if(!setupDone) $("hostLineCode").textContent=CODE;
     $("tvJoinCode").textContent = joinCode || "------";
     $("lobbyPlaying").textContent=state.playerCount;
     if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";

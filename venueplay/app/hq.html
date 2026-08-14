@@ -827,9 +827,10 @@
     var b=e.target.closest && e.target.closest("button[data-drem]");
     if(!b) return;
     if(!canBilling()){ alert("Discounts are restricted to Owner and Accounts."); return; }
-    if(!confirm("Remove this discount? It is deleted, not paused, and the venue goes back to its normal rate from the next invoice.")) return;
+    if(!confirm("Remove this discount?\n\nIt is deleted, not paused. The coupon comes off their Stripe subscription, or a dollar credit is taken back off their balance, and the venue goes back to its normal rate from the next invoice.")) return;
     b.disabled=true; var old=b.textContent; b.textContent="\u2026";
     workerPost("/admin/discount-remove", { discount_id:b.getAttribute("data-drem") }).then(function(r){
+      if(r && r.reversed) alert("Removed, and " + r.reversed + ".");
       if(r && r.error){ alert(r.error); b.disabled=false; b.textContent=old; return; }
       load();
     });
@@ -885,7 +886,11 @@
     workerPost("/admin/discount", { target_type:target, target_id:id, kind:kind, value_numeric:value, months:months, note:note }).then(function(res){
       ap.disabled=false;
       if(res.error){ msg.style.color="var(--roll)"; msg.textContent=res.error; return; }
-      msg.style.color="var(--win)"; msg.textContent="Discount applied.";
+      // Say what actually happened in Stripe. "Discount applied" was true of the row and false
+      // of the invoice for as long as this screen has existed, so it now reports the real thing.
+      msg.style.color="var(--win)";
+      msg.textContent = res.manual ? ("Recorded. " + (res.why||"Apply it when you raise the invoice."))
+                      : ("Applied in Stripe: " + (res.applied||"done") + ".");
       reloadDiscounts();
     });
   });

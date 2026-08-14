@@ -968,6 +968,63 @@ async function vpaHandleDiscount(request, env, json) {
   // would zero out or invert the bill). The dashboard also confirms above 50.
   if (kind === 'percent' && value > 100) return json({ error: 'A percentage discount cannot be over 100.' }, 400);
 
+  /* THIS IS WHERE THE DISCOUNT REACHES STRIPE, AND IT NEVER USED TO.
+     vp_discounts was written here, read back by HQ, and read by nothing else in the product. A
+     discount agreed with a venue was recorded, displayed on the billing tab as though it were
+     live, and then every invoice went out at the full rate. Nobody would notice from this screen:
+     the discount is right there on it. */
+  const target = await vpaBillingTargetFor(env, targetType, targetId);
+  if (target.error) return json({ error: target.error }, 400);
+
+  let stripeCouponId = null;
+  let stripeTxnId = null;
+  let applied = null;
+
+  if (!target.manual) {
+    try {
+      if (kind === 'percent') {
+        // Percent off is an ongoing rate change, so it has to be a coupon on the subscription.
+        // duration 'forever' when no month count is given, which is what "ongoing" means here.
+        const coupon = await vpbStripePost(env, 'coupons', Object.assign({
+          percent_off: value,
+          duration: months ? 'repeating' : 'forever',
+          name: 'VenuePlay: ' + (target.name || 'venue') + ' ' + value + '% off',
+        }, months ? { duration_in_months: months } : {}));
+        if (!coupon || coupon.error || !coupon.id) {
+          return json({ error: 'Stripe would not create that discount: ' + ((coupon && coupon.error && coupon.error.message) || 'unknown error') }, 502);
+        }
+        stripeCouponId = coupon.id;
+        if (!target.subId) return json({ error: 'That account has no subscription to discount yet.' }, 400);
+        // Newer Stripe API versions take discounts[]; older ones take a bare coupon. Which one
+        // this account is on is not knowable from here, so try the current shape and fall back
+        // rather than have the coupon exist while attached to nothing.
+        let att = await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(target.subId), { 'discounts[0][coupon]': stripeCouponId });
+        if (att && att.error) att = await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(target.subId), { coupon: stripeCouponId });
+        if (att && att.error) {
+          await vpbStripeDelete(env, 'coupons/' + encodeURIComponent(stripeCouponId)).catch(() => {});
+          return json({ error: 'Stripe would not apply that discount: ' + (att.error.message || 'unknown error') }, 502);
+        }
+        applied = months ? (value + '% off for ' + months + ' month' + (months === 1 ? '' : 's')) : (value + '% off, ongoing');
+      } else {
+        // A dollar discount is a one-off. Negative balance on the customer IS a credit, and
+        // Stripe consumes it on the next invoice by itself. Same mechanism the annual release
+        // credit already uses, so a venue sees one consistent "credit held" figure.
+        const cents = Math.round(value * 100);
+        const txn = await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions', {
+          amount: -cents, currency: 'aud',
+          description: 'VenuePlay discount' + (note ? ': ' + note : ''),
+        });
+        if (!txn || txn.error || !txn.id) {
+          return json({ error: 'Stripe would not add that credit: ' + ((txn && txn.error && txn.error.message) || 'unknown error') }, 502);
+        }
+        stripeTxnId = txn.id;
+        applied = '$' + value.toFixed(2) + ' credit, comes off their next invoice';
+      }
+    } catch (e) {
+      return json({ error: 'Could not reach Stripe just now. Nothing was changed, please try again.' }, 502);
+    }
+  }
+
   const discount = await vpaInsert(env, 'vp_discounts', {
     target_type: targetType,
     target_id: targetId,
@@ -976,13 +1033,17 @@ async function vpaHandleDiscount(request, env, json) {
     months: kind === 'percent' ? months : null,   // dollar credits are one-off, no months
     note: note,
     created_by: actor.actorId,
+    stripe_coupon_id: stripeCouponId,
+    stripe_txn_id: stripeTxnId,
   });
 
   await vpaAudit(env, actor, 'discount_applied', targetType + ':' + targetId, {
     kind: kind, value_numeric: value, months: months, note: note,
+    stripe_coupon_id: stripeCouponId, stripe_txn_id: stripeTxnId, manual: !!target.manual,
   });
 
-  return json({ ok: true, discount: { id: discount.id } });
+  return json({ ok: true, discount: { id: discount.id },
+                manual: !!target.manual, applied: applied, why: target.why || null });
 }
 
 
@@ -1010,13 +1071,46 @@ async function vpaHandleDiscountRemove(request, env, json) {
   const row = rows && rows[0];
   if (!row) return json({ error: 'That discount no longer exists.' }, 404);
 
+  /* Undo the Stripe side FIRST. Deleting only the row would put HQ back to the state that made
+     this worth fixing, except inverted and worse: the screen would show no discount while Stripe
+     quietly kept taking it off every invoice, forever, with nothing left pointing at it. */
+  let reversed = null;
+  try {
+    if (row.stripe_coupon_id) {
+      const target = await vpaBillingTargetFor(env, row.target_type, row.target_id);
+      // Clear it off the subscription, then delete the coupon so it cannot be reused by accident.
+      if (target && !target.manual && target.subId) {
+        await vpbStripeDelete(env, 'subscriptions/' + encodeURIComponent(target.subId) + '/discount').catch(() => {});
+      }
+      await vpbStripeDelete(env, 'coupons/' + encodeURIComponent(row.stripe_coupon_id));
+      reversed = 'coupon removed from their subscription';
+    } else if (row.stripe_txn_id) {
+      // A balance credit cannot be deleted, so take it back with an equal and opposite entry.
+      const target = await vpaBillingTargetFor(env, row.target_type, row.target_id);
+      if (target && !target.manual && target.customer) {
+        const cents = Math.round(Number(row.value_numeric || 0) * 100);
+        if (cents > 0) {
+          const back = await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions', {
+            amount: cents, currency: 'aud', description: 'VenuePlay discount reversed',
+          });
+          if (back && back.error) {
+            return json({ error: 'Could not take that credit back off their account: ' + (back.error.message || 'unknown error') + '. The discount has been left in place.' }, 502);
+          }
+          reversed = '$' + (cents / 100).toFixed(2) + ' credit taken back';
+        }
+      }
+    }
+  } catch (e) {
+    return json({ error: 'Could not reach Stripe just now. The discount has been left in place, please try again.' }, 502);
+  }
+
   await vpaDelete(env, 'vp_discounts', 'id=eq.' + encodeURIComponent(id));
 
   await vpaAudit(env, actor, 'discount_removed', row.target_type + ':' + row.target_id, {
-    discount_id: id, removed: row,
+    discount_id: id, removed: row, reversed: reversed,
   });
 
-  return json({ ok: true, removed: { id: id } });
+  return json({ ok: true, removed: { id: id }, reversed: reversed });
 }
 
 
@@ -2170,6 +2264,42 @@ async function vpbStripePost(env, path, params) {
     body: form.toString(),
   });
   return await res.json();
+}
+
+async function vpbStripeDelete(env, path) {
+  const res = await fetch('https://api.stripe.com/v1/' + path, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + env.STRIPE_SECRET_KEY },
+  });
+  return await res.json();
+}
+
+/* Where does a discount on this target actually land?
+ *
+ * A venue billed through a founding account is on Stripe and can carry a real coupon or credit.
+ * A venue in a vp_venue_groups group is admin-invoiced through Xero instead (the two are mutually
+ * exclusive: vp_venues_one_billing_parent allows founding_id OR group_id, never both), so there is
+ * no subscription to discount and the negotiated rate is what the invoice is built from. Saying so
+ * plainly is the point: a discount that cannot be applied must not report success. */
+async function vpaBillingTargetFor(env, targetType, targetId) {
+  if (targetType === 'group') {
+    return { manual: true, why: 'Groups are invoiced by hand through Xero, so this is recorded against the group and applied when you raise the invoice.' };
+  }
+  const vs = await vpaSelect(env, 'vp_venues',
+    'id=eq.' + encodeURIComponent(targetId) + '&select=id,name,founding_id,group_id');
+  const venue = vs && vs[0];
+  if (!venue) return { error: 'That venue no longer exists.' };
+  if (!venue.founding_id) {
+    return { manual: true, name: venue.name, why: 'This venue is invoiced by hand (it bills through a group, not Stripe), so this is recorded and applied when you raise the invoice.' };
+  }
+  const accts = await vpaSelect(env, 'venueplay_founding',
+    'id=eq.' + encodeURIComponent(venue.founding_id) + '&select=id,plan,stripe_subscription_id,stripe_customer_id');
+  const acct = accts && accts[0];
+  if (!acct) return { error: 'That venue has no billing account.' };
+  const info = await vpbSubItem(env, acct.stripe_subscription_id);
+  const customer = (info && info.sub && info.sub.customer) || acct.stripe_customer_id || null;
+  if (!customer) return { error: 'That account has no Stripe customer yet, so there is nothing to discount.' };
+  return { manual: false, name: venue.name, account: acct, info: info, customer: customer, subId: acct.stripe_subscription_id };
 }
 
 /* POST /account/portal : open the Stripe Customer Portal so a venue can see + download every past

@@ -238,7 +238,7 @@
   }
   function stopAds(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
   function startAds(){
-    stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.toggle("hidden", !!VENUE_SLUG);   // no host code on a live venue screen
+    stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.toggle("hidden", !!VENUE_SLUG);   // a linked screen never needs pairing instructions
     hideAll(); $("tvIdle").classList.remove("hidden"); fillIdle();
     var slides=document.querySelectorAll("#tvIdle .ad"); adIdx=0;
     for(var i=0;i<slides.length;i++){ slides[i].classList.toggle("show", i===0); }

@@ -225,12 +225,20 @@
   // The QR shows the HOST pairing link until a session opens (so the host can scan to set up
   // this screen), then flips to the player join link built from the real DB join code.
   function drawLobbyQR(){
-    var url = joinCode ? playURLFor(joinCode) : hostURL;
-    drawQR($("qrBig"), 720, url);
-    drawQR($("qrMini"), 220, joinCode ? playURLFor(joinCode) : url);
+    // A linked screen must never put a host setup QR on the big screen: the room would scan it.
+    var url = joinCode ? playURLFor(joinCode) : (VENUE_SLUG ? "" : hostURL);
+    if(url) drawQR($("qrBig"), 720, url);
+    if(url) drawQR($("qrMini"), 220, joinCode ? playURLFor(joinCode) : url);
   }
   function renderLobby(){
     $("lobbyCode").textContent = joinCode || "------";
+    /* The host line is SETUP INSTRUCTION, and it was being shown to the pub. A screen that is
+       linked to a venue never needs pairing, and once a join code exists the host is plainly
+       already connected, so from either point on the only thing this screen should offer the
+       room is the player join link. */
+    var setupDone = !!VENUE_SLUG || !!joinCode;
+    var hl=document.querySelector(".hostline");
+    if(hl) hl.classList.toggle("hidden", setupDone);
     $("hostLineCode").textContent = CODE;
     $("tvJoinCode").textContent = joinCode || "------";
     $("lobbyPlaying").textContent=state.playerCount;

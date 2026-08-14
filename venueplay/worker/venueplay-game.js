@@ -176,6 +176,7 @@ export default {
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
+      if (method === 'POST' && path === '/host/signing-key')   return await handleHostSigningKey(request, env, json);
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       if (method === 'POST' && path === '/host/game/pattern')  return await handleMusicPattern(request, env, json);
@@ -294,7 +295,7 @@ async function handleCreateSession(request, env, json) {
         state_version: 0,
         plan_cap_at_start: planCap,
         opened_at: new Date().toISOString(),
-        created_by: staff.id,   // vp_venue_staff.id, for the audit trail
+        created_by: staff.id || null,   // vp_venue_staff.id; null for an HQ admin, who has no staff row
       }),
     });
     if (res.ok) { const d = await res.json(); session = Array.isArray(d) ? d[0] : d; break; }
@@ -396,7 +397,49 @@ async function handleVenueLookup(request, env, json) {
   const venueId = await venueByCode(env, url.searchParams.get('code') || '');
   if (!venueId) return json({ exists: false });
   const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
-  return json({ exists: true, name: (rows && rows[0] && rows[0].name) || '' });
+  // The public half of the venue's signing key, so a phone or a TV can check that a ball really
+  // came from the host. Public on purpose: verifying is the entire point of it.
+  const pub = await venuePublicJwk(env, venueId);
+  return json({ exists: true, name: (rows && rows[0] && rows[0].name) || '', signing_key: pub });
+}
+
+/* The bingo channel is named from the venue's PUBLIC slug, so it is guessable by anyone who knows
+   the venue exists, and no amount of renaming fixes that while printed signs and a fixed TV URL
+   have to reach the same room. Authenticity comes from a signature instead: the host signs what it
+   broadcasts, and phones and the TV drop anything that does not verify. */
+async function venuePublicJwk(env, venueId) {
+  try {
+    const rows = await sbGet(env, 'vp_venue_signing_keys',
+      'venue_id=eq.' + enc(venueId) + '&select=public_jwk&limit=1');
+    return (rows && rows[0] && rows[0].public_jwk) || null;
+  } catch (e) { return null; }   // table not migrated yet: unsigned, exactly as before
+}
+
+/* POST /host/signing-key  { venue_id }  ->  { public_jwk, private_jwk }
+ * Staff-only. Mints the venue's keypair on first use and returns it to the console so it can sign.
+ * requireStaff is what stands between the private half and the world, so it runs BEFORE any read. */
+async function handleHostSigningKey(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const venueId = String(b.venue_id || '').trim();
+  assertUuid(venueId, 'venue_id');
+  await requireStaff(env, authUserId, venueId);   // throws 403 unless this person works here
+
+  const rows = await sbGet(env, 'vp_venue_signing_keys',
+    'venue_id=eq.' + enc(venueId) + '&select=public_jwk,private_jwk&limit=1');
+  if (rows && rows[0]) return json({ public_jwk: rows[0].public_jwk, private_jwk: rows[0].private_jwk });
+
+  const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const publicJwk = await crypto.subtle.exportKey('jwk', pair.publicKey);
+  const privateJwk = await crypto.subtle.exportKey('jwk', pair.privateKey);
+  // Upsert, because two host devices opening the console at once would otherwise race and the
+  // loser would sign with a key nobody is verifying against.
+  await sbUpsert(env, 'vp_venue_signing_keys',
+    { venue_id: venueId, public_jwk: publicJwk, private_jwk: privateJwk }, 'venue_id');
+  const after = await sbGet(env, 'vp_venue_signing_keys',
+    'venue_id=eq.' + enc(venueId) + '&select=public_jwk,private_jwk&limit=1');
+  const row = (after && after[0]) || { public_jwk: publicJwk, private_jwk: privateJwk };
+  return json({ public_jwk: row.public_jwk, private_jwk: row.private_jwk });
 }
 
 /* What is on at this venue right now?  (anon)
@@ -740,7 +783,7 @@ async function handleHostGame(request, env, json) {
   await emitEvent(env, session, 'game.started', {
     game_id: game.id, seq, format: 'bingo90', pattern,
     prize: config.prize || null, title: config.title || null,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   return json({ game_id: game.id, seq, pattern, cards_dealt: cards.length });
 }
@@ -853,7 +896,7 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
     game_id: game.id, seq, format: 'trivia',
     question_count: questionCount, title: config.title || null, prize: config.prize || null,
     colour: config.colour !== false,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   return json({ game_id: game.id, seq, format: 'trivia', question_count: questionCount });
 }
@@ -957,7 +1000,7 @@ async function hostStartMusical(env, json, b, session, staff, seq) {
     game_id: game.id, seq, format: 'musical_bingo', pattern,
     prize: config.prize || null, title: config.title || null,
     playlist_name: playlistName, song_count: songs.length, auto_daub: autoDaub,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   // The host response carries the playlist's songs WITH their uuids so the host page can
   // map each to its previewUrl/artwork from the library (client-side) and send song_id to
@@ -1077,7 +1120,7 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
     prize: config.prize || null, prize_type: config.prize_type || null,
     allow_redraw: allowRedraw, time_to_present: timeToPresent, pad: padWidth,
     jackpot_on: jackpotOn, jackpot_amount_cents: jackpotCents,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   return json({
     game_id: game.id, seq, format: 'raffle',
@@ -1216,7 +1259,7 @@ async function handleHostDraw(request, env, json) {
     prize: prizeText || null, prize_type: prizeType || null,
     allow_redraw: raffle.allow_redraw, time_to_present: raffle.time_to_claim_seconds,
     range_min: min, range_max: max, pad: padWidth, redraw: isRedraw,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   return json({
     game_id: gameId, seq: newSeq, tickets: picks, pad: padWidth,
@@ -1257,7 +1300,7 @@ async function handleDrawResolve(request, env, json) {
   await sbPatch(env, 'vp_raffle_results', 'game_id=eq.' + enc(gameId) + '&seq=eq.' + seq, patch);
 
   const tickets = results.map((r) => r.ticket_number);
-  await emitEvent(env, session, 'raffle.result', { game_id: gameId, seq, outcome, tickets }, 'host:' + staff.id);
+  await emitEvent(env, session, 'raffle.result', { game_id: gameId, seq, outcome, tickets }, actorRef(staff));
   return json({ game_id: gameId, seq, outcome, tickets });
 }
 
@@ -1941,7 +1984,7 @@ async function handleSongFlag(request, env, json) {
   const counts = await sbGet(env, 'v_vp_song_flag_counts', 'skey=eq.' + enc(skey) + '&select=venues');
   const venues = (counts && counts[0] && Number(counts[0].venues)) || 1;
   await emitEvent(env, session, 'song.flagged',
-    { song_id: songId, title: song.title, venues: venues }, 'host:' + staff.id);
+    { song_id: songId, title: song.title, venues: venues }, actorRef(staff));
   return json({ ok: true, title: song.title, artist: song.artist, venues: venues, retires_at: 3 });
 }
 
@@ -2009,7 +2052,7 @@ async function handleHostPlay(request, env, json) {
 
   await emitEvent(env, session, 'music.song_played', {
     song_id: songId, title: song.title, artist: song.artist, seq: nextSeq, played_count: nextSeq,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   return json({ song_id: songId, title: song.title, artist: song.artist, seq: nextSeq, played_count: nextSeq });
 }
@@ -2088,7 +2131,7 @@ async function handleHostQuestion(request, env, json) {
     text: q.question, options, ends_at: endsAt, secs,
     image_url: q.image_url || null,   // picture rounds: the phones + TV show the image with the question
     colour: cfg.colour !== false,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   /* Read one further ahead, HOST ONLY, so the console can show what is coming.
      A host reads the question aloud, and until now they first saw it at the same instant the room
@@ -2205,7 +2248,7 @@ async function handleHostReveal(request, env, json) {
   // PUBLIC broadcast: NOW it is safe to send correct_index, the reveal has happened.
   await emitEvent(env, session, 'trivia.reveal', {
     qseq: t.current_seq, correct_index: q.correct_index, options, split, leaderboard,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   return json({ qseq: t.current_seq, correct_index: q.correct_index, split, leaderboard });
 }
@@ -2243,7 +2286,7 @@ async function handleHostBall(request, env, json) {
   // 90-ball has no letter: emit just the number and its position in the draw.
   await emitEvent(env, session, 'bingo.ball_drawn', {
     number, index: newIndex, ordinal: newIndex, drawn_count: newIndex,
-  }, 'host:' + staff.id);
+  }, actorRef(staff));
 
   return json({ number, index: newIndex });
 }
@@ -2468,7 +2511,7 @@ async function handleClaimResolve(request, env, json) {
 
   const status = decision === 'confirm' ? 'confirmed' : 'rejected';
   await sbPatch(env, 'vp_claims', 'id=eq.' + enc(claimId), {
-    status, resolved_by: staff.id, resolved_at: new Date().toISOString(),
+    status, resolved_by: staff.id || null, resolved_at: new Date().toISOString(),
   });
 
   // WRITE THE RESULT. There is no separate bingo winners table: the confirmed
@@ -2495,7 +2538,7 @@ async function handleClaimResolve(request, env, json) {
   if (status === 'confirmed' && claim.winning_cells) payload.winning_cells = claim.winning_cells;
   // The result event name matches the game format so each TV/host listens for its own.
   const resultEvent = games[0].format === 'musical_bingo' ? 'music.claim_result' : 'bingo.claim_result';
-  await emitEvent(env, session, resultEvent, payload, 'host:' + staff.id);
+  await emitEvent(env, session, resultEvent, payload, actorRef(staff));
 
   return json({ claim_id: claimId, status });
 }
@@ -2655,7 +2698,7 @@ async function handleGameEnd(request, env, json) {
   if (games[0].status === 'running') {
     await sbPatch(env, 'vp_games', 'id=eq.' + enc(gameId), { status: 'finished', ended_at: new Date().toISOString() });
   }
-  await emitEvent(env, session, 'game.ended', { game_id: gameId }, 'host:' + staff.id);
+  await emitEvent(env, session, 'game.ended', { game_id: gameId }, actorRef(staff));
   return json({ game_id: gameId, status: 'finished' });
 }
 
@@ -2698,7 +2741,7 @@ async function handleSessionClose(request, env, json) {
     { status: 'finished', ended_at: new Date().toISOString() });
   await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId),
     { status: 'finished', ended_at: new Date().toISOString() });
-  await emitEvent(env, session, 'session.closed', {}, 'host:' + staff.id);
+  await emitEvent(env, session, 'session.closed', {}, actorRef(staff));
   // Busy-night overage: if this night's metered headcount beat the plan cap, add the
   // extra players to the next Stripe invoice. Wrapped so a billing hiccup never blocks close.
   try { await chargeNightOverage(env, session); } catch (e) { /* billing never blocks session close */ }
@@ -2982,17 +3025,48 @@ async function verifyHostJwt(request, env) {
 // Confirm the auth user is staff at the target venue. Returns the staff row
 // (id + role). This is the cross-venue-leakage gate: the venue is re-derived
 // per request and matched against the target.
+/* Who did this, for the event log. A VenuePlay HQ admin using "View as" has no vp_venue_staff
+   row to name, and 'host:null' in an audit trail reads as data loss rather than as us acting on
+   the venue's behalf. The auth user id is the thing that is actually true about them. */
+function actorRef(staff) {
+  if (!staff) return 'host:unknown';
+  if (staff.is_admin) return 'vpadmin:' + (staff.auth_user_id || 'unknown');
+  return 'host:' + (staff.id || 'unknown');
+}
+
 async function requireStaff(env, authUserId, venueId) {
   assertUuid(authUserId, 'user');     // sub claim from the verified JWT
   assertUuid(venueId, 'venue_id');    // re-derived per request; never trusted raw
   const rows = await sbGet(env, 'vp_venue_staff',
     'auth_user_id=eq.' + enc(authUserId) + '&venue_id=eq.' + enc(venueId) + '&select=id,role,venue_id');
-  if (!rows.length) throw httpError(403, 'Not authorised: you are not staff at this venue');
+  if (!rows.length) {
+    /* A VenuePlay HQ admin using "View as" is staff nowhere, and this Worker had no concept of an
+       admin at all, so every host route refused them. The consoles do not refuse them: they read
+       ctx.isAdmin and show the full manager controls. So an admin got a working-looking members
+       draw where creating a draw, adding members and drawing a winner all failed.
+
+       It looked format-specific from the outside, which is what made it hard to place: broadcast
+       bingo has no Worker, so bingo worked perfectly while everything with a server behind it did
+       nothing. This is the same gap the billing Worker had, fixed there this morning.
+
+       The admin still has to BE an admin: this is a real lookup against vp_platform_admins, not a
+       header or a client claim. */
+    const admins = await sbGet(env, 'vp_platform_admins',
+      'auth_user_id=eq.' + enc(authUserId) + '&select=auth_user_id,role');
+    if (!admins.length) throw httpError(403, 'Not authorised: you are not staff at this venue');
+    // The kill-switch still applies: an admin must not be able to run games at a venue we have
+    // switched off, or the suspension would not mean anything.
+    await assertVenueActive(env, venueId);
+    // 'owner' so the manager-gated routes (draw settings, members list) work, which is the whole
+    // point of View as. id is null: there is no staff row to attribute to, and the audit trail
+    // records the auth user either way.
+    return { id: null, role: 'owner', venue_id: venueId, is_admin: true, auth_user_id: authUserId };
+  }
 
   // M6 kill-switch: an admin-suspended venue (or its group) cannot run games,
   // regardless of a valid host login or Stripe state.
   await assertVenueActive(env, venueId);
-  return rows[0];
+  return Object.assign({ auth_user_id: authUserId }, rows[0]);
 }
 
 // M6 kill-switch, shared by requireStaff (host routes) and the player routes
