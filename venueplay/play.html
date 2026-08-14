@@ -898,10 +898,39 @@
   var roomIn=$("roomIn");
   roomIn.addEventListener("input", function(){ roomIn.value=roomIn.value.toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,""); $("roomErr").textContent=""; });
   roomIn.addEventListener("keydown", function(e){ if(e.key==="Enter") roomGo(); });
+  /* Every sign in the pub says venueplay.com.au/play, so /play has to cope with ANY code the
+     room is shown: a bingo venue code, or the random join code a trivia or musical night hands
+     out. It could not. Typing a trivia code here connected the phone to the BINGO channel and
+     sat on "waiting for the host" forever, because the only thing that ever hopped to another
+     game was the /play?venue= path off a table talker. A punter reading the printed sign and
+     typing the code on the screen in front of them hit a dead end.
+     Ask the Worker what the code is for, then go there. Bingo, an unknown code, or a Worker we
+     cannot reach all fall through to connecting here, which is the old behaviour. */
+  function playerAppFor(format){
+    var f=String(format||"");
+    if(f.indexOf("trivia")===0)  return "/app/trivia/play.html";
+    if(f.indexOf("musical")===0) return "/app/musical/play.html";
+    return "";   // bingo (and raffle/members, which have no player app) stay right here
+  }
+  function goToCode(code){
+    // Connect FIRST, ask second. Bingo is far and away the common case and its code needs no
+    // lookup at all, so making every player wait on a round trip to catch the rarer trivia and
+    // musical codes would be paying the cost in the wrong place. Same shape watchVenue already
+    // uses for a table-talker link.
+    connect(code);
+    playerPost("/join/info",{ code:code })
+      .then(function(r){
+        if(P.joined || P.active) return;               // already in a game here: never yank them away
+        var to=playerAppFor(r && r.format);
+        if(to) window.location.replace(to+"?room="+encodeURIComponent(code));
+      })
+      .catch(function(){});                            // worker unreachable: bingo still works
+  }
   function roomGo(){
     var v=roomIn.value.toUpperCase().trim();
     if(!CODE_RE.test(v)){ $("roomErr").textContent="Enter all 6 characters from the TV."; return; }
-    connect(v);
+    $("roomErr").textContent="";
+    goToCode(v);
   }
   $("roomBtn").addEventListener("click", roomGo);
   $("nameIn").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
@@ -1022,7 +1051,7 @@
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
     var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
     var slug = room ? "" : venueSlugFromURL();
-    if(room && CODE_RE.test(room)){ connect(room); }
+    if(room && CODE_RE.test(room)){ goToCode(room); }
     else if(slug){ watchVenue(slug); }
     else { $("statusText").textContent="No room"; show("vNoRoom"); }
   })();

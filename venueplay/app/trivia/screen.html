@@ -143,7 +143,7 @@
       <div class="qrbig"><canvas id="qrBig"></canvas></div>
       <div class="lobbytxt">
         <div class="lobbyname">Trivia Night</div>
-        <div class="joinurl" id="lobbyJoinUrl">venueplay.com.au/app/trivia/play</div>
+        <div class="joinurl" id="lobbyJoinUrl">venueplay.com.au/play</div>
         <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
         <div class="playing"><b id="lobbyPlaying">0</b> playing</div>
       </div>
@@ -266,7 +266,7 @@
     // A linked screen must never put a host setup QR on the big screen: the room would scan it.
     var url = joinCode ? playURLFor(joinCode) : (VENUE_SLUG ? "" : hostURL);
     if(url){ drawQR($("qrBig"), 720, url); drawQR($("qrMini"), 240, joinCode ? playURLFor(joinCode) : url); }
-    $("lobbyJoinUrl").textContent = joinCode ? "venueplay.com.au/app/trivia/play"
+    $("lobbyJoinUrl").textContent = joinCode ? "venueplay.com.au/play"
                                   : (VENUE_SLUG ? "Waiting for the host&hellip;" : "Host, scan to set up this screen");
   }
   function renderLobby(){

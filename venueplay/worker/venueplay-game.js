@@ -320,14 +320,24 @@ async function handleJoinInfo(request, env, json) {
   const code = String(b.code || '').trim().toUpperCase();
   if (!code) return json({ collect: null });
   let venueId = null;
-  const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=venue_id&limit=1');
-  if (sessions.length) venueId = sessions[0].venue_id;
-  else venueId = await venueByCode(env, code);   // broadcast bingo has no session: resolve by venue code
-  if (!venueId) return json({ collect: null }); // unknown code; join screen falls back to name only
+  /* WHICH GAME is this code for? Every printed sign says venueplay.com.au/play, so /play has to
+     be able to resolve ANY code the room is shown: a bingo venue code, or the random join code a
+     trivia or musical session hands out. It could not before. Typing a trivia code into /play
+     connected the phone to the bingo channel and sat there forever, because the only thing that
+     ever hopped to another game was the /play?venue= path off a table talker. */
+  let format = '';
+  const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=id,venue_id&limit=1');
+  if (sessions.length) {
+    venueId = sessions[0].venue_id;
+    const games = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(sessions[0].id) + '&status=in.(lobby,running,paused)&select=format&order=seq.desc&limit=1');
+    if (games.length) format = String(games[0].format || '');
+  } else venueId = await venueByCode(env, code);   // broadcast bingo has no session: resolve by venue code
+  if (!venueId) return json({ collect: null, format: '' }); // unknown code; join screen falls back to name only
   const rows = await sbGet(env, 'vp_venue_settings',
     'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
   const cfg = (rows && rows[0]) || {};
-  return json({ collect: {
+  return json({ format: format, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,
