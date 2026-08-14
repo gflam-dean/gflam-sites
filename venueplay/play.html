@@ -88,6 +88,8 @@
   .cpbtn.sel{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(255,31,142,.3)}
   /* stacked tickets (a book) */
   .ticket{margin-bottom:16px}
+  /* Turning the page hides tickets; it does NOT rebuild them. See buildCards. */
+  .ticket.offpage{display:none}
   .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:left}
 
   /* ---- LAYOUT: pages of three (menu option "Three at a time") ----
@@ -326,7 +328,7 @@
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
     pattern:"one", prize:"the prize", called:[], active:false, assist:false, allowEarly:false,
     claimPending:false, won:false, ended:false, capture:null,
-    shared:false, sharedWith:[], layout:"stack", page:0, builtKey:"", venueSlug:""
+    shared:false, sharedWith:[], layout:"stack", page:0, turnedFor:0, builtKey:"", venueSlug:""
   };
 
   // ---- pid persistence (keep the cosmetic identity across reconnects) ----
@@ -436,7 +438,7 @@
      top. Marks and highlights are just classes, so they get painted onto the cards already on
      screen and the DOM is left alone. */
   function structureKey(){
-    var k=effectiveLayout()+"|"+P.cards.length+"|"+P.page;
+    var k=effectiveLayout()+"|"+P.cards.length;
     for(var i=0;i<P.cards.length;i++) k+="|"+P.cards[i].cardNo;
     return k;
   }
@@ -464,15 +466,19 @@
       stack.appendChild(band);
     }
     // Pages of three. Everything else shows every ticket.
-    var PER=3, pages=1, from=0, to=P.cards.length;
+    /* EVERY ticket goes in, on every layout. "Three at a time" used to put only the current
+       page in the DOM, so turning the page meant a full rebuild: innerHTML="" and the whole
+       stack recreated. The page turns on its own whenever a called number is on
+       another ticket, which in this layout is most balls, so the screen was being torn down and
+       rebuilt several times a minute. That is the flicker. Now a page turn is a class. */
+    var PER=3, pages=1;
     if(lay==="pages"){
       pages=Math.ceil(P.cards.length/PER);
       if(P.page>=pages) P.page=0;
-      from=P.page*PER; to=Math.min(from+PER, P.cards.length);
       var tabs=document.createElement("div"); tabs.className="pagetabs";
       for(var pg=0;pg<pages;pg++){
         var b=document.createElement("button"); b.type="button";
-        b.className="pagetab"+(pg===P.page?" on":"");
+        b.className="pagetab";                 // which tab is "on" is painted, not built
         b.setAttribute("data-page",pg);
         var a=pg*PER+1, z=Math.min(pg*PER+PER, P.cards.length);
         b.textContent = (a===z) ? ("Ticket "+a) : ("Tickets "+a+"-"+z);
@@ -481,9 +487,10 @@
       stack.appendChild(tabs);
     }
     var wrap=document.createElement("div"); wrap.className="stackwrap";
-    for(var i=from;i<to;i++){
+    for(var i=0;i<P.cards.length;i++){
       var cd=P.cards[i];
-      var tk=document.createElement("div"); tk.className="ticket"; tk.setAttribute("data-ti",i);
+      var tk=document.createElement("div"); tk.className="ticket";
+      tk.setAttribute("data-ti",i); tk.setAttribute("data-pg", Math.floor(i/PER));
       if(P.cards.length>1){ var lab=document.createElement("div"); lab.className="tklabel";
         // Always show the card number: it is how the host and the TV identify a winning ticket.
         lab.textContent = "Ticket "+(i+1)+" of "+P.cards.length+" · #"+cd.cardNo;
@@ -520,6 +527,17 @@
     $("lastCalled").innerHTML = last ? ('<span class="lcnum">'+last+'</span><span class="lcsub">'+P.called.length+' of 90 called</span>') : "No numbers called yet";
     setHeaderBall(last);
     var stack=$("cardStack");
+    pageForCalled(last);         // decide the page BEFORE painting, so it all lands in one pass
+    // Which page is showing is PAINTED, so turning it never touches the DOM structure.
+    if(lay==="pages"){
+      var PER=3, tks=stack.querySelectorAll(".ticket");
+      var np=Math.ceil(P.cards.length/PER); if(P.page>=np) P.page=0;
+      for(var t=0;t<tks.length;t++){
+        tks[t].classList.toggle("offpage", (+tks[t].getAttribute("data-pg"))!==P.page);
+      }
+      var tbs=stack.querySelectorAll(".pagetab");
+      for(var q=0;q<tbs.length;q++) tbs[q].classList.toggle("on", q===P.page);
+    }
     var band=stack.querySelector(".colband");
     if(band){ var segs=band.children; for(var b=0;b<segs.length;b++) segs[b].className = (b===curCol) ? "lit" : ""; }
     var cells=stack.querySelectorAll(".cc[data-n]");
@@ -531,7 +549,7 @@
       cell.classList.toggle("incol", curCol>=0 && colOfNum(n)===curCol);
       cell.classList.toggle("justcalled", n===last);
     }
-    followCalled(last);
+    markCalledTab(last);
     updateTension(set);
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
     else { $("bingoBtn").disabled=false; setMsg("Mark off your numbers as they are called. Hit BINGO when your ticket completes the pattern.",""); }
@@ -557,12 +575,26 @@
     }
     return -1;
   }
-  function followCalled(n){
+  // Turn to the ticket the called number is on. Returns nothing and paints nothing: paintCards
+  // calls this BEFORE it paints, so the turn and the marks land in the same pass. Re-entering
+  // paintCards from here painted the whole stack twice on every page turn.
+  function pageForCalled(n){
     if(effectiveLayout()!=="pages" || !n) return;
+    // Only turn for a number we have not already turned for. paintCards runs on plenty of things
+    // that are not a new ball (a player joining, the host resending state, the player tapping a
+    // tab), and turning on every one of them meant a player who flicked to another ticket was
+    // yanked straight back to whatever was last called, with no way to look at their own tickets.
+    if(n===P.turnedFor) return;
+    P.turnedFor=n;
     var pg=pageOf(n);
+    if(pg>=0) P.page=pg;
+  }
+  // The gold dot on a tab: this page holds the number that was just called.
+  function markCalledTab(n){
+    if(effectiveLayout()!=="pages") return;
+    var pg=n?pageOf(n):-1;
     var tabs=$("cardStack").querySelectorAll(".pagetab");
     for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle("has", i===pg);
-    if(pg>=0 && pg!==P.page){ P.page=pg; buildCards(); }
   }
 
   // ---- layout choice (menu) ----
@@ -816,6 +848,7 @@
       P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; _celebrated=false;
       P.shared=false; P.sharedWith=[];
       for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
+      P.turnedFor=0;   // new round: the first ball must still turn the page
       route();
     }
     else if(m.t==="ball"){
@@ -966,7 +999,7 @@
   });
   $("cardStack").addEventListener("click", function(e){
     var tab=e.target.closest(".pagetab");
-    if(tab){ P.page=parseInt(tab.getAttribute("data-page"),10)||0; buildCards(); return; }
+    if(tab){ P.page=parseInt(tab.getAttribute("data-page"),10)||0; paintCards(); return; }
     var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("blank")) return;
     var ci=parseInt(cell.getAttribute("data-card"),10), n=parseInt(cell.getAttribute("data-n"),10);
     var cd=P.cards[ci]; if(!cd) return;
