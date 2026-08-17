@@ -3,3 +3,18 @@
 # than handing the whole question bank to anyone who guesses the URL.
 /data/trivia-library.json    /404  404
 /data/trivia-review-*.json   /404  404
+
+# Everything below is source, not site. It all sits in the deploy root, so it was being
+# served to anyone who guessed a filename: the full database schema and every RLS policy,
+# both Workers, and the seed scripts. Combined with the public anon key printed in every
+# page, a schema dump is a real head start for anyone poking at the database.
+#
+# seed-trivia-TEST.sql matters most: its first two lines DELETE the entire shared trivia
+# library before inserting test rows. It has no business being on the public internet.
+/supabase/*                  /404  404
+/worker/*                    /404  404
+/tools/*                     /404  404
+/*.sql                       /404  404
+/*.py                        /404  404
+/data/musical-library-full.json  /404  404
+/data/generated/*            /404  404

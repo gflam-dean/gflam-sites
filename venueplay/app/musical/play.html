@@ -424,6 +424,7 @@
     if(!P.room) return;
     playerPost("/join/info",{ code:P.room }).then(function(r){
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
+      P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
       var h="";
       if(c.last_name) h+=f("xLast","text","Last name","family-name",40);
@@ -435,6 +436,24 @@
         var l=document.createElement("label"); l.className="optin";
         l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>';
         box.appendChild(l);
+      }
+      /* Collection notice. Australian privacy law wants people told what is being collected and
+         who gets it AT THE POINT they are asked, not only in a policy page they never open. This
+         screen asked for last name, postcode, email and mobile with no notice and no link to the
+         policy at all, while the policy itself said capturing more than a name was a future
+         feature. */
+      if(h){
+        var vn=(P.venueName||"").trim();
+        var n=document.createElement("p");
+        n.setAttribute("style","font-size:12px;line-height:1.5;color:#6C6C76;margin-top:10px");
+        n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
+          ", not to anyone else. You can play with just your name. ";
+        var a=document.createElement("a");
+        a.href="/privacy"; a.target="_blank"; a.rel="noopener";
+        a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
+        a.textContent="How your details are handled";
+        n.appendChild(a);
+        box.appendChild(n);
       }
     }).catch(function(){});
   }

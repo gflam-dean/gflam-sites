@@ -352,7 +352,7 @@
     $("resJack").classList.remove("hidden"); $("resJack").textContent=money(nextJackpotCents||0);
     $("resSub").innerHTML="Grew by "+money(incrementCents||0)+" &middot; be here next week";
     var mm=$("resMissed"); mm.classList.remove("hidden");
-    mm.innerHTML="Drawn tonight: <b>#"+(missedNumber==null?"--":missedNumber)+" "+esc(missedName||"")+"</b>, not present in time";
+    mm.innerHTML="Drawn tonight: <b>#"+(missedNumber==null?"--":esc(missedNumber))+" "+esc(missedName||"")+"</b>, not present in time";
   }
 
   // ---- realtime ----

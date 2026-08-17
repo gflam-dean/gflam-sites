@@ -344,7 +344,15 @@ async function handleJoinInfo(request, env, json) {
   const rows = await sbGet(env, 'vp_venue_settings',
     'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
   const cfg = (rows && rows[0]) || {};
-  return json({ format: format, collect: {
+  /* The venue's NAME, so the join screen can say who is asking for these details. A collection
+     notice that cannot name the recipient is not much of a notice. Name only: no slug, no id, no
+     other venue data, so this stays what it has always been, a public lookup for one join code. */
+  let venueName = '';
+  try {
+    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
+    if (vrows && vrows[0] && vrows[0].name) venueName = String(vrows[0].name);
+  } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
+  return json({ format: format, venue_name: venueName, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,
@@ -809,7 +817,10 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
 
   // Count the questions now: it drives qtotal on the phones/TV and the end-of-round
   // check in /host/question. We select only ids, never correct_index.
-  const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&select=id,seq');
+  /* parked_at is set on questions pulled from play (flagged by venues, or withdrawn by us as
+     unfit for a pub screen). Migration 32 added the column and listed this filter as still to do,
+     so until now parking a question did nothing at all and it kept coming up in rounds. */
+  const qs = await sbGet(env, 'vp_questions', 'set_id=eq.' + enc(setId) + '&parked_at=is.null&select=id,seq');
   const allSeqs = qs.map((r) => r.seq).filter((s) => s != null);
   if (!allSeqs.length) return json({ error: 'That question set has no questions' }, 409);
   const seqToId = {};
@@ -1934,6 +1945,7 @@ async function handleTriviaSearch(request, env, json) {
   const inList = '(' + libSets.map((s) => enc(s.id)).join(',') + ')';
   const like = enc('*' + query + '*');
   let q = 'set_id=in.' + inList
+        + '&parked_at=is.null'   // a parked question must not come back through the library search either
         + '&or=(question.ilike.' + like + ',category.ilike.' + like + ')'
         + '&select=question,options,correct_index,category,difficulty,image_url';
   if (['easy', 'medium', 'hard'].includes(b.difficulty)) q += '&difficulty=eq.' + enc(b.difficulty);

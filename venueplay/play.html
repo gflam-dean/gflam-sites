@@ -350,6 +350,16 @@
   // the same vp_players row (via localStorage) instead of minting a new metered one.
 
   // ---- verification (from the called set only, ignore cosmetic daubs) ----
+  /* Ball numbers arrive over a PUBLIC broadcast channel that anyone who knows the venue exists
+     can compute and publish to. They are then written into innerHTML further down, so an array
+     of markup was a script injection onto every other player's phone. Bingo balls are 1 to 90:
+     anything else is not a ball and is dropped. */
+  function cleanCalled(a){
+    var out=[], i, n;
+    if(!a || !a.length) return out;
+    for(i=0;i<a.length && i<90;i++){ n=parseInt(a[i],10); if(n>=1 && n<=90 && out.indexOf(n)<0) out.push(n); }
+    return out;
+  }
   function calledSet(){ var s={}; for(var i=0;i<P.called.length;i++) s[P.called[i]]=true; return s; }
   function rowDone(set,cells,row){ for(var c=0;c<9;c++){ var v=cells[row][c]; if(v && !set[v]) return false; } return true; }
   // must mirror the host's cornerNums() exactly: first + last actual number of the top and bottom rows
@@ -720,6 +730,7 @@
     if(!P.room) return;
     playerPost("/join/info",{ code:P.room }).then(function(r){
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
+      P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
       var h="";
       if(c.last_name) h+=f("xLast","text","Last name","family-name",40);
@@ -731,6 +742,25 @@
         var l=document.createElement("label"); l.className="optin";
         l.innerHTML='<input type="checkbox" id="xOptin"> <span>Keep me posted on what is on at the venue</span>';
         box.appendChild(l);
+      }
+      /* Collection notice. Australian privacy law wants people told what is being collected and
+         who gets it AT THE POINT they are asked, not only in a policy page they never open. This
+         screen asked for last name, postcode, email and mobile with no notice and no link to the
+         policy at all, while the policy itself said capturing more than a name was a future
+         feature. Venue name is filled in where we know it, so the player can see who is asking. */
+      if(h){
+        var vn=(P.venueName||"").trim();
+        var n=document.createElement("p");
+        n.className="collectnote";
+        n.setAttribute("style","font-size:12px;line-height:1.5;color:#6C6C76;margin-top:10px");
+        n.textContent="These details are optional and go to "+(vn||"the venue you are playing at")+
+          ", not to anyone else. You can play with just your name. ";
+        var a=document.createElement("a");
+        a.href="/privacy"; a.target="_blank"; a.rel="noopener";
+        a.setAttribute("style","color:#FF1F8E;text-decoration:underline");
+        a.textContent="How your details are handled";
+        n.appendChild(a);
+        box.appendChild(n);
       }
     }).catch(function(){});
   }
@@ -832,7 +862,7 @@
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
       if(typeof m.paidMode==="string") P.paidMode=m.paidMode;
-      P.called=m.called||[]; P.active=!!m.active;
+      P.called=cleanCalled(m.called); P.active=!!m.active;
       autoDaub(); if(!P.won && !P.ended) route();
     }
     else if(m.t==="started"){
@@ -847,7 +877,7 @@
       route();
     }
     else if(m.t==="ball"){
-      P.called=m.called||P.called; P.active=true;
+      P.called=m.called?cleanCalled(m.called):P.called; P.active=true;
       autoDaub();
       if(P.joined && !P.won && !P.ended && P.cards.length){ renderCards(); show("vCard"); }
     }

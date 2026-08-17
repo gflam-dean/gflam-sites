@@ -1,0 +1,22 @@
+# venueplay.com.au
+User-agent: *
+Allow: /
+
+# Internal and unfinished pages. These also carry a noindex meta tag; this is belt and braces.
+Disallow: /test
+Disallow: /test.html
+Disallow: /training
+Disallow: /training.html
+Disallow: /app/
+Disallow: /tv
+Disallow: /tv.html
+Disallow: /signage
+Disallow: /signage.html
+
+# Source, not site.
+Disallow: /supabase/
+Disallow: /worker/
+Disallow: /tools/
+Disallow: /data/
+
+Sitemap: https://www.venueplay.com.au/sitemap.xml

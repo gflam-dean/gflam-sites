@@ -11,6 +11,12 @@
 
 /*
   Cache-Control: no-cache, must-revalidate
+  # Basic hardening. SAMEORIGIN rather than DENY because /tv embeds the game screens
+  # in an iframe from this same site, and DENY would black out the venue TV.
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 # Brand logos never change under a given filename, so cache them hard for a year.
 /logos/*
