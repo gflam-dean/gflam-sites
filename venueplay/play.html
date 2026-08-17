@@ -819,7 +819,12 @@
       // out was a reload that nothing on screen suggested.
       P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0;
       P.shared=false; P.sharedWith=[]; _celebrated=false;
-      P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:{} }; });
+      /* Carry marks across by card number. A paid player buying a second sheet mid-round gets a
+         fresh cards message, and rebuilding every ticket with an empty daub set wiped the marks
+         they had made on the tickets they were ALREADY holding. Only genuinely new tickets start
+         blank. */
+      var _prev={}; for(var _i=0;_i<P.cards.length;_i++){ _prev[P.cards[_i].cardNo]=P.cards[_i].daubs||{}; }
+      P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:_prev[c.cardNo]||{} }; });
       P.dealSeq++;   // a fresh deal is always a fresh structure, whatever the card numbers say
       P.active=true; autoDaub(); route();
     }

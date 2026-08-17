@@ -749,6 +749,11 @@
     workerPost("/admin/venue-status", { venue_id:id, status:to }).then(function(res){
       btn.disabled=false; btn.textContent=old;
       if(res.error){ alert(res.error); return; }
+      // Reactivating an archived venue can fail on the Stripe side while the games come back on.
+      // Unreported, that is a venue playing for free forever.
+      if(res.billing && res.billing.changed===false){
+        alert((to==="active"?"Switched back on, ":"Done, ")+"but the billing side did not go through:\n\n"+(res.billing.error||"unknown error")+"\n\nCheck this one in Stripe before they play again.");
+      }
       for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) S.venues[i].status=to; }
       renderStats(); renderVenues();
       loadAuditOnly();

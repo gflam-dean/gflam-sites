@@ -445,7 +445,13 @@
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
-  function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  /* Escapes QUOTES as well, which this one never did while play.html's always has. That gap was
+     survivable only while every escaped value went into text. The paid roster puts a player id
+     into an ATTRIBUTE, and the id is whatever a phone put in a join broadcast on a public
+     channel, so `x" onmouseenter="...` would have run script in the console origin: the venue's
+     Supabase session, the pairing code, the saved game. It also persists, because G.players is
+     written to localStorage and replayed on every reload for six hours. */
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
   var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
@@ -712,7 +718,11 @@
   function closeOpenNight(){
     if(window.VP && VP.closeOpenSessions) VP.closeOpenSessions();
   }
-  function endShift(){ closeOpenNight(); try{ localStorage.removeItem("vpShiftStart"); }catch(e){} if(shiftTimer){ clearTimeout(shiftTimer); shiftTimer=null; } }
+  // Tell the room before you go. Neither sign-out path did, so the wall kept showing a frozen
+  // board with the last number on it and every phone kept its card, until a 90 minute timer.
+  function releaseRoom(){ try{ if(subscribed && ch){ send({ t:"idle" }); } }catch(e){} }
+  function endShift(){
+    releaseRoom(); closeOpenNight(); try{ localStorage.removeItem("vpShiftStart"); }catch(e){} if(shiftTimer){ clearTimeout(shiftTimer); shiftTimer=null; } }
   function enforceShift(){
     var MAX=4*3600*1000, now=Date.now(), start=0;
     try{ start=parseInt(localStorage.getItem("vpShiftStart"),10)||0; }catch(e){}
@@ -812,7 +822,10 @@
   function saveGame(){
     if(!G.code) return;
     try{
-      if(G.status==="running"){
+      // The tapping happens in the LOBBY and between rounds, which is exactly when this used to
+      // delete the key. A reload mid-allocation lost the entire night's till record with nothing
+      // to rebuild it from, on the one screen that told the host to do it there.
+      if(G.status==="running" || G.paidMode){
         localStorage.setItem(gameKey(G.code), JSON.stringify({
           v:1, ts:Date.now(),
           status:G.status, pattern:G.pattern, prize:G.prize, paidMode:G.paidMode,
@@ -832,12 +845,25 @@
       var raw=localStorage.getItem(gameKey(code));
       if(!raw) return false;
       var s=JSON.parse(raw);
-      if(!s || s.status!=="running") return false;
+      if(!s) return false;
+      if(s.status!=="running"){
+        // Not a running round, but a paid night still has takings worth keeping. Bring back the
+        // mode and who paid for what; the game itself stays where it was.
+        if(!s.paidMode) return false;
+        if(!s.ts || (Date.now()-s.ts)>SAVE_MAX_AGE){ localStorage.removeItem(gameKey(code)); return false; }
+        G.code=code; G.paidMode=s.paidMode;
+        G.players=s.players||{}; G.order=Array.isArray(s.order)?s.order:[];
+        var ps=document.getElementById("paidSel"); if(ps){ ps.value=G.paidMode; }
+        return false;   // false: there is no ROUND to resume, only the allocation
+      }
       if(!s.ts || (Date.now()-s.ts)>SAVE_MAX_AGE){ localStorage.removeItem(gameKey(code)); return false; }
       G.code=code;
       G.status="running";
       G.pattern=s.pattern||"one";
       G.paidMode=s.paidMode||"";
+      // Put it back on the control too. startGame re-reads the select, so leaving it at its
+      // default silently turned the NEXT round free and stripped every count off the roster.
+      var _ps=document.getElementById("paidSel"); if(_ps){ _ps.value=G.paidMode; }
       G.prize=(typeof s.prize==="string")?s.prize:"the prize";
       G.defaultCards=clampCards(s.defaultCards||1);
       G.prizesWon=Array.isArray(s.prizesWon)?s.prizesWon:[];
@@ -1043,12 +1069,41 @@
 
   // A sheet is a full strip of six: the six tickets between them hold all 90 numbers, which is
   // what a book means in housie. So "2 sheets" is 12 tickets, dealt as two strips.
+  /* A ticket number must be unique WITHIN a player's hand. It was drawn independently per ticket
+     from 900 values, so a book of six had roughly a 1.6% chance of two tickets sharing a number,
+     which is about a coin flip that somebody in a 40-player room holds a duplicate pair. The claim
+     path looks up the FIRST ticket with that number, so it can check the wrong one, decide the
+     claim is invalid, and drop it with no reply at all: the punter has shouted BINGO, the host's
+     screen says "No claims yet", and the phone sits on "checking your ticket" for the rest of the
+     round. That is a disputed win in front of the room with nothing to appeal to. */
+  function nextCardNo(p){
+    var used={}; (p.cards||[]).forEach(function(c){ used[c.cardNo]=true; });
+    for(var tries=0;tries<400;tries++){ var n=100+cryptoInt(900); if(!used[n]) return n; }
+    var n2=100; while(used[n2]) n2++; return n2;   // exhausted: fall back to the first free number
+  }
   var PAID_MAX_TICKETS=24;   // four sheets. Past that a phone is unreadable, not a licensing limit.
   function ticketsFor(p){
     if(!G.paidMode) return clampCards(G.defaultCards);      // free night: everyone the same, as before
     var units=Math.max(0, parseInt(p && p.paid, 10) || 0);
     var t=(G.paidMode==="sheet") ? units*6 : units;
     return Math.min(t, PAID_MAX_TICKETS);
+  }
+  // Deal only what is MISSING, keeping the tickets a player is already marking. dealFor threw the
+  // whole hand away and minted a fresh one, so a host tapping + for a second sheet at ball 40 wiped
+  // six half-marked tickets and any near-line with them, and the phone cleared every daub. Buying
+  // more must never cost you what you were holding.
+  function topUpFor(p){
+    var want=ticketsFor(p), have=(p.cards||[]).length;
+    if(!p.cards) p.cards=[];
+    if(want===have) return;
+    if(want<have){ p.cards=p.cards.slice(0, want); return; }   // reduced: drop the newest, keep the rest
+    var strip=makeStrip(), si=have%6;
+    for(var k=have;k<want;k++){
+      if(si>=6 || !strip){ strip=makeStrip(); si=0; }
+      var card = strip ? strip[si] : makeCard();
+      si++;
+      p.cards.push({ card:card, cardNo:nextCardNo(p) });
+    }
   }
   function dealFor(p){
     var want=ticketsFor(p);
@@ -1061,7 +1116,7 @@
       if(si>=6){ strip=makeStrip(); si=0; }
       var card = strip ? strip[si] : makeCard();   // makeCard is the fallback if a strip cannot be built
       si++;
-      p.cards.push({ card:card, cardNo:100+cryptoInt(900) });
+      p.cards.push({ card:card, cardNo:nextCardNo(p) });
     }
   }
   // The TV's "Bingo claimed" card. names[] carries everyone who called on this ball; name stays
@@ -1203,12 +1258,14 @@
       var b=e.target.closest && e.target.closest("button.pm"); if(!b) return;
       var chip=b.closest(".pchip"); if(!chip) return;
       var pid=chip.getAttribute("data-pid"), p=G.players[pid]; if(!p) return;
-      var max=(G.paidMode==="sheet") ? 4 : PAID_MAX_TICKETS;
+      // The SAME ceiling the dealer uses, or the chip records takings the room never received:
+      // "20 sheets" while ticketsFor quietly caps at 24 tickets, i.e. four.
+      var max=(G.paidMode==="sheet") ? (PAID_MAX_TICKETS/6) : PAID_MAX_TICKETS;
       var n=(parseInt(p.paid,10)||0) + (parseInt(b.getAttribute("data-d"),10)||0);
       p.paid=Math.max(0, Math.min(n, max));
       // Give them the tickets NOW if a game is already running: a punter who pays mid-round
       // should be playing the next number, not waiting for the round to end.
-      if(G.status==="running"){ dealFor(p); sendCards(pid); }
+      if(G.status==="running"){ topUpFor(p); sendCards(pid); }
       saveGame(); renderPlayers(); sendPlayers();
     });
   })();
@@ -1477,7 +1534,9 @@
     if(!m||!m.t) return;
     if(m.t==="tv_here"){ tvHere(m); return; }
     if(m.t==="join"){
-      if(!m.pid) return;
+      // Shape-check the id itself. randId() mints these, so anything else is not a real phone and
+      // has no business becoming a DOM attribute or a localStorage key.
+      if(!m.pid || typeof m.pid!=="string" || !/^[A-Za-z0-9_-]{1,40}$/.test(m.pid)) return;
       var isNew=!G.players[m.pid];
       if(isNew){ G.players[m.pid]={ name:(m.name||"Player"), cards:null, paid:0 }; G.order.push(m.pid); }
       else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }

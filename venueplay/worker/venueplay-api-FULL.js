@@ -1160,9 +1160,15 @@ async function vpaHandleDiscountRemove(request, env, json) {
       if (target && !target.manual && target.subId) {
         const cur = (target.info && target.info.sub) || {};
         const held = (cur.discounts && cur.discounts.length && cur.discounts[0]) || cur.discount || null;
-        const heldId = held && held.coupon && held.coupon.id;
-        if (heldId && heldId === row.stripe_coupon_id) {
+        // Cope with both shapes Stripe returns: an expanded discount object, or a bare id string
+        // on an older API version. If we cannot positively identify it as ours, leave it alone and
+        // say so rather than strip a coupon that might be their contracted volume rate.
+        const heldId = (held && held.coupon && held.coupon.id) || (typeof held === 'string' ? held : null);
+        const heldCoupon = (held && held.coupon && held.coupon.id) || null;
+        if (heldCoupon && heldCoupon === row.stripe_coupon_id) {
           await vpbStripeDelete(env, 'subscriptions/' + encodeURIComponent(target.subId) + '/discount').catch(() => {});
+        } else if (heldId) {
+          return json({ error: 'We could not confirm the discount on their Stripe subscription is the one recorded here, so nothing was changed. Remove it in Stripe directly, then remove this record.' }, 409);
         }
       }
       await vpbStripeDelete(env, 'coupons/' + encodeURIComponent(row.stripe_coupon_id));
@@ -1351,9 +1357,14 @@ async function vpaHandleVenueStatus(request, env, json) {
       if (archiving) {
         await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: true });
       } else if (prior.suspended_reason === 'archived') {
-        // We set it when we archived, so we take it back off. 'archived_cancelling' means the
-        // owner had already cancelled before we archived, and that decision is theirs to keep.
+        // We set it when we archived, so we take it back off.
         await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: false });
+      }
+      // 'archived_cancelling' keeps the flag, because the OWNER set it. But then this venue is not
+      // billable, and switching its games back on would be giving the service away: HQ's own
+      // confirm text promises "billing included". Say so instead of quietly doing neither.
+      if (unarchiving && prior.suspended_reason === 'archived_cancelling') {
+        billing = { changed: false, error: 'This venue was cancelled by the owner before it was archived, so it is still set to stop at the end of their paid period. Turning it back on does not restart their billing. Ask them to undo the cancellation on their account page first.' };
       }
       const accts = await vpaSelect(env, 'venueplay_founding',
         'id=eq.' + encodeURIComponent(prior.founding_id) + '&select=id,stripe_subscription_id');
@@ -2524,7 +2535,11 @@ async function vpaSyncAccountQuantity(env, foundingId, subId) {
   if (!subId) return null;
   const total = await vpbAccountTotal(env, foundingId);
   const info = await vpbSubItem(env, subId);
-  if (!info || !info.itemId) return info;
+  // vpbSubItem returns {sub} with no itemId whenever the Stripe GET itself failed. Returning here
+  // meant a Stripe outage during an archive reported clean: games stopped, nothing reached Stripe,
+  // and the account kept paying for a dark venue for the rest of the period.
+  if (!info) return { syncFailed: 'Could not reach Stripe' };
+  if (!info.itemId) return Object.assign({}, info, { syncFailed: 'Stripe did not return the subscription' });
   /* vpbStripePost NEVER THROWS: it returns Stripe's error body. Leaving these unchecked meant a
      refusal was reported to HQ as done. The case that bites is a subscription Stripe has already
      cancelled (an archived venue whose period rolled over): every call 400s, and without this the
@@ -2551,7 +2566,10 @@ async function vpaSyncAccountQuantity(env, foundingId, subId) {
 // Fetch the subscription's item id + price id (needed to change quantity).
 async function vpbSubItem(env, subId) {
   if (!subId) return null;
-  const sub = await vpbStripeGet(env, 'subscriptions/' + encodeURIComponent(subId) + '?expand[]=default_payment_method');
+  // discounts must be EXPANDED or Stripe returns bare id strings, and the removal path compares
+  // held.coupon.id against ours: undefined every time, so the coupon was never taken off and the
+  // venue kept the discount forever with the only row pointing at it deleted.
+  const sub = await vpbStripeGet(env, 'subscriptions/' + encodeURIComponent(subId) + '?expand[]=default_payment_method&expand[]=discounts');
   if (!sub || sub.error || !sub.items || !sub.items.data || !sub.items.data[0]) return { sub: sub };
   const item = sub.items.data[0];
   const pm = sub.default_payment_method;
@@ -2816,6 +2834,7 @@ async function vpbSetPlayers(request, env, json) {
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
   }, false).catch(() => {});
   return json({ ok: true,
+                credit_failed: (dAdj && dAdj.kind === 'failed') ? true : false,
                 applied: annualPlan ? 'now' : 'next_renewal',
                 players: annualPlan ? players : undefined,
                 pending: annualPlan ? null : players,
@@ -2900,6 +2919,12 @@ async function vpbCancelVenue(request, env, json) {
   // Remaining billed total now EXCLUDES venues flagged to cancel (vpbAccountTotal skips them).
   // The credit for the removed players applies at renewal.
   const info = await vpaSyncAccountQuantity(env, foundingId, o.account.stripe_subscription_id);
+  // Telling an owner "it stays live until 14 September and then stops billing" when Stripe refused
+  // the change is a promise about their money that we have not kept.
+  if (info && info.syncFailed) {
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: undo });
+    return json({ error: 'We could not update your billing just now, so nothing has changed. Please try again in a minute, or email hello@venueplay.com.au.' }, 502);
+  }
   const endsDate = info && info.periodEnd ? vpaFmtDate(info.periodEnd) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),

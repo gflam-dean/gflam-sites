@@ -547,8 +547,21 @@ async function handleJoin(request, env, json) {
   // merge, keeping the risk of collapsing two distinct patrons who share a NAT IP
   // and browser to the TTL window. On reuse we rotate a fresh token onto the row
   // and do NOT re-broadcast player.joined (the player count has not changed).
-  const dedupKey = (env.RL && (ipHash || deviceHint))
-    ? 'joindedup:' + session.id + ':' + (ipHash || '-') + ':' + (deviceHint || '-')
+  /* DEDUP ONLY ON A KEY THE DEVICE ITSELF SUPPLIES.
+     This used to key on network + user-agent hash. Both are shared by a whole venue: everyone is
+     behind one NAT IP, and iOS Safari user-agent strings are byte-identical across every phone on
+     the same iOS build. So two different patrons joining within the window collapsed onto ONE
+     vp_players row: the second person was handed a fresh token bound to the FIRST person's row,
+     the first person's token was destroyed, her card disappeared mid-game with a 401, and the TV
+     renamed her to him. In a room of iPhones that is most of the room, and it also under-counted
+     the metering the venue is billed on.
+     play.html already mints a per-device id and sends it as `pid`, so dedup keys on that. A phone
+     retrying or refreshing sends the same pid and is correctly reused; two different phones can
+     never collide, whatever network they share. No pid (an older page) means no dedup, which is
+     the safe direction: a spare row costs a metered player, a collision costs somebody's game. */
+  const devId = String(b.pid || '').trim();
+  const dedupKey = (env.RL && /^[A-Za-z0-9_-]{6,64}$/.test(devId))
+    ? 'joindedup:' + session.id + ':' + devId
     : null;
   if (dedupKey) {
     let priorId = null;

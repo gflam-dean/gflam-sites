@@ -199,6 +199,11 @@
         <div class="panel" style="margin-bottom:20px" id="settingsPanel">
           <div class="lbl" style="margin-bottom:12px">Draw &amp; jackpot settings</div>
           <div class="field"><label>Draw name</label><input type="text" id="setName" placeholder="e.g. Friday Members Draw"></div>
+          <!-- Running since: the code has always read and written #setSince, and the input was
+               never here. $("setSince").value threw on EVERY load, which rejected loadAll(), which
+               meant connect() never ran, which left the whole console blank for every venue. The
+               field it wanted is a real one: date_started drives "running since" on the TV. -->
+          <div class="field"><label>Running since</label><input type="date" id="setSince"></div>
           <div class="two">
             <div class="field"><label>Starting jackpot ($)</label><input type="number" id="setStart" class="mono" min="0" step="1"></div>
             <div class="field"><label>Weekly increment ($)</label><input type="number" id="setInc" class="mono" min="0" step="1"></div>
@@ -623,7 +628,12 @@
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
-      loadAll().then(function(){
+      loadAll().catch(function(e){
+        // Never let a render fault silently stop the console from connecting. Before this, one
+        // null reference inside renderSettings rejected loadAll and the host got a blank page
+        // with no error at all: nothing to report, nothing to act on.
+        try{ console.error("members: load failed", e); }catch(_){}
+      }).then(function(){
         renderNameSeg(); applyRoleGates();
         var tv=tvFromUrl();
         if(tv){ connect(tv); }
