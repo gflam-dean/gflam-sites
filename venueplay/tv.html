@@ -888,6 +888,12 @@
       if(typeof m.prize==="string") state.prize=m.prize;
       state.called=m.called||[];
       if(typeof m.playerCount==="number") state.playerCount=m.playerCount;
+      /* A routine state refresh must NOT wipe a claim or a winner off the wall. The host resends
+         state whenever any phone re-announces, and phones re-announce whenever they wake or the TV
+         reconnects. So one punter's phone coming out of sleep used to erase "BINGO! Ann wins $50"
+         mid-announcement and put the board back. The phone page already guards this; the TV did
+         not. A new round arrives as t:"started", which sets the phase properly. */
+      if(state.phase==="claim" || state.phase==="win"){ applyBingo(); return; }
       if(m.active && state.called.length>0){ state.phase="running"; }
       else { state.phase="lobby"; stopCelebrate(); state.celebrated=false; }
       applyBingo();
