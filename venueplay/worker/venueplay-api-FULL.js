@@ -397,6 +397,9 @@ async function handleContact(request, env, json) {
   const b = await request.json();
   const name = (b.name || '').trim();
   const email = (b.email || '').trim();
+  // Optional. Capped and stripped of control characters like every other field that reaches an
+  // email body; the enquiry is worth more than a perfectly formatted number.
+  const phone = String(b.phone == null ? '' : b.phone).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 30);
   const message = (b.message || '').trim();
   if (!name || email.indexOf('@') === -1 || !message) return json({ error: 'Missing fields.' }, 400);
 
@@ -405,6 +408,7 @@ async function handleContact(request, env, json) {
     '<h2>New VenuePlay enquiry</h2>' +
     '<p><b>Name:</b> ' + esc(name) + '</p>' +
     '<p><b>Email:</b> ' + esc(email) + '</p>' +
+    (phone ? '<p><b>Phone:</b> ' + esc(phone) + '</p>' : '') +
     '<p><b>Message:</b><br>' + esc(message).replace(/\n/g, '<br>') + '</p>';
 
   const res = await fetch('https://api.resend.com/emails', {

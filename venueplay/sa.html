@@ -1144,6 +1144,10 @@
               <label for="ct-email">Email</label>
               <input id="ct-email" type="email" placeholder="you@venue.com.au" autocomplete="email">
             </div>
+            <div class="field">
+              <label for="ct-phone">Phone</label>
+              <input id="ct-phone" type="tel" placeholder="0400 000 000" autocomplete="tel" inputmode="tel">
+            </div>
             <div class="field full">
               <label for="ct-message">Message</label>
               <textarea id="ct-message" placeholder="Tell us about your venue and what you'd like to know."></textarea>
@@ -1514,10 +1518,13 @@
     ctErr.classList.remove('show');
     var name = document.getElementById('ct-name').value.trim();
     var email = document.getElementById('ct-email').value.trim();
+    var phone = document.getElementById('ct-phone').value.trim();
     var message = document.getElementById('ct-message').value.trim();
 
     if (!name) { ctErr.textContent = 'Please enter your name.'; ctErr.classList.add('show'); return; }
     if (email.indexOf('@') === -1) { ctErr.textContent = 'Please enter a valid email.'; ctErr.classList.add('show'); return; }
+    // Optional, but a half-typed number is worse than none: it looks like a way to ring back.
+    if (phone && phone.replace(/[^0-9]/g, '').length < 8) { ctErr.textContent = 'That phone number looks too short. Leave it blank if you would rather we emailed.'; ctErr.classList.add('show'); return; }
     if (!message) { ctErr.textContent = 'Please enter a message.'; ctErr.classList.add('show'); return; }
 
     if (!workerReady) { ctErr.textContent = 'Contact isn\u2019t connected yet, the Worker URL still needs to be set. For now, email hello@venueplay.com.au.'; ctErr.classList.add('show'); return; }
@@ -1531,7 +1538,7 @@
     fetch(VP_WORKER + '/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, message: message })
+      body: JSON.stringify({ name: name, email: email, phone: phone, message: message })
     })
     .then(function(r){ if (!r.ok) throw new Error('send failed'); ctDone(); })
     .catch(function(){
