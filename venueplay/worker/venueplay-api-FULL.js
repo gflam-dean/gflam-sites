@@ -401,6 +401,14 @@ async function handleWebhook(request, env, cors) {
     await vpaSuspendForNonpayment(env, cust, 'ended');
     await vpaClearCreditOnEnd(env, cust);   // the subscription is over, so the credit is too
   }
+  /* A CHARGEBACK. Stripe's dispute setting is what stops the games (cancel immediately, which
+     arrives here as customer.subscription.deleted). This handler does not touch money or status:
+     it exists so there is a RECORD next to the venue saying why they went dark. Without it a
+     dispute is invisible in HQ and the first anyone knows is a venue that has mysteriously
+     stopped, or a Stripe email nobody links to it. */
+  if (event.type === 'charge.dispute.created' || event.type === 'charge.dispute.closed') {
+    await vpaRecordDispute(env, event.data.object, event.type);
+  }
   // Paid. Anything switched off for non-payment comes straight back on.
   if (event.type === 'invoice.paid') {
     await vpaReactivateOnPayment(env, event.data.object && event.data.object.customer);
@@ -2118,6 +2126,40 @@ async function vpaVenuesForCustomer(env, customerId) {
  */
 function vpaFailuresBeforeSuspend(plan) { return plan === 'annual' ? 4 : 2; }
 
+/* Write a chargeback into the admin audit trail, against the account it belongs to.
+   Deliberately does nothing else: cancelling is Stripe's setting, and a dispute that we
+   auto-actioned as well would be two systems fighting over the same venue. */
+async function vpaRecordDispute(env, dispute, eventType) {
+  try {
+    if (!dispute) return;
+    // A Dispute carries the charge, not always the customer, so resolve through the charge.
+    let customerId = dispute.customer || null;
+    if (!customerId && dispute.charge) {
+      const ch = await vpbStripeGet(env, 'charges/' + encodeURIComponent(String(dispute.charge)));
+      customerId = (ch && !ch.error && ch.customer) || null;
+    }
+    if (!customerId) return;
+    const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
+    if (!acct) return;
+    const opened = eventType === 'charge.dispute.created';
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: 'stripe',
+      action: opened ? 'payment_disputed' : 'payment_dispute_closed',
+      target: 'account:' + acct.id,
+      detail: {
+        amount: '$' + (Number(dispute.amount || 0) / 100).toFixed(2),
+        reason: String(dispute.reason || 'unknown'),
+        status: String(dispute.status || ''),        // on close: won, lost, warning_closed...
+        customer: customerId,
+        dispute: String(dispute.id || ''),
+        venues: (venues || []).length,
+        respond_by: dispute.evidence_details && dispute.evidence_details.due_by
+          ? vpaFmtDate(dispute.evidence_details.due_by) : null,
+      },
+    }, false).catch(() => {});
+  } catch (_) { /* never throw out of a webhook */ }
+}
+
 async function vpaSuspendForNonpayment(env, customerId, reason) {
   try {
     const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
@@ -2197,13 +2239,20 @@ async function vpaFirePaymentFailedEmail(env, invoice) {
     const amount = '$' + (Number(invoice.amount_due || 0) / 100).toFixed(2);
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const billing = site + '/app/billing.html';
+    /* Send them to STRIPE'S invoice page, not ours. Our Account page needs them to sign in with a
+       texted code first, which is friction at the exact moment they are already annoyed about a
+       declined card. The hosted invoice page needs no login, takes a new card, and settles the
+       failed invoice on the spot, which is the one thing we actually want to happen. Our own page
+       stays as the second link for anyone who would rather go the long way. */
+    const payNow = invoice.hosted_invoice_url || billing;
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
       + '<img src="' + site + '/logos/venueplay_primary_rebuilt.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Your card did not go through.</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for your VenuePlay subscription and it was declined. Nine times out of ten it is an expired card.</p>'
       + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">Nothing has changed at your venue and your games are running as normal. We will try again over the next few days. If it keeps failing your games will pause until it is sorted, so it is worth a minute now.</p>'
-      + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Update your card</a>'
+      + '<a href="' + payNow + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Pay now with a new card</a>'
+      + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">No sign in needed, it takes a minute. You can also do it from <a href="' + billing + '" style="color:#FF1F8E">your account page</a>.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact hello@venueplay.com.au</p>'
       + '</div>';
     await fetch('https://api.resend.com/emails', {
