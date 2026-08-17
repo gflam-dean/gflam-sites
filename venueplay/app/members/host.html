@@ -652,6 +652,9 @@
       G.venueId=ctx.currentVenueId; G.role=ctx.role; G.venue=ctx.venue||null;
       G.canManage = ctx.isAdmin || ctx.role==="owner" || ctx.role==="manager";
       G.nameDisplay = (ctx.settings && ctx.settings.name_display) || "abbrev_last";
+      // Tell vp-session when a draw is actually live, so the forced sign-out leaves it open
+      // instead of finishing it with a winner still unclaimed. The host is still signed out.
+      if(VP.setGameActive) VP.setGameActive(function(){ return !!G.round; });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";

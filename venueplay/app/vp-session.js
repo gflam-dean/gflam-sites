@@ -428,10 +428,22 @@
     return Promise.resolve(0);
   }
 
+  // A console tells us when it has a game actually running, via VP.setGameActive(fn). Closing a
+  // session is what ENDS a night: it marks every running game finished and burns the once-a-week
+  // slot for trivia and musical bingo. Doing that on the way out of a shift killed live nights.
+  // The sign-out itself still happens on time (it is the compliance control protecting opt-in
+  // player data); only the session close is held back, so the host can sign straight back in and
+  // pick the same night up where it was.
+  var _gameActive = null;
+  function setGameActive(fn) { _gameActive = (typeof fn === 'function') ? fn : null; }
+  function gameIsLive() { try { return !!(_gameActive && _gameActive()); } catch (e) { return false; } }
+
   var _shiftIv = null;
   function endShift() {
     if (_shiftIv) { clearInterval(_shiftIv); _shiftIv = null; }
-    var p = closeOpenSessions();
+    // Leave a live night open. The record stays in localStorage, so the night is still closed and
+    // any approved overage still billed, either when the game ends or at the next sign-out.
+    var p = gameIsLive() ? Promise.resolve(0) : closeOpenSessions();
     try { localStorage.removeItem(SHIFT_KEY); } catch (e) {}
     return p;
   }
@@ -471,6 +483,11 @@
       try { localStorage.removeItem(SHIFT_KEY); } catch (e) {}
       signOut();
     }
+    // Mid-game: sign out on time, but do NOT close the session. Closing it finished every running
+    // game and burned the once-a-week slot, so the host signed back in to "your next trivia night
+    // is available in 7 days" with the room still seated and no way to clear it. Left open, the
+    // session is still live, so signing back in restores the same night and the same slot.
+    if (gameIsLive()) { finish(); return; }
     setTimeout(finish, 2500);
     closeOpenSessions().then(finish, finish);
   }
@@ -516,6 +533,7 @@
     closeOpenSessions: closeOpenSessions,
     retryPendingCloses: retryPendingCloses,
     enforceShift: enforceShift,
-    endShift: endShift
+    endShift: endShift,
+    setGameActive: setGameActive
   };
 })(window);

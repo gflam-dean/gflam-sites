@@ -625,7 +625,24 @@
   // demo bypass shortcuts removed 2026-07-29: sign-in is text-code only (no Skip for demo, no role shortcuts)
   $("adminBack").addEventListener("click", function(){ $("headerTag").textContent=""; $("statusText").textContent="Sign in to start"; go("vSignIn"); });
   $("noVenueOut").addEventListener("click", function(){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } });
+  // A night running in another console (trivia, musical bingo, raffle) leaves a fresh recovery
+  // pointer in localStorage. Signing out closes the session, which finishes those games. The host
+  // pressing Sign out at handover had no idea they were about to end a quiz in progress.
+  function liveNightElsewhere(){
+    var v=(__ctx&&__ctx.venue&&__ctx.venue.id)||"", MAXAGE=6*60*60*1000;
+    var probe=[["vpTriviaGame-","trivia night"],["vpMusicGame-","musical bingo game"],["vpRaffleGame-","raffle"]];
+    for(var i=0;i<probe.length;i++){
+      try{
+        var raw=localStorage.getItem(probe[i][0]+v); if(!raw) continue;
+        var rec=JSON.parse(raw);
+        if(rec && rec.ts && (Date.now()-rec.ts)<MAXAGE) return probe[i][1];
+      }catch(e){}
+    }
+    return null;
+  }
   $("signoutBtn").addEventListener("click", function(){
+    var live=liveNightElsewhere();
+    if(live && !confirm("There is a "+live+" still running. Signing out ends it and puts the venue ads back on the TV.\n\nSign out anyway?")) return;
     // endShift() is what closes the night, which is what bills any approved overage. This is the
     // button hosts actually press, so it has to be here and not only on the 4 hour timeout.
     endShift();

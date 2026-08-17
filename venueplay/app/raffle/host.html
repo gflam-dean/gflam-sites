@@ -700,6 +700,9 @@
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to draw a raffle."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId;
+      // Tell vp-session when a raffle is actually on, so the forced sign-out leaves the night
+      // open instead of finishing it mid-draw. The host is still signed out on time.
+      if(VP.setGameActive) VP.setGameActive(function(){ return !!G.gameId; });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";

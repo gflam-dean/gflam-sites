@@ -757,6 +757,10 @@
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live quiz."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
+      // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
+      // session out from under it. It still signs the host out; it just leaves the night open
+      // so signing back in restores it instead of burning the once-a-week trivia slot.
+      if(VP.setGameActive) VP.setGameActive(function(){ return !!(G.sessionId && G.status!=="setup" && G.status!=="ended"); });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";

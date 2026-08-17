@@ -3017,9 +3017,17 @@ async function checkWeeklyFormatLimit(env, session, isTrivia) {
   // Already running this format in THIS session: it is the same night, always allow.
   if (lastSession && lastSession === session.id) return null;
 
+  // Same night, NEW session id: allow. A session can end while the night is still going on
+  // (the 4 hour forced sign-out, a host signing out at handover, a closed tablet), and the
+  // restart mints a fresh session id. Keying the weekly slot on the session id alone meant
+  // that restart read as "a second trivia night this week" and refused the host with a room
+  // already seated, with nothing in either Worker able to clear it. Nobody runs the same
+  // format twice inside this window except when picking a night back up.
+  const RESUME_GRACE = 8 * 60 * 60 * 1000;
   // Ran this format in a DIFFERENT session within the last 7 days: block.
   if (lastAt) {
     const elapsed = Date.now() - new Date(lastAt).getTime();
+    if (elapsed >= 0 && elapsed < RESUME_GRACE) return null;
     if (elapsed >= 0 && elapsed < WEEK) {
       // Display the "available from" day in Brisbane (UTC+10, no DST in QLD).
       const nextDay = new Date(new Date(lastAt).getTime() + WEEK + 10 * 3600 * 1000).toISOString().slice(0, 10);
