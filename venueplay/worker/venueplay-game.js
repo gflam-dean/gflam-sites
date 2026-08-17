@@ -560,12 +560,23 @@ async function handleJoin(request, env, json) {
      never collide, whatever network they share. No pid (an older page) means no dedup, which is
      the safe direction: a spare row costs a metered player, a collision costs somebody's game. */
   const devId = String(b.pid || '').trim();
-  const dedupKey = (env.RL && /^[A-Za-z0-9_-]{6,64}$/.test(devId))
+  const devIdValid = /^[A-Za-z0-9_-]{6,64}$/.test(devId);
+  const dedupKey = (env.RL && devIdValid)
     ? 'joindedup:' + session.id + ':' + devId
     : null;
-  if (dedupKey) {
+  /* The KV key above is a 120 second cache in front of the real check, which is the DB. KV alone
+     could never carry a patron from trivia to musical bingo hours later in the same session, so
+     the same person was inserted again and billed again. device_id (migration 39) is the durable
+     record, so look there whenever the fast path misses. */
+  if (devIdValid) {
     let priorId = null;
-    try { priorId = await env.RL.get(dedupKey); } catch (e) { rlWarn(); }
+    if (dedupKey) { try { priorId = await env.RL.get(dedupKey); } catch (e) { rlWarn(); } }
+    if (!priorId) {
+      const byDevice = await sbGet(env, 'vp_players',
+        'session_id=eq.' + enc(session.id) + '&device_id=eq.' + enc(devId) +
+        '&kicked=eq.false&select=id&order=joined_at.asc&limit=1');
+      if (byDevice.length) priorId = byDevice[0].id;
+    }
     if (priorId && UUID_RE.test(priorId)) {
       const existing = await sbGet(env, 'vp_players',
         'id=eq.' + enc(priorId) + '&session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
@@ -592,6 +603,7 @@ async function handleJoin(request, env, json) {
   };
   if (ipHash) playerRow.ip_hash = ipHash;          // salted hash only, never a raw IP
   if (deviceHint) playerRow.device_hint = deviceHint;  // coarse fingerprint, soft dedup signal only
+  if (devIdValid) playerRow.device_id = devId;     // durable rejoin + billing key (migration 39)
   Object.assign(playerRow, cap);                        // optional first/last/email/mobile/postcode + opt-in
   const inserted = await sbInsert(env, 'vp_players', playerRow, true);
   const newPlayer = Array.isArray(inserted) ? inserted[0] : inserted;
@@ -602,8 +614,8 @@ async function handleJoin(request, env, json) {
   }
 
   // Broadcast player.joined (this insert is what pushes the TV welcome ticker).
-  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
-  const payload = { player_count: players.length };
+  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id');
+  const payload = { player_count: countPlayers(players) };   // the number the host is billed on
   if (name) payload.display_name = name;       // name on TV only if the player gave one
   await emitEvent(env, session, 'player.joined', payload, 'system');
 
@@ -676,14 +688,24 @@ async function handleHostGame(request, env, json) {
   // shows "you are over your X-player plan, the extra Z players are billed at your per-player
   // rate this month - OK?", and on OK calls POST /host/overage/ack, which sets the flag for
   // the night so games start freely (and chargeNightOverage will then bill at close).
-  if (!session.overage_approved) {
+  {
     const planCap = Number(session.plan_cap_at_start || 0);
     if (planCap > 0) {
-      const roster = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id');
-      const count = (roster && roster.length) || 0;
-      if (count > planCap) {
+      const roster = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
+      const count = countPlayers(roster);   // devices, not joins: never ask a host to approve phantom players
+      /* An approval covers the number the host actually saw, plus a margin for stragglers still
+         walking in. Past that we ask again rather than quietly billing on. Before this, one tap
+         on "5 extra players, $10" at 7pm silently covered 200 players at 11pm. */
+      const ceiling = overageCeiling(session, planCap);
+      if (count > planCap && (!session.overage_approved || count > ceiling)) {
+        /* Whether the night is inside the free first month is decided HERE and sent back, because
+           this is the code that decides whether to charge. The consoles were working it out
+           themselves with a calendar month while this Worker counts a fixed 30 days, so a venue
+           created on 1 March got no consent screen on 31 March and was billed anyway, against a
+           terms page that promises nothing is charged without that confirmation. */
+        const freeMonth = await venueInFreeMonth(env, session.venue_id);
         return json({ error: 'overage_approval_required', needs_overage_ack: true,
-          players: count, plan_cap: planCap, extra: count - planCap }, 402);
+          players: count, plan_cap: planCap, extra: count - planCap, free_month: freeMonth }, 402);
       }
     }
   }
@@ -2729,9 +2751,16 @@ async function handleOverageAck(request, env, json) {
   const session = await getSession(env, sessionId);
   await requireStaff(env, authUserId, session.venue_id);         // ENFORCED: staff at the session's venue (also kill-switch)
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
+  /* Record WHAT WAS APPROVED, not just that something was. The host taps OK against a specific
+     number of extra players and a specific dollar figure on screen. Storing a bare boolean meant
+     the amount was whatever the count happened to be at close, hours later, with no ceiling. */
+  const roster = await sbGet(env, 'vp_players',
+    'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
+  const approvedCount = countPlayers(roster);
   await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId),
-    { overage_approved: true, overage_approved_at: new Date().toISOString() });
-  return json({ ok: true, overage_approved: true });
+    { overage_approved: true, overage_approved_at: new Date().toISOString(),
+      overage_approved_count: approvedCount });
+  return json({ ok: true, overage_approved: true, approved_count: approvedCount });
 }
 
 async function handleSessionClose(request, env, json) {
@@ -2901,13 +2930,61 @@ async function venueInFreeMonth(env, venueId) {
   } catch (e) { return false; }   // cannot tell: bill it, and the consent screen was shown
 }
 
+/* The most a night can be billed for on one host approval.
+
+   The host approves a specific number of extra players and a specific dollar figure shown on
+   screen. Stragglers still arrive after that, so the approval carries a margin rather than
+   pinning to the exact number. Beyond the margin the host is asked again, and chargeNightOverage
+   will not bill past it either, so an approval can never become an open cheque. A session
+   approved before migration 39 has no recorded count and falls back to the plan cap plus the
+   margin, which is the smallest defensible reading of what that host agreed to.
+
+   OVERAGE_ABSOLUTE_MAX is a second, blunter backstop. /join needs no login, so a flood cannot be
+   ruled out by authorisation alone; nothing legitimate reaches it. */
+const OVERAGE_ACK_MARGIN = 10;
+const OVERAGE_ABSOLUTE_MAX = 500;
+function overageCeiling(session, planCap) {
+  const approved = Number(session.overage_approved_count || 0);
+  const base = approved > 0 ? approved : planCap;
+  // Proportional above ~40, so a genuinely big night is not re-prompting the host every ten
+  // people, while a small venue still gets a tight bound.
+  const margin = Math.max(OVERAGE_ACK_MARGIN, Math.ceil(base * 0.25));
+  return Math.min(base + margin, OVERAGE_ABSOLUTE_MAX);
+}
+
+/* Count PEOPLE, not join rows. A vp_players row is one join, and one patron makes several over a
+   night: a phone locking and reloading, a tab iOS discarded, private browsing, and a second format
+   later in the same session. Billing on rows charged a venue twice for the same crowd when they
+   ran trivia and then musical bingo, and three such nights moved them permanently up a plan.
+   Rows with no device_id predate migration 39, or came from a page that sends none: those are
+   counted individually, which is the old behaviour and errs in the venue's favour rather than
+   silently collapsing two real patrons into one. Callers must select device_id. */
+function countPlayers(rows) {
+  const seen = new Set();
+  let n = 0;
+  for (const p of (rows || [])) {
+    const d = p && p.device_id;
+    if (d) { if (!seen.has(d)) { seen.add(d); n++; } }
+    else n++;
+  }
+  return n;
+}
+
 async function chargeNightOverage(env, session) {
   if (!env.STRIPE_SECRET_KEY) return;                          // overage billing not configured
   const cap = Number(session.plan_cap_at_start || 0);
   if (!cap) return;
   const players = await sbGet(env, 'vp_players',
-    'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
-  const peak = (players && players.length) || 0;
+    'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id');
+  const counted = countPlayers(players);
+  /* Never bill past what the host approved. The count is re-read here, hours after the tap, so
+     without this the approved figure and the billed figure were unrelated numbers. */
+  const ceiling = overageCeiling(session, cap);
+  const peak = Math.min(counted, ceiling);
+  if (counted > ceiling) {
+    console.log('[overage] session ' + session.id + ' counted ' + counted +
+                ' players but the host approved up to ' + ceiling + '; billing the approved figure');
+  }
   // No metered players at all means this was not a player night (a raffle and a members draw
   // mint no vp_players). It is neither a big night nor a quiet one, so the streak is untouched:
   // otherwise bingo, then a raffle, then bingo could never add up to three in a row.
@@ -3180,7 +3257,8 @@ async function getPublicSnapshot(env, sessionId) {
   if (!sessions.length) throw httpError(404, 'Session not found');
   const s = sessions[0];
 
-  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id');
+  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
+  const playerCount = countPlayers(players);   // devices, not joins: matches what the venue is billed on
 
   const snap = {
     session_id: s.id,
@@ -3188,9 +3266,9 @@ async function getPublicSnapshot(env, sessionId) {
     state_version: s.state_version,
     join_code: s.join_code,
     title: s.title || null,
-    player_count: players.length,
+    player_count: playerCount,
     plan_cap: s.plan_cap_at_start != null ? s.plan_cap_at_start : null,
-    over_cap: s.plan_cap_at_start != null ? players.length > s.plan_cap_at_start : false,
+    over_cap: s.plan_cap_at_start != null ? playerCount > s.plan_cap_at_start : false,
     game: null,
   };
 
