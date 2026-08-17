@@ -589,6 +589,12 @@
   }
   // start a fresh raffle: end the current game so drawn tickets clear
   function newRaffle(){
+    /* Sits in the same grid as a low-stakes spin-length toggle, and wipes the drawn set AND the
+       whole prize list with no undo. It also left the saved recovery pointer behind, so the next
+       reload restored a dead game id and every Draw failed against it. */
+    var started = !!G.gameId || Object.keys(G.drawn||{}).length>0;
+    if(started && !confirm("Start a brand new raffle?\n\nThe drawn tickets and the prize list are cleared. This cannot be undone.")) return;
+    clearRaffle();
     clearTimers(); G.round=null; G.drawn={};
     G.prizes=[]; G.prizeIdx=0; renderPrizeList();   // a brand new raffle starts with a fresh prize list
     var gid=G.gameId; G.gameId=""; G.gameSig=""; G.serverPad=null;

@@ -651,10 +651,29 @@
   }
   // First press reads "Play song"; once a song is on, it becomes "Play next song".
   function syncPlayBtn(){ var b=$("playNextBtn"); if(b) b.textContent=(G.playedOrder.length?"Play next song":"Play song"); }
+  /* A DOUBLE TAP HERE USED TO ANNOUNCE A WINNER ON A SONG THE ROOM NEVER HEARD.
+     playSong() marks the song played synchronously, so tap 1 marked song A, started its clip and
+     POSTed /host/play. Tap 200ms later skipped A (already played), resolved to song B, replaced
+     the audio, and POSTed again. The room only ever heard B, but vp_music_plays had A recorded,
+     every card auto-daubed A, and handlePlayerClaim judges claims against that same table. So a
+     card completing on A was certified VALID by the Worker and nothing in the system disagreed.
+     Raffle and members already guarded their draw buttons; this one never did. */
+  var _playBusy=false;
   function playNext(){
+    if(_playBusy) return;
     for(var i=G.qIdx+1;i<G.queue.length;i++){
       var s=G.songs[G.queue[i]];
-      if(s && !G.played[songKey(s)]){ G.qIdx=i; playSong(s); return; }
+      if(s && !G.played[songKey(s)]){
+        _playBusy=true;
+        var b=$("playNextBtn"); if(b) b.disabled=true;
+        G.qIdx=i;
+        try{ playSong(s); } finally {
+          // Long enough to cover a fumbled double tap, short enough that a host moving quickly
+          // between songs never feels blocked.
+          setTimeout(function(){ _playBusy=false; var bb=$("playNextBtn"); if(bb && bb.textContent!=="All songs played") bb.disabled=false; }, 1200);
+        }
+        return;
+      }
     }
     // nothing left unplayed
     $("playNextBtn").disabled=true; $("playNextBtn").textContent="All songs played";
@@ -850,7 +869,13 @@
     G.prize=pz;
     beginRound($("startBtn"),"Open lobby");
   }
-  function newGame(){ if(G.busy) return; beginRound($("newGameBtn"),"New game"); }
+  function newGame(){
+    if(G.busy) return;
+    /* Sits 16px below the scrolling song list the host taps on every song, so a momentum scroll
+       ending in a tap lands here. It wipes every song played and deals the whole room new cards. */
+    if(G.playedOrder.length && !confirm("Start a brand new game?\n\nEveryone in the room gets a new card and the songs played so far are cleared.")) return;
+    beginRound($("newGameBtn"),"New game");
+  }
   // Open the session (once), start a musical game on the Worker (which deals every card),
   // then rebuild G.songs from the Worker response so each song carries its DB song_id for
   // /host/play. Phones fetch their own cards via /player/card off the "started" broadcast.

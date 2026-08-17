@@ -398,12 +398,49 @@
     var ml=document.querySelector(".members");
     if(ml){ ml.classList.toggle("mchipLock", !G.canManage); ml.title = G.canManage ? "" : "Your manager edits the members list on the Account page"; }
     var lock=!G.canManage;
-    ["setName","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).disabled=lock; });
+    // setSince was in the clear list but not this one, so a host could type into "Running since"
+    // and it silently never saved.
+    ["setName","setSince","setStart","setInc","setCur","setClaim","setDay","setTime"].forEach(function(id){ $(id).disabled=lock; });
     $("saveSettingsBtn").disabled=lock;
     show("settingsLock", lock);
   }
 
   // ---- draw flow ----
+  /* THE LIVE ROUND HAS TO SURVIVE A RELOAD.
+     It existed only as G.round in memory, with no localStorage and no snapshot, unlike trivia and
+     bingo which both recover. last_drawn_date is stamped at DRAW time, not at resolve. So if the
+     tablet locked between the draw and the claim, the reload found "drawn tonight", disabled the
+     button, showed no winner card, and left the jackpot neither reset nor rolled over: stuck at
+     that value until someone edited the database by hand. */
+  var MD_SAVE_MAX_AGE=6*60*60*1000;
+  function mdKey(){ return "vpMembersRound-"+(G.venueId||""); }
+  function saveRound(){
+    try{
+      if(G.round) localStorage.setItem(mdKey(), JSON.stringify({ v:1, ts:Date.now(), round:G.round, drawId:G.currentDrawId }));
+      else localStorage.removeItem(mdKey());
+    }catch(e){}
+  }
+  function clearRound(){ try{ localStorage.removeItem(mdKey()); }catch(e){} }
+  function restoreRound(){
+    var raw; try{ raw=localStorage.getItem(mdKey()); }catch(e){ return false; }
+    if(!raw) return false;
+    var p; try{ p=JSON.parse(raw); }catch(e){ clearRound(); return false; }
+    if(!p || !p.round || !p.ts || (Date.now()-p.ts)>MD_SAVE_MAX_AGE){ clearRound(); return false; }
+    if(p.drawId) G.currentDrawId=p.drawId;
+    G.round=p.round;
+    G.round.remaining=0;            // the claim clock is not restarted; the host decides now
+    var d=curDraw();
+    $("wcNum").textContent="#"+G.round.number;
+    $("wcName").textContent=G.round.name||"\u00b7";
+    updateClaimCd();
+    $("winnerCard").classList.add("show");
+    $("rollBtn").classList.add("pulse");
+    $("claimBtn").disabled=false; $("rollBtn").disabled=false;
+    $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call\u2026";
+    $("drawNote").textContent="Picked up where you left off. Confirm below: Claim if they are present, or roll the jackpot to next week.";
+    send({ t:"winner", number:G.round.number, name:G.round.name, claimSecs:0 });
+    return true;
+  }
   function clearTimers(){ if(G.drawTimer){ clearTimeout(G.drawTimer); G.drawTimer=null; } if(G.idleTimer){ clearTimeout(G.idleTimer); G.idleTimer=null; } stopClaimTimer(); }
   function hideWinnerCard(){ $("winnerCard").classList.remove("show"); $("rollBtn").classList.remove("pulse"); }
   // A draw runs once a week. Once it's been drawn tonight (claimed OR rolled to next week), lock the
@@ -420,7 +457,16 @@
     if(alreadyDrawnTonight()){ alert("This draw has already been done tonight. It runs again next week."); return; }
     if(G.busy || G.round) return;
     var d=curDraw();
-    if(!d){ alert("No draw set up yet. Fill in the draw name + settings on the right and tap Save to create one, then draw."); return; }
+    /* This told a host to fill in the settings on the right and tap Save, while applyRoleGates()
+       had disabled every one of those inputs and the Save button, and the Worker refuses the same
+       call for a host. So the message asked them to use controls they are locked out of, and the
+       night could not start. Say who can actually fix it. */
+    if(!d){
+      alert(G.canManage
+        ? "No draw set up yet. Fill in the draw name and settings on the right, tap Save to create it, then tap Draw."
+        : "This venue has no members draw set up yet.\n\nYour manager or the account owner needs to set it up on the Account page. A host cannot create one.");
+      return;
+    }
     if(activeMembers(d).length < 1){ alert("No active members to draw from. Enable at least one member."); return; }
     clearTimers(); hideWinnerCard();
     G.busy=true;
@@ -449,6 +495,7 @@
     updateClaimCd();
     $("winnerCard").classList.add("show");
     $("rollBtn").classList.add("pulse");
+    saveRound();   // so a locked tablet does not strand the jackpot
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call…";
     $("drawNote").textContent="Confirm below: Claim if they are present, or roll the jackpot to next week.";
     // if a claim time is set, count it down and auto-roll to next week when it runs out
@@ -470,7 +517,7 @@
       .then(function(r){
         if(d && r.new_jackpot_cents!=null) d.current_jackpot_cents=r.new_jackpot_cents;
         send({ t:"claimed", name:round.name, amountCents:r.amount_cents, nextResetCents:r.new_jackpot_cents });
-        G.round=null; hideWinnerCard(); renderStats(); renderSettings();
+        G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
         $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week.";
         scheduleIdle(9000);
       })
@@ -485,7 +532,7 @@
       .then(function(r){
         if(d && r.new_jackpot_cents!=null) d.current_jackpot_cents=r.new_jackpot_cents;
         send({ t:"rollover", nextJackpotCents:r.new_jackpot_cents, incrementCents:r.increment_cents, missedNumber:round.number, missedName:round.name });
-        G.round=null; hideWinnerCard(); renderStats(); renderSettings();
+        G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
         $("drawNote").textContent="Not claimed. Jackpot grew by "+money(r.increment_cents)+" to "+money(d?d.current_jackpot_cents:0)+".";
         scheduleIdle(7000);
       })
@@ -592,6 +639,9 @@
     if($("runHelp")) $("runHelp").classList.remove("hidden");   // walkthrough shows only on the console, never sign-in
     $("roomCode").textContent=code;
     renderDrawSelect(); renderStats(); renderMembers(); renderSettings(); renderNameSeg(); applyRoleGates();
+    // Pick a live round back up. Runs after the draws are rendered so curDraw() resolves, and
+    // after the TV is paired so the winner can go back on the screen.
+    if(!G.round) restoreRound();
   }
   // the screen announces itself; on a fresh (re)load we re-announce and replay the state
   function onPair(m){

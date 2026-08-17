@@ -372,7 +372,13 @@
         // Re-sync the TV only (the pairing channel). Connected phones are left alone; a phone that
         // also reloaded recovers itself from /snapshot, so we must not replay "started" to the game channel.
         send({ t:"mode", mode:"trivia" });
-        send({ t:"started", game_id:G.gameId, question_count:G.questionCount, colour:G.colour });
+        /* "started" puts the TV back on the join QR. That is right when a question follows it
+           (the asking branch below sends one), and wrong otherwise: after a reveal, or between
+           questions, nothing followed, so the TV sat on the lobby showing a join code for a quiz
+           already in progress until the host tapped Next. */
+        if(q && (phase==="asking"||phase==="locked")){
+          send({ t:"started", game_id:G.gameId, question_count:G.questionCount, colour:G.colour });
+        }
         if(q && (phase==="asking"||phase==="locked")){
           var endsAt=Date.parse(q.ends_at)||0;
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0 };
@@ -382,9 +388,11 @@
           else { send({ t:"lock" }); }
         } else if(q && phase==="revealed"){
           G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:(q.correct_index!=null?q.correct_index:-1), endsAt:0, secs:0 };
-          G.status="reveal"; G.board=[];   // the TV recovers the leaderboard from its own snapshot
+          G.status="reveal"; G.board=[];
+          rebuildBoard();
         } else {
           G.status="ready"; G.current=null; G.board=[];   // game running, between questions
+          rebuildBoard();
         }
         $("statusText").textContent="Recovered your live quiz";
         renderConsole();
@@ -498,7 +506,15 @@
       var brow=el("div","btnrow");
       var main=el("button","btn pink big", isLast ? "Reveal leaderboard" : "Next question");
       main.addEventListener("click", isLast ? finish : nextQuestion); brow.appendChild(main);
-      var endb=el("button","btn ghost big","End round"); endb.addEventListener("click", function(){ endRound(); }); brow.appendChild(endb);
+      var endb=el("button","btn ghost big","End round");
+      /* Same width and size as "Next question", 10px away, and rebuilt after every reveal, so it
+         sits beside the control the host taps about nineteen times a night. endRound() clears the
+         timer, wipes the recovery pointer, sends the TV and every phone to idle and ends the game
+         on the server, with no undo. */
+      endb.addEventListener("click", function(){
+        if(!confirm("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.")) return;
+        endRound();
+      }); brow.appendChild(endb);
       body.appendChild(brow);
       if(!isLast){ var nu2=nextUpPanel(); if(nu2) body.appendChild(nu2); }
       return;
@@ -609,6 +625,19 @@
       G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); bcast({ t:"lock" }); } }, 500);
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
+  /* Refill the leaderboard after a reload. G.board is ONLY ever set from a /host/reveal response,
+     so a host who reloaded their tablet had an empty board for the rest of the night. Tapping Next
+     after the last question then broadcast a podium built from an empty array: the TV showed the
+     podium layer with nothing on it and nine seconds of confetti, at the climax of the quiz.
+     The comment here used to say the TV recovers the leaderboard from its own snapshot. It cannot:
+     trivia/screen.html never calls the game Worker at all. /host/reveal is idempotent (it will not
+     re-stamp an already revealed question), so asking again is safe. */
+  function rebuildBoard(){
+    if(!G.gameId) return;
+    apiPost("/host/reveal",{ game_id:G.gameId })
+      .then(function(r){ if(r && r.leaderboard){ G.board=r.leaderboard; renderConsole(); } })
+      .catch(function(){ /* leave the board empty; finish() below refuses to show an empty podium */ });
+  }
   function reveal(){
     if(G.busy || G.status!=="question" || !G.gameId) return; G.busy=true; clearTick();
     apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
@@ -627,7 +656,24 @@
   }
   function finish(){
     clearTick();
+    /* Never put an empty podium on the wall. If the board is missing (a reload, or a failed
+       rebuild), fetch it once more before announcing rather than firing confetti over nothing. */
+    if(!G.board.length && G.gameId){
+      apiPost("/host/reveal",{ game_id:G.gameId })
+        .then(function(r){ if(r && r.leaderboard) G.board=r.leaderboard; })
+        .catch(function(){})
+        .then(function(){ finishNow(); });
+      return;
+    }
+    finishNow();
+  }
+  function finishNow(){
     G.status="ended";
+    if(!G.board.length){
+      hostError("Scores could not be loaded, so the podium was not put on the screen. Check your connection and tap Reveal leaderboard again.");
+      renderConsole();
+      return;
+    }
     bcast({ t:"podium", top:G.board.slice(0,3), rows:G.board });
     bcast({ t:"leaderboard", title:"Final scores", rows:G.board });
     renderConsole();
@@ -779,9 +825,18 @@
 
   // Every game needs an obvious way out. Without this the only route back to the venue's
   // own advertising was to end the round and wait for the screen to time out.
+  /* This is the FIRST control in the header, on every view, and it is what a confused bartender
+     reaches for when they mean "next". One tap used to drop the venue TV to advertising and show
+     "thanks for playing" on every phone, mid question, while the console carried on as if nothing
+     had happened: G.status stayed "question", the countdown kept running, /host/game/end was
+     never called. So it wrecked the room's night without actually ending the game.
+     Now it confirms while a quiz is live, and genuinely ends the round when it is used. */
   (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
     b.addEventListener("click", function(){
-      try{ bcast({ t:"idle" }); }catch(e){}
+      var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
+      if(live && !confirm("End the quiz and put the venue ads back on the TV?\n\nThe round in progress will finish and every player will see \"thanks for playing\".")) return;
+      if(live) endRound();          // actually end it, rather than only telling the room it ended
+      else { try{ bcast({ t:"idle" }); }catch(e){} }
       try{ bcast({ t:"to_ads" }); }catch(e){}
       b.textContent="Ads are back on";
       setTimeout(function(){ b.textContent="End game"; }, 2500);

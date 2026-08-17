@@ -1417,6 +1417,9 @@
   }
   function newGame(){
     if(blockedByHold()) return;
+    /* This sits in the resolve row, on screen throughout a live round. One tap re-deals every
+       player in the room a brand new card and throws away the balls drawn so far. */
+    if(G.idx>=0 && !G.won && !confirm("Start a brand new game?\n\nEveryone in the room gets a new ticket and the "+(G.idx+1)+" balls drawn so far are cleared.")) return;
     postReport();   // report the round just finished before a fresh one begins
     G.draw=shuffledDraw(); G.idx=-1; G.called={};
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
