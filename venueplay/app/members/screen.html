@@ -401,6 +401,12 @@
     if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
     if(m.t==="host_here"){ /* host present; wait for state */ return; }
     if(m.t==="state"){
+      /* A routine state refresh must NOT wipe a winner or a result off the wall. The host resends
+         state on ordinary actions (toggling a member, saving settings, changing name display), and
+         G.round is already cleared by then, so a tap behind the bar during the 60 second
+         celebration used to put the draws board straight back up over the winner. Same guard
+         tv.html got for bingo. A real new draw arrives as t:"drawing". */
+      if(state.phase==="winner" || state.phase==="result") return;
       if(typeof m.drawName==="string") state.drawName=m.drawName;
       if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents;
       applyDraws(m);

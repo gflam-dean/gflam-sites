@@ -354,12 +354,18 @@
     if(typeof m.min==="number") S.min=m.min;
     if(typeof m.max==="number") S.max=m.max;
 
-    if(m.t==="host_here"){ renderIdle(); return; }
-    if(m.t==="state" || m.t==="idle"){ renderIdle(); }
-    else if(m.t==="drawing"){ renderDrawing(); }
-    else if(m.t==="winner"){ renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); }
-    else if(m.t==="claimed"){ renderClaimed(m.numbers||[]); }
-    else if(m.t==="redraw"){ renderDrawing(); }
+    /* A passive refresh must NOT wipe a winner or a claimed result off the wall. "host_here" is
+       replayed whenever a console reloads or a socket re-joins, and the host sends "state" after
+       the round has been cleared, so either one used to blank the drawn number mid-announcement.
+       This screen had no phase at all, so it is tracked here. An explicit "idle" is the host
+       saying they have finished with this prize, and still clears. */
+    if((m.t==="host_here" || m.t==="state") && (S.phase==="winner" || S.phase==="result")) return;
+    if(m.t==="host_here"){ S.phase="idle"; renderIdle(); return; }
+    if(m.t==="state" || m.t==="idle"){ S.phase="idle"; renderIdle(); }
+    else if(m.t==="drawing"){ S.phase="drawing"; renderDrawing(); }
+    else if(m.t==="winner"){ S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); }
+    else if(m.t==="claimed"){ S.phase="result"; renderClaimed(m.numbers||[]); }
+    else if(m.t==="redraw"){ S.phase="drawing"; renderDrawing(); }
   }
 
   // ---- resize keeps big numbers fitted ----

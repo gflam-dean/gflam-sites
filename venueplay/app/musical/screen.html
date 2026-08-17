@@ -399,6 +399,14 @@
     if(m.t==="idle"){ stopClip(); state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
     if(m.t==="state"){
       state.hostSeen=true;
+      /* A routine state refresh must NOT wipe a claim or a winner off the wall. The host resends
+         state whenever any phone re-announces, and phones re-announce whenever they wake. On a
+         progressive prize the game stays "running" while the host types the next prize, so one
+         punter's phone coming out of sleep used to erase the winner card mid-celebration, and
+         erase "checking Ann's claim" while the host was verifying it. tv.html has had this guard
+         since the bingo fix; the other screens never got it. A new round arrives as t:"started"
+         or t:"carryon", which set the phase properly. */
+      if(state.phase==="win" || state.phase==="claim") return;
       if(m.pattern) state.pattern=m.pattern;
       if(typeof m.prize==="string") state.prize=m.prize;
       state.played=m.played||[];
