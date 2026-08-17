@@ -2542,8 +2542,10 @@ async function vpaSyncAccountQuantity(env, foundingId, subId) {
       { quantity: Math.max(total, 1), proration_behavior: 'none' });
     if (r2 && r2.error) failed = r2.error.message || 'Stripe refused the quantity change';
   }
-  if (failed) info = Object.assign({}, info, { syncFailed: failed });
-  return info;
+  // Return a NEW object rather than reassigning the const, and rather than mutating what
+  // vpbSubItem handed us: callers read periodEnd off it and none of them expect it to change
+  // shape underneath them.
+  return failed ? Object.assign({}, info, { syncFailed: failed }) : info;
 }
 
 // Fetch the subscription's item id + price id (needed to change quantity).
