@@ -362,13 +362,28 @@ async function handleWebhook(request, env, cors) {
   }
   // A declined card: tell them, suspend nothing. Stripe keeps retrying for about a fortnight.
   if (event.type === 'invoice.payment_failed') {
-    await vpaFirePaymentFailedEmail(env, event.data.object);
+    const inv = event.data.object || {};
+    await vpaFirePaymentFailedEmail(env, inv);
+    // Stop the games only once the grace window is used up. attempt_count is Stripe's own count
+    // of tries on THIS invoice, so this tracks the retry schedule instead of guessing at dates.
+    const cust = inv.customer;
+    if (cust) {
+      const accts = await vpaSelect(env, 'venueplay_founding',
+        'stripe_customer_id=eq.' + encodeURIComponent(cust) + '&select=plan&limit=1');
+      const plan = (accts && accts[0] && accts[0].plan) || 'monthly';
+      const tries = parseInt(inv.attempt_count, 10) || 0;
+      if (tries >= vpaFailuresBeforeSuspend(plan)) await vpaSuspendForNonpayment(env, cust);
+    }
   }
   // The invoice is now OVERDUE, or Stripe has given up entirely. Games stop until it is paid.
   // Nothing is deleted: the venue, its logins, its members list and its history all stay put.
   if (event.type === 'customer.subscription.updated') {
     const st = event.data.object && event.data.object.status;
-    if (st === 'past_due' || st === 'unpaid') {
+    // 'unpaid' ONLY. past_due fires on the very first failed attempt, which is what used to switch
+    // a venue off the same day its card expired; the grace window is counted on
+    // invoice.payment_failed above. 'unpaid' means Stripe has finished retrying, so by then the
+    // window is long gone either way and this is the backstop.
+    if (st === 'unpaid') {
       await vpaSuspendForNonpayment(env, event.data.object.customer);
     }
     // NO reactivation here. Every subscription_items quantity write WE make raises this event
@@ -2079,13 +2094,29 @@ async function vpaFireUpcomingEmail(env, invoice) {
 async function vpaVenuesForCustomer(env, customerId) {
   if (!customerId) return [];
   const accts = await vpaSelect(env, 'venueplay_founding',
-    'stripe_customer_id=eq.' + encodeURIComponent(customerId) + '&select=id,contact_email&limit=1');
+    'stripe_customer_id=eq.' + encodeURIComponent(customerId) + '&select=id,contact_email,plan&limit=1');
   const acct = accts && accts[0];
   if (!acct) return [];
   const venues = await vpaSelect(env, 'vp_venues',
     'founding_id=eq.' + encodeURIComponent(acct.id) + '&select=id,name,status,suspended_reason');
   return [(venues || []), acct];
 }
+
+/* HOW MANY FAILED ATTEMPTS BEFORE THE GAMES STOP.
+ *
+ * We used to stop them on the first one, because Stripe flips a subscription to past_due the
+ * moment an attempt fails. That is a venue going dark on a Tuesday over an expired card, possibly
+ * mid-night with a room full of people, and for an annual venue it is a customer who has just paid
+ * for a whole year being switched off on day one of a card problem.
+ *
+ * So they get a grace window, and it is longer for a bigger commitment: a monthly venue is one
+ * month behind, an annual venue has a year of paid history behind them.
+ *
+ * This counts STRIPE'S attempts, not days, so it moves with whatever retry schedule is configured
+ * rather than assuming one. The failure email goes out on every attempt regardless: they should
+ * hear from us the first time, they just should not be switched off the first time.
+ */
+function vpaFailuresBeforeSuspend(plan) { return plan === 'annual' ? 4 : 2; }
 
 async function vpaSuspendForNonpayment(env, customerId, reason) {
   try {
