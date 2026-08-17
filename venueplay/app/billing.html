@@ -492,8 +492,14 @@
                     (r.credit_cents ? " $" + (r.credit_cents/100).toFixed(2) + " credited for the rest of your year; it comes off your next invoice." : ""), true);
           } else if (n > v.players){
             var extra = n - v.players;
-            showMsg("Increased to " + n + " players, up " + extra + ". The extra " + extra +
-                    (extra === 1 ? " player is" : " players are") + " on your next bill and available right now.", true);
+            if (r.charge_failed){
+              // The capacity IS live; only the one-off top-up failed. Saying "on your next bill"
+              // would be a straight untruth about money.
+              showMsg("Increased to " + n + " players and they are available right now, but we could not put the one-off charge through. We will pick it up on your next invoice, or get in touch if you would rather sort it now.", true);
+            } else {
+              showMsg("Increased to " + n + " players, up " + extra + ". The extra " + extra +
+                      (extra === 1 ? " player is" : " players are") + " on your next bill and available right now.", true);
+            }
           } else { showMsg("Players updated.", true); }
           save.disabled=false; save.textContent="Save";
           load();
@@ -883,11 +889,16 @@
       ["trivia","musical","raffle","members"].forEach(function(g){ codes.push(VP.venueCode(g + "-" + slug)); });
       codes.forEach(function(code){
         var ch = c.channel("vp-" + code, { config:{ broadcast:{ self:false } } });
+        // Always let go, joined or not. Unsubscribing only on the happy path left a channel
+        // attached for the life of the page on every CHANNEL_ERROR, five at a time per save.
+        var done=false;
+        function drop(){ if(done) return; done=true; try{ ch.unsubscribe(); }catch(e){} }
         ch.subscribe(function(st){
           if(st !== "SUBSCRIBED") return;
           try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"screen_refresh" } }); }catch(e){}
-          setTimeout(function(){ try{ ch.unsubscribe(); }catch(e){} }, 1200);
+          setTimeout(drop, 1200);
         });
+        setTimeout(drop, 8000);   // backstop: a join that never lands still gets cleaned up
       });
     }catch(e){}
   }

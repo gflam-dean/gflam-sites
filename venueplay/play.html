@@ -328,7 +328,7 @@
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
     pattern:"one", prize:"the prize", called:[], active:false, assist:false, allowEarly:false,
     claimPending:false, won:false, ended:false, capture:null,
-    shared:false, sharedWith:[], layout:"stack", page:0, turnedFor:0, builtKey:"", venueSlug:""
+    shared:false, sharedWith:[], layout:"stack", page:0, turnedFor:0, dealSeq:0, builtKey:"", venueSlug:""
   };
 
   // ---- pid persistence (keep the cosmetic identity across reconnects) ----
@@ -438,7 +438,14 @@
      top. Marks and highlights are just classes, so they get painted onto the cards already on
      screen and the DOM is left alone. */
   function structureKey(){
-    var k=effectiveLayout()+"|"+P.cards.length;
+    /* dealSeq is in here because cardNo is NOT a reliable identity: the host mints it as
+       100 + random(900), so re-dealing the same NUMBER of tickets has about a 1-in-900 chance per
+       ticket of drawing the same numbers again. When that happens the key matches, the rebuild is
+       skipped, and the phone keeps showing LAST round's grid while holding this round's tickets.
+       The punter then plays a card the host does not have, calls BINGO on it, and the host checks
+       a card that does not match: a disputed win at the bar, which is the worst way for this to
+       fail. Counting deals makes a re-deal always a new structure. */
+    var k=effectiveLayout()+"|"+P.dealSeq+"|"+P.cards.length;
     for(var i=0;i<P.cards.length;i++) k+="|"+P.cards[i].cardNo;
     return k;
   }
@@ -766,6 +773,7 @@
       P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0;
       P.shared=false; P.sharedWith=[]; _celebrated=false;
       P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:{} }; });
+      P.dealSeq++;   // a fresh deal is always a fresh structure, whatever the card numbers say
       P.active=true; autoDaub(); route();
     }
     else if(m.t==="state"){

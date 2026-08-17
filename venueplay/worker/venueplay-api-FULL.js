@@ -979,6 +979,17 @@ async function vpaHandleDiscount(request, env, json) {
      the discount is right there on it. */
   const target = await vpaBillingTargetFor(env, targetType, targetId);
   if (target.error) return json({ error: target.error }, 400);
+  /* A Stripe coupon applies to the SUBSCRIPTION, and one subscription covers every venue on the
+     account. So a percentage picked from one venue's row silently discounts all of them: 20%
+     meant for one venue's $250 comes off the account's $1,250. Refuse and say so, rather than
+     give away four times what was intended and report it against the one venue. */
+  if (kind === 'percent' && !target.manual && target.account) {
+    const sibs = await vpaSelect(env, 'vp_venues',
+      'founding_id=eq.' + encodeURIComponent(target.account.id) + '&select=id');
+    if (sibs && sibs.length > 1) {
+      return json({ error: 'This account has ' + sibs.length + ' venues on one subscription, so a percentage would come off ALL of them, not just this venue. Use a dollar credit for a single venue, or apply the percentage knowing it covers the whole account.' }, 409);
+    }
+  }
 
   let stripeCouponId = null;
   let stripeTxnId = null;
@@ -1281,17 +1292,23 @@ async function vpaHandleVenueStatus(request, env, json) {
   // What it was before, so reactivating an ARCHIVED venue can put its billing back and
   // reactivating a merely suspended one leaves billing alone.
   const priorRows = await vpaSelect(env, 'vp_venues',
-    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,founding_id,status,suspended_reason');
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,founding_id,status,suspended_reason,cancel_at_period_end');
   const prior = priorRows && priorRows[0];
   if (!prior) return json({ error: 'That venue no longer exists.' }, 404);
 
   // Stamp WHY. A venue switched off from HQ is 'manual' and a later payment must never bring it
   // back on by itself; only a non-payment suspension is reversible automatically.
   const archiving = status === 'archived';
-  const unarchiving = status === 'active' && prior.suspended_reason === 'archived';
+  const wasArchived = prior.suspended_reason === 'archived' || prior.suspended_reason === 'archived_cancelling';
+  const unarchiving = status === 'active' && wasArchived;
+  /* Which of us set cancel_at_period_end has to survive the archive, or un-archiving cannot tell
+     "cancelling because WE archived it" from "cancelling because the OWNER asked". Reading the
+     flag on the way back out is useless: archiving sets it either way. So the reason carries it.
+     Free text, no migration, and it reads plainly in HQ. */
+  const archiveReason = prior.cancel_at_period_end ? 'archived_cancelling' : 'archived';
   await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), {
     status: archiving ? 'suspended' : status,
-    suspended_reason: archiving ? 'archived' : (status === 'suspended' ? 'manual' : null),
+    suspended_reason: archiving ? archiveReason : (status === 'suspended' ? 'manual' : null),
   });
 
   /* Archiving has to reach Stripe, which it never used to. A venue is archived once retention has
@@ -1303,13 +1320,25 @@ async function vpaHandleVenueStatus(request, env, json) {
   let billing = null;
   if ((archiving || unarchiving) && prior.founding_id) {
     try {
-      await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: archiving });
+      /* Only OUR archive flag comes back off. Writing false unconditionally reversed a
+         cancellation the OWNER had made themselves: they cancel a venue, we archive it, we
+         un-archive it, and they are silently billed again at renewal for a venue they cancelled,
+         with nothing telling them. If it was already cancelling before we archived it, leave it. */
+      if (archiving) {
+        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: true });
+      } else if (prior.suspended_reason === 'archived') {
+        // We set it when we archived, so we take it back off. 'archived_cancelling' means the
+        // owner had already cancelled before we archived, and that decision is theirs to keep.
+        await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: false });
+      }
       const accts = await vpaSelect(env, 'venueplay_founding',
         'id=eq.' + encodeURIComponent(prior.founding_id) + '&select=id,stripe_subscription_id');
       const acct = accts && accts[0];
       if (acct && acct.stripe_subscription_id) {
         const info = await vpaSyncAccountQuantity(env, prior.founding_id, acct.stripe_subscription_id);
-        billing = { changed: true, ends: (info && info.periodEnd) ? vpaFmtDate(info.periodEnd) : null };
+        billing = (info && info.syncFailed)
+          ? { changed: false, error: info.syncFailed }
+          : { changed: true, ends: (info && info.periodEnd) ? vpaFmtDate(info.periodEnd) : null };
       }
     } catch (e) {
       // The status change already landed and is what stops the games. Never fail the whole call
@@ -2415,15 +2444,24 @@ async function vpaSyncAccountQuantity(env, foundingId, subId) {
   const total = await vpbAccountTotal(env, foundingId);
   const info = await vpbSubItem(env, subId);
   if (!info || !info.itemId) return info;
+  /* vpbStripePost NEVER THROWS: it returns Stripe's error body. Leaving these unchecked meant a
+     refusal was reported to HQ as done. The case that bites is a subscription Stripe has already
+     cancelled (an archived venue whose period rolled over): every call 400s, and without this the
+     venue came back live, running games, and never invoiced again. */
+  let failed = null;
   if (total <= 0) {
     // Nothing left to bill: end the whole subscription when the period rolls over.
-    await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(subId), { cancel_at_period_end: 'true' });
+    const r = await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(subId), { cancel_at_period_end: 'true' });
+    if (r && r.error) failed = r.error.message || 'Stripe refused the cancellation';
   } else {
     // Keep it live, clear any full-cancel flag, and bill for the venues that remain.
-    await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(subId), { cancel_at_period_end: 'false' });
-    await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(info.itemId),
+    const r1 = await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(subId), { cancel_at_period_end: 'false' });
+    if (r1 && r1.error) failed = r1.error.message || 'Stripe refused to reopen the subscription';
+    const r2 = await vpbStripePost(env, 'subscription_items/' + encodeURIComponent(info.itemId),
       { quantity: Math.max(total, 1), proration_behavior: 'none' });
+    if (r2 && r2.error) failed = r2.error.message || 'Stripe refused the quantity change';
   }
+  if (failed) info = Object.assign({}, info, { syncFailed: failed });
   return info;
 }
 
@@ -2661,7 +2699,8 @@ async function vpbSetPlayers(request, env, json) {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
     }, false).catch(() => {});
-    return json({ ok: true, applied: 'now', players: players });
+    return json({ ok: true, applied: 'now', players: players,
+                  charge_failed: (iAdj && iAdj.kind === 'failed') ? true : false });
   }
 
   /* DECREASE. The two plans genuinely differ here, and conflating them was minting credit.

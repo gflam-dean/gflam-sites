@@ -615,7 +615,7 @@
       list.forEach(function(v){
         var wks=Math.floor(v.days_quiet/7);
         var quiet = v.days_quiet<14 ? (v.days_quiet+" days") : (wks+" weeks");
-        var state = (v.suspended_reason==="archived") ? '<span class="badge suspend">Archived</span>'
+        var state = ((v.suspended_reason==="archived"||v.suspended_reason==="archived_cancelling")) ? '<span class="badge suspend">Archived</span>'
                   : (v.status==="suspended") ? '<span class="badge suspend">'+(v.suspended_reason==="nonpayment"?"Unpaid":v.suspended_reason==="ended"?"Ended":"Paused")+'</span>'
                   : '<span class="badge">Active</span>';
         html += '<tr><td><b>'+esc(v.name||"Venue")+'</b></td>'
