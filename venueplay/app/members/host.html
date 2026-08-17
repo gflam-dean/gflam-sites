@@ -106,6 +106,17 @@
 
   .pulse{animation:pulse 1.4s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  /* Host-visible error bar. Sits inside the sticky header so it is on screen in every view
+     and while the host is scrolled down mid-draw. Used for faults the host must act on;
+     the small status pill is for connection state only. */
+  .errbar{display:none;background:rgba(255,45,85,.16);border-top:1px solid rgba(255,77,109,.55)}
+  .errbar.show{display:block}
+  .einner{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;gap:12px;align-items:flex-start}
+  .errbar .etxt{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.45;color:#FFD0DA}
+  .errbar .ex{flex:none;font-family:inherit;background:none;border:1px solid rgba(255,255,255,.25);border-radius:7px;color:#FFD0DA;font-size:11.5px;font-weight:700;padding:5px 10px;cursor:pointer}
+  .errbar .ex:hover{border-color:rgba(255,255,255,.5)}
+  .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
+
   .hidden{display:none!important}
 </style>
 </head>
@@ -120,6 +131,12 @@
     </div>
     <span class="tag">Members Draw</span>
     <span class="who"><span class="dot" id="statusDot"></span> <span id="statusText">Not connected</span></span>
+  </div>
+  <div class="errbar" id="hostErrBar" role="alert" aria-live="assertive">
+    <div class="einner">
+      <span class="etxt" id="hostErrText"></span>
+      <button type="button" class="ex" id="hostErrX">Dismiss</button>
+    </div>
   </div>
 </header>
 
@@ -241,6 +258,16 @@
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
+  // Faults the host has to act on go here, not to the 11.5px status pill and not to console.error.
+  function hostError(msg){
+    var t=$("hostErrText"), b=$("hostErrBar");
+    if(!t||!b) return;
+    t.textContent=msg||"Something went wrong";
+    b.classList.add("show");
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+  function clearHostError(){ var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
+  (function(){ var x=$("hostErrX"); if(x) x.addEventListener("click", clearHostError); })();
   function show(el,on){ $(el).classList.toggle("hidden", !on); }
   function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function money(cents){ return "$"+((cents||0)/100).toLocaleString("en-AU",{minimumFractionDigits:0,maximumFractionDigits:0}); }
@@ -633,6 +660,9 @@
         // null reference inside renderSettings rejected loadAll and the host got a blank page
         // with no error at all: nothing to report, nothing to act on.
         try{ console.error("members: load failed", e); }catch(_){}
+        // console.error alone is invisible behind a bar. Tell the host their list may be incomplete,
+        // otherwise a network blip looks exactly like an empty members list.
+        hostError("Could not load your members list. What you see may be out of date. Check your connection and reload before drawing.");
       }).then(function(){
         renderNameSeg(); applyRoleGates();
         var tv=tvFromUrl();

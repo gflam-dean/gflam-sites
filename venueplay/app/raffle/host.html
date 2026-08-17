@@ -115,6 +115,17 @@
   .res-no{color:var(--muted);font-weight:700}
   .tablewrap{overflow-x:auto}
 
+  /* Host-visible error bar. Sits inside the sticky header so it is on screen in every view
+     and while the host is scrolled down mid-draw. hostError() is the ONLY error surface:
+     the small status pill is for connection state only. */
+  .errbar{display:none;background:rgba(255,45,85,.16);border-top:1px solid rgba(255,77,109,.55)}
+  .errbar.show{display:block}
+  .einner{max-width:1100px;margin:0 auto;padding:12px 22px;display:flex;gap:12px;align-items:flex-start}
+  .errbar .etxt{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.45;color:#FFD0DA}
+  .errbar .ex{flex:none;font-family:inherit;background:none;border:1px solid rgba(255,255,255,.25);border-radius:7px;color:#FFD0DA;font-size:11.5px;font-weight:700;padding:5px 10px;cursor:pointer}
+  .errbar .ex:hover{border-color:rgba(255,255,255,.5)}
+  .errbar .ex:focus-visible{outline:2px solid #FF4D6D;outline-offset:2px}
+
   .hidden{display:none!important}
 </style>
 </head>
@@ -129,6 +140,12 @@
     </div>
     <span class="tag">Raffle</span>
     <span class="who"><span class="dot" id="statusDot"></span> <span id="statusText">Not connected</span></span>
+  </div>
+  <div class="errbar" id="hostErrBar" role="alert" aria-live="assertive">
+    <div class="einner">
+      <span class="etxt" id="hostErrText"></span>
+      <button type="button" class="ex" id="hostErrX">Dismiss</button>
+    </div>
   </div>
 </header>
 
@@ -284,6 +301,17 @@
   function padWidth(){ return G.serverPad || String(Math.max(G.max||0,1)).length; }
   function pad(n){ var s=String(n); var w=padWidth(); while(s.length<w) s="0"+s; return s; }
   function hostStatus(msg){ if(msg) $("statusText").textContent=msg; }
+  // Errors go to the banner under the header, NOT to the 11.5px status pill. A host mid-service
+  // never sees that pill, so a failed draw used to look like a button that simply did nothing.
+  function hostError(msg){
+    var t=$("hostErrText"), b=$("hostErrBar");
+    if(!t||!b){ $("statusText").textContent=msg||"Something went wrong"; return; }
+    t.textContent=msg||"Something went wrong";
+    b.classList.add("show");
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
+  function clearHostError(){ var b=$("hostErrBar"); if(b) b.classList.remove("show"); }
+  (function(){ var x=$("hostErrX"); if(x) x.addEventListener("click", clearHostError); })();
 
   // ---- reload-recovery: a host refresh keeps drawing the SAME raffle (same pattern as trivia/musical) ----
   // Stash only the session id; the Worker's /snapshot is the source of truth. The Worker also refuses to
@@ -482,7 +510,7 @@
       .then(function(){ return apiPost("/host/draw", drawBody()); })
       .then(function(r){ return wait.then(function(){ return r; }); })
       .then(function(r){ revealServer(r); })
-      .catch(function(e){ stopSpin(); G.busy=false; drawBtnIdle(); hostStatus(e.message||"Draw failed"); sendIdle(); });
+      .catch(function(e){ stopSpin(); G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); });
   }
 
   // reveal the SERVER's drawn ticket(s)
@@ -490,7 +518,7 @@
     stopSpin(); G.busy=false;
     var nums=(r.tickets||[]).slice();
     if(r.pad) G.serverPad=r.pad;
-    if(!nums.length){ drawBtnIdle(); hostStatus("No tickets left to draw"); sendIdle(); return; }
+    if(!nums.length){ drawBtnIdle(); hostError("No tickets left to draw"); sendIdle(); return; }
     var allowRedraw=(r.allow_redraw!==false);   // the game's stored setting is authoritative
     var t=(r.time_to_present!=null)?r.time_to_present:G.time;
     G.round={ seq:r.seq, numbers:nums, remaining:t, resolved:false, prize:(r.prize||prizeLabel()) };
@@ -540,7 +568,7 @@
     $("wcCd").innerHTML='<span style="color:var(--win)">Claimed · '+esc(pz)+'</span>';
     show("wcResolve",false);
     G.round=null; advancePrize(); renderRange(); drawBtnNext();
-    if(G.gameId && seq!=null){ apiPost("/host/draw/resolve",{ game_id:G.gameId, seq:seq, outcome:"claimed" }).catch(function(e){ hostStatus(e.message); }); }
+    if(G.gameId && seq!=null){ apiPost("/host/draw/resolve",{ game_id:G.gameId, seq:seq, outcome:"claimed" }).catch(function(e){ hostError(e.message); }); }
   }
   // winner not here -> mark that round no_show on the server and draw a replacement
   function onRedraw(auto){
@@ -557,7 +585,7 @@
     apiPost("/host/draw", body)
       .then(function(r){ return wait.then(function(){ return r; }); })
       .then(function(r){ revealServer(r); })
-      .catch(function(e){ stopSpin(); G.busy=false; drawBtnNext(); hostStatus(e.message||"Redraw failed"); sendIdle(); });
+      .catch(function(e){ stopSpin(); G.busy=false; drawBtnNext(); hostError(e.message||"Redraw failed"); sendIdle(); });
   }
   // start a fresh raffle: end the current game so drawn tickets clear
   function newRaffle(){
