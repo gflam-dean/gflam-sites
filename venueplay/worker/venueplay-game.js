@@ -415,6 +415,80 @@ async function handleVenueLookup(request, env, json) {
   return json({ exists: true, name: (rows && rows[0] && rows[0].name) || '' });
 }
 
+/* What is on at this venue right now?  (anon)
+ *   GET /play/live?code=<venue code>  ->  { exists, name, live, format, join_code }
+ *
+ * This is what makes a PRINTED sign possible. The venue code is a pure hash of the venue
+ * slug, so venueplay.com.au/play?venue=<slug> never changes and can go on a table talker.
+ * Bingo needs nothing here (host, TV and phones all meet on the venue code), but trivia and
+ * musical open a session and hand out a RANDOM join code, so a phone arriving from a printed
+ * sign has to ask which room it is tonight. Unknown/quiet venue = live:false, and the play
+ * page just waits on the venue code, which is exactly right for broadcast bingo.
+ */
+async function handlePlayLive(request, env, json) {
+  const url = new URL(request.url);
+  const venueId = await venueByCode(env, url.searchParams.get('code') || '');
+  if (!venueId) return json({ exists: false, live: false });
+  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
+  const name = (vrows && vrows[0] && vrows[0].name) || '';
+  const sessions = await sbGet(env, 'vp_sessions',
+    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code&order=created_at.desc&limit=1');
+  if (!sessions.length) return json({ exists: true, name, live: false });
+  const games = await sbGet(env, 'vp_games',
+    'session_id=eq.' + enc(sessions[0].id) + '&status=eq.running&select=format&order=seq.desc&limit=1');
+  return json({
+    exists: true, name, live: true,
+    join_code: sessions[0].join_code,
+    format: (games && games[0] && games[0].format) || '',
+  });
+}
+
+async function abuseIpHash(request, env) {
+  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; x-real-ip is client-suppliable
+  if (!ip) return null;
+  return await sha256Hex((env.IP_HASH_SALT || 'venueplay') + ':' + ip);
+}
+
+async function handleReport(request, env, json) {
+  const b = await readJson(request);
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'report:ip:' + ipHash, REPORT_MAX_PER_IP, 60);
+    if (!rl.ok) return json({ error: 'Too many reports from this network right now' }, 429);
+  }
+  const venueId = await venueByCode(env, b.code);
+  if (!venueId) return json({ ok: false });
+  const row = {
+    venue_id: venueId,
+    format: String(b.format || 'bingo').slice(0, 20),
+    players: Math.max(0, parseInt(b.players, 10) || 0),
+    tickets: Math.max(0, parseInt(b.tickets, 10) || 0),
+    prizes: Array.isArray(b.prizes) ? b.prizes.slice(0, 20) : [],
+    started_at: b.started_at || null,
+    ended_at: b.ended_at || null
+  };
+  /* A night that was PLAYED but never formally ended used to leave no trace whatsoever, because
+     the console only reported on "new game" and "end game". A host who shut the iPad mid-night,
+     or whose battery went, produced a venue that read as never having run a game at all. The
+     retention list then put that venue at the very top, most urgent, with an Archive button
+     sitting beside it: the cure for a busy venue was one click away from switching it off.
+
+     So the console now reports the moment a game STARTS and patches that same row when it
+     finishes. The trace exists from ball one, and there is still exactly one row per game. */
+  const reportId = String(b.report_id || '').trim();
+  if (reportId) {
+    if (!UUID_RE.test(reportId)) return json({ error: 'Invalid report_id' }, 400);
+    // Scoped to the venue the code resolved to, so a report id alone can never rewrite
+    // another venue's figures.
+    await sbPatch(env, 'vp_game_reports',
+      'id=eq.' + enc(reportId) + '&venue_id=eq.' + enc(venueId), row);
+    return json({ ok: true, id: reportId });
+  }
+  const ins = await sbInsert(env, 'vp_game_reports', row, true);
+  const created = Array.isArray(ins) ? ins[0] : ins;
+  return json({ ok: true, id: (created && created.id) || null });
+}
+
 async function handleJoin(request, env, json) {
   const b = await readJson(request);
   const code = String(b.code || '').trim().toUpperCase();
