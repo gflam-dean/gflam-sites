@@ -90,6 +90,11 @@
   .ticket{margin-bottom:16px}
   /* Turning the page hides tickets; it does NOT rebuild them. See buildCards. */
   .ticket.offpage{display:none}
+  /* A called number you have not marked yet. Deliberately quieter than .justcalled: the newest
+     number still has to be the loudest thing on the card. This does NOT mark for you, it only
+     says what is outstanding, which is what the board behind a caller does in a real hall. */
+  .cc.pending{box-shadow:inset 0 0 0 2px rgba(255,194,75,.75)}
+  body.light .cc.pending{box-shadow:inset 0 0 0 2px rgba(255,31,142,.55)}
   .ticket .tklabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;text-align:left}
 
   /* ---- LAYOUT: pages of three (menu option "Three at a time") ----
@@ -105,6 +110,10 @@
     letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:.15s;position:relative}
   .pagetab.on{background:var(--ink-2);color:var(--text);border-color:rgba(255,255,255,.22)}
   .pagetab.has{border-color:var(--gold);color:var(--gold)}
+  /* Paid, more than one ticket: how many called numbers are still unmarked on that page. */
+  .pagetab .pcount{display:none;margin-left:6px;font-size:11px;font-weight:800;color:#12101a;
+    background:var(--gold);border-radius:9px;padding:1px 6px;vertical-align:middle}
+  .pagetab.owed .pcount{display:inline-block}
   .pagetab.has:after{content:"";position:absolute;top:5px;right:6px;width:6px;height:6px;border-radius:50%;
     background:var(--gold);box-shadow:0 0 7px var(--gold)}
   .lay-pages .stackwrap{display:flex;flex-direction:column;gap:12px}
@@ -447,6 +456,16 @@
      down and coming up, the screen visibly flickered, and any scroll position jumped back to the
      top. Marks and highlights are just classes, so they get painted onto the cards already on
      screen and the DOM is left alone. */
+  /* THE OUTSTANDING-NUMBER HELPER, and exactly who gets it.
+     Only on a PAID night, and only for somebody holding more than one ticket. That is the case
+     the phone genuinely cannot cope with: four sheets is 24 tickets across 8 pages, and the page
+     turns itself to whatever was called last, so a number on another page is behind a tab with
+     nothing to say it is there. On paper you sweep a whole book in a second; here you cannot.
+     It never marks anything. It shows what you have not marked yet and you still tap every one,
+     which is what the board behind the caller does in a real hall. A free night with one ticket
+     plays exactly as it always has. */
+  function showsOutstanding(){ return !!(P.paidMode && P.cards.length > 1); }
+
   function structureKey(){
     /* dealSeq is in here because cardNo is NOT a reliable identity: the host mints it as
        100 + random(900), so re-dealing the same NUMBER of tickets has about a 1-in-900 chance per
@@ -498,7 +517,7 @@
         b.className="pagetab";                 // which tab is "on" is painted, not built
         b.setAttribute("data-page",pg);
         var a=pg*PER+1, z=Math.min(pg*PER+PER, P.cards.length);
-        b.textContent = (a===z) ? ("Ticket "+a) : ("Tickets "+a+"-"+z);
+        b.innerHTML = ((a===z) ? ("Ticket "+a) : ("Tickets "+a+"-"+z)) + '<i class="pcount"></i>';
         tabs.appendChild(b);
       }
       stack.appendChild(tabs);
@@ -557,14 +576,29 @@
     }
     var band=stack.querySelector(".colband");
     if(band){ var segs=band.children; for(var b=0;b<segs.length;b++) segs[b].className = (b===curCol) ? "lit" : ""; }
+    var helps=showsOutstanding(), owed=[];
     var cells=stack.querySelectorAll(".cc[data-n]");
     for(var i=0;i<cells.length;i++){
       var cell=cells[i], n=+cell.getAttribute("data-n"), ci=+cell.getAttribute("data-card");
       var cd=P.cards[ci];
-      cell.classList.toggle("daub", !!(cd && cd.daubs[n]));
+      var marked=!!(cd && cd.daubs[n]);
+      cell.classList.toggle("daub", marked);
       cell.classList.toggle("on", !!(P.assist && set[n]));
       cell.classList.toggle("incol", curCol>=0 && colOfNum(n)===curCol);
       cell.classList.toggle("justcalled", n===last);
+      // Called, not marked, and not the newest ball (that one already has the loud ring).
+      var pend = helps && set[n] && !marked && n!==last;
+      cell.classList.toggle("pending", !!pend);
+      if(pend){ var pgi=Math.floor(ci/3); owed[pgi]=(owed[pgi]||0)+1; }
+    }
+    // Put the tally on each tab, so they know to turn the page without hunting for a reason to.
+    if(lay==="pages"){
+      var tb2=stack.querySelectorAll(".pagetab");
+      for(var t2=0;t2<tb2.length;t2++){
+        var cnt=owed[t2]||0;
+        tb2[t2].classList.toggle("owed", cnt>0);
+        var ce=tb2[t2].querySelector(".pcount"); if(ce) ce.textContent=cnt||"";
+      }
     }
     markCalledTab(last);
     updateTension(set);
