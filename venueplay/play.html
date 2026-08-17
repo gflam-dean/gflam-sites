@@ -243,7 +243,7 @@
     <div style="font-size:44px">&#127921;</div>
     <div class="pbig" style="color:var(--gold)">You&#39;re in</div>
     <div class="psub">Good luck, <b id="waitName" style="color:var(--text)">Player</b></div>
-    <div class="pnote">Waiting for the host to start the game. Your card will appear here.</div>
+    <div class="pnote" id="waitNote">Waiting for the host to start the game. Your card will appear here.</div>
   </div>
 
   <!-- CARD -->
@@ -326,7 +326,7 @@
   var P={
     room:"", pid:"", name:"", joined:false, hostSeen:false,
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
-    pattern:"one", prize:"the prize", called:[], active:false, assist:false, allowEarly:false,
+    pattern:"one", prize:"the prize", called:[], active:false, paidMode:"", assist:false, allowEarly:false,
     claimPending:false, won:false, ended:false, capture:null,
     shared:false, sharedWith:[], layout:"stack", page:0, turnedFor:0, dealSeq:0, builtKey:"", venueSlug:""
   };
@@ -416,7 +416,17 @@
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
     if(P.active && P.cards.length){ renderCards(); show("vCard"); return; }
-    $("waitName").textContent=P.name; show("vWait");
+    $("waitName").textContent=P.name;
+    /* On a PAID night a player with no tickets is not waiting for the host, they have not bought
+       one yet, and "waiting for the host to start" would have them sitting there through the whole
+       game wondering. Tell them where the tickets come from. */
+    var wn=$("waitNote");
+    if(wn){
+      wn.innerHTML = (P.paidMode && P.active && !P.cards.length)
+        ? "Tickets are on sale at the bar tonight. Grab one and the staff will put it straight on your phone."
+        : "Waiting for the host to start the game. Your card will appear here.";
+    }
+    show("vWait");
   }
 
   // ---- card render ----
@@ -733,6 +743,9 @@
   }
   // ---- ticket count picker + host default ----
   function renderPicker(){
+    // #cpRow is not in the markup, so this returns here every time and has done for a while.
+    // Left alone deliberately: the ticket count is the HOST's to set (free night) or the bar's
+    // (paid night), and a picker on the phone could only ever promise something we do not honour.
     var row=$("cpRow"); if(!row) return; row.innerHTML="";
     for(var k=1;k<=6;k++){ (function(kk){
       var b=document.createElement("button"); b.type="button"; b.className="cpbtn"+(kk===P.numCards?" sel":""); b.textContent=kk;
@@ -779,6 +792,7 @@
     else if(m.t==="state"){
       if(m.pattern) P.pattern=m.pattern;
       if(typeof m.prize==="string") P.prize=m.prize;
+      if(typeof m.paidMode==="string") P.paidMode=m.paidMode;
       P.called=m.called||[]; P.active=!!m.active;
       autoDaub(); if(!P.won && !P.ended) route();
     }
