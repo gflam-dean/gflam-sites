@@ -176,7 +176,6 @@ export default {
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
-      if (method === 'POST' && path === '/host/signing-key')   return await handleHostSigningKey(request, env, json);
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       if (method === 'POST' && path === '/host/game/pattern')  return await handleMusicPattern(request, env, json);
@@ -413,134 +412,7 @@ async function handleVenueLookup(request, env, json) {
   const venueId = await venueByCode(env, url.searchParams.get('code') || '');
   if (!venueId) return json({ exists: false });
   const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
-  // The public half of the venue's signing key, so a phone or a TV can check that a ball really
-  // came from the host. Public on purpose: verifying is the entire point of it.
-  const pub = await venuePublicJwk(env, venueId);
-  return json({ exists: true, name: (rows && rows[0] && rows[0].name) || '', signing_key: pub });
-}
-
-/* The bingo channel is named from the venue's PUBLIC slug, so it is guessable by anyone who knows
-   the venue exists, and no amount of renaming fixes that while printed signs and a fixed TV URL
-   have to reach the same room. Authenticity comes from a signature instead: the host signs what it
-   broadcasts, and phones and the TV drop anything that does not verify. */
-async function venuePublicJwk(env, venueId) {
-  try {
-    const rows = await sbGet(env, 'vp_venue_signing_keys',
-      'venue_id=eq.' + enc(venueId) + '&select=public_jwk&limit=1');
-    return (rows && rows[0] && rows[0].public_jwk) || null;
-  } catch (e) { return null; }   // table not migrated yet: unsigned, exactly as before
-}
-
-/* POST /host/signing-key  { venue_id }  ->  { public_jwk, private_jwk }
- * Staff-only. Mints the venue's keypair on first use and returns it to the console so it can sign.
- * requireStaff is what stands between the private half and the world, so it runs BEFORE any read. */
-async function handleHostSigningKey(request, env, json) {
-  const authUserId = await verifyHostJwt(request, env);
-  const b = await readJson(request);
-  const venueId = String(b.venue_id || '').trim();
-  assertUuid(venueId, 'venue_id');
-  await requireStaff(env, authUserId, venueId);   // throws 403 unless this person works here
-
-  const rows = await sbGet(env, 'vp_venue_signing_keys',
-    'venue_id=eq.' + enc(venueId) + '&select=public_jwk,private_jwk&limit=1');
-  if (rows && rows[0]) return json({ public_jwk: rows[0].public_jwk, private_jwk: rows[0].private_jwk });
-
-  const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
-  const publicJwk = await crypto.subtle.exportKey('jwk', pair.publicKey);
-  const privateJwk = await crypto.subtle.exportKey('jwk', pair.privateKey);
-  // Upsert, because two host devices opening the console at once would otherwise race and the
-  // loser would sign with a key nobody is verifying against.
-  await sbUpsert(env, 'vp_venue_signing_keys',
-    { venue_id: venueId, public_jwk: publicJwk, private_jwk: privateJwk }, 'venue_id');
-  const after = await sbGet(env, 'vp_venue_signing_keys',
-    'venue_id=eq.' + enc(venueId) + '&select=public_jwk,private_jwk&limit=1');
-  const row = (after && after[0]) || { public_jwk: publicJwk, private_jwk: privateJwk };
-  return json({ public_jwk: row.public_jwk, private_jwk: row.private_jwk });
-}
-
-/* What is on at this venue right now?  (anon)
- *   GET /play/live?code=<venue code>  ->  { exists, name, live, format, join_code }
- *
- * This is what makes a PRINTED sign possible. The venue code is a pure hash of the venue
- * slug, so venueplay.com.au/play?venue=<slug> never changes and can go on a table talker.
- * Bingo needs nothing here (host, TV and phones all meet on the venue code), but trivia and
- * musical open a session and hand out a RANDOM join code, so a phone arriving from a printed
- * sign has to ask which room it is tonight. Unknown/quiet venue = live:false, and the play
- * page just waits on the venue code, which is exactly right for broadcast bingo.
- */
-async function handlePlayLive(request, env, json) {
-  const url = new URL(request.url);
-  const venueId = await venueByCode(env, url.searchParams.get('code') || '');
-  if (!venueId) return json({ exists: false, live: false });
-  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
-  const name = (vrows && vrows[0] && vrows[0].name) || '';
-  const sessions = await sbGet(env, 'vp_sessions',
-    'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code&order=created_at.desc&limit=1');
-  if (!sessions.length) return json({ exists: true, name, live: false });
-  const games = await sbGet(env, 'vp_games',
-    'session_id=eq.' + enc(sessions[0].id) + '&status=eq.running&select=format&order=seq.desc&limit=1');
-  return json({
-    exists: true, name, live: true,
-    join_code: sessions[0].join_code,
-    format: (games && games[0] && games[0].format) || '',
-  });
-}
-
-/* End-of-game figures for reporting. Host posts once per completed game. Keyed by venue_id. */
-/* Both /report and /capture are reached with NOTHING but `code`, and `code` is not a secret: it is
-   fnvVenueCode(slug), a pure hash of the venue's PUBLIC slug, computed by code that ships in
-   play.html and tv.html. Anyone can derive any venue's code and post to these two routes. They are
-   the only unauthenticated writes the rate limiter did not cover (broadcast bingo has no game
-   Worker, so these are its only server calls). /capture is the one that matters: it writes
-   marketing_optin rows, and a poisoned opt-in list is exactly the Spam Act exposure the whole
-   unticked-by-default rule exists to avoid. Throttle both per network. */
-const REPORT_MAX_PER_IP = 30;    // game reports per 60s per network. A venue finishes a round every few minutes.
-const CAPTURE_MAX_PER_IP = 120;  // opt-in captures per 60s per network. A whole venue shares one NAT IP, so keep it generous.
-
-async function abuseIpHash(request, env) {
-  const ip = request.headers.get('cf-connecting-ip') || '';   // Cloudflare-set; x-real-ip is client-suppliable
-  if (!ip) return null;
-  return await sha256Hex((env.IP_HASH_SALT || 'venueplay') + ':' + ip);
-}
-
-async function handleReport(request, env, json) {
-  const b = await readJson(request);
-  const ipHash = await abuseIpHash(request, env);
-  if (ipHash) {
-    const rl = await rateLimit(env, 'report:ip:' + ipHash, REPORT_MAX_PER_IP, 60);
-    if (!rl.ok) return json({ error: 'Too many reports from this network right now' }, 429);
-  }
-  const venueId = await venueByCode(env, b.code);
-  if (!venueId) return json({ ok: false });
-  const row = {
-    venue_id: venueId,
-    format: String(b.format || 'bingo').slice(0, 20),
-    players: Math.max(0, parseInt(b.players, 10) || 0),
-    tickets: Math.max(0, parseInt(b.tickets, 10) || 0),
-    prizes: Array.isArray(b.prizes) ? b.prizes.slice(0, 20) : [],
-    started_at: b.started_at || null,
-    ended_at: b.ended_at || null
-  };
-  /* A night that was PLAYED but never formally ended used to leave no trace whatsoever, because
-     the console only reported on "new game" and "end game". A host who shut the iPad mid-night,
-     or whose battery went, produced a venue that read as never having run a game at all. The
-     retention list then put that venue at the very top, most urgent, with an Archive button
-     sitting beside it: the cure for a busy venue was one click away from switching it off.
-
-     So the console now reports the moment a game STARTS and patches that same row when it
-     finishes. The trace exists from ball one, and there is still exactly one row per game. */
-  const reportId = String(b.report_id || '').trim();
-  if (reportId) {
-    if (!UUID_RE.test(reportId)) return json({ error: 'Invalid report_id' }, 400);
-    // Scoped to the venue the code resolved to, so a report id alone can never rewrite
-    // another venue's figures.
-    await sbPatch(env, 'vp_game_reports',
-      'id=eq.' + enc(reportId) + '&venue_id=eq.' + enc(venueId), row);
-    return json({ ok: true, id: reportId });
-  }
-  const ins = await sbInsert(env, 'vp_game_reports', row, true);
-  const created = Array.isArray(ins) ? ins[0] : ins;
-  return json({ ok: true, id: (created && created.id) || null });
+  return json({ exists: true, name: (rows && rows[0] && rows[0].name) || '' });
 }
 
 async function handleJoin(request, env, json) {
