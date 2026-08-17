@@ -205,7 +205,7 @@
     var nc=makeCode(); try{ localStorage.setItem("vpTvCodeMembers", nc); }catch(e){} return nc;
   })();
 
-  var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0, draws:[] };
+  var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0, draws:[], hostSeen:false };
   var adTimer=null, adIdx=0, spinTimer=null, nameTimer=null, celebrateTimer=null, countTimer=null, claimCdTimer=null;
   function mmss(s){ s=Math.max(0,s|0); var m=Math.floor(s/60), ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
   function stopClaimCd(){ if(claimCdTimer){ clearInterval(claimCdTimer); claimCdTimer=null; } $("tvClaimCd").classList.add("hidden"); }
@@ -238,7 +238,7 @@
   }
   function stopAds(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
   function startAds(){
-    stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.toggle("hidden", !!VENUE_SLUG);   // a linked screen never needs pairing instructions
+    stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.toggle("hidden", !!VENUE_SLUG || !!state.hostSeen);   // linked, or the host is plainly already here
     hideAll(); $("tvIdle").classList.remove("hidden"); fillIdle();
     var slides=document.querySelectorAll("#tvIdle .ad"); adIdx=0;
     for(var i=0;i<slides.length;i++){ slides[i].classList.toggle("show", i===0); }
@@ -395,6 +395,8 @@
 
   function onMsg(m){
     if(!m||!m.t) return;
+    // Any word from the host means pairing is done: never put the setup line back on the wall.
+    state.hostSeen=true;
     // The host tapped "Back to ads". Go now rather than wait for a timeout.
     if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
     if(m.t==="host_here"){ /* host present; wait for state */ return; }

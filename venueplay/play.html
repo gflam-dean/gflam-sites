@@ -745,72 +745,6 @@
 
   // ---- incoming ----
 
-  /* ---- VERIFYING THE HOST ------------------------------------------------------------
-     The bingo channel is named from the venue's PUBLIC slug, so anyone who knows the venue
-     exists can work out the channel and broadcast into a live game: balls that were never
-     called, a game that never started, somebody else's win. The channel name cannot be made
-     secret while a printed sign and a fixed TV URL have to reach the same room.
-
-     So the host signs what it sends and we check it here. An attacker can still shout into the
-     channel; nothing gets past this function.
-
-     Deliberately fail-open until the first GOOD signature: if the host cannot reach its key the
-     night still runs exactly as it did before. From the moment one valid signature is seen, this
-     room is a signed room and unsigned messages are impostors and get dropped. */
-  var _pub=null, _pubFetching=false, _sigSeen=false, _lastN=0, _pendRaw=[];
-  function _fromB64(str){
-    var bin=atob(str), b=new Uint8Array(bin.length);
-    for(var i=0;i<bin.length;i++) b[i]=bin.charCodeAt(i);
-    return b;
-  }
-  function loadVerifyKey(code){
-    if(_pubFetching || _pub || !window.crypto || !crypto.subtle) return;
-    _pubFetching=true;
-    fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(code))
-      .then(function(r){ return r.ok?r.json():null; })
-      .then(function(d){
-        if(!d || !d.signing_key) return null;
-        return crypto.subtle.importKey("jwk", d.signing_key, { name:"ECDSA", namedCurve:"P-256" }, false, ["verify"])
-          .then(function(k){ _pub=k; });
-      })
-      .then(function(){ _pubFetching=false; var q=_pendRaw; _pendRaw=[]; q.forEach(onRaw); })
-      .catch(function(){ _pubFetching=false; _pendRaw=[]; });
-  }
-  function onRaw(payload){
-    if(!payload) return;
-    if(typeof payload.b==="string" && payload.sig){
-      if(!_pub){
-        // Signed traffic but no key yet: hold a little and go and get it, rather than drop the
-        // opening of the game. Bounded so a flood cannot grow this without limit.
-        if(_pendRaw.length<40) _pendRaw.push(payload);
-        loadVerifyKey(ROOM_CODE());
-        return;
-      }
-      var body=payload.b;
-      crypto.subtle.verify({ name:"ECDSA", hash:"SHA-256" }, _pub, _fromB64(payload.sig), new TextEncoder().encode(body))
-        .then(function(ok){
-          if(!ok) return;                       // forged: drop it, say nothing
-          var m=null; try{ m=JSON.parse(body); }catch(e){ return; }
-          if(!m) return;
-          // Replay guard: the host's counter only ever goes up within a night.
-          if(typeof m.n==="number"){ if(m.n<=_lastN) return; _lastN=m.n; }
-          _sigSeen=true;
-          onMsg(m);
-        })
-        .catch(function(){});
-      return;
-    }
-    /* Drop unsigned traffic once we know this venue HAS a key, not merely once a signature has
-       verified. Waiting for the first verified message left a live window at page load: verifying
-       is async, so an unsigned injection arriving before that promise resolved was accepted, and
-       an attacker only has to keep shouting to land inside it.
-       _pub comes from our own fetch to the Worker, never off the channel, so an attacker cannot
-       set it and cannot force this branch. A venue with no key at all still fails open. */
-    if(_sigSeen || _pub) return;
-    onMsg(payload);
-  }
-  function ROOM_CODE(){ return P.room||""; }
-
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
@@ -910,8 +844,7 @@
     var savedName=loadName(room);
     if(savedName){ P.name=savedName; P.joined=true; }
     ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
-    loadVerifyKey(room);
-    ch.on("broadcast", { event:"msg" }, function(e){ onRaw(e.payload); });
+    ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true; flushQueue();
@@ -951,13 +884,23 @@
     // musical codes would be paying the cost in the wrong place. Same shape watchVenue already
     // uses for a table-talker link.
     connect(code);
-    playerPost("/join/info",{ code:code })
-      .then(function(r){
-        if(P.joined || P.active) return;               // already in a game here: never yank them away
-        var to=playerAppFor(r && r.format);
-        if(to) window.location.replace(to+"?room="+encodeURIComponent(code));
-      })
-      .catch(function(){});                            // worker unreachable: bingo still works
+    /* KEEP ASKING. A single lookup answered "no game" for anyone who typed the code before the
+       host started round one, which is most of the room: the join code goes up on the TV during
+       the lobby and that is when people type it. They then sat on the bingo channel all night
+       with no way back. Poll until we learn what this is, the player joins something here, or we
+       give up. Cheap, and it stops the moment it has an answer. */
+    var tries=0;
+    (function look(){
+      if(P.joined || P.active) return;                 // already in a game here: never yank them away
+      playerPost("/join/info",{ code:code })
+        .then(function(r){
+          if(P.joined || P.active) return;
+          var to=playerAppFor(r && r.format);
+          if(to){ window.location.replace(to+"?room="+encodeURIComponent(code)); return; }
+          if(++tries<40) setTimeout(look, 6000);       // ~4 minutes of lobby, then stop
+        })
+        .catch(function(){ if(++tries<40) setTimeout(look, 6000); });   // worker blip: bingo still works
+    })();
   }
   function roomGo(){
     var v=roomIn.value.toUpperCase().trim();

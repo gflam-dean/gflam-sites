@@ -844,9 +844,8 @@
     }
     try{
       client=supabase.createClient(SUPA_URL, SUPA_ANON);
-      loadVerifyKey();
       ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
-      ch.on("broadcast", { event:"msg" }, function(e){ onRaw(e.payload); });
+      ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
       ch.subscribe(function(status){
         if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
         else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
@@ -855,69 +854,6 @@
   }
 
   var HOST_TYPES={host_here:1,session:1,mode:1,idle:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
-  /* ---- VERIFYING THE HOST ------------------------------------------------------------
-     The bingo channel is vp-<CODE>, where CODE is derived from the venue's PUBLIC slug: the slug
-     is on the table talkers, the join link and this screen. So the channel name is not a secret
-     and cannot be made into one while a printed sign and a fixed TV URL both have to reach the
-     same room. Anyone who knows the venue exists can work out the channel and broadcast into a
-     live game, and this is the screen the whole room is watching.
-
-     So the host signs what it sends and we check it here. Fail-open until the first GOOD
-     signature, so a host that cannot reach its key still runs the night exactly as before. From
-     that first valid signature on, this is a signed room and an unsigned message is not the host.
-     Anything that fails verification is dropped in silence: a warning on the wall would just
-     hand an attacker a way to put text on the screen. */
-  var _pub=null, _pubFetching=false, _sigSeen=false, _lastN=0, _pendRaw=[];
-  function _fromB64(str){
-    var bin=atob(str), b=new Uint8Array(bin.length);
-    for(var i=0;i<bin.length;i++) b[i]=bin.charCodeAt(i);
-    return b;
-  }
-  function loadVerifyKey(){
-    if(_pubFetching || _pub || !window.crypto || !crypto.subtle) return;
-    _pubFetching=true;
-    fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE))
-      .then(function(r){ return r.ok?r.json():null; })
-      .then(function(d){
-        if(!d || !d.signing_key) return null;
-        return crypto.subtle.importKey("jwk", d.signing_key, { name:"ECDSA", namedCurve:"P-256" }, false, ["verify"])
-          .then(function(k){ _pub=k; });
-      })
-      .then(function(){ _pubFetching=false; var q=_pendRaw; _pendRaw=[]; q.forEach(onRaw); })
-      .catch(function(){ _pubFetching=false; _pendRaw=[]; });
-  }
-  function onRaw(payload){
-    if(!payload) return;
-    if(typeof payload.b==="string" && payload.sig){
-      if(!_pub){
-        // Signed traffic but no key yet: hold briefly and go and fetch it, rather than drop the
-        // opening of the game. Bounded, so a flood cannot grow this without limit.
-        if(_pendRaw.length<40) _pendRaw.push(payload);
-        loadVerifyKey();
-        return;
-      }
-      crypto.subtle.verify({ name:"ECDSA", hash:"SHA-256" }, _pub, _fromB64(payload.sig), new TextEncoder().encode(payload.b))
-        .then(function(ok){
-          if(!ok) return;
-          var m=null; try{ m=JSON.parse(payload.b); }catch(e){ return; }
-          if(!m) return;
-          if(typeof m.n==="number"){ if(m.n<=_lastN) return; _lastN=m.n; }   // replay guard
-          _sigSeen=true;
-          onMsg(m);
-        })
-        .catch(function(){});
-      return;
-    }
-    /* Drop unsigned traffic once we know this venue HAS a key, not merely once a signature has
-       verified. Waiting for the first verified message left a live window at page load: verifying
-       is async, so an unsigned injection arriving before that promise resolved was accepted, and
-       an attacker only has to keep shouting to land inside it.
-       _pub comes from our own fetch to the Worker, never off the channel, so an attacker cannot
-       set it and cannot force this branch. A venue with no key at all still fails open. */
-    if(_sigSeen || _pub) return;
-    onMsg(payload);
-  }
-
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here") return; // ignore our own presence pings

@@ -329,8 +329,14 @@ async function handleJoinInfo(request, env, json) {
   const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=id,venue_id&limit=1');
   if (sessions.length) {
     venueId = sessions[0].venue_id;
+    /* The LATEST game of any status, not just a live one. No vp_games row is ever written with
+       status 'lobby' (every insert is 'running'), so filtering on a live status meant the format
+       was unknown in exactly the window the code is typed in: after the session opens and before
+       round one starts, which is when the join code is up on the TV and the room is reading it.
+       It went blank again between rounds, because ending a round marks it finished. A session
+       that has run a trivia round is a trivia session whether or not a round is live right now. */
     const games = await sbGet(env, 'vp_games',
-      'session_id=eq.' + enc(sessions[0].id) + '&status=in.(lobby,running,paused)&select=format&order=seq.desc&limit=1');
+      'session_id=eq.' + enc(sessions[0].id) + '&select=format&order=seq.desc&limit=1');
     if (games.length) format = String(games[0].format || '');
   } else venueId = await venueByCode(env, code);   // broadcast bingo has no session: resolve by venue code
   if (!venueId) return json({ collect: null, format: '' }); // unknown code; join screen falls back to name only
@@ -855,12 +861,6 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   if (pool.length < questionCount) pool = allSeqs.slice();                   // whole set used this session -> reset
   const chosenSeqs = shuffleArray(pool.slice()).slice(0, questionCount);
   questionCount = chosenSeqs.length;
-  // Record what we're about to ask so it won't recur at this venue for 12 months. Best-effort:
-  // a logging failure must never stop the game starting.
-  if (session.venue_id) {
-    const askedInsert = chosenSeqs.map((s) => ({ venue_id: session.venue_id, question_id: seqToId[s] })).filter((r) => r.question_id);
-    if (askedInsert.length) { try { await sbInsert(env, 'vp_asked_questions', askedInsert, false); } catch (e) { /* non-fatal */ } }
-  }
 
   // vp_trivia_games has no per-game points/time/prize columns, so the host's overrides
   // and display text live in vp_games.config (same place bingo keeps prize/title).
@@ -892,6 +892,16 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   }, true);
   const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
   await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
+
+  /* Record the questions as asked ONLY now the round exists. This used to run before the insert,
+     so a host double-tapping "Start round" hit the unique (session_id, seq) index, the round was
+     never created, and twenty questions were still burned at that venue for twelve months. Same
+     fault migration 36 was written to clean up, just smaller. Best-effort: a logging failure must
+     never stop a game that has already started. */
+  if (session.venue_id) {
+    const askedInsert = chosenSeqs.map((sq) => ({ venue_id: session.venue_id, question_id: seqToId[sq] })).filter((r) => r.question_id);
+    if (askedInsert.length) { try { await sbInsert(env, 'vp_asked_questions', askedInsert, false); } catch (e) { /* non-fatal */ } }
+  }
 
   await sbInsert(env, 'vp_trivia_games', {
     game_id: game.id, question_set_id: setId, current_seq: 0, phase: 'idle', speed_bonus: speedBonus,
@@ -1518,6 +1528,9 @@ async function handleMembersSettings(request, env, json) {
   intField('current_jackpot_cents');
   intField('time_to_claim_seconds');
   intField('draw_length_seconds');
+  // The name is editable on an EXISTING draw too. It was only ever read on the create branch, so
+  // a venue renaming its draw was told "saved" and the TV kept showing the old name forever.
+  if (b.name != null) { const nm = String(b.name).slice(0, 120).trim(); if (nm) patch.name = nm; }
   if (b.draw_day != null) patch.draw_day = String(b.draw_day).slice(0, 20);
   if (b.draw_time != null) patch.draw_time = String(b.draw_time).slice(0, 20);
   // The owner sets when the draw started running (shown as "running since" on the TV). Only a
@@ -3061,8 +3074,13 @@ async function requireStaff(env, authUserId, venueId) {
 
        The admin still has to BE an admin: this is a real lookup against vp_platform_admins, not a
        header or a client claim. */
+    /* Role matters. vp_platform_admins.role is 'owner' | 'accounts' | 'staff', and the billing
+       Worker already gates its admin routes on ['owner','accounts']. Accepting ANY row here
+       handed a Gflam 'staff' admin owner rights at every venue in the country, including setting
+       a members-draw jackpot to any figure. Match the other Worker rather than invent a second
+       answer to the same question. */
     const admins = await sbGet(env, 'vp_platform_admins',
-      'auth_user_id=eq.' + enc(authUserId) + '&select=auth_user_id,role');
+      'auth_user_id=eq.' + enc(authUserId) + '&role=in.(owner,accounts)&select=auth_user_id,role');
     if (!admins.length) throw httpError(403, 'Not authorised: you are not staff at this venue');
     // The kill-switch still applies: an admin must not be able to run games at a venue we have
     // switched off, or the suspension would not mean anything.
@@ -3209,8 +3227,16 @@ async function getPublicSnapshot(env, sessionId) {
             '&select=question,options,correct_index&limit=1');
           if (qrows.length) {
             const q = qrows[0];
+            /* qi is the POSITION IN THE ROUND ("Question 3 of 10"); qseq is the question's id
+               within the set. They were the same number only because the randomiser was dead and
+               rounds ran seq 1..N in order. Now that config.question_seqs is honoured, current_seq
+               is a random seq from the whole library set, so a host reload mid-round rebroadcast
+               "Question 412 of 10" to the TV and every phone, and the console's isLast test
+               (qi >= qtotal) went true on question one and offered to end the round. */
+            const _seqs = Array.isArray((g.config || {}).question_seqs) ? g.config.question_seqs : null;
+            const _pos = _seqs ? (_seqs.indexOf(t.current_seq) + 1) : t.current_seq;
             const pub = {
-              qseq: t.current_seq, qi: t.current_seq,
+              qseq: t.current_seq, qi: _pos > 0 ? _pos : t.current_seq,
               text: q.question, options: Array.isArray(q.options) ? q.options : [],
               ends_at: t.question_ends_at || null,
             };

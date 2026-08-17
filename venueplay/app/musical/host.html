@@ -626,7 +626,7 @@
   function playNext(){
     for(var i=G.qIdx+1;i<G.queue.length;i++){
       var s=G.songs[G.queue[i]];
-      if(s && !G.played[s.title]){ G.qIdx=i; playSong(s); return; }
+      if(s && !G.played[songKey(s)]){ G.qIdx=i; playSong(s); return; }
     }
     // nothing left unplayed
     $("playNextBtn").disabled=true; $("playNextBtn").textContent="All songs played";
@@ -709,12 +709,12 @@
     var box=$("songList"); box.innerHTML="";
     var songs=curSongs();
     for(var i=0;i<songs.length;i++){
-      var s=songs[i], done=!!G.played[s.title], now=(G.hostNow===s.title);
+      var s=songs[i], done=!!G.played[songKey(s)], now=(G.hostNow===s.title);
       var row=document.createElement("div"); row.className="songrow"+(done?" done":"");
       var pillCls=now?"playing":(done?"on":"play");
       var pillTxt=s.previewUrl ? (now?"Playing":(done?"Played &#10003;":"Play")) : (done?"Called &#10003;":"Mark called");
       row.innerHTML='<div class="info"><div class="st">'+esc(s.title)+'</div><div class="sa">'+esc(s.artist)+'</div></div>'+
-        '<span class="pill '+pillCls+'" data-title="'+esc(s.title)+'">'+pillTxt+'</span>';
+        '<span class="pill '+pillCls+'" data-i="'+i+'" data-title="'+esc(s.title)+'">'+pillTxt+'</span>';
       box.appendChild(row);
     }
   }
@@ -727,7 +727,15 @@
     for(var i=0;i<25;i++){
       var cell=document.createElement("div");
       if(i===12){ cell.className="mc free"; cell.textContent="FREE"; }
-      else { var t=(cells && cells[i]!=null) ? cellTitle(cells[i]) : ""; cell.className="mc"+(t&&G.played[t]?" hit":""); cell.textContent=t||"\u2014"; }
+      else {
+        // The cell is {song_id,title}, so ask songKey, not the title. Indexing G.played by title
+        // here drew the winner's card with NOTHING marked, in front of the room, on the one
+        // screen the host uses to decide whether a claim is good.
+        var cobj=(cells && cells[i]!=null) ? cells[i] : null;
+        var t=cobj ? cellTitle(cobj) : "";
+        var hit=cobj ? !!G.played[songKey(typeof cobj==="object" ? cobj : { title:t })] : false;
+        cell.className="mc"+(hit?" hit":""); cell.textContent=t||"\u2014";
+      }
       container.appendChild(cell);
     }
   }
@@ -1052,7 +1060,12 @@
   $("spotifyBtn").addEventListener("click", copySpotify);
   $("songList").addEventListener("click", function(e){
     var pill=e.target.closest(".pill"); if(!pill) return;
-    playSong(findSong(pill.getAttribute("data-title")));
+    // By INDEX into the game's own song list. Resolving by title went through byTitle, which
+    // keeps only the first song of a given title, so the second "Crazy" in a playlist played the
+    // first one and could never be reached: the exact identity bug this was meant to remove.
+    var _pi=parseInt(pill.getAttribute("data-i"),10);
+    var _ps=(!isNaN(_pi) && curSongs()[_pi]) ? curSongs()[_pi] : findSong(pill.getAttribute("data-title"));
+    playSong(_ps);
   });
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;

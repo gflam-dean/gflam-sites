@@ -211,6 +211,8 @@
   var hostURL=absUrl("host.html?tv="+CODE);   // the host opens this to run the game on this screen
   var joinCode="";                            // the real DB join code, handed over once a session opens
   function playURLFor(code){ return absUrl("play.html?room="+code); }
+  // The address on every printed sign and table talker.
+  function ORIGIN_PLAY(){ try{ return window.location.origin + "/play"; }catch(e){ return "https://venueplay.com.au/play"; } }
 
   var state={ phase:"lobby", pattern:"one", prize:"the prize", played:[], playerCount:0, hostSeen:false, winner:null };
   var revealTimer=null;
@@ -226,9 +228,12 @@
   // this screen), then flips to the player join link built from the real DB join code.
   function drawLobbyQR(){
     // A linked screen must never put a host setup QR on the big screen: the room would scan it.
-    var url = joinCode ? playURLFor(joinCode) : (VENUE_SLUG ? "" : hostURL);
-    if(url) drawQR($("qrBig"), 720, url);
-    if(url) drawQR($("qrMini"), 220, joinCode ? playURLFor(joinCode) : url);
+    // A linked screen with no code yet shows the PLAYER link, never a host setup QR and never a
+    // blank white square: .qrbig paints a lit white panel, so drawing nothing left a glowing slab
+    // on the pub wall for the whole lobby.
+    var url = joinCode ? playURLFor(joinCode) : (VENUE_SLUG ? (ORIGIN_PLAY()) : hostURL);
+    drawQR($("qrBig"), 720, url);
+    drawQR($("qrMini"), 220, url);
   }
   function renderLobby(){
     $("lobbyCode").textContent = joinCode || "------";

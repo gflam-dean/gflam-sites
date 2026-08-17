@@ -442,58 +442,8 @@
   // so role resolution and gameplay broadcast run on a single client.
   if(window.VP){ VP.useClient(client); }
   var ch=null, subscribed=false, sendQueue=[];
-  /* ---- SIGNING THE BROADCAST ----------------------------------------------------------
-     The bingo channel is vp-<CODE> where CODE is a hash of the venue's PUBLIC slug, which is on
-     the table talkers, the join link and the TV. So the channel name is not a secret and cannot
-     be made into one: anyone who knows the venue exists can work out the channel, subscribe, and
-     broadcast balls that were never called into a live game.
-
-     Renaming it does not help, because every route into the room is public. Instead the console
-     signs what it sends, using a key the Worker only hands to somebody who passes the staff
-     check, and phones and the TV drop anything that does not verify. An attacker can still shout
-     into the channel; nothing in the room will render it.
-
-     Ordering matters here (a ball must not overtake the "started" before it), so signing runs
-     through one promise chain rather than a race of parallel signs. */
-  var _sigKey=null;
-  // Seeded from the clock so a host reload cannot restart the counter and have every phone reject
-  // the rest of the night as a replay.
-  var _sigSeq=Date.now();
-  var _sendChain=Promise.resolve();
-  function _b64(buf){
-    var b=new Uint8Array(buf), str="";
-    for(var i=0;i<b.length;i++) str+=String.fromCharCode(b[i]);
-    return btoa(str);
-  }
-  function loadSigningKey(){
-    var vid=null; try{ vid=(__ctx&&__ctx.currentVenueId)||null; }catch(e){}
-    if(!vid || !window.crypto || !crypto.subtle) return;
-    VP.getClient().auth.getSession().then(function(r){
-      var t=r&&r.data&&r.data.session&&r.data.session.access_token;
-      if(!t) return;
-      return fetch(VP_GAME_API+"/host/signing-key",{ method:"POST",
-        headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t },
-        body:JSON.stringify({ venue_id:vid })
-      }).then(function(x){ return x.ok?x.json():null; }).then(function(d){
-        if(!d || !d.private_jwk) return;
-        return crypto.subtle.importKey("jwk", d.private_jwk, { name:"ECDSA", namedCurve:"P-256" }, false, ["sign"])
-          .then(function(k){ _sigKey=k; });
-      });
-    }).catch(function(){ /* unsigned, which is exactly how this worked before */ });
-  }
-  function _emit(obj){
-    if(!ch) return;
-    if(!_sigKey){ ch.send({ type:"broadcast", event:"msg", payload:obj }); return; }
-    var body=JSON.stringify(Object.assign({}, obj, { n: ++_sigSeq }));
-    _sendChain=_sendChain.then(function(){
-      return crypto.subtle.sign({ name:"ECDSA", hash:"SHA-256" }, _sigKey, new TextEncoder().encode(body))
-        .then(function(sig){ ch.send({ type:"broadcast", event:"msg", payload:{ b:body, sig:_b64(sig) } }); })
-        // A signing failure must never take the night down: fall back to sending it plainly.
-        .catch(function(){ ch.send({ type:"broadcast", event:"msg", payload:obj }); });
-    });
-  }
-  function send(obj){ if(subscribed && ch){ _emit(obj); } else { sendQueue.push(obj); } }
-  function flushQueue(){ while(sendQueue.length && ch){ _emit(sendQueue.shift()); } }
+  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
 
   // ---- read ?tv=CODE from the URL and remember the pairing ----
   (function(){
@@ -1522,7 +1472,6 @@
     // if this screen has a saved RUNNING game (host reloaded mid game), bring it back
     // before we subscribe, so the draw, called set, roster and cards all survive.
     restoreGame(code);
-    loadSigningKey();   // fetched once per console load; unsigned until it lands
     ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){

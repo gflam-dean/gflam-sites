@@ -985,6 +985,22 @@ async function vpaHandleDiscount(request, env, json) {
       if (kind === 'percent') {
         // Percent off is an ongoing rate change, so it has to be a coupon on the subscription.
         // duration 'forever' when no month count is given, which is what "ongoing" means here.
+        if (!target.subId) return json({ error: 'That account has no subscription to discount yet.' }, 400);
+        /* A subscription carries ONE discount slot in the shape we write, and checkout already
+           uses it: a post-founding group past 4,000 or 10,000 players gets STRIPE_COUPON_5 or
+           STRIPE_COUPON_10 there. Writing discounts[0] again REPLACES that, so granting a 5% HQ
+           discount to a group on a contracted 10% volume rate would have quietly raised their
+           bill, while HQ reported the discount as applied. Refuse instead, and say what is in the
+           way: an HQ discount is a rare deliberate act and a wrong one here is a contract breach.
+           The launch cohort is all founding, which carries no tier coupon, so this refuses
+           nothing we currently do. */
+        const existing = (target.info && target.info.sub) || {};
+        const already = (existing.discounts && existing.discounts.length && existing.discounts[0])
+                     || existing.discount || null;
+        if (already) {
+          const nm = (already.coupon && (already.coupon.name || already.coupon.id)) || 'an existing discount';
+          return json({ error: 'This account already has a discount on its subscription (' + nm + '). Applying another would replace it and change what they are contracted to pay. Remove the existing one first, or use a dollar credit instead.' }, 409);
+        }
         const coupon = await vpbStripePost(env, 'coupons', Object.assign({
           percent_off: value,
           duration: months ? 'repeating' : 'forever',
@@ -994,7 +1010,6 @@ async function vpaHandleDiscount(request, env, json) {
           return json({ error: 'Stripe would not create that discount: ' + ((coupon && coupon.error && coupon.error.message) || 'unknown error') }, 502);
         }
         stripeCouponId = coupon.id;
-        if (!target.subId) return json({ error: 'That account has no subscription to discount yet.' }, 400);
         // Newer Stripe API versions take discounts[]; older ones take a bare coupon. Which one
         // this account is on is not knowable from here, so try the current shape and fall back
         // rather than have the coupon exist while attached to nothing.
@@ -1025,17 +1040,38 @@ async function vpaHandleDiscount(request, env, json) {
     }
   }
 
-  const discount = await vpaInsert(env, 'vp_discounts', {
-    target_type: targetType,
-    target_id: targetId,
-    kind: kind,
-    value_numeric: value,
-    months: kind === 'percent' ? months : null,   // dollar credits are one-off, no months
-    note: note,
-    created_by: actor.actorId,
-    stripe_coupon_id: stripeCouponId,
-    stripe_txn_id: stripeTxnId,
-  });
+  /* The money has already moved. If the row cannot be written, PUT IT BACK, because a coupon or
+     a credit with no row pointing at it can never be removed from HQ again: /admin/discount-remove
+     works off the row. This is not hypothetical, it is what a not-yet-run migration 37 looks like
+     from here, and the natural response to the error is to press Apply a second time. */
+  let discount;
+  try {
+    discount = await vpaInsert(env, 'vp_discounts', {
+      target_type: targetType,
+      target_id: targetId,
+      kind: kind,
+      value_numeric: value,
+      months: kind === 'percent' ? months : null,   // dollar credits are one-off, no months
+      note: note,
+      created_by: actor.actorId,
+      stripe_coupon_id: stripeCouponId,
+      stripe_txn_id: stripeTxnId,
+    });
+  } catch (e) {
+    if (stripeCouponId) {
+      try {
+        const t2 = await vpaBillingTargetFor(env, targetType, targetId);
+        if (t2 && !t2.manual && t2.subId) await vpbStripeDelete(env, 'subscriptions/' + encodeURIComponent(t2.subId) + '/discount').catch(() => {});
+      } catch (_) { /* best effort */ }
+      await vpbStripeDelete(env, 'coupons/' + encodeURIComponent(stripeCouponId)).catch(() => {});
+    }
+    if (stripeTxnId && target.customer) {
+      const back = Math.round(value * 100);
+      await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions',
+        { amount: back, currency: 'aud', description: 'VenuePlay discount reversed (could not be recorded)' }).catch(() => {});
+    }
+    return json({ error: 'Could not record that discount, so it has been undone in Stripe and nothing was charged. Please try again. (' + String((e && e.message) || e).slice(0, 160) + ')' }, 500);
+  }
 
   await vpaAudit(env, actor, 'discount_applied', targetType + ':' + targetId, {
     kind: kind, value_numeric: value, months: months, note: note,
@@ -1078,9 +1114,17 @@ async function vpaHandleDiscountRemove(request, env, json) {
   try {
     if (row.stripe_coupon_id) {
       const target = await vpaBillingTargetFor(env, row.target_type, row.target_id);
-      // Clear it off the subscription, then delete the coupon so it cannot be reused by accident.
+      /* DELETE .../discount strips whatever discount is on the subscription, not necessarily
+         ours. If the coupon there is not the one this row created, it is somebody else's, most
+         likely the contracted volume rate from checkout, and removing it would raise the venue's
+         bill on our way out. Only clear the slot when it holds OUR coupon. */
       if (target && !target.manual && target.subId) {
-        await vpbStripeDelete(env, 'subscriptions/' + encodeURIComponent(target.subId) + '/discount').catch(() => {});
+        const cur = (target.info && target.info.sub) || {};
+        const held = (cur.discounts && cur.discounts.length && cur.discounts[0]) || cur.discount || null;
+        const heldId = held && held.coupon && held.coupon.id;
+        if (heldId && heldId === row.stripe_coupon_id) {
+          await vpbStripeDelete(env, 'subscriptions/' + encodeURIComponent(target.subId) + '/discount').catch(() => {});
+        }
       }
       await vpbStripeDelete(env, 'coupons/' + encodeURIComponent(row.stripe_coupon_id));
       reversed = 'coupon removed from their subscription';
@@ -1088,7 +1132,17 @@ async function vpaHandleDiscountRemove(request, env, json) {
       // A balance credit cannot be deleted, so take it back with an equal and opposite entry.
       const target = await vpaBillingTargetFor(env, row.target_type, row.target_id);
       if (target && !target.manual && target.customer) {
-        const cents = Math.round(Number(row.value_numeric || 0) * 100);
+        let cents = Math.round(Number(row.value_numeric || 0) * 100);
+        /* Only take back what is still sitting there. A credit granted in September is consumed
+           by the October invoice; tidying the stale row off the list in November would otherwise
+           post a POSITIVE balance, which Stripe reads as money owed, and the venue's December
+           invoice would come in higher than their normal rate for a discount they were given. */
+        try {
+          const cust = await vpbStripeGet(env, 'customers/' + encodeURIComponent(target.customer));
+          const bal = (cust && typeof cust.balance === 'number') ? cust.balance : 0;
+          const outstanding = bal < 0 ? -bal : 0;
+          if (cents > outstanding) cents = outstanding;
+        } catch (e) { cents = 0; }   // cannot read the balance: take nothing rather than overcharge
         if (cents > 0) {
           const back = await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions', {
             amount: cents, currency: 'aud', description: 'VenuePlay discount reversed',
@@ -1097,6 +1151,8 @@ async function vpaHandleDiscountRemove(request, env, json) {
             return json({ error: 'Could not take that credit back off their account: ' + (back.error.message || 'unknown error') + '. The discount has been left in place.' }, 502);
           }
           reversed = '$' + (cents / 100).toFixed(2) + ' credit taken back';
+        } else {
+          reversed = 'nothing to take back, that credit has already been used';
         }
       }
     }
