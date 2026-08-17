@@ -2204,6 +2204,7 @@ async function handleHostReveal(request, env, json) {
 
   // Answer distribution for the TV/host, plus per-answer scoring (server-authoritative).
   const split = new Array(options.length).fill(0);
+  const scored = [];
   for (let i = 0; i < answers.length; i++) {
     const a = answers[i];
     if (a.answer_index >= 0 && a.answer_index < split.length) split[a.answer_index]++;
@@ -2219,7 +2220,32 @@ async function handleHostReveal(request, env, json) {
       }
       pts = base + bonus;
     }
-    await sbPatch(env, 'vp_trivia_answers', 'id=eq.' + enc(a.id), { is_correct: correct, points_awarded: pts });
+    // Collected, not written one at a time. See the batch below.
+    scored.push({ id: a.id, is_correct: correct, points_awarded: pts });
+  }
+
+  /* GROUPED, not one write per player. This was a sequential PATCH per answer, and a Worker gets
+     a limited number of subrequests per request: past roughly forty answers the reveal threw
+     mid-loop and escaped as a 500. Because the phase was only marked revealed AFTER the loop, the
+     retry re-ran it and failed identically, so the question could never be revealed, some answers
+     were scored and some were not, and nothing can score a question once the round has moved on.
+     Answers that share a result share a write. Every wrong answer is one request (usually most of
+     the room), and correct answers group by their points, so a full room collapses from hundreds
+     of round trips to a handful. Grouping rather than upserting on purpose: an upsert has to
+     satisfy every NOT NULL column on the insert path, and the base schema for this table is not
+     in the repo to check against. */
+  if (!already && scored.length) {
+    const buckets = new Map();
+    for (const r of scored) {
+      const key = r.is_correct + ':' + r.points_awarded;
+      if (!buckets.has(key)) buckets.set(key, { is_correct: r.is_correct, points_awarded: r.points_awarded, ids: [] });
+      buckets.get(key).ids.push(r.id);
+    }
+    for (const b of buckets.values()) {
+      await sbPatch(env, 'vp_trivia_answers',
+        'id=in.(' + b.ids.map(enc).join(',') + ')',
+        { is_correct: b.is_correct, points_awarded: b.points_awarded });
+    }
   }
 
   if (!already) await sbPatch(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId), { phase: 'revealed' });
@@ -2858,6 +2884,23 @@ async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
   return newMax;
 }
 
+/* Is this venue still inside its free first month? The consoles check this and skip the consent
+   popup entirely when it is true, telling the host "your first month is free, so no charge this
+   time". The Worker never checked, so it billed the night regardless: money taken after the
+   product said, on screen, that none would be. It also counted toward the three-night streak that
+   moves a venue onto a bigger plan. The billing Worker already refuses to charge a trialing
+   subscription; this is the same rule, applied where the night is actually billed. */
+async function venueInFreeMonth(env, venueId) {
+  try {
+    const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=created_at&limit=1');
+    const created = rows && rows[0] && rows[0].created_at;
+    if (!created) return false;
+    const t = Date.parse(created);
+    if (!isFinite(t)) return false;
+    return (Date.now() - t) < 30 * 24 * 60 * 60 * 1000;
+  } catch (e) { return false; }   // cannot tell: bill it, and the consent screen was shown
+}
+
 async function chargeNightOverage(env, session) {
   if (!env.STRIPE_SECRET_KEY) return;                          // overage billing not configured
   const cap = Number(session.plan_cap_at_start || 0);
@@ -2877,6 +2920,13 @@ async function chargeNightOverage(env, session) {
   if (!venue) return;
 
   const overage = peak - cap;
+  // Free first month: the consoles promise no charge and show no consent screen, so honour that
+  // here rather than invoice it. The streak is left alone too, or a venue could be moved onto a
+  // bigger plan by nights they were told were free.
+  if (overage > 0 && await venueInFreeMonth(env, venue.id)) {
+    console.log('[overage] free first month, not charging venue ' + venue.id);
+    return;
+  }
   if (overage <= 0) {
     // A night back inside their cap breaks the run, so the next big night starts again at $2.
     if (venue.overage_streak) {

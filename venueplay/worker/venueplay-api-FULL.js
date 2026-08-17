@@ -2333,8 +2333,11 @@ async function vpbRequireOwner(request, env) {
   // account this call is about and who the audit entry names.
   let adminRow = null;
   try {
+    // owner/accounts ONLY, matching requireStaff in the game Worker. Accepting any row let a
+    // Gflam 'staff' admin View-as into any venue and then charge their card through
+    // /account/players, cancel their venues, and export their entire marketing list.
     const admins = await vpaSelect(env, 'vp_platform_admins',
-      'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&select=auth_user_id,label,role');
+      'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&role=in.(owner,accounts)&select=auth_user_id,label,role');
     adminRow = (admins && admins[0]) || null;
   } catch (_) { adminRow = null; }
 
@@ -3375,13 +3378,33 @@ async function vpbAddHost(request, env, json) {
 }
 
 // Remove a host's access: { auth_user_id, venue_ids?[], all_venues? }. Never the owner.
+/* The owner's own staff row is written as role 'manager' by provisioning, so a `role=neq.owner`
+   filter does not protect them. A manager could open the Account page and remove the row labelled
+   "<venue> manager", which is the OWNER, at every venue on the account. The owner then fails
+   vpbRequireOwner entirely: no billing page, no account page, locked out of their own product with
+   no audit row to explain it and no self-serve way back. Removing people is owner-only now, and
+   nobody can remove the login that pays the bill. */
 async function vpbRemoveHost(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }   // a restricted manager cannot remove anyone
   const b = await request.json().catch(() => ({}));
   const target = String(b.auth_user_id || '').trim();
   if (!target) return json({ error: 'Missing host.' }, 400);
   if (target === o.authUserId) return json({ error: 'You cannot remove your own access.' }, 400);
+
+  /* And never remove another FULL-ACCESS login. perms === null is what makes somebody an owner
+     here, and the account owner's own staff row is stored with role 'manager', so a role filter
+     reads them as ordinary staff. Without this, the person who pays the bill can be deleted from
+     their own account. */
+  const targetRows = await vpaSelect(env, 'vp_venue_staff',
+    'auth_user_id=eq.' + encodeURIComponent(target) +
+    '&venue_id=in.(' + o.venues.map((v) => encodeURIComponent(v.id)).join(',') + ')' +
+    '&select=role,permissions');
+  const targetIsFullAccess = (targetRows || []).some((r) => (r.role === 'owner') || !r.permissions);
+  if (targetIsFullAccess) {
+    return json({ error: 'That login has full access to this account, so it cannot be removed here. Email hello@venueplay.com.au if you need it changed.' }, 403);
+  }
 
   const accountVenueIds = o.venues.map((v) => v.id);
   let venueIds = (!b.all_venues && Array.isArray(b.venue_ids))
