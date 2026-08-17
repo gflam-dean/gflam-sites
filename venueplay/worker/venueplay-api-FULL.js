@@ -354,8 +354,9 @@ async function handleWebhook(request, env, cors) {
   if (event.type === 'invoice.paid' && typeof vpaFireInvoiceEmail === 'function') {
     await vpaFireInvoiceEmail(env, event.data.object);
   }
-  // 5 days before each renewal (Stripe invoice.upcoming), email the venue a heads-up. Set the lead
-  // time to 5 days in Stripe: Settings -> Billing -> Automatic collection -> upcoming invoice webhook.
+  // Ahead of each renewal (Stripe invoice.upcoming), email the venue a heads-up. STRIPE owns the
+  // lead time, not us, and it offers 7 days. The email therefore names the DATE and never a number
+  // of days: restating a figure we do not control is how copy ends up lying after a settings change.
   if (event.type === 'invoice.upcoming' && typeof vpaFireUpcomingEmail === 'function') {
     await vpaFireUpcomingEmail(env, event.data.object);
   }
@@ -2018,7 +2019,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
       + '<img src="' + logo + '" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">A heads-up: your next payment is coming up.</p>'
-      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">In about 5 days' + (when ? ' (on ' + vpaEsc(when) + ')' : '') + ' we\'ll charge the card on file for your VenuePlay subscription.</p>'
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + (when ? 'On ' + vpaEsc(when) + ' we\'ll charge' : 'Shortly we\'ll charge') + ' the card on file for your VenuePlay subscription.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount due</p>'
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'

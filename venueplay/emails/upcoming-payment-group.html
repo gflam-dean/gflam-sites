@@ -5,7 +5,7 @@
   reference, but change the Worker if you want to change what venues receive.
 
   VenuePlay transactional email: UPCOMING PAYMENT (GROUP version)
-  Sent 5 days before each renewal charge, for a GROUP (multiple venues on one account).
+  Sent ahead of each renewal charge, for a GROUP (multiple venues on one account). Triggered by Stripe's invoice.upcoming webhook; Stripe owns the lead time.
   Simple merge fields:
     {{per_player_rate}}   e.g. "3.00"
     {{grand_total}}       group total, e.g. "$504.00"
