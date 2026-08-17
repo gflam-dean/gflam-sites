@@ -398,8 +398,41 @@
   // ---- clip audio: this screen is the venue's sound source (whichever screen is wired to the amp) ----
   var clipAudio=$("clipAudio"), _clipUnlocked=false;
   function unlockClip(){ if(_clipUnlocked) return; _clipUnlocked=true; try{ var p=clipAudio.play(); if(p&&p.then){ p.then(function(){ clipAudio.pause(); }).catch(function(){}); } }catch(e){} }
-  document.addEventListener("pointerdown", unlockClip, { once:true });   // browsers need one gesture before audio; Fully Kiosk autoplay covers a hands-off TV
-  function playClip(url){ if(!url) return; try{ clipAudio.src=url; clipAudio.currentTime=0; clipAudio.volume=1.0; var pr=clipAudio.play(); if(pr&&pr.catch) pr.catch(function(){}); }catch(e){} }
+  /* A Fire Stick remote sends key events, never pointer events, so binding the unlock to
+     pointerdown alone meant a kiosk TV could never satisfy the gesture requirement. */
+  document.addEventListener("pointerdown", unlockClip, { once:true });
+  document.addEventListener("keydown", unlockClip, { once:true });
+  document.addEventListener("click", unlockClip, { once:true });
+
+  /* THE ROOM CAN HEAR NOTHING AND NOBODY IS TOLD.
+     The host tablet is muted on purpose (audio.muted=!G.hostMonitor), so this screen is the
+     venue's only sound source. Its first play() has no user gesture behind it, and the rejection
+     used to be swallowed by an empty catch. If the kiosk's autoplay setting is off, name that tune
+     runs in complete silence while the screen cheerfully shows "Now playing". Say so on the wall,
+     and tell the host console, so somebody knows within one song rather than one round. */
+  var _audioWarned=false;
+  function audioBlocked(){
+    if(_audioWarned) return; _audioWarned=true;
+    var w=document.getElementById("audioWarn");
+    if(!w){
+      w=document.createElement("div"); w.id="audioWarn";
+      w.setAttribute("style","position:fixed;left:2cqw;bottom:2cqw;z-index:99;max-width:60cqw;"+
+        "background:rgba(255,45,85,.92);color:#fff;border-radius:1cqw;padding:1.2cqw 1.8cqw;"+
+        "font:700 clamp(12px,1.9cqw,22px)/1.35 system-ui,-apple-system,sans-serif");
+      w.textContent="No sound on this screen. Allow autoplay on the TV, or play the music from another device.";
+      document.body.appendChild(w);
+    }
+    try{ tvSend({ t:"tv_audio_blocked" }); }catch(e){}
+  }
+  function audioOk(){ _audioWarned=false; var w=document.getElementById("audioWarn"); if(w) w.remove(); }
+  function playClip(url){
+    if(!url) return;
+    try{
+      clipAudio.src=url; clipAudio.currentTime=0; clipAudio.volume=1.0;
+      var pr=clipAudio.play();
+      if(pr&&pr.then) pr.then(audioOk).catch(audioBlocked);
+    }catch(e){ audioBlocked(); }
+  }
   function stopClip(){ try{ clipAudio.pause(); clipAudio.removeAttribute("src"); clipAudio.load(); }catch(e){} }
 
   function onMsg(m){

@@ -997,6 +997,12 @@
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here"){ tvHere(m); return; }
+    /* The screen could not start the audio. This console is muted by design, so without this the
+       host has no way to know the room is hearing nothing until somebody complains. */
+    if(m.t==="tv_audio_blocked"){
+      hostError("The TV cannot play the music (autoplay is blocked on that screen). Turn on the monitor switch here and put this device through the PA, or allow autoplay on the TV.");
+      return;
+    }
     if(m.t==="host_here") return; // ignore our own presence pings
     if(m.t==="join"){
       // Cosmetic roster only: the Worker meters vp_players and deals the card. The phone

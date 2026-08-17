@@ -219,7 +219,7 @@
         <div class="field nvGroupF hidden"><label>Operator group</label><select id="nvGroup"></select></div>
         <div class="field nvGroupF hidden"><label>Included players (cap)</label><input type="number" id="nvCap" placeholder="e.g. 150" class="mono"></div>
         <div class="field nvFoundF"><label>Contact email</label><input type="email" id="nvEmail" placeholder="owner@venue.com.au"></div>
-        <div class="field nvFoundF"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"></div>
+        <div class="field"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
         <div class="field nvFoundF"><label>Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
         <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly">Founding monthly</option><option value="annual">Founding annual</option></select></div>
       </div>
@@ -1240,6 +1240,14 @@
     if(!slug){ errFlash("addVenueErr","Enter a slug (the TV web address)."); return; }
     var bill=$("nvBill").value;
     var body={ name:name, slug:slug, timezone:$("nvTz").value, billing:{ type:bill } };
+    /* body.manager used to be built ONLY on the independent path, and the mobile field was hidden
+       entirely for a group venue. So a grouped venue was created with no staff row at all: the
+       publican signed in, resolveRole found nothing, and they were told to ask their venue owner
+       to add them as staff. They ARE the venue owner. Meanwhile HQ was told an invite had gone out.
+       The mobile is now required on both paths, because it is the only route into the account. */
+    var mob=$("nvMobile").value.trim();
+    if(!mob){ errFlash("addVenueErr","Enter the first manager's mobile. Without it nobody at the venue can sign in."); return; }
+    body.manager={ mobile:mob, display_name:"Manager" };
     if(bill==="group"){
       var gid=$("nvGroup").value; if(!gid){ errFlash("addVenueErr","Choose an operator group."); return; }
       body.billing.group_id=gid;
@@ -1247,15 +1255,13 @@
     } else {
       var email=$("nvEmail").value.trim(); if(!email){ errFlash("addVenueErr","Enter the contact email."); return; }
       var max=parseInt($("nvMax").value,10);
-      body.billing.founding={ contact_email:email, mobile:$("nvMobile").value.trim(), postcode:"", max_seats:(max||null), plan:$("nvPlan").value };
-      var mob=$("nvMobile").value.trim();
-      if(mob) body.manager={ mobile:mob, display_name:"Manager" };
+      body.billing.founding={ contact_email:email, mobile:mob, postcode:"", max_seats:(max||null), plan:$("nvPlan").value };
     }
     var btn=$("addVenueSubmit"); btn.disabled=true; btn.textContent="Creating…";
     workerPost("/admin/venue", body).then(function(res){
       btn.disabled=false; btn.textContent="Create venue";
       if(res.error){ errFlash("addVenueErr",res.error); return; }
-      flash("addVenueOk","Venue created. The manager will be texted a login invite.");
+      flash("addVenueOk", body.manager ? ("Venue created. "+body.manager.mobile+" will be texted a login invite.") : "Venue created. NOBODY CAN SIGN IN YET: add a manager mobile.");
       $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value="";
       loadAll();
     });
