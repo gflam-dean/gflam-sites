@@ -973,7 +973,12 @@
     }
     GAMES.forEach(function(game){
       var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
-      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(m && m.t==="mode") onGameMode(game); });
+      /* ANY traffic on a game channel is proof a host is running something. noteHostAlive() was
+         only ever called from the bingo channel, so a trivia or musical night past 90 minutes,
+         or a members-draw board put up at 5pm for a 7:30 draw, hit the host-silence timer and
+         was torn down to the ad loop mid-service. It could not come back on its own either:
+         re-embedding needs a fresh t:"mode", which the destroyed iframe never asks for. */
+      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(!m) return; noteHostAlive(); if(m.t==="mode") onGameMode(game); });
       c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
     });
   })();

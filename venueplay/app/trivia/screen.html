@@ -431,6 +431,23 @@
   // ---- realtime ----
   // Pairing channel (screen <-> host), same convention as the bingo TV: vp-<screen code>.
   // The host dual-broadcasts every game message here, so this one channel is enough.
+  /* The Realtime library comes from a CDN. On slow venue wifi it is not here yet when this runs,
+     and every line below depends on it, so the page used to die silently right here. On the
+     members screen that is a literally black pub TV, because the ad loop starts further down and
+     .ad is opacity:0 until it does. The parent /tv watchdog cannot see it either: an embedded
+     screen always counts as alive, and the iframe load event fires normally even when the inner
+     script throws. Nobody is going to find the Fire Stick remote mid-service, so say something
+     and get the kiosk back on its own. */
+  if(typeof supabase==="undefined" || !supabase.createClient){
+    var _rc=document.createElement("div");
+    _rc.setAttribute("style","position:fixed;inset:0;z-index:99999;display:flex;align-items:center;"+
+      "justify-content:center;background:#0A0A0B;color:#9A9AA4;text-align:center;padding:24px;"+
+      "font:600 24px/1.4 system-ui,-apple-system,sans-serif");
+    _rc.textContent="Reconnecting to VenuePlay\u2026";
+    (document.body||document.documentElement).appendChild(_rc);
+    setTimeout(function(){ location.reload(); }, 4000);
+    throw new Error("VenuePlay: Realtime library not loaded yet");
+  }
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same
   // /tv link. Listen only (no tv_here ping) so two games that are both live can't ping-pong.
