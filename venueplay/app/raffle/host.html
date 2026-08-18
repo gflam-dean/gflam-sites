@@ -577,6 +577,12 @@
       G.countdownTimer=setInterval(function(){ G.round.remaining--; updateCd();
         if(G.round.remaining<=0){
           stopCountdown();
+          /* Re-arm the SCREEN too. Its return-to-ads timer was sized to the claim window plus 30
+             seconds, so a host who takes longer than that to find the ticket holder watched the
+             wall drop to advertising mid-decision. Re-sending the winner with time:0 restarts
+             that timer from now and keeps the number up while they decide. */
+          try{ send({ t:"winner", numbers:G.round.numbers, prizeLabel:G.round.prize, allowRedraw:true,
+                      pad:padWidth(), min:G.min, max:G.max, time:0 }); }catch(e){}
           hostError("Time is up on ticket "+(G.round&&G.round.numbers?G.round.numbers.join(", "):"")+". Tap \u201cNot here, redraw\u201d if nobody has come forward, or \u201cClaim\u201d if they have.");
         }
       },1000);

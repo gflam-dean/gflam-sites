@@ -1246,7 +1246,14 @@
        to add them as staff. They ARE the venue owner. Meanwhile HQ was told an invite had gone out.
        The mobile is now required on both paths, because it is the only route into the account. */
     var mob=$("nvMobile").value.trim();
-    if(!mob){ errFlash("addVenueErr","Enter the first manager's mobile. Without it nobody at the venue can sign in."); return; }
+    /* Same rule the Worker applies. vpaAdminVenue only creates the staff row for a valid AU
+       mobile, so a landline or a typo produced a venue with no login while HQ reported that an
+       invite had been sent. Check it here rather than find out when the publican cannot sign in. */
+    var mobDigits=mob.replace(/[^0-9]/g,"");
+    if(!/^(04\d{8}|614\d{8})$/.test(mobDigits)){
+      errFlash("addVenueErr","Enter a valid Australian mobile (04...). They sign in by text code, so a landline leaves the venue with no way in.");
+      return;
+    }
     body.manager={ mobile:mob, display_name:"Manager" };
     if(bill==="group"){
       var gid=$("nvGroup").value; if(!gid){ errFlash("addVenueErr","Choose an operator group."); return; }
