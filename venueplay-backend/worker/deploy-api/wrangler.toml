@@ -1,0 +1,10 @@
+# Auto-deploy config for the BILLING worker (the FULL file, never the stub).
+#
+# See the notes in ../deploy-game/wrangler.toml: a deploy replaces bindings with
+# whatever is declared here, so anything missing is removed. This Worker has no
+# KV binding, only variables, and every one of them should be ENCRYPTED in the
+# dashboard so it survives a deploy.
+
+name = "venueplay-api"
+main = "../venueplay-api-FULL.js"
+compatibility_date = "2026-08-01"
