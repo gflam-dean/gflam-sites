@@ -50,35 +50,26 @@ alter table vp_venues
   check (entity_type is null or entity_type in ('for_profit', 'non_profit'))
   not valid;
 
--- Which regulator applies. Gaming rules are state law, and OLGR's ruling is
--- QLD only. We currently derive a state from the founding account's postcode
--- at signup, which is not the same thing as where the VENUE is: a group can
--- have venues in more than one state.
-alter table vp_venues
-  add column if not exists state text;
-
-comment on column vp_venues.state is
-  'AU state/territory the VENUE is in (QLD, NSW, VIC, WA, SA, TAS, NT, ACT), which decides whose gaming rules apply. Not the same as the account''s postcode: a group can operate across state lines.';
-
--- Backfill what we can from the founding account's postcode. Anything we
--- cannot resolve stays NULL, which the app treats as "rules not confirmed"
--- and shows no category guidance at all, rather than guessing.
-update vp_venues v
-   set state = case
-         when left(f.postcode, 1) = '4' then 'QLD'
-         when left(f.postcode, 1) in ('2') and f.postcode >= '2600' and f.postcode <= '2618' then 'ACT'
-         when left(f.postcode, 1) = '2' then 'NSW'
-         when left(f.postcode, 1) = '3' then 'VIC'
-         when left(f.postcode, 1) = '5' then 'SA'
-         when left(f.postcode, 1) = '6' then 'WA'
-         when left(f.postcode, 1) = '7' then 'TAS'
-         when left(f.postcode, 1) = '0' then 'NT'
-         else null
-       end
-  from venueplay_founding f
- where v.founding_id = f.id
-   and v.state is null
-   and coalesce(f.postcode, '') <> '';
+-- Which regulator applies: ALREADY SOLVED, do not add a column.
+-- ---------------------------------------------------------------------
+-- vp_venues already carries `postcode` and `au_state`, written at venue
+-- creation by vpaProvisionOneVenue via vpaStateFromPostcode(), and migration 24
+-- already reads that postcode to set the timezone. An earlier draft of this
+-- migration added a separate `state` column and backfilled it from the FOUNDING
+-- account's postcode, which is strictly worse: an account's postcode is the
+-- billing address, and a group can run venues in several states.
+--
+-- Use au_state. Nothing to add here.
+--
+-- The real gap is upstream: HQ's Add venue form does not ask for a postcode
+-- (it sends an empty string), so an HQ-created venue has no postcode and
+-- therefore no au_state. That is a form fix, not a schema one. Any venue with a
+-- null au_state is treated as "rules not confirmed": no category guidance, and
+-- phone bingo tickets stay ON, because the paper-ticket rule must only fire
+-- where we positively know the venue is in SA, the ACT or Tasmania.
+--
+-- Find the ones missing it:
+--   select id, name, postcode, au_state from vp_venues where au_state is null;
 
 -- The conductor's own declaration, recorded per game that is run for money.
 -- This is the thing that answers OLGR's Third Party Operator point: the venue

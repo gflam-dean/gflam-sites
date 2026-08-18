@@ -219,6 +219,7 @@
         <div class="field nvGroupF hidden"><label>Operator group</label><select id="nvGroup"></select></div>
         <div class="field nvGroupF hidden"><label>Included players (cap)</label><input type="number" id="nvCap" placeholder="e.g. 150" class="mono"></div>
         <div class="field nvFoundF"><label>Contact email</label><input type="email" id="nvEmail" placeholder="owner@venue.com.au"></div>
+        <div class="field"><label>Venue postcode</label><input type="text" id="nvPostcode" placeholder="e.g. 4224" class="mono" maxlength="4" inputmode="numeric"><div class="note" style="margin-top:4px">The VENUE's postcode, not the account's. It sets the state, which decides which gaming rules apply and whether players can use phones for bingo.</div></div>
         <div class="field"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
         <div class="field nvFoundF"><label>Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
         <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly">Founding monthly</option><option value="annual">Founding annual</option></select></div>
@@ -1249,6 +1250,12 @@
     /* Same rule the Worker applies. vpaAdminVenue only creates the staff row for a valid AU
        mobile, so a landline or a typo produced a venue with no login while HQ reported that an
        invite had been sent. Check it here rather than find out when the publican cannot sign in. */
+    /* The venue's own postcode. vpaProvisionOneVenue derives au_state from it, and au_state now
+       decides which gaming rules we show and whether a phone may display a bingo ticket. Sending
+       an empty string, as this form used to, left the venue with no state at all. */
+    var pc=($("nvPostcode").value||"").replace(/[^0-9]/g,"");
+    if(pc.length!==4){ errFlash("addVenueErr","Enter the venue's 4-digit postcode. It sets which state's gaming rules apply."); return; }
+    body.postcode=pc;
     var mobDigits=mob.replace(/[^0-9]/g,"");
     if(!/^(04\d{8}|614\d{8}|4\d{8})$/.test(mobDigits)){   // match vpaNormaliseMobileAU, which accepts a bare 412345678
       errFlash("addVenueErr","Enter a valid Australian mobile (04...). They sign in by text code, so a landline leaves the venue with no way in.");
@@ -1262,14 +1269,14 @@
     } else {
       var email=$("nvEmail").value.trim(); if(!email){ errFlash("addVenueErr","Enter the contact email."); return; }
       var max=parseInt($("nvMax").value,10);
-      body.billing.founding={ contact_email:email, mobile:mob, postcode:"", max_seats:(max||null), plan:$("nvPlan").value };
+      body.billing.founding={ contact_email:email, mobile:mob, postcode:pc, max_seats:(max||null), plan:$("nvPlan").value };
     }
     var btn=$("addVenueSubmit"); btn.disabled=true; btn.textContent="Creating…";
     workerPost("/admin/venue", body).then(function(res){
       btn.disabled=false; btn.textContent="Create venue";
       if(res.error){ errFlash("addVenueErr",res.error); return; }
       flash("addVenueOk", body.manager ? ("Venue created. "+body.manager.mobile+" will be texted a login invite.") : "Venue created. NOBODY CAN SIGN IN YET: add a manager mobile.");
-      $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value="";
+      $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value="";
       loadAll();
     });
   });

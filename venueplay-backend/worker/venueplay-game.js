@@ -419,7 +419,7 @@ async function handleJoinInfo(request, env, json) {
   let venueName = '';
   let paperBingo = false;
   try {
-    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,state&limit=1');
+    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state&limit=1');
     if (vrows && vrows[0] && vrows[0].name) venueName = String(vrows[0].name);
     /* PAPER-TICKET STATES. Three jurisdictions still expect a printed ticket in the player's hand
        for bingo, so a phone must not show one:
@@ -429,7 +429,7 @@ async function handleJoinInfo(request, env, json) {
        Decided HERE and not in the console, because a venue must not be able to route around it by
        opening the phone page directly. The rest of the night is unaffected: the host still calls,
        the board still shows, players just mark paper. */
-    if (vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].state || '').toUpperCase())) {
+    if (vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].au_state || '').toUpperCase())) {
       paperBingo = true;
     }
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
