@@ -34,7 +34,11 @@ export default {
     const reqOrigin = request.headers.get('Origin') || '';
     const allowList = (env.ALLOW_ORIGIN || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
     const originOk = /^https:\/\/([a-z0-9-]+\.)?venueplay\.com\.au$/.test(reqOrigin) || allowList.indexOf(reqOrigin) !== -1;
-    const origin = originOk ? reqOrigin : (allowList[0] || '*');
+    const CANONICAL = 'https://www.venueplay.com.au';
+    // Safe with no env var set: venueplay.com.au origins are reflected, anything else gets the
+    // canonical site (which the browser will refuse), never a wildcard. ALLOW_ORIGIN is now
+    // purely additive, for a staging or preview host.
+    const origin = originOk ? reqOrigin : (allowList[0] || CANONICAL);
     const cors = {
       'Access-Control-Allow-Origin': origin,
       'Vary': 'Origin',
