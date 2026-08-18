@@ -1,20 +1,29 @@
-# The trivia bank is the product, not a public asset. Nothing in the browser loads it
-# (the homepage counter reads /data/trivia-count.json instead), so serve a 404 rather
-# than handing the whole question bank to anyone who guesses the URL.
-/data/trivia-library.json    /404  404
-/data/trivia-review-*.json   /404  404
-
-# Everything below is source, not site. It all sits in the deploy root, so it was being
-# served to anyone who guessed a filename: the full database schema and every RLS policy,
-# both Workers, and the seed scripts. Combined with the public anon key printed in every
-# page, a schema dump is a real head start for anyone poking at the database.
+# Cloudflare Pages redirects.
 #
-# seed-trivia-TEST.sql matters most: its first two lines DELETE the entire shared trivia
-# library before inserting test rows. It has no business being on the public internet.
-/supabase/*                  /404  404
-/worker/*                    /404  404
-/tools/*                     /404  404
-/*.sql                       /404  404
-/*.py                        /404  404
-/data/musical-library-full.json  /404  404
-/data/generated/*            /404  404
+# WHAT DOES NOT WORK HERE, AND WHY THIS FILE IS NEARLY EMPTY
+#
+# This file used to carry rules like:
+#
+#     /data/trivia-library.json    /404  404
+#
+# meaning "serve a 404 for the question bank". It never worked. Cloudflare Pages
+# supports 200 (rewrite) and the redirect statuses (301/302/303/307/308) in
+# _redirects; a bare 404 status is not honoured, so the rule was silently
+# ignored and the whole 41,000-question bank was downloadable by anyone who
+# guessed the URL, for as long as that rule had been sitting here looking like
+# protection. Verified against production on 18 Aug 2026: the URL returned 200.
+#
+# A file that IS in the deployed directory will be served. So the only reliable
+# way to keep something off the public site is to keep it out of the directory
+# Pages deploys.
+#
+# That is why the schema, both Workers, the seed and maintenance scripts and the
+# bulk data files now live in ../venueplay-backend/, a sibling of this folder and
+# therefore outside this Pages project. The layout there mirrors this one, so the
+# scripts' data paths still resolve.
+#
+# venueplay/data/ keeps only the three files the site actually fetches at
+# runtime: musical-library.json, trivia-count.json and music-count.json.
+#
+# If you add anything private in future: put it in venueplay-backend/, not here,
+# and do not rely on a rule in this file to hide it.

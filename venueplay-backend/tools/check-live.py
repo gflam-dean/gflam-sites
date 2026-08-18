@@ -72,12 +72,23 @@ record("future feature" not in body.lower(),
        "privacy page no longer calls player capture a future feature")
 
 print("\nSource files must NOT be downloadable")
+# These are no longer in the deployed directory at all (they live in venueplay-backend/),
+# which is the only reliable way: a _redirects rule cannot stop Pages serving a file that
+# is present, and a 404 status in _redirects is silently ignored.
 for path in ["/supabase/venueplay-17-manager-permissions.sql",
              "/worker/venueplay-game.js",
+             "/worker/venueplay-api-FULL.js",
              "/seed-trivia-TEST.sql",
-             "/seed-trivia.py"]:
+             "/seed-trivia.py",
+             "/data/trivia-library.json",
+             "/data/musical-library-full.json"]:
     code, _, _ = get(SITE + path)
-    record(code in (403, 404), "blocked: " + path, "HTTP %s" % code)
+    record(code in (403, 404), "not published: " + path, "HTTP %s" % code)
+
+print("\nFiles the site DOES need must still be there")
+for path in ["/data/musical-library.json", "/data/trivia-count.json"]:
+    code, _, body = get(SITE + path)
+    record(code == 200 and body.strip().startswith("{"), "served: " + path, "HTTP %s" % code)
 
 print("\nRobots and sitemap")
 code, _, body = get(SITE + "/robots.txt")
