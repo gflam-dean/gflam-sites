@@ -151,13 +151,15 @@
     $("body").classList.remove("hidden");
   });
 
-  // Unapproved accounts (name doesn't read like a venue) can only collect first/last name; the
-  // marketing fields are hidden here and enforced at the database (migration 21).
-  var VENUE_RE=/\b(hotel|tavern|rsl|club|pub|bowls|bowlo|bowling|leagues|sports|surf|golf|services|inn|arms)\b/i;
+  /* This used to hide the marketing fields based on the VENUE NAME, while the database decides
+     on the CONTACT EMAIL (migration 28). The two disagreed in both directions: "The Royal Hotel"
+     with a gmail contact saw the fields and was silently refused on save, and a plain-named venue
+     on its own domain was auto-approved by the database but had the fields hidden here. The copy
+     "venues are approved automatically" was false either way.
+     The fields are now always shown, and the save reports what actually landed. */
   function gateMarketing(ctx){
-    var ok=VENUE_RE.test((ctx&&ctx.venue&&ctx.venue.name)||"") || (ctx&&ctx.isAdmin);
-    document.querySelectorAll(".mktrow").forEach(function(el){ el.style.display=ok?"":"none"; });
-    var n=$("mktNote"); if(n) n.style.display=ok?"none":"";
+    var n=$("mktNote");
+    if(n) n.style.display="";   // always explain that approval is required to collect contact details
   }
 
   function fill(s){
@@ -196,7 +198,23 @@
 
     VP.saveSettings(venueId, patch).then(function(){
       btn.disabled=false; btn.textContent="Save settings";
-      msg.className="msg ok"; msg.textContent="Saved.";
+      /* A database trigger (migration 21/28) can silently rewrite the marketing toggles back to
+         false when the account is not approved to collect player contact details. This screen
+         reported "Saved." either way, so an owner turned Email on, was told it saved, and it was
+         never on. Read back what actually landed and say so. */
+      VP.loadSettings(venueId).then(function(saved){
+        var refused=[];
+        [["collect_email","Email"],["collect_mobile","Mobile"],["collect_postcode","Postcode"],
+         ["collect_marketing_optin","Marketing opt-in"]].forEach(function(p){
+          if(patch[p[0]] === true && saved && saved[p[0]] !== true) refused.push(p[1]);
+        });
+        if(refused.length){
+          msg.className="msg warn";
+          msg.textContent="Saved, but "+refused.join(", ")+" could not be switched on. Collecting player contact details needs your account approved first. Email us and we will sort it.";
+        } else {
+          msg.className="msg ok"; msg.textContent="Saved.";
+        }
+      }).catch(function(){ msg.className="msg ok"; msg.textContent="Saved."; });
     }).catch(function(e){
       btn.disabled=false; btn.textContent="Save settings";
       var m=(e&&e.message)?e.message:"Could not save.";

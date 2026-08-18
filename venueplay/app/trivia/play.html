@@ -249,8 +249,12 @@
     lastPts:0, cdTimer:null, ended:false
   };
 
-  function loadPid(room){ try{ return sessionStorage.getItem("vp-tpid-"+room)||""; }catch(e){ return ""; } }
-  function savePid(room,pid){ try{ sessionStorage.setItem("vp-tpid-"+room, pid); }catch(e){} }
+    /* localStorage, not sessionStorage. iOS discards a backgrounded tab routinely over a three
+     hour night, and sessionStorage dies with it, so the punter came back as a BRAND NEW
+     player: the host roster seated them twice and they were dealt fresh tickets mid-round.
+     Falls back to any sessionStorage value so a game already in progress is not disturbed. */
+  function loadPid(room){ try{ return localStorage.getItem("vp-tpid-"+room) || sessionStorage.getItem("vp-tpid-"+room) || ""; }catch(e){ return ""; } }
+  function savePid(room,pid){ try{ localStorage.setItem("vp-tpid-"+room, pid); }catch(e){} }
   function loadName(room){ try{ return sessionStorage.getItem("vp-tname-"+room)||""; }catch(e){ return ""; } }
   function saveName(room,nm){ try{ sessionStorage.setItem("vp-tname-"+room, nm); }catch(e){} }
   // the player token IS the metered server identity: persist it so a reload reuses the

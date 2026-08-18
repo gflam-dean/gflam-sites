@@ -2550,10 +2550,25 @@ async function vpbBillingPortal(request, env, json) {
 }
 
 // Per-player monthly rate from the subscription's price + the plan.
+/* Falling back to the founding rate when the price id is unknown is fine for a NUMBER ON A
+   SCREEN and wrong for a CHARGE. Stripe being briefly unreachable was silently deciding that a
+   standard venue pays $2.50 instead of $3.00. The game Worker already refuses to guess a rate on
+   real money ("do NOT guess a rate on real money: log and skip"); this now does the same.
+
+   vpbRate keeps the old display behaviour. vpbRateStrict returns null when the tier cannot be
+   established, and the billing path refuses rather than inventing a price. */
+function vpbIsFoundingPrice(env, priceId) {
+  return priceId === env.STRIPE_PRICE_MONTHLY || priceId === env.STRIPE_PRICE_ANNUAL;
+}
 function vpbRate(env, priceId, plan) {
-  // Default to founding when the price is unknown (e.g. Stripe briefly unreachable): the
-  // launch cohort is founding and it is the safer figure to show than standard.
-  const founding = !priceId || (priceId === env.STRIPE_PRICE_MONTHLY || priceId === env.STRIPE_PRICE_ANNUAL);
+  // Display only. Unknown price shows the founding figure, as it always has.
+  const founding = !priceId || vpbIsFoundingPrice(env, priceId);
+  if (plan === 'annual') return founding ? 2.30 : 2.85;
+  return founding ? 2.50 : 3.00;
+}
+function vpbRateStrict(env, priceId, plan) {
+  if (!priceId) return null;                     // tier unknown: the caller must not charge
+  const founding = vpbIsFoundingPrice(env, priceId);
   if (plan === 'annual') return founding ? 2.30 : 2.85;
   return founding ? 2.50 : 3.00;
 }
@@ -2735,7 +2750,13 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
        the first payment. A reduction during the trial has nothing to credit either. */
     const status = info.sub && info.sub.status;
     if (status === 'trialing') return null;
-    const rate = vpbRate(env, info.priceId, planName);       // per player, per month
+    // Strict here: this figure becomes an invoiceitem. If we cannot tell founding from standard,
+    // refuse and let it be handled by hand rather than charge a rate we guessed.
+    const rate = vpbRateStrict(env, info.priceId, planName);       // per player, per month
+    if (rate == null) {
+      console.log('[billing] rate unknown (no price id) for account ' + (info.sub && info.sub.id) + ': not charging');
+      return { kind: 'failed', cents: 0, reason: 'rate_unknown' };
+    }
     const annual = (planName === 'annual');
     const n = Math.abs(delta);
     const who = (label ? label + ': ' : '');

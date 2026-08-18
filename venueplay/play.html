@@ -356,11 +356,15 @@
   };
 
   // ---- pid persistence (keep the cosmetic identity across reconnects) ----
-  function loadPid(room){ try{ return sessionStorage.getItem("vp-pid-"+room)||""; }catch(e){ return ""; } }
-  function savePid(room,pid){ try{ sessionStorage.setItem("vp-pid-"+room, pid); }catch(e){} }
+    /* localStorage, not sessionStorage. iOS discards a backgrounded tab routinely over a three
+     hour night, and sessionStorage dies with it, so the punter came back as a BRAND NEW
+     player: the host roster seated them twice and they were dealt fresh tickets mid-round.
+     Falls back to any sessionStorage value so a game already in progress is not disturbed. */
+  function loadPid(room){ try{ return localStorage.getItem("vp-pid-"+room) || sessionStorage.getItem("vp-pid-"+room) || ""; }catch(e){ return ""; } }
+  function savePid(room,pid){ try{ localStorage.setItem("vp-pid-"+room, pid); }catch(e){} }
   // keep the name too, so a full page reload auto-rejoins instead of showing Join again
-  function loadName(room){ try{ return sessionStorage.getItem("vp-name-"+room)||""; }catch(e){ return ""; } }
-  function saveName(room,name){ try{ sessionStorage.setItem("vp-name-"+room, name); }catch(e){} }
+  function loadName(room){ try{ return localStorage.getItem("vp-name-"+room) || sessionStorage.getItem("vp-name-"+room) || ""; }catch(e){ return ""; } }
+  function saveName(room,name){ try{ localStorage.setItem("vp-name-"+room, name); }catch(e){} }
   // the player token IS the metered server identity: persist it so a reload reuses
   // the same vp_players row (via localStorage) instead of minting a new metered one.
 
@@ -1113,6 +1117,15 @@
           .then(function(r){ return r.ok?r.json():null; })
           .then(function(d){
             if(!d || hopped || P.joined || P.active) return;
+            /* A mistyped or out-of-date slug (an old table talker, a typo on a printed sign)
+               connects to a channel nobody is on, and the punter sat on "waiting for the host"
+               all night with nothing to tell them why. The TV has warned about this since
+               validateVenue(); the phone never did. */
+            if(d.exists===false){
+              var je=$("joinErr");
+              if(je) je.textContent="That venue link does not look right. Check the code on your table or ask the bar staff.";
+              return;
+            }
             if(d.name){ var jv=$("joinVenue"); if(jv){ jv.textContent=d.name; jv.classList.remove("hidden"); } }
             if(!d.live || !d.join_code || d.join_code===code) return;
             var f=String(d.format||"");

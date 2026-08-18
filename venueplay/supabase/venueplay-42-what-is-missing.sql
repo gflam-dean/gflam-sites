@@ -80,3 +80,53 @@ left join information_schema.tables t
 where t.table_name is null
 
 order by 4, 2, 3;
+
+
+-- =====================================================================
+-- PART 2: functions, triggers and views
+-- ---------------------------------------------------------------------
+-- Part 1 only sees columns and tables, so it cannot tell whether a migration
+-- that only defines a FUNCTION or a TRIGGER ever ran. That matters: the
+-- marketing gate (21/28/43) is a trigger, and without it every account can
+-- switch on player contact collection freely. Run this second.
+-- =====================================================================
+
+with expected_functions(name, added_by) as (
+  values
+    ('vp_gate_marketing_collect','venueplay-43-optin-gate-by-domain.sql'),
+    ('vp_park_flagged','venueplay-32-question-flags.sql'),
+    ('vp_qkey','venueplay-32-question-flags.sql'),
+    ('vp_songs_to_retire','venueplay-34-song-flags.sql')
+),
+expected_triggers(name, added_by) as (
+  values
+    ('vp_venue_settings_gate','venueplay-43-optin-gate-by-domain.sql')
+),
+expected_views(name, added_by) as (
+  values
+    ('v_vp_player_optins','venueplay-19-optin-export-view.sql'),
+    ('v_vp_question_review_queue','venueplay-32-question-flags.sql'),
+    ('v_vp_screen_draws','venueplay-24-venue-timezone.sql'),
+    ('v_vp_song_flag_counts','venueplay-34-song-flags.sql'),
+    ('v_vp_trusted','venueplay-30-trusted-view.sql')
+)
+select 'MISSING FUNCTION' as problem, e.name, e.added_by
+from expected_functions e
+where not exists (
+  select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname = e.name
+)
+union all
+select 'MISSING TRIGGER', e.name, e.added_by
+from expected_triggers e
+where not exists (
+  select 1 from pg_trigger t where not t.tgisinternal and t.tgname = e.name
+)
+union all
+select 'MISSING VIEW', e.name, e.added_by
+from expected_views e
+where not exists (
+  select 1 from information_schema.views v
+   where v.table_schema = 'public' and v.table_name = e.name
+)
+order by 3, 2;
