@@ -776,6 +776,8 @@
     code:"", status:"setup", pattern:"one", prize:"the prize", defaultCards:1, allowEarly:false,
     paidMode:"",           // "" free | "card" | "sheet". Set once at setup, holds for the night.
     draw:[], idx:-1, called:{},
+    pool:[],               // the balls NOT yet drawn. The future does not exist until it is called.
+
     players:{}, order:[],
     // TIES. Two people calling on the same number is normal bingo, not an edge case, and the
     // old single-claim model silently threw the second one away: the host never saw it and the
@@ -887,7 +889,13 @@
       G.startedAt=s.startedAt||null;
       G.draw=Array.isArray(s.draw)?s.draw:[];
       G.idx=(typeof s.idx==="number")?s.idx:-1;
+      /* A save written before this change holds all 90 numbers pre-shuffled, with idx marking how
+         far the host had got. Keep only the part actually called, so an in-progress game recovers
+         and the rest of that old order is discarded rather than honoured. */
+      if(G.draw.length > G.idx+1) G.draw=G.draw.slice(0, G.idx+1);
       G.called=s.called||{};
+      var _seen={},_i; for(_i=0;_i<G.draw.length;_i++) _seen[G.draw[_i]]=true;
+      G.pool=freshPool().filter(function(n){ return !_seen[n]; });
       G.players=s.players||{};
       G.order=Array.isArray(s.order)?s.order:[];
       // Accept the pre-tie shape too, so a host mid-game when this ships still recovers.
@@ -961,10 +969,23 @@
     }
     return [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]];
   }
-  function shuffledDraw(){
-    var a=[],i; for(i=1;i<=90;i++) a.push(i);
-    for(var j=a.length-1;j>0;j--){ var k=cryptoInt(j+1); var t=a[j]; a[j]=a[k]; a[k]=t; }
-    return a;
+  /* DRAW EACH BALL WHEN IT IS CALLED, NOT ALL 90 UP FRONT.
+     This used to shuffle the whole 90 at the start of the game and keep the order in G.draw,
+     which saveGame() writes to localStorage. Every future ball was therefore sitting in the
+     host's browser, readable, before a single one was called. Two rules say no:
+       OLGR RNG minimum technical requirements 4.2.2 - the RNG's state "must be a secret in the
+       overall RNG and not be externally visible or accessible";
+       4.2.7 and the national standard 8.6 - the outcome should not be generated before the game
+       needs it, leaving no interval in which early access could confer a benefit.
+     Drawing from a shrinking pool fixes both: the next ball does not exist until it is called,
+     so there is nothing to leak. G.draw now holds the balls ALREADY drawn, in order, which is
+     public information anyway, and every index into it still means what it used to.
+     cryptoInt is rejection-sampled over crypto.getRandomValues, so the pick is unbiased. */
+  function freshPool(){ var a=[],i; for(i=1;i<=90;i++) a.push(i); return a; }
+  function drawFromPool(){
+    if(!G.pool || !G.pool.length) return null;
+    var k=cryptoInt(G.pool.length);
+    return G.pool.splice(k,1)[0];   // removed from the pool: never drawn twice
   }
   function isCalled(n){ return !!G.called[n]; }
   function rowComplete(card,row){ for(var c=0;c<9;c++){ var v=card[row][c]; if(v && !isCalled(v)) return false; } return true; }
@@ -1403,7 +1424,7 @@
     G.prize=_p;
     G.paidMode=$("paidSel").value;
     G.defaultCards=clampCards($("cardsSel").value);
-    G.draw=shuffledDraw(); G.idx=-1; G.called={};
+    G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     G.reportId=null; postReport(true);   // the night is on the record from ball one
@@ -1421,7 +1442,7 @@
        player in the room a brand new card and throws away the balls drawn so far. */
     if(G.idx>=0 && !G.won && !confirm("Start a brand new game?\n\nEveryone in the room gets a new ticket and the "+(G.idx+1)+" balls drawn so far are cleared.")) return;
     postReport();   // report the round just finished before a fresh one begins
-    G.draw=shuffledDraw(); G.idx=-1; G.called={};
+    G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     G.reportId=null; postReport(true);   // the next round is on the record from ball one too
@@ -1443,7 +1464,7 @@
   }
   var _ballBusy=false;
   function nextBall(){
-    if(G.status!=="running" || G.idx>=89) return;
+    if(G.status!=="running" || G.draw.length>=90) return;
     /* AFTER "Finish game" the status is still "running" and lastWins has been cleared by
        announce(), so every existing guard below passes and a tap here drew a ball. tv.html
        handles a ball with no win guard, so the winner card, confetti and fanfare were replaced by
@@ -1465,12 +1486,13 @@
     // bingo was refused as "late" with nothing shown to anyone, and that player sat on "the host
     // is checking your ticket" until the round was finally announced for somebody else.
     if(G.lastWins.length){ showToast("Announce the win first: keep playing, or finish the game."); return; }
-    G.idx++;
-    var n=G.draw[G.idx]; G.called[n]=true;
+    var n=drawFromPool();
+    if(n==null){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; return; }
+    G.draw.push(n); G.idx=G.draw.length-1; G.called[n]=true;
     send({ t:"ball", number:n, called:calledArray(), index:G.idx });
     saveGame();
     renderLive(); updateBoard();
-    if(G.idx>=89){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
+    if(!G.pool.length){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
   }
   // Move one queued claim into the confirmed list. Nothing is broadcast yet: the host still has
   // to decide play on or finish, and with a tie they may confirm two or three people first.
