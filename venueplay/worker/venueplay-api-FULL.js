@@ -3231,9 +3231,12 @@ async function vpbAddManager(request, env, json) {
   const have = new Set((existing || []).map((r) => r.venue_id));
   for (const vid of wanted) {
     if (have.has(vid)) {
-      await vpaPatch(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&venue_id=eq.' + encodeURIComponent(vid), { role: 'manager', permissions: permissions, label: label || null });
+      // display_name, NOT label: vp_venue_staff has no label column, so both of these calls
+      // threw and "Add manager" failed outright. Everything else in the codebase
+      // (vp-session.js, the venue-creation inserts) already uses display_name.
+      await vpaPatch(env, 'vp_venue_staff', 'auth_user_id=eq.' + encodeURIComponent(authUserId) + '&venue_id=eq.' + encodeURIComponent(vid), { role: 'manager', permissions: permissions, display_name: label || 'Manager' });
     } else {
-      await vpaInsert(env, 'vp_venue_staff', { venue_id: vid, auth_user_id: authUserId, role: 'manager', label: label || null, permissions: permissions }, false);
+      await vpaInsert(env, 'vp_venue_staff', { venue_id: vid, auth_user_id: authUserId, role: 'manager', display_name: label || 'Manager', permissions: permissions }, false);
     }
   }
   await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'manager_added', target: 'manager:' + authUserId, detail: { label: label, venues: wanted.length } }, false).catch(() => {});
@@ -3303,11 +3306,11 @@ async function vpbListManagers(request, env, json) {
   const venueIds = o.venues.map((v) => v.id);
   if (!venueIds.length) return json({ managers: [], venues: [] });
   const staff = await vpaSelect(env, 'vp_venue_staff',
-    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&role=eq.manager&select=auth_user_id,venue_id,label,permissions');
+    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&role=eq.manager&select=auth_user_id,venue_id,display_name,permissions');
   const byUser = {};
   for (const s of (staff || [])) {
     if (s.auth_user_id === o.authUserId) continue; // never list the owner as a manager
-    if (!byUser[s.auth_user_id]) byUser[s.auth_user_id] = { auth_user_id: s.auth_user_id, label: s.label || '', venue_ids: [], permissions: s.permissions || null };
+    if (!byUser[s.auth_user_id]) byUser[s.auth_user_id] = { auth_user_id: s.auth_user_id, label: s.display_name || '', venue_ids: [], permissions: s.permissions || null };
     byUser[s.auth_user_id].venue_ids.push(s.venue_id);
     if (s.permissions && !byUser[s.auth_user_id].permissions) byUser[s.auth_user_id].permissions = s.permissions;
   }
@@ -3320,13 +3323,13 @@ async function vpbListHosts(request, env, json) {
   const venueIds = o.venues.map((v) => v.id);
   if (!venueIds.length) return json({ hosts: [], venues: [] });
   const staff = await vpaSelect(env, 'vp_venue_staff',
-    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&select=auth_user_id,venue_id,role,label');
+    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&select=auth_user_id,venue_id,role,display_name');
   const byUser = {};
   for (const s of (staff || [])) {
-    if (!byUser[s.auth_user_id]) byUser[s.auth_user_id] = { auth_user_id: s.auth_user_id, label: s.label || '', venue_ids: [], is_owner: false };
+    if (!byUser[s.auth_user_id]) byUser[s.auth_user_id] = { auth_user_id: s.auth_user_id, label: s.display_name || '', venue_ids: [], is_owner: false };
     byUser[s.auth_user_id].venue_ids.push(s.venue_id);
     if (s.role === 'owner') byUser[s.auth_user_id].is_owner = true;
-    if (s.label && !byUser[s.auth_user_id].label) byUser[s.auth_user_id].label = s.label;
+    if (s.display_name && !byUser[s.auth_user_id].label) byUser[s.auth_user_id].label = s.display_name;
   }
   if (byUser[o.authUserId]) byUser[o.authUserId].is_owner = true;
   return json({
@@ -3424,7 +3427,7 @@ async function vpbAddHost(request, env, json) {
     // the Add host button could open the billing page, change the player count the venue pays
     // for, add and remove other hosts, and edit settings, the members list and draw jackpots.
     // A host runs the games. That is the whole job.
-    await vpaInsert(env, 'vp_venue_staff', { venue_id: vid, auth_user_id: authUserId, role: 'host', label: label || null }, false);
+    await vpaInsert(env, 'vp_venue_staff', { venue_id: vid, auth_user_id: authUserId, role: 'host', display_name: label || 'Host' }, false);
   }
   await vpaStaffWelcome(env, o, wanted, mobile, false);   // host
   return json({ ok: true, auth_user_id: authUserId, venue_ids: wanted });
