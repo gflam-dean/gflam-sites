@@ -436,7 +436,17 @@
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
-  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } clearHostError(); return data; }); }); }
+  function apiPost(path, body){ return getToken().then(function(t){
+      /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
+         every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
+         The only way out was a reload, which used to land in the blank-podium bug. */
+      var _ac = (typeof AbortController!=="undefined") ? new AbortController() : null;
+      var _to = setTimeout(function(){ try{ if(_ac) _ac.abort(); }catch(e){} }, 15000);
+      var _opts = { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) };
+      if(_ac) _opts.signal=_ac.signal;
+      return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
+        function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
+    }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(data){ if(res.status===402 && data && data.needs_overage_ack){ var extra=data.extra||0, cap=data.plan_cap||0; var ackAndGo=function(){ return apiPost("/host/overage/ack",{ session_id: body.session_id }).then(function(){ return apiPost(path, body); }); }; if(data.free_month) return ackAndGo();   /* the Worker decides the free month, not our own calendar maths */ return confirmOverage(cap, extra).then(function(ok){ if(!ok){ var ec=new Error("Over plan - game not started."); ec.status=402; throw ec; } return ackAndGo(); }); } if(!res.ok){ var e=new Error((data&&data.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } clearHostError(); return data; }); }); }
 
   // TWO broadcast channels for instant UX (the DB is the source of truth), same as the
   // bingo/trivia host:

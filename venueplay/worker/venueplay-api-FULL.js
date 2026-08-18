@@ -511,6 +511,12 @@ async function verifyStripeSig(payload, header, secret) {
   const parts = Object.fromEntries(header.split(',').map((kv) => kv.split('=')));
   const t = parts.t, v1 = parts.v1;
   if (!t || !v1) return false;
+  /* The timestamp was parsed and then never used, so a captured (payload, signature) pair stayed
+     valid forever: anyone who had once seen a webhook body could replay it indefinitely, for
+     example replaying an invoice.paid to keep a suspended venue switched back on. Stripe's own
+     tolerance is five minutes. */
+  const ts = parseInt(t, 10);
+  if (!isFinite(ts) || Math.abs(Math.floor(Date.now() / 1000) - ts) > 300) return false;
 
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -1369,7 +1375,11 @@ async function vpaHandleVenueStatus(request, env, json) {
       const accts = await vpaSelect(env, 'venueplay_founding',
         'id=eq.' + encodeURIComponent(prior.founding_id) + '&select=id,stripe_subscription_id');
       const acct = accts && accts[0];
-      if (acct && acct.stripe_subscription_id) {
+      // Do NOT overwrite the warning set just above. It used to be replaced unconditionally by
+      // { changed:true }, so un-archiving an owner-cancelled venue switched its games back on and
+      // told HQ "billing restored", while cancel_at_period_end stayed true and vpbAccountTotal
+      // kept excluding it. The venue ran free until the next invoice suspended it again.
+      if (acct && acct.stripe_subscription_id && !billing) {
         const info = await vpaSyncAccountQuantity(env, prior.founding_id, acct.stripe_subscription_id);
         billing = (info && info.syncFailed)
           ? { changed: false, error: info.syncFailed }
@@ -1957,6 +1967,18 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
 // adds one Stripe invoiceitem per over-cap night, described "Big night extra players ...", at the
 // flat $2/head rate. So the invoice itself is the source of truth - no re-aggregation, no double
 // count. Returns { nights, players (total extra player-nights), cents }.
+/* Which invoice lines are BIG-NIGHT OVERAGE, for the "busy month" line in the customer's email.
+
+   This used to match /extra players/i, which also matches the description vpbAdjustPlayerBilling
+   writes for a permanent plan increase ("<venue>: N extra players, full month"). So a venue that
+   simply added 5 players on the billing page was emailed "you went over your plan on 1 night this
+   cycle" for something that never happened. It then divided by $2 regardless of the rate actually
+   charged ($2.50 or $3.00 for a plan increase, and $1.00 on a third consecutive big night), so the
+   headcount in that sentence was wrong too.
+
+   chargeNightOverage in the game Worker writes exactly one shape: "Big night extra players - ...".
+   Anchor on that and nothing else can be mistaken for it. The per-night rate is read back out of
+   the description rather than assumed. */
 function vpaOverageFromInvoice(invoice) {
   const out = { nights: 0, players: 0, cents: 0 };
   const lines = invoice && invoice.lines && invoice.lines.data;
@@ -1964,12 +1986,14 @@ function vpaOverageFromInvoice(invoice) {
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i];
     const desc = String((l && l.description) || '');
-    if (/extra players/i.test(desc) && Number(l.amount) > 0) {
-      out.nights += 1;
-      out.cents += Number(l.amount);
-    }
+    if (!/^Big night extra players/i.test(desc) || !(Number(l.amount) > 0)) continue;
+    out.nights += 1;
+    out.cents += Number(l.amount);
+    // "... - 12 over 100 at $2.00" : take the count from the line itself.
+    const m = desc.match(/-\s*(\d+)\s+over\s+\d+\s+at\s+\$/i);
+    if (m) out.players += parseInt(m[1], 10) || 0;
+    else out.players += Math.round(Number(l.amount) / 200);   // older line format: assume $2
   }
-  out.players = Math.round(out.cents / 200);   // $2.00 = 200 cents per extra player, per night
   return out;
 }
 
@@ -2192,10 +2216,18 @@ async function vpaSuspendForNonpayment(env, customerId, reason) {
   } catch (_) { /* never throw out of a webhook */ }
 }
 
+/* Throws on a lookup failure ON PURPOSE, so the webhook 500s and Stripe redelivers.
+
+   This is the ONLY automatic route back from a non-payment suspension. vpaSelect returns [] on any
+   non-OK response, so a transient Supabase 5xx made venues come back empty, this returned quietly,
+   the webhook answered 200, and Stripe never tried again. A venue that had fixed their card stayed
+   dark indefinitely, until somebody noticed and turned them on by hand. A retried webhook is
+   harmless here: every write below is idempotent. */
 async function vpaReactivateOnPayment(env, customerId) {
   try {
     const [venues, acct] = await vpaVenuesForCustomer(env, customerId);
-    if (!venues || !venues.length) return;
+    if (!venues) throw new Error('could not read venues for customer ' + customerId);
+    if (!venues.length) return;
     let n = 0;
     for (const v of venues) {
       // ONLY the ones we switched off for non-payment. A venue VenuePlay turned off on purpose
@@ -2212,7 +2244,12 @@ async function vpaReactivateOnPayment(env, customerId) {
         detail: { venues: n, customer: customerId },
       }, false).catch(() => {});
     }
-  } catch (_) { /* never throw out of a webhook */ }
+  } catch (e) {
+    // Let this one out. A silent failure here leaves a paid-up venue switched off, which is worse
+    // than a 500 that makes Stripe try again.
+    console.log('[reactivate] FAILED for customer ' + customerId + ': ' + (e && e.message));
+    throw e;
+  }
 }
 
 /* When a subscription actually ENDS, clear any credit left on the account.
@@ -2439,13 +2476,22 @@ async function vpbStripeGet(env, path) {
   });
   return await res.json();
 }
-async function vpbStripePost(env, path, params) {
+/* idemKey: pass one on anything that MOVES MONEY. Without it, two requests that race (two tabs on
+   the billing page, or a client retry that overtakes the first attempt) both read the same current
+   player count, both compute the same delta, and both create an invoiceitem: the venue is charged
+   twice for the same players. The Stripe subscription quantity converges either way, so nothing
+   downstream ever revealed it. The game Worker has always keyed its overage charge this way; the
+   billing Worker never did. */
+async function vpbStripePost(env, path, params, idemKey) {
   const form = new URLSearchParams();
   for (const k in params) form.set(k, String(params[k]));
+  const headers = {
+    'Authorization': 'Bearer ' + env.STRIPE_SECRET_KEY,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+  if (idemKey) headers['Idempotency-Key'] = String(idemKey).slice(0, 255);
   const res = await fetch('https://api.stripe.com/v1/' + path, {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + env.STRIPE_SECRET_KEY, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: form.toString(),
+    method: 'POST', headers, body: form.toString(),
   });
   return await res.json();
 }
@@ -2675,7 +2721,10 @@ function vpbYearFractionLeft(info) {
      reducing  -> no refund, but the unused value is BANKED as a credit on the Stripe customer,
                   which Stripe applies automatically to the next invoice. That is the annual perk:
                   players you stop using carry over to the following year instead of being lost. */
-async function vpbAdjustPlayerBilling(env, info, delta, planName, label) {
+/* idemTag identifies the LOGICAL change (which venue, to what number, in which billing period),
+   so a racing duplicate of the same change collapses into one charge while a genuine second
+   change later in the period still goes through. */
+async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag) {
   try {
     if (!delta || !info) return null;
     const customer = info.sub && info.sub.customer;
@@ -2699,7 +2748,7 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label) {
       const mRes = await vpbStripePost(env, 'invoiceitems', {
         customer: customer, amount: cents, currency: 'aud',
         description: who + n + ' extra ' + (n === 1 ? 'player' : 'players') + ', full month',
-      });
+      }, idemTag ? ('padd:' + idemTag) : null);
       // vpbStripePost never throws, so an unchecked call reported a Stripe refusal to the venue,
       // and to the audit trail, as money successfully charged.
       if (mRes && mRes.error) { console.log('[billing] monthly add FAILED: ' + (mRes.error.message || '')); return { kind: 'failed', cents: cents }; }
@@ -2716,7 +2765,7 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label) {
       const aRes = await vpbStripePost(env, 'invoiceitems', {
         customer: customer, amount: cents, currency: 'aud',
         description: who + players + ' added, pro rata to renewal (' + months + ' months)',
-      });
+      }, idemTag ? ('padd:' + idemTag) : null);
       if (aRes && aRes.error) { console.log('[billing] annual pro rata FAILED: ' + (aRes.error.message || '')); return { kind: 'failed', cents: cents }; }
       return { kind: 'charge', cents: cents, months: months };
     }
@@ -2771,7 +2820,8 @@ async function vpbSetPlayers(request, env, json) {
     }
     // Take back the credit the scheduled reduction banked. Without this, an annual venue could
     // reduce, pocket the credit, restore, and repeat.
-    const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - basis, o.account.plan, venue.name) : null;
+    const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - basis, o.account.plan, venue.name,
+      venueId + ':' + current + ':' + ((rinfo.sub && rinfo.sub.current_period_end) || '0')) : null;
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_reduction_cancelled',
       target: 'venue:' + venueId, detail: { players: current, from_billed: billedNow, billing: rAdj, actor_user: o.authUserId },
@@ -2798,7 +2848,8 @@ async function vpbSetPlayers(request, env, json) {
     }
     // Charge for the players they are actually gaining over what they are billed today. Using
     // players-current understated it whenever a reduction was already scheduled.
-    const iAdj = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name);
+    const iAdj = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name,
+      venueId + ':' + players + ':' + ((info.sub && info.sub.current_period_end) || '0'));
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
@@ -2831,7 +2882,8 @@ async function vpbSetPlayers(request, env, json) {
   }
   // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
   // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
-  const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name) : null;
+  const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name,
+    venueId + ':' + players + ':' + ((dinfo.sub && dinfo.sub.current_period_end) || '0')) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
@@ -2888,7 +2940,8 @@ async function vpbAddVenue(request, env, json) {
   const billingOk = !!(info && info.itemId) && !(upd && upd.error);
   // A whole new venue is an increase like any other: one month on monthly, pro rata to the
   // renewal date on annual (it used to be charged a single month even on an annual account).
-  const aAdj = billingOk ? await vpbAdjustPlayerBilling(env, info, players, o.account.plan, name) : null;
+  const aAdj = billingOk ? await vpbAdjustPlayerBilling(env, info, players, o.account.plan, name,
+    'newvenue:' + String(name || '').slice(0,40) + ':' + players + ':' + ((info.sub && info.sub.current_period_end) || '0')) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),
     action: billingOk ? 'venue_added' : 'venue_added_billing_pending',

@@ -527,6 +527,21 @@
       renderReveal(m);
     }
     else if(m.t==="leaderboard"){
+      /* finish() broadcasts podium and then leaderboard back to back, synchronously, so the medals
+         were painted and replaced by the score list in the same frame: the podium was never
+         actually seen. Hold the leaderboard back while the podium is up and show it after. */
+      if(state.phase==="podium"){
+        var _rows=m.rows||[], _title=m.title||"Final scores";
+        setTimeout(function(){
+          if(state.phase!=="podium") return;
+          state.phase="leaderboard";
+          if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
+          $("tvBoardTitle").textContent=_title;
+          renderRows($("tvBoardRows"), _rows, 10);
+          show("tvBoard");
+        }, 9000);
+        return;
+      }
       state.phase="leaderboard";
       if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
       $("tvBoardTitle").textContent=m.title||"Leaderboard";

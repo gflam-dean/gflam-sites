@@ -214,15 +214,38 @@
     }).catch(function(e){ setStatus("quickStatus", (e&&e.message)||"Could not build the night","err"); })
       .then(function(){ var c=document.querySelectorAll("#quickChips .chip"); for(var j=0;j<c.length;j++){ c[j].disabled=false; } });
   }
+  /* This page had no error surface whatsoever, and supabase-js v2 resolves rather than rejects on
+     an API error, so every failure looked like an empty result. */
+  function builderError(msg){
+    var b=document.getElementById("builderErr");
+    if(!b){
+      b=document.createElement("div"); b.id="builderErr";
+      b.setAttribute("role","alert");
+      b.setAttribute("style","position:sticky;top:0;z-index:60;margin:0 0 14px;padding:12px 16px;"+
+        "background:rgba(255,45,85,.16);border:1px solid rgba(255,77,109,.55);border-radius:10px;"+
+        "color:#FFD0DA;font-size:14px;font-weight:700;line-height:1.45");
+      var host=document.querySelector(".wrap")||document.body;
+      host.insertBefore(b, host.firstChild);
+    }
+    b.textContent=msg;
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+  }
   function loadMySets(keepId){
     client.from("vp_question_sets").select("id,title,question_count").eq("owner_venue_id",G.venueId).order("created_at",{ascending:false})
       .then(function(r){ var rows=(r&&r.data)||[]; var s=$("setSel"); s.innerHTML='<option value="__new">+ New night</option>';
         rows.forEach(function(row){ var o=document.createElement("option"); o.value=row.id; o.textContent=row.title+" ("+(row.question_count||0)+")"; s.appendChild(o); });
+        if(r && r.error){ builderError("Could not load your trivia nights. Check your connection and reload before building: what you see may be out of date."); return; }
         if(keepId){ s.value=keepId; onSetChange(); }
-      }, function(){});
+      }, function(){ builderError("Could not load your trivia nights. Check your connection and reload."); });
   }
   function onSetChange(){
     var v=$("setSel").value;
+    /* An empty value means the select never got populated, which happens when the read above came
+       back empty after a failed request. Falling into the else branch set G.setId="" while leaving
+       the editing area on screen, and from then on every control (Add, Add from library, Search,
+       Delete) hit a bare early return and silently did nothing, while the previous question list
+       stayed visible. The host kept typing questions and tapping Add, and nothing happened. */
+    if(!v){ $("editArea").classList.add("hidden"); $("nameRow").classList.add("hidden"); return; }
     if(v==="__new"){ G.setId=""; $("nameRow").classList.remove("hidden"); $("editArea").classList.add("hidden"); $("setName").value=""; }
     else { G.setId=v; $("nameRow").classList.add("hidden"); $("editArea").classList.remove("hidden"); loadQuestions(); }
   }

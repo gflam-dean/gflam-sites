@@ -314,6 +314,21 @@
   function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
   // A flat 27-value ticket from the Worker (blanks = 0) becomes a 3x9 grid.
 
+  /* On patchy pub wifi the Realtime library from the CDN is sometimes not there yet when this
+     runs. Everything below depends on it, so the script threw here and the punter was left with a
+     header and an empty screen forever: every view starts hidden, and there was no retry and no
+     message. Say something and try again rather than dying silently. */
+  if(typeof supabase==="undefined" || !supabase.createClient){
+    var _rc=document.createElement("div");
+    _rc.setAttribute("style","position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;"+
+      "align-items:center;justify-content:center;gap:14px;background:#0A0A0B;color:#E7E7EC;"+
+      "text-align:center;padding:28px;font:600 17px/1.5 system-ui,-apple-system,sans-serif");
+    _rc.innerHTML='<div>Connecting\u2026</div>'+
+      '<div style="font-size:14px;color:#9A9AA4;max-width:22em">The venue wifi is being slow. This will keep trying.</div>';
+    (document.body||document.documentElement).appendChild(_rc);
+    setTimeout(function(){ location.reload(); }, 4000);
+    throw new Error("VenuePlay: Realtime library not loaded yet");
+  }
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=null, subscribed=false, sendQueue=[];
   function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }

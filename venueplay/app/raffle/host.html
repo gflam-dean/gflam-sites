@@ -268,7 +268,17 @@
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
-  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(readApi); }
+  function apiPost(path, body){ return getToken().then(function(t){
+      /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
+         every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
+         The only way out was a reload, which used to land in the blank-podium bug. */
+      var _ac = (typeof AbortController!=="undefined") ? new AbortController() : null;
+      var _to = setTimeout(function(){ try{ if(_ac) _ac.abort(); }catch(e){} }, 15000);
+      var _opts = { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) };
+      if(_ac) _opts.signal=_ac.signal;
+      return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
+        function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
+    }).then(readApi); }
 
   // ---- pairing channel (host <-> venue screen), same convention as the raffle TV ----
   var ch=null, subscribed=false, sendQueue=[];
@@ -537,8 +547,17 @@
     if(allowRedraw){
       show("wcResolve",true);
       updateCd();
+      /* At zero this fires a REAL redraw: the holder is marked no_show, their number is taken out
+         of the pool for good, and someone else is drawn, with no confirmation. If the holder of
+         ticket 087 is out in the beer garden, that voids a genuine winner. The console also runs
+         on a phone, whose timers throttle in a background tab, so this could fire late and out of
+         step with the TV's own countdown. Stop at zero and let the host decide. */
       G.countdownTimer=setInterval(function(){ G.round.remaining--; updateCd();
-        if(G.round.remaining<=0){ stopCountdown(); onRedraw(true); } },1000);
+        if(G.round.remaining<=0){
+          stopCountdown();
+          hostError("Time is up on ticket "+(G.round&&G.round.numbers?G.round.numbers.join(", "):"")+". Tap \u201cNot here, redraw\u201d if nobody has come forward, or \u201cClaim\u201d if they have.");
+        }
+      },1000);
     } else {
       show("wcResolve",false);
       finalizeSimple();

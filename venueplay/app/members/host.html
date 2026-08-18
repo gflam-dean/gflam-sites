@@ -300,7 +300,17 @@
     return c.auth.getSession().then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; });
   }
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
-  function apiPost(path, body){ return getToken().then(function(t){ return fetch(VP_GAME_API+path,{ method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) }); }).then(readApi); }
+  function apiPost(path, body){ return getToken().then(function(t){
+      /* No timeout meant a request that never settled on pub wifi left G.busy true for good, and
+         every later tap on Next, Reveal, Start and Open lobby returned silently at if(G.busy).
+         The only way out was a reload, which used to land in the blank-podium bug. */
+      var _ac = (typeof AbortController!=="undefined") ? new AbortController() : null;
+      var _to = setTimeout(function(){ try{ if(_ac) _ac.abort(); }catch(e){} }, 15000);
+      var _opts = { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+t }, body:JSON.stringify(body||{}) };
+      if(_ac) _opts.signal=_ac.signal;
+      return fetch(VP_GAME_API+path,_opts).then(function(r){ clearTimeout(_to); return r; },
+        function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
+    }).then(readApi); }
 
   // ---- pairing channel (host <-> venue screen), same convention as the raffle TV ----
   var ch=null, subscribed=false, sendQueue=[];
@@ -434,7 +444,7 @@
     $("wcName").textContent=G.round.name||"\u00b7";
     updateClaimCd();
     $("winnerCard").classList.add("show");
-    $("rollBtn").classList.add("pulse");
+    $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member standing at the bar, and is not reversible: it should not be the button that attracts the thumb.
     $("claimBtn").disabled=false; $("rollBtn").disabled=false;
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call\u2026";
     $("drawNote").textContent="Picked up where you left off. Confirm below: Claim if they are present, or roll the jackpot to next week.";
@@ -442,7 +452,7 @@
     return true;
   }
   function clearTimers(){ if(G.drawTimer){ clearTimeout(G.drawTimer); G.drawTimer=null; } if(G.idleTimer){ clearTimeout(G.idleTimer); G.idleTimer=null; } stopClaimTimer(); }
-  function hideWinnerCard(){ $("winnerCard").classList.remove("show"); $("rollBtn").classList.remove("pulse"); }
+  function hideWinnerCard(){ $("winnerCard").classList.remove("show"); $("rollBtn").classList.remove("pulse"); $("claimBtn").classList.remove("pulse"); }
   // A draw runs once a week. Once it's been drawn tonight (claimed OR rolled to next week), lock the
   // Draw button so you can't accidentally draw the same members draw again the same night.
   function alreadyDrawnTonight(){ var d=curDraw(); return !!(d && d.last_drawn_date===new Date().toISOString().slice(0,10)); }
@@ -494,7 +504,7 @@
     $("wcName").textContent=r.winner_name||"·";
     updateClaimCd();
     $("winnerCard").classList.add("show");
-    $("rollBtn").classList.add("pulse");
+    $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member standing at the bar, and is not reversible: it should not be the button that attracts the thumb.
     saveRound();   // so a locked tablet does not strand the jackpot
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call…";
     $("drawNote").textContent="Confirm below: Claim if they are present, or roll the jackpot to next week.";

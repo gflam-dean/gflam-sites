@@ -1251,7 +1251,13 @@
   }
 
   // Require sign-in, then load.
-  VP.requireAuth().then(function(ctx){
+  /* Role-gate the page. requireAuth has supported opts.roles all along and it was never used
+     anywhere in the app; index.html only HIDES the Account link from a host. So a host who typed
+     /app/billing.html straight in reached the subscription, cancel-venue, the manager list and the
+     opt-in player export. The Workers do enforce owner-only on /account/*, so most buttons would
+     have failed, but the host could still read the venue's billing and staff, which defeats the
+     point of the forced sign-out protecting that data in the first place. */
+  VP.requireAuth({ roles:['owner','manager'] }).then(function(ctx){
     if (ctx) VP.suspensionBanner(ctx);
     if (!ctx){ return; } // requireAuth handles redirect when signed out
     load();

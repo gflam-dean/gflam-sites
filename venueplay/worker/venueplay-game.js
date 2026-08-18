@@ -154,11 +154,20 @@ const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered,
 
 export default {
   async fetch(request, env) {
-    const origin = env.ALLOW_ORIGIN || '*';
+    /* Reflect any venueplay.com.au origin, the same way the billing Worker does.
+       This was a single origin with no list and no reflection, set by deploy note to
+       https://www.venueplay.com.au. A host who reached the apex (no www) had every game call
+       blocked at preflight and got a dead console with nothing explaining it. The billing Worker
+       solved this and the fix was never carried across. */
+    const reqOrigin = request.headers.get('Origin') || '';
+    const allowList = (env.ALLOW_ORIGIN || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    const originOk = /^https:\/\/([a-z0-9-]+\.)?venueplay\.com\.au$/.test(reqOrigin) || allowList.indexOf(reqOrigin) !== -1;
+    const origin = originOk ? reqOrigin : (allowList[0] || '*');
     const cors = {
       'Access-Control-Allow-Origin': origin,
+      'Vary': 'Origin',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Player-Token',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Player-Token, X-VP-Venue',
     };
     const json = (obj, status = 200) =>
       new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json', ...cors } });
@@ -2140,8 +2149,23 @@ async function handleHostQuestion(request, env, json) {
   const endsAt = new Date(Date.now() + secs * 1000).toISOString();
   const options = Array.isArray(q.options) ? q.options : [];
 
-  await sbPatch(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId),
+  /* COMPARE AND SET on the question we believed we were leaving.
+
+     This patch was filtered on game_id alone, and the phase read at the top of the handler was
+     never used. G.busy on the console was the only guard, and it is per tab. So two hosts on one
+     game, or a client retry after a response was lost, silently advanced PAST a question: its
+     answers could never be scored, because /host/reveal only ever reads current_seq. Players who
+     had already answered got a 409 from the stale-qseq check, which the phone swallows, so they
+     sat on "Answer in! Good luck" for a question that scored them nothing.
+
+     Filtering on the prior current_seq means the second caller changes no rows and is told so,
+     instead of quietly skipping a question in front of the room. */
+  const advanced = await sbPatchReturning(env, 'vp_trivia_games',
+    'game_id=eq.' + enc(gameId) + '&current_seq=eq.' + curSeq,
     { current_seq: q.seq, phase: 'asking', question_ends_at: endsAt });
+  if (!advanced || !advanced.length) {
+    return json({ error: 'That question has already moved on. Check the screen before tapping again.' }, 409);
+  }
 
   // PUBLIC broadcast: options only, NEVER correct_index.
   await emitEvent(env, session, 'trivia.question', {
@@ -3073,6 +3097,29 @@ async function chargeNightOverage(env, session) {
   if (!res || res.error) {
     console.log('[overage] session ' + session.id + ' Stripe invoiceitem FAILED: ' +
                 ((res && res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
+    /* A FAILED CHARGE MUST NOT ADVANCE THE STREAK.
+       The code used to log and fall straight through to the streak patch and, on the third night,
+       to upliftPlan(). So three consecutive over-nights whose invoiceitems all failed (an expired
+       card, a Stripe outage) never billed the venue a cent for the overage but did move them
+       permanently onto a bigger monthly plan. Leave the streak where it is: the night can be
+       billed by hand, and a real third night will still count once a charge actually succeeds. */
+    try {
+      await sbInsert(env, 'vp_admin_audit', {
+        actor_admin: null,
+        actor_label: 'system',
+        action: 'overage_charge_failed',
+        target: venue.id,
+        detail: {
+          session_id: session.id,
+          venue_name: venue.name || null,
+          amount_cents: amountCents,
+          players_over: overage,
+          plan_cap: cap,
+          error: (res && res.error && res.error.message) || 'unknown',
+        },
+      }, false);
+    } catch (e) { /* audit is best effort; never let it mask the billing failure */ }
+    return;
   }
 
   if (!thirdInARow) {
@@ -3837,6 +3884,19 @@ async function sbPatch(env, table, filter, obj) {
     method: 'PATCH', headers: sbHeaders(env), body: JSON.stringify(obj),
   });
   if (!res.ok) throw dbError('update', table, await res.text());   // M5: log detail, return generic + code
+}
+
+/* Like sbPatch, but returns the rows it actually changed, so a caller can tell "I updated it"
+   apart from "the filter matched nothing". That difference is what makes a compare-and-set
+   possible: patch WHERE the value is still what we read, and an empty result means somebody else
+   got there first. */
+async function sbPatchReturning(env, table, filter, obj) {
+  const headers = Object.assign({}, sbHeaders(env), { 'Prefer': 'return=representation' });
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + filter, {
+    method: 'PATCH', headers, body: JSON.stringify(obj),
+  });
+  if (!res.ok) throw dbError('update', table, await res.text());
+  try { return await res.json(); } catch (e) { return []; }
 }
 
 async function sbDelete(env, table, filter) {
