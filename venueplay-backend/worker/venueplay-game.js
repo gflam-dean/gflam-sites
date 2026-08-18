@@ -150,6 +150,8 @@ const CAPTURE_MAX_PER_IP = 120;  // opt-in captures per 60s per network. A whole
 const JOIN_MAX_PER_DEVICE = 8;    // joins per 60s per device hint. One phone should not join many times a minute.
 const CLAIM_MAX_PER_PLAYER = 20;  // claims per 60s per player. Stops a joined attacker spamming BINGO + the TV overlay.
 const ANSWER_MAX_PER_PLAYER = 30; // trivia answers per 60s per player. One answer per question is normal; this only blocks a flood.
+/* Bingo tickets must be on paper in these jurisdictions. See handleJoinInfo. */
+const PAPER_BINGO_STATES = new Set(['SA', 'ACT', 'TAS']);
 const JOIN_DEDUP_TTL = 120;       // seconds a device's player_id is remembered, so a rapid re-join reuses its row.
 
 export default {
@@ -415,11 +417,23 @@ async function handleJoinInfo(request, env, json) {
      notice that cannot name the recipient is not much of a notice. Name only: no slug, no id, no
      other venue data, so this stays what it has always been, a public lookup for one join code. */
   let venueName = '';
+  let paperBingo = false;
   try {
-    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
+    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,state&limit=1');
     if (vrows && vrows[0] && vrows[0].name) venueName = String(vrows[0].name);
+    /* PAPER-TICKET STATES. Three jurisdictions still expect a printed ticket in the player's hand
+       for bingo, so a phone must not show one:
+         SA  - the rules recognise only physical bingo sheets bought from a licensed supplier
+         ACT - housie Model Rules r12 bar players from holding electronic devices in the playing area
+         TAS - the rules are written around a printed card the supervisor collects to verify a win
+       Decided HERE and not in the console, because a venue must not be able to route around it by
+       opening the phone page directly. The rest of the night is unaffected: the host still calls,
+       the board still shows, players just mark paper. */
+    if (vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].state || '').toUpperCase())) {
+      paperBingo = true;
+    }
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
-  return json({ format: format, venue_name: venueName, collect: {
+  return json({ format: format, venue_name: venueName, paper_bingo: paperBingo, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,

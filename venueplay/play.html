@@ -296,6 +296,22 @@
   "use strict";
   function $(id){ return document.getElementById(id); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
+  /* Shown instead of a ticket in the three states whose rules still require a printed card.
+     Written so a punter understands it is normal, not a fault. */
+  function showPaperBingo(){
+    var host=document.querySelector(".wrap")||document.body;
+    var d=document.createElement("div");
+    d.setAttribute("style","max-width:30em;margin:12vh auto 0;padding:0 22px;text-align:center;"+
+      "font:400 17px/1.6 system-ui,-apple-system,sans-serif;color:#E7E7EC");
+    d.innerHTML='<div style="font:800 26px/1.2 system-ui,sans-serif;color:#fff;margin-bottom:14px">'+
+      'Tonight you play on paper</div>'+
+      '<p style="color:#9A9AA4">Grab your bingo book from the bar and mark it off as the numbers are called. '+
+      'The big screen shows every number, so you can always check back.</p>'+
+      '<p style="color:#6C6C76;font-size:14px;margin-top:18px">Your state\u2019s rules ask for a printed ticket '+
+      'for bingo, so phones sit this one out. Everything else runs exactly the same.</p>';
+    try{ document.body.innerHTML=""; }catch(e){}
+    (document.body||host).appendChild(d);
+  }
   function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
 
   var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
@@ -748,6 +764,11 @@
   function loadJoinInfo(){
     if(!P.room) return;
     playerPost("/join/info",{ code:P.room }).then(function(r){
+      /* PAPER-TICKET STATES. South Australia, the ACT and Tasmania still expect a printed ticket
+         in the player's hand for bingo, so this phone must not show one. The Worker decides it
+         from the venue's state and sends paper_bingo, rather than the console deciding, so a
+         venue cannot route around it by handing out the phone link directly. */
+      if(r && r.paper_bingo){ showPaperBingo(); return; }
       var c=r&&r.collect; var box=$("joinExtra"); if(!c||!box) return;
       P.venueName=(r&&r.venue_name)||"";   // named in the collection notice below
       function f(id,type,ph,ac,ml){ return '<div class="field"><input type="'+type+'" id="'+id+'" placeholder="'+ph+'" autocomplete="'+ac+'" maxlength="'+ml+'"></div>'; }
@@ -1004,6 +1025,7 @@
       if(P.joined || P.active) return;                 // already in a game here: never yank them away
       playerPost("/join/info",{ code:code })
         .then(function(r){
+          if(r && r.paper_bingo){ showPaperBingo(); return; }
           if(P.joined || P.active) return;
           var to=playerAppFor(r && r.format);
           if(to){ window.location.replace(to+"?room="+encodeURIComponent(code)); return; }
