@@ -486,7 +486,10 @@
       state.played=m.played||state.played;
       state.phase="running";
       revealSong(m.title, m.artist, m.artworkUrl);
-      playClip(m.previewUrl);   // the venue hears the clip from this screen
+      // A replay is a re-sync after a host or TV reload: put the song back ON SCREEN but do not
+      // start the audio again. Without this the room heard the same clip a second time, possibly
+      // minutes later and over the top of the host talking.
+      if(!m.replay) playClip(m.previewUrl);   // the venue hears the clip from this screen
     }
     else if(m.t==="clipctl"){   // host pause/resume follows through to the venue sound
       if(m.action==="pause"){ try{ clipAudio.pause(); }catch(e){} }

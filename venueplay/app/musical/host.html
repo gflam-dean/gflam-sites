@@ -1005,7 +1005,7 @@
       if(G.status==="running"){
         send({ t:"mode", mode:"musical" });
         sendState();
-        if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
+        if(G.nowSong){ send({ t:"played", replay:true, title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub }); }
         if(G.claim) send({ t:"claim_pending", name:G.claim.name });
       }
     }
@@ -1057,7 +1057,7 @@
         if(G.status==="running"){
           send({ t:"mode", mode:"musical" });
           sendState();
-          if(G.nowSong){ send({ t:"played", title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), autoDaub:G.autoDaub }); }
+          if(G.nowSong){ send({ t:"played", replay:true, title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub }); }
           if(G.claim) send({ t:"claim_pending", name:G.claim.name });
         } else { sendState(); }
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){

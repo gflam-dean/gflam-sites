@@ -95,7 +95,7 @@
           <div><label class="f">Category</label><select id="libCat"></select></div>
           <div><label class="f">Difficulty</label>
             <select id="libDiff"><option value="">Any</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
-          <div style="flex:0 0 90px"><label class="f">How many</label><input type="text" id="libCount" value="20"></div>
+          <div style="flex:0 0 90px"><label class="f">How many</label><input type="number" inputmode="numeric" min="1" max="100" id="libCount" value="20"></div>
         </div>
         <button type="button" id="addLibBtn" class="btn pink" style="width:100%;margin-top:12px">Add to night</button>
         <div id="libStatus" class="status"></div>
@@ -108,7 +108,7 @@
           <div style="flex:1"><label class="f">Topic</label><input type="text" id="searchQ" placeholder="e.g. Neighbours"></div>
           <div><label class="f">Difficulty</label>
             <select id="searchDiff"><option value="">Any</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
-          <div style="flex:0 0 90px"><label class="f">How many</label><input type="text" id="searchCount" value="20"></div>
+          <div style="flex:0 0 90px"><label class="f">How many</label><input type="number" inputmode="numeric" min="1" max="100" id="searchCount" value="20"></div>
         </div>
         <button type="button" id="searchBtn" class="btn pink" style="width:100%;margin-top:12px">Search &amp; add to night</button>
         <div id="searchStatus" class="status"></div>

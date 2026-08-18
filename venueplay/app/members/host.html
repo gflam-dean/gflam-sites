@@ -227,7 +227,7 @@
           </div>
           <div class="two">
             <div class="field"><label>Current jackpot ($)</label><input type="number" id="setCur" class="mono" min="0" step="1"></div>
-            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="0" step="1"></div>
+            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" style="margin-top:4px">At least 30 seconds. A shorter window rolls the jackpot over before the member can reach the bar.</div></div>
           </div>
           <div class="two">
             <div class="field"><label>Draw day</label><input type="text" id="setDay" placeholder="Friday"></div>
@@ -751,6 +751,19 @@
       setTimeout(function(){ b.textContent="End game"; }, 2500);
     });
   })();
+
+  /* GIVE THE TV BACK ON THE WAY OUT.
+     This console announces t:"mode" the moment it connects, which is deliberate: a club wants the
+     draws board up on the wall from 5pm for a 7:30 draw. The problem was leaving. Nothing sent
+     idle or to_ads when the host simply closed the tab or tapped "Games", and the members screen
+     only returns to the venue's own advertising on idle, so a host opening this page to glance at
+     the jackpot left the TV stuck on the draws board for the rest of the night.
+     A live round is left alone: closing the tab mid-draw must not wipe a winner off the wall, and
+     the round now survives a reload anyway. */
+  window.addEventListener("pagehide", function(){
+    if(G.round) return;                       // a draw is live: leave the room as it is
+    try{ send({ t:"to_ads" }); }catch(e){}
+  });
 })();
 </script>
 </body>

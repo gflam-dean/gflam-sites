@@ -462,6 +462,14 @@
     if (_shiftIv) clearInterval(_shiftIv);
     _shiftIv = setInterval(checkShift, 30000);
     checkShift();
+    /* Drain any close that failed earlier. retryPendingCloses() was written for exactly this and
+       its own comment says it "picks it up on the next page load", but nothing ever called it:
+       it was exported and left unused, so a night whose close was lost to a wifi blip sat unbilled
+       until somebody happened to sign out on that same device. Calling it here covers all five
+       consoles, since every one of them calls enforceShift() after sign-in. It only touches
+       records already flagged `closing`, so a night in progress is never closed out from under
+       the host. */
+    try { retryPendingCloses(); } catch (e) {}
   }
   function checkShift() {
     var start = 0;
