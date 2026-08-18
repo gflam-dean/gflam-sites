@@ -693,12 +693,17 @@
     finishNow();
   }
   function finishNow(){
-    G.status="ended";
     if(!G.board.length){
+      /* Do NOT set status to "ended" here. Doing so re-rendered the console into its finished
+         state, whose only control is "Start a new round", which calls endRound() and destroys the
+         game: after a transient failure at the climax the host's single option wiped the scores
+         they were trying to show. Staying in "reveal" keeps the Reveal leaderboard button on
+         screen so they can simply try again. */
       hostError("Scores could not be loaded, so the podium was not put on the screen. Check your connection and tap Reveal leaderboard again.");
       renderConsole();
       return;
     }
+    G.status="ended";
     bcast({ t:"podium", top:G.board.slice(0,3), rows:G.board });
     bcast({ t:"leaderboard", title:"Final scores", rows:G.board });
     renderConsole();
@@ -789,6 +794,14 @@
     $("setupQs").textContent=G.questionCount;
     // Default the round to the WHOLE set so a host's questions all play (was stuck at 10). They can lower it.
     if($("cfgCount") && G.questionCount>0){ $("cfgCount").value=Math.min(100, G.questionCount); }
+    /* RE-RENDER. renderConsole() decides whether "Open lobby" is enabled, and it reads
+       G.questionCount. On a cold load renderConsole() runs before the question sets have come
+       back from the network, so the count is 0 and the button is disabled and captioned "No
+       questions in this night". This function is what learns the real count, and it did not
+       re-render, so the button stayed dead: the stat box read "Questions: 20" with a greyed-out
+       button underneath, and there was no way to start a quiz at all. A disabled button fires no
+       click, and nothing else re-renders during setup, so the host could not recover. */
+    renderConsole();
   }
 
   // ---- events ----

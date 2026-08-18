@@ -1441,8 +1441,21 @@
     saveGame();   // status is now "setup", so this clears the saved game for this code
     renderConsole();
   }
+  var _ballBusy=false;
   function nextBall(){
     if(G.status!=="running" || G.idx>=89) return;
+    /* AFTER "Finish game" the status is still "running" and lastWins has been cleared by
+       announce(), so every existing guard below passes and a tap here drew a ball. tv.html
+       handles a ball with no win guard, so the winner card, confetti and fanfare were replaced by
+       the board mid-celebration, with no way back. */
+    if(G.won){ showToast("That game is done. Tap New game for another, or End game to put the ads back on."); return; }
+    /* No debounce existed here at all. A fumbled double tap on a bar tablet drew TWO balls, and
+       the TV abandons the first reveal mid-flight, so the room hears one number called while two
+       are on the board. There is no undo. Musical's Play button got this guard; this never had it. */
+    if(_ballBusy) return;
+    _ballBusy=true;
+    var _nb=$("nextBtn"); if(_nb) _nb.disabled=true;
+    setTimeout(function(){ _ballBusy=false; var b=$("nextBtn"); if(b && G.status==="running" && !G.won) b.disabled=false; }, 1200);
     // Never call over an unresolved claim. Moving the ball on left the queue stranded on the old
     // number, and because the window is keyed to that ball, EVERY later claim was then refused in
     // silence: the next genuine winner got "the host said not yet" for a call nobody ever saw.

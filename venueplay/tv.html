@@ -978,7 +978,16 @@
          or a members-draw board put up at 5pm for a 7:30 draw, hit the host-silence timer and
          was torn down to the ad loop mid-service. It could not come back on its own either:
          re-embedding needs a fresh t:"mode", which the destroyed iframe never asks for. */
-      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(!m) return; noteHostAlive(); if(m.t==="mode") onGameMode(game); });
+      c.on("broadcast",{ event:"msg" },function(e){
+        var m=e.payload; if(!m) return;
+        noteHostAlive();
+        /* Re-embed on ANY game traffic while we are on the ad loop, not only on t:"mode".
+           A game announces its mode once, at the start. If the TV later fell back to ads for any
+           reason (the raffle screen's own 60s timer, 90 minutes of quiet, a failed embed), every
+           later drawing/winner/claimed/ball/question message was received here and thrown away,
+           so the rest of the night played out behind the venue's advertising with no way back. */
+        if(m.t==="mode" || tvMode==="ads") onGameMode(game);
+      });
       c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
     });
   })();

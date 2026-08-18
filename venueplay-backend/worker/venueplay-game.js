@@ -2598,7 +2598,10 @@ async function handlePlayerScore(request, env, json) {
   }
   if (!found) { total = 0; rank = board.length + 1; }
 
-  // The player's most recent stamped answer (its last-question result), if any.
+  // The player's most recent stamped answer in this game. NOTE: this is not necessarily the
+  // question just revealed. vp_trivia_answers is keyed by question_id, not qseq, and resolving a
+  // qseq here would cost two extra queries per player per question. The phone knows whether IT
+  // answered the current question, so it decides whether to trust this. See trivia/play.html.
   const last = await sbGet(env, 'vp_trivia_answers',
     'game_id=eq.' + enc(gameId) + '&player_id=eq.' + enc(player.id) +
     '&select=answer_index,is_correct,points_awarded,answered_at&order=answered_at.desc&limit=1');

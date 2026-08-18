@@ -464,7 +464,7 @@
 
   function startDraw(){
     if(!subscribed){ alert("No TV connected yet. Open venueplay.com.au/tv on your screen, then tap Draw."); return; }   // was a silent no-op
-    if(alreadyDrawnTonight()){ alert("This draw has already been done tonight. It runs again next week."); return; }
+    if(alreadyDrawnTonight() && !confirm("This draw is marked as already done tonight.\n\nThat is also what you see if a draw request was lost on bad wifi. Draw again anyway?")) return;
     if(G.busy || G.round) return;
     var d=curDraw();
     /* This told a host to fill in the settings on the right and tap Save, while applyRoleGates()
@@ -489,7 +489,7 @@
     apiPost("/host/members/draw", { draw_id:d.id })
       .then(function(r){ return wait.then(function(){ return r; }); })
       .then(function(r){ revealWinner(r); })
-      .catch(function(e){ G.busy=false; drawBtnIdle(); $("drawNote").textContent=e.message||"Draw failed"; sendIdle(); });
+      .catch(function(e){ G.busy=false; drawBtnIdle(); hostError(e.message||"Draw failed"); sendIdle(); });
   }
   function revealWinner(r){
     G.busy=false;
@@ -517,7 +517,15 @@
       G.claimTimer=setInterval(function(){
         if(!G.round){ stopClaimTimer(); return; }
         G.round.remaining--; updateClaimCd();
-        if(G.round.remaining<=0){ stopClaimTimer(); $("drawNote").textContent="No claim in time, rolling the jackpot to next week."; onRollover(); }
+        /* DO NOT roll the jackpot over automatically. This fired while the member was still
+           walking to the bar: silent, irreversible, announced on the TV, and unrepeatable because
+           last_drawn_date then disables the Draw button. The console clock also starts ~1.5s
+           before the TV's, so the wall still showed time remaining. Ask the host instead, exactly
+           as the raffle now does. */
+        if(G.round.remaining<=0){
+          stopClaimTimer();
+          hostError("Time is up on #"+G.round.number+" "+(G.round.name||"")+". Tap Claim if they are here, or Jackpot to next week if not.");
+        }
       }, 1000);
     }
   }
@@ -534,7 +542,7 @@
         $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week.";
         scheduleIdle(9000);
       })
-      .catch(function(e){ cb.disabled=false; rb.disabled=false; $("drawNote").textContent=e.message||"Could not record the claim"; });
+      .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not record the claim. The jackpot has NOT been reset: try again."); });
   }
   function onRollover(){
     if(!G.round) return;
@@ -549,7 +557,7 @@
         $("drawNote").textContent="Not claimed. Jackpot grew by "+money(r.increment_cents)+" to "+money(d?d.current_jackpot_cents:0)+".";
         scheduleIdle(7000);
       })
-      .catch(function(e){ cb.disabled=false; rb.disabled=false; $("drawNote").textContent=e.message||"Could not roll the jackpot over"; });
+      .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not roll the jackpot over. Try again."); });
   }
   function scheduleIdle(delay){
     drawBtnIdle();
@@ -685,7 +693,8 @@
   $("connectBtn").addEventListener("click", tryConnect);
 
   $("drawSel").addEventListener("change", function(){
-    if(G.busy || G.round){ clearTimers(); G.round=null; G.busy=false; hideWinnerCard(); drawBtnIdle(); }
+    if(G.round){ this.value=G.currentDrawId; alert("Finish this draw first: tap Claim, or Jackpot to next week."); return; }
+    if(G.busy){ clearTimers(); G.round=null; G.busy=false; hideWinnerCard(); drawBtnIdle(); }
     G.currentDrawId=this.value; renderStats(); renderMembers(); renderSettings(); sendIdle();
   });
   $("drawBtn").addEventListener("click", startDraw);

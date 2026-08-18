@@ -248,9 +248,9 @@
   // new draw activity cancels it. On a venue screen we return to /tv (the real venue ads).
   var _adsRet=null;
   function cancelAdsReturn(){ if(_adsRet){ clearTimeout(_adsRet); _adsRet=null; } }
-  function scheduleAdsReturn(){ cancelAdsReturn(); _adsRet=setTimeout(function(){
+  function scheduleAdsReturn(ms){ cancelAdsReturn(); _adsRet=setTimeout(function(){
     if(VENUE_SLUG){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); } else { renderIdle(); }
-  }, 60000); }
+  }, (ms>0?ms:60000)); }
   function renderIdle(){
     cancelAdsReturn();
     stopSpin(); stopCountdown(); stopCelebrate();
@@ -291,7 +291,11 @@
       $("tvPresent").innerHTML='<span style="color:var(--win)">Bring your winning ticket to claim</span>';
     }
     showLayer("tvWin");
-    scheduleAdsReturn();
+    /* Outlast the CLAIM WINDOW. This was a flat 60 seconds while the default claim time is 180,
+       so on every single draw the winning ticket came off the wall two minutes early and the
+       screen went back to the venue's ads. It did not come back either: the parent /tv blanks the
+       frame on that navigation, so the claim celebration and the next prize were never shown. */
+    scheduleAdsReturn(Math.max(60000, (time||0)*1000 + 30000));
   }
   function renderClaimed(nums){
     stopSpin(); stopCountdown();
@@ -318,9 +322,21 @@
       "font:600 24px/1.4 system-ui,-apple-system,sans-serif");
     _rc.textContent="Reconnecting to VenuePlay\u2026";
     (document.body||document.documentElement).appendChild(_rc);
-    setTimeout(function(){ location.reload(); }, 4000);
+    /* Cap the retries. This reloaded every 4 seconds indefinitely, and the parent /tv marks the
+       embed as loaded on each one, so its own 25 second deadline never fired: a blocked CDN meant
+       a grey card flashing all night with no fallback. After three attempts go to /tv, which has
+       the venue's ad loop and the real watchdog. */
+    var _tries=0; try{ _tries=parseInt(sessionStorage.getItem("vpCdnTries")||"0",10)||0; }catch(e){}
+    if(_tries>=3){
+      try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}
+      if(typeof VENUE_SLUG!=="undefined" && VENUE_SLUG){ location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); }
+    } else {
+      try{ sessionStorage.setItem("vpCdnTries", String(_tries+1)); }catch(e){}
+      setTimeout(function(){ location.reload(); }, 4000);
+    }
     throw new Error("VenuePlay: Realtime library not loaded yet");
   }
+  try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}   // loaded: reset the retry count
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same
   // /tv link. Listen only (no tv_here ping) so two games that are both live can't ping-pong.

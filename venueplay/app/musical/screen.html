@@ -350,9 +350,21 @@
       "font:600 24px/1.4 system-ui,-apple-system,sans-serif");
     _rc.textContent="Reconnecting to VenuePlay\u2026";
     (document.body||document.documentElement).appendChild(_rc);
-    setTimeout(function(){ location.reload(); }, 4000);
+    /* Cap the retries. This reloaded every 4 seconds indefinitely, and the parent /tv marks the
+       embed as loaded on each one, so its own 25 second deadline never fired: a blocked CDN meant
+       a grey card flashing all night with no fallback. After three attempts go to /tv, which has
+       the venue's ad loop and the real watchdog. */
+    var _tries=0; try{ _tries=parseInt(sessionStorage.getItem("vpCdnTries")||"0",10)||0; }catch(e){}
+    if(_tries>=3){
+      try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}
+      if(typeof VENUE_SLUG!=="undefined" && VENUE_SLUG){ location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); }
+    } else {
+      try{ sessionStorage.setItem("vpCdnTries", String(_tries+1)); }catch(e){}
+      setTimeout(function(){ location.reload(); }, 4000);
+    }
     throw new Error("VenuePlay: Realtime library not loaded yet");
   }
+  try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}   // loaded: reset the retry count
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   // Pairing channel (screen <-> host), same convention as the bingo/trivia TV: vp-<screen code>.
   // The host dual-broadcasts every game message here, so this one channel is enough.
@@ -392,7 +404,11 @@
 
   // Unified TV: after a game ends (idle) and stays ended, drop back to /tv (the venue ads). Any
   // real game activity cancels it, so a quick next round or restart never bounces.
-  var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
+  /* "state" MUST be in here. Every host end path (endGame, endGameNow, cancelLobby) sends idle
+   and then sendState() immediately after, so a "state" that cancelled the wind-down
+   cancelled it every single time: the TV never returned to the venue's ads and sat on a
+   dead join QR until the parent /tv gave up 90 minutes later. */
+var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1, state:1 };
   function cancelBackToAds(){ if(_backToAdsT){ clearTimeout(_backToAdsT); _backToAdsT=null; } }
   function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
   // ---- clip audio: this screen is the venue's sound source (whichever screen is wired to the amp) ----

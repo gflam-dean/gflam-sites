@@ -955,7 +955,11 @@
         $("carryModal").classList.remove("hidden");
         stopAudio();   // pause the music between rounds
       } else {
-        endGameNow();  // full house: the game is over
+        /* The game is over, but DO NOT end it in this tick: endGameNow() broadcasts idle, which
+           the screen handles by clearing the winner and returning to the lobby. Called here it
+           wiped the winner card milliseconds after it appeared. Wait for the screen's own
+           celebration (celebrate(9000)) to finish, then release the room. */
+        setTimeout(endGameNow, 9000);
       }
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }

@@ -251,6 +251,17 @@
   // The address on every printed sign and table talker.
   function ORIGIN_PLAY(){ try{ return window.location.origin + "/play"; }catch(e){ return "https://venueplay.com.au/play"; } }
 
+  /* How many leaderboard rows fit a 1080p TV. Each row is about 127px at 1920px wide, so ten
+
+     plus the title overflowed roughly 1550px into about 927px of usable height, and the layer is
+
+     a centred flex column inside overflow:hidden, so it clipped at BOTH ends: the title and the
+
+     top two ranks off the top, ninth and tenth off the bottom. The winner was what got cut. */
+
+  var TV_BOARD_ROWS = 6;
+
+
   var state={ phase:"lobby", hostSeen:false, playerCount:0, colour:true };
   var curQ=null, answeredPids={}, ringTimer=null, boardRollTimer=null;
 
@@ -345,7 +356,7 @@
       box.appendChild(el("span","at",esc(opts[i])));
       var sp=el("div","split");
       var bar=el("div","sbar"); var fill=el("div","sfill"); fill.style.width=Math.round((split[i]||0)/total*100)+"%"; bar.appendChild(fill);
-      sp.appendChild(bar); sp.appendChild(el("div","sc",(split[i]||0)+((split[i]||0)===1?" player":" players")));
+      sp.appendChild(bar); var _sc=Number(split[i])||0; sp.appendChild(el("div","sc",_sc+(_sc===1?" player":" players")));   // numeric: a forged string cannot reach innerHTML
       box.appendChild(sp);
       wrap.appendChild(box);
     }
@@ -354,7 +365,7 @@
     // roll to full leaderboard shortly after (host will also drive this authoritatively)
     if(boardRollTimer) clearTimeout(boardRollTimer);
     boardRollTimer=setTimeout(function(){
-      if(state.phase==="reveal"){ $("tvBoardTitle").textContent="Leaderboard"; renderRows($("tvBoardRows"), m.leaderboard||[], 10); show("tvBoard"); }
+      if(state.phase==="reveal"){ $("tvBoardTitle").textContent="Leaderboard"; renderRows($("tvBoardRows"), m.leaderboard||[], TV_BOARD_ROWS); show("tvBoard"); }
     }, 5200);
   }
 
@@ -365,7 +376,7 @@
       var row=el("div","brow"+(i===0?" top1":""));
       row.appendChild(el("span","r","#"+(i+1)));
       row.appendChild(el("span","n",esc(rows[i].name)));
-      row.appendChild(el("span","s",rows[i].points));
+      row.appendChild(el("span","s",Number(rows[i].points)||0));   // numeric: arrives over a public channel
       container.appendChild(row);
     }
     if(!n){ container.appendChild(el("div","jsub","No scores yet")); }
@@ -379,7 +390,7 @@
       var col=el("div","pcol "+o.cls);
       col.appendChild(el("div","medal",o.medal));
       col.appendChild(el("div","pn",esc(o.p.name)));
-      col.appendChild(el("div","ps",o.p.points));
+      col.appendChild(el("div","ps",Number(o.p.points)||0));   // numeric: arrives over a public channel
       col.appendChild(el("div","bar"));
       cols.appendChild(col);
     });
@@ -445,9 +456,21 @@
       "font:600 24px/1.4 system-ui,-apple-system,sans-serif");
     _rc.textContent="Reconnecting to VenuePlay\u2026";
     (document.body||document.documentElement).appendChild(_rc);
-    setTimeout(function(){ location.reload(); }, 4000);
+    /* Cap the retries. This reloaded every 4 seconds indefinitely, and the parent /tv marks the
+       embed as loaded on each one, so its own 25 second deadline never fired: a blocked CDN meant
+       a grey card flashing all night with no fallback. After three attempts go to /tv, which has
+       the venue's ad loop and the real watchdog. */
+    var _tries=0; try{ _tries=parseInt(sessionStorage.getItem("vpCdnTries")||"0",10)||0; }catch(e){}
+    if(_tries>=3){
+      try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}
+      if(typeof VENUE_SLUG!=="undefined" && VENUE_SLUG){ location.replace("/tv?venue="+encodeURIComponent(VENUE_SLUG)); }
+    } else {
+      try{ sessionStorage.setItem("vpCdnTries", String(_tries+1)); }catch(e){}
+      setTimeout(function(){ location.reload(); }, 4000);
+    }
     throw new Error("VenuePlay: Realtime library not loaded yet");
   }
+  try{ sessionStorage.removeItem("vpCdnTries"); }catch(e){}   // loaded: reset the retry count
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same
   // /tv link. Listen only (no tv_here ping) so two games that are both live can't ping-pong.
@@ -537,7 +560,7 @@
           state.phase="leaderboard";
           if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
           $("tvBoardTitle").textContent=_title;
-          renderRows($("tvBoardRows"), _rows, 10);
+          renderRows($("tvBoardRows"), _rows, TV_BOARD_ROWS);
           show("tvBoard");
         }, 9000);
         return;
@@ -545,7 +568,7 @@
       state.phase="leaderboard";
       if(boardRollTimer){ clearTimeout(boardRollTimer); boardRollTimer=null; }
       $("tvBoardTitle").textContent=m.title||"Leaderboard";
-      renderRows($("tvBoardRows"), m.rows||[], 10);
+      renderRows($("tvBoardRows"), m.rows||[], TV_BOARD_ROWS);
       show("tvBoard");
     }
     else if(m.t==="podium"){

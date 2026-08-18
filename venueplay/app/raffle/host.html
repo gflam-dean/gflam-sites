@@ -356,6 +356,25 @@
         // rebuild the drawn grid: all_tickets = every number drawn so far, last_tickets is the fallback
         G.drawn={}; var dt=(Array.isArray(g.all_tickets)&&g.all_tickets.length)?g.all_tickets:(g.last_tickets||[]);
         for(var i=0;i<dt.length;i++){ if(dt[i]!=null) G.drawn[dt[i]]=true; }
+        /* PUT A LIVE WINNER BACK. Without this, a tablet locking between the draw and the claim
+           lost the round entirely: renderRange() falls through to sendIdle(), which wiped the
+           drawn ticket off the TV, and the host was left with no winner card, no Claim and no
+           redraw, while the result row stayed "drawn" so that number could never come up again.
+           The snapshot already carries last_seq and last_tickets; we just never used them.
+           remaining:0 because the claim clock is not restarted: the host decides now. */
+        if(g.last_seq!=null && Array.isArray(g.last_tickets) && g.last_tickets.length){
+          hostStatus("Recovered your raffle");
+          renderRange(); renderResults();
+          /* Rebuild the live round through the SAME path a fresh draw takes, so the winner card,
+             the resolve buttons and the TV broadcast are all exactly what they would normally be
+             rather than a second hand-built copy that can drift. */
+          revealServer({ seq:g.last_seq, tickets:g.last_tickets.slice(), pad:g.pad,
+                         allow_redraw:(g.allow_redraw!==false),
+                         time_to_present:(g.time_to_present!=null?g.time_to_present:0),
+                         prize:(g.prize||prizeLabel()) });
+          hostError("Picked up where you left off. Confirm the ticket on screen: Claim if they are here, or Not here to redraw.");
+          return true;
+        }
         hostStatus("Recovered your raffle");
         renderRange(); renderResults();     // sendIdle() (queued) redraws the prize + range on the TV once paired
         return true;
@@ -434,7 +453,10 @@
   }
 
   // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
-  function sendIdle(){ send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length) }); }
+  function sendIdle(){
+    if(_suppressIdle) return;   /* a celebration is on the wall; do not paint over it */
+    send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length) });
+  }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
 
@@ -577,6 +599,7 @@
   }
 
   // winner presented -> mark claimed on the server
+  var _suppressIdle=false;
   function onClaim(){
     if(!G.round||G.round.resolved) return;
     G.round.resolved=true; clearTimers();
@@ -586,7 +609,15 @@
     send({ t:"claimed", numbers:nums, prizeLabel:pz, pad:padWidth(), min:G.min, max:G.max });
     $("wcCd").innerHTML='<span style="color:var(--win)">Claimed · '+esc(pz)+'</span>';
     show("wcResolve",false);
-    G.round=null; advancePrize(); renderRange(); drawBtnNext();
+    G.round=null;
+    /* Let the room SEE the win. advancePrize() and renderRange() both broadcast idle when there is
+       no live round, and running them here sent idle in the same tick as "claimed": the screen's
+       30 seconds of confetti lasted one frame before being replaced by the next-prize card.
+       Update the console now, tell the screen once the celebration has run. */
+    _suppressIdle=true;
+    advancePrize(); renderRange(); drawBtnNext();
+    _suppressIdle=false;
+    setTimeout(function(){ if(!G.round) sendIdle(); }, 9000);
     if(G.gameId && seq!=null){ apiPost("/host/draw/resolve",{ game_id:G.gameId, seq:seq, outcome:"claimed" }).catch(function(e){ hostError(e.message); }); }
   }
   // winner not here -> mark that round no_show on the server and draw a replacement
@@ -746,6 +777,16 @@
 
   // Every game needs an obvious way out. Without this the only route back to the venue's
   // own advertising was to end the round and wait for the screen to time out.
+  /* GIVE THE TV BACK ON THE WAY OUT. This console broadcasts mode:"raffle" the instant its
+     channel subscribes, so merely opening it pulls the venue off its own ads. Nothing released
+     the screen when the host closed the tab, tapped "Games" or was signed out by the 4 hour
+     timer, so the wall sat on "Raffle tonight" until /tv gave up 90 minutes later. A live round
+     is left alone: closing the tab mid-claim must not wipe the drawn ticket off the screen. */
+  window.addEventListener("pagehide", function(){
+    if(G.round) return;
+    try{ send({ t:"to_ads" }); }catch(e){}
+  });
+
   (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
     b.addEventListener("click", function(){
       try{ send({ t:"idle" }); }catch(e){}

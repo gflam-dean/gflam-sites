@@ -255,7 +255,7 @@
      Falls back to any sessionStorage value so a game already in progress is not disturbed. */
   function loadPid(room){ try{ return localStorage.getItem("vp-tpid-"+room) || sessionStorage.getItem("vp-tpid-"+room) || ""; }catch(e){ return ""; } }
   function savePid(room,pid){ try{ localStorage.setItem("vp-tpid-"+room, pid); }catch(e){} }
-  function loadName(room){ try{ return sessionStorage.getItem("vp-tname-"+room)||""; }catch(e){ return ""; } }
+  function loadName(room){ try{ return localStorage.getItem("vp-tname-"+room) || sessionStorage.getItem("vp-tname-"+room) || ""; }catch(e){ return ""; } }
   function saveName(room,nm){ try{ sessionStorage.setItem("vp-tname-"+room, nm); }catch(e){} }
   // the player token IS the metered server identity: persist it so a reload reuses the
   // same vp_players row instead of minting a new metered one.
@@ -363,6 +363,12 @@
       playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
         if(typeof r.total==="number") P.total=r.total;
         if(typeof r.rank==="number") P.rank=r.rank;
+        /* ONLY trust the server's "last answer" if we actually answered THIS question.
+           /player/score returns the player's most recent answer in the whole game, not the one
+           being revealed, so a player who sat a question out was congratulated with the result of
+           an earlier one they got right: "Correct! +130" while their total did not move. One
+           person showing that to their table is how a room stops believing the scoreboard. */
+        if(!answered){ paint(false, 0); return; }
         var last=r.last||{};
         var correct=(last.is_correct===true);
         paint(correct, last.points_awarded||0);
