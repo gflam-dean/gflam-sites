@@ -962,6 +962,12 @@
   function endGameNow(){
     G.won=true; G.status="setup"; clearMusic(); stopAudio();
     $("carryModal").classList.add("hidden");
+    /* Tell the room. endGame() broadcasts idle and resends state; this path did neither, so on a
+       full-house win (or "End game" from the carry-on modal) the console went back to setup while
+       the TV sat frozen on the winner layer, which only leaves on idle, and every phone kept the
+       won/lost view up. */
+    bcast({ t:"idle" });
+    sendState();
     if(G.gameId){ apiPost("/host/game/end",{ game_id:G.gameId }).catch(function(){}); }
     renderConsole();   // back to setup for the next game
   }

@@ -493,6 +493,9 @@
   }
   function revealWinner(r){
     G.busy=false;
+    // Re-arm the resolve buttons for THIS draw. They are disabled on use and were only ever
+    // re-enabled in the error path, so the second draw of the night showed dead buttons.
+    $("claimBtn").disabled=false; $("rollBtn").disabled=false;
     var d=curDraw();
     if(d) d.last_drawn_date=new Date().toISOString().slice(0,10);   // mark drawn-today so the board drops its "tonight" badge when it returns to idle
     var claimSecs = (d && d.time_to_claim_seconds!=null) ? (d.time_to_claim_seconds|0) : 0;
