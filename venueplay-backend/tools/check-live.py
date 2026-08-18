@@ -75,6 +75,10 @@ print("\nSource files must NOT be downloadable")
 # These are no longer in the deployed directory at all (they live in venueplay-backend/),
 # which is the only reliable way: a _redirects rule cannot stop Pages serving a file that
 # is present, and a 404 status in _redirects is silently ignored.
+# Cloudflare Pages answers an unknown path with the site's not-found PAGE and a 200 status,
+# so the status code alone cannot tell "gone" from "served". What matters is whether the real
+# file comes back: a published .js/.json/.sql/.py would arrive as its own content type. If we
+# get HTML, there is no file there. Verified against a control path that never existed.
 for path in ["/supabase/venueplay-17-manager-permissions.sql",
              "/worker/venueplay-game.js",
              "/worker/venueplay-api-FULL.js",
@@ -82,8 +86,25 @@ for path in ["/supabase/venueplay-17-manager-permissions.sql",
              "/seed-trivia.py",
              "/data/trivia-library.json",
              "/data/musical-library-full.json"]:
-    code, _, _ = get(SITE + path)
-    record(code in (403, 404), "not published: " + path, "HTTP %s" % code)
+    code, hdrs, body = get(SITE + path)
+    ctype = hdrs.get("Content-Type", "")
+    gone = code in (403, 404) or ctype.startswith("text/html")
+    detail = "HTTP %s %s" % (code, ctype.split(";")[0])
+    if not gone:
+        # Is it still deployed, or just still in Cloudflare's edge cache? A query string forces a
+        # cache miss, so the answer comes from the origin. This distinction matters: a cache is
+        # cleared with one click, a deployment needs a code change.
+        _, h2, _ = get(SITE + path + "?cachebust=vpcheck")
+        if h2.get("Content-Type", "").startswith("text/html"):
+            detail += "  <- REMOVED from the site, but still in Cloudflare's cache. Purge it."
+        else:
+            detail += "  <- genuinely still deployed"
+    record(gone, "not published: " + path, detail)
+
+# Control: if this ever stops looking like the others, the test above has stopped meaning anything.
+code, hdrs, _ = get(SITE + "/worker/zzz-control-never-existed.js")
+record(hdrs.get("Content-Type", "").startswith("text/html"),
+       "control path behaves as expected (soft 404)", "HTTP %s" % code)
 
 print("\nFiles the site DOES need must still be there")
 for path in ["/data/musical-library.json", "/data/trivia-count.json"]:
