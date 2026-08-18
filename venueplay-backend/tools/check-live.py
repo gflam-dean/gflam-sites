@@ -112,22 +112,24 @@ for origin in (SITE, APEX):
     alw = hdrs.get("Access-Control-Allow-Origin", "")
     record(alw in (origin, "*"), "CORS allows " + origin, "got '%s'" % alw)
 
-# /join/info must return the venue name, which the collection notice depends on.
 code, _, body = get(GAME + "/join/info", method="POST",
                     headers={"Content-Type": "application/json"},
                     body=json.dumps({"code": "ZZZZZZ"}).encode())
 record(code == 200, "/join/info responds", "HTTP %s" % code)
-try:
-    record("venue_name" in json.loads(body),
-           "/join/info returns venue_name (collection notice needs it)")
-except Exception:
-    record(False, "/join/info returns venue_name", body[:80])
+# NOTE: do not assert venue_name here. For an unknown code the handler returns early
+# ({collect:null, format:''}) before the venue is ever looked up, so venue_name is
+# legitimately absent and the assertion could never pass. Probe the version instead:
+# the old code answered a wildcard to ANY origin, the new code refuses a foreign one.
+_, hdrs, _ = get(GAME + "/venue?code=ZZZZZZ", headers={"Origin": "https://evil.example.com"})
+record(hdrs.get("Access-Control-Allow-Origin", "") not in ("*", "https://evil.example.com"),
+       "game Worker is running the current code",
+       "foreign origin got '%s'" % hdrs.get("Access-Control-Allow-Origin", ""))
 
 print("\nBilling Worker")
 code, hdrs, _ = get(BILLING + "/", headers={"Origin": SITE})
 record(code != 0, "billing Worker reachable", "HTTP %s" % code)
 alw = hdrs.get("Access-Control-Allow-Origin", "")
-record(alw in (SITE, "*", ""), "billing CORS sane", "got '%s'" % alw)
+record(alw in (SITE, ""), "billing Worker is running the current code", "got '%s'" % alw)
 
 print("\n" + "=" * 60)
 failed = [r for r in results if not r[0]]
