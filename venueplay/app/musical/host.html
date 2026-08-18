@@ -532,6 +532,14 @@
     var t=$("hostErrText"), b=$("hostErrBar");
     if(!t||!b){ $("statusText").textContent=msg||"Something went wrong"; return; }
     t.textContent=msg||"Something went wrong";
+    /* Lift it out of the header. The header is position:sticky with z-index 20, which creates a
+       stacking context, so nothing inside it can ever paint above the carry-on or overage modal
+       at z-index 60: a failure raised while a modal was open was hidden under the scrim and the
+       host saw a button that simply did nothing. Moved to <body>, it is above everything. */
+    if(b.parentNode !== document.body){
+      document.body.appendChild(b);
+      b.style.position="fixed"; b.style.top="0"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
+    }
     b.classList.add("show");
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
   }

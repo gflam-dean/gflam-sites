@@ -356,6 +356,14 @@
     var t=$("hostErrText"), b=$("hostErrBar");
     if(!t||!b){ $("statusText").textContent=msg||"Something went wrong"; return; }
     t.textContent=msg||"Something went wrong";
+    /* Lift it out of the header. The header is position:sticky with z-index 20, which creates a
+       stacking context, so nothing inside it can ever paint above the carry-on or overage modal
+       at z-index 60: a failure raised while a modal was open was hidden under the scrim and the
+       host saw a button that simply did nothing. Moved to <body>, it is above everything. */
+    if(b.parentNode !== document.body){
+      document.body.appendChild(b);
+      b.style.position="fixed"; b.style.top="0"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
+    }
     b.classList.add("show");
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
   }
@@ -729,6 +737,23 @@
         send({ t:"host_here" });
         if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
         if(G.status!=="setup"){ send({ t:"mode", mode:"trivia" }); send({ t:"players", count:playerCount() }); }
+        /* REPLAY WHAT IS ACTUALLY ON. trivia/screen.html never calls the game Worker, so a
+           freshly loaded screen has no way to learn the state on its own: it sat on the join QR
+           through a live question until the host tapped Next. The screen reloads more often than
+           you would think (the CDN retry, /tv re-embedding after ads), so this is the difference
+           between the big screen catching up on its own and the room staring at a join code. */
+        if(G.status==="question" && G.current){
+          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
+                 text:G.current.text, options:G.current.options, endsAt:G.current.endsAt,
+                 secs:remainingSecs(), colour:G.colour });
+          if(remainingSecs()<=0) send({ t:"lock" });
+        } else if(G.status==="reveal" && G.current){
+          send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
+                 options:G.current.options, split:[], leaderboard:G.board });
+          if(G.board.length) send({ t:"leaderboard", title:"Leaderboard", rows:G.board });
+        } else if(G.status==="ended" && G.board.length){
+          send({ t:"podium", top:G.board.slice(0,3), rows:G.board });
+        }
       }
       return;
     }
@@ -755,7 +780,12 @@
       if(status==="SUBSCRIBED"){
         subscribed=true; send({ t:"host_here" }); flushQueue();
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
-      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+        /* Reset the flag. Without this, send() kept thinking the channel was up and posted into a
+           dead socket, so the TV silently stopped updating with nothing on the console to say so.
+           Setting it false makes send() queue instead, and flushQueue() delivers everything the
+           screen missed the moment it reconnects. */
+        subscribed=false;
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
       }
     });

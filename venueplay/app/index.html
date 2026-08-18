@@ -1587,25 +1587,32 @@
       renderConsole();
     }
     else if(m.t==="claim"){
-      if(G.status!=="running" || G.won) return;
+      /* ALWAYS ANSWER A CLAIM. play.html sets claimPending and disables the BINGO button until it
+         hears resume, winner or started. Every path below used to return in silence, so a punter
+         whose claim was refused (a pattern that changed on "Keep playing" while their phone was
+         asleep, a tie already full, no matching ticket) shouted BINGO, got "the host is checking
+         your ticket" forever, could not press it again, and the console said "No claims yet".
+         That is the disputed-win-at-the-bar scenario. Release their button instead. */
+      var _refuse=function(){ try{ send({ t:"resume", pid:m.pid }); }catch(e){} };
+      if(G.status!=="running" || G.won){ _refuse(); return; }
       // The tie window is the BALL, and it stays open until the round is announced. Keying it on
       // "are there still unresolved claims" closed it the moment the host tapped Confirm on the
       // first caller, which is a second or two after the shout: a genuine tie partner calling on
       // the very same number was then dropped with nothing shown to anyone. Only a claim on a
       // LATER ball is actually late.
-      if(G.claimIdx!==-1 && G.claimIdx!==G.idx) return;
-      if(G.claims.length>=MAX_TIE) return;
+      if(G.claimIdx!==-1 && G.claimIdx!==G.idx){ _refuse(); return; }
+      if(G.claims.length>=MAX_TIE){ _refuse(); return; }
       var q;
       for(q=0;q<G.claims.length;q++){ if(G.claims[q].pid===m.pid) return; }    // one claim per player per ball
       for(q=0;q<G.lastWins.length;q++){ if(G.lastWins[q].pid===m.pid) return; } // already confirmed, awaiting announce
       var pl=G.players[m.pid];
-      if(!pl || !pl.cards || !pl.cards.length) return;
+      if(!pl || !pl.cards || !pl.cards.length){ _refuse(); return; }
       // find the exact ticket they claimed on; fall back to any winning ticket they hold
       var tk=null, j;
       for(j=0;j<pl.cards.length;j++){ if(pl.cards[j].cardNo===m.cardNo){ tk=pl.cards[j]; break; } }
       if(!tk){ for(j=0;j<pl.cards.length;j++){ if(checkPattern(pl.cards[j].card)){ tk=pl.cards[j]; break; } } }
       if(!tk && G.allowEarly){ tk=pl.cards[0]; }   // early-call venues: register their first ticket even with no win
-      if(!tk) return;
+      if(!tk){ _refuse(); return; }
       var valid=checkPattern(tk.card);
       if(valid || G.allowEarly){
         // seq preserves CALL order, so announcing is ordered by who shouted first even when the

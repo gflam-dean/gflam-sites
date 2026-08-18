@@ -1133,6 +1133,10 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
 
   let timeToPresent = parseInt(b.time_to_present != null ? b.time_to_present : b.time_to_claim_seconds, 10);
   if (!(timeToPresent >= 0)) timeToPresent = null;
+  // Floor it. Nothing enforced the min="30" on the input (not in a form, checkValidity never
+  // called), so a mistyped 5 gave the room five seconds to reach the bar. 0 is still allowed and
+  // means "no claim window at all", which is a deliberate setting; anything between is a typo.
+  if (timeToPresent !== null && timeToPresent > 0 && timeToPresent < 30) timeToPresent = 30;
 
   const allowRedraw = b.allow_redraw !== false;    // default on
   const leadingZeros = b.leading_zeros !== false;  // default on; display width is derived from range_max
@@ -1583,11 +1587,22 @@ async function handleMembersSettings(request, env, json) {
 
   // Build the patch from the numeric/schedule columns only.
   const patch = {};
-  const intField = (key) => { if (b[key] != null) { const n = parseInt(b[key], 10); if (!isNaN(n)) patch[key] = n; } };
-  intField('starting_amount_cents');
-  intField('increment_cents');
-  intField('current_jackpot_cents');
-  intField('time_to_claim_seconds');
+  /* min/max are enforced HERE, not by the input attributes: the settings fields are not inside a
+     form and nothing calls checkValidity(), so a typo saved happily. A 5 second claim window gives
+     the member five seconds to reach the bar before the host is prompted to roll the jackpot. */
+  const intField = (key, min, max) => {
+    if (b[key] == null) return;
+    let n = parseInt(b[key], 10);
+    if (isNaN(n)) return;
+    if (min != null && n > 0 && n < min) n = min;   // 0 stays 0: that means "no window", a real choice
+    if (min != null && n < 0) n = min;
+    if (max != null && n > max) n = max;
+    patch[key] = n;
+  };
+  intField('starting_amount_cents', 0);
+  intField('increment_cents', 0);
+  intField('current_jackpot_cents', 0);
+  intField('time_to_claim_seconds', 30, 3600);
   intField('draw_length_seconds');
   // The name is editable on an EXISTING draw too. It was only ever read on the create branch, so
   // a venue renaming its draw was told "saved" and the TV kept showing the old name forever.
@@ -1610,6 +1625,14 @@ async function handleMembersSettings(request, env, json) {
   const name = b.name != null ? String(b.name).slice(0, 120).trim() : '';
   if (!name) return json({ error: 'A draw needs a name' }, 400);
   const row = Object.assign({ venue_id: venueId, name }, patch);
+  /* Default the two numbers the jackpot maths depends on. Neither was required anywhere, and a
+     draw created with just a name behaved badly on the night: a CLAIM resets the jackpot to
+     starting_amount_cents, so with none set it either stayed at the full amount just paid out or
+     dropped to whatever the column default was, and a ROLLOVER grows it by increment_cents, so
+     the TV announced "Grew by $0, be here next week" and the board never moved.
+     A venue that wants different numbers sets them; this just stops a silent nonsense. */
+  if (row.starting_amount_cents == null) row.starting_amount_cents = 0;
+  if (row.increment_cents == null) row.increment_cents = 0;
   if (row.current_jackpot_cents == null && row.starting_amount_cents != null) row.current_jackpot_cents = row.starting_amount_cents;
   if (row.date_started == null) row.date_started = new Date().toISOString().slice(0, 10);
   const inserted = await sbInsert(env, 'vp_member_draws', row, true);

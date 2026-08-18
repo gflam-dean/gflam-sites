@@ -838,10 +838,26 @@
   // script must NOT die here - the ads have to keep showing. Realtime just reconnects later.
   var client=null, ch=null, tvSubscribed=false;
   function tvSend(obj){ if(tvSubscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); }catch(e){} } }
+  /* Retries here were unbounded. If the CDN stays blocked, /tv keeps showing ads (which is the
+     right floor) and the watchdog calls it healthy, so no game can EVER appear and the only
+     recovery is the 4 hour idle reload. A venue would spend a whole night with a TV that looks
+     fine and answers nothing. After a couple of minutes of trying, reload the page: that
+     re-requests the library from scratch, which is what actually fixes a bad fetch. */
+  var _rtTries=0;
   function connectRealtime(){
     if(typeof supabase==="undefined" || !supabase.createClient){
-      $("statusText").textContent="Reconnecting"; setTimeout(connectRealtime, 3000); return;   // library not here yet, keep trying
+      $("statusText").textContent="Reconnecting";
+      if(++_rtTries>=40){
+        /* reload() belongs to the watchdog closure further down and is not in scope here, so the
+           same two safeguards are repeated: never reload while the network is down (that swaps a
+           branded screen for a browser error page in a public room), and record why. */
+        try{ if(navigator.onLine === false){ setTimeout(connectRealtime, 3000); return; } }catch(e){}
+        try{ sessionStorage.setItem("vpTvReloadWhy","no-realtime"); }catch(e){}
+        location.reload(); return;
+      }
+      setTimeout(connectRealtime, 3000); return;   // library not here yet, keep trying
     }
+    _rtTries=0;
     try{
       client=supabase.createClient(SUPA_URL, SUPA_ANON);
       ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
