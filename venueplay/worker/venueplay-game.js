@@ -234,6 +234,60 @@ export default {
       return json({ error: 'Something went wrong', code }, 500);
     }
   },
+
+  /* NIGHTLY SWEEP: close sessions nobody ever closed.
+
+     /session/close is only ever called from the browser (vp-session.js), and its own comment
+     admits there is no server-side sweeper and a lost id is lost permanently. So a host who shut
+     the tablet without signing out, or a kiosk that was reset, left the session 'lobby' or
+     'running' for good. Two consequences, both real:
+       - the venue reads as live in HQ forever, and
+       - every later night's players append to that SAME session, so whenever some device finally
+         did sign out, one invoiceitem billed every player who had ever joined it, minus one cap.
+
+     Closing here goes through the same handleSessionClose path, so the overage is billed exactly
+     as it would have been, with the same Stripe idempotency key per session. Sessions younger
+     than the cutoff are left alone: a long night is not an abandoned one.
+
+     Needs a Cron Trigger on this Worker in the Cloudflare dashboard. Suggested: "0 17 * * *"
+     (3am Brisbane). With no trigger configured this simply never runs, which is today's
+     behaviour, so it is safe to deploy before the trigger is set up. */
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => {
+      const STALE_HOURS = 12;
+      const cutoff = new Date(Date.now() - STALE_HOURS * 3600 * 1000).toISOString();
+      let rows = [];
+      try {
+        rows = await sbGet(env, 'vp_sessions',
+          'status=in.(lobby,running,paused)&opened_at=lt.' + enc(cutoff) +
+          '&select=id,venue_id,opened_at&order=opened_at.asc&limit=200');
+      } catch (e) {
+        console.log('[sweep] could not list stale sessions: ' + String((e && e.message) || e));
+        return;
+      }
+      if (!rows.length) { console.log('[sweep] nothing to close'); return; }
+      let closed = 0, failed = 0;
+      for (const s of rows) {
+        try {
+          const session = await getSession(env, s.id);
+          if (session.status === 'finished' || session.status === 'cancelled') continue;
+          // Exactly the sequence handleSessionClose uses, so a swept night is billed and
+          // recorded identically to one the host closed themselves.
+          await sbPatch(env, 'vp_games', 'session_id=eq.' + enc(session.id) + '&status=eq.running',
+            { status: 'finished', ended_at: new Date().toISOString() });
+          await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id),
+            { status: 'finished', ended_at: new Date().toISOString() });
+          try { await emitEvent(env, session, 'session.closed', {}, 'system'); } catch (e2) {}
+          try { await chargeNightOverage(env, session); } catch (e2) { /* billing never blocks close */ }
+          closed++;
+        } catch (e) {
+          failed++;
+          console.log('[sweep] session ' + s.id + ' failed: ' + String((e && e.message) || e));
+        }
+      }
+      console.log('[sweep] closed ' + closed + ', failed ' + failed + ', of ' + rows.length + ' stale sessions');
+    })());
+  },
 };
 
 /* =====================================================================
