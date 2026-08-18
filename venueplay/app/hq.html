@@ -1250,7 +1250,7 @@
        mobile, so a landline or a typo produced a venue with no login while HQ reported that an
        invite had been sent. Check it here rather than find out when the publican cannot sign in. */
     var mobDigits=mob.replace(/[^0-9]/g,"");
-    if(!/^(04\d{8}|614\d{8})$/.test(mobDigits)){
+    if(!/^(04\d{8}|614\d{8}|4\d{8})$/.test(mobDigits)){   // match vpaNormaliseMobileAU, which accepts a bare 412345678
       errFlash("addVenueErr","Enter a valid Australian mobile (04...). They sign in by text code, so a landline leaves the venue with no way in.");
       return;
     }

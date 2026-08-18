@@ -852,6 +852,12 @@
            same two safeguards are repeated: never reload while the network is down (that swaps a
            branded screen for a browser error page in a public room), and record why. */
         try{ if(navigator.onLine === false){ setTimeout(connectRealtime, 3000); return; } }catch(e){}
+        _rtTries=0;
+        /* Go through the watchdog's own reload, which carries the MIN_GAP anti-thrash floor and
+           records vpTvReloadAt. A bare location.reload() here fired every 120s, inside the 180s
+           floor, and left the watchdog's limiter uninformed: a blocked CDN would have restarted
+           the venue's ad loop every couple of minutes all night. */
+        if(window.__vpTvReload){ window.__vpTvReload("no-realtime"); setTimeout(connectRealtime, 3000); return; }
         try{ sessionStorage.setItem("vpTvReloadWhy","no-realtime"); }catch(e){}
         location.reload(); return;
       }

@@ -1593,6 +1593,7 @@
          asleep, a tie already full, no matching ticket) shouted BINGO, got "the host is checking
          your ticket" forever, could not press it again, and the console said "No claims yet".
          That is the disputed-win-at-the-bar scenario. Release their button instead. */
+      if(!m.pid) return;   // a pid-less resume reads as "the whole room plays on" on every phone
       var _refuse=function(){ try{ send({ t:"resume", pid:m.pid }); }catch(e){} };
       if(G.status!=="running" || G.won){ _refuse(); return; }
       // The tie window is the BALL, and it stays open until the round is announced. Keying it on

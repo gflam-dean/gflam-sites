@@ -623,7 +623,7 @@
     _suppressIdle=true;
     advancePrize(); renderRange(); drawBtnNext();
     _suppressIdle=false;
-    setTimeout(function(){ if(!G.round) sendIdle(); }, 9000);
+    setTimeout(function(){ if(!G.round && !G.busy) sendIdle(); }, 9000);   // G.busy covers the whole spin, when G.round is still null
     if(G.gameId && seq!=null){ apiPost("/host/draw/resolve",{ game_id:G.gameId, seq:seq, outcome:"claimed" }).catch(function(e){ hostError(e.message); }); }
   }
   // winner not here -> mark that round no_show on the server and draw a replacement

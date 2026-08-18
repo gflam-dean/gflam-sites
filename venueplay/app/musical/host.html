@@ -538,7 +538,14 @@
        host saw a button that simply did nothing. Moved to <body>, it is above everything. */
     if(b.parentNode !== document.body){
       document.body.appendChild(b);
-      b.style.position="fixed"; b.style.top="0"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
+      b.style.position="fixed"; b.style.left="0"; b.style.right="0"; b.style.zIndex="90";
+      /* Sit BELOW the header, not on top of it. This bar's only background is a 16% pink tint: it
+         looked solid purely because the header behind it is opaque. At top:0 over <body> it drew
+         over the "Games" link and the status pill, and being fixed it swallowed the clicks too. */
+      var _hd=document.querySelector("header");
+      b.style.top=((_hd&&_hd.offsetHeight)||52)+"px";
+      b.style.background="#2A0B14";
+      b.style.backdropFilter="blur(8px)";
     }
     b.classList.add("show");
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
