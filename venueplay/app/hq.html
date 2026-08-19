@@ -195,6 +195,7 @@
           <option value="independent">Independent</option>
           <option value="live">Live now</option>
           <option value="suspended">Suspended</option>
+          <option value="archived">Archived</option>
         </select>
       </div>
       <button class="btn ghost sp" id="addVenueToggle">+ Add venue</button>
@@ -515,8 +516,23 @@
       S.usage=(r[3] && r[3].data) || [];
       S.admins=(r[4] && r[4].data) || [];
       S.audit=(r[5] && r[5].data) || [];
-      S.liveSessions=(r[6] && r[6].data)||[];
+      /* A SESSION THAT IS OPEN IS NOT A GAME THAT IS ON.
+         /session/close only ever runs in the browser, so a host who shut the tablet without
+         signing out leaves a session open for good, and that venue reads as live in HQ forever.
+         Anything older than the cutoff is shown as stale rather than counted as live, which is
+         the honest answer and stops "4 venues are running a game" when three of them are not.
+         The nightly sweeper in the game Worker is what actually closes these, and it needs a
+         Cron Trigger set in Cloudflare or it never runs. */
+      var allOpen=(r[6] && r[6].data)||[];
+      var STALE_MS=12*60*60*1000, nowMs=Date.now();
+      function sessionAge(x){
+        var t=Date.parse(x.started_at||x.opened_at||"");
+        return isNaN(t) ? 0 : (nowMs-t);
+      }
+      S.liveSessions=allOpen.filter(function(x){ return sessionAge(x) < STALE_MS; });
+      S.staleSessions=allOpen.filter(function(x){ return sessionAge(x) >= STALE_MS; });
       S.live={}; S.liveSessions.forEach(function(s){ S.live[s.venue_id]=true; });
+      S.stale={}; S.staleSessions.forEach(function(s){ S.stale[s.venue_id]=true; });
       S.spots=(r[7] && typeof r[7].data==="number") ? r[7].data : null;
       S.gameBySession={}; ((r[8] && r[8].data)||[]).forEach(function(g){ if(!S.gameBySession[g.session_id]) S.gameBySession[g.session_id]=g; });
       // latest usage month present
@@ -529,11 +545,13 @@
 
   /* ================= STATS ================= */
   function renderStats(){
-    var grouped=S.venues.filter(function(v){ return !!v.group_id; }).length;
-    var indep=S.venues.length-grouped;
-    var susp=S.venues.filter(function(v){ return v.status==="suspended"; }).length;
+    // Archived venues are not customers, so they are not in any headline number.
+    var active=S.venues.filter(function(v){ return !isArchived(v); });
+    var grouped=active.filter(function(v){ return !!v.group_id; }).length;
+    var indep=active.length-grouped;
+    var susp=active.filter(function(v){ return v.status==="suspended"; }).length;
     var liveN=Object.keys(S.live).length;
-    $("stVenues").textContent=S.venues.length;
+    $("stVenues").textContent=active.length;
     $("stVenuesD").textContent=indep+" independent, "+grouped+" grouped";
     $("stLive").textContent=liveN;
     $("stGroups").textContent=S.groups.length;
@@ -567,6 +585,22 @@
     var sessions=(S.liveSessions||[]).slice();
     sessions.sort(function(a,b){ return String(b.started_at||b.opened_at||"").localeCompare(String(a.started_at||a.opened_at||"")); });
     if($("liveCount")) $("liveCount").textContent = sessions.length ? ("· "+sessions.length) : "";
+    /* Say what the stale ones are rather than quietly counting them as live. These are sessions
+       nobody ever closed, usually a host who shut the tablet without signing out. The nightly
+       sweeper in the game Worker closes them and bills any overage correctly, but it only runs
+       if a Cron Trigger is set on that Worker in Cloudflare. If this list is never empty, that
+       trigger is missing. */
+    var staleN=(S.staleSessions||[]).length;
+    var staleNote=$("liveStale");
+    if(!staleNote){
+      staleNote=document.createElement("div"); staleNote.id="liveStale"; staleNote.className="note";
+      staleNote.style.cssText="margin:8px 0 0";
+      if(b.parentNode && b.parentNode.parentNode) b.parentNode.parentNode.appendChild(staleNote);
+    }
+    staleNote.innerHTML = staleN
+      ? ('<b style="color:var(--roll)">'+staleN+' session'+(staleN===1?" has":"s have")+' been open more than 12 hours</b> and are not counted above. '+
+         'Almost always a host who closed the tablet without signing out. The game Worker\'s nightly sweep closes these and bills any overage correctly, but it only runs if a Cron Trigger is set on that Worker in Cloudflare (suggested <span class="mono">0 17 * * *</span>, which is 3am Brisbane).')
+      : "";
     if(!sessions.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">No venues are live right now.</div></td></tr>'; return; }
     sessions.forEach(function(s){
       var v=venueById(s.venue_id);
@@ -659,11 +693,18 @@
   })();
 
   /* ================= VENUES ================= */
+  function isArchived(v){ return v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling"; }
   function venuePasses(v){
+    /* Archived venues are off every list unless you go looking for them. They are not customers
+       any more, and leaving them in the main view makes every count wrong and every scan slower.
+       Billing still sees them for the month they were archived in, because that month's invoice
+       is real; that filtering lives in renderBilling, not here. */
+    if(S.vFilter!=="archived" && isArchived(v)) return false;
+    if(S.vFilter==="archived" && !isArchived(v)) return false;
     if(S.vFilter==="grouped" && !v.group_id) return false;
     if(S.vFilter==="independent" && v.group_id) return false;
     if(S.vFilter==="live" && !S.live[v.id]) return false;
-    if(S.vFilter==="suspended" && v.status!=="suspended") return false;
+    if(S.vFilter==="suspended" && (v.status!=="suspended" || isArchived(v))) return false;
     if(S.vSearch){
       var q=S.vSearch.toLowerCase();
       if(String(v.name||"").toLowerCase().indexOf(q)<0 && String(v.slug||"").toLowerCase().indexOf(q)<0) return false;
@@ -673,7 +714,9 @@
   function renderVenues(){
     var b=$("venueRows"); b.innerHTML="";
     var list=S.venues.filter(venuePasses);
-    $("venuesLbl").textContent="All venues ("+list.length+(list.length===S.venues.length?"":" of "+S.venues.length)+")";
+    var pool=S.venues.filter(function(v){ return S.vFilter==="archived" ? isArchived(v) : !isArchived(v); });
+    var lbl=S.vFilter==="archived" ? "Archived venues" : "All venues";
+    $("venuesLbl").textContent=lbl+" ("+list.length+(list.length===pool.length?"":" of "+pool.length)+")";
     if(!list.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'+(S.venues.length?"No venues match that filter.":"No venues yet. Use Add venue to onboard the first one.")+'</div></td></tr>'; return; }
     // Venues that share a founding account (a self-serve multi-venue account) are one account,
     // even without a negotiated operator group. Count them so they read as merged, not separate.
