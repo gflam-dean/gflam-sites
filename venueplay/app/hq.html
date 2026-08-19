@@ -679,6 +679,7 @@
                        : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
       var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
                   '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
+                  (v.slug ? '<button class="mini" data-tvreload="'+esc(v.id)+'">Reload TV</button>' : '')+
                   '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
       if(canBilling()){
         actions+='<button class="mini'+(suspended?' win':' roll')+'" data-suspend="'+esc(v.id)+'" data-to="'+(suspended?'active':'suspended')+'">'+(suspended?"Reactivate":"Pause")+'</button>';
@@ -741,6 +742,8 @@
     if(sp){ suspendVenue(sp.getAttribute("data-suspend"), sp.getAttribute("data-to"), sp); return; }
     var ar=e.target.closest("button[data-archive]");
     if(ar){ archiveVenue(ar.getAttribute("data-archive"), ar); return; }
+    var tr=e.target.closest("button[data-tvreload]");
+    if(tr){ reloadOneScreen(tr.getAttribute("data-tvreload"), tr); return; }
     var pd=e.target.closest("button[data-paid]");
     if(pd){ setVenueGaming(pd.getAttribute("data-paid"), { paid_entry_enabled: pd.getAttribute("data-to")==="1" }, pd); return; }
   });
@@ -764,6 +767,43 @@
       }
       renderVenues(); loadAuditOnly();
     });
+  }
+
+  /* Send t:"tv_reload" to one venue's screens. Five channels, because the four game screens each
+     sit on their own game-namespaced channel and only the bare code is bingo's. Same list
+     billing.html uses to push a logo or a slide. */
+  function sendTvReload(slug){
+    if(!slug) return;
+    var c=VP.getClient();
+    var codes=[ VP.venueCode(slug) ];
+    ["trivia","musical","raffle","members"].forEach(function(g){ codes.push(VP.venueCode(g+"-"+slug)); });
+    codes.forEach(function(code){
+      var ch=c.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
+      var dropped=false;
+      function drop(){ if(dropped) return; dropped=true; try{ ch.unsubscribe(); }catch(e){} }
+      ch.subscribe(function(st){
+        if(st!=="SUBSCRIBED") return;
+        try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_reload" } }); }catch(e){}
+        setTimeout(drop, 1200);
+      });
+      setTimeout(drop, 8000);   // never leave a channel attached because a join never landed
+    });
+  }
+
+  /* One venue, from its row. Unlike the master button this does NOT skip a live venue: picking a
+     single venue is a deliberate act, usually because that screen is the one misbehaving. It
+     warns instead, and names what a mid-game reload costs. */
+  function reloadOneScreen(id, btn){
+    var v=venueById(id); if(!v || !v.slug){ alert("That venue has no screen address yet."); return; }
+    var liveNow=!!S.live[id];
+    var msg="Reload the screen at "+v.name+"?";
+    if(liveNow) msg+="\n\nA game is ON AIR there right now. The screen recovers by itself, but if it is musical bingo the current song stops and the room is quiet until the next one.";
+    else msg+="\n\nIt comes back on the current version within a few seconds.";
+    if(!confirm(msg)) return;
+    btn.disabled=true; var old=btn.textContent; btn.textContent="…";
+    sendTvReload(v.slug);
+    auditBestEffort("tv_reload", "venue:"+id, { name:v.name, live:liveNow });
+    setTimeout(function(){ btn.disabled=false; btn.textContent=old; }, 2500);
   }
 
   /* ---- RELOAD EVERY VENUE SCREEN ----
@@ -796,7 +836,7 @@
 
     var btn=$("reloadScreens"); btn.disabled=true; btn.textContent="Reloading…";
     out.textContent="Sending…";
-    var c=VP.getClient(), sent=0, done=0;
+    var done=0;   // the sending itself is sendTvReload's job now
 
     /* In batches. One channel join per game per venue is 5x the venue count, and firing them all
        at once on a big list is how you get a browser to drop half of them silently. */
@@ -811,22 +851,7 @@
         return;
       }
       var slice=targets.slice(i, i+BATCH); i+=BATCH;
-      slice.forEach(function(v){
-        var codes=[ VP.venueCode(v.slug) ];
-        ["trivia","musical","raffle","members"].forEach(function(g){ codes.push(VP.venueCode(g+"-"+v.slug)); });
-        codes.forEach(function(code){
-          var ch=c.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
-          var dropped=false;
-          function drop(){ if(dropped) return; dropped=true; try{ ch.unsubscribe(); }catch(e){} }
-          ch.subscribe(function(st){
-            if(st!=="SUBSCRIBED") return;
-            try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_reload" } }); sent++; }catch(e){}
-            setTimeout(drop, 1200);
-          });
-          setTimeout(drop, 8000);   // never leave a channel attached because a join never landed
-        });
-        done++;
-      });
+      slice.forEach(function(v){ sendTvReload(v.slug); done++; });
       out.textContent="Sending… "+Math.min(i,targets.length)+" of "+targets.length;
       setTimeout(next, 900);
     })();
