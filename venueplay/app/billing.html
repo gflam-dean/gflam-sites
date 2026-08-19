@@ -320,6 +320,7 @@
       <div class="btnrow">
         <button class="go" id="mdSave">Save draw</button>
         <button class="offtv" id="mdOffTv" type="button">Take off the TV</button>
+        <button class="offtv" id="mdRemoveDraw" type="button">Remove this draw</button>
       </div>
       <p class="snote" style="margin-top:8px">Taking it off the TV clears the draw day and time, so it stops appearing between games. The draw, its jackpot and your members list are all kept, so putting a night back on brings it straight back.</p>
     </div>
@@ -331,6 +332,14 @@
 143, Sam Taylor" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:14px;font-family:'Manrope',sans-serif;resize:vertical"></textarea>
       <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
       <input type="file" id="md-csv" accept=".csv,text/csv" style="display:none">
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
+        <div class="scardhead" style="font-size:13px">Take someone off the list</div>
+        <p class="snote">If a member leaves, or asks to be taken off, remove them by their member number. Any draws they have already won stay on your records.</p>
+        <div class="btnrow">
+          <input type="text" id="md-remove" class="mono" placeholder="Member number" style="max-width:190px">
+          <button class="offtv" id="mdRemove" type="button">Remove member</button>
+        </div>
+      </div>
       <button class="addbtn" id="md-csvbtn" style="margin-top:8px">Or upload a CSV file</button>
     </div>
     </div><!-- /tp-draws -->
@@ -1011,7 +1020,12 @@
     var client = VP.getClient();
     return client.from("vp_member_draws").select("*").eq("venue_id", venueId).order("created_at",{ascending:true})
       .then(function(r){
-        mdDraws = (r && r.data) || [];
+        /* Hide removed draws HERE rather than with .is("archived_at", null) in the query.
+           select("*") returns the column once migration 45 has run and simply omits it before,
+           so this works either way. A filter naming the column would 400 the whole query on a
+           database that has not been migrated yet, which is exactly how the HQ venue list ended
+           up empty this morning. */
+        mdDraws = ((r && r.data) || []).filter(function(d){ return !d.archived_at; });
         mdDraw = mdDraws[0] || null;
         renderDrawPicker();
         fillMembersDraw(mdDraw);
@@ -1039,7 +1053,7 @@
     body.draw_day  = $("md-day").value.trim();
     body.draw_time = $("md-time").value.trim();
     var tc=parseInt($("md-claim").value,10); if(!isNaN(tc)) body.time_to_claim_seconds=tc;
-    var ds=$("md-start").value.trim(); if(ds) body.date_started=ds;
+    body.date_started = $("md-start").value.trim();   // sent even when blank, so it can be cleared
     var btn=$("mdSave"); btn.disabled=true; btn.textContent="Saving…";
     gameApi("/host/members/settings", body).then(function(r){
       btn.disabled=false; btn.textContent="Save draw";
@@ -1049,6 +1063,41 @@
       showMsg("Members draw saved. Your TV updates in a few seconds.", true);
     });
   }
+  /* Someone asking to come off a list a venue holds about them is a privacy request, not a
+     preference, so this is a real delete rather than a hidden flag. */
+  function removeMember(){
+    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    var num = $("md-remove").value.trim();
+    if (!num){ showMsg("Enter the member number to remove."); return; }
+    if (!confirm("Remove member " + num + " from your members list?\n\nThey stop being drawn. Any draws they have already won stay on your records.")) return;
+    var btn=$("mdRemove"); btn.disabled=true; btn.textContent="Removing…";
+    var body = mdDraw ? { draw_id: mdDraw.id, number: num } : { venue_id: mdCurrent, number: num };
+    gameApi("/host/members/remove", body).then(function(r){
+      btn.disabled=false; btn.textContent="Remove member";
+      if (r.error){ showMsg(r.error); return; }
+      $("md-remove").value = "";
+      var who = r.removed && r.removed.name ? (" (" + r.removed.name + ")") : "";
+      showMsg("Member " + num + who + " removed.", true);
+      loadMembersDrawFor(mdCurrent);   // refreshes the count (and the draw picker) in one pass
+    });
+  }
+
+  /* Retiring a draw archives it: gone from the pickers and off the TV, but its winners stay
+     looked-up-able, which is what a club needs when a member queries a draw months later. */
+  function removeDraw(){
+    if (!mdDraw){ showMsg("Pick a draw first."); return; }
+    var nm = mdDraw.name || "this draw";
+    if (!confirm("Remove " + nm + "?\n\nIt comes off your TV and out of the list of draws. Past winners are kept on your records. This does not delete your members list, which your other draws still use.")) return;
+    var btn=$("mdRemoveDraw"); btn.disabled=true; btn.textContent="Removing…";
+    gameApi("/host/members/draw-remove", { draw_id: mdDraw.id }).then(function(r){
+      btn.disabled=false; btn.textContent="Remove this draw";
+      if (r.error){ showMsg(r.error); return; }
+      pushToScreen(mdCurrent);
+      showMsg(nm + " removed.", true);
+      loadMembersDrawFor(mdCurrent);   // reload the picker without it
+    });
+  }
+
   function importMembers(){
     if (!mdCurrent){ showMsg("Pick a venue first."); return; }
     var raw = $("md-import").value.trim();
@@ -1276,6 +1325,8 @@
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);
     $("mdOffTv").addEventListener("click", membersDrawOffTv);
+    $("mdRemove").addEventListener("click", removeMember);
+    $("mdRemoveDraw").addEventListener("click", removeDraw);
     $("mdImport").addEventListener("click", importMembers);
     ["md-start","md-startjp","md-inc"].forEach(function(id){ $(id).addEventListener("input", mdRecalc); $(id).addEventListener("change", mdRecalc); });
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });

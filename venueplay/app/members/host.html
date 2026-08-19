@@ -600,7 +600,7 @@
     var ic=dollarsToCents("setInc");   if(ic!==undefined) body.increment_cents=ic;
     var cj=dollarsToCents("setCur");   if(cj!==undefined) body.current_jackpot_cents=cj;
     var tc=intOf("setClaim");          if(tc!==undefined) body.time_to_claim_seconds=tc;
-    var ds=$("setSince").value.trim(); if(ds) body.date_started=ds;
+    body.date_started = $("setSince").value.trim();   // sent even when blank, so it can be cleared
     /* Sent even when blank, so clearing the night actually clears it. See billing.html. */
     body.draw_day  = $("setDay").value.trim();
     body.draw_time = $("setTime").value.trim();
@@ -633,7 +633,8 @@
   }
   function loadDraws(){
     return client.from("vp_member_draws").select("*").eq("venue_id", G.venueId).order("created_at",{ascending:true})
-      .then(function(r){ G.draws=(r&&r.data)||[]; });
+      /* Removed draws are filtered here, not in the query: see billing.html. */
+      .then(function(r){ G.draws=((r&&r.data)||[]).filter(function(d){ return !d.archived_at; }); });
   }
   function loadRoster(){
     return client.from("vp_member_rosters").select("id").eq("venue_id", G.venueId)

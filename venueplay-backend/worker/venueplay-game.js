@@ -220,6 +220,8 @@ export default {
       if (method === 'POST' && path === '/host/gaming/declare')       return await handleGamingDeclare(request, env, json);
       if (method === 'POST' && path === '/host/members/roster')       return await handleMembersRoster(request, env, json);
       if (method === 'POST' && path === '/host/members/import')        return await handleMembersImport(request, env, json);
+      if (method === 'POST' && path === '/host/members/remove')        return await handleMembersRemove(request, env, json);
+      if (method === 'POST' && path === '/host/members/draw-remove')   return await handleDrawRemove(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-add')      return await handleRafflePrizeAdd(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-remove')   return await handleRafflePrizeRemove(request, env, json);
       if (method === 'GET'  && path === '/player/card')        return await handlePlayerCard(request, env, json);
@@ -1806,6 +1808,96 @@ async function handleMembersImport(request, env, json) {
   });
   if (rows.length) await sbInsert(env, 'vp_members', rows, false);
   return json({ ok: true, added: rows.length, roster_id: rosterId });
+}
+
+/* POST /host/members/remove  (MANAGER/OWNER) : take one person off the members list.
+ *   body: { draw_id | venue_id, number }  -> { ok, removed }
+ *
+ * The list could be imported and never edited, which is a problem well beyond tidiness: a member
+ * asking to come off a list a venue holds about them is a privacy request, not a preference, and
+ * until now the honest answer was that we could not do it. So this is a real delete, not a flag.
+ * Their past wins in vp_member_draw_results are keyed by the result row, not by this row, so the
+ * club's own history of who won what survives them leaving the list.
+ */
+async function handleMembersRemove(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+
+  let venueId, rosterId = null;
+  const drawId = b.draw_id != null ? String(b.draw_id).trim() : '';
+  if (drawId) {
+    assertUuid(drawId, 'draw_id');
+    const dr = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=venue_id,roster_id');
+    if (!dr.length) return json({ error: 'Draw not found' }, 404);
+    venueId = dr[0].venue_id; rosterId = dr[0].roster_id || null;
+  } else {
+    venueId = String(b.venue_id || '').trim();
+    if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+    assertUuid(venueId, 'venue_id');
+  }
+
+  const staff = await requireStaff(env, authUserId, venueId);
+  if (staff.role !== 'owner' && staff.role !== 'manager') {
+    return json({ error: 'Only a manager or owner can change the members list' }, 403);
+  }
+
+  const num = parseInt(b.number, 10);
+  if (isNaN(num)) return json({ error: 'Enter the member number to remove' }, 400);
+
+  if (!rosterId) {
+    const rosters = await sbGet(env, 'vp_member_rosters', 'venue_id=eq.' + enc(venueId) + '&select=id&limit=1');
+    if (!rosters.length) return json({ error: 'This venue has no members list yet' }, 404);
+    rosterId = rosters[0].id;
+  }
+
+  const found = await sbGet(env, 'vp_members',
+    'roster_id=eq.' + enc(rosterId) + '&member_number=eq.' + enc(String(num)) + '&select=id,first_name,last_name&limit=1');
+  if (!found.length) return json({ error: 'No member with that number on this list' }, 404);
+
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_members?id=eq.' + enc(found[0].id), {
+    method: 'DELETE', headers: sbHeaders(env),
+  });
+  if (!res.ok) return json({ error: 'Could not remove that member. ' + (await res.text()).slice(0, 160) }, 500);
+
+  const nm = [found[0].first_name, found[0].last_name].filter(Boolean).join(' ');
+  return json({ ok: true, removed: { number: num, name: nm } });
+}
+
+/* POST /host/members/draw-remove  (MANAGER/OWNER) : retire a draw the venue no longer runs.
+ *   body: { draw_id }  -> { ok }
+ *
+ * ARCHIVES rather than deletes. vp_member_draw_results holds who won and when, which is what a
+ * club reaches for when a member queries a draw months later, so the draw row has to stay put.
+ * Clearing the day and time at the same time is what takes it off the TV: v_vp_screen_draws only
+ * shows draws that have a day, so nothing about the advertising loop needs to know about this.
+ */
+async function handleDrawRemove(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+
+  const drawId = String(b.draw_id || '').trim();
+  if (!drawId) return json({ error: 'Missing draw_id' }, 400);
+  assertUuid(drawId, 'draw_id');
+
+  const dr = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,name,archived_at');
+  if (!dr.length) return json({ error: 'Draw not found' }, 404);
+  if (dr[0].archived_at) return json({ ok: true, already: true });
+
+  const staff = await requireStaff(env, authUserId, dr[0].venue_id);
+  if (staff.role !== 'owner' && staff.role !== 'manager') {
+    return json({ error: 'Only a manager or owner can remove a draw' }, 403);
+  }
+
+  // A draw mid-round must not vanish from under the host running it.
+  const liveRound = await sbGet(env, 'vp_member_draw_results',
+    'draw_id=eq.' + enc(drawId) + '&outcome=is.null&select=id&limit=1').catch(function () { return []; });
+  if (liveRound && liveRound.length) {
+    return json({ error: 'That draw has a round on air. Finish it first, then remove the draw.' }, 409);
+  }
+
+  await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId),
+    { archived_at: new Date().toISOString(), draw_day: '', draw_time: '' });
+  return json({ ok: true, name: dr[0].name || 'Members draw' });
 }
 
 /* POST /host/raffle/prize-add  (MANAGER/OWNER) : add a reusable prize to the venue's list.
