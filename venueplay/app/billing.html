@@ -896,9 +896,15 @@
      saw nothing until the TV's own four hourly reload came round: upload at lunchtime, appears
      tomorrow morning. Meanwhile this page has been promising "it shows on your TV within a few
      seconds" the whole time. The TV listens on the venue's channel and re-fetches on this. */
-  function pushToScreen(){
+  /* venueId is optional: the Raffles and Members draw tabs have their own venue pickers, so they
+     cannot rely on whichever venue the Advertising tab happens to be showing. */
+  function slugForVenue(venueId){
+    for(var i=0;i<screenVenues.length;i++){ if(screenVenues[i].id===venueId) return screenVenues[i].slug; }
+    return (screenCurrent && screenCurrent.id===venueId) ? screenCurrent.slug : null;
+  }
+  function pushToScreen(venueId){
     try{
-      var slug = screenCurrent && screenCurrent.slug;
+      var slug = venueId ? slugForVenue(venueId) : (screenCurrent && screenCurrent.slug);
       if(!slug || !window.VP || !VP.venueCode) return;
       var c = VP.getClient();
       /* Every channel the venue's screens can be sitting on, not just bingo's. This used to
@@ -1039,7 +1045,8 @@
       btn.disabled=false; btn.textContent="Save draw";
       if (r.error){ showMsg(r.error); return; }
       mdDraw = r.draw || mdDraw;
-      showMsg("Members draw saved.", true);
+      pushToScreen(mdCurrent);
+      showMsg("Members draw saved. Your TV updates in a few seconds.", true);
     });
   }
   function importMembers(){
@@ -1189,7 +1196,8 @@
     api("/account/screen-save", { venue_id:rfCurrent, raffle:raffle }).then(function(r){
       btn.disabled=false; btn.textContent="Save routine";
       if (r.error){ showMsg(r.error); return; }
-      showMsg("Raffle routine saved.", true);
+      pushToScreen(rfCurrent);
+      showMsg("Raffle routine saved. Your TV updates in a few seconds.", true);
     });
   }
   /* "Take off the TV": stop advertising the raffle without touching the prize list. Sending an
@@ -1202,7 +1210,8 @@
       btn.disabled=false; btn.textContent="Take off the TV";
       if (r.error){ showMsg(r.error); return; }
       $("rf-label").value=""; $("rf-day").value=""; $("rf-time").value="";
-      showMsg("Raffle taken off the TV.", true);
+      pushToScreen(rfCurrent);
+      showMsg("Raffle taken off the TV. It stops showing in a few seconds.", true);
     });
   }
   /* Same idea for a members draw, except the draw itself is valuable: the jackpot and the
@@ -1217,7 +1226,8 @@
       if (r.error){ showMsg(r.error); return; }
       mdDraw = r.draw || mdDraw;
       $("md-day").value=""; $("md-time").value="";
-      showMsg("Members draw taken off the TV.", true);
+      pushToScreen(mdCurrent);
+      showMsg("Members draw taken off the TV. It stops showing in a few seconds.", true);
     });
   }
   function addRafflePrize(){
