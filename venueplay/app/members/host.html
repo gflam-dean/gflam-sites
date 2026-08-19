@@ -254,6 +254,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
+<script src="../vp-gaming.js"></script>
 <script>
 (function(){
   "use strict";
@@ -698,7 +699,8 @@
     if(G.busy){ clearTimers(); G.round=null; G.busy=false; hideWinnerCard(); drawBtnIdle(); }
     G.currentDrawId=this.value; renderStats(); renderMembers(); renderSettings(); sendIdle();
   });
-  $("drawBtn").addEventListener("click", startDraw);
+  /* State gaming rules, once a night, before the first draw. */
+  $("drawBtn").addEventListener("click", function(){ VPGaming.gateFor("members", startDraw); });
   $("claimBtn").addEventListener("click", onClaim);
   $("rollBtn").addEventListener("click", onRollover);
   $("saveSettingsBtn").addEventListener("click", saveSettings);

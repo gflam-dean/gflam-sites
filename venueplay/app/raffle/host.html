@@ -239,6 +239,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
+<script src="../vp-gaming.js"></script>
 <script>
 (function(){
   "use strict";
@@ -727,7 +728,8 @@
     connect(code);
   }
   $("connectBtn").addEventListener("click", tryConnect);
-  $("drawBtn").addEventListener("click", startDraw);
+  /* State gaming rules, once a night, before the first draw. */
+  $("drawBtn").addEventListener("click", function(){ VPGaming.gateFor("raffle", startDraw); });
   $("claimBtn").addEventListener("click", onClaim);
   $("redrawBtn").addEventListener("click", function(){ onRedraw(false); });
   $("newRaffleBtn").addEventListener("click", newRaffle);

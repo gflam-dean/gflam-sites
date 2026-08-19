@@ -690,12 +690,34 @@
         : (inAccount ? ("one account, "+acctCount[v.founding_id]+" venues") : "independent (card)");
       var players = v.max_players!=null ? esc(v.max_players) : (v.included_players!=null ? esc(v.included_players) : "not set");
       var dt=document.createElement("tr"); dt.className="detail"+(S.openVenue===v.id?"":" hidden");
+      /* What the venue IS decides every gaming category in the country, and signup has never
+         asked. Until it is set here, paid entry stays off and they are free-entry only. */
+      var ent = v.entity_type || "";
+      var paidOn = v.paid_entry_enabled === true;
+      var stateTxt = v.au_state ? esc(v.au_state) : '<span style="color:var(--roll)">no postcode, so no state</span>';
+      var gaming =
+        '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
+          '<b>Gaming</b> &middot; state '+stateTxt+' &middot; '+
+          '<select class="gament" data-vid="'+esc(v.id)+'" style="width:auto;display:inline-block;padding:5px 26px 5px 9px;font-size:12.5px">'+
+            '<option value=""'+(ent===""?" selected":"")+'>Not asked yet</option>'+
+            '<option value="non_profit"'+(ent==="non_profit"?" selected":"")+'>Club (non-profit)</option>'+
+            '<option value="for_profit"'+(ent==="for_profit"?" selected":"")+'>Pub (for-profit)</option>'+
+          '</select> '+
+          '<button class="mini'+(paidOn?" roll":"")+'" data-paid="'+esc(v.id)+'" data-to="'+(paidOn?"0":"1")+'"'+(ent?"":" disabled title=\"Record club or pub first\"")+'>'+
+            (paidOn?"Paid entry ON":"Paid entry off")+'</button>'+
+          '<div class="note" style="margin-top:6px">'+
+            (paidOn
+              ? "This venue can run paid-entry games. They see their own state's rules before each night."
+              : "Free entry only, which is a promotional game and lawful everywhere. Set what they are, then switch paid entry on.")+
+          '</div>'+
+        '</div>';
       dt.innerHTML='<td colspan="5">'+
         '<b>Screen address</b> screen.venueplay.com.au/'+esc(v.slug||"")+' &middot; '+
         '<b>Timezone</b> '+esc(v.timezone||"")+' &middot; '+
         '<b>Total players</b> '+players+' &middot; '+
         '<b>Billing</b> '+billTxt+' &middot; '+
         '<b>Created</b> '+esc(fmtWhen(v.created_at))+
+        gaming+
         '</td>';
       b.appendChild(dt);
     });
@@ -711,7 +733,30 @@
     if(sp){ suspendVenue(sp.getAttribute("data-suspend"), sp.getAttribute("data-to"), sp); return; }
     var ar=e.target.closest("button[data-archive]");
     if(ar){ archiveVenue(ar.getAttribute("data-archive"), ar); return; }
+    var pd=e.target.closest("button[data-paid]");
+    if(pd){ setVenueGaming(pd.getAttribute("data-paid"), { paid_entry_enabled: pd.getAttribute("data-to")==="1" }, pd); return; }
   });
+  $("venueRows").addEventListener("change", function(e){
+    var sel=e.target.closest("select.gament");
+    if(sel) setVenueGaming(sel.getAttribute("data-vid"), { entity_type: sel.value || null }, sel);
+  });
+
+  /* Club or pub, and whether paid entry is unlocked. HQ-only on purpose: a venue answering
+     this about itself is the wrong person to ask, because the answer decides what it may do. */
+  function setVenueGaming(id, patch, el){
+    el.disabled=true;
+    workerPost("/admin/venue-gaming", Object.assign({ venue_id:id }, patch)).then(function(res){
+      el.disabled=false;
+      if(res.error){ alert(res.error); renderVenues(); return; }
+      for(var i=0;i<S.venues.length;i++){
+        if(S.venues[i].id===id){
+          if(patch.entity_type!==undefined) S.venues[i].entity_type=res.venue&&res.venue.entity_type||null;
+          if(patch.paid_entry_enabled!==undefined) S.venues[i].paid_entry_enabled=!!(res.venue&&res.venue.paid_entry_enabled);
+        }
+      }
+      renderVenues(); loadAuditOnly();
+    });
+  }
 
   /* ---- VIEW AS (impersonation) ---- */
   function viewAs(id){

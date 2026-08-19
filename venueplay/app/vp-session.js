@@ -260,11 +260,12 @@
     // NEVER name a column here that has not been migrated into the live database. PostgREST
     // rejects the WHOLE select with a 400 if one column is missing, so a single un-migrated
     // name empties the HQ venue list and the console's venue picker at the same time. That is
-    // exactly what entity_type/paid_entry_enabled did: the code shipped ahead of migration 44.
-    // Anything new goes in a separate, optional read (see the logo_url pattern in tv.html),
-    // not on this line.
+    // exactly what entity_type/paid_entry_enabled did: the code shipped ahead of migration 44,
+    // and both were pulled back off this line until the migration was actually run. It has been
+    // (19 Aug 2026), and tools/check-schema.py now verifies every name here against the live
+    // database, so run that before adding to this list.
     return getClient().from("vp_venues")
-      .select("id,name,slug,timezone,status,suspended_reason,founding_id,group_id,included_players,max_players,logo_url,created_at,postcode,au_state")
+      .select("id,name,slug,timezone,status,suspended_reason,founding_id,group_id,included_players,max_players,logo_url,created_at,postcode,au_state,entity_type,paid_entry_enabled")
       .order("created_at", { ascending: false })
       .then(function (r) {
         // And do not swallow the failure. Returning [] on an error is indistinguishable from
@@ -535,6 +536,23 @@
     if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
     else document.body.appendChild(bar);
   }
+  /* Fire-and-forget POST to the game Worker, signed with the caller's token.
+     For side records that must never hold up or break the thing they describe:
+     the gaming declaration written when a host acknowledges their state's rules.
+     Resolves to null on any failure rather than rejecting, on purpose. */
+  function gameApiPost(path, body) {
+    var c; try { c = getClient(); } catch (e) { return Promise.resolve(null); }
+    return c.auth.getSession().then(function (r) {
+      var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
+      if (!tok) return null;
+      return fetch(GAME_API + path, {
+        method: "POST", keepalive: true,
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
+        body: JSON.stringify(body || {})
+      }).then(function (res) { return res.json().catch(function () { return null; }); });
+    }).catch(function () { return null; });
+  }
+
   root.VP = {
     getClient: getClient,
     useClient: useClient,
@@ -543,6 +561,7 @@
     getContext: getContext,
     setCurrentVenue: setCurrentVenue,
     listVenues: listVenues,
+    gameApiPost: gameApiPost,
     loadSettings: loadSettings,
     saveSettings: saveSettings,
     requireAuth: requireAuth,

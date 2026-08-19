@@ -83,6 +83,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/discount-remove' && typeof vpaHandleDiscountRemove === 'function') return await vpaHandleDiscountRemove(request, env, json);
       if (request.method === 'POST' && path === '/admin/quiet-venues'    && typeof vpaHandleQuietVenues === 'function')    return await vpaHandleQuietVenues(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
+      if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
       if (request.method === 'POST' && path === '/admin/audit'           && typeof vpaHandleAudit === 'function')          return await vpaHandleAudit(request, env, json);
@@ -1313,6 +1314,64 @@ async function vpaHandleQuietVenues(request, env, json) {
   }
   out.sort((a, z) => a.days_quiet - z.days_quiet);   // soonest quiet first: the winnable ones
   return json({ ok: true, days: days, count: out.length, venues: out });
+}
+
+/* Record what a venue IS, and whether paid-entry games are unlocked for it.
+ *
+ * Every gaming category in the country turns on one question we have never asked at signup:
+ * is this a non-profit (a club, an RSL, a bowls club) or a for-profit (a pub, a hotel)? Until
+ * somebody finds out and sets it here, paid entry stays off and the venue is free-entry only,
+ * which is a promotional game and lawful everywhere.
+ *
+ * Deliberately HQ-only, and deliberately not self-serve: a venue answering this about itself
+ * is exactly the wrong person to ask, because the answer decides what they are allowed to do.
+ */
+async function vpaHandleVenueGaming(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+
+  const b = await request.json();
+  const venueId = b.venue_id;
+  if (!venueId) return json({ error: 'venue_id is required.' }, 400);
+
+  const rows = await vpaSelect(env, 'vp_venues',
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,entity_type,paid_entry_enabled,au_state');
+  const prior = rows && rows[0];
+  if (!prior) return json({ error: 'That venue no longer exists.' }, 404);
+
+  const patch = {};
+  if (b.entity_type !== undefined) {
+    if (b.entity_type !== null && b.entity_type !== 'for_profit' && b.entity_type !== 'non_profit') {
+      return json({ error: "entity_type must be 'for_profit', 'non_profit' or null." }, 400);
+    }
+    patch.entity_type = b.entity_type || null;
+  }
+  if (b.paid_entry_enabled !== undefined) {
+    const on = !!b.paid_entry_enabled;
+    // Turning paid entry ON without knowing what the venue is would defeat the whole point.
+    const entity = patch.entity_type !== undefined ? patch.entity_type : prior.entity_type;
+    if (on && !entity) {
+      return json({ error: 'Record whether this venue is a club or a pub before turning paid entry on.' }, 400);
+    }
+    patch.paid_entry_enabled = on;
+  }
+  if (!Object.keys(patch).length) return json({ error: 'Nothing to change.' }, 400);
+
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {
+    method: 'PATCH',
+    headers: { ...vpaHeaders(env), 'Prefer': 'return=representation' },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) return json({ error: 'Could not save. ' + (await res.text()).slice(0, 180) }, 500);
+  const saved = (await res.json())[0] || {};
+
+  await vpaInsert(env, 'vp_admin_audit', {
+    actor_admin: actor.id || null, actor_label: actor.label || 'admin',
+    action: 'venue_gaming_updated', target: 'venue:' + venueId,
+    detail: { name: prior.name, from: { entity_type: prior.entity_type, paid_entry_enabled: prior.paid_entry_enabled }, to: patch },
+  }, false).catch(function () {});
+
+  return json({ ok: true, venue: saved });
 }
 
 async function vpaHandleVenueStatus(request, env, json) {

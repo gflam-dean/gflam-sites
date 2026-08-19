@@ -217,6 +217,7 @@ export default {
       if (method === 'POST' && path === '/host/members/draw')         return await handleMembersDraw(request, env, json);
       if (method === 'POST' && path === '/host/members/draw/resolve') return await handleMembersResolve(request, env, json);
       if (method === 'POST' && path === '/host/members/settings')     return await handleMembersSettings(request, env, json);
+      if (method === 'POST' && path === '/host/gaming/declare')       return await handleGamingDeclare(request, env, json);
       if (method === 'POST' && path === '/host/members/roster')       return await handleMembersRoster(request, env, json);
       if (method === 'POST' && path === '/host/members/import')        return await handleMembersImport(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-add')      return await handleRafflePrizeAdd(request, env, json);
@@ -1575,6 +1576,49 @@ async function handleMembersResolve(request, env, json) {
  * that recurring draw; without one it creates a new recurring draw (name required). The role gate
  * is enforced HERE in code, not just hidden in the UI. requireStaff also enforces the kill-switch.
  */
+/* ------------------------------ POST /host/gaming/declare ------------------------------
+ * A host pressed OK on their state's gaming rules before starting a game. Record it.
+ *
+ * This is the thing that answers OLGR's Third Party Operator point. The venue states, at
+ * the time and in its own account, that IT is the conductor: it supplies the prize, it
+ * handles any ticket sales, it keeps the proceeds. We supply software.
+ *
+ * Deliberately forgiving. It never refuses a declaration over a bad optional field, because
+ * a rejected write here would mean no record of an acknowledgement that genuinely happened.
+ * Any signed-in staff member may write one: the host on the floor is exactly who sees the
+ * popup, and a record from a host is worth more than no record at all.
+ * ------------------------------------------------------------------------------------ */
+async function handleGamingDeclare(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+
+  const venueId = String(b.venue_id || '').trim();
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  assertUuid(venueId, 'venue_id');
+
+  // Staff membership at THIS venue, so one venue cannot write records against another.
+  const staff = await requireStaff(env, authUserId, venueId);
+
+  const FORMATS = ['bingo90', 'bingo', 'musical', 'raffle', 'members'];
+  const format = FORMATS.indexOf(String(b.format || '')) !== -1 ? String(b.format) : null;
+  if (!format) return json({ error: 'Unknown format' }, 400);
+
+  const entity = (b.entity_type === 'non_profit' || b.entity_type === 'for_profit') ? b.entity_type : null;
+  const state = typeof b.state === 'string' ? b.state.slice(0, 8) : null;
+
+  await sbInsert(env, 'vp_gaming_declarations', {
+    venue_id: venueId,
+    format: format,
+    entity_type: entity,
+    state: state,
+    paid_entry: !!b.paid_entry,
+    category_claimed: typeof b.category_claimed === 'string' ? b.category_claimed.slice(0, 300) : null,
+    declared_by: staff && staff.id ? staff.id : null,
+  }, false);
+
+  return json({ ok: true });
+}
+
 async function handleMembersSettings(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
   const b = await readJson(request);
