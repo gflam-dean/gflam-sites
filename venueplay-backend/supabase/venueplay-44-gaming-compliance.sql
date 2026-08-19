@@ -45,10 +45,20 @@ alter table vp_venues
 comment on column vp_venues.entity_type is
   'for_profit (pub, hotel, tavern: Category 4 free-entry promotional games only) or non_profit (community club, RSL, bowls club: may run Category 1/2/3 subject to their ticket sales). NULL = we have not asked yet, which means treat as for_profit and free entry only.';
 
-alter table vp_venues
-  add constraint vp_venues_entity_type_chk
-  check (entity_type is null or entity_type in ('for_profit', 'non_profit'))
-  not valid;
+-- Postgres has no "add constraint if not exists", so guard it. Every other statement in this
+-- file is already safe to run twice; without this one, a second run fails on the constraint
+-- alone and looks like the whole migration broke.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'vp_venues_entity_type_chk'
+  ) then
+    alter table vp_venues
+      add constraint vp_venues_entity_type_chk
+      check (entity_type is null or entity_type in ('for_profit', 'non_profit'))
+      not valid;
+  end if;
+end $$;
 
 -- Which regulator applies: ALREADY SOLVED, do not add a column.
 -- ---------------------------------------------------------------------

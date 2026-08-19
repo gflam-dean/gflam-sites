@@ -17,6 +17,9 @@
  *   STRIPE_PRICE_STANDARD_MONTHLY price_...   standard $3.00 / player / month (venue 101+)
  *   STRIPE_PRICE_STANDARD_ANNUAL  price_...   standard $2.85 / player / month, billed yearly (venue 101+)
  *   RESEND_API_KEY              re_...
+ *   VP_INTERNAL_EMAIL           optional. Where the "new signup" heads-up goes.
+ *                               Defaults to hello@venueplay.com.au, so it needs setting
+ *                               only to send it somewhere else.
  *   SUPABASE_URL                https://gpoolavkghnxedzrmtmc.supabase.co
  *   SUPABASE_SERVICE_KEY        service_role key (NOT the anon key — keep secret)
  *   SITE_URL                    https://www.venueplay.com.au
@@ -1695,6 +1698,7 @@ async function vpaProvisionFromCheckout(env, session) {
     // Welcome email on a fresh provision (best-effort; skips if Resend unset).
     if (stepsDone.indexOf('venue') !== -1) {
       await vpaFireWelcome(env, session, f, [{ name: venueName, seats: f.max_seats }], false);
+      await vpaNotifyNewSignup(env, session, f, [{ name: venueName, seats: f.max_seats }], false);
     }
   } catch (e) {
     // Log which step failed so a stuck venue is visible in HQ, then rethrow so
@@ -1863,6 +1867,7 @@ async function vpaProvisionGroup(env, session, f) {
         },
       }, false);
       await vpaFireWelcome(env, session, f, venues, true);
+      await vpaNotifyNewSignup(env, session, f, venues, true);
     }
     // Flag a loginless group on ANY run (even a no-op retry), written once, so HQ always catches it.
     if (!authUserId) {
@@ -1962,6 +1967,86 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       }),
     });
   } catch (_) { /* welcome email is best-effort; never fail provisioning */ }
+}
+
+/* Internal heads-up to the VenuePlay inbox the moment a venue signs up.
+ *
+ * Separate from the customer's welcome email on purpose: this one is for us, so it carries the
+ * facts needed to act rather than anything reassuring. It fires from the same place the welcome
+ * does, which is the only point where a signup is known to have provisioned successfully.
+ *
+ * Best-effort in the strongest sense: it is wrapped, it never throws, and it is deliberately
+ * NOT awaited by anything that could fail a Stripe webhook. A missed notification costs an
+ * email; a thrown one would cost a retry storm on a customer's provisioning.
+ */
+async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
+  try {
+    if (!env.RESEND_API_KEY) return;
+    const to = env.VP_INTERNAL_EMAIL || 'hello@venueplay.com.au';
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+    const cd = session.customer_details || {};
+    const meta = session.metadata || {};
+
+    const contactName = meta.contact_name || cd.name || '';
+    const contactEmail = f.contact_email || cd.email || '';
+    const mobile = f.mobile || cd.phone || '';
+    const postcode = f.postcode || '';
+    const state = vpaStateFromPostcode(postcode) || '';
+
+    const plan = f.plan === 'annual' ? 'annual' : 'monthly';
+    const tier = meta.tier === 'standard' ? 'standard' : 'founding';
+    const rate = tier === 'standard' ? (plan === 'annual' ? 2.85 : 3.00)
+                                     : (plan === 'annual' ? 2.30 : 2.50);
+    const list = Array.isArray(venues) ? venues : [];
+    const seatsTotal = list.reduce((n, v) => n + (parseInt(v.seats, 10) || 0), 0);
+    const money = (n) => '$' + Number(n).toFixed(2);
+
+    const rows = [];
+    const row = (k, v) => { if (v) rows.push([k, v]); };
+    row('Venue' + (list.length > 1 ? 's' : ''), list.map((v) => vpaEsc(v.name)).join('<br>'));
+    row('Players', String(seatsTotal) + (list.length > 1 ? ' across ' + list.length + ' venues' : ''));
+    row('State', state ? (state + ' &middot; ' + vpaEsc(postcode)) : (postcode ? vpaEsc(postcode) : ''));
+    row('Contact', vpaEsc(contactName));
+    row('Email', contactEmail ? '<a href="mailto:' + vpaEsc(contactEmail) + '">' + vpaEsc(contactEmail) + '</a>' : '');
+    row('Mobile', mobile ? '<a href="tel:' + vpaEsc(mobile) + '">' + vpaEsc(mobile) + '</a>' : '');
+    row('Plan', tier + ' ' + plan + ', ' + money(rate) + ' a player');
+    row('Monthly', money(seatsTotal * rate));
+
+    let table = '';
+    for (let i = 0; i < rows.length; i++) {
+      table += '<tr>'
+        + '<td style="padding:7px 14px 7px 0;color:#6a6a75;font-size:14px;white-space:nowrap;vertical-align:top">' + rows[i][0] + '</td>'
+        + '<td style="padding:7px 0;color:#12101a;font-size:14px;font-weight:600">' + rows[i][1] + '</td>'
+        + '</tr>';
+    }
+
+    /* The gaming rules turn on whether the venue is a club or a pub, and signup never asks.
+       Until someone finds out and sets it in HQ, that venue is free-entry only. Say so here,
+       while the signup is fresh and someone is about to call them anyway. */
+    const askState = state ? (' Their state is ' + state + ', so check the grid before promising paid games.') : '';
+
+    const html = '<div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px">'
+      + '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#FF1F8E;font-weight:700">New signup</p>'
+      + '<h1 style="margin:0 0 18px;font-size:24px;color:#12101a">' + vpaEsc(list.length ? list[0].name : 'A new venue') + (list.length > 1 ? ' and ' + (list.length - 1) + ' more' : '') + '</h1>'
+      + '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:20px">' + table + '</table>'
+      + '<p style="margin:0 0 18px;padding:12px 14px;background:#FFF4F9;border-left:3px solid #FF1F8E;font-size:13.5px;color:#12101a;line-height:1.5">'
+      + '<b>Before they run a paid game:</b> we have not recorded whether this is a club or a pub, so paid entry is off and they are free-entry only.' + askState + '</p>'
+      + '<a href="' + site + '/app/hq.html" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Open HQ</a>'
+      + '</div>';
+
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'VenuePlay <hello@send.venueplay.com.au>',
+        reply_to: contactEmail || 'hello@venueplay.com.au',  // reply goes straight to the venue
+        to: [to],
+        subject: (isGroup ? 'New group signup: ' + list.length + ' venues, ' : 'New signup: ')
+                 + (list.length ? list[0].name : 'venue') + (state ? ' (' + state + ')' : ''),
+        html: html,
+      }),
+    });
+  } catch (_) { /* internal notification only; never affect provisioning */ }
 }
 
 /* Branded VenuePlay invoice email, sent on every real payment (invoice.paid).
