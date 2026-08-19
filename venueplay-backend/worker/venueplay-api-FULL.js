@@ -1670,6 +1670,12 @@ async function vpaProvisionFromCheckout(env, session) {
 
     // ---- Venue: find the existing one for this founding_id, or create it. ----
     step = 'venue';
+    let declaredEntity1 = null;
+    try {
+      const vlist = f.venues_json ? (typeof f.venues_json === 'string' ? JSON.parse(f.venues_json) : f.venues_json) : null;
+      const e = vlist && vlist[0] && vlist[0].entity_type;
+      if (e === 'non_profit' || e === 'for_profit') declaredEntity1 = e;
+    } catch (e) { /* older signup with no answer: falls back to the name guess */ }
     let venue = (await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id,name,slug'))[0];
     if (!venue) {
@@ -1681,6 +1687,11 @@ async function vpaProvisionFromCheckout(env, session) {
         max_players: f.max_seats || null,
         postcode: f.postcode || null,
         au_state: vpaStateFromPostcode(f.postcode),
+        /* What the venue said about itself on the signup form, out of venues_json. The name guess
+           is only a fallback for accounts created before the question existed, and it never
+           unlocks paid entry: only a declaration does that. */
+        entity_type: declaredEntity1 || vpaGuessEntity(venueName),
+        paid_entry_enabled: vpaPaidEntryDefault(declaredEntity1, vpaStateFromPostcode(f.postcode)),
         status: 'active',
         timezone: vpaTimezoneFromPostcode(f.postcode),
       });
@@ -1844,6 +1855,31 @@ function vpaTimezoneFromPostcode(pc) {
  */
 const VPA_CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
 const VPA_PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
+/* Should paid entry be ON for this venue from day one?
+ *
+ * Only ever when the VENUE told us what it is at signup. A guess from the trading name is fine
+ * for choosing which rules to show, and nowhere near good enough to unlock a legal capability:
+ * a privately owned golf club reads as a non-profit and is not one, and unlocking that venue
+ * would have us enabling paid games for someone who cannot lawfully run them. OLGR's letter of
+ * 18 Aug 2026 puts that expectation on us directly as a third party operator.
+ *
+ * A for-profit venue is never unlocked: in every state it can run a paid raffle only for a
+ * nominated cause, which is a conversation, not a switch.
+ *
+ * Two states stay off even for a confirmed club:
+ *   QLD  our number generator is still going through OLGR approval, so we cannot run the draw
+ *        at all yet, whatever the venue is allowed to do
+ *   NT   a published permit condition may bar an association paying us any fee, unresolved
+ * Everywhere else a club may charge, subject to caps and permits that vp-gaming.js shows them
+ * before each night and that remain the venue's own responsibility.
+ */
+const VPA_PAID_ENTRY_BLOCKED_STATES = new Set(['QLD', 'NT']);
+function vpaPaidEntryDefault(entityType, auState) {
+  if (entityType !== 'non_profit') return false;
+  if (!auState) return false;                       // no postcode, no state, no assumptions
+  return !VPA_PAID_ENTRY_BLOCKED_STATES.has(String(auState).toUpperCase());
+}
+
 function vpaGuessEntity(name) {
   const n = String(name || '');
   const club = VPA_CLUBWORDS.test(n), pub = VPA_PUBWORDS.test(n);
@@ -1855,6 +1891,9 @@ function vpaGuessEntity(name) {
 async function vpaProvisionOneVenue(env, opts) {
   const foundingId = opts.foundingId, groupId = opts.groupId,
         name = opts.name, seats = opts.seats, authUserId = opts.authUserId;
+  // Only 'non_profit' or 'for_profit' from the signup form is trusted; anything else is "not asked".
+  const declaredEntity = (opts.entityType === 'non_profit' || opts.entityType === 'for_profit')
+    ? opts.entityType : null;
   let created = false;
 
   let venue = (await vpaSelect(env, 'vp_venues',
@@ -1870,9 +1909,10 @@ async function vpaProvisionOneVenue(env, opts) {
       max_players: seats || null,
       postcode: opts.postcode || null,
       au_state: vpaStateFromPostcode(opts.postcode),
-      // Null when the name does not say. That venue then shows "we have not recorded what you
-      // are", and the signup email asks hello@ to set it.
-      entity_type: vpaGuessEntity(name),
+      // What the venue said about ITSELF at signup wins. The name guess is only the fallback for
+      // a venue that signed up before the question existed.
+      entity_type: declaredEntity || vpaGuessEntity(name),
+      paid_entry_enabled: vpaPaidEntryDefault(declaredEntity, vpaStateFromPostcode(opts.postcode)),
       status: 'active',
       timezone: 'Australia/Brisbane',
     });
@@ -1950,7 +1990,7 @@ async function vpaProvisionGroup(env, session, f) {
       const name = String(v.name || '').trim() || ('Venue ' + (i + 1));
       const seats = parseInt(v.seats, 10) || null;
       const postcode = String(v.postcode || '').replace(/\D/g, '').slice(0, 4);
-      const r = await vpaProvisionOneVenue(env, { foundingId: foundingId, groupId: null, name: name, seats: seats, postcode: postcode, authUserId: authUserId });
+      const r = await vpaProvisionOneVenue(env, { foundingId: foundingId, groupId: null, name: name, seats: seats, postcode: postcode, entityType: v.entity_type || null, authUserId: authUserId });
       if (r.created) anyCreated = true;
     }
 

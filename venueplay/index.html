@@ -349,6 +349,7 @@
   .venue-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
   .venue-row .v-name{flex:2 1 160px;min-width:120px}
   .venue-row .v-postcode{flex:1 1 90px;min-width:80px}
+  .venue-row .v-entity{flex:1 1 150px;min-width:130px}
   .venue-row .v-seats{flex:1 1 120px;min-width:100px}
   .venue-row .v-remove{flex:0 0 auto;width:46px;border:1px solid var(--line-2);background:transparent;color:var(--muted);border-radius:11px;font-size:22px;line-height:1;cursor:pointer;transition:border-color .15s ease,color .15s ease}
   .venue-row .v-remove:hover{border-color:var(--pink);color:var(--pink)}
@@ -1060,7 +1061,7 @@
               <label>Your venues</label>
               <div id="vp-venue-list"></div>
               <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
-              <span class="field-hint" style="text-align:center">For each venue, enter its postcode and the most players it would have in one game on a busy night, that venue's own number, not the group total. One card, one bill for the lot.</span>
+              <span class="field-hint" style="text-align:center">For each venue, enter its postcode, whether it is a club or a pub, and the most players it would have in one game on a busy night, that venue's own number, not the group total. One card, one bill for the lot.</span>
             </div>
             <div class="field full">
               <label>Plan</label>
@@ -1375,6 +1376,17 @@
       addVenueBtn.textContent = rows.length >= 20 ? 'Up to 20 venues at signup, add the rest once you are in' : '+ Add another venue';
     }
   }
+  /* Only ever a suggestion on this form: the venue confirms or changes it before paying. Kept in
+     step with guessEntity() in app/hq.html and vpaGuessEntity() in the Worker. */
+  var CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
+  var PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
+  function guessEntityFromName(n){
+    n = String(n || '');
+    var c = CLUBWORDS.test(n), p = PUBWORDS.test(n);
+    if (c && !p) return 'non_profit';
+    if (p && !c) return 'for_profit';
+    return '';
+  }
   function addVenueRow(name, seats, postcode){
     var row = document.createElement('div');
     row.className = 'venue-row';
@@ -1384,6 +1396,23 @@
     var pc = document.createElement('input');
     pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = 'Postcode'; pc.setAttribute('autocomplete', 'postal-code');
     if (postcode) pc.value = postcode;
+    /* Club or pub. Asked here, of the venue, because it decides which gaming rules apply to them
+       and whether they can ever charge for entry, and nothing else on this form can tell us. We
+       used to guess it from the trading name, which is right for an RSL and wrong for a privately
+       owned golf club, and being wrong means unlocking paid games for a venue that legally cannot
+       run them. The venue knows for certain, so it takes one tap and their answer is on record.
+       The name still pre-selects it, so for most venues it IS just one tap. */
+    var et = document.createElement('select');
+    et.className = 'v-entity';
+    et.innerHTML = '<option value="">Club or pub?</option>' +
+                   '<option value="non_profit">Club (non-profit)</option>' +
+                   '<option value="for_profit">Pub, hotel or tavern</option>';
+    function preselect(){
+      if (et.value) return;                        // never overwrite an answer already given
+      var g = guessEntityFromName(nm.value);
+      if (g) et.value = g;
+    }
+    nm.addEventListener('blur', preselect);
     var st = document.createElement('input');
     st.type = 'number'; st.className = 'v-seats'; st.min = '1'; st.step = '1'; st.inputMode = 'numeric'; st.placeholder = 'Max players';
     if (seats) st.value = seats;
@@ -1391,7 +1420,7 @@
     rm.type = 'button'; rm.className = 'v-remove'; rm.setAttribute('aria-label', 'Remove venue'); rm.textContent = '×';
     rm.addEventListener('click', function(){ row.remove(); refreshRemoveButtons(); renderEstimate(); });
     st.addEventListener('input', renderEstimate);
-    row.appendChild(nm); row.appendChild(pc); row.appendChild(st); row.appendChild(rm);
+    row.appendChild(nm); row.appendChild(pc); row.appendChild(et); row.appendChild(st); row.appendChild(rm);
     venueList.appendChild(row);
     refreshRemoveButtons();
   }
@@ -1452,14 +1481,16 @@
     for (var i = 0; i < rows.length; i++){
       var vn = rows[i].querySelector('.v-name').value.trim();
       var vpc = (rows[i].querySelector('.v-postcode').value || '').replace(/\D/g, '');
+      var vet = rows[i].querySelector('.v-entity').value;
       var vs = parseInt(rows[i].querySelector('.v-seats').value, 10);
       if (!vn) { showErr('Please enter a name for every venue.'); return; }
       if (!/^\d{4}$/.test(vpc)) { showErr('Please enter a 4-digit postcode for ' + vn + '.'); return; }
+      if (vet !== 'non_profit' && vet !== 'for_profit') { showErr('Please tell us whether ' + vn + ' is a club or a pub. It decides which gaming rules apply to you.'); return; }
       if (!vs || vs < 1) { showErr('Please enter the max players for ' + vn + '.'); return; }
       if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.'); return; }
       if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.'); return; }
       namesLower[vn.toLowerCase()] = true;
-      venues.push({ name: vn, seats: vs, postcode: vpc });
+      venues.push({ name: vn, seats: vs, postcode: vpc, entity_type: vet });
     }
     if (!venues.length) { showErr('Please add at least one venue.'); return; }
 
