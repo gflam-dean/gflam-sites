@@ -701,7 +701,7 @@
     G.currentDrawId=this.value; renderStats(); renderMembers(); renderSettings(); sendIdle();
   });
   /* State gaming rules, once a night, before the first draw. */
-  $("drawBtn").addEventListener("click", function(){ VPGaming.gateFor("members", startDraw); });
+  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("members", startDraw); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);
   $("rollBtn").addEventListener("click", onRollover);
   $("saveSettingsBtn").addEventListener("click", saveSettings);

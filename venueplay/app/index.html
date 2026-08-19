@@ -1773,7 +1773,8 @@
   // ================= EVENTS =================
   /* State gaming rules, once a night: shown before the night opens, never mid-game. */
   $("startBtn").addEventListener("click", function(){
-    VPGaming.gateFor("bingo90", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
+    if(window.VPGaming) VPGaming.gateFor("bingo90", go); else go();
+    function go(){ if(G.status==="lobby") startGame(); else openLobby(); }
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
 

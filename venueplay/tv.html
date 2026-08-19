@@ -1009,12 +1009,27 @@
     var GAMES=["trivia","musical","raffle","members"];
     function onGameMode(game){
       if(tvMode==="embed") return;   // a game is already on screen; the embedded screen handles hops between games itself
+      /* BINGO IS A GAME TOO. This only ever refused while another game was EMBEDDED, so a live
+         bingo round (tvMode==="bingo", drawn by this page rather than in an iframe) was fair game:
+         a manager opening the raffle or members console mid-round wiped the board off the wall,
+         because both of those consoles announce their mode the moment their channel subscribes.
+         Nothing running on screen should be displaced by a console merely being opened. */
+      if(tvMode==="bingo"){
+        try{ if(Date.now() - (lastHostAt||0) < HOST_SILENCE_MS) return; }catch(e){ return; }
+      }
       enterEmbed(game);              // load it IN PLACE (iframe) instead of navigating, so browser fullscreen is kept
     }
     /* Messages that mean "somebody is present" or "housekeeping", never "a game is on air".
        t:"idle" is the clearest case of all: it is the host explicitly saying go back to ads. */
+    /* to_ads is the single most important entry here. Every host sends it on pagehide, which is
+       the ordinary end of a night, and this page has no handler for it: returning to the ads is
+       done by the embedded screen navigating itself. So without this line, a host closing the tab
+       BETWEEN games pulled the wall off the venue's advertising and onto a dead join screen with
+       a code for a game nobody was running, and left it there for the full 90 minute host-silence
+       timeout. resume is deliberately NOT here: musical broadcasts it mid-game when a claim is
+       waved off and the room plays on, so it is real gameplay. */
     var NOT_ON_AIR = { tv_here:1, host_here:1, session:1, players:1, idle:1, rollcall:1,
-                       tv_audio_blocked:1, screen_refresh:1, tv_reload:1, resume:1 };
+                       tv_audio_blocked:1, screen_refresh:1, tv_reload:1, to_ads:1 };
     /* t:"state" is the awkward one: every format sends it, and it means "here is where things
        stand", which is just as often "nothing is on" as "a game is running". Musical ends a game
        with idle THEN state, and members does the same, so treating state as proof of life put the
@@ -1255,11 +1270,23 @@
       var VERSION_CHECK_MS = 10 * 60 * 1000;
       var mine = null;
 
+      /* Cloudflare's Email Address Obfuscation rewrites the support address on this page into
+         <a class="__cf_email__" data-cfemail="..."> with a FRESH RANDOM KEY on every request. So
+         the bytes differ every single time and "has this page changed" was always true: every
+         venue TV reloaded itself every ten minutes, all day, restarting the ad loop from slide
+         one. Strip the rewritten parts before hashing, and hash a normalised copy. */
+      function stable(str){
+        return String(str)
+          .replace(/data-cfemail="[^"]*"/g, '')
+          .replace(/\/cdn-cgi\/[^"']*/g, '')
+          .replace(/<span class="__cf_email__"[^>]*>[\s\S]*?<\/span>/g, '')
+          .replace(/\s+/g, ' ');
+      }
       function hash(str){
         // djb2. Not cryptographic, and does not need to be: it only has to change when the file does.
-        var h = 5381;
-        for (var i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
-        return h + ":" + str.length;
+        var t = stable(str), h = 5381;
+        for (var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+        return h + ":" + t.length;
       }
       function probe(){
         var url = location.origin + location.pathname + "?v=" + Date.now();
@@ -1269,8 +1296,15 @@
           .catch(function(){ return null; });
       }
 
-      probe().then(function(h){
-        if(!h) return;
+      /* Keep trying to get a first reading. A Fire Stick that boots before its wifi associates
+         used to fail this one probe and then never check again for the life of the page. */
+      (function first(tries){
+        probe().then(function(h){
+          if(!h){ if(tries < 10) setTimeout(function(){ first(tries+1); }, 60000); return; }
+          arm(h);
+        });
+      })(0);
+      function arm(h){
         mine = h;
         setInterval(function(){
           if(!idle()) return;                       // a game is never interrupted for a code update
@@ -1279,7 +1313,7 @@
             if(now && mine && now !== mine) reload("new-version");
           });
         }, VERSION_CHECK_MS);
-      });
+      }
     })();
   })();
 

@@ -1147,7 +1147,8 @@
      size. While this venue is free-entry only there is nothing to warn about, so no popup. It
      switches itself back on if the venue is ever unlocked to charge. */
   $("startBtn").addEventListener("click", function(){
-    VPGaming.gateFor("musical", function(){ if(G.status==="lobby") startGame(); else openLobby(); }, { onlyIfPaid:true });
+    if(window.VPGaming) VPGaming.gateFor("musical", go, { onlyIfPaid:true }); else go();
+    function go(){ if(G.status==="lobby") startGame(); else openLobby(); }
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
   $("newGameBtn").addEventListener("click", newGame);

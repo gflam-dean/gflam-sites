@@ -729,7 +729,7 @@
   }
   $("connectBtn").addEventListener("click", tryConnect);
   /* State gaming rules, once a night, before the first draw. */
-  $("drawBtn").addEventListener("click", function(){ VPGaming.gateFor("raffle", startDraw); });
+  $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("raffle", startDraw); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);
   $("redrawBtn").addEventListener("click", function(){ onRedraw(false); });
   $("newRaffleBtn").addEventListener("click", newRaffle);

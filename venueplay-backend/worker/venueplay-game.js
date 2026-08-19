@@ -1692,7 +1692,14 @@ async function handleMembersSettings(request, env, json) {
   if (b.draw_time != null) patch.draw_time = String(b.draw_time).slice(0, 20);
   // The owner sets when the draw started running (shown as "running since" on the TV). Only a
   // real YYYY-MM-DD is accepted so a bad value can never overwrite it.
-  if (b.date_started != null) { const ds = String(b.date_started).slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) patch.date_started = ds; }
+  /* An empty string is a real instruction: clear it. The pages now always send this field, but a
+     blank failed the date regex and fell through, so the value silently stayed put and "running
+     since" could still never be removed. The column is a date, so clearing means null, not ''. */
+  if (b.date_started != null) {
+    const ds = String(b.date_started).trim().slice(0, 10);
+    if (!ds) patch.date_started = null;
+    else if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) patch.date_started = ds;
+  }
   if (b.roster_id != null && String(b.roster_id).trim()) {
     const rid = String(b.roster_id).trim(); assertUuid(rid, 'roster_id'); patch.roster_id = rid;
   }
@@ -1854,10 +1861,20 @@ async function handleMembersRemove(request, env, json) {
     'roster_id=eq.' + enc(rosterId) + '&member_number=eq.' + enc(String(num)) + '&select=id,first_name,last_name&limit=1');
   if (!found.length) return json({ error: 'No member with that number on this list' }, 404);
 
+  /* Detach their past wins FIRST. vp_member_draw_results.member_id references this row, and which
+     ON DELETE rule that FK carries is not readable from here. Both possibilities are bad: RESTRICT
+     fails the delete for exactly the long-standing members most likely to ask to come off, and
+     CASCADE quietly destroys the club's record of who won what. Nulling the link removes the
+     ambiguity, and the result row already carries member_number and winner_name, so the history
+     reads the same afterwards. */
+  await sbPatch(env, 'vp_member_draw_results', 'member_id=eq.' + enc(found[0].id), { member_id: null })
+    .catch(function () { /* no wins, or already detached: the delete below is still correct */ });
+
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_members?id=eq.' + enc(found[0].id), {
     method: 'DELETE', headers: sbHeaders(env),
   });
-  if (!res.ok) return json({ error: 'Could not remove that member. ' + (await res.text()).slice(0, 160) }, 500);
+  // No raw PostgREST text to the client: this file's rule is that no constraint or SQL detail leaks.
+  if (!res.ok) return json({ error: 'Could not remove that member. Please try again.' }, 500);
 
   const nm = [found[0].first_name, found[0].last_name].filter(Boolean).join(' ');
   return json({ ok: true, removed: { number: num, name: nm } });
@@ -1868,8 +1885,10 @@ async function handleMembersRemove(request, env, json) {
  *
  * ARCHIVES rather than deletes. vp_member_draw_results holds who won and when, which is what a
  * club reaches for when a member queries a draw months later, so the draw row has to stay put.
- * Clearing the day and time at the same time is what takes it off the TV: v_vp_screen_draws only
- * shows draws that have a day, so nothing about the advertising loop needs to know about this.
+ * Clearing the day and time at the same time is what takes it off the TV. Note the filtering is
+ * done by tv.html, which drops rows with no draw_day, NOT by the v_vp_screen_draws view, which has
+ * no WHERE clause and will happily return an archived draw. One line of JS in one file is the whole
+ * safety net; if another screen ever reads that view directly it must filter for itself.
  */
 async function handleDrawRemove(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
@@ -1879,20 +1898,31 @@ async function handleDrawRemove(request, env, json) {
   if (!drawId) return json({ error: 'Missing draw_id' }, 400);
   assertUuid(drawId, 'draw_id');
 
-  const dr = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,name,archived_at');
+  const dr = await sbGet(env, 'vp_member_draws',
+    'id=eq.' + enc(drawId) + '&select=id,venue_id,name,archived_at,last_drawn_date,last_resolved_at');
   if (!dr.length) return json({ error: 'Draw not found' }, 404);
-  if (dr[0].archived_at) return json({ ok: true, already: true });
 
   const staff = await requireStaff(env, authUserId, dr[0].venue_id);
   if (staff.role !== 'owner' && staff.role !== 'manager') {
     return json({ error: 'Only a manager or owner can remove a draw' }, 403);
   }
+  // Answer "is it already gone" only AFTER proving the caller has rights here, so this cannot be
+  // used to probe whether a draw id exists at a venue the caller has nothing to do with.
+  if (dr[0].archived_at) return json({ ok: true, already: true });
 
-  // A draw mid-round must not vanish from under the host running it.
-  const liveRound = await sbGet(env, 'vp_member_draw_results',
-    'draw_id=eq.' + enc(drawId) + '&outcome=is.null&select=id&limit=1').catch(function () { return []; });
-  if (liveRound && liveRound.length) {
-    return json({ error: 'That draw has a round on air. Finish it first, then remove the draw.' }, 409);
+  /* A draw mid-round must not vanish from under the host running it.
+     This CANNOT be asked of vp_member_draw_results: as the schema note above handleMembersDraw
+     explains, outcome is NOT NULL and a row is only written at RESOLVE, so a live round has no
+     row there at all. An earlier version queried outcome=is.null, which is a valid query that
+     matches nothing, so the guard was decoration and a manager could archive a draw mid-round.
+     The real signals are the two stamps on the draw itself: last_drawn_date is set when the
+     winner is drawn, last_resolved_at when the claim or rollover lands. Drawn today and not yet
+     resolved today means a round is on air. */
+  const today = auDateStr(dr[0].timezone || null);
+  const drawnToday = String(dr[0].last_drawn_date || '').slice(0, 10) === today;
+  const resolvedToday = String(dr[0].last_resolved_at || '').slice(0, 10) === today;
+  if (drawnToday && !resolvedToday) {
+    return json({ error: 'That draw has a round on air. Finish it, then remove the draw.' }, 409);
   }
 
   await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId),
