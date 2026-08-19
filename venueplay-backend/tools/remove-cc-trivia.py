@@ -40,6 +40,7 @@ KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.join(HERE, "data", "trivia-library.json")
 APPLY = "--apply" in sys.argv
+STATUS = "--status" in sys.argv
 
 CC_SOURCES = {
     "Open Trivia Database (opentdb.com)",
@@ -66,7 +67,13 @@ def req(method, path, body=None, headers=None):
             raw = resp.read().decode()
             return json.loads(raw) if raw.strip() else []
     except urllib.error.HTTPError as e:
-        sys.exit("HTTP %s on %s %s\n%s" % (e.code, method, path, e.read().decode()[:500]))
+        detail = e.read().decode()[:300]
+        sys.exit("\nSTOPPED: the database refused a %s request.\n  %s\n\n"
+                 "Nothing further was changed. Re-running is safe: already-deleted rows are simply\n"
+                 "not found again, and the library is only rewritten once everything else worked.\n"
+                 % (method, detail))
+    except urllib.error.URLError as e:
+        sys.exit("\nSTOPPED: could not reach the database (%s).\nRe-running is safe.\n" % e)
 
 def page_all(path, page=1000):
     """PostgREST caps a response, so walk it."""
@@ -99,13 +106,35 @@ if collide:
     print("  %d texts appear in BOTH sets and will be LEFT ALONE (cannot tell them apart)" % len(collide))
     cc_keys -= collide
 
+if STATUS:
+    if not KEY or len(KEY) < 40:
+        sys.exit("--status needs SUPABASE_SERVICE_KEY set, so it can read the live bank.")
+    live = page_all("vp_questions?select=id,question")
+    live_keys = [norm(r.get("question")) for r in live]
+    still = sum(1 for k in live_keys if k in cc_keys)
+    print("\nLIVE DATABASE")
+    print("  questions live now        : %d" % len(live))
+    print("  still Creative Commons    : %d" % still)
+    print("\nLOCAL LIBRARY")
+    print("  questions in the file     : %d" % len(qs))
+    print("  still Creative Commons    : %d" % len(cc))
+    if still == 0 and len(cc) > 0:
+        print("\nThe live bank is clean but the local file is not. The delete finished and the")
+        print("rewrite did not. Re-run with --apply: it will find nothing to delete and just")
+        print("tidy the file.")
+    elif still == 0 and len(cc) == 0:
+        print("\nAll done, both sides. Safe to take the attribution off the site.")
+    else:
+        print("\nNot finished. Re-run with --apply.")
+    sys.exit(0)
+
 if not KEY or len(KEY) < 40:
     print("\nDRY RUN (no SUPABASE_SERVICE_KEY set). Nothing was changed, locally or live.")
     print("Set the key and re-run with --apply to do it for real.")
     sys.exit(0)
 
 # ---------------------------------------------------------------- the live database
-print("\nReading the live question bank...")
+print("\nReading the live question bank (this takes a minute, it pages through ~40,000 rows)...")
 live = page_all("vp_questions?select=id,set_id,question")
 print("  live rows: %d" % len(live))
 doomed = [r for r in live if norm(r.get("question")) in cc_keys]
