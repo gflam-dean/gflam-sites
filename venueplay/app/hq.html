@@ -711,6 +711,7 @@
       /* What the venue IS decides every gaming category in the country, and signup has never
          asked. Until it is set here, paid entry stays off and they are free-entry only. */
       var ent = v.entity_type || "";
+      var guess = guessEntity(v.name);
       var paidOn = v.paid_entry_enabled === true;
       var stateTxt = v.au_state ? esc(v.au_state) : '<span style="color:var(--roll)">no postcode, so no state</span>';
       var gaming =
@@ -721,9 +722,11 @@
             '<option value="non_profit"'+(ent==="non_profit"?" selected":"")+'>Club (non-profit)</option>'+
             '<option value="for_profit"'+(ent==="for_profit"?" selected":"")+'>Pub (for-profit)</option>'+
           '</select> '+
+          (guess && !ent ? '<button class="mini" data-guess="'+esc(v.id)+'" data-as="'+esc(guess)+'">Set as '+(guess==="non_profit"?"club":"pub")+'</button> ' : '')+
           '<button class="mini'+(paidOn?" roll":"")+'" data-paid="'+esc(v.id)+'" data-to="'+(paidOn?"0":"1")+'"'+(ent?"":" disabled title=\"Record club or pub first\"")+'>'+
             (paidOn?"Paid entry ON":"Paid entry off")+'</button>'+
           '<div class="note" style="margin-top:6px">'+
+            (guess && !ent ? ("The name "+guessLabel(guess)+", so that is the suggestion. Confirm it before switching paid entry on. ") : "")+
             (paidOn
               ? "This venue can run paid-entry games. They see their own state's rules before each night."
               : "Free entry only, which is a promotional game and lawful everywhere. Set what they are, then switch paid entry on.")+
@@ -754,6 +757,8 @@
     if(ar){ archiveVenue(ar.getAttribute("data-archive"), ar); return; }
     var tr=e.target.closest("button[data-tvreload]");
     if(tr){ reloadOneScreen(tr.getAttribute("data-tvreload"), tr); return; }
+    var gs=e.target.closest("button[data-guess]");
+    if(gs){ setVenueGaming(gs.getAttribute("data-guess"), { entity_type: gs.getAttribute("data-as") }, gs); return; }
     var pd=e.target.closest("button[data-paid]");
     if(pd){ setVenueGaming(pd.getAttribute("data-paid"), { paid_entry_enabled: pd.getAttribute("data-to")==="1" }, pd); return; }
   });
@@ -817,6 +822,26 @@
     sendTvReload(v.slug);
     auditBestEffort("tv_reload", "venue:"+id, { name:v.name, live:liveNow });
     setTimeout(function(){ btn.disabled=false; btn.textContent=old; }, 2500);
+  }
+
+  /* Club or pub, guessed from the venue's name.
+     The postcode gives us the STATE automatically, but nothing about a postcode says whether the
+     venue is a non-profit, and that is the half every gaming category actually turns on. The name
+     is a good signal though: an RSL, a bowls club or a leagues club is a non-profit by
+     construction, and a Hotel or Tavern is not. So we suggest, HQ confirms in one click, and
+     nothing is ever set from a guess on its own. Getting this wrong decides what a venue is
+     allowed to do, so it does not get to be silent. */
+  var CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
+  var PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
+  function guessEntity(name){
+    var n = String(name || "");
+    var club = CLUBWORDS.test(n), pub = PUBWORDS.test(n);
+    if (club && !pub) return "non_profit";
+    if (pub && !club) return "for_profit";
+    return "";   // both or neither: no guess, because a wrong one here is worse than none
+  }
+  function guessLabel(g){
+    return g === "non_profit" ? "looks like a club" : g === "for_profit" ? "looks like a pub" : "";
   }
 
   /* ---- RELOAD EVERY VENUE SCREEN ----
