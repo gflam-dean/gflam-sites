@@ -1240,6 +1240,49 @@
     // An uncaught error can stop the rotation with the last slide still lit, which looks alive to
     // the check above. Move the watchdog along rather than wait for a slide to fail to advance.
     window.addEventListener("error", function(){ if(strikes < 2) strikes = 2; });
+
+    /* ---- pick up a deploy in minutes, not hours ----
+       These screens are switched on and never touched again. Nobody reloads a Fire Stick behind
+       a bar, so until now a fix reached a venue only when the 4 hour idle reload came round.
+
+       Cloudflare gives this page no ETag, no Last-Modified and no Content-Length (checked against
+       the live site, 19 Aug 2026), so there is no cheap header to compare. The page itself is the
+       only honest signal: fetch it and hash it. That is deliberately chosen over a version string
+       someone has to remember to bump, because a stamp nobody updates is worse than no stamp.
+
+       78KB every ten minutes, idle only, never mid-game. If anything fails it does nothing at all
+       and the 4 hour reload still catches it. This can make updates faster; it cannot make the
+       screen worse. */
+    (function watchForDeploy(){
+      var VERSION_CHECK_MS = 10 * 60 * 1000;
+      var mine = null;
+
+      function hash(str){
+        // djb2. Not cryptographic, and does not need to be: it only has to change when the file does.
+        var h = 5381;
+        for (var i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+        return h + ":" + str.length;
+      }
+      function probe(){
+        var url = location.origin + location.pathname + "?v=" + Date.now();
+        return fetch(url, { cache:"no-store" })
+          .then(function(r){ return r.ok ? r.text() : null; })
+          .then(function(t){ return t ? hash(t) : null; })
+          .catch(function(){ return null; });
+      }
+
+      probe().then(function(h){
+        if(!h) return;
+        mine = h;
+        setInterval(function(){
+          if(!idle()) return;                       // a game is never interrupted for a code update
+          try{ if(navigator.onLine === false) return; }catch(e){}
+          probe().then(function(now){
+            if(now && mine && now !== mine) reload("new-version");
+          });
+        }, VERSION_CHECK_MS);
+      });
+    })();
   })();
 
   // ================= FULLSCREEN (additive setup control) =================
