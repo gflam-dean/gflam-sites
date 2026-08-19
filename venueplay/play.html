@@ -1022,19 +1022,24 @@
        give up. Cheap, and it stops the moment it has an answer. */
     var tries=0;
     (function look(){
-      if(P.joined || P.active) return;                 // already in a game here: never yank them away
+      /* "Already in a game here" must mean a game, not a remembered name. connect() sets
+         P.joined=true whenever localStorage has a name for this room, and the room key is now the
+         venue's PERMANENT code, so it matches for every regular who has ever played bingo here.
+         They typed the trivia code off the TV and were silently pinned to the bingo channel with
+         this lookup never running once. Only a live game here should stop the hop. */
+      if(P.active) return;
       playerPost("/join/info",{ code:code })
         .then(function(r){
           if(r && r.paper_bingo){ showPaperBingo(); return; }
-          if(P.joined || P.active) return;
+          if(P.active) return;
           var to=playerAppFor(r && r.format);
           /* room_code is set when the code typed was the VENUE code (the permanent one on the
              wall) and a trivia or musical session is live under it. Hop to THAT room, not the
              code they typed, or the phone lands in the right app on the wrong channel. */
           if(to){ window.location.replace(to+"?room="+encodeURIComponent((r && r.room_code) || code)); return; }
-          if(++tries<40) setTimeout(look, 6000);       // ~4 minutes of lobby, then stop
+          if(++tries<225) setTimeout(look, 8000);     // ~30 minutes: a lobby routinely outlasts 4
         })
-        .catch(function(){ if(++tries<40) setTimeout(look, 6000); });   // worker blip: bingo still works
+        .catch(function(){ if(++tries<225) setTimeout(look, 8000); });  // worker blip: bingo still works
     })();
   }
   function roomGo(){

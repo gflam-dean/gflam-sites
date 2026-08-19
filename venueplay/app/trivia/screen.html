@@ -291,8 +291,12 @@
     var url = shownJoinURL();
     drawQR($("qrBig"), 720, url);
     drawQR($("qrMini"), 240, url);
-    $("lobbyJoinUrl").textContent = joinCode ? "venueplay.com.au/play"
-                                  : (VENUE_SLUG ? "Waiting for the host\u2026" : "Host, scan to set up this screen");
+    /* The code shown is now the venue's permanent one, which is valid whether or not a host has
+       opened a session, so the address beside it has to be there too. It used to say "Waiting for
+       the host", leaving the room looking at a code with nowhere to type it. */
+    $("lobbyJoinUrl").textContent = (joinCode || VENUE_SLUG)
+      ? "venueplay.com.au/play"
+      : "Host, scan to set up this screen";
   }
   function renderLobby(){
     $("lobbyCode").textContent = shownCode();

@@ -425,11 +425,21 @@ async function handleJoinInfo(request, env, json) {
       const live = await sbGet(env, 'vp_sessions',
         'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code&order=created_at.desc&limit=1');
       if (live.length) {
+        /* A RUNNING game only. This deliberately does NOT match the session branch above, which
+           takes the latest game of any status so that a code typed between rounds still resolves.
+           Here the code typed was the venue's PERMANENT one, which is also bingo's channel, so
+           the bar for sending a phone somewhere else has to be much higher: proof a game is
+           actually on. A session left open from a previous night otherwise sent an entire bingo
+           room into a dead trivia or musical room they could not get back out of, and minted a
+           metered player row against the stale session for every one of them. Same rule as
+           /play/live, which is the other half of this pair and always had it right. */
         const g = await sbGet(env, 'vp_games',
-          'session_id=eq.' + enc(live[0].id) + '&select=format&order=seq.desc&limit=1');
-        if (g.length) format = String(g[0].format || '');
-        // Only worth handing back when it actually differs, so bingo is untouched.
-        if (live[0].join_code && live[0].join_code !== code) roomCode = live[0].join_code;
+          'session_id=eq.' + enc(live[0].id) + '&status=eq.running&select=format&order=seq.desc&limit=1');
+        if (g.length) {
+          format = String(g[0].format || '');
+          // Only worth handing back when it actually differs, so bingo is untouched.
+          if (live[0].join_code && live[0].join_code !== code) roomCode = live[0].join_code;
+        }
       }
     }
   }
