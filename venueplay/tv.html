@@ -411,6 +411,14 @@
   function accentClass(a){ return ACCENT[a]||"ad-b"; }
   function accentHex(a){ return ACCENT_COLOR[a]||"#FF1F8E"; }
 
+  /* Does this raffle routine have anything worth putting on the wall? Covers the current
+     {label,day,time} shape and the older {tag,head,sub} one. */
+  function hasRaffle(r){
+    if(!r || typeof r!=="object") return false;
+    var k=["label","day","time","tag","head","sub"];
+    for(var i=0;i<k.length;i++){ if(String(r[k[i]]||"").trim()) return true; }
+    return false;
+  }
   function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function slideVisible(s){
     var t=todayStr();
@@ -1048,7 +1056,10 @@
           if(!rows) return;
           var c=rows&&rows[0]; if(!c) return;
           if(Array.isArray(c.slides)) ADS.slides=c.slides;
-          ADS.raffle = c.raffle || null;
+          // An empty routine is no routine. A saved-but-blank raffle object is still truthy, so
+          // without this the screen rotated a card with no words on it and the venue had no way
+          // to get rid of it. Treat "nothing filled in" as "not advertising a raffle".
+          ADS.raffle = hasRaffle(c.raffle) ? c.raffle : null;
           if(withLogo) setVenueLogo(c.logo_url || "");
           refreshAds();
         }).catch(function(){});

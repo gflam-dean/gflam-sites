@@ -600,8 +600,9 @@
     var cj=dollarsToCents("setCur");   if(cj!==undefined) body.current_jackpot_cents=cj;
     var tc=intOf("setClaim");          if(tc!==undefined) body.time_to_claim_seconds=tc;
     var ds=$("setSince").value.trim(); if(ds) body.date_started=ds;
-    var dd=$("setDay").value.trim();   if(dd) body.draw_day=dd;
-    var dt=$("setTime").value.trim();  if(dt) body.draw_time=dt;
+    /* Sent even when blank, so clearing the night actually clears it. See billing.html. */
+    body.draw_day  = $("setDay").value.trim();
+    body.draw_time = $("setTime").value.trim();
     $("saveSettingsBtn").disabled=true; $("settingsMsg").textContent="Saving…";
     apiPost("/host/members/settings", body)
       .then(function(r){

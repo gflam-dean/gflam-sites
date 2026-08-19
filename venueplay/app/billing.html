@@ -106,6 +106,13 @@
   .go{background:var(--pink);color:#fff;border:0;border-radius:11px;padding:11px 20px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s;box-shadow:0 6px 16px rgba(255,31,142,.28)}
   .go:hover{background:var(--pink-deep);box-shadow:0 8px 20px rgba(255,31,142,.34)}
   .go:disabled{opacity:.5;cursor:default;box-shadow:none}
+  /* Quiet counterpart to .go, for "take this off the screen" style actions: it has to be
+     findable without competing with Save. */
+  .offtv{background:transparent;color:var(--pink);border:1px solid rgba(255,31,142,.45);border-radius:11px;
+    padding:11px 18px;font-size:13.5px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:.15s}
+  .offtv:hover{background:rgba(255,31,142,.08);border-color:var(--pink)}
+  .offtv:disabled{opacity:.45;cursor:default}
+  .btnrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:12px}
   .addform .go{flex:0 0 auto}
   .flabel{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:600}
   .ffield{display:flex;flex-direction:column}
@@ -267,7 +274,11 @@
         <div class="mdf"><label class="flabel" for="rf-day">Draw day</label><select id="rf-day"><option value="">Pick a day</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
         <div class="mdf"><label class="flabel" for="rf-time">Draw time</label><input type="text" id="rf-time" placeholder="e.g. 6:30pm"></div>
       </div>
-      <button class="go" id="rfSave" style="margin-top:12px">Save routine</button>
+      <div class="btnrow">
+        <button class="go" id="rfSave">Save routine</button>
+        <button class="offtv" id="rfClear" type="button">Take off the TV</button>
+      </div>
+      <p class="snote" style="margin-top:8px">Taking it off the TV clears the routine above, so the raffle stops appearing between games. Your prize list below is kept.</p>
     </div>
     <div class="scard">
       <div class="scardhead">Your usual prizes</div>
@@ -306,7 +317,11 @@
         <div class="mdf"><label class="flabel" for="md-curjp">Current jackpot ($)</label><input type="number" id="md-curjp" min="0" step="1" inputmode="numeric"></div>
       </div>
       <p class="snote" style="margin:8px 0 0">The draw day comes from your start date, and the current jackpot is worked out from the start date, starting jackpot and weekly increase. You can still adjust the jackpot if you need to.</p>
-      <button class="go" id="mdSave" style="margin-top:12px">Save draw</button>
+      <div class="btnrow">
+        <button class="go" id="mdSave">Save draw</button>
+        <button class="offtv" id="mdOffTv" type="button">Take off the TV</button>
+      </div>
+      <p class="snote" style="margin-top:8px">Taking it off the TV clears the draw day and time, so it stops appearing between games. The draw, its jackpot and your members list are all kept, so putting a night back on brings it straight back.</p>
     </div>
     <div class="scard">
       <div class="scardhead">Your members list</div>
@@ -1012,8 +1027,11 @@
     var sj=toCents($("md-startjp").value); if(sj!==undefined) body.starting_amount_cents=sj;
     var ic=toCents($("md-inc").value);     if(ic!==undefined) body.increment_cents=ic;
     var cj=toCents($("md-curjp").value);   if(cj!==undefined) body.current_jackpot_cents=cj;
-    var dd=$("md-day").value.trim();  if(dd) body.draw_day=dd;
-    var dt=$("md-time").value.trim(); if(dt) body.draw_time=dt;
+    // Always send the day and time, even when they are empty. Sending them only when filled
+    // meant a venue could set a draw night but never unset one, so the TV kept advertising a
+    // draw that was not running. An empty string is a real instruction: take it off the board.
+    body.draw_day  = $("md-day").value.trim();
+    body.draw_time = $("md-time").value.trim();
     var tc=parseInt($("md-claim").value,10); if(!isNaN(tc)) body.time_to_claim_seconds=tc;
     var ds=$("md-start").value.trim(); if(ds) body.date_started=ds;
     var btn=$("mdSave"); btn.disabled=true; btn.textContent="Saving…";
@@ -1174,6 +1192,34 @@
       showMsg("Raffle routine saved.", true);
     });
   }
+  /* "Take off the TV": stop advertising the raffle without touching the prize list. Sending an
+     empty routine stores null, and the screen drops the card on its next refresh. */
+  function clearRaffleRoutine(){
+    if (!rfCurrent){ showMsg("Pick a venue first."); return; }
+    if (!confirm("Take the raffle off the TV?\n\nIt stops showing between games. Your prize list is kept, and you can put it back any time.")) return;
+    var btn=$("rfClear"); btn.disabled=true; btn.textContent="Removing…";
+    api("/account/screen-save", { venue_id:rfCurrent, raffle:{ label:"", day:"", time:"" } }).then(function(r){
+      btn.disabled=false; btn.textContent="Take off the TV";
+      if (r.error){ showMsg(r.error); return; }
+      $("rf-label").value=""; $("rf-day").value=""; $("rf-time").value="";
+      showMsg("Raffle taken off the TV.", true);
+    });
+  }
+  /* Same idea for a members draw, except the draw itself is valuable: the jackpot and the
+     members list stay exactly as they are, and only the advertised night and time are cleared. */
+  function membersDrawOffTv(){
+    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    if (!mdDraw){ showMsg("Save the draw first."); return; }
+    if (!confirm("Take this members draw off the TV?\n\nIt stops showing between games. The draw, its jackpot and your members list are all kept.")) return;
+    var btn=$("mdOffTv"); btn.disabled=true; btn.textContent="Removing…";
+    gameApi("/host/members/settings", { draw_id: mdDraw.id, name: (mdDraw.name || $("md-name").value.trim() || "Members draw"), draw_day:"", draw_time:"" }).then(function(r){
+      btn.disabled=false; btn.textContent="Take off the TV";
+      if (r.error){ showMsg(r.error); return; }
+      mdDraw = r.draw || mdDraw;
+      $("md-day").value=""; $("md-time").value="";
+      showMsg("Members draw taken off the TV.", true);
+    });
+  }
   function addRafflePrize(){
     if (!rfCurrent){ showMsg("Pick a venue first."); return; }
     var label = $("rf-newprize").value.trim();
@@ -1194,6 +1240,7 @@
   }
   function initRaffles(){
     $("rfSave").addEventListener("click", saveRaffleRoutine);
+    $("rfClear").addEventListener("click", clearRaffleRoutine);
     $("rfAddPrize").addEventListener("click", addRafflePrize);
     $("rfPrizes").addEventListener("click", function(e){ var b=e.target.closest(".rfx"); if (b) removeRafflePrize(b.getAttribute("data-id")); });
     api("/account/summary", {}).then(function(d){
@@ -1218,6 +1265,7 @@
   }
   function initMembersDraws(){
     $("mdSave").addEventListener("click", saveMembersDraw);
+    $("mdOffTv").addEventListener("click", membersDrawOffTv);
     $("mdImport").addEventListener("click", importMembers);
     ["md-start","md-startjp","md-inc"].forEach(function(id){ $(id).addEventListener("input", mdRecalc); $(id).addEventListener("change", mdRecalc); });
     $("md-csvbtn").addEventListener("click", function(){ $("md-csv").click(); });

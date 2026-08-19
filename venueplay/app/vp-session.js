@@ -256,10 +256,23 @@
 
   function listVenues() {
     // RLS scopes this: admins see all, staff see only their own venues.
+    //
+    // NEVER name a column here that has not been migrated into the live database. PostgREST
+    // rejects the WHOLE select with a 400 if one column is missing, so a single un-migrated
+    // name empties the HQ venue list and the console's venue picker at the same time. That is
+    // exactly what entity_type/paid_entry_enabled did: the code shipped ahead of migration 44.
+    // Anything new goes in a separate, optional read (see the logo_url pattern in tv.html),
+    // not on this line.
     return getClient().from("vp_venues")
-      .select("id,name,slug,timezone,status,suspended_reason,founding_id,group_id,included_players,max_players,logo_url,created_at,postcode,au_state,entity_type,paid_entry_enabled")
+      .select("id,name,slug,timezone,status,suspended_reason,founding_id,group_id,included_players,max_players,logo_url,created_at,postcode,au_state")
       .order("created_at", { ascending: false })
-      .then(function (r) { return (r && r.data) || []; });
+      .then(function (r) {
+        // And do not swallow the failure. Returning [] on an error is indistinguishable from
+        // "this venue has no venues", so a broken query looked like an empty account for
+        // however long it took someone to notice. Let the caller show the real reason.
+        if (r && r.error) throw r.error;
+        return (r && r.data) || [];
+      });
   }
 
   function saveSettings(id, patch) {
