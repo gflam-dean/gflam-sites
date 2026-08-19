@@ -898,7 +898,18 @@ async function vpaHandleVenue(request, env, json) {
 
   const slug = await vpaUniqueSlug(env, slugIn, name);
   let foundingId = null;
+  /* The postcode is what sets au_state, and au_state is what decides which state's gaming rules
+     a venue is shown and whether the paper-ticket rule applies to it. HQ's Add venue form now
+     REQUIRES a postcode and sends it, but this row never read it, so every hand-onboarded venue
+     had a null state and the whole compliance feature was inert for exactly those venues. The
+     self-serve path (vpaProvisionOneVenue) has always done this correctly; this is it catching up. */
+  const venuePostcode = String((b.postcode || '')).replace(/\D/g, '').slice(0, 4);
   const venueRow = { name: name, slug: slug, timezone: timezone };
+  if (venuePostcode) {
+    venueRow.postcode = venuePostcode;
+    const st = (typeof vpaStateFromPostcode === 'function') ? vpaStateFromPostcode(venuePostcode) : null;
+    if (st) venueRow.au_state = st;
+  }
 
   if (billing.type === 'group') {
     const groupId = billing.group_id;
@@ -1355,6 +1366,12 @@ async function vpaHandleVenueGaming(request, env, json) {
     }
     patch.paid_entry_enabled = on;
   }
+  /* Clearing the entity type has to take paid entry with it. Otherwise: set Club, switch paid
+     entry ON, set back to "Not asked yet", and the venue is left paid-entry-enabled with an
+     unknown type while HQ's button is disabled, so nothing can turn it off again. */
+  if (patch.entity_type === null && patch.paid_entry_enabled !== false) {
+    patch.paid_entry_enabled = false;
+  }
   if (!Object.keys(patch).length) return json({ error: 'Nothing to change.' }, 400);
 
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + encodeURIComponent(venueId), {
@@ -1366,7 +1383,7 @@ async function vpaHandleVenueGaming(request, env, json) {
   const saved = (await res.json())[0] || {};
 
   await vpaInsert(env, 'vp_admin_audit', {
-    actor_admin: actor.id || null, actor_label: actor.label || 'admin',
+    actor_admin: actor.actorId || null, actor_label: actor.label || 'admin',
     action: 'venue_gaming_updated', target: 'venue:' + venueId,
     detail: { name: prior.name, from: { entity_type: prior.entity_type, paid_entry_enabled: prior.paid_entry_enabled }, to: patch },
   }, false).catch(function () {});

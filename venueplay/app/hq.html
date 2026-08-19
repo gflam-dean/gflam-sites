@@ -234,7 +234,7 @@
     <div class="panel" style="margin-bottom:12px">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="mini" id="reloadScreens">Reload every venue screen</button>
-        <span class="note" style="flex:1;min-width:220px">Pushes a refresh to every TV so a new version lands now instead of within four hours. Venues with a game on air are skipped: a reload mid-song leaves a musical night silent until the next track.</span>
+        <span class="note" style="flex:1;min-width:220px">Pushes a refresh to every TV so a new version lands now instead of within four hours. Venues running trivia, musical or a raffle are skipped, because a reload mid-song leaves a musical night silent until the next track. <b>Bingo and members draws cannot be detected</b>, since neither opens a session, so avoid this during a bingo night or use the Reload TV button on each quiet venue instead.</span>
       </div>
       <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
     </div>
@@ -487,7 +487,11 @@
 
   function loadAll(){
     var c=VP.getClient();
-    Promise.all([
+    /* allSettled, not all. listVenues now throws on error instead of quietly returning [], which
+       is right, but Promise.all fails fast: one bad query discarded the other nine results and
+       skipped every render, so a broken venue query blanked billing, groups, usage, team and
+       audit as well. Each pane should fail on its own. */
+    Promise.allSettled([
       VP.listVenues(),
       c.from("vp_venue_groups").select("*").order("name"),
       c.from("vp_discounts").select("*").order("created_at",{ascending:false}),
@@ -497,7 +501,13 @@
       c.from("vp_sessions").select("id,venue_id,status,opened_at,started_at").in("status",["lobby","running","paused"]),
       c.rpc("venueplay_spots_taken"),
       c.from("vp_games").select("session_id,format,started_at,status").eq("status","running")
-    ]).then(function(r){
+    ]).then(function(settled){
+      var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
+      var venuesFailed = settled[0].status !== "fulfilled";
+      if(venuesFailed){
+        var why=(settled[0].reason && (settled[0].reason.message||settled[0].reason))||"unknown error";
+        $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(why)+'</td></tr>';
+      }
       S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
@@ -780,7 +790,10 @@
     codes.forEach(function(code){
       var ch=c.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
       var dropped=false;
-      function drop(){ if(dropped) return; dropped=true; try{ ch.unsubscribe(); }catch(e){} }
+      /* removeChannel, not unsubscribe: in supabase-js v2 unsubscribe leaves the channel
+         registered on the client, so every press of the master button left 5 per venue attached
+         for the life of the page and walked towards the ~100 channel ceiling. */
+      function drop(){ if(dropped) return; dropped=true; try{ VP.getClient().removeChannel(ch); }catch(e){ try{ ch.unsubscribe(); }catch(_){} } }
       ch.subscribe(function(st){
         if(st!=="SUBSCRIBED") return;
         try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_reload" } }); }catch(e){}
@@ -822,6 +835,18 @@
   function reloadAllScreens(){
     if(!canBilling()) return;
     var out=$("reloadScreensOut");
+    /* Refresh liveness FIRST. S.live is built once when HQ loads and never again, so an admin
+       tab left open since the morning would treat every venue that started a game since as quiet
+       and reload it mid-game. */
+    out.textContent="Checking which venues are busy…";
+    VP.getClient().from("vp_sessions").select("venue_id,status").in("status",["lobby","running","paused"])
+      .then(function(r){
+        S.live={}; ((r&&r.data)||[]).forEach(function(x){ S.live[x.venue_id]=true; });
+        reloadAllScreensNow();
+      }).catch(function(){ reloadAllScreensNow(); });
+  }
+  function reloadAllScreensNow(){
+    var out=$("reloadScreensOut");
     var all=S.venues.filter(function(v){ return v.status!=="suspended" && v.slug; });
     var live=all.filter(function(v){ return S.live[v.id]; });
     var targets=all.filter(function(v){ return !S.live[v.id]; });
@@ -840,11 +865,12 @@
 
     /* In batches. One channel join per game per venue is 5x the venue count, and firing them all
        at once on a big list is how you get a browser to drop half of them silently. */
-    var BATCH=8, i=0;
+    var BATCH=4, i=0;   // 4 venues x 5 channels = 20 joins in flight, well under the client ceiling
     (function next(){
       if(i>=targets.length){
         btn.disabled=false; btn.textContent="Reload every venue screen";
-        out.textContent="Sent to "+done+" venue"+(done===1?"":"s")+"."+
+        // "Asked", not "sent": sendTvReload is fire and forget, so nothing here saw a send land.
+        out.textContent="Asked "+done+" venue"+(done===1?"":"s")+" to reload."+
           (live.length?(" Skipped "+live.length+" mid-game."):"")+
           " Screens come back on the current version within a few seconds.";
         auditBestEffort("tv_reload_all", "venues:"+done, { skipped_live: live.length });
@@ -853,7 +879,7 @@
       var slice=targets.slice(i, i+BATCH); i+=BATCH;
       slice.forEach(function(v){ sendTvReload(v.slug); done++; });
       out.textContent="Sending… "+Math.min(i,targets.length)+" of "+targets.length;
-      setTimeout(next, 900);
+      setTimeout(next, 1500);   // longer than drop()'s 1200ms, so batches do not overlap
     })();
   }
 

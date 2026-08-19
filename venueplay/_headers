@@ -18,17 +18,26 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
-# Shared scripts must revalidate like the pages that load them.
+# HOW THIS FILE ACTUALLY BEHAVES, because two wrong assumptions have now been tested against
+# the live site and both cost time:
 #
-# The /* rule above did NOT reach them: Cloudflare Pages was serving /app/vp-session.js with
-# max-age=14400 while every .html on the site correctly said no-cache. So a fix to the shared
-# session library sat invisible in browsers for four hours after it went live, which is exactly
-# how the empty HQ venue list survived its own fix. A more specific rule wins, so name them.
+# 1. Cloudflare Pages MERGES every rule that matches, it does not pick the most specific one.
+#    Proof: /app/vp-session.js came back with "no-cache, must-revalidate" three times over, once
+#    each from /*, /*.js and /app/*.js. So a later rule cannot override /*, it can only add to it.
+# 2. Because of that, the /logos/* rule below DOES NOT WORK and cannot be made to work while /*
+#    sets Cache-Control: per RFC 9111 a no-cache anywhere in the field forces revalidation, so
+#    the logos revalidate every time despite saying immutable.
+#
+# That is a deliberate trade, not an oversight. Dropping Cache-Control from /* would let the logo
+# rule win, but /* is the only pattern that reaches the extensionless routes Pages actually serves
+# (/tv, /play, /app/billing): a /*.html rule matches none of them, and a venue TV or console stuck
+# on a stale cached page is a far worse problem than a logo that revalidates. The logos are a few
+# KB and return 304s. Leave it alone unless every clean URL is enumerated here first.
+#
+# /app/*.js is gone because /*.js already covers it; it only ever added a duplicate header.
 /*.js
   Cache-Control: no-cache, must-revalidate
-/app/*.js
-  Cache-Control: no-cache, must-revalidate
 
-# Brand logos never change under a given filename, so cache them hard for a year.
+# Kept for the day /* stops setting Cache-Control. Currently merged away: see note above.
 /logos/*
   Cache-Control: public, max-age=31536000, immutable

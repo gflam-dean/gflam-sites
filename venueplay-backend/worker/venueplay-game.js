@@ -463,7 +463,14 @@ async function handleJoinInfo(request, env, json) {
        Decided HERE and not in the console, because a venue must not be able to route around it by
        opening the phone page directly. The rest of the night is unaffected: the host still calls,
        the board still shows, players just mark paper. */
-    if (vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].au_state || '').toUpperCase())) {
+    /* ONLY FOR BINGO. This used to be decided from the state alone, ignoring the format, and
+       play.html acts on it by wiping the page and printing "tonight you play on paper". So in
+       SA, the ACT and Tasmania a punter typing the code for a TRIVIA night had their phone
+       blanked and could not join anything. Trivia is a game of skill, is not gaming at all, and
+       has no ticket to print: the whole product says so. An unknown format means bingo here,
+       because broadcast bingo has no session and so never resolves one. */
+    const paperFormat = !format || format.indexOf('bingo') === 0 || format.indexOf('musical') === 0;
+    if (paperFormat && vrows && vrows[0] && PAPER_BINGO_STATES.has(String(vrows[0].au_state || '').toUpperCase())) {
       paperBingo = true;
     }
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }

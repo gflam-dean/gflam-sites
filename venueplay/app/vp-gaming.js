@@ -283,8 +283,13 @@
       out.warnings.push(st.paperBingo);
     }
 
-    // Something stopping the whole format in this state, regardless of the venue.
-    if (st.blocked) { out.blocked = st.blocked; out.ok = false; }
+    /* Something stopping the whole format in this state, regardless of the venue. This is about
+       PAID gaming approval, so it must not appear on the free-entry path: free entry is a
+       promotional game and lawful everywhere, as this function says two branches down. Showing a
+       Queensland venue a red "we cannot run bingo here" box before a free game made the product
+       look unlawful in the state the regulator's letter came from, and it was the default for
+       every venue, because paid entry ships switched off. */
+    if (st.blocked && opts.paidEntry) { out.blocked = st.blocked; out.ok = false; }
 
     var entity = (opts.entityType === 'non_profit') ? 'non_profit' : 'for_profit';
     var rule = (st[entity] || {})[kind] || { paid: 'no', notes: [] };
@@ -404,16 +409,24 @@
     });
   }
 
+  /* Mirrors the localStorage flag in memory, so a kiosk tablet that clears storage, or a private
+     window, still only sees this once. Without it a raffle with eight prizes showed eight modals,
+     which is precisely the click-through-without-reading the once-a-night rule exists to avoid. */
+  var _ackMem = {};
   function ackKey(venueId, format) {
     var d = new Date();
     var day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     return 'vpGamingAck:' + (venueId || 'x') + ':' + format + ':' + day;
   }
   function alreadyAcked(venueId, format) {
-    try { return !!localStorage.getItem(ackKey(venueId, format)); } catch (e) { return false; }
+    var k = ackKey(venueId, format);
+    if (_ackMem[k]) return true;
+    try { return !!localStorage.getItem(k); } catch (e) { return false; }
   }
   function markAcked(venueId, format) {
-    try { localStorage.setItem(ackKey(venueId, format), String(Date.now())); } catch (e) {}
+    var k = ackKey(venueId, format);
+    _ackMem[k] = 1;
+    try { localStorage.setItem(k, String(Date.now())); } catch (e) {}
   }
 
   /* Keep the record server-side too, because a localStorage flag proves nothing to anybody.
@@ -447,6 +460,10 @@
       venueName: venue.name
     });
 
+    // One at a time. Two taps on Start used to stack two identical overlays, and because the
+    // bingo button flips to "start calling numbers" as soon as the lobby opens, OK-then-OK
+    // opened the lobby and immediately started calling, so nobody got to scan the QR.
+    if (document.querySelector('.vpg-wrap')) return;
     injectCss();
     var wrap = document.createElement('div');
     wrap.className = 'vpg-wrap';
