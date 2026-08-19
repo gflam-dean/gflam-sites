@@ -1038,6 +1038,10 @@
       if(tvMode==="embed") return;   // a game is already on screen; the embedded screen handles hops between games itself
       enterEmbed(game);              // load it IN PLACE (iframe) instead of navigating, so browser fullscreen is kept
     }
+    /* Messages that mean "somebody is present" or "housekeeping", never "a game is on air".
+       t:"idle" is the clearest case of all: it is the host explicitly saying go back to ads. */
+    var NOT_ON_AIR = { tv_here:1, host_here:1, session:1, players:1, idle:1, rollcall:1,
+                       tv_audio_blocked:1, screen_refresh:1, tv_reload:1, resume:1 };
     GAMES.forEach(function(game){
       var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
       /* ANY traffic on a game channel is proof a host is running something. noteHostAlive() was
@@ -1048,12 +1052,22 @@
       c.on("broadcast",{ event:"msg" },function(e){
         var m=e.payload; if(!m) return;
         noteHostAlive();
-        /* Re-embed on ANY game traffic while we are on the ad loop, not only on t:"mode".
+        /* Re-embed on game traffic while we are on the ad loop, not only on t:"mode".
            A game announces its mode once, at the start. If the TV later fell back to ads for any
            reason (the raffle screen's own 60s timer, 90 minutes of quiet, a failed embed), every
            later drawing/winner/claimed/ball/question message was received here and thrown away,
-           so the rest of the night played out behind the venue's advertising with no way back. */
-        if(m.t==="mode" || tvMode==="ads") onGameMode(game);
+           so the rest of the night played out behind the venue's advertising with no way back.
+
+           But "any traffic" was too broad, and it put the TV into a game nobody had started.
+           Simply OPENING a host console announces itself (host_here, session, players), so the
+           big screen jumped to the trivia lobby the moment a host opened the trivia page, and
+           closing the lobby could not stick: t:"idle" sent the screen back to ads, and the next
+           housekeeping message dragged it straight into the lobby again.
+
+           So: presence and housekeeping never re-embed. Anything else still does, because the
+           point of this is to recover a night that is genuinely on air, and a denylist keeps
+           that true for message types nobody has invented yet. */
+        if(m.t==="mode" || (tvMode==="ads" && !NOT_ON_AIR[m.t])) onGameMode(game);
       });
       c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
     });
