@@ -218,6 +218,7 @@ export default {
       if (method === 'POST' && path === '/host/members/draw/resolve') return await handleMembersResolve(request, env, json);
       if (method === 'POST' && path === '/host/members/settings')     return await handleMembersSettings(request, env, json);
       if (method === 'POST' && path === '/host/gaming/declare')       return await handleGamingDeclare(request, env, json);
+      if (method === 'POST' && path === '/admin/sweep-sessions')      return await handleAdminSweep(request, env, json);
       if (method === 'POST' && path === '/host/members/roster')       return await handleMembersRoster(request, env, json);
       if (method === 'POST' && path === '/host/members/import')        return await handleMembersImport(request, env, json);
       if (method === 'POST' && path === '/host/members/remove')        return await handleMembersRemove(request, env, json);
@@ -262,42 +263,63 @@ export default {
      (3am Brisbane). With no trigger configured this simply never runs, which is today's
      behaviour, so it is safe to deploy before the trigger is set up. */
   async scheduled(event, env, ctx) {
-    ctx.waitUntil((async () => {
-      const STALE_HOURS = 12;
-      const cutoff = new Date(Date.now() - STALE_HOURS * 3600 * 1000).toISOString();
-      let rows = [];
-      try {
-        rows = await sbGet(env, 'vp_sessions',
-          'status=in.(lobby,running,paused)&opened_at=lt.' + enc(cutoff) +
-          '&select=id,venue_id,opened_at&order=opened_at.asc&limit=200');
-      } catch (e) {
-        console.log('[sweep] could not list stale sessions: ' + String((e && e.message) || e));
-        return;
-      }
-      if (!rows.length) { console.log('[sweep] nothing to close'); return; }
-      let closed = 0, failed = 0;
-      for (const s of rows) {
-        try {
-          const session = await getSession(env, s.id);
-          if (session.status === 'finished' || session.status === 'cancelled') continue;
-          // Exactly the sequence handleSessionClose uses, so a swept night is billed and
-          // recorded identically to one the host closed themselves.
-          await sbPatch(env, 'vp_games', 'session_id=eq.' + enc(session.id) + '&status=eq.running',
-            { status: 'finished', ended_at: new Date().toISOString() });
-          await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id),
-            { status: 'finished', ended_at: new Date().toISOString() });
-          try { await emitEvent(env, session, 'session.closed', {}, 'system'); } catch (e2) {}
-          try { await chargeNightOverage(env, session); } catch (e2) { /* billing never blocks close */ }
-          closed++;
-        } catch (e) {
-          failed++;
-          console.log('[sweep] session ' + s.id + ' failed: ' + String((e && e.message) || e));
-        }
-      }
-      console.log('[sweep] closed ' + closed + ', failed ' + failed + ', of ' + rows.length + ' stale sessions');
-    })());
+    ctx.waitUntil(sweepStaleSessions(env).then(function (r) {
+      console.log('[sweep] closed ' + r.closed + ', failed ' + r.failed + ', of ' + r.found + ' stale sessions');
+    }));
   },
 };
+
+/* The sweep itself, so the nightly Cron Trigger and the button in HQ run the SAME code.
+ * Closing a session is what bills an approved busy-night overage, so there must never be two
+ * versions of this: one that bills and one that does not. */
+async function sweepStaleSessions(env, staleHours) {
+  const STALE_HOURS = staleHours || 12;
+  const cutoff = new Date(Date.now() - STALE_HOURS * 3600 * 1000).toISOString();
+  let rows = [];
+  try {
+    rows = await sbGet(env, 'vp_sessions',
+      'status=in.(lobby,running,paused)&opened_at=lt.' + enc(cutoff) +
+      '&select=id,venue_id,opened_at&order=opened_at.asc&limit=200');
+  } catch (e) {
+    return { found: 0, closed: 0, failed: 0, error: String((e && e.message) || e) };
+  }
+  if (!rows.length) return { found: 0, closed: 0, failed: 0 };
+  let closed = 0, failed = 0;
+  for (const s of rows) {
+    try {
+      const session = await getSession(env, s.id);
+      if (session.status === 'finished' || session.status === 'cancelled') continue;
+      // Exactly the sequence handleSessionClose uses, so a swept night is billed and
+      // recorded identically to one the host closed themselves.
+      await sbPatch(env, 'vp_games', 'session_id=eq.' + enc(session.id) + '&status=eq.running',
+        { status: 'finished', ended_at: new Date().toISOString() });
+      await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id),
+        { status: 'finished', ended_at: new Date().toISOString() });
+      try { await emitEvent(env, session, 'session.closed', {}, 'system'); } catch (e2) {}
+      try { await chargeNightOverage(env, session); } catch (e2) { /* billing never blocks close */ }
+      closed++;
+    } catch (e) {
+      failed++;
+      console.log('[sweep] session ' + s.id + ' failed: ' + String((e && e.message) || e));
+    }
+  }
+  return { found: rows.length, closed: closed, failed: failed };
+}
+
+/* POST /admin/sweep-sessions  (Gflam owner/accounts) : close the stale ones NOW.
+ * The Cron Trigger is the real answer, but it has to be set in the Cloudflare dashboard and
+ * evidently has not been, so HQ needs a way to clear what has already piled up without waiting
+ * for a nightly run that may never come. Same function, same billing, same idempotency key. */
+async function handleAdminSweep(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const admins = await sbGet(env, 'vp_platform_admins',
+    'auth_user_id=eq.' + enc(authUserId) + '&role=in.(owner,accounts)&select=auth_user_id');
+  if (!admins.length) return json({ error: 'Not authorised.' }, 403);
+  const b = await readJson(request).catch(function () { return {}; });
+  const hours = Math.max(1, Math.min(168, parseInt(b.stale_hours, 10) || 12));
+  const r = await sweepStaleSessions(env, hours);
+  return json({ ok: true, ...r, stale_hours: hours });
+}
 
 /* =====================================================================
  * ROUTE HANDLERS

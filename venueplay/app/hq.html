@@ -411,6 +411,7 @@
   function tzShort(tz){ if(!tz) return ""; var p=tz.split("/"); return (p[1]||tz).replace(/_/g," "); }
 
   var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
+  var VP_GAME_WORKER = "https://venueplay-game.dean-tindale.workers.dev";   // sessions live here, not on the billing Worker
 
   function fmtWhen(iso){
     var d=new Date(iso); if(isNaN(d)) return esc(iso||"");
@@ -443,6 +444,20 @@
     return VP.getClient().auth.getSession().then(function(r){
       return (r && r.data && r.data.session && r.data.session.access_token) || null;
     });
+  }
+  /* Same shape as workerPost, pointed at the game Worker. Sessions, games and the stale-session
+     sweep all live there; the billing Worker has never known about them. */
+  function gameWorkerPost(path, body){
+    return authToken().then(function(tok){
+      var headers={ "Content-Type":"application/json" };
+      if(tok) headers["Authorization"]="Bearer "+tok;
+      return fetch(VP_GAME_WORKER+path, { method:"POST", headers:headers, body:JSON.stringify(body||{}) })
+        .then(function(res){
+          if(res.status===404) return { degraded:true, error:"The game Worker does not have "+path+" yet. Paste venueplay-game.js and try again." };
+          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || ("Request failed ("+res.status+")") }; })
+                           .catch(function(){ return { error:"Unexpected response from the server." }; });
+        });
+    }).catch(function(){ return { error:"Could not reach the game service. Please try again." }; });
   }
   function workerPost(path, body){
     return authToken().then(function(tok){
@@ -599,8 +614,23 @@
     }
     staleNote.innerHTML = staleN
       ? ('<b style="color:var(--roll)">'+staleN+' session'+(staleN===1?" has":"s have")+' been open more than 12 hours</b> and are not counted above. '+
-         'Almost always a host who closed the tablet without signing out. The game Worker\'s nightly sweep closes these and bills any overage correctly, but it only runs if a Cron Trigger is set on that Worker in Cloudflare (suggested <span class="mono">0 17 * * *</span>, which is 3am Brisbane).')
+         'Almost always a host who closed the tablet without signing out. '+
+         '<button class="mini" id="sweepBtn" style="margin-left:6px">Close them now</button>'+
+         '<div class="note" style="margin-top:6px">Closing bills any busy-night overage exactly as the host closing it would, same Stripe key, so nothing is charged twice. '+
+         'This is the same sweep the game Worker runs nightly, which only happens if a Cron Trigger is set on that Worker in Cloudflare (suggested <span class="mono">0 17 * * *</span>, 3am Brisbane). Set that and this stops piling up.</div>')
       : "";
+    var sb=$("sweepBtn");
+    if(sb) sb.addEventListener("click", function(){
+      if(!canBilling()){ alert("Owner or accounts only."); return; }
+      if(!confirm("Close "+staleN+" stale session"+(staleN===1?"":"s")+"?\n\nAny approved busy-night overage is billed exactly as it would have been if the host had closed the night themselves. Sessions younger than 12 hours are left alone.")) return;
+      sb.disabled=true; sb.textContent="Closing…";
+      gameWorkerPost("/admin/sweep-sessions", { stale_hours:12 }).then(function(r){
+        sb.disabled=false; sb.textContent="Close them now";
+        if(r.error){ alert(r.error); return; }
+        alert("Closed "+r.closed+" of "+r.found+" stale session"+(r.found===1?"":"s")+(r.failed?(", "+r.failed+" failed"):"")+".");
+        loadAll();
+      });
+    });
     if(!sessions.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">No venues are live right now.</div></td></tr>'; return; }
     sessions.forEach(function(s){
       var v=venueById(s.venue_id);
