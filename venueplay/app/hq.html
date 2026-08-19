@@ -716,7 +716,9 @@
       var stateTxt = v.au_state ? esc(v.au_state) : '<span style="color:var(--roll)">no postcode, so no state</span>';
       var gaming =
         '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
-          '<b>Gaming</b> &middot; state '+stateTxt+' &middot; '+
+          '<b>Gaming</b> &middot; state '+stateTxt+' '+
+          '<input type="text" class="gampc mono" data-vid="'+esc(v.id)+'" value="'+esc(v.postcode||"")+'" maxlength="4" inputmode="numeric" placeholder="Postcode" style="width:86px;display:inline-block;padding:5px 8px;font-size:12.5px"> '+
+          '<button class="mini" data-pcsave="'+esc(v.id)+'">Set</button> &middot; '+
           '<select class="gament" data-vid="'+esc(v.id)+'" style="width:auto;display:inline-block;padding:5px 26px 5px 9px;font-size:12.5px">'+
             '<option value=""'+(ent===""?" selected":"")+'>Not asked yet</option>'+
             '<option value="non_profit"'+(ent==="non_profit"?" selected":"")+'>Club (non-profit)</option>'+
@@ -757,6 +759,15 @@
     if(ar){ archiveVenue(ar.getAttribute("data-archive"), ar); return; }
     var tr=e.target.closest("button[data-tvreload]");
     if(tr){ reloadOneScreen(tr.getAttribute("data-tvreload"), tr); return; }
+    var pcb=e.target.closest("button[data-pcsave]");
+    if(pcb){
+      var vid=pcb.getAttribute("data-pcsave");
+      var inp=document.querySelector('input.gampc[data-vid="'+vid+'"]');
+      var pc=(inp&&inp.value||"").replace(/\D/g,"");
+      if(pc.length!==4){ alert("A postcode is 4 digits."); return; }
+      setVenueGaming(vid, { postcode: pc }, pcb);
+      return;
+    }
     var gs=e.target.closest("button[data-guess]");
     if(gs){ setVenueGaming(gs.getAttribute("data-guess"), { entity_type: gs.getAttribute("data-as") }, gs); return; }
     var pd=e.target.closest("button[data-paid]");
@@ -777,7 +788,13 @@
       for(var i=0;i<S.venues.length;i++){
         if(S.venues[i].id===id){
           if(patch.entity_type!==undefined) S.venues[i].entity_type=res.venue&&res.venue.entity_type||null;
-          if(patch.paid_entry_enabled!==undefined) S.venues[i].paid_entry_enabled=!!(res.venue&&res.venue.paid_entry_enabled);
+          if(patch.postcode!==undefined){
+            S.venues[i].postcode=(res.venue&&res.venue.postcode)||null;
+            S.venues[i].au_state=(res.venue&&res.venue.au_state)||null;
+          }
+          // The server can switch paid entry off on its own (a move into QLD or NT), so always
+          // take what it returned rather than only what we asked to change.
+          if(res.venue && res.venue.paid_entry_enabled!==undefined) S.venues[i].paid_entry_enabled=!!res.venue.paid_entry_enabled;
         }
       }
       renderVenues(); loadAuditOnly();

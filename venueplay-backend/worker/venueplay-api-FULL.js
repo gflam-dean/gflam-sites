@@ -1347,11 +1347,28 @@ async function vpaHandleVenueGaming(request, env, json) {
   if (!venueId) return json({ error: 'venue_id is required.' }, 400);
 
   const rows = await vpaSelect(env, 'vp_venues',
-    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,entity_type,paid_entry_enabled,au_state');
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,entity_type,paid_entry_enabled,au_state,postcode');
   const prior = rows && rows[0];
   if (!prior) return json({ error: 'That venue no longer exists.' }, 404);
 
   const patch = {};
+  /* The venue's postcode, and therefore its state. Set at creation and never editable until now,
+     so a typo at signup permanently gave a venue the wrong state and the wrong gaming rules, and
+     a venue that moved could not be corrected at all. Same class of fault as the ones the
+     pre-launch audit turned up: easy to set, impossible to unset. */
+  if (b.postcode !== undefined) {
+    const pc = String(b.postcode || '').replace(/\D/g, '').slice(0, 4);
+    if (pc && pc.length !== 4) return json({ error: 'A postcode is 4 digits.' }, 400);
+    patch.postcode = pc || null;
+    patch.au_state = pc ? vpaStateFromPostcode(pc) : null;
+    if (pc && !patch.au_state) return json({ error: 'That postcode is not one we can map to a state.' }, 400);
+    /* Moving a venue into a state where we cannot run paid games has to switch paid entry off,
+       or a NSW club relocated to Queensland keeps a capability its new state does not allow. */
+    const entAfter = (b.entity_type !== undefined) ? b.entity_type : prior.entity_type;
+    if (patch.au_state && !vpaPaidEntryDefault(entAfter, patch.au_state) && prior.paid_entry_enabled) {
+      patch.paid_entry_enabled = false;
+    }
+  }
   if (b.entity_type !== undefined) {
     if (b.entity_type !== null && b.entity_type !== 'for_profit' && b.entity_type !== 'non_profit') {
       return json({ error: "entity_type must be 'for_profit', 'non_profit' or null." }, 400);
