@@ -410,9 +410,16 @@
      connects on its own. But the console's pairing screen still says the code is on the TV, and
      a venue that lands there (or is setting up a second screen) has to be able to read it. So:
      no big panel, but always the small chip. */
+  /* Only while someone is plausibly standing in front of it setting up: 90 seconds from load,
+     then it goes and stays gone. This is the venue's advertising space, and a chip parked over
+     it all night (which is what happens when nobody ever connects a host) costs them more than
+     the code is worth. Someone pairing a screen does it within a minute of switching it on, and
+     a reload brings it straight back. */
+  var CODE_WINDOW_MS=90000, codeExpired=false;
+  setTimeout(function(){ codeExpired=true; showScreenCode(false); }, CODE_WINDOW_MS);
   function showScreenCode(on){
     var el=$("tvCode"); if(!el) return;
-    if(on && VENUE_SLUG && !hostConnected){ $("tvCodeVal").textContent=CODE; el.classList.remove("hidden"); }
+    if(on && VENUE_SLUG && !hostConnected && !codeExpired){ $("tvCodeVal").textContent=CODE; el.classList.remove("hidden"); }
     else el.classList.add("hidden");
   }
   function showPairPanel(){
