@@ -85,6 +85,18 @@ def page_all(path, page=1000):
             return out
         start += page
 
+# ---------------------------------------------------------------- is the key even here?
+# Printed FIRST, because the usual reason this stops early is an export that was typed in a
+# different Terminal window. export only lasts for the window you typed it in.
+HAVE_KEY = bool(KEY) and len(KEY) > 40
+print("Service key: %s" % ("found" if HAVE_KEY else "NOT SET in this Terminal window"))
+if not HAVE_KEY and (APPLY or STATUS):
+    sys.exit(
+        "\nThis needs the key. In THIS window, run:\n"
+        "    export SUPABASE_SERVICE_KEY='paste-the-service-role-key-here'\n"
+        "then run this again. The key is in Supabase under Project Settings, API,\n"
+        "service_role. It only lasts for this window, so a new tab needs it again.\n")
+
 # ---------------------------------------------------------------- the library
 lib = json.load(open(LIB, encoding="utf-8"))
 qs = lib.get("questions", lib if isinstance(lib, list) else [])
@@ -107,8 +119,7 @@ if collide:
     cc_keys -= collide
 
 if STATUS:
-    if not KEY or len(KEY) < 40:
-        sys.exit("--status needs SUPABASE_SERVICE_KEY set, so it can read the live bank.")
+    print("\nReading the live bank (about a minute, it pages through ~40,000 rows)...")
     live = page_all("vp_questions?select=id,question")
     live_keys = [norm(r.get("question")) for r in live]
     still = sum(1 for k in live_keys if k in cc_keys)
@@ -128,8 +139,8 @@ if STATUS:
         print("\nNot finished. Re-run with --apply.")
     sys.exit(0)
 
-if not KEY or len(KEY) < 40:
-    print("\nDRY RUN (no SUPABASE_SERVICE_KEY set). Nothing was changed, locally or live.")
+if not HAVE_KEY:
+    print("\nDRY RUN (no key in this window). Nothing was changed, locally or live.")
     print("Set the key and re-run with --apply to do it for real.")
     sys.exit(0)
 
