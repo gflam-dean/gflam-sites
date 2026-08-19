@@ -905,6 +905,7 @@ async function vpaHandleVenue(request, env, json) {
      self-serve path (vpaProvisionOneVenue) has always done this correctly; this is it catching up. */
   const venuePostcode = String((b.postcode || '')).replace(/\D/g, '').slice(0, 4);
   const venueRow = { name: name, slug: slug, timezone: timezone };
+  { const g = vpaGuessEntity(name); if (g) venueRow.entity_type = g; }
   if (venuePostcode) {
     venueRow.postcode = venuePostcode;
     const st = (typeof vpaStateFromPostcode === 'function') ? vpaStateFromPostcode(venuePostcode) : null;
@@ -1831,6 +1832,26 @@ function vpaTimezoneFromPostcode(pc) {
   }
 }
 
+/* Club or pub, guessed from the venue's name. The postcode gives us the state; nothing about a
+ * postcode says whether a venue is a non-profit, and that is the half every gaming category turns
+ * on. An RSL, a bowls club or a leagues club is a non-profit by construction; a Hotel or Tavern is
+ * not. Where the name carries both signals or neither we return null and ASK, because a confident
+ * wrong answer here is worse than no answer.
+ *
+ * Setting this is safe on its own: it decides which rules a venue is SHOWN, not what it may do.
+ * Paid entry stays switched off until a human turns it on in HQ, which is a separate action and
+ * one this never takes. Kept in step with guessEntity() in app/hq.html.
+ */
+const VPA_CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
+const VPA_PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
+function vpaGuessEntity(name) {
+  const n = String(name || '');
+  const club = VPA_CLUBWORDS.test(n), pub = VPA_PUBWORDS.test(n);
+  if (club && !pub) return 'non_profit';
+  if (pub && !club) return 'for_profit';
+  return null;
+}
+
 async function vpaProvisionOneVenue(env, opts) {
   const foundingId = opts.foundingId, groupId = opts.groupId,
         name = opts.name, seats = opts.seats, authUserId = opts.authUserId;
@@ -1849,6 +1870,9 @@ async function vpaProvisionOneVenue(env, opts) {
       max_players: seats || null,
       postcode: opts.postcode || null,
       au_state: vpaStateFromPostcode(opts.postcode),
+      // Null when the name does not say. That venue then shows "we have not recorded what you
+      // are", and the signup email asks hello@ to set it.
+      entity_type: vpaGuessEntity(name),
       status: 'active',
       timezone: 'Australia/Brisbane',
     });
@@ -2097,16 +2121,27 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
     }
 
     /* The gaming rules turn on whether the venue is a club or a pub, and signup never asks.
-       Until someone finds out and sets it in HQ, that venue is free-entry only. Say so here,
-       while the signup is fresh and someone is about to call them anyway. */
-    const askState = state ? (' Their state is ' + state + ', so check the grid before promising paid games.') : '';
+       We guess it from the name, which is right for an RSL or a Hotel and silent for anything
+       ambiguous. When it IS silent, this email is the thing that gets it fixed: nobody is going
+       to notice a null column, but somebody reads this. */
+    const guessed = vpaGuessEntity(list.length ? list[0].name : '');
+    const stateLine = state ? (' Their state is ' + state + ', so check the grid before promising paid games.') : '';
+
+    /* Two very different messages. One is a note; the other is a job for a person. */
+    const gamingBlock = guessed
+      ? ('<p style="margin:0 0 18px;padding:12px 14px;background:#F4F0F2;border-left:3px solid #9b93a5;font-size:13.5px;color:#12101a;line-height:1.5">'
+         + 'The name reads as <b>' + (guessed === 'non_profit' ? 'a club (non-profit)' : 'a pub (for-profit)') + '</b>, so that is what we have recorded. '
+         + 'Paid entry is still switched off until someone turns it on in HQ.' + stateLine + '</p>')
+      : ('<p style="margin:0 0 18px;padding:12px 14px;background:#FBF2E0;border-left:3px solid #8A5A0B;font-size:13.5px;color:#12101a;line-height:1.5">'
+         + '<b>Needs a person: we cannot tell if this is a club or a pub.</b> The name does not say, and it decides which gaming rules they get shown '
+         + 'and whether they can ever charge for entry. Ask them on the onboarding call, then set it on their row in HQ. '
+         + 'Until then they are free-entry only, which is safe everywhere but is not the whole product.' + stateLine + '</p>');
 
     const html = '<div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:560px;margin:0 auto;padding:24px">'
       + '<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#FF1F8E;font-weight:700">New signup</p>'
       + '<h1 style="margin:0 0 18px;font-size:24px;color:#12101a">' + vpaEsc(list.length ? list[0].name : 'A new venue') + (list.length > 1 ? ' and ' + (list.length - 1) + ' more' : '') + '</h1>'
       + '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin-bottom:20px">' + table + '</table>'
-      + '<p style="margin:0 0 18px;padding:12px 14px;background:#FFF4F9;border-left:3px solid #FF1F8E;font-size:13.5px;color:#12101a;line-height:1.5">'
-      + '<b>Before they run a paid game:</b> we have not recorded whether this is a club or a pub, so paid entry is off and they are free-entry only.' + askState + '</p>'
+      + gamingBlock
       + '<a href="' + site + '/app/hq.html" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Open HQ</a>'
       + '</div>';
 
@@ -2117,8 +2152,10 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
         from: 'VenuePlay <hello@send.venueplay.com.au>',
         reply_to: contactEmail || 'hello@venueplay.com.au',  // reply goes straight to the venue
         to: [to],
+        // Flag the ones needing a decision in the subject, so it is actionable from the inbox list.
         subject: (isGroup ? 'New group signup: ' + list.length + ' venues, ' : 'New signup: ')
-                 + (list.length ? list[0].name : 'venue') + (state ? ' (' + state + ')' : ''),
+                 + (list.length ? list[0].name : 'venue') + (state ? ' (' + state + ')' : '')
+                 + (guessed ? '' : ' [club or pub?]'),
         html: html,
       }),
     });
