@@ -234,7 +234,7 @@
     <div class="panel" style="margin-bottom:12px">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="mini" id="reloadScreens">Reload every venue screen</button>
-        <span class="note" style="flex:1;min-width:220px">Pushes a refresh to every TV so a new version lands now instead of within four hours. Venues running trivia, musical or a raffle are skipped, because a reload mid-song leaves a musical night silent until the next track. <b>Bingo and members draws cannot be detected</b>, since neither opens a session, so avoid this during a bingo night or use the Reload TV button on each quiet venue instead.</span>
+        <span class="note" style="flex:1;min-width:220px">Pushes a refresh to every TV so a new version lands now rather than within four hours. Safe at any time: a screen showing the ads reloads straight away, and a screen mid-game holds it until that game finishes. Venues never have to do anything, and screens pick up new versions on their own within ten minutes anyway.</span>
       </div>
       <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
     </div>
@@ -787,7 +787,7 @@
   /* Send t:"tv_reload" to one venue's screens. Five channels, because the four game screens each
      sit on their own game-namespaced channel and only the bare code is bingo's. Same list
      billing.html uses to push a logo or a slide. */
-  function sendTvReload(slug){
+  function sendTvReload(slug, force){
     if(!slug) return;
     var c=VP.getClient();
     var codes=[ VP.venueCode(slug) ];
@@ -801,7 +801,7 @@
       function drop(){ if(dropped) return; dropped=true; try{ VP.getClient().removeChannel(ch); }catch(e){ try{ ch.unsubscribe(); }catch(_){} } }
       ch.subscribe(function(st){
         if(st!=="SUBSCRIBED") return;
-        try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_reload" } }); }catch(e){}
+        try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_reload", force:!!force } }); }catch(e){}
         setTimeout(drop, 1200);
       });
       setTimeout(drop, 8000);   // never leave a channel attached because a join never landed
@@ -819,7 +819,7 @@
     else msg+="\n\nIt comes back on the current version within a few seconds.";
     if(!confirm(msg)) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
-    sendTvReload(v.slug);
+    sendTvReload(v.slug, true);   // deliberate, on one screen, already warned: go now
     auditBestEffort("tv_reload", "venue:"+id, { name:v.name, live:liveNow });
     setTimeout(function(){ btn.disabled=false; btn.textContent=old; }, 2500);
   }
@@ -860,29 +860,19 @@
   function reloadAllScreens(){
     if(!canBilling()) return;
     var out=$("reloadScreensOut");
-    /* Refresh liveness FIRST. S.live is built once when HQ loads and never again, so an admin
-       tab left open since the morning would treat every venue that started a game since as quiet
-       and reload it mid-game. */
-    out.textContent="Checking which venues are busy…";
-    VP.getClient().from("vp_sessions").select("venue_id,status").in("status",["lobby","running","paused"])
-      .then(function(r){
-        S.live={}; ((r&&r.data)||[]).forEach(function(x){ S.live[x.venue_id]=true; });
-        reloadAllScreensNow();
-      }).catch(function(){ reloadAllScreensNow(); });
+    reloadAllScreensNow();
   }
+  /* No liveness guessing any more. HQ cannot see a bingo night or a members draw at all, because
+     neither opens a session, so any check here was always going to be wrong for two of the five
+     formats. The TV decides instead: it takes the reload, and if a game is on screen it holds it
+     until the ads come back. Nothing is ever interrupted, and nothing is skipped either. */
   function reloadAllScreensNow(){
     var out=$("reloadScreensOut");
-    var all=S.venues.filter(function(v){ return v.status!=="suspended" && v.slug; });
-    var live=all.filter(function(v){ return S.live[v.id]; });
-    var targets=all.filter(function(v){ return !S.live[v.id]; });
-    if(!targets.length){
-      out.textContent = live.length ? ("Nothing to do: all "+live.length+" active venue"+(live.length===1?" has":"s have")+" a game on air right now.")
-                                    : "No venues with a screen address yet.";
-      return;
-    }
+    var targets=S.venues.filter(function(v){ return v.status!=="suspended" && v.slug; });
+    var live=[];
+    if(!targets.length){ out.textContent="No venues with a screen address yet."; return; }
     if(!confirm("Reload "+targets.length+" venue screen"+(targets.length===1?"":"s")+"?"+
-                (live.length?("\n\n"+live.length+" venue"+(live.length===1?" is":"s are")+" mid-game and will be left alone."):"")+
-                "\n\nEach screen comes back on the current version within a few seconds.")) return;
+                "\n\nA screen showing the ads reloads within a few seconds. A screen mid-game holds the reload and takes it the moment that game finishes, so nothing is interrupted.")) return;
 
     var btn=$("reloadScreens"); btn.disabled=true; btn.textContent="Reloading…";
     out.textContent="Sending…";
@@ -895,10 +885,9 @@
       if(i>=targets.length){
         btn.disabled=false; btn.textContent="Reload every venue screen";
         // "Asked", not "sent": sendTvReload is fire and forget, so nothing here saw a send land.
-        out.textContent="Asked "+done+" venue"+(done===1?"":"s")+" to reload."+
-          (live.length?(" Skipped "+live.length+" mid-game."):"")+
-          " Screens come back on the current version within a few seconds.";
-        auditBestEffort("tv_reload_all", "venues:"+done, { skipped_live: live.length });
+        out.textContent="Asked "+done+" venue"+(done===1?"":"s")+" to reload. "+
+          "Idle screens come back within a few seconds; any mid-game screen takes it when its game ends.";
+        auditBestEffort("tv_reload_all", "venues:"+done, {});
         return;
       }
       var slice=targets.slice(i, i+BATCH); i+=BATCH;

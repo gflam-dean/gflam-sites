@@ -793,6 +793,9 @@
       if(/(^|\/)tv(\.html)?$/i.test(path) && tvMode==="embed") enterAds();
     });
   })();
+  /* Set when a reload arrived mid-game. Honoured the moment the ads come back up, so an update
+     always lands, just never over the top of a room that is playing. */
+  var reloadWhenIdle=false;
   function enterAds(){
     ballInFlight=false;
     tvMode="ads"; stopCelebrate(); cancelHolding(); cancelEmbedWatch(); hideGameFrame();
@@ -802,6 +805,11 @@
     if(hostConnected) hidePairPanel(); else showPairPanel();
     adBuilt=false;   // rebuild from the latest loaded slides so the ads always come back (never black)
     startAds();
+    if(reloadWhenIdle){
+      reloadWhenIdle=false;
+      // A beat, so the ad loop is genuinely up if the reload is refused by the rate limiter.
+      setTimeout(function(){ if(window.__vpTvReload) window.__vpTvReload("deferred"); }, 4000);
+    }
   }
   function enterBingo(){
     ballInFlight=false;
@@ -904,11 +912,19 @@
       return;
     }
     if(m.t==="tv_reload"){
-      // Accepted in EVERY state. This is a deliberate command we send to recover a screen we
-      // cannot reach any other way, and the states most likely to need it are exactly the ones
-      // it used to refuse: a game left on air by a host whose tablet died, or an embedded game
-      // screen that never loaded. Refusing it there meant a wall screen nobody could fix.
-      if(window.__vpTvReload) window.__vpTvReload("remote"); else location.reload();
+      /* WAIT FOR THE GAME TO FINISH.
+         An ordinary reload command is a deployment, not an emergency, so it must never interrupt
+         a room mid-game: a musical night would lose the song it is playing. But it must not be
+         refused and forgotten either, or a screen that is busy every time we push never updates.
+         So: reload now if the ads are up, otherwise remember it and go the moment the game ends.
+         HQ's master button relies on this, which is why it no longer has to guess which venues
+         are busy, and why it can no longer get bingo or a members draw wrong: those open no
+         session, so they were invisible to HQ but are perfectly visible from here.
+         force:true still reloads instantly. That is the per-venue button in HQ, which is a
+         deliberate act on one screen and warns before it sends. */
+      if(m.force){ if(window.__vpTvReload) window.__vpTvReload("remote-forced"); else location.reload(); return; }
+      if(tvMode==="ads"){ if(window.__vpTvReload) window.__vpTvReload("remote"); else location.reload(); return; }
+      reloadWhenIdle=true;
       return;
     }
     // any host broadcast means a host is connected this session: hide the pair QR
