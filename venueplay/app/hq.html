@@ -231,6 +231,13 @@
     </div>
 
     <div class="lblk" id="venuesLbl">All venues</div>
+    <div class="panel" style="margin-bottom:12px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="mini" id="reloadScreens">Reload every venue screen</button>
+        <span class="note" style="flex:1;min-width:220px">Pushes a refresh to every TV so a new version lands now instead of within four hours. Venues with a game on air are skipped: a reload mid-song leaves a musical night silent until the next track.</span>
+      </div>
+      <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
+    </div>
     <div class="panel"><div class="tscroll"><table>
       <thead><tr><th>Venue</th><th>Location</th><th>Billing</th><th>Status</th><th></th></tr></thead>
       <tbody id="venueRows"></tbody>
@@ -722,6 +729,7 @@
       b.appendChild(dt);
     });
   }
+  (function(){ var b=$("reloadScreens"); if(b) b.addEventListener("click", reloadAllScreens); })();
   $("venueSearch").addEventListener("input", function(){ S.vSearch=this.value.trim(); renderVenues(); });
   $("venueFilter").addEventListener("change", function(){ S.vFilter=this.value; renderVenues(); });
   $("venueRows").addEventListener("click", function(e){
@@ -756,6 +764,72 @@
       }
       renderVenues(); loadAuditOnly();
     });
+  }
+
+  /* ---- RELOAD EVERY VENUE SCREEN ----
+     A venue TV is switched on and never touched again, so a fix reaches it only when its own
+     idle reload comes round. This is the push. The TV accepts t:"tv_reload" in every state and
+     rate-limits itself to one reload every 3 minutes, so pressing this twice is harmless.
+
+     LIVE VENUES ARE SKIPPED. The reload does recover: the screen re-announces itself and the
+     host replays session, mode and current state. But musical bingo does not restart the song
+     it is playing, so a room mid-track goes quiet until the next one. Not worth doing to a
+     paying venue on a Friday night to save a few hours. Hold the button's meaning: quiet
+     screens now, busy ones when they are quiet.
+
+     Five channels per venue, because the four game screens each sit on their own
+     game-namespaced channel and only the bare code is bingo's. Same list billing.html uses. */
+  function reloadAllScreens(){
+    if(!canBilling()) return;
+    var out=$("reloadScreensOut");
+    var all=S.venues.filter(function(v){ return v.status!=="suspended" && v.slug; });
+    var live=all.filter(function(v){ return S.live[v.id]; });
+    var targets=all.filter(function(v){ return !S.live[v.id]; });
+    if(!targets.length){
+      out.textContent = live.length ? ("Nothing to do: all "+live.length+" active venue"+(live.length===1?" has":"s have")+" a game on air right now.")
+                                    : "No venues with a screen address yet.";
+      return;
+    }
+    if(!confirm("Reload "+targets.length+" venue screen"+(targets.length===1?"":"s")+"?"+
+                (live.length?("\n\n"+live.length+" venue"+(live.length===1?" is":"s are")+" mid-game and will be left alone."):"")+
+                "\n\nEach screen comes back on the current version within a few seconds.")) return;
+
+    var btn=$("reloadScreens"); btn.disabled=true; btn.textContent="Reloading…";
+    out.textContent="Sending…";
+    var c=VP.getClient(), sent=0, done=0;
+
+    /* In batches. One channel join per game per venue is 5x the venue count, and firing them all
+       at once on a big list is how you get a browser to drop half of them silently. */
+    var BATCH=8, i=0;
+    (function next(){
+      if(i>=targets.length){
+        btn.disabled=false; btn.textContent="Reload every venue screen";
+        out.textContent="Sent to "+done+" venue"+(done===1?"":"s")+"."+
+          (live.length?(" Skipped "+live.length+" mid-game."):"")+
+          " Screens come back on the current version within a few seconds.";
+        auditBestEffort("tv_reload_all", "venues:"+done, { skipped_live: live.length });
+        return;
+      }
+      var slice=targets.slice(i, i+BATCH); i+=BATCH;
+      slice.forEach(function(v){
+        var codes=[ VP.venueCode(v.slug) ];
+        ["trivia","musical","raffle","members"].forEach(function(g){ codes.push(VP.venueCode(g+"-"+v.slug)); });
+        codes.forEach(function(code){
+          var ch=c.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
+          var dropped=false;
+          function drop(){ if(dropped) return; dropped=true; try{ ch.unsubscribe(); }catch(e){} }
+          ch.subscribe(function(st){
+            if(st!=="SUBSCRIBED") return;
+            try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_reload" } }); sent++; }catch(e){}
+            setTimeout(drop, 1200);
+          });
+          setTimeout(drop, 8000);   // never leave a channel attached because a join never landed
+        });
+        done++;
+      });
+      out.textContent="Sending… "+Math.min(i,targets.length)+" of "+targets.length;
+      setTimeout(next, 900);
+    })();
   }
 
   /* ---- VIEW AS (impersonation) ---- */
