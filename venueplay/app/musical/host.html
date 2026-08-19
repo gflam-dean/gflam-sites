@@ -949,6 +949,7 @@
     stopAudio();
     bcast({ t:"idle" });   // screen returns to the join/lobby state
     sendState();
+    try{ send({ t:"to_ads" }); }catch(e){}   // and back to the venue's own advertising
     renderConsole();
     if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
   }
@@ -988,6 +989,7 @@
        won/lost view up. */
     bcast({ t:"idle" });
     sendState();
+    try{ send({ t:"to_ads" }); }catch(e){}   // and back to the venue's own advertising
     if(G.gameId){ apiPost("/host/game/end",{ game_id:G.gameId }).catch(function(){}); }
     renderConsole();   // back to setup for the next game
   }
@@ -1149,6 +1151,14 @@
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
   $("newGameBtn").addEventListener("click", newGame);
+  /* Musical was the only format with no pagehide handler, so closing the tab, tapping Games or
+     being signed out by the 4 hour timer left the wall sitting on the musical screen. Raffle and
+     members have done this for a while. A live game is left alone: closing the tab mid-song must
+     not wipe the round off the screen. */
+  window.addEventListener("pagehide", function(){
+    if(G.status==="running") return;
+    try{ send({ t:"to_ads" }); }catch(e){}
+  });
   $("endGameBtn").addEventListener("click", endGame);
   $("playNextBtn").addEventListener("click", playNext);
   $("playPauseBtn").addEventListener("click", togglePlayPause);

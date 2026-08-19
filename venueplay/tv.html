@@ -1042,6 +1042,17 @@
        t:"idle" is the clearest case of all: it is the host explicitly saying go back to ads. */
     var NOT_ON_AIR = { tv_here:1, host_here:1, session:1, players:1, idle:1, rollcall:1,
                        tv_audio_blocked:1, screen_refresh:1, tv_reload:1, resume:1 };
+    /* t:"state" is the awkward one: every format sends it, and it means "here is where things
+       stand", which is just as often "nothing is on" as "a game is running". Musical ends a game
+       with idle THEN state, and members does the same, so treating state as proof of life put the
+       TV straight back into a game that had just finished, over and over. Both formats already
+       say which it is, so read it: musical sends active, members sends playing. Raffle's state
+       carries neither because it only ever describes the next prize while idle. */
+    function onAir(m){
+      if(NOT_ON_AIR[m.t]) return false;
+      if(m.t==="state") return m.active===true || m.playing===true;
+      return true;
+    }
     GAMES.forEach(function(game){
       var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
       /* ANY traffic on a game channel is proof a host is running something. noteHostAlive() was
@@ -1067,7 +1078,7 @@
            So: presence and housekeeping never re-embed. Anything else still does, because the
            point of this is to recover a night that is genuinely on air, and a denylist keeps
            that true for message types nobody has invented yet. */
-        if(m.t==="mode" || (tvMode==="ads" && !NOT_ON_AIR[m.t])) onGameMode(game);
+        if(m.t==="mode" || (tvMode==="ads" && onAir(m))) onGameMode(game);
       });
       c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
     });

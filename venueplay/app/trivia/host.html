@@ -907,6 +907,14 @@
      had happened: G.status stayed "question", the countdown kept running, /host/game/end was
      never called. So it wrecked the room's night without actually ending the game.
      Now it confirms while a quiz is live, and genuinely ends the round when it is used. */
+  /* Last format without one. Closing the tab, tapping Games or being signed out by the 4 hour
+     timer left the wall on the trivia join screen until /tv gave up 90 minutes later. A live
+     quiz is left alone: closing the tab mid-question must not wipe it off the screen. */
+  window.addEventListener("pagehide", function(){
+    if(G.status==="question" || G.status==="reveal" || G.status==="ready") return;
+    try{ send({ t:"to_ads" }); }catch(e){}
+  });
+
   (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
     b.addEventListener("click", function(){
       var live = G.status==="question" || G.status==="reveal" || G.status==="ready";
