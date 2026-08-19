@@ -33,6 +33,15 @@
   .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
   .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
   .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
+  /* Screen code chip. Sits over the venue's own advertising, so it stays small and quiet:
+     it is there to be found when someone goes looking, not to be noticed all night. */
+  .tv-code{position:absolute;right:2.4cqw;bottom:2.4cqw;z-index:7;display:flex;align-items:center;gap:.7cqw;
+    background:rgba(10,10,11,.62);border:1px solid rgba(255,255,255,.14);border-radius:.9cqw;
+    padding:.7cqw 1.1cqw;backdrop-filter:blur(4px)}
+  .tv-code.hidden{display:none}
+  .tv-code .k{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.12em;font-size:clamp(8px,.95cqw,12px);color:var(--muted)}
+  .tv-code .c{font-weight:700;font-size:clamp(12px,1.6cqw,22px);color:var(--text);letter-spacing:.12em}
   .tv-status{position:absolute;top:2cqw;left:2.4cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
   .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
@@ -180,6 +189,11 @@
   <div class="winburst" id="winBurst"></div>
 
   <div class="tv-status" style="display:none"><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <!-- The screen code, small, in ads mode only, and only until a host connects. A venue-linked
+       TV never shows the big pairing panel (it does not need pairing), but the host console
+       tells people the code is "in the corner of the venue TV", and that has to be true or the
+       instruction is impossible to follow. -->
+  <div class="tv-code hidden" id="tvCode"><span class="k">Screen code</span><span class="c mono" id="tvCodeVal"></span></div>
   <div class="tv-corner" id="tvCorner">
     <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
     <span class="vn">VenuePlay</span>
@@ -392,9 +406,22 @@
   // Today's weekday in the venue's time. Computed fresh each render so an always-on TV updates at midnight.
   function todayAU(){ try{ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:VENUE_TZ}).toLowerCase(); }catch(e){ return new Date().toLocaleDateString("en-AU",{weekday:"long",timeZone:"Australia/Brisbane"}).toLowerCase(); } }
   function drawPairQR(){ drawQR($("qrPair"), pairURL, 320); }
-  function showPairPanel(){ if(VENUE_SLUG){ hidePairPanel(); return; } var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR(); }
+  /* A venue-linked screen does not need pairing: its code comes from the slug and the console
+     connects on its own. But the console's pairing screen still says the code is on the TV, and
+     a venue that lands there (or is setting up a second screen) has to be able to read it. So:
+     no big panel, but always the small chip. */
+  function showScreenCode(on){
+    var el=$("tvCode"); if(!el) return;
+    if(on && VENUE_SLUG && !hostConnected){ $("tvCodeVal").textContent=CODE; el.classList.remove("hidden"); }
+    else el.classList.add("hidden");
+  }
+  function showPairPanel(){
+    if(VENUE_SLUG){ hidePairPanel(); showScreenCode(true); return; }
+    showScreenCode(false);
+    var p=$("pairPanel"); p.classList.remove("hidden"); $("pairCode").textContent=CODE; drawPairQR();
+  }
   function hidePairPanel(){ $("pairPanel").classList.add("hidden"); }
-  function markHostConnected(){ hostConnected=true; hidePairPanel(); }
+  function markHostConnected(){ hostConnected=true; hidePairPanel(); showScreenCode(false); }
 
   // ================= ADVERTISING LOOP =================
   // No fake sample adverts: a venue only ever shows what it has actually set up (its uploaded
@@ -760,6 +787,7 @@
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
+    showScreenCode(false);
     try{ sessionStorage.setItem("vpTvHop", VENUE_SLUG); }catch(e){}   // shared with the iframe, so the game screen never bounces to /tv
     var f=document.getElementById("gameFrame");
     var url="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG);
@@ -799,6 +827,7 @@
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
+    showScreenCode(false);
     applyBingo();
   }
   // "Starting <game>..." is a HANDOVER card, never a resting state. It used to have no way out:
@@ -835,6 +864,7 @@
     hideBingoLayers();
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
+    showScreenCode(false);
     $("holdGame").textContent=gameLabel(mode);
     showBingoLayer("tvHold");
     cancelHolding();
