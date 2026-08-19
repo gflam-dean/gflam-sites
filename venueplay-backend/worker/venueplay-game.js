@@ -397,6 +397,7 @@ async function handleJoinInfo(request, env, json) {
      connected the phone to the bingo channel and sat there forever, because the only thing that
      ever hopped to another game was the /play?venue= path off a table talker. */
   let format = '';
+  let roomCode = '';   // set only when the code typed was the venue code and a session is live
   const sessions = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=id,venue_id&limit=1');
   if (sessions.length) {
     venueId = sessions[0].venue_id;
@@ -409,7 +410,27 @@ async function handleJoinInfo(request, env, json) {
     const games = await sbGet(env, 'vp_games',
       'session_id=eq.' + enc(sessions[0].id) + '&select=format&order=seq.desc&limit=1');
     if (games.length) format = String(games[0].format || '');
-  } else venueId = await venueByCode(env, code);   // broadcast bingo has no session: resolve by venue code
+  } else {
+    venueId = await venueByCode(env, code);   // broadcast bingo has no session: resolve by venue code
+    /* ONE CODE PER VENUE, whatever is on tonight.
+       The venue code is a pure hash of the slug, so it never changes and can go on a table
+       talker or be printed on the wall. Bingo needs nothing more, because host, TV and phones
+       all meet on that code. Trivia and musical open a session with a RANDOM join code, so a
+       phone arriving on the venue code used to land on the bingo channel and wait forever.
+       Resolve the venue's live session here too, and hand back its real join code so the player
+       page can move the phone to the right room. Nothing to type twice, nothing to reprint. */
+    if (venueId) {
+      const live = await sbGet(env, 'vp_sessions',
+        'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code&order=created_at.desc&limit=1');
+      if (live.length) {
+        const g = await sbGet(env, 'vp_games',
+          'session_id=eq.' + enc(live[0].id) + '&select=format&order=seq.desc&limit=1');
+        if (g.length) format = String(g[0].format || '');
+        // Only worth handing back when it actually differs, so bingo is untouched.
+        if (live[0].join_code && live[0].join_code !== code) roomCode = live[0].join_code;
+      }
+    }
+  }
   if (!venueId) return json({ collect: null, format: '' }); // unknown code; join screen falls back to name only
   const rows = await sbGet(env, 'vp_venue_settings',
     'venue_id=eq.' + enc(venueId) + '&select=collect_first_name,collect_last_name,collect_postcode,collect_email,collect_mobile,collect_marketing_optin&limit=1');
@@ -434,7 +455,7 @@ async function handleJoinInfo(request, env, json) {
       paperBingo = true;
     }
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
-  return json({ format: format, venue_name: venueName, paper_bingo: paperBingo, collect: {
+  return json({ format: format, room_code: roomCode, venue_name: venueName, paper_bingo: paperBingo, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,

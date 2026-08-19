@@ -1028,7 +1028,10 @@
           if(r && r.paper_bingo){ showPaperBingo(); return; }
           if(P.joined || P.active) return;
           var to=playerAppFor(r && r.format);
-          if(to){ window.location.replace(to+"?room="+encodeURIComponent(code)); return; }
+          /* room_code is set when the code typed was the VENUE code (the permanent one on the
+             wall) and a trivia or musical session is live under it. Hop to THAT room, not the
+             code they typed, or the phone lands in the right app on the wrong channel. */
+          if(to){ window.location.replace(to+"?room="+encodeURIComponent((r && r.room_code) || code)); return; }
           if(++tries<40) setTimeout(look, 6000);       // ~4 minutes of lobby, then stop
         })
         .catch(function(){ if(++tries<40) setTimeout(look, 6000); });   // worker blip: bingo still works

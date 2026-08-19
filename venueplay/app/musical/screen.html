@@ -226,17 +226,25 @@
 
   // The QR shows the HOST pairing link until a session opens (so the host can scan to set up
   // this screen), then flips to the player join link built from the real DB join code.
+  /* ONE CODE, ALWAYS THE SAME.
+     A venue-linked screen shows the VENUE code, not the session's random join code. It is a
+     hash of the slug, so it is identical for bingo, trivia and musical, it is the same tonight
+     as next month, and it can be printed on a table talker. The Worker resolves it to whatever
+     session is live, so a phone typing it still lands in the right room. Only an unlinked screen
+     (paired by code, no venue) falls back to the session code, because it has nothing stabler. */
+  function shownCode(){ return VENUE_SLUG ? venueCode(VENUE_SLUG) : (joinCode || "------"); }
+  function shownJoinURL(){ return VENUE_SLUG ? (ORIGIN_PLAY() + "?venue=" + encodeURIComponent(VENUE_SLUG)) : (joinCode ? playURLFor(joinCode) : hostURL); }
   function drawLobbyQR(){
     // A linked screen must never put a host setup QR on the big screen: the room would scan it.
     // A linked screen with no code yet shows the PLAYER link, never a host setup QR and never a
     // blank white square: .qrbig paints a lit white panel, so drawing nothing left a glowing slab
     // on the pub wall for the whole lobby.
-    var url = joinCode ? playURLFor(joinCode) : (VENUE_SLUG ? (ORIGIN_PLAY()) : hostURL);
+    var url = shownJoinURL();
     drawQR($("qrBig"), 720, url);
     drawQR($("qrMini"), 220, url);
   }
   function renderLobby(){
-    $("lobbyCode").textContent = joinCode || "------";
+    $("lobbyCode").textContent = shownCode();
     /* The host line is SETUP INSTRUCTION, and it was being shown to the pub. A screen that is
        linked to a venue never needs pairing, and once a join code exists the host is plainly
        already connected, so from either point on the only thing this screen should offer the
@@ -245,7 +253,7 @@
     var hl=document.querySelector(".hostline");
     if(hl) hl.classList.toggle("hidden", setupDone);
     $("hostLineCode").textContent = CODE;
-    $("tvJoinCode").textContent = joinCode || "------";
+    $("tvJoinCode").textContent = shownCode();
     $("lobbyPlaying").textContent=state.playerCount;
     if(!state.hostSeen) $("lobbySub").innerHTML="Waiting for the host to connect&hellip;";
     else if(!joinCode) $("lobbySub").innerHTML="Host is connected, setting up the game&hellip;";
