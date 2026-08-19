@@ -502,15 +502,25 @@
         $("startBtn").addEventListener("click", function(){ VPGaming.gateFor("bingo90", start); });
      If anything at all goes wrong finding the venue, the game starts. A compliance prompt that
      can stop a night is a worse problem than the one it solves. */
-  function gateFor(format, onProceed) {
+  function gateFor(format, onProceed, opts) {
     var proceed = typeof onProceed === 'function' ? onProceed : function () {};
+    opts = opts || {};
     try {
       if (!isGaming(format)) { proceed(); return; }
       var ctx = (root.VP && VP.getContext && VP.getContext()) || null;
       var venue = ctx && ctx.venue;
       if (!venue) { proceed(); return; }
+
+      /* onlyIfPaid: skip the popup entirely while this venue is free-entry only.
+         Musical bingo uses this. A free game is a promotional game and lawful in every
+         state whatever the prize is worth, so the prompt would be friction with nothing
+         behind it. The moment a venue is unlocked to charge, it is bingo like any other
+         and the popup comes back on its own: regulators draw the line at whether people
+         pay to play, never at how big the prize is. */
+      if (opts.onlyIfPaid && venue.paid_entry_enabled !== true) { proceed(); return; }
+
       if (alreadyAcked(venue.id, format)) { proceed(); return; }
-      gate({ format: format, venue: venue, paidEntry: false }, proceed);
+      gate({ format: format, venue: venue, paidEntry: venue.paid_entry_enabled === true }, proceed);
     } catch (e) { proceed(); }
   }
 

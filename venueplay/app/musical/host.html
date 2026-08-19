@@ -1141,9 +1141,11 @@
   $("playlistSel").addEventListener("change", function(){ G.playlistId=this.value; });
   if($("plSearch")) $("plSearch").addEventListener("input", function(){ renderPlCards(this.value); });
   // auto-daub is a per-player choice (Easy mode on the phone), not a host setting
-  /* State gaming rules, once a night. Musical bingo is bingo as far as every regulator is concerned. */
+  /* Musical bingo is bingo to every regulator, but the line they draw is paid entry, not prize
+     size. While this venue is free-entry only there is nothing to warn about, so no popup. It
+     switches itself back on if the venue is ever unlocked to charge. */
   $("startBtn").addEventListener("click", function(){
-    VPGaming.gateFor("musical", function(){ if(G.status==="lobby") startGame(); else openLobby(); });
+    VPGaming.gateFor("musical", function(){ if(G.status==="lobby") startGame(); else openLobby(); }, { onlyIfPaid:true });
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
   $("newGameBtn").addEventListener("click", newGame);
