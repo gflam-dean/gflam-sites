@@ -305,6 +305,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/app/vp-sign.js"></script>
 <script>
 (function(){
   "use strict";
@@ -372,6 +373,11 @@
   // If this screen has a venue link, check it maps to a real venue. If not, the venue almost
   // certainly mistyped the address, so we say so rather than sit forever on a dead channel.
   var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  // Broadcast-message signing (migrations 38/49): fetch this venue's PUBLIC key and verify every
+  // host message. vpGate drops forged messages once the venue is in enforce mode; with the script
+  // absent or enforce off it simply delivers, so the TV behaves exactly as before.
+  if(window.VPSign && VENUE_SLUG){ VPSign.initReceiver(VP_GAME_API, VENUE_SLUG); }
+  function vpGate(payload, cb){ if(window.VPSign){ VPSign.gate(payload, cb); } else { cb(payload); } }
   function showBadVenue(){ var el=$("badVenue"); if(el) el.classList.remove("hidden"); }
   function validateVenue(){
     if(!VENUE_SLUG) return;   // no venue linked: the pair panel already prompts them
@@ -921,7 +927,7 @@
     try{
       client=supabase.createClient(SUPA_URL, SUPA_ANON);
       ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
-      ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+      ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, onMsg); });
       ch.subscribe(function(status){
         if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
         else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
@@ -1097,8 +1103,8 @@
          or a members-draw board put up at 5pm for a 7:30 draw, hit the host-silence timer and
          was torn down to the ad loop mid-service. It could not come back on its own either:
          re-embedding needs a fresh t:"mode", which the destroyed iframe never asks for. */
-      c.on("broadcast",{ event:"msg" },function(e){
-        var m=e.payload; if(!m) return;
+      c.on("broadcast",{ event:"msg" },function(e){ vpGate(e.payload, function(m){
+        if(!m) return;
         noteHostAlive();
         /* Re-embed on game traffic while we are on the ad loop, not only on t:"mode".
            A game announces its mode once, at the start. If the TV later fell back to ads for any
@@ -1116,7 +1122,7 @@
            point of this is to recover a night that is genuinely on air, and a denylist keeps
            that true for message types nobody has invented yet. */
         if(m.t==="mode" || (tvMode==="ads" && onAir(m))) onGameMode(game);
-      });
+      }); });
       c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
     });
   })();

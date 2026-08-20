@@ -255,6 +255,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
 <script src="../vp-gaming.js"></script>
+<script src="/app/vp-sign.js"></script>
 <script>
 (function(){
   "use strict";
@@ -314,8 +315,11 @@
     }).then(readApi); }
 
   // ---- pairing channel (host <-> venue screen), same convention as the raffle TV ----
+  // Sign every host broadcast (migrations 38/49) so a forged draw/winner is dropped in enforce mode.
+  function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
   var ch=null, subscribed=false, sendQueue=[];
-  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
 
   // ---- authoritative-ish console state (the Worker is the real authority) ----
@@ -745,6 +749,8 @@
       }).then(function(){
         renderNameSeg(); applyRoleGates();
         var tv=tvFromUrl();
+        var _slug=(ctx.venue && ctx.venue.slug) || "";
+        if(_slug && window.VPSign){ VPSign.initHost(VP_GAME_API, _slug, vpHostToken); }   // this venue's signing key
         if(tv){ connect(tv); }
         else if(ctx.venue && ctx.venue.slug && window.VP && VP.venueCode){ connect(VP.venueCode("members-"+ctx.venue.slug)); }
         else { $("connectView").classList.remove("hidden"); }

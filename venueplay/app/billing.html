@@ -143,6 +143,8 @@
   .hostrow .hn b{display:block;font-size:15px;color:#fff}
   .hostrow .hn small{color:var(--muted);font-size:12.5px}
   .hostrow .rm{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+  .edv{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+  .edv:hover{border-color:var(--pink);color:#fff}
   .hostrow .own{color:var(--faint);font-size:12px;font-family:'JetBrains Mono',ui-monospace,monospace}
 </style>
 </head>
@@ -702,6 +704,37 @@
       buildHostVenuePicker(acctVenues);
     });
   }
+  /* Inline "which venues" editor shared by hosts and managers, so a person's venues can be changed
+     after they are added instead of remove-and-re-add. Pre-ticks their current venues; Save reconciles
+     the set through /account/staff-set-venues (adds the newly ticked, removes the un-ticked). */
+  function venueEditor(staff, venues, reloadFn){
+    var panel = document.createElement("div");
+    panel.style.cssText = "display:none;flex-basis:100%;width:100%;margin-top:10px;border-top:1px solid var(--line);padding-top:10px";
+    var checks = document.createElement("div"); checks.className = "hostvenues";
+    var have = {}; (staff.venue_ids||[]).forEach(function(id){ have[id]=true; });
+    venues.forEach(function(v){
+      var l = document.createElement("label"); l.className = "hostchk";
+      l.innerHTML = '<input type="checkbox" class="ve-v" value="'+esc(v.id)+'"'+(have[v.id]?" checked":"")+'><span>'+esc(v.name)+'</span>';
+      checks.appendChild(l);
+    });
+    var actions = document.createElement("div"); actions.style.cssText = "display:flex;gap:10px;align-items:center;margin-top:8px";
+    var save = document.createElement("button"); save.className = "go"; save.textContent = "Save venues";
+    var cancel = document.createElement("button"); cancel.className = "canxlink"; cancel.type = "button"; cancel.textContent = "Cancel";
+    actions.appendChild(save); actions.appendChild(cancel);
+    panel.appendChild(checks); panel.appendChild(actions);
+    cancel.addEventListener("click", function(){ panel.style.display = "none"; });
+    save.addEventListener("click", function(){
+      var ids = []; checks.querySelectorAll(".ve-v:checked").forEach(function(c){ ids.push(c.value); });
+      if (!ids.length){ showMsg("Tick at least one venue, or use Remove to take away all access."); return; }
+      save.disabled = true; save.textContent = "Saving…";
+      api("/account/staff-set-venues", { auth_user_id: staff.auth_user_id, venue_ids: ids, all_venues: ids.length >= venues.length }).then(function(r){
+        save.disabled = false; save.textContent = "Save venues";
+        if (r.error){ showMsg(r.error); return; }
+        showMsg("Venues updated.", true); reloadFn();
+      });
+    });
+    return panel;
+  }
   function renderHosts(hosts, venues){
     var vmap = {}; venues.forEach(function(v){ vmap[v.id] = v.name; });
     var wrap = $("hosts"); wrap.innerHTML = "";
@@ -712,7 +745,12 @@
                 : (names.length ? names.join(", ") : "No venues");
       var row = document.createElement("div"); row.className = "hostrow";
       row.innerHTML = '<div class="hn"><b>' + esc(h.label || "Host") + '</b><small>' + esc(scope) + '</small></div>' +
-        (h.is_owner ? '<span class="own">Owner</span>' : '<button class="rm">Remove</button>');
+        (h.is_owner ? '<span class="own">Owner</span>' : '<button class="edv">Edit venues</button><button class="rm">Remove</button>');
+      if (!h.is_owner){
+        var ed = venueEditor(h, venues, loadHosts);
+        row.appendChild(ed);
+        row.querySelector(".edv").addEventListener("click", function(){ ed.style.display = (ed.style.display === "none" ? "block" : "none"); });
+      }
       var rm = row.querySelector(".rm");
       if (rm){
         rm.addEventListener("click", function(){
@@ -1183,9 +1221,13 @@
       if (p.draws_raffles !== false) on.push("Draws & raffles");
       if (p.players_optin !== false) on.push("Players");
       if (p.add_hosts !== false) on.push("Add hosts");
-      var row = document.createElement("div"); row.className = "venue";
+      var row = document.createElement("div"); row.className = "venue"; row.style.flexWrap = "wrap";
       row.innerHTML = '<div class="nm"><b>' + esc(m.label||"Manager") + '</b><small>' + esc(scope) + ' &middot; ' + esc(on.join(", ")||"no permissions") + '</small></div>' +
+        '<button class="edv" type="button">Edit venues</button>' +
         '<button class="canxlink" data-rmmgr="' + esc(m.auth_user_id) + '">Remove</button>';
+      var med = venueEditor(m, venues, loadManagers);
+      row.appendChild(med);
+      row.querySelector(".edv").addEventListener("click", function(){ med.style.display = (med.style.display === "none" ? "block" : "none"); });
       box.appendChild(row);
     });
     box.querySelectorAll("[data-rmmgr]").forEach(function(btn){

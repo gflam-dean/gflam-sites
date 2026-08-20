@@ -345,6 +345,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
 <script src="../vp-gaming.js"></script>
+<script src="/app/vp-sign.js"></script>
 <script>
 (function(){
   "use strict";
@@ -454,11 +455,16 @@
   //   ch  = PAIRING channel "vp-"+pairCode: host <-> venue screen (handoff + presence).
   //   gch = GAME channel "vp-"+join_code: host <-> players (their phones).
   // Every game message goes to BOTH via bcast() so the screen never switches channels.
+  // Sign every host broadcast (migrations 38/49). vpHostToken() is the Supabase access token for the
+  // staff-gated private-key fetch; signSend is order-preserving and degrades to unsigned if no key.
+  function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
   var ch=null, subscribed=false, sendQueue=[];
-  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
   var gch=null, gsub=false, gQueue=[];
-  function gsend(obj){ if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:obj }); } else { gQueue.push(obj); } }
+  function rawGsend(p){ if(gsub && gch){ gch.send({ type:"broadcast", event:"msg", payload:p }); } else { gQueue.push(p); } }
+  function gsend(obj){ if(window.VPSign){ VPSign.signSend(obj, rawGsend); } else { rawGsend(obj); } }
   function gflush(){ while(gQueue.length && gch){ gch.send({ type:"broadcast", event:"msg", payload:gQueue.shift() }); } }
   function bcast(obj){ send(obj); gsend(obj); }
   function openGameChannel(joinCode){
@@ -1220,6 +1226,7 @@
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       var slug=(ctx.venue && ctx.venue.slug) || "";
+      if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
       libReady.then(function(){                 // library must be loaded before we rebuild a game's song list
         restoreMusic().then(function(){         // recover a live game first (accidental reload), then pair the TV as normal
           if(tv){ connect(tv); }                // paired from the screen QR
