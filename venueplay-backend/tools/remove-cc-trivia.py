@@ -24,6 +24,11 @@ USAGE
     python3 remove-cc-trivia.py                    # DRY RUN: says what it would do, changes nothing
     export SUPABASE_SERVICE_KEY='...'              # keep this secret, never commit it
     python3 remove-cc-trivia.py --apply            # actually do it
+    python3 remove-cc-trivia.py --status           # read-only: how far did it get
+
+Questions that have been answered in a real game cannot be deleted, because vp_trivia_answers
+points at them. Those are PARKED instead (vp_questions.parked_at, which the game Worker already
+filters on), which takes them out of play just as effectively and leaves game history alone.
 
 ORDER MATTERS
 -------------
@@ -41,7 +46,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.join(HERE, "data", "trivia-library.json")
 APPLY = "--apply" in sys.argv
 STATUS = "--status" in sys.argv
-PURGE  = "--purge-answers" in sys.argv
 
 CC_SOURCES = {
     "Open Trivia Database (opentdb.com)",
@@ -185,7 +189,7 @@ print("\nBacked up the library to %s" % os.path.basename(backup))
 # first. What is lost is per-player per-question answer detail for questions we are retiring;
 # who won a night lives in vp_game_reports and is untouched.
 deleted = 0
-blocked = []
+parked = []
 for set_id, ids in by_set.items():
     removed_here = 0
     for i in range(0, len(ids), 100):          # chunked: a URL has a length limit
@@ -197,40 +201,29 @@ for set_id, ids in by_set.items():
         except Refused as e:
             if "23503" not in e.body:
                 sys.exit("\nSTOPPED: the database refused a DELETE.\n  %s\n" % e.body)
-            if not PURGE:
-                blocked.extend(chunk); continue
-            # Clear the answers for this chunk, then take the questions again.
-            req("DELETE", "vp_trivia_answers?question_id=in.(%s)" % ",".join(chunk),
-                headers={"Prefer": "return=minimal"})
-            try:
-                req("DELETE", "vp_questions?id=in.(%s)" % ",".join(chunk),
-                    headers={"Prefer": "return=minimal"}, soft=True)
-                deleted += len(chunk); removed_here += len(chunk)
-            except Refused as e2:
-                blocked.extend(chunk)
-                print("  still blocked after clearing answers: %s" % e2.body[:160])
+            # PARK them instead. vp_questions.parked_at already exists (migration 32) and the
+            # game Worker filters on parked_at is null both when it picks a question and when it
+            # searches the library, so a parked question is never served again. That is the same
+            # outcome as deleting it, without touching a single row of game history.
+            req("PATCH", "vp_questions?id=in.(%s)" % ",".join(chunk),
+                {"parked_at": "now()"}, headers={"Prefer": "return=minimal"})
+            parked.extend(chunk); removed_here += len(chunk)
     print("  set %s: -%d" % (set_id[:8], removed_here))
 
-if blocked:
-    print("\n%d question%s could not be removed: they have been answered in a real game."
-          % (len(blocked), "" if len(blocked) == 1 else "s"))
-    print("There is no way to retire a question without deleting it, so while these are here they")
-    print("keep being served and the attribution has to stay published.")
-    print("\nRe-run with --purge-answers to clear the answer rows for those questions and finish:")
-    print("    python3 remove-cc-trivia.py --apply --purge-answers")
-    print("\nThat deletes per-player answer detail for the questions being retired only. Who won a")
-    print("night is stored separately in vp_game_reports and is not touched.")
-    print("\nThe library file has NOT been rewritten, so nothing is out of step. Stopping here.")
-    sys.exit(1)
+if parked:
+    print("\n%d question%s had been answered in a real game, so %s parked instead of deleted."
+          % (len(parked), "" if len(parked) == 1 else "s", "it was" if len(parked) == 1 else "they were"))
+    print("Parked means never served again, and never returned by the library search either, so it")
+    print("is the same outcome as deleting. The difference is that the game history that pointed at")
+    print("them is left exactly as it was.")
 
 print("Deleted %d rows. Recounting each set..." % deleted)
-sets = req("GET", "vp_question_sets?select=id,name,question_count")
+sets = req("GET", "vp_question_sets?select=id,title,question_count")
 for s in sets:
-    rows = req("GET", "vp_questions?set_id=eq.%s&select=id" % s["id"], headers={"Prefer": "count=exact"})
     real = len(page_all("vp_questions?set_id=eq.%s&select=id" % s["id"]))
     if real != (s.get("question_count") or 0):
         req("PATCH", "vp_question_sets?id=eq.%s" % s["id"], {"question_count": real})
-    print("  %-28s %d" % ((s.get("name") or "?")[:28], real))
+    print("  %-28s %d" % ((s.get("title") or "?")[:28], real))
 
 if isinstance(lib, list):
     json.dump(keep, open(LIB, "w", encoding="utf-8"), ensure_ascii=False)
