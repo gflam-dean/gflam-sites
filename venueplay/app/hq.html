@@ -477,8 +477,15 @@
       return fetch(VP_WORKER+path, { method:"POST", headers:headers, body:JSON.stringify(body||{}) })
         .then(function(res){
           if(res.status===404) return { degraded:true, error:"Backend endpoint "+path+" is not deployed yet. Nothing was changed." };
-          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || ("Request failed ("+res.status+")") }; })
-                           .catch(function(){ return { error:"Unexpected response from the server." }; });
+          // Return the WHOLE body on a non-2xx, not just {error}: handlers rely on extra fields the
+          // Worker sends alongside an error (e.g. the discount's needs_confirm + venue_count, which
+          // drive the "apply to the whole account?" prompt). Only synthesise an error if none came.
+          return res.json().then(function(j){
+            if(res.ok) return j;
+            var out=(j && typeof j==="object") ? j : {};
+            if(!out.error) out.error="Request failed ("+res.status+")";
+            return out;
+          }).catch(function(){ return { error:"Unexpected response from the server." }; });
         })
         .catch(function(){ return { degraded:true, error:"Backend endpoint "+path+" is not reachable yet (Worker not deployed). Nothing was changed." }; });
     });
