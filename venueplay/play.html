@@ -399,6 +399,14 @@
   }
   function clearDaubs(){ try{ localStorage.removeItem(daubKey()); }catch(e){} }
   function saveName(room,name){ try{ localStorage.setItem("vp-name-"+room, name); }catch(e){} }
+  // A confirmed win survives a phone reload (#28): the "show this to the host to claim" screen was
+  // memory-only and set once by a live announcement that has already passed, so a locked/dropped tab
+  // came back with no proof. Save it, restore it on reconnect, and clear it the moment a new round
+  // starts. Two-hour expiry so last night's win never resurfaces.
+  function winKey(room){ return "vp-win-"+(room||P.room||""); }
+  function saveWin(){ try{ localStorage.setItem(winKey(), JSON.stringify({ cardNo:P.wonCardNo, prize:P.prize, shared:!!P.shared, sharedWith:P.sharedWith||[], ts:Date.now() })); }catch(e){} }
+  function loadWin(room){ try{ var raw=localStorage.getItem(winKey(room)); if(!raw) return null; var w=JSON.parse(raw); if(!w || (Date.now()-(w.ts||0))>2*60*60*1000){ clearWin(room); return null; } return w; }catch(e){ return null; } }
+  function clearWin(room){ try{ localStorage.removeItem(winKey(room)); }catch(e){} }
   // the player token IS the metered server identity: persist it so a reload reuses
   // the same vp_players row (via localStorage) instead of minting a new metered one.
 
@@ -913,7 +921,7 @@
       // stale "You won!" for the whole next game, ignoring its own new tickets, and the only way
       // out was a reload that nothing on screen suggested.
       P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0;
-      P.shared=false; P.sharedWith=[]; _celebrated=false;
+      P.shared=false; P.sharedWith=[]; _celebrated=false; clearWin(P.room);   // fresh deal = new round: drop last round's saved win
       /* Carry marks across by card number. A paid player buying a second sheet mid-round gets a
          fresh cards message, and rebuilding every ticket with an empty daub set wiped the marks
          they had made on the tickets they were ALREADY holding. Only genuinely new tickets start
@@ -941,7 +949,7 @@
       if(typeof m.prize==="string") P.prize=m.prize;
       // fresh round: the host deals new tickets (t:"cards") just before this. Reset the
       // round but keep whatever tickets we're holding.
-      P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; _celebrated=false;
+      P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; _celebrated=false; clearWin(P.room);   // new round starting
       P.shared=false; P.sharedWith=[];
       for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
       clearDaubs();   // a new game starts on a clean ticket
@@ -983,7 +991,7 @@
           : (esc(list(names))+" won "+pn+".");
         setMsg(head+" Now playing for "+(PATTERN_NAMES[P.pattern]||"the next prize")+".", me?"wait":"");
       } else {
-        if(me){ P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; route(); celebrate(); }
+        if(me){ P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; saveWin(); route(); celebrate(); }
         else { P.ended=true; route(); }
       }
     }
@@ -1006,6 +1014,10 @@
     // they land back on their card. The host re-deals it when we re-announce below.
     var savedName=loadName(room);
     if(savedName){ P.name=savedName; P.joined=true; }
+    // Restore a confirmed win so a reloaded phone can still show it to the host. Any live new-round
+    // message (cards / started) clears it below, so it never lingers into the next game.
+    var _w=loadWin(room);
+    if(_w && P.joined){ P.won=true; P.wonCardNo=_w.cardNo||0; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; route(); }
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
     // forged messages in enforce mode. No key / enforce off / script absent -> renders as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
