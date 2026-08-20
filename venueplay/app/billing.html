@@ -639,7 +639,12 @@
       if (r.error){ showMsg(r.error); return; }
       $("add-name").value=""; $("add-postcode").value=""; $("add-seats").value=""; $("addForm").classList.remove("show");
       showMsg(name + " added to your account.", true);
+      // Refresh the account summary AND the host/manager panels: their "which venues" checkbox
+      // pickers are built from their own /account/hosts + /account/managers calls, so without this
+      // a freshly added venue would not appear as a tickable option until a full page reload.
       load();
+      loadHosts();
+      loadManagers();
     });
   });
 
