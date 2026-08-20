@@ -37,6 +37,12 @@
   .jsub b{color:var(--gold)}
 
   /* idle promo */
+  /* The idle "Get your tickets" call-to-action, a touch bigger than a prize name so it reads across
+     the room, with the prizes listed under it so people can see what they are playing for. */
+  #idlePrize{font-size:clamp(40px,10.5cqw,158px)}
+  .prizemenu{display:flex;flex-direction:column;align-items:center;gap:.6cqw;margin-top:2.2cqw}
+  .prizemenu .pmh{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(11px,2cqw,20px);color:var(--gold);margin-bottom:.3cqw}
+  .prizemenu .pmi{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(17px,3.4cqw,40px);color:#fff;line-height:1.12}
   .prizebig{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(30px,8cqw,120px);line-height:.98;margin:1.4cqw 0 .4cqw;
     background:linear-gradient(100deg,#E9A93A 0%,#FFC24B 30%,#FFF0C6 48%,#FFC24B 66%,#E9A93A 100%);background-size:220% auto;
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
@@ -84,6 +90,7 @@
     <div class="eyebrow" id="idleEye">Raffle tonight</div>
     <div class="prizebig" id="idlePrize">Get your tickets</div>
     <div class="jsub" id="idleSub">Drawn tonight</div>
+    <div class="prizemenu" id="idlePrizes"></div>
   </div>
 
   <!-- drawing -->
@@ -168,7 +175,7 @@
   })();
 
   // ---- screen state ----
-  var S={ padW:3, min:1, max:150, prizeLabel:"", nextUp:false, hostSeen:false,
+  var S={ padW:3, min:1, max:150, prizeLabel:"", nextUp:false, hostSeen:false, prizes:[],
           spinTimer:null, countdownTimer:null, remaining:0, celebrateTimer:null };
 
   function pad(n){ var s=String(n); while(s.length<S.padW) s="0"+s; return s; }
@@ -271,9 +278,23 @@
     if(S.nextUp && pz){   // a prize was just drawn and there are more to come
       $("idleEye").textContent="Next prize is"; $("idlePrize").textContent=pz; $("idleSub").textContent="Drawn shortly";
     } else {
-      $("idleEye").textContent="Raffle tonight"; $("idlePrize").textContent=pz||"Get your tickets"; $("idleSub").textContent="Drawn tonight";
+      // Keep the call-to-action prominent and list the prizes below it, so the room can see what
+      // they are playing for (rather than the headline swapping to a single prize name).
+      $("idleEye").textContent="Raffle tonight"; $("idlePrize").textContent="Get your tickets"; $("idleSub").textContent="Drawn tonight";
     }
+    renderPrizeMenu();
     showLayer("tvIdle");
+  }
+  function renderPrizeMenu(){
+    var box=$("idlePrizes"); if(!box) return;
+    box.innerHTML="";
+    var ps=(S.prizes||[]).filter(Boolean);
+    if(!ps.length) return;
+    // textContent, not innerHTML: prize labels arrive over the public broadcast, so a forged one
+    // must never be able to inject markup onto the venue's screen.
+    var head=document.createElement("div"); head.className="pmh";
+    head.textContent = ps.length>1 ? "Prizes tonight" : "Tonight's prize"; box.appendChild(head);
+    for(var i=0;i<ps.length;i++){ var d=document.createElement("div"); d.className="pmi"; d.textContent=String(ps[i]); box.appendChild(d); }
   }
   function renderDrawing(){
     cancelAdsReturn();
@@ -404,7 +425,7 @@
     // The host tapped "Back to ads". Go now rather than sit through the 18 second
     // wind-down: they have finished and the room should be looking at the venue again.
     if(m.t==="to_ads"){ if(VENUE_SLUG) window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); return; }
-    if(m.t==="idle") S.nextUp=!!m.next;   // showing the next prize after a draw, vs the raffle's first prize
+    if(m.t==="idle"){ S.nextUp=!!m.next; if(Array.isArray(m.prizes)) S.prizes=m.prizes.filter(Boolean).slice(0,12); }   // showing the next prize after a draw, vs the raffle's first prize; prizes = what is still to win
     // pad() loops on this. It arrives over a public broadcast channel, so an absurd value
     // (or a hostile one) used to spin the render thread forever and freeze the TV.
     if(typeof m.pad==="number" && isFinite(m.pad)) S.padW=Math.max(1, Math.min(6, m.pad|0));

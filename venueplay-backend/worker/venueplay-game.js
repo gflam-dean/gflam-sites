@@ -1514,6 +1514,20 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
   const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
   await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
 
+  // Remember this raffle's SETUP as the venue's template (migration 51), so a weekly raffle pre-fills
+  // to what they last ran instead of re-entering the range, times and settings each week. The prizes
+  // were already saved per venue; this is the rest of the setup. Best-effort, never fails a draw.
+  if (session.venue_id) {
+    try {
+      await sbUpsert(env, 'vp_venue_settings', { venue_id: session.venue_id, raffle_template: {
+        range_min: rangeMin, range_max: rangeMax, time_to_present: timeToPresent, winners: winners,
+        allow_redraw: allowRedraw, jackpot_on: jackpotOn, jackpot_amount_cents: jackpotCents,
+        leading_zeros: leadingZeros, excluded_ranges: config.excluded_ranges || null,
+        prizes: config.prizes || null,
+      } }, 'venue_id');
+    } catch (e) { /* non-fatal */ }
+  }
+
   const rngSeed = randomTokenHex(16);   // stored for audit ("prove the draw was fair")
   await sbInsert(env, 'vp_raffle_games', {
     game_id: game.id,
