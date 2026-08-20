@@ -1139,7 +1139,7 @@
     workerPost("/admin/discount-remove", { discount_id:b.getAttribute("data-drem") }).then(function(r){
       if(r && r.reversed) alert("Removed, and " + r.reversed + ".");
       if(r && r.error){ alert(r.error); b.disabled=false; b.textContent=old; return; }
-      load();
+      loadAll();   // there is no load() in this file: this threw, so a removed discount stayed on screen
     });
   });
   function discLine(d){
