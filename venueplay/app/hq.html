@@ -933,6 +933,9 @@
           if(patch.postcode!==undefined){
             S.venues[i].postcode=(res.venue&&res.venue.postcode)||null;
             S.venues[i].au_state=(res.venue&&res.venue.au_state)||null;
+            // The postcode also moves the timezone (the venue's location); take it back so the row
+            // updates immediately instead of showing the old city until a reload.
+            if(res.venue && res.venue.timezone!==undefined) S.venues[i].timezone=res.venue.timezone||null;
           }
           // The server can switch paid entry off on its own (a move into QLD or NT), so always
           // take what it returned rather than only what we asked to change.

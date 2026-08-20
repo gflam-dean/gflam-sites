@@ -1475,6 +1475,10 @@ async function vpaHandleVenueGaming(request, env, json) {
     patch.postcode = pc || null;
     patch.au_state = pc ? vpaStateFromPostcode(pc) : null;
     if (pc && !patch.au_state) return json({ error: 'That postcode is not one we can map to a state.' }, 400);
+    // The postcode also sets the TIMEZONE (which decides which calendar night a game falls on for
+    // billing, and is shown in HQ as the venue's location). This used to be left untouched, so a
+    // corrected postcode kept the old city/timezone. Recompute it alongside the state.
+    if (pc) patch.timezone = vpaTimezoneFromPostcode(pc);
     /* Moving a venue into a state where we cannot run paid games has to switch paid entry off,
        or a NSW club relocated to Queensland keeps a capability its new state does not allow. */
     const entAfter = (b.entity_type !== undefined) ? b.entity_type : prior.entity_type;
