@@ -1065,11 +1065,13 @@ async function vpaHandleDiscount(request, env, json) {
      account. So a percentage picked from one venue's row silently discounts all of them: 20%
      meant for one venue's $250 comes off the account's $1,250. Refuse and say so, rather than
      give away four times what was intended and report it against the one venue. */
-  if (kind === 'percent' && !target.manual && target.account) {
+  if (kind === 'percent' && !target.manual && target.account && b.apply_to_account !== true) {
     const sibs = await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(target.account.id) + '&select=id');
     if (sibs && sibs.length > 1) {
-      return json({ error: 'This account has ' + sibs.length + ' venues on one subscription, so a percentage would come off ALL of them, not just this venue. Use a dollar credit for a single venue, or apply the percentage knowing it covers the whole account.' }, 409);
+      // Not a hard block: a warning the caller can confirm past. HQ re-sends with apply_to_account:true
+      // after the operator OKs "this covers all N venues". needs_confirm lets HQ show the right prompt.
+      return json({ error: 'This account has ' + sibs.length + ' venues on one subscription, so a percentage would come off ALL of them, not just this venue. Use a dollar credit for a single venue, or apply it knowing it covers the whole account.', needs_confirm: true, venue_count: sibs.length }, 409);
     }
   }
 
@@ -1098,10 +1100,16 @@ async function vpaHandleDiscount(request, env, json) {
           const nm = (already.coupon && (already.coupon.name || already.coupon.id)) || 'an existing discount';
           return json({ error: 'This account already has a discount on its subscription (' + nm + '). Applying another would replace it and change what they are contracted to pay. Remove the existing one first, or use a dollar credit instead.' }, 409);
         }
+        // Stripe caps a coupon NAME at 40 chars. A group or long venue name blew past it ("Invalid
+        // string ... must be at most 40 characters"), so reserve room for the " N% off" suffix and
+        // truncate the name to fit, then hard-cap at 40 as a belt.
+        const _suf = ' ' + value + '% off';
+        const _room = Math.max(1, 40 - 'VenuePlay: '.length - _suf.length);
+        let _cname = ('VenuePlay: ' + String(target.name || 'venue').slice(0, _room) + _suf).slice(0, 40);
         const coupon = await vpbStripePost(env, 'coupons', Object.assign({
           percent_off: value,
           duration: months ? 'repeating' : 'forever',
-          name: 'VenuePlay: ' + (target.name || 'venue') + ' ' + value + '% off',
+          name: _cname,
         }, months ? { duration_in_months: months } : {}));
         if (!coupon || coupon.error || !coupon.id) {
           return json({ error: 'Stripe would not create that discount: ' + ((coupon && coupon.error && coupon.error.message) || 'unknown error') }, 502);
