@@ -224,6 +224,7 @@
         <div class="field"><label>First manager's mobile</label><input type="text" id="nvMobile" placeholder="e.g. 0412 345 678" class="mono"><div class="note" style="margin-top:4px">They are texted a login invite. Without this nobody at the venue can sign in.</div></div>
         <div class="field nvFoundF"><label>Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
         <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly">Founding monthly</option><option value="annual">Founding annual</option></select></div>
+        <div class="field nvFoundF"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="nvComp" style="width:auto;margin:0"> Comp / demo venue &mdash; no card, and does NOT use one of the 100 founding spots</label></div>
       </div>
       <button class="btn pink" id="addVenueSubmit">Create venue</button>
       <div class="note">Onboarding sets up the venue's subscription and its first manager login.</div>
@@ -1678,13 +1679,14 @@
       var email=$("nvEmail").value.trim(); if(!email){ errFlash("addVenueErr","Enter the contact email."); return; }
       var max=parseInt($("nvMax").value,10);
       body.billing.founding={ contact_email:email, mobile:mob, postcode:pc, max_seats:(max||null), plan:$("nvPlan").value };
+      body.billing.comp = $("nvComp").checked;   // comp/demo: founding row 'comp', not counted in the 100 spots
     }
     var btn=$("addVenueSubmit"); btn.disabled=true; btn.textContent="Creating…";
     workerPost("/admin/venue", body).then(function(res){
       btn.disabled=false; btn.textContent="Create venue";
       if(res.error){ errFlash("addVenueErr",res.error); return; }
       flash("addVenueOk", body.manager ? ("Venue created. "+body.manager.mobile+" will be texted a login invite.") : "Venue created. NOBODY CAN SIGN IN YET: add a manager mobile.");
-      $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value="";
+      $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value=""; $("nvComp").checked=false;
       loadAll();
     });
   });
