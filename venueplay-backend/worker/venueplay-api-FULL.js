@@ -1772,7 +1772,25 @@ async function vpaHandleAudit(request, env, json) {
 async function vpaProvisionFromCheckout(env, session) {
   const foundingId = (session && session.client_reference_id)
     || (session && session.metadata && session.metadata.row_id);
-  if (!foundingId) return; // nothing we can link to; leave as-is
+  if (!foundingId) {
+    // A paid checkout we cannot link back to a signup (a bare payment link, a test charge, or a soft
+    // failure upstream). Never silently do nothing on money in: record it so an unmatched payment is
+    // visible in HQ the same night instead of vanishing with no trace (audit #13).
+    try {
+      await vpaInsert(env, 'vp_admin_audit', {
+        actor_admin: null, actor_label: 'stripe', action: 'checkout_unmatched',
+        target: 'session:' + ((session && session.id) || 'unknown'),
+        detail: {
+          stripe_session_id: (session && session.id) || null,
+          customer: (session && session.customer) || null,
+          subscription: (session && session.subscription) || null,
+          amount_total: (session && session.amount_total) || null,
+          email: (session && session.customer_details && session.customer_details.email) || null,
+        },
+      }, false);
+    } catch (e) { /* audit is best-effort; never throw out of the webhook over it */ }
+    return;
+  }
 
   // Load the founding/lead row for the venue name + mobile fallback.
   const rows = await vpaSelect(env, 'venueplay_founding',
