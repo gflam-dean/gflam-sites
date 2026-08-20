@@ -747,7 +747,9 @@
   }
   // Tell the room before you go. Neither sign-out path did, so the wall kept showing a frozen
   // board with the last number on it and every phone kept its card, until a 90 minute timer.
-  function releaseRoom(){ try{ if(subscribed && ch){ send({ t:"idle" }); } }catch(e){} }
+  // Sync (rawSend), not the async signed send: this fires as the host signs out / the tab unloads, and
+  // an async signature never completes before the page dies. idle is EXEMPT so enforce still honours it.
+  function releaseRoom(){ try{ if(subscribed && ch){ rawSend({ t:"idle" }); } }catch(e){} }
   function endShift(){
     releaseRoom(); closeOpenNight(); try{ localStorage.removeItem("vpShiftStart"); }catch(e){} if(shiftTimer){ clearTimeout(shiftTimer); shiftTimer=null; } }
   function enforceShift(){

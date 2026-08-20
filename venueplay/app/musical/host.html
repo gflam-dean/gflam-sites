@@ -1164,7 +1164,7 @@
      not wipe the round off the screen. */
   window.addEventListener("pagehide", function(){
     if(G.status==="running") return;
-    try{ send({ t:"to_ads" }); }catch(e){}
+    try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; async signed send never lands before the page dies (to_ads is EXEMPT)
   });
   $("endGameBtn").addEventListener("click", endGame);
   $("playNextBtn").addEventListener("click", playNext);

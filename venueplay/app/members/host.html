@@ -781,7 +781,7 @@
      the round now survives a reload anyway. */
   window.addEventListener("pagehide", function(){
     if(G.round) return;                       // a draw is live: leave the room as it is
-    try{ send({ t:"to_ads" }); }catch(e){}
+    try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; async signed send never lands before the page dies (to_ads is EXEMPT)
   });
 })();
 </script>

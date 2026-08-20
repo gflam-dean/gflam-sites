@@ -1140,7 +1140,7 @@
     var ci=parseInt(cell.getAttribute("data-card"),10), n=parseInt(cell.getAttribute("data-n"),10);
     var cd=P.cards[ci]; if(!cd) return;
     if(cd.daubs[n]){ delete cd.daubs[n]; cell.classList.remove("daub"); }
-    else { cd.daubs[n]=true; cell.classList.add("daub"); }
+    else { cd.daubs[n]=true; cell.classList.add("daub"); cell.classList.remove("on"); }   // clear the paid-mode "dab me" glow the instant it is marked
     saveDaubs();
   });
   var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
