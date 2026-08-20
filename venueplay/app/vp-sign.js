@@ -179,21 +179,30 @@
         .catch(function () { return "bad"; });
     },
 
-    // The gate a receiver puts in front of onMsg. Verifies, then either delivers the payload to cb or
-    // drops it. In enforce mode a non-'ok' verdict is dropped (except EXEMPT lifecycle types); with
-    // enforce off, everything is delivered and a bad/absent signature is only logged.
+    // The gate a receiver puts in front of onMsg. Two hard safety rules keep it from ever blanking a
+    // real screen:
+    //   1. ENFORCE OFF (every venue by default): deliver SYNCHRONOUSLY, exactly as before signing
+    //      existed. No async verify sits in the render path, so message order can never change. A
+    //      signature is still checked in the background, only to log a suspicious one.
+    //   2. ENFORCE ON but we hold NO public key yet (fetch not finished, or it failed): deliver
+    //      anyway. We cannot judge a message with no key, and going dark on an infrastructure hiccup
+    //      is worse than the spoofing we are guarding against. Enforcement only bites once a key is
+    //      actually loaded, which for a paired screen is within a second of load.
+    // Only when enforce is ON and a key IS loaded do we drop anything that is not a good signature.
     gate: function (payload, cb) {
+      if (!S.enforce) {
+        try { cb(payload); } catch (e) { }
+        if (S.pubKey && payload && payload._sig) {
+          VPSign.verify(payload).then(function (v) { if (v === "bad" || v === "replay") console.warn("[VPSign] " + v + " signature, rendered (enforce off)"); });
+        }
+        return;
+      }
+      if (!S.pubKey || !subtleOk()) { try { cb(payload); } catch (e) { } return; }   // no key to verify with -> fail open
       VPSign.verify(payload).then(function (verdict) {
         if (verdict === "ok") { try { cb(payload); } catch (e) { } return; }
         var t = payload && payload.t;
-        if (S.enforce && !(t && EXEMPT[t])) {
-          if (verdict !== "unsigned") console.warn("[VPSign] dropped " + verdict + " message" + (t ? " (" + t + ")" : ""));
-          else console.warn("[VPSign] dropped unsigned message" + (t ? " (" + t + ")" : "") + " (enforce on)");
-          return;   // DROP
-        }
-        // phase 2 (enforce off) or an exempt lifecycle nudge: render, but surface anything suspicious.
-        if (verdict === "bad" || verdict === "replay") console.warn("[VPSign] " + verdict + " signature, rendered anyway (enforce off)" + (t ? " (" + t + ")" : ""));
-        try { cb(payload); } catch (e) { }
+        if (t && EXEMPT[t]) { try { cb(payload); } catch (e) { } return; }           // harmless lifecycle nudge
+        console.warn("[VPSign] dropped " + verdict + " message" + (t ? " (" + t + ")" : "") + " (enforce on)");
       });
     }
   };
