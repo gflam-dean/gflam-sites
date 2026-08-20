@@ -1181,10 +1181,13 @@
   function discountFormHtml(){
     return '<div class="dgrid">'+
       '<div class="field" style="margin:0"><label>Type</label><select class="dcType"><option value="percent">Percentage</option><option value="dollar">Dollar amount</option></select></div>'+
-      '<div class="field" style="margin:0"><label>Value</label><input type="number" step="0.01" class="dcValue mono" placeholder="e.g. 10"></div>'+
+      '<div class="field" style="margin:0"><label class="dcValLbl">Percent off</label><input type="number" step="0.01" class="dcValue mono" placeholder="e.g. 10"></div>'+
       '<div class="field dcMonthsWrap" style="margin:0"><label>For how many months</label><input type="number" class="dcMonths mono" placeholder="blank = ongoing"></div>'+
       '<div class="field" style="margin:0"><label>Note / reason</label><input type="text" class="dcNote" placeholder="optional"></div>'+
       '</div>'+
+      /* The two types are not variations on one thing, they are different mechanisms with
+         different billing behaviour, and the form used to say nothing about either. */
+      '<div class="note dcHelp" style="margin-top:8px">A percentage is an ongoing discount on the subscription, so it scales with the player count: 10% off is effectively 10% off the per-player rate. It cannot be used on an account with more than one venue, because one subscription covers them all.</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">'+
       '<button class="btn pink dcApply">Apply discount</button>'+
       '<span class="dcMsg" style="font-size:12px;color:var(--muted)"></span>'+
@@ -1204,8 +1207,16 @@
   // discount type toggle (percent shows months)
   document.addEventListener("change", function(e){
     var t=e.target.closest(".dcType"); if(!t) return;
-    var form=t.closest(".dform"); var mw=form.querySelector(".dcMonthsWrap");
-    if(mw) mw.style.display=(t.value==="dollar")?"none":"";
+    var form=t.closest(".dform");
+    var dollar=(t.value==="dollar");
+    var mw=form.querySelector(".dcMonthsWrap");
+    if(mw) mw.style.display=dollar?"none":"";          // a one-off credit has no duration
+    var lb=form.querySelector(".dcValLbl");
+    if(lb) lb.textContent=dollar?"Dollars off (one-off)":"Percent off";
+    var hp=form.querySelector(".dcHelp");
+    if(hp) hp.textContent=dollar
+      ? "A dollar amount is a ONE-OFF credit on their account, taken off their next invoice and then gone. It is a flat amount off the whole bill, NOT per player, and it does not repeat. For a per-player discount, or an ongoing one, use a percentage."
+      : "A percentage is an ongoing discount on the subscription, so it scales with the player count: 10% off is effectively 10% off the per-player rate. It cannot be used on an account with more than one venue, because one subscription covers them all.";
   });
   // apply discount (Worker)
   document.addEventListener("click", function(e){
