@@ -194,6 +194,7 @@ export default {
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
+      if (method === 'GET'  && path === '/screen')             return await handleScreen(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       if (method === 'POST' && path === '/host/game/pattern')  return await handleMusicPattern(request, env, json);
       if (method === 'POST' && path === '/host/trivia/set')                return await handleTriviaSet(request, env, json);
@@ -601,6 +602,57 @@ async function handleVenueLookup(request, env, json) {
  * sign has to ask which room it is tonight. Unknown/quiet venue = live:false, and the play
  * page just waits on the venue code, which is exactly right for broadcast bingo.
  */
+/* GET /screen?venue=<slug>   (anon)
+ *   -> { exists, name, logo_url, slides[], raffle, draws[] }
+ *
+ * Everything a venue TV needs to paint itself, for ONE venue, by slug.
+ *
+ * Why this exists: the TV and the four game screens used to read vp_venue_screen straight from
+ * Supabase with the public key. That worked, but the same grant answered a request with NO slug
+ * filter, so one line of curl returned every venue's slug, id and advertising URLs: the platform's
+ * entire customer list, and the first step to deriving live join codes. A confirmed finding on
+ * 20 Aug 2026. An RLS policy that tried to require a slug filter did not work, because PostgREST
+ * does not expose the query string the way that policy assumed.
+ *
+ * So the public grant goes (migration 48) and this replaces it. Nothing changes for a venue: the
+ * TV link is the same, still public, still no login. A stranger who knows a slug can still see
+ * that one venue's screen, which is the same thing they could see by walking into the bar. What
+ * they can no longer do is ask for the list.
+ */
+async function handleScreen(request, env, json) {
+  const url = new URL(request.url);
+  const slug = String(url.searchParams.get('venue') || '').trim().toLowerCase().slice(0, 80);
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) return json({ exists: false });
+
+  const rows = await sbGet(env, 'vp_venue_screen',
+    'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1');
+  const cfg = (rows && rows[0]) || null;
+
+  let name = '';
+  if (cfg && cfg.venue_id) {
+    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(cfg.venue_id) + '&select=name&limit=1');
+    name = (v && v[0] && v[0].name) || '';
+  }
+
+  // The members-draw board, same one venue. Only draws with a night set are advertised, which is
+  // also what takes an archived or retired draw off the screen.
+  let draws = [];
+  try {
+    const d = await sbGet(env, 'v_vp_screen_draws',
+      'slug=eq.' + enc(slug) + '&select=name,current_jackpot_cents,draw_day,draw_time,timezone');
+    draws = (d || []).filter((x) => x && x.draw_day);
+  } catch (e) { /* the board is a nicety; never fail the whole screen for it */ }
+
+  return json({
+    exists: !!cfg,
+    name: name,
+    logo_url: (cfg && cfg.logo_url) || '',
+    slides: (cfg && Array.isArray(cfg.slides)) ? cfg.slides : [],
+    raffle: (cfg && cfg.raffle) || null,
+    draws: draws,
+  });
+}
+
 async function handlePlayLive(request, env, json) {
   const url = new URL(request.url);
   const venueId = await venueByCode(env, url.searchParams.get('code') || '');

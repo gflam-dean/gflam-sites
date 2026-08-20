@@ -1144,49 +1144,41 @@
         document.body.appendChild(el); }
       el.src=url; el.style.display="block";
     }
-    // Advertising slides (images) + the raffle routine, from the venue's screen config.
-    // We request logo_url but fall back without it, so ads keep working before AND after the
-    // logo_url column is migrated in. A missing column must NEVER take the slides down with it.
-    function loadScreen(withLogo){
-      var sel="slides,raffle"+(withLogo?",logo_url":"");
-      fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select="+sel+"&limit=1", { headers:hdr })
-        .then(function(r){ if(!r.ok){ if(withLogo) loadScreen(false); return null; } return r.json(); })
-        .then(function(rows){
-          if(!rows) return;
-          var c=rows&&rows[0]; if(!c) return;
-          if(Array.isArray(c.slides)) ADS.slides=c.slides;
-          // An empty routine is no routine. A saved-but-blank raffle object is still truthy, so
-          // without this the screen rotated a card with no words on it and the venue had no way
-          // to get rid of it. Treat "nothing filled in" as "not advertising a raffle".
-          ADS.raffle = hasRaffle(c.raffle) ? c.raffle : null;
-          if(withLogo) setVenueLogo(c.logo_url || "");
+    /* THE WHOLE SCREEN, IN ONE CALL, THROUGH THE WORKER.
+       This used to read vp_venue_screen and v_vp_screen_draws straight from Supabase with the
+       public key. That worked for one venue by slug, but the same grant answered a request with
+       NO slug filter, handing over every venue's slug, id and advertising URLs: the platform's
+       customer list, and the first step to deriving live join codes. Confirmed live 20 Aug 2026.
+       The public grant is gone (migration 48) and the Worker serves one venue instead.
+       Nothing changes for the venue: same /tv?venue=slug link, still public, still no login.
+       Two calls became one, and the retry-without-a-column dance is gone with them: the Worker
+       decides its own shape, so a column we have not migrated can no longer take the ads down. */
+    function loadScreen(){
+      fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(slug))
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(d){
+          if(!d || !d.exists) return;
+          if(Array.isArray(d.slides)) ADS.slides=d.slides;
+          /* An empty routine is no routine. A saved-but-blank raffle object is still truthy, so
+             without this the screen rotated a card with no words on it and the venue had no way
+             to get rid of it. */
+          ADS.raffle = hasRaffle(d.raffle) ? d.raffle : null;
+          setVenueLogo(d.logo_url || "");
+          var draws = Array.isArray(d.draws) ? d.draws : [];
+          if(draws[0] && draws[0].timezone) VENUE_TZ=draws[0].timezone;   // "Tonight" in the VENUE's time
+          // "Tonight" is decided at render time (entryInner), so the board stays right past midnight.
+          ADS.draws = draws.map(function(x){
+            return { day:x.draw_day,
+                     jackpot:"$"+Math.round((x.current_jackpot_cents||0)/100).toLocaleString("en-AU"),
+                     time:x.draw_time||"" };
+          });
           refreshAds();
         }).catch(function(){});
     }
     // A venue that uploads a slide or a logo should see it on the wall now, not after the next
     // four hourly reload. billing.html broadcasts t:"screen_refresh" the moment it saves.
-    reloadVenueScreen=function(){ try{ loadScreen(true); loadDrawBoard(true); }catch(e){} };
-    loadScreen(true);
-    // Live members-draw board (name + current jackpot + day/time + venue timezone) from the public view.
-    // We request timezone but fall back without it, so it works before AND after the view is migrated
-    // to expose timezone (older view -> no column -> retry without it, defaulting the tz to QLD).
-    function loadDrawBoard(withTz){
-      var sel="name,current_jackpot_cents,draw_day,draw_time"+(withTz?",timezone":"");
-      fetch(SUPA_URL+"/rest/v1/v_vp_screen_draws?slug=eq."+encodeURIComponent(slug)+"&select="+sel, { headers:hdr })
-        .then(function(r){ if(!r.ok){ if(withTz) loadDrawBoard(false); return null; } return r.json(); })
-        .then(function(rows){
-          if(!rows || !Array.isArray(rows)) return;
-          if(rows[0] && rows[0].timezone) VENUE_TZ=rows[0].timezone;   // decide "Tonight" in the venue's own time
-          // "Tonight" is decided at render time (entryInner), so the board stays correct past midnight.
-          ADS.draws = rows.filter(function(d){ return d.draw_day; }).map(function(d){
-            return { day:d.draw_day,
-                     jackpot:"$"+Math.round((d.current_jackpot_cents||0)/100).toLocaleString("en-AU"),
-                     time:d.draw_time||"" };
-          });
-          refreshAds();
-        }).catch(function(){});
-    }
-    loadDrawBoard(true);
+    reloadVenueScreen=function(){ try{ loadScreen(); }catch(e){} };
+    loadScreen();
   })();
 
   // An always-on venue TV must flip "Tonight" when the day rolls over. buildAds() bakes the board once,

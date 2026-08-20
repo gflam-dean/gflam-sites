@@ -286,6 +286,7 @@
 <script>
 (function(){
   "use strict";
+  var VP_SCREEN_API='https://venueplay-game.dean-tindale.workers.dev';
   var $=function(id){ return document.getElementById(id); };
   var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
   var SITE='https://venueplay.com.au';
@@ -460,11 +461,12 @@
   function loadVenueLogo(slug){
     if(!slug) return;
     try{
-      fetch(SUPA_URL+"/rest/v1/vp_venue_screen?slug=eq."+encodeURIComponent(slug)+"&select=logo_url&limit=1",
-        { headers:{ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON } })
+      /* Through the Worker, not straight at Supabase. The public grant on vp_venue_screen
+         answered an unfiltered request with EVERY venue, which is the customer list. */
+      fetch(VP_SCREEN_API+"/screen?venue="+encodeURIComponent(slug))
         .then(function(r){ return r.ok?r.json():null; })
-        .then(function(rows){
-          var u=rows&&rows[0]&&rows[0].logo_url;
+        .then(function(d){
+          var u=d&&d.logo_url;   // one object now, not an array
           if(u){ state.logo=u; render(); }
         }).catch(function(){});   // no logo is fine, the sign works without one
     }catch(e){}
