@@ -1957,7 +1957,13 @@ async function handleDrawRemove(request, env, json) {
      The real signals are the two stamps on the draw itself: last_drawn_date is set when the
      winner is drawn, last_resolved_at when the claim or rollover lands. Drawn today and not yet
      resolved today means a round is on air. */
-  const today = auDateStr(dr[0].timezone || null);
+  // Same clock the draw itself stamps with (handleMembersDraw, "const today = new
+  // Date().toISOString().slice(0,10)"). Matching it matters more than being clever about the
+  // venue's timezone: comparing a locally-derived date against a UTC-stamped one would make this
+  // guard fire on the wrong day. An earlier version called a helper that does not exist in this
+  // file at all, which the syntax check could not see because an undefined function is a runtime
+  // error, not a parse error.
+  const today = new Date().toISOString().slice(0, 10);
   const drawnToday = String(dr[0].last_drawn_date || '').slice(0, 10) === today;
   const resolvedToday = String(dr[0].last_resolved_at || '').slice(0, 10) === today;
   if (drawnToday && !resolvedToday) {
