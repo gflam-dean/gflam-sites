@@ -306,6 +306,16 @@
     </table></div></div>
     <div class="note">Peak rule: the single biggest metered night sets the month. Raffles and members draws never count. Open <b>Details</b> to apply a discount. Dollar estimates use the group's negotiated rate; independent venue rates live in the founding record (Worker only).</div>
 
+    <div class="lblk">GST set-aside</div>
+    <div class="panel" id="gstPanel">
+      <div class="note">What came in through Stripe this quarter, and the GST inside it. Owner and Accounts only.</div>
+      <div id="gstOut" class="note" style="margin-top:8px">Loading&hellip;</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="mini" id="gstThis">This quarter</button>
+        <button class="mini" id="gstLast">Last quarter</button>
+      </div>
+    </div>
+
     <div class="lblk">Active discounts</div>
     <div id="discountList"></div>
   </div>
@@ -565,7 +575,9 @@
       S.stale={}; S.staleSessions.forEach(function(s){ S.stale[s.venue_id]=true; });
       // latest usage month present
       S.usageMonth = S.usage.length ? S.usage[0].period_month : null;
-      renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderAudit(); populateGroupSelect();
+      (function(){ var p=$("gstPanel"); if(p) p.style.display = canBilling() ? "" : "none"; })();
+    if(canBilling()) renderGst(0);
+    renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderAudit(); populateGroupSelect();
     }).catch(function(e){
       $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(e&&e.message||e)+'</td></tr>';
     });
@@ -1246,6 +1258,38 @@
     var det=e.target.closest("button[data-bdet]");
     if(det){ var id=det.getAttribute("data-bdet"); S.openBilling=(S.openBilling===id?null:id); renderBilling(); }
   });
+
+  /* ---- GST set-aside ----
+     Taken from Stripe, not from our own usage estimates, because what matters is money actually
+     received. Prices are GST INCLUSIVE, so the GST is a eleventh of the total rather than 10% of
+     it: reading it the other way overstates by about 10%, which is how people under-provision.
+     Owner and Accounts only, same as everything else that shows money. */
+  function renderGst(back){
+    var out=$("gstOut"); if(!out) return;
+    if(!canBilling()){ out.textContent="Owner and Accounts only."; return; }
+    out.textContent="Reading Stripe\u2026";
+    workerPost("/admin/gst", { back: back||0 }).then(function(r){
+      if(r.error){ out.textContent=r.error; return; }
+      var total=(r.total_cents||0)/100, gst=(r.gst_cents||0)/100;
+      out.innerHTML =
+        '<div style="font-size:13px;color:var(--muted);margin-bottom:6px">'+esc(r.quarter)+
+        ' &middot; '+esc(r.from)+' to '+esc(r.to)+' &middot; '+(r.invoices||0)+' invoice'+((r.invoices===1)?'':'s')+'</div>'+
+        '<div style="display:flex;gap:26px;flex-wrap:wrap">'+
+          '<div><div class="k" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)">Received</div>'+
+          '<div class="mono" style="font-size:24px;color:#fff">'+aud(total)+'</div></div>'+
+          '<div><div class="k" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)">GST inside it</div>'+
+          '<div class="mono" style="font-size:24px;color:var(--gold)">'+aud(gst)+'</div></div>'+
+        '</div>'+
+        (r.refunds_cents ? ('<div class="note" style="margin-top:6px">After '+aud(r.refunds_cents/100)+' refunded.</div>') : '')+
+        (r.truncated ? '<div class="note" style="margin-top:6px;color:var(--roll)">More than 2,000 invoices in this quarter, so this is short. Tell me and I will page further.</div>' : '')+
+        '<div class="note" style="margin-top:8px">A guide for setting money aside, not the BAS. It does not know about input tax credits on what Gflam spends, or anything invoiced outside Stripe.</div>';
+    });
+  }
+  (function(){
+    var a=$("gstThis"), b=$("gstLast");
+    if(a) a.addEventListener("click", function(){ renderGst(0); });
+    if(b) b.addEventListener("click", function(){ renderGst(1); });
+  })();
 
   /* ---- Xero export (date-ranged, from vp_billing_usage) ---- */
   function auDate(pm){ if(!pm) return ""; var d=new Date(String(pm).slice(0,10)+"T00:00:00"); if(isNaN(d)) return String(pm); var dd=("0"+d.getDate()).slice(-2), mm=("0"+(d.getMonth()+1)).slice(-2); return dd+"/"+mm+"/"+d.getFullYear(); }

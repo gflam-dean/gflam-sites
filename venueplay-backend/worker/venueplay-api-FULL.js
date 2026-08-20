@@ -84,6 +84,7 @@ export default {
       if (request.method === 'POST' && path === '/admin/quiet-venues'    && typeof vpaHandleQuietVenues === 'function')    return await vpaHandleQuietVenues(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
+      if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
       if (request.method === 'POST' && path === '/admin/optin-approve'   && typeof vpaHandleOptinApprove === 'function')   return await vpaHandleOptinApprove(request, env, json);
       if (request.method === 'POST' && path === '/admin/staff'           && typeof vpaHandleStaff === 'function')          return await vpaHandleStaff(request, env, json);
       if (request.method === 'POST' && path === '/admin/audit'           && typeof vpaHandleAudit === 'function')          return await vpaHandleAudit(request, env, json);
@@ -1357,6 +1358,87 @@ async function vpaHandleQuietVenues(request, env, json) {
  * Deliberately HQ-only, and deliberately not self-serve: a venue answering this about itself
  * is exactly the wrong person to ask, because the answer decides what they are allowed to do.
  */
+/* POST /admin/gst  (Gflam owner/accounts) : what came in this quarter, and the GST in it.
+ *
+ * Read only, and taken from STRIPE rather than from our own usage estimates, because the BAS
+ * figure is money actually received, not money we think we invoiced. Sums amount_paid on paid
+ * invoices in the period and subtracts anything refunded in it.
+ *
+ * VenuePlay prices are GST INCLUSIVE (the terms say so, $2.50 a player GST inclusive), so the GST
+ * is one eleventh of the total, not ten percent of it. Getting that backwards overstates it by
+ * about 10%, which is the classic way to under-provision.
+ *
+ * This is a guide for setting money aside and a sanity check against the BAS. It is not the BAS:
+ * it does not know about GST-free items, input tax credits on what Gflam spends, or anything
+ * invoiced outside Stripe. Dean's accountant lodges from the books, not from this.
+ */
+async function vpaHandleGst(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  if (!env.STRIPE_SECRET_KEY) return json({ error: 'Stripe is not configured on this Worker.' }, 500);
+
+  const b = await request.json().catch(function () { return {}; });
+
+  /* Australian BAS quarters, in Brisbane time. Working in UTC would put a payment taken late on
+     30 September into the December quarter, which is exactly the kind of quiet error nobody finds
+     until the ATO does. Queensland has no daylight saving, so a fixed +10 is correct year round. */
+  const AEST = 10 * 3600 * 1000;
+  const nowB = new Date(Date.now() + AEST);
+  const qIndex = Math.floor(nowB.getUTCMonth() / 3);          // 0 = Jan-Mar
+  const back = Math.max(0, Math.min(8, parseInt(b.back, 10) || 0));   // 0 = this quarter, 1 = last
+  let y = nowB.getUTCFullYear(), qi = qIndex - back;
+  while (qi < 0) { qi += 4; y -= 1; }
+  const startB = Date.UTC(y, qi * 3, 1, 0, 0, 0);
+  const endB   = Date.UTC(qi === 3 ? y + 1 : y, ((qi + 1) % 4) * 3, 1, 0, 0, 0);
+  const from = Math.floor((startB - AEST) / 1000);            // back to real UTC seconds
+  const to   = Math.floor((endB - AEST) / 1000);
+
+  let grossCents = 0, invoices = 0, refundCents = 0, truncated = false;
+  try {
+    let starting_after = null;
+    for (let page = 0; page < 20; page++) {                   // 20 x 100 = 2,000 invoices
+      let q = 'invoices?status=paid&limit=100&created[gte]=' + from + '&created[lt]=' + to;
+      if (starting_after) q += '&starting_after=' + encodeURIComponent(starting_after);
+      const r = await vpbStripeGet(env, q);
+      if (!r || r.error) return json({ error: 'Stripe would not answer: ' + ((r && r.error && r.error.message) || 'unknown') }, 502);
+      const rows = r.data || [];
+      for (const inv of rows) { grossCents += (inv.amount_paid || 0); invoices++; }
+      if (!r.has_more || !rows.length) { starting_after = null; break; }
+      starting_after = rows[rows.length - 1].id;
+      if (page === 19) truncated = true;
+    }
+    // Refunds reduce what was actually received, so they reduce the GST owed on it.
+    let ra = null;
+    for (let page = 0; page < 20; page++) {
+      let q = 'refunds?limit=100&created[gte]=' + from + '&created[lt]=' + to;
+      if (ra) q += '&starting_after=' + encodeURIComponent(ra);
+      const r = await vpbStripeGet(env, q);
+      if (!r || r.error) break;                               // refunds are a refinement, not a blocker
+      const rows = r.data || [];
+      for (const rf of rows) refundCents += (rf.amount || 0);
+      if (!r.has_more || !rows.length) break;
+      ra = rows[rows.length - 1].id;
+    }
+  } catch (e) {
+    return json({ error: 'Could not reach Stripe just now.' }, 502);
+  }
+
+  const netCents = Math.max(0, grossCents - refundCents);
+  // GST INCLUSIVE pricing: the GST is 1/11th of the total, not 10% of it.
+  const gstCents = Math.round(netCents / 11);
+  const label = ['Jan to Mar', 'Apr to Jun', 'Jul to Sep', 'Oct to Dec'][qi] + ' ' + y;
+
+  return json({
+    ok: true, quarter: label, back: back,
+    from: new Date(from * 1000).toISOString().slice(0, 10),
+    to: new Date((to - 1) * 1000).toISOString().slice(0, 10),
+    invoices: invoices,
+    gross_cents: grossCents, refunds_cents: refundCents,
+    total_cents: netCents, gst_cents: gstCents,
+    truncated: truncated,
+  });
+}
+
 async function vpaHandleVenueGaming(request, env, json) {
   const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
   if (actor.error) return json({ error: actor.error }, actor.status);
