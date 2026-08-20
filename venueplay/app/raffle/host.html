@@ -788,20 +788,25 @@
       $("statusText").textContent="Signed in";
       loadSavedPrizes();
       // Pre-fill the raffle setup from this venue's saved template (migration 51), so a weekly raffle
-      // loads what they last ran instead of the built-in defaults. Prizes come from loadSavedPrizes.
-      if(VP.loadSettings){ VP.loadSettings(G.venueId).then(function(s){
-        var t=s&&s.raffle_template; if(!t) return;
-        function setv(id,v){ var el=$(id); if(el&&v!=null&&v!=="") el.value=v; }
-        setv("rfStart", t.range_min); setv("rfEnd", t.range_max);
-        if(t.time_to_present!=null) setv("rfTime", t.time_to_present);
-        if(t.jackpot_on){ var jo=$("rfJackOn"); if(jo){ jo.checked=true; var jw=$("rfJackWrap"); if(jw) jw.classList.remove("hidden"); if(t.jackpot_amount_cents) setv("rfJackAmt", Math.round(t.jackpot_amount_cents/100)); } }
-        var ar=$("rfAllowRedraw"); if(ar && typeof t.allow_redraw==="boolean") ar.checked=t.allow_redraw;
-        if(Array.isArray(t.excluded_ranges) && t.excluded_ranges.length){ var sk=$("rfSkip"); if(sk) sk.value=t.excluded_ranges.map(function(r){ return r[0]===r[1]?(""+r[0]):(r[0]+"-"+r[1]); }).join(", "); }
-        if(typeof renderRange==="function") renderRange();
-      }).catch(function(){}); }
+      // loads what they last ran. ONLY when there is no live round to recover, or the two async chains
+      // race and the template overwrites a recovered round's inputs -> a spurious "start fresh?" prompt.
+      function prefillRaffleTemplate(){
+        if(!VP.loadSettings) return;
+        VP.loadSettings(G.venueId).then(function(s){
+          var t=s&&s.raffle_template; if(!t) return;
+          function setv(id,v){ var el=$(id); if(el&&v!=null&&v!=="") el.value=v; }
+          setv("rfStart", t.range_min); setv("rfEnd", t.range_max);
+          if(t.time_to_present!=null) setv("rfTime", t.time_to_present);
+          if(t.jackpot_on){ var jo=$("rfJackOn"); if(jo){ jo.checked=true; var jw=$("rfJackWrap"); if(jw) jw.classList.remove("hidden"); if(t.jackpot_amount_cents) setv("rfJackAmt", Math.round(t.jackpot_amount_cents/100)); } }
+          var ar=$("rfAllowRedraw"); if(ar && typeof t.allow_redraw==="boolean") ar.checked=t.allow_redraw;
+          if(Array.isArray(t.excluded_ranges) && t.excluded_ranges.length){ var sk=$("rfSkip"); if(sk) sk.value=t.excluded_ranges.map(function(r){ return r[0]===r[1]?(""+r[0]):(r[0]+"-"+r[1]); }).join(", "); }
+          if(typeof renderRange==="function") renderRange();
+        }).catch(function(){});
+      }
       var slug=(ctx.venue && ctx.venue.slug) || "";
       if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
-      restoreRaffle().then(function(){   // recover a live raffle first (accidental reload), then pair the TV as normal
+      restoreRaffle().then(function(recovered){   // recover a live raffle first; only pre-fill if there was none
+        if(!recovered) prefillRaffleTemplate();
         var tv=tvFromUrl();
         if(tv){ connect(tv); }
         else if(slug && window.VP && VP.venueCode){ connect(VP.venueCode("raffle-"+slug)); }
@@ -821,7 +826,7 @@
      is left alone: closing the tab mid-claim must not wipe the drawn ticket off the screen. */
   window.addEventListener("pagehide", function(){
     if(G.round) return;
-    try{ send({ t:"to_ads" }); }catch(e){}
+    try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; async signed send never lands before the page dies (to_ads is EXEMPT)
   });
 
   (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;

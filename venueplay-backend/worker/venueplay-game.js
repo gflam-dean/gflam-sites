@@ -2505,7 +2505,12 @@ async function handleTriviaImageUpload(request, env, json) {
   if (!m) return json({ error: 'That did not look like an image.' }, 400);
   const contentType = m[1].toLowerCase();
   if (!/^image\/(png|jpe?g|webp|gif)$/.test(contentType)) return json({ error: 'Use a PNG, JPG, WEBP or GIF.' }, 400);
-  const bytes = gB64ToBytes(m[2]);
+  // Reject an oversized image from the base64 LENGTH before decoding it, so a huge body is never
+  // fully allocated in the isolate (base64 is ~4/3 of the byte count). Then decode inside a try so a
+  // malformed payload is a clean 400, not an uncaught 500.
+  if (m[2].length > Math.ceil(5 * 1024 * 1024 * 4 / 3) + 4) return json({ error: 'That image is too big. Keep it under 5MB.' }, 400);
+  let bytes;
+  try { bytes = gB64ToBytes(m[2]); } catch (e) { return json({ error: 'That image could not be read.' }, 400); }
   if (bytes.length > 5 * 1024 * 1024) return json({ error: 'That image is too big. Keep it under 5MB.' }, 400);
   await gEnsureBucket(env, 'trivia-images');
   const ext = contentType.split('/')[1].replace('jpeg', 'jpg');

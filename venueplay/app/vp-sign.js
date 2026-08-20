@@ -27,7 +27,12 @@
 (function () {
   "use strict";
   var TE = new TextEncoder();
-  var MAX_AGE_MS = 45000;         // a signed message older than this is treated as a replay
+  // A signed message older than this is treated as a stale replay. Deliberately LARGE (6h, i.e. a
+  // whole night) rather than tight: _ts is the HOST's clock and Date.now() is the RECEIVER's, and a
+  // cheap TV stick with a wrong clock must never mark every live message "stale" and black out under
+  // enforce. Replay within a session is already caught by the nonce set; this only bounds ancient
+  // cross-session replays loosely, which the screen reconciles against the server anyway.
+  var MAX_AGE_MS = 6 * 60 * 60 * 1000;
   var NONCE_KEEP = 600;           // remember this many recent nonces to reject instant replays
 
   var S = {
@@ -36,13 +41,19 @@
     kid: null, enforce: false,
     ready: false,
     seenNonces: [], seenSet: {},
-    chain: Promise.resolve()      // serialises host signing so message order is preserved
+    chain: Promise.resolve(),     // serialises host signing so message order is preserved
+    recvChain: Promise.resolve(), // serialises receiver verify+deliver so enforce can't reorder messages
+    _keyPoll: null                // interval handle: retry the public-key fetch until it is minted
   };
 
   // Message types that are harmless page-lifecycle nudges, not game content. They are honoured even
   // unsigned so admin tools (HQ "reload all TVs", the billing screen refresh) keep working: the worst
   // an attacker does with one is make a TV reload, which comes straight back to its true state.
-  var EXEMPT = { tv_reload: 1, screen_refresh: 1, tv_here: 1, hello: 1, rollcall: 1 };
+  // idle / to_ads are on-EXIT page-lifecycle nudges: the host sends them synchronously (unsigned) as
+  // it signs out or the tab unloads, because an async signature never completes before the page dies.
+  // They only return the TV to the ad loop, which the next signed game message re-embeds anyway, so a
+  // forged one is self-correcting and honouring them unsigned is safe.
+  var EXEMPT = { tv_reload: 1, screen_refresh: 1, tv_here: 1, hello: 1, rollcall: 1, idle: 1, to_ads: 1 };
 
   function b64uFromBytes(bytes) {
     var s = "";
@@ -101,14 +112,27 @@
       else if (ident && ident.code) { qs = "code=" + encodeURIComponent(ident.code); }
       else if (ident && ident.session) { qs = "session=" + encodeURIComponent(ident.session); }
       if (!subtleOk() || !qs) return Promise.resolve();
-      return fetch(apiBase + "/venue/signing/public?" + qs)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) {
-          if (!d || !d.exists || !d.public_jwk) return;
-          S.kid = d.kid || null; S.enforce = !!d.enforce;
-          return importKey(d.public_jwk, "verify").then(function (k) { S.pubKey = k; S.ready = true; });
-        })
-        .catch(function () { /* leave pubKey null -> render everything */ });
+      var url = apiBase + "/venue/signing/public?" + qs;
+      function attempt() {
+        return fetch(url)
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (d && typeof d.enforce === "boolean") S.enforce = !!d.enforce;   // keep the flag fresh even before a key
+            if (!d || !d.exists || !d.public_jwk) return false;                 // no key minted yet -> retry
+            S.kid = d.kid || null;
+            return importKey(d.public_jwk, "verify").then(function (k) { S.pubKey = k; S.ready = true; return true; });
+          })
+          .catch(function () { return false; });
+      }
+      // Fetch the key, and if it is not there yet (a screen that booted before the venue's first host
+      // login) or the fetch failed, KEEP RETRYING every 90s. Without this a long-lived Fire Stick that
+      // came up before the key existed would stay fail-open forever, so enforce would never protect it.
+      return attempt().then(function (got) {
+        if (got || S._keyPoll) return;
+        S._keyPoll = setInterval(function () {
+          attempt().then(function (ok) { if (ok && S._keyPoll) { clearInterval(S._keyPoll); S._keyPoll = null; } });
+        }, 90000);
+      });
     },
 
     // Fetch the venue PRIVATE key (staff-gated). getToken() must return the host's Supabase access
@@ -198,11 +222,16 @@
         return;
       }
       if (!S.pubKey || !subtleOk()) { try { cb(payload); } catch (e) { } return; }   // no key to verify with -> fail open
-      VPSign.verify(payload).then(function (verdict) {
-        if (verdict === "ok") { try { cb(payload); } catch (e) { } return; }
-        var t = payload && payload.t;
-        if (t && EXEMPT[t]) { try { cb(payload); } catch (e) { } return; }           // harmless lifecycle nudge
-        console.warn("[VPSign] dropped " + verdict + " message" + (t ? " (" + t + ")" : "") + " (enforce on)");
+      // Serialize verify+deliver through a chain so back-to-back messages (e.g. trivia podium then
+      // leaderboard) cannot be reordered by crypto.subtle.verify's variable timing under enforce. The
+      // sender already preserves wire order; this preserves it on the receive side too.
+      S.recvChain = S.recvChain.then(function () {
+        return VPSign.verify(payload).then(function (verdict) {
+          if (verdict === "ok") { try { cb(payload); } catch (e) { } return; }
+          var t = payload && payload.t;
+          if (t && EXEMPT[t]) { try { cb(payload); } catch (e) { } return; }         // harmless lifecycle nudge
+          console.warn("[VPSign] dropped " + verdict + " message" + (t ? " (" + t + ")" : "") + " (enforce on)");
+        });
       });
     }
   };

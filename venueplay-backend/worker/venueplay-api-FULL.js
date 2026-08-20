@@ -482,7 +482,9 @@ async function sbReturningAccount(env, email, mobile, excludeId) {
   try {
     const ors = ['contact_email.eq.' + encodeURIComponent(email)];
     if (mobile) ors.push('mobile.eq.' + encodeURIComponent(mobile));
-    const q = 'venueplay_founding?or=(' + ors.join(',') + ')&status=neq.pending&id=neq.' +
+    // Exclude 'pending' (an abandoned signup) AND 'comp' (a demo venue on a test contact): neither is
+    // a real prior account, so neither should deny a genuine later signup its first-month-free.
+    const q = 'venueplay_founding?or=(' + ors.join(',') + ')&status=not.in.(pending,comp)&id=neq.' +
               encodeURIComponent(excludeId) + '&select=id&limit=1';
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + q, { headers: sbHeaders(env) });
     if (!res.ok) return false;
@@ -3431,14 +3433,13 @@ async function vpbCancelVenue(request, env, json) {
      billing side but left switched OFF, with no screen to turn it back on. That is exactly how a
      venue got stuck. Only ever reverses a CANCELLATION suspension, never a non-payment one: an unpaid
      venue must stay off until it is paid. */
-  if (undo) {
-    const curRows = await vpaSelect(env, 'vp_venues',
-      'id=eq.' + encodeURIComponent(venueId) + '&select=status,suspended_reason');
-    const cur = curRows && curRows[0];
-    if (cur && cur.status === 'suspended' && cur.suspended_reason !== 'nonpayment') {
-      venuePatch.status = 'active';
-      venuePatch.suspended_reason = null;
-    }
+  // Remember the exact prior state so a Stripe failure can be rolled back COMPLETELY, not partially.
+  const priorRows = await vpaSelect(env, 'vp_venues',
+    'id=eq.' + encodeURIComponent(venueId) + '&select=status,suspended_reason,cancel_at_period_end');
+  const priorState = (priorRows && priorRows[0]) || null;
+  if (undo && priorState && priorState.status === 'suspended' && priorState.suspended_reason !== 'nonpayment') {
+    venuePatch.status = 'active';
+    venuePatch.suspended_reason = null;
   }
   await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), venuePatch);
 
@@ -3448,7 +3449,16 @@ async function vpbCancelVenue(request, env, json) {
   // Telling an owner "it stays live until 14 September and then stops billing" when Stripe refused
   // the change is a promise about their money that we have not kept.
   if (info && info.syncFailed) {
-    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: undo });
+    // FULL rollback of everything we changed, not just cancel_at_period_end. Restoring only the flag
+    // (as this used to) left an un-cancelled-then-reactivated venue at status='active' with
+    // cancel_at_period_end=true: it ran games but was excluded from the billed quantity, i.e. free
+    // games until the next renewal. Put every column back exactly as it was.
+    const rollback = { cancel_at_period_end: priorState ? !!priorState.cancel_at_period_end : undo };
+    if (venuePatch.status !== undefined && priorState) {
+      rollback.status = priorState.status;
+      rollback.suspended_reason = priorState.suspended_reason;
+    }
+    await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), rollback);
     return json({ error: 'We could not update your billing just now, so nothing has changed. Please try again in a minute, or email hello@venueplay.com.au.' }, 502);
   }
   const endsDate = info && info.periodEnd ? vpaFmtDate(info.periodEnd) : null;
