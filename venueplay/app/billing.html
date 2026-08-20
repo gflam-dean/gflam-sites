@@ -37,6 +37,10 @@
   .sumgrid .k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
   .sumgrid .v{font-size:20px;font-weight:800;margin-top:3px;color:#fff}
   .sumgrid .v.pink{color:var(--pink)}
+  .sumgrid .whenlbl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:1px}
+  .sumgrid .nextrow{margin-top:8px;font-size:12.5px;color:var(--muted);display:flex;align-items:baseline;gap:7px}
+  .sumgrid .nextrow .nl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .sumgrid .nextrow b{color:var(--text);font-weight:800;font-size:14px}
   .label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
   .tabs{display:flex;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow-x:auto}
   .tabs button{flex:1 0 auto;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:14px;padding:11px 16px;border-radius:10px;cursor:pointer;transition:.15s}
@@ -139,6 +143,8 @@
   .hostrow .hn b{display:block;font-size:15px;color:#fff}
   .hostrow .hn small{color:var(--muted);font-size:12.5px}
   .hostrow .rm{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+  .edv{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+  .edv:hover{border-color:var(--pink);color:#fff}
   .hostrow .own{color:var(--faint);font-size:12px;font-family:'JetBrains Mono',ui-monospace,monospace}
 </style>
 </head>
@@ -173,10 +179,17 @@
     <div class="tabpanel on" id="tp-billing">
     <div class="card">
       <div class="sumgrid">
-        <div><div class="k">Total players</div><div class="v" id="s-players">–</div></div>
-        <div><div class="k">Per month</div><div class="v pink" id="s-total">–</div></div>
+        <div>
+          <div class="k">Total players</div>
+          <div class="v" id="s-players">–</div><div class="whenlbl">this month</div>
+          <div class="nextrow"><span class="nl">Next month</span><b id="s-players-next">–</b></div>
+        </div>
+        <div>
+          <div class="k">Per month</div>
+          <div class="v pink" id="s-total">–</div><div class="whenlbl">this month</div>
+          <div class="nextrow"><span class="nl">Next month</span><b id="s-total-next">–</b></div>
+        </div>
         <div><div class="k">Next payment</div><div class="v" id="s-next" style="font-size:16px">–</div></div>
-        <div><div class="k">Card</div><div class="v" id="s-card" style="font-size:16px">–</div></div>
         <div id="s-credit-tile" style="display:none"><div class="k">Credit held</div><div class="v" id="s-credit" style="color:#35D07F">–</div></div>
       </div>
       <div class="note" id="s-credit-note" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
@@ -427,6 +440,17 @@
     } else if (ct){ ct.style.display="none"; if(cnote) cnote.textContent=""; }
     $("s-players").textContent = d.total_players;
     $("s-total").textContent = d.monthly_total;
+    /* NEXT MONTH. Reductions and cancellations only take effect at the next renewal, so "this month"
+       is current cover and "next month" is what it becomes. Players next month = every venue's
+       pending figure (or its current one), with cancelling venues dropped. Cost next month: when the
+       pricing is plain players x rate (no group tier or discount) we can state it exactly; otherwise
+       we show the Worker's authoritative next-charge amount rather than guess. */
+    var nextPlayers = 0;
+    (d.venues || []).forEach(function(v){ if (v.cancelling) return; nextPlayers += (v.pending != null ? v.pending : v.players); });
+    $("s-players-next").textContent = nextPlayers;
+    var mtNum = parseFloat(String(d.monthly_total).replace(/[^0-9.]/g, "")) || 0;
+    var plainPricing = Math.abs(mtNum - (d.total_players || 0) * rate) < 0.01;
+    $("s-total-next").textContent = plainPricing ? money(nextPlayers * rate) : (d.next_charge_amount || d.monthly_total);
     // Make it clear when the tiles above show current cover but a change is scheduled: reductions
     // (and a venue you cancel) only take effect at your next renewal, so the totals hold until then.
     var pn = $("players-note");
@@ -442,9 +466,8 @@
     $("s-next").textContent = d.next_charge
       ? (d.next_charge + (d.next_charge_amount ? "  ·  " + d.next_charge_amount : ""))
       : "at launch";
-    $("s-card").textContent = d.card_last4
-      ? ((d.card_brand ? (d.card_brand.charAt(0).toUpperCase() + d.card_brand.slice(1) + " ") : "") + "•••• " + d.card_last4)
-      : "on file";
+    // Card tile removed: we do not hold the card's last 4 digits, so it only ever said "on file".
+    // The card is viewed and updated through the Stripe portal under "Invoices & card" below.
     $("reminders").checked = d.payment_reminders !== false;
     gateSections(d);
 
@@ -639,7 +662,12 @@
       if (r.error){ showMsg(r.error); return; }
       $("add-name").value=""; $("add-postcode").value=""; $("add-seats").value=""; $("addForm").classList.remove("show");
       showMsg(name + " added to your account.", true);
+      // Refresh the account summary AND the host/manager panels: their "which venues" checkbox
+      // pickers are built from their own /account/hosts + /account/managers calls, so without this
+      // a freshly added venue would not appear as a tickable option until a full page reload.
       load();
+      loadHosts();
+      loadManagers();
     });
   });
 
@@ -676,6 +704,37 @@
       buildHostVenuePicker(acctVenues);
     });
   }
+  /* Inline "which venues" editor shared by hosts and managers, so a person's venues can be changed
+     after they are added instead of remove-and-re-add. Pre-ticks their current venues; Save reconciles
+     the set through /account/staff-set-venues (adds the newly ticked, removes the un-ticked). */
+  function venueEditor(staff, venues, reloadFn){
+    var panel = document.createElement("div");
+    panel.style.cssText = "display:none;flex-basis:100%;width:100%;margin-top:10px;border-top:1px solid var(--line);padding-top:10px";
+    var checks = document.createElement("div"); checks.className = "hostvenues";
+    var have = {}; (staff.venue_ids||[]).forEach(function(id){ have[id]=true; });
+    venues.forEach(function(v){
+      var l = document.createElement("label"); l.className = "hostchk";
+      l.innerHTML = '<input type="checkbox" class="ve-v" value="'+esc(v.id)+'"'+(have[v.id]?" checked":"")+'><span>'+esc(v.name)+'</span>';
+      checks.appendChild(l);
+    });
+    var actions = document.createElement("div"); actions.style.cssText = "display:flex;gap:10px;align-items:center;margin-top:8px";
+    var save = document.createElement("button"); save.className = "go"; save.textContent = "Save venues";
+    var cancel = document.createElement("button"); cancel.className = "canxlink"; cancel.type = "button"; cancel.textContent = "Cancel";
+    actions.appendChild(save); actions.appendChild(cancel);
+    panel.appendChild(checks); panel.appendChild(actions);
+    cancel.addEventListener("click", function(){ panel.style.display = "none"; });
+    save.addEventListener("click", function(){
+      var ids = []; checks.querySelectorAll(".ve-v:checked").forEach(function(c){ ids.push(c.value); });
+      if (!ids.length){ showMsg("Tick at least one venue, or use Remove to take away all access."); return; }
+      save.disabled = true; save.textContent = "Saving…";
+      api("/account/staff-set-venues", { auth_user_id: staff.auth_user_id, venue_ids: ids, all_venues: ids.length >= venues.length }).then(function(r){
+        save.disabled = false; save.textContent = "Save venues";
+        if (r.error){ showMsg(r.error); return; }
+        showMsg("Venues updated.", true); reloadFn();
+      });
+    });
+    return panel;
+  }
   function renderHosts(hosts, venues){
     var vmap = {}; venues.forEach(function(v){ vmap[v.id] = v.name; });
     var wrap = $("hosts"); wrap.innerHTML = "";
@@ -686,7 +745,12 @@
                 : (names.length ? names.join(", ") : "No venues");
       var row = document.createElement("div"); row.className = "hostrow";
       row.innerHTML = '<div class="hn"><b>' + esc(h.label || "Host") + '</b><small>' + esc(scope) + '</small></div>' +
-        (h.is_owner ? '<span class="own">Owner</span>' : '<button class="rm">Remove</button>');
+        (h.is_owner ? '<span class="own">Owner</span>' : '<button class="edv">Edit venues</button><button class="rm">Remove</button>');
+      if (!h.is_owner){
+        var ed = venueEditor(h, venues, loadHosts);
+        row.appendChild(ed);
+        row.querySelector(".edv").addEventListener("click", function(){ ed.style.display = (ed.style.display === "none" ? "block" : "none"); });
+      }
       var rm = row.querySelector(".rm");
       if (rm){
         rm.addEventListener("click", function(){
@@ -759,9 +823,14 @@
         '</div>' +
       '</div>' +
       '<input type="file" class="ad-file" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none">';
-    if (s.image_url) row.querySelector(".adthumb").style.backgroundImage = "url(" + s.image_url + ")";
+    var thumb0 = row.querySelector(".adthumb");
+    if (s.image_url) thumb0.style.backgroundImage = "url(" + s.image_url + ")";
     var file = row.querySelector(".ad-file");
     row.querySelector(".ad-change").addEventListener("click", function(){ file.click(); });
+    // Clicking the image slot itself also opens the picker, so "click where the image goes to upload"
+    // works as expected, not just the button beneath it.
+    thumb0.style.cursor = "pointer"; thumb0.title = "Click to choose an image";
+    thumb0.addEventListener("click", function(){ file.click(); });
     file.addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) uploadSlideImage(f, row); this.value=""; });
     row.querySelector(".ad-rm").addEventListener("click", function(){ row.remove(); });
     return row;
@@ -824,6 +893,9 @@
     var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove");
     if(lf) lf.addEventListener("change", function(){ var f=this.files&&this.files[0]; if(f) uploadLogo(f); this.value=""; });
     if(lr) lr.addEventListener("click", removeLogo);
+    // Clicking the logo box itself opens the picker too, same as the slide image slot.
+    var lt=document.getElementById("logoThumb");
+    if(lt && lf){ lt.style.cursor="pointer"; lt.title="Click to upload a logo"; lt.addEventListener("click", function(){ lf.click(); }); }
   })();
   function uploadSlideImage(file, row){
     if (!screenCurrent){ showMsg("Screen is still loading, one moment."); return; }
@@ -847,9 +919,11 @@
     (cfg.slides||[]).forEach(function(s){ sl.appendChild(slideRow(s)); });
     screenLogoUrl = cfg.logo_url || ""; renderLogo();
   }
-  function tvHref(slug){ return (screenOrigin||"") + "/tv" + (slug ? ("?venue=" + encodeURIComponent(slug)) : ""); }
+  // The bare /tv?<slug> form (tv.html reads a query with no "=" as the slug). Cleaner to read out and
+  // to type on a TV remote than /tv?venue=<slug>, and it resolves to exactly the same screen.
+  function tvHref(slug){ return (screenOrigin||"") + "/tv" + (slug ? ("?" + encodeURIComponent(slug)) : ""); }
   function setTvLinks(slug){
-    $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?venue=" + slug) : "");
+    $("tvLink").textContent = "venueplay.com.au/tv" + (slug ? ("?" + slug) : "");
     $("screenPreview").href = tvHref(slug);
     var sg=$("signageLink");
     if(sg) sg.href = (screenOrigin||"") + "/signage.html" + (slug ? ("?venue=" + encodeURIComponent(slug)) : "");
@@ -1147,9 +1221,13 @@
       if (p.draws_raffles !== false) on.push("Draws & raffles");
       if (p.players_optin !== false) on.push("Players");
       if (p.add_hosts !== false) on.push("Add hosts");
-      var row = document.createElement("div"); row.className = "venue";
+      var row = document.createElement("div"); row.className = "venue"; row.style.flexWrap = "wrap";
       row.innerHTML = '<div class="nm"><b>' + esc(m.label||"Manager") + '</b><small>' + esc(scope) + ' &middot; ' + esc(on.join(", ")||"no permissions") + '</small></div>' +
+        '<button class="edv" type="button">Edit venues</button>' +
         '<button class="canxlink" data-rmmgr="' + esc(m.auth_user_id) + '">Remove</button>';
+      var med = venueEditor(m, venues, loadManagers);
+      row.appendChild(med);
+      row.querySelector(".edv").addEventListener("click", function(){ med.style.display = (med.style.display === "none" ? "block" : "none"); });
       box.appendChild(row);
     });
     box.querySelectorAll("[data-rmmgr]").forEach(function(btn){

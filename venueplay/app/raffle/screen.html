@@ -117,6 +117,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-sign.js"></script>
 <script>
 (function(){
   "use strict";
@@ -148,6 +149,11 @@
     try{ var s=localStorage.getItem("vpTvVenue"); if(s) return s; }catch(e){}
     return "";
   })();
+  var VP_GAME_API='https://venueplay-game.dean-tindale.workers.dev';
+  // Verify host broadcasts (migrations 38/49): fetch this venue's PUBLIC key; vpGate drops forged
+  // messages in enforce mode, and delivers as before when enforce is off or the script is absent.
+  if(window.VPSign && VENUE_SLUG){ VPSign.initReceiver(VP_GAME_API, VENUE_SLUG); }
+  function vpGate(payload, cb){ if(window.VPSign){ VPSign.gate(payload, cb); } else { cb(payload); } }
   // ---- divert guard: a venue screen is NEVER a landing page. The only entry is the unified /tv link,
   //      which hops here (sessionStorage vpTvHop) the moment a game goes on air. A direct or bookmarked
   //      open is bounced straight to /tv so a screen is only ever the live link. ----
@@ -367,7 +373,7 @@
     Object.keys(CH).forEach(function(game){
       if(game===SELF) return;
       var c=client.channel("vp-"+CH[game], { config:{ broadcast:{ self:false } } });
-      c.on("broadcast",{ event:"msg" },function(e){ var m=e.payload; if(m && m.t==="mode") goTo(game); });
+      c.on("broadcast",{ event:"msg" },function(e){ vpGate(e.payload, function(m){ if(m && m.t==="mode") goTo(game); }); });
       c.subscribe();
     });
   })();
@@ -375,13 +381,12 @@
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });   // match the host + the unified TV convention
   var tvSubscribed=false;
   function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
-  ch.on("broadcast", { event:"msg" }, function(e){
-    var _m=e.payload;
+  ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, function(_m){
     // The venue saved a logo or a slide on the Account page. Re-read it now rather than
     // leaving the screen showing whatever it happened to load with.
     if(_m && _m.t==="screen_refresh"){ try{ reloadVenueLogo(); }catch(_){} return; }
     onMsg(_m);
-  });
+  }); });
   ch.subscribe(function(status){
     if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }

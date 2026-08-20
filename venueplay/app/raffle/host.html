@@ -240,6 +240,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
 <script src="../vp-gaming.js"></script>
+<script src="/app/vp-sign.js"></script>
 <script>
 (function(){
   "use strict";
@@ -281,9 +282,12 @@
         function(e){ clearTimeout(_to); var te=new Error("The game server did not answer. Check the venue wifi and try again."); te.status=0; throw te; });
     }).then(readApi); }
 
+  // Sign every host broadcast (migrations 38/49) so a forged raffle draw/winner is dropped in enforce mode.
+  function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
   // ---- pairing channel (host <-> venue screen), same convention as the raffle TV ----
   var ch=null, subscribed=false, sendQueue=[];
-  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
 
   // ---- console state (the Worker is authoritative; this is the console's view) ----
@@ -772,6 +776,7 @@
       $("statusText").textContent="Signed in";
       loadSavedPrizes();
       var slug=(ctx.venue && ctx.venue.slug) || "";
+      if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
       restoreRaffle().then(function(){   // recover a live raffle first (accidental reload), then pair the TV as normal
         var tv=tvFromUrl();
         if(tv){ connect(tv); }

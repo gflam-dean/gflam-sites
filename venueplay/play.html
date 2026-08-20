@@ -291,6 +291,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/app/vp-sign.js"></script>
 <script>
 (function(){
   "use strict";
@@ -992,8 +993,11 @@
     // they land back on their card. The host re-deals it when we re-announce below.
     var savedName=loadName(room);
     if(savedName){ P.name=savedName; P.joined=true; }
+    // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
+    // forged messages in enforce mode. No key / enforce off / script absent -> renders as before.
+    if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
     ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
-    ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+    ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
         subscribed=true; flushQueue();

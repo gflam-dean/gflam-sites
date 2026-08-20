@@ -442,6 +442,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
 <script src="vp-gaming.js"></script>
+<script src="/app/vp-sign.js"></script>
 <script>
 (function(){
   "use strict";
@@ -466,8 +467,13 @@
   // so role resolution and gameplay broadcast run on a single client.
   if(window.VP){ VP.useClient(client); }
   var ch=null, subscribed=false, sendQueue=[];
-  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
+  function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  // Sign every host broadcast (migrations 38/49) so a screen in enforce mode drops any forged copy.
+  // signSend is order-preserving and degrades to an unsigned send if the key is not loaded yet.
+  function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
   function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  // The host's Supabase access token, for the staff-gated private-key fetch.
+  function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
 
   // ---- read ?tv=CODE from the URL and remember the pairing ----
   (function(){
@@ -663,7 +669,10 @@
   }
   function markVenuePick(id){ try{ localStorage.setItem("vpVenuePick", JSON.stringify({ id:id, at:Date.now() })); }catch(e){} }
   function pairToVenue(slug){
-    if(VP && VP.venueCode && slug){ connect(VP.venueCode(slug)); return true; }
+    if(VP && VP.venueCode && slug){
+      if(window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // fetch this venue's signing key
+      connect(VP.venueCode(slug)); return true;
+    }
     return false;
   }
   function showVenuePick(){

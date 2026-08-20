@@ -76,6 +76,7 @@ export default {
       if (request.method === 'POST' && path === '/account/managers'     && typeof vpbListManagers === 'function') return await vpbListManagers(request, env, json);
       if (request.method === 'POST' && path === '/account/optin-export'  && typeof vpbOptinExport === 'function')  return await vpbOptinExport(request, env, json);
       if (request.method === 'POST' && path === '/account/host-remove' && typeof vpbRemoveHost === 'function')   return await vpbRemoveHost(request, env, json);
+      if (request.method === 'POST' && path === '/account/staff-set-venues' && typeof vpbSetStaffVenues === 'function') return await vpbSetStaffVenues(request, env, json);
       if (request.method === 'POST' && path === '/account/my-venues'   && typeof vpbMyVenues === 'function')     return await vpbMyVenues(request, env, json);
       // Gflam HQ admin (vpa* functions below). JWT-verified + role-gated inside each handler.
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
@@ -836,13 +837,23 @@ function vpaSlugify(s) {
   return String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-async function vpaUniqueSlug(env, base, seed) {
+async function vpaUniqueSlug(env, base, seed, postcode) {
+  const isFree = async (s) => {
+    const t = await vpaSelect(env, 'vp_venues', 'slug=eq.' + encodeURIComponent(s) + '&select=id');
+    return !(t && t.length);
+  };
   let slug = base || ('venue-' + String(seed || '').replace(/[^a-z0-9]/gi, '').slice(0, 8));
-  const taken = await vpaSelect(env, 'vp_venues', 'slug=eq.' + encodeURIComponent(slug) + '&select=id');
-  if (taken && taken.length) {
-    slug = slug + '-' + String(seed || Date.now()).replace(/[^a-z0-9]/gi, '').slice(0, 6);
+  if (await isFree(slug)) return slug;
+  /* Two venues with the same name (The Grand Hotel is everywhere). Append the POSTCODE, not a random
+     tail, so the TV link tells them apart by where they are: the-grand-hotel-4217. That is meaningful
+     to read out and to type on a remote, unlike the-grand-hotel-abc123. */
+  const pc = String(postcode || '').replace(/\D/g, '').slice(0, 4);
+  if (pc) {
+    const withPc = slug + '-' + pc;
+    if (await isFree(withPc)) return withPc;
+    slug = withPc;   // same name AND same postcode (rare): keep the postcode and add a short tail below
   }
-  return slug;
+  return slug + '-' + String(seed || Date.now()).replace(/[^a-z0-9]/gi, '').slice(0, 6);
 }
 
 // Australian mobile -> E.164 (+61...). Falls back to a bare +digits form.
@@ -915,7 +926,7 @@ async function vpaHandleVenue(request, env, json) {
     return json({ error: "billing.type must be 'founding' or 'group'." }, 400);
   }
 
-  const slug = await vpaUniqueSlug(env, slugIn, name);
+  const slug = await vpaUniqueSlug(env, slugIn, name, venuePostcode);
   let foundingId = null;
   /* The postcode is what sets au_state, and au_state is what decides which state's gaming rules
      a venue is shown and whether the paper-ticket rule applies to it. HQ's Add venue form now
@@ -1810,7 +1821,7 @@ async function vpaProvisionFromCheckout(env, session) {
     let venue = (await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id,name,slug'))[0];
     if (!venue) {
-      const slug = await vpaUniqueSlug(env, vpaSlugify(venueName), foundingId);
+      const slug = await vpaUniqueSlug(env, vpaSlugify(venueName), foundingId, f.postcode);
       venue = await vpaInsert(env, 'vp_venues', {
         founding_id: foundingId,
         name: venueName,
@@ -2031,7 +2042,7 @@ async function vpaProvisionOneVenue(env, opts) {
     'founding_id=eq.' + encodeURIComponent(foundingId) +
     '&name=eq.' + encodeURIComponent(name) + '&select=id,name,slug'))[0];
   if (!venue) {
-    const slug = await vpaUniqueSlug(env, vpaSlugify(name), foundingId + ':' + name);
+    const slug = await vpaUniqueSlug(env, vpaSlugify(name), foundingId + ':' + name, opts.postcode);
     venue = await vpaInsert(env, 'vp_venues', {
       founding_id: foundingId,
       group_id: groupId || undefined,
@@ -3883,6 +3894,65 @@ async function vpbRemoveHost(request, env, json) {
       'auth_user_id=eq.' + encodeURIComponent(target) + '&venue_id=eq.' + encodeURIComponent(vid) + '&role=neq.owner');
   }
   return json({ ok: true });
+}
+
+/* --- POST /account/staff-set-venues : change which venues an EXISTING host/manager can access. ---
+ * body { auth_user_id, venue_ids?[], all_venues? }
+ * Makes the person's venue set exactly match the request: adds a staff row for each newly chosen
+ * venue (carrying their existing role + permissions + name) and deletes the row for each venue they
+ * were de-selected from. Owner-only; never edits the owner or another full-access login; only ever
+ * touches venues on this account. This is what makes a host/manager's venues editable after they are
+ * added, instead of remove-and-re-add. */
+async function vpbSetStaffVenues(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }   // a restricted manager cannot reassign anyone
+  const b = await request.json().catch(() => ({}));
+  const target = String(b.auth_user_id || '').trim();
+  if (!target) return json({ error: 'Missing host.' }, 400);
+  if (target === o.authUserId) return json({ error: 'You cannot change your own venues here.' }, 400);
+
+  const accountVenueIds = o.venues.map((v) => v.id);
+  const accountSet = new Set(accountVenueIds);
+
+  // Their current rows across the account: role, permissions and name are carried onto any new row.
+  const currentRows = await vpaSelect(env, 'vp_venue_staff',
+    'auth_user_id=eq.' + encodeURIComponent(target) +
+    '&venue_id=in.(' + accountVenueIds.map(encodeURIComponent).join(',') + ')' +
+    '&select=venue_id,role,permissions,display_name');
+  if (!currentRows || !currentRows.length) {
+    return json({ error: 'That person is not set up on this account yet. Add them first.' }, 404);
+  }
+  // Never reassign the owner's own login (stored as role 'owner' on at least one venue).
+  const ownerLike = currentRows.some((r) => r.role === 'owner');
+  if (ownerLike) return json({ error: 'That login has full access and cannot be reassigned here.' }, 403);
+
+  const role = currentRows[0].role || 'host';
+  const perms = currentRows[0].permissions || null;
+  const name = currentRows[0].display_name || (role === 'manager' ? 'Manager' : 'Host');
+
+  let wanted = b.all_venues ? accountVenueIds.slice()
+             : (Array.isArray(b.venue_ids) ? b.venue_ids.filter((id) => accountSet.has(id)) : []);
+  wanted = Array.from(new Set(wanted));
+  if (!wanted.length) return json({ error: 'Pick at least one venue, or use Remove to take away all access.' }, 400);
+
+  const haveSet = new Set(currentRows.map((r) => r.venue_id));
+  const wantSet = new Set(wanted);
+
+  // Add rows for newly chosen venues, carrying the same role/permissions/name.
+  for (const vid of wanted) {
+    if (haveSet.has(vid)) continue;
+    const row = { venue_id: vid, auth_user_id: target, role: role, display_name: name };
+    if (role === 'manager') row.permissions = perms;
+    await vpaInsert(env, 'vp_venue_staff', row, false);
+  }
+  // Remove rows for venues they were de-selected from (never an owner row).
+  for (const r of currentRows) {
+    if (wantSet.has(r.venue_id)) continue;
+    await vpaDelete(env, 'vp_venue_staff',
+      'auth_user_id=eq.' + encodeURIComponent(target) + '&venue_id=eq.' + encodeURIComponent(r.venue_id) + '&role=neq.owner');
+  }
+  return json({ ok: true, auth_user_id: target, venue_ids: wanted });
 }
 
 // The signed-in host's venues, for the sign-in venue picker (any staff role).

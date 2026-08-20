@@ -195,6 +195,8 @@ export default {
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'GET'  && path === '/screen')             return await handleScreen(request, env, json);
+      if (method === 'GET'  && path === '/venue/signing/public') return await handleSigningPublic(request, env, json);
+      if (method === 'POST' && path === '/host/signing/private') return await handleSigningPrivate(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       if (method === 'POST' && path === '/host/game/pattern')  return await handleMusicPattern(request, env, json);
       if (method === 'POST' && path === '/host/trivia/set')                return await handleTriviaSet(request, env, json);
@@ -650,6 +652,122 @@ async function handleScreen(request, env, json) {
     slides: (cfg && Array.isArray(cfg.slides)) ? cfg.slides : [],
     raffle: (cfg && cfg.raffle) || null,
     draws: draws,
+  });
+}
+
+/* ------------------------------ broadcast message signing (migrations 38 + 49) ------------------------------
+ * Broadcast games meet on a Realtime channel whose name is derived from the venue's PUBLIC slug, so
+ * the channel is guessable and anyone with the anon key can shout into it: fake balls, a fake winner,
+ * the wrong trivia answer, the TV forced back to ads mid-round. There is no game server to appeal to.
+ *
+ * The fix (migration 38): each venue has an ECDSA P-256 keypair. The private half is released ONLY to
+ * a signed-in host who passes the staff check; the console signs every message. The public half is
+ * served to anyone, and the TV + phones verify each message, dropping anything unsigned once the venue
+ * is in enforce mode (migration 49). Verifying is the whole point, so the public key is not a secret.
+ *
+ * Keys are minted lazily on first request and cached forever. Deleting the row rotates them. */
+async function vpVenueIdBySlug(env, slugRaw) {
+  const slug = String(slugRaw || '').trim().toLowerCase().slice(0, 80);
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) return null;
+  const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id&limit=1');
+  return (rows && rows[0] && rows[0].id) || null;
+}
+
+// A short, stable id for a public key so a screen can notice the venue rotated its key and refetch.
+async function vpKeyId(pubJwk) {
+  const material = String((pubJwk && pubJwk.x) || '') + '.' + String((pubJwk && pubJwk.y) || '');
+  return (await sha256Hex(material)).slice(0, 16);
+}
+
+// Read (or mint on first ask) the venue's signing keypair. venue_id is the PK, so a concurrent
+// first-mint surfaces as a 409 from sbInsert, which we absorb by re-reading.
+async function vpGetOrMintSigningKey(env, venueId) {
+  const have = await sbGet(env, 'vp_venue_signing_keys',
+    'venue_id=eq.' + enc(venueId) + '&select=public_jwk,private_jwk&limit=1');
+  if (have && have.length) return have[0];
+  const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const pub = await crypto.subtle.exportKey('jwk', kp.publicKey);
+  const priv = await crypto.subtle.exportKey('jwk', kp.privateKey);
+  try {
+    await sbInsert(env, 'vp_venue_signing_keys', { venue_id: venueId, public_jwk: pub, private_jwk: priv }, false);
+    return { public_jwk: pub, private_jwk: priv };
+  } catch (e) {
+    // 409 = another request minted first (venue_id PK). Re-read and use theirs.
+    const again = await sbGet(env, 'vp_venue_signing_keys',
+      'venue_id=eq.' + enc(venueId) + '&select=public_jwk,private_jwk&limit=1');
+    if (again && again.length) return again[0];
+    throw e;
+  }
+}
+
+// Is this venue in ENFORCE mode? Per-venue column (migration 49), with a global env override so
+// every venue can be flipped at once once we trust it. Never throws: a missing column/row is "off".
+async function vpSignEnforce(env, venueId) {
+  if (String(env.SIGN_ENFORCE || '') === '1') return true;
+  try {
+    const rows = await sbGet(env, 'vp_venue_settings',
+      'venue_id=eq.' + enc(venueId) + '&select=sign_enforce&limit=1');
+    return !!(rows && rows[0] && rows[0].sign_enforce);
+  } catch (e) { return false; }
+}
+
+// Resolve a venue_id from whatever identifier a receiver happens to hold: the TV/screen knows the
+// slug, a bingo phone knows the venue CODE, a trivia/musical phone knows its session id. Any one of
+// them is enough to fetch the PUBLIC key (all it lets you do is verify, which is the whole point).
+async function vpVenueIdFromReq(env, url) {
+  const bySlug = await vpVenueIdBySlug(env, url.searchParams.get('venue'));
+  if (bySlug) return bySlug;
+  const code = url.searchParams.get('code');
+  if (code) {
+    const v = await venueByCode(env, code);           // a venue's permanent code (bingo / TV)
+    if (v) return v;
+    // ...or a live session's join code (trivia/musical/raffle phones only know this).
+    const jc = String(code).trim().toUpperCase();
+    if (/^[A-Z0-9]{4,8}$/.test(jc)) {
+      const s = await sbGet(env, 'vp_sessions', 'join_code=eq.' + enc(jc) + '&select=venue_id&order=created_at.desc&limit=1');
+      if (s && s[0] && s[0].venue_id) return s[0].venue_id;
+    }
+  }
+  const session = url.searchParams.get('session');
+  if (session && /^[0-9a-f-]{36}$/i.test(session)) {
+    const rows = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(session) + '&select=venue_id&limit=1');
+    if (rows && rows[0] && rows[0].venue_id) return rows[0].venue_id;
+  }
+  return null;
+}
+
+// GET /venue/signing/public?venue=<slug> | ?code=<venue code> | ?session=<id>
+//   -> { exists, public_jwk, kid, enforce }. Public: verifying is the point. Mints the keypair if the
+//   venue has none yet, so a screen that loads before the host still gets a real key. NEVER returns
+//   private_jwk.
+async function handleSigningPublic(request, env, json) {
+  const url = new URL(request.url);
+  const venueId = await vpVenueIdFromReq(env, url);
+  if (!venueId) return json({ exists: false });
+  const key = await vpGetOrMintSigningKey(env, venueId);
+  return json({
+    exists: true,
+    public_jwk: key.public_jwk,
+    kid: await vpKeyId(key.public_jwk),
+    enforce: await vpSignEnforce(env, venueId),
+  });
+}
+
+// POST /host/signing/private  body { slug } , Authorization: host JWT
+// -> { public_jwk, private_jwk, kid, enforce }. Staff-gated: only a signed-in host at THIS venue (or a
+// platform owner/accounts admin via View-as) is ever handed the private half.
+async function handleSigningPrivate(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const venueId = await vpVenueIdBySlug(env, b.slug);
+  if (!venueId) return json({ error: 'Unknown venue' }, 404);
+  await requireStaff(env, authUserId, venueId);                   // ENFORCED: staff at this venue (+ kill-switch)
+  const key = await vpGetOrMintSigningKey(env, venueId);
+  return json({
+    public_jwk: key.public_jwk,
+    private_jwk: key.private_jwk,
+    kid: await vpKeyId(key.public_jwk),
+    enforce: await vpSignEnforce(env, venueId),
   });
 }
 
