@@ -910,7 +910,13 @@
     if(m.t==="rollcall" || m.t==="host_here"){
       // host (re)connected and is rebuilding the night. re-announce so it re-adds us and
       // re-deals our tickets. We only reply to explicit host presence.
-      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); }
+      if(P.joined){
+        send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards });
+        // Re-announce a still-pending BINGO claim, so a host that reloaded mid-claim gets it back in
+        // the queue instead of an empty one, and the player is not left on "checking your ticket"
+        // forever (audit #7).
+        if(P.claimPending && P.wonCardNo){ send({ t:"claim", pid:P.pid, name:P.name, cardNo:P.wonCardNo }); }
+      }
       markHost(); return;
     }
     markHost();   // any message below proves a live host is on this channel
