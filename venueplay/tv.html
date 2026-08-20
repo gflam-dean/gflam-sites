@@ -1150,6 +1150,20 @@
         document.body.appendChild(el); }
       el.src=url; el.style.display="block";
     }
+    // The venue's NAME in plain text, bottom-left, always on. So anyone glancing at a screen can see
+    // WHICH venue it is showing (a TV pointed at the wrong venue is otherwise only noticeable by its
+    // sound). Subtle, never over a game's own content.
+    function setVenueName(name){
+      var el=document.getElementById("venueNameTag");
+      var nm=String(name||"").trim();
+      if(!nm){ if(el) el.style.display="none"; return; }
+      if(!el){ el=document.createElement("div"); el.id="venueNameTag";
+        el.style.cssText="position:fixed;left:22px;bottom:16px;z-index:60;pointer-events:none;"+
+          "font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;letter-spacing:.02em;"+
+          "color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)";
+        document.body.appendChild(el); }
+      el.textContent=nm; el.style.display="block";
+    }
     /* THE WHOLE SCREEN, IN ONE CALL, THROUGH THE WORKER.
        This used to read vp_venue_screen and v_vp_screen_draws straight from Supabase with the
        public key. That worked for one venue by slug, but the same grant answered a request with
@@ -1170,6 +1184,7 @@
              to get rid of it. */
           ADS.raffle = hasRaffle(d.raffle) ? d.raffle : null;
           setVenueLogo(d.logo_url || "");
+          setVenueName(d.name || "");
           var draws = Array.isArray(d.draws) ? d.draws : [];
           if(draws[0] && draws[0].timezone) VENUE_TZ=draws[0].timezone;   // "Tonight" in the VENUE's time
           // "Tonight" is decided at render time (entryInner), so the board stays right past midnight.

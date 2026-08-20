@@ -477,8 +477,15 @@
       return fetch(VP_WORKER+path, { method:"POST", headers:headers, body:JSON.stringify(body||{}) })
         .then(function(res){
           if(res.status===404) return { degraded:true, error:"Backend endpoint "+path+" is not deployed yet. Nothing was changed." };
-          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || ("Request failed ("+res.status+")") }; })
-                           .catch(function(){ return { error:"Unexpected response from the server." }; });
+          // Return the WHOLE body on a non-2xx, not just {error}: handlers rely on extra fields the
+          // Worker sends alongside an error (e.g. the discount's needs_confirm + venue_count, which
+          // drive the "apply to the whole account?" prompt). Only synthesise an error if none came.
+          return res.json().then(function(j){
+            if(res.ok) return j;
+            var out=(j && typeof j==="object") ? j : {};
+            if(!out.error) out.error="Request failed ("+res.status+")";
+            return out;
+          }).catch(function(){ return { error:"Unexpected response from the server." }; });
         })
         .catch(function(){ return { degraded:true, error:"Backend endpoint "+path+" is not reachable yet (Worker not deployed). Nothing was changed." }; });
     });
@@ -488,7 +495,7 @@
   /* ---- state ---- */
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
-          admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null,
+          admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null, hideHp:{},
           vFilter:"all", vSearch:"", openVenue:null, openBilling:null, openGroup:null,
           gFilter:"all", gSearch:"" };
 
@@ -527,7 +534,11 @@
       c.from("vp_admin_audit").select("*").order("created_at",{ascending:false}).limit(250),
       c.from("vp_sessions").select("id,venue_id,status,opened_at,started_at").in("status",["lobby","running","paused"]),
       c.rpc("venueplay_spots_taken"),
-      c.from("vp_games").select("session_id,format,started_at,status").eq("status","running")
+      c.from("vp_games").select("session_id,format,started_at,status").eq("status","running"),
+      // Separate + fault-tolerant on purpose: hide_from_trusted (migration 54) is NOT named in
+      // listVenues, because a not-yet-migrated column there would 400 and empty the whole list. Here
+      // a 400 just leaves the flag map empty and every Hide button defaults to "Hide from homepage".
+      c.from("vp_venues").select("id,hide_from_trusted")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -536,6 +547,7 @@
         $("venueRows").innerHTML='<tr><td colspan="5" class="empty" style="border:none;background:none">Could not load venues: '+esc(why)+'</td></tr>';
       }
       S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
+      S.hideHp={}; ((r[9] && r[9].data) || []).forEach(function(v){ S.hideHp[v.id]=!!v.hide_from_trusted; });   // homepage-marquee visibility (migration 54)
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
       S.discounts=(r[2] && r[2].data) || [];
@@ -812,6 +824,7 @@
                   '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
                   (v.slug ? '<button class="mini" data-tvreload="'+esc(v.id)+'">Reload TV</button>' : '')+
                   (canBilling() ? '<button class="mini" data-disc="'+esc(v.id)+'">Discount</button>' : '')+
+                  '<button class="mini" data-hidehp="'+esc(v.id)+'">'+(S.hideHp[v.id]?"Show on homepage":"Hide from homepage")+'</button>'+
                   '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
       if(canBilling()){
         actions+='<button class="mini'+(suspended?' win':' roll')+'" data-suspend="'+esc(v.id)+'" data-to="'+(suspended?'active':'suspended')+'">'+(suspended?"Reactivate":"Pause")+'</button>';
@@ -902,6 +915,8 @@
     }
     var tr=e.target.closest("button[data-tvreload]");
     if(tr){ reloadOneScreen(tr.getAttribute("data-tvreload"), tr); return; }
+    var hh=e.target.closest("button[data-hidehp]");
+    if(hh){ toggleHideHomepage(hh.getAttribute("data-hidehp"), hh); return; }
     var pcb=e.target.closest("button[data-pcsave]");
     if(pcb){
       var vid=pcb.getAttribute("data-pcsave");
@@ -1111,6 +1126,18 @@
       for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) S.venues[i].status=to; }
       renderStats(); renderVenues();
       loadAuditOnly();
+    });
+  }
+  /* Show/hide a venue on the public "Trusted by" homepage marquee. Direct client update: admins have
+     FOR ALL on vp_venues (same policy HQ already uses to reassign a venue's group). No Worker needed.
+     v_vp_trusted (migration 54) excludes venues with hide_from_trusted=true. */
+  function toggleHideHomepage(id, btn){
+    var next = !S.hideHp[id];
+    btn.disabled=true; var old=btn.textContent; btn.textContent="…";
+    VP.getClient().from("vp_venues").update({ hide_from_trusted: next }).eq("id", id).then(function(r){
+      btn.disabled=false;
+      if(r.error){ btn.textContent=old; alert("Could not change homepage visibility: "+(r.error.message||r.error)+"\n\n(If this says the column is missing, run migration 54 first.)"); return; }
+      S.hideHp[id]=next; renderVenues();
     });
   }
 

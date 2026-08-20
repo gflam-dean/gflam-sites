@@ -923,7 +923,7 @@
   #trusted .marquee{overflow:hidden;position:relative;margin-top:22px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
   #trusted .track{display:flex;gap:48px;align-items:center;width:max-content;animation:trustedScroll 45s linear infinite}
   #trusted .marquee:hover .track{animation-play-state:paused}
-  .trustedlogo{height:46px;width:auto;max-width:160px;object-fit:contain;opacity:.85}
+  .trustedlogo{height:64px;width:auto;max-width:210px;object-fit:contain;opacity:.9}
   @keyframes trustedScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   @media(prefers-reduced-motion:reduce){#trusted .track{animation:none;flex-wrap:wrap;justify-content:center}}
 </style>
@@ -1060,12 +1060,12 @@
               <!-- Asked once, not per venue: a group is pubs or it is clubs, never a mix. It
                    decides which gaming rules the venue is shown and whether it can charge for
                    entry, and nothing else on this form can tell us. -->
-              <label for="vp-entity">Is your venue a club or a pub?</label>
-              <select id="vp-entity">
-                <option value="">Choose one</option>
-                <option value="non_profit">Club (RSL, bowls, leagues, community, non-profit)</option>
-                <option value="for_profit">Pub, hotel or tavern</option>
-              </select>
+              <label>Is your venue a club or a pub?</label>
+              <input type="hidden" id="vp-entity" value="">
+              <div class="seg seg-entity" id="vp-entity-seg" role="radiogroup" aria-label="Is your venue a club or a pub?">
+                <button type="button" data-entity="non_profit" role="radio" aria-checked="false">Club<small>RSL, bowls, leagues, non-profit</small></button>
+                <button type="button" data-entity="for_profit" role="radio" aria-checked="false">Pub<small>hotel or tavern</small></button>
+              </div>
               <span class="field-hint">This sets the gaming rules we show you. Clubs are non-profits and can charge for entry to a raffle or bingo in most states; a pub generally cannot in its own right, but can run one for a nominated charity.</span>
             </div>
             <div class="field full">
@@ -1372,13 +1372,28 @@
 
   /* ---------- Venue rows: one venue, or many (a group is simply more than one) ---------- */
   var entitySel = document.getElementById('vp-entity');
+  var entitySeg = document.getElementById('vp-entity-seg');
+  /* Club/pub is a two-way choice, so a segmented control (the same one the plan toggle uses) reads
+     better than a dropdown and is one tap on a phone. #vp-entity stays a hidden input holding the
+     value, so every reader (preselect, submit) is unchanged. */
+  function setEntity(val){
+    if (!entitySel) return;
+    entitySel.value = val || '';
+    if (entitySeg) Array.prototype.forEach.call(entitySeg.children, function(b){
+      var on = b.getAttribute('data-entity') === val;
+      b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+  }
+  if (entitySeg) Array.prototype.forEach.call(entitySeg.children, function(b){
+    b.addEventListener('click', function(){ setEntity(b.getAttribute('data-entity')); });
+  });
   /* Pre-fill from the first venue's name, so an RSL or a Hotel is one tap. Never overwrites an
      answer already given: the venue's own choice always wins. */
   function preselectEntity(){
     if (!entitySel || entitySel.value) return;
     var first = document.querySelector('#vp-venue-list .v-name');
     var g = guessEntityFromName(first && first.value);
-    if (g) entitySel.value = g;
+    if (g) setEntity(g);
   }
   var venueList = document.getElementById('vp-venue-list');
   var addVenueBtn = document.getElementById('vp-add-venue');
