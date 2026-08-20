@@ -88,6 +88,14 @@
   .scorebox{margin-top:18px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:22px}
   .rankline{color:var(--muted);font-size:13px;margin-top:2px}
   .finalwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(255,194,75,.16), transparent 65%)}
+  /* win celebration (shared with bingo/musical) */
+  .cfetti{position:fixed;top:-14px;width:9px;height:14px;z-index:9999;pointer-events:none;border-radius:2px;will-change:transform,opacity;animation:cfall linear forwards}
+  @keyframes cfall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(106vh) rotate(560deg);opacity:.85}}
+  @keyframes winPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+  .winner #finalBig{font-size:52px;line-height:1.02;letter-spacing:.01em;text-shadow:0 0 26px rgba(255,194,75,.65);animation:winPulse 1s ease-in-out infinite}
+  .winner #finalEmoji{font-size:78px;animation:winPulse 1.3s ease-in-out infinite}
+  .winner #finalSub{color:#fff;font-weight:700}
+  @media (prefers-reduced-motion: reduce){ .cfetti{display:none} .winner #finalBig,.winner #finalEmoji{animation:none} }
   /* menu (top-right): Light mode + Leave */
   .menubtn{position:absolute;top:12px;right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer;z-index:20}
   .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:200px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
@@ -169,9 +177,9 @@
 
   <!-- FINAL -->
   <div class="view center hidden finalwrap" id="vFinal">
-    <div style="font-size:52px">&#127881;</div>
-    <div class="pbig" style="color:var(--gold)">That&#39;s a wrap</div>
-    <div class="psub">Thanks for playing tonight</div>
+    <div style="font-size:56px" id="finalEmoji">&#127881;</div>
+    <div class="pbig" id="finalBig" style="color:var(--gold)">That&#39;s a wrap</div>
+    <div class="psub" id="finalSub">Thanks for playing tonight</div>
     <div class="scorebox" id="finalScore">0 points</div>
     <div class="rankline" id="finalRank"></div>
     <div class="pnote">The winners are up on the big screen.</div>
@@ -377,18 +385,74 @@
     }
   }
 
+  // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file). Phone speakers are
+  // often muted, so confetti + vibrate lead and sound is a bonus. Shared shape with bingo/musical. ----
+  var _ac=null;
+  function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", unlockAudio, { once:true });
+  function playFanfare(){
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+      if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume();
+      var ctx=_ac, now=ctx.currentTime, notes=[523.25,659.25,783.99,1046.50];
+      for(var i=0;i<notes.length;i++){ var t=now+i*0.11, o=ctx.createOscillator(), g=ctx.createGain();
+        o.type="triangle"; o.frequency.value=notes[i];
+        g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.55); }
+      var chord=[1046.50,1318.51,1567.98], tc=now+notes.length*0.11;
+      for(var j=0;j<chord.length;j++){ var oc=ctx.createOscillator(), gc=ctx.createGain();
+        oc.type="sine"; oc.frequency.value=chord[j];
+        gc.gain.setValueAtTime(0.0001,tc); gc.gain.exponentialRampToValueAtTime(0.2,tc+0.04); gc.gain.exponentialRampToValueAtTime(0.0001,tc+0.9);
+        oc.connect(gc); gc.connect(ctx.destination); oc.start(tc); oc.stop(tc+0.95); }
+    }catch(e){}
+  }
+  function confettiBurst(){
+    try{
+      var colors=["#FF1F8E","#FFC24B","#35D07F","#48C9FF","#C70F69","#FFFFFF"];
+      for(var i=0;i<44;i++){ var c=document.createElement("div"); c.className="cfetti";
+        c.style.left=Math.random()*100+"vw"; c.style.background=colors[i%colors.length];
+        c.style.animationDuration=(2+Math.random()*1.6)+"s"; c.style.animationDelay=(Math.random()*0.25)+"s";
+        c.style.transform="translateY(0) rotate("+(Math.random()*360)+"deg)";
+        document.body.appendChild(c);
+        (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 4200); })(c); }
+    }catch(e){}
+  }
+  var _celebrated=false;
+  function celebrate(){ if(_celebrated) return; _celebrated=true; try{ if(navigator.vibrate) navigator.vibrate([0,90,60,90,60,150]); }catch(e){} playFanfare(); confettiBurst(); }
+  function ordinal(n){ var s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+
+  function decorateFinal(){
+    var r=P.rank||0, wrap=$("vFinal");
+    $("finalScore").textContent=P.total+" points";
+    if(r===1){
+      $("finalEmoji").innerHTML="&#127942;";                       // trophy
+      $("finalBig").textContent="YOU WON!"; $("finalSub").textContent="You topped the leaderboard tonight";
+      $("finalRank").textContent="1st place"; if(wrap) wrap.classList.add("winner");
+      celebrate();                                                  // confetti + fanfare + buzz
+    } else if(r===2 || r===3){
+      $("finalEmoji").innerHTML = (r===2 ? "&#129352;" : "&#129353;"); // silver / bronze medal
+      $("finalBig").textContent = ordinal(r)+" place!"; $("finalSub").textContent="On the podium tonight, nicely done";
+      $("finalRank").textContent = "You finished "+ordinal(r); if(wrap) wrap.classList.remove("winner");
+      confettiBurst();
+    } else {
+      $("finalEmoji").innerHTML="&#127881;";
+      $("finalBig").textContent="That's a wrap"; $("finalSub").textContent="Thanks for playing tonight";
+      $("finalRank").textContent = r ? ("You finished "+ordinal(r)) : ""; if(wrap) wrap.classList.remove("winner");
+    }
+  }
   function showFinal(){
     P.ended=true; show("vFinal");
     $("finalScore").textContent=P.total+" points";
-    $("finalRank").textContent = P.rank ? ("You finished rank "+P.rank) : "";
+    var done=false;
+    function finish(){ if(done) return; done=true; decorateFinal(); }
+    // Decorate from the AUTHORITATIVE rank so we only ever fire the winner celebration for a real 1st.
     if(P.gameId){
       playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
         if(typeof r.total==="number") P.total=r.total;
         if(typeof r.rank==="number") P.rank=r.rank;
-        $("finalScore").textContent=P.total+" points";
-        $("finalRank").textContent = P.rank ? ("You finished rank "+P.rank) : "";
-      }).catch(function(){});
-    }
+        finish();
+      }).catch(finish);
+    } else { finish(); }
   }
 
   // ---- incoming ----

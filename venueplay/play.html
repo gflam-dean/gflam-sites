@@ -190,6 +190,10 @@
   .sharenote{margin-top:12px;font-size:13.5px;color:var(--muted);line-height:1.45}
   .sharenote b{color:var(--text)}
   .wonwrap{background:radial-gradient(600px 400px at 50% 20%, rgba(53,208,127,.18), transparent 65%)}
+  @keyframes winPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  .wonwrap .pbig{font-size:56px;line-height:1.02;text-shadow:0 0 28px rgba(53,208,127,.6);animation:winPulse 1s ease-in-out infinite}
+  .wonwrap .wonemoji{font-size:78px;animation:winPulse 1.3s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){ .wonwrap .pbig,.wonwrap .wonemoji{animation:none} }
   .biglose .pbig{color:var(--gold)}
   /* near-win tension */
   .tension{margin:10px 0 2px;text-align:center;font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.04em;color:var(--gold);line-height:1}
@@ -273,8 +277,8 @@
 
   <!-- WON -->
   <div class="view center hidden wonwrap" id="vWon">
-    <div style="font-size:52px">&#127881;</div>
-    <div class="pbig" style="color:var(--win)">You won!</div>
+    <div class="wonemoji" style="font-size:52px">&#127881;</div>
+    <div class="pbig" style="color:var(--win)">YOU WON!</div>
     <div class="psub">Show this screen at the bar to claim</div>
     <div class="prizebox" id="wonPrize">the prize</div>
     <div class="sharenote hidden" id="wonShare"></div>
