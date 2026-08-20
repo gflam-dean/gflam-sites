@@ -503,6 +503,8 @@
 
   // ---- card render ----
   function autoDaub(){
+    if(P.paidMode) return;  // paid games are real bingo: the player dabs their own card. We highlight the
+                            // called numbers (see renderCards) but never mark them, even in Easy mode.
     if(!P.assist) return;   // manual play by default: the player dabs their own numbers, we never mark for them
     var set=calledSet();
     for(var i=0;i<P.cards.length;i++){ var cd=P.cards[i];
@@ -600,7 +602,10 @@
         if(!n){ cell.className="cc blank"; grid.appendChild(cell); continue; }
         cell.className="cc"; cell.setAttribute("data-card",i); cell.setAttribute("data-n",n); cell.textContent=n;
         if(cd.daubs[n]) cell.classList.add("daub");
-        if(P.assist && set[n]) cell.classList.add("on");   // only hint which numbers are called in Easy mode; otherwise the player tracks their own
+        // Highlight a called number in Easy mode, OR on a PAID game (where the player dabs their own
+        // card): on a paid night we never mark for them, we just glow the called-but-unmarked cells
+        // so they can find and tap them. The glow clears once they mark it.
+        if((P.assist && set[n]) || (P.paidMode && set[n] && !cd.daubs[n])) cell.classList.add("on");
         if(c===curCol) cell.classList.add("incol");
         // Three across shrinks a ticket to thumbnail size. Lifting the right TICKET is only half
         // the job: without this the player still had to hunt 15 tiny numbers for the one that was
@@ -646,7 +651,7 @@
       var cd=P.cards[ci];
       var marked=!!(cd && cd.daubs[n]);
       cell.classList.toggle("daub", marked);
-      cell.classList.toggle("on", !!(P.assist && set[n]));
+      cell.classList.toggle("on", !!((P.assist && set[n]) || (P.paidMode && set[n] && !marked)));
       cell.classList.toggle("incol", curCol>=0 && colOfNum(n)===curCol);
       cell.classList.toggle("justcalled", n===last);
       // Called, not marked, and not the newest ball (that one already has the loud ring).
