@@ -1245,17 +1245,30 @@
     var note=form.querySelector(".dcNote").value.trim();
     var msg=form.querySelector(".dcMsg");
     if(!(value>0)){ msg.style.color="var(--roll)"; msg.textContent="Enter a value greater than zero."; return; }
-    ap.disabled=true; msg.style.color="var(--muted)"; msg.textContent="Applying…";
-    workerPost("/admin/discount", { target_type:target, target_id:id, kind:kind, value_numeric:value, months:months, note:note }).then(function(res){
-      ap.disabled=false;
-      if(res.error){ msg.style.color="var(--roll)"; msg.textContent=res.error; return; }
-      // Say what actually happened in Stripe. "Discount applied" was true of the row and false
-      // of the invoice for as long as this screen has existed, so it now reports the real thing.
-      msg.style.color="var(--win)";
-      msg.textContent = res.manual ? ("Recorded. " + (res.why||"Apply it when you raise the invoice."))
-                      : ("Applied in Stripe: " + (res.applied||"done") + ".");
-      reloadDiscounts();
-    });
+    submitDiscount(false);
+    function submitDiscount(applyToAccount){
+      ap.disabled=true; msg.style.color="var(--muted)"; msg.textContent="Applying…";
+      var body={ target_type:target, target_id:id, kind:kind, value_numeric:value, months:months, note:note };
+      if(applyToAccount) body.apply_to_account=true;
+      workerPost("/admin/discount", body).then(function(res){
+        ap.disabled=false;
+        if(res.error){
+          // A group percentage covers every venue on the account. That is a warning, not a hard stop:
+          // let the operator confirm and re-send to apply it across the whole account.
+          if(res.needs_confirm && !applyToAccount){
+            if(confirm(res.error + "\n\nApply this " + value + "% across the whole account (" + (res.venue_count||"all") + " venues)?")){ submitDiscount(true); return; }
+            msg.style.color="var(--muted)"; msg.textContent="Cancelled."; return;
+          }
+          msg.style.color="var(--roll)"; msg.textContent=res.error; return;
+        }
+        // Say what actually happened in Stripe. "Discount applied" was true of the row and false
+        // of the invoice for as long as this screen has existed, so it now reports the real thing.
+        msg.style.color="var(--win)";
+        msg.textContent = res.manual ? ("Recorded. " + (res.why||"Apply it when you raise the invoice."))
+                        : ("Applied in Stripe: " + (res.applied||"done") + ".");
+        reloadDiscounts();
+      });
+    }
   });
   $("billingRows").addEventListener("click", function(e){
     var det=e.target.closest("button[data-bdet]");
