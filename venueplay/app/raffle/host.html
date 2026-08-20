@@ -361,6 +361,18 @@
         // rebuild the drawn grid: all_tickets = every number drawn so far, last_tickets is the fallback
         G.drawn={}; var dt=(Array.isArray(g.all_tickets)&&g.all_tickets.length)?g.all_tickets:(g.last_tickets||[]);
         for(var i=0;i<dt.length;i++){ if(dt[i]!=null) G.drawn[dt[i]]=true; }
+        // Rebuild the audit-log table from the server (audit #36), so a reload does not blank the
+        // "who won what" history. Newest first, matching logResults().
+        if(Array.isArray(g.results) && g.results.length){
+          G.results = g.results.slice().reverse().map(function(r){
+            var d=r.drawn_at?new Date(r.drawn_at):null;
+            return { when: d?d.toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}):"",
+                     date: d?d.toLocaleDateString("en-AU",{day:"numeric",month:"short"}):"",
+                     prize: r.prize||"", numText: pad(r.ticket),
+                     range: (g.range_min!=null?g.range_min:G.min)+"-"+(g.range_max!=null?g.range_max:G.max),
+                     outcome: r.outcome||"drawn" };
+          });
+        }
         /* PUT A LIVE WINNER BACK. Without this, a tablet locking between the draw and the claim
            lost the round entirely: renderRange() falls through to sendIdle(), which wiped the
            drawn ticket off the TV, and the host was left with no winner card, no Claim and no

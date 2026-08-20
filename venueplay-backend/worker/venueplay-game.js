@@ -4106,6 +4106,14 @@ async function getPublicSnapshot(env, sessionId) {
         if (last[i].seq === lastSeq && last[i].ticket_number != null) lastTickets.push(last[i].ticket_number);
         if (last[i].ticket_number != null) allTickets.push(last[i].ticket_number);
       }
+      // The full results log (audit #36), so a reloaded HOST rebuilds its on-screen "who won what"
+      // table instead of it going blank. Bounded to 200 rows; the records themselves live forever.
+      const resultsRows = await sbGet(env, 'vp_raffle_results',
+        'game_id=eq.' + enc(g.id) + '&select=seq,ticket_number,prize_text,prize_type,outcome,drawn_at&order=seq.asc&limit=200');
+      const results = resultsRows.map((x) => ({
+        seq: x.seq, ticket: x.ticket_number, prize: x.prize_text || null,
+        prize_type: x.prize_type || null, outcome: x.outcome || null, drawn_at: x.drawn_at || null,
+      }));
       snap.game = {
         game_id: g.id, seq: g.seq, format: 'raffle',
         prize: cfg.prize || null, prize_type: cfg.prize_type || null,
@@ -4117,6 +4125,7 @@ async function getPublicSnapshot(env, sessionId) {
         jackpot_on: !!r.jackpot_on,
         jackpot_amount_cents: r.jackpot_amount_cents != null ? r.jackpot_amount_cents : null,
         pad: padWidth, last_seq: lastSeq, last_tickets: lastTickets, all_tickets: allTickets,
+        results: results,
       };
     }
   }
