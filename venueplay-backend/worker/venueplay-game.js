@@ -264,6 +264,8 @@ export default {
      behaviour, so it is safe to deploy before the trigger is set up. */
   async scheduled(event, env, ctx) {
     ctx.waitUntil(sweepStaleSessions(env).then(function (r) {
+      // A sweep whose query failed used to print exactly what a quiet night prints. Say which.
+      if (r.error) { console.log('[sweep] FAILED to list stale sessions: ' + r.error); return; }
       console.log('[sweep] closed ' + r.closed + ', failed ' + r.failed + ', of ' + r.found + ' stale sessions');
     }));
   },

@@ -120,7 +120,14 @@ async function handleCheckout(request, env, json) {
     venues = (vn && vs) ? [{ name: vn, seats: vs }] : [];
   }
   venues = venues
-    .map((v) => ({ name: String((v && v.name) || '').trim(), seats: parseInt(v && v.seats, 10), postcode: String((v && v.postcode) || '').replace(/\D/g, '').slice(0, 4) }))
+    /* entity_type is the venue's own answer to "are you a club or a pub", and it has to survive
+       this mapping. It did not, so every declaration was silently dropped here and provisioning
+       fell back to guessing from the trading name: a venue that answered "pub" and happens to be
+       called Southport RSL was recorded as a non-profit. That is the wrong way round for the one
+       field the OLGR position rests on. */
+    .map((v) => ({ name: String((v && v.name) || '').trim(), seats: parseInt(v && v.seats, 10),
+                   postcode: String((v && v.postcode) || '').replace(/\D/g, '').slice(0, 4),
+                   entity_type: (v && (v.entity_type === 'non_profit' || v.entity_type === 'for_profit')) ? v.entity_type : null }))
     .filter((v) => v.name && v.seats > 0);
 
   if (email.indexOf('@') === -1 || !venues.length) {
@@ -134,7 +141,7 @@ async function handleCheckout(request, env, json) {
     let nm = v.name, k = 2;
     while (seenNames[nm.toLowerCase()]) { nm = v.name + ' (' + k + ')'; k++; }
     seenNames[nm.toLowerCase()] = true;
-    return { name: nm, seats: v.seats, postcode: v.postcode };
+    return { name: nm, seats: v.seats, postcode: v.postcode, entity_type: v.entity_type };
   });
 
   const venueCount = venues.length;
@@ -491,11 +498,22 @@ async function sbInsert(env, obj) {
   return Array.isArray(data) ? data[0] : data;
 }
 async function sbUpdate(env, id, obj) {
-  await fetch(env.SUPABASE_URL + '/rest/v1/venueplay_founding?id=eq.' + encodeURIComponent(id), {
+  /* THROW, do not swallow. This is the only writer of venueplay_founding.stripe_customer_id and
+     stripe_subscription_id, and it was fire-and-forget: a failed PATCH let the webhook carry on
+     and return 200, so Stripe never retried and that account had no Stripe ids for good. The
+     consequences are all silent and permanent: chargeNightOverage reads missing ids as "comp
+     venue, never charge" and skips their overage forever, the account page shows no card and no
+     renewal date, and the venue is never counted in the founding spots. Throwing makes the
+     webhook fail, which makes Stripe retry, which is exactly what should happen. */
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/venueplay_founding?id=eq.' + encodeURIComponent(id), {
     method: 'PATCH',
     headers: sbHeaders(env),
     body: JSON.stringify(obj),
   });
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error('venueplay_founding update failed (' + res.status + '): ' + t.slice(0, 200));
+  }
 }
 // Count of committed venues (card_on_file / active), via the same RPC the site counter uses.
 async function sbSpotsTaken(env) {
@@ -905,7 +923,8 @@ async function vpaHandleVenue(request, env, json) {
      self-serve path (vpaProvisionOneVenue) has always done this correctly; this is it catching up. */
   const venuePostcode = String((b.postcode || '')).replace(/\D/g, '').slice(0, 4);
   const venueRow = { name: name, slug: slug, timezone: timezone };
-  { const g = vpaGuessEntity(name); if (g) venueRow.entity_type = g; }
+  // HQ's Add venue form does not ask the question, so this stays null and HQ prompts for it.
+  // A guess must never occupy this column: see vpaProvisionOneVenue.
   if (venuePostcode) {
     venueRow.postcode = venuePostcode;
     const st = (typeof vpaStateFromPostcode === 'function') ? vpaStateFromPostcode(venuePostcode) : null;
@@ -1379,16 +1398,29 @@ async function vpaHandleVenueGaming(request, env, json) {
     const on = !!b.paid_entry_enabled;
     // Turning paid entry ON without knowing what the venue is would defeat the whole point.
     const entity = patch.entity_type !== undefined ? patch.entity_type : prior.entity_type;
+    const st = patch.au_state !== undefined ? patch.au_state : prior.au_state;
     if (on && !entity) {
       return json({ error: 'Record whether this venue is a club or a pub before turning paid entry on.' }, 400);
+    }
+    /* The same two rules the automatic path applies. This had neither, so one click could tell a
+       for-profit pub in Queensland it may charge for entry to a raffle, which is the precise
+       exposure OLGR's letter creates. A deliberate override is still possible: change what the
+       venue IS, or wait for the approval. It just cannot happen by accident. */
+    if (on && entity !== 'non_profit') {
+      return json({ error: 'Paid entry is for non-profits. A for-profit venue can only run a paid game for a nominated cause, which is a conversation, not a switch.' }, 409);
+    }
+    if (on && !vpaPaidEntryDefault(entity, st)) {
+      return json({ error: st
+        ? ('We do not unlock paid games in ' + st + ' yet. Queensland is waiting on OLGR approval of our generator, and the Northern Territory is unresolved.')
+        : 'Set this venue\'s postcode first, so we know which state\'s rules apply.' }, 409);
     }
     patch.paid_entry_enabled = on;
   }
   /* Clearing the entity type has to take paid entry with it. Otherwise: set Club, switch paid
      entry ON, set back to "Not asked yet", and the venue is left paid-entry-enabled with an
      unknown type while HQ's button is disabled, so nothing can turn it off again. */
-  if (patch.entity_type === null && patch.paid_entry_enabled !== false) {
-    patch.paid_entry_enabled = false;
+  if (patch.entity_type === null) {
+    patch.paid_entry_enabled = false;   // unconditional: clearing what a venue IS always locks it
   }
   if (!Object.keys(patch).length) return json({ error: 'Nothing to change.' }, 400);
 
@@ -1707,7 +1739,7 @@ async function vpaProvisionFromCheckout(env, session) {
         /* What the venue said about itself on the signup form, out of venues_json. The name guess
            is only a fallback for accounts created before the question existed, and it never
            unlocks paid entry: only a declaration does that. */
-        entity_type: declaredEntity1 || vpaGuessEntity(venueName),
+        entity_type: declaredEntity1,   // declared only, never a guess: see vpaProvisionOneVenue
         paid_entry_enabled: vpaPaidEntryDefault(declaredEntity1, vpaStateFromPostcode(f.postcode)),
         status: 'active',
         timezone: vpaTimezoneFromPostcode(f.postcode),
@@ -1926,9 +1958,13 @@ async function vpaProvisionOneVenue(env, opts) {
       max_players: seats || null,
       postcode: opts.postcode || null,
       au_state: vpaStateFromPostcode(opts.postcode),
-      // What the venue said about ITSELF at signup wins. The name guess is only the fallback for
-      // a venue that signed up before the question existed.
-      entity_type: declaredEntity || vpaGuessEntity(name),
+      /* DECLARED ONLY. Never a guess. Writing vpaGuessEntity() here meant the column that looks
+         like a legal declaration held an inference from a trading name, and HQ could no longer
+         tell the two apart: its "Set as club" prompt and its "confirm before switching paid entry
+         on" warning both only render when entity_type is EMPTY, so filling it with a guess hid
+         the very check that was supposed to catch a wrong guess. Null means nobody has asked yet,
+         which is the truth, keeps paid entry locked, and makes HQ ask. */
+      entity_type: declaredEntity,
       paid_entry_enabled: vpaPaidEntryDefault(declaredEntity, vpaStateFromPostcode(opts.postcode)),
       status: 'active',
       timezone: 'Australia/Brisbane',
@@ -2837,9 +2873,19 @@ function vpbRateStrict(env, priceId, plan) {
 // keeps the Stripe quantity correct even when some venues have a pending reduction (so a
 // later increase/add-venue can't silently re-inflate an already-reduced venue).
 async function vpbAccountTotal(env, foundingId) {
-  const vs = await vpaSelect(env, 'vp_venues',
-    'founding_id=eq.' + encodeURIComponent(foundingId) + '&select=max_players,pending_players,cancel_at_period_end');
-  return (vs || []).reduce((n, v) => {
+  /* READ IT DIRECTLY, NOT THROUGH vpaSelect. vpaSelect returns [] on ANY non-2xx, which reduces
+     to a total of 0, which vpaSyncAccountQuantity reads as "nothing left to bill" and answers by
+     setting cancel_at_period_end on the WHOLE subscription. So one transient database error while
+     a venue cancelled one of its five could quietly end the entire account, report success, and
+     surface only when every venue went dark at period end. A total is only trustworthy if the
+     query is known to have succeeded, so this throws instead of guessing. */
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?founding_id=eq.'
+    + encodeURIComponent(foundingId) + '&select=max_players,pending_players,cancel_at_period_end',
+    { headers: vpaHeaders(env) });
+  if (!res.ok) throw new Error('vpbAccountTotal: could not read venues (' + res.status + ')');
+  const vs = await res.json();
+  if (!Array.isArray(vs)) throw new Error('vpbAccountTotal: unexpected response');
+  return vs.reduce((n, v) => {
     if (v.cancel_at_period_end) return n; // venues cancelling at period end are no longer billed
     const billed = (v.pending_players != null) ? parseInt(v.pending_players, 10) : parseInt(v.max_players, 10);
     return n + (billed || 0);
@@ -2868,6 +2914,9 @@ async function vpaSyncAccountQuantity(env, foundingId, subId) {
      cancelled (an archived venue whose period rolled over): every call 400s, and without this the
      venue came back live, running games, and never invoiced again. */
   let failed = null;
+  /* Zero here now means zero, because vpbAccountTotal throws rather than returning 0 on a
+     failed read. Cancelling a whole subscription is the most destructive thing this file does,
+     so it must only ever follow a total we are certain of. */
   if (total <= 0) {
     // Nothing left to bill: end the whole subscription when the period rolls over.
     const r = await vpbStripePost(env, 'subscriptions/' + encodeURIComponent(subId), { cancel_at_period_end: 'true' });

@@ -1034,6 +1034,19 @@
               <input id="vp-mobile" type="tel" placeholder="0400 000 000" autocomplete="tel" required>
             </div>
             <div class="field full">
+              <!-- Club or pub. Asked once for the account, because a group is pubs or it is clubs,
+                   never a mix. It decides which gaming rules the venue is shown and whether it can
+                   ever charge for entry, and nothing else on this form can tell us. These six
+                   founding pages are the launch cohort and were not asking it at all. -->
+              <label for="vp-entity">Is your venue a club or a pub?</label>
+              <select id="vp-entity">
+                <option value="">Choose one</option>
+                <option value="non_profit">Club (RSL, bowls, leagues, community, non-profit)</option>
+                <option value="for_profit">Pub, hotel or tavern</option>
+              </select>
+              <span class="field-hint">This sets the gaming rules we show you. Clubs are non-profits and can charge for entry to a raffle or bingo in most states; a pub generally cannot in its own right, but can run one for a nominated charity.</span>
+            </div>
+            <div class="field full">
               <label>Your venues</label>
               <div id="vp-venue-list"></div>
               <button type="button" class="add-venue" id="vp-add-venue">+ Add another venue</button>
@@ -1330,11 +1343,30 @@
       addVenueBtn.textContent = rows.length >= 20 ? 'Up to 20 venues at signup, add the rest once you are in' : '+ Add another venue';
     }
   }
+  /* Only ever a suggestion: the venue confirms or changes it before paying. Kept in step with
+     index.html, app/hq.html and vpaGuessEntity() in the Worker. */
+  var CLUBWORDS = /\b(rsl|bowls|bowling|leagues|workers|workmen|club|golf|surf|sailing|yacht|memorial|services|citizens|cwa|legion|guild|association|society|assn|inc)\b/i;
+  var PUBWORDS  = /\b(hotel|tavern|pub|inn|arms|brewery|brewhouse|bar|motel|resort|lodge)\b/i;
+  function guessEntityFromName(n){
+    n = String(n || '');
+    var c = CLUBWORDS.test(n), p = PUBWORDS.test(n);
+    if (c && !p) return 'non_profit';
+    if (p && !c) return 'for_profit';
+    return '';
+  }
+  var entitySel = document.getElementById('vp-entity');
+  function preselectEntity(){
+    if (!entitySel || entitySel.value) return;
+    var first = document.querySelector('#vp-venue-list .v-name');
+    var g = guessEntityFromName(first && first.value);
+    if (g) entitySel.value = g;
+  }
   function addVenueRow(name, seats, postcode){
     var row = document.createElement('div');
     row.className = 'venue-row';
     var nm = document.createElement('input');
     nm.type = 'text'; nm.className = 'v-name'; nm.placeholder = 'Venue name'; nm.setAttribute('autocomplete', 'organization');
+    nm.addEventListener('blur', preselectEntity);
     if (name) nm.value = name;
     var pc = document.createElement('input');
     pc.type = 'text'; pc.className = 'v-postcode'; pc.inputMode = 'numeric'; pc.maxLength = 4; pc.placeholder = 'Postcode'; pc.setAttribute('autocomplete', 'postal-code');
@@ -1401,6 +1433,13 @@
     var mobile = document.getElementById('vp-mobile').value.trim();
 
     // Collect every venue (name + postcode + max players). One venue or many, same flow.
+    // Club or pub, once for the account: a group is pubs or it is clubs, never a mix.
+    var entityType = entitySel ? entitySel.value : '';
+    if (entityType !== 'non_profit' && entityType !== 'for_profit') {
+      showErr('Please tell us whether you are a club or a pub. It decides which gaming rules apply to you.');
+      return;
+    }
+
     var venues = [];
     var rows = venueRows();
     var namesLower = {};
@@ -1414,7 +1453,7 @@
       if (vs > 5000) { showErr('That is a lot of players for ' + vn + '. Please email us for very large venues.'); return; }
       if (namesLower[vn.toLowerCase()]) { showErr('Two venues have the same name (' + vn + '). Please give each a different name.'); return; }
       namesLower[vn.toLowerCase()] = true;
-      venues.push({ name: vn, seats: vs, postcode: vpc });
+      venues.push({ name: vn, seats: vs, postcode: vpc, entity_type: entityType });
     }
     if (!venues.length) { showErr('Please add at least one venue.'); return; }
 
