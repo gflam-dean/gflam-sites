@@ -965,10 +965,11 @@ async function vpaHandleVenue(request, env, json) {
       max_seats: (f.max_seats != null && f.max_seats !== '') ? (parseInt(f.max_seats, 10) || null) : null,
       plan: (f.plan === 'annual' ? 'annual' : 'monthly'),
       marketing_opt_in: false,
-      // Admin-onboarded venues have no Stripe card in this flow. 'active' makes
-      // the venue live and counts it in venueplay_spots_taken. See report flag:
-      // change to 'card_on_file' or 'pending' if it should not consume a spot.
-      status: 'active',
+      // Admin-onboarded venues have no Stripe card in this flow. 'active' makes the venue live AND
+      // counts it in venueplay_spots_taken (which counts founding rows in ('card_on_file','active')).
+      // A COMP/DEMO venue is set to 'comp', which is outside that set, so it runs games (the kill-
+      // switch reads vp_venues.status, not this) without eating one of the 100 founding spots (#14).
+      status: (billing.comp === true ? 'comp' : 'active'),
     };
     const created = await vpaInsert(env, 'venueplay_founding', foundingRow);
     foundingId = created && created.id;
