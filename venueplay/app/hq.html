@@ -544,12 +544,25 @@
         var t=Date.parse(x.started_at||x.opened_at||"");
         return isNaN(t) ? 0 : (nowMs-t);
       }
-      S.liveSessions=allOpen.filter(function(x){ return sessionAge(x) < STALE_MS; });
+      S.spots=(r[7] && typeof r[7].data==="number") ? r[7].data : null;
+      // Built BEFORE liveness is decided, because liveness now depends on it.
+      S.gameBySession={}; ((r[8] && r[8].data)||[]).forEach(function(g){ if(!S.gameBySession[g.session_id]) S.gameBySession[g.session_id]=g; });
+
+      /* AN OPEN SESSION IS NOT A GAME ON AIR, and conflating them is what had HQ insisting the
+         Wellshot was mid-game while its TV sat happily on the venue's advertising. A session opens
+         when a host taps Open lobby and stays open until something closes it; whether a GAME is
+         running is a separate row in vp_games. So live means a running game, full stop.
+         Three states now, and the difference between them is what tells Dean what to do:
+           running  a vp_games row is running -> genuinely on air, leave it alone
+           open     session open, no game running -> a lobby nobody started, or a host who walked
+                    away. Not live, and not old enough to sweep either.
+           stale    open more than 12 hours -> abandoned, the sweeper's job. */
+      S.liveSessions=allOpen.filter(function(x){ return sessionAge(x) < STALE_MS && S.gameBySession[x.id]; });
+      S.openSessions=allOpen.filter(function(x){ return sessionAge(x) < STALE_MS && !S.gameBySession[x.id]; });
       S.staleSessions=allOpen.filter(function(x){ return sessionAge(x) >= STALE_MS; });
       S.live={}; S.liveSessions.forEach(function(s){ S.live[s.venue_id]=true; });
+      S.openNoGame={}; S.openSessions.forEach(function(s){ S.openNoGame[s.venue_id]=true; });
       S.stale={}; S.staleSessions.forEach(function(s){ S.stale[s.venue_id]=true; });
-      S.spots=(r[7] && typeof r[7].data==="number") ? r[7].data : null;
-      S.gameBySession={}; ((r[8] && r[8].data)||[]).forEach(function(g){ if(!S.gameBySession[g.session_id]) S.gameBySession[g.session_id]=g; });
       // latest usage month present
       S.usageMonth = S.usage.length ? S.usage[0].period_month : null;
       renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderAudit(); populateGroupSelect();
@@ -605,6 +618,23 @@
        sweeper in the game Worker closes them and bills any overage correctly, but it only runs
        if a Cron Trigger is set on that Worker in Cloudflare. If this list is never empty, that
        trigger is missing. */
+    /* Lobbies nobody started. Not live, not old enough to sweep, and the reason HQ used to claim
+       a venue was mid-game while its TV showed advertising. Named, so it is obvious what it is. */
+    var openN=(S.openSessions||[]).length;
+    var openNote=$("liveOpen");
+    if(!openNote){
+      openNote=document.createElement("div"); openNote.id="liveOpen"; openNote.className="note";
+      openNote.style.cssText="margin:8px 0 0";
+      if(b.parentNode && b.parentNode.parentNode) b.parentNode.parentNode.appendChild(openNote);
+    }
+    openNote.innerHTML = openN
+      ? ('<b>'+openN+' venue'+(openN===1?" has":"s have")+' a session open with no game running.</b> '+
+         'A lobby that was opened and never started, or a host who walked away. Their TV is on the venue\'s advertising, which is correct. '+
+         'Nothing is wrong at the venue; the session just needs closing, which happens automatically 12 hours after it opened.'+
+         '<div class="note" style="margin-top:4px">'+
+         (S.openSessions||[]).map(function(x){ var v=venueById(x.venue_id); return esc(v?v.name:"(unknown)")+" &middot; open "+esc(agoLabel(x.started_at||x.opened_at)); }).join("<br>")+
+         '</div>')
+      : "";
     var staleN=(S.staleSessions||[]).length;
     var staleNote=$("liveStale");
     if(!staleNote){
