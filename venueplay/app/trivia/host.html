@@ -885,6 +885,15 @@
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live quiz."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
+      // Pre-fill the round settings from what this venue last used (migration 50), so a host does not
+      // re-enter their preferred time/points/speed every night. A NULL column leaves the built-in default.
+      if(VP.loadSettings){ VP.loadSettings(G.venueId).then(function(s){
+        if(!s) return;
+        if(s.trivia_time_limit_s!=null){ G.timePerQ=s.trivia_time_limit_s; var t=$("cfgTime"); if(t) t.value=s.trivia_time_limit_s; }
+        if(s.trivia_base_points!=null){ G.base=s.trivia_base_points; var bp=$("cfgBase"); if(bp) bp.value=s.trivia_base_points; }
+        if(s.trivia_speed_bonus!=null){ G.speedBonus=!!s.trivia_speed_bonus;
+          var seg=$("cfgSpeed"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.speedBonus); }); } }
+      }).catch(function(){}); }
       // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open
       // so signing back in restores it instead of burning the once-a-week trivia slot.

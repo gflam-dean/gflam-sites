@@ -3393,7 +3393,23 @@ async function vpbCancelVenue(request, env, json) {
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
 
   const foundingId = o.account.id;
-  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), { cancel_at_period_end: !undo });
+  const venuePatch = { cancel_at_period_end: !undo };
+  /* KEEP THIS VENUE must fully reinstate a venue that already tipped into suspended. The undo used to
+     only clear cancel_at_period_end, so a venue whose paid period had already rolled over (status
+     'suspended', because the webhook suspends a flagged venue at renewal) was un-cancelled on the
+     billing side but left switched OFF, with no screen to turn it back on. That is exactly how a
+     venue got stuck. Only ever reverses a CANCELLATION suspension, never a non-payment one: an unpaid
+     venue must stay off until it is paid. */
+  if (undo) {
+    const curRows = await vpaSelect(env, 'vp_venues',
+      'id=eq.' + encodeURIComponent(venueId) + '&select=status,suspended_reason');
+    const cur = curRows && curRows[0];
+    if (cur && cur.status === 'suspended' && cur.suspended_reason !== 'nonpayment') {
+      venuePatch.status = 'active';
+      venuePatch.suspended_reason = null;
+    }
+  }
+  await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(venueId), venuePatch);
 
   // Remaining billed total now EXCLUDES venues flagged to cancel (vpbAccountTotal skips them).
   // The credit for the removed players applies at renewal.

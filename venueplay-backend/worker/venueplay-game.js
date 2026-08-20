@@ -479,10 +479,17 @@ async function handleJoinInfo(request, env, json) {
      notice that cannot name the recipient is not much of a notice. Name only: no slug, no id, no
      other venue data, so this stays what it has always been, a public lookup for one join code. */
   let venueName = '';
+  let logoUrl = '';
   let paperBingo = false;
   try {
     const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state&limit=1');
     if (vrows && vrows[0] && vrows[0].name) venueName = String(vrows[0].name);
+    // The venue's logo, so the player's phone can show whose game they are in (same logo as the TV).
+    // Public: it is already on the TV, and the player holds a valid join code for this venue.
+    try {
+      const srows = await sbGet(env, 'vp_venue_screen', 'venue_id=eq.' + enc(venueId) + '&select=logo_url&limit=1');
+      if (srows && srows[0] && srows[0].logo_url) logoUrl = String(srows[0].logo_url);
+    } catch (e) { /* logo is a nicety; never fail the join lookup for it */ }
     /* PAPER-TICKET STATES. Three jurisdictions still expect a printed ticket in the player's hand
        for bingo, so a phone must not show one:
          SA  - the rules recognise only physical bingo sheets bought from a licensed supplier
@@ -502,7 +509,7 @@ async function handleJoinInfo(request, env, json) {
       paperBingo = true;
     }
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
-  return json({ format: format, room_code: roomCode, venue_name: venueName, paper_bingo: paperBingo, collect: {
+  return json({ format: format, room_code: roomCode, venue_name: venueName, logo_url: logoUrl, paper_bingo: paperBingo, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,
@@ -1262,6 +1269,16 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   if (typeof b.colour === 'boolean') config.colour = b.colour;
   const speedBonus = b.speed_bonus !== false;   // default on
   config.speed_bonus = speedBonus;
+
+  // Remember this venue's trivia settings (migration 50), so the next night pre-fills to what they
+  // last used instead of resetting to the built-in defaults. Only writes the fields the host actually
+  // sent, and never fails a game start if it cannot save.
+  if (session.venue_id) {
+    const prefs = { venue_id: session.venue_id, trivia_speed_bonus: speedBonus };
+    if (config.time_limit_s != null) prefs.trivia_time_limit_s = config.time_limit_s;
+    if (config.base_points != null) prefs.trivia_base_points = config.base_points;
+    try { await sbUpsert(env, 'vp_venue_settings', prefs, 'venue_id'); } catch (e) { /* non-fatal */ }
+  }
 
   const gameRows = await sbInsert(env, 'vp_games', {
     session_id: session.id, seq, format: 'trivia', status: 'running', config,
