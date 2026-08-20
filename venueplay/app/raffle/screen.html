@@ -252,7 +252,13 @@
     if(VENUE_SLUG){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); } else { renderIdle(); }
   }, (ms>0?ms:60000)); }
   function renderIdle(){
-    cancelAdsReturn();
+    /* Deliberately does NOT cancel the return to ads. The host's own end-of-raffle sequence is
+       claimed, then t:"idle" nine seconds later, and idle lands here: cancelling meant the timer
+       armed by the last prize was killed on every raffle that finished normally, so the wall sat
+       on "Raffle tonight, get your tickets" instead of the venue's paid advertising. Worse, the
+       parent still counts as embedded while that is up, which switches off the black-screen
+       watchdog and the self-update. Anything that genuinely starts a new round (drawing, winner)
+       cancels it at its own call site. */
     stopSpin(); stopCountdown(); stopCelebrate();
     var pz=S.prizeLabel||"";
     if(S.nextUp && pz){   // a prize was just drawn and there are more to come
@@ -346,7 +352,17 @@
     var CH={ bingo:venueCode(VENUE_SLUG), trivia:venueCode("trivia-"+VENUE_SLUG), musical:venueCode("musical-"+VENUE_SLUG), raffle:venueCode("raffle-"+VENUE_SLUG), members:venueCode("members-"+VENUE_SLUG) };
     var URL={ bingo:"/tv?venue=", trivia:"/app/trivia/screen.html?venue=", musical:"/app/musical/screen.html?venue=", raffle:"/app/raffle/screen.html?venue=", members:"/app/members/screen.html?venue=" };
     var switched=false;
-    function goTo(game){ if(switched||game===SELF) return; switched=true; window.location.href=URL[game]+encodeURIComponent(VENUE_SLUG); }
+    /* DO NOT WALK OUT ON A LIVE GAME. This hopped on any t:"mode" from another format, and the
+       raffle and members consoles announce their mode on every channel subscribe, which includes
+       every reconnect after a wifi blip. So a manager opening the raffle console in the back
+       office, or a raffle tablet losing wifi for a moment, threw a live quiz off the wall
+       mid-question, and the hop is one-way: nothing brought the quiz back. tv.html was hardened
+       against exactly this earlier today; these four screens were missed.
+       A screen that is genuinely idle still hops, which is what makes the unified TV work. */
+    function goTo(game){
+      if(switched||game===SELF) return;
+      try{ if(S.phase && S.phase!=="idle") return; }catch(e){}
+      switched=true; window.location.href=URL[game]+encodeURIComponent(VENUE_SLUG); }
     Object.keys(CH).forEach(function(game){
       if(game===SELF) return;
       var c=client.channel("vp-"+CH[game], { config:{ broadcast:{ self:false } } });
@@ -396,7 +412,7 @@
        saying they have finished with this prize, and still clears. */
     if((m.t==="host_here" || m.t==="state") && (S.phase==="winner" || S.phase==="result")) return;
     if(m.t==="host_here"){ S.phase="idle"; renderIdle(); return; }
-    if(m.t==="state" || m.t==="idle"){ S.phase="idle"; renderIdle(); }
+    if(m.t==="state" || m.t==="idle"){ S.phase="idle"; renderIdle(); if(m.t==="idle") scheduleAdsReturn(); }
     else if(m.t==="drawing"){ S.phase="drawing"; renderDrawing(); }
     else if(m.t==="winner"){ S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); }
     else if(m.t==="claimed"){ S.phase="result"; renderClaimed(m.numbers||[]); }

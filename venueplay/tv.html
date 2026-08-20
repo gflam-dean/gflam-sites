@@ -375,11 +375,29 @@
   function showBadVenue(){ var el=$("badVenue"); if(el) el.classList.remove("hidden"); }
   function validateVenue(){
     if(!VENUE_SLUG) return;   // no venue linked: the pair panel already prompts them
-    try{
-      fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)).then(function(r){ return r.ok?r.json():null; }).then(function(d){
-        if(d && d.exists===false) showBadVenue();
-      }).catch(function(){});   // worker unreachable/old: don't false-alarm, just carry on
-    }catch(e){}
+    /* ASK TWICE, AND KEEP CHECKING. This ran once and, on a single exists:false, put a
+       full-screen "not linked to an account" card over the venue's advertising with no retry and
+       no way out but a physical reload. One bad read during a Worker deploy or a database blip
+       cost a venue their screen for the night. Now it has to say so twice, thirty seconds apart,
+       and it re-checks afterwards so the card clears itself the moment the venue really is
+       findable again. */
+    var strikes=0;
+    function ask(){
+      try{
+        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)).then(function(r){ return r.ok?r.json():null; }).then(function(d){
+          if(!d){ return; }                       // unreachable or old Worker: never false-alarm
+          if(d.exists===false){
+            strikes++;
+            if(strikes>=2) showBadVenue();
+            return;
+          }
+          strikes=0;
+          var el=$("badVenue"); if(el) el.classList.add("hidden");   // it resolved: take the card down
+        }).catch(function(){});
+      }catch(e){}
+    }
+    ask();
+    setInterval(ask, 30000);
   }
 
   // show the pair QR whenever this screen is in ads mode and no host has connected

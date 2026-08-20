@@ -237,6 +237,18 @@
     wrap.innerHTML=html;
   }
   function stopAds(){ if(adTimer){ clearInterval(adTimer); adTimer=null; } }
+  /* The other three screens drift back to the venue's own advertising when nothing is on; this
+     one never did, so a club that opened the console at 5pm for a 7:30 draw lost its advertising
+     for the whole evening and never got it back after the draw resolved. The board staying up
+     also keeps the parent in embed mode, which disables the black-screen watchdog and the
+     self-update for hours. Same 60 second drift the raffle screen uses. */
+  var _backToAdsT=null;
+  function cancelBackToAds(){ if(_backToAdsT){ clearTimeout(_backToAdsT); _backToAdsT=null; } }
+  function scheduleBackToAds(){
+    if(!VENUE_SLUG) return;
+    cancelBackToAds();
+    _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 60000);
+  }
   function startAds(){
     stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.toggle("hidden", !!VENUE_SLUG || !!state.hostSeen);   // linked, or the host is plainly already here
     hideAll(); $("tvIdle").classList.remove("hidden"); fillIdle();
@@ -394,7 +406,17 @@
     var CH={ bingo:venueCode(VENUE_SLUG), trivia:venueCode("trivia-"+VENUE_SLUG), musical:venueCode("musical-"+VENUE_SLUG), raffle:venueCode("raffle-"+VENUE_SLUG), members:venueCode("members-"+VENUE_SLUG) };
     var URL={ bingo:"/tv?venue=", trivia:"/app/trivia/screen.html?venue=", musical:"/app/musical/screen.html?venue=", raffle:"/app/raffle/screen.html?venue=", members:"/app/members/screen.html?venue=" };
     var switched=false;
-    function goTo(game){ if(switched||game===SELF) return; switched=true; window.location.href=URL[game]+encodeURIComponent(VENUE_SLUG); }
+    /* DO NOT WALK OUT ON A LIVE GAME. This hopped on any t:"mode" from another format, and the
+       raffle and members consoles announce their mode on every channel subscribe, which includes
+       every reconnect after a wifi blip. So a manager opening the raffle console in the back
+       office, or a raffle tablet losing wifi for a moment, threw a live quiz off the wall
+       mid-question, and the hop is one-way: nothing brought the quiz back. tv.html was hardened
+       against exactly this earlier today; these four screens were missed.
+       A screen that is genuinely idle still hops, which is what makes the unified TV work. */
+    function goTo(game){
+      if(switched||game===SELF) return;
+      try{ if(state.phase && state.phase!=="idle") return; }catch(e){}
+      switched=true; window.location.href=URL[game]+encodeURIComponent(VENUE_SLUG); }
     Object.keys(CH).forEach(function(game){
       if(game===SELF) return;
       var c=client.channel("vp-"+CH[game], { config:{ broadcast:{ self:false } } });
@@ -439,14 +461,14 @@
       if(typeof m.drawName==="string") state.drawName=m.drawName;
       if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents;
       applyDraws(m);
-      if(!m.playing){ state.phase="idle"; startAds(); }
+      if(!m.playing){ state.phase="idle"; startAds(); scheduleBackToAds(); }
       else if(state.phase==="idle"){ fillIdle(); }   // refresh board while still idle
     }
-    else if(m.t==="drawing"){ if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="drawing"; showDrawing(); }
+    else cancelBackToAds(); if(m.t==="drawing"){ if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="drawing"; showDrawing(); }
     else if(m.t==="winner"){ state.phase="winner"; showWinner(m.number, m.name, m.claimSecs); }
     else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
     else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName); }
-    else if(m.t==="idle"){ applyDraws(m); if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents; if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="idle"; startAds(); }
+    else if(m.t==="idle"){ applyDraws(m); if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents; if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="idle"; startAds(); scheduleBackToAds(); }
   }
 
   // ---- init ----

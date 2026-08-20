@@ -380,6 +380,17 @@
   function savePid(room,pid){ try{ localStorage.setItem("vp-pid-"+room, pid); }catch(e){} }
   // keep the name too, so a full page reload auto-rejoins instead of showing Join again
   function loadName(room){ try{ return localStorage.getItem("vp-name-"+room) || sessionStorage.getItem("vp-name-"+room) || ""; }catch(e){ return ""; } }
+  function daubKey(){ return "vp-daubs-"+(P.room||""); }   // per room; a new deal clears it
+  function saveDaubs(){
+    try{
+      var out={}; for(var i=0;i<P.cards.length;i++) out[P.cards[i].cardNo]=P.cards[i].daubs||{};
+      localStorage.setItem(daubKey(), JSON.stringify(out));
+    }catch(e){}
+  }
+  function loadDaubs(){
+    try{ return JSON.parse(localStorage.getItem(daubKey())||"{}") || {}; }catch(e){ return {}; }
+  }
+  function clearDaubs(){ try{ localStorage.removeItem(daubKey()); }catch(e){} }
   function saveName(room,name){ try{ localStorage.setItem("vp-name-"+room, name); }catch(e){} }
   // the player token IS the metered server identity: persist it so a reload reuses
   // the same vp_players row (via localStorage) instead of minting a new metered one.
@@ -893,7 +904,13 @@
          fresh cards message, and rebuilding every ticket with an empty daub set wiped the marks
          they had made on the tickets they were ALREADY holding. Only genuinely new tickets start
          blank. */
+      /* Marks survive the phone dropping the tab. They were memory-only, so a punter whose screen
+         locked long enough for the browser to discard the page came back to a blank ticket after
+         twenty minutes of dabbing. The win itself was never at risk (a claim is checked against
+         the called numbers, not the marks) but losing them mid-house is a bar argument. */
       var _prev={}; for(var _i=0;_i<P.cards.length;_i++){ _prev[P.cards[_i].cardNo]=P.cards[_i].daubs||{}; }
+      var _saved=loadDaubs();
+      for(var _k in _saved){ if(!_prev[_k] || !Object.keys(_prev[_k]).length) _prev[_k]=_saved[_k]; }
       P.cards=(m.cards||[]).map(function(c){ return { cardNo:c.cardNo, cells:c.cells, daubs:_prev[c.cardNo]||{} }; });
       P.dealSeq++;   // a fresh deal is always a fresh structure, whatever the card numbers say
       P.active=true; autoDaub(); route();
@@ -913,6 +930,7 @@
       P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; _celebrated=false;
       P.shared=false; P.sharedWith=[];
       for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
+      clearDaubs();   // a new game starts on a clean ticket
       P.turnedFor=0;   // new round: the first ball must still turn the page
       route();
     }
@@ -1088,6 +1106,7 @@
     var cd=P.cards[ci]; if(!cd) return;
     if(cd.daubs[n]){ delete cd.daubs[n]; cell.classList.remove("daub"); }
     else { cd.daubs[n]=true; cell.classList.add("daub"); }
+    saveDaubs();
   });
   var assistChk=$("assistChk"); if(assistChk){ assistChk.addEventListener("change", function(){ setAssist(assistChk.checked); }); }
   // ---- menu (Easy mode / Light mode / Leave game) ----
