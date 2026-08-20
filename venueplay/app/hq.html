@@ -1091,7 +1091,13 @@
   function suspendVenue(id, to, btn){
     if(!canBilling()) return;
     var name=venueName(id);
-    if(!confirm((to==="suspended"?"Suspend ":"Reactivate ")+name+"?")) return;
+    // Warn if we are about to suspend a venue that has a game running RIGHT NOW (audit #16): the next
+    // host or player action gets a hard error and the game dies mid-round. HQ already knows who is live.
+    var live = (to==="suspended") && (S.liveSessions||[]).some(function(s){ return s.venue_id===id; });
+    var q = live
+      ? ("⚠️ "+name+" has a GAME RUNNING RIGHT NOW.\n\nSuspending it ends that game immediately, mid-round, in front of the room.\n\nSuspend anyway?")
+      : ((to==="suspended"?"Suspend ":"Reactivate ")+name+"?");
+    if(!confirm(q)) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     workerPost("/admin/venue-status", { venue_id:id, status:to }).then(function(res){
       btn.disabled=false; btn.textContent=old;
