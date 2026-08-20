@@ -198,8 +198,45 @@
     return null;   // admin picks a venue explicitly via setCurrentVenue()
   }
 
+  /* THE CDN CAN FAIL, AND IT MUST NOT KILL THE CONSOLE SILENTLY.
+     getClient() throws synchronously when cdn.jsdelivr.net has not delivered supabase-js, and
+     build() used to call it at the top, OUTSIDE any promise. So the throw escaped before a promise
+     existed and every .catch() on every console never ran: the host sat on the boot splash
+     forever with no error, no retry and nothing to tell them why, then reloaded into the same
+     thing and rang Dean mid-service. tv.html has retried this for a while; the consoles never got
+     the same treatment.
+     Two parts: a rejected promise instead of a throw, so the existing .catch() handlers finally
+     do their job, and a visible message with a retry, because a blocked CDN on pub wifi does not
+     fix itself and a host needs to be told what is happening. */
+  function cdnDown() {
+    try {
+      if (document.getElementById('vpCdnDown')) return;
+      var d = document.createElement('div');
+      d.id = 'vpCdnDown';
+      d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0A0A0B;color:#E7E7EC;' +
+        'display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;' +
+        'font-family:-apple-system,Segoe UI,sans-serif';
+      d.innerHTML = '<div style="max-width:420px">' +
+        '<p style="margin:0 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#FF1F8E;font-weight:800">Cannot start</p>' +
+        '<h1 style="margin:0 0 12px;font-size:22px;line-height:1.25">VenuePlay could not finish loading</h1>' +
+        '<p style="margin:0 0 16px;font-size:14.5px;line-height:1.5;color:#9A9AA4">Part of the app is served from the internet and it did not arrive. This is almost always the venue wifi, or a network that blocks it. Your game and your players are fine.</p>' +
+        '<button id="vpCdnRetry" style="font:inherit;font-size:15px;font-weight:700;background:#FF1F8E;color:#fff;border:0;border-radius:10px;padding:12px 24px;cursor:pointer">Try again</button>' +
+        '<p style="margin:14px 0 0;font-size:12.5px;color:#6C6C76">Still stuck? Use your phone hotspot, or call us on the number in your welcome email.</p>' +
+        '</div>';
+      document.body.appendChild(d);
+      var b = document.getElementById('vpCdnRetry');
+      if (b) b.addEventListener('click', function () { location.reload(); });
+    } catch (e) {}
+  }
+
   function build() {
-    var client = getClient();
+    var client;
+    try {
+      client = getClient();
+    } catch (e) {
+      cdnDown();
+      return Promise.reject(e);   // a REJECTION, so the caller's .catch() can run
+    }
     // getSession() reads the persisted session (instant, refreshes only if expired) instead of
     // getUser() which always hits the network. Routing/role only needs identity; every real
     // action still re-verifies the token at the Worker, so this is safe and much faster.
