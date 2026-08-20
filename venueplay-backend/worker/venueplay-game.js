@@ -204,6 +204,7 @@ export default {
       if (method === 'POST' && path === '/host/trivia/set/delete')         return await handleTriviaSetDelete(request, env, json);
       if (method === 'GET'  && path === '/host/trivia/set/questions')      return await handleTriviaSetQuestions(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/add')      return await handleTriviaAdd(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/image-upload')        return await handleTriviaImageUpload(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/from-library') return await handleTriviaFromLibrary(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/search')       return await handleTriviaSearch(request, env, json);
       if (method === 'POST' && path === '/admin/trivia/submissions')           return await handleAdminSubmissions(request, env, json);
@@ -2460,6 +2461,48 @@ async function handleTriviaAdd(request, env, json) {              // write your 
     if (subs.length) await sbInsert(env, 'vp_question_submissions', subs, false);
   } catch (e) { /* non-fatal: the review queue is best-effort */ }
   return json({ ok: true, added: rows.length });
+}
+
+/* --- POST /host/trivia/image-upload : upload one picture-round image, return its public URL. ---
+   body { set_id, data:"data:image/...;base64,..." }, Authorization: host JWT. Staff-gated through the
+   set's venue (triviaSetForVenue). Lets a host add a picture question by choosing a photo, instead of
+   needing an image already hosted somewhere to paste a URL. The returned URL goes in image_url on the
+   question, which already flows to the TV and every phone. */
+function gB64ToBytes(b64) {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+async function gEnsureBucket(env, id) {
+  try {
+    await fetch(env.SUPABASE_URL + '/storage/v1/bucket', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, name: id, public: true, file_size_limit: 5242880, allowed_mime_types: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] }),
+    });
+  } catch (_) { /* already exists -> the POST 400s; the upload still works */ }
+}
+async function handleTriviaImageUpload(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const set = await triviaSetForVenue(env, b.set_id, authUserId); // ENFORCED: staff at the set's venue
+  const m = String(b.data || '').match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) return json({ error: 'That did not look like an image.' }, 400);
+  const contentType = m[1].toLowerCase();
+  if (!/^image\/(png|jpe?g|webp|gif)$/.test(contentType)) return json({ error: 'Use a PNG, JPG, WEBP or GIF.' }, 400);
+  const bytes = gB64ToBytes(m[2]);
+  if (bytes.length > 5 * 1024 * 1024) return json({ error: 'That image is too big. Keep it under 5MB.' }, 400);
+  await gEnsureBucket(env, 'trivia-images');
+  const ext = contentType.split('/')[1].replace('jpeg', 'jpg');
+  const path = set.owner_venue_id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+  const up = await fetch(env.SUPABASE_URL + '/storage/v1/object/trivia-images/' + path, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY, 'Content-Type': contentType, 'x-upsert': 'true' },
+    body: bytes,
+  });
+  if (!up.ok) { const t = await up.text(); return json({ error: 'Upload failed. ' + t.slice(0, 160) }, 500); }
+  return json({ ok: true, url: env.SUPABASE_URL + '/storage/v1/object/public/trivia-images/' + path });
 }
 
 // --- Review queue admin (used by the weekly fact-check run). Gated by env.ADMIN_KEY. ---

@@ -130,8 +130,13 @@
           <div><label class="f">Difficulty</label>
             <select id="ownDiff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
         </div>
-        <label class="f">Picture URL (optional, for a picture round)</label>
-        <input type="text" id="ownImg" placeholder="https://...">
+        <label class="f">Picture (optional, for a picture round)</label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label class="btn" style="cursor:pointer;margin:0;background:var(--ink-3);color:var(--text);border:1px solid var(--line)">Upload a photo<input type="file" id="ownImgFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none"></label>
+          <img id="ownImgPreview" alt="" style="display:none;height:46px;max-width:90px;object-fit:cover;border-radius:8px;border:1px solid var(--line)">
+          <button type="button" id="ownImgClear" style="display:none;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit">remove</button>
+        </div>
+        <input type="text" id="ownImg" placeholder="…or paste an image URL" style="margin-top:8px">
         <button type="button" id="addOwnBtn" class="btn pink" style="width:100%;margin-top:12px">Add question</button>
         <div id="ownStatus" class="status"></div>
       </details>
@@ -327,7 +332,7 @@
     $("addOwnBtn").disabled=true; setStatus("ownStatus","Adding…","");
     req("POST","/host/trivia/questions/add",{ set_id:G.setId, questions:[{ question:q, options:opts, correct_index:ci, category:($("ownCat").value||"").trim()||undefined, difficulty:$("ownDiff").value, image_url:($("ownImg").value||"").trim()||undefined }] })
       .then(function(r){ setStatus("ownStatus","Added.","ok");
-        $("ownQ").value=""; document.querySelectorAll("#ownOpts input[data-o]").forEach(function(i){ i.value=""; }); $("ownImg").value="";
+        $("ownQ").value=""; document.querySelectorAll("#ownOpts input[data-o]").forEach(function(i){ i.value=""; }); setOwnImg("");
         document.querySelectorAll('#ownOpts input[name="correct"]').forEach(function(r){ r.checked=false; });  // force an explicit "correct" pick per question - no sticky A default
         loadQuestions(); loadMySets(G.setId); })
       .catch(function(e){ setStatus("ownStatus", e.message||"Could not add", "err"); })
@@ -337,6 +342,42 @@
     req("POST","/host/trivia/questions/remove",{ question_id:qid }).then(function(){ loadQuestions(); loadMySets(G.setId); }).catch(function(e){ setStatus("listStatus", e.message||"Could not remove", "err"); });
   }
 
+  // ---- picture-round image: shrink on the device, upload to storage, fill the picture field ----
+  function shrinkImage(dataUrl, cb){
+    if(dataUrl.indexOf("data:image/gif")===0){ cb(dataUrl); return; }   // keep animated GIFs as-is
+    var img=new Image();
+    img.onload=function(){
+      var MAXW=1280, MAXH=960, w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+      var scale=Math.min(1, MAXW/w, MAXH/h);
+      var cv=document.createElement("canvas"); cv.width=Math.round(w*scale)||w; cv.height=Math.round(h*scale)||h;
+      try{ cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height); }catch(e){ cb(dataUrl); return; }
+      var out=cv.toDataURL("image/webp",0.85);
+      if(out.indexOf("data:image/webp")!==0) out=cv.toDataURL("image/jpeg",0.85);
+      cb(out);
+    };
+    img.onerror=function(){ cb(dataUrl); };   // fall back to the original if it will not decode
+    img.src=dataUrl;
+  }
+  function setOwnImg(url){
+    $("ownImg").value=url||"";
+    var pv=$("ownImgPreview"), cl=$("ownImgClear");
+    if(url){ pv.src=url; pv.style.display=""; cl.style.display=""; } else { pv.removeAttribute("src"); pv.style.display="none"; cl.style.display="none"; }
+  }
+  function onOwnImgFile(){
+    var f=this.files&&this.files[0]; this.value="";
+    if(!f) return;
+    if(!G.setId){ setStatus("ownStatus","Pick or create a night first, then add a picture.","err"); return; }
+    if(f.size>12*1024*1024){ setStatus("ownStatus","That photo is huge. Keep it under about 12MB.","err"); return; }
+    setStatus("ownStatus","Uploading photo…","");
+    var reader=new FileReader();
+    reader.onload=function(){ shrinkImage(reader.result, function(data){
+      req("POST","/host/trivia/image-upload",{ set_id:G.setId, data:data })
+        .then(function(r){ if(r&&r.url){ setOwnImg(r.url); setStatus("ownStatus","Photo added. Now fill the question and answers.","ok"); } else { setStatus("ownStatus","Upload failed.","err"); } })
+        .catch(function(e){ setStatus("ownStatus", e.message||"Upload failed", "err"); });
+    }); };
+    reader.readAsDataURL(f);
+  }
+
   $("setSel").addEventListener("change", onSetChange);
   $("createBtn").addEventListener("click", createSet);
   $("setName").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); createSet(); } });
@@ -344,6 +385,8 @@
   $("searchBtn").addEventListener("click", searchLibrary);
   $("searchQ").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); searchLibrary(); } });
   $("addOwnBtn").addEventListener("click", addOwn);
+  $("ownImgFile").addEventListener("change", onOwnImgFile);
+  $("ownImgClear").addEventListener("click", function(){ setOwnImg(""); });
   $("qList").addEventListener("click", function(e){ var b=e.target.closest("button[data-rm]"); if(b) removeQuestion(b.getAttribute("data-rm")); });
 
   // ---- boot ----
