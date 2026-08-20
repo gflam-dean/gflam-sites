@@ -41,6 +41,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.join(HERE, "data", "trivia-library.json")
 APPLY = "--apply" in sys.argv
 STATUS = "--status" in sys.argv
+PURGE  = "--purge-answers" in sys.argv
 
 CC_SOURCES = {
     "Open Trivia Database (opentdb.com)",
@@ -51,7 +52,10 @@ def norm(s):
     """Same normalisation add-trivia.py uses to spot a duplicate, so matching is consistent."""
     return re.sub(r"[^a-z0-9]+", "", str(s or "").lower())
 
-def req(method, path, body=None, headers=None):
+class Refused(Exception):
+    def __init__(self, code, body): self.code, self.body = code, body
+
+def req(method, path, body=None, headers=None, soft=False):
     h = {
         "apikey": KEY,
         "Authorization": "Bearer " + KEY,
@@ -68,6 +72,8 @@ def req(method, path, body=None, headers=None):
             return json.loads(raw) if raw.strip() else []
     except urllib.error.HTTPError as e:
         detail = e.read().decode()[:300]
+        if soft:
+            raise Refused(e.code, detail)
         sys.exit("\nSTOPPED: the database refused a %s request.\n  %s\n\n"
                  "Nothing further was changed. Re-running is safe: already-deleted rows are simply\n"
                  "not found again, and the library is only rewritten once everything else worked.\n"
@@ -168,13 +174,54 @@ backup = os.path.join(HERE, "data", "trivia-library.BACKUP-%d.json" % n)
 json.dump(lib, open(backup, "w", encoding="utf-8"), ensure_ascii=False)
 print("\nBacked up the library to %s" % os.path.basename(backup))
 
+# A question that has been ANSWERED in a real game cannot simply be deleted: vp_trivia_answers
+# holds a row per player per question and points back at it. There is no retire flag on
+# vp_questions (checked, 20 Aug 2026), so a question that stays is a question that keeps being
+# served, which keeps the licence obligation alive. The only way to actually retire one is to
+# clear the answer rows first.
+#
+# That is real data, so it is never done by default. Without --purge-answers this stops and
+# reports how many are stuck. With it, the answer rows for THOSE questions only are deleted
+# first. What is lost is per-player per-question answer detail for questions we are retiring;
+# who won a night lives in vp_game_reports and is untouched.
 deleted = 0
+blocked = []
 for set_id, ids in by_set.items():
+    removed_here = 0
     for i in range(0, len(ids), 100):          # chunked: a URL has a length limit
         chunk = ids[i:i + 100]
-        req("DELETE", "vp_questions?id=in.(%s)" % ",".join(chunk), headers={"Prefer": "return=minimal"})
-        deleted += len(chunk)
-    print("  set %s: -%d" % (set_id[:8], len(ids)))
+        try:
+            req("DELETE", "vp_questions?id=in.(%s)" % ",".join(chunk),
+                headers={"Prefer": "return=minimal"}, soft=True)
+            deleted += len(chunk); removed_here += len(chunk)
+        except Refused as e:
+            if "23503" not in e.body:
+                sys.exit("\nSTOPPED: the database refused a DELETE.\n  %s\n" % e.body)
+            if not PURGE:
+                blocked.extend(chunk); continue
+            # Clear the answers for this chunk, then take the questions again.
+            req("DELETE", "vp_trivia_answers?question_id=in.(%s)" % ",".join(chunk),
+                headers={"Prefer": "return=minimal"})
+            try:
+                req("DELETE", "vp_questions?id=in.(%s)" % ",".join(chunk),
+                    headers={"Prefer": "return=minimal"}, soft=True)
+                deleted += len(chunk); removed_here += len(chunk)
+            except Refused as e2:
+                blocked.extend(chunk)
+                print("  still blocked after clearing answers: %s" % e2.body[:160])
+    print("  set %s: -%d" % (set_id[:8], removed_here))
+
+if blocked:
+    print("\n%d question%s could not be removed: they have been answered in a real game."
+          % (len(blocked), "" if len(blocked) == 1 else "s"))
+    print("There is no way to retire a question without deleting it, so while these are here they")
+    print("keep being served and the attribution has to stay published.")
+    print("\nRe-run with --purge-answers to clear the answer rows for those questions and finish:")
+    print("    python3 remove-cc-trivia.py --apply --purge-answers")
+    print("\nThat deletes per-player answer detail for the questions being retired only. Who won a")
+    print("night is stored separately in vp_game_reports and is not touched.")
+    print("\nThe library file has NOT been rewritten, so nothing is out of step. Stopping here.")
+    sys.exit(1)
 
 print("Deleted %d rows. Recounting each set..." % deleted)
 sets = req("GET", "vp_question_sets?select=id,name,question_count")
