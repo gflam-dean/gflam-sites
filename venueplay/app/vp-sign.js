@@ -80,10 +80,14 @@
     return window.crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, [usage]);
   }
   function subtleOk() { return !!(window.crypto && window.crypto.subtle); }
-
-  // ---- receiver ----
-  VPSignInit();
-  function VPSignInit() { /* placeholder so hoisting is obvious; real API below */ }
+  // Adopt a key payload from the Worker: import the private (sign) + public (verify) halves, and take
+  // the venue's kid + enforce flag. Used by initHost both when a key already exists and after minting.
+  function useHostKey(d) {
+    S.kid = d.kid || null; S.enforce = !!d.enforce;
+    var jobs = [importKey(d.private_jwk, "sign").then(function (k) { S.privKey = k; })];
+    if (d.public_jwk) jobs.push(importKey(d.public_jwk, "verify").then(function (k) { S.pubKey = k; }));
+    return Promise.all(jobs).then(function () { S.ready = true; });
+  }
 
   var VPSign = {
     // Fetch and import the venue PUBLIC key + enforce flag. `ident` is the venue slug (a string), or
@@ -108,23 +112,35 @@
     },
 
     // Fetch the venue PRIVATE key (staff-gated). getToken() must return the host's Supabase access
-    // token (or a Promise of it). Never rejects; on failure the host sends UNSIGNED, as before.
+    // token (or a Promise of it). If the venue has no key yet, mint an ECDSA P-256 pair in the browser
+    // (the Workers runtime cannot) and store it. Never rejects; on any failure the host sends UNSIGNED.
     initHost: function (apiBase, slug, getToken) {
       S.apiBase = apiBase; S.slug = slug;
       if (!subtleOk() || !slug) return Promise.resolve();
-      return Promise.resolve(getToken ? getToken() : null).then(function (token) {
-        if (!token) return;
+      var token = null;
+      return Promise.resolve(getToken ? getToken() : null).then(function (t) {
+        token = t;
+        if (!token) return null;
         return fetch(apiBase + "/host/signing/private", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
           body: JSON.stringify({ slug: slug })
-        }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-          if (!d || !d.private_jwk) return;
-          S.kid = d.kid || null; S.enforce = !!d.enforce;
-          var jobs = [importKey(d.private_jwk, "sign").then(function (k) { S.privKey = k; })];
-          if (d.public_jwk) jobs.push(importKey(d.public_jwk, "verify").then(function (k) { S.pubKey = k; }));
-          return Promise.all(jobs).then(function () { S.ready = true; });
-        });
+        }).then(function (r) { return r.ok ? r.json() : null; });
+      }).then(function (d) {
+        if (!d) return;
+        if (d.has_key && d.private_jwk) return useHostKey(d);
+        // No key yet for this venue: mint one here, store it, then use whatever the Worker settles on
+        // (another host may have minted first; the Worker returns the effective key so we converge).
+        S.enforce = !!(d && d.enforce);
+        return window.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"])
+          .then(function (kp) { return Promise.all([window.crypto.subtle.exportKey("jwk", kp.publicKey), window.crypto.subtle.exportKey("jwk", kp.privateKey)]); })
+          .then(function (jw) {
+            return fetch(apiBase + "/host/signing/mint", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+              body: JSON.stringify({ slug: slug, public_jwk: jw[0], private_jwk: jw[1] })
+            }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d2) { if (d2 && d2.private_jwk) return useHostKey(d2); });
+          });
       }).catch(function () { /* leave privKey null -> send unsigned */ });
     },
 

@@ -197,6 +197,7 @@ export default {
       if (method === 'GET'  && path === '/screen')             return await handleScreen(request, env, json);
       if (method === 'GET'  && path === '/venue/signing/public') return await handleSigningPublic(request, env, json);
       if (method === 'POST' && path === '/host/signing/private') return await handleSigningPrivate(request, env, json);
+      if (method === 'POST' && path === '/host/signing/mint')    return await handleSigningMint(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
       if (method === 'POST' && path === '/host/game/pattern')  return await handleMusicPattern(request, env, json);
       if (method === 'POST' && path === '/host/trivia/set')                return await handleTriviaSet(request, env, json);
@@ -679,23 +680,28 @@ async function vpKeyId(pubJwk) {
   return (await sha256Hex(material)).slice(0, 16);
 }
 
-// Read (or mint on first ask) the venue's signing keypair. venue_id is the PK, so a concurrent
-// first-mint surfaces as a 409 from sbInsert, which we absorb by re-reading.
-async function vpGetOrMintSigningKey(env, venueId) {
-  const have = await sbGet(env, 'vp_venue_signing_keys',
+// Read the venue's signing key row, or null. No minting here: the Cloudflare Workers runtime will
+// not generate an ECDSA keypair, so the keypair is minted in the signed-in host's BROWSER (full Web
+// Crypto) and stored through vpStoreSigningKey. The Worker only ever holds and serves keys.
+async function vpReadSigningKey(env, venueId) {
+  const rows = await sbGet(env, 'vp_venue_signing_keys',
     'venue_id=eq.' + enc(venueId) + '&select=public_jwk,private_jwk&limit=1');
-  if (have && have.length) return have[0];
-  const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
-  const pub = await crypto.subtle.exportKey('jwk', kp.publicKey);
-  const priv = await crypto.subtle.exportKey('jwk', kp.privateKey);
+  return (rows && rows[0]) || null;
+}
+
+// Store a host-minted keypair, exactly once. venue_id is the PK, so if two hosts mint at the same
+// moment the first INSERT wins and the second gets a 409; either way we return the EFFECTIVE stored
+// key, so the host that lost the race converges on the winner's key rather than signing with an
+// orphaned one.
+async function vpStoreSigningKey(env, venueId, pubJwk, privJwk) {
+  const existing = await vpReadSigningKey(env, venueId);
+  if (existing) return existing;
   try {
-    await sbInsert(env, 'vp_venue_signing_keys', { venue_id: venueId, public_jwk: pub, private_jwk: priv }, false);
-    return { public_jwk: pub, private_jwk: priv };
+    await sbInsert(env, 'vp_venue_signing_keys', { venue_id: venueId, public_jwk: pubJwk, private_jwk: privJwk }, false);
+    return { public_jwk: pubJwk, private_jwk: privJwk };
   } catch (e) {
-    // 409 = another request minted first (venue_id PK). Re-read and use theirs.
-    const again = await sbGet(env, 'vp_venue_signing_keys',
-      'venue_id=eq.' + enc(venueId) + '&select=public_jwk,private_jwk&limit=1');
-    if (again && again.length) return again[0];
+    const again = await vpReadSigningKey(env, venueId);
+    if (again) return again;
     throw e;
   }
 }
@@ -737,33 +743,63 @@ async function vpVenueIdFromReq(env, url) {
 }
 
 // GET /venue/signing/public?venue=<slug> | ?code=<venue code> | ?session=<id>
-//   -> { exists, public_jwk, kid, enforce }. Public: verifying is the point. Mints the keypair if the
-//   venue has none yet, so a screen that loads before the host still gets a real key. NEVER returns
-//   private_jwk.
+//   -> { exists, public_jwk|null, kid, enforce }. Public: verifying is the point. public_jwk is null
+//   until a host has minted the key (on their first console load); a screen with no key runs in
+//   accept-all mode, which only matters once enforce is on, and by then a host has always signed in.
+//   NEVER returns private_jwk.
 async function handleSigningPublic(request, env, json) {
   const url = new URL(request.url);
   const venueId = await vpVenueIdFromReq(env, url);
   if (!venueId) return json({ exists: false });
-  const key = await vpGetOrMintSigningKey(env, venueId);
+  const key = await vpReadSigningKey(env, venueId);
   return json({
     exists: true,
-    public_jwk: key.public_jwk,
-    kid: await vpKeyId(key.public_jwk),
+    public_jwk: key ? key.public_jwk : null,
+    kid: key ? await vpKeyId(key.public_jwk) : null,
     enforce: await vpSignEnforce(env, venueId),
   });
 }
 
 // POST /host/signing/private  body { slug } , Authorization: host JWT
-// -> { public_jwk, private_jwk, kid, enforce }. Staff-gated: only a signed-in host at THIS venue (or a
-// platform owner/accounts admin via View-as) is ever handed the private half.
+// -> { has_key, public_jwk?, private_jwk?, kid?, enforce }. Staff-gated: only a signed-in host at THIS
+// venue (or a platform owner/accounts admin via View-as) is ever handed the private half. If no key
+// exists yet, has_key:false tells the host to mint one in the browser and POST it to /host/signing/mint.
 async function handleSigningPrivate(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
   const b = await readJson(request);
   const venueId = await vpVenueIdBySlug(env, b.slug);
   if (!venueId) return json({ error: 'Unknown venue' }, 404);
   await requireStaff(env, authUserId, venueId);                   // ENFORCED: staff at this venue (+ kill-switch)
-  const key = await vpGetOrMintSigningKey(env, venueId);
+  const enforce = await vpSignEnforce(env, venueId);
+  const key = await vpReadSigningKey(env, venueId);
+  if (!key) return json({ has_key: false, enforce: enforce });
   return json({
+    has_key: true,
+    public_jwk: key.public_jwk,
+    private_jwk: key.private_jwk,
+    kid: await vpKeyId(key.public_jwk),
+    enforce: enforce,
+  });
+}
+
+// POST /host/signing/mint  body { slug, public_jwk, private_jwk } , Authorization: host JWT
+// The host minted an ECDSA P-256 keypair in the browser (the Workers runtime cannot). Store it once
+// and return the EFFECTIVE key, so a host that lost a mint race adopts the stored one. Staff-gated.
+async function handleSigningMint(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const venueId = await vpVenueIdBySlug(env, b.slug);
+  if (!venueId) return json({ error: 'Unknown venue' }, 404);
+  await requireStaff(env, authUserId, venueId);                   // ENFORCED: staff at this venue (+ kill-switch)
+  const pub = b.public_jwk, priv = b.private_jwk;
+  // Sanity check the shape. The caller is an authenticated host, so this guards against a mistake,
+  // not against a hostile party (who could not pass the staff check to get here anyway).
+  if (!pub || !priv || pub.kty !== 'EC' || pub.crv !== 'P-256' || !pub.x || !pub.y || priv.kty !== 'EC' || !priv.d) {
+    return json({ error: 'Invalid key material' }, 400);
+  }
+  const key = await vpStoreSigningKey(env, venueId, pub, priv);
+  return json({
+    has_key: true,
     public_jwk: key.public_jwk,
     private_jwk: key.private_jwk,
     kid: await vpKeyId(key.public_jwk),

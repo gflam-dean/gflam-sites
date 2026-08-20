@@ -926,14 +926,15 @@ async function vpaHandleVenue(request, env, json) {
     return json({ error: "billing.type must be 'founding' or 'group'." }, 400);
   }
 
-  const slug = await vpaUniqueSlug(env, slugIn, name, venuePostcode);
-  let foundingId = null;
   /* The postcode is what sets au_state, and au_state is what decides which state's gaming rules
      a venue is shown and whether the paper-ticket rule applies to it. HQ's Add venue form now
      REQUIRES a postcode and sends it, but this row never read it, so every hand-onboarded venue
      had a null state and the whole compliance feature was inert for exactly those venues. The
-     self-serve path (vpaProvisionOneVenue) has always done this correctly; this is it catching up. */
+     self-serve path (vpaProvisionOneVenue) has always done this correctly; this is it catching up.
+     Declared before the slug so a name clash can be disambiguated by postcode (the-grand-hotel-4217). */
   const venuePostcode = String((b.postcode || '')).replace(/\D/g, '').slice(0, 4);
+  const slug = await vpaUniqueSlug(env, slugIn, name, venuePostcode);
+  let foundingId = null;
   const venueRow = { name: name, slug: slug, timezone: timezone };
   // HQ's Add venue form does not ask the question, so this stays null and HQ prompts for it.
   // A guess must never occupy this column: see vpaProvisionOneVenue.
