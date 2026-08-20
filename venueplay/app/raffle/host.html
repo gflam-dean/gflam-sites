@@ -460,7 +460,7 @@
   // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
   function sendIdle(){
     if(_suppressIdle) return;   /* a celebration is on the wall; do not paint over it */
-    send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length) });
+    send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length), prizes:G.prizes.slice(G.prizeIdx) });
   }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
   function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
@@ -775,6 +775,18 @@
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";
       loadSavedPrizes();
+      // Pre-fill the raffle setup from this venue's saved template (migration 51), so a weekly raffle
+      // loads what they last ran instead of the built-in defaults. Prizes come from loadSavedPrizes.
+      if(VP.loadSettings){ VP.loadSettings(G.venueId).then(function(s){
+        var t=s&&s.raffle_template; if(!t) return;
+        function setv(id,v){ var el=$(id); if(el&&v!=null&&v!=="") el.value=v; }
+        setv("rfStart", t.range_min); setv("rfEnd", t.range_max);
+        if(t.time_to_present!=null) setv("rfTime", t.time_to_present);
+        if(t.jackpot_on){ var jo=$("rfJackOn"); if(jo){ jo.checked=true; var jw=$("rfJackWrap"); if(jw) jw.classList.remove("hidden"); if(t.jackpot_amount_cents) setv("rfJackAmt", Math.round(t.jackpot_amount_cents/100)); } }
+        var ar=$("rfAllowRedraw"); if(ar && typeof t.allow_redraw==="boolean") ar.checked=t.allow_redraw;
+        if(Array.isArray(t.excluded_ranges) && t.excluded_ranges.length){ var sk=$("rfSkip"); if(sk) sk.value=t.excluded_ranges.map(function(r){ return r[0]===r[1]?(""+r[0]):(r[0]+"-"+r[1]); }).join(", "); }
+        if(typeof renderRange==="function") renderRange();
+      }).catch(function(){}); }
       var slug=(ctx.venue && ctx.venue.slug) || "";
       if(slug && window.VPSign){ VPSign.initHost(VP_GAME_API, slug, vpHostToken); }   // this venue's signing key
       restoreRaffle().then(function(){   // recover a live raffle first (accidental reload), then pair the TV as normal
