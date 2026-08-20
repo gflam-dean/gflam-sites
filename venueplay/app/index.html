@@ -811,9 +811,21 @@
                  ended_at: open ? null : new Date().toISOString() };
       if(!open && G.reportId) body.report_id=G.reportId;
       var mine=G.startedAt;   // so a slow reply can't stamp an id onto the NEXT game
-      fetch(VP_GAME_API+"/report",{ method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
-        .then(function(r){ return r.json(); })
-        .then(function(j){ if(open && j && j.id && G.startedAt===mine) G.reportId=j.id; })
+      /* Signed now. /report used to authorise on the venue code alone, and that code is a hash of
+         the venue's PUBLIC slug, so anyone could write invented player counts and prize figures
+         against any venue. These rows drive the quiet-venue retention list, so poisoning them
+         gets a real customer chased or archived. The console is signed in anyway, so this costs
+         nothing. Still best-effort: a report that cannot be sent never blocks the night. */
+      (VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null))
+        .then(function(r){ return (r && r.data && r.data.session && r.data.session.access_token) || ""; })
+        .catch(function(){ return ""; })
+        .then(function(tok){
+          var h={ "Content-Type":"application/json" };
+          if(tok) h["Authorization"]="Bearer "+tok;
+          return fetch(VP_GAME_API+"/report",{ method:"POST", headers:h, body:JSON.stringify(body) })
+            .then(function(r){ return r.json(); })
+            .then(function(j){ if(open && j && j.id && G.startedAt===mine) G.reportId=j.id; });
+        })
         .catch(function(){});
       if(!open) G.reportId=null;
     }catch(e){}

@@ -556,6 +556,26 @@ async function handleCapture(request, env, json) {
   if (cfg.collect_email)      row.email     = s(b.email);
   if (cfg.collect_mobile)     row.mobile    = s(b.mobile);
   if (cfg.collect_marketing_optin && b.marketing_optin === true) { row.marketing_optin = true; row.marketing_optin_at = new Date().toISOString(); }
+  /* PROVENANCE, because this cannot be authenticated yet and pretending otherwise would be worse.
+     Broadcast bingo has no session and no player token, so there is genuinely nothing to check
+     beyond a venue code derived from a public slug: anyone can post a forged capture, including a
+     forged marketing_optin with a consent timestamp, which is a Spam Act problem for the VENUE
+     rather than for us. Until the broadcast signing work lands (migration 38, designed and never
+     built), record where each row came from so a poisoned list can be identified and removed
+     rather than silently mailed. Hashed, so this is not itself new personal data. */
+  if (ipHash) row.source_ip_hash = ipHash;
+  /* The column may not be migrated yet, and a player's details must NEVER be lost to a schema
+     mismatch: PostgREST rejects the whole insert on an unknown column. So try it, and if that is
+     the only thing wrong, store the capture without it. Order of deploy and migration then does
+     not matter, which is the lesson from the empty HQ venue list. */
+  try {
+    await sbInsert(env, 'vp_captures', row, false);
+    return json({ ok: true, stored: true });
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('42703') === -1) throw e;
+    delete row.source_ip_hash;
+  }
   if (!row.first_name && !row.last_name && !row.email && !row.mobile) return json({ ok: true, stored: false });
   await sbInsert(env, 'vp_captures', row, false);
   return json({ ok: true, stored: true });
@@ -614,6 +634,17 @@ async function handleReport(request, env, json) {
   }
   const venueId = await venueByCode(env, b.code);
   if (!venueId) return json({ ok: false });
+
+  /* PROVE YOU ARE THE HOST. This authorised on the venue code alone, and that code is a plain
+     hash of the venue's PUBLIC slug, so anyone could write invented player counts and prize
+     figures against any venue. These rows drive the quiet-venue retention list, whose remedy is
+     an Archive button, so poisoning them is a way to get a real customer chased or archived.
+     The only caller is the bingo console, which is signed in, so the token costs nothing. */
+  let reporter = null;
+  try { reporter = await verifyHostJwt(request, env); } catch (e) { reporter = null; }
+  if (!reporter) return json({ error: 'Sign in to report a game.' }, 401);
+  try { await requireStaff(env, reporter, venueId); }
+  catch (e) { return json({ error: 'That venue is not yours to report on.' }, 403); }
   const row = {
     venue_id: venueId,
     format: String(b.format || 'bingo').slice(0, 20),
