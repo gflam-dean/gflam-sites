@@ -1104,7 +1104,11 @@
     try{ send({ t:"leave", pid:P.pid }); }catch(e){}   // tell the host to drop us from the roster
     try{ if(ch) ch.unsubscribe(); }catch(e){}
     subscribed=false;
+    /* Both stores. saveName writes to localStorage and loadName reads either, so clearing only
+       sessionStorage meant Leave game redirected, loadName found the name again, and the player
+       was silently rejoined to the room they had just left. */
     try{ sessionStorage.removeItem("vp-name-"+P.room); }catch(e){}
+    try{ localStorage.removeItem("vp-name-"+P.room); }catch(e){}
     P.joined=false; P.cards=[]; P.active=false; P.won=false; P.ended=false; P.claimPending=false;
     setConn("");
     // A player who scanned the sign on the table has no code and never typed one, so dropping
@@ -1141,12 +1145,18 @@
     connect(code);                              // broadcast bingo is live on this code right now
     var hopped=false;
     function look(){
-      if(hopped || P.joined || P.active) return;   // already in a game here: never yank them away
+      /* P.active, NOT P.joined. connect() sets P.joined the moment loadName() finds a saved name,
+         and that name lives in localStorage keyed by the venue's PERMANENT code, so every regular
+         who has ever played bingo here has it forever. They scanned the trivia QR, this lookup
+         never ran once, and they sat on the bingo channel all night. goToCode was fixed for
+         exactly this today and this, its twin, was missed. The failure shape is the worst kind:
+         it works for first-timers and fails for regulars, so it looks intermittent. */
+      if(hopped || P.active) return;   // in a live game HERE: never yank them away
       try{
         fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
           .then(function(r){ return r.ok?r.json():null; })
           .then(function(d){
-            if(!d || hopped || P.joined || P.active) return;
+            if(!d || hopped || P.active) return;
             /* A mistyped or out-of-date slug (an old table talker, a typo on a printed sign)
                connects to a channel nobody is on, and the punter sat on "waiting for the host"
                all night with nothing to tell them why. The TV has warned about this since

@@ -806,14 +806,21 @@
     adBuilt=false;   // rebuild from the latest loaded slides so the ads always come back (never black)
     startAds();
     if(reloadWhenIdle){
-      reloadWhenIdle=false;
-      // A beat, so the ad loop is genuinely up if the reload is refused by the rate limiter.
-      setTimeout(function(){ if(window.__vpTvReload) window.__vpTvReload("deferred"); }, 4000);
+      /* Re-check when it FIRES, not when it was scheduled. A round starting inside these four
+         seconds (bingo New game, the next raffle prize) would otherwise be reloaded through,
+         which is the exact thing deferring it exists to prevent. And the flag is only cleared
+         once the reload is actually attempted, so a refusal keeps it pending instead of
+         silently losing the update. */
+      setTimeout(function(){
+        if(tvMode!=="ads") return;                  // a game started: stay pending
+        reloadWhenIdle=false;
+        if(window.__vpTvReload) window.__vpTvReload("deferred");
+      }, 4000);
     }
   }
   function enterBingo(){
     ballInFlight=false;
-    tvMode="bingo"; stopAds(); cancelHolding(); hideGameFrame();
+    tvMode="bingo"; lastBingoAt=Date.now(); stopAds(); cancelHolding(); hideGameFrame();
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
@@ -835,6 +842,9 @@
   // A live game always produces host traffic, so silence for this long means nobody is running
   // anything. Ads are always safe to show, and going there re-arms every other protection.
   var HOST_SILENCE_MS=90*60*1000, lastHostAt=Date.now();
+  /* Set only by traffic on the BINGO channel, so "is bingo actually on air" can be answered
+     without another format's chatter answering it for us. */
+  var BINGO_LIVE_MS=2*60*1000, lastBingoAt=0;
   function noteHostAlive(){ lastHostAt=Date.now(); }
   setInterval(function(){
     if(tvMode==="ads") { lastHostAt=Date.now(); return; }
@@ -961,6 +971,7 @@
       state.phase="lobby"; applyBingo();
     }
     else if(m.t==="ball"){
+      lastBingoAt=Date.now();
       state.called=m.called||state.called;
       state.phase="running";
       // Mark the ball in flight BEFORE the repaint, not after. applyBingo runs renderRun, and
@@ -1030,9 +1041,13 @@
          a manager opening the raffle or members console mid-round wiped the board off the wall,
          because both of those consoles announce their mode the moment their channel subscribes.
          Nothing running on screen should be displaced by a console merely being opened. */
-      if(tvMode==="bingo"){
-        try{ if(Date.now() - (lastHostAt||0) < HOST_SILENCE_MS) return; }catch(e){ return; }
-      }
+      /* Judged on BINGO's own traffic, not lastHostAt. lastHostAt is refreshed by the handler
+         that calls this, microseconds earlier and on traffic from ANY game channel, so the old
+         test was always true and the TV could never leave bingo for another format. A venue that
+         ran bingo then trivia had the bingo board frozen on the wall for the whole quiz.
+         BINGO_LIVE_MS is short on purpose: a bingo round has constant traffic (a ball every few
+         seconds), so two minutes of silence means it is over, not paused. */
+      if(tvMode==="bingo" && (Date.now() - lastBingoAt) < BINGO_LIVE_MS) return;
       enterEmbed(game);              // load it IN PLACE (iframe) instead of navigating, so browser fullscreen is kept
     }
     /* Messages that mean "somebody is present" or "housekeeping", never "a game is on air".
