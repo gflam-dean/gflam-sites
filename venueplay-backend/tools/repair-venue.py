@@ -15,11 +15,14 @@ WHAT IT REPAIRS, and only these:
   * vp_venues.postcode       only if you pass --postcode, because a guess here is worse than
                              a blank: au_state decides which state's gaming rules apply.
   * vp_venues.au_state       derived from the postcode, never guessed from anything else.
+  * a manager login          only with --manager-mobile 04xxxxxxxx. Creates the phone-OTP auth
+                             user (or reuses the existing one) and the vp_venue_staff row, the
+                             same two writes the Worker does at signup. Without a staff row
+                             nobody at the venue can sign in at all.
 
 WHAT IT WILL NOT DO
-  * Create a login. Use fix-venue-login.py, which needs the manager's real mobile.
   * Change a billing status. Whether a venue is comp or should be chased for a card is a
-    decision, not a repair.
+    decision, not a repair. The SQL for it is one line and you should mean it.
 """
 
 import json, os, sys, urllib.parse, urllib.request, urllib.error
@@ -32,10 +35,14 @@ if not KEY:
 args = [a for a in sys.argv[1:]]
 APPLY = "--apply" in args
 postcode = None
+mobile_in = None
 for i, a in enumerate(args):
     if a == "--postcode" and i + 1 < len(args):
         postcode = "".join(ch for ch in args[i + 1] if ch.isdigit())[:4]
-slugs = [a for a in args if not a.startswith("--") and a != postcode]
+    if a == "--manager-mobile" and i + 1 < len(args):
+        mobile_in = args[i + 1]
+consumed = {postcode, mobile_in}
+slugs = [a for a in args if not a.startswith("--") and a not in consumed]
 if not slugs:
     sys.exit("Give me a venue slug. See the docstring at the top of this file.")
 slug = slugs[0]
@@ -58,6 +65,31 @@ def state_from_postcode(pc):
     if 7000 <= n <= 7799: return "TAS"
     if 800 <= n <= 999: return "NT"
     return None
+
+
+def norm_mobile_au(raw):
+    """Same normalisation the Worker uses: only a real AU mobile can receive a sign-in code."""
+    d = "".join(ch for ch in str(raw or "") if ch.isdigit())
+    if d.startswith("61"):
+        d = "0" + d[2:]
+    if len(d) == 9 and d.startswith("4"):
+        d = "0" + d
+    if len(d) != 10 or not d.startswith("04"):
+        return None
+    return "+61" + d[1:]
+
+
+def auth_call(method, path, body=None):
+    """Supabase Auth admin API. Separate from PostgREST, different base path."""
+    req = urllib.request.Request(URL + "/auth/v1/" + path, method=method,
+                                 data=json.dumps(body).encode() if body else None)
+    req.add_header("apikey", KEY); req.add_header("Authorization", "Bearer " + KEY)
+    req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.loads(r.read().decode() or "{}")
+    except urllib.error.HTTPError as e:
+        return {"_error": e.read().decode()[:300], "_code": e.code}
 
 
 def call(method, path, body=None):
@@ -108,12 +140,48 @@ if not v.get("au_state"):
     else:
         print("  !! cannot set au_state: no usable postcode. Re-run with --postcode 4224")
 
-if not patch:
+# ---- the login, only when asked for ----
+staff = call("GET", "vp_venue_staff?venue_id=eq." + urllib.parse.quote(v["id"]) + "&select=id,role")
+print("  staff rows   %s" % len(staff))
+mobile = None
+if mobile_in:
+    mobile = norm_mobile_au(mobile_in)
+    if not mobile:
+        sys.exit("  !! '%s' is not an Australian mobile. They sign in by text code, so a landline "
+                 "leaves the venue with no way in." % mobile_in)
+    if staff:
+        print("  -> %s already has %s staff row(s); a login will be ADDED alongside them" % (slug, len(staff)))
+    print("  -> manager login for %s" % mobile)
+elif not staff:
+    print("  !! NOBODY CAN SIGN IN at this venue. Re-run with --manager-mobile 04xxxxxxxx")
+
+if not patch and not mobile:
     print("\nNothing to repair.")
     sys.exit(0)
 if not APPLY:
     print("\nDry run. Add --apply to write these.")
     sys.exit(0)
 
-call("PATCH", "vp_venues?id=eq." + urllib.parse.quote(v["id"]), patch)
-print("\nApplied: %s" % ", ".join(sorted(patch)))
+if patch:
+    call("PATCH", "vp_venues?id=eq." + urllib.parse.quote(v["id"]), patch)
+    print("\nApplied: %s" % ", ".join(sorted(patch)))
+
+if mobile:
+    # Create the phone-OTP user, or find the one that already exists. Same two writes the Worker
+    # does at signup: an auth user, then the staff row that ties them to THIS venue.
+    u = auth_call("POST", "admin/users", {"phone": mobile, "phone_confirm": True,
+                                          "user_metadata": {"venue": v.get("name") or slug}})
+    uid = u.get("id")
+    if not uid:
+        found = auth_call("GET", "admin/users?page=1&per_page=200")
+        for row in (found.get("users") or []):
+            if row.get("phone") in (mobile, mobile.lstrip("+")):
+                uid = row.get("id"); break
+        if uid:
+            print("that mobile already had a login; reusing it")
+        else:
+            sys.exit("Could not create or find a login for %s: %s" % (mobile, u.get("_error") or u))
+    call("POST", "vp_venue_staff", {"venue_id": v["id"], "auth_user_id": uid,
+                                    "role": "manager",
+                                    "display_name": (v.get("name") or slug) + " manager"})
+    print("Login added: %s can now sign in at venueplay.com.au/app and will be texted a code." % mobile)
