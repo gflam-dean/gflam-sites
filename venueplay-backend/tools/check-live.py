@@ -62,8 +62,11 @@ record("venueplay" in body.lower(), "home page has content")
 # The overage sentence that used to contradict the terms and the code.
 record("your plan just grows to match what you use" not in body,
        "old overage wording is gone from the home page")
-record("creativecommons.org/licenses/by-sa" in body,
-       "trivia licence attribution present")
+# Every Creative Commons question was deleted on 20 Aug 2026 and the bank is now entirely ours,
+# so the attribution was removed on purpose. This check used to assert it was PRESENT, which meant
+# a suite that failed every single run: one permanent red is how a team learns to skim past red.
+record("creativecommons.org/licenses/by-sa" not in body,
+       "no stale Creative Commons attribution (the bank is all ours now)")
 
 code, _, body = get(SITE + "/privacy")
 record(code == 200 and "opt out" in body.lower() or "opt-out" in body.lower(),

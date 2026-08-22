@@ -193,6 +193,12 @@ export default {
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
+      /* Broadcast signing (migrations 38 + 49). vp-sign.js has been loaded by every TV, phone and
+         console since 20 Aug calling these three; they were never written, so every page fell back
+         to send-unsigned / render-everything and the signing was decorative. */
+      if (method === 'GET'  && path === '/venue/signing/public')  return await handleSigningPublic(request, env, json);
+      if (method === 'POST' && path === '/host/signing/private')  return await handleSigningPrivate(request, env, json);
+      if (method === 'POST' && path === '/host/signing/mint')     return await handleSigningMint(request, env, json);
       if (method === 'GET'  && path === '/play/live')          return await handlePlayLive(request, env, json);
       if (method === 'GET'  && path === '/screen')             return await handleScreen(request, env, json);
       if (method === 'POST' && path === '/host/game')          return await handleHostGame(request, env, json);
@@ -584,6 +590,179 @@ async function handleCapture(request, env, json) {
 
 /* Does this screen code map to a real venue? Lets the TV warn a venue that mistyped its
    screen link (/tv?venue=...) instead of silently sitting on a dead channel. */
+
+/* ===========================================================================
+ * BROADCAST SIGNING (migrations 38 + 49)
+ *
+ * Broadcast games meet on a Supabase Realtime channel named from the venue's
+ * PUBLIC slug, and the anon key is printed in every page, so the channel was
+ * never a secret and anyone could shout into it: a ball that was never called,
+ * a winner who never won, a TV pushed back to ads mid-round. There is no game
+ * server to appeal to for broadcast bingo, so authenticity has to travel with
+ * the message.
+ *
+ * Each venue gets one ECDSA P-256 keypair. The private half goes only to a
+ * signed-in host who is staff at that venue; the public half goes to anyone,
+ * because verifying is the entire point. The KEYPAIR IS MINTED IN THE BROWSER:
+ * the Workers runtime cannot generateKey for ECDSA, so the console makes it and
+ * posts both halves here. This Worker only stores and serves.
+ *
+ * kid is derived from the public key rather than stored, so there is no extra
+ * column to migrate and two Workers can never disagree about a key's name.
+ * ======================================================================== */
+
+/* A short, stable name for a public key: the first 12 hex of SHA-256 over its
+   curve point. Informational only (vp-sign.js excludes _kid from the signed
+   bytes), but it makes a rotation visible in a log. */
+async function signingKid(pub) {
+  try {
+    return (await sha256Hex('vpkid:' + String(pub.crv || '') + ':' + String(pub.x || '') + ':' + String(pub.y || ''))).slice(0, 12);
+  } catch (e) { return null; }
+}
+
+/* Store only what we can prove is an ECDSA P-256 JWK of the half we asked for.
+   Without this the table becomes a place a signed-in host can park arbitrary
+   JSON, and a malformed key would fail to import on every TV in the venue,
+   silently, for as long as it sat there. */
+function validJwk(j, wantPrivate) {
+  if (!j || typeof j !== 'object' || Array.isArray(j)) return false;
+  if (j.kty !== 'EC' || j.crv !== 'P-256') return false;
+  if (typeof j.x !== 'string' || typeof j.y !== 'string') return false;
+  if (!j.x || !j.y || j.x.length > 128 || j.y.length > 128) return false;
+  if (wantPrivate) { if (typeof j.d !== 'string' || !j.d || j.d.length > 128) return false; }
+  else if (j.d != null) return false;    // a public half must NOT carry the private scalar
+  return true;
+}
+
+/* Resolve the venue a RECEIVER is asking about. A TV knows its slug, a phone in
+   a broadcast game knows only the venue code it derived from that slug, and a
+   phone in a server-backed format knows its session id. All three are public
+   identifiers, which is fine: this route serves the public half only. */
+async function signingVenueForReceiver(env, url) {
+  const venue = String(url.searchParams.get('venue') || '').trim().toLowerCase().slice(0, 80);
+  if (venue) {
+    if (!/^[a-z0-9-]+$/.test(venue)) return null;
+    const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(venue) + '&select=id,broadcast_enforce&limit=1');
+    return (rows && rows[0]) || null;
+  }
+  const code = String(url.searchParams.get('code') || '').trim();
+  if (code) {
+    const id = await venueByCode(env, code);
+    if (!id) return null;
+    const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(id) + '&select=id,broadcast_enforce&limit=1');
+    return (rows && rows[0]) || null;
+  }
+  const session = String(url.searchParams.get('session') || '').trim();
+  if (session) {
+    if (!/^[0-9a-fA-F-]{36}$/.test(session)) return null;
+    const ss = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(session) + '&select=venue_id&limit=1');
+    const vid = ss && ss[0] && ss[0].venue_id;
+    if (!vid) return null;
+    const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(vid) + '&select=id,broadcast_enforce&limit=1');
+    return (rows && rows[0]) || null;
+  }
+  return null;
+}
+
+/* GET /venue/signing/public?venue=<slug> | ?code=<venue code> | ?session=<id>
+   Public by design. Returns the enforce flag even when no key exists yet, so a
+   screen that booted before the venue's first host login knows to keep polling
+   rather than settle into fail-open forever. */
+async function handleSigningPublic(request, env, json) {
+  const url = new URL(request.url);
+  const venue = await signingVenueForReceiver(env, url);
+  if (!venue) return json({ exists: false });
+  const enforce = !!venue.broadcast_enforce;
+  const rows = await sbGet(env, 'vp_venue_signing_keys',
+    'venue_id=eq.' + enc(venue.id) + '&select=public_jwk&limit=1');
+  const key = rows && rows[0];
+  if (!key || !key.public_jwk) return json({ exists: false, enforce: enforce });
+  return json({
+    exists: true,
+    enforce: enforce,
+    public_jwk: key.public_jwk,
+    kid: await signingKid(key.public_jwk),
+  });
+}
+
+/* Shared front door for the two host routes: a valid host JWT, a real slug, and
+   staff membership at THAT venue. requireStaff also enforces the kill-switch, so
+   a suspended venue cannot mint or fetch a key. */
+async function signingHostVenue(request, env) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const slug = String((b && b.slug) || '').trim().toLowerCase().slice(0, 80);
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) throw httpError(400, 'Missing venue');
+  const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id,broadcast_enforce&limit=1');
+  const venue = rows && rows[0];
+  if (!venue) throw httpError(404, 'Venue not found');
+  await requireStaff(env, authUserId, venue.id);
+  return { venue: venue, body: b };
+}
+
+/* POST /host/signing/private  { slug }
+   Hands the venue's private half to a host who has passed the staff check. When
+   there is no key yet it says so and the console mints one (next route), because
+   the Workers runtime cannot generate an ECDSA key itself. */
+async function handleSigningPrivate(request, env, json) {
+  const { venue } = await signingHostVenue(request, env);
+  const rows = await sbGet(env, 'vp_venue_signing_keys',
+    'venue_id=eq.' + enc(venue.id) + '&select=public_jwk,private_jwk&limit=1');
+  const key = rows && rows[0];
+  const enforce = !!venue.broadcast_enforce;
+  if (!key) return json({ has_key: false, enforce: enforce });
+  return json({
+    has_key: true,
+    enforce: enforce,
+    private_jwk: key.private_jwk,
+    public_jwk: key.public_jwk,
+    kid: await signingKid(key.public_jwk),
+  });
+}
+
+/* POST /host/signing/mint  { slug, public_jwk, private_jwk }
+   Stores a keypair the console generated. Two hosts opening their consoles at
+   the same moment would both mint; the venue_id primary key means the second
+   insert loses, and rather than fail we RE-READ and return whatever the table
+   settled on, so both consoles converge on one key instead of signing with two.
+   An existing key is never overwritten: rotation is deleting the row on purpose,
+   not a race. */
+async function handleSigningMint(request, env, json) {
+  const { venue, body } = await signingHostVenue(request, env);
+  const pub = body && body.public_jwk;
+  const priv = body && body.private_jwk;
+  if (!validJwk(pub, false) || !validJwk(priv, true)) {
+    return json({ error: 'That is not an ECDSA P-256 key pair.' }, 400);
+  }
+  if (pub.x !== priv.x || pub.y !== priv.y) {
+    return json({ error: 'The two halves are not the same key.' }, 400);
+  }
+  const existing = await sbGet(env, 'vp_venue_signing_keys',
+    'venue_id=eq.' + enc(venue.id) + '&select=public_jwk,private_jwk&limit=1');
+  if (!(existing && existing.length)) {
+    try {
+      await sbInsert(env, 'vp_venue_signing_keys', {
+        venue_id: venue.id, public_jwk: pub, private_jwk: priv,
+      }, false);
+    } catch (e) {
+      // 409 on the primary key: another console minted first. Fall through and read theirs.
+      const msg = String((e && e.message) || e);
+      if (msg.indexOf('409') === -1 && msg.indexOf('duplicate') === -1 && msg.indexOf('23505') === -1) throw e;
+    }
+  }
+  const rows = await sbGet(env, 'vp_venue_signing_keys',
+    'venue_id=eq.' + enc(venue.id) + '&select=public_jwk,private_jwk&limit=1');
+  const key = rows && rows[0];
+  if (!key) return json({ error: 'Could not store the signing key.' }, 502);
+  return json({
+    has_key: true,
+    enforce: !!venue.broadcast_enforce,
+    private_jwk: key.private_jwk,
+    public_jwk: key.public_jwk,
+    kid: await signingKid(key.public_jwk),
+  });
+}
+
 async function handleVenueLookup(request, env, json) {
   const url = new URL(request.url);
   const venueId = await venueByCode(env, url.searchParams.get('code') || '');
@@ -934,7 +1113,16 @@ async function handleHostGame(request, env, json) {
          walking in. Past that we ask again rather than quietly billing on. Before this, one tap
          on "5 extra players, $10" at 7pm silently covered 200 players at 11pm. */
       const ceiling = overageCeiling(session, planCap);
-      if (count > planCap && (!session.overage_approved || count > ceiling)) {
+      /* Never ask a venue to consent to a charge that cannot happen. chargeNightOverage bails out
+         when the account has no Stripe customer and subscription behind it, which is every comp
+         venue and every venue we onboarded from HQ that has not added a card yet. Those hosts were
+         still being shown "the extra players are $2 each, OK?" and made to tap it before their game
+         would start: a promise about their money that we then did not keep in either direction.
+         Asking is the same decision as billing, so it reads the same condition. */
+      const chargeable = (count > planCap && (!session.overage_approved || count > ceiling))
+        ? await venueCanBeCharged(env, session.venue_id)
+        : true;
+      if (chargeable && count > planCap && (!session.overage_approved || count > ceiling)) {
         /* Whether the night is inside the free first month is decided HERE and sent back, because
            this is the code that decides whether to charge. The consoles were working it out
            themselves with a calendar month while this Worker counts a fixed 30 days, so a venue
@@ -3370,6 +3558,25 @@ async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
    product said, on screen, that none would be. It also counted toward the three-night streak that
    moves a venue onto a bigger plan. The billing Worker already refuses to charge a trialing
    subscription; this is the same rule, applied where the night is actually billed. */
+/* Can this venue's account actually be billed? Exactly the condition chargeNightOverage uses
+   before it writes a Stripe invoiceitem, so the consent screen and the charge can never disagree:
+   no founding row, no Stripe customer, or no subscription means nothing will ever be charged, and
+   a comp account has none of them by definition. Failure is treated as CHARGEABLE, so a Supabase
+   blip shows the host the consent screen rather than quietly skipping it. */
+async function venueCanBeCharged(env, venueId) {
+  try {
+    const vs = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=founding_id&limit=1');
+    const foundingId = vs && vs[0] && vs[0].founding_id;
+    if (!foundingId) return false;   // a grouped venue is invoiced by hand; nothing meters it here
+    const accts = await sbGet(env, 'venueplay_founding',
+      'id=eq.' + enc(foundingId) + '&select=status,stripe_customer_id,stripe_subscription_id&limit=1');
+    const a = accts && accts[0];
+    if (!a) return false;
+    if (a.status === 'comp') return false;
+    return !!(a.stripe_customer_id && a.stripe_subscription_id);
+  } catch (e) { return true; }
+}
+
 async function venueInFreeMonth(env, venueId) {
   try {
     const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=created_at&limit=1');

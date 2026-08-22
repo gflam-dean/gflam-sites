@@ -24,8 +24,16 @@ does not fit, and the quick fix is to open it up entirely. Opening it up is neve
 import os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# The site lives in venueplay/ and this tool lives in venueplay-backend/tools/, so "next to me"
+# has been wrong since the repo was split: both guards tracebacked on a missing file instead of
+# checking anything, which is the worst way for a guard to fail. Resolve the site explicitly, and
+# say so plainly if it ever moves again.
+SITE = os.path.join(HERE, "..", "..", "venueplay")
+if not os.path.isdir(SITE):
+    sys.exit("Cannot find the site at %s. If the repo layout changed, fix SITE in this file." % SITE)
+
 def read(p):
-    with open(os.path.join(HERE, "..", p), encoding="utf-8") as f:
+    with open(os.path.join(SITE, p), encoding="utf-8") as f:
         return f.read()
 
 idx = read("app/index.html")

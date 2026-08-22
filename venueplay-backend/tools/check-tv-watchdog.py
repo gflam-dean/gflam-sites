@@ -15,7 +15,15 @@ Exits non-zero and says what is missing if any of it has gone.
 import os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TV = os.path.join(HERE, "..", "tv.html")
+# The site lives in venueplay/ and this tool lives in venueplay-backend/tools/, so "next to me"
+# has been wrong since the repo was split: both guards tracebacked on a missing file instead of
+# checking anything, which is the worst way for a guard to fail. Resolve the site explicitly, and
+# say so plainly if it ever moves again.
+SITE = os.path.join(HERE, "..", "..", "venueplay")
+if not os.path.isdir(SITE):
+    sys.exit("Cannot find the site at %s. If the repo layout changed, fix SITE in this file." % SITE)
+
+TV = os.path.join(SITE, "tv.html")
 src = open(TV, encoding="utf-8").read()
 
 CHECKS = [
