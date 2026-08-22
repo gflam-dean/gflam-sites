@@ -543,6 +543,20 @@ async function venueByCode(env, code) {
 /* Opt-in capture for a broadcast game. Anon; best-effort. Stores ONLY the fields the venue's
    settings allow (which migration 21 already forces off for unapproved accounts), always keyed
    by venue_id, never by name. Unknown code = silently ignored so a player is never blocked. */
+/* Did this venue have a game running in the last few hours? The bingo console posts a report row
+   at game start and patches the same row at the end, so an open-ended row (or one that ended very
+   recently, because people fill the form as the room empties) means a real night is under way.
+   Deliberately generous, and it FAILS OPEN: if this lookup errors we say yes, because refusing a
+   genuine opt-in to be strict about a forgery is the wrong way round. */
+async function venueHasGameOpen(env, venueId) {
+  try {
+    const since = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    const rows = await sbGet(env, 'vp_game_reports',
+      'venue_id=eq.' + enc(venueId) + '&started_at=gte.' + enc(since) + '&select=id&limit=1');
+    return !!(rows && rows.length);
+  } catch (e) { return true; }
+}
+
 async function handleCapture(request, env, json) {
   const b = await readJson(request);
   const ipHash = await abuseIpHash(request, env);
@@ -571,6 +585,16 @@ async function handleCapture(request, env, json) {
      built), record where each row came from so a poisoned list can be identified and removed
      rather than silently mailed. Hashed, so this is not itself new personal data. */
   if (ipHash) row.source_ip_hash = ipHash;
+  /* Was a game actually on? This is the only thing about a capture we can check.
+     /capture authorises on a venue code derived from the venue's PUBLIC slug, so anyone who knows
+     a venue exists can post one, including a marketing_optin with a consent timestamp for someone
+     who never consented. Nothing on the phone's side can fix that. But the console posts a report
+     row the moment a game starts, so we can ask whether this venue was mid-game when the capture
+     landed. A real punter fills the form in the room during bingo; a forged one turns up at 4am.
+     Marked, not rejected: the row is still stored either way, and the export view is what leaves
+     the unmarked ones out, so a console whose report failed to send never costs a venue real
+     opt-ins that they can go and look at. */
+  row.during_game = await venueHasGameOpen(env, venueId);
   /* The column may not be migrated yet, and a player's details must NEVER be lost to a schema
      mismatch: PostgREST rejects the whole insert on an unknown column. So try it, and if that is
      the only thing wrong, store the capture without it. Order of deploy and migration then does
@@ -580,8 +604,11 @@ async function handleCapture(request, env, json) {
     return json({ ok: true, stored: true });
   } catch (e) {
     const msg = String((e && e.message) || e);
-    if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('42703') === -1) throw e;
+    if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('during_game') === -1 && msg.indexOf('42703') === -1) throw e;
+    // Migration 47 or 52 has not run yet. A player's details must never be lost to a schema
+    // mismatch, so drop the columns the database does not know about and store the capture.
     delete row.source_ip_hash;
+    delete row.during_game;
   }
   if (!row.first_name && !row.last_name && !row.email && !row.mobile) return json({ ok: true, stored: false });
   await sbInsert(env, 'vp_captures', row, false);

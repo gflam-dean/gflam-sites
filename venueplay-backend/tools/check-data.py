@@ -199,6 +199,14 @@ if n_caps is not None:
     if n_noprov and n_opt and n_noprov > 0:
         notes.append("%s capture(s) predate migration 47, so a poisoned row among them cannot be "
                      "traced back to where it came from." % n_noprov)
+    # A capture that arrived with no game running at that venue is what a forged one looks like.
+    # The export view already leaves these out; this is so you can see whether anyone is trying.
+    _, n_forged = q("vp_captures", "select=id&during_game=is.false&limit=1", count=True)
+    if n_forged:
+        flag("MED", "%s capture(s) arrived with no game running" % n_forged,
+             "That is the shape of a forged opt-in: /capture authorises on a code derived from the "
+             "venue's public slug, so anyone who knows a venue exists can post one. They are kept "
+             "out of the venue's export, but somebody is poking at it.")
 
 # ------------------------------------------------------------------ sessions
 open_s, n_open = q("vp_sessions", "select=id,venue_id,status,opened_at&status=in.(lobby,live)"
