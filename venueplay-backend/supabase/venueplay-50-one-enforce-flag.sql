@@ -1,0 +1,42 @@
+-- =====================================================================
+-- Migration 50: one enforce flag, not two
+-- ---------------------------------------------------------------------
+--   ****  RUN THIS ONLY AFTER PASTING venueplay-game.js FROM main.  ****
+--
+-- WHAT HAPPENED. Broadcast signing was built twice. An earlier version lives on
+-- the unmerged branch fix/audit-40 and was deployed at some point: that is where
+-- the venue signing keys already in vp_venue_signing_keys came from. It stored
+-- its per-venue switch as vp_venue_settings.sign_enforce. That build was later
+-- replaced by one from main that had no signing routes at all, which is how the
+-- feature came to be loaded on every screen while every endpoint 404'd.
+--
+-- The version now on main stores the switch as vp_venues.broadcast_enforce, in
+-- the same row it already reads to resolve the venue, so turning a venue on
+-- costs no extra query. Both columns now exist in the live database and NOTHING
+-- reads sign_enforce: main does not mention it anywhere.
+--
+-- Two switches for one feature is how somebody later flips the wrong one and
+-- concludes the signing does not work. This drops the one nothing reads.
+--
+-- BEFORE YOU RUN IT, check you are not throwing away a decision:
+--
+--   select v.slug, s.sign_enforce
+--   from vp_venue_settings s join vp_venues v on v.id = s.venue_id
+--   where s.sign_enforce;
+--
+-- Every row that returns is a venue somebody deliberately switched on under the
+-- old build. Carry each one across first:
+--
+--   update vp_venues set broadcast_enforce = true where slug in ( ... );
+--
+-- If it returns nothing, which is expected, drop it and move on.
+--
+-- The KEYS are untouched and stay valid. vp_venue_signing_keys is the same table
+-- in both versions with the same columns, so the seven venues that already have
+-- a key keep it: the new routes read exactly what the old build wrote, and the
+-- mint route never overwrites an existing key.
+--
+-- Safe to run more than once.
+
+ALTER TABLE public.vp_venue_settings
+  DROP COLUMN IF EXISTS sign_enforce;
