@@ -1,4 +1,4 @@
-/* VenuePlay broadcast-message signing (migrations 38 + 49).
+/* VenuePlay broadcast-message signing (migrations 38 + 55).
  *
  * WHY. Broadcast games (bingo, members draw, and the instant-UX layer of trivia/musical/raffle) meet
  * on a Supabase Realtime channel whose name is derived from the venue's PUBLIC slug. The channel is
@@ -16,7 +16,7 @@
  *   - screen can't get a key  -> renders everything (as before)
  *   - enforce is off (phase 2) -> screen renders unsigned messages, just logs a warning
  *   - this script fails to load -> callers fall back to calling onMsg directly (see the pages)
- * Only when a venue is flipped to enforce=true (migration 49) does an unsigned message get dropped.
+ * Only when a venue is flipped to enforce=true (migration 55) does an unsigned message get dropped.
  *
  * Usage:
  *   Receiver (TV / phone):  VPSign.initReceiver(apiBase, slug)

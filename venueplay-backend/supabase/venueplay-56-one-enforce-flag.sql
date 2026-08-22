@@ -1,5 +1,5 @@
 -- =====================================================================
--- Migration 50: one enforce flag, not two
+-- Migration 56: one enforce flag, not two
 -- ---------------------------------------------------------------------
 --   ****  RUN THIS ONLY AFTER PASTING venueplay-game.js FROM main.  ****
 --

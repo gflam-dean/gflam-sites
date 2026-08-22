@@ -1,5 +1,5 @@
 -- =====================================================================
--- Migration 49: the switch that makes broadcast signing mean something
+-- Migration 55: the switch that makes broadcast signing mean something
 -- ---------------------------------------------------------------------
 --   ****  RUN THIS *AFTER* PASTING venueplay-game.js, NOT BEFORE.  ****
 --

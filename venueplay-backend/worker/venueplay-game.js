@@ -193,7 +193,7 @@ export default {
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
-      /* Broadcast signing (migrations 38 + 49). vp-sign.js has been loaded by every TV, phone and
+      /* Broadcast signing (migrations 38 + 55). vp-sign.js has been loaded by every TV, phone and
          console since 20 Aug calling these three; they were never written, so every page fell back
          to send-unsigned / render-everything and the signing was decorative. */
       if (method === 'GET'  && path === '/venue/signing/public')  return await handleSigningPublic(request, env, json);
@@ -605,7 +605,7 @@ async function handleCapture(request, env, json) {
   } catch (e) {
     const msg = String((e && e.message) || e);
     if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('during_game') === -1 && msg.indexOf('42703') === -1) throw e;
-    // Migration 47 or 52 has not run yet. A player's details must never be lost to a schema
+    // Migration 47 or 58 has not run yet. A player's details must never be lost to a schema
     // mismatch, so drop the columns the database does not know about and store the capture.
     delete row.source_ip_hash;
     delete row.during_game;
@@ -619,7 +619,7 @@ async function handleCapture(request, env, json) {
    screen link (/tv?venue=...) instead of silently sitting on a dead channel. */
 
 /* ===========================================================================
- * BROADCAST SIGNING (migrations 38 + 49)
+ * BROADCAST SIGNING (migrations 38 + 55)
  *
  * Broadcast games meet on a Supabase Realtime channel named from the venue's
  * PUBLIC slug, and the anon key is printed in every page, so the channel was

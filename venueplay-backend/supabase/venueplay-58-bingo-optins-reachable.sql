@@ -1,5 +1,5 @@
 -- =====================================================================
--- Migration 52: the venue can finally see the opt-ins from a bingo night
+-- Migration 58: the venue can finally see the opt-ins from a bingo night
 -- ---------------------------------------------------------------------
 --   ****  RUN THIS *AFTER* PASTING venueplay-game.js, NOT BEFORE.  ****
 --
