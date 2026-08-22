@@ -947,6 +947,8 @@ async function vpaHandleVenue(request, env, json) {
     venueRow.group_id = groupId;
     if (billing.included_players != null && billing.included_players !== '') {
       venueRow.included_players = parseInt(billing.included_players, 10) || null;
+      // Everything that DISPLAYS a plan reads vp_venues.max_players (see below).
+      venueRow.max_players = venueRow.included_players;
     }
   } else {
     // Independent: create the founding/subscription record first.
@@ -983,6 +985,12 @@ async function vpaHandleVenue(request, env, json) {
     }
     foundingId = created && created.id;
     venueRow.founding_id = foundingId;
+    /* The cap has to live on the VENUE, not just the founding row. Every self-serve path writes
+       vp_venues.max_players (vpaProvisionOneVenue does it); vpaHandleVenue never has, so a venue
+       onboarded by hand opened its own billing page and was told it had 0 players and a $0 plan.
+       Metering was never wrong (the game Worker falls back to founding.max_seats when this is
+       null) but the venue was being shown a plan it does not have. */
+    venueRow.max_players = foundingRow.max_seats || null;
   }
 
   // Create the venue, its default settings and a screen.
@@ -3086,7 +3094,7 @@ async function vpbRequireOwner(request, env) {
   const foundingId = venues[0].founding_id;
   const accounts = await vpaSelect(env, 'venueplay_founding',
     'id=eq.' + encodeURIComponent(foundingId) +
-    '&select=id,plan,is_group,payment_reminders,stripe_subscription_id,stripe_customer_id,contact_email');
+    '&select=id,plan,is_group,payment_reminders,stripe_subscription_id,stripe_customer_id,contact_email,status');
   const account = accounts && accounts[0];
   if (!account) return { error: 'No billing account found for this login.', status: 404 };
 
@@ -3385,6 +3393,11 @@ async function vpbAccountSummary(request, env, json) {
     credit_cents: creditCents,
     credit: '$' + (creditCents / 100).toFixed(2),
     payment_reminders: o.account.payment_reminders !== false,
+    /* A comp account has no subscription and never will, and an HQ-onboarded venue has not added
+       a card yet. Both were being shown a monthly total and a next payment date as if they were
+       ordinary paying venues, which is the one thing a billing page must never get wrong. */
+    comp: o.account.status === 'comp',
+    has_subscription: !!o.account.stripe_subscription_id,
     is_owner: vpbIsOwner(o),
     perms: o.perms || null,
   });

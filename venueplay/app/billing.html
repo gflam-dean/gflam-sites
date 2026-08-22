@@ -439,7 +439,7 @@
         "It comes off your next renewal automatically, so there is nothing to claim.";
     } else if (ct){ ct.style.display="none"; if(cnote) cnote.textContent=""; }
     $("s-players").textContent = d.total_players;
-    $("s-total").textContent = d.monthly_total;
+    $("s-total").textContent = d.comp ? "On us" : d.monthly_total;
     /* NEXT MONTH. Reductions and cancellations only take effect at the next renewal, so "this month"
        is current cover and "next month" is what it becomes. Players next month = every venue's
        pending figure (or its current one), with cancelling venues dropped. Cost next month: when the
@@ -450,25 +450,42 @@
     $("s-players-next").textContent = nextPlayers;
     var mtNum = parseFloat(String(d.monthly_total).replace(/[^0-9.]/g, "")) || 0;
     var plainPricing = Math.abs(mtNum - (d.total_players || 0) * rate) < 0.01;
-    $("s-total-next").textContent = plainPricing ? money(nextPlayers * rate) : (d.next_charge_amount || d.monthly_total);
+    $("s-total-next").textContent = d.comp ? "On us"
+      : (plainPricing ? money(nextPlayers * rate) : (d.next_charge_amount || d.monthly_total));
     // Make it clear when the tiles above show current cover but a change is scheduled: reductions
     // (and a venue you cancel) only take effect at your next renewal, so the totals hold until then.
     var pn = $("players-note");
     if (pn){
       var pending = (d.venues || []).filter(function(v){ return (v.pending != null && v.pending !== v.players) || v.cancelling; });
-      var note = "Extra players are charged a full month at " + money(rate) + " per player from the day you add them, and the totals above update straight away.";
+      var note = d.comp
+        ? "Your account is on us, so nothing on this page is charged. Add as many players or venues as you like."
+        : "Extra players are charged a full month at " + money(rate) + " per player from the day you add them, and the totals above update straight away.";
       if (pending.length){
         note = "The totals above are your current cover. A scheduled change (a player reduction or a venue you cancelled) takes effect at your next renewal" +
                (d.next_charge ? " on " + d.next_charge : "") + ", and the figures update then. Adding players or a venue applies straight away.";
       }
       pn.textContent = note;
     }
-    $("s-next").textContent = d.next_charge
-      ? (d.next_charge + (d.next_charge_amount ? "  ·  " + d.next_charge_amount : ""))
+    /* "at launch" was pre-launch copy that outlived launch. It is shown whenever there is no
+       Stripe period to read, which is now two real cases: an account that is on us, and a venue
+       we onboarded from HQ that has not added its card yet. Neither has a payment at launch. */
+    $("s-next").textContent = d.comp ? "Nothing to pay"
+      : d.next_charge ? (d.next_charge + (d.next_charge_amount ? "  ·  " + d.next_charge_amount : ""))
+      : d.has_subscription === false ? "When you add your card"
       : "at launch";
     // Card tile removed: we do not hold the card's last 4 digits, so it only ever said "on file".
     // The card is viewed and updated through the Stripe portal under "Invoices & card" below.
     $("reminders").checked = d.payment_reminders !== false;
+    /* No Stripe customer means the portal has nothing to open, so the button would fail rather
+       than explain itself. Hide the whole section for a comp account. */
+    if (d.comp){
+      var _inv = $("portalBtn");
+      if (_inv){
+        var _card = _inv.closest(".card"); if (_card) _card.style.display = "none";
+        var _lbl = _card && _card.previousElementSibling;
+        if (_lbl && _lbl.classList.contains("label")) _lbl.style.display = "none";
+      }
+    }
     gateSections(d);
 
     var wrap = $("venues"); wrap.innerHTML = "";
