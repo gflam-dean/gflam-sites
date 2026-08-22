@@ -893,6 +893,21 @@ async function handleReport(request, env, json) {
 
      So the console now reports the moment a game STARTS and patches that same row when it
      finishes. The trace exists from ball one, and there is still exactly one row per game. */
+  /* METERING BROADCAST BINGO.
+     Bingo has no server session and mints no player rows, so until now the biggest room in the
+     building was the one thing that could never be billed. This report is the meter: it is host
+     authenticated, it carries the count the console had on screen, and it lands once when the
+     game ENDS. Charged per game, not per day, because a venue that runs bingo and then trivia the
+     same night has drawn two crowds and pays on both.
+     Two guards, both of which have to hold before a cent moves:
+       - ended_at, so a game still in progress is never billed, and the start report cannot bill;
+       - overage_ack, the host's tap on the consent screen that names the exact figure. No tap,
+         no charge, which is what the console promises them.
+     The Stripe idempotency key is the report row, so the console re-sending the end report (a
+     retry, a reload, a flaky pub connection) can never bill the same game twice. */
+  const wantsCharge = !!(row.ended_at && b.overage_ack === true);
+  const approved = Math.max(0, parseInt(b.approved_players, 10) || 0);
+
   const reportId = String(b.report_id || '').trim();
   if (reportId) {
     if (!UUID_RE.test(reportId)) return json({ error: 'Invalid report_id' }, 400);
@@ -900,11 +915,22 @@ async function handleReport(request, env, json) {
     // another venue's figures.
     await sbPatch(env, 'vp_game_reports',
       'id=eq.' + enc(reportId) + '&venue_id=eq.' + enc(venueId), row);
+    if (wantsCharge) {
+      // Billing must never take the report down with it: the row is what keeps a busy venue off
+      // the retention list, and losing that is worse than missing one charge.
+      try { await chargeBingoReport(env, venueId, reportId, row.players, approved); }
+      catch (e) { console.log('[overage] bingo report ' + reportId + ' charge failed: ' + e); }
+    }
     return json({ ok: true, id: reportId });
   }
   const ins = await sbInsert(env, 'vp_game_reports', row, true);
   const created = Array.isArray(ins) ? ins[0] : ins;
-  return json({ ok: true, id: (created && created.id) || null });
+  const newId = (created && created.id) || null;
+  if (wantsCharge && newId) {
+    try { await chargeBingoReport(env, venueId, newId, row.players, approved); }
+    catch (e) { console.log('[overage] bingo report ' + newId + ' charge failed: ' + e); }
+  }
+  return json({ ok: true, id: newId });
 }
 
 async function handleJoin(request, env, json) {
@@ -3628,8 +3654,159 @@ function countPlayers(rows) {
   return n;
 }
 
-async function chargeNightOverage(env, session) {
+/* Which NIGHT is it, on a 2am-to-2am Brisbane clock?
+ *
+ * A bingo session that finishes at 12:30am belongs to the night it started, not to the next day,
+ * and a venue running three games on one Saturday must not read as three consecutive big nights.
+ * Brisbane is a fixed UTC+10 with no daylight saving, so this is +10 for the timezone and -2 for
+ * the boundary: eight hours forward, then take the date. */
+function brisbaneNightKey(ms) {
+  return new Date((ms || Date.now()) + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/* THE MONEY, in one place.
+ *
+ * Overage used to live entirely inside chargeNightOverage, which starts from a vp_sessions row
+ * and counts vp_players. Broadcast bingo has neither: it has no server session and mints no
+ * player rows, so the flagship format could never be billed a cent no matter how big the room
+ * got. Rather than write a second copy of the pricing (two answers to "what does an extra head
+ * cost" is how a venue gets billed twice, or not at all), the decision is factored out here and
+ * both paths hand it the same three numbers: who, how many turned up, and what they are on.
+ *
+ * peak      players actually counted, already clamped to what the host approved
+ * cap       the plan they are paying for
+ * idemKey   Stripe idempotency: a retry of the same night must never bill twice
+ */
+async function applyOverageCharge(env, o) {
+  const venueId = o.venueId, peak = Number(o.peak || 0), cap = Number(o.cap || 0);
   if (!env.STRIPE_SECRET_KEY) return;                          // overage billing not configured
+  if (!cap || peak <= 0) return;
+
+  const venues = await sbGet(env, 'vp_venues',
+    'id=eq.' + enc(venueId) +
+    '&select=id,name,founding_id,max_players,pending_players,overage_streak,overage_streak_peaks,overage_streak_day');
+  const venue = venues && venues[0];
+  if (!venue) return;
+
+  const overage = peak - cap;
+  // Free first month: the consoles promise no charge and show no consent screen, so honour that
+  // here rather than invoice it. The streak is left alone too, or a venue could be moved onto a
+  // bigger plan by nights they were told were free.
+  if (overage > 0 && await venueInFreeMonth(env, venue.id)) {
+    console.log('[overage] free first month, not charging venue ' + venue.id);
+    return;
+  }
+  if (overage <= 0) {
+    // A night back inside their cap breaks the run, so the next big night starts again at $2.
+    if (venue.overage_streak) {
+      await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
+        { overage_streak: 0, overage_streak_peaks: [], overage_streak_day: null });
+    }
+    return;
+  }
+  if (!venue.founding_id) return;
+  // Overage is charged ONLY when the host approved it on the night: when the room passed the
+  // plan cap they saw a "you are over your plan, extra players are $X each" warning and tapped
+  // OK (POST /host/overage/ack). No approval means no charge and no streak, so a fake-join flood
+  // can never bill a venue or push one onto a bigger plan.
+  if (!o.approved) return;
+  const accts = await sbGet(env, 'venueplay_founding',
+    'id=eq.' + enc(venue.founding_id) + '&select=id,stripe_customer_id,stripe_subscription_id');
+  const acct = accts && accts[0];
+  if (!acct || !acct.stripe_customer_id || !acct.stripe_subscription_id) return;   // comp/test venue: never charge
+
+  // Tier ('founding' | 'standard') comes from the subscription metadata we set at checkout,
+  // the authoritative source (no price-id guessing, no extra env vars). If we cannot read a
+  // known tier, do NOT guess a rate on real money: log and skip for manual handling.
+  let tier = '';
+  try {
+    const sub = await stripeGet(env, 'subscriptions/' + enc(acct.stripe_subscription_id));
+    tier = (sub && sub.metadata && sub.metadata.tier) || '';
+  } catch (e) { tier = ''; }
+  if (tier !== 'founding' && tier !== 'standard') {
+    console.log('[overage] ' + o.idemKey + ' unknown tier (metadata.tier="' + tier +
+                '"): skipping charge for manual review');
+    return;
+  }
+  /* Dean's model (12 Aug 2026): $2 a head for the first two big nights in a row. On the THIRD
+     consecutive one they pay $1 a head and the plan moves up, because at that point it is not a
+     big night any more, it is their crowd. The uplift is the SMALLEST of the three nights: a
+     venue capped at 10 that draws 12, 13, 15 moves to 12, since 12 is the only number they hit
+     every time. Paying twice at $2 and once at $1 is also what makes moving up the cheaper
+     outcome for them, which is the point. */
+  /* The streak counts NIGHTS, not charges. Bingo is billed per game, so without this a venue with
+     three sessions on one Saturday would hit "three big nights in a row" before closing time and
+     be moved onto a bigger plan permanently, off a single day's trade. A second game the same
+     night is still charged in full; it just does not advance the run. */
+  const night = brisbaneNightKey(Date.now());
+  const sameNight = venue.overage_streak_day === night;
+  const peaks = sameNight
+    ? (Array.isArray(venue.overage_streak_peaks) && venue.overage_streak_peaks.length
+        ? venue.overage_streak_peaks.slice()
+        : [peak])
+    : (Array.isArray(venue.overage_streak_peaks) ? venue.overage_streak_peaks.slice(-2) : []).concat([peak]);
+  // A bigger room later the same night replaces that night's figure rather than adding to the run.
+  if (sameNight && peaks.length) peaks[peaks.length - 1] = Math.max(peaks[peaks.length - 1], peak);
+  const thirdInARow = !sameNight && peaks.length >= 3;
+  const rateDollars = thirdInARow ? 1.00 : 2.00;
+  const amountCents = Math.round(overage * rateDollars * 100);
+  if (amountCents <= 0) return;
+
+  const when = new Date().toISOString().slice(0, 10);
+  const res = await stripePost(env, 'invoiceitems', {
+    customer: acct.stripe_customer_id,
+    subscription: acct.stripe_subscription_id,
+    currency: 'aud',
+    amount: amountCents,
+    description: 'Big night extra players - ' + (venue.name || 'venue') + ' - ' + when +
+                 ' - ' + overage + ' over ' + cap + ' at $' + rateDollars.toFixed(2) +
+                 (thirdInARow ? ' (third big night in a row)' : ''),
+  }, o.idemKey);
+  if (!res || res.error) {
+    console.log('[overage] ' + o.idemKey + ' Stripe invoiceitem FAILED: ' +
+                ((res && res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
+    /* A FAILED CHARGE MUST NOT ADVANCE THE STREAK.
+       The code used to log and fall straight through to the streak patch and, on the third night,
+       to upliftPlan(). So three consecutive over-nights whose invoiceitems all failed (an expired
+       card, a Stripe outage) never billed the venue a cent for the overage but did move them
+       permanently onto a bigger monthly plan. Leave the streak where it is: the night can be
+       billed by hand, and a real third night will still count once a charge actually succeeds. */
+    try {
+      await sbInsert(env, 'vp_admin_audit', {
+        actor_admin: null,
+        actor_label: 'system',
+        action: 'overage_charge_failed',
+        target: venue.id,
+        detail: {
+          source: o.idemKey,
+          venue_name: venue.name || null,
+          amount_cents: amountCents,
+          players_over: overage,
+          plan_cap: cap,
+          error: (res && res.error && res.error.message) || 'unknown',
+        },
+      }, false);
+    } catch (e) { /* audit is best effort; never let it mask the billing failure */ }
+    return;
+  }
+
+  if (!thirdInARow) {
+    await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
+      { overage_streak: peaks.length, overage_streak_peaks: peaks, overage_streak_day: night });
+    return;
+  }
+  // Third in a row: move them up to the crowd they proved every time, and start counting again.
+  const newMax = Math.min.apply(null, peaks);
+  await upliftPlan(env, venue, acct, newMax, peaks, tier);
+  await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
+    { overage_streak: 0, overage_streak_peaks: [], overage_streak_day: null });
+}
+
+
+/* The server-backed formats: trivia, musical bingo, raffles. A session exists and every player
+   minted a row, so the count is the Worker's own and the host's approval is on the session. */
+async function chargeNightOverage(env, session) {
+  if (!env.STRIPE_SECRET_KEY) return;
   const cap = Number(session.plan_cap_at_start || 0);
   if (!cap) return;
   const players = await sbGet(env, 'vp_players',
@@ -3647,113 +3824,47 @@ async function chargeNightOverage(env, session) {
   // mint no vp_players). It is neither a big night nor a quiet one, so the streak is untouched:
   // otherwise bingo, then a raffle, then bingo could never add up to three in a row.
   if (peak <= 0) return;
+  await applyOverageCharge(env, {
+    venueId: session.venue_id, peak: peak, cap: cap,
+    idemKey: 'overage_' + session.id,
+    approved: !!session.overage_approved,
+  });
+}
 
-  const venues = await sbGet(env, 'vp_venues',
-    'id=eq.' + enc(session.venue_id) +
-    '&select=id,name,founding_id,max_players,pending_players,overage_streak,overage_streak_peaks');
-  const venue = venues && venues[0];
-  if (!venue) return;
+/* BROADCAST BINGO. No session, no player rows: the console is the only thing that knows how many
+   phones are in the room, and it is signed in, so its end-of-game report is the meter. Charged
+   PER GAME rather than per day, deliberately: a venue that runs bingo and then trivia on the same
+   night has drawn two crowds and pays on both, and a daily rule would quietly bill them for the
+   larger one only.
+   The CAP is read here rather than taken from the console: the room count is the host's to report,
+   what they are charged against is not. */
+async function chargeBingoReport(env, venueId, reportId, reported, approved) {
+  const players = Math.max(0, parseInt(reported, 10) || 0);
+  if (players <= 0) return;
+  // Only what the host actually agreed to on the night. No tap, no charge, exactly as the
+  // consent screen in the console promises.
+  const ceiling = Math.max(0, parseInt(approved, 10) || 0);
+  if (ceiling <= 0) return;
+  const peak = Math.min(players, ceiling);
 
-  const overage = peak - cap;
-  // Free first month: the consoles promise no charge and show no consent screen, so honour that
-  // here rather than invoice it. The streak is left alone too, or a venue could be moved onto a
-  // bigger plan by nights they were told were free.
-  if (overage > 0 && await venueInFreeMonth(env, venue.id)) {
-    console.log('[overage] free first month, not charging venue ' + venue.id);
-    return;
+  const vs = await sbGet(env, 'vp_venues',
+    'id=eq.' + enc(venueId) + '&select=id,max_players,included_players,founding_id&limit=1');
+  const v = vs && vs[0];
+  if (!v) return;
+  let cap = null;
+  if (v.max_players != null) cap = parseInt(v.max_players, 10) || 0;
+  else if (v.included_players != null) cap = parseInt(v.included_players, 10) || 0;
+  else if (v.founding_id) {
+    const f = await sbGet(env, 'venueplay_founding',
+      'id=eq.' + enc(v.founding_id) + '&select=max_seats&limit=1');
+    if (f.length) cap = parseInt(f[0].max_seats, 10) || 0;
   }
-  if (overage <= 0) {
-    // A night back inside their cap breaks the run, so the next big night starts again at $2.
-    if (venue.overage_streak) {
-      await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
-        { overage_streak: 0, overage_streak_peaks: [] });
-    }
-    return;
-  }
-  if (!venue.founding_id) return;
-  // Overage is charged ONLY when the host approved it on the night: when the room passed the
-  // plan cap they saw a "you are over your plan, extra players are $X each" warning and tapped
-  // OK (POST /host/overage/ack). No approval means no charge and no streak, so a fake-join flood
-  // can never bill a venue or push one onto a bigger plan.
-  if (!session.overage_approved) return;
-  const accts = await sbGet(env, 'venueplay_founding',
-    'id=eq.' + enc(venue.founding_id) + '&select=id,stripe_customer_id,stripe_subscription_id');
-  const acct = accts && accts[0];
-  if (!acct || !acct.stripe_customer_id || !acct.stripe_subscription_id) return;   // comp/test venue: never charge
-
-  // Tier ('founding' | 'standard') comes from the subscription metadata we set at checkout,
-  // the authoritative source (no price-id guessing, no extra env vars). If we cannot read a
-  // known tier, do NOT guess a rate on real money: log and skip for manual handling.
-  let tier = '';
-  try {
-    const sub = await stripeGet(env, 'subscriptions/' + enc(acct.stripe_subscription_id));
-    tier = (sub && sub.metadata && sub.metadata.tier) || '';
-  } catch (e) { tier = ''; }
-  if (tier !== 'founding' && tier !== 'standard') {
-    console.log('[overage] session ' + session.id + ' unknown tier (metadata.tier="' + tier +
-                '"): skipping charge for manual review');
-    return;
-  }
-  /* Dean's model (12 Aug 2026): $2 a head for the first two big nights in a row. On the THIRD
-     consecutive one they pay $1 a head and the plan moves up, because at that point it is not a
-     big night any more, it is their crowd. The uplift is the SMALLEST of the three nights: a
-     venue capped at 10 that draws 12, 13, 15 moves to 12, since 12 is the only number they hit
-     every time. Paying twice at $2 and once at $1 is also what makes moving up the cheaper
-     outcome for them, which is the point. */
-  const peaks = (Array.isArray(venue.overage_streak_peaks) ? venue.overage_streak_peaks.slice(-2) : []).concat([peak]);
-  const thirdInARow = peaks.length >= 3;
-  const rateDollars = thirdInARow ? 1.00 : 2.00;
-  const amountCents = Math.round(overage * rateDollars * 100);
-  if (amountCents <= 0) return;
-
-  const when = new Date().toISOString().slice(0, 10);
-  const res = await stripePost(env, 'invoiceitems', {
-    customer: acct.stripe_customer_id,
-    subscription: acct.stripe_subscription_id,
-    currency: 'aud',
-    amount: amountCents,
-    description: 'Big night extra players - ' + (venue.name || 'venue') + ' - ' + when +
-                 ' - ' + overage + ' over ' + cap + ' at $' + rateDollars.toFixed(2) +
-                 (thirdInARow ? ' (third big night in a row)' : ''),
-  }, 'overage_' + session.id);
-  if (!res || res.error) {
-    console.log('[overage] session ' + session.id + ' Stripe invoiceitem FAILED: ' +
-                ((res && res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
-    /* A FAILED CHARGE MUST NOT ADVANCE THE STREAK.
-       The code used to log and fall straight through to the streak patch and, on the third night,
-       to upliftPlan(). So three consecutive over-nights whose invoiceitems all failed (an expired
-       card, a Stripe outage) never billed the venue a cent for the overage but did move them
-       permanently onto a bigger monthly plan. Leave the streak where it is: the night can be
-       billed by hand, and a real third night will still count once a charge actually succeeds. */
-    try {
-      await sbInsert(env, 'vp_admin_audit', {
-        actor_admin: null,
-        actor_label: 'system',
-        action: 'overage_charge_failed',
-        target: venue.id,
-        detail: {
-          session_id: session.id,
-          venue_name: venue.name || null,
-          amount_cents: amountCents,
-          players_over: overage,
-          plan_cap: cap,
-          error: (res && res.error && res.error.message) || 'unknown',
-        },
-      }, false);
-    } catch (e) { /* audit is best effort; never let it mask the billing failure */ }
-    return;
-  }
-
-  if (!thirdInARow) {
-    await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
-      { overage_streak: peaks.length, overage_streak_peaks: peaks });
-    return;
-  }
-  // Third in a row: move them up to the crowd they proved every time, and start counting again.
-  const newMax = Math.min.apply(null, peaks);
-  await upliftPlan(env, venue, acct, newMax, peaks, tier);
-  await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
-    { overage_streak: 0, overage_streak_peaks: [] });
+  if (!cap) return;   // no plan to measure against; never guess one on a live charge
+  await applyOverageCharge(env, {
+    venueId: venueId, peak: peak, cap: cap,
+    idemKey: 'overage_report_' + reportId,
+    approved: true,   // the caller only reaches here when the host tapped OK on the night
+  });
 }
 
 /* Once-a-week limit for Trivia and Musical Bingo. A venue may only start a NEW

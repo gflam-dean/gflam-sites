@@ -820,6 +820,13 @@
       var body={ code:G.code, format:"bingo", players:players, tickets:tickets,
                  prizes:G.prizesWon||[], started_at:G.startedAt,
                  ended_at: open ? null : new Date().toISOString() };
+      /* This is what makes a big bingo night billable at all. Only on the END report, and only
+         carrying a figure the host actually tapped OK on. No tap, no charge, which is exactly
+         what the consent screen promises them. */
+      if(!open && overageAcked && overageApproved>0){
+        body.overage_ack=true;
+        body.approved_players=overageApproved;
+      }
       if(!open && G.reportId) body.report_id=G.reportId;
       var mine=G.startedAt;   // so a slow reply can't stamp an id onto the NEXT game
       /* Signed now. /report used to authorise on the venue code alone, and that code is a hash of
@@ -1433,7 +1440,11 @@
     var end=new Date(c); if(isNaN(end.getTime())) return false; end.setMonth(end.getMonth()+1);
     return new Date() < end;
   }
-  var overageAcked=false;
+  /* What the host actually agreed to, and for which game. Bingo is billed PER GAME, so consent
+     has to be per game too: approving "12 players, $4" once must never quietly cover the next
+     three rooms. overageApproved is the number they were shown; the Worker bills the smaller of
+     that and what the room really was, and bills nothing at all without it. */
+  var overageAcked=false, overageApproved=0;
   function showOverage(cnt, cap, onGo){
     var extra=cnt-cap;
     // Name the actual number. This modal is the venue's consent to a charge and it used to give
@@ -1442,7 +1453,7 @@
       "Tonight's <b>"+extra+"</b> extra player"+(extra===1?"":"s")+" cost <b>$2 each</b>, so <b>$"+(extra*2).toFixed(2)+"</b> on your next bill. "+
       "Go over three weeks running and the third night is $1 a head and we lift your plan to suit, so it never costs more than moving up.";
     var m=$("ovgModal"); m.classList.remove("hidden");
-    $("ovgGo").onclick=function(){ overageAcked=true; m.classList.add("hidden"); onGo(); };
+    $("ovgGo").onclick=function(){ overageAcked=true; overageApproved=cnt; m.classList.add("hidden"); onGo(); };
     $("ovgCancel").onclick=function(){ m.classList.add("hidden"); };
   }
   function startGame(){
@@ -1472,6 +1483,9 @@
        player in the room a brand new card and throws away the balls drawn so far. */
     if(G.idx>=0 && !G.won && !confirm("Start a brand new game?\n\nEveryone in the room gets a new ticket and the "+(G.idx+1)+" balls drawn so far are cleared.")) return;
     postReport();   // report the round just finished before a fresh one begins
+    /* Consent does not carry into the next game, because the charge does not either. The room can
+       grow between games and each one is billed on its own, so each one is asked on its own. */
+    overageAcked=false; overageApproved=0;
     G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
