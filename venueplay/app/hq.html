@@ -825,6 +825,10 @@
                   '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
                   (v.slug ? '<button class="mini" data-tvreload="'+esc(v.id)+'">Reload TV</button>' : '')+
                   (canBilling() ? '<button class="mini" data-disc="'+esc(v.id)+'">Discount</button>' : '')+
+                  /* For a venue that was onboarded here and never added a card. The welcome email
+                     fires once, at creation, and there was no second chance: the only fix was to
+                     delete the venue and build it again. */
+                  (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">Resend welcome</button>' : '')+
                   '<button class="mini" data-hidehp="'+esc(v.id)+'">'+(S.hideHp[v.id]?"Show on homepage":"Hide from homepage")+'</button>'+
                   '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
       if(canBilling()){
@@ -887,6 +891,23 @@
   $("venueRows").addEventListener("click", function(e){
     var va=e.target.closest("button[data-viewas]");
     if(va){ viewAs(va.getAttribute("data-viewas")); return; }
+    var rs=e.target.closest("button[data-resend]");
+    if(rs){
+      var rid=rs.getAttribute("data-resend"), rname=(S.venues.filter(function(x){return x.id===rid;})[0]||{}).name||"this venue";
+      if(!confirm("Send "+rname+" their welcome email again?\n\nIf they have not added a card it carries the secure link to do it.")) return;
+      rs.disabled=true; rs.textContent="Sending\u2026";
+      workerPost("/admin/resend-welcome", { venue_id: rid }).then(function(r){
+        rs.disabled=false; rs.textContent="Resend welcome";
+        if(r.error){ alert(r.error); return; }
+        // The link is worth having on screen whether or not the email went: a publican who
+        // ignored one email will ignore the second, and this is pasteable into a text message.
+        var msg = r.sent ? ("Sent to "+r.to+".") : ("The email did NOT send. Nothing has reached "+r.to+".");
+        if(r.card_url) msg += "\n\nTheir card link, if you would rather send it yourself:\n"+r.card_url;
+        else if(r.comp) msg += "\n\nThis is a comp venue, so the email carries no card link.";
+        alert(msg);
+      });
+      return;
+    }
     var dt=e.target.closest("button[data-details]");
     if(dt){ var id=dt.getAttribute("data-details"); S.openVenue=(S.openVenue===id?null:id); renderVenues(); return; }
     var sp=e.target.closest("button[data-suspend]");

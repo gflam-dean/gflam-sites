@@ -82,6 +82,7 @@ export default {
       if (request.method === 'POST' && path === '/account/my-venues'   && typeof vpbMyVenues === 'function')     return await vpbMyVenues(request, env, json);
       // Gflam HQ admin (vpa* functions below). JWT-verified + role-gated inside each handler.
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
+      if (request.method === 'POST' && path === '/admin/resend-welcome'  && typeof vpaResendWelcome === 'function')        return await vpaResendWelcome(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount'        && typeof vpaHandleDiscount === 'function')       return await vpaHandleDiscount(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount-remove' && typeof vpaHandleDiscountRemove === 'function') return await vpaHandleDiscountRemove(request, env, json);
       if (request.method === 'POST' && path === '/admin/quiet-venues'    && typeof vpaHandleQuietVenues === 'function')    return await vpaHandleQuietVenues(request, env, json);
@@ -1070,6 +1071,72 @@ async function vpaHandleVenue(request, env, json) {
   return json(out);
 }
 
+
+
+/* ===========================================================================
+ * POST /admin/resend-welcome   (owner | accounts)
+ *   body: { venue_id }
+ *   -> { ok:true, sent:bool, card_url, comp:bool, has_card:bool }
+ *
+ * A venue onboarded from HQ that never added a card has, until now, been
+ * unreachable: the welcome email carrying the card link fires exactly once, at
+ * creation, and there was no way to send another. check-data.py finds these
+ * (active account, no Stripe subscription, holding a place and never billed) and
+ * the only fix on offer was to delete the venue and build it again.
+ *
+ * Returns the card link as well as sending it, because half the time the useful
+ * thing is to paste it into a text message to the publican rather than trust an
+ * email they have already ignored once.
+ * ======================================================================== */
+async function vpaResendWelcome(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+
+  const b = await request.json();
+  const venueId = (b.venue_id || '').trim();
+  if (!venueId) return json({ error: 'Which venue?' }, 400);
+
+  const vs = await vpaSelect(env, 'vp_venues',
+    'id=eq.' + encodeURIComponent(venueId) + '&select=id,name,slug,postcode,founding_id,group_id&limit=1');
+  const venue = vs && vs[0];
+  if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
+  if (!venue.founding_id) {
+    return json({ error: 'This venue bills through an operator group, so there is no card for it to add. The group is invoiced by hand.' }, 400);
+  }
+
+  const fs = await vpaSelect(env, 'venueplay_founding',
+    'id=eq.' + encodeURIComponent(venue.founding_id) +
+    '&select=id,contact_email,max_seats,plan,status,stripe_subscription_id&limit=1');
+  const f = fs && fs[0];
+  if (!f) return json({ error: 'No billing account behind that venue.' }, 404);
+  if (!f.contact_email) return json({ error: 'That account has no contact email, so there is nowhere to send it. Add one first.' }, 400);
+
+  const comp = f.status === 'comp';
+  const hasCard = !!f.stripe_subscription_id;
+  // Sending "add your card" to somebody already paying is the kind of email that gets you a
+  // worried phone call. Say so rather than sending it.
+  if (hasCard && !comp) {
+    return json({ error: (venue.name || 'That venue') + ' already has a card on file, so there is nothing to chase. Their billing page is where changes belong.' }, 400);
+  }
+
+  const sent = await vpaFireHqWelcome(env, {
+    foundingId: f.id,
+    email: f.contact_email,
+    venueName: venue.name,
+    slug: venue.slug,
+    seats: f.max_seats,
+    plan: f.plan,
+    postcode: venue.postcode || '',
+    comp: comp,
+  });
+
+  const cardUrl = comp ? '' : await vpaCardLink(env, f.id);
+  await vpaAudit(env, actor, 'welcome_resent', 'venue:' + venue.id, {
+    name: venue.name, to: f.contact_email, comp: comp, sent: sent,
+  });
+  return json({ ok: true, sent: sent, comp: comp, has_card: hasCard, card_url: cardUrl,
+                to: f.contact_email });
+}
 
 /* ===========================================================================
  * 2) POST /admin/discount   (owner | accounts)
