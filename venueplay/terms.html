@@ -57,6 +57,16 @@
   /* VenuePlay neon hollow-triangle logo */
   .brand svg,.foot-brand svg{overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9)) drop-shadow(0 0 6px rgba(255,31,142,.45))}
 </style>
+<!-- Google Analytics 4. The signup pages already call gtag() on a completed checkout,
+     guarded with a typeof check, so those conversions were being thrown away until this loaded.
+     Placed in the head so a bounce still registers. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-E2CZM4BZCH"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-E2CZM4BZCH');
+</script>
 </head>
 <body>
 

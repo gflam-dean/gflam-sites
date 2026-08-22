@@ -6,7 +6,7 @@ check-data.py -- ask the LIVE database the questions code review cannot answer.
 
 check-schema.py asks whether the columns exist. This asks whether the ROWS make sense:
 a venue nobody can sign in to, a venue that will never be billed, a comp venue that is
-quietly eating a founding spot, a signing-key table that is empty because the feature was
+quietly counted as a paying venue, a signing-key table that is empty because the feature was
 never finished. Every one of these reads as fine in the code and only shows up in the data.
 
 READ ONLY. It issues nothing but GETs, and it prints counts and ids, never a player's name,
@@ -150,7 +150,7 @@ unbilled = [a for a in accts
             if a.get("status") == "active" and not a.get("stripe_subscription_id")]
 if unbilled:
     flag("HIGH", "%d active account(s) have no Stripe subscription" % len(unbilled),
-         "They occupy a founding spot and will never be charged a cent. Either they never "
+         "They count as signed-up venues and will never be charged a cent. Either they never "
          "added a card after HQ onboarding, or they should be marked comp: "
          + ", ".join((a.get("venue_name") or a["id"][:8]) for a in unbilled[:12]))
 
@@ -162,14 +162,16 @@ if no_seats:
          "so with both empty a night has no plan cap at all: "
          + ", ".join((a.get("venue_name") or a["id"][:8]) for a in no_seats[:12]))
 
-# --------------------------------------------------------- founding spots, counted two ways
+# ------------------------------------------------------- signed-up venues, counted two ways
 try:
     req = urllib.request.Request(URL + "/rest/v1/rpc/venueplay_spots_taken", data=b"{}")
     req.add_header("apikey", KEY); req.add_header("Authorization", "Bearer " + KEY)
     req.add_header("Content-Type", "application/json")
     with urllib.request.urlopen(req, timeout=30) as r:
         spots = int(json.loads(r.read().decode()))
-    print("Founding spots taken (the RPC the site shows): %d of 100" % spots)
+    # Founding is a state-by-state window now, not a race to 100, so this is a count and
+    # nothing else. Do not reintroduce a cap here.
+    print("Venues counted as signed up (venueplay_spots_taken): %d" % spots)
     committed = [a for a in accts if a.get("status") in ("active", "card_on_file")]
     print("Accounts in a committed state: %d" % len(committed))
 except Exception as e:

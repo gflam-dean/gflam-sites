@@ -316,6 +316,16 @@
 
   .footnote{margin-top:26px;font-size:11.5px;color:var(--faint);text-align:center;line-height:1.6}
 </style>
+<!-- Google Analytics 4. The signup pages already call gtag() on a completed checkout,
+     guarded with a typeof check, so those conversions were being thrown away until this loaded.
+     Placed in the head so a bounce still registers. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-E2CZM4BZCH"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-E2CZM4BZCH');
+</script>
 </head>
 <body>
 <header>

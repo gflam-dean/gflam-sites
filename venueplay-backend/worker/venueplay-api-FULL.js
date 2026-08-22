@@ -922,8 +922,8 @@ async function vpaHandleVenue(request, env, json) {
   let foundingId = null;
   let foundingRow = null;
   // HQ's Add venue form has always offered a comp/demo tick and this Worker has always ignored
-  // it: every hand-onboarded venue was written 'active' and quietly ate one of the 100 founding
-  // spots. It also decides which welcome email goes out, so it has to be read before either.
+  // it: every hand-onboarded venue was written 'active' and quietly counted as a signed-up venue.
+  // It also decides which welcome email goes out, so it has to be read before either.
   const isComp = billing.comp === true;
   let compFellBack = false;
   /* The postcode is what sets au_state, and au_state is what decides which state's gaming rules
@@ -966,8 +966,8 @@ async function vpaHandleVenue(request, env, json) {
       marketing_opt_in: false,
       // Admin-onboarded venues have no Stripe card in this flow. 'active' makes the venue live
       // and counts it in venueplay_spots_taken; the welcome email below is what then asks for
-      // the card. A comp/demo venue is live too, but must NOT spend one of the 100 founding
-      // spots, which is exactly what the tick in HQ promises.
+      // the card. A comp/demo venue is live too, but must NOT be counted as a signed-up venue,
+      // which is exactly what the tick in HQ promises.
       status: isComp ? 'comp' : 'active',
     };
     let created = null;
@@ -1048,6 +1048,7 @@ async function vpaHandleVenue(request, env, json) {
       slug: slug,
       seats: foundingRow && foundingRow.max_seats,
       plan: foundingRow && foundingRow.plan,
+      postcode: venuePostcode || (foundingRow && foundingRow.postcode) || '',
       comp: isComp,
     });
   }
@@ -1064,7 +1065,7 @@ async function vpaHandleVenue(request, env, json) {
   if (managerOut) out.manager = managerOut;
   out.welcome_sent = welcomeSent;
   if (compFellBack) {
-    out.warning = 'The venue is set up, but the database would not accept a comp status, so it is marked active and DOES count towards the 100 founding spots. Run the comp status migration, then set this one by hand.';
+    out.warning = 'The venue is set up, but the database would not accept a comp status, so it is marked active and IS counted as a signed-up venue. Fix the status by hand.';
   }
   return json(out);
 }
@@ -2347,6 +2348,33 @@ async function vpaCardLink(env, foundingId) {
   return site + '/add-card?f=' + encodeURIComponent(foundingId) + '&t=' + t;
 }
 
+
+/* Is a venue in THIS postcode's state currently inside a founding window?
+ *
+ * Founding stopped being "the first 100 venues" a while back: it is a state-by-state rollout,
+ * invite-only through a state link that carries a code like QLD-AUG-2026, and it runs until the
+ * end of that month. handleCheckout has read it that way for some time. The HQ onboarding path
+ * and its welcome email did not, because they were written against the old cap, so a venue we
+ * hand-onboarded was quoted and sold on a rule that no longer exists.
+ *
+ * env FOUNDING_CODES is the list of codes that are live right now, so retiring a state's window
+ * is deleting its code from that variable. There is deliberately no count anywhere.
+ */
+function vpaFoundingForPostcode(env, postcode) {
+  const codes = (env.FOUNDING_CODES || '').split(',').map(function (c) { return c.trim(); }).filter(Boolean);
+  if (!codes.length) return false;
+  const pcState = vpaStateFromPostcode(postcode);
+  if (!pcState) return false;
+  for (const code of codes) {
+    const codeState = String(code.split('-')[0] || '').toUpperCase();
+    if (codeState === pcState) return true;
+    // ACT and NSW are one market for founding, same as at checkout.
+    if (codeState === 'NSW' && pcState === 'ACT') return true;
+    if (codeState === 'ACT' && pcState === 'NSW') return true;
+  }
+  return false;
+}
+
 /* GET /add-card?f=<founding id>&t=<token>
    Verifies the signature, builds a Checkout session for THAT EXISTING founding
    row and redirects to Stripe. client_reference_id is the row id, so the
@@ -2393,10 +2421,9 @@ async function vpaAddCardRedirect(request, env) {
 
     const plan = f.plan === 'annual' ? 'annual' : 'monthly';
     const seats = Math.max(parseInt(f.max_seats, 10) || 0, 1);
-    // Founding vs standard is decided at the moment they add the card, exactly as it is for a
-    // self-serve signup, so an HQ venue cannot hold a founding spot open by sitting on the email.
-    const spotsTaken = await sbSpotsTaken(env);
-    const founding = (spotsTaken + 1) <= 100;
+    // Founding vs standard is decided at the moment they add the card, on the SAME rule as a
+    // self-serve signup: is this venue's state inside a live founding window. Nothing counts spots.
+    const founding = vpaFoundingForPostcode(env, f.postcode);
     const price = founding
       ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
       : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
@@ -2489,8 +2516,8 @@ async function vpaFireHqWelcome(env, o) {
     html = vpaTplSections(html, { card: !comp, comp: comp });
 
     const plan = o.plan === 'annual' ? 'annual' : 'monthly';
-    const spotsTaken = comp ? 0 : await sbSpotsTaken(env);
-    const founding = (spotsTaken + 1) <= 100;
+    // Same rule as checkout and as the card link: the venue's state, not a count.
+    const founding = !comp && vpaFoundingForPostcode(env, o.postcode);
     const rate = founding ? (plan === 'annual' ? 2.30 : 2.50)
                           : (plan === 'annual' ? 2.85 : 3.00);
     const seats = parseInt(o.seats, 10) || 0;

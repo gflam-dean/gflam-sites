@@ -1394,6 +1394,12 @@
                       : '<span class="vbadge" style="background:#F5A524;color:#180d00">Not a win yet</span>';
       var sub=valid ? (PATTERN_NAMES[G.pattern]+' &middot; verified against '+(G.idx+1)+' called numbers &middot; card #'+c.cardNo)
                     : ('Called early &middot; '+PATTERN_NAMES[G.pattern]+' is not complete on card #'+c.cardNo+'. Wave it off to keep the game moving.');
+      // Never let the host read numbers off one ticket while the player reads another.
+      if(c.swapped){
+        sub = '<b style="color:var(--roll)">They called on card #'+esc(String(c.calledOn||'?'))+', which is not a ticket they hold any more.</b> '+
+              'This is card #'+c.cardNo+', which does complete the pattern. Their phone has just been re-sent their real tickets: '+
+              'ask them to check the number in the corner matches before you confirm. '+sub;
+      }
       html+='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+badge+'</div>'+
         '<div class="card9" id="claimCard-'+ci+'"></div>'+
         '<div class="claimsub">'+sub+'</div>'+
@@ -1655,16 +1661,26 @@
       var pl=G.players[m.pid];
       if(!pl || !pl.cards || !pl.cards.length){ _refuse(); return; }
       // find the exact ticket they claimed on; fall back to any winning ticket they hold
-      var tk=null, j;
+      var tk=null, j, swapped=false;
       for(j=0;j<pl.cards.length;j++){ if(pl.cards[j].cardNo===m.cardNo){ tk=pl.cards[j]; break; } }
-      if(!tk){ for(j=0;j<pl.cards.length;j++){ if(checkPattern(pl.cards[j].card)){ tk=pl.cards[j]; break; } } }
-      if(!tk && G.allowEarly){ tk=pl.cards[0]; }   // early-call venues: register their first ticket even with no win
+      /* The fallback is right (dropping a shout is worse than checking the wrong ticket) but it
+         used to be SILENT, and that is how the host ends up reading numbers off a ticket the
+         player is not holding. It happens when a phone claims on a card number we no longer have
+         for them: they slept through a re-deal, or rejoined and were dealt fresh tickets. Mark it,
+         say so on the card below, and push their real tickets back to the phone so the two of you
+         are looking at the same thing before anyone confirms a prize. */
+      if(!tk){
+        for(j=0;j<pl.cards.length;j++){ if(checkPattern(pl.cards[j].card)){ tk=pl.cards[j]; swapped=true; break; } }
+      }
+      if(!tk && G.allowEarly){ tk=pl.cards[0]; swapped=true; }   // early-call venues: register their first ticket even with no win
       if(!tk){ _refuse(); return; }
+      if(swapped){ try{ sendCards(m.pid); }catch(e){} }
       var valid=checkPattern(tk.card);
       if(valid || G.allowEarly){
         // seq preserves CALL order, so announcing is ordered by who shouted first even when the
         // host confirms the cards in a different order (they often serve whoever is at the bar).
-        G.claims.push({ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card, valid:valid, seq:G.claimSeq++ });
+        G.claims.push({ pid:m.pid, name:pl.name, cardNo:tk.cardNo, card:tk.card, valid:valid, seq:G.claimSeq++,
+                        swapped:swapped, calledOn:(swapped?m.cardNo:0) });
         G.claimIdx=G.idx;
         sendClaimPending();
         saveGame();

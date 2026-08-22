@@ -135,7 +135,13 @@
     padding:5px 0 6px;margin-bottom:2px;background:var(--ink)}
   .colband i{height:4px;border-radius:2px;background:var(--ink-3);transition:background .2s ease}
   .colband i.lit{background:var(--gold);box-shadow:0 0 10px rgba(255,194,75,.55)}
-  .card9 .cc.incol{border-color:rgba(255,194,75,.5);background:rgba(255,194,75,.07)}
+  /* NO VERTICAL HIGHLIGHT ON A TICKET. This used to tint the whole column holding the last
+     called number, all three rows of it, which draws a vertical stripe down a ticket in a game
+     where the only thing that ever wins is a row across. Players read it as the line they were
+     chasing. The thin colband above the tickets still points at the column, and .justcalled still
+     rings the actual number, which is the real navigation need. */
+  .card9 .cc.incol{border-color:rgba(255,194,75,.5)}
+  .card9 .cc.incol.blank{border-color:transparent}
   /* the number just called, ringed on the ticket that popped forward */
   .card9 .cc.justcalled{box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
   .card9 .cc.daub.justcalled{box-shadow:inset 0 0 0 2px rgba(255,194,75,.9);color:#fff}
@@ -179,7 +185,8 @@
   body.light .colband{ background:var(--ink) }
   body.light .colband i{ background:rgba(0,0,0,.10) }
   body.light .colband i.lit{ background:var(--pink); box-shadow:0 0 10px rgba(255,31,142,.45) }
-  body.light .card9 .cc.incol{ border-color:rgba(255,31,142,.55); background:rgba(255,31,142,.08) }
+  body.light .card9 .cc.incol{ border-color:rgba(255,31,142,.55) }
+  body.light .card9 .cc.incol.blank{ border-color:transparent }
   body.light .card9 .cc.justcalled{ box-shadow:inset 0 0 0 2px var(--pink); color:var(--pink-deep) }
   body.light .card9 .cc.daub.justcalled{ box-shadow:inset 0 0 0 2px #7a0940; color:#fff }
   body.light .pagetab{ background:#fff; border-color:rgba(0,0,0,.12) }

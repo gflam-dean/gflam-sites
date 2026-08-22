@@ -63,6 +63,16 @@
   /* VenuePlay neon hollow-triangle logo */
   .brand svg,.foot-brand svg{overflow:visible;filter:drop-shadow(0 0 2px rgba(255,31,142,.9)) drop-shadow(0 0 6px rgba(255,31,142,.45))}
 </style>
+<!-- Google Analytics 4. The signup pages already call gtag() on a completed checkout,
+     guarded with a typeof check, so those conversions were being thrown away until this loaded.
+     Placed in the head so a bounce still registers. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-E2CZM4BZCH"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-E2CZM4BZCH');
+</script>
 </head>
 <body>
 
@@ -116,7 +126,7 @@
     <p>Players are told what is being collected and who gets it at the point they are asked, on the join screen itself.</p>
     <p>We keep player details for as long as the venue holds an active VenuePlay account. When a venue's account is closed, its player list is deleted within 90 days, other than anything we have to keep for tax or legal record-keeping.</p>
     <h3>Technical information</h3>
-    <p>Like most websites, we may automatically collect basic technical data such as your IP address, browser and device type, and pages visited, through cookies and analytics tools (for example Google Analytics and the Meta Pixel) if and when these are enabled on the site.</p>
+    <p>Like most websites, we automatically collect basic technical data such as your IP address, browser and device type, and pages visited. We use <strong>Google Analytics</strong> for this. We do not currently run the Meta Pixel or any other advertising tracker, and this page will say so if that changes.</p>
 
     <h2>3. How we use your information</h2>
     <ul>
