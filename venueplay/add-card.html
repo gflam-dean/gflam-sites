@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VenuePlay · Add your card</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="/logos/venueplay_appicon_rebuilt.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#0A0A0B; --ink-2:#121214; --pink:#FF1F8E; --text:#E7E7EC; --muted:#9A9AA4;
+         --line:rgba(255,255,255,0.10); }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
+       color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.55;min-height:100vh;
+       display:flex;align-items:center;justify-content:center;padding:26px}
+  .box{max-width:460px;text-align:center}
+  h1{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:28px;color:#fff;line-height:1.06;margin:22px 0 10px}
+  p{color:var(--muted);font-size:15px;margin:0 0 6px}
+  .spin{width:34px;height:34px;margin:0 auto;border-radius:50%;border:3px solid var(--line);border-top-color:var(--pink);animation:sp .9s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .btn{display:inline-block;margin-top:20px;background:var(--pink);color:#fff;text-decoration:none;
+       font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;padding:13px 28px;border-radius:10px}
+  a.mail{color:var(--pink);font-weight:700;text-decoration:none}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="spin" id="spin"></div>
+    <h1 id="head">Taking you to our secure payment page</h1>
+    <p id="lede">This is Stripe, our payment provider. We never see or store your card.</p>
+    <p id="fallback" class="hidden"><a class="btn" id="go" href="#">Continue to the payment page</a></p>
+  </div>
+<script>
+  // The email links here, on venueplay.com.au, rather than straight at the Worker: the Worker is
+  // what mints the Stripe Checkout (it holds the keys), but a link people are asked to trust with
+  // a card should be on our own domain. It hands the whole query string over untouched; the
+  // Worker verifies the signature on it and redirects on to Stripe.
+  var VP_WORKER = "https://venueplay-api.dean-tindale.workers.dev";
+  var q = window.location.search || "";
+  var target = VP_WORKER + "/add-card" + q;
+  if (/[?&]f=/.test(q) && /[?&]t=/.test(q)) {
+    document.getElementById("go").href = target;
+    window.location.replace(target);
+    // If the redirect is blocked or slow, give them something to click rather than a spinner.
+    setTimeout(function(){
+      document.getElementById("spin").className = "hidden";
+      document.getElementById("fallback").className = "";
+    }, 2500);
+  } else {
+    document.getElementById("spin").className = "hidden";
+    document.getElementById("head").textContent = "That link is not complete";
+    document.getElementById("lede").innerHTML =
+      'Check you copied the whole link from your welcome email, or reply to it and we will send you a fresh one. You can also reach us at <a class="mail" href="mailto:hello@venueplay.com.au">hello@venueplay.com.au</a>.';
+  }
+</script>
+</body>
+</html>

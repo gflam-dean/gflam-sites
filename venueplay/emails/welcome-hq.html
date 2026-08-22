@@ -1,19 +1,28 @@
 <!--
-  VenuePlay transactional email: WELCOME / CONFIRMATION
-  Sent once, right after a venue signs up (Stripe checkout.session.completed).
-  Merge fields (replaced by the Worker before sending):
+  VenuePlay transactional email: WELCOME (HQ-ONBOARDED VENUE)
+  Sent when we create a venue by hand from HQ, not from a self-serve signup.
+  Two flavours from ONE template, picked by the Worker:
+    card  -> a normal paying venue that has no card on file yet (HQ onboarding
+             takes no payment), so the email's job is to get the card added.
+    comp  -> a complimentary / demo venue. No card, no charge, no billing talk.
+  The IF:card / ENDIF:card marker pairs below (and the comp pair) are kept or
+  stripped by vpaTplSections() in the Worker before sending. Do not write those
+  markers out in full in this header: an HTML comment cannot nest, so the first
+  one would close this comment and spill the rest of it into the email body.
+  Merge fields:
+    {{venue_name}}        the venue we just set up, e.g. "Tugun Surf Club"
     {{host_console_url}}  link to the app host console sign-in
-    {{tv_url}}            link to open the venue TV screen (shows the join code)
-    {{player_count}}      seats they signed up for, e.g. "80"
-    {{monthly_total}}     e.g. "$192.00"
-    {{first_charge_date}} e.g. "24 September 2026"
-    {{support_email}}     e.g. "hello@venueplay.com.au"
-  For GROUPS (multiple venues on one account), use welcome-group.html instead.
+    {{tv_url}}            that venue's TV screen link (/tv?venue=slug)
+    {{card_url}}          secure add-your-card link (card flavour only)
+    {{player_count}}      players their plan covers, e.g. "80"
+    {{player_rate}}       e.g. "$2.50"
+    {{monthly_total}}     e.g. "$200.00"
+    {{terms_url}} {{privacy_url}} {{support_email}}
 -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
   <tr><td align="center" style="padding:24px 12px">
     <!-- preheader (hidden) -->
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0">You are in. Here is how to get your first game live.</div>
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">Your venue is set up. Here is how to get your first game on the screen.</div>
 
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
       <!-- header -->
@@ -23,8 +32,8 @@
 
       <!-- hero -->
       <tr><td style="padding:36px 32px 8px">
-        <h1 style="margin:0;font-size:26px;line-height:1.25;color:#12101a;font-weight:800">Welcome to VenuePlay.</h1>
-        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">Your account is live. Here is everything you need to get your first game on the screen.</p>
+        <h1 style="margin:0;font-size:26px;line-height:1.25;color:#12101a;font-weight:800">{{venue_name}} is set up.</h1>
+        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">We have built your account for you, so there is nothing to sign up for. Here is everything you need to get your first game on the screen.</p>
       </td></tr>
 
       <!-- login box -->
@@ -37,27 +46,35 @@
         </table>
       </td></tr>
 
-      <!-- free until -->
-      <tr><td style="padding:22px 32px 0">
-        <p style="margin:0;font-size:16px;line-height:1.6;color:#3a3a44">Your first month is free{{launch_phrase}}. You are <strong>free until {{first_charge_date}}</strong>, your first payment: {{player_count}} players at {{player_rate}} each, {{monthly_total}} a month. Nothing is charged before then, and you can cancel anytime before it.</p>
-      </td></tr>
-
-
-      <!-- what you agreed to, in plain terms -->
-      <tr><td style="padding:20px 32px 0">
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e6e6ec;border-radius:12px;background:#fbfbfd">
-          <tr><td style="padding:16px 18px">
-            <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a8a95">Your plan, in plain terms</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44">You pay per player, on the maximum players per session you set. Prices include GST.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>If a night runs over your maximum</strong>, each extra player that night is $2. Your host sees what it costs and has to tap OK on the screen before the game starts, so nothing is ever charged without someone at your venue agreeing to it.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>If you run over three times in a row</strong>, that is your crowd rather than a big night. The third one is $1 per extra player and we lift your maximum to the smallest of those three crowds. On monthly that starts from your next invoice; on annual the extra players are charged pro rata to your renewal, since your year is already paid for. It costs less than paying per head every week.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>Changing your maximum</strong> is self-service in your account. Adding applies straight away and lands on your next bill. On monthly, dropping takes effect at your next renewal, so you keep what you have paid for. On annual, added players are pro rata to your renewal, and players you drop are released straight away with the rest of the year held as a credit rather than lost.</p>
-            <p style="margin:0 0 8px;font-size:14.5px;line-height:1.6;color:#3a3a44"><strong>On an annual plan</strong>, if you drop your maximum part way through the year the lower maximum starts that day and we do not refund it, but the value of the players you release for the rest of the year is held as a credit and comes off your next renewal on its own. There is nothing to claim and nothing to spend. Worth knowing: the credit is the part of the year you have not used, so the sooner you drop players you are not getting, the more of it there is. Your billing page shows what you are holding.</p>
-            <p style="margin:0;font-size:14.5px;line-height:1.6;color:#3a3a44">No lock-in. Cancel any time before your first payment and you are never charged.</p>
-            <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">This is a summary for reading over a coffee. The full <a href="{{terms_url}}" style="color:#C70F69;font-weight:600">Terms of Service</a> and <a href="{{privacy_url}}" style="color:#C70F69;font-weight:600">Privacy Policy</a> are the agreement, and they are worth a look before your first payment.</p>
+<!--IF:card-->
+      <!-- add your card -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px solid #FF1F8E;border-radius:12px;background:#fff6fb">
+          <tr><td style="padding:22px 24px">
+            <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#C70F69">One thing left</p>
+            <p style="margin:10px 0 0;font-size:19px;font-weight:800;color:#12101a">Add your card to switch the games on</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.65;color:#3a3a44">Your plan covers <strong>{{player_count}} players</strong> at {{player_rate}} each, <strong>{{monthly_total}} a month</strong>, GST included. Your <strong>first month is free</strong>: nothing is charged when you add the card, and your first payment lands a month later. No lock-in, and you can cancel any time before it.</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:18px"><tr>
+              <td><a href="{{card_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:14px 30px;border-radius:10px">Add my card</a></td>
+            </tr></table>
+            <p style="margin:14px 0 0;font-size:13px;line-height:1.6;color:#6a6a75">The link takes you to our payment provider, Stripe. We never see or store your card. Prefer to do it over the phone or by invoice? Just reply and we will sort it out.</p>
           </td></tr>
         </table>
       </td></tr>
+<!--ENDIF:card-->
+<!--IF:comp-->
+      <!-- on the house -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e6e6ec;border-radius:12px;background:#fbfbfd">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#8a8a95">Your account</p>
+            <p style="margin:10px 0 0;font-size:19px;font-weight:800;color:#12101a">This one is on us</p>
+            <p style="margin:10px 0 0;font-size:15.5px;line-height:1.65;color:#3a3a44">There is nothing to pay and no card to add. Your account covers up to <strong>{{player_count}} players</strong> a session, and every game is yours to run as often as you like. Play with it, break it, tell us what you think.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+<!--ENDIF:comp-->
+
       <!-- 3 steps -->
       <tr><td style="padding:26px 32px 0">
         <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#12101a">Three steps to get ready</p>
@@ -79,8 +96,9 @@
 
       <!-- CTA -->
       <tr><td align="center" style="padding:30px 32px 4px">
-        <a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Open your host console</a>
+        <a href="{{host_console_url}}" style="display:inline-block;background:#12101a;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Open your host console</a>
       </td></tr>
+
       <!-- Your screens & sign-in -->
       <tr><td style="padding:16px 32px 0">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
@@ -109,6 +127,9 @@
       <!-- footer -->
       <tr><td style="padding:30px 32px 34px">
         <p style="margin:0;font-size:14px;line-height:1.6;color:#8a8a95">Any questions, just reply to this email or reach us at <a href="mailto:{{support_email}}" style="color:#FF1F8E;text-decoration:none">{{support_email}}</a>. We are glad to have you on board.</p>
+<!--IF:card-->
+        <p style="margin:14px 0 0;font-size:12.5px;line-height:1.6;color:#b3b3bb">Our <a href="{{terms_url}}" style="color:#b3b3bb">Terms of Service</a> and <a href="{{privacy_url}}" style="color:#b3b3bb">Privacy Policy</a> are the agreement, and they are worth a look before your first payment.</p>
+<!--ENDIF:card-->
         <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
       </td></tr>
     </table>

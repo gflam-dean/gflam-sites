@@ -45,7 +45,7 @@ export default {
     const cors = {
       'Access-Control-Allow-Origin': origin,
       'Vary': 'Origin',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Stripe-Signature, Authorization, X-VP-Venue',
     };
     const json = (obj, status = 200) =>
@@ -58,6 +58,9 @@ export default {
 
     try {
       if (request.method === 'POST' && path === '/checkout') return await handleCheckout(request, env, json);
+      // Followed from an HQ-onboarded venue's welcome email, in a browser, so it answers with a
+      // redirect rather than JSON. Signed, and it mints a fresh Checkout each time it is clicked.
+      if (request.method === 'GET'  && path === '/add-card' && typeof vpaAddCardRedirect === 'function') return await vpaAddCardRedirect(request, env);
       if (request.method === 'POST' && path === '/contact')  return await handleContact(request, env, json);
       if (request.method === 'POST' && path === '/webhook')  return await handleWebhook(request, env, cors);
       // Owner self-serve billing (vpb* functions pasted in from venueplay-api-account.js).
@@ -917,6 +920,12 @@ async function vpaHandleVenue(request, env, json) {
 
   const slug = await vpaUniqueSlug(env, slugIn, name);
   let foundingId = null;
+  let foundingRow = null;
+  // HQ's Add venue form has always offered a comp/demo tick and this Worker has always ignored
+  // it: every hand-onboarded venue was written 'active' and quietly ate one of the 100 founding
+  // spots. It also decides which welcome email goes out, so it has to be read before either.
+  const isComp = billing.comp === true;
+  let compFellBack = false;
   /* The postcode is what sets au_state, and au_state is what decides which state's gaming rules
      a venue is shown and whether the paper-ticket rule applies to it. HQ's Add venue form now
      REQUIRES a postcode and sends it, but this row never read it, so every hand-onboarded venue
@@ -945,7 +954,7 @@ async function vpaHandleVenue(request, env, json) {
     if (!f.contact_email || String(f.contact_email).indexOf('@') === -1) {
       return json({ error: 'A contact email is required for an independent venue.' }, 400);
     }
-    const foundingRow = {
+    foundingRow = {
       venue_name: name,
       contact_email: (f.contact_email || '').trim(),
       mobile: (f.mobile || '').trim() || null,
@@ -953,12 +962,25 @@ async function vpaHandleVenue(request, env, json) {
       max_seats: (f.max_seats != null && f.max_seats !== '') ? (parseInt(f.max_seats, 10) || null) : null,
       plan: (f.plan === 'annual' ? 'annual' : 'monthly'),
       marketing_opt_in: false,
-      // Admin-onboarded venues have no Stripe card in this flow. 'active' makes
-      // the venue live and counts it in venueplay_spots_taken. See report flag:
-      // change to 'card_on_file' or 'pending' if it should not consume a spot.
-      status: 'active',
+      // Admin-onboarded venues have no Stripe card in this flow. 'active' makes the venue live
+      // and counts it in venueplay_spots_taken; the welcome email below is what then asks for
+      // the card. A comp/demo venue is live too, but must NOT spend one of the 100 founding
+      // spots, which is exactly what the tick in HQ promises.
+      status: isComp ? 'comp' : 'active',
     };
-    const created = await vpaInsert(env, 'venueplay_founding', foundingRow);
+    let created = null;
+    try {
+      created = await vpaInsert(env, 'venueplay_founding', foundingRow);
+    } catch (e) {
+      // venueplay_founding predates this Worker and may still carry a CHECK on status that has
+      // never seen 'comp'. Losing the whole onboarding over one label is worse than the label:
+      // fall back to 'active' and say so loudly, in the response and in the audit, so nobody
+      // believes a spot was saved when it was not.
+      if (!isComp) throw e;
+      compFellBack = true;
+      foundingRow.status = 'active';
+      created = await vpaInsert(env, 'venueplay_founding', foundingRow);
+    }
     foundingId = created && created.id;
     venueRow.founding_id = foundingId;
   }
@@ -1004,14 +1026,38 @@ async function vpaHandleVenue(request, env, json) {
     }
   }
 
+  // Welcome email. NOT the self-serve one: nobody went through Checkout here, so a paying venue
+  // gets the flavour that asks for the card (with a signed link back to a Checkout for this exact
+  // founding row) and a comp venue gets the same email with the billing talk stripped out. Only
+  // for independent venues: a grouped venue bills through its operator, who onboards it themselves.
+  // Best-effort, and after the audit, so a Resend outage can never cost us the venue record.
+  let welcomeSent = false;
+  if (foundingId && b.send_welcome !== false) {
+    welcomeSent = await vpaFireHqWelcome(env, {
+      foundingId: foundingId,
+      email: foundingRow && foundingRow.contact_email,
+      venueName: name,
+      slug: slug,
+      seats: foundingRow && foundingRow.max_seats,
+      plan: foundingRow && foundingRow.plan,
+      comp: isComp,
+    });
+  }
+
   await vpaAudit(env, actor, 'venue_onboarded', 'venue:' + venue.id, {
     name: name, slug: slug, billing: billing.type,
     founding_id: foundingId || undefined, manager_created: !!managerOut,
+    comp: isComp || undefined, comp_status_fallback: compFellBack || undefined,
+    welcome_sent: welcomeSent,
   });
 
   const out = { ok: true, venue: { id: venue.id, name: venue.name, slug: venue.slug } };
   if (foundingId) out.founding_id = foundingId;
   if (managerOut) out.manager = managerOut;
+  out.welcome_sent = welcomeSent;
+  if (compFellBack) {
+    out.warning = 'The venue is set up, but the database would not accept a comp status, so it is marked active and DOES count towards the 100 founding spots. Run the comp status migration, then set this one by hand.';
+  }
   return json(out);
 }
 
@@ -2189,7 +2235,6 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
     const launchPhrase = '';
     const consoleUrl = site + '/app';
     const tvUrl = site + '/tv';
-    const calendly = env.CALENDLY_URL || (site + '/#contact');
     const support = 'hello@venueplay.com.au';
 
     const res = await fetch(site + '/emails/' + (isGroup ? 'welcome-group.html' : 'welcome.html'));
@@ -2222,7 +2267,6 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       .replace(/{{player_rate}}/g, money(rate))
       .replace(/{{host_console_url}}/g, consoleUrl)
       .replace(/{{tv_url}}/g, tvUrl)
-      .replace(/{{calendly_url}}/g, calendly)
       // The welcome email now carries a plain-English summary of the plan and links the real
       // agreement. Unfilled, these would go out to a paying customer as the literal text
       // {{terms_url}}, which is worse than not linking them at all.
@@ -2242,6 +2286,254 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       }),
     });
   } catch (_) { /* welcome email is best-effort; never fail provisioning */ }
+}
+
+
+/* ===========================================================================
+ * HQ-ONBOARDED VENUES: the card link, and the emails that are not the
+ * self-serve welcome.
+ *
+ * A venue we build by hand in HQ has a founding row, a venue, a login and no
+ * card: nobody went through Checkout. The self-serve welcome email is wrong for
+ * it twice over (it thanks them for signing up and quotes a first charge date
+ * that no subscription will honour), so HQ sends welcome-hq.html instead, in
+ * one of two flavours: "add your card" for a paying venue, "on the house" for a
+ * comp/demo one.
+ * ======================================================================== */
+
+/* Keep or strip <!--IF:name--> ... <!--ENDIF:name--> sections in a template.
+   Lets one file carry both flavours instead of two files drifting apart. A
+   section whose name is not in `on` is removed, so a typo fails quiet-and-empty
+   rather than mailing raw HTML comments to a customer. */
+function vpaTplSections(html, on) {
+  return String(html).replace(
+    /<!--IF:([a-zA-Z0-9_-]+)-->([\s\S]*?)<!--ENDIF:\1-->/g,
+    (m, key, body) => (on && on[key] ? body : '')
+  );
+}
+
+/* The secret behind the add-card link. CARD_LINK_SECRET if you set one, else we
+   piggyback on a secret the Worker already holds. Either way it never leaves
+   here: only the HMAC of it does. */
+function vpaCardSecret(env) {
+  return env.CARD_LINK_SECRET || env.STRIPE_WEBHOOK_SECRET || env.SUPABASE_SERVICE_KEY || '';
+}
+
+async function vpaCardToken(env, foundingId) {
+  const secret = vpaCardSecret(env);
+  if (!secret || !foundingId) return '';
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = await crypto.subtle.sign('HMAC', key, enc.encode('vp-add-card:' + foundingId));
+  return [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
+/* The link that goes in the email. Stable and reusable: it points at our own
+   page, and the Checkout session is created on the click. A Stripe session URL
+   pasted into an email would be dead within 24 hours, which is exactly the
+   window a venue owner spends ignoring their inbox. */
+async function vpaCardLink(env, foundingId) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const t = await vpaCardToken(env, foundingId);
+  if (!t) return '';
+  return site + '/add-card?f=' + encodeURIComponent(foundingId) + '&t=' + t;
+}
+
+/* GET /add-card?f=<founding id>&t=<token>
+   Verifies the signature, builds a Checkout session for THAT EXISTING founding
+   row and redirects to Stripe. client_reference_id is the row id, so the
+   webhook we already have marks the row card_on_file and the provisioning it
+   already runs finds the venue HQ built (it matches on founding_id) instead of
+   creating a second one. Nothing new has to know about this path. */
+async function vpaAddCardRedirect(request, env) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const page = (title, body) => new Response(
+    '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>' + title + '</title>'
+    + '<body style="margin:0;background:#12101a;color:#fff;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px">'
+    + '<div style="max-width:460px;text-align:center">'
+    + '<h1 style="font-size:22px;margin:0 0 12px">' + title + '</h1>'
+    + '<p style="font-size:16px;line-height:1.6;color:#c9c7d4;margin:0">' + body + '</p>'
+    + '<p style="margin:22px 0 0"><a href="mailto:hello@venueplay.com.au" style="color:#FF1F8E;font-weight:700">hello@venueplay.com.au</a></p>'
+    + '</div></body>',
+    { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
+  );
+
+  try {
+    const url = new URL(request.url);
+    const foundingId = (url.searchParams.get('f') || '').trim();
+    const token = (url.searchParams.get('t') || '').trim();
+    const expect = await vpaCardToken(env, foundingId);
+    // Constant-time-ish compare, same as the Stripe signature check above.
+    let ok = !!(expect && token && expect.length === token.length);
+    if (ok) {
+      let diff = 0;
+      for (let i = 0; i < expect.length; i++) diff |= expect.charCodeAt(i) ^ token.charCodeAt(i);
+      ok = diff === 0;
+    }
+    if (!ok) return page('That link is not valid', 'Check you copied the whole link from the email, or reply to it and we will send you a fresh one.');
+
+    const rows = await vpaSelect(env, 'venueplay_founding',
+      'id=eq.' + encodeURIComponent(foundingId)
+      + '&select=id,venue_name,contact_email,mobile,max_seats,plan,status,stripe_subscription_id');
+    const f = rows && rows[0];
+    if (!f) return page('We could not find that account', 'Reply to your welcome email and we will sort it out.');
+    // Already paying: sending them through Checkout again would open a SECOND subscription on the
+    // same venue and bill them twice. Their billing page is where changes belong.
+    if (f.stripe_subscription_id) return Response.redirect(site + '/app/billing.html', 302);
+    if (f.status === 'comp') return page('This account is on us', 'There is nothing to pay on ' + vpaEsc(f.venue_name || 'this venue') + ', so there is no card to add.');
+
+    const plan = f.plan === 'annual' ? 'annual' : 'monthly';
+    const seats = Math.max(parseInt(f.max_seats, 10) || 0, 1);
+    // Founding vs standard is decided at the moment they add the card, exactly as it is for a
+    // self-serve signup, so an HQ venue cannot hold a founding spot open by sitting on the email.
+    const spotsTaken = await sbSpotsTaken(env);
+    const founding = (spotsTaken + 1) <= 100;
+    const price = founding
+      ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
+      : (plan === 'annual' ? env.STRIPE_PRICE_STANDARD_ANNUAL : env.STRIPE_PRICE_STANDARD_MONTHLY);
+    if (!price) return page('We could not open the payment page', 'Reply to your welcome email and we will send you another way to pay.');
+
+    const nowTs = Math.floor(Date.now() / 1000);
+    // Their free month starts when they add the card, not when HQ built the venue: they have not
+    // had the product until now. Stripe rejects a trial_end under ~2 days out.
+    const trialTs = Math.max(nowTs + 30 * 24 * 60 * 60, nowTs + 3 * 24 * 60 * 60);
+
+    const form = new URLSearchParams();
+    form.set('mode', 'subscription');
+    form.set('line_items[0][price]', price);
+    form.set('line_items[0][quantity]', String(seats));
+    form.set('subscription_data[trial_end]', String(trialTs));
+    form.set('subscription_data[metadata][venue]', f.venue_name || '');
+    form.set('subscription_data[metadata][row_id]', foundingId);
+    form.set('subscription_data[metadata][tier]', founding ? 'founding' : 'standard');
+    form.set('subscription_data[metadata][is_group]', '0');
+    form.set('subscription_data[metadata][venue_count]', '1');
+    form.set('subscription_data[metadata][hq_onboarded]', '1');
+    form.set('payment_method_collection', 'always');
+    form.set('allow_promotion_codes', 'false');
+    if (f.contact_email) form.set('customer_email', f.contact_email);
+    form.set('client_reference_id', foundingId);   // <- what links the card back to the venue HQ built
+    form.set('metadata[venue]', f.venue_name || '');
+    form.set('metadata[row_id]', foundingId);
+    form.set('metadata[tier]', founding ? 'founding' : 'standard');
+    form.set('metadata[is_group]', '0');
+    form.set('metadata[venue_count]', '1');
+    form.set('metadata[hq_onboarded]', '1');
+    form.set('success_url', site + '/?vp=success&session_id={CHECKOUT_SESSION_ID}');
+    form.set('cancel_url', site + '/app');
+
+    const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + env.STRIPE_SECRET_KEY,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: form.toString(),
+    });
+    const session = await res.json();
+    if (!res.ok || !session.url) {
+      await vpaInsert(env, 'vp_admin_audit', {
+        actor_admin: null, actor_label: 'system', action: 'add_card_link_failed',
+        target: 'founding:' + foundingId,
+        detail: { error: (session.error && session.error.message) || 'stripe error' },
+      }, false).catch(() => {});
+      return page('We could not open the payment page', 'Nothing has been charged. Reply to your welcome email and we will get you sorted.');
+    }
+    return Response.redirect(session.url, 302);
+  } catch (e) {
+    return page('Something went wrong', 'Nothing has been charged. Reply to your welcome email and we will get you sorted.');
+  }
+}
+
+/* One place that actually posts to Resend, so the three emails below cannot
+   drift on the from address or the reply-to. Returns true if it went. */
+async function vpaSendEmail(env, to, subject, html) {
+  if (!env.RESEND_API_KEY || !to) return false;
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'VenuePlay <hello@send.venueplay.com.au>',
+      reply_to: 'hello@venueplay.com.au',
+      to: [to],
+      subject: subject,
+      html: html,
+    }),
+  });
+  return res.ok;
+}
+
+/* Welcome email for a venue onboarded from HQ. `comp` picks the flavour.
+   Best-effort like every other email here: onboarding has already succeeded by
+   the time this runs and must never be undone by Resend having a bad day. */
+async function vpaFireHqWelcome(env, o) {
+  try {
+    if (!env.RESEND_API_KEY) return false;
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+    const email = (o.email || '').trim();
+    if (!email) return false;
+
+    const res = await fetch(site + '/emails/welcome-hq.html');
+    if (!res.ok) return false;
+    let html = await res.text();
+    const comp = !!o.comp;
+    html = vpaTplSections(html, { card: !comp, comp: comp });
+
+    const plan = o.plan === 'annual' ? 'annual' : 'monthly';
+    const spotsTaken = comp ? 0 : await sbSpotsTaken(env);
+    const founding = (spotsTaken + 1) <= 100;
+    const rate = founding ? (plan === 'annual' ? 2.30 : 2.50)
+                          : (plan === 'annual' ? 2.85 : 3.00);
+    const seats = parseInt(o.seats, 10) || 0;
+    const money = (n) => '$' + Number(n).toFixed(2);
+    const cardUrl = comp ? '' : await vpaCardLink(env, o.foundingId);
+    // No card link means no working "Add my card" button, and an email whose one job is that
+    // button is worse than no email. Say nothing rather than send a dead end.
+    if (!comp && !cardUrl) return false;
+
+    html = html
+      .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your venue'))
+      .replace(/{{player_count}}/g, String(seats))
+      .replace(/{{player_rate}}/g, money(rate))
+      .replace(/{{monthly_total}}/g, money(seats * rate))
+      .replace(/{{card_url}}/g, cardUrl)
+      .replace(/{{host_console_url}}/g, site + '/app')
+      .replace(/{{tv_url}}/g, site + '/tv?venue=' + encodeURIComponent(o.slug || ''))
+      .replace(/{{terms_url}}/g, site + '/terms')
+      .replace(/{{privacy_url}}/g, site + '/privacy')
+      .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
+
+    return await vpaSendEmail(env, email,
+      comp ? 'Your VenuePlay account is ready, and it is on us'
+           : 'Your VenuePlay account is ready. One thing left.',
+      html);
+  } catch (_) { return false; }
+}
+
+/* Onboarding email for a venue an OWNER adds from their own account. It goes to
+   the account's contact email, written to be forwarded straight to the venue,
+   and carries no billing at all: the owner is the one paying, and the venue
+   only needs to know how to get a game on the screen. */
+async function vpbFireVenueOnboarding(env, o) {
+  try {
+    if (!env.RESEND_API_KEY) return false;
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+    const email = (o.email || '').trim();
+    if (!email) return false;
+
+    const res = await fetch(site + '/emails/venue-onboarding.html');
+    if (!res.ok) return false;
+    let html = await res.text();
+    html = html
+      .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your new venue'))
+      .replace(/{{host_console_url}}/g, site + '/app')
+      .replace(/{{tv_url}}/g, site + '/tv?venue=' + encodeURIComponent(o.slug || ''))
+      .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
+
+    return await vpaSendEmail(env, email,
+      'Setup guide for ' + (o.venueName || 'your new venue') + ' (forward this on)', html);
+  } catch (_) { return false; }
 }
 
 /* Internal heads-up to the VenuePlay inbox the moment a venue signs up.
@@ -3360,7 +3652,16 @@ async function vpbAddVenue(request, env, json) {
     detail: { name: name, players: players, new_total: newTotal, billing: aAdj, actor_user: o.authUserId },
   }, false).catch(() => {});
 
-  return json({ ok: true, billing_synced: billingOk, venue: { id: r.venue && r.venue.id, name: name, slug: r.venue && r.venue.slug, players: players } });
+  // A venue added from the account is a venue nobody has told yet. Send the owner one tidy
+  // setup email they can forward straight on to the people who will run the night there.
+  // Best-effort: the venue is already live and billed, so this must not be able to fail the call.
+  const onboardingSent = await vpbFireVenueOnboarding(env, {
+    email: o.account && o.account.contact_email,
+    venueName: name,
+    slug: r.venue && r.venue.slug,
+  });
+
+  return json({ ok: true, billing_synced: billingOk, onboarding_sent: onboardingSent, venue: { id: r.venue && r.venue.id, name: name, slug: r.venue && r.venue.slug, players: players } });
 }
 
 /* --- POST /account/cancel-venue : schedule (or undo) a venue's cancellation. ---

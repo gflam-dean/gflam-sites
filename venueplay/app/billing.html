@@ -661,7 +661,12 @@
       $("add-go").disabled = false; $("add-go").textContent = "Add venue";
       if (r.error){ showMsg(r.error); return; }
       $("add-name").value=""; $("add-postcode").value=""; $("add-seats").value=""; $("addForm").classList.remove("show");
-      showMsg(name + " added to your account.", true);
+      // The Worker emails a ready-to-forward setup guide for the new venue to this account's
+      // contact address. Saying so is the only way the owner knows to pass it on, and saying so
+      // ONLY when it actually sent is the only way they know when to write it themselves.
+      showMsg(r.onboarding_sent
+        ? (name + " added. We have emailed you a setup guide to forward on to the venue.")
+        : (name + " added to your account."), true);
       // Refresh the account summary AND the host/manager panels: their "which venues" checkbox
       // pickers are built from their own /account/hosts + /account/managers calls, so without this
       // a freshly added venue would not appear as a tickable option until a full page reload.

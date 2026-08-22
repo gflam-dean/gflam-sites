@@ -225,9 +225,10 @@
         <div class="field nvFoundF"><label>Max players (plan cap)</label><input type="number" id="nvMax" placeholder="e.g. 80" class="mono"></div>
         <div class="field nvFoundF"><label>Plan</label><select id="nvPlan"><option value="monthly">Founding monthly</option><option value="annual">Founding annual</option></select></div>
         <div class="field nvFoundF"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="nvComp" style="width:auto;margin:0"> Comp / demo venue &mdash; no card, and does NOT use one of the 100 founding spots</label></div>
+        <div class="field"><label style="display:flex;align-items:center;gap:8px;font-weight:400;text-transform:none;letter-spacing:0"><input type="checkbox" id="nvWelcome" style="width:auto;margin:0" checked> Email the venue their welcome and setup guide</label><div class="note" style="margin-top:4px">Goes to the contact email. A paying venue gets a secure link to add their card (nothing is charged until they do, and their free month starts then). A comp venue gets the same email with the billing left out. Untick if you are onboarding them in person.</div></div>
       </div>
       <button class="btn pink" id="addVenueSubmit">Create venue</button>
-      <div class="note">Onboarding sets up the venue's subscription and its first manager login.</div>
+      <div class="note">Onboarding sets up the venue, its first manager login and its billing record. HQ takes no card: the welcome email is what asks for it.</div>
       <div class="okflash" id="addVenueOk"><span>&#10003;</span> <span></span></div>
       <div class="errflash" id="addVenueErr"></div>
     </div>
@@ -1708,12 +1709,24 @@
       body.billing.founding={ contact_email:email, mobile:mob, postcode:pc, max_seats:(max||null), plan:$("nvPlan").value };
       body.billing.comp = $("nvComp").checked;   // comp/demo: founding row 'comp', not counted in the 100 spots
     }
+    /* The welcome email is the ONLY thing that asks an HQ-onboarded venue for a card, so it is on
+       by default and the flash below says whether it actually went. A grouped venue never gets one:
+       its operator does that onboarding themselves. */
+    body.send_welcome = $("nvWelcome").checked;
     var btn=$("addVenueSubmit"); btn.disabled=true; btn.textContent="Creating…";
     workerPost("/admin/venue", body).then(function(res){
       btn.disabled=false; btn.textContent="Create venue";
       if(res.error){ errFlash("addVenueErr",res.error); return; }
-      flash("addVenueOk", body.manager ? ("Venue created. "+body.manager.mobile+" will be texted a login invite.") : "Venue created. NOBODY CAN SIGN IN YET: add a manager mobile.");
-      $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value=""; $("nvComp").checked=false;
+      var msg = body.manager ? ("Venue created. "+body.manager.mobile+" will be texted a login invite.") : "Venue created. NOBODY CAN SIGN IN YET: add a manager mobile.";
+      /* Say what the email DID, not what was ticked. A welcome that quietly failed to send is a
+         venue sitting there with no card link and nobody chasing it. */
+      if(bill==="founding"){
+        if(res.welcome_sent) msg += " Welcome email sent to "+$("nvEmail").value.trim()+".";
+        else if(body.send_welcome) msg += " WELCOME EMAIL DID NOT SEND: nothing has asked them for a card. Send it by hand.";
+      }
+      if(res.warning){ errFlash("addVenueErr", res.warning); }
+      flash("addVenueOk", msg);
+      $("nvName").value=""; $("nvSlug").value=""; $("nvEmail").value=""; $("nvMobile").value=""; $("nvMax").value=""; $("nvCap").value=""; $("nvPostcode").value=""; $("nvComp").checked=false; $("nvWelcome").checked=true;
       loadAll();
     });
   });

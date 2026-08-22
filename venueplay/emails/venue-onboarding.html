@@ -1,0 +1,100 @@
+<!--
+  VenuePlay transactional email: VENUE ONBOARDING (FORWARDABLE)
+  Sent to the account owner when they add a new venue from their account, so
+  they can forward one tidy email straight to that venue's team. Deliberately
+  carries NO billing detail: the owner's account handles the money, and the
+  venue reading this only needs to know how to get a game on the screen.
+  Merge fields:
+    {{venue_name}}        the new venue, e.g. "The Grand Hotel"
+    {{host_console_url}}  link to the app host console sign-in
+    {{tv_url}}            that venue's TV screen link (/tv?venue=slug)
+    {{support_email}}     e.g. "hello@venueplay.com.au"
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f7;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <tr><td align="center" style="padding:24px 12px">
+    <!-- preheader (hidden) -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0">{{venue_name}} is on VenuePlay. Forward this to whoever runs the night.</div>
+
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden">
+      <!-- header -->
+      <tr><td style="background:#12101a;padding:20px 32px">
+        <img src="https://venueplay.com.au/logos/venueplay_primary_rebuilt.png" width="168" alt="VenuePlay" style="display:block;border:0;height:auto">
+      </td></tr>
+
+      <!-- forward bar -->
+      <tr><td style="background:#fff6fb;border-bottom:1px solid #ffd9ec;padding:12px 32px">
+        <p style="margin:0;font-size:13.5px;line-height:1.55;color:#C70F69"><strong>Ready to forward.</strong> This is the setup guide for {{venue_name}}. Send it straight on to whoever runs the night there.</p>
+      </td></tr>
+
+      <!-- hero -->
+      <tr><td style="padding:34px 32px 8px">
+        <h1 style="margin:0;font-size:26px;line-height:1.25;color:#12101a;font-weight:800">{{venue_name}} is on VenuePlay.</h1>
+        <p style="margin:16px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">The venue is set up and ready to run bingo, trivia, musical bingo, raffles and members draws. Billing is handled on the head office account, so there is nothing to pay or sign up for here. Everything below is the setup.</p>
+      </td></tr>
+
+      <!-- login box -->
+      <tr><td style="padding:24px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">How you sign in</p>
+            <p style="margin:8px 0 0;font-size:16px;line-height:1.6;color:#3a3a44">With your <strong>mobile number</strong>. No password to remember. Enter your mobile at <a href="{{host_console_url}}" style="color:#12101a;font-weight:700;text-decoration:none">venueplay.com.au/app</a> and we text you a code. Head office adds each host's mobile from their account, so if the code does not come, ask them to add you.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- 3 steps -->
+      <tr><td style="padding:26px 32px 0">
+        <p style="margin:0 0 14px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#12101a">Three steps to your first night</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">1</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Set up the screen.</strong> Any TV works, a Fire Stick, a smart TV, or an HDMI cable from a laptop. Open the TV link below on the venue screen once and a join code appears for players.</td>
+          </tr></table></td></tr>
+          <tr><td style="padding:0 0 12px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">2</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Sign in on your phone or the bar laptop.</strong> That is the host console: you start the game, call it and see who is winning from there.</td>
+          </tr></table></td></tr>
+          <tr><td><table role="presentation" cellpadding="0" cellspacing="0"><tr>
+            <td valign="top" style="width:30px;font-size:16px;font-weight:800;color:#FF1F8E">3</td>
+            <td style="font-size:15px;line-height:1.55;color:#3a3a44"><strong>Run a test game.</strong> Play a quick round yourself, phone in hand, so it all feels familiar before a room full of people is watching.</td>
+          </tr></table></td></tr>
+        </table>
+      </td></tr>
+
+      <!-- CTA -->
+      <tr><td align="center" style="padding:30px 32px 4px">
+        <a href="{{host_console_url}}" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:15px 34px;border-radius:10px">Open the host console</a>
+      </td></tr>
+
+      <!-- screens -->
+      <tr><td style="padding:16px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf7fb;border:1px solid #eee;border-radius:12px">
+          <tr><td style="padding:20px 22px">
+            <p style="margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#FF1F8E">This venue's screen link</p>
+            <p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#3a3a44">Open <a href="{{tv_url}}" style="color:#12101a;font-weight:700;text-decoration:none">{{tv_url}}</a> on the venue TV once. It remembers this venue after that, so next time the link is just venueplay.com.au/tv. Worth saving it as the TV's home page.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- need a hand -->
+      <tr><td style="padding:22px 32px 0">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#12101a;border-radius:14px">
+          <tr><td style="padding:26px 26px 28px">
+            <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FF1F8E">We are on the other end of this</p>
+            <p style="margin:10px 0 0;font-size:22px;line-height:1.25;font-weight:800;color:#ffffff">Need a hand setting up?</p>
+            <p style="margin:12px 0 0;font-size:15.5px;line-height:1.65;color:#c9c7d4">Reach out. Reply to this email or write to <a href="mailto:{{support_email}}" style="color:#ffffff;font-weight:700;text-decoration:none">{{support_email}}</a> and a real person answers, usually the same day. A TV that will not cooperate, a host who wants a walk through, nerves about your first night: we would rather sort it with you in five minutes than have you wrestle it alone.</p>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:20px"><tr>
+              <td><a href="mailto:{{support_email}}?subject=Help%20setting%20up%20VenuePlay" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 28px;border-radius:9px">Reach out to us</a></td>
+            </tr></table>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- footer -->
+      <tr><td style="padding:30px 32px 34px">
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#8a8a95">Any questions, just reply to this email or reach us at <a href="mailto:{{support_email}}" style="color:#FF1F8E;text-decoration:none">{{support_email}}</a>. Have a great first night.</p>
+        <p style="margin:16px 0 0;font-size:12px;color:#b3b3bb"><a href="https://venueplay.com.au" style="color:#b3b3bb;text-decoration:none">venueplay.com.au</a></p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
