@@ -199,14 +199,27 @@ if n_caps is not None:
     if n_noprov and n_opt and n_noprov > 0:
         notes.append("%s capture(s) predate migration 47, so a poisoned row among them cannot be "
                      "traced back to where it came from." % n_noprov)
-    # A capture that arrived with no game running at that venue is what a forged one looks like.
-    # The export view already leaves these out; this is so you can see whether anyone is trying.
-    _, n_forged = q("vp_captures", "select=id&during_game=is.false&limit=1", count=True)
+    /* IS THE IDENTITY FLOWING? Since 24 Aug a bingo phone joins the host's session behind the
+       scenes and holds a player token, and /capture binds the capture to that player. So these
+       three numbers together say whether the plumbing is actually working in the wild:
+         bound      the phone proved who it was. This is the number that should grow.
+         no game    arrived with nothing running at that venue: the shape of a forgery, and also
+                    the shape of a test posted between games.
+         unchecked  written before the check existed. Still exported, on purpose. */
+    _, n_bound   = q("vp_captures", "select=id&player_id=not.is.null&limit=1", count=True)
+    _, n_forged  = q("vp_captures", "select=id&during_game=is.false&limit=1", count=True)
+    _, n_legacy  = q("vp_captures", "select=id&during_game=is.null&limit=1", count=True)
+    print("Captures by evidence: %s bound to a player, %s with no game running, %s from before the check"
+          % (n_bound, n_forged, n_legacy))
+    if n_caps and not n_bound:
+        notes.append("No capture is bound to a player yet. Expected until a phone goes through a "
+                     "bingo night on the 24 Aug code or later; if it stays at zero after one, the "
+                     "identity claim is not reaching /capture and that is worth chasing.")
     if n_forged:
         flag("MED", "%s capture(s) arrived with no game running" % n_forged,
-             "That is the shape of a forged opt-in: /capture authorises on a code derived from the "
-             "venue's public slug, so anyone who knows a venue exists can post one. They are kept "
-             "out of the venue's export, but somebody is poking at it.")
+             "That is the shape of a forged opt-in, and also the shape of a capture posted while "
+             "testing between games, so check the dates before reading anything into it. They are "
+             "kept out of the venue's export either way.")
 
 # ------------------------------------------------------------------ sessions
 open_s, n_open = q("vp_sessions", "select=id,venue_id,status,opened_at&status=in.(lobby,live)"
