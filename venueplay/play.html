@@ -1083,48 +1083,41 @@
      Falls through silently on anything else: an old table talker, a typed venue code, a Worker
      blip. Bingo has never needed the server to run and still does not, so a failure here costs
      the identity and nothing else. */
-  function joinSession(code, done){
-    /* TWO WAYS THIS CAN GO WRONG, and the second one cost a whole room in testing.
-       A code from the TV is now a SESSION code, and a session code is NOT a channel name. So the
-       old fallback of "just connect to whatever they typed" is right for a venue code off a table
-       talker and completely wrong for a session code: the phone lands on a channel nobody is on
-       and waits for a host all night. That is exactly what happened when this call timed out at
-       four seconds against a cold Worker.
-       So: the fallback still runs (a venue code has to keep working, and a phone must never be
-       stranded by a slow Worker) but a LATE answer is still honoured and moves the phone across
-       to the right channel instead of being thrown away. */
-    var settled=false;
-    function finish(ok){ if(settled) return; settled=true; done(ok); }
-    var t=setTimeout(function(){ finish(false); }, 8000);
-    playerPost("/join", { code: code, name: loadName(code) || "" })
-      .then(function(r){
-        clearTimeout(t);
-        if(!(r && r.token && r.snapshot && r.snapshot.venue_slug)){ finish(false); return; }
-        P.token = r.token;
-        try{ localStorage.setItem("vp-token-"+code, r.token); }catch(e){}
-        var vc = venueCode(r.snapshot.venue_slug);   // the CHANNEL is still the venue's
-        if(settled){
-          // The fallback already connected us, and to the wrong place if this was a session code.
-          if(P.room !== vc) switchChannel(vc);
-          return;
-        }
-        settled=true; connect(vc); done(true);
+  /* CLAIM A SERVER IDENTITY, without changing anything the room sees.
+     Broadcast bingo meets on a channel derived from the venue's PERMANENT code, and that code is
+     printed on the table talkers, so it cannot move. But a permanent public code is also why
+     /capture was forgeable: it proves nothing about who is sending.
+     The session is the missing piece. The host's console opens one, /play/live will name its join
+     code for this venue, and joining THAT mints a player row: an identity worth something,
+     because the code behind it exists only while the game runs. The punter sees none of this.
+     Entirely best-effort. No session, no Worker, no token: the night runs on the broadcast channel
+     exactly as it always has, and a capture without a token is stored but marked unverified. */
+  function claimIdentity(code){
+    if(P.token) return;
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        if(!d || !d.live || !d.join_code || P.token) return;
+        return playerPost("/join", { code: d.join_code, name: loadName(code) || P.name || "" })
+          .then(function(j){
+            if(j && j.token){
+              P.token = j.token;
+              try{ localStorage.setItem("vp-token-"+code, j.token); }catch(e){}
+              // A capture may already have gone unverified while we were asking. Send it again now
+              // that it can be vouched for; the Worker keeps the newer row.
+              if(P.capture) saveCapture();
+            }
+          });
       })
-      .catch(function(){ clearTimeout(t); finish(false); });
-  }
-
-  /* Move to another channel mid-flight. connect() alone would leave the old subscription running
-     and the phone listening to two rooms, which is how a stale board turns up over a live one. */
-  function switchChannel(room){
-    try{ if(ch) ch.unsubscribe(); }catch(e){}
-    subscribed=false;
-    connect(room);
+      .catch(function(){});
   }
 
   function goToCode(code){
-    // A session code is joinable and gives this phone a server identity; a venue code is not and
-    // falls straight through to the path bingo has always used.
-    joinSession(code, function(joined){ if(!joined) goToCodeLegacy(code); });
+    // Connect to the code we were given, exactly as this has always worked: for bingo that is the
+    // venue's permanent code and the channel is live right now. Identity is claimed alongside,
+    // never in front of, so a slow or missing Worker can no longer strand a phone.
+    goToCodeLegacy(code);
+    claimIdentity(code);
   }
 
   function goToCodeLegacy(code){
@@ -1262,6 +1255,7 @@
     P.venueSlug=slug;
     var code=venueCode(slug);
     connect(code);                              // broadcast bingo is live on this code right now
+    claimIdentity(code);                        // and quietly pick up a server identity if one is going
     var hopped=false;
     function look(){
       /* P.active, NOT P.joined. connect() sets P.joined the moment loadName() finds a saved name,

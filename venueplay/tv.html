@@ -995,12 +995,11 @@
     if(m.t==="idle"){ enterAds(); return; }
 
     if(m.t==="state"){
-      /* The join code the host's SERVER SESSION minted, when there is one. It replaces the venue
-         code on the screen and in the QR, so what a punter scans exists only while this game runs
-         instead of being a permanent code derived from the venue's public slug. setJoinCode was
-         written for this and never had a caller. Falls back silently: no session, old code, and
-         the night runs exactly as it always has. */
-      if(m.join_code) setJoinCode(m.join_code);
+      /* THE CODE ON THE WALL DOES NOT CHANGE. It is deliberately the venue's permanent one: it is
+         on the table talkers and the printed signs, and one sign has to work every week. A session
+         code was briefly shown here instead, to give phones a server identity, and that was the
+         wrong place to solve it: the phone can ask /play/live what session is on and join THAT,
+         without anything punter-facing ever changing. See claimIdentity() in play.html. */
       if(m.pattern) state.pattern=m.pattern;
       if(typeof m.prize==="string") state.prize=m.prize;
       state.called=m.called||[];
