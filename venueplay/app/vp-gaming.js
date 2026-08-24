@@ -546,7 +546,21 @@
          The trade-off, deliberately: no gaming declaration is recorded for a free game. If that
          record is wanted for every game, record it silently rather than by making the host
          dismiss rules that do not apply to them. */
-      if (opts.gameIsPaid === false) { proceed(); return; }
+      if (opts.gameIsPaid === false) {
+        /* Skipping the SCREEN, not the RECORD. The declaration is the part that is worth keeping:
+           who conducted the game, in which state, under which category, and that entry was free.
+           Writing it silently keeps that record for every game while sparing the host a wall of
+           charging rules that do not apply to them. Best-effort in the same way the tapped one is:
+           a failed write never stops a night, and nothing here can throw into the caller. */
+        try {
+          record(venue, format, assess({
+            state: venue.au_state, entityType: venue.entity_type, format: format,
+            paidEntry: false, paidEntryEnabled: venue.paid_entry_enabled !== false,
+            venueName: venue.name
+          }) || {}, false);
+        } catch (e) {}
+        proceed(); return;
+      }
 
       if (alreadyAcked(venue.id, format)) { proceed(); return; }
       gate({ format: format, venue: venue, paidEntry: venue.paid_entry_enabled === true }, proceed);
