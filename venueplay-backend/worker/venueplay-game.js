@@ -4212,9 +4212,15 @@ async function getPublicSnapshot(env, sessionId) {
       const r = rg.length ? rg[0] : {};
       const leadingZeros = cfg.leading_zeros !== false;
       const padWidth = leadingZeros ? String(Math.max(r.range_max || 1, 1)).length : 1;
-      // The latest draw round's winning tickets (for a TV that reconnected after a draw).
+      /* The latest draw round's winning tickets (for a TV that reconnected after a draw), AND
+         the whole result history, because the host console rebuilds its audit log from this.
+         It has had the code to do that for a while; this select never returned the rows, so a
+         host who reloaded mid-night watched "who won what" reset to "No draws yet" while the
+         drawn-ticket count carried on climbing. prize_text and outcome come with it: without
+         them a restored row shows a blank prize and cannot tell a claim from a no-show. */
       const last = await sbGet(env, 'vp_raffle_results',
-        'game_id=eq.' + enc(g.id) + '&select=seq,ticket_number&order=seq.desc&limit=50');
+        'game_id=eq.' + enc(g.id) +
+        '&select=seq,ticket_number,prize_text,outcome,drawn_at&order=seq.desc&limit=50');
       let lastSeq = null;
       const lastTickets = [];
       const allTickets = [];   // every number drawn so far (up to 50) so a reloading HOST rebuilds its drawn grid
@@ -4234,6 +4240,14 @@ async function getPublicSnapshot(env, sessionId) {
         jackpot_on: !!r.jackpot_on,
         jackpot_amount_cents: r.jackpot_amount_cents != null ? r.jackpot_amount_cents : null,
         pad: padWidth, last_seq: lastSeq, last_tickets: lastTickets, all_tickets: allTickets,
+        /* Oldest first: the console reverses this into newest-first, matching the order it uses
+           when it appends a live draw, so a restored log and a live one read the same way. */
+        results: last.slice().reverse().map((r) => ({
+          ticket: r.ticket_number,
+          prize: r.prize_text || '',
+          outcome: r.outcome || 'drawn',
+          drawn_at: r.drawn_at || null,
+        })),
       };
     }
   }

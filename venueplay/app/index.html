@@ -1826,7 +1826,9 @@
   // ================= EVENTS =================
   /* State gaming rules, once a night: shown before the night opens, never mid-game. */
   $("startBtn").addEventListener("click", function(){
-    if(window.VPGaming) VPGaming.gateFor("bingo90", go); else go();
+    /* G.paidMode is "" for a free night and "single"/"sheet" when they are selling tickets, and
+       it is set from the same dropdown the host just used, so it is the truth about THIS game. */
+    if(window.VPGaming) VPGaming.gateFor("bingo90", go, { gameIsPaid: !!G.paidMode }); else go();
     function go(){ if(G.status==="lobby") startGame(); else openLobby(); }
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);

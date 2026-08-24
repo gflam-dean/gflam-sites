@@ -797,8 +797,23 @@
     try{ sessionStorage.setItem("vpTvHop", VENUE_SLUG); }catch(e){}   // shared with the iframe, so the game screen never bounces to /tv
     var f=document.getElementById("gameFrame");
     var url="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG);
-    if(f.getAttribute("src")!==url){ embedLoaded=false; try{ f.src=url; }catch(e){} }
-    f.style.display="block";
+    var fresh = f.getAttribute("src")!==url;
+    if(fresh){ embedLoaded=false; try{ f.src=url; }catch(e){} }
+    /* HOLD THE ROOM, DO NOT GO BLACK. hideBingoLayers() above has just taken the "Starting the
+       game" card away, and an iframe that has not loaded paints nothing, so the wall went black
+       for as long as the screen took to come up. On a pub TV over a pub connection that read as
+       broken, in front of everybody, right at the moment the host announced the game.
+       So: keep the card up until the frame actually fires load, and only then reveal it. The
+       25s watchdog below is unchanged and still drops back to the ads if it never loads, and a
+       frame that is ALREADY on the right URL is shown immediately, because there is nothing to
+       wait for. */
+    if(fresh && !embedLoaded){
+      $("holdGame").textContent=gameLabel(game);
+      showBingoLayer("tvHold");
+      f.style.display="none";
+    } else {
+      f.style.display="block";
+    }
     cancelEmbedWatch();
     embedT=setTimeout(function(){
       if(tvMode==="embed" && !embedLoaded){ try{ sessionStorage.setItem("vpTvReloadWhy","embed-never-loaded"); }catch(e){} enterAds(); }
@@ -811,8 +826,14 @@
   (function bindGameFrame(){
     var f=document.getElementById("gameFrame"); if(!f) return;
     f.addEventListener("load", function(){
-      if(f.style.display==="none") return;   // about:blank / hidden loads
+      /* Do NOT bail on a hidden frame any more: it is deliberately hidden while it loads (see
+         enterEmbed), and this handler is what reveals it. Only a genuinely blank src is ignored. */
+      var src=f.getAttribute("src")||"";
+      if(!src || src==="about:blank") return;
       embedLoaded=true; cancelEmbedWatch(); noteHostAlive();
+      // Loaded: swap the "Starting..." card for the real screen, in that order, so there is no
+      // frame in between where neither is showing.
+      if(tvMode==="embed"){ f.style.display="block"; hideBingoLayers(); }
       var path=""; try{ path=f.contentWindow.location.pathname||""; }catch(e){ return; }
       if(/(^|\/)tv(\.html)?$/i.test(path) && tvMode==="embed") enterAds();
     });

@@ -536,6 +536,18 @@
          pay to play, never at how big the prize is. */
       if (opts.onlyIfPaid && venue.paid_entry_enabled !== true) { proceed(); return; }
 
+      /* gameIsPaid:false - THIS game is free, whatever the venue is allowed to do.
+         onlyIfPaid above asks "may this venue charge at all", which is a venue-level switch, so a
+         venue that CAN charge saw the full charging rules even on a night it was giving the game
+         away. Every line in that popup is about taking money: the entry cap, the proceeds split,
+         the licence. None of it applies to a free game, which is a promotional game and lawful in
+         every state whatever the prize is worth. Asking anyway trains hosts to tap through the
+         one screen we need them to actually read on the nights it matters.
+         The trade-off, deliberately: no gaming declaration is recorded for a free game. If that
+         record is wanted for every game, record it silently rather than by making the host
+         dismiss rules that do not apply to them. */
+      if (opts.gameIsPaid === false) { proceed(); return; }
+
       if (alreadyAcked(venue.id, format)) { proceed(); return; }
       gate({ format: format, venue: venue, paidEntry: venue.paid_entry_enabled === true }, proceed);
     } catch (e) { proceed(); }
