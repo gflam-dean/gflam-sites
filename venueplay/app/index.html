@@ -815,7 +815,7 @@
   function postReport(open){
     try{
       if(!G.code || !G.startedAt) return;
-      var players=G.order.length, tickets=0;
+      var players=Math.max(G.peak||0, G.order.length), tickets=0;
       for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p&&p.cards) tickets+=p.cards.length; }
       var body={ code:G.code, format:"bingo", players:players, tickets:tickets,
                  prizes:G.prizesWon||[], started_at:G.startedAt,
@@ -1468,6 +1468,7 @@
     G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
+    G.peak=G.order.length;   // the room as it stands at the first ball
     G.reportId=null; postReport(true);   // the night is on the record from ball one
     dealCards();
     $("nextBtn").disabled=false; $("nextBtn").textContent="Start calling";
@@ -1486,6 +1487,7 @@
     /* Consent does not carry into the next game, because the charge does not either. The room can
        grow between games and each one is billed on its own, so each one is asked on its own. */
     overageAcked=false; overageApproved=0;
+    G.peak=G.order.length;   // this game's peak starts at whoever is already in the room
     G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
@@ -1638,6 +1640,13 @@
       if(!m.pid || typeof m.pid!=="string" || !/^[A-Za-z0-9_-]{1,40}$/.test(m.pid)) return;
       var isNew=!G.players[m.pid];
       if(isNew){ G.players[m.pid]={ name:(m.name||"Player"), cards:null, paid:0 }; G.order.push(m.pid); }
+      /* HIGH-WATER MARK. The report used to send G.order.length at the moment the game ended, and
+         a player leaving removes them from that list, so a room of 80 that thinned to 50 by the
+         last house was metered at 50. Every other format bills the PEAK, and the peak is what the
+         host was shown and tapped OK on, so bingo was the odd one out and the gap came out of our
+         side. The Worker still clamps to whatever the host actually approved, so this can never
+         bill more than they agreed to. */
+      if(G.order.length > (G.peak||0)) G.peak = G.order.length;
       else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
       if(G.status==="running"){
         var p=G.players[m.pid];
