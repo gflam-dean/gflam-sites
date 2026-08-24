@@ -1084,20 +1084,41 @@
      blip. Bingo has never needed the server to run and still does not, so a failure here costs
      the identity and nothing else. */
   function joinSession(code, done){
-    var timed=false, t=setTimeout(function(){ timed=true; done(false); }, 4000);
+    /* TWO WAYS THIS CAN GO WRONG, and the second one cost a whole room in testing.
+       A code from the TV is now a SESSION code, and a session code is NOT a channel name. So the
+       old fallback of "just connect to whatever they typed" is right for a venue code off a table
+       talker and completely wrong for a session code: the phone lands on a channel nobody is on
+       and waits for a host all night. That is exactly what happened when this call timed out at
+       four seconds against a cold Worker.
+       So: the fallback still runs (a venue code has to keep working, and a phone must never be
+       stranded by a slow Worker) but a LATE answer is still honoured and moves the phone across
+       to the right channel instead of being thrown away. */
+    var settled=false;
+    function finish(ok){ if(settled) return; settled=true; done(ok); }
+    var t=setTimeout(function(){ finish(false); }, 8000);
     playerPost("/join", { code: code, name: loadName(code) || "" })
       .then(function(r){
-        if(timed) return;
         clearTimeout(t);
-        if(r && r.token && r.snapshot && r.snapshot.venue_slug){
-          P.token = r.token;
-          try{ localStorage.setItem("vp-token-"+code, r.token); }catch(e){}
-          connect(venueCode(r.snapshot.venue_slug));   // the CHANNEL is still the venue's
-          done(true); return;
+        if(!(r && r.token && r.snapshot && r.snapshot.venue_slug)){ finish(false); return; }
+        P.token = r.token;
+        try{ localStorage.setItem("vp-token-"+code, r.token); }catch(e){}
+        var vc = venueCode(r.snapshot.venue_slug);   // the CHANNEL is still the venue's
+        if(settled){
+          // The fallback already connected us, and to the wrong place if this was a session code.
+          if(P.room !== vc) switchChannel(vc);
+          return;
         }
-        done(false);
+        settled=true; connect(vc); done(true);
       })
-      .catch(function(){ if(!timed){ clearTimeout(t); done(false); } });
+      .catch(function(){ clearTimeout(t); finish(false); });
+  }
+
+  /* Move to another channel mid-flight. connect() alone would leave the old subscription running
+     and the phone listening to two rooms, which is how a stale board turns up over a live one. */
+  function switchChannel(room){
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    subscribed=false;
+    connect(room);
   }
 
   function goToCode(code){
