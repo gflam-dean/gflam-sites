@@ -199,13 +199,13 @@ if n_caps is not None:
     if n_noprov and n_opt and n_noprov > 0:
         notes.append("%s capture(s) predate migration 47, so a poisoned row among them cannot be "
                      "traced back to where it came from." % n_noprov)
-    /* IS THE IDENTITY FLOWING? Since 24 Aug a bingo phone joins the host's session behind the
-       scenes and holds a player token, and /capture binds the capture to that player. So these
-       three numbers together say whether the plumbing is actually working in the wild:
-         bound      the phone proved who it was. This is the number that should grow.
-         no game    arrived with nothing running at that venue: the shape of a forgery, and also
-                    the shape of a test posted between games.
-         unchecked  written before the check existed. Still exported, on purpose. */
+    # IS THE IDENTITY FLOWING? Since 24 Aug a bingo phone joins the host's session behind the
+    # scenes and holds a player token, and /capture binds the capture to that player. These three
+    # numbers together say whether the plumbing is actually working in the wild:
+    #   bound      the phone proved who it was. This is the number that should grow.
+    #   no game    arrived with nothing running at that venue: the shape of a forgery, and also
+    #              the shape of a test posted between games.
+    #   unchecked  written before the check existed. Still exported, on purpose.
     _, n_bound   = q("vp_captures", "select=id&player_id=not.is.null&limit=1", count=True)
     _, n_forged  = q("vp_captures", "select=id&during_game=is.false&limit=1", count=True)
     _, n_legacy  = q("vp_captures", "select=id&during_game=is.null&limit=1", count=True)
