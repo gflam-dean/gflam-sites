@@ -141,6 +141,11 @@
      chasing. The thin colband above the tickets still points at the column, and .justcalled still
      rings the actual number, which is the real navigation need. */
   .card9 .cc.incol{border-color:rgba(255,194,75,.5)}
+  /* A called number this player has not marked, shown only when they are one or two away. */
+  .card9 .cc.missed{outline:2px dashed var(--gold);outline-offset:-2px;animation:missedPulse 1.1s ease-in-out infinite}
+  @keyframes missedPulse{0%,100%{opacity:1}50%{opacity:.55}}
+  @media (prefers-reduced-motion:reduce){ .card9 .cc.missed{animation:none} }
+  .tmiss{display:block;font-size:12.5px;font-weight:600;opacity:.92;margin-top:3px}
   .card9 .cc.incol.blank{border-color:transparent}
   /* the number just called, ringed on the ticket that popped forward */
   .card9 .cc.justcalled{box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
@@ -470,15 +475,50 @@
   }
   function marksShort(set){ var best=99; for(var i=0;i<P.cards.length;i++){ var s=cardShort(P.cards[i].cells,set); if(s<best) best=s; } return best; }
   var _lastShort=99;
+  /* Numbers that have been CALLED and sit on this player's ticket unmarked.
+     "One to go" is worked out from the called numbers, because that is what a win is actually
+     made of, but the ticket in front of them shows their own marks. Miss one and the phone says
+     you are one away while the ticket plainly is not, which reads as the app being wrong. It is
+     not wrong, it is looking at something the player cannot see. So show them: name the numbers
+     they have missed, and glow those squares. */
+  function missedOnBestCard(set){
+    var out=[], best=99, bi=-1;
+    for(var i=0;i<P.cards.length;i++){ var s=cardShort(P.cards[i].cells,set); if(s<best){ best=s; bi=i; } }
+    if(bi<0) return out;
+    var cd=P.cards[bi];
+    for(var r=0;r<3;r++) for(var c=0;c<9;c++){
+      var v=cd.cells[r][c];
+      if(v && set[v] && !cd.daubs[v]) out.push(v);
+    }
+    return out;
+  }
   function updateTension(set){
     var el=$("tension"); if(!el) return;
-    if(P.claimPending||P.won||P.ended||!P.active||!P.cards.length){ el.classList.add("hidden"); _lastShort=99; return; }
+    if(P.claimPending||P.won||P.ended||!P.active||!P.cards.length){ el.classList.add("hidden"); _lastShort=99; _missed=[]; return; }
     var n=marksShort(set);
-    if(n===1){ el.classList.remove("hidden"); el.className="tension hot"; el.innerHTML="&#128293; One to go!";
+    // Only when it matters. A permanent hint would mark the card for them and there would be no
+    // game left in it; two away is the point where confusion starts costing someone a win.
+    _missed = (n<=2) ? missedOnBestCard(set) : [];
+    var miss = _missed.length
+      ? '<span class="tmiss">You have not marked ' +
+        (_missed.length>3 ? (_missed.length + ' called numbers') : _missed.join(", ")) +
+        ' &middot; tap the glowing squares</span>'
+      : '';
+    if(n===1){ el.classList.remove("hidden"); el.className="tension hot"; el.innerHTML="&#128293; One to go!" + miss;
       if(_lastShort>1){ try{ if(navigator.vibrate) navigator.vibrate([0,70,50,70]); }catch(e){} } }   // buzz once, on the transition
-    else if(n===2){ el.classList.remove("hidden"); el.className="tension two"; el.textContent="2 numbers away"; }
+    else if(n===2){ el.classList.remove("hidden"); el.className="tension two"; el.innerHTML="2 numbers away" + miss; }
     else { el.classList.add("hidden"); el.className="tension hidden"; }
     _lastShort=n;
+    if(P.cards.length) paintMissed();
+  }
+  var _missed=[];
+  // Glow the called-but-unmarked squares, without a full re-render: this runs on every ball.
+  function paintMissed(){
+    var cells=document.querySelectorAll(".card9 .cc[data-n]");
+    for(var i=0;i<cells.length;i++){
+      var n=parseInt(cells[i].getAttribute("data-n"),10);
+      cells[i].classList.toggle("missed", _missed.indexOf(n)!==-1);
+    }
   }
 
   // ---- views ----
@@ -559,6 +599,7 @@
     return k;
   }
   function renderCards(){
+    autoLayoutForHand();   // six tickets stacked on a phone is a scroll, not a game
     if(structureKey()===P.builtKey){ paintCards(); return; }
     buildCards();
   }
@@ -737,6 +778,19 @@
   // so a junk stored value used to sail through and leave the menu showing a blank selection.
   function knownLayout(v){ return Object.prototype.hasOwnProperty.call(LAYOUTS, v); }
   function loadLayout(){ try{ var v=localStorage.getItem("vp-layout"); return knownLayout(v)?v:"stack"; }catch(e){ return "stack"; } }
+  // Has this player ever CHOSEN a layout? Only then do we stop picking one for them.
+  function hasChosenLayout(){ try{ return knownLayout(localStorage.getItem("vp-layout")); }catch(e){ return false; } }
+  /* A stack of six tickets on a phone is a scroll, and a punter who is scrolling is not marking.
+     Past three, "three at a time" is the readable shape, so choose it for them the first time they
+     are dealt that many. Their own pick always wins, and once made it is never overridden. */
+  var _autoLaid=false;
+  function autoLayoutForHand(){
+    if(_autoLaid || hasChosenLayout()) return;
+    if(!P.cards || P.cards.length<=3) return;
+    _autoLaid=true;
+    var sel=$("laySel"); if(sel) sel.value="pages";
+    setLayout("pages", false);   // for this hand, not for ever
+  }
   // With one ticket every layout looks the same, so we render stacked. The CONTROLS have to
   // follow that, not the stored preference: hiding zoom because of a setting that is not in
   // effect stranded a player at 220% zoom with no way to zoom back out.
@@ -745,9 +799,13 @@
     var ctl=document.querySelector(".cardctl");
     if(ctl) ctl.style.display = (effectiveLayout()==="stack") ? "" : "none";
   }
-  function setLayout(v){
+  /* remember=false is us choosing for them (a big hand), and it must NOT be written down as a
+     preference: do that and the player has "chosen" a layout they never picked, and every later
+     hand is locked to it. Their own pick is the only thing that gets stored. */
+  function setLayout(v, remember){
     if(!knownLayout(v)) v="stack";
-    P.layout=v; try{ localStorage.setItem("vp-layout", v); }catch(e){}
+    P.layout=v;
+    if(remember!==false){ try{ localStorage.setItem("vp-layout", v); }catch(e){} }
     var sel=$("laySel"); if(sel && sel.value!==v) sel.value=v;
     syncCardCtl();
     if(P.cards.length) renderCards();

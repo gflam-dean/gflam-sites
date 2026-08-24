@@ -1585,6 +1585,11 @@
     G.draw.push(n); G.idx=G.draw.length-1; G.called[n]=true;
     send({ t:"ball", number:n, called:calledArray(), index:G.idx });
     saveGame();
+    /* The button still read "Start calling" for the whole game. renderConsole() has always set it
+       to "Next number" once a ball is out, but drawing one only refreshes the live panel and the
+       board, so the label it set at kick-off was never revisited. A host reads that button, not
+       the board, and "Start calling" on ball forty is the console telling them a lie. */
+    var _nb=$("nextBtn"); if(_nb && G.pool.length) _nb.textContent="Next number";
     renderLive(); updateBoard();
     if(!G.pool.length){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
   }
