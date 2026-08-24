@@ -701,9 +701,25 @@
       } else {
         mine = (vs||[]).filter(function(v){ return ids[v.id]; });
       }
+      /* AN ARCHIVED VENUE IS NOT A PLACE YOU CAN RUN A GAME, SO IT DOES NOT BELONG ON THIS SCREEN.
+         Archiving writes status='suspended' with suspended_reason='archived', so the kill-switch
+         already stops the games. But the venue still appeared in this picker, and picking it gave
+         the host the SETTLE UP message, which is the wrong story entirely: nobody owes anything,
+         the venue was closed. Drop them here. They stay on the account page, where the owner can
+         see the closure and the final invoice, and HQ still lists them under its Archived filter. */
+      var archivedCount = mine.filter(isArchivedVenue).length;
+      mine = mine.filter(function(v){ return !isArchivedVenue(v); });
+
       box.innerHTML="";
       if(mine.length===1){ var one=mine[0]; markVenuePick(one.id); if(pairToVenue(one.slug)) return; }  // only one after all: just go in
       if(!mine.length){
+        /* Everything they had is closed. Say so, rather than dropping them on the pair screen with
+           no explanation, which reads as a broken login. */
+        if(archivedCount){
+          box.innerHTML="<div class='note'>"+(archivedCount===1?"This venue has been closed":"Your venues have been closed")+
+            " and its games are switched off. If that is not right, give us a call and we will get you going again.</div>";
+          return;
+        }
         // Don't dead-end: fall back to the current venue, else the manual pair screen.
         if(__ctx && __ctx.venue && __ctx.venue.slug && pairToVenue(__ctx.venue.slug)) return;
         go("vPair"); $("pairIn").value=pairedCode(); $("pairErr").textContent=""; $("pairIn").focus(); return;
@@ -1277,13 +1293,21 @@
      bingo has no server call at all: the console just broadcasts on the venue channel. So a venue
      whose card had failed could read the "settle up" banner, tap Start, and run bingo every week
      forever, which is the format they run most. The console has to stop itself. */
+  /* Archiving is a suspension with a reason, so these two states arrive on the same column and
+     have to be told apart before we say anything about money. Telling a closed venue to settle up
+     sends them to a billing page with nothing owing on it. */
+  function isArchivedVenue(v){
+    return !!(v && (v.suspended_reason === 'archived' || v.suspended_reason === 'archived_cancelling'));
+  }
   function venueOnHold(){
     var v = __ctx && __ctx.venue;
     return !!(v && v.status === 'suspended');
   }
   function blockedByHold(){
     if(!venueOnHold()) return false;
-    showToast("Your tab has run a bit long. Settle up on your account page and we will get your games going again.");
+    showToast(isArchivedVenue(__ctx && __ctx.venue)
+      ? "This venue has been closed, so its games are switched off. Give us a call if that is not right."
+      : "Your tab has run a bit long. Settle up on your account page and we will get your games going again.");
     return true;
   }
   function openLobby(){
