@@ -127,7 +127,7 @@
       <div class="nowtitle" id="tvNowTitle">Ready to play</div>
       <div class="nowartist" id="tvNowArtist">First song coming up</div>
     </div>
-    <div class="mpat">Pattern &middot; <b id="tvPattern">One line</b> &nbsp;&middot;&nbsp; Playing for <b id="tvPrize">the prize</b> &nbsp;&middot;&nbsp; <span id="tvPlayCount">0 playing</span></div>
+    <div class="mpat">Pattern &middot; <b id="tvPattern">One line across</b> &nbsp;&middot;&nbsp; Playing for <b id="tvPrize">the prize</b> &nbsp;&middot;&nbsp; <span id="tvPlayCount">0 playing</span></div>
     <div class="pboard" id="tvBoard"></div>
   </div>
 
@@ -168,7 +168,12 @@
   function $(id){ return document.getElementById(id); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
-  var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+  /* "One line" on a 5x5 card with a FREE centre reads as any row, column or diagonal to anyone
+   who has played bingo anywhere else, and the free square makes it look even more like a
+   diagonal counts. It does not: checkMusicPattern is rows only, which is what the host is
+   told in their own dropdown ("any full row"). The player and the TV were the two screens
+   that never said so, which is a dispute at the bar waiting to happen. */
+var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
 
   var CODE_ALPHABET="ACDEFGHJKMNPQRSTUVWXYZ2345679";
   var CODE_RE=/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;

@@ -162,7 +162,7 @@
 
   <!-- CARD -->
   <div class="view hidden" id="vCard">
-    <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line</span></div>
+    <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line across</span></div>
     <div class="lastcalled" id="lastCalled">No songs played yet</div>
     <div class="cardctl">
       <span class="czlbl">Size</span>
@@ -216,7 +216,12 @@
   }
   function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-  var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+  /* "One line" on a 5x5 card with a FREE centre reads as any row, column or diagonal to anyone
+   who has played bingo anywhere else, and the free square makes it look even more like a
+   diagonal counts. It does not: checkMusicPattern is rows only, which is what the host is
+   told in their own dropdown ("any full row"). The player and the TV were the two screens
+   that never said so, which is a dispute at the bar waiting to happen. */
+var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
   // The Worker sends vp_music_games pattern values; map to the UI labels/keys.
   var PAT_FROM_WORKER={one_line:"one",two_lines:"two",four_corners:"corners",full_house:"full"};
 

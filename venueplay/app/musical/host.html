@@ -283,7 +283,7 @@
           </div>
           <div class="stat">
             <div class="box"><div class="k">Played</div><div class="v" id="livePlayed">0</div></div>
-            <div class="box"><div class="k">Pattern</div><div class="v" style="font-size:13px" id="livePattern">One line</div></div>
+            <div class="box"><div class="k">Pattern</div><div class="v" style="font-size:13px" id="livePattern">One line across</div></div>
             <div class="box"><div class="k">Playing</div><div class="v g" id="livePlayers">0</div></div>
           </div>
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
@@ -353,7 +353,12 @@
   function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
-  var PATTERN_NAMES={one:"One line",two:"Two lines",corners:"Four corners",full:"Full house"};
+  /* "One line" on a 5x5 card with a FREE centre reads as any row, column or diagonal to anyone
+   who has played bingo anywhere else, and the free square makes it look even more like a
+   diagonal counts. It does not: checkMusicPattern is rows only, which is what the host is
+   told in their own dropdown ("any full row"). The player and the TV were the two screens
+   that never said so, which is a dispute at the bar waiting to happen. */
+var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four corners",full:"Full house"};
   // Host UI pattern value -> the vp_music_games pattern the Worker expects.
   var PAT_TO_WORKER={one:"one_line",two:"two_lines",corners:"four_corners",full:"full_house"};
 
