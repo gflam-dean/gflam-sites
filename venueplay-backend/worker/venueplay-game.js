@@ -564,6 +564,15 @@ async function handleCapture(request, env, json) {
     const rl = await rateLimit(env, 'capture:ip:' + ipHash, CAPTURE_MAX_PER_IP, 60);
     if (!rl.ok) return json({ error: 'Too many sign-ups from this network right now' }, 429);
   }
+  /* WHO IS THIS? A player token is minted by /join against a SESSION code, which exists only
+     while that game runs and is only ever on the venue's own screen, so holding one is evidence
+     of having been in the room. The venue code in the body is derived from the venue's public
+     slug and proves nothing at all: that is the whole reason this endpoint was forgeable.
+     A capture with no token is still STORED (never lose a real punter's details) but is marked
+     unverified below and stays out of the export the venue mails. */
+  let player = null;
+  try { player = await verifyPlayerToken(request, env); } catch (e) { player = null; }
+
   const venueId = await venueByCode(env, b.code);
   if (!venueId) return json({ ok: false, stored: false });
   const rows = await sbGet(env, 'vp_venue_settings',
@@ -594,7 +603,16 @@ async function handleCapture(request, env, json) {
      Marked, not rejected: the row is still stored either way, and the export view is what leaves
      the unmarked ones out, so a console whose report failed to send never costs a venue real
      opt-ins that they can go and look at. */
-  row.during_game = await venueHasGameOpen(env, venueId);
+  /* A joined player IS in the room, by definition, so a token is the strongest evidence there is
+     and it settles the question on its own. Without one we fall back to the weaker check (was a
+     game even running) and, since a real phone always holds a token now, the honest reading of a
+     token-less capture is "cannot vouch for this": marked, kept, excluded from the export. */
+  if (player) {
+    row.player_id = player.id;
+    row.during_game = true;
+  } else {
+    row.during_game = false;
+  }
   /* The column may not be migrated yet, and a player's details must NEVER be lost to a schema
      mismatch: PostgREST rejects the whole insert on an unknown column. So try it, and if that is
      the only thing wrong, store the capture without it. Order of deploy and migration then does
@@ -604,11 +622,13 @@ async function handleCapture(request, env, json) {
     return json({ ok: true, stored: true });
   } catch (e) {
     const msg = String((e && e.message) || e);
-    if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('during_game') === -1 && msg.indexOf('42703') === -1) throw e;
+    if (msg.indexOf('source_ip_hash') === -1 && msg.indexOf('during_game') === -1 &&
+        msg.indexOf('player_id') === -1 && msg.indexOf('42703') === -1) throw e;
     // Migration 47 or 58 has not run yet. A player's details must never be lost to a schema
     // mismatch, so drop the columns the database does not know about and store the capture.
     delete row.source_ip_hash;
     delete row.during_game;
+    delete row.player_id;
   }
   if (!row.first_name && !row.last_name && !row.email && !row.mobile) return json({ ok: true, stored: false });
   await sbInsert(env, 'vp_captures', row, false);
@@ -920,20 +940,13 @@ async function handleReport(request, env, json) {
 
      So the console now reports the moment a game STARTS and patches that same row when it
      finishes. The trace exists from ball one, and there is still exactly one row per game. */
-  /* METERING BROADCAST BINGO.
-     Bingo has no server session and mints no player rows, so until now the biggest room in the
-     building was the one thing that could never be billed. This report is the meter: it is host
-     authenticated, it carries the count the console had on screen, and it lands once when the
-     game ENDS. Charged per game, not per day, because a venue that runs bingo and then trivia the
-     same night has drawn two crowds and pays on both.
-     Two guards, both of which have to hold before a cent moves:
-       - ended_at, so a game still in progress is never billed, and the start report cannot bill;
-       - overage_ack, the host's tap on the consent screen that names the exact figure. No tap,
-         no charge, which is what the console promises them.
-     The Stripe idempotency key is the report row, so the console re-sending the end report (a
-     retry, a reload, a flaky pub connection) can never bill the same game twice. */
-  const wantsCharge = !!(row.ended_at && b.overage_ack === true);
-  const approved = Math.max(0, parseInt(b.approved_players, 10) || 0);
+  /* THIS REPORT NO LONGER BILLS ANYTHING.
+     It briefly did, because broadcast bingo had no server session and no player rows, so the
+     console's own count was the only number available. Bingo now opens a session and its players
+     join like every other format, so the meter is vp_players: a count the SERVER made, not one a
+     browser reported. That is the more defensible number by a distance, and it means there is
+     exactly one meter rather than two that could disagree or double up.
+     The report stays exactly as it was for the retention list, which is what it was always for. */
 
   const reportId = String(b.report_id || '').trim();
   if (reportId) {
@@ -942,21 +955,11 @@ async function handleReport(request, env, json) {
     // another venue's figures.
     await sbPatch(env, 'vp_game_reports',
       'id=eq.' + enc(reportId) + '&venue_id=eq.' + enc(venueId), row);
-    if (wantsCharge) {
-      // Billing must never take the report down with it: the row is what keeps a busy venue off
-      // the retention list, and losing that is worse than missing one charge.
-      try { await chargeBingoReport(env, venueId, reportId, row.players, approved); }
-      catch (e) { console.log('[overage] bingo report ' + reportId + ' charge failed: ' + e); }
-    }
     return json({ ok: true, id: reportId });
   }
   const ins = await sbInsert(env, 'vp_game_reports', row, true);
   const created = Array.isArray(ins) ? ins[0] : ins;
   const newId = (created && created.id) || null;
-  if (wantsCharge && newId) {
-    try { await chargeBingoReport(env, venueId, newId, row.players, approved); }
-    catch (e) { console.log('[overage] bingo report ' + newId + ' charge failed: ' + e); }
-  }
   return json({ ok: true, id: newId });
 }
 
@@ -3858,41 +3861,6 @@ async function chargeNightOverage(env, session) {
   });
 }
 
-/* BROADCAST BINGO. No session, no player rows: the console is the only thing that knows how many
-   phones are in the room, and it is signed in, so its end-of-game report is the meter. Charged
-   PER GAME rather than per day, deliberately: a venue that runs bingo and then trivia on the same
-   night has drawn two crowds and pays on both, and a daily rule would quietly bill them for the
-   larger one only.
-   The CAP is read here rather than taken from the console: the room count is the host's to report,
-   what they are charged against is not. */
-async function chargeBingoReport(env, venueId, reportId, reported, approved) {
-  const players = Math.max(0, parseInt(reported, 10) || 0);
-  if (players <= 0) return;
-  // Only what the host actually agreed to on the night. No tap, no charge, exactly as the
-  // consent screen in the console promises.
-  const ceiling = Math.max(0, parseInt(approved, 10) || 0);
-  if (ceiling <= 0) return;
-  const peak = Math.min(players, ceiling);
-
-  const vs = await sbGet(env, 'vp_venues',
-    'id=eq.' + enc(venueId) + '&select=id,max_players,included_players,founding_id&limit=1');
-  const v = vs && vs[0];
-  if (!v) return;
-  let cap = null;
-  if (v.max_players != null) cap = parseInt(v.max_players, 10) || 0;
-  else if (v.included_players != null) cap = parseInt(v.included_players, 10) || 0;
-  else if (v.founding_id) {
-    const f = await sbGet(env, 'venueplay_founding',
-      'id=eq.' + enc(v.founding_id) + '&select=max_seats&limit=1');
-    if (f.length) cap = parseInt(f[0].max_seats, 10) || 0;
-  }
-  if (!cap) return;   // no plan to measure against; never guess one on a live charge
-  await applyOverageCharge(env, {
-    venueId: venueId, peak: peak, cap: cap,
-    idemKey: 'overage_report_' + reportId,
-    approved: true,   // the caller only reaches here when the host tapped OK on the night
-  });
-}
 
 /* Once-a-week limit for Trivia and Musical Bingo. A venue may only start a NEW
    night of that format once per rolling 7 days. Tracking by session id means
@@ -4072,15 +4040,24 @@ async function emitEvent(env, session, type, payload, actor) {
 async function getPublicSnapshot(env, sessionId) {
   assertUuid(sessionId, 'session');   // the ?session= query param is validated here before any PostgREST use
   const sessions = await sbGet(env, 'vp_sessions',
-    'id=eq.' + enc(sessionId) + '&select=id,status,state_version,join_code,plan_cap_at_start,title');
+    'id=eq.' + enc(sessionId) + '&select=id,venue_id,status,state_version,join_code,plan_cap_at_start,title');
   if (!sessions.length) throw httpError(404, 'Session not found');
   const s = sessions[0];
+  /* The venue's slug, because a broadcast-bingo phone now joins with a SESSION code and still has
+     to find the venue's realtime channel, which is named from the slug. Without this the phone
+     would know its session and not know which room it is in. */
+  let venueSlug = null;
+  try {
+    const vs = await sbGet(env, 'vp_venues', 'id=eq.' + enc(s.venue_id) + '&select=slug&limit=1');
+    venueSlug = (vs && vs[0] && vs[0].slug) || null;
+  } catch (e) { venueSlug = null; }
 
   const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
   const playerCount = countPlayers(players);   // devices, not joins: matches what the venue is billed on
 
   const snap = {
     session_id: s.id,
+    venue_slug: venueSlug,
     status: s.status,
     state_version: s.state_version,
     join_code: s.join_code,

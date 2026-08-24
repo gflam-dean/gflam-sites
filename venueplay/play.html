@@ -873,7 +873,13 @@
     try{
       if(!P.capture || !P.room) return;
       var body={ code:P.room }; for(var k in P.capture){ body[k]=P.capture[k]; }
-      fetch(VP_GAME_API+"/capture",{ method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) }).catch(function(){});
+      /* The token is the whole point of this endpoint changing. It is minted by /join against a
+         SESSION code that exists only while this game runs, so presenting one is evidence of
+         having been in the room. Without it the Worker stores the capture but marks it unverified
+         and keeps it out of the list the venue mails. */
+      var _h={ "Content-Type":"application/json" };
+      if(P.token) _h["X-Player-Token"]=P.token;
+      fetch(VP_GAME_API+"/capture",{ method:"POST", headers:_h, body:JSON.stringify(body) }).catch(function(){});
     }catch(e){}
   }
   function pressBingo(){
@@ -1069,7 +1075,38 @@
     if(f.indexOf("musical")===0) return "/app/musical/play.html";
     return "";   // bingo (and raffle/members, which have no player app) stay right here
   }
+  /* Join the host's SERVER SESSION, when the code is one.
+     Broadcast bingo used to put the venue's permanent code on the TV, so a phone had no identity
+     and /capture could be forged by anyone who knew the venue existed. The console now opens a
+     session and the TV shows ITS code, which dies with the game. Joining it mints a player row,
+     which is both the identity a capture is bound to and the count the venue is metered on.
+     Falls through silently on anything else: an old table talker, a typed venue code, a Worker
+     blip. Bingo has never needed the server to run and still does not, so a failure here costs
+     the identity and nothing else. */
+  function joinSession(code, done){
+    var timed=false, t=setTimeout(function(){ timed=true; done(false); }, 4000);
+    playerPost("/join", { code: code, name: loadName(code) || "" })
+      .then(function(r){
+        if(timed) return;
+        clearTimeout(t);
+        if(r && r.token && r.snapshot && r.snapshot.venue_slug){
+          P.token = r.token;
+          try{ localStorage.setItem("vp-token-"+code, r.token); }catch(e){}
+          connect(venueCode(r.snapshot.venue_slug));   // the CHANNEL is still the venue's
+          done(true); return;
+        }
+        done(false);
+      })
+      .catch(function(){ if(!timed){ clearTimeout(t); done(false); } });
+  }
+
   function goToCode(code){
+    // A session code is joinable and gives this phone a server identity; a venue code is not and
+    // falls straight through to the path bingo has always used.
+    joinSession(code, function(joined){ if(!joined) goToCodeLegacy(code); });
+  }
+
+  function goToCodeLegacy(code){
     // Connect FIRST, ask second. Bingo is far and away the common case and its code needs no
     // lookup at all, so making every player wait on a round trip to catch the rarer trivia and
     // musical codes would be paying the cost in the wrong place. Same shape watchVenue already

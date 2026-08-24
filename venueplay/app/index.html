@@ -1044,7 +1044,9 @@
   function calledArray(){ var a=[]; for(var i=0;i<=G.idx;i++) a.push(G.draw[i]); return a; }
   function playerCount(){ return G.order.length; }
 
-  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, paidMode:G.paidMode, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount() }); }
+  /* join_code rides on every state message. The TV shows it instead of the venue code, so what a
+     punter scans is a code that dies with the game rather than one printed on the furniture. */
+  function sendState(){ send({ t:"state", pattern:G.pattern, prize:G.prize, defaultCards:G.defaultCards, paidMode:G.paidMode, allowEarly:G.allowEarly, called:calledArray(), active:(G.status==="running"), playerCount:playerCount(), join_code:(G.joinCode||null) }); }
   /* ---- strips ----
      Paper bingo is sold in STRIPS of six: between them the six tickets carry all 90
      numbers exactly once, so every number called marks exactly one of your tickets.
@@ -1294,6 +1296,32 @@
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to the join screen
     sendState();                         // active:false -> TV shows the lobby (QR)
     saveGame(); renderConsole();
+    openServerSession();
+  }
+
+  /* THE SERVER SESSION. Broadcast bingo ran without one for a long time and paid for it twice
+     over: the room could never be counted by anything but this browser, and /capture had nothing
+     to identify a phone by except a code derived from the venue's PUBLIC slug, which is printed
+     on the table talkers and never changes.
+     A session gives the night a join code that exists only while it runs, so a phone holding a
+     token minted against it has actually been in the room, and it gives the metering a count the
+     SERVER made rather than one a tablet reported.
+     Best-effort by design: if this fails the night carries on exactly as before over the
+     broadcast channel. Bingo has never needed the server to run, and it still does not. */
+  function openServerSession(){
+    try{
+      var v = __ctx && __ctx.venue; if(!v || !v.id) return;
+      if(!(window.VP && VP.gameApiPost)) return;
+      VP.gameApiPost("/session", { venue_id: v.id }).then(function(r){
+        if(!r || r.error || !r.session_id) return;
+        G.sessionId = r.session_id;
+        G.joinCode  = r.join_code || null;
+        if(r.plan_cap != null) G.planCapAtStart = r.plan_cap;
+        try{ VP.noteOpenSession(r.session_id, v.id); }catch(e){}   // so sign-out closes it and bills the night
+        sendState();     // the TV needs the join code: it is what the phones scan now
+        saveGame();
+      }).catch(function(){});
+    }catch(e){}
   }
   function cancelLobby(){
     G.status="setup";
@@ -1453,7 +1481,18 @@
       "Tonight's <b>"+extra+"</b> extra player"+(extra===1?"":"s")+" cost <b>$2 each</b>, so <b>$"+(extra*2).toFixed(2)+"</b> on your next bill. "+
       "Go over three weeks running and the third night is $1 a head and we lift your plan to suit, so it never costs more than moving up.";
     var m=$("ovgModal"); m.classList.remove("hidden");
-    $("ovgGo").onclick=function(){ overageAcked=true; overageApproved=cnt; m.classList.add("hidden"); onGo(); };
+    $("ovgGo").onclick=function(){
+      overageAcked=true; overageApproved=cnt;
+      /* The tap is the authorisation, and the session is what bills now, so it has to reach the
+         server. Same call the trivia and musical consoles make. Best-effort: a failed ack means
+         the night is not billed, which is the right way round to fail. */
+      try{
+        if(G.sessionId && window.VP && VP.gameApiPost){
+          VP.gameApiPost("/host/overage/ack", { session_id: G.sessionId, approved_count: cnt }).catch(function(){});
+        }
+      }catch(e){}
+      m.classList.add("hidden"); onGo();
+    };
     $("ovgCancel").onclick=function(){ m.classList.add("hidden"); };
   }
   function startGame(){
@@ -1502,6 +1541,15 @@
   }
   function endGame(){
     postReport();   // send this game's figures to the backend before returning to ads
+    /* Closing the session is what meters and bills the night: chargeNightOverage counts the
+       vp_players rows against the plan cap frozen at kick-off. Same path every other format
+       takes. Best-effort, and VP.noteOpenSession above is the backstop if this never lands. */
+    try{
+      if(G.sessionId && window.VP && VP.gameApiPost){
+        VP.gameApiPost("/session/close", { session_id: G.sessionId }).catch(function(){});
+      }
+    }catch(e){}
+    G.sessionId=null; G.joinCode=null;
     G.status="setup"; G.claims=[]; G.claimIdx=-1; G.won=false; G.lastWins=[];
     send({ t:"idle" });   // TV returns to the advertising loop
     sendState();

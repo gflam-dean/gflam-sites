@@ -995,6 +995,12 @@
     if(m.t==="idle"){ enterAds(); return; }
 
     if(m.t==="state"){
+      /* The join code the host's SERVER SESSION minted, when there is one. It replaces the venue
+         code on the screen and in the QR, so what a punter scans exists only while this game runs
+         instead of being a permanent code derived from the venue's public slug. setJoinCode was
+         written for this and never had a caller. Falls back silently: no session, old code, and
+         the night runs exactly as it always has. */
+      if(m.join_code) setJoinCode(m.join_code);
       if(m.pattern) state.pattern=m.pattern;
       if(typeof m.prize==="string") state.prize=m.prize;
       state.called=m.called||[];
