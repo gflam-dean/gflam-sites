@@ -175,6 +175,14 @@
   /* ---------- SECTION SCAFFOLD ---------- */
   section{position:relative}
   .sec{padding:84px 0}
+  /* A neon tube, since the mark is one. The accent should be structural and not
+     only ever the fill colour of a button. Matches partyplay.com.au. */
+  .neon{height:2px;border:0;margin:0;background:var(--pink);
+    box-shadow:0 0 7px var(--pink),0 0 18px var(--glow)}
+  /* Fourteen sections at the same 84px is what makes a long page feel uniform.
+     The ones that are a moment get more air than the ones that are a list. */
+  #offer,#claim,#contact{padding:104px 0}
+  #faq,#included{padding:66px 0}
   .sec-head{margin-bottom:46px}
   .label{
     font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.18em;
@@ -974,6 +982,8 @@
   </div>
 </section>
 
+<hr class="neon">
+
 <section class="sec" id="offer">
   <div class="wrap">
     <div class="offer">
@@ -1003,7 +1013,7 @@
 <!-- ===================== WHAT'S INCLUDED ===================== -->
 <section class="sec" id="included">
   <div class="wrap">
-    <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+    <div class="sec-head">
       <div class="label" style="justify-content:center">What you get</div>
       <h2 class="sec-title">Everything to run the night</h2>
     </div>
@@ -1020,7 +1030,7 @@
 
 <section class="sec" id="why">
   <div class="wrap">
-    <div class="sec-head" style="text-align:center;max-width:640px;margin-left:auto;margin-right:auto">
+    <div class="sec-head">
       <div class="label" style="justify-content:center">From the people who run the nights</div>
       <h2 class="sec-title vps-balance">Why we built it</h2>
     </div>
@@ -1145,7 +1155,7 @@
 <!-- ===================== FAQ ===================== -->
 <section class="sec" id="faq">
   <div class="wrap">
-    <div class="sec-head" style="text-align:center">
+    <div class="sec-head">
       <div class="label" style="justify-content:center">Good to know</div>
       <h2 class="sec-title">Questions</h2>
     </div>
@@ -1172,6 +1182,7 @@
 </section>
 
 <!-- ===================== CONTACT ===================== -->
+<hr class="neon">
 <section class="sec" id="contact">
   <div class="wrap">
     <div class="sec-head" style="text-align:center;max-width:600px;margin-left:auto;margin-right:auto">
@@ -1221,7 +1232,7 @@
   <div class="wrap foot">
     <div>
       <div class="foot-brand">
-        <img src="/logos/venueplay_primary_rebuilt.png" alt="VenuePlay" style="height:46px;width:auto;max-width:230px;display:block">
+        <img src="/logos/venueplay-primary.svg" alt="VenuePlay" style="height:46px;width:auto;max-width:230px;display:block">
       </div>
       <p class="powered" style="margin-top:14px">Powered by <b>Gflam Touring</b></p>
     </div>
