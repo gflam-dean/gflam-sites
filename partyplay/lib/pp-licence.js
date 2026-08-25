@@ -1,19 +1,17 @@
-/* PartyPlay licence window.
+/* PartyPlay licence: a stopwatch, not a calendar.
  *
- * A buyer picks THEIR STATE and A DATE, and 1 to 3 days. Play runs from midnight on the
- * first nominated day until 6am the morning after the last one, as a courtesy so a party
- * that runs late is not cut off mid-game.
+ * It used to be a fixed window, midnight to 6am on a date chosen at purchase, in
+ * the buyer's own state. That worked but it made everybody else's life harder:
+ * the buyer had to commit to a date before they had a date, the form needed a
+ * state and a date they did not want to think about yet, and every screen had to
+ * explain a 6am cutoff nobody asked about.
  *
- * Building the games is NOT limited by any of this. A host can spend a fortnight writing
- * questions and uploading photographs. Only PLAY is bound to the window.
+ * Now the clock starts when the host says go. They buy it, they build their games
+ * whenever they like, and on the night they press start and confirm. Twenty four
+ * hours, or seventy two, from that moment.
  *
- * Why the state is asked for at all: it is the timezone. Midnight in Perth is not midnight
- * in Sydney, and four states move for daylight saving while four do not. VenuePlay got away
- * with a hardcoded "+8 hours" because every venue was in Brisbane. PartyPlay cannot.
- *
- * DELIBERATE: the window is WALL CLOCK, not elapsed hours. On the night daylight saving
- * starts a one-day licence is 29 real hours, and on the night it ends it is 31. That is
- * correct: people understand "midnight until 6am", not "30 hours".
+ * What that quietly deletes: every timezone, daylight saving, and the whole
+ * question of whose midnight. A duration is the same length everywhere.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -21,114 +19,81 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  var ZONES = {
-    NSW: 'Australia/Sydney',    VIC: 'Australia/Melbourne', QLD: 'Australia/Brisbane',
-    SA:  'Australia/Adelaide',  WA:  'Australia/Perth',     TAS: 'Australia/Hobart',
-    NT:  'Australia/Darwin',    ACT: 'Australia/Sydney'
+  var HOUR = 3600 * 1000;
+  var PLANS = {
+    1: { days: 1, hours: 24, cents: 5000,  label: '24 hours' },
+    3: { days: 3, hours: 72, cents: 12000, label: '3 days' }
   };
-  var MAX_DAYS = 3;
-  var END_HOUR = 6;
 
-  function zoneFor(state) {
-    var z = ZONES[String(state || '').toUpperCase().trim()];
-    if (!z) throw new Error('Unknown state: ' + state);
-    return z;
-  }
+  /* An unstarted licence does not sit there forever. Twelve months is generous
+     enough that nobody real ever hits it, and it stops a liability accruing
+     indefinitely on something bought once and forgotten. */
+  var UNUSED_EXPIRY_DAYS = 365;
 
-  /* Wall-clock parts of an instant, as seen in a zone. */
-  function partsInZone(ms, tz) {
-    var f = new Intl.DateTimeFormat('en-AU', {
-      timeZone: tz, hour12: false,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
-    });
-    var o = {};
-    f.formatToParts(new Date(ms)).forEach(function (p) {
-      if (p.type !== 'literal') o[p.type] = parseInt(p.value, 10);
-    });
-    if (o.hour === 24) o.hour = 0;            // some ICU builds report midnight as 24
-    return o;
-  }
-
-  /* A wall-clock time in a zone -> the UTC instant. Two passes so a DST jump between the
-     guess and the answer is absorbed; a third would never change it. */
-  function zonedToUtc(y, mo, d, hh, mi, tz) {
-    var want = Date.UTC(y, mo - 1, d, hh, mi, 0);
-    var ms = want;
-    for (var i = 0; i < 2; i++) {
-      var p = partsInZone(ms, tz);
-      var got = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
-      var drift = want - got;
-      if (!drift) break;
-      ms += drift;
-    }
-    return ms;
-  }
-
-  function parseDate(s) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || '').trim());
-    if (!m) throw new Error('Date must be YYYY-MM-DD, got: ' + s);
-    var y = +m[1], mo = +m[2], d = +m[3];
-    var probe = new Date(Date.UTC(y, mo - 1, d));
-    if (probe.getUTCFullYear() !== y || probe.getUTCMonth() !== mo - 1 || probe.getUTCDate() !== d) {
-      throw new Error('Not a real date: ' + s);
-    }
-    return { y: y, mo: mo, d: d };
-  }
-
-  /* The whole contract, in one call.
-     window('NSW', '2026-11-15', 1) -> { startsAt, endsAt, ... }  (epoch ms, UTC) */
-  function windowFor(state, date, days) {
-    var tz = zoneFor(state);
-    /* Integer only. Math.floor would quietly turn 2.5 into 2 and sell a shorter licence
-       than the number the buyer saw, which is exactly the sort of silent coercion that
-       shows up later as a refund. */
+  function plan(days) {
     var n = Number(days);
-    if (!isFinite(n) || n !== Math.trunc(n) || n < 1 || n > MAX_DAYS) {
-      throw new Error('Days must be a whole number from 1 to ' + MAX_DAYS + ', got: ' + days);
+    if (!isFinite(n) || n !== Math.trunc(n) || !PLANS[n]) {
+      throw new Error('Days must be 1 or 3, got: ' + days);
     }
-    var p = parseDate(date);
+    return PLANS[n];
+  }
 
-    var startsAt = zonedToUtc(p.y, p.mo, p.d, 0, 0, tz);
-    // The morning AFTER the last nominated day. Built by adding days to the calendar date,
-    // never by adding milliseconds, so a DST shift in between cannot move the 6am.
-    var lastDay = new Date(Date.UTC(p.y, p.mo - 1, p.d + n));
-    var endsAt = zonedToUtc(lastDay.getUTCFullYear(), lastDay.getUTCMonth() + 1,
-                            lastDay.getUTCDate(), END_HOUR, 0, tz);
-
+  /* Called when the host confirms. Everything after this is arithmetic. */
+  function activate(days, nowMs) {
+    var p = plan(days);
+    var start = nowMs == null ? Date.now() : nowMs;
     return {
-      state: String(state).toUpperCase().trim(),
-      timezone: tz,
-      date: date,
-      days: n,
-      startsAt: startsAt,
-      endsAt: endsAt,
-      startsAtIso: new Date(startsAt).toISOString(),
-      endsAtIso: new Date(endsAt).toISOString(),
-      elapsedHours: Math.round((endsAt - startsAt) / 36e5 * 100) / 100
+      days: p.days,
+      hours: p.hours,
+      startsAt: start,
+      endsAt: start + p.hours * HOUR,
+      startsAtIso: new Date(start).toISOString(),
+      endsAtIso: new Date(start + p.hours * HOUR).toISOString()
     };
   }
 
-  function isLive(w, nowMs) {
+  function isLive(lic, nowMs) {
+    if (!lic || !lic.startsAt) return false;
     var t = nowMs == null ? Date.now() : nowMs;
-    return t >= w.startsAt && t < w.endsAt;
+    return t >= lic.startsAt && t < lic.endsAt;
   }
 
-  /* What the buyer is told, in their own words and their own time. */
-  function describe(w) {
-    var f = new Intl.DateTimeFormat('en-AU', {
-      timeZone: w.timezone, weekday: 'long', day: 'numeric', month: 'long'
-    });
-    var first = f.format(new Date(w.startsAt + 12 * 36e5));       // midday, so the label is the right day
-    var lastMorning = f.format(new Date(w.endsAt));
-    return w.days === 1
-      ? 'Midnight to 6am: ' + first + ', running until 6am on ' + lastMorning + '.'
-      : w.days + ' days from midnight on ' + first + ', running until 6am on ' + lastMorning + '.';
+  function msLeft(lic, nowMs) {
+    if (!lic || !lic.endsAt) return 0;
+    return Math.max(0, lic.endsAt - (nowMs == null ? Date.now() : nowMs));
+  }
+
+  /* What a host reads on the console while the night is running. Rounded UP,
+     because a clock that says "0 hours left" while the game is still going is
+     worse than one that says "1 hour". */
+  function timeLeft(lic, nowMs) {
+    var ms = msLeft(lic, nowMs);
+    if (ms <= 0) return 'Finished';
+    var mins = Math.ceil(ms / 60000);
+    if (mins < 60) return mins + (mins === 1 ? ' minute left' : ' minutes left');
+    var hrs = Math.floor(mins / 60), rem = mins % 60;
+    if (hrs < 24) return hrs + (hrs === 1 ? ' hour ' : ' hours ') + (rem ? rem + ' min left' : 'left');
+    var d = Math.floor(hrs / 24), h = hrs % 24;
+    return d + (d === 1 ? ' day ' : ' days ') + (h ? h + 'h left' : 'left');
+  }
+
+  function unusedExpiry(purchasedMs) {
+    return purchasedMs + UNUSED_EXPIRY_DAYS * 24 * HOUR;
+  }
+
+  /* The words on the confirmation box. This is the only moment the buyer can
+     make an expensive mistake, so it says the consequence, not the mechanism. */
+  function startWarning(days) {
+    var p = plan(days);
+    return 'Start your ' + p.label + ' now? The clock runs from this moment, so ' +
+           'only do this when the party is actually happening. You can keep building ' +
+           'games without starting it.';
   }
 
   return {
-    ZONES: ZONES, MAX_DAYS: MAX_DAYS, PLAYER_CAP: 50,
+    PLANS: PLANS, PLAYER_CAP: 50, UNUSED_EXPIRY_DAYS: UNUSED_EXPIRY_DAYS,
     PRICE_CENTS: { 1: 5000, 3: 12000 },
-    zoneFor: zoneFor, windowFor: windowFor, isLive: isLive, describe: describe
+    plan: plan, activate: activate, isLive: isLive, msLeft: msLeft,
+    timeLeft: timeLeft, unusedExpiry: unusedExpiry, startWarning: startWarning
   };
 }));

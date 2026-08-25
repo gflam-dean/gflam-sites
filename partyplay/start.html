@@ -88,8 +88,8 @@
 <body>
 <div class="wrap">
   <div class="brand"><img src="/logos/partyplay-mark.svg" alt=""><span>PartyPlay</span></div>
-  <h1>Book your <em>party</em></h1>
-  <p class="sub">Pick your date now. Build your games whenever you like, there is no rush and no extra cost.</p>
+  <h1>Get your <em>party</em> sorted</h1>
+  <p class="sub">No date to pick. Buy it now, build your games whenever you like, and start the clock on the night.</p>
 
   <form id="f" novalidate>
     <fieldset>
@@ -101,7 +101,6 @@
         </div>
         <div>
           <label for="email">Email</label>
-          <span class="hint">Your licence code goes here</span>
           <input id="email" type="email" autocomplete="email" inputmode="email" required>
         </div>
       </div>
@@ -119,45 +118,23 @@
     </fieldset>
 
     <fieldset>
-      <legend>When and where</legend>
-      <div class="row two">
-        <div>
-          <label for="state">Your state</label>
-          <span class="hint">So midnight means your midnight</span>
-          <select id="state" required>
-            <option value="">Choose one</option>
-            <option value="NSW">New South Wales</option>
-            <option value="VIC">Victoria</option>
-            <option value="QLD">Queensland</option>
-            <option value="SA">South Australia</option>
-            <option value="WA">Western Australia</option>
-            <option value="TAS">Tasmania</option>
-            <option value="NT">Northern Territory</option>
-            <option value="ACT">ACT</option>
-          </select>
-        </div>
-        <div>
-          <label for="date">Date of the party</label>
-          <span class="hint">You can change this later, free</span>
-          <input id="date" type="date" required>
-        </div>
-      </div>
+      <legend>How long do you want</legend>
       <div class="picks">
         <div class="pick">
           <input type="radio" name="days" id="d1" value="1" checked>
-          <label for="d1" style="margin:0"><span><b>$50</b><i>One day</i></span></label>
+          <label for="d1" style="margin:0"><span><b>$50</b><i>24 hours</i></span></label>
         </div>
         <div class="pick">
           <input type="radio" name="days" id="d3" value="3">
-          <label for="d3" style="margin:0"><span><b>$120</b><i>Three days in a row</i></span></label>
+          <label for="d3" style="margin:0"><span><b>$120</b><i>3 days</i></span></label>
         </div>
       </div>
       <p class="err" id="err"></p>
     </fieldset>
 
-    <div class="confirm" id="confirm" hidden>
-      <span class="lbl">What you get</span>
-      <p id="confirmText"></p>
+    <div class="confirm">
+      <span class="lbl">No date needed</span>
+      <p id="confirmText">Your clock does not start until you press start on the night, so book now and work out the date later.</p>
     </div>
 
     <fieldset>
@@ -168,8 +145,8 @@
       </div>
     </fieldset>
 
-    <button class="go" id="go" type="submit" disabled>Choose a date to continue</button>
-    <p class="fine">You will be taken to Stripe to pay. Moving your date is always free. Full refund within 7 days of buying, a credit any time up to 24 hours before your party, and nothing after that. This does not limit your rights under the Australian Consumer Law. <a href="/terms">Terms</a> and <a href="/privacy">privacy</a>.</p>
+    <button class="go" id="go" type="submit">Continue to pay $50</button>
+    <p class="fine">You will be taken to Stripe to pay. Full refund within 7 days of buying, and a credit any time before you press start. This does not limit your rights under the Australian Consumer Law. <a href="/terms">Terms</a> and <a href="/privacy">privacy</a>.</p>
   </form>
 
   <p class="xref">Running a pub, club or venue? <a href="https://venueplay.com.au">Head to VenuePlay</a>, built for you.</p>
@@ -182,87 +159,39 @@
   "use strict";
   var API = PPConfig.API;
   var $ = function(id){ return document.getElementById(id); };
-  var f = $("f"), go = $("go"), errEl = $("err"),
-      box = $("confirm"), boxText = $("confirmText");
-
-  // Never let someone book a party that has already happened. Computed in THEIR
-  // state, not the browser's, because a NSW customer travelling in Perth still
-  // books NSW dates.
-  function todayIn(state){
-    try{
-      var tz = PPLicence.zoneFor(state);
-      var p = new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"})
-                .format(new Date());
-      return p;                              // en-CA gives YYYY-MM-DD
-    }catch(e){ return null; }
-  }
+  var f = $("f"), go = $("go"), errEl = $("err"), boxText = $("confirmText");
 
   function currentDays(){
     var r = f.querySelector('input[name=days]:checked');
     return r ? parseInt(r.value,10) : 1;
   }
-
-  function showErr(msg){
-    errEl.textContent = msg; errEl.classList.add("show");
-    box.hidden = true; go.disabled = true; go.textContent = "Choose a date to continue";
-  }
+  function showErr(msg){ errEl.textContent = msg; errEl.classList.add("show"); }
   function clearErr(){ errEl.textContent=""; errEl.classList.remove("show"); }
 
   function refresh(){
-    clearErr();
-    var state = $("state").value, date = $("date").value, days = currentDays();
-    if(!state || !date){
-      box.hidden = true; go.disabled = true;
-      go.textContent = "Choose a date to continue"; return;
-    }
-    var min = todayIn(state);
-    if(min && date < min){ showErr("That date has already been. Pick today or later."); return; }
-
-    var w;
-    try{ w = PPLicence.windowFor(state, date, days); }
-    catch(e){ showErr("That date does not look right. Try again."); return; }
-
-    // Tell them exactly what they are buying, in their own words. The commonest
-    // reason anyone would want a refund is booking the wrong night, so it is
-    // worth spelling out before they pay rather than after.
-    boxText.textContent = PPLicence.describe(w) +
-      " Set your games up any time between now and then.";
-    box.hidden = false;
-
-    var price = PPLicence.PRICE_CENTS[days] / 100;
-    go.disabled = false;
-    go.textContent = "Continue to pay $" + price;
+    var days = currentDays(), p = PPLicence.plan(days);
+    go.textContent = "Continue to pay $" + (p.cents/100);
+    boxText.textContent = "You get " + p.label + " of play. The clock does not start until you " +
+      "press start on the night, so book now and work out the date later. Build your games any time in between.";
   }
-
-  ["state","date"].forEach(function(id){
-    $(id).addEventListener("change", refresh);
-    $(id).addEventListener("input", refresh);
-  });
   Array.prototype.forEach.call(f.querySelectorAll('input[name=days]'), function(r){
     r.addEventListener("change", refresh);
   });
 
-  // A date picker that offers last year is a date picker that produces refunds.
-  $("state").addEventListener("change", function(){
-    var min = todayIn($("state").value);
-    if(min) $("date").min = min;
-  });
-
   f.addEventListener("submit", function(ev){
     ev.preventDefault();
+    clearErr();
     var payload = {
       name:   $("name").value.trim(),
       email:  $("email").value.trim(),
       mobile: $("mobile").value.trim() || null,
       party:  $("party").value.trim() || null,
-      state:  $("state").value,
-      date:   $("date").value,
       days:   currentDays(),
       optin:  $("optin").checked
     };
     if(!payload.name){ showErr("We need a name to put on the licence."); return; }
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(payload.email)){
-      showErr("That email does not look right. Your licence code is sent there.");
+      showErr("That email does not look right. Your party code gets sent there.");
       return;
     }
     go.disabled = true; go.textContent = "Taking you to Stripe...";
@@ -279,10 +208,12 @@
       // Put the button back. A dead button after a failed request is a customer
       // who assumes they have paid and emails to ask where their code is.
       go.disabled = false;
-      go.textContent = "Continue to pay $" + (PPLicence.PRICE_CENTS[currentDays()]/100);
+      refresh();
       showErr(e.message);
     });
   });
+
+  refresh();
 })();
 </script>
 </body>

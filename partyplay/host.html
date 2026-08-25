@@ -173,19 +173,14 @@
   }
 
   function whenText(){
-    var start = new Date(PARTY.startsAt), end = new Date(PARTY.endsAt), now = Date.now();
-    var f = new Intl.DateTimeFormat("en-AU",{ weekday:"long", day:"numeric", month:"long" });
-    var state = now < start ? "up" : (now >= end ? "done" : "live");
-    var label = state === "up" ? "Coming up" : (state === "live" ? "On now" : "Finished");
-    /* Say when it opens, not just that it is closed. A host who reads "not started"
-       and nothing else is a host who emails to ask when it starts. */
-    var when = state === "up"
-      ? "Your games go live at midnight on " + f.format(new Date(start.getTime() + 12*36e5)) +
-        ", and run until 6am the morning after your last day."
-      : state === "live"
-        ? "Playing until 6am on " + f.format(end) + "."
-        : "This party finished on " + f.format(end) + ".";
-    return { state:state, label:label, when:when };
+    var st = PARTY.status;   // ready | live | finished
+    return st === "ready"
+      ? { state:"up",   label:"Ready when you are",
+          when:"Nothing is ticking. Your " + (PARTY.days === 3 ? "3 days" : "24 hours") +
+               " starts only when you press start on the night." }
+      : st === "live"
+        ? { state:"live", label:"Running", when:PARTY.timeLeft + "." }
+        : { state:"done", label:"Finished", when:"This party has run its course. Hope it was a good one." };
   }
 
   function render(){

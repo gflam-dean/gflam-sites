@@ -79,6 +79,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="/lib/pp-config.js"></script>
+<script src="/lib/pp-licence.js"></script>
 <script src="/lib/pp-quiz.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -163,25 +164,45 @@
     var s=$("strip"); if(s) s.querySelector(".n").textContent=players.length+" playing";
   }
 
+  function startClock(){
+    if(!window.confirm(PARTY.startWarning)) return;
+    var btn = $("startnow");
+    if(btn){ btn.disabled = true; btn.textContent = "Starting..."; }
+    api("/licence/start", { method:"POST", body: JSON.stringify({ code:CODE, key:KEY }) })
+      .then(function(j){
+        PARTY.status = "live"; PARTY.startsAt = j.startsAt; PARTY.endsAt = j.endsAt;
+        PARTY.timeLeft = j.timeLeft;
+        render(); toast("You are running");
+      })
+      .catch(function(e){
+        if(btn){ btn.disabled = false; btn.textContent = "Start the party"; }
+        toast(e.message);
+      });
+  }
+
   function render(){
-    var now=Date.now(), start=Date.parse(PARTY.startsAt), end=Date.parse(PARTY.endsAt);
-    var f=new Intl.DateTimeFormat("en-AU",{weekday:"long",day:"numeric",month:"long"});
-    if(now<start){
-      /* Do not just say no. A host who reads "not started" and nothing else is a
-         host who emails to ask when it starts. */
-      $("app").innerHTML='<div class="gate"><div class="big">Not yet</div>'+
-        '<p>Your games go live at midnight on '+esc(f.format(new Date(start+12*36e5)))+
-        '. You can keep building them until then.</p>'+
-        '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build your games</a></p></div>';
+    /* Three states. "ready" is where a licence spends most of its life: bought,
+       built, and waiting for somebody to say go. */
+    if(PARTY.status === "ready"){
+      $("app").innerHTML =
+        '<div class="gate"><div class="big">Ready when you are</div>'+
+        '<p>Nothing is ticking yet. Your <b>'+(PARTY.days===3?"3 days":"24 hours")+
+        '</b> begins the moment you press this, so leave it alone until the party is actually happening.</p>'+
+        '<p style="margin-top:6px">You can keep building games without starting it.</p>'+
+        '<button class="callbtn" id="startnow" style="margin-top:22px">Start the party</button>'+
+        '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build your games first</a></p></div>';
       return;
     }
-    if(now>=end){
+    if(PARTY.status === "finished"){
       $("app").innerHTML='<div class="gate"><div class="big">That is a wrap</div>'+
-        '<p>This party finished at 6am on '+esc(f.format(new Date(end)))+'. Hope it was a good one.</p></div>';
+        '<p>Your time is up. Hope it was a good one.</p></div>';
       return;
     }
+
     var h='<div class="strip" id="strip"><span style="color:var(--faint);font-size:14px">Code</span>'+
-      '<span class="code">'+esc(PARTY.code)+'</span><span class="n">'+players.length+' playing</span></div>';
+      '<span class="code">'+esc(PARTY.code)+'</span><span class="n">'+players.length+' playing</span></div>'+
+      '<div class="strip" style="padding:9px 16px"><span style="color:var(--faint);font-size:14px">Time</span>'+
+      '<span id="clock" style="font-weight:700">'+esc(PARTY.timeLeft||"")+'</span></div>';
     if(!GAMES.length){
       h+='<div class="gate"><div class="big">No games yet</div><p>Add one and come back.</p>'+
          '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build your games</a></p></div>';
@@ -205,43 +226,15 @@
     send({t:"lobby"});
   }
 
-  /* ------------------------------------------------------------------ bingo -- */
-  function runBingo(g){
-    G={ pool:[], called:[], repaint:paintBingo };
-    for(var i=1;i<=90;i++) G.pool.push(i);
-    // Tell the phones to build their tickets BEFORE the first ball, so nobody is
-    // still staring at a lobby when a number goes up.
-    send({t:"bingo"});
-    send({t:"big",text:"Bingo",sub:"Grab your ticket"});
-    paintBingo();
-  }
-  function paintBingo(){
-    var last=G.called.length?G.called[G.called.length-1]:null;
-    var h='<div class="caller"><div class="num">'+(last==null?"--":last)+'</div>'+
-      '<div class="said">'+(last==null?"Tap to call the first number":esc(callName(last)))+'</div></div>'+
-      '<button class="callbtn" id="call">'+(G.called.length?"Next number":"Start calling")+'</button>'+
-      '<div class="board">';
-    for(var i=1;i<=90;i++) h+='<i class="'+(G.called.indexOf(i)>=0?"hit":"")+'">'+i+'</i>';
-    h+='</div><div class="bar2"><button class="sec" id="back">Back to games</button>'+
-       '<button class="sec" id="again">Start over</button></div>';
-    $("app").innerHTML=h;
-    if(!G.pool.length){ $("call").disabled=true; $("call").textContent="All 90 called"; }
-  }
-  function callName(n){
-    /* The bit that makes it feel like bingo rather than a number generator. */
-    var names={1:"Kelly's eye",2:"One little duck",7:"Lucky seven",8:"Garden gate",
-      10:"Uncle Ben",11:"Legs eleven",22:"Two little ducks",25:"Duck and dive",
-      44:"Droopy drawers",55:"All the fives",66:"Clickety click",77:"Sunset strip",
-      88:"Two fat ladies",90:"Top of the shop"};
-    return names[n] || (n<10 ? "Number "+n : String(n).split("").join(" and ")+", "+n);
-  }
-  function nextBall(){
-    if(!G.pool.length) return;
-    var n=G.pool.splice(pick(G.pool.length),1)[0];
-    G.called.push(n);
-    send({t:"big",text:String(n),sub:callName(n)});
-    paintBingo();
-  }
+  /* Keep the clock honest without hammering the Worker: recompute locally from
+     the end time we already hold, and only every half minute. */
+  setInterval(function(){
+    if(!PARTY || PARTY.status !== "live" || !PARTY.endsAt) return;
+    var lic = { startsAt: Date.parse(PARTY.startsAt), endsAt: Date.parse(PARTY.endsAt) };
+    var el = $("clock");
+    if(el) el.textContent = PPLicence.timeLeft(lic);
+    if(!PPLicence.isLive(lic)){ PARTY.status = "finished"; G = null; render(); }
+  }, 30000);
 
   /* --------------------------------------------------- heads or tails -------- */
   /* The pub version makes you stand up and touch your head, which quietly rules
@@ -341,6 +334,7 @@
       else { send({t:"big",text:esc(g.title||g.format),sub:"Off we go"}); toast("Running "+(g.title||g.format)); }
       return;
     }
+    if(el.id==="startnow"){ startClock(); return; }
     if(el.id==="shownight"){ send({t:"board", title:"Tonight", rows:nightBoard().slice(0,12)}); toast("On the screen"); return; }
     if(el.id==="resetnight"){
       if(!window.confirm("Clear tonight's scores? The games stay, only the running total goes.")) return;

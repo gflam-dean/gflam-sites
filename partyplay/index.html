@@ -59,8 +59,16 @@
 
   .pricing{display:grid;gap:14px;max-width:640px;margin:0 auto}
   @media(min-width:600px){.pricing{grid-template-columns:1fr 1fr}}
-  .p{background:var(--ink2);border:1px solid var(--line);border-radius:18px;padding:28px;text-align:center}
+  /* The whole card is the button. People aim at the price, not at a small link
+     underneath it, and a card that looks clickable but is not is worse than one
+     that never looked clickable. */
+  .p{display:block;background:var(--ink2);border:1px solid var(--line);border-radius:18px;padding:28px;
+    text-align:center;text-decoration:none;color:inherit;transition:border-color .12s,transform .12s}
+  .p:hover{border-color:var(--pink);transform:translateY(-2px)}
+  .p:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
   .p.best{border-color:var(--pink)}
+  .p .pick{display:block;margin-top:20px;background:var(--pink);color:#fff;border-radius:11px;padding:13px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px}
   .p .amt{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:52px;line-height:1}
   .p .per{color:var(--faint);font-size:15px;margin-top:4px}
   .p ul{list-style:none;padding:0;margin:18px 0 0;text-align:left}
@@ -105,7 +113,7 @@
     <h1>Your telly. Their <em>phones</em>. A proper party.</h1>
     <p class="lede">Bingo and trivia everyone can play, without downloading a thing.</p>
     <a class="btn" href="/start">Book your party</a>
-    <span class="price">From $50 for the day. Build your games whenever you like.</span>
+    <span class="price">$50 for 24 hours. No date to lock in, and the clock only starts when you say so.</span>
   </header>
 </div>
 
@@ -114,12 +122,12 @@
     <h2>How it works</h2>
     <p class="sub">Three screens, none of which need setting up on the night.</p>
     <div class="steps">
-      <div class="s"><div class="n">1</div><h3>Pick your date</h3>
-        <p>Choose the day, pay once, and get your party code. Then build your games any time between now and then, at no extra cost.</p></div>
+      <div class="s"><div class="n">1</div><h3>Buy it whenever</h3>
+        <p>No date to choose. Pay once, get your party code, and build your games at your own pace. Nothing is ticking.</p></div>
       <div class="s"><div class="n">2</div><h3>Put it on a screen</h3>
         <p>A cable from a laptop, your smart TV's browser, or cast it. No TV at all is fine too: a laptop on the bench works.</p></div>
-      <div class="s"><div class="n">3</div><h3>Read out the code</h3>
-        <p>Guests scan or type it into their phone browser, put in a name, and they are playing. No app, no sign up, no passwords.</p></div>
+      <div class="s"><div class="n">3</div><h3>Press start</h3>
+        <p>That is when your 24 hours begins. Read out the code, guests join in their phone browser, and away you go. No app, no sign up.</p></div>
     </div>
   </section>
 
@@ -140,12 +148,14 @@
     <h2>What it costs</h2>
     <p class="sub">One payment. No subscription, nothing to cancel.</p>
     <div class="pricing">
-      <div class="p"><div class="amt">$50</div><div class="per">one day</div>
-        <ul><li>Midnight to 6am the next morning</li><li>Up to 50 people</li>
-        <li>Build your games any time</li><li>Move the date free</li></ul></div>
-      <div class="p best"><div class="amt">$120</div><div class="per">three days</div>
-        <ul><li>Three days in a row</li><li>Up to 50 people</li>
-        <li>Build your games any time</li><li>Move the dates free</li></ul></div>
+      <a class="p" href="/start"><div class="amt">$50</div><div class="per">24 hours</div>
+        <ul><li>Starts when you press start</li><li>Up to 50 people</li>
+        <li>Build your games any time</li><li>No date to lock in</li></ul>
+        <span class="pick">Choose 24 hours</span></a>
+      <a class="p best" href="/start"><div class="amt">$120</div><div class="per">3 days</div>
+        <ul><li>Starts when you press start</li><li>Up to 50 people</li>
+        <li>Build your games any time</li><li>No date to lock in</li></ul>
+        <span class="pick">Choose 3 days</span></a>
     </div>
     <div class="xref">Running a pub, club or venue? <a href="https://venueplay.com.au">Head to VenuePlay</a>. It is built for that, and it handles the licensing that comes with it.</div>
   </section>
@@ -158,11 +168,11 @@
       <details><summary>What if we do not have a smart TV?</summary>
         <p>A cable from a laptop works and always will. So does a laptop or an iPad propped up where people can see it. <a href="/setup">Here are the five ways</a>.</p></details>
       <details><summary>How long do we get?</summary>
-        <p>From midnight on your day until 6am the following morning, in your own state's time, so a party that runs late is not cut off mid game. Three day licences run the same way across all three.</p></details>
+        <p>24 hours, or 3 days, from the moment you press start. Not from when you buy it, so a party that kicks off late is not eating into your time.</p></details>
       <details><summary>Can I set the games up in advance?</summary>
-        <p>Yes, and it costs nothing extra. Take as long as you like. Only playing is tied to your dates.</p></details>
-      <details><summary>What if the date changes?</summary>
-        <p>Move it, free, as many times as you need. Your code and your games stay exactly as they are.</p></details>
+        <p>Yes, and it costs nothing extra. Take as long as you like. Building games does not start the clock, only pressing start does.</p></details>
+      <details><summary>What if the party gets moved?</summary>
+        <p>Nothing to do. You never told us a date, so a postponed party costs you nothing. Start it whenever it actually happens.</p></details>
       <details><summary>How many people can play?</summary>
         <p>Fifty. If you need more than that you are having a bigger night than this is built for.</p></details>
       <details><summary>What do you do with our details?</summary>
@@ -172,7 +182,7 @@
 
   <div class="end">
     <h2>Get it booked</h2>
-    <p class="sub" style="margin:0 auto 26px">Pick your date now. Worry about the questions later.</p>
+    <p class="sub" style="margin:0 auto 26px">Buy it now. Worry about the date, and the questions, later.</p>
     <a class="btn" href="/start">Book your party</a>
   </div>
 
