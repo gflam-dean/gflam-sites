@@ -199,7 +199,9 @@
         var share = location.origin + "/album?share=" + encodeURIComponent(d.shareKey || "");
         el.innerHTML =
           '<div class="game"><div class="ico">&#128247;</div><div class="meta">' +
-          '<b>' + d.count + (d.count === 1 ? " photo" : " photos") + '</b>' +
+          '<b>' + d.count + (d.count === 1 ? " item" : " items") +
+          (d.videos ? ' <span style="font-weight:400;color:var(--faint)">(' + d.videos +
+            (d.videos === 1 ? " clip" : " clips") + ')</span>' : '') + '</b>' +
           '<span>' + d.megabytes + ' MB' + (gone ? ' &middot; deleted on ' + esc(gone) : '') +
           (d.guestsWaiting ? ' &middot; ' + d.guestsWaiting + ' guests want a copy' : '') + '</span></div>' +
           '<button id="dlAll">Download</button></div>' +

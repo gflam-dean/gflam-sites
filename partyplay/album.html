@@ -20,7 +20,10 @@
   .warn p{margin:0;color:var(--paper);font-size:16px}
   .grid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));margin-top:20px}
   .grid a{display:block;aspect-ratio:1;border-radius:11px;overflow:hidden;background:var(--ink2);border:1px solid var(--line)}
-  .grid img{width:100%;height:100%;object-fit:cover;display:block}
+  .grid img,.grid video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+  .grid a{position:relative}
+  .grid .play{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;
+    color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.7);pointer-events:none}
   .bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
   .btn{background:var(--pink);color:#fff;text-decoration:none;border:0;border-radius:12px;padding:14px 22px;
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
@@ -58,7 +61,7 @@
       var days = d.deleteAfter ? Math.ceil((Date.parse(d.deleteAfter)-Date.now())/86400000) : null;
 
       var h='<h1>'+esc(d.party||"The album")+'</h1>'+
-        '<p>'+d.count+(d.count===1?" photo":" photos")+'. Tap any of them to save it.</p>';
+        '<p>'+d.count+(d.count===1?" thing":" things")+' in here. Tap any of them to save it.</p>';
       /* The countdown is the honest bit AND the useful bit. Nobody's party photos
          should live on somebody else's server forever, and saying when they go is
          what makes people actually save the ones they want. */
@@ -71,8 +74,15 @@
          '<a class="btn ghost" href="/">What is PartyPlay?</a></div><div class="grid">';
       d.photos.forEach(function(p){
         var u=PPConfig.API+"/album/photo?share="+encodeURIComponent(SHARE)+"&id="+encodeURIComponent(p.id);
-        h+='<a href="'+u+'" target="_blank" rel="noopener"><img loading="lazy" src="'+u+
-           '" alt="'+(p.by?"Taken by "+esc(p.by):"Party photo")+'"></a>';
+        if(p.video){
+          /* preload="metadata" so a page of clips does not download itself on a
+             phone the moment somebody opens the link. */
+          h+='<a href="'+u+'" target="_blank" rel="noopener"><video preload="metadata" muted playsinline src="'+
+             u+'#t=0.1"></video><span class="play">&#9654;</span></a>';
+        } else {
+          h+='<a href="'+u+'" target="_blank" rel="noopener"><img loading="lazy" src="'+u+
+             '" alt="'+(p.by?"Taken by "+esc(p.by):"Party photo")+'"></a>';
+        }
       });
       h+='</div>';
       $("app").innerHTML=h;

@@ -86,6 +86,20 @@
     width:58px;height:58px;border-radius:50%;border:0;background:var(--pink);color:#fff;
     font-size:25px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4);z-index:20}
   .cam:disabled{opacity:.6}
+  .vid{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom));
+    width:52px;height:52px;border-radius:50%;border:0;background:var(--ink3);color:var(--paper);
+    font-size:21px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4);z-index:20}
+  .rec{position:fixed;inset:0;background:#000;z-index:40;display:grid;grid-template-rows:1fr auto}
+  .rec video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+  .recbar{padding:18px 18px calc(22px + env(safe-area-inset-bottom));text-align:center;background:#000}
+  .recbtn{width:74px;height:74px;border-radius:50%;border:5px solid rgba(255,255,255,.85);
+    background:var(--pink);cursor:pointer}
+  .recbtn.on{background:#fff;border-radius:18px;width:64px;height:64px}
+  .rectime{color:#fff;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;margin-bottom:12px;
+    font-variant-numeric:tabular-nums}
+  .recx{position:absolute;top:calc(14px + env(safe-area-inset-top));left:16px;background:rgba(0,0,0,.5);
+    border:0;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer}
+  .rechint{color:rgba(255,255,255,.7);font-size:14.5px;margin-top:10px}
   .camnote{position:fixed;left:50%;transform:translateX(-50%);
     bottom:calc(22px + env(safe-area-inset-bottom));background:var(--ink3);border:1px solid var(--line);
     border-radius:22px;padding:9px 17px;font-size:14.5px;opacity:0;transition:opacity .2s;
@@ -111,12 +125,14 @@
 <div class="wrap" id="app"></div>
 <input type="file" id="camfile" accept="image/*" capture="environment" hidden multiple>
 <button class="cam" id="cam" hidden title="Add a photo to the party album">&#128247;</button>
+<button class="vid" id="vid" hidden title="Record a 15 second message">&#127909;</button>
 <div class="camnote" id="camnote"></div>
 
 <script src="/lib/pp-config.js"></script>
 <script src="/lib/pp-ticket.js"></script>
 <script src="/lib/pp-quiz.js"></script>
 <script src="/lib/pp-photo.js"></script>
+<script src="/lib/pp-video.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
