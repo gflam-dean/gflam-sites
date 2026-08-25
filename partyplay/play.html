@@ -68,6 +68,14 @@
   .opts button.wrong{opacity:.45}
   .verdict{text-align:center;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;margin:18px 0 4px}
   .verdict.yes{color:var(--teal)} .verdict.no{color:var(--mute)}
+  .tin{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--ink2);
+    color:var(--paper);font:inherit;font-size:16.5px;margin-bottom:9px}
+  .tin:focus{outline:2px solid var(--pink);outline-offset:1px}
+  .tgo{width:100%;padding:15px;border:0;border-radius:12px;background:var(--pink);color:#fff;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;cursor:pointer}
+  .tgo:disabled{background:#2A2438;color:var(--faint)}
+  .lielabel{display:flex;gap:9px;align-items:center;color:var(--mute);font-size:14.5px;margin:-2px 0 12px}
+  .lielabel input{width:18px;height:18px;accent-color:var(--pink)}
   .lb{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
   .lb div{display:flex;justify-content:space-between;padding:5px 0;color:var(--mute);font-size:15.5px}
   .lb div.me{color:var(--paper);font-weight:700}
@@ -194,6 +202,9 @@
   var B = null;   // bingo
   var Q = null;   // the question on screen right now
   var H = null;   // heads or tails
+  var T = null;   // text prompt: a song, or three statements
+  var W = null;   // who here has ever
+  var V = null;   // voting on somebody's two truths
 
   function bingoStart(){
     var s = load() || {};
@@ -291,6 +302,89 @@
     $("app").innerHTML=h;
   }
 
+  /* One text box, used by the playlist and anything else that wants a line of
+     text. Stays on screen after sending so people can add another without
+     waiting to be asked again. */
+  function paintText(){
+    $("app").innerHTML =
+      '<div class="qn2">'+esc(T.title||"")+'</div>'+
+      '<div class="qt2" style="font-size:17px;font-weight:400;color:var(--mute)">'+esc(T.hint||"")+'</div>'+
+      '<input class="tin" id="tval" maxlength="80" autocomplete="off">'+
+      '<button class="tgo" id="tgo">Add it</button>'+
+      (T.sent ? '<div class="status">'+T.sent+(T.sent===1?" added":" added")+'. Add another if you like.</div>' : '');
+    var go=$("tgo"), val=$("tval");
+    function send(){
+      var v=(val.value||"").trim(); if(!v) return;
+      var s=load()||{};
+      if(window._ppSend) window._ppSend({ t:T.kind==="song"?"song":"text", name:s.nickname, text:v });
+      T.sent++; paintText();
+    }
+    go.addEventListener("click", send);
+    val.addEventListener("keydown", function(e){ if(e.key==="Enter") send(); });
+    val.focus();
+  }
+
+  function paintTruthsForm(){
+    if(T.done){
+      $("app").innerHTML='<img class="mark" src="/logos/partyplay-mark.svg" alt="">'+
+        '<div class="waiting"><div class="who">Sent</div><p>Watch the big screen and see who gets caught.</p></div>';
+      return;
+    }
+    $("app").innerHTML =
+      '<div class="qn2">Two truths and a lie</div>'+
+      '<div class="qt2" style="font-size:17px;font-weight:400;color:var(--mute)">Three things about you. Two true, one not.</div>'+
+      [0,1,2].map(function(i){
+        return '<input class="tin" id="t'+i+'" maxlength="120" placeholder="Number '+(i+1)+'" autocomplete="off">'+
+               '<label class="lielabel"><input type="radio" name="lie" value="'+i+'"'+(i===2?" checked":"")+
+               '><span>this one is the lie</span></label>'; }).join("")+
+      '<button class="tgo" id="tgo">Send it in</button>';
+    $("tgo").addEventListener("click", function(){
+      var lines=[0,1,2].map(function(i){ return ($("t"+i).value||"").trim(); });
+      if(lines.some(function(x){ return !x; })){ $("t"+lines.indexOf("")).focus(); return; }
+      var lie=parseInt((document.querySelector('input[name=lie]:checked')||{}).value||"2",10);
+      var s=load()||{};
+      if(window._ppSend) window._ppSend({ t:"truths", name:s.nickname, lines:lines, lie:lie });
+      T.done=true; paintTruthsForm();
+    });
+    $("t0").focus();
+  }
+
+  function paintHands(){
+    $("app").innerHTML =
+      '<div class="qn2">Who here has ever</div>'+
+      '<div class="qt2">'+esc(W.q)+'</div>'+
+      '<div class="opts"><button class="'+(W.raised?"mine":"")+'" id="hand"'+(W.raised?" disabled":"")+'>'+
+      (W.raised?"That is you":"That is me")+'</button></div>'+
+      (W.raised?'<div class="status">Go and find someone else who did.</div>':'');
+    if(!W.raised) $("hand").addEventListener("click", function(){
+      var s=load()||{}; W.raised=true; paintHands();
+      if(window._ppSend) window._ppSend({ t:"hand", name:s.nickname, i:W.i });
+    });
+  }
+
+  function paintVote(){
+    var me=(load()||{}).nickname;
+    if(V.who===me){
+      $("app").innerHTML='<img class="mark" src="/logos/partyplay-mark.svg" alt="">'+
+        '<div class="waiting"><div class="who">Your turn</div><p>Keep a straight face.</p></div>';
+      return;
+    }
+    var h='<div class="qn2">Which one is the lie?</div><div class="qt2">'+esc(V.who)+'</div><div class="opts">';
+    V.lines.forEach(function(line,i){
+      var cls="";
+      if(V.lie!=null){ cls = i===V.lie ? "right" : (i===V.picked ? "mine wrong" : "wrong"); }
+      else if(i===V.picked) cls="mine";
+      h+='<button class="'+cls+'" data-lie="'+i+'"'+((V.picked!=null||V.lie!=null)?" disabled":"")+'>'+esc(line)+'</button>';
+    });
+    h+='</div>';
+    if(V.lie!=null){
+      var got=V.picked===V.lie;
+      h+='<div class="verdict '+(got?"yes":"no")+'">'+
+         (got?"Got them":(V.picked==null?"You did not vote":"They got you"))+'</div>';
+    }
+    $("app").innerHTML=h;
+  }
+
   function paintFinal(b, night){
     var s = load()||{};
     var me = b.filter(function(r){ return r.name === s.nickname; })[0];
@@ -304,8 +398,31 @@
 
   function onMsg(m){
     if(!m || !m.t) return;
-    if(m.t === "lobby"){ B = null; Q = null; H = null; var s = load()||{}; waiting(s.nickname||""); return; }
+    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; var s = load()||{}; waiting(s.nickname||""); return; }
     if(m.t === "bingo"){ Q=null; H=null; bingoStart(); return; }
+    if(m.t === "ask-text"){
+      B=null;Q=null;H=null;V=null;W=null;
+      T={ kind:m.kind, title:m.title, hint:m.hint, sent:0 };
+      paintText(); return;
+    }
+    if(m.t === "ask-truths"){
+      B=null;Q=null;H=null;V=null;W=null;
+      T={ kind:"truths", title:"Two truths and a lie", hint:"Write three things about you. Two true, one not.", sent:0 };
+      paintTruthsForm(); return;
+    }
+    if(m.t === "hands"){
+      B=null;Q=null;H=null;T=null;V=null;
+      W={ i:m.i, q:m.q, raised:false }; paintHands(); return;
+    }
+    if(m.t === "truthvote"){
+      B=null;Q=null;H=null;T=null;W=null;
+      V={ turn:m.turn, who:m.name, lines:m.lines||[], picked:null, lie:null }; paintVote(); return;
+    }
+    if(m.t === "truthresult"){
+      if(V && V.turn===m.turn){ V.lie=m.lie; paintVote(); }
+      return;
+    }
+    if(m.t === "queue"){ return; }          // the queue is a television thing
     if(m.t === "heads"){
       B=null; Q=null;
       var me=(load()||{}).nickname;
@@ -354,8 +471,16 @@
   }
 
   document.addEventListener("click", function(ev){
-    var el = ev.target.closest ? ev.target.closest("[data-n],[data-claim],[data-opt],[data-side]") : null;
+    var el = ev.target.closest ? ev.target.closest("[data-n],[data-claim],[data-opt],[data-side],[data-lie]") : null;
     if(!el) return;
+    if(el.hasAttribute("data-lie")){
+      if(!V || V.picked!=null || V.lie!=null) return;
+      var sv=load()||{};
+      V.picked=+el.getAttribute("data-lie");
+      paintVote();
+      if(window._ppSend) window._ppSend({ t:"truthvote", name:sv.nickname, turn:V.turn, pick:V.picked });
+      return;
+    }
     if(el.hasAttribute("data-side")){
       if(!H || H.out || H.picked) return;
       var s1 = load() || {};

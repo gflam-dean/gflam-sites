@@ -96,6 +96,16 @@
     if(m.t === "big"){ show('<div><div class="big">' + esc(m.text) + '</div>' +
         (m.sub ? '<p class="msg" style="margin-top:2vh">' + esc(m.sub) + '</p>' : '') + '</div>'); return; }
     if(m.t === "html"){ show(m.html); return; }
+    if(m.t === "queue"){
+      if(!m.songs || !m.songs.length){ show('<div class="msg">Nothing in the queue yet. Add one on your phone.</div>'); return; }
+      show('<div style="width:100%;max-width:78vw"><h2 style="font-size:clamp(24px,4.4vh,54px);margin-bottom:2vh">Coming up</h2>'+
+        m.songs.map(function(s,i){
+          return '<div style="display:flex;justify-content:space-between;gap:3vw;padding:.9vh 0;'+
+            'font-size:clamp(15px,2.7vh,34px);border-bottom:1px solid var(--line)">'+
+            '<span>'+esc(s.t)+'</span><span style="color:var(--mute)">'+esc(s.by)+'</span></div>'; }).join("")+
+        '</div>');
+      return;
+    }
   }
 
   function connect(){

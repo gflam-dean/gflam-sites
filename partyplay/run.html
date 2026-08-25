@@ -139,6 +139,33 @@
         /* An answer from a phone. First one per person per question counts: a
            guest who taps twice has changed their mind after seeing a face, and
            letting that through makes the whole board meaningless. */
+        if(m.t==="song" && G && G.mode==="playlist" && m.name && m.text){
+          G.songs.push({ title:String(m.text).slice(0,80), by:m.name, played:false });
+          send({t:"queue", songs:G.songs.slice(-12).map(function(s){ return {t:s.title,by:s.by}; })});
+          paintPlaylist();
+        }
+        if(m.t==="hand" && G && G.mode==="whohere" && m.name && m.i===G.i){
+          if(!G.hands.some(function(x){ return x.i===m.i && x.name===m.name; })){
+            G.hands.push({i:m.i,name:m.name});
+            send({t:"big",text:esc(G.items[G.i].q),
+                  sub:G.hands.filter(function(x){return x.i===G.i;}).map(function(x){return x.name;}).join(", ")});
+            paintWhoHere();
+          }
+        }
+        if(m.t==="truths" && G && G.mode==="truths" && m.name && m.lines && m.lines.length===3){
+          if(!G.subs.some(function(x){ return x.name===m.name; })){
+            G.subs.push({ name:m.name, lines:m.lines.map(function(x){return String(x).slice(0,120);}),
+                          lie: Math.max(0, Math.min(2, parseInt(m.lie,10)||0)) });
+            paintTruths();
+          }
+        }
+        if(m.t==="truthvote" && G && G.mode==="truths" && m.name && G.phase==="play"){
+          var t=G.subs[G.turn];
+          if(t && m.name!==t.name && !G.votes.some(function(x){ return x.turn===G.turn && x.name===m.name; })){
+            G.votes.push({ turn:G.turn, name:m.name, right: (parseInt(m.pick,10)===t.lie) });
+            paintTruths();
+          }
+        }
         if(m.t==="pick" && G && G.mode==="heads" && m.name && G.inPlay.indexOf(m.name)>=0){
           G.picks[m.name]=m.side; paintHeads();
         }
@@ -241,6 +268,133 @@
     if(!PPLicence.isLive(lic)){ PARTY.status = "finished"; G = null; render(); }
   }, 30000);
 
+  /* ------------------------------------------------------- prize draw ------- */
+  /* Deliberately draws from people who are actually IN the room, not a list typed
+     up earlier. The commonest way a party draw goes wrong is the winner having
+     gone home an hour ago. */
+  function runDraw(g){
+    G={ mode:"draw", won:[], last:null, repaint:paintDraw };
+    send({t:"big",text:"Prize draw",sub:"Everyone in the room is in it"});
+    paintDraw();
+  }
+  function paintDraw(){
+    var pool=players.filter(function(n){ return G.won.indexOf(n)<0; });
+    var h='<div class="caller"><div class="num" style="font-size:clamp(34px,11vw,74px)">'+
+      (G.last?esc(G.last):"--")+'</div><div class="said">'+
+      (G.last?"That is the winner":pool.length+" in the hat")+'</div></div>';
+    h+= pool.length
+      ? '<button class="callbtn" id="drawnow">'+(G.won.length?"Draw another":"Draw a winner")+'</button>'
+      : '<div class="q"><div class="qt">Everybody has won something. Good party.</div></div>';
+    if(G.won.length){
+      h+='<div class="q"><div class="qn">Winners so far</div>'+
+         G.won.map(function(n,i){ return '<div style="padding:3px 0">'+(i+1)+'. '+esc(n)+'</div>'; }).join("")+'</div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button>'+
+       '<button class="sec" id="drawreset">Start over</button></div>';
+    $("app").innerHTML=h;
+  }
+  function drawWinner(){
+    var pool=players.filter(function(n){ return G.won.indexOf(n)<0; });
+    if(!pool.length) return;
+    var w=pool[pick(pool.length)];
+    G.won.push(w); G.last=w;
+    send({t:"big",text:esc(w),sub:"Come and get it"});
+    paintDraw();
+  }
+
+  /* --------------------------------------------------------- playlist ------- */
+  /* We show the queue. We do NOT play anything: PartyPlay supplies no music and
+     no lyrics, which is what keeps a private party out of licensing entirely. */
+  function runPlaylist(g){
+    G={ mode:"playlist", songs:[], repaint:paintPlaylist };
+    send({t:"ask-text", kind:"song", title:"Add a song",
+          hint:"Whatever you want to hear. Add as many as you like."});
+    send({t:"big",text:"The playlist",sub:"Add songs on your phone"});
+    paintPlaylist();
+  }
+  function paintPlaylist(){
+    var h='<div class="q"><div class="qn">The queue<span style="float:right;text-transform:none;'+
+      'letter-spacing:0">'+G.songs.length+'</span></div>'+
+      (G.songs.length? G.songs.map(function(s,i){
+        return '<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 0;'+
+          (s.played?"opacity:.4;text-decoration:line-through":"")+'">'+
+          '<span>'+esc(s.title)+'</span><span style="color:var(--faint);font-size:13px">'+esc(s.by)+'</span></div>';
+      }).join("") : '<div class="qt" style="font-size:16px;font-weight:400;color:var(--mute)">Nothing yet. It appears here as people add it.</div>')+
+      '</div><div class="bar2"><button class="sec" id="back">Back to games</button>'+
+      '<button class="sec" id="showqueue">Put it up</button></div>';
+    $("app").innerHTML=h;
+  }
+
+  /* -------------------------------------------------- who here has ever ----- */
+  function runWhoHere(g){
+    G={ mode:"whohere", items:(g.config&&g.config.items)||[], i:-1, hands:[], repaint:paintWhoHere };
+    paintWhoHere();
+  }
+  function paintWhoHere(){
+    var it=G.items[G.i];
+    var h='';
+    if(G.i<0) h='<div class="gate"><div class="big">'+G.items.length+' to get through</div><p>Ready when you are.</p></div>';
+    else if(!it) h='<div class="gate"><div class="big">That is the lot</div></div>';
+    else {
+      var hands=G.hands.filter(function(x){ return x.i===G.i; });
+      h='<div class="q"><div class="qn">'+(G.i+1)+' of '+G.items.length+'</div>'+
+        '<div class="qt">'+esc(it.q)+'</div>'+
+        '<div class="qa">'+(hands.length? hands.map(function(x){return esc(x.name);}).join(", ")
+          : "Nobody yet")+'</div></div>';
+    }
+    h+='<div class="bar2">'+
+       (G.i<0 || !it ? '' : '<button class="sec" id="whonext" style="flex:1">Next one</button>')+
+       (G.i<0 ? '<button class="play" id="whonext" style="flex:1">Start</button>' : '')+
+       '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+
+  /* ------------------------------------------- two truths and a lie --------- */
+  /* Two phases. Everyone writes their three first, because doing it person by
+     person leaves twenty people watching one person type. */
+  function runTruths(g){
+    G={ mode:"truths", phase:"collect", subs:[], turn:-1, votes:[], repaint:paintTruths };
+    send({t:"ask-truths"});
+    send({t:"big",text:"Two truths and a lie",sub:"Write yours on your phone"});
+    paintTruths();
+  }
+  function paintTruths(){
+    var h='';
+    if(G.phase==="collect"){
+      h='<div class="gate"><div class="big">'+G.subs.length+' of '+players.length+' ready</div>'+
+        '<p>Everyone writes two true things and one lie. Start when enough of them have.</p></div>'+
+        '<button class="callbtn" id="truthsgo"'+(G.subs.length<2?' disabled':'')+'>'+
+        (G.subs.length<2?"Waiting for two people":"Start reading them out")+'</button>';
+    } else {
+      var t=G.subs[G.turn];
+      if(!t){
+        var tally={};
+        G.votes.forEach(function(v){ if(v.right) tally[v.name]=(tally[v.name]||0)+PPQuiz.CORRECT_POINTS; });
+        var board=Object.keys(tally).map(function(n){return {name:n,score:tally[n]};})
+          .sort(function(a,b){return b.score-a.score;});
+        h='<div class="gate"><div class="big">Done</div></div>';
+        if(board.length) h+='<div class="q"><div class="qn">Best liar spotters</div>'+
+          board.slice(0,8).map(function(r,i){ return '<div style="display:flex;justify-content:space-between;padding:3px 0">'+
+            '<span>'+(i+1)+'. '+esc(r.name)+'</span><b>'+r.score+'</b></div>'; }).join("")+'</div>';
+      } else {
+        var v=G.votes.filter(function(x){ return x.turn===G.turn; });
+        h='<div class="q"><div class="qn">'+(G.turn+1)+' of '+G.subs.length+
+          '<span style="float:right;text-transform:none;letter-spacing:0">'+v.length+' voted</span></div>'+
+          '<div class="qt">'+esc(t.name)+'</div>'+
+          t.lines.map(function(line,i){
+            return '<div class="qa" style="color:'+(G.shown && i===t.lie ? "var(--pink)":"var(--mute)")+'">'+
+              (i+1)+'. '+esc(line)+(G.shown && i===t.lie ? "  &larr; the lie" : "")+'</div>'; }).join("");
+        h+='</div>';
+      }
+      h+='<div class="bar2">'+
+         (t && !G.shown ? '<button class="play" id="truthreveal" style="flex:1">Show the lie</button>' : '')+
+         (!t || G.shown ? '<button class="play" id="truthnext" style="flex:1">'+(t?"Next person":"Done")+'</button>' : '')+
+         '</div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+
   /* --------------------------------------------------- heads or tails -------- */
   /* The pub version makes you stand up and touch your head, which quietly rules
      out anyone who cannot easily do either. On a phone everybody plays. */
@@ -336,10 +490,52 @@
       if(g.format==="bingo90") runBingo(g);
       else if(g.format==="trivia"||g.format==="howwell") runTrivia(g);
       else if(g.format==="headstails") runHeads(g);
+      else if(g.format==="draw") runDraw(g);
+      else if(g.format==="playlist") runPlaylist(g);
+      else if(g.format==="whohere") runWhoHere(g);
+      else if(g.format==="truths") runTruths(g);
       else { send({t:"big",text:esc(g.title||g.format),sub:"Off we go"}); toast("Running "+(g.title||g.format)); }
       return;
     }
     if(el.id==="startnow"){ startClock(); return; }
+    if(el.id==="drawnow"){ drawWinner(); return; }
+    if(el.id==="drawreset"){ runDraw(); return; }
+    if(el.id==="showqueue"){
+      send({t:"queue", songs:G.songs.map(function(s){ return {t:s.title,by:s.by}; }), big:true});
+      toast("On the screen"); return;
+    }
+    if(el.id==="whonext"){
+      G.i++;
+      var it=G.items[G.i];
+      if(it) send({t:"hands", i:G.i, q:it.q});
+      else send({t:"lobby"});
+      send({t:"big", text: it?esc(it.q):"That is the lot", sub: it?"Tap if it is you":""});
+      paintWhoHere(); return;
+    }
+    if(el.id==="truthsgo"){
+      G.phase="play"; G.turn=0; G.shown=false;
+      var t0=G.subs[0];
+      send({t:"truthvote", turn:0, name:t0.name, lines:t0.lines});
+      send({t:"big", text:esc(t0.name), sub:"Which one is the lie?"});
+      paintTruths(); return;
+    }
+    if(el.id==="truthreveal"){
+      G.shown=true;
+      var tt=G.subs[G.turn];
+      send({t:"truthresult", turn:G.turn, lie:tt.lie, line:tt.lines[tt.lie]});
+      send({t:"big", text:esc(tt.lines[tt.lie]), sub:"was the lie"});
+      paintTruths(); return;
+    }
+    if(el.id==="truthnext"){
+      G.turn++; G.shown=false;
+      var tn=G.subs[G.turn];
+      if(tn){ send({t:"truthvote", turn:G.turn, name:tn.name, lines:tn.lines});
+              send({t:"big", text:esc(tn.name), sub:"Which one is the lie?"}); }
+      else { send({t:"lobby"}); nightAdd(Object.keys(G.votes.reduce(function(a,v){
+              if(v.right) a[v.name]=(a[v.name]||0)+PPQuiz.CORRECT_POINTS; return a; },{}))
+              .map(function(n){ return {name:n, score:PPQuiz.CORRECT_POINTS}; })); }
+      paintTruths(); return;
+    }
     if(el.id==="askphotos"){ send({t:"askphotos"}); toast("Asked everyone"); return; }
     if(el.id==="shownight"){ send({t:"board", title:"Tonight", rows:nightBoard().slice(0,12)}); toast("On the screen"); return; }
     if(el.id==="resetnight"){
