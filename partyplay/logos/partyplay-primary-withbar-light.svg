@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 128" width="640" height="128" role="img" aria-label="PartyPlay">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 616 128" width="616" height="128" role="img" aria-label="PartyPlay">
   <defs>
     <filter id="gpl" x="-70%" y="-70%" width="240%" height="240%">
       <feGaussianBlur stdDeviation="4.5" result="b"/>
@@ -32,6 +32,6 @@
     <path d="M116 54 q5 -4 10 -1" fill="none" stroke="#17C4B4" stroke-width="2.6" stroke-linecap="round"/>
     <path d="M85 12 q4 -5 9 -3" fill="none" stroke="#FFD23F" stroke-width="2.4" stroke-linecap="round"/>
   </g>
-  <line x1="168" y1="30" x2="168" y2="98" stroke="#8A8A95" stroke-width="2"/>
-  <text x="196" y="88" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="74" letter-spacing="-0.5" fill="#12101A">PartyPlay</text>
+  <line x1="150" y1="30" x2="150" y2="98" stroke="#8A8A95" stroke-width="2"/>
+  <text x="172" y="88" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="74" letter-spacing="-0.5" fill="#12101A">PartyPlay</text>
 </svg>
