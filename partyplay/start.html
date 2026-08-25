@@ -32,17 +32,18 @@
     width:100%;padding:14px 15px;border-radius:11px;border:1px solid var(--line);
     background:var(--ink2);color:var(--paper);font:inherit;font-size:16.5px}
   input:focus,select:focus{outline:2px solid var(--pink);outline-offset:1px;border-color:transparent}
-  .row{display:grid;gap:14px;margin-bottom:16px}
+  .row{display:grid;gap:14px;margin-bottom:16px;align-items:end}
   @media(min-width:520px){.row.two{grid-template-columns:1fr 1fr}}
 
   .picks{display:grid;gap:12px}
   @media(min-width:520px){.picks{grid-template-columns:1fr 1fr}}
   .pick{position:relative}
   .pick input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+  .pick label{display:block;margin:0}
   .pick span{display:block;border:2px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;
-    transition:border-color .12s}
-  .pick input:checked + span{border-color:var(--pink);background:var(--ink2)}
-  .pick input:focus-visible + span{outline:2px solid var(--pink);outline-offset:2px}
+    transition:border-color .12s,background .12s,box-shadow .12s}
+  .pick input:checked + label span{border-color:var(--pink);background:var(--ink2);box-shadow:0 0 0 1px var(--pink)}
+  .pick input:focus-visible + label span{outline:2px solid var(--pink);outline-offset:2px}
   .pick b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:26px;display:block}
   .pick i{font-style:normal;color:var(--mute);font-size:15px;display:block;margin-top:3px}
 
@@ -52,6 +53,7 @@
   .confirm .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12px;letter-spacing:.13em;
     text-transform:uppercase;color:var(--teal);display:block;margin-bottom:5px}
   .confirm.bad{border-left-color:var(--yellow)}
+  .promo{color:var(--faint);font-size:14.5px;margin:-14px 0 20px}
 
   .optin{display:flex;gap:12px;align-items:flex-start;background:var(--ink2);border:1px solid var(--line);
     border-radius:12px;padding:15px 16px}
@@ -132,6 +134,8 @@
       <p class="err" id="err"></p>
     </fieldset>
 
+    <p class="promo">Got a discount code? There is a box for it on the payment page.</p>
+
     <div class="confirm">
       <span class="lbl">No date needed</span>
       <p id="confirmText">Your clock does not start until you press start on the night, so book now and work out the date later.</p>
@@ -200,11 +204,25 @@
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload)
     }).then(function(r){
-      return r.json().then(function(j){ if(!r.ok) throw new Error(j && j.error ? j.error : "Could not start checkout."); return j; });
+      return r.json().then(function(j){
+        if(!r.ok) throw new Error(j && j.error ? j.error : "Could not start checkout.");
+        return j;
+      }, function(){
+        /* A response that is not JSON. Usually a proxy or an error page, and
+           "Unexpected token <" helps nobody standing at a checkout. */
+        throw new Error("Something went wrong at our end. Try again in a minute.");
+      });
     }).then(function(j){
       if(!j.url) throw new Error("Could not start checkout.");
       window.location = j.url;
     }).catch(function(e){
+      /* fetch() rejects with a bare TypeError when the request never lands at
+         all: no worker, no network, DNS gone. The browser calls that "Failed to
+         fetch", which is meaningless to a person trying to pay. */
+      if(e instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(e.message||"")){
+        e = new Error("We could not reach the payment system. Check your connection and try again, " +
+                      "or email hello@partyplay.com.au and we will sort it out.");
+      }
       // Put the button back. A dead button after a failed request is a customer
       // who assumes they have paid and emails to ask where their code is.
       go.disabled = false;
