@@ -41,13 +41,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/lib/pp-config.js"></script>
 <script>
 (function(){
   "use strict";
-  var API  = "https://api.partyplay.com.au";
+  var API = PPConfig.API;
   var SITE = location.origin;
-  var SUPA_URL  = "https://gpoolavkghnxedzrmtmc.supabase.co";
-  var SUPA_ANON = "";   // set at deploy: the anon key, which is public by design
+  var SUPA_URL  = PPConfig.SUPA_URL;
+  var SUPA_ANON = PPConfig.SUPA_ANON;
   var $ = function(id){ return document.getElementById(id); };
   var CODE = (new URLSearchParams(location.search).get("code") || "").toUpperCase();
   var players = [];
@@ -103,7 +104,7 @@
     drawJoin();
     try{
       var client = supabase.createClient(SUPA_URL, SUPA_ANON);
-      var ch = client.channel("pp-" + CODE, { config:{ broadcast:{ self:false } } });
+      var ch = client.channel(PPConfig.channel(CODE), { config:{ broadcast:{ self:false } } });
       ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
       ch.subscribe(function(status){
         /* Say nothing on a wobble. A television that flashes "reconnecting" every

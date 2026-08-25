@@ -112,10 +112,11 @@
 </dialog>
 <div class="saved" id="toast"></div>
 
+<script src="/lib/pp-config.js"></script>
 <script>
 (function(){
   "use strict";
-  var API = "https://api.partyplay.com.au";     // the Worker
+  var API = PPConfig.API;
   var $ = function(id){ return document.getElementById(id); };
   var qs = new URLSearchParams(location.search);
   var CODE = (qs.get("code")||"").toUpperCase(), KEY = qs.get("key")||"";

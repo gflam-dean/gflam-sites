@@ -40,10 +40,11 @@
   <button id="go" disabled>Move it</button>
   <div id="msg"></div>
 </div>
+<script src="/lib/pp-config.js"></script>
 <script src="/lib/pp-licence.js"></script>
 <script>
 (function(){
-  var API="https://api.partyplay.com.au", $=function(i){return document.getElementById(i);};
+  var API = PPConfig.API, $=function(i){return document.getElementById(i);};
   var q=new URLSearchParams(location.search);
   var CODE=(q.get("code")||"").toUpperCase(), KEY=q.get("key")||"";
   var STATE=null, DAYS=1;

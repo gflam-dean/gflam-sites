@@ -76,15 +76,16 @@
 <body>
 <div class="wrap" id="app"></div>
 
+<script src="/lib/pp-config.js"></script>
 <script src="/lib/pp-ticket.js"></script>
 <script src="/lib/pp-quiz.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
   "use strict";
-  var API = "https://api.partyplay.com.au";
-  var SUPA_URL  = "https://gpoolavkghnxedzrmtmc.supabase.co";
-  var SUPA_ANON = "";   // set at deploy
+  var API = PPConfig.API;
+  var SUPA_URL  = PPConfig.SUPA_URL;
+  var SUPA_ANON = PPConfig.SUPA_ANON;
   var $ = function(id){ return document.getElementById(id); };
   var qs = new URLSearchParams(location.search);
 
@@ -147,7 +148,7 @@
     if(!SUPA_ANON) return;
     try{
       var client = supabase.createClient(SUPA_URL, SUPA_ANON);
-      var ch = client.channel("pp-"+code, { config:{ broadcast:{ self:false } } });
+      var ch = client.channel(PPConfig.channel(code), { config:{ broadcast:{ self:false } } });
       ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
       ch.subscribe(function(s){
         if(s === "SUBSCRIBED") ch.send({ type:"broadcast", event:"msg", payload:{ t:"hello", name:nickname } });

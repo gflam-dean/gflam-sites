@@ -175,11 +175,12 @@
   <p class="xref">Running a pub, club or venue? <a href="https://venueplay.com.au">Head to VenuePlay</a>, built for you.</p>
 </div>
 
+<script src="/lib/pp-config.js"></script>
 <script src="/lib/pp-licence.js"></script>
 <script>
 (function(){
   "use strict";
-  var API = "https://api.partyplay.com.au";
+  var API = PPConfig.API;
   var $ = function(id){ return document.getElementById(id); };
   var f = $("f"), go = $("go"), errEl = $("err"),
       box = $("confirm"), boxText = $("confirmText");
