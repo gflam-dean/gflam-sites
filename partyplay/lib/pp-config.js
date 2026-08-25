@@ -19,10 +19,15 @@
   root.PPConfig = {
     /* The Worker. On the real domain it answers on its own subdomain; anywhere
        else (a pages.dev preview, or localhost) it is the workers.dev address, so
-       a preview build is never quietly talking to production. */
+       a preview build is never quietly talking to production.
+
+       The workers.dev subdomain is dean-tindale, NOT gflam. It is per Cloudflare
+       ACCOUNT, not per project, which is why VenuePlay's two Workers use the same
+       one. Check an existing Worker rather than guessing from the business name:
+       guessing is how this was wrong the first time. */
     API: isProd
       ? 'https://api.partyplay.com.au'
-      : 'https://partyplay-api.gflam.workers.dev',
+      : 'https://partyplay-api.dean-tindale.workers.dev',
 
     SUPA_URL:  'https://gpoolavkghnxedzrmtmc.supabase.co',
     SUPA_ANON: 'sb_publishable_DqFZOQsLYxrmlHDBLe1kfg_QdQ5DEV0',
