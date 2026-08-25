@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PartyPlay | Bingo and trivia for your place</title>
+<meta name="description" content="Bingo, trivia and party games everyone plays on their own phone. Fifty dollars for the day. No app, nothing to set up on the night.">
+<meta property="og:title" content="PartyPlay">
+<meta property="og:description" content="Bingo, trivia and party games on everyone's phone. From $50.">
+<meta property="og:type" content="website">
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--ink2:#1B1826;--ink3:#262234;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+    --pink:#FF1F8E;--teal:#17C4B4;--yellow:#FFD23F;--line:rgba(255,241,230,.13)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;
+    font-size:17.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 22px}
+  h1,h2,h3,.n{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.025em;margin:0}
+  a{color:var(--pink)}
+  .btn{display:inline-block;background:var(--pink);color:#fff;text-decoration:none;border-radius:13px;
+    padding:16px 30px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--paper)}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;gap:14px}
+  nav .brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--paper)}
+  nav img{width:42px;height:36px}
+  nav b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:21px}
+  nav a.cta{font-family:'Hanken Grotesk',sans-serif;font-weight:800;text-decoration:none;font-size:16px}
+
+  header{padding:44px 0 56px;text-align:center}
+  h1{font-size:clamp(38px,8.4vw,86px);line-height:.96;margin-bottom:18px;text-wrap:balance}
+  h1 em{font-style:normal;color:var(--pink)}
+  header p.lede{font-size:clamp(18px,2.4vw,23px);color:var(--mute);max-width:30ch;margin:0 auto 30px}
+  .price{display:block;color:var(--faint);font-size:15.5px;margin-top:16px}
+
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  h2{font-size:clamp(25px,4vw,38px);margin-bottom:12px;text-wrap:balance}
+  .sub{color:var(--mute);max-width:56ch;margin:0 0 30px}
+
+  .games{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+  .g{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .g .i{font-size:27px;line-height:1;margin-bottom:10px}
+  .g h3{font-size:18px;margin-bottom:5px}
+  .g p{color:var(--faint);font-size:15px;margin:0}
+  .g.soon{opacity:.62}
+  .g.soon .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--faint);border:1px solid var(--line);border-radius:20px;padding:2px 9px;margin-top:9px}
+
+  .steps{display:grid;gap:18px;grid-template-columns:1fr}
+  @media(min-width:760px){.steps{grid-template-columns:repeat(3,1fr)}}
+  .s{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .s .n{font-size:34px;color:var(--pink);line-height:1;margin-bottom:10px}
+  .s h3{font-size:19px;margin-bottom:6px}
+  .s p{color:var(--mute);font-size:16px;margin:0}
+
+  .pricing{display:grid;gap:14px;max-width:640px;margin:0 auto}
+  @media(min-width:600px){.pricing{grid-template-columns:1fr 1fr}}
+  .p{background:var(--ink2);border:1px solid var(--line);border-radius:18px;padding:28px;text-align:center}
+  .p.best{border-color:var(--pink)}
+  .p .amt{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:52px;line-height:1}
+  .p .per{color:var(--faint);font-size:15px;margin-top:4px}
+  .p ul{list-style:none;padding:0;margin:18px 0 0;text-align:left}
+  .p li{color:var(--mute);font-size:15.5px;padding:5px 0 5px 24px;position:relative}
+  .p li::before{content:"";position:absolute;left:2px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--teal)}
+
+  .faq{max-width:700px}
+  .faq details{border-bottom:1px solid var(--line);padding:16px 0}
+  .faq summary{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;cursor:pointer;list-style:none}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";float:right;color:var(--pink)}
+  .faq details[open] summary::after{content:"\2212"}
+  .faq p{color:var(--mute);margin:11px 0 0;font-size:16.5px}
+
+  .end{text-align:center;padding:66px 0}
+  .end h2{margin-bottom:14px}
+  footer{border-top:1px solid var(--line);padding:30px 0 60px;color:var(--faint);font-size:15px}
+  footer a{color:var(--mute)}
+  .xref{background:var(--ink3);border-radius:14px;padding:18px 22px;margin-top:26px;color:var(--mute);font-size:16px}
+  .xref a{font-weight:700}
+</style>
+<!-- Google Analytics. Deliberately NOT on every page: see site/ANALYTICS.md -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7S6R8QJSMQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-7S6R8QJSMQ', {
+    page_location: location.origin + location.pathname,
+    anonymize_ip: true
+  });
+</script>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="/"><img src="/logos/partyplay-mark.svg" alt=""><b>PartyPlay</b></a>
+    <a class="cta" href="/start">Book a party</a>
+  </nav>
+
+  <header>
+    <h1>Your telly. Their <em>phones</em>. A proper party.</h1>
+    <p class="lede">Bingo and trivia everyone can play, without downloading a thing.</p>
+    <a class="btn" href="/start">Book your party</a>
+    <span class="price">From $50 for the day. Build your games whenever you like.</span>
+  </header>
+</div>
+
+<div class="wrap">
+  <section>
+    <h2>How it works</h2>
+    <p class="sub">Three screens, none of which need setting up on the night.</p>
+    <div class="steps">
+      <div class="s"><div class="n">1</div><h3>Pick your date</h3>
+        <p>Choose the day, pay once, and get your party code. Then build your games any time between now and then, at no extra cost.</p></div>
+      <div class="s"><div class="n">2</div><h3>Put it on a screen</h3>
+        <p>A cable from a laptop, your smart TV's browser, or cast it. No TV at all is fine too: a laptop on the bench works.</p></div>
+      <div class="s"><div class="n">3</div><h3>Read out the code</h3>
+        <p>Guests scan or type it into their phone browser, put in a name, and they are playing. No app, no sign up, no passwords.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The games</h2>
+    <p class="sub">Bingo and trivia are ready now. The rest are on the way, and everything you buy today gets them as they land.</p>
+    <div class="games">
+      <div class="g"><div class="i">&#127921;</div><h3>Bingo</h3><p>Proper 90 ball, with the calls. Everyone gets a real ticket on their phone.</p></div>
+      <div class="g"><div class="i">&#129504;</div><h3>Trivia</h3><p>Your own questions. Everyone taps an answer and the scores keep themselves.</p></div>
+      <div class="g"><div class="i">&#127874;</div><h3>How well do you know...</h3><p>About the birthday girl. The nine year old cousin usually wins this one.</p></div>
+      <div class="g soon"><div class="i">&#129689;</div><h3>Heads or tails</h3><p>Ninety seconds, no skill, everyone in.</p><span class="tag">Coming</span></div>
+      <div class="g soon"><div class="i">&#128101;</div><h3>Who here has ever</h3><p>Gets people who have never met talking.</p><span class="tag">Coming</span></div>
+      <div class="g soon"><div class="i">&#128444;</div><h3>Guess the photo</h3><p>Baby photos. Enough said.</p><span class="tag">Coming</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it costs</h2>
+    <p class="sub">One payment. No subscription, nothing to cancel.</p>
+    <div class="pricing">
+      <div class="p"><div class="amt">$50</div><div class="per">one day</div>
+        <ul><li>Midnight to 6am the next morning</li><li>Up to 50 people</li>
+        <li>Build your games any time</li><li>Move the date free</li></ul></div>
+      <div class="p best"><div class="amt">$120</div><div class="per">three days</div>
+        <ul><li>Three days in a row</li><li>Up to 50 people</li>
+        <li>Build your games any time</li><li>Move the dates free</li></ul></div>
+    </div>
+    <div class="xref">Running a pub, club or venue? <a href="https://venueplay.com.au">Head to VenuePlay</a>. It is built for that, and it handles the licensing that comes with it.</div>
+  </section>
+
+  <section>
+    <h2>Questions</h2>
+    <div class="faq">
+      <details><summary>Do we need to download anything?</summary>
+        <p>No. Guests open a web page in whatever browser is already on their phone. That is the whole thing.</p></details>
+      <details><summary>What if we do not have a smart TV?</summary>
+        <p>A cable from a laptop works and always will. So does a laptop or an iPad propped up where people can see it. <a href="/setup">Here are the five ways</a>.</p></details>
+      <details><summary>How long do we get?</summary>
+        <p>From midnight on your day until 6am the following morning, in your own state's time, so a party that runs late is not cut off mid game. Three day licences run the same way across all three.</p></details>
+      <details><summary>Can I set the games up in advance?</summary>
+        <p>Yes, and it costs nothing extra. Take as long as you like. Only playing is tied to your dates.</p></details>
+      <details><summary>What if the date changes?</summary>
+        <p>Move it, free, as many times as you need. Your code and your games stay exactly as they are.</p></details>
+      <details><summary>How many people can play?</summary>
+        <p>Fifty. If you need more than that you are having a bigger night than this is built for.</p></details>
+      <details><summary>What do you do with our details?</summary>
+        <p>Guests give a nickname and nothing else, and it is deleted when your licence expires. We never collect their contact details. <a href="/privacy">The full version</a> is short.</p></details>
+    </div>
+  </section>
+
+  <div class="end">
+    <h2>Get it booked</h2>
+    <p class="sub" style="margin:0 auto 26px">Pick your date now. Worry about the questions later.</p>
+    <a class="btn" href="/start">Book your party</a>
+  </div>
+
+  <footer>
+    <p>PartyPlay is made by Gflam Group Pty Ltd on the Gold Coast.
+    <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;
+    <a href="mailto:hello@partyplay.com.au">hello@partyplay.com.au</a></p>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="PartyPlay">
+  <defs>
+    <filter id="ga" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="4.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="gsa" x="-90%" y="-90%" width="280%" height="280%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>  <rect width="512" height="512" rx="112" fill="#12101A"/>
+  <g transform="translate(88,110) scale(2.4)">
+  <!-- the play triangle, unchanged from VenuePlay: same shape, same pink -->
+  <g filter="url(#ga)">
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FF1F8E" stroke-width="10"
+          stroke-linejoin="round" opacity=".5"/>
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FF1F8E" stroke-width="6"
+          stroke-linejoin="round"/>
+    <path d="M30 20 L30 108 L104 64 Z" fill="none" stroke="#FFD9EC" stroke-width="1.7"
+          stroke-linejoin="round"/>
+  </g>
+  <!-- confetti, out of the top right: dense at the point, thinning outward -->
+  <g filter="url(#gsa)">
+    <g transform="translate(100,44) rotate(-28)"><rect x="0" y="0" width="9" height="4.4" rx="1.6" fill="#FFD23F"/></g>
+    <g transform="translate(112,26) rotate(18)"><rect x="0" y="0" width="10" height="4.6" rx="1.7" fill="#17C4B4"/></g>
+    <g transform="translate(92,20) rotate(-52)"><rect x="0" y="0" width="8" height="4.2" rx="1.5" fill="#FF1F8E"/></g>
+    <g transform="translate(126,44) rotate(62)"><rect x="0" y="0" width="7.5" height="4" rx="1.5" fill="#FF1F8E"/></g>
+    <g transform="translate(120,10) rotate(-12)"><rect x="0" y="0" width="7" height="3.8" rx="1.4" fill="#FFD23F"/></g>
+    <circle cx="108" cy="36" r="2.6" fill="#17C4B4"/>
+    <circle cx="132" cy="30" r="2.3" fill="#FFD23F"/>
+    <circle cx="104" cy="12" r="2.2" fill="#17C4B4"/>
+    <circle cx="137" cy="16" r="1.9" fill="#FF1F8E"/>
+    <path d="M116 54 q5 -4 10 -1" fill="none" stroke="#17C4B4" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M85 12 q4 -5 9 -3" fill="none" stroke="#FFD23F" stroke-width="2.4" stroke-linecap="round"/>
+  </g>
+  </g>
+</svg>

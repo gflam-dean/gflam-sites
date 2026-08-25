@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Build your games | PartyPlay</title>
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--ink2:#1B1826;--ink3:#262234;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+    --pink:#FF1F8E;--teal:#17C4B4;--yellow:#FFD23F;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;
+    font-size:16.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:26px 20px 120px}
+  h1,h2,h3{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
+  a{color:var(--pink)}
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .top img{width:44px;height:38px}
+  .top b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:21px}
+
+  .party{background:var(--ink2);border:1px solid var(--line);border-radius:15px;padding:20px 22px;margin-bottom:14px}
+  .party .when{color:var(--mute);font-size:15.5px;margin:6px 0 0}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:4px 10px;border-radius:20px;margin-bottom:8px}
+  .pill.up{background:rgba(23,196,180,.16);color:var(--teal)}
+  .pill.live{background:var(--pink);color:#fff}
+  .pill.done{background:var(--ink3);color:var(--faint)}
+  .codebox{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:14px;
+    border-top:1px solid var(--line)}
+  .codebox .lbl{font-size:13px;color:var(--faint)}
+  .codebox .code{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:30px;letter-spacing:.1em}
+
+  .bar{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:30px 0 12px}
+  h2{font-size:21px}
+  .hint{color:var(--faint);font-size:14.5px;margin:2px 0 0}
+
+  .game{background:var(--ink2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;
+    display:flex;align-items:center;gap:14px}
+  .game .ico{width:38px;height:38px;border-radius:10px;background:var(--ink3);display:grid;place-items:center;
+    font-size:19px;flex:0 0 auto}
+  .game .meta{flex:1 1 auto;min-width:0}
+  .game .meta b{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16.5px}
+  .game .meta span{color:var(--faint);font-size:14px}
+  .game button{background:none;border:1px solid var(--line);color:var(--mute);border-radius:9px;
+    padding:8px 13px;font:inherit;font-size:14px;cursor:pointer}
+  .game button:hover{color:var(--paper);border-color:var(--faint)}
+  .game button.del:hover{color:#FF8FA3;border-color:#FF8FA3}
+
+  .runbtn{display:block;text-align:center;text-decoration:none;background:none;border:1px solid var(--line);
+    color:var(--mute);border-radius:13px;padding:15px;font-family:'Hanken Grotesk',sans-serif;
+    font-weight:800;font-size:16px;margin-bottom:14px}
+  .runbtn.live{background:var(--pink);border-color:var(--pink);color:#fff}
+  .add{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));margin-top:12px}
+  .add button{background:var(--ink2);border:1px dashed var(--line);color:var(--paper);border-radius:13px;
+    padding:16px 12px;font:inherit;cursor:pointer;text-align:left}
+  .add button:hover{border-color:var(--pink);border-style:solid}
+  .add button b{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15.5px}
+  .add button span{color:var(--faint);font-size:13px;display:block;margin-top:2px}
+
+  dialog{background:var(--ink2);color:var(--paper);border:1px solid var(--line);border-radius:18px;
+    padding:0;max-width:640px;width:calc(100% - 32px)}
+  dialog::backdrop{background:rgba(6,4,10,.72)}
+  .dhd{padding:20px 22px 0}
+  .dbd{padding:14px 22px;max-height:60vh;overflow:auto}
+  .dft{padding:14px 22px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line)}
+  label{display:block;font-weight:700;font-size:14px;margin:0 0 5px}
+  input[type=text],textarea{width:100%;padding:12px 13px;border-radius:10px;border:1px solid var(--line);
+    background:var(--ink);color:var(--paper);font:inherit;font-size:16px}
+  textarea{min-height:74px;resize:vertical}
+  input:focus,textarea:focus{outline:2px solid var(--pink);outline-offset:1px}
+  .qrow{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:10px}
+  .qrow .n{font-size:12px;color:var(--faint);font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+  .qrow .n button{background:none;border:0;color:var(--faint);cursor:pointer;font:inherit;font-size:13px}
+  .qrow .n button:hover{color:#FF8FA3}
+  .qrow .two{display:grid;gap:9px}
+  @media(min-width:520px){.qrow .two{grid-template-columns:1fr 1fr}}
+  button.primary{background:var(--pink);border:0;color:#fff;border-radius:11px;padding:12px 20px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
+  button.ghost{background:none;border:1px solid var(--line);color:var(--mute);border-radius:11px;
+    padding:12px 18px;font:inherit;cursor:pointer}
+  button.addq{background:none;border:1px dashed var(--line);color:var(--mute);border-radius:11px;
+    padding:11px;width:100%;font:inherit;cursor:pointer}
+
+  .saved{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--ink3);
+    border:1px solid var(--line);border-radius:22px;padding:10px 20px;font-size:14.5px;
+    opacity:0;transition:opacity .18s;pointer-events:none}
+  .saved.show{opacity:1}
+  .state{text-align:center;padding:60px 20px;color:var(--mute)}
+  .err{background:rgba(255,90,110,.12);border:1px solid rgba(255,90,110,.4);border-radius:12px;
+    padding:14px 16px;color:#FFC2CC;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><img src="/logos/partyplay-mark.svg" alt=""><b>PartyPlay</b></div>
+  <div id="app"><div class="state">Loading your party...</div></div>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="dform">
+    <div class="dhd"><h3 id="dTitle">Game</h3><p class="hint" id="dHint"></p></div>
+    <div class="dbd" id="dBody"></div>
+    <div class="dft">
+      <button type="button" class="ghost" id="dCancel">Cancel</button>
+      <button type="button" class="primary" id="dSave">Save game</button>
+    </div>
+  </form>
+</dialog>
+<div class="saved" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var API = "https://api.partyplay.com.au";     // the Worker
+  var $ = function(id){ return document.getElementById(id); };
+  var qs = new URLSearchParams(location.search);
+  var CODE = (qs.get("code")||"").toUpperCase(), KEY = qs.get("key")||"";
+
+  /* Every game type in one table, so adding another is one entry rather than a
+     new screen. `fields` describes the builder; a type with none needs no content
+     at all and can just be added. */
+  /* `ready` is the honest bit. Offering a game that does nothing when the host
+     presses Start on the night is exactly the sort of thing that becomes a support
+     email, so the ones that are not finished say so and cannot be added. */
+  var TYPES = {
+    bingo90:    { icon:"\u{1F3B1}", name:"Bingo",            blurb:"90 ball. Nothing to set up.", ready:true },
+    trivia:     { icon:"\u{1F9E0}", name:"Trivia",           blurb:"Your own questions", ready:true,
+                  q:"Question", a:"Answer", addLabel:"Add a question" },
+    howwell:    { icon:"\u{1F382}", name:"How well do you know...",  blurb:"About the guest of honour", ready:true,
+                  q:"Question about them", a:"The real answer", addLabel:"Add a question" },
+    truths:     { icon:"\u{1F914}", name:"Two truths and a lie", blurb:"Guests add their own on the night" },
+    headstails: { icon:"\u{1FA99}", name:"Heads or tails",    blurb:"Ninety seconds. Nothing to set up.", ready:true },
+    whohere:    { icon:"\u{1F465}", name:"Who here has ever", blurb:"Prompts to get people talking",
+                  q:"Find someone who...", a:null, addLabel:"Add a prompt" },
+    photos:     { icon:"\u{1F5BC}", name:"Guess the photo",   blurb:"Add photos later",
+                  q:"Caption or clue", a:"Who is it?", addLabel:"Add a photo round" },
+    playlist:   { icon:"\u{1F3B5}", name:"The playlist",      blurb:"Guests add songs on the night" },
+    draw:       { icon:"\u{1F3AB}", name:"Prize draw",        blurb:"Nothing to set up." }
+  };
+
+  var PARTY = null, GAMES = [], editing = null;
+
+  function toast(msg){
+    var t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove("show"); }, 1800);
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+
+  function api(path, opts){
+    return fetch(API + path, Object.assign({ headers:{ "content-type":"application/json" } }, opts||{}))
+      .then(function(r){ return r.json().then(function(j){
+        if(!r.ok) throw new Error(j && j.error ? j.error : "Something went wrong");
+        return j; }); });
+  }
+
+  function load(){
+    if(!CODE || !KEY){
+      $("app").innerHTML = '<div class="err">This link is missing something. Open the link from your confirmation email, ' +
+        'which has both your code and your host key in it.</div>';
+      return;
+    }
+    api("/games?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY))
+      .then(function(d){ PARTY = d.party; GAMES = d.games || []; render(); })
+      .catch(function(e){
+        $("app").innerHTML = '<div class="err">' + esc(e.message) + '</div>';
+      });
+  }
+
+  function whenText(){
+    var start = new Date(PARTY.startsAt), end = new Date(PARTY.endsAt), now = Date.now();
+    var f = new Intl.DateTimeFormat("en-AU",{ weekday:"long", day:"numeric", month:"long" });
+    var state = now < start ? "up" : (now >= end ? "done" : "live");
+    var label = state === "up" ? "Coming up" : (state === "live" ? "On now" : "Finished");
+    /* Say when it opens, not just that it is closed. A host who reads "not started"
+       and nothing else is a host who emails to ask when it starts. */
+    var when = state === "up"
+      ? "Your games go live at midnight on " + f.format(new Date(start.getTime() + 12*36e5)) +
+        ", and run until 6am the morning after your last day."
+      : state === "live"
+        ? "Playing until 6am on " + f.format(end) + "."
+        : "This party finished on " + f.format(end) + ".";
+    return { state:state, label:label, when:when };
+  }
+
+  function render(){
+    var w = whenText();
+    var h = '<div class="party">' +
+      '<span class="pill ' + w.state + '">' + w.label + '</span>' +
+      '<h1 style="font-size:26px">Your party</h1>' +
+      '<p class="when">' + esc(w.when) + '</p>' +
+      '<div class="codebox"><span class="lbl">Guests join with</span>' +
+      '<span class="code">' + esc(PARTY.code) + '</span></div></div>';
+
+    /* Without this there is no way to reach the console that actually runs the
+       night: the email links here, and here linked nowhere. */
+    var runHref = "/run?code=" + encodeURIComponent(PARTY.code) + "&key=" + encodeURIComponent(KEY);
+    h += '<a class="runbtn' + (w.state === "live" ? " live" : "") + '" href="' + runHref + '">' +
+         (w.state === "live" ? "Run the night" :
+          w.state === "up"   ? "Open the night console" : "Look back at the night") + '</a>';
+
+    h += '<div class="bar"><div><h2>Your games</h2>' +
+         '<p class="hint">Build these whenever you like. There is no rush and no extra cost.</p></div></div>';
+
+    if(!GAMES.length){
+      h += '<p class="hint" style="margin-bottom:10px">Nothing yet. Add your first below.</p>';
+    }
+    GAMES.forEach(function(g){
+      var t = TYPES[g.format] || { icon:"\u{1F3AE}", name:g.format };
+      var n = (g.config && g.config.items && g.config.items.length) || 0;
+      h += '<div class="game"><div class="ico">' + t.icon + '</div><div class="meta">' +
+           '<b>' + esc(g.title || t.name) + '</b><span>' + esc(t.name) +
+           (t.q ? " &middot; " + n + (n === 1 ? " item" : " items") : "") + '</span></div>' +
+           (t.q ? '<button data-edit="' + esc(g.id) + '">Edit</button>' : '') +
+           '<button class="del" data-del="' + esc(g.id) + '">Remove</button></div>';
+    });
+
+    h += '<div class="bar"><div><h2>Add a game</h2></div></div><div class="add">';
+    Object.keys(TYPES).filter(function(k){ return TYPES[k].ready; }).forEach(function(k){
+      var t = TYPES[k];
+      h += '<button data-add="' + k + '"><b>' + t.icon + " " + esc(t.name) + '</b><span>' + esc(t.blurb) + '</span></button>';
+    });
+    h += '</div>';
+    var soon = Object.keys(TYPES).filter(function(k){ return !TYPES[k].ready; });
+    if(soon.length){
+      h += '<p class="hint" style="margin-top:16px">On the way: ' +
+           soon.map(function(k){ return esc(TYPES[k].name); }).join(", ") + '.</p>';
+    }
+    $("app").innerHTML = h;
+  }
+
+  /* ------------------------------------------------------------ the builder -- */
+  function openBuilder(format, game){
+    var t = TYPES[format];
+    editing = { format:format, id: game ? game.id : null,
+                title: game ? game.title : "",
+                items: (game && game.config && game.config.items) ? game.config.items.slice() : [] };
+    if(!editing.items.length) editing.items.push({ q:"", a:"" });
+    $("dTitle").textContent = game ? "Edit " + t.name : t.name;
+    $("dHint").textContent = t.blurb;
+    drawItems();
+    $("dlg").showModal();
+  }
+
+  function drawItems(){
+    var t = TYPES[editing.format];
+    var h = '<label for="gTitle">Give it a name</label>' +
+            '<input type="text" id="gTitle" value="' + esc(editing.title || "") + '" placeholder="' + esc(t.name) + '">' +
+            '<div style="height:16px"></div>';
+    editing.items.forEach(function(it, i){
+      h += '<div class="qrow"><div class="n"><span>' + (i+1) + '</span>' +
+           (editing.items.length > 1 ? '<button type="button" data-rm="' + i + '">Remove</button>' : '') +
+           '</div><div class="two">' +
+           '<div><label>' + esc(t.q) + '</label><textarea data-q="' + i + '">' + esc(it.q) + '</textarea></div>' +
+           (t.a ? '<div><label>' + esc(t.a) + '</label><textarea data-a="' + i + '">' + esc(it.a) + '</textarea></div>' : '') +
+           '</div></div>';
+    });
+    h += '<button type="button" class="addq" id="addItem">+ ' + esc(t.addLabel) + '</button>';
+    $("dBody").innerHTML = h;
+  }
+
+  function harvest(){
+    editing.title = ($("gTitle") && $("gTitle").value.trim()) || "";
+    Array.prototype.forEach.call($("dBody").querySelectorAll("[data-q]"), function(el){
+      editing.items[+el.getAttribute("data-q")].q = el.value;
+    });
+    Array.prototype.forEach.call($("dBody").querySelectorAll("[data-a]"), function(el){
+      editing.items[+el.getAttribute("data-a")].a = el.value;
+    });
+  }
+
+  function saveGame(){
+    harvest();
+    var items = editing.items.filter(function(it){ return (it.q||"").trim(); });
+    if(!items.length){ toast("Add at least one before saving."); return; }
+    $("dSave").disabled = true; $("dSave").textContent = "Saving...";
+    api("/games", { method:"POST", body: JSON.stringify({
+      code:CODE, key:KEY, id:editing.id, format:editing.format,
+      title: editing.title || null, config:{ items:items }
+    })}).then(function(){
+      $("dlg").close(); toast("Saved");
+      return api("/games?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY));
+    }).then(function(d){ if(d){ GAMES = d.games || []; render(); } })
+      .catch(function(e){ toast(e.message); })
+      .then(function(){ $("dSave").disabled = false; $("dSave").textContent = "Save game"; });
+  }
+
+  /* ------------------------------------------------------------- listeners --- */
+  document.addEventListener("click", function(ev){
+    var el = ev.target.closest ? ev.target.closest("[data-add],[data-edit],[data-del],[data-rm],#addItem") : null;
+    if(!el) return;
+
+    if(el.hasAttribute("data-add")){
+      var fmt = el.getAttribute("data-add");
+      if(!TYPES[fmt].q){
+        // Nothing to build. Add it and get out of the way.
+        api("/games", { method:"POST", body: JSON.stringify({ code:CODE, key:KEY, format:fmt, config:{} }) })
+          .then(function(){ toast(TYPES[fmt].name + " added");
+            return api("/games?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY)); })
+          .then(function(d){ GAMES = d.games || []; render(); })
+          .catch(function(e){ toast(e.message); });
+      } else openBuilder(fmt, null);
+      return;
+    }
+    if(el.hasAttribute("data-edit")){
+      var g = GAMES.filter(function(x){ return String(x.id) === el.getAttribute("data-edit"); })[0];
+      if(g) openBuilder(g.format, g);
+      return;
+    }
+    if(el.hasAttribute("data-del")){
+      var id = el.getAttribute("data-del");
+      var g2 = GAMES.filter(function(x){ return String(x.id) === id; })[0];
+      var n = (g2 && g2.config && g2.config.items && g2.config.items.length) || 0;
+      // Only ask when there is something to lose. Confirming a game with no
+      // content in it is friction for nothing.
+      if(n && !window.confirm("Remove this game? It has " + n + (n===1?" item":" items") + " in it.")) return;
+      api("/games/delete", { method:"POST", body: JSON.stringify({ code:CODE, key:KEY, id:id }) })
+        .then(function(){ GAMES = GAMES.filter(function(x){ return String(x.id) !== id; }); render(); toast("Removed"); })
+        .catch(function(e){ toast(e.message); });
+      return;
+    }
+    if(el.id === "addItem"){ harvest(); editing.items.push({ q:"", a:"" }); drawItems(); return; }
+    if(el.hasAttribute("data-rm")){ harvest(); editing.items.splice(+el.getAttribute("data-rm"),1); drawItems(); return; }
+  });
+  $("dCancel").addEventListener("click", function(){ $("dlg").close(); });
+  $("dSave").addEventListener("click", saveGame);
+
+  load();
+})();
+</script>
+</body>
+</html>

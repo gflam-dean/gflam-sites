@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PartyPlay</title>
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--paper:#FFF1E6;--mute:#B6ADC2;--pink:#FF1F8E;--teal:#17C4B4;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  /* Everything scales off the viewport, because this is read from a couch and we
+     have no idea whether it is a 24 inch monitor or a 65 inch television. */
+  .screen{height:100%;display:grid;place-items:center;padding:4vh 4vw;text-align:center}
+  h1,h2,.code,.big{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
+  .join .mark{width:14vh;height:12vh;margin-bottom:2vh}
+  .join h1{font-size:clamp(30px,6.4vh,90px);line-height:1}
+  .join .sub{color:var(--mute);font-size:clamp(15px,2.4vh,30px);margin:1.4vh 0 3vh}
+  .joinrow{display:flex;align-items:center;gap:5vw;flex-wrap:wrap;justify-content:center}
+  .qr{background:#fff;padding:1.4vh;border-radius:2vh;line-height:0}
+  .qr canvas{display:block;width:26vh;height:26vh}
+  .codewrap .lbl{color:var(--mute);font-size:clamp(13px,2vh,24px);display:block;margin-bottom:.6vh}
+  .code{font-size:clamp(46px,15vh,190px);line-height:.95;letter-spacing:.06em;color:var(--pink)}
+  .codewrap .url{color:var(--mute);font-size:clamp(14px,2.2vh,28px);margin-top:1vh}
+  .who{position:fixed;left:0;right:0;bottom:0;padding:1.6vh 3vw;display:flex;gap:1vw;flex-wrap:wrap;
+    justify-content:center;border-top:1px solid var(--line);background:rgba(18,16,26,.9)}
+  .who span{background:rgba(255,241,230,.08);border-radius:2vh;padding:.6vh 1.6vh;font-size:clamp(12px,1.8vh,22px)}
+  .who .count{background:var(--pink);color:#fff;font-weight:700}
+  .msg{color:var(--mute);font-size:clamp(15px,2.6vh,32px);max-width:24ch}
+  .big{font-size:clamp(40px,14vh,180px);line-height:1}
+</style>
+</head>
+<body>
+<div class="screen" id="screen">
+  <div class="msg">Starting up...</div>
+</div>
+<div class="who" id="who" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  var API  = "https://api.partyplay.com.au";
+  var SITE = location.origin;
+  var SUPA_URL  = "https://gpoolavkghnxedzrmtmc.supabase.co";
+  var SUPA_ANON = "";   // set at deploy: the anon key, which is public by design
+  var $ = function(id){ return document.getElementById(id); };
+  var CODE = (new URLSearchParams(location.search).get("code") || "").toUpperCase();
+  var players = [];
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function show(html){ $("screen").innerHTML = html; }
+
+  /* The lobby. This is what is on the television for most of the night, so it is
+     the screen that matters most: a code big enough to read from the back of the
+     room, and a QR for anyone close enough to point a phone at it. */
+  function drawJoin(){
+    show('<div class="join">' +
+      '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
+      '<h1>Join the party</h1>' +
+      '<p class="sub">No app. It works in your phone browser.</p>' +
+      '<div class="joinrow">' +
+        '<div class="qr"><canvas id="qr"></canvas></div>' +
+        '<div class="codewrap"><span class="lbl">or go to partyplay.com.au and enter</span>' +
+        '<div class="code">' + esc(CODE) + '</div>' +
+        '<div class="url">' + esc(SITE.replace(/^https?:\/\//,"")) + '/play</div></div>' +
+      '</div></div>');
+    var el = $("qr");
+    if(window.QRCode && el){
+      QRCode.toCanvas(el, SITE + "/play?code=" + encodeURIComponent(CODE),
+        { width: 420, margin: 1, color:{ dark:"#12101A", light:"#ffffff" } }, function(){});
+    }
+  }
+
+  function drawWho(){
+    var w = $("who");
+    if(!players.length){ w.hidden = true; return; }
+    w.hidden = false;
+    w.innerHTML = '<span class="count">' + players.length + ' playing</span>' +
+      players.slice(-24).map(function(p){ return '<span>' + esc(p) + '</span>'; }).join("");
+  }
+
+  /* Whatever the host broadcasts, put it up. Each game sends its own shape and
+     the TV stays dumb on purpose: a screen that knows the rules is a screen that
+     has to be redeployed every time a game changes. */
+  function onMsg(m){
+    if(!m || !m.t) return;
+    if(m.t === "players"){ players = m.names || []; drawWho(); return; }
+    if(m.t === "lobby"){ drawJoin(); return; }
+    if(m.t === "big"){ show('<div><div class="big">' + esc(m.text) + '</div>' +
+        (m.sub ? '<p class="msg" style="margin-top:2vh">' + esc(m.sub) + '</p>' : '') + '</div>'); return; }
+    if(m.t === "html"){ show(m.html); return; }
+  }
+
+  function connect(){
+    if(!CODE){ show('<div class="msg">Open this screen from your host console so it knows which party to show.</div>'); return; }
+    if(!SUPA_ANON){ show('<div class="msg">This screen is not configured yet.</div>'); return; }
+    drawJoin();
+    try{
+      var client = supabase.createClient(SUPA_URL, SUPA_ANON);
+      var ch = client.channel("pp-" + CODE, { config:{ broadcast:{ self:false } } });
+      ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
+      ch.subscribe(function(status){
+        /* Say nothing on a wobble. A television that flashes "reconnecting" every
+           time the house wifi hiccups is a television everyone is looking at. */
+        if(status === "SUBSCRIBED") ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv-here" } });
+      });
+    }catch(e){ /* the lobby is already up, and it is the useful screen anyway */ }
+  }
+
+  // A TV that sleeps mid-game is the commonest complaint about anything like this.
+  if(navigator.wakeLock){ navigator.wakeLock.request("screen").catch(function(){}); }
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden && navigator.wakeLock) navigator.wakeLock.request("screen").catch(function(){});
+  });
+
+  connect();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# partyplay.com.au cache rules (Cloudflare Pages).
+#
+# Copied from venueplay.com.au, where two wrong assumptions were each paid for once.
+# Do not "tidy" this without reading the notes.
+#
+# no-cache (revalidate), NOT no-store (never cache). A no-store would force every asset
+# to download again on every page view, on a phone, at a party, on someone's home wifi.
+
+/*
+  Cache-Control: no-cache, must-revalidate
+  X-Content-Type-Options: nosniff
+  # SAMEORIGIN, not DENY: the party screen embeds the game pages in an iframe from this
+  # same site, and DENY would leave the host staring at a black television.
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# Two things proved against the live VenuePlay site, which apply identically here:
+#
+# 1. Cloudflare Pages MERGES every rule that matches. It does not pick the most specific
+#    one. A later rule can only ADD to /*, never override it.
+# 2. Because of that, an "immutable" rule on /logos/* cannot work while /* sets
+#    Cache-Control: per RFC 9111 a no-cache anywhere in the field forces revalidation.
+#
+# That is a deliberate trade. Dropping Cache-Control from /* would let a logo rule win,
+# but /* is the only pattern reaching the extensionless routes Pages serves (/play, /tv,
+# /host). A stale cached game page is far worse than a logo that returns a 304.
+/*.js
+  Cache-Control: no-cache, must-revalidate

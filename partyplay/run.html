@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Run the night | PartyPlay</title>
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--ink2:#1B1826;--ink3:#262234;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+    --pink:#FF1F8E;--teal:#17C4B4;--yellow:#FFD23F;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;
+    font-size:16.5px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  .wrap{max-width:620px;margin:0 auto;padding:22px 18px 40px}
+  h1,h2,h3,.num{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .top .l{display:flex;align-items:center;gap:10px}
+  .top img{width:38px;height:33px}
+  .top b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px}
+  .tvbtn{background:none;border:1px solid var(--line);color:var(--mute);border-radius:10px;
+    padding:9px 13px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+
+  .strip{display:flex;gap:10px;align-items:center;background:var(--ink2);border:1px solid var(--line);
+    border-radius:13px;padding:13px 16px;margin-bottom:14px;flex-wrap:wrap}
+  .strip .code{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:23px;letter-spacing:.09em;color:var(--pink)}
+  .strip .n{margin-left:auto;color:var(--mute);font-size:15px}
+
+  .card{background:var(--ink2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px}
+  .card h3{font-size:17px;margin-bottom:3px}
+  .card p{color:var(--faint);font-size:14.5px;margin:0}
+  .card .row{display:flex;align-items:center;gap:12px}
+  .card .row .meta{flex:1 1 auto;min-width:0}
+  button.play{background:var(--pink);border:0;color:#fff;border-radius:10px;padding:11px 18px;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;cursor:pointer}
+  button.sec{background:none;border:1px solid var(--line);color:var(--mute);border-radius:10px;
+    padding:11px 15px;font:inherit;font-size:15px;cursor:pointer}
+  button:disabled{opacity:.45;cursor:not-allowed}
+
+  .gate{text-align:center;padding:46px 18px;color:var(--mute)}
+  .gate .big{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:23px;color:var(--paper);margin-bottom:8px}
+
+  /* ---- bingo ---- */
+  .caller{text-align:center;padding:10px 0 4px}
+  .caller .num{font-size:clamp(74px,26vw,150px);line-height:1;color:var(--pink)}
+  .caller .said{color:var(--mute);font-size:16px;min-height:24px}
+  .callbtn{width:100%;padding:20px;border:0;border-radius:15px;background:var(--pink);color:#fff;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:21px;cursor:pointer;margin:12px 0}
+  .board{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px}
+  .board i{font-style:normal;text-align:center;padding:6px 0;border-radius:6px;background:var(--ink3);
+    color:var(--faint);font-size:13px;font-variant-numeric:tabular-nums}
+  .board i.hit{background:var(--pink);color:#fff;font-weight:700}
+  .bar2{display:flex;gap:9px;margin-top:12px}
+  .bar2 button{flex:1 1 0}
+
+  /* ---- trivia ---- */
+  .q{background:var(--ink3);border-radius:13px;padding:16px 18px;margin-bottom:10px}
+  .q .qn{color:var(--faint);font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+  .q .qt{font-size:18px;font-weight:700}
+  .q .qa{color:var(--teal);font-size:16px;margin-top:8px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--ink3);
+    border:1px solid var(--line);border-radius:22px;padding:10px 18px;font-size:14.5px;opacity:0;
+    transition:opacity .18s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="l"><img src="/logos/partyplay-mark.svg" alt=""><b>PartyPlay</b></div>
+    <div style="display:flex;gap:8px">
+      <a class="tvbtn" id="buildlink">Games</a>
+      <a class="tvbtn" id="tvlink" target="_blank" rel="noopener">Open the screen</a>
+    </div>
+  </div>
+  <div id="app"><div class="gate">Loading...</div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/lib/pp-quiz.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+  var API="https://api.partyplay.com.au";
+  var SUPA_URL="https://gpoolavkghnxedzrmtmc.supabase.co", SUPA_ANON="";  // set at deploy
+  var $=function(i){return document.getElementById(i);};
+  var q=new URLSearchParams(location.search);
+  var CODE=(q.get("code")||"").toUpperCase(), KEY=q.get("key")||"";
+  var PARTY=null, GAMES=[], players=[], ch=null, G=null;
+  /* The night's running total, kept outside G so it survives one game ending and
+     the next starting. Stored too, because the host's tablet WILL get locked,
+     backgrounded or reloaded halfway through the night. */
+  var NIGHT = {};
+  function nightKey(){ return "ppNight:" + CODE; }
+  function nightLoad(){ try{ NIGHT = JSON.parse(localStorage.getItem(nightKey())||"{}") || {}; }catch(e){ NIGHT={}; } }
+  function nightSave(){ try{ localStorage.setItem(nightKey(), JSON.stringify(NIGHT)); }catch(e){} }
+  function nightAdd(rows){
+    (rows||[]).forEach(function(r){ NIGHT[r.name] = (NIGHT[r.name]||0) + (r.score||0); });
+    nightSave();
+  }
+  function nightBoard(){
+    return Object.keys(NIGHT).map(function(n){ return {name:n, score:NIGHT[n]}; })
+      .sort(function(a,b){ return b.score-a.score || a.name.localeCompare(b.name); });
+  }
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("show");
+    clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove("show");},1700); }
+  function api(p,o){ return fetch(API+p,Object.assign({headers:{"content-type":"application/json"}},o||{}))
+    .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.error||"Something went wrong"); return j; }); }); }
+  function send(o){ if(ch){ try{ ch.send({type:"broadcast",event:"msg",payload:o}); }catch(e){} } }
+
+  /* PartyPlay draws in the browser, unlike VenuePlay which had to move its draw
+     to a server for OLGR. A private party is not regulated gaming, there is no
+     stake and no regulator to satisfy, so the tablet is a perfectly good barrel.
+     Still rejection sampled, because a biased draw is just a worse game. */
+  function pick(n){
+    var a=new Uint32Array(1), lim=Math.floor(4294967296/n)*n, x;
+    do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim);
+    return x%n;
+  }
+
+  function connect(){
+    if(!SUPA_ANON) return;
+    try{
+      var c=supabase.createClient(SUPA_URL,SUPA_ANON);
+      ch=c.channel("pp-"+CODE,{config:{broadcast:{self:false}}});
+      ch.on("broadcast",{event:"msg"},function(e){
+        var m=e.payload||{};
+        if(m.t==="hello" && m.name){
+          if(players.indexOf(m.name)<0){ players.push(m.name); paintStrip(); send({t:"players",names:players}); }
+        }
+        if(m.t==="tv-here"){ send({t:"players",names:players}); if(G) G.repaint&&G.repaint(); }
+        /* An answer from a phone. First one per person per question counts: a
+           guest who taps twice has changed their mind after seeing a face, and
+           letting that through makes the whole board meaningless. */
+        if(m.t==="pick" && G && G.mode==="heads" && m.name && G.inPlay.indexOf(m.name)>=0){
+          G.picks[m.name]=m.side; paintHeads();
+        }
+        if(m.t==="answer" && G && G.items && m.name){
+          var dup = G.answers.some(function(a){ return a.name===m.name && a.i===m.i; });
+          if(!dup){ G.answers.push({name:m.name,i:m.i,answer:m.answer}); paintTrivia(); }
+        }
+      });
+      ch.subscribe();
+    }catch(e){}
+  }
+
+  function load(){
+    if(!CODE||!KEY){ $("app").innerHTML='<div class="gate">Open this from the link in your email, which has your host key in it.</div>'; return; }
+    $("tvlink").href="/tv?code="+encodeURIComponent(CODE);
+    $("buildlink").href="/host?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY);
+    api("/games?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY))
+      .then(function(d){ PARTY=d.party; GAMES=d.games||[]; connect(); render(); })
+      .catch(function(e){ $("app").innerHTML='<div class="gate">'+esc(e.message)+'</div>'; });
+  }
+
+  function paintStrip(){
+    var s=$("strip"); if(s) s.querySelector(".n").textContent=players.length+" playing";
+  }
+
+  function render(){
+    var now=Date.now(), start=Date.parse(PARTY.startsAt), end=Date.parse(PARTY.endsAt);
+    var f=new Intl.DateTimeFormat("en-AU",{weekday:"long",day:"numeric",month:"long"});
+    if(now<start){
+      /* Do not just say no. A host who reads "not started" and nothing else is a
+         host who emails to ask when it starts. */
+      $("app").innerHTML='<div class="gate"><div class="big">Not yet</div>'+
+        '<p>Your games go live at midnight on '+esc(f.format(new Date(start+12*36e5)))+
+        '. You can keep building them until then.</p>'+
+        '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build your games</a></p></div>';
+      return;
+    }
+    if(now>=end){
+      $("app").innerHTML='<div class="gate"><div class="big">That is a wrap</div>'+
+        '<p>This party finished at 6am on '+esc(f.format(new Date(end)))+'. Hope it was a good one.</p></div>';
+      return;
+    }
+    var h='<div class="strip" id="strip"><span style="color:var(--faint);font-size:14px">Code</span>'+
+      '<span class="code">'+esc(PARTY.code)+'</span><span class="n">'+players.length+' playing</span></div>';
+    if(!GAMES.length){
+      h+='<div class="gate"><div class="big">No games yet</div><p>Add one and come back.</p>'+
+         '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build your games</a></p></div>';
+    }
+    GAMES.forEach(function(g,i){
+      var n=(g.config&&g.config.items&&g.config.items.length)||0;
+      h+='<div class="card"><div class="row"><div class="meta"><h3>'+esc(g.title||g.format)+'</h3>'+
+         '<p>'+esc(g.format)+(n?" &middot; "+n+" ready":"")+'</p></div>'+
+         '<button class="play" data-run="'+i+'">Start</button></div></div>';
+    });
+    var nb = nightBoard();
+    if(nb.length){
+      h+='<div class="card"><div class="row"><div class="meta"><h3>Tonight so far</h3>'+
+         '<p>'+nb.length+(nb.length===1?" player":" players")+'</p></div>'+
+         '<button class="sec" id="shownight">Put it up</button></div>'+
+         nb.slice(0,8).map(function(r,i){ return '<div style="display:flex;justify-content:space-between;'+
+           'padding:4px 0;color:var(--mute);font-size:15px"><span>'+(i+1)+'. '+esc(r.name)+'</span><b>'+r.score+'</b></div>'; }).join("")+
+         '<button class="sec" id="resetnight" style="width:100%;margin-top:10px">Clear the scores</button></div>';
+    }
+    $("app").innerHTML=h;
+    send({t:"lobby"});
+  }
+
+  /* ------------------------------------------------------------------ bingo -- */
+  function runBingo(g){
+    G={ pool:[], called:[], repaint:paintBingo };
+    for(var i=1;i<=90;i++) G.pool.push(i);
+    // Tell the phones to build their tickets BEFORE the first ball, so nobody is
+    // still staring at a lobby when a number goes up.
+    send({t:"bingo"});
+    send({t:"big",text:"Bingo",sub:"Grab your ticket"});
+    paintBingo();
+  }
+  function paintBingo(){
+    var last=G.called.length?G.called[G.called.length-1]:null;
+    var h='<div class="caller"><div class="num">'+(last==null?"--":last)+'</div>'+
+      '<div class="said">'+(last==null?"Tap to call the first number":esc(callName(last)))+'</div></div>'+
+      '<button class="callbtn" id="call">'+(G.called.length?"Next number":"Start calling")+'</button>'+
+      '<div class="board">';
+    for(var i=1;i<=90;i++) h+='<i class="'+(G.called.indexOf(i)>=0?"hit":"")+'">'+i+'</i>';
+    h+='</div><div class="bar2"><button class="sec" id="back">Back to games</button>'+
+       '<button class="sec" id="again">Start over</button></div>';
+    $("app").innerHTML=h;
+    if(!G.pool.length){ $("call").disabled=true; $("call").textContent="All 90 called"; }
+  }
+  function callName(n){
+    /* The bit that makes it feel like bingo rather than a number generator. */
+    var names={1:"Kelly's eye",2:"One little duck",7:"Lucky seven",8:"Garden gate",
+      10:"Uncle Ben",11:"Legs eleven",22:"Two little ducks",25:"Duck and dive",
+      44:"Droopy drawers",55:"All the fives",66:"Clickety click",77:"Sunset strip",
+      88:"Two fat ladies",90:"Top of the shop"};
+    return names[n] || (n<10 ? "Number "+n : String(n).split("").join(" and ")+", "+n);
+  }
+  function nextBall(){
+    if(!G.pool.length) return;
+    var n=G.pool.splice(pick(G.pool.length),1)[0];
+    G.called.push(n);
+    send({t:"big",text:String(n),sub:callName(n)});
+    paintBingo();
+  }
+
+  /* --------------------------------------------------- heads or tails -------- */
+  /* The pub version makes you stand up and touch your head, which quietly rules
+     out anyone who cannot easily do either. On a phone everybody plays. */
+  function runHeads(g){
+    G={ mode:"heads", round:0, inPlay:players.slice(), picks:{}, last:null, repaint:paintHeads };
+    send({t:"heads", round:0});
+    send({t:"big", text:"Heads or tails", sub:"Pick one on your phone"});
+    paintHeads();
+  }
+  function paintHeads(){
+    var picked=Object.keys(G.picks).length;
+    var h='<div class="caller"><div class="num" style="font-size:clamp(40px,14vw,90px)">'+
+      (G.last? (G.last==="heads"?"HEADS":"TAILS") : "--")+'</div>'+
+      '<div class="said">'+(G.last? G.last+" wins the round" : "Waiting on picks")+'</div></div>'+
+      '<div class="q"><div class="qn">Still in</div><div class="qt">'+G.inPlay.length+
+      '<span style="float:right;font-size:15px;font-weight:400;color:var(--faint)">'+
+      picked+' of '+G.inPlay.length+' picked</span></div></div>';
+    if(G.inPlay.length<=1){
+      h+='<div class="q"><div class="qn">Winner</div><div class="qt">'+
+         (G.inPlay.length? esc(G.inPlay[0]) : "Nobody, everyone went out together")+'</div></div>';
+    } else {
+      h+='<button class="callbtn" id="flip">Flip it</button>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button>'+
+       '<button class="sec" id="hstart">Start again</button></div>';
+    $("app").innerHTML=h;
+  }
+  function flip(){
+    var side = pick(2) ? "tails" : "heads";
+    G.last = side;
+    /* Anyone who did not pick stays in. Knocking out the guest who was at the bar
+       is the fastest way to have someone stop playing for the night. */
+    var out = G.inPlay.filter(function(n){ return G.picks[n] && G.picks[n] !== side; });
+    G.inPlay = G.inPlay.filter(function(n){ return out.indexOf(n) < 0; });
+    G.picks = {}; G.round++;
+    send({t:"heads", round:G.round, result:side, out:out, inPlay:G.inPlay.slice()});
+    if(G.inPlay.length<=1){
+      var w = G.inPlay[0];
+      if(w){ nightAdd([{name:w, score:PPQuiz.CORRECT_POINTS}]); }
+      send({t:"big", text: w?esc(w):"All out", sub: w?"Heads or tails winner":""});
+    } else {
+      send({t:"big", text:side.toUpperCase(), sub:G.inPlay.length+" still in"});
+    }
+    paintHeads();
+  }
+
+  /* ----------------------------------------------------------------- trivia -- */
+  function runTrivia(g){
+    // One seed for the night, so the host, the television and every phone build
+    // the same four options in the same order without sending them three times.
+    G={ items:(g.config&&g.config.items)||[], i:-1, shown:false, answers:[],
+        seed: Math.floor(Math.random()*1e6), title:(g.title||"Trivia"), repaint:paintTrivia };
+    paintTrivia();
+  }
+  function answeredCount(){
+    return G.answers.filter(function(a){ return a.i===G.i; }).length;
+  }
+  function board(){ return PPQuiz.score(G.answers, G.items, G.seed); }
+  function paintTrivia(){
+    var it=G.items[G.i];
+    var h='';
+    if(G.i<0){
+      h='<div class="gate"><div class="big">'+esc(G.items.length)+' questions</div><p>Ready when you are.</p></div>';
+    } else if(!it){
+      h='<div class="gate"><div class="big">That is the lot</div><p>All '+G.items.length+' done.</p></div>';
+    } else {
+      h='<div class="q"><div class="qn">Question '+(G.i+1)+' of '+G.items.length+
+        '<span style="float:right;text-transform:none;letter-spacing:0">'+
+        answeredCount()+' of '+players.length+' answered</span></div>'+
+        '<div class="qt">'+esc(it.q)+'</div>'+
+        (G.shown?'<div class="qa">'+esc(it.a||"")+'</div>':'')+'</div>';
+      if(G.shown){
+        var b=board().slice(0,6);
+        if(b.length){
+          h+='<div class="q"><div class="qn">Scores</div>'+
+             b.map(function(r,i){ return '<div style="display:flex;justify-content:space-between;padding:3px 0">'+
+               '<span>'+(i+1)+'. '+esc(r.name)+'</span><b>'+r.score+'</b></div>'; }).join("")+'</div>';
+        }
+      }
+    }
+    h+='<div class="bar2">'+
+       (G.i>=0 && it && !G.shown ? '<button class="play" id="reveal" style="flex:1">Show the answer</button>' : '')+
+       (G.i<0 || G.shown || !it ? '<button class="play" id="next" style="flex:1">'+(G.i<0?"First question":(it?"Next question":"Done"))+'</button>' : '')+
+       '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+
+  document.addEventListener("click",function(ev){
+    var el=ev.target.closest?ev.target.closest("[data-run],#call,#back,#again,#reveal,#next,#shownight,#resetnight,#flip,#hstart"):null;
+    if(!el) return;
+    if(el.hasAttribute("data-run")){
+      var g=GAMES[+el.getAttribute("data-run")];
+      if(g.format==="bingo90") runBingo(g);
+      else if(g.format==="trivia"||g.format==="howwell") runTrivia(g);
+      else if(g.format==="headstails") runHeads(g);
+      else { send({t:"big",text:esc(g.title||g.format),sub:"Off we go"}); toast("Running "+(g.title||g.format)); }
+      return;
+    }
+    if(el.id==="shownight"){ send({t:"board", title:"Tonight", rows:nightBoard().slice(0,12)}); toast("On the screen"); return; }
+    if(el.id==="resetnight"){
+      if(!window.confirm("Clear tonight's scores? The games stay, only the running total goes.")) return;
+      NIGHT={}; nightSave(); render(); toast("Scores cleared"); return;
+    }
+    if(el.id==="call"){ nextBall(); return; }
+    if(el.id==="again"){ runBingo(); return; }
+    if(el.id==="flip"){ flip(); return; }
+    if(el.id==="hstart"){ runHeads(); return; }
+    if(el.id==="back"){ G=null; render(); return; }
+    if(el.id==="reveal"){
+      G.shown=true;
+      var it=G.items[G.i];
+      var o=PPQuiz.options(G.items,G.i,G.seed);
+      // Tell the phones what was right, so each guest sees their own result
+      // rather than having to find themselves on a list on the television.
+      send({t:"result", i:G.i, correct:o.correct, board:board().slice(0,10)});
+      send({t:"big", text:esc(it.a||""), sub:it.q});
+      paintTrivia(); return; }
+    if(el.id==="next"){
+      G.i++; G.shown=false;
+      var it2=G.items[G.i];
+      if(it2){
+        var o2=PPQuiz.options(G.items,G.i,G.seed);
+        send({t:"ask", i:G.i, q:it2.q, options:o2.options, n:G.i+1, of:G.items.length});
+        send({t:"big", text:esc(it2.q), sub:"Question "+(G.i+1)+" of "+G.items.length});
+      } else {
+        var fin=board();
+        // Bank it once. G.banked stops a host who taps Next again at the end from
+        // adding the same round to the night twice.
+        if(!G.banked){ nightAdd(fin); G.banked=true; }
+        send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
+        send({t:"big", text: fin.length?esc(fin[0].name):"That is the lot",
+              sub: fin.length? fin[0].score+" points" : ""});
+      }
+      paintTrivia(); return;
+    }
+  });
+
+  if(navigator.wakeLock) navigator.wakeLock.request("screen").catch(function(){});
+  load();
+})();
+</script>
+</body>
+</html>

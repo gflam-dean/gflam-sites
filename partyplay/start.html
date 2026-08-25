@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Book your party | PartyPlay</title>
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--ink2:#1B1826;--ink3:#262234;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+    --pink:#FF1F8E;--teal:#17C4B4;--yellow:#FFD23F;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;
+    font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:620px;margin:0 auto;padding:40px 22px 90px}
+  h1,h2,legend{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
+  h1{font-size:clamp(30px,7vw,46px);line-height:1.02;margin:22px 0 10px}
+  h1 em{font-style:normal;color:var(--pink)}
+  .sub{color:var(--mute);margin:0 0 30px;font-size:18px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand img{width:52px;height:44px}
+  .brand span{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:24px}
+
+  fieldset{border:0;padding:0;margin:0 0 28px}
+  legend{font-size:13px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+    padding:0;margin-bottom:12px}
+  label{display:block;font-weight:700;font-size:15px;margin:0 0 6px}
+  .hint{font-weight:400;color:var(--faint);font-size:14px;display:block;margin-top:-2px;margin-bottom:7px}
+  input[type=text],input[type=email],input[type=tel],input[type=date],select{
+    width:100%;padding:14px 15px;border-radius:11px;border:1px solid var(--line);
+    background:var(--ink2);color:var(--paper);font:inherit;font-size:16.5px}
+  input:focus,select:focus{outline:2px solid var(--pink);outline-offset:1px;border-color:transparent}
+  .row{display:grid;gap:14px;margin-bottom:16px}
+  @media(min-width:520px){.row.two{grid-template-columns:1fr 1fr}}
+
+  .picks{display:grid;gap:12px}
+  @media(min-width:520px){.picks{grid-template-columns:1fr 1fr}}
+  .pick{position:relative}
+  .pick input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+  .pick span{display:block;border:2px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;
+    transition:border-color .12s}
+  .pick input:checked + span{border-color:var(--pink);background:var(--ink2)}
+  .pick input:focus-visible + span{outline:2px solid var(--pink);outline-offset:2px}
+  .pick b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:26px;display:block}
+  .pick i{font-style:normal;color:var(--mute);font-size:15px;display:block;margin-top:3px}
+
+  .confirm{background:var(--ink2);border:1px solid var(--line);border-left:3px solid var(--teal);
+    border-radius:0 14px 14px 0;padding:18px 20px;margin:6px 0 26px}
+  .confirm p{margin:0;font-size:16px;color:var(--paper)}
+  .confirm .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12px;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--teal);display:block;margin-bottom:5px}
+  .confirm.bad{border-left-color:var(--yellow)}
+
+  .optin{display:flex;gap:12px;align-items:flex-start;background:var(--ink2);border:1px solid var(--line);
+    border-radius:12px;padding:15px 16px}
+  .optin input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto;accent-color:var(--pink)}
+  .optin label{margin:0;font-weight:400;font-size:15.5px;color:var(--mute)}
+
+  button.go{width:100%;padding:17px;border:0;border-radius:13px;background:var(--pink);color:#fff;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;cursor:pointer}
+  button.go:disabled{background:var(--ink3);color:var(--faint);cursor:not-allowed}
+  .fine{color:var(--faint);font-size:14px;margin-top:14px}
+  .fine a{color:var(--mute)}
+  .xref{margin-top:38px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:15px}
+  .xref a{color:var(--pink);font-weight:700}
+  .err{color:#FF8FA3;font-size:14.5px;margin-top:6px;display:none}
+  .err.show{display:block}
+</style>
+<!-- Google Analytics. Deliberately NOT on every page: see site/ANALYTICS.md -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7S6R8QJSMQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-7S6R8QJSMQ', {
+    // Never send a query string to Google. Three pages on this site carry the
+    // host key in the URL, and page_location would post it straight to a third
+    // party. Those pages are excluded entirely as well, but this is the belt to
+    // that braces: if anyone ever pastes the snippet somewhere new, the key
+    // still does not leave.
+    page_location: location.origin + location.pathname,
+    anonymize_ip: true
+  });
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="/logos/partyplay-mark.svg" alt=""><span>PartyPlay</span></div>
+  <h1>Book your <em>party</em></h1>
+  <p class="sub">Pick your date now. Build your games whenever you like, there is no rush and no extra cost.</p>
+
+  <form id="f" novalidate>
+    <fieldset>
+      <legend>Who is throwing it</legend>
+      <div class="row two">
+        <div>
+          <label for="name">Your name</label>
+          <input id="name" type="text" autocomplete="name" required>
+        </div>
+        <div>
+          <label for="email">Email</label>
+          <span class="hint">Your licence code goes here</span>
+          <input id="email" type="email" autocomplete="email" inputmode="email" required>
+        </div>
+      </div>
+      <div class="row two">
+        <div>
+          <label for="party">What is the party?</label>
+          <span class="hint">Goes on the big screen</span>
+          <input id="party" type="text" maxlength="60" placeholder="Nicole's 40th">
+        </div>
+        <div>
+          <label for="mobile">Mobile <span style="font-weight:400;color:var(--faint)">(optional)</span></label>
+          <input id="mobile" type="tel" autocomplete="tel" inputmode="tel">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>When and where</legend>
+      <div class="row two">
+        <div>
+          <label for="state">Your state</label>
+          <span class="hint">So midnight means your midnight</span>
+          <select id="state" required>
+            <option value="">Choose one</option>
+            <option value="NSW">New South Wales</option>
+            <option value="VIC">Victoria</option>
+            <option value="QLD">Queensland</option>
+            <option value="SA">South Australia</option>
+            <option value="WA">Western Australia</option>
+            <option value="TAS">Tasmania</option>
+            <option value="NT">Northern Territory</option>
+            <option value="ACT">ACT</option>
+          </select>
+        </div>
+        <div>
+          <label for="date">Date of the party</label>
+          <span class="hint">You can change this later, free</span>
+          <input id="date" type="date" required>
+        </div>
+      </div>
+      <div class="picks">
+        <div class="pick">
+          <input type="radio" name="days" id="d1" value="1" checked>
+          <label for="d1" style="margin:0"><span><b>$50</b><i>One day</i></span></label>
+        </div>
+        <div class="pick">
+          <input type="radio" name="days" id="d3" value="3">
+          <label for="d3" style="margin:0"><span><b>$120</b><i>Three days in a row</i></span></label>
+        </div>
+      </div>
+      <p class="err" id="err"></p>
+    </fieldset>
+
+    <div class="confirm" id="confirm" hidden>
+      <span class="lbl">What you get</span>
+      <p id="confirmText"></p>
+    </div>
+
+    <fieldset>
+      <legend>Keeping in touch</legend>
+      <div class="optin">
+        <input type="checkbox" id="optin">
+        <label for="optin">Send me the occasional party idea and a heads up on new games. No more than once a month, and one click to stop.</label>
+      </div>
+    </fieldset>
+
+    <button class="go" id="go" type="submit" disabled>Choose a date to continue</button>
+    <p class="fine">You will be taken to Stripe to pay. Moving your date is always free. Full refund within 7 days of buying, a credit any time up to 24 hours before your party, and nothing after that. This does not limit your rights under the Australian Consumer Law. <a href="/terms">Terms</a> and <a href="/privacy">privacy</a>.</p>
+  </form>
+
+  <p class="xref">Running a pub, club or venue? <a href="https://venueplay.com.au">Head to VenuePlay</a>, built for you.</p>
+</div>
+
+<script src="/lib/pp-licence.js"></script>
+<script>
+(function(){
+  "use strict";
+  var API = "https://api.partyplay.com.au";
+  var $ = function(id){ return document.getElementById(id); };
+  var f = $("f"), go = $("go"), errEl = $("err"),
+      box = $("confirm"), boxText = $("confirmText");
+
+  // Never let someone book a party that has already happened. Computed in THEIR
+  // state, not the browser's, because a NSW customer travelling in Perth still
+  // books NSW dates.
+  function todayIn(state){
+    try{
+      var tz = PPLicence.zoneFor(state);
+      var p = new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"})
+                .format(new Date());
+      return p;                              // en-CA gives YYYY-MM-DD
+    }catch(e){ return null; }
+  }
+
+  function currentDays(){
+    var r = f.querySelector('input[name=days]:checked');
+    return r ? parseInt(r.value,10) : 1;
+  }
+
+  function showErr(msg){
+    errEl.textContent = msg; errEl.classList.add("show");
+    box.hidden = true; go.disabled = true; go.textContent = "Choose a date to continue";
+  }
+  function clearErr(){ errEl.textContent=""; errEl.classList.remove("show"); }
+
+  function refresh(){
+    clearErr();
+    var state = $("state").value, date = $("date").value, days = currentDays();
+    if(!state || !date){
+      box.hidden = true; go.disabled = true;
+      go.textContent = "Choose a date to continue"; return;
+    }
+    var min = todayIn(state);
+    if(min && date < min){ showErr("That date has already been. Pick today or later."); return; }
+
+    var w;
+    try{ w = PPLicence.windowFor(state, date, days); }
+    catch(e){ showErr("That date does not look right. Try again."); return; }
+
+    // Tell them exactly what they are buying, in their own words. The commonest
+    // reason anyone would want a refund is booking the wrong night, so it is
+    // worth spelling out before they pay rather than after.
+    boxText.textContent = PPLicence.describe(w) +
+      " Set your games up any time between now and then.";
+    box.hidden = false;
+
+    var price = PPLicence.PRICE_CENTS[days] / 100;
+    go.disabled = false;
+    go.textContent = "Continue to pay $" + price;
+  }
+
+  ["state","date"].forEach(function(id){
+    $(id).addEventListener("change", refresh);
+    $(id).addEventListener("input", refresh);
+  });
+  Array.prototype.forEach.call(f.querySelectorAll('input[name=days]'), function(r){
+    r.addEventListener("change", refresh);
+  });
+
+  // A date picker that offers last year is a date picker that produces refunds.
+  $("state").addEventListener("change", function(){
+    var min = todayIn($("state").value);
+    if(min) $("date").min = min;
+  });
+
+  f.addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var payload = {
+      name:   $("name").value.trim(),
+      email:  $("email").value.trim(),
+      mobile: $("mobile").value.trim() || null,
+      party:  $("party").value.trim() || null,
+      state:  $("state").value,
+      date:   $("date").value,
+      days:   currentDays(),
+      optin:  $("optin").checked
+    };
+    if(!payload.name){ showErr("We need a name to put on the licence."); return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(payload.email)){
+      showErr("That email does not look right. Your licence code is sent there.");
+      return;
+    }
+    go.disabled = true; go.textContent = "Taking you to Stripe...";
+    fetch(API + "/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      return r.json().then(function(j){ if(!r.ok) throw new Error(j && j.error ? j.error : "Could not start checkout."); return j; });
+    }).then(function(j){
+      if(!j.url) throw new Error("Could not start checkout.");
+      window.location = j.url;
+    }).catch(function(e){
+      // Put the button back. A dead button after a failed request is a customer
+      // who assumes they have paid and emails to ask where their code is.
+      go.disabled = false;
+      go.textContent = "Continue to pay $" + (PPLicence.PRICE_CENTS[currentDays()]/100);
+      showErr(e.message);
+    });
+  });
+})();
+</script>
+</body>
+</html>

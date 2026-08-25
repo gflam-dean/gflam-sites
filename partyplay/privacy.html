@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy | PartyPlay</title>
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--ink2:#1B1826;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+    --pink:#FF1F8E;--teal:#17C4B4;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;
+    font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:680px;margin:0 auto;padding:44px 22px 100px}
+  h1,h2{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
+  h1{font-size:clamp(28px,6vw,40px);margin:0 0 6px}
+  h2{font-size:20px;margin:34px 0 8px}
+  .up{color:var(--faint);font-size:14.5px;margin:0 0 26px}
+  p,li{color:var(--mute);margin:0 0 13px}
+  strong{color:var(--paper)}
+  a{color:var(--pink)}
+  .mark{width:50px;height:43px;margin-bottom:16px}
+  .box{background:var(--ink2);border-left:3px solid var(--teal);border-radius:0 12px 12px 0;padding:15px 18px;margin:18px 0}
+  .box p{margin:0;color:var(--paper);font-size:16px}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:14.5px}
+</style>
+<!-- Google Analytics. Deliberately NOT on every page: see site/ANALYTICS.md -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7S6R8QJSMQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-7S6R8QJSMQ', {
+    // Never send a query string to Google. Three pages on this site carry the
+    // host key in the URL, and page_location would post it straight to a third
+    // party. Those pages are excluded entirely as well, but this is the belt to
+    // that braces: if anyone ever pastes the snippet somewhere new, the key
+    // still does not leave.
+    page_location: location.origin + location.pathname,
+    anonymize_ip: true
+  });
+</script>
+</head>
+<body><div class="wrap">
+<img class="mark" src="/logos/partyplay-mark.svg" alt="">
+<h1>Privacy</h1>
+<p class="up">Gflam Group Pty Ltd &middot; last updated 25 August 2026</p>
+
+<p>The honest version is short, because we hold very little.</p>
+
+<h2>Your guests: a nickname, and nothing else</h2>
+<p>People who join your party type a name so everyone knows who they are. That is all we ask for and all we keep. <strong>No sign up, no account, no email, no phone number.</strong> It is deleted when your licence expires.</p>
+<div class="box"><p>We do not collect contact details from your guests, and we never will. Turning a party into a mailing list is exactly what PartyPlay is not for.</p></div>
+
+<h2>You, as the person who bought it</h2>
+<p>We hold your name and email because you are our customer and we have to send you a receipt and your party code. If you gave us a mobile number, we hold that too. Payment is handled by Stripe and <strong>we never see your card details</strong>.</p>
+
+<h2>The mailing list, only if you ticked the box</h2>
+<p>If you opted in at checkout we will send the occasional party idea. That box is never ticked for you. One click stops it, and unsubscribing does not affect anything you have paid for.</p>
+
+<h2>Analytics</h2>
+<p>We use Google Analytics on our public pages, so we can see how many people find us and how many go on to book. It sets a cookie and tells us about visits, not about people: we never send it your name, your email or anything you type.</p>
+<div class="box"><p><strong>It is not on the pages your guests use.</strong> The page your guests join on carries no analytics at all, so scanning the code at a party puts you on nobody's list.</p></div>
+
+<h2>Who else sees it</h2>
+<p>Stripe for the payment, Resend to send your emails, Google Analytics on our public pages, and Supabase and Cloudflare to run the service. Nobody else, and we do not sell anything to anyone.</p>
+
+<h2>Getting it back or getting rid of it</h2>
+<p>Email <a href="mailto:hello@partyplay.com.au">hello@partyplay.com.au</a> and ask. We will send you what we hold, or delete it, whichever you want.</p>
+<footer>Questions? <a href="mailto:hello@partyplay.com.au">hello@partyplay.com.au</a>.
+Running a pub, club or venue? <a href="https://venueplay.com.au">Head to VenuePlay</a>.</footer>
+</div></body></html>

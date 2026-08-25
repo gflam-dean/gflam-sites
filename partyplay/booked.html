@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>You are booked | PartyPlay</title>
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--ink2:#1B1826;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+    --pink:#FF1F8E;--teal:#17C4B4;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;font-size:17px;line-height:1.55}
+  .wrap{max-width:600px;margin:0 auto;padding:44px 20px 90px}
+  h1,h2{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
+  h1{font-size:clamp(30px,7vw,44px)}
+  .mark{width:60px;height:52px;margin-bottom:18px}
+  p{color:var(--mute);margin:12px 0}
+  .codecard{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:24px;text-align:center;margin:26px 0}
+  .codecard .lbl{color:var(--faint);font-size:14px;display:block}
+  .codecard .code{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:52px;
+    letter-spacing:.12em;color:var(--pink);line-height:1.1}
+  .when{background:var(--ink2);border-left:3px solid var(--teal);border-radius:0 12px 12px 0;padding:15px 18px;margin:20px 0}
+  .when p{margin:0;color:var(--paper);font-size:16px}
+  ol{padding-left:22px}
+  ol li{margin-bottom:12px;color:var(--mute)}
+  ol li b{color:var(--paper)}
+  a.btn{display:block;text-align:center;background:var(--pink);color:#fff;text-decoration:none;
+    border-radius:12px;padding:15px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;margin-top:24px}
+  .fine{color:var(--faint);font-size:14.5px;margin-top:22px}
+  .fine a{color:var(--mute)}
+</style>
+<!-- Google Analytics. Deliberately NOT on every page: see site/ANALYTICS.md -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7S6R8QJSMQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-7S6R8QJSMQ', {
+    // Never send a query string to Google. Three pages on this site carry the
+    // host key in the URL, and page_location would post it straight to a third
+    // party. Those pages are excluded entirely as well, but this is the belt to
+    // that braces: if anyone ever pastes the snippet somewhere new, the key
+    // still does not leave.
+    page_location: location.origin + location.pathname,
+    anonymize_ip: true
+  });
+</script>
+</head>
+<body>
+<div class="wrap">
+  <img class="mark" src="/logos/partyplay-mark.svg" alt="">
+  <h1>You are booked</h1>
+  <p>We have emailed your code and a link to build your games. If it has not turned up in a minute, check the junk folder.</p>
+
+  <div class="codecard"><span class="lbl">Your party code</span>
+    <div class="code" id="code">------</div></div>
+
+  <div class="when"><p id="when">Loading your dates...</p></div>
+
+  <h2 style="font-size:20px;margin-top:30px">What now</h2>
+  <ol>
+    <li><b>Build your games whenever you like.</b> There is no rush and no extra cost. The link is in your email.</li>
+    <li><b>Get the screen sorted before the day.</b> Five minutes, and you probably already own everything you need.</li>
+    <li><b>On the night, open the screen and read out the code.</b> Guests join in their phone browser. No app.</li>
+  </ol>
+
+  <a class="btn" id="build" href="/setup">Getting it on your TV</a>
+  <p class="fine">Need to move the date? It is free, as many times as you like, and the link is in your email.
+  Full refund within 7 days of buying, a credit any time up to 24 hours before your party, nothing after that. This does not limit your rights under the Australian Consumer Law.</p>
+</div>
+<script>
+(function(){
+  var code = (new URLSearchParams(location.search).get("code")||"").toUpperCase();
+  if(code) document.getElementById("code").textContent = code;
+  fetch("https://api.partyplay.com.au/licence?code=" + encodeURIComponent(code))
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(j.error) throw new Error(j.error);
+      var f = new Intl.DateTimeFormat("en-AU",{ weekday:"long", day:"numeric", month:"long" });
+      var s = new Date(j.startsAt), e = new Date(j.endsAt);
+      document.getElementById("when").textContent =
+        "Your games run from midnight on " + f.format(new Date(s.getTime()+12*36e5)) +
+        " until 6am on " + f.format(e) + ".";
+    })
+    .catch(function(){
+      /* The webhook may not have landed yet. Say something true rather than an
+         error: they have paid, and the email is coming. */
+      document.getElementById("when").textContent =
+        "Your dates are in the email we just sent you.";
+    });
+})();
+</script>
+</body>
+</html>
