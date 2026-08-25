@@ -27,3 +27,9 @@
 # /host). A stale cached game page is far worse than a logo that returns a 304.
 /*.js
   Cache-Control: no-cache, must-revalidate
+
+# The admin screen. Not linked from anywhere, but "not linked" is not a control.
+/admin
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Cache-Control: no-store
+  X-Frame-Options: DENY

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PartyPlay admin</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/logos/partyplay-appicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#12101A;--ink2:#1B1826;--ink3:#262234;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+    --pink:#FF1F8E;--teal:#17C4B4;--yellow:#FFD23F;--line:rgba(255,241,230,.14)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;font-size:16px;line-height:1.5}
+  .wrap{max-width:880px;margin:0 auto;padding:26px 18px 90px}
+  h1,h2{font-family:'Hanken Grotesk',sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
+  h1{font-size:26px} h2{font-size:19px;margin:0 0 10px}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+  .top .l{display:flex;align-items:center;gap:11px}
+  .top img{width:38px;height:33px}
+  section{background:var(--ink2);border:1px solid var(--line);border-radius:15px;padding:20px 22px;margin-bottom:14px}
+  p{color:var(--mute);margin:0 0 12px;font-size:15px}
+  label{display:block;font-weight:700;font-size:13.5px;margin:0 0 5px}
+  input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--ink);
+    color:var(--paper);font:inherit;font-size:16px}
+  input:focus,select:focus{outline:2px solid var(--pink);outline-offset:1px}
+  .row{display:grid;gap:11px;margin-bottom:11px}
+  @media(min-width:600px){.row.two{grid-template-columns:1fr 1fr}.row.three{grid-template-columns:1fr 1fr 1fr}}
+  button{border:0;border-radius:10px;padding:12px 18px;background:var(--pink);color:#fff;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;cursor:pointer}
+  button.sec{background:none;border:1px solid var(--line);color:var(--mute)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+  th{text-align:left;color:var(--faint);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+    padding:0 8px 7px 0;border-bottom:1px solid var(--line);font-weight:700}
+  td{padding:9px 8px 9px 0;border-bottom:1px solid rgba(255,241,230,.07);font-variant-numeric:tabular-nums}
+  td:first-child,th:first-child{font-family:'JetBrains Mono',monospace}
+  .jobs{display:flex;gap:9px;flex-wrap:wrap}
+  .out{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--teal);background:var(--ink);
+    border-radius:9px;padding:11px 13px;margin-top:11px;white-space:pre-wrap;word-break:break-word;display:none}
+  .out.show{display:block}
+  .out.bad{color:#FF8FA3}
+  .note{background:var(--ink3);border-left:3px solid var(--yellow);border-radius:0 10px 10px 0;padding:12px 15px;margin-top:12px}
+  .note p{margin:0;color:var(--paper);font-size:14.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="l"><img src="/logos/partyplay-mark.svg" alt=""><h1>Admin</h1></div>
+    <button class="sec" id="forget" hidden>Forget the key</button>
+  </div>
+  <div id="app"></div>
+</div>
+<script src="/lib/pp-config.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $=function(i){return document.getElementById(i);};
+  var KEYSTORE="ppAdminKey";
+  function key(){ try{ return localStorage.getItem(KEYSTORE)||""; }catch(e){ return ""; } }
+  function setKey(v){ try{ v?localStorage.setItem(KEYSTORE,v):localStorage.removeItem(KEYSTORE); }catch(e){} }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+
+  /* The key travels in a header, never in the URL. A key in a query string is in
+     browser history, in the Worker's logs, and in any screenshot of the tab. */
+  function api(path, opts){
+    opts = opts || {};
+    return fetch(PPConfig.API+path, {
+      method: opts.method || "GET",
+      headers: Object.assign({ "content-type":"application/json", "X-Admin-Key": key() }, opts.headers||{}),
+      body: opts.body
+    }).then(function(r){ return r.json().then(function(j){
+      if(!r.ok) throw new Error(j && j.error ? j.error : ("HTTP "+r.status)); return j; }); });
+  }
+  function out(id, text, bad){
+    var el=$(id); el.textContent=text; el.classList.add("show");
+    el.classList.toggle("bad", !!bad);
+  }
+
+  function askKey(msg){
+    $("forget").hidden = true;
+    $("app").innerHTML =
+      '<section><h2>Admin key</h2><p>The one you set on the Worker as ADMIN_KEY. It is kept on this device only.</p>'+
+      '<div class="row"><input type="password" id="k" autocomplete="off"></div>'+
+      '<button id="kgo">Unlock</button>'+
+      (msg?'<div class="out show bad">'+esc(msg)+'</div>':'')+'</section>';
+    $("kgo").addEventListener("click", function(){
+      var v=($("k").value||"").trim(); if(!v) return;
+      setKey(v); boot();
+    });
+    $("k").addEventListener("keydown", function(e){ if(e.key==="Enter") $("kgo").click(); });
+    $("k").focus();
+  }
+
+  function screen(){
+    $("forget").hidden = false;
+    $("app").innerHTML =
+      '<section><h2>The numbers</h2>'+
+      '<p>Sold is when money changed hands. Ran is when somebody actually pressed start. They are often different months.</p>'+
+      '<div id="stats">Loading...</div></section>'+
+
+      '<section><h2>Comp a party</h2>'+
+      '<p>A real licence that was never paid for. Competition winners, or making something right.</p>'+
+      '<div class="row two"><div><label for="cn">Their name</label><input id="cn"></div>'+
+      '<div><label for="ce">Their email</label><input id="ce" type="email"></div></div>'+
+      '<div class="row three"><div><label for="cp">What is the party</label><input id="cp" placeholder="optional"></div>'+
+      '<div><label for="cd">How long</label><select id="cd"><option value="3">3 days</option><option value="1">24 hours</option></select></div>'+
+      '<div><label for="cr">Why</label><input id="cr" placeholder="e.g. August competition"></div></div>'+
+      '<button id="compgo">Issue it</button><div class="out" id="compout"></div></section>'+
+
+      '<section><h2>Jobs</h2>'+
+      '<p>Safe to run any time. Each one is idempotent, so running it twice sends nothing twice.</p>'+
+      '<div class="jobs">'+
+      '<button class="sec" data-job="followups">Send "how was it" emails</button>'+
+      '<button class="sec" data-job="send-albums">Send album links</button>'+
+      '<button class="sec" data-job="sweep-photos">Delete expired photos</button>'+
+      '</div><div class="out" id="jobout"></div>'+
+      '<div class="note"><p>These want to run daily. Once you are happy with them, put a Cloudflare Cron Trigger on the Worker so nobody has to remember.</p></div></section>';
+
+    api("/admin/stats?months=6").then(function(d){
+      var rows=d.months||[];
+      $("stats").innerHTML = rows.length
+        ? '<table><tr><th>Month</th><th>Sold</th><th>Revenue</th><th>Comps</th><th>Ran</th><th>24h</th><th>3 day</th></tr>'+
+          rows.map(function(m){ return '<tr><td>'+esc(m.month)+'</td><td>'+m.sold+'</td><td>'+esc(m.revenue)+
+            '</td><td>'+m.comps+'</td><td>'+m.ran+'</td><td>'+m.oneDay+'</td><td>'+m.threeDay+'</td></tr>'; }).join("")+
+          '</table><p style="margin-top:12px">'+d.unstartedTotal+' bought and not yet started. That is normal, they keep for a year, but it is the number that says whether people are actually using it.</p>'
+        : '<p>Nothing yet.</p>';
+    }).catch(function(e){
+      if(/^HTTP 403/.test(e.message)||e.message==="no"){ setKey(""); askKey("That key was not right."); return; }
+      $("stats").innerHTML='<p>'+esc(e.message)+'</p>';
+    });
+
+    $("compgo").addEventListener("click", function(){
+      var b={ name:($("cn").value||"").trim(), email:($("ce").value||"").trim(),
+              party:($("cp").value||"").trim()||null, days:parseInt($("cd").value,10),
+              reason:($("cr").value||"").trim()||null };
+      if(!b.name||!b.email){ out("compout","Name and email, please.",true); return; }
+      $("compgo").disabled=true;
+      api("/admin/comp",{method:"POST",body:JSON.stringify(b)})
+        .then(function(j){ out("compout","Done. Code "+j.code+"\nThey have been emailed their link."); 
+          $("cn").value=$("ce").value=$("cp").value=$("cr").value=""; })
+        .catch(function(e){ out("compout",e.message,true); })
+        .then(function(){ $("compgo").disabled=false; });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-job]"), function(btn){
+      btn.addEventListener("click", function(){
+        var job=btn.getAttribute("data-job");
+        btn.disabled=true; out("jobout","Running "+job+"...");
+        api("/admin/"+job,{method:"POST",body:JSON.stringify({})})
+          .then(function(j){ out("jobout", job+": "+JSON.stringify(j,null,1)); })
+          .catch(function(e){ out("jobout", job+": "+e.message, true); })
+          .then(function(){ btn.disabled=false; });
+      });
+    });
+  }
+
+  $("forget").addEventListener("click", function(){ setKey(""); askKey(); });
+  function boot(){ if(!key()) askKey(); else screen(); }
+  boot();
+})();
+</script>
+</body>
+</html>

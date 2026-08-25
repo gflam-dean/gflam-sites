@@ -1,0 +1,10 @@
+# The album and the admin screen are private. Neither is linked from anywhere,
+# but "nobody links to it" has never been a security control.
+User-agent: *
+Disallow: /admin
+Disallow: /album
+Disallow: /host
+Disallow: /run
+Disallow: /play
+Disallow: /tv
+Allow: /
