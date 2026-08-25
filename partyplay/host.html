@@ -113,6 +113,7 @@
 <div class="saved" id="toast"></div>
 
 <script src="/lib/pp-config.js"></script>
+<script src="/lib/pp-photo.js"></script>
 <script>
 (function(){
   "use strict";
@@ -183,6 +184,44 @@
         : { state:"done", label:"Finished", when:"This party has run its course. Hope it was a good one." };
   }
 
+  function loadAlbum(){
+    api("/photos?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY))
+      .then(function(d){
+        var el = $("album"); if(!el) return;
+        if(!d.count){
+          el.innerHTML = '<p class="hint">Nothing yet.</p>';
+          return;
+        }
+        /* Say when it goes, plainly and early. "We delete it after 30 days" is a
+           reason to trust us, not a limitation to bury at the bottom. */
+        var gone = d.deleteAfter ? new Intl.DateTimeFormat("en-AU",
+          { day:"numeric", month:"long" }).format(new Date(d.deleteAfter)) : null;
+        el.innerHTML =
+          '<div class="game"><div class="ico">&#128247;</div><div class="meta">' +
+          '<b>' + d.count + (d.count === 1 ? " photo" : " photos") + '</b>' +
+          '<span>' + d.megabytes + ' MB' + (gone ? ' &middot; deleted on ' + esc(gone) : '') + '</span></div>' +
+          '<button id="dlAll">Download</button></div>';
+      })
+      .catch(function(){ /* the album is a bonus, never the reason a page fails */ });
+  }
+
+  function downloadAll(){
+    api("/photos?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY))
+      .then(function(d){
+        if(!d.photos || !d.photos.length){ toast("Nothing to download yet."); return; }
+        toast("Opening " + d.photos.length + ". Your browser may ask to allow it.");
+        /* One tab each, spaced out. A zip would be nicer and needs a library and
+           a lot of memory on a phone; this works everywhere today. */
+        d.photos.forEach(function(p, i){
+          setTimeout(function(){
+            window.open(PPConfig.API + "/photo?code=" + encodeURIComponent(CODE) +
+              "&key=" + encodeURIComponent(KEY) + "&id=" + encodeURIComponent(p.id), "_blank");
+          }, i * 350);
+        });
+      })
+      .catch(function(e){ toast(e.message); });
+  }
+
   function render(){
     var w = whenText();
     var h = '<div class="party">' +
@@ -221,12 +260,17 @@
       h += '<button data-add="' + k + '"><b>' + t.icon + " " + esc(t.name) + '</b><span>' + esc(t.blurb) + '</span></button>';
     });
     h += '</div>';
+    h += '<div class="bar"><div><h2>The album</h2>' +
+         '<p class="hint" id="albumHint">Guests can add photos all night from the camera button on their phone.</p></div></div>' +
+         '<div id="album"></div>';
+
     var soon = Object.keys(TYPES).filter(function(k){ return !TYPES[k].ready; });
     if(soon.length){
       h += '<p class="hint" style="margin-top:16px">On the way: ' +
            soon.map(function(k){ return esc(TYPES[k].name); }).join(", ") + '.</p>';
     }
     $("app").innerHTML = h;
+    loadAlbum();
   }
 
   /* ------------------------------------------------------------ the builder -- */
@@ -319,6 +363,7 @@
         .catch(function(e){ toast(e.message); });
       return;
     }
+    if(el.id === "dlAll"){ downloadAll(); return; }
     if(el.id === "addItem"){ harvest(); editing.items.push({ q:"", a:"" }); drawItems(); return; }
     if(el.hasAttribute("data-rm")){ harvest(); editing.items.splice(+el.getAttribute("data-rm"),1); drawItems(); return; }
   });
