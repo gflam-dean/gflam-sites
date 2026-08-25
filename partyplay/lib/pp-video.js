@@ -1,4 +1,4 @@
-/* A fifteen second video message, recorded in the browser.
+/* A thirty second video message, recorded in the browser.
  *
  * RECORDED, not picked from the camera roll. That is the whole design decision
  * and it is worth spelling out, because picking a file looks easier:
@@ -7,11 +7,14 @@
  *     the phone made it, which for 30 seconds of 4K is 200 MB, and no amount of
  *     hoping fixes that.
  *   - Recording lets us set the resolution and the bitrate up front, so a clip
- *     is about 8 MB before it exists rather than after.
- *   - Forty phones on one house wifi is the actual condition. 8 MB finishes.
+ *     is about 9 MB before it exists rather than after.
+ *   - Forty phones on one house wifi is the actual condition. 9 MB finishes.
  *     200 MB sits at 90% and the guest gives up on the whole product.
  *
- * And a message to the birthday girl is better at fifteen seconds anyway.
+ * Thirty seconds at 720p is about 9 MB. Thirty at 1080p would be 29 MB, so the
+ * length is the generous half of that trade and the resolution is the careful
+ * half. On a television across a room the difference is hard to see; in the
+ * upload queue it is three times the wait.
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -19,7 +22,7 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  var MAX_SECONDS = 15;
+  var MAX_SECONDS = 30;
   var TARGET_HEIGHT = 720;
   var VIDEO_BPS = 2500000;          // 2.5 Mbit: about 4.7 MB for fifteen seconds
   var AUDIO_BPS = 96000;

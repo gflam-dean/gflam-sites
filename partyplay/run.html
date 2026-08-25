@@ -139,6 +139,11 @@
         /* An answer from a phone. First one per person per question counts: a
            guest who taps twice has changed their mind after seeing a face, and
            letting that through makes the whole board meaningless. */
+        if(m.t==="photoguess" && G && G.mode==="photos" && m.name){
+          if(!G.answers.some(function(a){ return a.name===m.name && a.i===m.i; })){
+            G.answers.push({name:m.name,i:m.i,answer:m.answer}); paintPhotos();
+          }
+        }
         if(m.t==="song" && G && G.mode==="playlist" && m.name && m.text){
           G.songs.push({ title:String(m.text).slice(0,80), by:m.name, played:false });
           send({t:"queue", songs:G.songs.slice(-12).map(function(s){ return {t:s.title,by:s.by}; })});
@@ -267,6 +272,57 @@
     if(el) el.textContent = PPLicence.timeLeft(lic);
     if(!PPLicence.isLive(lic)){ PARTY.status = "finished"; G = null; render(); }
   }, 30000);
+
+  /* -------------------------------------------------- guess the photo ------- */
+  /* Rounds are built from the album, which is the point: the host prepares
+     nothing, and the photos are ones the room took tonight. Guesses are player
+     names, so the options build themselves out of who is actually here. */
+  function runPhotos(g){
+    G={ mode:"photos", items:(g.config&&g.config.items)||[], i:-1, shown:false,
+        answers:[], seed:Math.floor(Math.random()*1e6), repaint:paintPhotos };
+    if(!G.items.length){
+      $("app").innerHTML='<div class="gate"><div class="big">Nothing set up</div>'+
+        '<p>Build this one from your album first: pick a few photos and say who each is.</p>'+
+        '<p style="margin-top:14px"><a href="/host?code='+encodeURIComponent(CODE)+'&key='+encodeURIComponent(KEY)+'">Build it</a></p>'+
+        '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+      return;
+    }
+    paintPhotos();
+  }
+  function photoOptions(i){
+    var it=G.items[i]||{};
+    var correct=String(it.a||"").trim();
+    /* Decoys are other people at the party. If the answer is not somebody here,
+       fall back to the other answers in the round. */
+    var pool=players.filter(function(n){ return n!==correct; });
+    if(pool.length<3){
+      G.items.forEach(function(o,j){ if(j!==i && o.a && o.a!==correct && pool.indexOf(o.a)<0) pool.push(o.a); });
+    }
+    var r=(G.seed+i)>>>0;
+    function rnd(){ r=(r*1103515245+12345)>>>0; return r/4294967296; }
+    var picked=pool.slice().sort(function(){ return rnd()-0.5; }).slice(0,3);
+    return { correct:correct,
+             options:[correct].concat(picked).sort(function(){ return rnd()-0.5; }) };
+  }
+  function paintPhotos(){
+    var it=G.items[G.i];
+    var h='';
+    if(G.i<0) h='<div class="gate"><div class="big">'+G.items.length+' photos</div><p>Ready when you are.</p></div>';
+    else if(!it) h='<div class="gate"><div class="big">That is the lot</div></div>';
+    else {
+      var n=G.answers.filter(function(a){ return a.i===G.i; }).length;
+      h='<div class="q"><div class="qn">'+(G.i+1)+' of '+G.items.length+
+        '<span style="float:right;text-transform:none;letter-spacing:0">'+n+' of '+players.length+' guessed</span></div>'+
+        '<div class="qt">'+esc(it.q||"Who is this?")+'</div>'+
+        (G.shown?'<div class="qa">'+esc(it.a||"")+'</div>':'')+'</div>';
+    }
+    h+='<div class="bar2">'+
+       (G.i>=0 && it && !G.shown ? '<button class="play" id="photoreveal" style="flex:1">Show who it is</button>' : '')+
+       (G.i<0 || G.shown || !it ? '<button class="play" id="photonext" style="flex:1">'+
+          (G.i<0?"First photo":(it?"Next photo":"Done"))+'</button>' : '')+
+       '</div><div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
 
   /* ------------------------------------------------------- prize draw ------- */
   /* Deliberately draws from people who are actually IN the room, not a list typed
@@ -494,10 +550,40 @@
       else if(g.format==="playlist") runPlaylist(g);
       else if(g.format==="whohere") runWhoHere(g);
       else if(g.format==="truths") runTruths(g);
+      else if(g.format==="photos") runPhotos(g);
       else { send({t:"big",text:esc(g.title||g.format),sub:"Off we go"}); toast("Running "+(g.title||g.format)); }
       return;
     }
     if(el.id==="startnow"){ startClock(); return; }
+    if(el.id==="photoreveal"){
+      G.shown=true;
+      var pit=G.items[G.i], po=photoOptions(G.i);
+      var right=G.answers.filter(function(a){ return a.i===G.i && a.answer===po.correct; });
+      send({t:"photoresult", i:G.i, correct:po.correct,
+            board:right.map(function(a){ return {name:a.name, score:PPQuiz.CORRECT_POINTS}; })});
+      send({t:"big", text:esc(po.correct), sub:right.length+(right.length===1?" got it":" got it")});
+      paintPhotos(); return;
+    }
+    if(el.id==="photonext"){
+      G.i++; G.shown=false;
+      var nit=G.items[G.i];
+      if(nit){
+        var no=photoOptions(G.i);
+        send({t:"photo", i:G.i, q:nit.q||"Who is this?", url:nit.url||"",
+              options:no.options, n:G.i+1, of:G.items.length});
+        send({t:"photoscreen", url:nit.url||"", q:nit.q||"Who is this?", n:G.i+1, of:G.items.length});
+      } else {
+        var tally={};
+        G.answers.forEach(function(a){
+          if(a.answer===photoOptions(a.i).correct) tally[a.name]=(tally[a.name]||0)+PPQuiz.CORRECT_POINTS; });
+        var fin=Object.keys(tally).map(function(n){return {name:n,score:tally[n]};})
+          .sort(function(a,b){return b.score-a.score;});
+        if(!G.banked){ nightAdd(fin); G.banked=true; }
+        send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
+        send({t:"big", text:fin.length?esc(fin[0].name):"Done", sub:fin.length?fin[0].score+" points":""});
+      }
+      paintPhotos(); return;
+    }
     if(el.id==="drawnow"){ drawWinner(); return; }
     if(el.id==="drawreset"){ runDraw(); return; }
     if(el.id==="showqueue"){

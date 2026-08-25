@@ -125,7 +125,7 @@
 <div class="wrap" id="app"></div>
 <input type="file" id="camfile" accept="image/*" capture="environment" hidden multiple>
 <button class="cam" id="cam" hidden title="Add a photo to the party album">&#128247;</button>
-<button class="vid" id="vid" hidden title="Record a 15 second message">&#127909;</button>
+<button class="vid" id="vid" hidden>&#127909;</button>
 <div class="camnote" id="camnote"></div>
 
 <script src="/lib/pp-config.js"></script>
@@ -221,6 +221,7 @@
   var T = null;   // text prompt: a song, or three statements
   var W = null;   // who here has ever
   var V = null;   // voting on somebody's two truths
+  var PH = null;  // guess the photo
 
   function bingoStart(){
     var s = load() || {};
@@ -401,6 +402,27 @@
     $("app").innerHTML=h;
   }
 
+  function paintPhoto(){
+    /* The photo is on the television. The phone is the buzzer: putting a big
+       image on both means everyone looks down instead of at the room. */
+    var h='<div class="qn2">Photo '+PH.n+' of '+PH.of+'</div>'+
+          '<div class="qt2">'+esc(PH.q)+'</div><div class="opts">';
+    PH.options.forEach(function(o){
+      var cls="";
+      if(PH.correct!=null){ cls = o===PH.correct ? "right" : (o===PH.mine ? "mine wrong" : "wrong"); }
+      else if(o===PH.mine) cls="mine";
+      h+='<button class="'+cls+'" data-photo="'+esc(o)+'"'+
+         ((PH.mine!=null||PH.correct!=null)?" disabled":"")+'>'+esc(o)+'</button>';
+    });
+    h+='</div>';
+    if(PH.correct!=null){
+      var got=PH.mine===PH.correct;
+      h+='<div class="verdict '+(got?"yes":"no")+'">'+
+         (got?"Correct":(PH.mine==null?"You did not guess":"Not them"))+'</div>';
+    } else if(PH.mine!=null){ h+='<div class="status">Locked in. Look up.</div>'; }
+    $("app").innerHTML=h;
+  }
+
   function paintFinal(b, night){
     var s = load()||{};
     var me = b.filter(function(r){ return r.name === s.nickname; })[0];
@@ -414,8 +436,17 @@
 
   function onMsg(m){
     if(!m || !m.t) return;
-    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; var s = load()||{}; waiting(s.nickname||""); return; }
+    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null; var s = load()||{}; waiting(s.nickname||""); return; }
     if(m.t === "bingo"){ Q=null; H=null; bingoStart(); return; }
+    if(m.t === "photo"){
+      B=null;Q=null;H=null;T=null;V=null;W=null;
+      PH={ i:m.i, q:m.q, url:m.url, options:m.options||[], n:m.n, of:m.of, mine:null, correct:null };
+      paintPhoto(); return;
+    }
+    if(m.t === "photoresult"){
+      if(PH && PH.i===m.i){ PH.correct=m.correct; paintPhoto(); }
+      return;
+    }
     if(m.t === "ask-text"){
       B=null;Q=null;H=null;V=null;W=null;
       T={ kind:m.kind, title:m.title, hint:m.hint, sent:0 };
@@ -487,8 +518,16 @@
   }
 
   document.addEventListener("click", function(ev){
-    var el = ev.target.closest ? ev.target.closest("[data-n],[data-claim],[data-opt],[data-side],[data-lie]") : null;
+    var el = ev.target.closest ? ev.target.closest("[data-n],[data-claim],[data-opt],[data-side],[data-lie],[data-photo]") : null;
     if(!el) return;
+    if(el.hasAttribute("data-photo")){
+      if(!PH || PH.mine!=null || PH.correct!=null) return;
+      var sp=load()||{};
+      PH.mine=el.getAttribute("data-photo");
+      paintPhoto();
+      if(window._ppSend) window._ppSend({ t:"photoguess", name:sp.nickname, i:PH.i, answer:PH.mine });
+      return;
+    }
     if(el.hasAttribute("data-lie")){
       if(!V || V.picked!=null || V.lie!=null) return;
       var sv=load()||{};

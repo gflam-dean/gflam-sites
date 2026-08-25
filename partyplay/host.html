@@ -77,6 +77,12 @@
   .qrow .n button{background:none;border:0;color:var(--faint);cursor:pointer;font:inherit;font-size:13px}
   .qrow .n button:hover{color:#FF8FA3}
   .qrow .two{display:grid;gap:9px}
+  .pickgrid{display:grid;gap:7px;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));margin-bottom:12px}
+  .pickgrid button{padding:0;border:2px solid var(--line);border-radius:10px;overflow:hidden;
+    background:var(--ink);aspect-ratio:1;cursor:pointer}
+  .pickgrid button.on{border-color:var(--pink)}
+  .pickgrid img{width:100%;height:100%;object-fit:cover;display:block}
+  .qrow .shot{width:64px;height:64px;border-radius:9px;object-fit:cover;float:right;margin-left:10px}
   @media(min-width:520px){.qrow .two{grid-template-columns:1fr 1fr}}
   button.primary{background:var(--pink);border:0;color:#fff;border-radius:11px;padding:12px 20px;
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
@@ -138,8 +144,9 @@
     headstails: { icon:"\u{1FA99}", name:"Heads or tails",    blurb:"Ninety seconds. Nothing to set up.", ready:true },
     whohere:    { icon:"\u{1F465}", name:"Who here has ever", ready:true, blurb:"Prompts to get people talking",
                   q:"Find someone who...", a:null, addLabel:"Add a prompt" },
-    photos:     { icon:"\u{1F5BC}", name:"Guess the photo",   blurb:"Add photos later",
-                  q:"Caption or clue", a:"Who is it?", addLabel:"Add a photo round" },
+    photos:     { icon:"\u{1F5BC}", name:"Guess the photo",   ready:true, picker:true,
+                  blurb:"Built from your album",
+                  q:"Clue", a:"Who is it?", addLabel:"Add a photo" },
     playlist:   { icon:"\u{1F3B5}", name:"The playlist",      ready:true, blurb:"Guests add songs on the night" },
     draw:       { icon:"\u{1F3AB}", name:"Prize draw",        ready:true, blurb:"Nothing to set up." }
   };
@@ -299,6 +306,7 @@
 
   function drawItems(){
     var t = TYPES[editing.format];
+    if(t.picker) return drawPicker(t);
     var h = '<label for="gTitle">Give it a name</label>' +
             '<input type="text" id="gTitle" value="' + esc(editing.title || "") + '" placeholder="' + esc(t.name) + '">' +
             '<div style="height:16px"></div>';
@@ -314,6 +322,71 @@
     $("dBody").innerHTML = h;
   }
 
+  /* Guess the Photo is built FROM the album rather than typed from nothing. The
+     host picks faces the room already photographed tonight, which is the whole
+     appeal and means there is nothing to prepare in advance. */
+  function drawPicker(t){
+    var body = $("dBody");
+    body.innerHTML = '<label for="gTitle">Give it a name</label>' +
+      '<input type="text" id="gTitle" value="' + esc(editing.title || "") + '" placeholder="' + esc(t.name) + '">' +
+      '<div style="height:14px"></div><p class="hint" id="pickHint">Loading your album...</p><div id="pickWrap"></div>';
+    api("/photos/pick?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY))
+      .then(function(d){
+        var pics = d.photos || [];
+        if(!pics.length){
+          $("pickHint").textContent = "Nothing in the album yet. Once guests start taking photos, come back and pick a few.";
+          return;
+        }
+        $("pickHint").textContent = "Tap the ones to use, then say who is in each.";
+        var chosen = {};
+        editing.items.forEach(function(it){ if(it.id) chosen[it.id] = it; });
+        function url(id){ return PPConfig.API + "/photo?code=" + encodeURIComponent(CODE) +
+          "&key=" + encodeURIComponent(KEY) + "&id=" + encodeURIComponent(id); }
+        function paint(){
+          var h = '<div class="pickgrid">' + pics.map(function(p){
+            return '<button type="button" class="' + (chosen[p.id] ? "on" : "") + '" data-pick="' + esc(p.id) + '">' +
+                   '<img loading="lazy" src="' + url(p.id) + '" alt=""></button>'; }).join("") + '</div>';
+          var picked = Object.keys(chosen);
+          if(picked.length){
+            h += picked.map(function(id, i){
+              var it = chosen[id];
+              return '<div class="qrow"><div class="n"><span>' + (i+1) + '</span>' +
+                '<button type="button" data-unpick="' + esc(id) + '">Remove</button></div>' +
+                '<img class="shot" src="' + url(id) + '" alt="">' +
+                '<div><label>Who is it?</label><textarea data-who="' + esc(id) + '">' + esc(it.a || "") + '</textarea></div>' +
+                '<div><label>Clue (optional)</label><textarea data-clue="' + esc(id) + '">' + esc(it.q || "") + '</textarea></div>' +
+                '</div>'; }).join("");
+          }
+          $("pickWrap").innerHTML = h;
+        }
+        function grab(){
+          Array.prototype.forEach.call($("pickWrap").querySelectorAll("[data-who]"), function(el){
+            var id = el.getAttribute("data-who"); if(chosen[id]) chosen[id].a = el.value; });
+          Array.prototype.forEach.call($("pickWrap").querySelectorAll("[data-clue]"), function(el){
+            var id = el.getAttribute("data-clue"); if(chosen[id]) chosen[id].q = el.value; });
+        }
+        $("pickWrap").addEventListener("click", function(ev){
+          var b = ev.target.closest ? ev.target.closest("[data-pick],[data-unpick]") : null;
+          if(!b) return;
+          grab();
+          if(b.hasAttribute("data-pick")){
+            var id = b.getAttribute("data-pick");
+            if(chosen[id]) delete chosen[id];
+            else chosen[id] = { id:id, q:"", a:"", url:url(id) };
+          } else { delete chosen[b.getAttribute("data-unpick")]; }
+          paint();
+        });
+        editing._collect = function(){
+          grab();
+          return Object.keys(chosen).map(function(id){
+            return { id:id, q:chosen[id].q, a:chosen[id].a, url:url(id) };
+          }).filter(function(x){ return (x.a||"").trim(); });
+        };
+        paint();
+      })
+      .catch(function(e){ $("pickHint").textContent = e.message; });
+  }
+
   function harvest(){
     editing.title = ($("gTitle") && $("gTitle").value.trim()) || "";
     Array.prototype.forEach.call($("dBody").querySelectorAll("[data-q]"), function(el){
@@ -325,9 +398,17 @@
   }
 
   function saveGame(){
-    harvest();
-    var items = editing.items.filter(function(it){ return (it.q||"").trim(); });
-    if(!items.length){ toast("Add at least one before saving."); return; }
+    var items;
+    if(editing._collect){
+      // the picker knows its own shape: what matters is WHO, not the clue
+      editing.title = ($("gTitle") && $("gTitle").value.trim()) || "";
+      items = editing._collect();
+      if(!items.length){ toast("Pick a photo and say who is in it."); return; }
+    } else {
+      harvest();
+      items = editing.items.filter(function(it){ return (it.q||"").trim(); });
+      if(!items.length){ toast("Add at least one before saving."); return; }
+    }
     $("dSave").disabled = true; $("dSave").textContent = "Saving...";
     api("/games", { method:"POST", body: JSON.stringify({
       code:CODE, key:KEY, id:editing.id, format:editing.format,
