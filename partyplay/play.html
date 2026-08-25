@@ -83,6 +83,20 @@
     border-radius:22px;padding:9px 17px;font-size:14.5px;opacity:0;transition:opacity .2s;
     pointer-events:none;z-index:21;max-width:80vw;text-align:center}
   .camnote.show{opacity:1}
+
+  .ask{position:fixed;inset:0;background:rgba(6,4,10,.78);display:grid;place-items:end center;z-index:30;padding:16px}
+  .askbox{background:var(--ink2);border:1px solid var(--line);border-radius:20px;padding:24px 22px;
+    width:100%;max-width:440px;margin-bottom:env(safe-area-inset-bottom)}
+  .askbox h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:22px;margin:0 0 6px}
+  .askbox p{color:var(--mute);margin:0 0 16px;font-size:15.5px}
+  .askbox input[type=email]{width:100%;padding:14px;border-radius:11px;border:1px solid var(--line);
+    background:var(--ink);color:var(--paper);font:inherit;font-size:16.5px}
+  .askbox .tick{display:flex;gap:10px;align-items:flex-start;margin-top:13px;color:var(--mute);font-size:14.5px}
+  .askbox .tick input{width:19px;height:19px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--pink)}
+  .askbox .row2{display:flex;gap:9px;margin-top:16px}
+  .askbox button{flex:1 1 0;padding:14px;border-radius:11px;border:0;background:var(--pink);color:#fff;
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
+  .askbox button.no{background:none;border:1px solid var(--line);color:var(--mute);flex:0 0 auto;padding:14px 18px}
 </style>
 </head>
 <body>
@@ -314,6 +328,9 @@
       if(Q && Q.i===m.i){ Q.correct=m.correct; Q.board=m.board||[]; paintQuestion(); }
       return; }
     if(m.t === "final"){ paintFinal(m.board||[], m.night||[]); return; }
+    // The host can ask the room at the end of the night, which is the other
+    // moment people actually want the photos.
+    if(m.t === "askphotos"){ setTimeout(askForEmail, 400); return; }
     if(m.t === "big"){
       var n = parseInt(m.text,10);
       // A number on its own during a bingo game is a ball. Anything else is a

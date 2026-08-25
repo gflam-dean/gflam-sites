@@ -222,6 +222,11 @@
            'padding:4px 0;color:var(--mute);font-size:15px"><span>'+(i+1)+'. '+esc(r.name)+'</span><b>'+r.score+'</b></div>'; }).join("")+
          '<button class="sec" id="resetnight" style="width:100%;margin-top:10px">Clear the scores</button></div>';
     }
+    if(PARTY.status === "live"){
+      h+='<div class="card"><div class="row"><div class="meta"><h3>The photos</h3>'+
+         '<p>Ask everyone if they want tonight\'s album sent to them</p></div>'+
+         '<button class="sec" id="askphotos">Ask the room</button></div></div>';
+    }
     $("app").innerHTML=h;
     send({t:"lobby"});
   }
@@ -335,6 +340,7 @@
       return;
     }
     if(el.id==="startnow"){ startClock(); return; }
+    if(el.id==="askphotos"){ send({t:"askphotos"}); toast("Asked everyone"); return; }
     if(el.id==="shownight"){ send({t:"board", title:"Tonight", rows:nightBoard().slice(0,12)}); toast("On the screen"); return; }
     if(el.id==="resetnight"){
       if(!window.confirm("Clear tonight's scores? The games stay, only the running total goes.")) return;

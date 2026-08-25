@@ -196,11 +196,20 @@
            reason to trust us, not a limitation to bury at the bottom. */
         var gone = d.deleteAfter ? new Intl.DateTimeFormat("en-AU",
           { day:"numeric", month:"long" }).format(new Date(d.deleteAfter)) : null;
+        var share = location.origin + "/album?share=" + encodeURIComponent(d.shareKey || "");
         el.innerHTML =
           '<div class="game"><div class="ico">&#128247;</div><div class="meta">' +
           '<b>' + d.count + (d.count === 1 ? " photo" : " photos") + '</b>' +
-          '<span>' + d.megabytes + ' MB' + (gone ? ' &middot; deleted on ' + esc(gone) : '') + '</span></div>' +
-          '<button id="dlAll">Download</button></div>';
+          '<span>' + d.megabytes + ' MB' + (gone ? ' &middot; deleted on ' + esc(gone) : '') +
+          (d.guestsWaiting ? ' &middot; ' + d.guestsWaiting + ' guests want a copy' : '') + '</span></div>' +
+          '<button id="dlAll">Download</button></div>' +
+          /* The share link is safe to hand out: it shows the album and can do
+             nothing else. Never give anyone the host key, which can delete games. */
+          '<div class="game"><div class="ico">&#128279;</div><div class="meta">' +
+          '<b>Share the album</b><span>Anyone with this link can see and save the photos. ' +
+          'They cannot change anything.</span></div>' +
+          '<button id="copyShare">Copy link</button></div>';
+        el.setAttribute("data-share", share);
       })
       .catch(function(){ /* the album is a bonus, never the reason a page fails */ });
   }
@@ -364,6 +373,13 @@
       return;
     }
     if(el.id === "dlAll"){ downloadAll(); return; }
+    if(el.id === "copyShare"){
+      var link = $("album").getAttribute("data-share") || "";
+      if(navigator.clipboard) navigator.clipboard.writeText(link).then(function(){ toast("Link copied"); },
+        function(){ window.prompt("Copy this link", link); });
+      else window.prompt("Copy this link", link);
+      return;
+    }
     if(el.id === "addItem"){ harvest(); editing.items.push({ q:"", a:"" }); drawItems(); return; }
     if(el.hasAttribute("data-rm")){ harvest(); editing.items.splice(+el.getAttribute("data-rm"),1); drawItems(); return; }
   });
