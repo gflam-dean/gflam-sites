@@ -2601,7 +2601,7 @@ async function vpaFireHqWelcome(env, o) {
       .replace(/{{monthly_total}}/g, money(seats * rate))
       .replace(/{{card_url}}/g, cardUrl)
       .replace(/{{host_console_url}}/g, site + '/app')
-      .replace(/{{tv_url}}/g, site + '/tv?venue=' + encodeURIComponent(o.slug || ''))
+      .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
       .replace(/{{terms_url}}/g, site + '/terms')
       .replace(/{{privacy_url}}/g, site + '/privacy')
       .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
@@ -2630,7 +2630,7 @@ async function vpbFireVenueOnboarding(env, o) {
     html = html
       .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your new venue'))
       .replace(/{{host_console_url}}/g, site + '/app')
-      .replace(/{{tv_url}}/g, site + '/tv?venue=' + encodeURIComponent(o.slug || ''))
+      .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
       .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
 
     return await vpaSendEmail(env, email,
@@ -3811,7 +3811,7 @@ async function vpbCancelVenue(request, env, json) {
   return json({ ok: true, cancelling: !undo, ends: endsDate });
 }
 
-/* --- Venue screen (what shows on /tv?venue=<slug>): custom promo slides, the weekly
+/* --- Venue screen (what shows on /tv?<slug>): custom promo slides, the weekly
    members-draw schedule and the meat-raffle blurb. Editable from the Account page. --- */
 function vpbScreenStr(s, n) { return String(s == null ? '' : s).replace(/[\x00-\x1f]+/g, ' ').slice(0, n).trim(); }
 // Advertising slides are now uploaded IMAGES: {image_url, seconds, starts?, ends?}. The url
@@ -4180,7 +4180,7 @@ async function vpaSendStaffWelcomeSms(env, mobile, opts) {   // opts.isManager i
     const slug = (opts && opts.slug) || '';
     // The TV link only makes sense for ONE venue. Someone added across several gets the sign-in
     // link and finds their screens from the console rather than a wrong guess.
-    const tv = slug ? (' TV URL: ' + site + '/tv?venue=' + slug) : '';
+    const tv = slug ? (' TV URL: ' + site + '/tv?' + slug) : '';
     // Nothing about manager vs host here: they will see what they can do the moment they sign in,
     // and the words would mean nothing to them before then.
     const message =
