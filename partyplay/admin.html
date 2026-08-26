@@ -35,6 +35,14 @@
   td{padding:9px 8px 9px 0;border-bottom:1px solid rgba(255,241,230,.07);font-variant-numeric:tabular-nums}
   td:first-child,th:first-child{font-family:'JetBrains Mono',monospace}
   .jobs{display:flex;gap:9px;flex-wrap:wrap}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin:0 0 22px}
+  .tile{border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+  .tile b{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:30px;line-height:1}
+  .tile span{display:block;margin-top:5px;font-size:12.5px;color:var(--mute);line-height:1.35}
+  .tile.live{border-color:var(--teal)} .tile.live b{color:var(--teal)}
+  .tile.warn{border-color:#F5A524} .tile.warn b{color:#F5A524}
+  td.warn{color:#F5A524;font-weight:700}
+  h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;margin:26px 0 8px}
   .out{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--teal);background:var(--ink);
     border-radius:9px;padding:11px 13px;margin-top:11px;white-space:pre-wrap;word-break:break-word;display:none}
   .out.show{display:block}
@@ -136,14 +144,72 @@
       '</div><div class="out" id="jobout"></div>'+
       '<div class="note"><p>These want to run daily. Once you are happy with them, put a Cloudflare Cron Trigger on the Worker so nobody has to remember.</p></div></section>';
 
-    api("/admin/stats?months=6").then(function(d){
-      var rows=d.months||[];
-      $("stats").innerHTML = rows.length
-        ? '<table><tr><th>Month</th><th>Sold</th><th>Revenue</th><th>Comps</th><th>Ran</th><th>24h</th><th>3 day</th></tr>'+
-          rows.map(function(m){ return '<tr><td>'+esc(m.month)+'</td><td>'+m.sold+'</td><td>'+esc(m.revenue)+
-            '</td><td>'+m.comps+'</td><td>'+m.ran+'</td><td>'+m.oneDay+'</td><td>'+m.threeDay+'</td></tr>'; }).join("")+
-          '</table><p style="margin-top:12px">'+d.unstartedTotal+' bought and not yet started. That is normal, they keep for a year, but it is the number that says whether people are actually using it.</p>'
-        : '<p>Nothing yet.</p>';
+    api("/admin/stats?months=12").then(function(d){
+      var n = d.now || {}, months = d.months || [], quarters = d.quarters || [], exp = d.expiring || [];
+
+      /* The numbers you actually want at a glance, before any table: what is on
+         right now, what is coming, and who is about to lose what they paid for. */
+      function tile(big, label, cls){
+        return '<div class="tile'+(cls?' '+cls:'')+'"><b>'+big+'</b><span>'+label+'</span></div>';
+      }
+      var tiles =
+        '<div class="tiles">'+
+        tile(n.runningNow||0, 'on right now', (n.runningNow?'live':''))+
+        tile(n.upcoming||0, 'bought, not started')+
+        tile(n.upcomingPaid||0, 'of those, paid')+
+        tile(n.upcomingComp||0, 'of those, comped')+
+        tile(n.ranTotal||0, 'parties run, all time')+
+        tile(n.expiring30||0, 'expiring in 30 days', (n.expiring30?'warn':''))+
+        '</div>';
+
+      function moneyTable(title, rows, periodLabel){
+        if(!rows.length) return '';
+        return '<h3>'+title+'</h3><table><tr><th>'+periodLabel+'</th><th>Sold</th><th>Revenue</th>'+
+          '<th>Refunds</th><th>Net</th><th>Comps</th><th>Ran</th><th>24h</th><th>3 day</th></tr>'+
+          rows.map(function(m){
+            return '<tr><td>'+esc(m.period)+'</td><td>'+m.sold+'</td><td>'+esc(m.revenue)+'</td>'+
+              '<td>'+(m.refunds? m.refunds+' &middot; '+esc(m.refunded) : '&mdash;')+'</td>'+
+              '<td><b>'+esc(m.net)+'</b></td><td>'+m.comps+'</td><td>'+m.ran+'</td>'+
+              '<td>'+m.oneDay+'</td><td>'+m.threeDay+'</td></tr>';
+          }).join("")+'</table>';
+      }
+
+      var expiringBlock = '';
+      if(exp.length){
+        expiringBlock =
+          '<h3>Running out in the next 30 days</h3>'+
+          '<p>Bought, never started, and the 12 months is nearly up. '+
+          (n.neverNudged ? '<b>'+n.neverNudged+'</b> of them have not been chased yet.' : 'All of them have been chased already.')+'</p>'+
+          '<table><tr><th>Code</th><th>Who</th><th>Party</th><th>Days left</th><th>Chased</th></tr>'+
+          exp.map(function(r){
+            return '<tr><td><b>'+esc(r.code)+'</b></td><td>'+esc(r.name)+'<br><small>'+esc(r.email)+'</small></td>'+
+              '<td>'+(r.party? esc(r.party) : "&mdash;")+'</td><td'+(r.daysLeft<8?' class="warn"':'')+'>'+r.daysLeft+'</td>'+
+              '<td>'+(r.nudgedAt? new Date(r.nudgedAt).toLocaleDateString("en-AU") : '<i>not yet</i>')+'</td></tr>';
+          }).join("")+'</table>'+
+          (n.neverNudged
+            ? '<div class="row"><button class="sec" id="nudgeBtn">Email the '+n.neverNudged+' who have not been chased</button></div>'+
+              '<div class="out" id="nudgeout"></div>'+
+              '<div class="note"><p>One email each, once. Anyone already chased is skipped, so pressing this twice cannot pester the same person.</p></div>'
+            : '');
+      }
+
+      $("stats").innerHTML = tiles +
+        moneyTable('By month', months, 'Month') +
+        moneyTable('By quarter', quarters, 'Quarter') +
+        expiringBlock +
+        (months.length ? '' : '<p>Nothing yet.</p>');
+
+      var nb = $("nudgeBtn");
+      if(nb) nb.addEventListener("click", function(){
+        nb.disabled = true; nb.textContent = "Sending...";
+        api("/admin/nudge-expiring", { method:"POST", body:"{}" })
+          .then(function(r){
+            $("nudgeout").textContent = "Sent " + r.sent + " of " + r.due +
+              (r.failed && r.failed.length ? ". Failed: " + r.failed.join(", ") : ".");
+            nb.textContent = "Done";
+          })
+          .catch(function(e){ nb.disabled=false; nb.textContent="Try again"; $("nudgeout").textContent=e.message; });
+      });
     }).catch(function(e){
       if(/^HTTP 403/.test(e.message)||e.message==="no"){ setKey(""); askKey("That key was not right."); return; }
       $("stats").innerHTML='<p>'+esc(e.message)+'</p>';
