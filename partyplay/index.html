@@ -61,11 +61,21 @@
     padding:16px 28px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;
     border-radius:11px}
   .under{display:block;margin-top:12px;color:var(--faint);font-size:14.5px;max-width:30ch}
-  .facts{display:flex;gap:0;margin:44px 0 0;border-top:1px solid var(--hair);flex-wrap:wrap}
-  .facts div{flex:1 1 160px;padding:18px 22px 18px 0;border-right:1px solid var(--hair)}
-  .facts div:last-child{border-right:0}
-  .facts b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:31px;line-height:1}
-  .facts span{color:var(--faint);font-size:14px}
+  /* The numbers had padding on the right only, so each one sat hard against the
+     divider on its left. Even padding on both sides, and the first and last pull
+     back to the page edge so the row still lines up with everything above it. */
+  .facts{display:flex;gap:0;margin:48px 0 0;border-top:1px solid var(--hair);flex-wrap:wrap}
+  .facts div{flex:1 1 170px;padding:22px 26px;border-right:1px solid var(--hair)}
+  .facts div:first-child{padding-left:0}
+  .facts div:last-child{border-right:0;padding-right:0}
+  .facts b{display:block;font-family:Anton,Impact,sans-serif;font-weight:400;font-size:33px;line-height:1;
+    margin-bottom:5px}
+  .facts span{color:var(--faint);font-size:14px;line-height:1.35;display:block}
+  @media(max-width:640px){
+    .facts div{flex:1 1 45%;padding:18px 18px 18px 0;border-right:0}
+    .facts div:nth-child(odd){border-right:1px solid var(--hair)}
+    .facts div:nth-child(even){padding-left:18px}
+  }
 
   section{padding:74px 0}
   h2{margin:0 0 26px}
@@ -114,6 +124,11 @@
   .steps p{color:var(--mute);margin:0;font-size:16.5px}
   .steps .k{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--pink);font-weight:700}
 
+  .album-row{display:grid;gap:30px;border-top:1px solid var(--hair);padding-top:28px}
+  @media(min-width:820px){.album-row{grid-template-columns:repeat(3,1fr);gap:38px}}
+  .album-row h3{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;margin:0 0 7px}
+  .album-row p{color:var(--mute);margin:0;font-size:16.5px}
+
   .faq{max-width:760px}
   .faq details{border-bottom:1px solid var(--hair);padding:17px 0}
   .faq summary{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;cursor:pointer;list-style:none}
@@ -159,6 +174,11 @@
       <div><b>50</b><span>people, no app</span></div>
       <div><b>0</b><span>things to install</span></div>
       <div><b>24h</b><span>from when you start</span></div>
+      <!-- Appears only once the number is real. See the script at the foot of the
+           page: it asks the Worker how many parties have actually run, and if the
+           answer is small it removes itself rather than printing a figure nobody
+           has earned. -->
+      <div id="partiesFact" hidden><b id="partiesN">0</b><span>parties so far</span></div>
     </div>
   </header>
 
@@ -215,13 +235,27 @@
 
 <div class="w">
   <section>
+    <h2><span class="mono" style="color:var(--faint)">Afterwards</span>
+        <span class="shout">Everyone's photos,<br>in one place</span></h2>
+    <p class="lede">There is a camera on every guest's phone from the moment they join, and a video button under it for a message to whoever the night is about.</p>
+    <div class="album-row">
+      <div><h3>Nobody has to send you anything</h3>
+        <p>No group chat, no "can you AirDrop me that one". It lands in your album as they take it.</p></div>
+      <div><h3>You get the lot</h3>
+        <p>Download everything, or send one link that lets anyone who was there save what they want.</p></div>
+      <div><h3>Then it is gone</h3>
+        <p>The whole album is deleted 30 days after your party. Not archived. Deleted.</p></div>
+    </div>
+  </section>
+
+  <section>
     <h2><span class="mono" style="color:var(--faint)">How it runs</span>
         <span class="shout">Three screens</span></h2>
     <div class="steps">
       <div><span class="k">01</span><h3>Buy it whenever</h3>
         <p>No date to choose. Pay once, get your code, and build your games at your own pace. Nothing is ticking.</p></div>
-      <div><span class="k">02</span><h3>Any screen will do</h3>
-        <p>A cable from a laptop, your TV's own browser, or cast it. No TV at all is fine: a laptop on the bench works.</p></div>
+      <div><span class="k">02</span><h3>As many screens as you like</h3>
+        <p>The same link works on every screen at once. Telly in the lounge, laptop in the kitchen, an iPad by the bar. No TV at all is fine either.</p></div>
       <div><span class="k">03</span><h3>Press start</h3>
         <p>That is when your 24 hours begins. Read out the code, guests join in their phone browser, and away you go.</p></div>
     </div>
@@ -234,6 +268,8 @@
     <div class="faq">
       <details><summary>Do we need to download anything?</summary>
         <p>No. Guests open a web page in whatever browser is already on their phone. That is the whole thing.</p></details>
+      <details><summary>Can we put it on more than one screen?</summary>
+        <p>Yes, as many as you like, and it costs nothing extra. Open the same screen link on each one and they all show the same thing at the same moment. Handy when the kitchen cannot see the telly.</p></details>
       <details><summary>What if we do not have a smart TV?</summary>
         <p>A cable from a laptop works and always will. So does a laptop or an iPad propped up where people can see it. <a href="/setup">Here are the five ways</a>.</p></details>
       <details><summary>How long do we get?</summary>
@@ -245,7 +281,7 @@
       <details><summary>How many people can play?</summary>
         <p>Fifty. More than that and you are having a bigger night than this is built for.</p></details>
       <details><summary>What about photos?</summary>
-        <p>There is a camera on every guest's phone and a video button under it. It all lands in one album you can download, and the whole lot is deleted 30 days after your party.</p></details>
+        <p>There is a camera on every guest's phone and a video button under it. It all lands in one album you can download or share, and the whole lot is deleted 30 days after your party.</p></details>
       <details><summary>What do you do with our details?</summary>
         <p>Guests give a nickname and nothing else. We never collect their contact details. <a href="/privacy">The full version</a> is short.</p></details>
     </div>
@@ -266,6 +302,30 @@
   </footer>
 </div>
 
+<script>
+/* The parties counter.
+   It asks how many have actually run and shows the real number. If that number
+   is under 25 it removes itself, because a figure nobody has earned is worse
+   than no figure: it is the one claim on this page a customer could catch us
+   out on, and under the Australian Consumer Law a made up count of customers is
+   misleading conduct, not marketing. The column reappears on its own the day
+   the number is real. */
+(function(){
+  var el = document.getElementById("partiesFact");
+  if(!el) return;
+  fetch(PPConfig.API + "/parties", { cache:"no-store" })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      var n = j && typeof j.parties === "number" ? j.parties : 0;
+      if(n < 25) return;
+      document.getElementById("partiesN").textContent = n >= 1000
+        ? Math.floor(n/1000) + "k" : String(n);
+      el.hidden = false;
+    })
+    .catch(function(){});
+})();
+</script>
+<script src="/lib/pp-config.js"></script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-7S6R8QJSMQ"></script>
 <script>
   window.dataLayer = window.dataLayer || [];

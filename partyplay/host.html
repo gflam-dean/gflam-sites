@@ -83,6 +83,11 @@
   .pickgrid button.on{border-color:var(--pink)}
   .pickgrid img{width:100%;height:100%;object-fit:cover;display:block}
   .qrow .shot{width:64px;height:64px;border-radius:9px;object-fit:cover;float:right;margin-left:10px}
+  .upbtn{display:block;text-align:center;border:1px dashed var(--line);border-radius:12px;padding:15px;
+    color:var(--paper);font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15.5px;
+    cursor:pointer;margin-bottom:12px}
+  .upbtn:hover{border-color:var(--pink);border-style:solid}
+  .upnote{color:var(--faint);font-size:14px;margin:-6px 0 10px;min-height:18px}
   @media(min-width:520px){.qrow .two{grid-template-columns:1fr 1fr}}
   button.primary{background:var(--pink);border:0;color:#fff;border-radius:11px;padding:12px 20px;
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
@@ -145,7 +150,7 @@
     whohere:    { icon:"\u{1F465}", name:"Who here has ever", ready:true, blurb:"Prompts to get people talking",
                   q:"Find someone who...", a:null, addLabel:"Add a prompt" },
     photos:     { icon:"\u{1F5BC}", name:"Guess the photo",   ready:true, picker:true,
-                  blurb:"Built from your album",
+                  blurb:"Baby photos, holiday photos, whatever you have",
                   q:"Clue", a:"Who is it?", addLabel:"Add a photo" },
     playlist:   { icon:"\u{1F3B5}", name:"The playlist",      ready:true, blurb:"Guests add songs on the night" },
     draw:       { icon:"\u{1F3AB}", name:"Prize draw",        ready:true, blurb:"Nothing to set up." }
@@ -332,18 +337,24 @@
       '<div style="height:14px"></div><p class="hint" id="pickHint">Loading your album...</p><div id="pickWrap"></div>';
     api("/photos/pick?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY))
       .then(function(d){
-        var pics = d.photos || [];
-        if(!pics.length){
-          $("pickHint").textContent = "Nothing in the album yet. Once guests start taking photos, come back and pick a few.";
-          return;
-        }
-        $("pickHint").textContent = "Tap the ones to use, then say who is in each.";
+        /* Two sources. What the host brought (baby photos, usually, uploaded days
+           earlier) and what the room has taken tonight. The first is the game
+           people actually want; the second is a bonus once a party is running. */
+        var mine = d.mine || [], party = d.party || [];
+        var pics = mine.concat(party);
+        $("pickHint").innerHTML =
+          'Upload your own photos, then say who is in each. Baby photos work best.' +
+          (party.length ? ' Photos your guests have taken tonight are down the bottom.' : '');
         var chosen = {};
         editing.items.forEach(function(it){ if(it.id) chosen[it.id] = it; });
         function url(id){ return PPConfig.API + "/photo?code=" + encodeURIComponent(CODE) +
           "&key=" + encodeURIComponent(KEY) + "&id=" + encodeURIComponent(id); }
         function paint(){
-          var h = '<div class="pickgrid">' + pics.map(function(p){
+          var h = '<label class="upbtn" for="gamePhotos">' +
+                  (mine.length ? "Add more photos" : "Upload your photos") +
+                  '</label><input type="file" id="gamePhotos" accept="image/*" multiple hidden>' +
+                  '<div class="upnote" id="upnote"></div>';
+          h += '<div class="pickgrid">' + pics.map(function(p){
             return '<button type="button" class="' + (chosen[p.id] ? "on" : "") + '" data-pick="' + esc(p.id) + '">' +
                    '<img loading="lazy" src="' + url(p.id) + '" alt=""></button>'; }).join("") + '</div>';
           var picked = Object.keys(chosen);
@@ -358,6 +369,34 @@
                 '</div>'; }).join("");
           }
           $("pickWrap").innerHTML = h;
+          var f = $("gamePhotos");
+          if(f) f.addEventListener("change", function(ev){
+            var files = Array.prototype.slice.call(ev.target.files || []);
+            ev.target.value = "";
+            if(!files.length) return;
+            var note = $("upnote"), done = 0;
+            note.textContent = "Sending 1 of " + files.length + "...";
+            /* One at a time and shrunk first, same as the guests. A host on a
+               phone adding twenty baby photos is the same upload problem. */
+            files.reduce(function(chain, file){
+              return chain.then(function(){
+                return PPPhoto.shrink(file).then(function(blob){
+                  return fetch(PPConfig.API + "/photos/host?code=" + encodeURIComponent(CODE) +
+                               "&key=" + encodeURIComponent(KEY), {
+                    method:"POST", headers:{ "content-type":"image/jpeg" }, body: blob
+                  }).then(function(r){
+                    if(!r.ok) return r.json().then(function(j){ throw new Error(j.error||"That did not send."); });
+                    return r.json();
+                  }).then(function(j){
+                    done++; mine.push({id:j.id}); pics.unshift({id:j.id});
+                    chosen[j.id] = { id:j.id, q:"", a:"", url:url(j.id) };
+                    note.textContent = done < files.length
+                      ? "Sending " + (done+1) + " of " + files.length + "..." : "";
+                  });
+                }).catch(function(e){ note.textContent = e.message; });
+              });
+            }, Promise.resolve()).then(function(){ paint(); });
+          });
         }
         function grab(){
           Array.prototype.forEach.call($("pickWrap").querySelectorAll("[data-who]"), function(el){
