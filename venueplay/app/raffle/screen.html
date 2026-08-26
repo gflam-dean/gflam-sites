@@ -125,6 +125,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-screen-router.js"></script>
 <script>
 (function(){
   "use strict";
@@ -374,30 +375,18 @@
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same
   // /tv link. Listen only (no tv_here ping) so two games that are both live can't ping-pong.
-  (function unifiedRouter(){
-    if(!VENUE_SLUG) return;
-    var SELF="raffle";
-    var CH={ bingo:venueCode(VENUE_SLUG), trivia:venueCode("trivia-"+VENUE_SLUG), musical:venueCode("musical-"+VENUE_SLUG), raffle:venueCode("raffle-"+VENUE_SLUG), members:venueCode("members-"+VENUE_SLUG) };
-    var URL={ bingo:"/tv?venue=", trivia:"/app/trivia/screen.html?venue=", musical:"/app/musical/screen.html?venue=", raffle:"/app/raffle/screen.html?venue=", members:"/app/members/screen.html?venue=" };
-    var switched=false;
-    /* DO NOT WALK OUT ON A LIVE GAME. This hopped on any t:"mode" from another format, and the
-       raffle and members consoles announce their mode on every channel subscribe, which includes
-       every reconnect after a wifi blip. So a manager opening the raffle console in the back
-       office, or a raffle tablet losing wifi for a moment, threw a live quiz off the wall
-       mid-question, and the hop is one-way: nothing brought the quiz back. tv.html was hardened
-       against exactly this earlier today; these four screens were missed.
-       A screen that is genuinely idle still hops, which is what makes the unified TV work. */
-    function goTo(game){
-      if(switched||game===SELF) return;
-      try{ if(S.phase && S.phase!=="idle") return; }catch(e){}
-      switched=true; window.location.href=URL[game]+encodeURIComponent(VENUE_SLUG); }
-    Object.keys(CH).forEach(function(game){
-      if(game===SELF) return;
-      var c=client.channel("vp-"+CH[game], { config:{ broadcast:{ self:false } } });
-      c.on("broadcast",{ event:"msg" },function(e){ vpGate(e.payload, function(m){ if(m && m.t==="mode") goTo(game); }); });
-      c.subscribe();
+  /* Follow the night. The shared router is in /app/vp-screen-router.js: it hops
+     on any traffic that means a game is genuinely on air, not only on t:"mode",
+     which a host sends once and only once. Four copies of this had drifted apart,
+     which is how a raffle came to draw its numbers with the finished quiz still
+     on the wall. */
+  var _router = { seen: function(){} };
+  if(window.VPScreenRouter && VENUE_SLUG){
+    _router = VPScreenRouter.start({
+      client: client, self: "raffle", slug: VENUE_SLUG, venueCode: venueCode, gate: vpGate,
+      busy: function(){ return S.phase && S.phase !== "idle"; }
     });
-  })();
+  }
   if(VENUE_SLUG){ var _tvs=document.querySelector(".tv-status"); if(_tvs) _tvs.style.display="none"; }   // no "connected" pill on a live venue screen
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });   // match the host + the unified TV convention
   var tvSubscribed=false;
@@ -417,6 +406,7 @@
   // replies tv_here so a freshly (re)loaded console re-syncs, same handshake as the trivia TV.
   var HOST_TYPES={host_here:1,state:1,idle:1,drawing:1,winner:1,claimed:1,redraw:1};
   function onMsg(m){
+    _router.seen();   // our game is still talking, so it is genuinely live
     if(!m||!m.t) return;
     if(m.t==="tv_here") return;                       // ignore our own presence pings
     if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here" }); }

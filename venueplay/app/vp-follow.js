@@ -53,7 +53,20 @@
     var every = opts.every || 8000;
     if (!api || !room || !mine) return;
 
-    var hopped = false;
+    var hopped = false, settled = 0, timer = null;
+
+    /* EVERY PHONE IN THE ROOM RUNS THIS. Asking every eight seconds for the whole
+       night is a lot of Worker and database traffic for a question whose answer is
+       almost always "stay where you are". Ask briskly for the first minute, when a
+       change is actually likely because the host has just moved everyone, then
+       ease off. A switch is picked up within half a minute either way, and the
+       room's phones stop hammering the thing they are also playing on. */
+    function reschedule() {
+      if (hopped) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(tick, settled >= 7 ? 30000 : every);
+    }
+    function tick() { look(); reschedule(); }
 
     function look() {
       if (hopped) return;
@@ -65,6 +78,7 @@
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) {
           if (!d || hopped) return;
+          settled++;
           var fmt = String(d.format || "");
           if (!fmt) return;                       // nothing running yet: stay put
           if (NO_PLAYER_APP.test(fmt.toLowerCase())) return;
@@ -84,8 +98,7 @@
 
     /* Not immediately. The page has only just loaded because something sent the
        phone here, and asking in the same breath races the write that moved it. */
-    setTimeout(look, 2500);
-    setInterval(look, every);
+    timer = setTimeout(tick, 2500);
   }
 
   root.VPFollow = { start: start, familyOf: familyOf, pageFor: pageFor };

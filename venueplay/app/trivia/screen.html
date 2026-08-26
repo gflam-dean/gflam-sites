@@ -53,7 +53,13 @@
 
   /* question layer */
   .qcount{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
+  /* One fixed size for every question meant a long one was set at the same
+     54px as "WHO WROTE HAMLET" and ran off the bottom of the screen. Anton is a
+     condensed face so the steps can be big without looking odd. */
   .qtext{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5.4cqw,54px);color:#fff;line-height:1.03;margin:1.6cqw 0 2.4cqw;max-width:92cqw}
+  .qtext.q-med  {font-size:clamp(19px,4.4cqw,44px);line-height:1.06}
+  .qtext.q-long {font-size:clamp(18px,3.6cqw,36px);line-height:1.1}
+  .qtext.q-epic {font-size:clamp(16px,2.9cqw,29px);line-height:1.14}
   .qimg{max-width:min(54cqw,52vh);max-height:34cqw;object-fit:contain;border-radius:2cqw;margin:1cqw auto 0;display:block;box-shadow:0 0 42px rgba(0,0,0,.55)}
   .answers{display:grid;grid-template-columns:1fr 1fr;gap:2.2cqw;width:100%;max-width:82cqw}
   .answers.rev4{grid-template-columns:repeat(4,1fr);max-width:94cqw;gap:1.6cqw}
@@ -196,6 +202,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-screen-router.js"></script>
 <script>
 (function(){
   "use strict";
@@ -344,7 +351,15 @@
     show("tvQ");
     $("tvQCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
     var qi=$("tvQImg"); if(m.imageUrl){ qi.src=m.imageUrl; qi.classList.remove("hidden"); } else { qi.classList.add("hidden"); qi.removeAttribute("src"); }
-    $("tvQText").textContent = m.text||"";
+    /* Size to the question, so it fits the wall instead of running off it. The
+       thresholds are character counts because Anton is fixed-width enough at
+       this scale for that to hold, and they are checked against the longest
+       question in the bank. */
+    var _qt = $("tvQText"), _q = m.text||"";
+    _qt.textContent = _q;
+    _qt.className = "qtext" + (_q.length > 150 ? " q-epic"
+                             : _q.length > 95  ? " q-long"
+                             : _q.length > 55  ? " q-med" : "");
     var wrap=$("tvAnswers"); wrap.className="answers"; wrap.innerHTML="";
     for(var i=0;i<curQ.options.length;i++){
       var box=el("div","ans c"+i);
@@ -493,30 +508,18 @@
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   // Unified TV: hop to whatever OTHER game a host puts on air (and back to bingo) on the same
   // /tv link. Listen only (no tv_here ping) so two games that are both live can't ping-pong.
-  (function unifiedRouter(){
-    if(!VENUE_SLUG) return;
-    var SELF="trivia";
-    var CH={ bingo:venueCode(VENUE_SLUG), trivia:venueCode("trivia-"+VENUE_SLUG), musical:venueCode("musical-"+VENUE_SLUG), raffle:venueCode("raffle-"+VENUE_SLUG), members:venueCode("members-"+VENUE_SLUG) };
-    var URL={ bingo:"/tv?venue=", trivia:"/app/trivia/screen.html?venue=", musical:"/app/musical/screen.html?venue=", raffle:"/app/raffle/screen.html?venue=", members:"/app/members/screen.html?venue=" };
-    var switched=false;
-    /* DO NOT WALK OUT ON A LIVE GAME. This hopped on any t:"mode" from another format, and the
-       raffle and members consoles announce their mode on every channel subscribe, which includes
-       every reconnect after a wifi blip. So a manager opening the raffle console in the back
-       office, or a raffle tablet losing wifi for a moment, threw a live quiz off the wall
-       mid-question, and the hop is one-way: nothing brought the quiz back. tv.html was hardened
-       against exactly this earlier today; these four screens were missed.
-       A screen that is genuinely idle still hops, which is what makes the unified TV work. */
-    function goTo(game){
-      if(switched||game===SELF) return;
-      try{ if(state.phase && state.phase!=="lobby") return; }catch(e){}
-      switched=true; window.location.href=URL[game]+encodeURIComponent(VENUE_SLUG); }
-    Object.keys(CH).forEach(function(game){
-      if(game===SELF) return;
-      var c=client.channel("vp-"+CH[game], { config:{ broadcast:{ self:false } } });
-      c.on("broadcast",{ event:"msg" },function(e){ vpGate(e.payload, function(m){ if(m && m.t==="mode") goTo(game); }); });
-      c.subscribe();
+  /* Follow the night. The shared router is in /app/vp-screen-router.js: it hops
+     on any traffic that means a game is genuinely on air, not only on t:"mode",
+     which a host sends once and only once. Four copies of this had drifted apart,
+     which is how a raffle came to draw its numbers with the finished quiz still
+     on the wall. */
+  var _router = { seen: function(){} };
+  if(window.VPScreenRouter && VENUE_SLUG){
+    _router = VPScreenRouter.start({
+      client: client, self: "trivia", slug: VENUE_SLUG, venueCode: venueCode, gate: vpGate,
+      busy: function(){ return state.phase && state.phase !== "lobby"; }
     });
-  })();
+  }
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
   var tvSubscribed=false;
   function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
@@ -538,6 +541,7 @@
   function cancelBackToAds(){ if(_backToAdsT){ clearTimeout(_backToAdsT); _backToAdsT=null; } }
   function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
   function onMsg(m){
+    _router.seen();   // our game is still talking, so it is genuinely live
     if(!m||!m.t) return;
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                       // ignore our own presence pings

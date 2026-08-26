@@ -10,12 +10,17 @@ function harness(reply){
   g.window = g;
   g.location = { replace: function(u){ g.went = u; } };
   g.fetch = function(){ g.calls++; return Promise.resolve({ ok:true, json:function(){ return Promise.resolve(reply); } }); };
-  g.setTimeout  = function(fn){ g.timers.push(fn); return 0; };
-  g.setInterval = function(fn){ g.timers.push(fn); return 0; };
+  /* Real ids and a real clearTimeout, because the code under test cancels and
+     reschedules. A stub that returns 0 made every cancel a no-op and the backoff
+     was never actually exercised. */
+  g.delays = []; var _id = 0;
+  g.setTimeout  = function(fn, ms){ g.timers.push(fn); g.delays.push(ms); return ++_id; };
+  g.setInterval = function(fn, ms){ g.timers.push(fn); g.delays.push(ms); return ++_id; };
+  g.clearTimeout = function(){};
   g.encodeURIComponent = encodeURIComponent;
-  (new Function("globalThis","window","location","fetch","setTimeout","setInterval",
+  (new Function("globalThis","window","location","fetch","setTimeout","setInterval","clearTimeout",
                 readFile("/tmp/vp-work/venueplay/app/vp-follow.js")))
-    (g, g, g.location, g.fetch, g.setTimeout, g.setInterval);
+    (g, g, g.location, g.fetch, g.setTimeout, g.setInterval, g.clearTimeout);
   return g;
 }
 function run(label, reply, opts, expect){
@@ -73,6 +78,23 @@ var chain = Promise.resolve()
         var first = g.went, before = g.calls;
         g.timers.forEach(function(fn){ fn(); });
         ok(g.went === first, "a second poll must not hop again");
+      });
+  })
+  // every phone in the room runs this, so it must not ask forever at full speed
+  .then(function(){
+      var g = harness({ format:"trivia" });      // same game: nothing to do, every time
+      g.VPFollow.start({ api:"https://x", room:R, format:"trivia" });
+      var step = function(){
+        var fns = g.timers.slice(); g.timers.length = 0;
+        fns.forEach(function(fn){ fn(); });
+        return Promise.resolve().then(function(){}).then(function(){}).then(function(){});
+      };
+      var p = Promise.resolve();
+      for (var i = 0; i < 10; i++) p = p.then(step);
+      return p.then(function(){
+        var last = g.delays[g.delays.length - 1];
+        ok(last === 30000, "should have eased off to 30s, last delay was " + last);
+        ok(g.delays[1] === 8000, "should start brisk, second delay was " + g.delays[1]);
       });
   });
 

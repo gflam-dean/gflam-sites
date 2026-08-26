@@ -1724,7 +1724,12 @@
          side. The Worker still clamps to whatever the host actually approved, so this can never
          bill more than they agreed to. */
       if(G.order.length > (G.peak||0)) G.peak = G.order.length;
-      else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
+      /* Refreshing the name used to sit in the ELSE of that peak check, which has
+         nothing to do with it: a phone re-announcing itself at the same moment a
+         new player pushed the peak up had its name silently dropped, and the
+         winner card on the wall read "Player". Always take a name when one is
+         offered. */
+      if(m.name) G.players[m.pid].name = m.name;
       if(G.status==="running"){
         var p=G.players[m.pid];
         var need=ticketsFor(p);

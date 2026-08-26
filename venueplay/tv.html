@@ -756,6 +756,16 @@
   ["pointerdown","keydown","click"].forEach(function(ev){
     document.addEventListener(ev, nudgeFrameAudio);      // not once: the frame is replaced per game
   });
+
+  /* The embedded game screen has seen another game go on air. It cannot act on
+     that itself without putting a television inside this one, so it asks us. */
+  window.addEventListener("message", function(e){
+    if(e.origin !== window.location.origin) return;
+    var d = e.data;
+    if(!d || d.vp !== "show-game" || !d.game) return;
+    if(d.game === "bingo"){ enterAds(); return; }   // bingo is drawn by this page, not in the frame
+    enterEmbed(d.game);
+  });
   function playFanfare(){
     try{
       var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;

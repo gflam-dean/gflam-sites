@@ -921,9 +921,39 @@
     // Bingo runs on the live link: tell the host we're here and how many tickets we want.
     // It adds us to the night and deals our tickets straight back (t:"cards").
     send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards });
+    pushNameToServer();            // the TV reads the server row, not this broadcast
     saveCapture();                 // best-effort: store opt-in details for the venue
     setConn(P.hostSeen ? "live" : "waiting");
     route();
+  }
+
+  /* WHY THE SCREEN SAID "PLAYER".
+     claimIdentity() runs the moment the page opens, before anyone has typed
+     anything, so the server row is created with no name. The name typed a moment
+     later goes out over BROADCAST, which reaches the host but never the database,
+     and /join only writes display_name when a name is actually present. So the
+     row stayed nameless for the whole night and every screen that reads it (the
+     trivia leaderboard, the winner card) fell back to "Player".
+     Re-posting /join with the name patches the same row: it is matched on
+     device_id, so this neither mints a second player nor bills the venue twice. */
+  var _namePushed="";
+  function pushNameToServer(){
+    if(!P.name || _namePushed===P.name) return;
+    var code=P.room; if(!code) return;
+    _namePushed=P.name;
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        if(!d || !d.live || !d.join_code) return;
+        return playerPost("/join", { code:d.join_code, name:P.name })
+          .then(function(j){
+            if(j && j.token){
+              P.token=j.token;                                  // the patch mints a fresh token
+              try{ localStorage.setItem("vp-token-"+code, j.token); }catch(e){}
+            }
+          });
+      })
+      .catch(function(){ _namePushed=""; });                    // let a later attempt retry
   }
   // Best-effort: store this player's details for the venue's opt-in list. This is
   // separate from the game; if the endpoint isn't deployed yet it's simply ignored.
