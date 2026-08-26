@@ -567,6 +567,164 @@
     }
   });
 
+  /* ------------------------------------------------------------ the album ---
+     These were lost in an earlier edit. play.html called showCamera() and
+     askForEmail() which did not exist, so EVERY guest hit a ReferenceError the
+     moment they joined and bounced straight back to the join screen. The whole
+     product was dead. Restored, and the smoke test now checks for
+     called-but-undefined names so it cannot happen again quietly. */
+  function camNote(msg, ms){
+    var n = $("camnote"); if(!n) return;
+    n.textContent = msg; n.classList.add("show");
+    clearTimeout(camNote._t);
+    camNote._t = setTimeout(function(){ n.classList.remove("show"); }, ms || 2600);
+  }
+
+  function showCamera(){
+    var c = $("cam"); if(c) c.hidden = false;
+    var v = $("vid");
+    if(v && typeof PPVideo !== "undefined" && PPVideo.supported()){
+      v.title = "Record a " + PPVideo.MAX_SECONDS + " second message";
+      v.hidden = false;
+    }
+  }
+
+  function sendOne(file){
+    var st = load() || {};
+    return PPPhoto.shrink(file).then(function(blob){
+      return fetch(PPConfig.API + "/photos", {
+        method: "POST",
+        headers: { "content-type": "image/jpeg", "X-Player-Token": st.token || "" },
+        body: blob
+      }).then(function(r){
+        if(r.ok) return true;
+        return r.json().then(function(j){ throw new Error(j && j.error ? j.error : "That did not send."); });
+      });
+    });
+  }
+
+  function onPhotosPicked(ev){
+    var files = Array.prototype.slice.call(ev.target.files || []);
+    ev.target.value = "";
+    if(!files.length) return;
+    var btn = $("cam"); btn.disabled = true;
+    var done = 0, failed = 0, i = 0;
+    camNote(files.length === 1 ? "Sending..." : "Sending 1 of " + files.length, 60000);
+    /* One at a time. Forty phones on one house wifi is the real condition here,
+       and firing six uploads at once is how they all fail together. */
+    function next(){
+      if(i >= files.length){
+        btn.disabled = false;
+        if(done && !failed){
+          camNote(done === 1 ? "Added to the album" : done + " added to the album");
+          setTimeout(askForEmail, 2200);
+        } else if(done){ camNote(done + " added, " + failed + " did not send"); }
+        return;
+      }
+      var f = files[i++];
+      sendOne(f).then(function(){
+        done++;
+        if(files.length > 1 && i < files.length) camNote("Sending " + (i+1) + " of " + files.length, 60000);
+        next();
+      }, function(e){ failed++; camNote(e.message); next(); });
+    }
+    next();
+  }
+
+  function recordMessage(){
+    if(typeof PPVideo === "undefined" || !PPVideo.supported()){
+      camNote("This phone will not record in the browser. Take a photo instead."); return;
+    }
+    navigator.mediaDevices.getUserMedia(PPVideo.constraints("user")).then(function(stream){
+      var box = document.createElement("div");
+      box.className = "rec";
+      box.innerHTML =
+        '<video id="recv" autoplay muted playsinline></video>' +
+        '<button class="recx" id="recx">&times;</button>' +
+        '<div class="recbar"><div class="rectime" id="rect">' + PPVideo.MAX_SECONDS + '</div>' +
+        '<button class="recbtn" id="recb"></button>' +
+        '<div class="rechint" id="rech">Tap to start. It stops itself at ' + PPVideo.MAX_SECONDS + ' seconds.</div></div>';
+      document.body.appendChild(box);
+      box.querySelector("#recv").srcObject = stream;
+      var rec = null;
+      function shut(){
+        try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+        try{ box.remove(); }catch(e){}
+      }
+      box.querySelector("#recx").addEventListener("click", function(){ if(rec) rec.stop(); else shut(); });
+      box.querySelector("#recb").addEventListener("click", function(){
+        var b = box.querySelector("#recb");
+        if(rec){ rec.stop(); return; }
+        b.classList.add("on");
+        box.querySelector("#rech").textContent = "Tap again to stop";
+        rec = PPVideo.record(stream, function(sec){
+          box.querySelector("#rect").textContent = Math.max(0, PPVideo.MAX_SECONDS - sec);
+        });
+        rec.done.then(function(out){
+          shut(); camNote("Sending your message...", 60000);
+          var st = load() || {};
+          return fetch(PPConfig.API + "/photos", {
+            method:"POST",
+            headers:{ "content-type": out.mime, "X-Player-Token": st.token || "" },
+            body: out.blob
+          }).then(function(r){
+            if(r.ok){ camNote("Message added to the album"); return; }
+            return r.json().then(function(j){ throw new Error(j && j.error ? j.error : "That did not send."); });
+          });
+        }).catch(function(e){ shut(); camNote((e && e.message) || "That did not send."); });
+      });
+    }).catch(function(){
+      camNote("We could not get to the camera. Check the permission and try again.");
+    });
+  }
+
+  /* An OFFER, never a gate. Photos are never held back from anyone who says no,
+     nobody needs an email to see or add anything, and once dismissed it stays
+     dismissed for this party. */
+  function askKey(){ var st = load() || {}; return "ppAsked:" + (st.code || ""); }
+  function alreadyAsked(){ try{ return !!localStorage.getItem(askKey()); }catch(e){ return true; } }
+  function markAsked(){ try{ localStorage.setItem(askKey(), "1"); }catch(e){} }
+
+  function askForEmail(){
+    if(alreadyAsked()) return;
+    markAsked();
+    var w = document.createElement("div");
+    w.className = "ask";
+    w.innerHTML =
+      '<div class="askbox">' +
+      "<h3>Want tonight's photos?</h3>" +
+      '<p>Pop your email in and we will send you the album tomorrow. One email, that is it.</p>' +
+      '<input type="email" id="askEmail" inputmode="email" autocomplete="email" placeholder="you@example.com">' +
+      '<label class="tick"><input type="checkbox" id="askMkt">' +
+      '<span>Also send me the occasional party idea. Nothing to do with tonight, and one click to stop.</span></label>' +
+      '<div class="row2"><button id="askGo">Send it to me</button>' +
+      '<button class="no" id="askNo">No thanks</button></div></div>';
+    document.body.appendChild(w);
+    function shutAsk(){ try{ w.remove(); }catch(e){} }
+    w.addEventListener("click", function(e){ if(e.target === w) shutAsk(); });
+    w.querySelector("#askNo").addEventListener("click", shutAsk);
+    w.querySelector("#askGo").addEventListener("click", function(){
+      var em = (w.querySelector("#askEmail").value || "").trim();
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ w.querySelector("#askEmail").focus(); return; }
+      var st = load() || {};
+      var b = w.querySelector("#askGo"); b.disabled = true; b.textContent = "Sending...";
+      fetch(PPConfig.API + "/album/notify-me", {
+        method:"POST",
+        headers:{ "content-type":"application/json", "X-Player-Token": st.token || "" },
+        body: JSON.stringify({ email: em, marketing: w.querySelector("#askMkt").checked })
+      }).then(function(){ shutAsk(); camNote("Done. We will send it tomorrow."); })
+        .catch(function(){ shutAsk(); camNote("Could not save that. Ask the host for the link."); });
+    });
+    setTimeout(function(){ var el = w.querySelector("#askEmail"); if(el) el.focus(); }, 60);
+  }
+
+  (function(){
+    var c = $("cam"), f = $("camfile"), v = $("vid");
+    if(c) c.addEventListener("click", function(){ f.click(); });
+    if(f) f.addEventListener("change", onPhotosPicked);
+    if(v) v.addEventListener("click", recordMessage);
+  })();
+
   /* Someone who has already joined this party should not be asked again, because
      "it made me put my name in twice" is the sort of thing that becomes an email. */
   var saved = load(), fromUrl = (qs.get("code")||"").toUpperCase();

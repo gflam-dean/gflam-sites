@@ -139,6 +139,7 @@
         /* An answer from a phone. First one per person per question counts: a
            guest who taps twice has changed their mind after seeing a face, and
            letting that through makes the whole board meaningless. */
+        if(m.t==="claim" && m.name){ onClaim(m.name, m.kind); }
         if(m.t==="photoguess" && G && G.mode==="photos" && m.name){
           if(!G.answers.some(function(a){ return a.name===m.name && a.i===m.i; })){
             G.answers.push({name:m.name,i:m.i,answer:m.answer}); paintPhotos();
@@ -272,6 +273,40 @@
     if(el) el.textContent = PPLicence.timeLeft(lic);
     if(!PPLicence.isLive(lic)){ PARTY.status = "finished"; G = null; render(); }
   }, 30000);
+
+  /* ------------------------------------------------------------------ bingo -- */
+  function runBingo(g){
+    G={ pool:[], called:[], repaint:paintBingo };
+    for(var i=1;i<=90;i++) G.pool.push(i);
+    // Tell the phones to build their tickets BEFORE the first ball, so nobody is
+    // still staring at a lobby when a number goes up.
+    send({t:"bingo"});
+    send({t:"big",text:"Bingo",sub:"Grab your ticket"});
+    paintBingo();
+  }
+  /* A claim from a phone. Without this the shout goes nowhere and the host never
+     knows anybody has won. */
+  function onClaim(name, kind){
+    toast((name||"Someone") + (kind === "full" ? " has a full house!" : " has a line!"));
+    send({t:"big", text:esc(name||"Winner"), sub: kind === "full" ? "Full house" : "Line"});
+  }
+
+  function callName(n){
+    /* The bit that makes it feel like bingo rather than a number generator. */
+    var names={1:"Kelly's eye",2:"One little duck",7:"Lucky seven",8:"Garden gate",
+      10:"Uncle Ben",11:"Legs eleven",22:"Two little ducks",25:"Duck and dive",
+      44:"Droopy drawers",55:"All the fives",66:"Clickety click",77:"Sunset strip",
+      88:"Two fat ladies",90:"Top of the shop"};
+    return names[n] || (n<10 ? "Number "+n : String(n).split("").join(" and ")+", "+n);
+  }
+
+  function nextBall(){
+    if(!G.pool.length) return;
+    var n=G.pool.splice(pick(G.pool.length),1)[0];
+    G.called.push(n);
+    send({t:"big",text:String(n),sub:callName(n)});
+    paintBingo();
+  }
 
   /* -------------------------------------------------- guess the photo ------- */
   /* Rounds are built from the album, which is the point: the host prepares
