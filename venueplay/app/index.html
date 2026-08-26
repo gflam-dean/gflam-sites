@@ -239,9 +239,9 @@
         <svg width="26" height="30" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
         <span class="word">VenuePlay</span>
       </div>
-      <div class="authbig">VenuePlay HQ admin</div>
+      <div class="authbig">VenuePlay Admin</div>
       <div class="authcard" style="text-align:center">
-        <p style="font-size:14px;color:var(--text);line-height:1.6">VenuePlay HQ admin lands here.</p>
+        <p style="font-size:14px;color:var(--text);line-height:1.6">VenuePlay Admin lands here.</p>
         <p class="note" style="margin-top:12px">The full admin (venues, billing, discounts) plugs in here. For this first cut the venue host path is the focus.</p>
         <div style="text-align:center"><span class="skiplink" id="adminBack" style="margin-top:20px">Back to sign in</span></div>
       </div>
@@ -503,8 +503,8 @@
     var bar=document.createElement("div");
     bar.id="vpImpBar";
     bar.style.cssText="position:sticky;top:0;z-index:60;background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
-    bar.innerHTML='<span>Viewing <b>'+String(name||"this venue").replace(/[<>&]/g,"")+'</b> from VenuePlay HQ</span>'+
-      '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to VenuePlay HQ</a>';
+    bar.innerHTML='<span>Viewing <b>'+String(name||"this venue").replace(/[<>&]/g,"")+'</b> from VenuePlay Admin</span>'+
+      '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
     document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById("vpImpBack").addEventListener("click", function(){ clearImp(); window.location.href="hq.html"; });
   }
@@ -550,7 +550,7 @@
         // Impersonating a venue from VenuePlay HQ: show the console for that venue.
         showImpBanner(imp.name);
         $("headerTag").textContent="Bingo";
-        $("statusText").textContent="VenuePlay HQ · "+(imp.name||"venue");
+        $("statusText").textContent="VenuePlay Admin · "+(imp.name||"venue");
         $("who").style.display="flex";
         $("hactions").style.display="flex";
         greetOnce(ctx);

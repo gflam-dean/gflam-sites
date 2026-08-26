@@ -69,7 +69,7 @@
       <span class="div"></span><span class="word">VenuePlay</span>
     </div>
     <span class="tag">Onboard</span>
-    <span class="hactions"><a class="hact" href="hq.html">Back to HQ</a></span>
+    <span class="hactions"><a class="hact" href="hq.html">Back to Admin</a></span>
   </div>
 </header>
 
@@ -161,7 +161,7 @@
         <div class="r" id="dManager"></div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-        <a class="btn pink" style="width:auto;flex:1" href="hq.html">Back to HQ</a>
+        <a class="btn pink" style="width:auto;flex:1" href="hq.html">Back to Admin</a>
         <a class="btn pink" style="width:auto;flex:1;background:var(--ink-3);color:var(--text);box-shadow:none;border:1px solid var(--line)" id="settingsLink" href="#">Open settings</a>
       </div>
     </div>
@@ -270,7 +270,7 @@
     $("dTv").textContent="screen.venueplay.com.au/"+v.slug;
     $("dScreen").textContent=(extra.screen&&!extra.screen.error)?"Default screen created: Main TV":"Screen row not created (add one later).";
     $("dSettings").textContent=(extra.settings&&!extra.settings.error)?"Default settings created.":"Settings row not created (open Settings to create it).";
-    if(extra.manager&&extra.manager.skipped){ $("dManager").textContent="No manager linked yet. Add one from HQ / Supabase when their Auth user exists."; }
+    if(extra.manager&&extra.manager.skipped){ $("dManager").textContent="No manager linked yet. Add one from Admin / Supabase when their Auth user exists."; }
     else if(extra.manager&&extra.manager.ok){ $("dManager").textContent="First manager linked."; }
     else { $("dManager").innerHTML='<span style="color:var(--roll)">Manager NOT linked: '+(extra.manager&&extra.manager.error&&extra.manager.error.message?extra.manager.error.message:"check the UID")+'. The venue itself was created fine.</span>'; }
     $("settingsLink").href="settings.html?venue="+encodeURIComponent(v.id);
