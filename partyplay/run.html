@@ -453,6 +453,119 @@
     $("app").innerHTML=h;
   }
 
+  /* ---------------------------------------------------------- charades ------
+     The word must reach exactly one phone and no screen at all. It is broadcast
+     with the actor's name attached and every other phone throws it away, which
+     is honest enough for a lounge room: nobody is going to read the network
+     traffic at their mate's fortieth. The television is told who is acting and
+     nothing else. */
+  function runCharades(g){
+    G={ mode:"charades", items:(g.config&&g.config.items)||[], i:-1, actor:null, got:[], repaint:paintCharades };
+    warnScreens("charades");
+    paintCharades();
+  }
+  function nextActor(){
+    /* Straight around the room in join order, so nobody is picked twice before
+       everybody has had a go, and nobody has to volunteer. */
+    if(!players.length) return null;
+    var used=G.got.length;
+    return players[used % players.length];
+  }
+  function paintCharades(){
+    var it=G.items[G.i], h='';
+    if(G.i<0){
+      h='<div class="gate"><div class="big">'+G.items.length+' to act out</div>'+
+        '<p>One phone gets the word. Nothing goes on the telly, so turn any screen '+
+        'the actor can see away from them.</p></div>'+
+        '<button class="callbtn" id="charstart"'+(players.length?'':' disabled')+'>'+
+        (players.length? 'Start' : 'Waiting for someone to join')+'</button>';
+    } else if(!it){
+      h='<div class="gate"><div class="big">That is the lot</div></div>';
+    } else {
+      h='<div class="q"><div class="qn">'+(G.i+1)+' of '+G.items.length+'</div>'+
+        '<div class="qt">'+esc(it.q)+'</div>'+
+        '<div class="qa">'+esc(G.actor||"nobody")+' is acting it out</div></div>'+
+        '<div class="bar2">'+
+        '<button class="play" id="charnext" style="flex:1">Got it</button>'+
+        '<button class="sec" id="charskip" style="flex:1">Skip</button></div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+  function charadesGo(){
+    G.i++;
+    var it=G.items[G.i];
+    if(!it){ send({t:"big",text:"Charades done",sub:""}); paintCharades(); return; }
+    G.actor=nextActor();
+    G.got.push(G.actor);
+    // The word goes to the phones, tagged with whose it is. The TV gets the name only.
+    send({t:"charades", i:G.i, of:G.items.length, word:it.q, actor:G.actor});
+    send({t:"big", text:(G.actor||"Someone")+" is acting", sub:"Shout your guesses"});
+    paintCharades();
+  }
+
+  /* ----------------------------------------------------------- who am I? ----
+     The mirror image of charades. The answer goes on the big screen so the whole
+     room can see it, and on every phone EXCEPT the person guessing. They ask yes
+     or no questions out loud. The only way this fails is the guesser looking at
+     the telly, so say so, twice. */
+  function runGuessWho(g){
+    G={ mode:"guesswho", items:(g.config&&g.config.items)||[], i:-1, guesser:null, done:[], repaint:paintGuessWho };
+    warnScreens("guesswho");
+    paintGuessWho();
+  }
+  function paintGuessWho(){
+    var it=G.items[G.i], h='';
+    if(G.i<0){
+      h='<div class="gate"><div class="big">'+G.items.length+' to guess</div>'+
+        '<p>The answer goes on the big screen and on every phone but theirs. '+
+        'Sit them with their back to it.</p></div>'+
+        '<button class="callbtn" id="gwstart"'+(players.length?'':' disabled')+'>'+
+        (players.length? 'Start' : 'Waiting for someone to join')+'</button>';
+    } else if(!it){
+      h='<div class="gate"><div class="big">That is the lot</div></div>';
+    } else {
+      h='<div class="q"><div class="qn">'+(G.i+1)+' of '+G.items.length+'</div>'+
+        '<div class="qt">'+esc(it.q)+'</div>'+
+        '<div class="qa">'+esc(G.guesser||"nobody")+' is guessing</div></div>'+
+        '<div class="bar2">'+
+        '<button class="play" id="gwnext" style="flex:1">Got it</button>'+
+        '<button class="sec" id="gwpass" style="flex:1">Pass</button></div>';
+    }
+    h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
+    $("app").innerHTML=h;
+  }
+  function guessWhoGo(){
+    G.i++;
+    var it=G.items[G.i];
+    if(!it){ send({t:"big",text:"That is the lot",sub:""}); paintGuessWho(); return; }
+    if(!players.length){ toast("Nobody has joined yet"); G.i--; return; }
+    G.guesser=players[G.done.length % players.length];
+    G.done.push(G.guesser);
+    send({t:"guesswho", i:G.i, of:G.items.length, answer:it.q, guesser:G.guesser});
+    send({t:"big", text:it.q, sub:esc(G.guesser||"They")+", eyes off the screen"});
+    paintGuessWho();
+  }
+
+  /* Both games are ruined by a screen the player can see, and a host reading a
+     line of small print on a busy night will miss it. So it is a thing you have
+     to tap past, once, before the first round. */
+  function warnScreens(kind){
+    var who = kind==="charades" ? "the person acting" : "the person guessing";
+    var why = kind==="charades"
+      ? "The word goes to their phone only. Nothing appears on the television."
+      : "The answer goes on the television and on everyone else's phone.";
+    send({t:"big", text:"Screens off", sub:"for "+who});
+    var w=document.createElement("div");
+    w.className="ask";
+    w.innerHTML='<div class="askbox"><h3>Before you start</h3>'+
+      '<p>'+why+' Make sure '+who+' cannot see any screen: turn their phone face '+
+      'down, or sit them with their back to the telly.</p>'+
+      '<div class="row2"><button id="warnok">Got it</button></div></div>';
+    document.body.appendChild(w);
+    w.querySelector("#warnok").addEventListener("click", function(){ try{ w.remove(); }catch(e){} });
+  }
+
   /* ------------------------------------------- two truths and a lie --------- */
   /* Two phases. Everyone writes their three first, because doing it person by
      person leaves twenty people watching one person type. */
@@ -599,9 +712,15 @@
       else if(g.format==="whohere") runWhoHere(g);
       else if(g.format==="truths") runTruths(g);
       else if(g.format==="photos") runPhotos(g);
+      else if(g.format==="charades") runCharades(g);
+      else if(g.format==="guesswho") runGuessWho(g);
       else { send({t:"big",text:esc(g.title||g.format),sub:"Off we go"}); toast("Running "+(g.title||g.format)); }
       return;
     }
+    if(el.id==="charstart" || el.id==="charnext"){ charadesGo(); return; }
+    if(el.id==="charskip"){ G.got.pop(); charadesGo(); return; }   // a skip should not use up their turn
+    if(el.id==="gwstart" || el.id==="gwnext"){ guessWhoGo(); return; }
+    if(el.id==="gwpass"){ G.done.pop(); guessWhoGo(); return; }
     if(el.id==="startnow"){ startClock(); return; }
     if(el.id==="photoreveal"){
       G.shown=true;

@@ -153,7 +153,17 @@
                   blurb:"Baby photos, holiday photos, whatever you have",
                   q:"Clue", a:"Who is it?", addLabel:"Add a photo" },
     playlist:   { icon:"\u{1F3B5}", name:"The playlist",      ready:true, blurb:"Guests add songs on the night" },
-    draw:       { icon:"\u{1F3AB}", name:"Prize draw",        ready:true, blurb:"Nothing to set up." }
+    draw:       { icon:"\u{1F3AB}", name:"Prize draw",        ready:true, blurb:"Nothing to set up." },
+
+    /* The two games where a screen is a problem rather than a help. `screenOff`
+       puts the warning in front of the host before the first round, because the
+       whole game is ruined the moment the person guessing glances at the telly. */
+    charades:   { icon:"\u{1F3AD}", name:"Charades",         ready:true, screenOff:"actor",
+                  blurb:"The word goes to one phone only",
+                  q:"Word or phrase to act out", a:null, addLabel:"Add a word" },
+    guesswho:   { icon:"\u{1F914}", name:"Who am I?",        ready:true, screenOff:"guesser",
+                  blurb:"They ask, everyone else can see the answer",
+                  q:"Person or thing", a:null, addLabel:"Add one" }
   };
 
   var PARTY = null, GAMES = [], editing = null;

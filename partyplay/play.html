@@ -120,6 +120,22 @@
   .askbox .tick input{width:19px;height:19px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--pink)}
   /* The photo opt-in, on the join screen. It sits inside its own quiet panel so
      it reads as an offer rather than as another thing you have to fill in. */
+  /* Charades and Who am I. One phone in the room is deliberately told nothing,
+     so the two states have to look completely different at a glance in a dark
+     lounge room, not merely say different words. */
+  .secret{border:2px solid var(--pink);border-radius:16px;padding:26px 20px;margin-top:10px;
+    background:rgba(255,31,142,.08);text-align:center}
+  .secret .lbl{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--pink);
+    font-weight:800;margin-bottom:10px}
+  .secret .word{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:34px;
+    line-height:1.12;word-break:break-word}
+  .blind{border:1px dashed var(--line);border-radius:16px;padding:26px 20px;margin-top:10px;text-align:center}
+  .blind .eyes{font-size:40px;line-height:1;margin-bottom:12px}
+  .blind h3{margin:0 0 8px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px}
+  .blind p{margin:0;color:var(--mute);font-size:15px;line-height:1.5}
+  .watch{text-align:center;margin-top:10px}
+  .watch .who{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:26px;margin-bottom:6px}
+  .watch p{color:var(--mute);font-size:15px;margin:0}
   .optin{border:1px solid var(--line);border-radius:13px;padding:15px 16px 4px;margin-top:6px}
   .optin h3{margin:0 0 4px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px}
   .optin .why{margin:0 0 13px;color:var(--mute);font-size:14px;line-height:1.5}
@@ -494,6 +510,45 @@
       PH={ i:m.i, q:m.q, url:m.url, options:m.options||[], n:m.n, of:m.of, mine:null, correct:null };
       paintPhoto(); return;
     }
+    /* CHARADES. Exactly one phone shows the word. Everyone else is told who to
+       watch, which also stops them staring at a blank screen wondering whether
+       the game has started. */
+    if(m.t === "charades"){
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;
+      var me = (load()||{}).nickname || "";
+      var mine = m.actor && me && String(m.actor) === String(me);
+      $("app").innerHTML =
+        '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
+        (mine
+          ? '<div class="secret"><div class="lbl">Act this out. Do not say it.</div>' +
+            '<div class="word">' + esc(m.word||"") + '</div></div>' +
+            '<p class="sub" style="margin-top:14px">No talking, no pointing at words. ' +
+            'Keep this screen to yourself.</p>'
+          : '<div class="watch"><div class="who">' + esc(m.actor||"Someone") + '</div>' +
+            '<p>is acting one out. Shout your guesses.</p></div>') +
+        '<p class="sub" style="margin-top:16px;font-size:13.5px">' + (m.i+1) + ' of ' + (m.of||"?") + '</p>';
+      return;
+    }
+
+    /* WHO AM I. The mirror image: everyone sees it except the one guessing. */
+    if(m.t === "guesswho"){
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;
+      var me2 = (load()||{}).nickname || "";
+      var blind = m.guesser && me2 && String(m.guesser) === String(me2);
+      $("app").innerHTML =
+        '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
+        (blind
+          ? '<div class="blind"><div class="eyes">&#128584;</div>' +
+            '<h3>Do not look at the big screen</h3>' +
+            '<p>Everyone else can see who you are. Ask them questions they can ' +
+            'answer yes or no, and work it out.</p></div>'
+          : '<div class="secret"><div class="lbl">' + esc(m.guesser||"They") + ' is guessing</div>' +
+            '<div class="word">' + esc(m.answer||"") + '</div></div>' +
+            '<p class="sub" style="margin-top:14px">Yes or no answers only. Do not give it away.</p>') +
+        '<p class="sub" style="margin-top:16px;font-size:13.5px">' + (m.i+1) + ' of ' + (m.of||"?") + '</p>';
+      return;
+    }
+
     if(m.t === "photoresult"){
       if(PH && PH.i===m.i){ PH.correct=m.correct; paintPhoto(); }
       return;
