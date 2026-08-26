@@ -498,7 +498,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     played:{}, playedOrder:[], hostNow:null, nowSong:null,
     players:{}, order:[],  // cosmetic roster: pid -> {name}
     claim:null, won:false, busy:false,
-    hostMonitor:false     // false = the venue sound comes from the TV screen and THIS device stays quiet
+    hostMonitor:false,    // false = the venue sound comes from the TV screen and THIS device stays quiet
+    tvLastSeen:0          // when a screen last announced itself; 0 means never
   };
   function curSongs(){ return G.songs; }
   // Prefer THIS game's set: it is small and its artists are known, so a shared title resolves to
@@ -675,7 +676,16 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var warn=$("clipWarn");
     if(song.previewUrl){
       warn.classList.add("hidden");
-      audio.src=song.previewUrl; audio.volume=1.0; audio.muted=!G.hostMonitor; resetClipUI();   // sound plays on the TV screen; this device stays quiet unless monitoring
+      /* Normally the venue's sound comes from the screen and this device stays
+         quiet, so the host is not listening to the same song twice a foot apart.
+         But if no screen has announced itself, there is nothing else in the room
+         that can make a sound, and staying muted means the song plays to nobody.
+         That is what happens when a host tests on their own, and when a venue's
+         TV never came up. So: be the sound system, and say so. */
+      audio.src=song.previewUrl; audio.volume=1.0;
+      audio.muted = !(G.hostMonitor || soundIsOnlyHere());
+      noteIfAlone();
+      resetClipUI();
       var pr=audio.play(); if(pr && pr.catch){ pr.catch(function(){}); }
       $("playPauseBtn").disabled=false; $("playPauseBtn").textContent="Pause";
     } else {
@@ -1029,7 +1039,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // Screen presence arrives on the pairing channel; player join + claim arrive on the game
   // channel. Both flow through onMsg.
   function tvHere(m){
+    G.tvLastSeen = Date.now();          // proof something is out there to make the noise
     $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+    syncMonitorBtn();
     // A freshly (re)loaded screen announces itself with hello:true. Re-hand the session and,
     // if a game is live, replay state + the current song so the TV catches up.
     if(m && m.hello){
@@ -1177,10 +1189,29 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   $("endGameBtn").addEventListener("click", endGame);
   $("playNextBtn").addEventListener("click", playNext);
   $("playPauseBtn").addEventListener("click", togglePlayPause);
+  /* No screen seen in the last minute means no screen. A live TV re-announces
+     itself far more often than that, so this is quiet in a normal venue. */
+  function soundIsOnlyHere(){
+    return !G.tvLastSeen || (Date.now() - G.tvLastSeen > 60000);
+  }
+  function syncMonitorBtn(){
+    var b=$("monitorBtn"); if(!b) return;
+    if(G.hostMonitor)          b.innerHTML="&#128266; Also playing here &middot; tap to mute this device";
+    else if(soundIsOnlyHere()) b.innerHTML="&#128266; Playing here, no screen connected &middot; tap to mute";
+    else                       b.innerHTML="&#128263; Sound is on the TV &middot; tap to also hear it here";
+  }
+  var _aloneSaid=false;
+  function noteIfAlone(){
+    syncMonitorBtn();
+    if(G.hostMonitor || !soundIsOnlyHere()){ _aloneSaid=false; return; }
+    if(_aloneSaid) return; _aloneSaid=true;
+    hostError("No screen is connected, so the music is coming out of this device. "+
+              "Put it through the PA, or open the venue screen and it will take over.");
+  }
   $("monitorBtn").addEventListener("click", function(){
-    G.hostMonitor=!G.hostMonitor; audio.muted=!G.hostMonitor;
-    this.innerHTML = G.hostMonitor ? "&#128266; Also playing here &middot; tap to mute this device"
-                                   : "&#128263; Sound is on the TV &middot; tap to also hear it here";
+    G.hostMonitor=!G.hostMonitor;
+    audio.muted = !(G.hostMonitor || soundIsOnlyHere());
+    syncMonitorBtn();
   });
   $("spotifyBtn").addEventListener("click", copySpotify);
   $("songList").addEventListener("click", function(e){

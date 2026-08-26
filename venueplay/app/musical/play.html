@@ -195,6 +195,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-follow.js"></script>
 <script>
 (function(){
   "use strict";
@@ -701,7 +702,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(loadLight()) setLight(true); var lc=$("lightChk"); if(lc) lc.checked=loadLight();
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
     var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
-    if(room && CODE_RE.test(room)){ connect(room); }
+    if(room && CODE_RE.test(room)){
+      connect(room);
+      // Follow the host to whatever they start next. See vp-follow.js.
+      if(window.VPFollow) VPFollow.start({ api: VP_GAME_API, room: room, format: "musical" });
+    }
     else { $("statusText").textContent="No room"; show("vNoRoom"); }
   })();
 })();

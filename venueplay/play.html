@@ -973,7 +973,20 @@
 
   // ---- incoming ----
 
+  /* When did a game last actually HAPPEN on this channel? A bingo game the host
+     walked away from and one that is mid-round look identical from P.active
+     alone, and that difference decides whether it is safe to move the phone.
+
+     Only real play counts. Presence pings (host_here, tv_here), a phone waking up
+     (rollcall) and the pairing traffic all keep arriving on a channel where
+     nothing is happening, so counting those would mean the answer is always
+     "busy" and no phone would ever follow the host anywhere. idle is excluded on
+     purpose: it means the game just ended. */
+  var PLAY_TYPES = { ball:1, started:1, state:1, resume:1, winner:1, claim_pending:1, cards:1 };
+  var lastPlay = 0;
+  function playingHere(){ return P.active && lastPlay && (Date.now() - lastPlay < 60000); }
   function onMsg(m){
+    if(m && m.t && PLAY_TYPES[m.t]) lastPlay = Date.now();
     if(!m||!m.t) return;
     if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
     if(typeof m.defaultCards==="number"){ setHostDefault(m.defaultCards); }
@@ -1196,11 +1209,11 @@
          venue's PERMANENT code, so it matches for every regular who has ever played bingo here.
          They typed the trivia code off the TV and were silently pinned to the bingo channel with
          this lookup never running once. Only a live game here should stop the hop. */
-      if(P.active) return;
+      if(playingHere()) return;   // see watchVenue
       playerPost("/join/info",{ code:code })
         .then(function(r){
           if(r && r.paper_bingo){ showPaperBingo(); return; }
-          if(P.active) return;
+          if(playingHere()) return;
           var to=playerAppFor(r && r.format);
           /* room_code is set when the code typed was the VENUE code (the permanent one on the
              wall) and a trivia or musical session is live under it. Hop to THAT room, not the
@@ -1322,7 +1335,13 @@
          never ran once, and they sat on the bingo channel all night. goToCode was fixed for
          exactly this today and this, its twin, was missed. The failure shape is the worst kind:
          it works for first-timers and fails for regulars, so it looks intermittent. */
-      if(hopped || P.active) return;   // in a live game HERE: never yank them away
+      /* Do not yank someone out of a game that is actually being played. But a
+         host who started bingo by mistake and immediately started trivia leaves
+         P.active true forever with nothing happening, and the room used to sit
+         on that dead bingo screen all night. So: a live game holds the phone
+         only while it is still saying something. Numbers come far more often
+         than once a minute; an abandoned game says nothing at all. */
+      if(hopped || playingHere()) return;
       try{
         fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
           .then(function(r){ return r.ok?r.json():null; })

@@ -740,6 +740,22 @@
   var _ac=null;
   function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
   document.addEventListener("pointerdown", unlockAudio, { once:true });
+  document.addEventListener("keydown", unlockAudio, { once:true });   // a remote sends keys, never pointers
+
+  /* HAND THE GESTURE TO THE GAME SCREEN.
+     Musical bingo plays its clips inside the embedded screen, in an iframe. A tap
+     on THIS page satisfies the browser's autoplay rule for this document only: the
+     frame is a separate document and has had no gesture of its own, so its first
+     play() is refused and the room hears nothing. The frame cannot see our events
+     either. So tell it, and let it unlock itself. */
+  function nudgeFrameAudio(){
+    var f=document.getElementById("gameFrame");
+    if(!f || !f.contentWindow) return;
+    try{ f.contentWindow.postMessage({ vp:"unlock-audio" }, window.location.origin); }catch(e){}
+  }
+  ["pointerdown","keydown","click"].forEach(function(ev){
+    document.addEventListener(ev, nudgeFrameAudio);      // not once: the frame is replaced per game
+  });
   function playFanfare(){
     try{
       var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;

@@ -448,6 +448,13 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
   document.addEventListener("pointerdown", unlockClip, { once:true });
   document.addEventListener("keydown", unlockClip, { once:true });
   document.addEventListener("click", unlockClip, { once:true });
+  /* When this page is embedded in /tv, every tap lands on the parent and none of
+     the listeners above ever fire. The parent forwards it here instead. Same
+     origin only: a message from anywhere else is ignored. */
+  window.addEventListener("message", function(e){
+    if(e.origin !== window.location.origin) return;
+    if(e.data && e.data.vp === "unlock-audio"){ unlockClip(); unlockAudio(); }
+  });
 
   /* THE ROOM CAN HEAR NOTHING AND NOBODY IS TOLD.
      The host tablet is muted on purpose (audio.muted=!G.hostMonitor), so this screen is the
