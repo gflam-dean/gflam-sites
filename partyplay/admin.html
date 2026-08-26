@@ -41,6 +41,18 @@
   .out.bad{color:#FF8FA3}
   .note{background:var(--ink3);border-left:3px solid var(--yellow);border-radius:0 10px 10px 0;padding:12px 15px;margin-top:12px}
   .note p{margin:0;color:var(--paper);font-size:14.5px}
+  .party{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:12px}
+  .phead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .phead b{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:21px;letter-spacing:.08em;color:var(--pink)}
+  .phead span{color:var(--mute);font-size:15px}
+  .phead i{margin-left:auto;font-style:normal;font-size:12px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);border:1px solid var(--line);border-radius:20px;padding:3px 10px}
+  .phead i.live{background:var(--pink);color:#fff;border-color:var(--pink)}
+  .party table{margin:0 0 12px}
+  .party td:first-child{color:var(--faint);width:1%;white-space:nowrap;padding-right:16px;font-size:13px}
+  .links,.acts{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px}
+  .links button,.acts button{padding:9px 13px;font-size:13.5px}
+  .cpy{border-color:rgba(23,196,180,.4);color:var(--teal)}
 </style>
 </head>
 <body>
@@ -100,6 +112,12 @@
       '<p>Sold is when money changed hands. Ran is when somebody actually pressed start. They are often different months.</p>'+
       '<div id="stats">Loading...</div></section>'+
 
+      '<section><h2>Find a party</h2>'+
+      '<p>A code, or any part of an email. Everything you need to help somebody is on one screen: what state they are in, what they built, who is in the room, and the links to hand them.</p>'+
+      '<div class="row two"><div><label for="q">Code or email</label><input id="q" placeholder="ACDEFG or sam@"></div>'+
+      '<div style="align-self:end"><button id="findgo">Look it up</button></div></div>'+
+      '<div id="found"></div></section>'+
+
       '<section><h2>Comp a party</h2>'+
       '<p>A real licence that was never paid for. Competition winners, or making something right.</p>'+
       '<div class="row two"><div><label for="cn">Their name</label><input id="cn"></div>'+
@@ -129,6 +147,83 @@
     }).catch(function(e){
       if(/^HTTP 403/.test(e.message)||e.message==="no"){ setKey(""); askKey("That key was not right."); return; }
       $("stats").innerHTML='<p>'+esc(e.message)+'</p>';
+    });
+
+    /* ------------------------------------------------ the support console --- */
+    function copyBtn(label, value){
+      return '<button class="sec cpy" data-cp="'+esc(value)+'">'+esc(label)+'</button>';
+    }
+    function showParty(p){
+      var warn = p.status !== "paid"
+        ? '<div class="note"><p>This one is <b>'+esc(p.status)+'</b>, not paid. A pending row is usually somebody who started checkout and never finished.</p></div>' : '';
+      return '<div class="party">'+
+        '<div class="phead"><b>'+esc(p.code)+'</b>'+
+          '<span>'+esc(p.party || "no party name")+'</span>'+
+          '<i class="'+(p.clock.indexOf("running")===0?"live":"")+'">'+esc(p.clock)+'</i></div>'+
+        warn+
+        '<table>'+
+        '<tr><td>Who</td><td>'+esc(p.buyer.name)+' &middot; '+esc(p.buyer.email)+
+          (p.buyer.mobile?' &middot; '+esc(p.buyer.mobile):'')+'</td></tr>'+
+        '<tr><td>Bought</td><td>'+esc(p.plan)+(p.isComp?' <b>(comp'+(p.compReason?': '+esc(p.compReason):'')+')</b>':'')+
+          ' &middot; '+new Date(p.boughtAt).toLocaleString("en-AU")+'</td></tr>'+
+        '<tr><td>Games</td><td>'+(p.games.length
+          ? p.games.map(function(g){ return esc(g.title||g.format)+(g.items?' ('+g.items+')':''); }).join(", ")
+          : '<i>none built yet</i>')+'</td></tr>'+
+        '<tr><td>In the room</td><td>'+p.playerCount+(p.players.length?' &middot; '+esc(p.players.slice(0,12).join(", ")):'')+'</td></tr>'+
+        '<tr><td>Album</td><td>'+p.albumPhotos+' photos, '+p.megabytes+' MB'+
+          (p.gamePhotos?' &middot; '+p.gamePhotos+' game photos':'')+
+          (p.guestsWantingAlbum?' &middot; '+p.guestsWantingAlbum+' guests want a copy':'')+'</td></tr>'+
+        '</table>'+
+        '<div class="links">'+
+          copyBtn("Copy host link", p.hostLink)+
+          copyBtn("Copy run link", p.runLink)+
+          copyBtn("Copy TV link", p.tvLink)+
+          copyBtn("Copy album link", p.albumLink)+
+        '</div>'+
+        '<div class="acts">'+
+          '<button class="sec" data-do="resend" data-code="'+esc(p.code)+'">Resend their email</button>'+
+          '<button class="sec" data-do="unstart" data-code="'+esc(p.code)+'">Put the clock back</button>'+
+          '<button class="sec" data-do="extend" data-code="'+esc(p.code)+'">Give them 24h more</button>'+
+          '<button class="sec" data-do="clear-players" data-code="'+esc(p.code)+'">Empty the room</button>'+
+        '</div><div class="out" id="act-'+esc(p.code)+'"></div></div>';
+    }
+
+    function lookup(){
+      var q = ($("q").value||"").trim();
+      if(!q) return;
+      $("found").innerHTML = '<p>Looking...</p>';
+      api("/admin/party?q="+encodeURIComponent(q))
+        .then(function(d){
+          $("found").innerHTML = (d.parties||[]).map(showParty).join("") ||
+            '<p>Nothing found.</p>';
+        })
+        .catch(function(e){ $("found").innerHTML = '<p>'+esc(e.message)+'</p>'; });
+    }
+    $("findgo").addEventListener("click", lookup);
+    $("q").addEventListener("keydown", function(e){ if(e.key==="Enter") lookup(); });
+
+    document.addEventListener("click", function(ev){
+      var b = ev.target.closest ? ev.target.closest("[data-cp],[data-do]") : null;
+      if(!b) return;
+      if(b.hasAttribute("data-cp")){
+        var v = b.getAttribute("data-cp");
+        if(navigator.clipboard) navigator.clipboard.writeText(v).then(function(){
+          var t=b.textContent; b.textContent="Copied"; setTimeout(function(){ b.textContent=t; },1200); });
+        else window.prompt("Copy this", v);
+        return;
+      }
+      var act = b.getAttribute("data-do"), code = b.getAttribute("data-code");
+      /* Every one of these changes somebody's paid-for thing, so it asks why and
+         the answer goes in the log. Nobody should be able to give away a day and
+         leave no trace. */
+      var why = window.prompt("Why? (goes in the log)\n\n" + act + " on " + code);
+      if(why === null) return;
+      var out = $("act-"+code);
+      out.className = "out show"; out.textContent = "Working...";
+      api("/admin/party/do", { method:"POST",
+        body: JSON.stringify({ code:code, action:act, why:why, hours:24 }) })
+        .then(function(j){ out.textContent = j.did; setTimeout(lookup, 600); })
+        .catch(function(e){ out.className = "out show bad"; out.textContent = e.message; });
     });
 
     $("compgo").addEventListener("click", function(){
