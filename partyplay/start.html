@@ -53,6 +53,11 @@
   .confirm .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12px;letter-spacing:.13em;
     text-transform:uppercase;color:var(--teal);display:block;margin-bottom:5px}
   .confirm.bad{border-left-color:var(--yellow)}
+  /* The 12 months is the thing that makes "no date needed" safe rather than
+     alarming, so it is the loudest line in the box, not a footnote. */
+  .confirm .keeps{margin:12px 0 0;padding-top:12px;border-top:1px solid var(--line);
+    font-size:16px;color:var(--mute)}
+  .confirm .keeps b{color:var(--paper);font-weight:700}
   .promo{color:var(--faint);font-size:14.5px;margin:-14px 0 20px}
 
   .optin{display:flex;gap:12px;align-items:flex-start;background:var(--ink2);border:1px solid var(--line);
@@ -91,7 +96,7 @@
 <div class="wrap">
   <div class="brand"><img src="/logos/partyplay-mark.svg" alt=""><span>PartyPlay</span></div>
   <h1>Get your <em>party</em> sorted</h1>
-  <p class="sub">No date to pick. Buy it now, build your games whenever you like, and start the clock on the night.</p>
+  <p class="sub">No date to pick, and it keeps for 12 months. Buy it now, build your games whenever you like, and start the clock on the night.</p>
 
   <form id="f" novalidate>
     <fieldset>
@@ -138,7 +143,8 @@
 
     <div class="confirm">
       <span class="lbl">No date needed</span>
-      <p id="confirmText">Your clock does not start until you press start on the night, so book now and work out the date later.</p>
+      <p id="confirmText"></p>
+      <p class="keeps"><b>Your licence keeps for 12 months.</b> Buy it today and use it in March if you like. If the party moves, or gets cancelled, or never quite happens, you have lost nothing and there is nothing you need to do.</p>
     </div>
 
     <fieldset>
@@ -175,8 +181,8 @@
   function refresh(){
     var days = currentDays(), p = PPLicence.plan(days);
     go.textContent = "Continue to pay $" + (p.cents/100);
-    boxText.textContent = "You get " + p.label + " of play. The clock does not start until you " +
-      "press start on the night, so book now and work out the date later. Build your games any time in between.";
+    boxText.textContent = "You get " + p.label + " of play, and the clock only starts when you press " +
+      "start on the night. Build your games any time between now and then.";
   }
   Array.prototype.forEach.call(f.querySelectorAll('input[name=days]'), function(r){
     r.addEventListener("change", refresh);
