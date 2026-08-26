@@ -25,9 +25,20 @@
        ACCOUNT, not per project, which is why VenuePlay's two Workers use the same
        one. Check an existing Worker rather than guessing from the business name:
        guessing is how this was wrong the first time. */
-    API: isProd
-      ? 'https://api.partyplay.com.au'
-      : 'https://partyplay-api.dean-tindale.workers.dev',
+    /* ONE address for now, on purpose.
+       api.partyplay.com.au has no DNS record: the Worker custom domain has not
+       been added yet, so a browser on partyplay.com.au had nowhere to send the
+       request and checkout failed on the live site while working on previews.
+       The workers.dev address is the Worker's own and always exists.
+
+       TO SWITCH LATER: add api.partyplay.com.au under the Worker's Domains and
+       Routes, confirm https://api.partyplay.com.au/health answers, then restore
+       the split below. Not before: a split that points half the traffic at a
+       name that does not resolve is worse than no split at all.
+
+         API: isProd ? 'https://api.partyplay.com.au'
+                     : 'https://partyplay-api.dean-tindale.workers.dev', */
+    API: 'https://partyplay-api.dean-tindale.workers.dev',
 
     SUPA_URL:  'https://gpoolavkghnxedzrmtmc.supabase.co',
     SUPA_ANON: 'sb_publishable_DqFZOQsLYxrmlHDBLe1kfg_QdQ5DEV0',
