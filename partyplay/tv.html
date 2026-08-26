@@ -51,6 +51,9 @@
   var SUPA_ANON = PPConfig.SUPA_ANON;
   var $ = function(id){ return document.getElementById(id); };
   var CODE = (new URLSearchParams(location.search).get("code") || "").toUpperCase();
+  /* A television gets set up once and used all night, then again next year. If a
+     code was typed in before, the bare address works from then on. */
+  if(!CODE){ try{ CODE = (localStorage.getItem("ppTvCode") || "").toUpperCase(); }catch(e){} }
   var players = [];
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
@@ -60,6 +63,37 @@
   /* The lobby. This is what is on the television for most of the night, so it is
      the screen that matters most: a code big enough to read from the back of the
      room, and a QR for anyone close enough to point a phone at it. */
+  /* A code box ON THE TELLY.
+     The setup guide tells people four times to go to partyplay.com.au/tv and
+     enter their code. There was nowhere to enter it: the page only read ?code=
+     and otherwise showed a dead end with nothing to tap, which on a TV remote is
+     the end of the road. This is what makes the smart-TV and TV-browser routes
+     work at all. Big boxes, because this gets typed with a remote. */
+  function askForCode(){
+    show('<div class="join" style="max-width:26ch">' +
+      '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
+      '<h1>Enter your party code</h1>' +
+      '<p class="sub">It is in the email, and on your phone in the host console.</p>' +
+      '<input id="cin" maxlength="9" autocomplete="off" autocapitalize="characters" ' +
+      'spellcheck="false" style="width:100%;padding:2.4vh;border-radius:1.6vh;border:2px solid var(--line);' +
+      'background:var(--ink);color:var(--paper);font-family:\'Hanken Grotesk\',sans-serif;font-weight:800;' +
+      'font-size:clamp(28px,7vh,72px);text-align:center;letter-spacing:.16em;text-transform:uppercase">' +
+      '<button id="cgo" style="width:100%;margin-top:1.8vh;padding:2vh;border:0;border-radius:1.6vh;' +
+      'background:var(--pink);color:#fff;font-family:\'Hanken Grotesk\',sans-serif;font-weight:800;' +
+      'font-size:clamp(17px,3vh,30px);cursor:pointer">Show the party</button></div>');
+    var i = document.getElementById("cin"), b = document.getElementById("cgo");
+    function go(){
+      var v = (i.value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+      if(v.length < 6) { i.focus(); return; }
+      // Remembered, so a television only ever gets this typed into it once.
+      try{ localStorage.setItem("ppTvCode", v); }catch(e){}
+      location.search = "?code=" + encodeURIComponent(v);
+    }
+    b.addEventListener("click", go);
+    i.addEventListener("keydown", function(e){ if(e.key === "Enter") go(); });
+    i.focus();
+  }
+
   function drawJoin(){
     show('<div class="join">' +
       '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
@@ -121,7 +155,7 @@
   }
 
   function connect(){
-    if(!CODE){ show('<div class="msg">Open this screen from your host console so it knows which party to show.</div>'); return; }
+    if(!CODE){ askForCode(); return; }
     if(!SUPA_ANON){ show('<div class="msg">This screen is not configured yet.</div>'); return; }
     drawJoin();
     try{

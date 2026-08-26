@@ -188,6 +188,7 @@
     if(!CODE||!KEY){ $("app").innerHTML='<div class="gate">Open this from the link in your email, which has your host key in it.</div>'; return; }
     $("tvlink").href="/tv?code="+encodeURIComponent(CODE);
     $("buildlink").href="/host?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY);
+    nightLoad();
     api("/games?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY))
       .then(function(d){ PARTY=d.party; GAMES=d.games||[]; connect(); render(); })
       .catch(function(e){ $("app").innerHTML='<div class="gate">'+esc(e.message)+'</div>'; });
