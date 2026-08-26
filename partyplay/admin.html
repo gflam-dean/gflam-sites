@@ -35,6 +35,7 @@
   td{padding:9px 8px 9px 0;border-bottom:1px solid rgba(255,241,230,.07);font-variant-numeric:tabular-nums}
   td:first-child,th:first-child{font-family:'JetBrains Mono',monospace}
   .jobs{display:flex;gap:9px;flex-wrap:wrap}
+  button.sm{padding:7px 12px;font-size:13px;width:auto;margin:0}
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin:0 0 22px}
   .tile{border:1px solid var(--line);border-radius:12px;padding:14px 15px}
   .tile b{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:30px;line-height:1}
@@ -67,10 +68,11 @@
 <div class="wrap">
   <div class="top">
     <div class="l"><img src="/logos/partyplay-mark.svg" alt=""><h1>Admin</h1></div>
-    <button class="sec" id="forget" hidden>Forget the key</button>
+    <button class="sec" id="forget" hidden>Sign out</button>
   </div>
   <div id="app"></div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/lib/pp-config.js"></script>
 <script>
 (function(){
@@ -86,9 +88,18 @@
      browser history, in the Worker's logs, and in any screenshot of the tab. */
   function api(path, opts){
     opts = opts || {};
+    /* Two ways in, and the page does not care which it has. A staff member signs
+       in with their mobile and travels on a Supabase token; the shared key is
+       kept as the way to add the first person and the way back in when a phone
+       is flat. Both go in headers, never the URL: a key in a query string is in
+       browser history, in the Worker's logs, and in any screenshot of the tab. */
+    var h = { "content-type":"application/json" };
+    var tok = token();
+    if(tok) h["Authorization"] = "Bearer " + tok;
+    else if(key()) h["X-Admin-Key"] = key();
     return fetch(PPConfig.API+path, {
       method: opts.method || "GET",
-      headers: Object.assign({ "content-type":"application/json", "X-Admin-Key": key() }, opts.headers||{}),
+      headers: Object.assign(h, opts.headers||{}),
       body: opts.body
     }).then(function(r){ return r.json().then(function(j){
       if(!r.ok) throw new Error(j && j.error ? j.error : ("HTTP "+r.status)); return j; }); });
@@ -98,19 +109,92 @@
     el.classList.toggle("bad", !!bad);
   }
 
+  /* ---------------------------------------------------------- signing in ----
+     Mobile first, because that is what staff will use every day, with the shared
+     key underneath it for the first person in and for the day somebody's phone is
+     flat. Supabase sends the code; this page never sees a password. */
+  var sbClient = null;
+  function supa(){
+    if(!sbClient && window.supabase) sbClient = window.supabase.createClient(PPConfig.SUPA_URL, PPConfig.SUPA_ANON);
+    return sbClient;
+  }
+  function token(){ try{ return localStorage.getItem("ppAdminTok") || ""; }catch(e){ return ""; } }
+  function setToken(v){ try{ v ? localStorage.setItem("ppAdminTok", v) : localStorage.removeItem("ppAdminTok"); }catch(e){} }
+
   function askKey(msg){
     $("forget").hidden = true;
     $("app").innerHTML =
-      '<section><h2>Admin key</h2><p>The one you set on the Worker as ADMIN_KEY. It is kept on this device only.</p>'+
+      '<section><h2>Sign in</h2>'+
+      '<p>Your mobile, and we will text you a code. Ask whoever set this up to add your number first.</p>'+
+      '<div class="row"><input type="tel" id="mob" inputmode="tel" autocomplete="tel" placeholder="04xx xxx xxx"></div>'+
+      '<button id="mgo">Text me a code</button>'+
+      '<div class="out" id="mout"></div>'+
+      '<div class="note"><p>No password. The code lasts a few minutes and is good once.</p></div>'+
+      '</section>'+
+      '<section><h2>Or the shared key</h2>'+
+      '<p>The one set on the Worker as ADMIN_KEY. Use this to add the first mobile, or when a phone is flat.</p>'+
       '<div class="row"><input type="password" id="k" autocomplete="off"></div>'+
-      '<button id="kgo">Unlock</button>'+
+      '<button class="sec" id="kgo">Unlock with the key</button>'+
       (msg?'<div class="out show bad">'+esc(msg)+'</div>':'')+'</section>';
+
     $("kgo").addEventListener("click", function(){
       var v=($("k").value||"").trim(); if(!v) return;
-      setKey(v); boot();
+      setToken(""); setKey(v); boot();
     });
     $("k").addEventListener("keydown", function(e){ if(e.key==="Enter") $("kgo").click(); });
-    $("k").focus();
+
+    $("mgo").addEventListener("click", sendCode);
+    $("mob").addEventListener("keydown", function(e){ if(e.key==="Enter") sendCode(); });
+    $("mob").focus();
+  }
+
+  function auMobile(v){
+    var d=String(v||"").replace(/[^\d+]/g,"");
+    if(d.indexOf("+61")===0) d="0"+d.slice(3);
+    else if(d.indexOf("61")===0 && d.length===11) d="0"+d.slice(2);
+    return /^04\d{8}$/.test(d) ? "+61"+d.slice(1) : null;
+  }
+
+  function sendCode(){
+    var mob=auMobile($("mob").value);
+    if(!mob){ out("mout","That does not look like an Australian mobile. Try 04xx xxx xxx.",true); return; }
+    var c=supa(); if(!c){ out("mout","Could not reach the sign-in service. Use the key below.",true); return; }
+    var b=$("mgo"); b.disabled=true; b.textContent="Sending...";
+    c.auth.signInWithOtp({ phone: mob }).then(function(r){
+      b.disabled=false; b.textContent="Text me a code";
+      if(r && r.error){ out("mout", r.error.message || "Could not send the code.", true); return; }
+      askCode(mob);
+    }).catch(function(e){
+      b.disabled=false; b.textContent="Text me a code";
+      out("mout", e.message || "Could not send the code.", true);
+    });
+  }
+
+  function askCode(mob){
+    $("app").innerHTML =
+      '<section><h2>Check your phone</h2>'+
+      '<p>We sent a six digit code to '+esc(mob)+'.</p>'+
+      '<div class="row"><input id="otp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="------"></div>'+
+      '<button id="ogo">Sign in</button>'+
+      '<div class="out" id="oout"></div>'+
+      '<div class="row" style="margin-top:14px"><button class="sec" id="oback">Use a different number</button></div>'+
+      '</section>';
+    $("oback").addEventListener("click", function(){ askKey(""); });
+    $("otp").addEventListener("keydown", function(e){ if(e.key==="Enter") $("ogo").click(); });
+    $("ogo").addEventListener("click", function(){
+      var code=($("otp").value||"").replace(/\D/g,"");
+      if(code.length<6){ out("oout","Six digits.",true); return; }
+      var b=$("ogo"); b.disabled=true; b.textContent="Checking...";
+      supa().auth.verifyOtp({ phone: mob, token: code, type: "sms" }).then(function(r){
+        if(r && r.error){ b.disabled=false; b.textContent="Sign in"; out("oout", r.error.message||"That code did not work.", true); return; }
+        var tok = r && r.data && r.data.session && r.data.session.access_token;
+        if(!tok){ b.disabled=false; b.textContent="Sign in"; out("oout","Signed in, but no session came back. Try the key.",true); return; }
+        setKey(""); setToken(tok); boot();
+      }).catch(function(e){
+        b.disabled=false; b.textContent="Sign in"; out("oout", e.message||"That code did not work.", true);
+      });
+    });
+    $("otp").focus();
   }
 
   function screen(){
@@ -142,7 +226,8 @@
       '<button class="sec" data-job="send-albums">Send album links</button>'+
       '<button class="sec" data-job="sweep-photos">Delete expired photos</button>'+
       '</div><div class="out" id="jobout"></div>'+
-      '<div class="note"><p>These want to run daily. Once you are happy with them, put a Cloudflare Cron Trigger on the Worker so nobody has to remember.</p></div></section>';
+      '<div class="note"><p>These want to run daily. Once you are happy with them, put a Cloudflare Cron Trigger on the Worker so nobody has to remember.</p></div></section>'+
+      '<section id="staff"><h2>Who can get in</h2><p>Loading...</p></section>';
 
     api("/admin/stats?months=12").then(function(d){
       var n = d.now || {}, months = d.months || [], quarters = d.quarters || [], exp = d.expiring || [];
@@ -213,6 +298,57 @@
     }).catch(function(e){
       if(/^HTTP 403/.test(e.message)||e.message==="no"){ setKey(""); askKey("That key was not right."); return; }
       $("stats").innerHTML='<p>'+esc(e.message)+'</p>';
+    });
+
+    /* ------------------------------------------------------ who can get in --- */
+    api("/admin/whoami").then(function(me){
+      var who = me.viaKey
+        ? 'Signed in with the <b>shared key</b>. Add your mobile below and use that from now on, so the log can tell you apart.'
+        : 'Signed in as <b>' + esc(me.name) + '</b>.';
+      return api("/admin/staff").then(function(d){
+        var staff = d.staff || [];
+        var rows = staff.length
+          ? '<table><tr><th>Name</th><th>Mobile</th><th>Last in</th><th></th></tr>' +
+            staff.map(function(a){
+              var isYou = a.mobile === d.you;
+              return '<tr' + (a.active ? '' : ' style="opacity:.5"') + '>' +
+                '<td>' + esc(a.name) + (isYou ? ' <b>(you)</b>' : '') + '</td>' +
+                '<td class="mono">' + esc(a.mobile) + '</td>' +
+                '<td>' + (a.last_seen_at ? new Date(a.last_seen_at).toLocaleDateString("en-AU") : '<i>never</i>') + '</td>' +
+                '<td>' + (a.active
+                   ? (isYou ? '' : '<button class="sec sm" data-off="' + esc(a.mobile) + '">Remove</button>')
+                   : '<i>removed</i>') + '</td></tr>';
+            }).join("") + '</table>'
+          : '<p>Nobody has a phone login yet. Add yours and you will not need the shared key again.</p>';
+
+        $("staff").innerHTML =
+          '<h2>Who can get in</h2><p>' + who + '</p>' + rows +
+          '<div class="row" style="margin-top:14px">' +
+          '<input id="sName" placeholder="Their name" maxlength="60">' +
+          '<input id="sMob" type="tel" inputmode="tel" placeholder="04xx xxx xxx">' +
+          '<button class="sec" id="sAdd">Add</button></div>' +
+          '<div class="out" id="sout"></div>' +
+          '<div class="note"><p>They sign in with that mobile and a texted code. Removing somebody switches them off rather than deleting them, so the log still says who did what.</p></div>';
+
+        $("sAdd").addEventListener("click", function(){
+          var name=($("sName").value||"").trim(), mob=($("sMob").value||"").trim();
+          if(!name || !mob){ out("sout","Both a name and a mobile.",true); return; }
+          api("/admin/staff/add",{ method:"POST", body:JSON.stringify({ name:name, mobile:mob }) })
+            .then(function(){ screen(); })
+            .catch(function(e){ out("sout", e.message, true); });
+        });
+        $("staff").addEventListener("click", function(e){
+          var b=e.target.closest("[data-off]"); if(!b) return;
+          api("/admin/staff/off",{ method:"POST", body:JSON.stringify({ mobile:b.getAttribute("data-off") }) })
+            .then(function(){ screen(); })
+            .catch(function(err){ out("sout", err.message, true); });
+        });
+      });
+    }).catch(function(e){
+      /* An older Worker has none of these routes. Say so plainly rather than
+         leaving an empty box: the page still works on the shared key. */
+      $("staff").innerHTML = '<h2>Who can get in</h2><p>Phone logins need the newer Worker. ' +
+        'Paste the latest one and this will fill in. (' + esc(e.message) + ')</p>';
     });
 
     /* ------------------------------------------------ the support console --- */
@@ -317,8 +453,12 @@
     });
   }
 
-  $("forget").addEventListener("click", function(){ setKey(""); askKey(); });
-  function boot(){ if(!key()) askKey(); else screen(); }
+  $("forget").addEventListener("click", function(){
+    setKey(""); setToken("");
+    try{ if(supa()) supa().auth.signOut(); }catch(e){}
+    askKey();
+  });
+  function boot(){ if(!key() && !token()) askKey(); else screen(); }
   boot();
 })();
 </script>
