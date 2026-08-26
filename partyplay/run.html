@@ -300,6 +300,18 @@
     return names[n] || (n<10 ? "Number "+n : String(n).split("").join(" and ")+", "+n);
   }
 
+  function paintBingo(){
+    var last=G.called.length?G.called[G.called.length-1]:null;
+    var h='<div class="caller"><div class="num">'+(last==null?"--":last)+'</div>'+
+      '<div class="said">'+(last==null?"Tap to call the first number":esc(callName(last)))+'</div></div>'+
+      '<button class="callbtn" id="call">'+(G.called.length?"Next number":"Start calling")+'</button>'+
+      '<div class="board">';
+    for(var i=1;i<=90;i++) h+='<i class="'+(G.called.indexOf(i)>=0?"hit":"")+'">'+i+'</i>';
+    h+='</div><div class="bar2"><button class="sec" id="back">Back to games</button>'+
+       '<button class="sec" id="again">Start over</button></div>';
+    $("app").innerHTML=h;
+    if(!G.pool.length){ $("call").disabled=true; $("call").textContent="All 90 called"; }
+  }
   function nextBall(){
     if(!G.pool.length) return;
     var n=G.pool.splice(pick(G.pool.length),1)[0];
