@@ -276,7 +276,7 @@
 
   function paintQuestion(){
     var s = load()||{};
-    var h = '<div class="qn2">Question ' + Q.n + ' of ' + Q.of + '</div>' +
+    var h = '<div class="qn2">Question ' + esc(Q.n) + ' of ' + esc(Q.of) + '</div>' +
             '<div class="qt2">' + esc(Q.q) + '</div><div class="opts">';
     Q.options.forEach(function(o){
       var cls = "";

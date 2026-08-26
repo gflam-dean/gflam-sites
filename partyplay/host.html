@@ -347,8 +347,16 @@
           (party.length ? ' Photos your guests have taken tonight are down the bottom.' : '');
         var chosen = {};
         editing.items.forEach(function(it){ if(it.id) chosen[it.id] = it; });
-        function url(id){ return PPConfig.API + "/photo?code=" + encodeURIComponent(CODE) +
+        /* Two different URLs on purpose.
+           thumb() is for THIS screen only and carries the host key, which is fine
+           because only the host is looking at it.
+           shown() is what gets SAVED into the game and later broadcast to the
+           whole room, so it must never contain a key. It is the photo id alone,
+           which is an unguessable UUID and reaches nothing but game photos. */
+        function thumb(id){ return PPConfig.API + "/photo?code=" + encodeURIComponent(CODE) +
           "&key=" + encodeURIComponent(KEY) + "&id=" + encodeURIComponent(id); }
+        function shown(id){ return PPConfig.API + "/game/photo?id=" + encodeURIComponent(id); }
+        var url = thumb;
         function paint(){
           var h = '<label class="upbtn" for="gamePhotos">' +
                   (mine.length ? "Add more photos" : "Upload your photos") +
@@ -389,7 +397,7 @@
                     return r.json();
                   }).then(function(j){
                     done++; mine.push({id:j.id}); pics.unshift({id:j.id});
-                    chosen[j.id] = { id:j.id, q:"", a:"", url:url(j.id) };
+                    chosen[j.id] = { id:j.id, q:"", a:"", url:shown(j.id) };
                     note.textContent = done < files.length
                       ? "Sending " + (done+1) + " of " + files.length + "..." : "";
                   });
@@ -411,14 +419,14 @@
           if(b.hasAttribute("data-pick")){
             var id = b.getAttribute("data-pick");
             if(chosen[id]) delete chosen[id];
-            else chosen[id] = { id:id, q:"", a:"", url:url(id) };
+            else chosen[id] = { id:id, q:"", a:"", url:shown(id) };
           } else { delete chosen[b.getAttribute("data-unpick")]; }
           paint();
         });
         editing._collect = function(){
           grab();
           return Object.keys(chosen).map(function(id){
-            return { id:id, q:chosen[id].q, a:chosen[id].a, url:url(id) };
+            return { id:id, q:chosen[id].q, a:chosen[id].a, url:shown(id) };
           }).filter(function(x){ return (x.a||"").trim(); });
         };
         paint();
