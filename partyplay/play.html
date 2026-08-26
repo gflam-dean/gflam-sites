@@ -115,6 +115,14 @@
     background:var(--ink);color:var(--paper);font:inherit;font-size:16.5px}
   .askbox .tick{display:flex;gap:10px;align-items:flex-start;margin-top:13px;color:var(--mute);font-size:14.5px}
   .askbox .tick input{width:19px;height:19px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--pink)}
+  /* The photo opt-in, on the join screen. It sits inside its own quiet panel so
+     it reads as an offer rather than as another thing you have to fill in. */
+  .optin{border:1px solid var(--line);border-radius:13px;padding:15px 16px 4px;margin-top:6px}
+  .optin h3{margin:0 0 4px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px}
+  .optin .why{margin:0 0 13px;color:var(--mute);font-size:14px;line-height:1.5}
+  .optin .field{margin-bottom:0}
+  .optin .tick{display:flex;gap:10px;align-items:flex-start;margin:13px 0 14px;color:var(--mute);font-size:14px;line-height:1.45}
+  .optin .tick input{width:18px;height:18px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--pink)}
   .askbox .row2{display:flex;gap:9px;margin-top:16px}
   .askbox button{flex:1 1 0;padding:14px;border-radius:11px;border:0;background:var(--pink);color:#fff;
     font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;cursor:pointer}
@@ -155,12 +163,24 @@
 
   function api(path, opts){
     return fetch(API+path, Object.assign({ headers:{ "content-type":"application/json" } }, opts||{}))
-      .then(function(r){ return r.json().then(function(j){
+      .catch(function(){
+        /* fetch only rejects when the request never got an answer at all: no
+           signal, the party wifi dropped, or the browser threw the reply away.
+           Its own wording for that is "Load failed" or "Failed to fetch", which
+           tells a guest at a party precisely nothing. */
+        throw new Error("Could not reach the party. Check your signal and try again.");
+      })
+      .then(function(r){ return r.json().catch(function(){
+          throw new Error("Could not reach the party. Check your signal and try again.");
+        }).then(function(j){
         if(!r.ok) throw new Error(j&&j.error ? j.error : "Something went wrong"); return j; }); });
   }
 
-  function joinScreen(prefillCode, err){
-    var saved = load() || {};
+  function joinScreen(prefillCode, err, keep){
+    /* keep is whatever was in the boxes a moment ago. Without it, a failed
+       attempt redrew from the last saved player, which on a first join is
+       nothing at all, so the guest had to type their name in again. */
+    var saved = keep || load() || {};
     $("app").innerHTML =
       '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
       '<h1>Join the party</h1><p class="sub">Whatever is on the telly, put the code in.</p>' +
@@ -169,27 +189,55 @@
       'inputmode="text" maxlength="9" value="' + esc(prefillCode||"") + '"></div>' +
       '<div class="field"><label for="name">Your name</label>' +
       '<input id="name" autocomplete="nickname" maxlength="24" value="' + esc(saved.nickname||"") + '"></div>' +
+      '<div class="optin">' +
+        "<h3>Want tonight's photos?</h3>" +
+        '<p class="why">Everyone at the party shares one album. Leave your email and we will ' +
+        'send it to you tomorrow. Skip it if you would rather not, you can still play.</p>' +
+        '<div class="field"><label for="email">Email <span style="color:var(--faint)">(optional)</span></label>' +
+        '<input id="email" type="email" inputmode="email" autocomplete="email" ' +
+        'placeholder="you@example.com" value="' + esc(saved.email||"") + '"></div>' +
+        '<label class="tick"><input type="checkbox" id="mkt"' + (saved.mkt ? " checked" : "") + '>' +
+        '<span>Also send me the occasional party idea. Nothing to do with tonight, ' +
+        'and one click to stop.</span></label>' +
+      '</div>' +
       '<button class="go" id="go">Join</button>' +
       (err ? '<div class="err">' + esc(err) + '</div>' : '');
     $("go").addEventListener("click", doJoin);
     $("code").addEventListener("keydown", function(e){ if(e.key==="Enter") $("name").focus(); });
-    $("name").addEventListener("keydown", function(e){ if(e.key==="Enter") doJoin(); });
+    $("name").addEventListener("keydown", function(e){ if(e.key==="Enter") $("email").focus(); });
+    $("email").addEventListener("keydown", function(e){ if(e.key==="Enter") doJoin(); });
     ($("code").value ? $("name") : $("code")).focus();
   }
 
   function doJoin(){
     var code = ($("code").value||"").trim(), nickname = ($("name").value||"").trim();
-    if(!code) return joinScreen(code, "Put in the code from the screen.");
-    if(!nickname) return joinScreen(code, "Put in a name so everyone knows who you are.");
+    var email = ($("email").value||"").trim(), mkt = !!$("mkt").checked;
+    var typed = { nickname:nickname, email:email, mkt:mkt };
+    if(!code) return joinScreen(code, "Put in the code from the screen.", typed);
+    if(!nickname) return joinScreen(code, "Put in a name so everyone knows who you are.", typed);
+    /* The email is optional, but a typed one that is wrong is worth catching
+       here: the album goes nowhere and nobody ever finds out why. */
+    if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+      return joinScreen(code, "That email does not look right. Fix it, or clear it and join anyway.", typed);
     $("go").disabled = true; $("go").textContent = "Joining...";
     api("/join", { method:"POST", body: JSON.stringify({ code:code, nickname:nickname }) })
       .then(function(j){
-        save({ code:code.toUpperCase(), nickname:j.nickname, token:j.token });
+        save({ code:code.toUpperCase(), nickname:j.nickname, token:j.token, email:email, mkt:mkt });
         waiting(j.nickname);
         showCamera();
         connect(code.toUpperCase(), j.nickname);
+        /* Sent after they are already in, and never allowed to fail the join.
+           Nobody should be kept out of a party because a mailing list is down. */
+        if(email){
+          markAsked();
+          fetch(API + "/album/notify-me", {
+            method:"POST",
+            headers:{ "content-type":"application/json", "X-Player-Token": j.token || "" },
+            body: JSON.stringify({ email: email, marketing: mkt })
+          }).catch(function(){});
+        }
       })
-      .catch(function(e){ joinScreen(code, e.message); });
+      .catch(function(e){ joinScreen(code, e.message, typed); });
   }
 
   function waiting(nickname){

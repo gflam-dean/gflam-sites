@@ -22,9 +22,34 @@
   .joinrow{display:flex;align-items:center;gap:5vw;flex-wrap:wrap;justify-content:center}
   .qr{background:#fff;padding:1.4vh;border-radius:2vh;line-height:0}
   .qr canvas{display:block;width:26vh;height:26vh}
-  .codewrap .lbl{color:var(--mute);font-size:clamp(13px,2vh,24px);display:block;margin-bottom:.6vh}
-  .code{font-size:clamp(46px,15vh,190px);line-height:.95;letter-spacing:.06em;color:var(--pink)}
-  .codewrap .url{color:var(--mute);font-size:clamp(14px,2.2vh,28px);margin-top:1vh}
+  .codewrap{text-align:left}
+  .codewrap .lbl{color:var(--mute);font-size:clamp(13px,2vh,24px);display:block;margin-bottom:.4vh}
+  /* The address is the instruction, so it is set like one: big, in the party
+     colour, on its own line. It used to sit under the code in mute grey at half
+     the size, which read as a footnote rather than the thing to type. */
+  .codewrap .url{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;
+    font-size:clamp(24px,5.4vh,68px);line-height:1;letter-spacing:-.01em;color:var(--teal);
+    margin-bottom:2.2vh;word-break:break-word}
+  .code{font-size:clamp(46px,14vh,180px);line-height:.95;letter-spacing:.06em;color:var(--pink)}
+
+  /* Typing a code with a TV remote is slow and unpleasant, so this screen gets
+     out of the way: one box, one button, nothing else to land focus on. */
+  .entry{width:min(90vw,30ch);text-align:center}
+  .entry .mark{width:11vh;height:9.5vh;margin-bottom:1.6vh}
+  .entry h1{font-size:clamp(26px,5.2vh,66px);line-height:1.02}
+  .entry .sub{color:var(--mute);font-size:clamp(14px,2.2vh,26px);margin:1.2vh 0 3vh;line-height:1.5}
+  .entry input{width:100%;padding:2.2vh 1vh;border-radius:1.6vh;border:2px solid var(--line);
+    background:rgba(255,241,230,.05);color:var(--paper);font-family:'Hanken Grotesk',system-ui,sans-serif;
+    font-weight:800;font-size:clamp(28px,6.6vh,68px);text-align:center;letter-spacing:.16em;
+    text-transform:uppercase;outline:none;transition:border-color .15s}
+  .entry input:focus{border-color:var(--pink)}
+  .entry input::placeholder{color:rgba(182,173,194,.4);letter-spacing:.12em}
+  .entry button{width:100%;margin-top:1.8vh;padding:2.1vh;border:0;border-radius:1.6vh;
+    background:var(--pink);color:#fff;font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:800;
+    font-size:clamp(17px,3vh,30px);cursor:pointer}
+  .entry button:disabled{background:rgba(255,241,230,.13);color:var(--mute);cursor:default}
+  .entry .foot{color:var(--mute);font-size:clamp(12px,1.8vh,20px);margin-top:2.6vh;line-height:1.6}
+  .entry .foot b{color:var(--paper)}
   .who{position:fixed;left:0;right:0;bottom:0;padding:1.6vh 3vw;display:flex;gap:1vw;flex-wrap:wrap;
     justify-content:center;border-top:1px solid var(--line);background:rgba(18,16,26,.9)}
   .who span{background:rgba(255,241,230,.08);border-radius:2vh;padding:.6vh 1.6vh;font-size:clamp(12px,1.8vh,22px)}
@@ -47,6 +72,10 @@
   "use strict";
   var API = PPConfig.API;
   var SITE = location.origin;
+  /* What guests are told to type is always the plain address, never whatever
+     this television happens to have loaded from. A www. or a preview host on
+     the screen is one more thing for someone to mistype from across the room. */
+  var JOIN_ADDRESS = "partyplay.com.au/play";
   var SUPA_URL  = PPConfig.SUPA_URL;
   var SUPA_ANON = PPConfig.SUPA_ANON;
   var $ = function(id){ return document.getElementById(id); };
@@ -70,25 +99,28 @@
      the end of the road. This is what makes the smart-TV and TV-browser routes
      work at all. Big boxes, because this gets typed with a remote. */
   function askForCode(){
-    show('<div class="join" style="max-width:26ch">' +
+    show('<div class="entry">' +
       '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
       '<h1>Enter your party code</h1>' +
-      '<p class="sub">It is in the email, and on your phone in the host console.</p>' +
-      '<input id="cin" maxlength="9" autocomplete="off" autocapitalize="characters" ' +
-      'spellcheck="false" style="width:100%;padding:2.4vh;border-radius:1.6vh;border:2px solid var(--line);' +
-      'background:var(--ink);color:var(--paper);font-family:\'Hanken Grotesk\',sans-serif;font-weight:800;' +
-      'font-size:clamp(28px,7vh,72px);text-align:center;letter-spacing:.16em;text-transform:uppercase">' +
-      '<button id="cgo" style="width:100%;margin-top:1.8vh;padding:2vh;border:0;border-radius:1.6vh;' +
-      'background:var(--pink);color:#fff;font-family:\'Hanken Grotesk\',sans-serif;font-weight:800;' +
-      'font-size:clamp(17px,3vh,30px);cursor:pointer">Show the party</button></div>');
+      '<p class="sub">Six characters, in your welcome email and in the host console on your phone.</p>' +
+      '<input id="cin" maxlength="9" placeholder="ABC123" autocomplete="off" ' +
+      'autocapitalize="characters" spellcheck="false" inputmode="text">' +
+      '<button id="cgo" disabled>Show the party</button>' +
+      '<p class="foot">This telly only needs this once. Next time <b>partyplay.com.au/tv</b> ' +
+      'comes straight back to your party.</p></div>');
+
     var i = document.getElementById("cin"), b = document.getElementById("cgo");
+    function clean(){ return (i.value||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
     function go(){
-      var v = (i.value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
-      if(v.length < 6) { i.focus(); return; }
+      var v = clean();
+      if(v.length < 6){ i.focus(); return; }
       // Remembered, so a television only ever gets this typed into it once.
       try{ localStorage.setItem("ppTvCode", v); }catch(e){}
       location.search = "?code=" + encodeURIComponent(v);
     }
+    // The button stays dead until the code is long enough, so a remote cannot
+    // land on it and submit nothing, which just blinks and looks broken.
+    i.addEventListener("input", function(){ b.disabled = clean().length < 6; });
     b.addEventListener("click", go);
     i.addEventListener("keydown", function(e){ if(e.key === "Enter") go(); });
     i.focus();
@@ -101,9 +133,12 @@
       '<p class="sub">No app. It works in your phone browser.</p>' +
       '<div class="joinrow">' +
         '<div class="qr"><canvas id="qr"></canvas></div>' +
-        '<div class="codewrap"><span class="lbl">or go to partyplay.com.au and enter</span>' +
-        '<div class="code">' + esc(CODE) + '</div>' +
-        '<div class="url">' + esc(SITE.replace(/^https?:\/\//,"")) + '/play</div></div>' +
+        '<div class="codewrap">' +
+          '<span class="lbl">Or on your phone, go to</span>' +
+          '<div class="url">' + esc(JOIN_ADDRESS) + '</div>' +
+          '<span class="lbl">and put in this code</span>' +
+          '<div class="code">' + esc(CODE) + '</div>' +
+        '</div>' +
       '</div></div>');
     var el = $("qr");
     if(window.QRCode && el){
