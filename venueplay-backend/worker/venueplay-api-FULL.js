@@ -2478,7 +2478,11 @@ async function vpaAddCardRedirect(request, env) {
 
     const rows = await vpaSelect(env, 'venueplay_founding',
       'id=eq.' + encodeURIComponent(foundingId)
-      + '&select=id,venue_name,contact_email,mobile,max_seats,plan,status,stripe_subscription_id');
+      // postcode IS in this list on purpose: vpaFoundingForPostcode below reads it, and
+      // without it f.postcode was undefined, founding came back false, and every venue
+      // onboarded from HQ was quietly put on the STANDARD price instead of the founding
+      // one they were promised. Self-serve signup was never affected; only this path.
+      + '&select=id,venue_name,contact_email,mobile,max_seats,plan,status,stripe_subscription_id,postcode');
     const f = rows && rows[0];
     if (!f) return page('We could not find that account', 'Reply to your welcome email and we will sort it out.');
     // Already paying: sending them through Checkout again would open a SECOND subscription on the

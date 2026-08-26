@@ -1912,11 +1912,21 @@
   // ================= EVENTS =================
   /* State gaming rules, once a night: shown before the night opens, never mid-game. */
   $("startBtn").addEventListener("click", function(){
+    /* DOUBLE TAP GUARD. openLobby() sets G.status="lobby" synchronously, and for a FREE game
+       gateFor calls proceed() synchronously too with no modal to slow anybody down. So two
+       quick taps used to land in startGame(): cards dealt to an empty room, the TV jumping
+       ads to lobby to live before a single person could scan the QR, and no way back but
+       "New game". The overlay guard in vp-gaming.js never engages on the free path because
+       there is no overlay. Musical and trivia each set a busy flag; bingo had nothing. */
+    if(_startBusy) return;
+    _startBusy = true;
+    setTimeout(function(){ _startBusy = false; }, 1200);
     /* G.paidMode is "" for a free night and "single"/"sheet" when they are selling tickets, and
        it is set from the same dropdown the host just used, so it is the truth about THIS game. */
     if(window.VPGaming) VPGaming.gateFor("bingo90", go, { gameIsPaid: !!G.paidMode }); else go();
     function go(){ if(G.status==="lobby") startGame(); else openLobby(); }
   });
+  var _startBusy = false;
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
 
   // The same setting in two places, because the host needs it before the game AND during it.

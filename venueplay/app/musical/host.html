@@ -1080,6 +1080,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
+        /* Reset on failure. Without this one CHANNEL_ERROR left the console posting into a
+           dead socket for the rest of the night instead of queueing. See app/index.html. */
+        if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") subscribed = false;
       if(status==="SUBSCRIBED"){
         subscribed=true;
         send({ t:"host_here" });   // announce to the screen; it replies with tv_here

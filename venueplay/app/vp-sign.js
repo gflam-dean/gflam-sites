@@ -53,7 +53,13 @@
   // it signs out or the tab unloads, because an async signature never completes before the page dies.
   // They only return the TV to the ad loop, which the next signed game message re-embeds anyway, so a
   // forged one is self-correcting and honouring them unsigned is safe.
-  var EXEMPT = { tv_reload: 1, screen_refresh: 1, tv_here: 1, hello: 1, rollcall: 1, idle: 1, to_ads: 1 };
+  /* Messages that do not need a signature.
+     idle, to_ads and tv_reload came OFF this list. All three are destructive: a forged
+     {t:"idle"} drops a live game straight to the ad loop, and nothing re-embeds the game
+     without a fresh message from the host. The channel name is a public function of the
+     venue slug, so any patron who could read the screen could kill the night, repeatedly.
+     What is left is genuinely harmless: a screen saying hello, or asking who is there. */
+  var EXEMPT = { screen_refresh: 1, tv_here: 1, hello: 1, rollcall: 1 };
 
   function b64uFromBytes(bytes) {
     var s = "";

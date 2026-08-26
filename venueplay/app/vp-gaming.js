@@ -283,6 +283,13 @@
       out.warnings.push(st.paperBingo);
     }
 
+    /* A state-wide warning, shown to everybody. This used to sit much further down, inside
+       the branch that only runs when a venue may charge, so it never reached a for-profit
+       pub in any configuration. That silently hid the two that matter most: Victoria's
+       "bingo must not be conducted online", and WA's independent certification. Placed here
+       with the paper warning, before the early returns, so everybody sees it. */
+    if (st.warn) out.warnings.push(st.warn);
+
     /* Something stopping the whole format in this state, regardless of the venue. This is about
        PAID gaming approval, so it must not appear on the free-entry path: free entry is a
        promotional game and lawful everywhere, as this function says two branches down. Showing a
@@ -333,7 +340,6 @@
 
     out.headline = 'You can charge for entry to this game in ' + st.name + '.';
     out.points = rule.notes.slice();
-    if (st.warn) out.warnings.push(st.warn);
     return out;
   }
 
@@ -563,7 +569,15 @@
       }
 
       if (alreadyAcked(venue.id, format)) { proceed(); return; }
-      gate({ format: format, venue: venue, paidEntry: venue.paid_entry_enabled === true }, proceed);
+      /* paidEntry MUST be whether THIS game charges, not whether the venue is unlocked to
+         charge at all. It used to pass the venue-level flag, which ships false. So a venue
+         selling tickets tonight was shown "Free entry, nobody pays to play", and
+         handleGamingDeclare then wrote paid_entry:false into vp_gaming_declarations. The
+         record we would hand a regulator said free entry on a night that took money. */
+      var thisGameIsPaid = (opts.gameIsPaid != null)
+        ? !!opts.gameIsPaid
+        : (venue.paid_entry_enabled === true);
+      gate({ format: format, venue: venue, paidEntry: thisGameIsPaid }, proceed);
     } catch (e) { proceed(); }
   }
 

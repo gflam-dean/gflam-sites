@@ -703,6 +703,9 @@
     ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });   // same convention as trivia/musical so the unified TV finds it
     ch.on("broadcast", { event:"msg" }, function(e){ onPair(e.payload); });
     ch.subscribe(function(status){
+        /* Reset on failure. Without this one CHANNEL_ERROR left the console posting into a
+           dead socket for the rest of the night instead of queueing. See app/index.html. */
+        if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") subscribed = false;
       if(status==="SUBSCRIBED"){
         subscribed=true; send({ t:"host_here" }); send({ t:"mode", mode:"raffle" }); flushQueue();   // put the raffle screen on the unified /tv
         $("statusDot").classList.remove("on"); $("statusText").textContent="Waiting for screen";
