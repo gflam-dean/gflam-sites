@@ -134,6 +134,11 @@
         var m=e.payload||{};
         if(m.t==="hello" && m.name){
           if(players.indexOf(m.name)<0){ players.push(m.name); paintStrip(); send({t:"players",names:players}); }
+          /* Somebody has just walked in and picked up their phone. Tell them what
+             is happening, or they stare at a waiting screen until the next round
+             wondering whether it is broken. Not every game can do this, so it is
+             opt in per game. */
+          if(G && G.resend){ try{ G.resend(); }catch(e){} }
         }
         if(m.t==="tv-here"){ send({t:"players",names:players}); if(G) G.repaint&&G.repaint(); }
         /* An answer from a phone. First one per person per question counts: a
@@ -460,7 +465,8 @@
      traffic at their mate's fortieth. The television is told who is acting and
      nothing else. */
   function runCharades(g){
-    G={ mode:"charades", items:(g.config&&g.config.items)||[], i:-1, actor:null, got:[], repaint:paintCharades };
+    G={ mode:"charades", items:(g.config&&g.config.items)||[], i:-1, actor:null, got:[],
+        repaint:paintCharades, resend:resendCharades };
     warnScreens("charades");
     paintCharades();
   }
@@ -492,6 +498,14 @@
     h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
     $("app").innerHTML=h;
   }
+  /* Say the current round again, for a phone that has only just joined. Safe to
+     repeat: every phone works out what to show from the same message, so the
+     actor sees the word again and everybody else sees who to watch again. */
+  function resendCharades(){
+    var it = G.items[G.i];
+    if(!it || !G.actor) return;
+    send({t:"charades", i:G.i, of:G.items.length, word:it.q, actor:G.actor});
+  }
   function charadesGo(){
     G.i++;
     var it=G.items[G.i];
@@ -510,7 +524,8 @@
      or no questions out loud. The only way this fails is the guesser looking at
      the telly, so say so, twice. */
   function runGuessWho(g){
-    G={ mode:"guesswho", items:(g.config&&g.config.items)||[], i:-1, guesser:null, done:[], repaint:paintGuessWho };
+    G={ mode:"guesswho", items:(g.config&&g.config.items)||[], i:-1, guesser:null, done:[],
+        repaint:paintGuessWho, resend:resendGuessWho };
     warnScreens("guesswho");
     paintGuessWho();
   }
@@ -534,6 +549,11 @@
     }
     h+='<div class="bar2"><button class="sec" id="back">Back to games</button></div>';
     $("app").innerHTML=h;
+  }
+  function resendGuessWho(){
+    var it = G.items[G.i];
+    if(!it || !G.guesser) return;
+    send({t:"guesswho", i:G.i, of:G.items.length, answer:it.q, guesser:G.guesser});
   }
   function guessWhoGo(){
     G.i++;
