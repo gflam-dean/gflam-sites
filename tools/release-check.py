@@ -478,6 +478,37 @@ def pages_live(name, base, table):
             ok(path, True, '%d KB' % (len(body) // 1024))
 
 
+def every_page_is_reachable(name, base, folder, skip=()):
+    """Every page in the repo, not only the ones somebody remembered to list.
+
+    The table above is hand-written and will drift: a page added next month is a
+    page nobody checks. This walks what is actually in the repository, so a file
+    that stops being served is noticed by the tool rather than by a customer.
+    """
+    head('%s: every page in the repo is reachable' % name)
+    root = os.path.join(ROOT, folder)
+    if not os.path.isdir(root):
+        ok('found %s' % folder, False, why='no such folder')
+        return
+    pages, bad = [], []
+    for d, _, fs in os.walk(root):
+        if any(x in d for x in ('emails', '.git')):
+            continue
+        for f in fs:
+            if not f.endswith('.html') or f.startswith('_'):
+                continue
+            rel = os.path.relpath(os.path.join(d, f), root)
+            if rel in skip:
+                continue
+            pages.append(rel)
+    for rel in sorted(pages):
+        url = base + '/' + rel
+        status, body, _ = get(url)
+        if status != 200 or len(body) < 300:
+            bad.append('%s (HTTP %s)' % (rel, status))
+    ok('all %d page(s) serve' % len(pages), not bad, why='not served: ' + ', '.join(bad[:5]))
+
+
 def worker_health(name, api, needs_config=True):
     head('%s Worker' % name)
     status, body, _ = get(api + '/health')
@@ -644,12 +675,15 @@ def main():
             wait_for_deploy()
         if which in ('both', 'venueplay'):
             pages_live('VenuePlay', VP, VP_PAGES)
+            every_page_is_reachable('VenuePlay', VP, 'venueplay',
+                                    skip=('test.html',))
             worker_health('VenuePlay game', VP_GAME)
             worker_health('VenuePlay billing', VP_API)
             cors_checks('VenuePlay', VP_GAME, '/play/live',
                         ['https://venueplay.com.au', 'https://www.venueplay.com.au'])
         if which in ('both', 'partyplay'):
             pages_live('PartyPlay', PP, PP_PAGES)
+            every_page_is_reachable('PartyPlay', PP, 'partyplay')
             worker_health('PartyPlay', PP_API)
             cors_checks('PartyPlay', PP_API, '/join',
                         ['https://partyplay.com.au', 'https://www.partyplay.com.au'],
