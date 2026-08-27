@@ -516,7 +516,13 @@ def worker_health(name, api, needs_config=True):
         try:
             d = json.loads(body)
             ok('%s health' % name, d.get('ok') is True,
-               '' if d.get('ok') else 'missing: %s' % ', '.join(d.get('missing', [])))
+               why='missing: %s%s' % (', '.join(d.get('missing', [])) or 'nothing',
+                                      '. ' + d['warning'] if d.get('warning') else ''))
+            if 'photos' in d:
+                ok('%s photo store is bound' % name, d.get('photos') is True,
+                   why='R2 is not bound as PHOTOS, so every photo and video upload '
+                       'fails and the album is empty. Cloudflare > the Worker > '
+                       'Settings > Bindings > R2 bucket, variable name PHOTOS.')
         except Exception:
             ok('%s health' % name, False, 'health did not answer JSON')
     else:
