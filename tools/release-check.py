@@ -571,6 +571,69 @@ def public_key_cannot_reach_data():
            why='HTTP %s: the write was not refused' % status)
 
 
+# Venues to watch for a session nobody closed. Add a slug here when a venue goes
+# live. Read-only: it asks the same public endpoint a phone asks.
+WATCH_VENUES = ['the-average-joe']
+
+
+def venue_code(slug):
+    """The same hash the site uses to turn a slug into a channel code."""
+    t = ''.join(c for c in slug.lower() if c.isalnum())
+    h = 2166136261
+    for ch in t:
+        h ^= ord(ch)
+        h = (h * 16777619) & 0xffffffff
+    A, out, x = 'ACDEFGHJKMNPQRSTUVWXYZ2345679', '', (h or 1)
+    for _ in range(6):
+        x = (x * 1103515245 + 12345) & 0xffffffff
+        out += A[x % len(A)]
+    return out
+
+
+def no_session_left_open():
+    """A session nobody closed is a billing problem, not just untidy.
+
+    /session/close only ever runs in the browser, so a host who shuts the tablet
+    without signing out leaves the session open. Every later night's players then
+    append to that SAME session, and when it finally closes one invoice bills
+    every player who ever joined it. The Worker has a nightly sweep for exactly
+    this, but it does nothing at all unless a Cron Trigger is configured in the
+    Cloudflare dashboard.
+
+    So: check. A session reading live with no game running, in the small hours, is
+    one nobody closed.
+    """
+    import datetime
+    head('No venue has a session nobody closed')
+    hour = datetime.datetime.now().hour
+    # Between four and ten in the morning nobody is running a bingo night, so a
+    # session reading live then was left open. At other hours it might be real,
+    # and calling a live night "stale" would be worse than saying nothing.
+    quiet = 4 <= hour < 10
+    for slug in WATCH_VENUES:
+        status, body, _ = get(VP_GAME + '/play/live?code=' + venue_code(slug))
+        try:
+            d = json.loads(body)
+        except Exception:
+            ok('%s reachable' % slug, False, why='no JSON back')
+            continue
+        if not d.get('exists'):
+            ok('%s is a known venue' % slug, False, why='the Worker does not know that slug')
+            continue
+        live, fmt = d.get('live'), (d.get('format') or '')
+        if live and not fmt and quiet:
+            ok('%s has no session left open' % slug, False,
+               why='a session reads LIVE at %02d:00 with no game running. Nobody closed it. '
+                   'Set a Cron Trigger on the game Worker (0 17 * * * is 3am Brisbane) '
+                   'so the nightly sweep runs.' % hour)
+        elif live and not fmt:
+            ok('%s has no session left open' % slug, True,
+               'live with no game, but it is %02d:00 so that may be a real lobby' % hour)
+        else:
+            ok('%s has no session left open' % slug, True,
+               'live=%s game=%s' % (live, fmt or 'none'))
+
+
 def admin_routes_refuse():
     head('Admin and money routes must refuse a stranger')
     for path, method in [('/admin/stats', 'GET'), ('/admin/whoami', 'GET'),
@@ -681,6 +744,7 @@ def main():
             worker_health('VenuePlay billing', VP_API)
             cors_checks('VenuePlay', VP_GAME, '/play/live',
                         ['https://venueplay.com.au', 'https://www.venueplay.com.au'])
+            no_session_left_open()
         if which in ('both', 'partyplay'):
             pages_live('PartyPlay', PP, PP_PAGES)
             every_page_is_reachable('PartyPlay', PP, 'partyplay')
