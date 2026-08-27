@@ -36,6 +36,8 @@
   td:first-child,th:first-child{font-family:'JetBrains Mono',monospace}
   .jobs{display:flex;gap:9px;flex-wrap:wrap}
   button.sm{padding:7px 12px;font-size:13px;width:auto;margin:0}
+  .tiny{font-size:13px;color:var(--mute);margin:16px 0 0}
+  .tiny a{color:var(--mute)}
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin:0 0 22px}
   .tile{border:1px solid var(--line);border-radius:12px;padding:14px 15px}
   .tile b{display:block;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:30px;line-height:1}
@@ -130,12 +132,22 @@
       '<button id="mgo">Text me a code</button>'+
       '<div class="out" id="mout"></div>'+
       '<div class="note"><p>No password. The code lasts a few minutes and is good once.</p></div>'+
+      (msg?'<div class="out show bad">'+esc(msg)+'</div>':'')+
+      /* The shared key is no longer the way in, but it is still the way BACK in:
+         a flat phone, a Supabase outage, or a fresh Worker with nobody in the
+         allow-list yet. Folded away rather than deleted, because a locked-out
+         support console at 9pm on a Saturday is a worse problem than a tidier
+         screen. */
+      '<p class="tiny"><a href="#" id="showkey">Phone not working?</a></p>'+
       '</section>'+
-      '<section><h2>Or the shared key</h2>'+
-      '<p>The one set on the Worker as ADMIN_KEY. Use this to add the first mobile, or when a phone is flat.</p>'+
+      '<section id="keybox" hidden><h2>The shared key</h2>'+
+      '<p>Only for when the phone cannot get you in. Set on the Worker as ADMIN_KEY.</p>'+
       '<div class="row"><input type="password" id="k" autocomplete="off"></div>'+
-      '<button class="sec" id="kgo">Unlock with the key</button>'+
-      (msg?'<div class="out show bad">'+esc(msg)+'</div>':'')+'</section>';
+      '<button class="sec" id="kgo">Unlock with the key</button></section>';
+
+    $("showkey").addEventListener("click", function(e){
+      e.preventDefault(); $("keybox").hidden = false; $("k").focus();
+    });
 
     $("kgo").addEventListener("click", function(){
       var v=($("k").value||"").trim(); if(!v) return;
@@ -296,7 +308,7 @@
           .catch(function(e){ nb.disabled=false; nb.textContent="Try again"; $("nudgeout").textContent=e.message; });
       });
     }).catch(function(e){
-      if(/^HTTP 403/.test(e.message)||e.message==="no"){ setKey(""); askKey("That key was not right."); return; }
+      if(/^HTTP 403/.test(e.message)||e.message==="no"){ setKey(""); setToken(""); askKey("That did not get you in. Sign in again."); return; }
       $("stats").innerHTML='<p>'+esc(e.message)+'</p>';
     });
 
