@@ -15,6 +15,11 @@
   h1{font-size:clamp(30px,7vw,44px)}
   .mark{width:60px;height:52px;margin-bottom:18px}
   p{color:var(--mute);margin:12px 0}
+  .again{color:var(--mute);font-size:15px}
+  .linkish{background:none;border:0;padding:0;font:inherit;color:var(--pink);
+    text-decoration:underline;cursor:pointer}
+  .linkish[disabled]{color:var(--faint);text-decoration:none;cursor:default}
+  #resendMsg{display:block;margin-top:6px;font-size:14px;color:var(--faint)}
   .codecard{background:var(--ink2);border:1px solid var(--line);border-radius:16px;padding:24px;text-align:center;margin:26px 0}
   .codecard .lbl{color:var(--faint);font-size:14px;display:block}
   .codecard .code{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:52px;
@@ -52,6 +57,13 @@
   <img class="mark" src="/logos/partyplay-mark.svg" alt="">
   <h1>You are booked</h1>
   <p>We have emailed your code and a link to build your games. If it has not turned up in a minute, check the junk folder.</p>
+  <!-- The host key lives ONLY in that email, on purpose: in a URL it would go
+       straight to analytics. Which means a spam filter or a typo leaves somebody
+       who has paid with no way into their own party, and until now the only fix
+       was to email us. -->
+  <p class="again">Still nothing?
+    <button id="resend" class="linkish">Send the email again</button>
+    <span id="resendMsg"></span></p>
 
   <div class="codecard"><span class="lbl">Your party code</span>
     <div class="code" id="code">------</div></div>
@@ -72,6 +84,29 @@
 (function(){
   var code = (new URLSearchParams(location.search).get("code")||"").toUpperCase();
   if(code) document.getElementById("code").textContent = code;
+
+  var rs = document.getElementById("resend"), rmsg = document.getElementById("resendMsg");
+  if(rs) rs.addEventListener("click", function(){
+    if(!code){ rmsg.textContent = "We do not have your code on this page. Email hello@partyplay.com.au and we will sort it."; return; }
+    rs.disabled = true; rs.textContent = "Sending...";
+    fetch(PPConfig.API + "/licence/resend", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: code })
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(){
+        /* The Worker answers the same way whatever happened, so that asking about
+           a code cannot be used to find out whether it is real. So say something
+           that is true in every case. */
+        rs.textContent = "Sent";
+        rmsg.textContent = "If that code is right, the email is on its way to the address you paid with. " +
+                           "It can take a minute, and do check the junk folder.";
+      })
+      .catch(function(){
+        rs.disabled = false; rs.textContent = "Send the email again";
+        rmsg.textContent = "Could not reach us just now. Try again in a moment, or email hello@partyplay.com.au.";
+      });
+  });
   fetch(PPConfig.API + "/licence?code=" + encodeURIComponent(code))
     .then(function(r){ return r.json(); })
     .then(function(j){
