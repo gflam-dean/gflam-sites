@@ -571,7 +571,8 @@ def main():
             pages_live('PartyPlay', PP, PP_PAGES)
             worker_health('PartyPlay', PP_API)
             cors_checks('PartyPlay', PP_API, '/join',
-                        ['https://partyplay.com.au', 'https://www.partyplay.com.au'])
+                        ['https://partyplay.com.au', 'https://www.partyplay.com.au'],
+                        bad_origin='https://partyplay.pages.dev')   # NOT ours, see allowedOrigin
             admin_routes_refuse()
             cannot_change_a_party_without_the_key()
         public_key_cannot_reach_data()
