@@ -1207,11 +1207,28 @@ async function vpaHandleDiscount(request, env, json) {
      account. So a percentage picked from one venue's row silently discounts all of them: 20%
      meant for one venue's $250 comes off the account's $1,250. Refuse and say so, rather than
      give away four times what was intended and report it against the one venue. */
-  if (kind === 'percent' && !target.manual && target.account) {
+  if (kind === 'percent' && !target.manual && target.account && b.apply_to_account !== true) {
     const sibs = await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(target.account.id) + '&select=id');
     if (sibs && sibs.length > 1) {
-      return json({ error: 'This account has ' + sibs.length + ' venues on one subscription, so a percentage would come off ALL of them, not just this venue. Use a dollar credit for a single venue, or apply the percentage knowing it covers the whole account.' }, 409);
+      /* THIS WAS A DEAD END. The console has a confirm-and-apply path built for
+         exactly this case: it looks for needs_confirm, asks "apply across the
+         whole account?", and re-sends with apply_to_account. This Worker never
+         sent needs_confirm and never read apply_to_account, so a percentage on
+         any venue in a group could not be applied at all, by any route. The
+         warning was correct and the way past it was missing.
+
+         So: send the flag the console is waiting for, and honour the answer. The
+         refusal still happens first, every time, because a 20% meant for one
+         venue coming off the whole account is exactly the mistake worth stopping.
+         It is now a question rather than a wall. */
+      return json({
+        error: 'This account has ' + sibs.length + ' venues on one subscription, so a ' +
+               'percentage comes off ALL of them, not just this venue. Use a dollar credit ' +
+               'for a single venue, or confirm to apply it across the account.',
+        needs_confirm: true,
+        venue_count: sibs.length
+      }, 409);
     }
   }
 
