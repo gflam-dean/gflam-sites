@@ -532,7 +532,7 @@
            '<div class="adbig">'+escBr(s.head)+'</div>'+
            (s.sub?'<div class="adsub">'+escBr(s.sub)+'</div>':"");
   }
-  var adIdx=0, adTimer=null, adBuilt=false;
+  var adIdx=0, adTimer=null, adBuilt=false, adFadeTimer=null;
   // Per-slide try/catch, and never finish with an empty container. One null row in the venue's
   // slides JSON used to throw out of here AFTER innerHTML="" had already run, so the rotation was
   // wiped, the watchdog saw no slides, its repair called this same failing code, and the screen
@@ -554,7 +554,13 @@
     }
     adBuilt=true;
   }
-  function stopAds(){ if(adTimer){ clearTimeout(adTimer); clearInterval(adTimer); adTimer=null; } }
+  function stopAds(){
+    if(adTimer){ clearTimeout(adTimer); clearInterval(adTimer); adTimer=null; }
+    /* The handover timer too. Without this, a rebuild or a game starting could
+       leave a pending callback that strips "show" off a slide belonging to a
+       rotation that no longer exists, and the wall goes to the floor colour. */
+    if(adFadeTimer){ clearTimeout(adFadeTimer); adFadeTimer=null; }
+  }
   function startAds(){
     if(!adBuilt) buildAds();
     stopAds();
@@ -569,11 +575,28 @@
       var sec=(e && e.type==="slide" && e.slide && e.slide.seconds) ? e.slide.seconds : ADS.rotationSecs;
       return Math.max(2, sec||7)*1000;
     }
+    /* CROSS-FADE, not fade-out-then-in.
+       Both slides used to transition at the same moment: the outgoing fell from
+       1 to 0 while the incoming climbed from 0 to 1, so halfway through the swap
+       BOTH sat at about half opacity and the whole wall dipped towards the floor
+       colour. Every seven seconds. All night, on a screen in a pub.
+
+       So bring the new one up OVER the old one, which stays fully opaque
+       underneath, and only take the old one away once the new one has arrived. */
+    var FADE_MS = 800;   // matches the .8s transition on .ad
     function advance(){
-      slides[adIdx].classList.remove("show");
-      adIdx=(adIdx+1)%slides.length;
-      slides[adIdx].classList.add("show");
-      adTimer=setTimeout(advance, secsFor(adIdx));
+      var out = slides[adIdx];
+      adIdx = (adIdx+1)%slides.length;
+      var into = slides[adIdx];
+      into.style.zIndex = "2";              // on top for the duration of the swap
+      into.classList.add("show");
+      if(adFadeTimer) clearTimeout(adFadeTimer);
+      adFadeTimer = setTimeout(function(){
+        adFadeTimer = null;
+        if(out !== into){ out.classList.remove("show"); out.style.zIndex = ""; }
+        into.style.zIndex = "";
+      }, FADE_MS + 60);
+      adTimer = setTimeout(advance, secsFor(adIdx));
     }
     adTimer=setTimeout(advance, secsFor(0));
   }

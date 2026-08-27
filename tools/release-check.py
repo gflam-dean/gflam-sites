@@ -31,6 +31,13 @@ broadcasts on no real venue's channel: VenuePlay has a live client.
   python3 tools/release-check.py --local    the pre-push half only
   python3 tools/release-check.py --live     production only, skip the local half
   python3 tools/release-check.py --wait     wait for the deploy first, then check
+
+  python3 tools/release-check.py --vp-base https://my-branch.venueplay.pages.dev
+        Check a Cloudflare Pages PREVIEW instead of production. This is the point
+        of a staging step: the branch build gets the full page sweep before
+        anything reaches the venue. Note what a preview does NOT isolate: it
+        serves branch SITE code but talks to the same Workers and the same
+        database as production, so play on it with a throwaway venue slug.
 """
 import io, json, os, re, subprocess, sys, urllib.error, urllib.request
 
@@ -403,7 +410,8 @@ def wait_for_deploy(minutes=30):
 
 
 def pages_live(name, base, table):
-    head('%s pages: is the CURRENT build actually being served' % name)
+    head('%s pages: is the CURRENT build actually being served%s'
+         % (name, '' if base in (VP, PP) else '   [%s]' % base))
     for path, marker in sorted(table.items()):
         status, body, final = get(base + path)
         if status != 200:
@@ -554,6 +562,23 @@ def main():
     live_only = '--live' in args
     wait = '--wait' in args
 
+    # A preview URL to check instead of production, so a branch can be swept
+    # before anything reaches a venue.
+    global VP, PP
+    for flag, which_base in (('--vp-base', 'vp'), ('--pp-base', 'pp')):
+        if flag in args:
+            i = args.index(flag)
+            if i + 1 >= len(args):
+                sys.exit('%s needs a URL after it' % flag)
+            url = args[i + 1].rstrip('/')
+            if which_base == 'vp':
+                VP = url
+                which = 'venueplay'
+            else:
+                PP = url
+                which = 'partyplay'
+            print('%sChecking a preview:%s %s' % (YEL, OFF, url))
+
     global _scanner
     _scanner = _load_scanner()
     print('%sRELEASE CHECK%s  %s%s' % (YEL, OFF, which, '  (local only)' if local_only else ''))
@@ -577,6 +602,9 @@ def main():
                         bad_origin='https://partyplay.pages.dev')   # NOT ours, see allowedOrigin
             admin_routes_refuse()
             cannot_change_a_party_without_the_key()
+        # A preview serves branch SITE code but talks to the production Workers
+        # and the production database, so these are the same either way. Run them
+        # anyway: it is worth knowing they are still sound.
         public_key_cannot_reach_data()
 
     sys.exit(summary(which, not local_only))
