@@ -25,8 +25,8 @@
      the result was a phone bouncing between two pages that each believed the
      other one was wrong. */
   var PAGES = [
-    { match: /^trivia/,  page: "/app/trivia/play.html",  family: "trivia"  },
-    { match: /^musical/, page: "/app/musical/play.html", family: "musical" },
+    { match: /^trivia/,  page: "/app/trivia/play",  family: "trivia"  },
+    { match: /^musical/, page: "/app/musical/play", family: "musical" },
     { match: /^bingo/,   page: "/play",                  family: "bingo"   }
   ];
 

@@ -1175,8 +1175,8 @@
      cannot reach all fall through to connecting here, which is the old behaviour. */
   function playerAppFor(format){
     var f=String(format||"");
-    if(f.indexOf("trivia")===0)  return "/app/trivia/play.html";
-    if(f.indexOf("musical")===0) return "/app/musical/play.html";
+    if(f.indexOf("trivia")===0)  return "/app/trivia/play";
+    if(f.indexOf("musical")===0) return "/app/musical/play";
     return "";   // bingo (and raffle/members, which have no player app) stay right here
   }
   /* Join the host's SERVER SESSION, when the code is one.
@@ -1392,8 +1392,8 @@
             if(d.name){ var jv=$("joinVenue"); if(jv){ jv.textContent=d.name; jv.classList.remove("hidden"); } }
             if(!d.live || !d.join_code || d.join_code===code) return;
             var f=String(d.format||"");
-            var to = f.indexOf("trivia")===0  ? "/app/trivia/play.html"
-                   : f.indexOf("musical")===0 ? "/app/musical/play.html" : "";
+            var to = f.indexOf("trivia")===0  ? "/app/trivia/play"
+                   : f.indexOf("musical")===0 ? "/app/musical/play" : "";
             if(to){ hopped=true; window.location.replace(to+"?room="+encodeURIComponent(d.join_code)); }
           }).catch(function(){});               // worker unreachable/old: bingo still works
       }catch(e){}

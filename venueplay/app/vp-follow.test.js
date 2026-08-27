@@ -38,10 +38,10 @@ var chain = Promise.resolve()
   // the bug Dean hit: host starts the wrong game then the right one
   .then(function(){ return run("trivia player, host switches to musical",
         { format:"musical_bingo" }, { api:"https://x", room:R, format:"trivia" },
-        "/app/musical/play.html?room=ABC123"); })
+        "/app/musical/play?room=ABC123"); })
   .then(function(){ return run("musical player, host switches to trivia",
         { format:"trivia" }, { api:"https://x", room:R, format:"musical" },
-        "/app/trivia/play.html?room=ABC123"); })
+        "/app/trivia/play?room=ABC123"); })
   .then(function(){ return run("trivia player, host switches to bingo",
         { format:"bingo90" }, { api:"https://x", room:R, format:"trivia" },
         "/play?room=ABC123"); })
@@ -59,7 +59,7 @@ var chain = Promise.resolve()
   // the worker handing back a different room code for the live session
   .then(function(){ return run("hop uses the session's own room code",
         { format:"musical", room_code:"ZZZ999" }, { api:"https://x", room:R, format:"trivia" },
-        "/app/musical/play.html?room=ZZZ999"); })
+        "/app/musical/play?room=ZZZ999"); })
   // and it must not run at all without the basics
   .then(function(){
       var g = harness({ format:"musical" });

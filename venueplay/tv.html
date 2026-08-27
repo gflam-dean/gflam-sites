@@ -822,7 +822,9 @@
     $("pairPanel").classList.add("hidden");
     try{ sessionStorage.setItem("vpTvHop", VENUE_SLUG); }catch(e){}   // shared with the iframe, so the game screen never bounces to /tv
     var f=document.getElementById("gameFrame");
-    var url="/app/"+game+"/screen.html?venue="+encodeURIComponent(VENUE_SLUG);
+    // No .html: Pages 308s it, and the iframe was paying a redirect before the
+    // game screen even started loading, with the wall holding on a card.
+    var url="/app/"+game+"/screen?venue="+encodeURIComponent(VENUE_SLUG);
     var fresh = f.getAttribute("src")!==url;
     if(fresh){ embedLoaded=false; try{ f.src=url; }catch(e){} }
     /* HOLD THE ROOM, DO NOT GO BLACK. hideBingoLayers() above has just taken the "Starting the
