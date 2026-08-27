@@ -488,7 +488,13 @@ def every_page_is_reachable(name, base, folder, skip=()):
     head('%s: every page in the repo is reachable' % name)
     root = os.path.join(ROOT, folder)
     if not os.path.isdir(root):
-        ok('found %s' % folder, False, why='no such folder')
+        # Not a fault in the site: this checkout does not have that folder, which
+        # almost always means it is behind. Say THAT, rather than "no such folder",
+        # which reads like the pages are missing when they are serving perfectly.
+        ok('%s pages enumerated from the repo' % name, False,
+           why='this working copy has no %s/ folder, so the pages could not be '
+               'listed. It is probably out of date: run "git fetch && git status" '
+               'and see how far behind it is.' % folder)
         return
     pages, bad = [], []
     for d, _, fs in os.walk(root):
