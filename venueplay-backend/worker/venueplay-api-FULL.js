@@ -57,6 +57,38 @@ export default {
     const path = url.pathname.replace(/\/+$/, '');
 
     try {
+      /* HEALTH. Same reasoning as the game Worker: this one had none either, and
+         a missing secret here is silent until somebody tries to pay or a Stripe
+         webhook arrives and cannot be verified. Names and booleans only, never a
+         value, because this endpoint is public. */
+      if (request.method === 'GET' && path === '/health') {
+        // Without these nothing works at all.
+        const need = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET',
+                      'SUPABASE_URL', 'SUPABASE_SERVICE_KEY',
+                      'STRIPE_PRICE_MONTHLY', 'STRIPE_PRICE_ANNUAL'];
+        const missing = need.filter((k) => !env[k]);
+        /* And these fail QUIETLY, which is worse. No SMS credentials and venue
+           staff simply never receive their sign-in code, with nothing on screen
+           to say why. No email key and welcome and invoice emails stop going out.
+           Reported separately because the Worker does still run without them. */
+        const can = {
+          sms:   !!(env.MOBILEMESSAGE_USERNAME && env.MOBILEMESSAGE_PASSWORD),
+          email: !!env.RESEND_API_KEY,
+          cardLinks: !!env.CARD_LINK_SECRET
+        };
+        const quiet = Object.keys(can).filter((k) => !can[k]);
+        return json({
+          worker: 'venueplay-api',
+          ok: !missing.length && !quiet.length,
+          missing,
+          can,
+          warning: quiet.length
+            ? 'These are not set and fail silently: ' + quiet.join(', ') +
+              '. No sms means staff never get their sign-in code.'
+            : undefined
+        }, missing.length ? 503 : 200);
+      }
+
       if (request.method === 'POST' && path === '/checkout') return await handleCheckout(request, env, json);
       // Followed from an HQ-onboarded venue's welcome email, in a browser, so it answers with a
       // redirect rather than JSON. Signed, and it mints a fresh Checkout each time it is clicked.

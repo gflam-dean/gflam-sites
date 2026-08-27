@@ -518,6 +518,11 @@ def worker_health(name, api, needs_config=True):
             ok('%s health' % name, d.get('ok') is True,
                why='missing: %s%s' % (', '.join(d.get('missing', [])) or 'nothing',
                                       '. ' + d['warning'] if d.get('warning') else ''))
+            # Things that fail QUIETLY: no SMS and staff never get a sign-in code,
+            # no email and welcome and invoice emails simply stop.
+            for cap, on in (d.get('can') or {}).items():
+                ok('%s can %s' % (name, cap), bool(on),
+                   why='not configured, and it fails without saying anything')
             if 'photos' in d:
                 ok('%s photo store is bound' % name, d.get('photos') is True,
                    why='R2 is not bound as PHOTOS, so every photo and video upload '

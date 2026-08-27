@@ -186,6 +186,31 @@ export default {
     const method = request.method;
 
     try {
+      /* HEALTH. This Worker had none, and that is how something can be quietly
+         broken for days.
+
+         PartyPlay's health check said "ok" while every photo upload was failing,
+         because R2 is a BINDING and health only looked at secrets. Same shape of
+         hole here, and this one is running a real venue: if the RL namespace goes
+         missing the anti-abuse limiter drops to allow-mode silently, and player
+         count is what a venue is BILLED on. If SUPABASE_JWT_SECRET goes missing
+         no host can sign in at all.
+
+         Names and booleans only. Never a value: this endpoint is public. */
+      if (method === 'GET' && path === '/health') {
+        const need = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SUPABASE_JWT_SECRET', 'IP_HASH_SALT'];
+        const missing = need.filter((k) => !env[k]);
+        const rl = !!env.RL;
+        return json({
+          worker: 'venueplay-game',
+          ok: !missing.length && rl,
+          missing,
+          rateLimiter: rl,
+          warning: rl ? undefined
+            : 'The RL KV namespace is not bound. Anti-abuse limiting and join dedup are in allow-mode, and player counts are what venues are billed on.'
+        }, missing.length ? 503 : 200);
+      }
+
       if (method === 'POST' && path === '/session')            return await handleCreateSession(request, env, json);
       if (method === 'POST' && path === '/session/close')      return await handleSessionClose(request, env, json);
       if (method === 'POST' && path === '/join')               return await handleJoin(request, env, json);
