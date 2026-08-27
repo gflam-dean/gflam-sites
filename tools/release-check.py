@@ -437,7 +437,9 @@ def cors_checks(name, api, path, good_origins, bad_origin='https://evil.example'
         got = preflight(api, path, o)
         ok('allows %s' % o, got == o, why='answered %r, so a browser there throws the reply away' % got)
     got = preflight(api, path, bad_origin)
-    ok('refuses an unknown origin', got != bad_origin, why='it was allowed in')
+    ok('refuses %s' % bad_origin, got != bad_origin,
+       why='it was ALLOWED IN. That site is not ours, so a stranger can call this '
+           'Worker from a visitor browser. Paste the current Worker build.')
 
 
 def public_key_cannot_reach_data():
