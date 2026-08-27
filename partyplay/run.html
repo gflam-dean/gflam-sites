@@ -566,6 +566,21 @@
     w.querySelector("#warnok").addEventListener("click", function(){ try{ w.remove(); }catch(e){} });
   }
 
+  /* What each person earned across the whole of two truths and a lie.
+
+     This was written inline and threw its own answer away: it added the points up
+     per player, then Object.keys() kept only the NAMES and the map handed
+     everybody a flat hundred. Somebody who spotted five lies finished the night
+     level with somebody who spotted one. Out here as a named function so it can
+     be tested, which is the other half of why it went unnoticed. */
+  function truthsTally(votes){
+    var by = (votes||[]).reduce(function(a, v){
+      if(v && v.right && v.name) a[v.name] = (a[v.name] || 0) + PPQuiz.CORRECT_POINTS;
+      return a;
+    }, {});
+    return Object.keys(by).map(function(n){ return { name:n, score:by[n] }; });
+  }
+
   /* ------------------------------------------- two truths and a lie --------- */
   /* Two phases. Everyone writes their three first, because doing it person by
      person leaves twenty people watching one person type. */
@@ -784,9 +799,7 @@
       var tn=G.subs[G.turn];
       if(tn){ send({t:"truthvote", turn:G.turn, name:tn.name, lines:tn.lines});
               send({t:"big", text:esc(tn.name), sub:"Which one is the lie?"}); }
-      else { send({t:"lobby"}); nightAdd(Object.keys(G.votes.reduce(function(a,v){
-              if(v.right) a[v.name]=(a[v.name]||0)+PPQuiz.CORRECT_POINTS; return a; },{}))
-              .map(function(n){ return {name:n, score:PPQuiz.CORRECT_POINTS}; })); }
+      else { send({t:"lobby"}); nightAdd(truthsTally(G.votes)); }
       paintTruths(); return;
     }
     if(el.id==="askphotos"){ send({t:"askphotos"}); toast("Asked everyone"); return; }

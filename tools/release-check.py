@@ -379,15 +379,69 @@ PP_PAGES = {
 }
 
 
-def wait_for_deploy(minutes=30):
-    """Sit here until the new build is actually being served.
+def changed_files_since(ref='HEAD~1'):
+    """The files this release actually changed, so we can wait for THOSE."""
+    try:
+        out = subprocess.run(['git', 'diff', '--name-only', ref, 'HEAD'],
+                             capture_output=True, text=True, cwd=ROOT).stdout
+        return [f.strip() for f in out.splitlines() if f.strip()]
+    except Exception:
+        return []
 
-    Cloudflare Pages has taken anywhere from three to twenty-five minutes. Every
-    time I checked too early I read the OLD build and had to work out whether the
-    change was broken or simply not there yet. So wait, and say how long it took.
+
+def live_matches_local(path_in_repo):
+    """Is the live page byte-identical to the file in this working copy?
+
+    THIS is how you tell a deploy has landed. The fixed markers below never
+    change between releases, so waiting on them returned "deployed" instantly
+    even when the old build was still up, which is precisely the false pass this
+    whole tool exists to stop. It caught me the first time I used it.
+    """
+    local = os.path.join(ROOT, path_in_repo)
+    if not os.path.isfile(local):
+        return None
+    if path_in_repo.startswith('venueplay/'):
+        base, rel = VP, path_in_repo[len('venueplay/'):]
+    elif path_in_repo.startswith('partyplay/'):
+        base, rel = PP, path_in_repo[len('partyplay/'):]
+    else:
+        return None                       # tools, docs: nothing is served
+    url = base + '/' + rel
+    status, body, _ = get(url)
+    if status != 200:
+        return False
+    want = io.open(local, encoding='utf-8').read()
+    return body.strip() == want.strip()
+
+
+def wait_for_deploy(minutes=30):
+    """Sit here until THIS release is actually being served.
+
+    Cloudflare Pages has taken anywhere from three to twenty-five minutes, and
+    checking too early reads the old build. So compare the live pages against the
+    files this release changed, which is the only thing that actually moves.
     """
     import time
     head('Waiting for Cloudflare Pages')
+    changed = [f for f in changed_files_since()
+               if f.startswith(('venueplay/', 'partyplay/')) and f.endswith(('.html', '.js'))]
+    if changed:
+        print('  %swaiting on %d changed file(s), e.g. %s%s' % (DIM, len(changed), changed[0], OFF))
+        deadline = time.time() + minutes * 60
+        started = time.time()
+        while time.time() < deadline:
+            stale = [f for f in changed if live_matches_local(f) is False]
+            if not stale:
+                ok('this release is live', True, 'took %d seconds' % (time.time() - started))
+                break
+            print('  %s...%s %d still on the old build, e.g. %s' % (DIM, OFF, len(stale), stale[0]))
+            time.sleep(30)
+        else:
+            ok('this release is live', False,
+               why='still stale after %d minutes: %s' % (minutes, ', '.join(stale[:3])))
+    else:
+        print('  %snothing served was changed in the last commit%s' % (DIM, OFF))
+
     targets = [(PP, p, m) for p, m in PP_PAGES.items()] + [(VP, p, m) for p, m in VP_PAGES.items()]
     deadline = time.time() + minutes * 60
     started = time.time()
