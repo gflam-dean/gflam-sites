@@ -1,0 +1,34 @@
+#!/bin/bash
+# Refuse a push that would break either site.
+#
+# A checklist you have to remember to run is a checklist that gets skipped, and
+# main deploys straight to production on a product with a live venue on it. So
+# this is not a reminder, it is a gate.
+#
+# Install:  bash tools/hooks/install.sh
+# Skip it once, knowing what you are doing:  git push --no-verify
+
+ROOT="$(git rev-parse --show-toplevel)"
+echo
+echo "── pre-push: checking before this goes to a live venue ──"
+
+if ! python3 "$ROOT/tools/release-check.py" --local; then
+  echo
+  echo "PUSH REFUSED. Fix the above, or push with --no-verify if you are certain."
+  echo "Whatever you do, do not fix it by deleting the check."
+  exit 1
+fi
+
+# Anything a machine cannot judge, put in front of the person pushing.
+CHANGED=$(git diff --name-only @{u}..HEAD 2>/dev/null || git diff --name-only HEAD~1..HEAD)
+if echo "$CHANGED" | grep -qE "(screen|play|host|tv)\.html|vp-(follow|screen-router|sign|gaming)\.js|run\.html"; then
+  echo
+  echo "── this push touches a game, a screen or a phone ──"
+  echo "   Static checks did not catch four of the five faults found on 27 Aug,"
+  echo "   because they only appear when a game is actually running. After it"
+  echo "   deploys, someone has to open a screen and a phone and play one."
+  echo
+fi
+echo "── ok, pushing ──"
+echo
+exit 0

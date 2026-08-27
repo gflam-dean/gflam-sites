@@ -1618,7 +1618,7 @@
       btn.disabled=false;
       if(res.error){ errFlash("tmErr",res.error); return; }
       $("tmName").value=""; $("tmMobile").value=""; $("tmEmail").value="";
-      flash("tmOk","Added "+name+" as "+role+". No invite is sent — tell them to sign in at venueplay.com.au/app with their mobile (they get a text code).");
+      flash("tmOk","Added "+name+" as "+role+". No invite is sent. Tell them to sign in at venueplay.com.au/app with their mobile (they get a text code).");
       // refresh admins + audit
       VP.getClient().from("vp_platform_admins").select("*").then(function(r){ S.admins=(r&&r.data)||[]; renderTeam(); });
       loadAuditOnly();

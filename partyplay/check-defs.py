@@ -5,17 +5,24 @@ This exists because two showstoppers shipped: play.html called showCamera() and
 run.html called runBingo(), neither of which existed. Both pages returned HTTP
 200 the whole time, so the old smoke test was perfectly happy.
 
-Deliberately naive and deliberately NOT clever about strings: an earlier version
-tried to strip string literals first and an apostrophe in a comment ("host's")
-opened a fake string that swallowed real code, so it reported half the codebase
-as missing. Instead we keep a list of the CSS functions that appear inside our
-style strings and ignore those by name.
+Comments ARE stripped, by a scanner that tracks state rather than a regex. An
+earlier attempt used a regex, an apostrophe in a comment ("host\'s") opened a
+fake string, and it swallowed real code and reported half the codebase missing.
+A scanner does not have that problem: it knows whether it is inside a string
+before it decides what a quote means. Without this, a function named in a comment
+("see claimIdentity() in play.html") counted as a call, and five perfectly good
+files reported as broken.
+
+Strings are left ALONE on purpose, which is why the CSS list below exists: the
+style text inside them mentions clamp() and var() and those are not calls.
 """
 import io, os, re, glob, sys
 
 CSS = set("""clamp var calc rgba rgb hsl hsla translate translateX translateY scale
  rotate url linear-gradient radial-gradient cubic-bezier minmax repeat blur
  drop-shadow env attr counter""".split())
+# cubic-bezier( matches as bezier(, because a hyphen cannot be part of a JS name.
+CSS |= {w.split("-")[-1] for w in list(CSS) if "-" in w}
 
 BUILTIN = set("""if for while switch catch function return typeof new delete void do else try
  parseInt parseFloat Number String Boolean Array Object JSON Math Date Promise RegExp Error
@@ -23,7 +30,65 @@ BUILTIN = set("""if for while switch catch function return typeof new delete voi
  setTimeout setInterval clearTimeout clearInterval fetch alert confirm prompt requestAnimationFrame
  encodeURIComponent decodeURIComponent isNaN isFinite console document window navigator localStorage
  sessionStorage crypto Intl gtag dataLayer supabase
- PPConfig PPLicence PPTicket PPQuiz PPPhoto PPVideo""".split())
+ atob btoa getComputedStyle encodeURI decodeURI structuredClone queueMicrotask
+ AbortController Headers Request Response AudioContext webkitAudioContext
+ IntersectionObserver ResizeObserver MutationObserver
+ fbq
+ PPConfig PPLicence PPTicket PPQuiz PPPhoto PPVideo VPSign VPGaming VPFollow VPScreenRouter""".split())
+
+def strip_comments(src):
+    """Remove // and /* */ while knowing what is a string and what is not.
+
+    The cases that matter, all of which have bitten us:
+      "https://x"    the // is inside a string and is not a comment
+      // host\'s        the apostrophe is in a comment and opens nothing
+      /* it\'s fine */  same, in a block
+      `a ${b} c`      template literals
+    """
+    out = []
+    i, n = 0, len(src)
+    quote = None            # the character that opened the string we are in
+    while i < n:
+        c = src[i]
+        if quote:
+            out.append(c)
+            if c == "\\":
+                if i + 1 < n:
+                    out.append(src[i + 1])
+                i += 2
+                continue
+            if c == quote:
+                quote = None
+            elif c == "\n" and quote != "`":
+                # SELF-HEALING. A ' or " string cannot span a newline in
+                # JavaScript, so if we are still "inside" one at the end of a
+                # line we were wrong: almost always a quote inside a regex
+                # literal, like replace(/'/g, ""). Without this the scanner
+                # treated the whole rest of the file as one long string, no
+                # comment after that point was ever removed, and functions named
+                # in comments read as undefined calls. Only backticks may run on.
+                quote = None
+            i += 1
+            continue
+        if c in "\"\'`":
+            quote = c
+            out.append(c)
+            i += 1
+            continue
+        if c == "/" and i + 1 < n and src[i + 1] == "/":
+            while i < n and src[i] != "\n":
+                i += 1
+            continue
+        if c == "/" and i + 1 < n and src[i + 1] == "*":
+            i += 2
+            while i + 1 < n and not (src[i] == "*" and src[i + 1] == "/"):
+                i += 1
+            i += 2
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out)
+
 
 def javascript_in(path):
     """The script a file actually runs.
@@ -35,8 +100,16 @@ def javascript_in(path):
     """
     src = io.open(path, encoding="utf-8").read()
     if path.endswith(".js"):
-        return src
-    return "\n".join(re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", src, re.S))
+        # `export default` is a module keyword; the checker only wants the body.
+        return strip_comments(re.sub(r"^export default", "var _x =", src, flags=re.M))
+    out = []
+    for tag, body in re.findall(r"(<script(?![^>]*\bsrc=)[^>]*>)(.*?)</script>", src, re.S):
+        t = re.search(r"type\s*=\s*[\"\']([^\"\']+)", tag)
+        # application/ld+json is data for search engines, not code.
+        if t and not re.match(r"(text/javascript|module|application/javascript)$", t.group(1).strip()):
+            continue
+        out.append(body)
+    return strip_comments("\n".join(out))
 
 
 # Files named on the command line, or every page and shared script if none are.
@@ -66,7 +139,12 @@ for f in [t for t in targets if os.path.isfile(t)]:
 
     defined = set()
     defined |= set(re.findall(r"function\s+([A-Za-z_$][\w$]*)", js))          # function foo(
-    defined |= set(re.findall(r"(?:var|let|const)\s+([A-Za-z_$][\w$]*)", js)) # var foo =
+    # `var a = 1, b = 2, c = 3` used to register only `a`, so b and c read as
+    # undefined. Take every name in the declaration list.
+    for decl in re.findall(r"(?:var|let|const)\s+([^;\n]{0,400})", js):
+        for nm in re.findall(r"(?:^|,)\s*([A-Za-z_$][\w$]*)\s*(?==|,|$)", decl):
+            defined.add(nm)
+    defined |= set(re.findall(r"(?:var|let|const)\s+([A-Za-z_$][\w$]*)", js))
     for m in re.finditer(r"function[^(]*\(([^)]*)\)", js):                    # parameters
         for a in m.group(1).split(","):
             a = a.strip()
