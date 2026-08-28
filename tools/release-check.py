@@ -840,6 +840,27 @@ def admin_routes_refuse():
     ok('Stripe webhook rejects an unsigned event', status == 400,
        why='HTTP %s: a 404 means the path is wrong, not that it is safe' % status)
 
+    """AND SOMEBODY MUST BE ABLE TO GET IN.
+
+    Everything above proves the lock works. It says nothing about whether any
+    key fits, and that is not a hypothetical: pp_admins shipped with no rows,
+    so comping a party answered 'no' and every check here still passed. A door
+    nobody can open is not secure, it is broken.
+
+    Health reports the count, so this can ask without holding a credential."""
+    status, body, _ = get(PP_API + '/health')
+    try:
+        d = json.loads(body)
+    except Exception:
+        d = {}
+    if 'admins' not in d:
+        note('PartyPlay admin count', 'the deployed Worker predates this check')
+    else:
+        n = d.get('admins')
+        ok('somebody can actually sign in to the PartyPlay admin',
+           n is None or n > 0,
+           why='pp_admins has %s active rows, so nobody can comp, refund or resend' % n)
+
 
 def cannot_change_a_party_without_the_key():
     head('A party cannot be changed by someone who only knows the code')
