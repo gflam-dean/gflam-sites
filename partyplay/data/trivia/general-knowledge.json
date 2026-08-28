@@ -1,0 +1,2682 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "General Knowledge",
+"count": 240,
+"questions": [
+{
+"q": "Who is the Gryffindor ghost in the Harry Potter books?",
+"options": [
+"The Bloody Baron",
+"Nearly Headless Nick",
+"Casper the Friendly Ghost",
+"The Fat Friar"
+],
+"answer": "Nearly Headless Nick",
+"d": "easy"
+},
+{
+"q": "Which classic toy involves connecting coloured discs in a vertical grid to get four in a row?",
+"options": [
+"Connect Four",
+"Guess Who?",
+"Jenga",
+"Battleship"
+],
+"answer": "Connect Four",
+"d": "easy"
+},
+{
+"q": "What currency is used in Pakistan?",
+"options": [
+"Pakistani rupee",
+"Pakistani afghani",
+"Pakistani rial",
+"Pakistani dinar"
+],
+"answer": "Pakistani rupee",
+"d": "easy"
+},
+{
+"q": "VB is a well-known Australian brand of what?",
+"options": [
+"Beer",
+"Cider",
+"Cordial",
+"Wine"
+],
+"answer": "Beer",
+"d": "easy"
+},
+{
+"q": "What currency is used in South Korea?",
+"options": [
+"South Korean rupee",
+"South Korean won",
+"K-pop coins",
+"South Korean yen"
+],
+"answer": "South Korean won",
+"d": "easy"
+},
+{
+"q": "Which is the only food that never spoils?",
+"options": [
+"Peanut butter",
+"An ice cream cone",
+"Potatoes",
+"Honey"
+],
+"answer": "Honey",
+"d": "easy"
+},
+{
+"q": "If you are traveling at a speed of 80 mph, how long will it take you to drive 80 miles?",
+"options": [
+"60 minutes",
+"90 minutes",
+"30 minutes",
+"50 minutes"
+],
+"answer": "60 minutes",
+"d": "easy"
+},
+{
+"q": "Which brand of water pistol, hugely popular in the 1990s, could pump and blast large streams of water?",
+"options": [
+"Nerf",
+"Water Warriors",
+"Aqua Zone",
+"Super Soaker"
+],
+"answer": "Super Soaker",
+"d": "easy"
+},
+{
+"q": "Lightning Mcqueen was the protagonist of what movie?",
+"options": [
+"The Fast and the Furious",
+"Cars",
+"Turbo",
+"Planes"
+],
+"answer": "Cars",
+"d": "easy"
+},
+{
+"q": "According to The Twelve Days of Christmas, how many pipers piping did my true love give to me?",
+"options": [
+"Ninety-nine",
+"Ten",
+"Eleven",
+"Twelve"
+],
+"answer": "Eleven",
+"d": "easy"
+},
+{
+"q": "How many tens are in a score?",
+"options": [
+"20",
+"4",
+"2",
+"200"
+],
+"answer": "2",
+"d": "easy"
+},
+{
+"q": "Which of the following items cannot be found in a colonial classroom?",
+"options": [
+"Fireplace",
+"Horn book",
+"Crayon",
+"Quill pen"
+],
+"answer": "Crayon",
+"d": "easy"
+},
+{
+"q": "What is the square root of 144?",
+"options": [
+"24",
+"14",
+"12",
+"144"
+],
+"answer": "12",
+"d": "easy"
+},
+{
+"q": "What is H2O?",
+"options": [
+"Hydrogen Peroxide",
+"Holy Water",
+"Water",
+"Oxygen"
+],
+"answer": "Water",
+"d": "easy"
+},
+{
+"q": "In \"Shrek\", what comedic actor voices Donkey?",
+"options": [
+"Bernie Mac",
+"Richard Pryor",
+"Chris Rock",
+"Eddie Murphy"
+],
+"answer": "Eddie Murphy",
+"d": "easy"
+},
+{
+"q": "Which of these countries use dollars?",
+"options": [
+"Canada and Great Britain",
+"Narnia and Atlantis",
+"The USA and Great Britain",
+"Canada and Australia"
+],
+"answer": "Canada and Australia",
+"d": "easy"
+},
+{
+"q": "What does the 'www' stand for at the start of a web address?",
+"options": [
+"World Web Wide",
+"Wireless Web Work",
+"Web Wide World",
+"World Wide Web"
+],
+"answer": "World Wide Web",
+"d": "easy"
+},
+{
+"q": "What is the boy doing under the haystack in the nursery rhyme Little Boy Blue?",
+"options": [
+"Daydreaming",
+"Hiding",
+"Sleeping",
+"Blowing his horn"
+],
+"answer": "Sleeping",
+"d": "easy"
+},
+{
+"q": "In the book Harry Potter and the Chamber of Secrets, during the summer break Harry gets a visit from a character named Dobby. What kind of creature is Dobby?",
+"options": [
+"a house goblin",
+"a house hippo",
+"a house imp",
+"a house elf"
+],
+"answer": "a house elf",
+"d": "easy"
+},
+{
+"q": "A male sheep is a ram. What is the female sheep called?",
+"options": [
+"Ewe",
+"Doe",
+"Sow",
+"Lamb"
+],
+"answer": "Ewe",
+"d": "easy"
+},
+{
+"q": "Which restaurant's mascot is a clown?",
+"options": [
+"McDonald's",
+"Sonic",
+"IHOP",
+"Burger King"
+],
+"answer": "McDonald's",
+"d": "easy"
+},
+{
+"q": "Which of these mammals is not a rodent?",
+"options": [
+"Capybara",
+"Beaver",
+"Rabbit",
+"Porcupine"
+],
+"answer": "Rabbit",
+"d": "easy"
+},
+{
+"q": "Name the black scary ship featured in the first movie of Pirates of the Caribbean?",
+"options": [
+"The Flying Dutchman",
+"The Rubber Ducky",
+"The Black Pearl",
+"Queen Anne's Revenge"
+],
+"answer": "The Black Pearl",
+"d": "easy"
+},
+{
+"q": "How many cards are in a traditional pack?",
+"options": [
+"48",
+"1000",
+"54",
+"52"
+],
+"answer": "52",
+"d": "easy"
+},
+{
+"q": "What name did Ursula adopt while in disguise in the movie The Little Mermaid?",
+"options": [
+"Cordelia",
+"Vanessa",
+"Morgana",
+"Sea Witch Sally"
+],
+"answer": "Vanessa",
+"d": "easy"
+},
+{
+"q": "What material was most highly prized in Ancient Egypt and was used most often for the making of jewelry?",
+"options": [
+"Lapis lazuli",
+"Silver",
+"Plastic",
+"Gold"
+],
+"answer": "Gold",
+"d": "easy"
+},
+{
+"q": "In Australia, the word thongs usually refers to what?",
+"options": [
+"Underwear",
+"Flip-flop footwear",
+"Guitar picks",
+"Rubber boots"
+],
+"answer": "Flip-flop footwear",
+"d": "easy"
+},
+{
+"q": "What is an esky used for?",
+"options": [
+"Storing tools",
+"Keeping food and drinks cold",
+"Carrying water",
+"Cooking meat"
+],
+"answer": "Keeping food and drinks cold",
+"d": "easy"
+},
+{
+"q": "Which mountain has the highest peak in Australia?",
+"options": [
+"Mount Townsend, New South Wales",
+"Mount Kosciuszko, New South Wales",
+"Uluru, Northern Territory",
+"Mount Bartle Frere, Queensland"
+],
+"answer": "Mount Kosciuszko, New South Wales",
+"d": "easy"
+},
+{
+"q": "Which famous boxer, born on January 17, won a gold medal in the 1960 Olympics?",
+"options": [
+"Joe Frazier",
+"George Foreman",
+"Rocky Balboa",
+"Muhammad Ali"
+],
+"answer": "Muhammad Ali",
+"d": "easy"
+},
+{
+"q": "The word \"dozen\" usually refers to a group of how many objects?",
+"options": [
+"6",
+"20",
+"10",
+"12"
+],
+"answer": "12",
+"d": "easy"
+},
+{
+"q": "Which company's logo features a partly eaten apple?",
+"options": [
+"Apple",
+"Microsoft",
+"Samsung",
+"Android"
+],
+"answer": "Apple",
+"d": "easy"
+},
+{
+"q": "What is the currency unit in the Philippines?",
+"options": [
+"Coconut",
+"Peso",
+"Rupiah",
+"Baht"
+],
+"answer": "Peso",
+"d": "easy"
+},
+{
+"q": "What is the full meaning of RAM?",
+"options": [
+"Rapid Access Module",
+"Random Access Memory",
+"Really Angry Machine",
+"Readily Accessible Memory"
+],
+"answer": "Random Access Memory",
+"d": "easy"
+},
+{
+"q": "Gouda cheese is from which European country?",
+"options": [
+"The Netherlands",
+"Belgium",
+"France",
+"Germany"
+],
+"answer": "The Netherlands",
+"d": "easy"
+},
+{
+"q": "Which children's construction toy features interlocking plastic bricks and minifigures?",
+"options": [
+"Hot Wheels",
+"Nerf",
+"Play-Doh",
+"Lego"
+],
+"answer": "Lego",
+"d": "easy"
+},
+{
+"q": "Which board game asks players to answer questions across six coloured categories to collect wedges?",
+"options": [
+"Trivial Pursuit",
+"Scrabble",
+"Monopoly",
+"Cluedo"
+],
+"answer": "Trivial Pursuit",
+"d": "easy"
+},
+{
+"q": "What alcoholic drink is mainly made from juniper berries?",
+"options": [
+"Grappa",
+"Vodka",
+"Moonshine",
+"Gin"
+],
+"answer": "Gin",
+"d": "easy"
+},
+{
+"q": "What animal is responsible for the most human deaths in the world?",
+"options": [
+"Snake",
+"Dog",
+"Mosquito",
+"Sloth"
+],
+"answer": "Mosquito",
+"d": "easy"
+},
+{
+"q": "Who does Harry Potter kiss in the book Harry Potter and the Half-Blood Prince, after Gryffindor wins the Quidditch Cup?",
+"options": [
+"Luna Lovegood",
+"Ginny Weasley",
+"Cho Chang",
+"Professor McGonagall"
+],
+"answer": "Ginny Weasley",
+"d": "easy"
+},
+{
+"q": "The American company \"Campbell's\" is most well known for making what food product?",
+"options": [
+"Chocolate",
+"Sausages",
+"Soft drinks",
+"Canned soups"
+],
+"answer": "Canned soups",
+"d": "easy"
+},
+{
+"q": "Which classic wooden toy set involves knocking down pins with a small ball, in a miniature bowling style?",
+"options": [
+"Boules",
+"Skittles",
+"Bocce",
+"Quoits"
+],
+"answer": "Skittles",
+"d": "easy"
+},
+{
+"q": "What is the spell incantation for conjuring a Patronus in the Harry Potter books?",
+"options": [
+"Abracadabra",
+"Expecto Patronum",
+"Expelliarmus",
+"Expecto Petronas"
+],
+"answer": "Expecto Patronum",
+"d": "easy"
+},
+{
+"q": "All of the following are fruits except which one?",
+"options": [
+"grape",
+"corn",
+"banana",
+"peach"
+],
+"answer": "corn",
+"d": "easy"
+},
+{
+"q": "What is the name of the video call and messaging app owned by Microsoft, once dominant for internet calls?",
+"options": [
+"Teams",
+"Zoom",
+"FaceTime",
+"Skype"
+],
+"answer": "Skype",
+"d": "easy"
+},
+{
+"q": "How many colors are there in a rainbow?",
+"options": [
+"9",
+"10",
+"8",
+"7"
+],
+"answer": "7",
+"d": "easy"
+},
+{
+"q": "What is the name of the hippogriff that hurt Draco Malfoy in the book Harry Potter and the Prisoner of Azkaban?",
+"options": [
+"Featherbottom",
+"Buckbeak",
+"Griffclaw",
+"Fawkes"
+],
+"answer": "Buckbeak",
+"d": "easy"
+},
+{
+"q": "Which streaming service is known for its red logo and originally posted DVDs by mail?",
+"options": [
+"Stan",
+"Netflix",
+"Disney+",
+"Hulu"
+],
+"answer": "Netflix",
+"d": "easy"
+},
+{
+"q": "Who is the poltergeist that lives at Hogwarts?",
+"options": [
+"Nearly Headless Nick",
+"The Bloody Baron",
+"Peeves",
+"Moaning Myrtle"
+],
+"answer": "Peeves",
+"d": "easy"
+},
+{
+"q": "Which of these fast-food chains is NOT mainly known to sell pizza?",
+"options": [
+"Little Caesars",
+"Domino's",
+"Papa John's",
+"Wendy's"
+],
+"answer": "Wendy's",
+"d": "easy"
+},
+{
+"q": "Which mountain has the highest peak in Africa?",
+"options": [
+"Mount Kenya, Kenya",
+"Table Mountain, South Africa",
+"Mount Kilimanjaro, Tanzania",
+"Mount Meru, Tanzania"
+],
+"answer": "Mount Kilimanjaro, Tanzania",
+"d": "easy"
+},
+{
+"q": "Which 1994 movie is this audio clip from?",
+"options": [
+"Ace Ventura: Pet Detective",
+"Bill & Ted's Excellent Adventure",
+"The Mask",
+"Dumb and Dumber"
+],
+"answer": "Dumb and Dumber",
+"d": "easy"
+},
+{
+"q": "In the movie The Lion, the Witch and the Wardrobe Edmund asked if the White Witch had what candy?",
+"options": [
+"Marzipan",
+"a Snickers bar",
+"Turkish Joy",
+"Turkish Delight"
+],
+"answer": "Turkish Delight",
+"d": "easy"
+},
+{
+"q": "What famous Greek philosopher tutored Alexander the Great and stimulated his interest in science, medicine, philosophy and literature?",
+"options": [
+"Aristotle",
+"Socrates",
+"Plato",
+"Pythagoras"
+],
+"answer": "Aristotle",
+"d": "easy"
+},
+{
+"q": "What is the name of Microsoft's game console brand?",
+"options": [
+"Wii",
+"Xbox",
+"GameCube",
+"PlayStation"
+],
+"answer": "Xbox",
+"d": "easy"
+},
+{
+"q": "What is the meaning of the French word \u201cchien\u201d?",
+"options": [
+"Dog",
+"Dragon",
+"Cat",
+"Wolf"
+],
+"answer": "Dog",
+"d": "easy"
+},
+{
+"q": "What is the solution to this problem 12-3=?",
+"options": [
+"8",
+"36",
+"9",
+"10"
+],
+"answer": "9",
+"d": "easy"
+},
+{
+"q": "How many are in a Bakers Dozen?",
+"options": [
+"12",
+"13",
+"50",
+"14"
+],
+"answer": "13",
+"d": "easy"
+},
+{
+"q": "In what Disney movie do Anastasia and Drizella appear?",
+"options": [
+"Beauty and the Beast",
+"Snow White",
+"Cinderella",
+"Sleeping Beauty"
+],
+"answer": "Cinderella",
+"d": "easy"
+},
+{
+"q": "The Quran is the holy book of which Abrahamic religion?",
+"options": [
+"Christianity",
+"Judaism",
+"Islam",
+"Rastafarianism"
+],
+"answer": "Islam",
+"d": "easy"
+},
+{
+"q": "Which type of cutlery is most suited for eating soup?",
+"options": [
+"Knife",
+"Spoon",
+"Fork",
+"A crazy straw"
+],
+"answer": "Spoon",
+"d": "easy"
+},
+{
+"q": "What big red dog, created in 1963 by Norman Bridwell, is owned by Emily Elizabeth Howard?",
+"options": [
+"Clifford",
+"Godzilla",
+"Marmaduke",
+"Rusty"
+],
+"answer": "Clifford",
+"d": "easy"
+},
+{
+"q": "Earth is located in which galaxy?",
+"options": [
+"The Galaxy Note",
+"The Black Hole",
+"The Mars Galaxy",
+"The Milky Way Galaxy"
+],
+"answer": "The Milky Way Galaxy",
+"d": "easy"
+},
+{
+"q": "What is the largest organ of the human body?",
+"options": [
+"Left earlobe",
+"Large intestine",
+"Skin",
+"Liver"
+],
+"answer": "Skin",
+"d": "easy"
+},
+{
+"q": "What type of greeting gesture is the so-called Eskimo Kiss?",
+"options": [
+"A high five with your feet",
+"A kiss on the tip of the nose",
+"Two people rubbing noses together",
+"Touching foreheads together"
+],
+"answer": "Two people rubbing noses together",
+"d": "easy"
+},
+{
+"q": "Who was the ever faithful friend and comrade-in-arms of Sherlock Holmes?",
+"options": [
+"Dr. Whatson",
+"John Watson",
+"Mycroft Holmes",
+"Inspector Lestrade"
+],
+"answer": "John Watson",
+"d": "easy"
+},
+{
+"q": "Which brand of adhesive putty is a reusable blue material used to stick posters to walls?",
+"options": [
+"Velcro",
+"Super Glue",
+"Sticky Tape",
+"Blu-Tack"
+],
+"answer": "Blu-Tack",
+"d": "easy"
+},
+{
+"q": "What is the name of the record book that lists world records?",
+"options": [
+"Ripley's",
+"Britannica",
+"The Domesday Book",
+"Guinness World Records"
+],
+"answer": "Guinness World Records",
+"d": "easy"
+},
+{
+"q": "What do scientists call dinosaur bones found deep in the ground?",
+"options": [
+"Sediment",
+"Relics",
+"Dragon eggs",
+"Fossils"
+],
+"answer": "Fossils",
+"d": "easy"
+},
+{
+"q": "Which late-night television host is famous for his amusing Top Ten lists?",
+"options": [
+"Count von Count",
+"Johnny Carson",
+"Jay Leno",
+"David Letterman"
+],
+"answer": "David Letterman",
+"d": "easy"
+},
+{
+"q": "In the game of darts, what is the highest score possible with a single dart?",
+"options": [
+"50",
+"60",
+"57",
+"54"
+],
+"answer": "60",
+"d": "easy"
+},
+{
+"q": "Michael Keaton, George Cloony, Christian Bale, and Val Kilmer have all played the role of a super hero. Which is the hero?",
+"options": [
+"Batman",
+"The Tooth Fairy",
+"Superman",
+"Green Lantern"
+],
+"answer": "Batman",
+"d": "easy"
+},
+{
+"q": "What is the name of the house-elf who warned Harry Potter of not going back to school?",
+"options": [
+"Sneezy",
+"Winky",
+"Kreacher",
+"Dobby"
+],
+"answer": "Dobby",
+"d": "easy"
+},
+{
+"q": "Which of these characters is Harry Potters best friend?",
+"options": [
+"Voldemort",
+"Neville",
+"Draco",
+"Ron"
+],
+"answer": "Ron",
+"d": "easy"
+},
+{
+"q": "What is Cuba's official, most widely spoken language?",
+"options": [
+"Creole",
+"Spanish",
+"Portuguese",
+"Pig Latin"
+],
+"answer": "Spanish",
+"d": "easy"
+},
+{
+"q": "In what movie did Tom Cruise have an autistic brother named Raymond?",
+"options": [
+"Rain Man",
+"Magnolia",
+"Jerry Maguire",
+"Mission: Impossible"
+],
+"answer": "Rain Man",
+"d": "easy"
+},
+{
+"q": "Who plays Harry in the Harry Potter movies?",
+"options": [
+"Rowan Atkinson",
+"Tom Felton",
+"Rupert Grint",
+"Daniel Radcliffe"
+],
+"answer": "Daniel Radcliffe",
+"d": "easy"
+},
+{
+"q": "What is the shortest month of the year?",
+"options": [
+"Smarch",
+"February",
+"November",
+"April"
+],
+"answer": "February",
+"d": "easy"
+},
+{
+"q": "What type of food is the Pavlova, very popular in Australia and New Zealand?",
+"options": [
+"Cake",
+"Pastry",
+"Dessert",
+"Ballet move"
+],
+"answer": "Dessert",
+"d": "easy"
+},
+{
+"q": "What English word means to \"think deeply\"?",
+"options": [
+"Contemplate",
+"Consecrate",
+"Constipate",
+"Concentrate"
+],
+"answer": "Contemplate",
+"d": "easy"
+},
+{
+"q": "Which brand is famous for the 'Tim Tam Slam', where you drink through the biscuit?",
+"options": [
+"Kingston",
+"Tim Tam",
+"Mint Slice",
+"Oreo"
+],
+"answer": "Tim Tam",
+"d": "easy"
+},
+{
+"q": "What is the name of the capital city of Scotland?",
+"options": [
+"the Isle of Skye",
+"Edinburgh",
+"Aberdeen",
+"Glasgow"
+],
+"answer": "Edinburgh",
+"d": "easy"
+},
+{
+"q": "Where did Sherlock Holmes live in London?",
+"options": [
+"10 Downing Street",
+"221B Baker Street",
+"21B Baker Street",
+"221 Baker Street"
+],
+"answer": "221B Baker Street",
+"d": "easy"
+},
+{
+"q": "Which of the following card games revolves around numbers and basic math?",
+"options": [
+"Crazy Eights",
+"52-Card Pickup",
+"Uno",
+"Skip-Bo"
+],
+"answer": "Uno",
+"d": "easy"
+},
+{
+"q": "In the game Monopoly, which colour are the two most expensive properties on the standard board?",
+"options": [
+"Blue",
+"Green",
+"Dark blue",
+"Purple"
+],
+"answer": "Dark blue",
+"d": "easy"
+},
+{
+"q": "Which of the following Australian states has no border with any of the others?",
+"options": [
+"Queensland",
+"Tasmania",
+"Victoria",
+"South Australia"
+],
+"answer": "Tasmania",
+"d": "easy"
+},
+{
+"q": "What is the most common religion in the Republic of Ireland?",
+"options": [
+"Worship of Guinness",
+"Catholic",
+"Protestant",
+"Church of Ireland"
+],
+"answer": "Catholic",
+"d": "easy"
+},
+{
+"q": "What is the name of the new Defence Against the Dark Arts teacher who first appears in the novel Harry Potter and the Prisoner of Azkaban?",
+"options": [
+"Professor Moody",
+"Professor Lupin",
+"Professor Snape",
+"Professor Dumbledore"
+],
+"answer": "Professor Lupin",
+"d": "easy"
+},
+{
+"q": "Harry Potter character Sirius Black was an Animagi meaning that he could take the form of an animal. What animal could he emulate?",
+"options": [
+"A bear",
+"A wolf",
+"A hippogriff",
+"A dog"
+],
+"answer": "A dog",
+"d": "easy"
+},
+{
+"q": "What device did Apple release in 2007 that combined a phone, iPod and internet browser?",
+"options": [
+"iPad",
+"MacBook",
+"iPhone",
+"iPod Touch"
+],
+"answer": "iPhone",
+"d": "easy"
+},
+{
+"q": "On what continent is the highest mountain in the world located?",
+"options": [
+"Africa",
+"Asia",
+"South America",
+"Australia"
+],
+"answer": "Asia",
+"d": "easy"
+},
+{
+"q": "What is the name of the little yellow, googly-eyed creatures in the 'Despicable Me' films?",
+"options": [
+"Trolls",
+"Minions",
+"Oompa Loompas",
+"Smurfs"
+],
+"answer": "Minions",
+"d": "easy"
+},
+{
+"q": "In the bovine family, what is the male counterpart of the cow?",
+"options": [
+"Bull",
+"Moo-ster",
+"Steer",
+"Ox"
+],
+"answer": "Bull",
+"d": "easy"
+},
+{
+"q": "In which cardinal direction does the Sun rise from?",
+"options": [
+"East",
+"South",
+"North",
+"West"
+],
+"answer": "East",
+"d": "easy"
+},
+{
+"q": "In French, what does non mean?",
+"options": [
+"Hello",
+"Yes",
+"No",
+"Cheese"
+],
+"answer": "No",
+"d": "easy"
+},
+{
+"q": "Where is Apple Inc. headquartered?",
+"options": [
+"San Jose, California",
+"1 Infinite Loop, Mars",
+"Cupertino, California",
+"Sunnyvale, California"
+],
+"answer": "Cupertino, California",
+"d": "easy"
+},
+{
+"q": "What are the two official national languages of Ireland?",
+"options": [
+"English and Welsh",
+"English and Leprechaun",
+"Gaelic and Irish",
+"Irish and English"
+],
+"answer": "Irish and English",
+"d": "easy"
+},
+{
+"q": "Which company makes the PlayStation game console?",
+"options": [
+"Sony",
+"Microsoft",
+"Sega",
+"Nintendo"
+],
+"answer": "Sony",
+"d": "easy"
+},
+{
+"q": "What was the last state to join America?",
+"options": [
+"Alaska",
+"Arizona",
+"Texas",
+"Hawaii"
+],
+"answer": "Hawaii",
+"d": "easy"
+},
+{
+"q": "What handheld gaming console did Nintendo release in 1989 that popularised the game Tetris?",
+"options": [
+"Sega Nomad",
+"PSP",
+"Game Boy",
+"Atari Lynx"
+],
+"answer": "Game Boy",
+"d": "easy"
+},
+{
+"q": "I have 10 apples and I give all but 6 away, how many do I have left?",
+"options": [
+"0",
+"10",
+"6",
+"4"
+],
+"answer": "6",
+"d": "easy"
+},
+{
+"q": "What is Lord Voldemorts real first name?",
+"options": [
+"Harry",
+"Marvolo",
+"Tom",
+"Salazar"
+],
+"answer": "Tom",
+"d": "easy"
+},
+{
+"q": "Which of the following is the symbol for Plutonium on the Periodic Table of Elements?",
+"options": [
+"Pu",
+"Pl",
+"Pluto",
+"Po"
+],
+"answer": "Pu",
+"d": "easy"
+},
+{
+"q": "What is a sanga in Australian slang?",
+"options": [
+"A singlet",
+"A sandwich",
+"A snake",
+"A sausage"
+],
+"answer": "A sandwich",
+"d": "easy"
+},
+{
+"q": "Who wrote the allegorical novella Animal Farm?",
+"options": [
+"Aldous Huxley",
+"H.G. Wells",
+"Old MacDonald",
+"George Orwell"
+],
+"answer": "George Orwell",
+"d": "easy"
+},
+{
+"q": "Dry air consists mostly of what gas?",
+"options": [
+"Oxygen",
+"Nitrogen",
+"Carbon dioxide",
+"Helium"
+],
+"answer": "Nitrogen",
+"d": "easy"
+},
+{
+"q": "What is the name of the game console accessory by Microsoft that used cameras to track body movement, released in 2010?",
+"options": [
+"Kinect",
+"PlayStation Move",
+"Wii Remote",
+"Joy-Con"
+],
+"answer": "Kinect",
+"d": "easy"
+},
+{
+"q": "Which awards recognise achievement in the music recording industry and are held in the United States?",
+"options": [
+"Logies",
+"Golden Globes",
+"Grammys",
+"BAFTAs"
+],
+"answer": "Grammys",
+"d": "easy"
+},
+{
+"q": "Which is the second highest mountain in terms of above sea level elevation?",
+"options": [
+"K2",
+"Kangchenjunga",
+"Lhotse",
+"Mount Everest"
+],
+"answer": "K2",
+"d": "easy"
+},
+{
+"q": "What is the name of the ogre in the DreamWorks film released in 2001?",
+"options": [
+"Donkey",
+"Farquaad",
+"Fiona",
+"Shrek"
+],
+"answer": "Shrek",
+"d": "easy"
+},
+{
+"q": "Which specialized toilet is designed to be used only for urination?",
+"options": [
+"Bidet",
+"Chamber pot",
+"Kitchen sink",
+"Urinal"
+],
+"answer": "Urinal",
+"d": "easy"
+},
+{
+"q": "Five dollars is worth how many nickels?",
+"options": [
+"50",
+"20",
+"25",
+"100"
+],
+"answer": "100",
+"d": "easy"
+},
+{
+"q": "If T.J. went to the circus with 10 dollars and bought some fruit snacks for 3 dollars, how much money would T. J. then have left over?",
+"options": [
+"7 dollars",
+"5 dollars",
+"13 dollars",
+"8 dollars"
+],
+"answer": "7 dollars",
+"d": "easy"
+},
+{
+"q": "What handheld electronic 'virtual pet' toy became hugely popular in the late 1990s?",
+"options": [
+"Tamagotchi",
+"Game Boy",
+"Nano Baby",
+"Furby"
+],
+"answer": "Tamagotchi",
+"d": "easy"
+},
+{
+"q": "A bottle-o is Australian slang for what kind of shop?",
+"options": [
+"A chemist",
+"A milk bar",
+"A recycling depot",
+"A liquor store"
+],
+"answer": "A liquor store",
+"d": "easy"
+},
+{
+"q": "Tim Tams are a popular Australian type of what?",
+"options": [
+"Ice cream",
+"Chocolate biscuit",
+"A cream slice",
+"A chocolate bar"
+],
+"answer": "Chocolate biscuit",
+"d": "easy"
+},
+{
+"q": "Acrophobia is a term, defined as an excessive fear of what?",
+"options": [
+"Flying",
+"Tall ladders",
+"Heights",
+"Acrobats"
+],
+"answer": "Heights",
+"d": "easy"
+},
+{
+"q": "What is the name given to Indian food cooked over charcoal in a clay oven?",
+"options": [
+"Tandoori",
+"Vindaloo",
+"Biryani",
+"Poppadom"
+],
+"answer": "Tandoori",
+"d": "easy"
+},
+{
+"q": "When one is \"envious\", they are said to be what color?",
+"options": [
+"Purple",
+"Blue",
+"Green",
+"Polka dot"
+],
+"answer": "Green",
+"d": "easy"
+},
+{
+"q": "Which brand's logo is a bitten biscuit and the mascot is often associated with milk dunking, an Australian favourite?",
+"options": [
+"Tim Tam",
+"Oreo",
+"Arnott's",
+"Milk Arrowroot"
+],
+"answer": "Tim Tam",
+"d": "easy"
+},
+{
+"q": "What is the name of Katniss Everdeens 12 year-old sister in the novel The Hunger Games?",
+"options": [
+"Rue",
+"Buttercup",
+"Daisy",
+"Primrose"
+],
+"answer": "Primrose",
+"d": "easy"
+},
+{
+"q": "How many letters are there in the English alphabet?",
+"options": [
+"23",
+"28",
+"24",
+"26"
+],
+"answer": "26",
+"d": "easy"
+},
+{
+"q": "What is the unusual platform number on which Harry Potter has to catch his train - The Hogwarts Express?",
+"options": [
+"nine and three quarters",
+"ten and three quarters",
+"platform zero",
+"nine and a half"
+],
+"answer": "nine and three quarters",
+"d": "easy"
+},
+{
+"q": "What is the number of members of the Senate for each US state?",
+"options": [
+"one hundred",
+"three",
+"based on the states population",
+"two"
+],
+"answer": "two",
+"d": "easy"
+},
+{
+"q": "Gaston tries to woo the title character from which Disney movie?",
+"options": [
+"Aladdin",
+"Beauty and the Beast",
+"The Little Mermaid",
+"Frozen"
+],
+"answer": "Beauty and the Beast",
+"d": "easy"
+},
+{
+"q": "Out of these four buildings, which one is the tallest, with a height of 2,717 ft (828 m)?",
+"options": [
+"Shanghai Tower, China",
+"The Gherkin, United Kingdom",
+"Lotte World Tower, South Korea",
+"Burj Khalifa, United Arab Emirates"
+],
+"answer": "Burj Khalifa, United Arab Emirates",
+"d": "easy"
+},
+{
+"q": "Where did Harry buy his wand?",
+"options": [
+"Flourish and Blotts",
+"Gregorovitchs",
+"Ollivanders",
+"Weasleys Wizard Wheezes"
+],
+"answer": "Ollivanders",
+"d": "easy"
+},
+{
+"q": "How many months have twenty eight days?",
+"options": [
+"0",
+"11",
+"1",
+"12"
+],
+"answer": "12",
+"d": "easy"
+},
+{
+"q": "Who invented the first working television system?",
+"options": [
+"Guglielmo Marconi",
+"Steve Jobs",
+"Nikola Tesla",
+"John Logie Baird"
+],
+"answer": "John Logie Baird",
+"d": "easy"
+},
+{
+"q": "What do the letters of the fast food chain KFC stand for?",
+"options": [
+"Krispy Fried Clucker",
+"Kentucky Fried Cuisine",
+"Kentucky Fried Chicken",
+"Kentucky Farm Chicken"
+],
+"answer": "Kentucky Fried Chicken",
+"d": "easy"
+},
+{
+"q": "What country does sushi & karaoke come from?",
+"options": [
+"China",
+"South Korea",
+"Japan",
+"Vietnam"
+],
+"answer": "Japan",
+"d": "easy"
+},
+{
+"q": "What is the name of the Pixar-created family of superheroes?",
+"options": [
+"The Avengers",
+"The Incredibles",
+"The Toy Story Gang",
+"Fantastic Four"
+],
+"answer": "The Incredibles",
+"d": "easy"
+},
+{
+"q": "What is the name of Rays wife in the 1989 movie Field of Dreams?",
+"options": [
+"Annie",
+"Shoeless Joan",
+"Anna",
+"Sarah"
+],
+"answer": "Annie",
+"d": "medium"
+},
+{
+"q": "A schooner of beer is about what size?",
+"options": [
+"375 ml",
+"425 ml",
+"500 ml",
+"285 ml"
+],
+"answer": "425 ml",
+"d": "medium"
+},
+{
+"q": "What is the fastest land animal, capable of speeds over 100 km/h?",
+"options": [
+"Pronghorn",
+"Greyhound",
+"Lion",
+"Cheetah"
+],
+"answer": "Cheetah",
+"d": "medium"
+},
+{
+"q": "Which of these actors starred in the 2009 movie Angels Demons?",
+"options": [
+"Tom Hanks",
+"Ewan McGregor",
+"Russell Crowe",
+"The Pope"
+],
+"answer": "Tom Hanks",
+"d": "medium"
+},
+{
+"q": "Who was Prince of Monaco for almost 56 years between May 1949 and April 2005?",
+"options": [
+"Rainier III",
+"Louis II",
+"Prince Charming",
+"Albert II"
+],
+"answer": "Rainier III",
+"d": "medium"
+},
+{
+"q": "What is the English name commonly used to refer to the popular Indian dish Murgh Makhani?",
+"options": [
+"The sleepy hen",
+"Butter chicken",
+"Chicken tikka masala",
+"Chicken korma"
+],
+"answer": "Butter chicken",
+"d": "medium"
+},
+{
+"q": "What are the official languages in the linguistically and culturally diverse community of Israel?",
+"options": [
+"Hebrew and Klingon",
+"Hebrew and Arabic",
+"Hebrew, Yiddish and Arabic",
+"Hebrew and English"
+],
+"answer": "Hebrew and Arabic",
+"d": "medium"
+},
+{
+"q": "What bird can be associated with the infectious disease Varicella?",
+"options": [
+"Turkey",
+"Chicken",
+"Dodo",
+"Duck"
+],
+"answer": "Chicken",
+"d": "medium"
+},
+{
+"q": "Which 2000s film franchise, based on a theme park ride, stars a pirate named Jack Sparrow?",
+"options": [
+"Pirates of the Caribbean",
+"Treasure Island",
+"Hook",
+"The Goonies"
+],
+"answer": "Pirates of the Caribbean",
+"d": "medium"
+},
+{
+"q": "Which of these movies was set in Chicago, Illinois, USA?",
+"options": [
+"Speed",
+"Sleepless in Seattle",
+"Godzilla",
+"My Best Friends Wedding"
+],
+"answer": "My Best Friends Wedding",
+"d": "medium"
+},
+{
+"q": "What famous person from WWI does Snoopy pretend to battle from the top of his dog house in the comic strip Peanuts?",
+"options": [
+"The Blue Baron",
+"General Pershing",
+"The Kaiser",
+"Red Baron"
+],
+"answer": "Red Baron",
+"d": "medium"
+},
+{
+"q": "Which brand of loom bands kit sparked a craze in 2013 for making rubber-band bracelets?",
+"options": [
+"Cra-Z-Loom",
+"Rainbow Loom",
+"FunLoom",
+"Bandaloom"
+],
+"answer": "Rainbow Loom",
+"d": "medium"
+},
+{
+"q": "Who had a #1 single in 1988 with Foolish Beat?",
+"options": [
+"Tiffany",
+"Samantha Fox",
+"Debbie Gibson",
+"Madonna"
+],
+"answer": "Debbie Gibson",
+"d": "medium"
+},
+{
+"q": "In the Harry Potter books, what is Harrys classmate Hermiones full name?",
+"options": [
+"Hermione Jane Granger",
+"Hermione Grace Granger",
+"Hermione Minerva Granger",
+"Hermione Jean Granger"
+],
+"answer": "Hermione Jean Granger",
+"d": "medium"
+},
+{
+"q": "Who was the director of the hit 90s movie Misery?",
+"options": [
+"Stephen King",
+"Brian De Palma",
+"Rob Reiner",
+"Kathy Bates"
+],
+"answer": "Rob Reiner",
+"d": "medium"
+},
+{
+"q": "Who sent Harry a letter in Chapter 2 telling him not to do any more magic, or to surrender his wand?",
+"options": [
+"Mafalda Hopkirk",
+"Arthur Weasley",
+"Dobby",
+"Cornelius Fudge"
+],
+"answer": "Arthur Weasley",
+"d": "medium"
+},
+{
+"q": "During what year did Samuel Morse come up with the idea of Morse Code?",
+"options": [
+"1837",
+"1844",
+"1900",
+"1838"
+],
+"answer": "1838",
+"d": "medium"
+},
+{
+"q": "What alcoholic drink is made from molasses?",
+"options": [
+"Whisky",
+"Gin",
+"Vodka",
+"Rum"
+],
+"answer": "Rum",
+"d": "medium"
+},
+{
+"q": "Who was the first Tzar of Russia?",
+"options": [
+"Boris Godunov",
+"Ivan the Great",
+"Ivan the Terrible",
+"Ivan the Reasonable"
+],
+"answer": "Ivan the Terrible",
+"d": "medium"
+},
+{
+"q": "What movie earned Grace Kelly the Academy Award for Best Actress?",
+"options": [
+"The Country Girl",
+"To Catch a Thief",
+"The Wizard of Oz",
+"Rear Window"
+],
+"answer": "The Country Girl",
+"d": "medium"
+},
+{
+"q": "Which of the American states below does not have part of the Yellow Stone National Park in it?",
+"options": [
+"Wyoming",
+"Idaho",
+"Montana",
+"Utah"
+],
+"answer": "Utah",
+"d": "medium"
+},
+{
+"q": "What is the official nickname of Seattle, a city in the State of Washington?",
+"options": [
+"The Rainy City",
+"The Big Latte",
+"The Emerald City",
+"The Lilac City"
+],
+"answer": "The Emerald City",
+"d": "medium"
+},
+{
+"q": "Which company built the A6M, aka Zero -- the fighter aircraft that was used in the attack on Pearl Harbor?",
+"options": [
+"Mitsubishi",
+"Nintendo",
+"Kawasaki",
+"Nissan"
+],
+"answer": "Mitsubishi",
+"d": "medium"
+},
+{
+"q": "What 1990s western, written by Kevin Jarre and directed by George P. Cosmatos, is this quote from?",
+"options": [
+"Cowboys & Aliens",
+"Wyatt Earp",
+"Young Guns II",
+"Tombstone"
+],
+"answer": "Tombstone",
+"d": "medium"
+},
+{
+"q": "Which river flows through four European capitals?",
+"options": [
+"Amazon River",
+"Rhine",
+"Danube",
+"Elbe"
+],
+"answer": "Danube",
+"d": "medium"
+},
+{
+"q": "Which Chinese Dynasty is responsible for the construction of most of the Great Wall of China?",
+"options": [
+"Qin",
+"Han",
+"Tang",
+"Ming"
+],
+"answer": "Ming",
+"d": "medium"
+},
+{
+"q": "Which of the following characters did NOT die at some point of the Harry Potter series?",
+"options": [
+"Fred Weasley",
+"Bellatrix Lestrange",
+"Dobby",
+"George"
+],
+"answer": "George",
+"d": "medium"
+},
+{
+"q": "What name represents the letter \"M\" in the NATO phonetic alphabet?",
+"options": [
+"Morris",
+"Mickey",
+"Mike",
+"Mario"
+],
+"answer": "Mike",
+"d": "medium"
+},
+{
+"q": "What interesting nickname did Adolf Hitler adopt in the early 1920s?",
+"options": [
+"Fox",
+"Eagle",
+"Bunny",
+"Wolf"
+],
+"answer": "Wolf",
+"d": "medium"
+},
+{
+"q": "What is the capital city of Iceland?",
+"options": [
+"Kopavogur",
+"Reykjavik",
+"Akureyri",
+"Frostbite City"
+],
+"answer": "Reykjavik",
+"d": "medium"
+},
+{
+"q": "What was the name of the 1998 handheld game craze where players battled digital monsters, later a huge franchise?",
+"options": [
+"Digimon",
+"Neopets",
+"Tamagotchi",
+"Pokemon"
+],
+"answer": "Pokemon",
+"d": "medium"
+},
+{
+"q": "This field is sometimes known as \u201cThe Dismal Science.\u201d",
+"options": [
+"Astrology",
+"Sociology",
+"Economics",
+"Accounting"
+],
+"answer": "Economics",
+"d": "medium"
+},
+{
+"q": "What is the real name of viral internet meme Grumpy Cat?",
+"options": [
+"Tardar Sauce",
+"Tartar Sauce",
+"Grumpkin",
+"Mr Whiskers"
+],
+"answer": "Tardar Sauce",
+"d": "medium"
+},
+{
+"q": "What is the name of the traditional South Indian crepe made from rice and black lentils and eaten for breakfast or dinner?",
+"options": [
+"Dosa",
+"Vada",
+"Dosa the Explorer",
+"Idli"
+],
+"answer": "Dosa",
+"d": "medium"
+},
+{
+"q": "Which of the following was not taught to Native American children at Indian boarding schools during the 19th century and early 20th century?",
+"options": [
+"Christianity",
+"English, writing",
+"Native American languages",
+"English, reading"
+],
+"answer": "Native American languages",
+"d": "medium"
+},
+{
+"q": "The most popular nickname of Paris, France, is La Ville-Lumiere. What does this mean?",
+"options": [
+"City of light",
+"City of cheese",
+"City of the sun",
+"City of enlightenment"
+],
+"answer": "City of light",
+"d": "medium"
+},
+{
+"q": "Captain Edward J. Smith was captain of Titanic. Who was the first officer?",
+"options": [
+"William McMaster Murdoch",
+"Henry Wilde",
+"Jack Dawson",
+"Charles Lightoller"
+],
+"answer": "William McMaster Murdoch",
+"d": "medium"
+},
+{
+"q": "Where would you find the only royal palace to serve as an official residence in the USA?",
+"options": [
+"Santa Fe, New Mexico",
+"Las Vegas, Nevada",
+"Honolulu, Hawaii",
+"St. Augustine, Florida"
+],
+"answer": "Honolulu, Hawaii",
+"d": "medium"
+},
+{
+"q": "What phenomenon is caused by the collision of high-energy charged particles?",
+"options": [
+"Rainbows",
+"Ball lightning",
+"Aurora Borealis",
+"Solar flares"
+],
+"answer": "Aurora Borealis",
+"d": "medium"
+},
+{
+"q": "What is the full name of the famous British writer J. R. R. Tolkien, author of the trilogy The Lord of the Rings?",
+"options": [
+"John Ronald Reuel Tolkien",
+"John Ronald Reginald Tolkien",
+"John Robert Reuel Tolkien",
+"John Ronald Baggins Tolkien"
+],
+"answer": "John Ronald Reuel Tolkien",
+"d": "medium"
+},
+{
+"q": "What color is the sweat of the Hippopotamus?",
+"options": [
+"Clear",
+"Red",
+"Rainbow",
+"Pink"
+],
+"answer": "Red",
+"d": "medium"
+},
+{
+"q": "Which company's logo is a blue bird, associated with its former name?",
+"options": [
+"Facebook",
+"Twitter",
+"Bluesky",
+"Reddit"
+],
+"answer": "Twitter",
+"d": "medium"
+},
+{
+"q": "What geographical area does the Diamond Dove populate?",
+"options": [
+"New Guinea",
+"Southeast Asia",
+"Australia",
+"Antarctica"
+],
+"answer": "Australia",
+"d": "medium"
+},
+{
+"q": "What was the last name of Rockys manager, Mickey in the movie Rocky?",
+"options": [
+"Goldstein",
+"Balboa",
+"Goldmill",
+"Goldman"
+],
+"answer": "Goldmill",
+"d": "medium"
+},
+{
+"q": "What was the name of the sleazy lawyer in the musical and movie Chicago?",
+"options": [
+"Roxie Hart",
+"Saul Goodman",
+"Billy Flynn",
+"Vinny Gambini"
+],
+"answer": "Billy Flynn",
+"d": "medium"
+},
+{
+"q": "What company manufactures the F-35 Joint Strike Fighter?",
+"options": [
+"Boeing",
+"Tesla",
+"Lockheed",
+"General Dynamics"
+],
+"answer": "Lockheed",
+"d": "medium"
+},
+{
+"q": "What group included Nils Lofgren, Ray Bittan, Gary Tallent, and Soozie Tyrell?",
+"options": [
+"The Silver Bullet Band",
+"The Heartbreakers",
+"The Backstreet Boys",
+"The E Street Band"
+],
+"answer": "The E Street Band",
+"d": "medium"
+},
+{
+"q": "In the TV series The Addams Family, what language does Morticia speak that drives Gomez crazy?",
+"options": [
+"French",
+"Spanish",
+"Italian",
+"Ancient Latin"
+],
+"answer": "French",
+"d": "medium"
+},
+{
+"q": "Which country has the highest population density in the world as of 2008?",
+"options": [
+"Singapore",
+"Mongolia",
+"Bangladesh",
+"Monaco"
+],
+"answer": "Monaco",
+"d": "medium"
+},
+{
+"q": "What is Odontophobia?",
+"options": [
+"a fear of bones",
+"a fear of teeth or dental procedures",
+"a fear of the colour yellow",
+"a fear of doctors"
+],
+"answer": "a fear of teeth or dental procedures",
+"d": "medium"
+},
+{
+"q": "Which candy is NOT made by Mars?",
+"options": [
+"Skittles",
+"Snickers",
+"Twix",
+"Almond Joy"
+],
+"answer": "Almond Joy",
+"d": "medium"
+},
+{
+"q": "In which film does Salma Hayek appear as a vampire queen doing a snake dance?",
+"options": [
+"Blade",
+"From Dusk Till Dawn",
+"Interview with the Vampire",
+"Hotel Transylvania"
+],
+"answer": "From Dusk Till Dawn",
+"d": "medium"
+},
+{
+"q": "Which method can be used to transport oil over long distances?",
+"options": [
+"Railroad",
+"Very large crude carriers (VLCC)",
+"All of these methods can be used.",
+"Pipelines"
+],
+"answer": "All of these methods can be used.",
+"d": "medium"
+},
+{
+"q": "What is the currency unit in Indonesia?",
+"options": [
+"Doubloon",
+"Rupee",
+"Ringgit",
+"Rupiah"
+],
+"answer": "Rupiah",
+"d": "medium"
+},
+{
+"q": "Which Disney movie are the characters Drizella, Lucifer, Anastasia and Octavius from?",
+"options": [
+"Cinderella",
+"Sleeping Beauty",
+"Snow White and the Seven Dwarfs",
+"Frozen"
+],
+"answer": "Cinderella",
+"d": "medium"
+},
+{
+"q": "How many sheep per person are there in New Zealand?",
+"options": [
+"9",
+"20",
+"100",
+"12"
+],
+"answer": "12",
+"d": "medium"
+},
+{
+"q": "Who accused Hermione of having a thing for famous wizards in Harry Potter and the Goblet of Fire?",
+"options": [
+"Rita Skeeter",
+"Madame Maxime",
+"Ludo Bagman",
+"Gilderoy Lockhart"
+],
+"answer": "Rita Skeeter",
+"d": "medium"
+},
+{
+"q": "On what period of Abraham Lincolns life does Steven Spielbergs 2012 movie Lincoln focus?",
+"options": [
+"his teenage log-cabin days",
+"the Civil War years",
+"the final four months of his life",
+"the final year of his life"
+],
+"answer": "the final four months of his life",
+"d": "medium"
+},
+{
+"q": "The words \"bungalow\" and \"shampoo\" originate from the languages of which country?",
+"options": [
+"China",
+"Ethiopia",
+"Papua New Guinea",
+"India"
+],
+"answer": "India",
+"d": "medium"
+},
+{
+"q": "Which famous physicist and author wrote 'A Brief History of Time'?",
+"options": [
+"Carl Sagan",
+"Richard Feynman",
+"Stephen Hawking",
+"Brian Cox"
+],
+"answer": "Stephen Hawking",
+"d": "medium"
+},
+{
+"q": "In what 1973 James Bond movie has actress Jane Seymour appeared as a Bond girl?",
+"options": [
+"Live and Let Die",
+"The Man with the Golden Gun",
+"Diamonds Are Forever",
+"Austin Powers in Goldmember"
+],
+"answer": "Live and Let Die",
+"d": "medium"
+},
+{
+"q": "In the 90s movie Misery, how does Paul Sheldon end up waking up in somebodys home?",
+"options": [
+"car accident",
+"snowmobile accident",
+"slipped on ice",
+"fell off his typewriter"
+],
+"answer": "car accident",
+"d": "medium"
+},
+{
+"q": "Apple co-founder Steve Jobs died from complications of which form of cancer?",
+"options": [
+"Liver",
+"Pancreatic",
+"Stomach",
+"Skin"
+],
+"answer": "Pancreatic",
+"d": "medium"
+},
+{
+"q": "What is a dead mall?",
+"options": [
+"A mall haunted by ghosts",
+"A mall that never opened to the public",
+"A mall with high vacancy rates or low consumer foot traffic",
+"A mall scheduled for demolition"
+],
+"answer": "A mall with high vacancy rates or low consumer foot traffic",
+"d": "medium"
+},
+{
+"q": "In the nursery rhyme Mary, Mary, Quite Contrary, what type of shells help Marys garden grow?",
+"options": [
+"cockle",
+"tortoise",
+"scallop",
+"mussel"
+],
+"answer": "cockle",
+"d": "medium"
+},
+{
+"q": "According to modern geological theories, there was only one continent about 200 million years ago. What do geologists call it?",
+"options": [
+"Atlantis",
+"Pangaea",
+"Rodinia",
+"Pannotia"
+],
+"answer": "Pangaea",
+"d": "medium"
+},
+{
+"q": "Which charm did Doby the House Elf use to get Harry Potter in huge trouble with his Uncle?",
+"options": [
+"A jelly-legs jinx",
+"A bouncing charm",
+"A hover charm",
+"A shrinking charm"
+],
+"answer": "A hover charm",
+"d": "medium"
+},
+{
+"q": "Which 350-meter tower in Las Vegas, Nevada, is actually a famous hotel and casino?",
+"options": [
+"The Space Needle",
+"Stratosphere Tower",
+"The Leaning Tower of Pisa",
+"The CN Tower"
+],
+"answer": "Stratosphere Tower",
+"d": "medium"
+},
+{
+"q": "What is the currency unit in Costa Rica?",
+"options": [
+"Balboa",
+"Banana Dollar",
+"Colon",
+"Quetzal"
+],
+"answer": "Colon",
+"d": "medium"
+},
+{
+"q": "In the classic 80s film, Sixteen Candles, what was the name of the hilarious Asian foreign exchange student, portrayed by Gedde Watanabe?",
+"options": [
+"Ferris Bueller",
+"Kim Duk Soo",
+"Long Duk Dong",
+"Long Duk Ho"
+],
+"answer": "Long Duk Dong",
+"d": "medium"
+},
+{
+"q": "Which group recorded the hit single Sugar Daddy in 1971?",
+"options": [
+"Jackson 5",
+"Sugar Ray",
+"The Temptations",
+"The Osmonds"
+],
+"answer": "Jackson 5",
+"d": "medium"
+},
+{
+"q": "Chinophobia is the fear of what?",
+"options": [
+"snow",
+"chins",
+"ice",
+"winter"
+],
+"answer": "snow",
+"d": "medium"
+},
+{
+"q": "What do we call a storage place for bees?",
+"options": [
+"A bee hotel",
+"Vespiary",
+"Aviary",
+"Apiary"
+],
+"answer": "Apiary",
+"d": "medium"
+},
+{
+"q": "Where should one use perfume? Wherever one wants to be kissed. That's a piece of advice given by what prominent fashion designer?",
+"options": [
+"Christian Dior",
+"Coco Chanel",
+"Ron Burgundy",
+"Yves Saint Laurent"
+],
+"answer": "Coco Chanel",
+"d": "medium"
+},
+{
+"q": "Gwyneth Paltrow is known for practicing which of the following?",
+"options": [
+"Selling scented candles",
+"Meditation",
+"Pilates",
+"Yoga"
+],
+"answer": "Yoga",
+"d": "medium"
+},
+{
+"q": "What are the colors on the national flag of Greenland?",
+"options": [
+"All the colours of the rainbow",
+"Green and white",
+"White and blue",
+"White and red"
+],
+"answer": "White and red",
+"d": "medium"
+},
+{
+"q": "What type of teeth do rodents lack?",
+"options": [
+"Molars",
+"They have all of these.",
+"Incisors",
+"Canine teeth"
+],
+"answer": "Canine teeth",
+"d": "medium"
+},
+{
+"q": "What is the defining characteristic of someone who is described as hirsute?",
+"options": [
+"Sweaty",
+"Bald",
+"Hairy",
+"Wrinkled"
+],
+"answer": "Hairy",
+"d": "medium"
+},
+{
+"q": "Which of these American singers and songwriters won a Nobel Prize in Literature?",
+"options": [
+"Bob Dylan",
+"Leonard Cohen",
+"Kanye West",
+"Bruce Springsteen"
+],
+"answer": "Bob Dylan",
+"d": "medium"
+},
+{
+"q": "How many movies were made featuring the character Dirty Harry during the 70s and 80s?",
+"options": [
+"5",
+"4",
+"6",
+"12"
+],
+"answer": "5",
+"d": "medium"
+},
+{
+"q": "Where are the Islets of Langerhans?",
+"options": [
+"in the liver",
+"in Denmark",
+"in the pancreas",
+"in the kidneys"
+],
+"answer": "in the pancreas",
+"d": "medium"
+},
+{
+"q": "Which of the following correctly describes Japanese word order?",
+"options": [
+"Verb Object Subject",
+"Subject Object Verb",
+"Object Subject Verb",
+"Subject Verb Object"
+],
+"answer": "Subject Object Verb",
+"d": "medium"
+},
+{
+"q": "Which brand of premium ice cream is named after a made-up 'Danish-sounding' pair of words?",
+"options": [
+"Streets",
+"Connoisseur",
+"Ben & Jerry's",
+"Haagen-Dazs"
+],
+"answer": "Haagen-Dazs",
+"d": "medium"
+},
+{
+"q": "What is the name of Oprah Winfreys character in the 1985 drama movie The Color Purple directed by Steven Spielberg?",
+"options": [
+"Sofia",
+"Nettie",
+"Celie",
+"Oprah herself"
+],
+"answer": "Sofia",
+"d": "medium"
+},
+{
+"q": "Which language is most widely spoken in Switzerland?",
+"options": [
+"Italian",
+"Swiss",
+"French",
+"German"
+],
+"answer": "German",
+"d": "medium"
+},
+{
+"q": "Which African American invented the traffic light?",
+"options": [
+"Lewis Latimer",
+"Elijah McCoy",
+"Thomas Edison",
+"Garrett Morgan"
+],
+"answer": "Garrett Morgan",
+"d": "medium"
+},
+{
+"q": "What toxic chemical was released in the Tokyo subway by the Aum Shinrikyo sect in 1995?",
+"options": [
+"Chlorine gas",
+"Sarin",
+"VX nerve agent",
+"Laughing gas"
+],
+"answer": "Sarin",
+"d": "medium"
+},
+{
+"q": "What is the most popular sport in Bulgaria, with world-known representatives such as Dimitar Berbatov and Hristo Stoichkov?",
+"options": [
+"Weightlifting",
+"Basketball",
+"Football",
+"Sumo wrestling"
+],
+"answer": "Football",
+"d": "medium"
+},
+{
+"q": "Which city did not serve as capital of Poland?",
+"options": [
+"Warsaw",
+"Poznan",
+"Gdansk",
+"Krakow"
+],
+"answer": "Gdansk",
+"d": "medium"
+},
+{
+"q": "What is the position number of a Center in basketball?",
+"options": [
+"10",
+"3",
+"4",
+"5"
+],
+"answer": "5",
+"d": "medium"
+},
+{
+"q": "Johnny Storm, a member of the Fantastic Four, goes by what moniker?",
+"options": [
+"The Firestarter",
+"Mr Matchstick",
+"The Blazing Man",
+"The Human Torch"
+],
+"answer": "The Human Torch",
+"d": "medium"
+},
+{
+"q": "From the name of which river is the name India derived?",
+"options": [
+"Ganga river",
+"Yamuna river",
+"Sindhu river",
+"Amazon river"
+],
+"answer": "Sindhu river",
+"d": "medium"
+},
+{
+"q": "What role did Geena Davis play in the movie A League of Their Own?",
+"options": [
+"Dottie Hinson",
+"Kit Keller",
+"Jimmy Dugan",
+"Mae Mordabito"
+],
+"answer": "Dottie Hinson",
+"d": "medium"
+},
+{
+"q": "Which film about marijuana was directed by Louis Gasnier and released in 1936?",
+"options": [
+"Reefer Madness",
+"Assassin of Youth",
+"Marihuana",
+"Pineapple Express"
+],
+"answer": "Reefer Madness",
+"d": "medium"
+},
+{
+"q": "What city does Carl Sandburg call Hog Butcher for the World and City of the Big Shoulders?",
+"options": [
+"Kansas City",
+"Bikini Bottom",
+"Cincinnati",
+"Chicago"
+],
+"answer": "Chicago",
+"d": "medium"
+},
+{
+"q": "What year was Apple Inc. founded?",
+"options": [
+"1975",
+"1977",
+"1976",
+"1984"
+],
+"answer": "1976",
+"d": "medium"
+},
+{
+"q": "Who invented Pastafarianism?",
+"options": [
+"Chef Boyardee",
+"Richard Dawkins",
+"Bill Maher",
+"Bobby Henderson"
+],
+"answer": "Bobby Henderson",
+"d": "hard"
+},
+{
+"q": "What is the name of Lanas pimp in the movie Risky Business?",
+"options": [
+"Vito",
+"Joel",
+"Rocco",
+"Guido"
+],
+"answer": "Guido",
+"d": "hard"
+},
+{
+"q": "Who plays Lilly Truscot in Hannah Montana: The Movie?",
+"options": [
+"Emily Osment",
+"Miley Cyrus",
+"Oprah Winfrey",
+"Emily Osborne"
+],
+"answer": "Emily Osment",
+"d": "hard"
+},
+{
+"q": "Waluigi's first appearance was in what game?",
+"options": [
+"Mario Party (N64)",
+"Mario Tennis 64 (N64)",
+"Super Smash Bros. Ultimate",
+"Wario Land: Super Mario Land 3"
+],
+"answer": "Mario Tennis 64 (N64)",
+"d": "hard"
+},
+{
+"q": "Which of the following chemicals are found in eggplant seeds?",
+"options": [
+"Capsaicin",
+"Nicotine",
+"Rocket fuel",
+"Caffeine"
+],
+"answer": "Nicotine",
+"d": "hard"
+},
+{
+"q": "What luxury car brand was resurrected in 2002 by Mercedes-Benz?",
+"options": [
+"Maserati",
+"Maybach",
+"Bugatti",
+"Batmobile Motors"
+],
+"answer": "Maybach",
+"d": "hard"
+},
+{
+"q": "Which of the following novels does not use the island of Ibiza as setting to its action?",
+"options": [
+"Soma Blues",
+"They all do",
+"Vacation in Ibiza",
+"The Python Project"
+],
+"answer": "They all do",
+"d": "hard"
+},
+{
+"q": "What sword do US Marine Officers carry?",
+"options": [
+"Cutlass",
+"Lightsaber",
+"Cavalry Sabre",
+"Mameluke Sword"
+],
+"answer": "Mameluke Sword",
+"d": "hard"
+},
+{
+"q": "Which actor starred with John Wayne in his final film, The Shootist, playing the role of the doctor?",
+"options": [
+"Jimmy Stewart",
+"Richard Boone",
+"John Wayne himself",
+"Henry Fonda"
+],
+"answer": "Jimmy Stewart",
+"d": "hard"
+},
+{
+"q": "What city houses Hans Giengs famous statue of Lady Justice?",
+"options": [
+"Geneva, Switzerland",
+"Bern, Switzerland",
+"Zurich, Switzerland",
+"The Hague, Netherlands"
+],
+"answer": "Bern, Switzerland",
+"d": "hard"
+},
+{
+"q": "In Latin, the word for apple (m\u0101lum) is nearly identical to a word that means which of the following?",
+"options": [
+"evil",
+"misfortune",
+"a curse",
+"a worm"
+],
+"answer": "evil",
+"d": "hard"
+},
+{
+"q": "How many towns in the USA have liberty in their names?",
+"options": [
+"45",
+"25",
+"300",
+"30"
+],
+"answer": "30",
+"d": "hard"
+}
+]
+}

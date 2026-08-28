@@ -1,0 +1,2220 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "History",
+"count": 198,
+"questions": [
+{
+"q": "What is the name of the slightly curved single-edged sword used by Japanese samurai warriors?",
+"options": [
+"Nunchaku",
+"Yumi (longbow)",
+"Katana",
+"Yari (spear)"
+],
+"answer": "Katana",
+"d": "easy"
+},
+{
+"q": "In what month in 1945 did Japan surrender to the US?",
+"options": [
+"September",
+"October",
+"July",
+"December"
+],
+"answer": "September",
+"d": "easy"
+},
+{
+"q": "The Southern Cross is a constellation featured on which nation's flag?",
+"options": [
+"Australia",
+"Canada",
+"Japan",
+"South Africa"
+],
+"answer": "Australia",
+"d": "easy"
+},
+{
+"q": "King Henry VIII was the second monarch of which European royal house?",
+"options": [
+"Windsor",
+"Tudor",
+"Plantagenet",
+"Hufflepuff"
+],
+"answer": "Tudor",
+"d": "easy"
+},
+{
+"q": "Which of the following countries was not an axis power during World War II?",
+"options": [
+"Soviet Union",
+"Germany",
+"Hungary",
+"Japan"
+],
+"answer": "Soviet Union",
+"d": "easy"
+},
+{
+"q": "Where did the biggest amphibious operation during WW2 take place?",
+"options": [
+"Okinawa",
+"Dunkirk",
+"Normandy",
+"Sicily"
+],
+"answer": "Normandy",
+"d": "easy"
+},
+{
+"q": "What happened on June 6, 1944?",
+"options": [
+"The Battle of the Bulge",
+"VE Day",
+"D-Day",
+"The Liberation of Paris"
+],
+"answer": "D-Day",
+"d": "easy"
+},
+{
+"q": "What Chinese warrior and strategist wrote The Art of War?",
+"options": [
+"Bruce Lee",
+"Confucius",
+"Sun Tzu",
+"Sun Bin"
+],
+"answer": "Sun Tzu",
+"d": "easy"
+},
+{
+"q": "How long did World War II last?",
+"options": [
+"7 years",
+"5 years",
+"6 years",
+"100 years"
+],
+"answer": "6 years",
+"d": "easy"
+},
+{
+"q": "Who is attributed credit for recording the epic poem The Odyssey?",
+"options": [
+"Odysseus",
+"Homer",
+"Virgil",
+"Zeus"
+],
+"answer": "Homer",
+"d": "easy"
+},
+{
+"q": "Who were the leaders of the US and the Soviet Union during the Cuban Missile Crisis?",
+"options": [
+"Kennedy, Brezhnev",
+"Kennedy, Khrushchev",
+"Reagan, Gorbachev",
+"Johnson, Khrushchev"
+],
+"answer": "Kennedy, Khrushchev",
+"d": "easy"
+},
+{
+"q": "Which historical conflict killed the most people?",
+"options": [
+"World War I",
+"Mongol conquests",
+"The Cold War",
+"World War II"
+],
+"answer": "World War II",
+"d": "easy"
+},
+{
+"q": "Who started the movement of Protestant Reformation in Europe?",
+"options": [
+"Martin Luther",
+"Martin Luther King Jr.",
+"John Calvin",
+"Ulrich Zwingli"
+],
+"answer": "Martin Luther",
+"d": "easy"
+},
+{
+"q": "Which country transferred sovereignty of Hong Kong to China in 1997?",
+"options": [
+"Japan",
+"Portugal",
+"Great Britain",
+"The Netherlands"
+],
+"answer": "Great Britain",
+"d": "easy"
+},
+{
+"q": "When did the American Civil War break out?",
+"options": [
+"1860",
+"1861",
+"1862",
+"1776"
+],
+"answer": "1861",
+"d": "easy"
+},
+{
+"q": "What is the other name of the Dardanelles Campaign of 1915, which resulted in a major victory of the Ottoman Empire against combined British and French forces?",
+"options": [
+"The Battle of Sari Bair",
+"Battle of Gallipoli",
+"The Battle of Waterloo",
+"The Battle of Suvla Bay"
+],
+"answer": "Battle of Gallipoli",
+"d": "easy"
+},
+{
+"q": "Who directed the 1979 movie Apocalypse Now?",
+"options": [
+"Francis Ford Coppola",
+"Oliver Stone",
+"Michael Cimino",
+"Stanley Kubrick"
+],
+"answer": "Francis Ford Coppola",
+"d": "easy"
+},
+{
+"q": "When did the Berlin Wall fall, ending symbolically the Cold War?",
+"options": [
+"1990",
+"1989",
+"1987",
+"1991"
+],
+"answer": "1989",
+"d": "easy"
+},
+{
+"q": "Which Australian Prime Minister disappeared in 1967 and was never found?",
+"options": [
+"Robert Menzies",
+"Harold Holt",
+"Bob Hawke",
+"John Gorton"
+],
+"answer": "Harold Holt",
+"d": "easy"
+},
+{
+"q": "Who was the first person in space?",
+"options": [
+"Alan Shepard",
+"Gherman Titov",
+"Neil Armstrong",
+"Yuri Gagarin"
+],
+"answer": "Yuri Gagarin",
+"d": "easy"
+},
+{
+"q": "What decade saw the Great Depression, Adolf Hitlers election as Chancellor of Germany, and the outbreak of World War II?",
+"options": [
+"1920s",
+"1940s",
+"1930s",
+"1910s"
+],
+"answer": "1930s",
+"d": "easy"
+},
+{
+"q": "On October 9, 2006, this Internet company announced its purchase of the popular YouTube site?",
+"options": [
+"AOL",
+"Google",
+"Microsoft",
+"Yahoo"
+],
+"answer": "Google",
+"d": "easy"
+},
+{
+"q": "What English Queen was daughter of Henry VIII and Anne Boleyn?",
+"options": [
+"Elizabeth I",
+"Queen Victoria",
+"Mary I",
+"Jane Grey"
+],
+"answer": "Elizabeth I",
+"d": "easy"
+},
+{
+"q": "Who directed the 1986 movie Platoon?",
+"options": [
+"Stanley Kubrick",
+"Michael Cimino",
+"Brian De Palma",
+"Oliver Stone"
+],
+"answer": "Oliver Stone",
+"d": "easy"
+},
+{
+"q": "Who discovered Penicillin?",
+"options": [
+"Alexander Flemming",
+"Louis Pasteur",
+"Joseph Lister",
+"Isaac Newton"
+],
+"answer": "Alexander Flemming",
+"d": "easy"
+},
+{
+"q": "The ancient city of Chich\u00e9n Itz\u00e1 was built by which civilization?",
+"options": [
+"Toltecs",
+"Aztecs",
+"Ancient Aliens",
+"Mayans"
+],
+"answer": "Mayans",
+"d": "easy"
+},
+{
+"q": "In what year did Neil Armstrong and Buzz Aldrin land on the moon?",
+"options": [
+"1968",
+"1970",
+"1999",
+"1969"
+],
+"answer": "1969",
+"d": "easy"
+},
+{
+"q": "How did Cleopatra commit suicide according to ancient sources?",
+"options": [
+"by wrestling a Nile crocodile",
+"by inducing an asp to bite her",
+"by starving herself to death",
+"by stabbing herself with a dagger"
+],
+"answer": "by inducing an asp to bite her",
+"d": "easy"
+},
+{
+"q": "In what year did the First World War end?",
+"options": [
+"1917",
+"1945",
+"1919",
+"1918"
+],
+"answer": "1918",
+"d": "easy"
+},
+{
+"q": "Until which event did the US remain neutral in the Second World War?",
+"options": [
+"The Fall of France",
+"Operation Barbarossa",
+"The Battle of Britain",
+"The Pearl Harbor attack"
+],
+"answer": "The Pearl Harbor attack",
+"d": "easy"
+},
+{
+"q": "What nickname did Erwin Rommel get during World War II?",
+"options": [
+"Desert Fox",
+"The Sandman",
+"The Panzer Baron",
+"Desert Wolf"
+],
+"answer": "Desert Fox",
+"d": "easy"
+},
+{
+"q": "What author broke the record for book sales when the last book in her famous series sold 15 million copies in 24 hours?",
+"options": [
+"J. K. Rowling",
+"Stephenie Meyer",
+"William Shakespeare",
+"Suzanne Collins"
+],
+"answer": "J. K. Rowling",
+"d": "easy"
+},
+{
+"q": "Who conquered England as a result of the Battle of Hastings?",
+"options": [
+"The Saxons",
+"The Franks",
+"The Normans",
+"The Vikings"
+],
+"answer": "The Normans",
+"d": "easy"
+},
+{
+"q": "Who assassinated Austrian Archduke Franz Ferdinand and his wife on June 28, 1914?",
+"options": [
+"Charles Guiteau",
+"Leon Czolgosz",
+"Gavrilo Princip",
+"John Wilkes Booth"
+],
+"answer": "Gavrilo Princip",
+"d": "easy"
+},
+{
+"q": "What year did World War I begin?",
+"options": [
+"1814",
+"1916",
+"1913",
+"1914"
+],
+"answer": "1914",
+"d": "easy"
+},
+{
+"q": "What year did the Wright Brothers fly at Kitty Hawk, North Carolina?",
+"options": [
+"1899",
+"1903",
+"1905",
+"1904"
+],
+"answer": "1903",
+"d": "easy"
+},
+{
+"q": "In what year did the Berlin Wall fall?",
+"options": [
+"1990",
+"1991",
+"1989",
+"2001"
+],
+"answer": "1989",
+"d": "easy"
+},
+{
+"q": "When did the earth form?",
+"options": [
+"3.8 billion years ago",
+"4.5 billion years ago",
+"6,000 years ago",
+"5.2 billion years ago"
+],
+"answer": "4.5 billion years ago",
+"d": "easy"
+},
+{
+"q": "In 1939, Britain and France declared war on Germany after it invaded which country?",
+"options": [
+"Belgium",
+"Atlantis",
+"Poland",
+"Czechoslovakia"
+],
+"answer": "Poland",
+"d": "easy"
+},
+{
+"q": "In the Seven Wonders of the World, which wonder is the only that has survived to this day?",
+"options": [
+"Colossus of Rhodes",
+"Great Pyramid of Giza",
+"Statue of Zeus at Olympia",
+"Lighthouse of Alexandria"
+],
+"answer": "Great Pyramid of Giza",
+"d": "easy"
+},
+{
+"q": "What year was the United States Declaration of Independence signed?",
+"options": [
+"1776",
+"1777",
+"1976",
+"1775"
+],
+"answer": "1776",
+"d": "easy"
+},
+{
+"q": "What event marked the start of World War II?",
+"options": [
+"The Boston Tea Party (1773)",
+"Invasion of the Soviet Union (1941)",
+"Invasion of Czechoslovakia (1939)",
+"Invasion of Poland (1939)"
+],
+"answer": "Invasion of Poland (1939)",
+"d": "easy"
+},
+{
+"q": "Which of these is the most recognizable feature of Maya architecture?",
+"options": [
+"Carved stone stelae",
+"Towering ziggurats",
+"Round temples",
+"Giant stepped pyramids"
+],
+"answer": "Giant stepped pyramids",
+"d": "easy"
+},
+{
+"q": "What blockbuster movie opened on May 25, 1977?",
+"options": [
+"Titanic",
+"Jaws",
+"Star Wars",
+"Close Encounters of the Third Kind"
+],
+"answer": "Star Wars",
+"d": "easy"
+},
+{
+"q": "What happened on D-day, 6th June,1944?",
+"options": [
+"Nazi Germany was declared defeated.",
+"Operation Overlord started.",
+"The atomic bomb was dropped on Hiroshima.",
+"The liberation of Paris began."
+],
+"answer": "Operation Overlord started.",
+"d": "easy"
+},
+{
+"q": "Who directed the 1987 film Full Metal Jacket?",
+"options": [
+"Stanley Kubrick",
+"Brian De Palma",
+"Oliver Stone",
+"Francis Ford Coppola"
+],
+"answer": "Stanley Kubrick",
+"d": "easy"
+},
+{
+"q": "Where was Napoleon finally defeated on June 18, 1815?",
+"options": [
+"Austerlitz",
+"Ligny",
+"Leipzig",
+"Waterloo"
+],
+"answer": "Waterloo",
+"d": "easy"
+},
+{
+"q": "Who was the king of Sparta and leader of the 300 Spartans at the famous battle at Thermopylae?",
+"options": [
+"Xerxes",
+"Pausanias",
+"Leonidas",
+"Menelaus"
+],
+"answer": "Leonidas",
+"d": "easy"
+},
+{
+"q": "During what war did the \"Cuban Missile Crisis\" occur?",
+"options": [
+"The Vietnam War",
+"Cold War",
+"The Korean War",
+"The War of 1812"
+],
+"answer": "Cold War",
+"d": "easy"
+},
+{
+"q": "On what cartoon from the 90s did we meet the characters Tommy, Angelica, and Chuckie?",
+"options": [
+"Rugrats",
+"Doug",
+"The Flintstones",
+"Hey Arnold!"
+],
+"answer": "Rugrats",
+"d": "easy"
+},
+{
+"q": "When did the Cuban Missile Crisis start?",
+"options": [
+"1961",
+"1963",
+"1959",
+"1962"
+],
+"answer": "1962",
+"d": "easy"
+},
+{
+"q": "Which famous metaphor did Winston Churchill use in the 1940s to describe what Russia did to Eastern Europe after WWII?",
+"options": [
+"The Red Tide",
+"The Eastern Shadow",
+"The Iron Curtain",
+"The Iron Wall"
+],
+"answer": "The Iron Curtain",
+"d": "easy"
+},
+{
+"q": "Who was the first man to travel into outer space?",
+"options": [
+"Laika the dog",
+"Yuri Gagarin",
+"Neil Armstrong",
+"Alan Shepard"
+],
+"answer": "Yuri Gagarin",
+"d": "easy"
+},
+{
+"q": "What year did the Boxing Day earthquake & tsunami occur in the Indian Ocean?",
+"options": [
+"2003",
+"2005",
+"2004",
+"2020"
+],
+"answer": "2004",
+"d": "easy"
+},
+{
+"q": "The assassination of which royal led to the start of World War I?",
+"options": [
+"Kaiser Wilhelm II",
+"Archduke Chocula",
+"Tsar Nicholas II",
+"Archduke Franz Ferdinand"
+],
+"answer": "Archduke Franz Ferdinand",
+"d": "easy"
+},
+{
+"q": "In World War II, the Axis and the Allies were the two main rival powers. Which of these countries was not a member of the Axis?",
+"options": [
+"Japan",
+"Greece",
+"Hungary",
+"Italy"
+],
+"answer": "Greece",
+"d": "easy"
+},
+{
+"q": "How many months in the Gregorian calendar have 31 days?",
+"options": [
+"7",
+"8",
+"6",
+"5"
+],
+"answer": "7",
+"d": "easy"
+},
+{
+"q": "What is commemorated in Australia and New Zealand on 25 April?",
+"options": [
+"Remembrance Day",
+"Anzac Day",
+"Australia Day",
+"Labour Day"
+],
+"answer": "Anzac Day",
+"d": "easy"
+},
+{
+"q": "What year did the Titanic sink?",
+"options": [
+"1911",
+"1912",
+"1812",
+"1915"
+],
+"answer": "1912",
+"d": "easy"
+},
+{
+"q": "What city was the Russian capital before Tsar Peter the Great founded St. Petersburg?",
+"options": [
+"Novgorod",
+"Vladivostok",
+"Kiev",
+"Moscow"
+],
+"answer": "Moscow",
+"d": "easy"
+},
+{
+"q": "What King of France was popularly known as the Sun King?",
+"options": [
+"Louis XV",
+"Louis XL",
+"Louis XVI",
+"Louis XIV"
+],
+"answer": "Louis XIV",
+"d": "easy"
+},
+{
+"q": "The idea of Socialism was articulated and advanced by whom?",
+"options": [
+"Pierre-Joseph Proudhon",
+"Robert Owen",
+"Karl Marx",
+"Adam Smith"
+],
+"answer": "Karl Marx",
+"d": "easy"
+},
+{
+"q": "Which Greek god was the god of the Sun?",
+"options": [
+"Ares",
+"Helios",
+"Dionysus",
+"Hyperion"
+],
+"answer": "Helios",
+"d": "easy"
+},
+{
+"q": "The Battle of Hastings was fought in which year?",
+"options": [
+"1067",
+"2066",
+"1066",
+"1086"
+],
+"answer": "1066",
+"d": "easy"
+},
+{
+"q": "In what year did the French Revolution begin?",
+"options": [
+"1788",
+"1792",
+"1789",
+"1889"
+],
+"answer": "1789",
+"d": "easy"
+},
+{
+"q": "What year did Australia become a federation?",
+"options": [
+"1901",
+"1900",
+"1788",
+"1902"
+],
+"answer": "1901",
+"d": "easy"
+},
+{
+"q": "In which year did the First World War begin?",
+"options": [
+"1815",
+"1915",
+"1913",
+"1914"
+],
+"answer": "1914",
+"d": "easy"
+},
+{
+"q": "Who was the Prime Minister of the United Kingdom for most of World War II?",
+"options": [
+"Clement Attlee",
+"Neville Chamberlain",
+"Margaret Thatcher",
+"Winston Churchill"
+],
+"answer": "Winston Churchill",
+"d": "easy"
+},
+{
+"q": "In what year did the nuclear power plant in Chernobyl melt down?",
+"options": [
+"1886",
+"1979",
+"1988",
+"1986"
+],
+"answer": "1986",
+"d": "easy"
+},
+{
+"q": "Water World and The Postman were two of the biggest flops in movie history. Who was the star of both of these films?",
+"options": [
+"Danny DeVito",
+"Sean Penn",
+"Kevin Costner",
+"Mel Gibson"
+],
+"answer": "Kevin Costner",
+"d": "easy"
+},
+{
+"q": "The catastrophic nuclear accident that occurred in Ukraine in 1986 occurred at which power plant?",
+"options": [
+"Fukushima",
+"Chernobyl",
+"Zaporizhzhia",
+"Springfield"
+],
+"answer": "Chernobyl",
+"d": "easy"
+},
+{
+"q": "What did Benjamin Franklin do in 1752?",
+"options": [
+"Became the first US President",
+"Proved lightning is electricity",
+"Signed the Declaration of Independence",
+"Invented bifocal glasses"
+],
+"answer": "Proved lightning is electricity",
+"d": "easy"
+},
+{
+"q": "Against which country were the two Gulf Wars fought?",
+"options": [
+"Iran",
+"Iceland",
+"Kuwait",
+"Iraq"
+],
+"answer": "Iraq",
+"d": "easy"
+},
+{
+"q": "The RMS Titanic sunk during her maiden voyage from Southampton, England to which American city?",
+"options": [
+"Boston",
+"New York City",
+"Baltimore",
+"Atlantis"
+],
+"answer": "New York City",
+"d": "easy"
+},
+{
+"q": "What number does the Roman numeral \"D\" stand for?",
+"options": [
+"500",
+"5",
+"1,000",
+"50"
+],
+"answer": "500",
+"d": "easy"
+},
+{
+"q": "In which war did the atomic bombings of Hiroshima and Nagasaki occur?",
+"options": [
+"World War I",
+"World War II",
+"The Cola Wars",
+"Korean War"
+],
+"answer": "World War II",
+"d": "easy"
+},
+{
+"q": "In what country did the Industrial Revolution start?",
+"options": [
+"France",
+"The Netherlands",
+"Germany",
+"Great Britain"
+],
+"answer": "Great Britain",
+"d": "easy"
+},
+{
+"q": "Where did the D-Day invasion occur?",
+"options": [
+"The French Riviera",
+"Pas-de-Calais",
+"Brittany",
+"Normandy"
+],
+"answer": "Normandy",
+"d": "easy"
+},
+{
+"q": "What year did World War II end?",
+"options": [
+"1944",
+"1947",
+"1845",
+"1945"
+],
+"answer": "1945",
+"d": "easy"
+},
+{
+"q": "What term is generally used to describe the genocide of approximately six million European Jews during World War II?",
+"options": [
+"the Enigma",
+"the Holocaust",
+"The Blitz",
+"The Final Solution"
+],
+"answer": "the Holocaust",
+"d": "easy"
+},
+{
+"q": "What was the nickname of Tom Cruises character in Top Gun?",
+"options": [
+"Iceman",
+"Maverick",
+"Slider",
+"Goose"
+],
+"answer": "Maverick",
+"d": "easy"
+},
+{
+"q": "According to legend, the ancient Greeks constructed a huge wooden model of which animal to gain entrance to Troy?",
+"options": [
+"Elephant",
+"Horse",
+"Bull",
+"Rubber duck"
+],
+"answer": "Horse",
+"d": "easy"
+},
+{
+"q": "The Allies and Axis were the two main opponent powers in the Second World War. Which of these leaders and his country were on the side of the Axis powers?",
+"options": [
+"Benito Mussolini",
+"Charles de Gaulle",
+"Franklin Delano Roosevelt",
+"Winston Churchill"
+],
+"answer": "Benito Mussolini",
+"d": "easy"
+},
+{
+"q": "Which was the formal reason for the end of World War II, on September 2, 1945?",
+"options": [
+"The dropping of the atomic bombs",
+"The surrender of Germany",
+"The formal surrender of Japan",
+"The number of civilian casualties"
+],
+"answer": "The formal surrender of Japan",
+"d": "easy"
+},
+{
+"q": "Where was Abraham Lincoln when he was assassinated by John Wilkes Booth in 1865?",
+"options": [
+"At a political rally",
+"At the theatre",
+"In his carriage",
+"On a fishing trip"
+],
+"answer": "At the theatre",
+"d": "easy"
+},
+{
+"q": "What French monarch was known as the Sun King?",
+"options": [
+"Louis XIV",
+"Louis XV",
+"Louis XIII",
+"Napoleon Bonaparte"
+],
+"answer": "Louis XIV",
+"d": "easy"
+},
+{
+"q": "Who famously coined the phrase \"I think, therefore I am\"?",
+"options": [
+"Socrates",
+"Immanuel Kant",
+"Descartes",
+"Friedrich Nietzsche"
+],
+"answer": "Descartes",
+"d": "easy"
+},
+{
+"q": "When did Vesuvius destroy the city of Pompeii?",
+"options": [
+"79 AD",
+"1906 AD",
+"89 AD",
+"62 AD"
+],
+"answer": "79 AD",
+"d": "easy"
+},
+{
+"q": "During WWII, in 1945, the United States dropped atomic bombs on the two Japanese cities of Hiroshima and what other city?",
+"options": [
+"Kyoto",
+"Kokura",
+"Tokyo",
+"Nagasaki"
+],
+"answer": "Nagasaki",
+"d": "easy"
+},
+{
+"q": "According to legend, Ancient Rome was founded by the brothers Romulus and Remus who were raised by what animal?",
+"options": [
+"Crocodile",
+"Bear",
+"Wolf",
+"Fox"
+],
+"answer": "Wolf",
+"d": "easy"
+},
+{
+"q": "Which American civilization is the source of the belief that the world would end or drastically change on December 21st, 2012?",
+"options": [
+"The Vikings",
+"The Aztecs",
+"The Olmecs",
+"The Mayans"
+],
+"answer": "The Mayans",
+"d": "medium"
+},
+{
+"q": "In which years did the Battle of Gallipoli take place?",
+"options": [
+"1939 - 1945",
+"1915 - 1916",
+"1916 - 1917",
+"1914 - 1915"
+],
+"answer": "1915 - 1916",
+"d": "medium"
+},
+{
+"q": "Which of the following is not a period of the Paleozoic era?",
+"options": [
+"Devonian",
+"Paleogene",
+"Cambrian",
+"Permian"
+],
+"answer": "Paleogene",
+"d": "medium"
+},
+{
+"q": "In the Battle of Gaugamela, 331 B.C. , Alexander the Great of Macedonia defeated which king?",
+"options": [
+"King Midas",
+"Xerxes I",
+"Darius I",
+"Darius III"
+],
+"answer": "Darius III",
+"d": "medium"
+},
+{
+"q": "Which Las Vegas casino was originally constructed and operated by mobster Bugsy Siegel?",
+"options": [
+"The Flamingo",
+"The Sands",
+"Circus Circus",
+"The Riviera"
+],
+"answer": "The Flamingo",
+"d": "medium"
+},
+{
+"q": "Who can be regarded as the only military dictator of England?",
+"options": [
+"Guy Fawkes",
+"Thomas Cromwell",
+"Oliver Cromwell",
+"Richard Cromwell"
+],
+"answer": "Oliver Cromwell",
+"d": "medium"
+},
+{
+"q": "Who was a serf in the Middle Ages?",
+"options": [
+"A tenant farmer who paid rent in coin",
+"A farmer who was not free",
+"A town craft apprentice",
+"A knight in shining armour"
+],
+"answer": "A farmer who was not free",
+"d": "medium"
+},
+{
+"q": "What does the term seppuku, connected with the culture of Japanese samurai, refer to?",
+"options": [
+"Suicide",
+"A loyalty oath",
+"A war banner",
+"A sword salute"
+],
+"answer": "Suicide",
+"d": "medium"
+},
+{
+"q": "What disease crippled President Franklin D. Roosevelt and led him to help the nation find a cure?",
+"options": [
+"The common cold",
+"Multiple sclerosis",
+"Polio",
+"Tuberculosis"
+],
+"answer": "Polio",
+"d": "medium"
+},
+{
+"q": "How did Cleopatra present herself to Julius Caesar when he seized the Egyptian capital in 48 BC ?",
+"options": [
+"disguised as a servant girl",
+"rolled into a Persian carpet",
+"hidden inside a large wine amphora",
+"descending on a golden throne from the ceiling"
+],
+"answer": "rolled into a Persian carpet",
+"d": "medium"
+},
+{
+"q": "What was the language of science in the ancient world?",
+"options": [
+"Latin",
+"Greek",
+"Hieroglyphics",
+"Aramaic"
+],
+"answer": "Greek",
+"d": "medium"
+},
+{
+"q": "What did Walter Morrison invent in 1948?",
+"options": [
+"the Slinky",
+"the Frisbee",
+"the hula hoop",
+"the boomerang"
+],
+"answer": "the Frisbee",
+"d": "medium"
+},
+{
+"q": "What was the code name for the German invasion of the Soviet Union in WW2?",
+"options": [
+"Operation Barbarossa",
+"Operation Bagration",
+"Operation Typhoon",
+"Operation Blau"
+],
+"answer": "Operation Barbarossa",
+"d": "medium"
+},
+{
+"q": "Which of one these people holds patent #1370316 for a divers suit?",
+"options": [
+"P.T. Barnum",
+"Thomas Edison",
+"George Washington",
+"Harry Houdini"
+],
+"answer": "Harry Houdini",
+"d": "medium"
+},
+{
+"q": "Which was the first Egyptian pyramid?",
+"options": [
+"The Red Pyramid",
+"The Bent Pyramid",
+"The Step Pyramid",
+"The Leaning Pyramid of Cairo"
+],
+"answer": "The Step Pyramid",
+"d": "medium"
+},
+{
+"q": "In the 4th century, the Mayas were among the first civilizations to use what in their counting system?",
+"options": [
+"The number zero",
+"Fractions",
+"The decimal point",
+"Negative numbers"
+],
+"answer": "The number zero",
+"d": "medium"
+},
+{
+"q": "Which Greek historian is known as the Father of History?",
+"options": [
+"Xenophon",
+"Thucydides",
+"Herodotus",
+"Homer"
+],
+"answer": "Herodotus",
+"d": "medium"
+},
+{
+"q": "What device was invented in 1879 by James Ritty, the owner of a tavern in Dayton, Ohio?",
+"options": [
+"The adding machine",
+"The vending machine",
+"The jukebox",
+"The cash register"
+],
+"answer": "The cash register",
+"d": "medium"
+},
+{
+"q": "What is the name of the famous Apache leader who died in 1909 at the age of 79?",
+"options": [
+"Geronimo",
+"Cochise",
+"Victorio",
+"Sitting Bull"
+],
+"answer": "Geronimo",
+"d": "medium"
+},
+{
+"q": "The Gregorian calendar replaced the Julian over 400 year ago. Which religion is still using the Julian calendar?",
+"options": [
+"Orthodox Christianity",
+"Hinduism",
+"Islam",
+"Judaism"
+],
+"answer": "Orthodox Christianity",
+"d": "medium"
+},
+{
+"q": "When was this headline breaking news: Two people found murdered outside a condominium on South Bundy Drive in the Brentwood area of Los Angeles.?",
+"options": [
+"June 13, 1994",
+"June 13, 1995",
+"May 13, 1994",
+"June 3, 1994"
+],
+"answer": "June 13, 1994",
+"d": "medium"
+},
+{
+"q": "What two US Presidents served during the first decade of the Cold War?",
+"options": [
+"Eisenhower, Kennedy",
+"Truman, Eisenhower",
+"Washington, Lincoln",
+"Roosevelt, Truman"
+],
+"answer": "Truman, Eisenhower",
+"d": "medium"
+},
+{
+"q": "Which ill-fated pair tried to cross Australia south to north in 1860 to 1861?",
+"options": [
+"Hume and Hovell",
+"Sturt and Mitchell",
+"Burke and Wills",
+"Flinders and Bass"
+],
+"answer": "Burke and Wills",
+"d": "medium"
+},
+{
+"q": "Who rode on horseback to warn the Minutemen that the British were coming during the U.S. Revolutionary War?",
+"options": [
+"Thomas Paine",
+"Paul Revere",
+"Nathan Hale",
+"Forrest Gump"
+],
+"answer": "Paul Revere",
+"d": "medium"
+},
+{
+"q": "What was the language of the Inca Empire, used by the Catholic Church to preach to Indians in the Andes area?",
+"options": [
+"Aymara",
+"Quechua",
+"Guarani",
+"Nahuatl"
+],
+"answer": "Quechua",
+"d": "medium"
+},
+{
+"q": "Which naval battle was considered the turning point of the Pacific Ocean Theater during World War 2?",
+"options": [
+"Battle of Midway",
+"Battle of the Coral Sea",
+"Battle of the Bulge",
+"Battle of Leyte Gulf"
+],
+"answer": "Battle of Midway",
+"d": "medium"
+},
+{
+"q": "At the battle of Hastings (1066) an army of Normans, led by William the Conqueror, defeated the Anglo-Saxon forces. Who actually were Normans?",
+"options": [
+"A mixture of Dutch, Flemish and Spanish",
+"Vikings from Norway who kept their language",
+"Vikings who settled in Normandy and spoke French",
+"Franks descended from Charlemagne"
+],
+"answer": "Vikings who settled in Normandy and spoke French",
+"d": "medium"
+},
+{
+"q": "Who was awarded the 1989 Nobel Prize for Peace?",
+"options": [
+"Lech Walesa",
+"The 14th Dalai Lama, Tenzin Gyatso",
+"Mother Teresa",
+"Mikhail Sergeyevich Gorbachev"
+],
+"answer": "The 14th Dalai Lama, Tenzin Gyatso",
+"d": "medium"
+},
+{
+"q": "From what is the English word Friday derived?",
+"options": [
+"Old English for 'the day one fries food'",
+"Frisia, a region in the Netherlands",
+"Latin 'feria quinta', the fifth day",
+"Old English day of Frige"
+],
+"answer": "Old English day of Frige",
+"d": "medium"
+},
+{
+"q": "What brilliant Carthaginian general defeated the Romans in the Second Punic War at the Battle of Cannae in 216 B.C.?",
+"options": [
+"Hamilcar Barca",
+"Hannibal",
+"Hasdrubal",
+"Julius Caesar"
+],
+"answer": "Hannibal",
+"d": "medium"
+},
+{
+"q": "What was the name of the famous market place in Athens?",
+"options": [
+"The Stoa",
+"Agora",
+"The Colosseum",
+"The Acropolis"
+],
+"answer": "Agora",
+"d": "medium"
+},
+{
+"q": "Which king was killed at the Battle of Bosworth Field in 1485?",
+"options": [
+"Henry VII",
+"Richard III",
+"Edward IV",
+"Henry VIII"
+],
+"answer": "Richard III",
+"d": "medium"
+},
+{
+"q": "Who was the last Tsar of Russia, King of Poland and Grand Duke of Finland?",
+"options": [
+"Alexander III",
+"Alexander II",
+"Nicholas II",
+"Peter the Great"
+],
+"answer": "Nicholas II",
+"d": "medium"
+},
+{
+"q": "Which of these countries was sea charted in 1500 by the Portuguese maritime explorations?",
+"options": [
+"Antarctica",
+"India",
+"Mozambique",
+"Brazil"
+],
+"answer": "Brazil",
+"d": "medium"
+},
+{
+"q": "How many days did it take the Mayflower to make the crossing from England to America?",
+"options": [
+"64 days",
+"66 days",
+"365 days",
+"73 days"
+],
+"answer": "66 days",
+"d": "medium"
+},
+{
+"q": "In World War I, what was the name of the alliance of Germany, Austria-Hungary, the Ottoman Empire, and Bulgaria?",
+"options": [
+"The Central Powers",
+"The Triple Alliance",
+"The Axis Powers",
+"The League of Villains"
+],
+"answer": "The Central Powers",
+"d": "medium"
+},
+{
+"q": "What was the name of Caligulas pet horse?",
+"options": [
+"Incitatus",
+"Mr. Ed",
+"Bucephalus",
+"Ferox"
+],
+"answer": "Incitatus",
+"d": "medium"
+},
+{
+"q": "How many manned moon landings have there been?",
+"options": [
+"5",
+"6",
+"0",
+"7"
+],
+"answer": "6",
+"d": "medium"
+},
+{
+"q": "What was the objective of Operation Husky launched in 1943?",
+"options": [
+"The capture of Sardinia",
+"The landings at Salerno",
+"The capture of Sicily",
+"The liberation of Paris"
+],
+"answer": "The capture of Sicily",
+"d": "medium"
+},
+{
+"q": "Where was Napoleon Bonaparte born?",
+"options": [
+"Elba",
+"Corsica",
+"Sardinia",
+"Marseille"
+],
+"answer": "Corsica",
+"d": "medium"
+},
+{
+"q": "Bolshevik revolutionary and Marxist theorist Leon Trotsky was assassinated in which country?",
+"options": [
+"France",
+"Turkey",
+"Mexico",
+"the United States"
+],
+"answer": "Mexico",
+"d": "medium"
+},
+{
+"q": "Which statement about year 2009 is not true?",
+"options": [
+"Hebrew year 5770 starts on 18 September 2009",
+"It is a leap year",
+"It is year 1430 in Islamic calendar",
+"It is the year of the ox in Chinese calendar"
+],
+"answer": "It is a leap year",
+"d": "medium"
+},
+{
+"q": "What was the capital of South Vietnam before the Vietnam War?",
+"options": [
+"Da Nang",
+"Hue",
+"Hanoi",
+"Saigon"
+],
+"answer": "Saigon",
+"d": "medium"
+},
+{
+"q": "What was William Frederick Cody better known as?",
+"options": [
+"Pawnee Bill",
+"Wild Bill Hickok",
+"Bronco Bill",
+"Buffalo Bill"
+],
+"answer": "Buffalo Bill",
+"d": "medium"
+},
+{
+"q": "Which nation revolted against Soviet-imposed policies in 1956?",
+"options": [
+"East Germany",
+"Hungary",
+"Poland",
+"Cuba"
+],
+"answer": "Hungary",
+"d": "medium"
+},
+{
+"q": "Che Guevara was a Marxist revolutionary, who took part in the Cuban Revolution under the command of Fidel Castro. Where did Che Guevara die?",
+"options": [
+"Argentina",
+"Cuba",
+"Bolivia",
+"The Congo"
+],
+"answer": "Bolivia",
+"d": "medium"
+},
+{
+"q": "The seed drill was invented by which British inventor?",
+"options": [
+"Ian Anderson",
+"James Hargreaves",
+"Robert Bakewell",
+"Jethro Tull"
+],
+"answer": "Jethro Tull",
+"d": "medium"
+},
+{
+"q": "What was Manfred von Richthofen's nickname?",
+"options": [
+"The Blue Max",
+"The Red Baron",
+"The Flying Tomato",
+"The Crimson Knight"
+],
+"answer": "The Red Baron",
+"d": "medium"
+},
+{
+"q": "Which of these was an invention of Charles Strite?",
+"options": [
+"The electric kettle",
+"The bread slicer",
+"The pop-up toaster",
+"The electric oven"
+],
+"answer": "The pop-up toaster",
+"d": "medium"
+},
+{
+"q": "How many people were murdered as a result of the Salem Witch Trials?",
+"options": [
+"25",
+"40",
+"20",
+"1000"
+],
+"answer": "20",
+"d": "medium"
+},
+{
+"q": "When did Boston become a settlement and who led it?",
+"options": [
+"1630 - John Winthrop",
+"1620 - William Bradford",
+"1776 - George Washington",
+"1607 - John Smith"
+],
+"answer": "1630 - John Winthrop",
+"d": "medium"
+},
+{
+"q": "In 1845, a series of wars named after which indigenous people began in New Zealand?",
+"options": [
+"Polynesians",
+"Melanesians",
+"M\u0101ori",
+"Vikings"
+],
+"answer": "M\u0101ori",
+"d": "medium"
+},
+{
+"q": "What Russian automatic gas-operated assault rifle was developed in the Soviet Union in 1947, and is still popularly used today?",
+"options": [
+"AK-74",
+"SKS",
+"AK-47",
+"Nerf blaster"
+],
+"answer": "AK-47",
+"d": "medium"
+},
+{
+"q": "Which game was the Game of the Year in 2018?",
+"options": [
+"Red Dead Redemption 2",
+"God of War",
+"Pong",
+"Marvel's Spider-Man"
+],
+"answer": "God of War",
+"d": "medium"
+},
+{
+"q": "Who accepted the surrender of the German military forces in Northwest Germany, Holland and Denmark on May 4, 1945?",
+"options": [
+"General Eisenhower",
+"General Montgomery",
+"General Zhukov",
+"General Patton"
+],
+"answer": "General Montgomery",
+"d": "medium"
+},
+{
+"q": "What play was President Lincoln watching at Fords Theatre, when he was assassinated by a Southern sympathizer from Maryland?",
+"options": [
+"Our American Cousin",
+"Hamlet",
+"Our English Cousin",
+"The Marble Heart"
+],
+"answer": "Our American Cousin",
+"d": "medium"
+},
+{
+"q": "What was the name of one of the surviving palaces of Henry VIII located near Richmond, London?",
+"options": [
+"Richmond Palace",
+"Hampton Court",
+"Nonsuch Palace",
+"Buckingham Palace"
+],
+"answer": "Hampton Court",
+"d": "medium"
+},
+{
+"q": "The legends of King Arthur and the Round Table are some of the most famous tales about knights. Who was the head of the table?",
+"options": [
+"Sir Lancelot",
+"Merlin",
+"Nobody",
+"King Arthur"
+],
+"answer": "Nobody",
+"d": "medium"
+},
+{
+"q": "After his loss at the Battle of Waterloo, Napoleon Bonaparte was exiled to which island?",
+"options": [
+"Elba",
+"Alcatraz",
+"Corsica",
+"St. Helena"
+],
+"answer": "St. Helena",
+"d": "medium"
+},
+{
+"q": "What memorial was dedicated on May 30, 1922?",
+"options": [
+"Grant Memorial",
+"Jefferson Memorial",
+"Lincoln Memorial",
+"Mount Rushmore"
+],
+"answer": "Lincoln Memorial",
+"d": "medium"
+},
+{
+"q": "Who was chosen to be the 2006 Time Magazines Person of the Year?",
+"options": [
+"The Internet",
+"Me",
+"You",
+"George W. Bush"
+],
+"answer": "You",
+"d": "medium"
+},
+{
+"q": "Which Roman Emperor wrote The Meditations that was actually a sort of personal diary?",
+"options": [
+"Hadrian",
+"Antoninus Pius",
+"Marcus Aurelius",
+"Nero"
+],
+"answer": "Marcus Aurelius",
+"d": "medium"
+},
+{
+"q": "Always a bridesmaid and never a bride. No more! What daytime soap actress won an Emmy for her role as Erica Kane on her 19th try?",
+"options": [
+"Erika Slezak",
+"Deidre Hall",
+"Susan Lucci",
+"Meryl Streep"
+],
+"answer": "Susan Lucci",
+"d": "medium"
+},
+{
+"q": "Joseph Smith was the founder of what religion?",
+"options": [
+"Scientology",
+"Mormonism",
+"Seventh-day Adventism",
+"Jehovah's Witnesses"
+],
+"answer": "Mormonism",
+"d": "medium"
+},
+{
+"q": "Which king of England is not the title character of a Shakespearean play?",
+"options": [
+"Richard III",
+"Henry VII",
+"Richard II",
+"Henry VIII"
+],
+"answer": "Henry VII",
+"d": "medium"
+},
+{
+"q": "In what month are the World Health Day and Buddhas Birthday celebrated?",
+"options": [
+"December",
+"April",
+"March",
+"May"
+],
+"answer": "April",
+"d": "medium"
+},
+{
+"q": "What major comic book character underwent a costume change in 1984, wearing a suit that was black and white instead of blue and red?",
+"options": [
+"Aquaman",
+"Daredevil",
+"Spiderman",
+"Superman"
+],
+"answer": "Spiderman",
+"d": "medium"
+},
+{
+"q": "In 1945, Churchill, Stalin and Roosevelt made arrangements for post-war Europe. Where did the conference take place?",
+"options": [
+"Tehran",
+"Yalta",
+"Potsdam",
+"Casablanca"
+],
+"answer": "Yalta",
+"d": "medium"
+},
+{
+"q": "Which one of these countries was NOT in the Central Powers during WWI?",
+"options": [
+"Austria-Hungary",
+"Spain",
+"Germany",
+"Bulgaria"
+],
+"answer": "Spain",
+"d": "medium"
+},
+{
+"q": "Which Roman Emperor led the Roman Empire to reach its maximum territorial extent?",
+"options": [
+"Augustus",
+"Trajan",
+"Nero",
+"Hadrian"
+],
+"answer": "Trajan",
+"d": "medium"
+},
+{
+"q": "Who was the patron of Athens during its Golden Age?",
+"options": [
+"Zeus",
+"Pericles",
+"Cleisthenes",
+"Themistocles"
+],
+"answer": "Pericles",
+"d": "medium"
+},
+{
+"q": "As poverty and racial tensions pushed African-Americans out of the southern US, many of them moved north in an event known as what?",
+"options": [
+"The Great Exodus",
+"The Great Depression",
+"The Northern Migration",
+"The Great Migration"
+],
+"answer": "The Great Migration",
+"d": "medium"
+},
+{
+"q": "How many Union soldiers were killed during the bombardment of Fort Sumter in Charleston Harbor?",
+"options": [
+"12",
+"None",
+"1",
+"3"
+],
+"answer": "None",
+"d": "medium"
+},
+{
+"q": "Which famous world leader is famed for the saying, \"Let them eat cake\", yet is rumored that he/she never said it at all?",
+"options": [
+"Catherine the Great",
+"Louis XVI",
+"Mary Berry",
+"Marie Antoinette"
+],
+"answer": "Marie Antoinette",
+"d": "medium"
+},
+{
+"q": "In 1793 Claude Chappe made the first system of communicating over long distances via flags. What word refers to such a system?",
+"options": [
+"Semaphore",
+"Smoke signals",
+"Cryptography",
+"Heliograph"
+],
+"answer": "Semaphore",
+"d": "medium"
+},
+{
+"q": "What was the official German currency until 2002?",
+"options": [
+"Mark",
+"Thaler",
+"Bitcoin",
+"Guilder"
+],
+"answer": "Mark",
+"d": "medium"
+},
+{
+"q": "In which year did the Tokyo Subway Sarin Attack occur?",
+"options": [
+"1994",
+"1945",
+"1995",
+"1998"
+],
+"answer": "1995",
+"d": "medium"
+},
+{
+"q": "Which of these landmarks is not included in the original 'Seven Wonders of the Ancient World'?",
+"options": [
+"Great Pyramid of Giza",
+"Hanging Gardens of Babylon",
+"Great Wall of China",
+"Mausoleum at Halicarnassus"
+],
+"answer": "Great Wall of China",
+"d": "medium"
+},
+{
+"q": "What was Elvis Presleys first motion picture?",
+"options": [
+"Love Me Tender",
+"Jailhouse Rock",
+"Loving You",
+"Blue Hawaii"
+],
+"answer": "Love Me Tender",
+"d": "medium"
+},
+{
+"q": "What is widely considered to be the oldest civilization known to mankind?",
+"options": [
+"Atlantis",
+"Sumeria",
+"Babylon",
+"Ancient Egypt"
+],
+"answer": "Sumeria",
+"d": "medium"
+},
+{
+"q": "In 1547 who became the 1st Tsar of Russia",
+"options": [
+"Ivan III",
+"Ivan the Terrible",
+"Ivan the Reasonable",
+"Peter the Great"
+],
+"answer": "Ivan the Terrible",
+"d": "medium"
+},
+{
+"q": "Who was the Union commander at the Battle of Antietam?",
+"options": [
+"Ambrose Burnside",
+"Robert E. Lee",
+"Joseph Hooker",
+"George McClellan"
+],
+"answer": "George McClellan",
+"d": "medium"
+},
+{
+"q": "What does the term \u201cPaleozoic\u201d mean?",
+"options": [
+"New life",
+"Middle life",
+"Ancient life",
+"Recent life"
+],
+"answer": "Ancient life",
+"d": "medium"
+},
+{
+"q": "The Second Boer War in 1899 was fought where?",
+"options": [
+"Rhodesia",
+"South Africa",
+"A farm in Yorkshire",
+"Namibia"
+],
+"answer": "South Africa",
+"d": "medium"
+},
+{
+"q": "America's Strategic Defense System during the Cold War was nicknamed after this famous movie.",
+"options": [
+"Bambi",
+"2001: A Space Odyssey",
+"Star Trek",
+"Star Wars"
+],
+"answer": "Star Wars",
+"d": "medium"
+},
+{
+"q": "Four colossal statues guard the temple Abu Simbel of what Egyptian pharaoh?",
+"options": [
+"Seti I",
+"Ramesses II",
+"Ramesses III",
+"Tutankhamun"
+],
+"answer": "Ramesses II",
+"d": "medium"
+},
+{
+"q": "The allies of WW2 initially consisted of three countries, which were later joined by others. Which of these countries never joined the Allies?",
+"options": [
+"France",
+"Poland",
+"Japan",
+"China"
+],
+"answer": "Japan",
+"d": "medium"
+},
+{
+"q": "A collection of Sanskrit hymns and verses known as the Vedas are sacred texts in what religion?",
+"options": [
+"Hinduism",
+"Jainism",
+"Scientology",
+"Buddhism"
+],
+"answer": "Hinduism",
+"d": "medium"
+},
+{
+"q": "The House of Windsor was founded by King George V in 1917 when he changed the name of his family to Windsor. What was the original name of his family?",
+"options": [
+"Austrian",
+"Ancient Roman",
+"Danish",
+"German"
+],
+"answer": "German",
+"d": "medium"
+},
+{
+"q": "How many landing beaches were there in the 1944 Normandy Invasion, known as Operation Overlord?",
+"options": [
+"Six",
+"Five",
+"Twelve",
+"Four"
+],
+"answer": "Five",
+"d": "medium"
+},
+{
+"q": "What did the abbreviation \"RMS\" stand for in the RMS Titanic in 1912?",
+"options": [
+"Really Massive Ship",
+"Royal Merchant Ship",
+"Royal Maritime Steamer",
+"Royal Mail Ship"
+],
+"answer": "Royal Mail Ship",
+"d": "medium"
+},
+{
+"q": "Which country was invaded by the Soviet Army in 1968?",
+"options": [
+"Hungary",
+"Afghanistan",
+"Czechoslovakia",
+"Poland"
+],
+"answer": "Czechoslovakia",
+"d": "medium"
+},
+{
+"q": "The famous rhyme I had a little bird. Its name was Enza. I opened the window. And In-flew-Enza refers to what disaster?",
+"options": [
+"The common cold",
+"The Spanish Flu",
+"The Black Death",
+"The Asian Flu"
+],
+"answer": "The Spanish Flu",
+"d": "medium"
+},
+{
+"q": "During the Russian Revolution of 1917, which city was capital of Russia?",
+"options": [
+"Vladivostok",
+"Saint Petersburg",
+"Kiev",
+"Moscow"
+],
+"answer": "Saint Petersburg",
+"d": "medium"
+},
+{
+"q": "What was the name commonly given to the ancient trade routes that connected the East and West of Eurasia?",
+"options": [
+"Yellow Brick Road",
+"Silk Road",
+"Spice Road",
+"Jade Road"
+],
+"answer": "Silk Road",
+"d": "medium"
+},
+{
+"q": "Which ruler was crowned the first Tsar of All the Russias?",
+"options": [
+"Boris Godunov",
+"Ivan the Great",
+"Ivan the Terrible",
+"Vasili III"
+],
+"answer": "Ivan the Terrible",
+"d": "medium"
+},
+{
+"q": "Who had the great idea of putting a bell on the telephone so people would know that someone was calling?",
+"options": [
+"a passing telegraph delivery boy",
+"Thomas Watson",
+"Antonio Meucci",
+"Alexander Graham Bell"
+],
+"answer": "Thomas Watson",
+"d": "hard"
+},
+{
+"q": "Who was the leader of Sweden in the Great Northern War?",
+"options": [
+"Charles XI",
+"Peter the Great",
+"Gustavus Adolphus",
+"Charles XII"
+],
+"answer": "Charles XII",
+"d": "hard"
+},
+{
+"q": "What brand of sweetener did G. D. Searle Co. put on the market in 1983?",
+"options": [
+"plain white sugar",
+"Splenda",
+"Sweet N Low",
+"NutraSweet"
+],
+"answer": "NutraSweet",
+"d": "hard"
+},
+{
+"q": "What dynasty ruled France before the Capetian dynasty?",
+"options": [
+"Bourbon dynasty",
+"Valois dynasty",
+"Carolingian dynasty",
+"Merovingian dynasty"
+],
+"answer": "Carolingian dynasty",
+"d": "hard"
+},
+{
+"q": "Which Union general, wounded in the foot at Antietam, would, within six months time, be the commander of the Army of the Potomac?",
+"options": [
+"George Meade",
+"John Sedgwick",
+"Joe Hooker",
+"Ambrose Burnside"
+],
+"answer": "Joe Hooker",
+"d": "hard"
+},
+{
+"q": "Which countries participated in the Lobster War?",
+"options": [
+"Red Lobster and Long John Silver's",
+"Spain and Brazil",
+"France and Brazil",
+"Portugal and Brazil"
+],
+"answer": "France and Brazil",
+"d": "hard"
+},
+{
+"q": "What decade saw the the end of the Enlightenment, the invention of canned food, and the publishing of the atomic theory?",
+"options": [
+"1800s",
+"1810s",
+"1790s",
+"1950s"
+],
+"answer": "1800s",
+"d": "hard"
+},
+{
+"q": "What word refers to the hundreds of flat-roofed Egyptian tombs built round the Pyramids of Giza?",
+"options": [
+"Hypogea",
+"Mastabas",
+"Serdabs",
+"Igloos"
+],
+"answer": "Mastabas",
+"d": "hard"
+},
+{
+"q": "Which musician holds a patent for an electronic device that helps a composer, a musician, or a conductor to interactively select parts of a musical score?",
+"options": [
+"Harry Connick, Jr.",
+"Weird Al Yankovic",
+"Herbie Hancock",
+"Henry Mancini"
+],
+"answer": "Harry Connick, Jr.",
+"d": "hard"
+},
+{
+"q": "What Dukes of Hazzard star played Thumblerig the Gambler in the 1960 movie The Alamo?",
+"options": [
+"John Wayne",
+"Denver Pyle",
+"Sorrell Booke",
+"James Best"
+],
+"answer": "Denver Pyle",
+"d": "hard"
+},
+{
+"q": "What was Napoleon Bonaparte's name before he changed it?",
+"options": [
+"Nabulione di Buonaparte",
+"Naapolion van Bonijpaart",
+"Napoleone Bonaparte",
+"Napoleone di Buonaparte"
+],
+"answer": "Napoleone di Buonaparte",
+"d": "hard"
+},
+{
+"q": "What year were the Marian Reforms instituted in the Roman Republic?",
+"options": [
+"107 CE",
+"104 BCE",
+"88 BCE",
+"107 BCE"
+],
+"answer": "107 BCE",
+"d": "hard"
+}
+]
+}

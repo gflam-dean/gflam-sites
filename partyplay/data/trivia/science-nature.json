@@ -1,0 +1,2682 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "Science & Nature",
+"count": 240,
+"questions": [
+{
+"q": "What is the powerhouse of the cell?",
+"options": [
+"Ribosome",
+"Redbull",
+"Mitochondria",
+"Nucleus"
+],
+"answer": "Mitochondria",
+"d": "easy"
+},
+{
+"q": "What does WWW stand for?",
+"options": [
+"Whole Wide World",
+"Worldwide Web Network",
+"World Wide Web",
+"Wild Wacky Web"
+],
+"answer": "World Wide Web",
+"d": "easy"
+},
+{
+"q": "What is the symbol for Copper?",
+"options": [
+"Cp",
+"Cu",
+"Co",
+"Cop"
+],
+"answer": "Cu",
+"d": "easy"
+},
+{
+"q": "What are common side effects of pregnancy?",
+"options": [
+"All of the these",
+"Morning sickness",
+"Cravings for pickles at 3am",
+"Swollen ankles"
+],
+"answer": "All of the these",
+"d": "easy"
+},
+{
+"q": "What is the chemical symbol for Uranium?",
+"options": [
+"Ur",
+"Um",
+"Un",
+"U"
+],
+"answer": "U",
+"d": "easy"
+},
+{
+"q": "Which planet was named after the ancient Romans\u2019 king of the gods?",
+"options": [
+"Saturn",
+"Neptune",
+"Jupiter",
+"Zeus"
+],
+"answer": "Jupiter",
+"d": "easy"
+},
+{
+"q": "Who discovered the Law of Gravity?",
+"options": [
+"Albert Einstein",
+"Galileo Galilei",
+"Charles Darwin",
+"Sir Isaac Newton"
+],
+"answer": "Sir Isaac Newton",
+"d": "easy"
+},
+{
+"q": "Which of these particles has a negative charge?",
+"options": [
+"Proton",
+"Neutron",
+"Electron",
+"Positron"
+],
+"answer": "Electron",
+"d": "easy"
+},
+{
+"q": "What continent is the aardvark native to?",
+"options": [
+"Africa",
+"Antarctica",
+"Asia",
+"South America"
+],
+"answer": "Africa",
+"d": "easy"
+},
+{
+"q": "The coat of arms of which country includes a depiction of a cactus?",
+"options": [
+"The Cactus Republic",
+"Mexico",
+"Peru",
+"Argentina"
+],
+"answer": "Mexico",
+"d": "easy"
+},
+{
+"q": "What is marijuanas primary active ingredient?",
+"options": [
+"CBN",
+"TNT",
+"THC",
+"CBD"
+],
+"answer": "THC",
+"d": "easy"
+},
+{
+"q": "What is the speed of light in free space?",
+"options": [
+"180,000 miles per second (~290,000 km/s)",
+"88 miles per hour (~142 km/h)",
+"150,000 miles per second (~240,000 km/s)",
+"186,282 miles per second (~300,000 km/s)"
+],
+"answer": "186,282 miles per second (~300,000 km/s)",
+"d": "easy"
+},
+{
+"q": "According to the Bible, Eve was made out of which of Adams bones?",
+"options": [
+"Sternum",
+"Funny bone",
+"Clavicle",
+"Rib"
+],
+"answer": "Rib",
+"d": "easy"
+},
+{
+"q": "Who came up with the laws of gravity?",
+"options": [
+"Newton",
+"Galileo Galilei",
+"Albert Einstein",
+"Archimedes"
+],
+"answer": "Newton",
+"d": "easy"
+},
+{
+"q": "What do you call the transfer of pollen grains from the anther to the stigma of flowers?",
+"options": [
+"Germination",
+"Fertilisation",
+"Pollination",
+"Photosynthesis"
+],
+"answer": "Pollination",
+"d": "easy"
+},
+{
+"q": "What is the largest planet in the Solar System?",
+"options": [
+"Mars",
+"Jupiter",
+"Saturn",
+"Earth"
+],
+"answer": "Jupiter",
+"d": "easy"
+},
+{
+"q": "What is the distinctive feature of the sixth planet of the Solar System (counted from the Sun)?",
+"options": [
+"Its deep blue colour",
+"Its bright purple haze",
+"Its giant red storm",
+"Its equatorial rings"
+],
+"answer": "Its equatorial rings",
+"d": "easy"
+},
+{
+"q": "What is the first element on the periodic table?",
+"options": [
+"Helium",
+"Oxygen",
+"Lithium",
+"Hydrogen"
+],
+"answer": "Hydrogen",
+"d": "easy"
+},
+{
+"q": "How long is one day on planet Earth?",
+"options": [
+"About 24 hours",
+"About 25 hours",
+"About 23 hours",
+"About 1,000 hours"
+],
+"answer": "About 24 hours",
+"d": "easy"
+},
+{
+"q": "Which planet was named after the Roman god of war?",
+"options": [
+"Jupiter",
+"Ares",
+"Mars",
+"Mercury"
+],
+"answer": "Mars",
+"d": "easy"
+},
+{
+"q": "What does a caterpillar turn into?",
+"options": [
+"butterfly or moth",
+"a dragonfly",
+"a beetle",
+"a majestic swan"
+],
+"answer": "butterfly or moth",
+"d": "easy"
+},
+{
+"q": "What does long in the tooth mean?",
+"options": [
+"Old",
+"In need of a dentist",
+"Experienced",
+"Greedy"
+],
+"answer": "Old",
+"d": "easy"
+},
+{
+"q": "What is the chemical symbol for lead?",
+"options": [
+"Ld",
+"Ln",
+"Pl",
+"Pb"
+],
+"answer": "Pb",
+"d": "easy"
+},
+{
+"q": "What is the \"powerhouse\" of the Eukaryotic animal cell?",
+"options": [
+"Endoplasmic Reticulum",
+"Nucleus",
+"Chloroplast",
+"Mitochondria"
+],
+"answer": "Mitochondria",
+"d": "easy"
+},
+{
+"q": "USB connectors let you attach everything from printers to cameras to your computer quickly and easily. What does the abbreviation USB actually stand for?",
+"options": [
+"Universal Serial Bus",
+"Universal Storage Bus",
+"Unified Serial Bus",
+"Universal System Bus"
+],
+"answer": "Universal Serial Bus",
+"d": "easy"
+},
+{
+"q": "The constant anticyclonic storm on Jupiter which can be seen through telescopes from Earth is called by what name?",
+"options": [
+"The Great Red Spot",
+"The Great Dark Spot",
+"The Big Red Pimple",
+"The Red Cyclone"
+],
+"answer": "The Great Red Spot",
+"d": "easy"
+},
+{
+"q": "Which of the following Solar System planets was not named after a Greek or Roman God?",
+"options": [
+"Neptune",
+"Mars",
+"Jupiter",
+"Earth"
+],
+"answer": "Earth",
+"d": "easy"
+},
+{
+"q": "How many teeth does an average human have?",
+"options": [
+"206",
+"28",
+"30",
+"32"
+],
+"answer": "32",
+"d": "easy"
+},
+{
+"q": "What is the chemical symbol for Helium?",
+"options": [
+"Hg",
+"He",
+"Hs",
+"H"
+],
+"answer": "He",
+"d": "easy"
+},
+{
+"q": "What connects muscles to bones?",
+"options": [
+"Sticky tape",
+"Cartilage",
+"Ligaments",
+"Tendons"
+],
+"answer": "Tendons",
+"d": "easy"
+},
+{
+"q": "What Australian pop duo performed the 1990s hit To the Moon and Back?",
+"options": [
+"Roxette",
+"Savage Garden",
+"Air Supply",
+"The Wiggles"
+],
+"answer": "Savage Garden",
+"d": "easy"
+},
+{
+"q": "Which is the chemical name of H2O?",
+"options": [
+"Anhydrous Sodium Carbonate",
+"Dihydrogen Monoxide",
+"Ammonium chloride",
+"Manganese dioxide"
+],
+"answer": "Dihydrogen Monoxide",
+"d": "easy"
+},
+{
+"q": "Which Apollo mission was the first one to land on the Moon?",
+"options": [
+"Apollo 9",
+"Apollo 13",
+"Apollo 11",
+"Apollo 10"
+],
+"answer": "Apollo 11",
+"d": "easy"
+},
+{
+"q": "Which of these organs has no known function in the human body?",
+"options": [
+"appendix",
+"the spleen",
+"tonsils",
+"the liver"
+],
+"answer": "appendix",
+"d": "easy"
+},
+{
+"q": "The human heart has how many chambers?",
+"options": [
+"2",
+"6",
+"3",
+"4"
+],
+"answer": "4",
+"d": "easy"
+},
+{
+"q": "What did early Greeks believe lightning was?",
+"options": [
+"The wrath of Poseidon",
+"A giant static shock",
+"The weapon of Zeus",
+"A warning from Minerva"
+],
+"answer": "The weapon of Zeus",
+"d": "easy"
+},
+{
+"q": "What part of the body produces insulin?",
+"options": [
+"Gallbladder",
+"Spleen",
+"Pancreas",
+"Liver"
+],
+"answer": "Pancreas",
+"d": "easy"
+},
+{
+"q": "A flash of lightning can heat the air around it, which gives off vibrations and expansion of the air thus causing what?",
+"options": [
+"Static electricity",
+"An echo",
+"A round of applause",
+"Thunder"
+],
+"answer": "Thunder",
+"d": "easy"
+},
+{
+"q": "What is the best location to exercise in order to fight depression according to studies?",
+"options": [
+"In a gym",
+"At the office",
+"Outdoors",
+"At home"
+],
+"answer": "Outdoors",
+"d": "easy"
+},
+{
+"q": "Which is the longest bone in the human body?",
+"options": [
+"Ulna",
+"Scapula",
+"Femur",
+"Fibula"
+],
+"answer": "Femur",
+"d": "easy"
+},
+{
+"q": "Coulrophobia is the irrational fear of what?",
+"options": [
+"Spiders",
+"Clowns",
+"The dark",
+"Heights"
+],
+"answer": "Clowns",
+"d": "easy"
+},
+{
+"q": "This equation, Y=mX+B, represents what?",
+"options": [
+"A curve in the plane",
+"A line in the plane",
+"A pizza slice",
+"A parabola"
+],
+"answer": "A line in the plane",
+"d": "easy"
+},
+{
+"q": "Rhinoplasty is a surgical procedure on what part of the human body?",
+"options": [
+"Chin",
+"Neck",
+"Ears",
+"Nose"
+],
+"answer": "Nose",
+"d": "easy"
+},
+{
+"q": "What is the chemical symbol for Iron?",
+"options": [
+"Fe",
+"Ir",
+"Fe2",
+"Fn"
+],
+"answer": "Fe",
+"d": "easy"
+},
+{
+"q": "The Earths atmosphere comprises of which two main elements?",
+"options": [
+"Helium and Hydrogen",
+"Nitrogen and Carbon dioxide",
+"Oxygen and Nitrogen",
+"Oxygen and Argon"
+],
+"answer": "Oxygen and Nitrogen",
+"d": "easy"
+},
+{
+"q": "If the nurse approaches the doctor and says, Doctor, there's a code in the lobby, what is the doctor likely to do?",
+"options": [
+"Say thank you and carry on",
+"Tell the nurse to call 911",
+"Go home for the day",
+"Reach for his wallet"
+],
+"answer": "Tell the nurse to call 911",
+"d": "easy"
+},
+{
+"q": "How many bones is an adults human skeletal system made up of?",
+"options": [
+"206",
+"180",
+"256",
+"212"
+],
+"answer": "206",
+"d": "easy"
+},
+{
+"q": "The USB memory stick is a very useful device. But do you know what USB stands for?",
+"options": [
+"Universal Serial Board",
+"Ultra Speedy Backup",
+"Universal Serial Bus",
+"Universal System Bus"
+],
+"answer": "Universal Serial Bus",
+"d": "easy"
+},
+{
+"q": "What is the range of the pH scale?",
+"options": [
+"(0 or 1) -- 14",
+"0 -- 7",
+"1 -- 10",
+"0 -- 100"
+],
+"answer": "(0 or 1) -- 14",
+"d": "easy"
+},
+{
+"q": "Approximately what is the speed of light in vacuum?",
+"options": [
+"30 000 km/s",
+"3 000 000 km/s",
+"150 000 km/s",
+"300 000 km/s"
+],
+"answer": "300 000 km/s",
+"d": "easy"
+},
+{
+"q": "How are CDs and DVDs read?",
+"options": [
+"Magnetic head",
+"A stylus needle",
+"Static electricity",
+"Laser"
+],
+"answer": "Laser",
+"d": "easy"
+},
+{
+"q": "How many bones are in the human body?",
+"options": [
+"209",
+"203",
+"206",
+"200"
+],
+"answer": "206",
+"d": "easy"
+},
+{
+"q": "How many planets are in our Solar System?",
+"options": [
+"Ten",
+"Eight",
+"Nine",
+"Seven"
+],
+"answer": "Eight",
+"d": "easy"
+},
+{
+"q": "What do you call the force which slows down and stops a moving object?",
+"options": [
+"Inertia",
+"Friction",
+"Tension",
+"Willpower"
+],
+"answer": "Friction",
+"d": "easy"
+},
+{
+"q": "What Greek mythological figure flew too close to the sun with his wings made of wax?",
+"options": [
+"Icarus",
+"Perseus",
+"Theseus",
+"Daedalus"
+],
+"answer": "Icarus",
+"d": "easy"
+},
+{
+"q": "What is the thin, outermost layer of the Earth?",
+"options": [
+"Outer Core",
+"Mantle",
+"Crust",
+"Exosphere"
+],
+"answer": "Crust",
+"d": "easy"
+},
+{
+"q": "What name is given to all baby marsupials?",
+"options": [
+"Pup",
+"Joey",
+"Calf",
+"Cub"
+],
+"answer": "Joey",
+"d": "easy"
+},
+{
+"q": "What do we call the ratio of a circles circumference to its diameter?",
+"options": [
+"Tau",
+"Pi",
+"Phi",
+"Pie"
+],
+"answer": "Pi",
+"d": "easy"
+},
+{
+"q": "Two angles of a triangle are 4 degrees and 56 degrees, respectively. How large is the third angle?",
+"options": [
+"60 degrees",
+"130 degrees",
+"90 degrees",
+"120 degrees"
+],
+"answer": "120 degrees",
+"d": "easy"
+},
+{
+"q": "What is the primary addictive substance found in tobacco?",
+"options": [
+"Ephedrine",
+"Cathinone",
+"Glaucine",
+"Nicotine"
+],
+"answer": "Nicotine",
+"d": "easy"
+},
+{
+"q": "How many planets are there in the Solar System?",
+"options": [
+"8",
+"11",
+"9",
+"10"
+],
+"answer": "8",
+"d": "easy"
+},
+{
+"q": "The deficiency of what vitamin causes Rickets and Osteomalacia in humans?",
+"options": [
+"Vitamin Sunshine",
+"Vitamin C",
+"Vitamin K",
+"Vitamin D"
+],
+"answer": "Vitamin D",
+"d": "easy"
+},
+{
+"q": "Pi Day is celebrated by many lovers of the mathematical constant, \u03c0, on what date?",
+"options": [
+"March 4th",
+"November 10th",
+"March 14th",
+"The 3.14th of March"
+],
+"answer": "March 14th",
+"d": "easy"
+},
+{
+"q": "What does a koala eat?",
+"options": [
+"acacia leaves",
+"eucalyptus leaves",
+"eucalyptus-flavoured lollies",
+"wattle shoots"
+],
+"answer": "eucalyptus leaves",
+"d": "easy"
+},
+{
+"q": "What cell organelle is known as \"the powerhouse of the cell?\"",
+"options": [
+"Mitochondria",
+"Chloroplast",
+"Nucleus",
+"Ribosome"
+],
+"answer": "Mitochondria",
+"d": "easy"
+},
+{
+"q": "At what temperature does water boil?",
+"options": [
+"210\u00b0F",
+"212\u00b0F",
+"451\u00b0F",
+"220\u00b0F"
+],
+"answer": "212\u00b0F",
+"d": "easy"
+},
+{
+"q": "What does the ROM part of a CD-ROM stand for?",
+"options": [
+"Rapid Online Memory",
+"Random Optical Memory",
+"Recordable Overwrite Memory",
+"Read Only Memory"
+],
+"answer": "Read Only Memory",
+"d": "easy"
+},
+{
+"q": "The companies Intel and AMD are primarily known for their development and manufacturing of what?",
+"options": [
+"Motherboards",
+"Keyboards",
+"Processors",
+"Hard drives"
+],
+"answer": "Processors",
+"d": "easy"
+},
+{
+"q": "How many planets make up our Solar System?",
+"options": [
+"7",
+"8",
+"6",
+"9"
+],
+"answer": "8",
+"d": "easy"
+},
+{
+"q": "Which part of a building is also a computer operating system name?",
+"options": [
+"Windows",
+"Doors",
+"Chimney",
+"Roof"
+],
+"answer": "Windows",
+"d": "easy"
+},
+{
+"q": "How many major planets are there in the Solar System?",
+"options": [
+"9",
+"8",
+"12",
+"7"
+],
+"answer": "8",
+"d": "easy"
+},
+{
+"q": "Which country owns the .ie domain name?",
+"options": [
+"Iceland",
+"Northern Ireland",
+"Ireland",
+"Narnia"
+],
+"answer": "Ireland",
+"d": "easy"
+},
+{
+"q": "Alzheimer's disease primarily affects which part of the human body?",
+"options": [
+"Heart",
+"Skin",
+"Lungs",
+"Brain"
+],
+"answer": "Brain",
+"d": "easy"
+},
+{
+"q": "What is the name of the Galaxy that our Solar System is a part of?",
+"options": [
+"The Large Magellanic Cloud",
+"Milky Way",
+"The Andromeda Galaxy",
+"Hollywood"
+],
+"answer": "Milky Way",
+"d": "easy"
+},
+{
+"q": "What do mathematicians call a quadrilateral with exactly one pair of parallel sides?",
+"options": [
+"A rhombus",
+"A trapezoid",
+"A triangle",
+"A parallelogram"
+],
+"answer": "A trapezoid",
+"d": "easy"
+},
+{
+"q": "What type of structure do tulips grow out from?",
+"options": [
+"Bulb",
+"Corm",
+"Acorn",
+"Tuber"
+],
+"answer": "Bulb",
+"d": "easy"
+},
+{
+"q": "What is the most common method of child birth?",
+"options": [
+"Vaginal",
+"Water birth",
+"Cesarean",
+"Delivered by stork"
+],
+"answer": "Vaginal",
+"d": "easy"
+},
+{
+"q": "Which element has the chemical symbol 'Fe'?",
+"options": [
+"Silver",
+"Tin",
+"Gold",
+"Iron"
+],
+"answer": "Iron",
+"d": "easy"
+},
+{
+"q": "How many degrees Fahrenheit is 100 degrees Celsius?",
+"options": [
+"212",
+"202",
+"451",
+"180"
+],
+"answer": "212",
+"d": "easy"
+},
+{
+"q": "What is the scientific name of the knee cap?",
+"options": [
+"Fibula",
+"Femur",
+"Patella",
+"Funny bone"
+],
+"answer": "Patella",
+"d": "easy"
+},
+{
+"q": "WWW, an abbreviation well known to Internet lovers, actually stands for what?",
+"options": [
+"Wild Wild West",
+"World Wide Website",
+"World Wide Web",
+"Worldwide Web Wire"
+],
+"answer": "World Wide Web",
+"d": "easy"
+},
+{
+"q": "Which sweets are stored by an Internet browser?",
+"options": [
+"Lollies",
+"Cookies",
+"Muffins",
+"Wafers"
+],
+"answer": "Cookies",
+"d": "easy"
+},
+{
+"q": "Which one of these is an operating system?",
+"options": [
+"Internet Explorer",
+"Vista",
+"Microsoft Office",
+"Clippy"
+],
+"answer": "Vista",
+"d": "easy"
+},
+{
+"q": "What produces the green colour of most plant leaves?",
+"options": [
+"UV radiation",
+"Natural pigments",
+"Chlorophyll",
+"Light refraction"
+],
+"answer": "Chlorophyll",
+"d": "easy"
+},
+{
+"q": "What is the basic unit of electric pressure, also known as emf?",
+"options": [
+"Volt",
+"Amp",
+"Ohm",
+"Jolt"
+],
+"answer": "Volt",
+"d": "easy"
+},
+{
+"q": "About what percentage of the Earth's surface is water?",
+"options": [
+"70%",
+"50%",
+"30%",
+"90%"
+],
+"answer": "70%",
+"d": "easy"
+},
+{
+"q": "Name the first four planets of the Solar System in order of their distance from the Sun?",
+"options": [
+"Venus, Mercury, Earth, Mars",
+"The Sun, Moon, Earth, Mars",
+"Mercury, Earth, Venus, Mars",
+"Mercury, Venus, Earth, Mars"
+],
+"answer": "Mercury, Venus, Earth, Mars",
+"d": "easy"
+},
+{
+"q": "What is the standard SI unit for time?",
+"options": [
+"Hour",
+"Day",
+"Minute",
+"Second"
+],
+"answer": "Second",
+"d": "easy"
+},
+{
+"q": "What does the equation y = mx + b represent?",
+"options": [
+"A squiggle",
+"A ray",
+"A line",
+"A parabola"
+],
+"answer": "A line",
+"d": "easy"
+},
+{
+"q": "Which wall is used for computer protection in the Internet or other networks?",
+"options": [
+"Brick wall",
+"Great Wall",
+"Steel wall",
+"Firewall"
+],
+"answer": "Firewall",
+"d": "easy"
+},
+{
+"q": "Venus is named after the Roman Goddess of what?",
+"options": [
+"War",
+"Wisdom",
+"Love",
+"Hunting"
+],
+"answer": "Love",
+"d": "easy"
+},
+{
+"q": "Which is the most abundant element in the universe?",
+"options": [
+"Lithium",
+"Hydrogen",
+"Oxygen",
+"Helium"
+],
+"answer": "Hydrogen",
+"d": "easy"
+},
+{
+"q": "What is the symbol for Platinum?",
+"options": [
+"Pl",
+"Pa",
+"Pt",
+"Pm"
+],
+"answer": "Pt",
+"d": "easy"
+},
+{
+"q": "What does RAM stand for?",
+"options": [
+"Remote Array Memory",
+"Random Access Memory",
+"Read Access Memory",
+"Rapid Active Memory"
+],
+"answer": "Random Access Memory",
+"d": "easy"
+},
+{
+"q": "How many moons does the Earth have?",
+"options": [
+"2",
+"1",
+"0",
+"3"
+],
+"answer": "1",
+"d": "easy"
+},
+{
+"q": "How many continents are generally considered to be there on Earth?",
+"options": [
+"50",
+"6",
+"5",
+"7"
+],
+"answer": "7",
+"d": "easy"
+},
+{
+"q": "How many protons are in an oxygen atom?",
+"options": [
+"Eight",
+"Seven",
+"Zero",
+"Six"
+],
+"answer": "Eight",
+"d": "easy"
+},
+{
+"q": "Which planet has been demoted from its planet status by scientists like Neil Tyson, Director of the Hayden Planetarium?",
+"options": [
+"Neptune",
+"Pluto",
+"Mercury",
+"Planet Hollywood"
+],
+"answer": "Pluto",
+"d": "easy"
+},
+{
+"q": "Which set contains only prime numbers?",
+"options": [
+"1, 3, 5, 7, 11, 13",
+"2, 4, 5, 7, 11, 13",
+"2, 3, 5, 7, 9, 11",
+"2, 3, 5, 7,11,13, 17"
+],
+"answer": "2, 3, 5, 7,11,13, 17",
+"d": "easy"
+},
+{
+"q": "What does DNA stand for?",
+"options": [
+"Deoxyribogenetic Atoms",
+"Deoxyribonucleic Acid",
+"Detoxic Acid",
+"Deoxyribogenetic Acid"
+],
+"answer": "Deoxyribonucleic Acid",
+"d": "easy"
+},
+{
+"q": "Dry ice is the solid form of what substance?",
+"options": [
+"Oxygen",
+"Nitrogen",
+"Ammonia",
+"Carbon dioxide"
+],
+"answer": "Carbon dioxide",
+"d": "easy"
+},
+{
+"q": "What does the metric prefix kilo mean?",
+"options": [
+"100",
+"10000",
+"1",
+"1000"
+],
+"answer": "1000",
+"d": "easy"
+},
+{
+"q": "What kind of cells carry oxygen around your body?",
+"options": [
+"brain cells",
+"plasma cells",
+"red blood cells",
+"white blood cells"
+],
+"answer": "red blood cells",
+"d": "easy"
+},
+{
+"q": "What is the symbol for Helium?",
+"options": [
+"Hu",
+"H",
+"He",
+"Hm"
+],
+"answer": "He",
+"d": "easy"
+},
+{
+"q": "Which planet in the Solar System is the closest to the Sun?",
+"options": [
+"Pluto",
+"Venus",
+"Mercury",
+"Mars"
+],
+"answer": "Mercury",
+"d": "easy"
+},
+{
+"q": "What lies at the center of our galaxy?",
+"options": [
+"A quasar",
+"A wormhole",
+"A black hole",
+"A supernova"
+],
+"answer": "A black hole",
+"d": "easy"
+},
+{
+"q": "About how much of an adult humans body is water?",
+"options": [
+"99%",
+"60%",
+"75%",
+"50%"
+],
+"answer": "60%",
+"d": "easy"
+},
+{
+"q": "What is the unit of power that shows how fast a circuit uses electrical energy?",
+"options": [
+"Volt",
+"Amp",
+"Jolt",
+"Watt"
+],
+"answer": "Watt",
+"d": "easy"
+},
+{
+"q": "How long does it take light to travel from the Sun to the Earth?",
+"options": [
+"About 20 minutes",
+"About 3 minutes",
+"Instantly, of course",
+"About 8 minutes"
+],
+"answer": "About 8 minutes",
+"d": "easy"
+},
+{
+"q": "What is the name of the pigment that determines the color of human skin?",
+"options": [
+"Melatonin",
+"Melamine",
+"Melanin",
+"Watermelon"
+],
+"answer": "Melanin",
+"d": "easy"
+},
+{
+"q": "The element involved in making human blood red is which of the following?",
+"options": [
+"Iridium",
+"Cobalt",
+"Copper",
+"Iron"
+],
+"answer": "Iron",
+"d": "easy"
+},
+{
+"q": "How long do you need to boil an egg for it to be considered hard boiled?",
+"options": [
+"7 - 8 minutes",
+"10 -11 minutes",
+"1 hour",
+"15 - 16 minutes"
+],
+"answer": "10 -11 minutes",
+"d": "easy"
+},
+{
+"q": "71% of the Earth's surface is made up of",
+"options": [
+"Water",
+"Deserts",
+"Continents",
+"Forests"
+],
+"answer": "Water",
+"d": "easy"
+},
+{
+"q": "Taste is related to what other basic sense?",
+"options": [
+"Sight",
+"Hearing",
+"Smell",
+"Touch"
+],
+"answer": "Smell",
+"d": "easy"
+},
+{
+"q": "What is the speed of light in vacuum?",
+"options": [
+"88 mph",
+"300 000 km/s",
+"150 000 km/s",
+"3 000 000 km/s"
+],
+"answer": "300 000 km/s",
+"d": "easy"
+},
+{
+"q": "What does CPR, the emergency procedure to assist someone who has suffered cardiac arrest, stand for?",
+"options": [
+"Cardiac pulse restoration",
+"Coronary pressure regulation",
+"Chest Pumping Routine",
+"Cardiopulmonary resuscitation"
+],
+"answer": "Cardiopulmonary resuscitation",
+"d": "easy"
+},
+{
+"q": "What is the symbol for Hydrogen?",
+"options": [
+"Ho",
+"Hg",
+"H",
+"Hy"
+],
+"answer": "H",
+"d": "easy"
+},
+{
+"q": "If you are solving a word problem for 2 unknowns, how many equations will you need?",
+"options": [
+"0",
+"1",
+"3",
+"2"
+],
+"answer": "2",
+"d": "easy"
+},
+{
+"q": "Jason has 3 quarters, 8 nickels, 6 dimes and 3 pennies. How much money does he have?",
+"options": [
+"$1.83",
+"$0.20",
+"$1.68",
+"$1.78"
+],
+"answer": "$1.78",
+"d": "easy"
+},
+{
+"q": "Au on the Periodic Table refers to which element?",
+"options": [
+"Gold",
+"Copper",
+"Silver",
+"Aluminium"
+],
+"answer": "Gold",
+"d": "easy"
+},
+{
+"q": "The Scoville scale is used to measure the hotness of what?",
+"options": [
+"Chilli peppers",
+"Volcano temperatures",
+"Sauna heat",
+"Car engines"
+],
+"answer": "Chilli peppers",
+"d": "easy"
+},
+{
+"q": "What is the constellation Ursa Major commonly known as?",
+"options": [
+"The Frying Pan",
+"The Big Dipper",
+"The Little Dipper",
+"The Northern Cross"
+],
+"answer": "The Big Dipper",
+"d": "easy"
+},
+{
+"q": "What is the standard SI unit for mass?",
+"options": [
+"Gram",
+"Tonne",
+"Kilogram",
+"Pound"
+],
+"answer": "Kilogram",
+"d": "easy"
+},
+{
+"q": "If we add up all the interior angles of a quadrilateral, what sum do we get?",
+"options": [
+"360 degrees",
+"180 degrees",
+"540 degrees",
+"1000 degrees"
+],
+"answer": "360 degrees",
+"d": "easy"
+},
+{
+"q": "The medical condition osteoporosis affects which part of the body?",
+"options": [
+"Hair",
+"Muscles",
+"Joints",
+"Bones"
+],
+"answer": "Bones",
+"d": "easy"
+},
+{
+"q": "In his Theory of Relativity, Albert Einstein discloses that when you multiply the mass by the square of the speed of light, you get what?",
+"options": [
+"The power",
+"The energy",
+"The vibe",
+"The momentum"
+],
+"answer": "The energy",
+"d": "easy"
+},
+{
+"q": "At what time in a womans life is she most likely to gain the most weight?",
+"options": [
+"Before her menstruation",
+"During menopause",
+"During the holiday season",
+"During pregnancy"
+],
+"answer": "During pregnancy",
+"d": "easy"
+},
+{
+"q": "What does the letter 'S' stand for in 'NASA'?",
+"options": [
+"Space",
+"Star",
+"Society",
+"Science"
+],
+"answer": "Space",
+"d": "easy"
+},
+{
+"q": "Which of the following is an arithmetic progression?",
+"options": [
+"2, 4, 6, 8...",
+"1, 4, 9, 16...",
+"1, 2, 4, 8, 16...",
+"2, 3, 5, 7, 11..."
+],
+"answer": "2, 4, 6, 8...",
+"d": "easy"
+},
+{
+"q": "6 is a multiple of 2 and 3, 9 is a multiple of 3 only, 10 is a multiple of 5 and what other number?",
+"options": [
+"1",
+"4",
+"20",
+"2"
+],
+"answer": "2",
+"d": "easy"
+},
+{
+"q": "What is the symbol for Gold?",
+"options": [
+"Ag",
+"$$$",
+"Au",
+"Go"
+],
+"answer": "Au",
+"d": "easy"
+},
+{
+"q": "What is the standard SI unit for distance?",
+"options": [
+"Fathom",
+"Foot",
+"Angstrom",
+"Metre"
+],
+"answer": "Metre",
+"d": "easy"
+},
+{
+"q": "Which blood type is called the universal recipient?",
+"options": [
+"Type Z",
+"A positive",
+"AB",
+"O"
+],
+"answer": "AB",
+"d": "medium"
+},
+{
+"q": "The word hurricane\u201d comes from the name of a Caribbean god - Huracan. Huracan was god of what?",
+"options": [
+"The sun",
+"The storms",
+"The sea",
+"The wind"
+],
+"answer": "The storms",
+"d": "medium"
+},
+{
+"q": "Which of these regions is most affected by AIDS, as about 60% of all the HIV-infected people in the world live there?",
+"options": [
+"South Asia",
+"North Africa",
+"Antarctica",
+"Sub-Saharan Africa"
+],
+"answer": "Sub-Saharan Africa",
+"d": "medium"
+},
+{
+"q": "Emphysema is a chronic disease affecting the organs of which system of the body?",
+"options": [
+"Respiratory system",
+"Skeletal system",
+"Circulatory system",
+"Digestive system"
+],
+"answer": "Respiratory system",
+"d": "medium"
+},
+{
+"q": "The Planet Venus orbits the Sun once every how many days?",
+"options": [
+"365",
+"225",
+"88",
+"243"
+],
+"answer": "225",
+"d": "medium"
+},
+{
+"q": "A pair of fair dice are rolled and the numbers on the dice are added. What is the probability that you will roll a seven?",
+"options": [
+"8 out of 36",
+"5 out of 36",
+"36 out of 36 (guaranteed!)",
+"6 out of 36"
+],
+"answer": "6 out of 36",
+"d": "medium"
+},
+{
+"q": "What year was the iPod touch launched?",
+"options": [
+"2008",
+"2001",
+"2007",
+"2005"
+],
+"answer": "2007",
+"d": "medium"
+},
+{
+"q": "I am from a country in Central Europe. Which domain name do I most likely type to access pages in my native language?",
+"options": [
+".pl",
+".pn",
+".lol",
+".pt"
+],
+"answer": ".pl",
+"d": "medium"
+},
+{
+"q": "x^2+y^2=r^2 is which equation?",
+"options": [
+"the equation of a sphere",
+"the equation of a circle",
+"the equation of a hyperbola",
+"the equation of a parabola"
+],
+"answer": "the equation of a circle",
+"d": "medium"
+},
+{
+"q": "The North Star, Polaris, is located within which constellation?",
+"options": [
+"Draco",
+"Ursa Minor",
+"Ursa Major",
+"Canis Major"
+],
+"answer": "Ursa Minor",
+"d": "medium"
+},
+{
+"q": "How are the orbits in which the electrons of the atom reside called?",
+"options": [
+"Electron rings",
+"Electron shells",
+"Electron loops",
+"Electron paths"
+],
+"answer": "Electron shells",
+"d": "medium"
+},
+{
+"q": "What happened to the tropical coral reefs during the 1998 and 2004 El Nino weather phenomenons?",
+"options": [
+"Many of them were bleached or even killed",
+"Nothing, they were too deep to notice",
+"They all migrated to cooler waters",
+"They grew faster in the warm water"
+],
+"answer": "Many of them were bleached or even killed",
+"d": "medium"
+},
+{
+"q": "The mean distance between the Sun and the Earth is about 93 million miles, which is also called what by astronomers?",
+"options": [
+"Light Year (LY)",
+"Astronomical Unit (AU)",
+"Parsec (pc)",
+"Cosmic Mile (CM)"
+],
+"answer": "Astronomical Unit (AU)",
+"d": "medium"
+},
+{
+"q": "Who made the discovery of X-rays?",
+"options": [
+"Thomas Alva Edison",
+"Marie Curie",
+"Henri Becquerel",
+"Wilhelm Conrad R\u00f6ntgen"
+],
+"answer": "Wilhelm Conrad R\u00f6ntgen",
+"d": "medium"
+},
+{
+"q": "Which moon is the only satellite in our solar system to possess a dense atmosphere?",
+"options": [
+"Triton",
+"Ganymede",
+"Titan",
+"The Death Star"
+],
+"answer": "Titan",
+"d": "medium"
+},
+{
+"q": "What are the main components of the stomach juice, which is secreted by gastric glands?",
+"options": [
+"Enzymes and hydrochloric acid",
+"Enzymes and saliva",
+"Mucus and bile",
+"Hydrochloric acid, enzymes and mucus"
+],
+"answer": "Hydrochloric acid, enzymes and mucus",
+"d": "medium"
+},
+{
+"q": "Where is the radial artery located?",
+"options": [
+"Behind the knee",
+"Upper arm",
+"Forearm",
+"Neck"
+],
+"answer": "Forearm",
+"d": "medium"
+},
+{
+"q": "When was the Hubble Space Telescope put into orbit by the Space Shuttle?",
+"options": [
+"2001",
+"1991",
+"1990",
+"1985"
+],
+"answer": "1990",
+"d": "medium"
+},
+{
+"q": "Along with Oxygen, which element is primarily responsible for the sky appearing blue?",
+"options": [
+"Nitrogen",
+"Argon",
+"Ozone",
+"Helium"
+],
+"answer": "Nitrogen",
+"d": "medium"
+},
+{
+"q": "What marrow produces blood cells in the human body?",
+"options": [
+"Yellow marrow",
+"Pink marrow",
+"Bone marrow soup",
+"Red marrow"
+],
+"answer": "Red marrow",
+"d": "medium"
+},
+{
+"q": "What time of the day do tornadoes most often strike?",
+"options": [
+"6 a.m. - noon",
+"3 p.m. - 9p.m.",
+"9 a.m. - 3 p.m.",
+"midnight - 3 a.m."
+],
+"answer": "3 p.m. - 9p.m.",
+"d": "medium"
+},
+{
+"q": "Who is the author of the 1988 book \u2018The Alchemist\u2019?",
+"options": [
+"Nicolas Flamel, alchemist",
+"Gabriel Garc\u00eda M\u00e1rquez",
+"Isabel Allende",
+"Paulo Coehlo"
+],
+"answer": "Paulo Coehlo",
+"d": "medium"
+},
+{
+"q": "An effective minimum price imposed by the government, called price floor in economics, is usually expected to result in what?",
+"options": [
+"Increased demand",
+"Shortage",
+"Surplus",
+"Lower prices"
+],
+"answer": "Surplus",
+"d": "medium"
+},
+{
+"q": "What year was the iPod introduced?",
+"options": [
+"2001",
+"1999",
+"2005",
+"2003"
+],
+"answer": "2001",
+"d": "medium"
+},
+{
+"q": "What does the word geometry mean?",
+"options": [
+"measuring the stars",
+"shapes and sizes",
+"earth measure",
+"size and measurement"
+],
+"answer": "earth measure",
+"d": "medium"
+},
+{
+"q": "Which portion of the Marijuana plant produces the psychoactive substance known as THC?",
+"options": [
+"Leaves",
+"Female Flower",
+"Male Flower",
+"Root Ball"
+],
+"answer": "Female Flower",
+"d": "medium"
+},
+{
+"q": "How many people are overweight around the world?",
+"options": [
+"More than 1 billion",
+"More than 500 million",
+"More than 5 million",
+"More than 100 million"
+],
+"answer": "More than 1 billion",
+"d": "medium"
+},
+{
+"q": "What are the two twin stars in the constellation Gemini?",
+"options": [
+"Thing 1 and Thing 2",
+"Sirius Procyon",
+"Rigel Betelgeuse",
+"Castor Pollux"
+],
+"answer": "Castor Pollux",
+"d": "medium"
+},
+{
+"q": "How many laws of thermodynamics are there?",
+"options": [
+"Two",
+"Three",
+"Five",
+"Four"
+],
+"answer": "Four",
+"d": "medium"
+},
+{
+"q": "What do mathematicians call any rectangular table of numbers?",
+"options": [
+"A vector",
+"A matrix",
+"A determinant",
+"A crossword"
+],
+"answer": "A matrix",
+"d": "medium"
+},
+{
+"q": "What natural therapy works best for seasonal depression and low moods due to sleep deprivation?",
+"options": [
+"Disco ball therapy",
+"Bright light therapy",
+"Aromatherapy",
+"Vitamin D supplements"
+],
+"answer": "Bright light therapy",
+"d": "medium"
+},
+{
+"q": "How are hard drives and floppy disks read?",
+"options": [
+"Optically",
+"Magnetically",
+"Electrically",
+"By a tiny librarian inside"
+],
+"answer": "Magnetically",
+"d": "medium"
+},
+{
+"q": "What is the symbol for Neon?",
+"options": [
+"Neo",
+"No",
+"N",
+"Ne"
+],
+"answer": "Ne",
+"d": "medium"
+},
+{
+"q": "The planet Jupiter was named after the chief God in Roman Mythology. What is the name of his Greek counterpart?",
+"options": [
+"Hercules",
+"Cronus",
+"Poseidon",
+"Zeus"
+],
+"answer": "Zeus",
+"d": "medium"
+},
+{
+"q": "Which term refers to the number of complete cycles of an alternating current that occur per second?",
+"options": [
+"Wavelength",
+"Frequency",
+"Amplitude",
+"Voltage"
+],
+"answer": "Frequency",
+"d": "medium"
+},
+{
+"q": "How long does it take Mars to complete one revolution around the sun?",
+"options": [
+"365 days",
+"687 days",
+"1000 days",
+"780 days"
+],
+"answer": "687 days",
+"d": "medium"
+},
+{
+"q": "Which is the mathematical property used in this addition equation: (57 + 63) + 14 = 57 + (63 + 14)?",
+"options": [
+"Associative property",
+"Distributive property",
+"Transitive property",
+"Commutative property"
+],
+"answer": "Associative property",
+"d": "medium"
+},
+{
+"q": "What is the name of the cognitive bias wherein a person with low ability in a particular skill mistake themselves as being superior?",
+"options": [
+"Impostor syndrome",
+"Halo effect",
+"Dunning-Kruger effect",
+"M\u00fcller-Lyer effect"
+],
+"answer": "Dunning-Kruger effect",
+"d": "medium"
+},
+{
+"q": "Which of these elements on the Periodic Table is a Noble Gas?",
+"options": [
+"Cobalt",
+"Neon",
+"Bromine",
+"Chlorine"
+],
+"answer": "Neon",
+"d": "medium"
+},
+{
+"q": "What chemical compound is commonly known as vitamin C?",
+"options": [
+"Acetylsalicylic acid",
+"Folic acid",
+"Citric acid",
+"Ascorbic acid"
+],
+"answer": "Ascorbic acid",
+"d": "medium"
+},
+{
+"q": "Which of the following is NOT a real element?",
+"options": [
+"Hassium",
+"Lutetium",
+"Praseodymium",
+"Vitrainium"
+],
+"answer": "Vitrainium",
+"d": "medium"
+},
+{
+"q": "Which noble gas has the lowest atomic number?",
+"options": [
+"Helium",
+"Argon",
+"Neon",
+"Krypton"
+],
+"answer": "Helium",
+"d": "medium"
+},
+{
+"q": "Down Syndrome is usually caused by an extra copy of which chromosome?",
+"options": [
+"18",
+"100",
+"13",
+"21"
+],
+"answer": "21",
+"d": "medium"
+},
+{
+"q": "Which of these is a semiconductor amplifying device?",
+"options": [
+"P-N junction",
+"diode",
+"tube",
+"transistor"
+],
+"answer": "transistor",
+"d": "medium"
+},
+{
+"q": "Mars has two natural satellites. What are their names?",
+"options": [
+"Tom and Jerry",
+"Io and Europa",
+"Phobos and Deimos",
+"Titan and Rhea"
+],
+"answer": "Phobos and Deimos",
+"d": "medium"
+},
+{
+"q": "What is the atomic mass of Carbon?",
+"options": [
+"10",
+"16",
+"14",
+"12"
+],
+"answer": "12",
+"d": "medium"
+},
+{
+"q": "What was the first living creature in space?",
+"options": [
+"Cat",
+"Dog",
+"Monkey",
+"Fruit Flies"
+],
+"answer": "Fruit Flies",
+"d": "medium"
+},
+{
+"q": "What element was usually the subject of transformation in alchemy?",
+"options": [
+"Lead",
+"Copper",
+"Iron",
+"Mercury"
+],
+"answer": "Lead",
+"d": "medium"
+},
+{
+"q": "Which of these continents represent the natural habit of the cactus?",
+"options": [
+"North America and Africa",
+"Antarctica only",
+"North America, South America and Africa",
+"South and North America"
+],
+"answer": "South and North America",
+"d": "medium"
+},
+{
+"q": "The 'Islets of Langerhans' is found in which human organ?",
+"options": [
+"Liver",
+"Pancreas",
+"Appendix",
+"Spleen"
+],
+"answer": "Pancreas",
+"d": "medium"
+},
+{
+"q": "The biggest distinction between a eukaryotic cell and a prokaryotic cell is:",
+"options": [
+"The presence or absence of certain organelles",
+"The presence or absence of a nucleus",
+"The mode of reproduction",
+"The overall size"
+],
+"answer": "The presence or absence of a nucleus",
+"d": "medium"
+},
+{
+"q": "Which is the highest layer of the Earth\u2019s atmosphere?",
+"options": [
+"Stratosphere",
+"Thermosphere",
+"Ionosphere",
+"Exosphere"
+],
+"answer": "Exosphere",
+"d": "medium"
+},
+{
+"q": "Which cooking technique is considered to be best for preserving vitamins and minerals in meat and fish, during heat processing?",
+"options": [
+"Charring over a bonfire",
+"Grilling",
+"Poaching",
+"Roasting"
+],
+"answer": "Roasting",
+"d": "medium"
+},
+{
+"q": "Which element has the highest melting point?",
+"options": [
+"Platinum",
+"Tungsten",
+"Carbon",
+"Osmium"
+],
+"answer": "Carbon",
+"d": "medium"
+},
+{
+"q": "Which are the endocrine systems so-called instant messengers used to affect distant cells within specific organs?",
+"options": [
+"Hormones",
+"Enzymes",
+"Tiny text messages",
+"Antibodies"
+],
+"answer": "Hormones",
+"d": "medium"
+},
+{
+"q": "What happens to an electron that has absorbed a certain amount of energy which is though less than the energy necessary to remove it from the atom?",
+"options": [
+"Goes into excited state",
+"Emits a photon",
+"Nothing happens",
+"Explodes"
+],
+"answer": "Goes into excited state",
+"d": "medium"
+},
+{
+"q": "Use an IMAP server to get advanced mail features. What does IMAP stand for?",
+"options": [
+"Integrated Message Access Protocol",
+"Internet Mail Access Protocol",
+"I'm Mostly Around, Probably",
+"Internet Message Access Protocol"
+],
+"answer": "Internet Message Access Protocol",
+"d": "medium"
+},
+{
+"q": "What do we call these numbers: 0, 1, 4, 9, 16, 25, 36, 49, etc?",
+"options": [
+"prime numbers",
+"square numbers",
+"triangular numbers",
+"cubic numbers"
+],
+"answer": "square numbers",
+"d": "medium"
+},
+{
+"q": "Which was the first version of Microsoft Windows to support Plug and Play?",
+"options": [
+"Windows ME",
+"Windows 98",
+"Windows 95",
+"Windows 3.11"
+],
+"answer": "Windows 95",
+"d": "medium"
+},
+{
+"q": "Fungi are crucial for the production of which of these foods?",
+"options": [
+"Ice cubes",
+"Butter",
+"Rice",
+"Bread"
+],
+"answer": "Bread",
+"d": "medium"
+},
+{
+"q": "How much does human hair grow in a year?",
+"options": [
+"7 inches",
+"12 inches",
+"9 inches",
+"36 inches"
+],
+"answer": "9 inches",
+"d": "medium"
+},
+{
+"q": "The \"Tibia\" is found in which part of the body?",
+"options": [
+"Arm",
+"Leg",
+"Foot",
+"Nose"
+],
+"answer": "Leg",
+"d": "medium"
+},
+{
+"q": "The horse of what fictional hero is called Tornado?",
+"options": [
+"Don Quixote",
+"The Lone Ranger",
+"Zorro",
+"A rodeo clown"
+],
+"answer": "Zorro",
+"d": "medium"
+},
+{
+"q": "What mineral present in some mineral waters is used as a cure for different types of depression?",
+"options": [
+"Magnesium",
+"Selenium",
+"Gold",
+"Lithium"
+],
+"answer": "Lithium",
+"d": "medium"
+},
+{
+"q": "What emotional state does the gesture of narrowed eyes convey?",
+"options": [
+"Threat, distrust",
+"Sadness, frustration",
+"Concentration, focus",
+"Delight, glee"
+],
+"answer": "Threat, distrust",
+"d": "medium"
+},
+{
+"q": "Which of the following is the Latin word for egg?",
+"options": [
+"Avis",
+"Gallina",
+"Ovis",
+"Ovum"
+],
+"answer": "Ovum",
+"d": "medium"
+},
+{
+"q": "Which of these is NOT a bone found in the human arm?",
+"options": [
+"Humerus",
+"Tibia",
+"Ulna",
+"Radius"
+],
+"answer": "Tibia",
+"d": "medium"
+},
+{
+"q": "Which part of the body does glaucoma affect?",
+"options": [
+"Brain",
+"Eyes",
+"Ears",
+"Toes"
+],
+"answer": "Eyes",
+"d": "medium"
+},
+{
+"q": "What is the standard SI unit for electric current?",
+"options": [
+"Volt",
+"Coulomb",
+"Watt",
+"Ampere"
+],
+"answer": "Ampere",
+"d": "medium"
+},
+{
+"q": "Which of these animals belongs in class Chondrichthyes?",
+"options": [
+"Killer whale",
+"Great white shark",
+"Catfish",
+"Octopus"
+],
+"answer": "Great white shark",
+"d": "medium"
+},
+{
+"q": "Which is the only B vitamin that cannot be obtained from plant products?",
+"options": [
+"B12",
+"B9",
+"B1",
+"B6"
+],
+"answer": "B12",
+"d": "medium"
+},
+{
+"q": "What is the name of the device used to measure the mass of atoms?",
+"options": [
+"Atomic scale",
+"Mass spectrometer",
+"Spectroscope",
+"Atomometer"
+],
+"answer": "Mass spectrometer",
+"d": "medium"
+},
+{
+"q": "Which of the following is a major muscle of the back?",
+"options": [
+"Trapezium",
+"Triquetrum",
+"Trapezoid",
+"Trapezius"
+],
+"answer": "Trapezius",
+"d": "medium"
+},
+{
+"q": "What causes Lyme disease?",
+"options": [
+"A parasitic worm",
+"A fungus",
+"A bacteria",
+"A virus"
+],
+"answer": "A bacteria",
+"d": "medium"
+},
+{
+"q": "Who developed the first successful polio vaccine in the 1950s?",
+"options": [
+"Louis Pasteur",
+"John F. Enders",
+"Jonas Salk",
+"Albert Sabin"
+],
+"answer": "Jonas Salk",
+"d": "medium"
+},
+{
+"q": "In which city was Albert Einstein born ?",
+"options": [
+"Zurich",
+"Ulm",
+"Munich",
+"Princeton"
+],
+"answer": "Ulm",
+"d": "medium"
+},
+{
+"q": "Which of the following is not a property of light?",
+"options": [
+"Frequency",
+"Polarization",
+"Viscosity",
+"Wavelength"
+],
+"answer": "Viscosity",
+"d": "medium"
+},
+{
+"q": "The humerus, paired radius, and ulna come together to form what joint?",
+"options": [
+"Elbow",
+"Wrist",
+"Shoulder",
+"Knee"
+],
+"answer": "Elbow",
+"d": "medium"
+},
+{
+"q": "What is the only number with no reciprocal?",
+"options": [
+"1",
+"-1",
+"0",
+"Infinity"
+],
+"answer": "0",
+"d": "medium"
+},
+{
+"q": "Which of the following is a water soluble vitamin also known as riboflavin?",
+"options": [
+"Vitamin B2",
+"Vitamin B6",
+"Vitamin A",
+"Vitamin C"
+],
+"answer": "Vitamin B2",
+"d": "medium"
+},
+{
+"q": "What is an example of a bacterial pathogen?",
+"options": [
+"Measles",
+"AIDS",
+"Cholera",
+"Ringworm"
+],
+"answer": "Cholera",
+"d": "medium"
+},
+{
+"q": "How long is one day on the planet Jupiter?",
+"options": [
+"About 18 hours",
+"Just over 10 hours",
+"Just under 10 hours",
+"Just under 10 minutes"
+],
+"answer": "Just under 10 hours",
+"d": "medium"
+},
+{
+"q": "Rain forests are home to approximately what percentage of all the living animal and plant species on the planet?",
+"options": [
+"50%",
+"65%",
+"90%",
+"30%"
+],
+"answer": "65%",
+"d": "medium"
+},
+{
+"q": "How many objects are equivalent to one mole?",
+"options": [
+"6.023 x 10^23",
+"6.022 x 10^23",
+"6.022 x 10^24",
+"6.022 x 10^2"
+],
+"answer": "6.022 x 10^23",
+"d": "medium"
+},
+{
+"q": "Depression and anxiety are considered mood disorders. Which of the following is also considered a mood disorder?",
+"options": [
+"Kleptomania",
+"Schizophrenia",
+"Narcissistic personality disorder",
+"Bipolar Disorder"
+],
+"answer": "Bipolar Disorder",
+"d": "medium"
+},
+{
+"q": "What common name is given to the medial condition, tibial stress syndrome (MTSS)?",
+"options": [
+"Housemaid's Knee",
+"Shin Splints",
+"Tennis Elbow",
+"Runner's Knee"
+],
+"answer": "Shin Splints",
+"d": "medium"
+},
+{
+"q": "What impressive physical characteristic did Charles Darwin possess, which made the Bank of England use his image for the ten pound note in 2000?",
+"options": [
+"Large beard",
+"Bright blue eyes",
+"A bald head",
+"Bushy eyebrows"
+],
+"answer": "Large beard",
+"d": "medium"
+},
+{
+"q": "Which constellation contains the center of the Milky Way?",
+"options": [
+"Capricornus",
+"Sagittarius",
+"Scorpius",
+"Ophiuchus"
+],
+"answer": "Sagittarius",
+"d": "medium"
+},
+{
+"q": "How many muscles are in the human body?",
+"options": [
+"320",
+"640",
+"450",
+"850"
+],
+"answer": "640",
+"d": "medium"
+},
+{
+"q": "The name of which beautiful flower also refers to an e-mail server/client?",
+"options": [
+"Lotus",
+"Iris",
+"Rose",
+"Daffodil"
+],
+"answer": "Lotus",
+"d": "medium"
+},
+{
+"q": "What does POS mean in instant messaging language?",
+"options": [
+"parent over shoulder",
+"parents observing screen",
+"point of sale",
+"pizza on Saturday"
+],
+"answer": "parent over shoulder",
+"d": "medium"
+},
+{
+"q": "Which scientific unit is named after an Italian nobleman?",
+"options": [
+"Pascal",
+"Volt",
+"Ohm",
+"Hertz"
+],
+"answer": "Volt",
+"d": "medium"
+},
+{
+"q": "What is the scientific term for 'taste'?",
+"options": [
+"Somatosensation",
+"Olfaction",
+"Echolocation",
+"Gustatory Perception"
+],
+"answer": "Gustatory Perception",
+"d": "medium"
+},
+{
+"q": "What did alchemists associate the planets with?",
+"options": [
+"Emotions",
+"Metals",
+"Gemstones",
+"Gods"
+],
+"answer": "Metals",
+"d": "medium"
+},
+{
+"q": "Which vehicle can also transport data?",
+"options": [
+"Bus",
+"Tram",
+"Rickshaw",
+"Train"
+],
+"answer": "Bus",
+"d": "medium"
+},
+{
+"q": "What kind of fractions are 4/4, 9/8, and 7/4?",
+"options": [
+"Equivalent fractions",
+"Badly behaved fractions",
+"Improper fractions",
+"Mixed numbers"
+],
+"answer": "Improper fractions",
+"d": "medium"
+},
+{
+"q": "What body part is involved in the medical procedure called orchiopexy?",
+"options": [
+"Earlobe",
+"Ovary",
+"Bladder",
+"Testicle"
+],
+"answer": "Testicle",
+"d": "hard"
+},
+{
+"q": "High surface tension, one of waters properties, is crucial for the survival of life on the planet, because it enables what vital process?",
+"options": [
+"Storage of nutrients",
+"Recycling of nutrients",
+"Transport of nutrients",
+"Dissolving of nutrients"
+],
+"answer": "Transport of nutrients",
+"d": "hard"
+},
+{
+"q": "What is the standard atomic weight of a Plutonium nucleus?",
+"options": [
+"94",
+"481",
+"244",
+"128"
+],
+"answer": "244",
+"d": "hard"
+},
+{
+"q": "The first examples of early Byzantine architecture, found in Ravenna and Constantinople, date from the reign of which Byzantine emperor?",
+"options": [
+"Constantine I",
+"Justin II",
+"Justinian I",
+"Heraclius"
+],
+"answer": "Justinian I",
+"d": "hard"
+},
+{
+"q": "Which of these substances and minerals is not effective in the treatment of depression?",
+"options": [
+"Sodium",
+"Omega-3 fatty acids",
+"Zinc",
+"Magnesium"
+],
+"answer": "Sodium",
+"d": "hard"
+},
+{
+"q": "What significant discovery about the nature of the constant e did French mathematician Charles Hermite make in 1873?",
+"options": [
+"e is transcendental.",
+"e is irrational.",
+"e is imaginary.",
+"e is a normal number."
+],
+"answer": "e is transcendental.",
+"d": "hard"
+},
+{
+"q": "Which one of the following is indicative of Direct Disc Labeling capabilities?",
+"options": [
+"Dual-layer DVD",
+"LightScribe",
+"Sharpie-enabled",
+"SATA 6.0Gb/s"
+],
+"answer": "LightScribe",
+"d": "hard"
+},
+{
+"q": "Which of these chemical compounds is NOT found in gastric acid?",
+"options": [
+"Potassium chloride",
+"Hydrochloric acid",
+"Sulfuric acid",
+"Sodium chloride"
+],
+"answer": "Sulfuric acid",
+"d": "hard"
+},
+{
+"q": "Unlike most animals eyes, the eyes of fish and snakes usually have a fixed lens size. How do these animals eyes focus then?",
+"options": [
+"By telescoping the lens",
+"By changing the lens curvature",
+"By squinting really hard",
+"By adjusting the pupil size"
+],
+"answer": "By telescoping the lens",
+"d": "hard"
+},
+{
+"q": "What is the name of the 1997 sci-fi horror movie, starring Sam Neil, that takes place in orbit around the planet Neptune?",
+"options": [
+"Space Jam",
+"Sunshine",
+"Event Horizon",
+"Sphere"
+],
+"answer": "Event Horizon",
+"d": "hard"
+},
+{
+"q": "Which planet did the \"Viking 1\" spacecraft send surface images of, starting in 1976?",
+"options": [
+"The Moon",
+"Mars",
+"Venus",
+"Jupiter"
+],
+"answer": "Mars",
+"d": "hard"
+},
+{
+"q": "The formation of toes in salamanders, animals that typically have no such organs, is an example for what?",
+"options": [
+"Symbiosis",
+"Mutation",
+"Adaptation",
+"Atavism"
+],
+"answer": "Atavism",
+"d": "hard"
+}
+]
+}

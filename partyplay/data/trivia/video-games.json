@@ -1,0 +1,1769 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "Video Games",
+"count": 157,
+"questions": [
+{
+"q": "Who is the main protagonist in the 'Ratchet and Clank' game series?",
+"options": [
+"Captain Qwark",
+"Clank",
+"Dr Nefarious",
+"Ratchet"
+],
+"answer": "Ratchet",
+"d": "easy"
+},
+{
+"q": "What is Marios nationality according to Nintendo video games?",
+"options": [
+"British",
+"American",
+"Mexican",
+"Italian"
+],
+"answer": "Italian",
+"d": "easy"
+},
+{
+"q": "Who controls the AT-ATs on Hoth in Star Wars: Battlefront?",
+"options": [
+"Empire",
+"The Republic",
+"Rebels",
+"The Ewoks"
+],
+"answer": "Empire",
+"d": "easy"
+},
+{
+"q": "What animal is featured in \"Bloons TD Battles\"?",
+"options": [
+"Frogs",
+"Monkeys",
+"Penguins",
+"Turtles"
+],
+"answer": "Monkeys",
+"d": "easy"
+},
+{
+"q": "What mainly favored rifle is used by the Terrorists in Counter Strike: Global Offensive?",
+"options": [
+"CZ-75 AUTO",
+"M4A4",
+"AK-74",
+"AK-47"
+],
+"answer": "AK-47",
+"d": "easy"
+},
+{
+"q": "What company created and developed the game \"Overwatch\"?",
+"options": [
+"Valve",
+"Gearbox Software",
+"Blizzard Entertainment",
+"Hi-Rez Studios"
+],
+"answer": "Blizzard Entertainment",
+"d": "easy"
+},
+{
+"q": "What does the D stand for in D-pad, found on most video game controllers?",
+"options": [
+"Design",
+"Dial-up",
+"Directional",
+"Dynamic"
+],
+"answer": "Directional",
+"d": "easy"
+},
+{
+"q": "Rocket League is a game which features..",
+"options": [
+"Helicopters",
+"Submarines",
+"Planes",
+"Cars"
+],
+"answer": "Cars",
+"d": "easy"
+},
+{
+"q": "Which puzzle game was designed by a Russian programmer, featuring Russian buildings and music?",
+"options": [
+"Jenga",
+"Dr. Mario",
+"Tetris",
+"Columns"
+],
+"answer": "Tetris",
+"d": "easy"
+},
+{
+"q": "What is the name of the main character in the 2006 third-person shooter Gears of War?",
+"options": [
+"Dominic Santiago",
+"Lt. Kim",
+"Marcus Fenix",
+"Baird"
+],
+"answer": "Marcus Fenix",
+"d": "easy"
+},
+{
+"q": "In which series of games do you collect souls to empower you and buy weaponry and armor with?",
+"options": [
+"The Legend of Zelda",
+"Souls",
+"Final Fantasy",
+"Monster Hunter"
+],
+"answer": "Souls",
+"d": "easy"
+},
+{
+"q": "What special abilities are unique to Metroids in the video game series Metroid?",
+"options": [
+"They can kill by eye contact.",
+"They can suck out your life energy.",
+"They can create lifelike illusions.",
+"They can kill by physical contact."
+],
+"answer": "They can suck out your life energy.",
+"d": "easy"
+},
+{
+"q": "In most FPS video games such as Counter-Strike, shooting which part of the body does the highest damage?",
+"options": [
+"Neck",
+"Chest",
+"Pinky toe",
+"Head"
+],
+"answer": "Head",
+"d": "easy"
+},
+{
+"q": "What video game genre were the original Warcraft games?",
+"options": [
+"RPG (Role Playing Game)",
+"RTS (Real Time Strategy)",
+"TBS (Turn Based Strategy)",
+"MMO (Massively Multiplayer Online)"
+],
+"answer": "RTS (Real Time Strategy)",
+"d": "easy"
+},
+{
+"q": "In Animal Crossing, who is the manager of the town shop?",
+"options": [
+"Timmy Nook",
+"K.K. Slider",
+"Kicks",
+"Tom Nook"
+],
+"answer": "Tom Nook",
+"d": "easy"
+},
+{
+"q": "In Super Mario Bros., who informs Mario that the princess is in another castle?",
+"options": [
+"Toad",
+"Toadsworth",
+"Bowser",
+"Luigi"
+],
+"answer": "Toad",
+"d": "easy"
+},
+{
+"q": "In the game \"Overwatch,\" what are the names of the two Australian criminals from the Junkers faction?",
+"options": [
+"Roadrat and Junkhog",
+"Junkrat and Roadhog",
+"Ana and Pharah",
+"McCree and Deadeye"
+],
+"answer": "Junkrat and Roadhog",
+"d": "easy"
+},
+{
+"q": "In Super Mario World, you start the game on which island?",
+"options": [
+"Toads Island",
+"Peachs Island",
+"Bowsers Island",
+"Yoshis Island"
+],
+"answer": "Yoshis Island",
+"d": "easy"
+},
+{
+"q": "Who is the main villain of the Crash Bandicoot series?",
+"options": [
+"Doctor N. Brio",
+"Sir Cortex-a-lot",
+"Doctor Nitrus Cortex",
+"Dr. Neo Cortex"
+],
+"answer": "Dr. Neo Cortex",
+"d": "easy"
+},
+{
+"q": "Where does the popular video game character Mario live?",
+"options": [
+"A pineapple under the sea",
+"Dinosaur Land",
+"The Mushroom Village",
+"The Mushroom Kingdom"
+],
+"answer": "The Mushroom Kingdom",
+"d": "easy"
+},
+{
+"q": "What is Pikachu's National Pok\u00e9Dex Number?",
+"options": [
+"#031",
+"#001",
+"#025",
+"#109"
+],
+"answer": "#025",
+"d": "easy"
+},
+{
+"q": "In the Mario video games, Bowser is the king of what?",
+"options": [
+"Koopas",
+"The Jungle",
+"Mushroom Kingdom",
+"Bowsers"
+],
+"answer": "Koopas",
+"d": "easy"
+},
+{
+"q": "What character from the Final Fantasy series used a weapon called the Buster Sword?",
+"options": [
+"Cloud Strife",
+"Sephiroth",
+"Seifer Almasy",
+"Squall Leonhart"
+],
+"answer": "Cloud Strife",
+"d": "easy"
+},
+{
+"q": "Who is Sonic's sidekick?",
+"options": [
+"Amy",
+"Knuckles",
+"Tails",
+"Dr. Eggman"
+],
+"answer": "Tails",
+"d": "easy"
+},
+{
+"q": "What does the Fire Flower do to Mario in the Mario video games?",
+"options": [
+"Makes him fireproof",
+"Allows him to throw fire balls.",
+"Lets him breathe fire",
+"Sets his overalls on fire"
+],
+"answer": "Allows him to throw fire balls.",
+"d": "easy"
+},
+{
+"q": "What is the name of the Italian plumber, that's also the mascot of Nintendo?",
+"options": [
+"Luigi",
+"Donkey Kong",
+"Sonic",
+"Mario"
+],
+"answer": "Mario",
+"d": "easy"
+},
+{
+"q": "Which soccer player is featured on the cover of EA Sport's FIFA 18?",
+"options": [
+"Cristiano Ronaldo",
+"Kylian Mbapp\u00e9",
+"Pel\u00e9",
+"Lionel Messi"
+],
+"answer": "Cristiano Ronaldo",
+"d": "easy"
+},
+{
+"q": "What is the name of the land where most of the Legend of Zelda games take place?",
+"options": [
+"Hylia",
+"Termina",
+"Hyrule",
+"Sacred Realm"
+],
+"answer": "Hyrule",
+"d": "easy"
+},
+{
+"q": "In vanilla Minecraft, you can make armor out of all BUT which of the following?",
+"options": [
+"Emeralds",
+"Iron",
+"Diamonds",
+"Leather"
+],
+"answer": "Emeralds",
+"d": "easy"
+},
+{
+"q": "In the video game Overwatch, which playable character is infamous for saying \"It's high noon.\"?",
+"options": [
+"Hanzo",
+"Pharah",
+"Soldier: 76",
+"McCree"
+],
+"answer": "McCree",
+"d": "easy"
+},
+{
+"q": "Which of these games was not released by Nintendo?",
+"options": [
+"Assassins Creed",
+"Warioware",
+"Star Fox",
+"Mario Galaxy"
+],
+"answer": "Assassins Creed",
+"d": "easy"
+},
+{
+"q": "In Minecraft, which two items must be combined to craft a torch?",
+"options": [
+"Stick and Flint",
+"Wood and Coal",
+"Stick and Coal",
+"Stick and Fire"
+],
+"answer": "Stick and Coal",
+"d": "easy"
+},
+{
+"q": "What effect does the Super Mushroom have on Mario in the popular series of video games?",
+"options": [
+"It makes him impervious to danger.",
+"None",
+"It makes him bigger.",
+"It makes him smaller."
+],
+"answer": "It makes him bigger.",
+"d": "easy"
+},
+{
+"q": "What is the name of a popular franchise that includes placing blocks down and surviving in an open world?",
+"options": [
+"Grand Theft Auto V",
+"Roblox",
+"Minecraft",
+"Unturned"
+],
+"answer": "Minecraft",
+"d": "easy"
+},
+{
+"q": "In the game Super Mario Kart, what does the mushroom item do to the racer?",
+"options": [
+"gives the racer a short burst of speed",
+"shrinks the racer so karts flatten them",
+"makes the racer spin out of control",
+"turns the racer invisible for a lap"
+],
+"answer": "gives the racer a short burst of speed",
+"d": "easy"
+},
+{
+"q": "What company developed the Xbox line of video game consoles?",
+"options": [
+"Microsoft",
+"Sony",
+"Toshiba",
+"IBM"
+],
+"answer": "Microsoft",
+"d": "easy"
+},
+{
+"q": "In the \"Hitman\" series, what is the name of the main character?",
+"options": [
+"Agent 48",
+"Agent 007",
+"Agent 74",
+"Agent 47"
+],
+"answer": "Agent 47",
+"d": "easy"
+},
+{
+"q": "This sound clip is from what Game Boy game that spawned an anime TV show and a collectible card game?",
+"options": [
+"Pokemon",
+"Magic the Gathering",
+"Final Fantasy",
+"Yu-Gi-Oh"
+],
+"answer": "Pokemon",
+"d": "easy"
+},
+{
+"q": "Zelda, featured in The Legend of Zelda series of video games, is what kind of character?",
+"options": [
+"The court jester",
+"A wise sage",
+"The princess",
+"The queen"
+],
+"answer": "The princess",
+"d": "easy"
+},
+{
+"q": "What is Marios occupation in the Mario series of games?",
+"options": [
+"builder",
+"ballet dancer",
+"plumber",
+"carpenter"
+],
+"answer": "plumber",
+"d": "easy"
+},
+{
+"q": "Which of the following is NOT a Nintendo game console?",
+"options": [
+"SNES",
+"Nintendo 64",
+"Dreamcast",
+"Wii"
+],
+"answer": "Dreamcast",
+"d": "easy"
+},
+{
+"q": "What is the name of the currency in the \"Animal Crossing\" series?",
+"options": [
+"Bugs",
+"Sea Shells",
+"Bells",
+"Leaves"
+],
+"answer": "Bells",
+"d": "easy"
+},
+{
+"q": "Which of these characters is the mascot of the video game company SEGA?",
+"options": [
+"Opa-Opa",
+"Sonic the Hedgehog",
+"Alex Kidd",
+"Mario"
+],
+"answer": "Sonic the Hedgehog",
+"d": "easy"
+},
+{
+"q": "Which of these is a type of monster found in Minecraft?",
+"options": [
+"Werewolf",
+"Minotaur",
+"Vampire",
+"Skeleton"
+],
+"answer": "Skeleton",
+"d": "easy"
+},
+{
+"q": "Link, one of the main characters in the Zelda series of games, is a member of what race?",
+"options": [
+"Goron",
+"Hylians",
+"Zora",
+"Kokiri"
+],
+"answer": "Hylians",
+"d": "easy"
+},
+{
+"q": "Which franchise does the creature \"Slowpoke\" originate from?",
+"options": [
+"Pokemon",
+"Dragon Ball",
+"Yugioh",
+"Sonic The Hedgehog"
+],
+"answer": "Pokemon",
+"d": "easy"
+},
+{
+"q": "In the game series \"The Legend of Zelda\", what was the first 3D game?",
+"options": [
+"The Wind Waker",
+"A Link to the Past",
+"Ocarina of Time",
+"Majora's Mask"
+],
+"answer": "Ocarina of Time",
+"d": "easy"
+},
+{
+"q": "Which company developed the free battle royale game Fortnite?",
+"options": [
+"Square Enix",
+"Epic Games",
+"Ubisoft",
+"Valve"
+],
+"answer": "Epic Games",
+"d": "easy"
+},
+{
+"q": "What's the name of the main protagonist in the \"Legend of Zelda\" franchise?",
+"options": [
+"Pit",
+"Mario",
+"Zelda",
+"Link"
+],
+"answer": "Link",
+"d": "easy"
+},
+{
+"q": "In the game \"Fire Emblem: Shadow Dragon\", what is the central protagonist's name?",
+"options": [
+"Eliwood",
+"Marth",
+"Robin",
+"Roy"
+],
+"answer": "Marth",
+"d": "medium"
+},
+{
+"q": "Which of the following is not a real Pok\u00e9mon?",
+"options": [
+"Dragalge",
+"Araquanid",
+"Mandibuzz",
+"Luminid"
+],
+"answer": "Luminid",
+"d": "medium"
+},
+{
+"q": "Which of the following characters is NOT a female marriage candidate in the game Stardew Valley?",
+"options": [
+"Haley",
+"Caroline",
+"Leah",
+"Penny"
+],
+"answer": "Caroline",
+"d": "medium"
+},
+{
+"q": "In Portal 2, which solar system body did Wheatley end up orbiting?",
+"options": [
+"Mars",
+"The moon",
+"Jupiter",
+"Earth"
+],
+"answer": "The moon",
+"d": "medium"
+},
+{
+"q": "In the video game DOTA 2, which of these is NOT a hero?",
+"options": [
+"Dark Seer",
+"Keeper of the Light",
+"Dragon Champion",
+"Mirana"
+],
+"answer": "Dragon Champion",
+"d": "medium"
+},
+{
+"q": "Which genre is the Touhou Project associated with?",
+"options": [
+"Shoot 'em up (bullet-hell) & Fighting",
+"Turn-Based Strategy",
+"MMORPG",
+"Building"
+],
+"answer": "Shoot 'em up (bullet-hell) & Fighting",
+"d": "medium"
+},
+{
+"q": "Which souls game was not directed by Hidetaka Miyazaki?",
+"options": [
+"Dark Souls 2",
+"Bloodborne",
+"Dark Souls",
+"Dark Souls 3"
+],
+"answer": "Dark Souls 2",
+"d": "medium"
+},
+{
+"q": "What video game sparked controversy because of its hidden \"Hot Coffee\" minigame?",
+"options": [
+"Grand Theft Auto: San Andreas",
+"Cooking Mama",
+"Hitman: Blood Money",
+"Grand Theft Auto: Vice City"
+],
+"answer": "Grand Theft Auto: San Andreas",
+"d": "medium"
+},
+{
+"q": "Which one of the Legend of Zelda games does not feature the same Link as the others?",
+"options": [
+"Links Awakening",
+"Wind Waker",
+"Ocarina of Time",
+"Majoras Mask"
+],
+"answer": "Wind Waker",
+"d": "medium"
+},
+{
+"q": "In the second-generation Pok\u00e9mon games, which Pok\u00e9mon can you start with?",
+"options": [
+"Bulbasaur, Charmander, and Squirtle",
+"Grassy, Firey, and Watery",
+"Treecko,Torchic, and Mudkip",
+"Chikorita, Cyndaquil, and Totodile"
+],
+"answer": "Chikorita, Cyndaquil, and Totodile",
+"d": "medium"
+},
+{
+"q": "Who is the leader of the Brotherhood of Nod in the Command and Conquer series?",
+"options": [
+"Kane",
+"Yuri",
+"CABAL",
+"Joseph Stalin"
+],
+"answer": "Kane",
+"d": "medium"
+},
+{
+"q": "Who made Garry's Mod?",
+"options": [
+"Garry Newman",
+"Gabe Newell",
+"Yahn Bernier",
+"Randy Newman"
+],
+"answer": "Garry Newman",
+"d": "medium"
+},
+{
+"q": "In what year was \"Metal Gear Solid\" released in North America?",
+"options": [
+"1987",
+"2001",
+"1998",
+"2004"
+],
+"answer": "1998",
+"d": "medium"
+},
+{
+"q": "How many Star Spirits do you rescue in the Nintendo 64 video game \"Paper Mario\"?",
+"options": [
+"8",
+"6",
+"7",
+"700"
+],
+"answer": "7",
+"d": "medium"
+},
+{
+"q": "What was Frank West's job in \"Dead Rising\"?",
+"options": [
+"Chef",
+"Taxi Driver",
+"Photojournalist",
+"Janitor"
+],
+"answer": "Photojournalist",
+"d": "medium"
+},
+{
+"q": "Of the following space shooter games, which came out first?",
+"options": [
+"Space Invaders",
+"Galaxian",
+"Sinistar",
+"Galaga"
+],
+"answer": "Space Invaders",
+"d": "medium"
+},
+{
+"q": "When was the first Call of Duty title released?",
+"options": [
+"October 29, 2005",
+"July 18, 2004",
+"October 29, 2003",
+"December 1, 2003"
+],
+"answer": "October 29, 2003",
+"d": "medium"
+},
+{
+"q": "Who is the main villain in Bendy and the ink machine?",
+"options": [
+"Joey Drew",
+"Boris",
+"Alice",
+"Bendy"
+],
+"answer": "Bendy",
+"d": "medium"
+},
+{
+"q": "How many controllers could a Nintendo GameCube have plugged in at one time?",
+"options": [
+"4",
+"6",
+"2",
+"64"
+],
+"answer": "4",
+"d": "medium"
+},
+{
+"q": "In the \"Metal Gear Solid\" series, what's the name of Solid Snake's brother?",
+"options": [
+"Plasma Snake",
+"Liquid Snake",
+"Vapor Snake",
+"Solid Steve"
+],
+"answer": "Liquid Snake",
+"d": "medium"
+},
+{
+"q": "Who is the creator of the Super Smash Bros. Series?",
+"options": [
+"Hideo Kojima",
+"Masahiro Sakurai",
+"Reggie Fils-Aim\u00e9",
+"Bill Trinen"
+],
+"answer": "Masahiro Sakurai",
+"d": "medium"
+},
+{
+"q": "What is the name of the main protagonist in \"Xenoblade Chronicles\"?",
+"options": [
+"Reyn",
+"Fiora",
+"Shulk",
+"Dunban"
+],
+"answer": "Shulk",
+"d": "medium"
+},
+{
+"q": "Which of these is NOT a player class in Team Fortress 2?",
+"options": [
+"Spy",
+"Healer",
+"Pyro",
+"Demoman"
+],
+"answer": "Healer",
+"d": "medium"
+},
+{
+"q": "Who are the original creators of Ratchet & Clank?",
+"options": [
+"Insomniac Games",
+"Rare",
+"Naughty Dog",
+"PixelTail Games"
+],
+"answer": "Insomniac Games",
+"d": "medium"
+},
+{
+"q": "Which Game Boy from the Game Boy series of portable video game consoles was released first?",
+"options": [
+"Game Boy Color",
+"Game Boy Advance SP",
+"Game Boy Micro",
+"Game Boy Advance"
+],
+"answer": "Game Boy Color",
+"d": "medium"
+},
+{
+"q": "What type of Pok\u00e9mon is Charizard?",
+"options": [
+"Fire",
+"Fire/Dragon",
+"Fire/Flying",
+"Dragon"
+],
+"answer": "Fire/Flying",
+"d": "medium"
+},
+{
+"q": "Which of the following is NOT one of the main characters in Grand Theft Auto V\u2019s story mode?",
+"options": [
+"Trevor Phillips",
+"Tommy Vercetti",
+"Franklin Clinton",
+"Michael de Santa"
+],
+"answer": "Tommy Vercetti",
+"d": "medium"
+},
+{
+"q": "When was Pokemon GO released in North America?",
+"options": [
+"May 24th, 2016",
+"June 5th, 2016",
+"July 6th, 2015",
+"July 6th, 2016"
+],
+"answer": "July 6th, 2016",
+"d": "medium"
+},
+{
+"q": "What is the main theme song of \"Sonic Adventure 2\"?",
+"options": [
+"His World",
+"Live and Learn",
+"Escape From the City",
+"Open Your Heart"
+],
+"answer": "Live and Learn",
+"d": "medium"
+},
+{
+"q": "What is Links fathers name according to the Zelda series of games?",
+"options": [
+"Sam",
+"It has never been revealed.",
+"Lance",
+"Gerald"
+],
+"answer": "It has never been revealed.",
+"d": "medium"
+},
+{
+"q": "What character from Super Smash Bros. Brawl was not in Super Smash Bros. Melee?",
+"options": [
+"Ike",
+"Falco",
+"Link",
+"Pikachu"
+],
+"answer": "Ike",
+"d": "medium"
+},
+{
+"q": "On the Nintendo 64 version of Mario Kart, Wario replaced which of the following playable characters from the Super NES version?",
+"options": [
+"Koopa Troopa",
+"Waluigi",
+"Toad",
+"Bowser"
+],
+"answer": "Koopa Troopa",
+"d": "medium"
+},
+{
+"q": "Which team won the first Overwatch League championship?",
+"options": [
+"Philadelphia Fusion",
+"London Spitfire",
+"Sydney Drop Bears",
+"New York Excelsior"
+],
+"answer": "London Spitfire",
+"d": "medium"
+},
+{
+"q": "When was Steam first released?",
+"options": [
+"2007",
+"1998",
+"2003",
+"2004"
+],
+"answer": "2003",
+"d": "medium"
+},
+{
+"q": "How many Wii consoles were sold worldwide?",
+"options": [
+"101,360,000",
+"7",
+"89,500,000",
+"101,630,000"
+],
+"answer": "101,630,000",
+"d": "medium"
+},
+{
+"q": "Who are the two protagonists of the game Yakuza 0?",
+"options": [
+"Kazuma Kiryu and Goro Majima",
+"Goro Majima and Taiga Saejima",
+"Kazuma Kiryu and Akira Nishikiyama",
+"Kazuma Kiryu and Nugget the chicken"
+],
+"answer": "Kazuma Kiryu and Goro Majima",
+"d": "medium"
+},
+{
+"q": "What happened to Half-Life 2 prior to its release, which resulted in Valve starting over the development of the game?",
+"options": [
+"They weren't satisfied with the result",
+"The story was not good enough",
+"The source code got leaked",
+"Way too many bugs to be fixed"
+],
+"answer": "The source code got leaked",
+"d": "medium"
+},
+{
+"q": "In the Yakuza series who is the Dragon of Dojima?",
+"options": [
+"Goro Majima",
+"Haruka Sawamura",
+"Ryuji Goda",
+"Kazuma Kiryu"
+],
+"answer": "Kazuma Kiryu",
+"d": "medium"
+},
+{
+"q": "What is the name of the creature that the main character befriends in \"The Last Guardian\"?",
+"options": [
+"Wolf",
+"Trico",
+"Andazi",
+"Nico"
+],
+"answer": "Trico",
+"d": "medium"
+},
+{
+"q": "In the video game, Half-life, what event started the Half-life universe as we know today?",
+"options": [
+"The Xen attack",
+"The Black Mesa meltdown",
+"The Resonance Cascade",
+"The Combine invasion"
+],
+"answer": "The Resonance Cascade",
+"d": "medium"
+},
+{
+"q": "What was the code name for the \"Nintendo Gamecube\"?",
+"options": [
+"Dolphin",
+"Nitro",
+"Revolution",
+"Atlantis"
+],
+"answer": "Dolphin",
+"d": "medium"
+},
+{
+"q": "What programming language was used to create the game \"Minecraft\"?",
+"options": [
+"Python",
+"C++",
+"Blockscript",
+"Java"
+],
+"answer": "Java",
+"d": "medium"
+},
+{
+"q": "What character is NOT apart of the Grand Theft Auto series?",
+"options": [
+"Michael Cardenas",
+"Tommy Vercetti",
+"Packie McReary",
+"Lester Crest"
+],
+"answer": "Michael Cardenas",
+"d": "medium"
+},
+{
+"q": "Who created the 2011 Video Game \"Minecraft\"?",
+"options": [
+"Daniel Rosenfeld",
+"Carl Manneh",
+"Markus Persson",
+"Jens Bergensten"
+],
+"answer": "Markus Persson",
+"d": "medium"
+},
+{
+"q": "Which Mario spin-off game did Waluigi make his debut?",
+"options": [
+"Mario Tennis",
+"Mario Party 3",
+"Mario Golf: Toadstool Tour",
+"Mario Kart: Double Dash!!"
+],
+"answer": "Mario Tennis",
+"d": "medium"
+},
+{
+"q": "Which one of these games wasn't released in 2016?",
+"options": [
+"Tom Clancy's The Division",
+"Metal Gear Solid V",
+"Killing Floor 2",
+"Hitman"
+],
+"answer": "Metal Gear Solid V",
+"d": "medium"
+},
+{
+"q": "What is the code name of Morgana the cat in Persona 5?",
+"options": [
+"Nightstalker",
+"Panther",
+"Zorro",
+"Mona"
+],
+"answer": "Mona",
+"d": "medium"
+},
+{
+"q": "What is not a default game mode in Counter-Strike (2000)?",
+"options": [
+"Hostage Rescue",
+"Bomb Defusal",
+"Arms Race",
+"Assassination"
+],
+"answer": "Arms Race",
+"d": "medium"
+},
+{
+"q": "This sound clip is a theme in which of the following Legend of Zelda games?",
+"options": [
+"The Legend of Zelda: Ganon's Karaoke Night",
+"The Legend of Zelda: Majora's Mask",
+"The Legend of Zelda: Ocarina of Time",
+"The Legend of Zelda: A Link to the Past"
+],
+"answer": "The Legend of Zelda: Ocarina of Time",
+"d": "medium"
+},
+{
+"q": "What was the first video game in which Mario appeared?",
+"options": [
+"Mario",
+"The Mario Bros.",
+"Donkey Kong",
+"Super Mario"
+],
+"answer": "Donkey Kong",
+"d": "medium"
+},
+{
+"q": "From where does the Nintendo video game character Mario derive his name?",
+"options": [
+"Miyamoto's favourite pizza topping",
+"The landlord of the American headquarters",
+"A character from Italian folklore",
+"Shigeru Miyamoto's father-in-law"
+],
+"answer": "The landlord of the American headquarters",
+"d": "medium"
+},
+{
+"q": "What is the name of the City in Saints Row The Third?",
+"options": [
+"Steelport",
+"Carcer",
+"Liberty",
+"Stilwater"
+],
+"answer": "Steelport",
+"d": "medium"
+},
+{
+"q": "What ingredients are required to make a cake in Minecraft?",
+"options": [
+"Milk, Sugar Cane, Egg, and Wheat",
+"Milk, Bread, Egg, and Wheat",
+"Milk, Sugar, Egg, and Wheat",
+"Milk, Sugar, and Wheat"
+],
+"answer": "Milk, Sugar, Egg, and Wheat",
+"d": "medium"
+},
+{
+"q": "In vanilla Minecraft, which of the following cannot be made into a block?",
+"options": [
+"Coal",
+"Wheat",
+"String",
+"Charcoal"
+],
+"answer": "Charcoal",
+"d": "medium"
+},
+{
+"q": "What major event caused the events of Half-Life 1?",
+"options": [
+"The Resonance Cascade",
+"The Blue Shift",
+"The Cascade Malfunction",
+"The Seven Hour War"
+],
+"answer": "The Resonance Cascade",
+"d": "medium"
+},
+{
+"q": "In Minecraft, which of these ingredients is needed to brew a Potion of Water Breathing?",
+"options": [
+"Pumpkin",
+"Pufferfish",
+"Fishing rod",
+"Ink sac"
+],
+"answer": "Pufferfish",
+"d": "medium"
+},
+{
+"q": "Which of these characters in \"Undertale\" can the player NOT go on a date with?",
+"options": [
+"Undyne",
+"Papyrus",
+"Alphys",
+"Toriel"
+],
+"answer": "Toriel",
+"d": "medium"
+},
+{
+"q": "In Grand Theft Auto: V, what wanted level does the player receive if they enter Zancudo Army Base north of Los Santos?",
+"options": [
+"3",
+"5",
+"6",
+"4"
+],
+"answer": "4",
+"d": "medium"
+},
+{
+"q": "What is the protagonist's title given by the demons in DOOM (2016)?",
+"options": [
+"Doom Slayer",
+"Doom Guy",
+"Doom Marine",
+"Doom Reaper"
+],
+"answer": "Doom Slayer",
+"d": "medium"
+},
+{
+"q": "In the video game \"Pizza Tower\", what is the protagonist's name?",
+"options": [
+"Pastachio",
+"Spinachio",
+"Pepper",
+"Peppino"
+],
+"answer": "Peppino",
+"d": "medium"
+},
+{
+"q": "The acronym DOTA stands for",
+"options": [
+"Defense of the Ancients",
+"Defense of the Antiques",
+"Defense of the Animated",
+"Defense of the Artifacts"
+],
+"answer": "Defense of the Ancients",
+"d": "medium"
+},
+{
+"q": "In The Elder Scrolls V: Skyrim, who is the jester in the dark brotherhood?",
+"options": [
+"Cicero",
+"Lucien Lachance",
+"Astrid",
+"Sheogorath"
+],
+"answer": "Cicero",
+"d": "medium"
+},
+{
+"q": "Which ones of these Mario Kart games was made for the Gameboy Advance?",
+"options": [
+"Mario Kart DS",
+"Mario Kart: Game & Watch",
+"Mario Kart: Super Circuit",
+"Mario Kart 7"
+],
+"answer": "Mario Kart: Super Circuit",
+"d": "medium"
+},
+{
+"q": "What's the Team Fortress 2 Scout's city of origin?",
+"options": [
+"Boston",
+"New York",
+"Sydney",
+"Detroit"
+],
+"answer": "Boston",
+"d": "medium"
+},
+{
+"q": "Who controls the Flood in the Halo series?",
+"options": [
+"Master Chief",
+"Gravemind",
+"343 Guilty Spark",
+"The Prophet of Truth"
+],
+"answer": "Gravemind",
+"d": "medium"
+},
+{
+"q": "In Team Fortress 2, which class wields a shotgun?",
+"options": [
+"Soldier",
+"Engineer",
+"Heavy",
+"Everyone Listed"
+],
+"answer": "Everyone Listed",
+"d": "medium"
+},
+{
+"q": "In the video game \"Team Fortress 2\", which class is able to double jump?",
+"options": [
+"Scout",
+"Pyro",
+"Engineer",
+"Spy"
+],
+"answer": "Scout",
+"d": "medium"
+},
+{
+"q": "Which of the following is not a realm type in World of Warcraft?",
+"options": [
+"Normal",
+"PvP",
+"RP",
+"RP-PvP"
+],
+"answer": "RP",
+"d": "medium"
+},
+{
+"q": "What type of Pokemon is Tyranitar?",
+"options": [
+"Rock dark",
+"Rock and roll",
+"Dark dragon",
+"Rock ground"
+],
+"answer": "Rock dark",
+"d": "medium"
+},
+{
+"q": "Which of these was NOT a launch title for the Nintendo 64?",
+"options": [
+"Saiky\u014d Habu Sh\u014dgi",
+"Mario Kart 64",
+"Pilotwings 64",
+"Super Mario 64"
+],
+"answer": "Mario Kart 64",
+"d": "medium"
+},
+{
+"q": "In the first Left 4 Dead, you can play as either of these four characters.",
+"options": [
+"Coach, Ellis, Nick, and Rochelle",
+"Francis, Bill, Zoey, and Louis",
+"Harry, Ron, Hermione and Dumbledore",
+"Bender, Andrew, Allison, and Brian"
+],
+"answer": "Francis, Bill, Zoey, and Louis",
+"d": "medium"
+},
+{
+"q": "Which of these pets can you own in Runescape?",
+"options": [
+"Kitten",
+"Dog",
+"Bird",
+"Hamster"
+],
+"answer": "Kitten",
+"d": "medium"
+},
+{
+"q": "Who taught Sasuke the Chidori technique in the Naruto series?",
+"options": [
+"Kakashi",
+"Orochimaru",
+"Itachi",
+"Naruto"
+],
+"answer": "Kakashi",
+"d": "medium"
+},
+{
+"q": "What is the highest level your character can go up to in the Runescape game for non-members?",
+"options": [
+"99",
+"113",
+"It never ends",
+"126"
+],
+"answer": "126",
+"d": "medium"
+},
+{
+"q": "At what location does the PS2 role-playing game Final Fantasy X start?",
+"options": [
+"Zanarkand",
+"Disneyland",
+"Besaid",
+"Luca"
+],
+"answer": "Zanarkand",
+"d": "medium"
+},
+{
+"q": "Who in this list is one of the co-founders of Valve?",
+"options": [
+"Robin Walker",
+"Marc Laidlaw",
+"Ray Ueno",
+"Gabe Newell"
+],
+"answer": "Gabe Newell",
+"d": "medium"
+},
+{
+"q": "Who is the main antagonist of Ori and the Blind Forest?",
+"options": [
+"Gumo",
+"Nibel",
+"Kuro",
+"King Rammer XII"
+],
+"answer": "Kuro",
+"d": "medium"
+},
+{
+"q": "In Dota 2, Wraith King was previously known as...",
+"options": [
+"Skeletor",
+"Skull King",
+"Skeleton King",
+"Bone King"
+],
+"answer": "Skeleton King",
+"d": "medium"
+},
+{
+"q": "In the Metroid video game, what is Samus profession?",
+"options": [
+"Soldier",
+"Professional Collector",
+"Pirate",
+"Bounty Hunter"
+],
+"answer": "Bounty Hunter",
+"d": "medium"
+},
+{
+"q": "In the game \"Dead Rising\", what is the profession of the main character Frank West?",
+"options": [
+"Stunt biker",
+"Mechanic",
+"Bartender",
+"Photojournalist"
+],
+"answer": "Photojournalist",
+"d": "medium"
+},
+{
+"q": "Why was the character Trevor Philips discharged from the Air Force?",
+"options": [
+"Mental Health Issues",
+"Bit His Commanding Officer",
+"Injuries",
+"Danger to Others"
+],
+"answer": "Mental Health Issues",
+"d": "medium"
+},
+{
+"q": "In the \"Halo\" franchise, in what country is New Mombasa?",
+"options": [
+"Uganda",
+"India",
+"Kenya",
+"Tanzania"
+],
+"answer": "Kenya",
+"d": "medium"
+},
+{
+"q": "The name of the Metroid series comes from what?",
+"options": [
+"The final boss's name",
+"A spaceship's name",
+"An enemy in the game",
+"The main character's name"
+],
+"answer": "An enemy in the game",
+"d": "medium"
+},
+{
+"q": "Who is the main character in the video game \"Just Cause 3\"?",
+"options": [
+"Rico Rodriguez",
+"Tom Sheldon",
+"Mario Frigo",
+"Nathan Drake"
+],
+"answer": "Rico Rodriguez",
+"d": "medium"
+},
+{
+"q": "In Portal 2, how did CEO of Aperture Science, Cave Johnson, presumably die?",
+"options": [
+"Mercury Poisoning",
+"Moon Rock Poisoning",
+"Asbestos Poisoning",
+"Slipped in the shower"
+],
+"answer": "Moon Rock Poisoning",
+"d": "medium"
+},
+{
+"q": "In the game Dark Souls, what is the name of the region you're in for the majority of the game?",
+"options": [
+"Lordran",
+"Oolacile",
+"Drangleic",
+"Catarina"
+],
+"answer": "Lordran",
+"d": "medium"
+},
+{
+"q": "Which of the following games was not a launch title for the Nintendo Gamecube?",
+"options": [
+"Star Wars Rogue Squadron II",
+"Disney\u2019s Tarzan Untamed",
+"Luigi\u2019s Mansion",
+"Super Mario Sunshine"
+],
+"answer": "Super Mario Sunshine",
+"d": "medium"
+},
+{
+"q": "Which of these covert groups employs Sam Fisher to work as a Splinter Cell?",
+"options": [
+"Black Arrow",
+"The Engineers",
+"Voron",
+"Third Echelon"
+],
+"answer": "Third Echelon",
+"d": "medium"
+},
+{
+"q": "Who stars in Brutal Legend?",
+"options": [
+"Ozzy Osbourne",
+"Jack Black",
+"Lemmy",
+"Kanye West"
+],
+"answer": "Jack Black",
+"d": "medium"
+},
+{
+"q": "Which of these is not a race featured in the Legend of Zelda video games?",
+"options": [
+"Hobbit",
+"Rito",
+"Hylian",
+"Zora"
+],
+"answer": "Hobbit",
+"d": "medium"
+},
+{
+"q": "In what year was the game \"Fallout\" released?",
+"options": [
+"1996",
+"1997",
+"1999",
+"1998"
+],
+"answer": "1997",
+"d": "medium"
+},
+{
+"q": "All of the following are items used in the game Super Mario Kart, for the Super NES, except which one of the following?",
+"options": [
+"banana peel",
+"blue shell",
+"ghost",
+"coins"
+],
+"answer": "blue shell",
+"d": "medium"
+},
+{
+"q": "Which is not an actual die?",
+"options": [
+"d100",
+"d10",
+"d4",
+"d18"
+],
+"answer": "d18",
+"d": "medium"
+},
+{
+"q": "Which of these is NOT the name of a team leader in Pok\u00e9mon GO?",
+"options": [
+"Spark",
+"Blanche",
+"Leif",
+"Candela"
+],
+"answer": "Leif",
+"d": "medium"
+},
+{
+"q": "Which of these is the best type of RuneScape weapon for non members?",
+"options": [
+"Barrows",
+"Rune",
+"Granite",
+"Dragon"
+],
+"answer": "Dragon",
+"d": "medium"
+},
+{
+"q": "What is the name of the protagonist of Life Is Strange?",
+"options": [
+"Frank Bowers",
+"Kate Marsh",
+"Max Caulfield",
+"Rachel Amber"
+],
+"answer": "Max Caulfield",
+"d": "medium"
+},
+{
+"q": "Where was the Sniper character in Team Fortress 2 born?",
+"options": [
+"Antarctica",
+"New Zealand",
+"Australia",
+"South Africa"
+],
+"answer": "New Zealand",
+"d": "hard"
+},
+{
+"q": "In Pokemon Diamond and Pearl, in what way do you evolve a Porygon2 into a Porygon-Z?",
+"options": [
+"Give it a dubious disc and trade it.",
+"Give it an upgrade and trade it.",
+"Give it a tech disc and trade it.",
+"Level it up."
+],
+"answer": "Give it a dubious disc and trade it.",
+"d": "hard"
+},
+{
+"q": "In \"The Elder Scrolls 3: Morrowind\", which of the following factions is not joinable?",
+"options": [
+"Mages Guild",
+"The Dark Brotherhood",
+"Thieves Guild",
+"Fighters Guild"
+],
+"answer": "The Dark Brotherhood",
+"d": "hard"
+},
+{
+"q": "In Runescape, what creature lives in the basement of Draynor Manor?",
+"options": [
+"a vampire",
+"a grumpy accountant",
+"a ghost",
+"a skeleton"
+],
+"answer": "a vampire",
+"d": "hard"
+},
+{
+"q": "Which of these is NOT DLC for the video game called \"Tabletop Simulator\"?",
+"options": [
+"Mr. Game!",
+"Three Kingdoms Redux",
+"The Binding of Isaac: Four Souls",
+"Superfight"
+],
+"answer": "The Binding of Isaac: Four Souls",
+"d": "hard"
+},
+{
+"q": "What is the 4th boss in the 1997 video game \"Crash Bandicoot 2: Cortex Strikes Back\"?",
+"options": [
+"Ripper Roo",
+"Tiny Tiger",
+"Dr. Neo Cortex",
+"Dr. N. Gin"
+],
+"answer": "Dr. N. Gin",
+"d": "hard"
+},
+{
+"q": "In \"Undertale\", how many main endings are there?",
+"options": [
+"4",
+"100",
+"2",
+"3"
+],
+"answer": "3",
+"d": "hard"
+},
+{
+"q": "What do you transform into in stage 4 of Altered Beast?",
+"options": [
+"Werewolf",
+"Weretiger",
+"Werebear",
+"Weredragon"
+],
+"answer": "Weretiger",
+"d": "hard"
+},
+{
+"q": "Which game in the \"Monster Hunter\" series introduced the monster \"Gobul\"?",
+"options": [
+"Monster Hunter World",
+"Monster Hunter Generations",
+"Monster Hunter Freedom Unite",
+"Monster Hunter Tri"
+],
+"answer": "Monster Hunter Tri",
+"d": "hard"
+},
+{
+"q": "In what year was Pok\u00e9mon Diamond & Pearl released in Japan?",
+"options": [
+"2007",
+"2006",
+"2005",
+"1996"
+],
+"answer": "2006",
+"d": "hard"
+},
+{
+"q": "Who must be defeated in the first quest of the second chapter of the computer game Diablo II?",
+"options": [
+"Radament",
+"Summoner",
+"Duriel",
+"Tal Rasha"
+],
+"answer": "Radament",
+"d": "hard"
+},
+{
+"q": "In \"Phoenix Wright: Ace Attorney\" which character is the District Chief of Police?",
+"options": [
+"Miles Edgeworth",
+"Damon Gant",
+"Lana Skye",
+"Mike Meekins"
+],
+"answer": "Damon Gant",
+"d": "hard"
+}
+]
+}

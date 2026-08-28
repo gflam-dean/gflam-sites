@@ -339,6 +339,15 @@ def local_checks(which):
             ok(f, r.returncode == 0 and 'All good' in r.stdout,
                (r.stdout.strip().splitlines() or [''])[-1])
 
+    # The packs live in the REPO's partyplay tree, not the separate working copy
+    # PARTYPLAY_LOCAL points at, so this must not use that constant.
+    tp = os.path.join(ROOT, 'partyplay', 'lib', 'pp-trivia-pack.test.js')
+    if os.path.isfile(tp):
+        r = subprocess.run([JSC, tp], capture_output=True, text=True)
+        out = (r.stdout + r.stderr).strip().splitlines()
+        line = out[-1] if out else ''
+        ok('pp-trivia-pack.test.js', 'ALL' in line and 'PASSED' in line, line)
+
     gt = os.path.join(ROOT, 'venueplay-backend', 'worker', 'one-game.test.js')
     if os.path.isfile(gt):
         r = subprocess.run([JSC, gt], capture_output=True, text=True)

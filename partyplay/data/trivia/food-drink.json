@@ -1,0 +1,1516 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "Food & Drink",
+"count": 134,
+"questions": [
+{
+"q": "What is the base grain of traditional porridge?",
+"options": [
+"Rice",
+"Oats",
+"Barley",
+"Wheat"
+],
+"answer": "Oats",
+"d": "easy"
+},
+{
+"q": "Which fruit is dried to make a raisin?",
+"options": [
+"Grape",
+"Apricot",
+"Fig",
+"Plum"
+],
+"answer": "Grape",
+"d": "easy"
+},
+{
+"q": "Which soft drink mixer is combined with whisky to make a common highball?",
+"options": [
+"Coconut water",
+"Milk",
+"Tomato juice",
+"Cola"
+],
+"answer": "Cola",
+"d": "easy"
+},
+{
+"q": "Which meat is used in traditional bacon?",
+"options": [
+"Lamb",
+"Chicken",
+"Pork",
+"Beef"
+],
+"answer": "Pork",
+"d": "easy"
+},
+{
+"q": "Which vegetable is long, green and often served steamed with a knob of butter?",
+"options": [
+"Onion",
+"Cabbage",
+"Cauliflower",
+"Green beans"
+],
+"answer": "Green beans",
+"d": "easy"
+},
+{
+"q": "Which breakfast food is made by toasting sliced bread?",
+"options": [
+"Cereal",
+"Porridge",
+"Toast",
+"Pancake"
+],
+"answer": "Toast",
+"d": "easy"
+},
+{
+"q": "Which fast food item is a beef patty in a bun with salad and sauce?",
+"options": [
+"Hamburger",
+"Burrito",
+"Taco",
+"Hot dog"
+],
+"answer": "Hamburger",
+"d": "easy"
+},
+{
+"q": "Which drink is made by fermenting honey and water?",
+"options": [
+"Mead",
+"Cider",
+"Wine",
+"Beer"
+],
+"answer": "Mead",
+"d": "easy"
+},
+{
+"q": "Which iconic Australian spread is made from leftover brewers' yeast extract?",
+"options": [
+"Marmite",
+"Promite",
+"Vegemite",
+"Nutella"
+],
+"answer": "Vegemite",
+"d": "easy"
+},
+{
+"q": "Which fruit is small, purple and grows in bunches to make wine and raisins?",
+"options": [
+"Plum",
+"Blueberry",
+"Cherry",
+"Grape"
+],
+"answer": "Grape",
+"d": "easy"
+},
+{
+"q": "What green herb is the main flavour of a traditional mint sauce?",
+"options": [
+"Rosemary",
+"Mint",
+"Thyme",
+"Basil"
+],
+"answer": "Mint",
+"d": "easy"
+},
+{
+"q": "Which fizzy cocktail mixer is flavoured with quinine and paired with gin?",
+"options": [
+"Lemonade",
+"Tonic water",
+"Ginger beer",
+"Soda water"
+],
+"answer": "Tonic water",
+"d": "easy"
+},
+{
+"q": "What is the primary ingredient in traditional bread?",
+"options": [
+"Oats",
+"Corn",
+"Flour",
+"Rice"
+],
+"answer": "Flour",
+"d": "easy"
+},
+{
+"q": "Which nut is used to make marzipan?",
+"options": [
+"Almond",
+"Walnut",
+"Cashew",
+"Peanut"
+],
+"answer": "Almond",
+"d": "easy"
+},
+{
+"q": "Which drink is fermented from apples and is alcoholic?",
+"options": [
+"Ginger ale",
+"Lemonade",
+"Soda",
+"Cider"
+],
+"answer": "Cider",
+"d": "easy"
+},
+{
+"q": "Which vegetable is traditionally roasted whole alongside meat in a Sunday roast and turns golden?",
+"options": [
+"Potato",
+"Lettuce",
+"Radish",
+"Cucumber"
+],
+"answer": "Potato",
+"d": "easy"
+},
+{
+"q": "What is the main ingredient in a traditional Aussie pavlova base?",
+"options": [
+"Butter",
+"Egg whites",
+"Chocolate",
+"Flour"
+],
+"answer": "Egg whites",
+"d": "easy"
+},
+{
+"q": "Which vegetable is orange and popular with rabbits in cartoons?",
+"options": [
+"Turnip",
+"Radish",
+"Parsnip",
+"Carrot"
+],
+"answer": "Carrot",
+"d": "easy"
+},
+{
+"q": "Which red sauce is commonly served with hot chips in Australia?",
+"options": [
+"Tomato sauce",
+"Fish sauce",
+"Oyster sauce",
+"Soy sauce"
+],
+"answer": "Tomato sauce",
+"d": "easy"
+},
+{
+"q": "What is the traditional filling of a jam doughnut?",
+"options": [
+"Cream",
+"Chocolate",
+"Jam",
+"Custard"
+],
+"answer": "Jam",
+"d": "easy"
+},
+{
+"q": "Which alcoholic drink is traditionally sparkling and associated with celebrations from France?",
+"options": [
+"Brandy",
+"Sherry",
+"Port",
+"Champagne"
+],
+"answer": "Champagne",
+"d": "easy"
+},
+{
+"q": "Which food is the main ingredient in traditional guacamole's chip companion, corn tortilla chips?",
+"options": [
+"Rice",
+"Corn",
+"Wheat",
+"Rye"
+],
+"answer": "Corn",
+"d": "easy"
+},
+{
+"q": "Which fruit is traditionally the main flavour of a banana split besides ice cream?",
+"options": [
+"Grape",
+"Kiwi",
+"Apple",
+"Banana"
+],
+"answer": "Banana",
+"d": "easy"
+},
+{
+"q": "Which citrus fruit is most sour and often used in cocktails and cooking?",
+"options": [
+"Mandarin",
+"Orange",
+"Lemon",
+"Tangerine"
+],
+"answer": "Lemon",
+"d": "easy"
+},
+{
+"q": "Which cocktail is traditionally served in a hollowed pineapple and contains coconut and rum?",
+"options": [
+"Daiquiri",
+"Mojito",
+"Mai Tai",
+"Pina Colada"
+],
+"answer": "Pina Colada",
+"d": "easy"
+},
+{
+"q": "Which drink is dark, fizzy and famous as a cola brand originating in the USA?",
+"options": [
+"Cola",
+"Lemonade",
+"Ginger ale",
+"Tonic"
+],
+"answer": "Cola",
+"d": "easy"
+},
+{
+"q": "Which condiment is traditionally yellow and made from ground mustard seeds?",
+"options": [
+"Relish",
+"Mustard",
+"Mayonnaise",
+"Ketchup"
+],
+"answer": "Mustard",
+"d": "easy"
+},
+{
+"q": "Which vegetable makes people cry when it is chopped?",
+"options": [
+"Potato",
+"Beetroot",
+"Carrot",
+"Onion"
+],
+"answer": "Onion",
+"d": "easy"
+},
+{
+"q": "Which spirit is the base of a Cosmopolitan cocktail?",
+"options": [
+"Vodka",
+"Gin",
+"Brandy",
+"Rum"
+],
+"answer": "Vodka",
+"d": "easy"
+},
+{
+"q": "Which food is a bowl of mixed raw vegetables usually dressed with oil or dressing?",
+"options": [
+"Curry",
+"Stew",
+"Salad",
+"Soup"
+],
+"answer": "Salad",
+"d": "easy"
+},
+{
+"q": "Which food is the round, flat Mexican staple made from corn or wheat?",
+"options": [
+"Pita",
+"Tortilla",
+"Baguette",
+"Naan"
+],
+"answer": "Tortilla",
+"d": "easy"
+},
+{
+"q": "What is the main ingredient in a traditional omelette?",
+"options": [
+"Rice",
+"Flour",
+"Eggs",
+"Potatoes"
+],
+"answer": "Eggs",
+"d": "easy"
+},
+{
+"q": "Which fruit is green outside, red inside, and famous for summer picnics?",
+"options": [
+"Honeydew",
+"Rockmelon",
+"Watermelon",
+"Papaya"
+],
+"answer": "Watermelon",
+"d": "easy"
+},
+{
+"q": "Which food is traditionally spread on toast and made from citrus, usually oranges?",
+"options": [
+"Marmalade",
+"Honey",
+"Butter",
+"Jam"
+],
+"answer": "Marmalade",
+"d": "easy"
+},
+{
+"q": "Which drink is known as 'the water of life' and includes Scotch and Bourbon varieties?",
+"options": [
+"Whisky",
+"Rum",
+"Vodka",
+"Gin"
+],
+"answer": "Whisky",
+"d": "easy"
+},
+{
+"q": "Which drink is made from roasted, ground coffee beans?",
+"options": [
+"Tea",
+"Coffee",
+"Cocoa",
+"Cider"
+],
+"answer": "Coffee",
+"d": "easy"
+},
+{
+"q": "What is the main spirit in a Margarita?",
+"options": [
+"Whisky",
+"Rum",
+"Tequila",
+"Brandy"
+],
+"answer": "Tequila",
+"d": "easy"
+},
+{
+"q": "Which food is a stack of pancakes traditionally served with butter and syrup for breakfast?",
+"options": [
+"Pancakes",
+"Toast",
+"Waffles",
+"Cereal"
+],
+"answer": "Pancakes",
+"d": "easy"
+},
+{
+"q": "Which sweet Australian dessert is made from a sponge cake coated in chocolate and coconut?",
+"options": [
+"Anzac biscuit",
+"Pavlova",
+"Tim Tam",
+"Lamington"
+],
+"answer": "Lamington",
+"d": "easy"
+},
+{
+"q": "Which spice gives curry its yellow colour?",
+"options": [
+"Paprika",
+"Nutmeg",
+"Cinnamon",
+"Turmeric"
+],
+"answer": "Turmeric",
+"d": "easy"
+},
+{
+"q": "Which coffee drink is made with espresso and a large amount of steamed milk foam?",
+"options": [
+"Cappuccino",
+"Long black",
+"Espresso",
+"Ristretto"
+],
+"answer": "Cappuccino",
+"d": "easy"
+},
+{
+"q": "Which fruit is small, red and often used to top a cocktail or ice cream sundae?",
+"options": [
+"Cherry",
+"Banana",
+"Mango",
+"Melon"
+],
+"answer": "Cherry",
+"d": "easy"
+},
+{
+"q": "What is the main ingredient in a traditional fruit smoothie besides fruit?",
+"options": [
+"Vinegar",
+"Oil",
+"Stock",
+"Yoghurt or milk"
+],
+"answer": "Yoghurt or milk",
+"d": "easy"
+},
+{
+"q": "Which food is a traditional English breakfast staple, a small round griddle bread with holes on top?",
+"options": [
+"Scone",
+"Pikelet",
+"Muffin",
+"Crumpet"
+],
+"answer": "Crumpet",
+"d": "easy"
+},
+{
+"q": "Which vegetable is used to make traditional chips or crisps?",
+"options": [
+"Lettuce",
+"Tomato",
+"Potato",
+"Cucumber"
+],
+"answer": "Potato",
+"d": "easy"
+},
+{
+"q": "Which fruit is spiky outside, sweet and yellow inside, and grown in tropical regions?",
+"options": [
+"Papaya",
+"Coconut",
+"Mango",
+"Pineapple"
+],
+"answer": "Pineapple",
+"d": "easy"
+},
+{
+"q": "Which meat is traditionally used in a Sunday roast in Australia and Britain?",
+"options": [
+"Emu",
+"Lamb",
+"Kangaroo",
+"Crocodile"
+],
+"answer": "Lamb",
+"d": "easy"
+},
+{
+"q": "What is the yellow part of an egg called?",
+"options": [
+"White",
+"Shell",
+"Membrane",
+"Yolk"
+],
+"answer": "Yolk",
+"d": "easy"
+},
+{
+"q": "What flavour is traditionally in a mint choc chip ice cream besides mint?",
+"options": [
+"Chocolate",
+"Vanilla",
+"Strawberry",
+"Caramel"
+],
+"answer": "Chocolate",
+"d": "easy"
+},
+{
+"q": "What is the popular Australian chocolate biscuit brand with a chocolate coating and cream filling?",
+"options": [
+"Oreo",
+"Kit Kat",
+"Wagon Wheel",
+"Tim Tam"
+],
+"answer": "Tim Tam",
+"d": "easy"
+},
+{
+"q": "What is the main ingredient in a traditional Greek tzatziki?",
+"options": [
+"Eggplant",
+"Chickpea",
+"Yoghurt",
+"Tomato"
+],
+"answer": "Yoghurt",
+"d": "easy"
+},
+{
+"q": "Which food is the crunchy salad leaf used as the base of a Caesar salad?",
+"options": [
+"Spinach",
+"Rocket",
+"Kale",
+"Cos lettuce"
+],
+"answer": "Cos lettuce",
+"d": "easy"
+},
+{
+"q": "What sweet topping is traditionally poured over pancakes?",
+"options": [
+"Soy sauce",
+"Olive oil",
+"Maple syrup",
+"Vinegar"
+],
+"answer": "Maple syrup",
+"d": "easy"
+},
+{
+"q": "What is the main ingredient in traditional guac's spicy cousin, salsa?",
+"options": [
+"Tomato",
+"Eggplant",
+"Mushroom",
+"Potato"
+],
+"answer": "Tomato",
+"d": "easy"
+},
+{
+"q": "What is the crunchy Australian oat biscuit associated with the military and Gallipoli?",
+"options": [
+"Gingerbread",
+"Shortbread",
+"Anzac biscuit",
+"Lamington"
+],
+"answer": "Anzac biscuit",
+"d": "easy"
+},
+{
+"q": "What spread is made from crushed sesame seeds and used in hummus?",
+"options": [
+"Pesto",
+"Aioli",
+"Tahini",
+"Miso"
+],
+"answer": "Tahini",
+"d": "easy"
+},
+{
+"q": "What is the popular Australian barbecue meat product served in a bread roll at hardware stores?",
+"options": [
+"Sausage",
+"Lamb chop",
+"Chicken wing",
+"Steak"
+],
+"answer": "Sausage",
+"d": "easy"
+},
+{
+"q": "Which hot drink is made by infusing leaves in hot water?",
+"options": [
+"Cocoa",
+"Cider",
+"Coffee",
+"Tea"
+],
+"answer": "Tea",
+"d": "easy"
+},
+{
+"q": "What is the main ingredient in traditional apple pie filling?",
+"options": [
+"Peach",
+"Plum",
+"Apple",
+"Pear"
+],
+"answer": "Apple",
+"d": "easy"
+},
+{
+"q": "What is the main protein in a traditional fish and chips meal?",
+"options": [
+"Chicken",
+"Fish",
+"Beef",
+"Pork"
+],
+"answer": "Fish",
+"d": "easy"
+},
+{
+"q": "Which vegetable is the main ingredient in coleslaw?",
+"options": [
+"Spinach",
+"Lettuce",
+"Celery",
+"Cabbage"
+],
+"answer": "Cabbage",
+"d": "easy"
+},
+{
+"q": "Which Italian dish is a flatbread traditionally topped with tomato and cheese?",
+"options": [
+"Pizza",
+"Gnocchi",
+"Polenta",
+"Risotto"
+],
+"answer": "Pizza",
+"d": "easy"
+},
+{
+"q": "What is the main ingredient in traditional lemonade?",
+"options": [
+"Orange",
+"Apple",
+"Lemon",
+"Lime"
+],
+"answer": "Lemon",
+"d": "easy"
+},
+{
+"q": "What flavour is a traditional vanilla slice?",
+"options": [
+"Chocolate",
+"Coffee",
+"Vanilla",
+"Strawberry"
+],
+"answer": "Vanilla",
+"d": "easy"
+},
+{
+"q": "What is the main grape variety used to make traditional Champagne alongside Pinot Noir and Pinot Meunier?",
+"options": [
+"Riesling",
+"Sauvignon Blanc",
+"Chardonnay",
+"Merlot"
+],
+"answer": "Chardonnay",
+"d": "medium"
+},
+{
+"q": "What is the traditional pastry-wrapped sausage snack popular at Australian bakeries?",
+"options": [
+"Quiche",
+"Pie",
+"Pasty",
+"Sausage roll"
+],
+"answer": "Sausage roll",
+"d": "medium"
+},
+{
+"q": "What is the classic French dish of slow-cooked meat, usually duck, preserved in its own fat?",
+"options": [
+"Confit",
+"Cassoulet",
+"Rillettes",
+"Terrine"
+],
+"answer": "Confit",
+"d": "medium"
+},
+{
+"q": "What is the term for meat cooked so the centre is warm and pink but not red?",
+"options": [
+"Blue",
+"Rare",
+"Medium",
+"Well done"
+],
+"answer": "Medium",
+"d": "medium"
+},
+{
+"q": "Which classic dessert wine from France is made from grapes affected by 'noble rot'?",
+"options": [
+"Muscadet",
+"Beaujolais",
+"Sauternes",
+"Chablis"
+],
+"answer": "Sauternes",
+"d": "medium"
+},
+{
+"q": "What is the popular Aussie summer fruit dessert of meringue, cream and fresh fruit?",
+"options": [
+"Eton mess",
+"Cheesecake",
+"Trifle",
+"Pavlova"
+],
+"answer": "Pavlova",
+"d": "medium"
+},
+{
+"q": "What is the fermented tea drink that has become popular as a health beverage?",
+"options": [
+"Kefir",
+"Kimchi juice",
+"Kombucha",
+"Kvass"
+],
+"answer": "Kombucha",
+"d": "medium"
+},
+{
+"q": "Which liqueur made from herbs is a key ingredient in a traditional Margarita, giving it orange flavour?",
+"options": [
+"Triple sec",
+"Chambord",
+"Baileys",
+"Amaretto"
+],
+"answer": "Triple sec",
+"d": "medium"
+},
+{
+"q": "What is the classic combination in a traditional ploughman's lunch alongside bread and pickle?",
+"options": [
+"Beef",
+"Fish",
+"Chicken",
+"Cheese"
+],
+"answer": "Cheese",
+"d": "medium"
+},
+{
+"q": "What is the main ingredient in a traditional French cr\u00e8me br\u00fbl\u00e9e custard?",
+"options": [
+"Cheese and cream",
+"Milk and flour",
+"Cream and egg yolk",
+"Butter and sugar"
+],
+"answer": "Cream and egg yolk",
+"d": "medium"
+},
+{
+"q": "What is the popular Aussie savoury snack of deep-fried battered savoury roll from Chinese-Australian cuisine?",
+"options": [
+"Chiko roll",
+"Wonton",
+"Spring roll",
+"Dim sim"
+],
+"answer": "Chiko roll",
+"d": "medium"
+},
+{
+"q": "What is the classic Middle Eastern salad of bulgur, parsley, mint and tomato?",
+"options": [
+"Tabbouleh",
+"Fatteh",
+"Fattoush",
+"Shirazi"
+],
+"answer": "Tabbouleh",
+"d": "medium"
+},
+{
+"q": "What is the classic cocktail of muddled mint, bourbon, sugar and crushed ice served at the Kentucky Derby?",
+"options": [
+"Mint Julep",
+"Southside",
+"Smash",
+"Mojito"
+],
+"answer": "Mint Julep",
+"d": "medium"
+},
+{
+"q": "What is the aniseed-flavoured spirit from Greece traditionally served with water?",
+"options": [
+"Sambuca",
+"Ouzo",
+"Raki",
+"Pastis"
+],
+"answer": "Ouzo",
+"d": "medium"
+},
+{
+"q": "What is the French term for cooking food sealed in a vacuum bag in a temperature-controlled water bath?",
+"options": [
+"Sous vide",
+"Confit",
+"Flamb\u00e9",
+"En papillote"
+],
+"answer": "Sous vide",
+"d": "medium"
+},
+{
+"q": "What French cooking term means to cook food quickly in a small amount of fat over high heat?",
+"options": [
+"Braise",
+"Blanch",
+"Poach",
+"Saut\u00e9"
+],
+"answer": "Saut\u00e9",
+"d": "medium"
+},
+{
+"q": "What is the main spirit in a traditional Long Island Iced Tea alongside gin, rum and tequila?",
+"options": [
+"Bourbon",
+"Brandy",
+"Vodka",
+"Whisky"
+],
+"answer": "Vodka",
+"d": "medium"
+},
+{
+"q": "What is the popular Aussie hot beverage brand of malted chocolate drink?",
+"options": [
+"Ovaltine",
+"Aktavite",
+"Horlicks",
+"Milo"
+],
+"answer": "Milo",
+"d": "medium"
+},
+{
+"q": "Which cocktail garnished with a celery stick contains vodka and tomato juice?",
+"options": [
+"Cape Codder",
+"Sea Breeze",
+"Screwdriver",
+"Bloody Mary"
+],
+"answer": "Bloody Mary",
+"d": "medium"
+},
+{
+"q": "What is the traditional main flavouring of the liqueur Baileys?",
+"options": [
+"Hazelnut",
+"Coffee",
+"Irish cream",
+"Orange"
+],
+"answer": "Irish cream",
+"d": "medium"
+},
+{
+"q": "What is the traditional spirit used to make a Caipirinha, distilled from sugarcane?",
+"options": [
+"Pisco",
+"Cacha\u00e7a",
+"Rum",
+"Aguardiente"
+],
+"answer": "Cacha\u00e7a",
+"d": "medium"
+},
+{
+"q": "What is the Spanish rice dish traditionally cooked with saffron, seafood and meat in a wide pan?",
+"options": [
+"Jambalaya",
+"Risotto",
+"Biryani",
+"Paella"
+],
+"answer": "Paella",
+"d": "medium"
+},
+{
+"q": "What is the Thai soup famous for its hot and sour flavours with lemongrass and lime?",
+"options": [
+"Tom Yum",
+"Tom Kha",
+"Pho",
+"Laksa"
+],
+"answer": "Tom Yum",
+"d": "medium"
+},
+{
+"q": "What Spanish cold soup is made primarily from raw blended tomatoes?",
+"options": [
+"Gazpacho",
+"Bouillabaisse",
+"Minestrone",
+"Bisque"
+],
+"answer": "Gazpacho",
+"d": "medium"
+},
+{
+"q": "Which drink is created by adding soda water to red wine and fruit to make a Spanish punch?",
+"options": [
+"Kir",
+"Spritz",
+"Sangria",
+"Mimosa"
+],
+"answer": "Sangria",
+"d": "medium"
+},
+{
+"q": "What is the traditional Greek pastry made with layers of filo, nuts and honey syrup?",
+"options": [
+"Kataifi",
+"Loukoum",
+"Galaktoboureko",
+"Baklava"
+],
+"answer": "Baklava",
+"d": "medium"
+},
+{
+"q": "Which spirit is aged in charred oak barrels and must be made in the USA from at least 51% corn?",
+"options": [
+"Scotch",
+"Irish whiskey",
+"Rye",
+"Bourbon"
+],
+"answer": "Bourbon",
+"d": "medium"
+},
+{
+"q": "What is the main ingredient in traditional black pudding?",
+"options": [
+"Kidney",
+"Tongue",
+"Blood",
+"Liver"
+],
+"answer": "Blood",
+"d": "medium"
+},
+{
+"q": "What is the traditional cheese grilled and served as a squeaky Cypriot dish?",
+"options": [
+"Queso fresco",
+"Feta",
+"Halloumi",
+"Paneer"
+],
+"answer": "Halloumi",
+"d": "medium"
+},
+{
+"q": "Which grape is the most widely planted red variety used in Bordeaux blends and full-bodied wines?",
+"options": [
+"Pinot Noir",
+"Zinfandel",
+"Cabernet Sauvignon",
+"Grenache"
+],
+"answer": "Cabernet Sauvignon",
+"d": "medium"
+},
+{
+"q": "What is the Japanese rice wine used in cooking and drinking?",
+"options": [
+"Soju",
+"Sake",
+"Baijiu",
+"Shochu"
+],
+"answer": "Sake",
+"d": "medium"
+},
+{
+"q": "Which cocktail combines white rum, lime juice and sugar, shaken and served straight up?",
+"options": [
+"Margarita",
+"Mojito",
+"Daiquiri",
+"Caipirinha"
+],
+"answer": "Daiquiri",
+"d": "medium"
+},
+{
+"q": "What is the main spirit in a Mai Tai cocktail?",
+"options": [
+"Tequila",
+"Vodka",
+"Gin",
+"Rum"
+],
+"answer": "Rum",
+"d": "medium"
+},
+{
+"q": "What is the traditional Vietnamese filled baguette sandwich?",
+"options": [
+"Pho",
+"Banh mi",
+"Bun cha",
+"Goi cuon"
+],
+"answer": "Banh mi",
+"d": "medium"
+},
+{
+"q": "What is the Italian word for the small potato dumplings served like pasta?",
+"options": [
+"Gnocchi",
+"Farfalle",
+"Orzo",
+"Penne"
+],
+"answer": "Gnocchi",
+"d": "medium"
+},
+{
+"q": "What is the Indian dish of rice cooked with meat or vegetables and aromatic spices?",
+"options": [
+"Korma",
+"Dal",
+"Biryani",
+"Tikka"
+],
+"answer": "Biryani",
+"d": "medium"
+},
+{
+"q": "What is the classic New Orleans rice dish with sausage, chicken and seafood?",
+"options": [
+"Gumbo",
+"Jambalaya",
+"Paella",
+"\u00c9touff\u00e9e"
+],
+"answer": "Jambalaya",
+"d": "medium"
+},
+{
+"q": "What is the traditional filling of a Cornish pasty?",
+"options": [
+"Lamb and mint",
+"Chicken and mushroom",
+"Beef and vegetables",
+"Pork and apple"
+],
+"answer": "Beef and vegetables",
+"d": "medium"
+},
+{
+"q": "What is the deep-fried Spanish and Latin American dough pastry usually dusted with sugar?",
+"options": [
+"Churros",
+"Beignet",
+"Zeppole",
+"Loukoumades"
+],
+"answer": "Churros",
+"d": "medium"
+},
+{
+"q": "Which type of tea is fully oxidised, unlike green tea?",
+"options": [
+"Matcha",
+"Black tea",
+"White tea",
+"Oolong"
+],
+"answer": "Black tea",
+"d": "medium"
+},
+{
+"q": "What variety of chilli is measured highest on the Scoville scale of these options?",
+"options": [
+"Poblano",
+"Jalapeno",
+"Cayenne",
+"Habanero"
+],
+"answer": "Habanero",
+"d": "medium"
+},
+{
+"q": "What is the traditional cheese melted in a Swiss fondue alongside Gruy\u00e8re?",
+"options": [
+"Cheddar",
+"Brie",
+"Emmental",
+"Feta"
+],
+"answer": "Emmental",
+"d": "medium"
+},
+{
+"q": "What is the main ingredient in traditional Italian pesto alongside basil, pine nuts and parmesan?",
+"options": [
+"Vinegar",
+"Butter",
+"Olive oil",
+"Cream"
+],
+"answer": "Olive oil",
+"d": "medium"
+},
+{
+"q": "What is the term for the flavour compound that gives food a savoury, meaty taste, often called the fifth taste?",
+"options": [
+"Piquant",
+"Astringent",
+"Umami",
+"Tannic"
+],
+"answer": "Umami",
+"d": "medium"
+},
+{
+"q": "What is the main ingredient in traditional Italian polenta?",
+"options": [
+"Cornmeal",
+"Rice",
+"Wheat",
+"Semolina"
+],
+"answer": "Cornmeal",
+"d": "medium"
+},
+{
+"q": "What is the traditional pastry used to make a croissant?",
+"options": [
+"Choux",
+"Filo",
+"Shortcrust",
+"Laminated dough"
+],
+"answer": "Laminated dough",
+"d": "medium"
+},
+{
+"q": "What is the main ingredient in a traditional French ratatouille alongside courgette and capsicum?",
+"options": [
+"Cabbage",
+"Eggplant",
+"Potato",
+"Corn"
+],
+"answer": "Eggplant",
+"d": "medium"
+},
+{
+"q": "Which classic cocktail is made with bourbon or rye, sugar, water and bitters?",
+"options": [
+"Mint Julep",
+"Sazerac",
+"Manhattan",
+"Old Fashioned"
+],
+"answer": "Old Fashioned",
+"d": "medium"
+},
+{
+"q": "Which cheese from Italy is traditionally aged and grated over pasta?",
+"options": [
+"Mozzarella",
+"Provolone",
+"Mascarpone",
+"Parmesan"
+],
+"answer": "Parmesan",
+"d": "medium"
+},
+{
+"q": "What is the primary flavouring in a traditional gingerbread?",
+"options": [
+"Cinnamon",
+"Ginger",
+"Clove",
+"Nutmeg"
+],
+"answer": "Ginger",
+"d": "medium"
+},
+{
+"q": "What is the main spirit in a traditional Manhattan cocktail?",
+"options": [
+"Brandy",
+"Rum",
+"Gin",
+"Bourbon or rye whiskey"
+],
+"answer": "Bourbon or rye whiskey",
+"d": "medium"
+},
+{
+"q": "What is the name of the Indian clay oven used to cook naan and tandoori dishes?",
+"options": [
+"Tagine",
+"Karahi",
+"Tandoor",
+"Wok"
+],
+"answer": "Tandoor",
+"d": "medium"
+},
+{
+"q": "Which citrus liqueur is orange-flavoured and made in France, used in Cosmopolitans and Sidecars?",
+"options": [
+"Frangelico",
+"Sambuca",
+"Kahlua",
+"Cointreau"
+],
+"answer": "Cointreau",
+"d": "medium"
+},
+{
+"q": "What is the name of the Italian coffee-based dessert layered with mascarpone and ladyfingers?",
+"options": [
+"Zabaglione",
+"Panna cotta",
+"Cannoli",
+"Tiramisu"
+],
+"answer": "Tiramisu",
+"d": "medium"
+},
+{
+"q": "Which spirit is made from the blue agave plant?",
+"options": [
+"Rum",
+"Tequila",
+"Gin",
+"Vodka"
+],
+"answer": "Tequila",
+"d": "medium"
+},
+{
+"q": "Which Australian wine region is most famous for Shiraz?",
+"options": [
+"Barossa Valley",
+"Coonawarra",
+"Yarra Valley",
+"Margaret River"
+],
+"answer": "Barossa Valley",
+"d": "medium"
+},
+{
+"q": "What is the Japanese green paste with a strong horseradish-like heat?",
+"options": [
+"Mirin",
+"Miso",
+"Wasabi",
+"Ponzu"
+],
+"answer": "Wasabi",
+"d": "medium"
+},
+{
+"q": "What is the traditional Japanese noodle made from buckwheat flour?",
+"options": [
+"Soba",
+"Somen",
+"Udon",
+"Ramen"
+],
+"answer": "Soba",
+"d": "medium"
+},
+{
+"q": "Which chemical leavening agent reacts with acid to produce the rise in baked goods?",
+"options": [
+"Gelatine",
+"Baking soda",
+"Cream of tartar",
+"Yeast"
+],
+"answer": "Baking soda",
+"d": "hard"
+},
+{
+"q": "Which style of beer is dark, roasty and made famous by an Irish brewery founded in 1759?",
+"options": [
+"Bock",
+"Dunkel",
+"Stout",
+"Porter"
+],
+"answer": "Stout",
+"d": "hard"
+},
+{
+"q": "Which nut is technically a legume that grows underground?",
+"options": [
+"Peanut",
+"Almond",
+"Cashew",
+"Pecan"
+],
+"answer": "Peanut",
+"d": "hard"
+},
+{
+"q": "Which Italian region is the protected origin of true balsamic vinegar?",
+"options": [
+"Piedmont",
+"Tuscany",
+"Modena",
+"Sicily"
+],
+"answer": "Modena",
+"d": "hard"
+},
+{
+"q": "Which French term describes the culinary practice of preparing and organising all ingredients before cooking?",
+"options": [
+"Brunoise",
+"Mise en place",
+"\u00c0 la carte",
+"Sous chef"
+],
+"answer": "Mise en place",
+"d": "hard"
+},
+{
+"q": "Which grape variety is the primary component of most red wine from Barolo in Italy?",
+"options": [
+"Sangiovese",
+"Montepulciano",
+"Barbera",
+"Nebbiolo"
+],
+"answer": "Nebbiolo",
+"d": "hard"
+},
+{
+"q": "Which variety of coffee processing involves fermenting and washing the beans to remove the fruit?",
+"options": [
+"Anaerobic process",
+"Honey process",
+"Natural process",
+"Washed process"
+],
+"answer": "Washed process",
+"d": "hard"
+},
+{
+"q": "Which spice comes from the dried aril surrounding the nutmeg seed?",
+"options": [
+"Sumac",
+"Mace",
+"Allspice",
+"Star anise"
+],
+"answer": "Mace",
+"d": "hard"
+},
+{
+"q": "Which family of grapes is traditionally used to make Chianti in Tuscany?",
+"options": [
+"Nebbiolo",
+"Dolcetto",
+"Barbera",
+"Sangiovese"
+],
+"answer": "Sangiovese",
+"d": "hard"
+},
+{
+"q": "Which classic cocktail combines equal parts bourbon, sweet vermouth and Campari?",
+"options": [
+"Boulevardier",
+"Rob Roy",
+"Americano",
+"Negroni"
+],
+"answer": "Boulevardier",
+"d": "hard"
+},
+{
+"q": "Which mushroom, prized in French and Italian cuisine, is hunted with trained pigs or dogs?",
+"options": [
+"Truffle",
+"Porcini",
+"Chanterelle",
+"Morel"
+],
+"answer": "Truffle",
+"d": "hard"
+},
+{
+"q": "Which fortified Italian wine, flavoured with wormwood and botanicals, is essential in a Martini?",
+"options": [
+"Grappa",
+"Vermouth",
+"Limoncello",
+"Amaro"
+],
+"answer": "Vermouth",
+"d": "hard"
+}
+]
+}

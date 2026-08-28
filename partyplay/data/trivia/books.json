@@ -1,0 +1,1802 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "Books",
+"count": 160,
+"questions": [
+{
+"q": "Who wrote the novel The Grapes of Wrath?",
+"options": [
+"John Ford",
+"William Faulkner",
+"Sinclair Lewis",
+"John Steinbeck"
+],
+"answer": "John Steinbeck",
+"d": "easy"
+},
+{
+"q": "Which sci-fi classic features the story of an alien invasion thwarted by earths microorganisms?",
+"options": [
+"War of the Worlds",
+"E.T.",
+"The Andromeda Strain",
+"Independence Day"
+],
+"answer": "War of the Worlds",
+"d": "easy"
+},
+{
+"q": "In the novel Pride and Prejudice, how many daughters do Mr. and Mrs. Bennet have?",
+"options": [
+"ten",
+"six",
+"four",
+"five"
+],
+"answer": "five",
+"d": "easy"
+},
+{
+"q": "Who wrote the collection of stories titled The Canterbury Tales?",
+"options": [
+"Geoffrey Chaucer",
+"A pilgrim bound for Canterbury",
+"Thomas Malory",
+"William Langland"
+],
+"answer": "Geoffrey Chaucer",
+"d": "easy"
+},
+{
+"q": "Which allegorical novel by William Golding features a group of boys stranded on a desert island?",
+"options": [
+"Beach Party Massacre",
+"The Coral Island",
+"The Inheritors",
+"Lord of the Flies"
+],
+"answer": "Lord of the Flies",
+"d": "easy"
+},
+{
+"q": "What is Romeos last name in Shakespeares play Romeo and Juliet?",
+"options": [
+"Capulet",
+"Montague",
+"Escalus",
+"Romeo Ravioli"
+],
+"answer": "Montague",
+"d": "easy"
+},
+{
+"q": "Goblet of Fire started a series of deaths in the books. Who died in Goblet of Fire?",
+"options": [
+"Cedric Diggory",
+"Mad-Eye Moody",
+"Barty Crouch Sr",
+"Dumbledore"
+],
+"answer": "Cedric Diggory",
+"d": "easy"
+},
+{
+"q": "Which author created a series about a teenager who discovers he is a wizard and goes to Hogwarts School of Witchcraft and Wizardry?",
+"options": [
+"J. K. Rowling",
+"Philip Pullman",
+"J. R. R. Tolkien",
+"Jules Verne"
+],
+"answer": "J. K. Rowling",
+"d": "easy"
+},
+{
+"q": "What Shakespeare play opens with a street brawl in Verona between the servants of two feuding noble families?",
+"options": [
+"The Taming of the Shrew",
+"Two Gentlemen of Verona",
+"Hamlet",
+"Romeo and Juliet"
+],
+"answer": "Romeo and Juliet",
+"d": "easy"
+},
+{
+"q": "In which novel does the evil Injun Joe appear?",
+"options": [
+"Adventures of Huckleberry Finn",
+"Life on the Mississippi",
+"The Cave of Doom",
+"The Adventures of Tom Sawyer"
+],
+"answer": "The Adventures of Tom Sawyer",
+"d": "easy"
+},
+{
+"q": "What spell summons an item to the spell caster in the Harry Potter books?",
+"options": [
+"Accio",
+"Aparecium",
+"Wingardium Leviosa",
+"Accingo"
+],
+"answer": "Accio",
+"d": "easy"
+},
+{
+"q": "Who gave Harry his invisibility cloak in Harry Potter and the Philosophers Stone?",
+"options": [
+"Sirius Black",
+"Rubeus Hagrid",
+"Dobby",
+"Dumbledore"
+],
+"answer": "Dumbledore",
+"d": "easy"
+},
+{
+"q": "What are the two cities named in the title of Charles Dickens historical novel A Tale of Two Cities?",
+"options": [
+"Paris and Dover",
+"London and Calais",
+"Paris and New York",
+"Paris and London"
+],
+"answer": "Paris and London",
+"d": "easy"
+},
+{
+"q": "Who wrote \"Harry Potter\"?",
+"options": [
+"Daniel Radcliffe",
+"Philip Pullman",
+"Roald Dahl",
+"J.K. Rowling"
+],
+"answer": "J.K. Rowling",
+"d": "easy"
+},
+{
+"q": "Who wrote \"A Tale of Two Cities\"?",
+"options": [
+"Thomas Hardy",
+"Charles Dickens",
+"Wilkie Collins",
+"Charles Darwin"
+],
+"answer": "Charles Dickens",
+"d": "easy"
+},
+{
+"q": "What is the first name of Mary Shelleys character Frankenstein, who creates a humanoid creature by stitching together pieces of human corpses?",
+"options": [
+"Viktor",
+"Henry",
+"Victor",
+"Igor"
+],
+"answer": "Victor",
+"d": "easy"
+},
+{
+"q": "Into what creature did Mad Eye Moody turn Draco Malfoy in Harry Potter and the Goblet of Fire?",
+"options": [
+"A ferret",
+"A weasel",
+"A garden gnome",
+"A stoat"
+],
+"answer": "A ferret",
+"d": "easy"
+},
+{
+"q": "\"Green Eggs And Ham\" is a book by which author?",
+"options": [
+"Eric Carle",
+"Sam-I-Am himself",
+"Shel Silverstein",
+"Dr. Seuss"
+],
+"answer": "Dr. Seuss",
+"d": "easy"
+},
+{
+"q": "Which spell is used in the Harry Potter novels to unlock a door?",
+"options": [
+"Alohomora",
+"Colloportus",
+"Reducto",
+"Open Sesame"
+],
+"answer": "Alohomora",
+"d": "easy"
+},
+{
+"q": "In the children's book series, where is Paddington Bear originally from?",
+"options": [
+"Canada",
+"Iceland",
+"India",
+"Peru"
+],
+"answer": "Peru",
+"d": "easy"
+},
+{
+"q": "What Shakespearean tragedy, set in Denmark, explores the themes of treachery and revenge?",
+"options": [
+"A Midsummer Nights Dream",
+"Hamlet",
+"Macbeth",
+"King Lear"
+],
+"answer": "Hamlet",
+"d": "easy"
+},
+{
+"q": "Who wrote the novel \"Moby-Dick\"?",
+"options": [
+"Herman Melville",
+"Mark Twain",
+"Nathaniel Hawthorne",
+"Captain Ahab"
+],
+"answer": "Herman Melville",
+"d": "easy"
+},
+{
+"q": "What is the name of the three headed dog in Harry Potter and the Sorcerer's Stone?",
+"options": [
+"Sir Barks-a-Lot x3",
+"Fluffy",
+"Norbert",
+"Fang"
+],
+"answer": "Fluffy",
+"d": "easy"
+},
+{
+"q": "Pennywise is introduced to us in a storm sewer from which Stephen King story?",
+"options": [
+"Needful Things",
+"Pet Sematary",
+"The Mist",
+"It"
+],
+"answer": "It",
+"d": "easy"
+},
+{
+"q": "In the book Harry Potter and the Prisoner of Azkaban, Draco Malfoy was attacked by this kind of creature while in his Care for Magical Creatures class?",
+"options": [
+"Griffin",
+"Blast-Ended Skrewt",
+"Hippogryph",
+"Thestral"
+],
+"answer": "Hippogryph",
+"d": "easy"
+},
+{
+"q": "Who wrote the novel Gone With the Wind?",
+"options": [
+"Scarlett OHara",
+"Margaret Mitchell",
+"Edna Ferber",
+"Harper Lee"
+],
+"answer": "Margaret Mitchell",
+"d": "easy"
+},
+{
+"q": "Which author wrote a novella, centered around a good-natured doctor who transforms into a cruel and remorseless person after drinking a potion?",
+"options": [
+"Robert Louis Stevenson",
+"Bram Stoker",
+"H.G. Wells",
+"Dr. Seuss"
+],
+"answer": "Robert Louis Stevenson",
+"d": "easy"
+},
+{
+"q": "In which Stephen King story do we meet a banker from Maine named Andy Dufresne?",
+"options": [
+"Shawshank Redemption",
+"The Great Prison Escape",
+"The Green Mile",
+"Apt Pupil"
+],
+"answer": "Shawshank Redemption",
+"d": "easy"
+},
+{
+"q": "What was Mark Twains birth name?",
+"options": [
+"Samuel L. Clemens",
+"Samuel Thatcher",
+"Samuel Rogers Clinton",
+"Huckleberry Finn"
+],
+"answer": "Samuel L. Clemens",
+"d": "easy"
+},
+{
+"q": "In which book by Mark Twain is Jim a major character?",
+"options": [
+"Life on the Mississippi",
+"Huckleberry Finn",
+"The Adventures of Tom Sawyer",
+"Moby-Dick"
+],
+"answer": "Huckleberry Finn",
+"d": "easy"
+},
+{
+"q": "Who wrote the \"A Song of Ice And Fire\" fantasy novel series?",
+"options": [
+"Curious George",
+"George R. R. Martin",
+"George Orwell",
+"George Eliot"
+],
+"answer": "George R. R. Martin",
+"d": "easy"
+},
+{
+"q": "What house was Cho Chang in, as explained in Harry Potter and the Prisoner of Azkaban, Order of the Pheonix, and Goblet of Fire?",
+"options": [
+"Gryffindor",
+"Ravenclaw",
+"Slytherin",
+"Hufflepuff"
+],
+"answer": "Ravenclaw",
+"d": "easy"
+},
+{
+"q": "Who killed Dumbledore in Harry Potter and the Half-Blood Prince?",
+"options": [
+"Draco Malfoy",
+"Professor Snape",
+"Peeves the Poltergeist",
+"Bellatrix Lestrange"
+],
+"answer": "Professor Snape",
+"d": "easy"
+},
+{
+"q": "In Harry Potter and the Philosophers Stone, after getting off the Hogwarts Express, how did Harry and his fellow First Years get to the castle?",
+"options": [
+"by boat across the lake",
+"on the Knight Bus",
+"in horseless carriages",
+"walking through the forest"
+],
+"answer": "by boat across the lake",
+"d": "easy"
+},
+{
+"q": "George Milton and Lennie Small were characters in which book by John Steinbeck?",
+"options": [
+"East of Eden",
+"The Great Gatsby",
+"The Grapes of Wrath",
+"Of Mice and Men"
+],
+"answer": "Of Mice and Men",
+"d": "easy"
+},
+{
+"q": "In which Stephen King story are we introduced to a recovering alcoholic named Jack Torrance?",
+"options": [
+"The Dead Zone",
+"Creepshow",
+"Cujo",
+"The Shining"
+],
+"answer": "The Shining",
+"d": "easy"
+},
+{
+"q": "What white whale does Captain Ahab seek in Herman Melvilles novel Moby Dick?",
+"options": [
+"A very large goldfish",
+"Humpback Whale",
+"Sperm Whale",
+"Beluga Whale"
+],
+"answer": "Sperm Whale",
+"d": "easy"
+},
+{
+"q": "Who was the original author of Frankenstein?",
+"options": [
+"Percy Shelley",
+"Mary Shelley",
+"Bram Stoker",
+"Dr Frankenstein himself"
+],
+"answer": "Mary Shelley",
+"d": "easy"
+},
+{
+"q": "What 2003 best-selling novel by Dan Brown was denounced by Roman Catholics for being anti-Christian?",
+"options": [
+"The Lost Symbol",
+"Angels and Demons",
+"Digital Fortress",
+"The Da Vinci Code"
+],
+"answer": "The Da Vinci Code",
+"d": "easy"
+},
+{
+"q": "George Orwell wrote this book, which is often considered a statement on government oversight.",
+"options": [
+"Brave New World",
+"The Very Hungry Caterpillar",
+"1984",
+"Fahrenheit 451"
+],
+"answer": "1984",
+"d": "easy"
+},
+{
+"q": "What's Harry Potter's dad's name?",
+"options": [
+"James Potter",
+"Hairy Potter Sr.",
+"Fleamont Potter",
+"Albus Potter"
+],
+"answer": "James Potter",
+"d": "easy"
+},
+{
+"q": "Which is NOT a book in the Harry Potter Series?",
+"options": [
+"The Prisoner of Azkaban",
+"The Chamber of Secrets",
+"The Deathly Hallows",
+"The House Elf"
+],
+"answer": "The House Elf",
+"d": "easy"
+},
+{
+"q": "This play is generally considered to be the most adaptable of Shakespeare\u2019s works, and follows two \u201cstar-crossed lovers\u201d.",
+"options": [
+"A Midsummer Night's Dream",
+"Romeo and Juliet",
+"Macbeth 2: Electric Boogaloo",
+"Antony and Cleopatra"
+],
+"answer": "Romeo and Juliet",
+"d": "easy"
+},
+{
+"q": "According to The Hitchhiker's Guide to the Galaxy book, the answer to life, the universe and everything else is...",
+"options": [
+"Loving everyone around you",
+"Death",
+"Chocolate",
+"42"
+],
+"answer": "42",
+"d": "easy"
+},
+{
+"q": "What position does Harry Potter play in Quidditch?",
+"options": [
+"Chaser",
+"Beater",
+"Seeker",
+"Keeper"
+],
+"answer": "Seeker",
+"d": "easy"
+},
+{
+"q": "Who gave Dudley a pigs tail using a pink umbrella in the book Harry Potter and the Philosophers Stone?",
+"options": [
+"Sirius Black",
+"Albus Dumbledore",
+"Lord Voldemort",
+"Rubeus Hagrid"
+],
+"answer": "Rubeus Hagrid",
+"d": "easy"
+},
+{
+"q": "How many Harry Potter books are there?",
+"options": [
+"6",
+"50",
+"8",
+"7"
+],
+"answer": "7",
+"d": "easy"
+},
+{
+"q": "Who is the author of the \"A Song of Ice and Fire\" book series, starting with \"A Game of Thrones\"?",
+"options": [
+"George R. R. Martin",
+"R.R. from down the pub",
+"Brandon Sanderson",
+"Patrick Rothfuss"
+],
+"answer": "George R. R. Martin",
+"d": "easy"
+},
+{
+"q": "Where did William Shakespeare grow up?",
+"options": [
+"Hogwarts",
+"Warwick",
+"London",
+"Stratford-upon-Avon"
+],
+"answer": "Stratford-upon-Avon",
+"d": "easy"
+},
+{
+"q": "In the year 1818, novelist Mary Shelly is credited with writing a fiction novel and creating this infamous character.",
+"options": [
+"Frankenstein's monster",
+"The Thing",
+"The Invisible Man",
+"Dracula"
+],
+"answer": "Frankenstein's monster",
+"d": "easy"
+},
+{
+"q": "What language can Harry Potter speak?",
+"options": [
+"Parseltounge",
+"Mermish",
+"Gobbledegook",
+"Troll"
+],
+"answer": "Parseltounge",
+"d": "easy"
+},
+{
+"q": "Mary Shelley is the author of what classic horror story?",
+"options": [
+"Frankenstein",
+"The Legend of Sleepy Hollow",
+"Dracula",
+"Strange Case of Dr Jekyll and Mr Hyde"
+],
+"answer": "Frankenstein",
+"d": "easy"
+},
+{
+"q": "The title of Adolf Hitler's autobiography \"Mein Kampf\" is what when translated to English?",
+"options": [
+"My Hatred",
+"My Sadness",
+"My Struggle",
+"My Desire"
+],
+"answer": "My Struggle",
+"d": "medium"
+},
+{
+"q": "Which of these professions has Mr. Wickham not tried in the book Pride and Prejudice?",
+"options": [
+"Groundskeeper",
+"Military",
+"Clergy",
+"Law"
+],
+"answer": "Groundskeeper",
+"d": "medium"
+},
+{
+"q": "What is the name of the main family in the novel The Grapes of Wrath and in the movie adaptation?",
+"options": [
+"Darwell",
+"Joad",
+"Joab",
+"Wilson"
+],
+"answer": "Joad",
+"d": "medium"
+},
+{
+"q": "What animal was the main character in the horror movie Cujo?",
+"options": [
+"Hamster",
+"Bear",
+"Wolf",
+"Dog"
+],
+"answer": "Dog",
+"d": "medium"
+},
+{
+"q": "What was the name of the Atlanta street where fictional character Scarlett OHara lived with Aunt Pittypat?",
+"options": [
+"Yankee Doodle Lane",
+"Magnolia",
+"Peachtree",
+"Peachblossom"
+],
+"answer": "Peachtree",
+"d": "medium"
+},
+{
+"q": "What book in the popular Harry Potter series contains a chapter titled The Seven Potters?",
+"options": [
+"Harry Potter and the Order of the Phoenix",
+"Harry Potter and the Chamber of Secrets",
+"Harry Potter and the Half-Blood Prince",
+"Harry Potter and the Deathly Hallows"
+],
+"answer": "Harry Potter and the Deathly Hallows",
+"d": "medium"
+},
+{
+"q": "Who is Lyras uncle in Philip Pullmans novel The Golden Compass?",
+"options": [
+"Iorek the armoured bear",
+"Lord Asriel",
+"The Master of Jordan College",
+"Lord Boreal"
+],
+"answer": "Lord Asriel",
+"d": "medium"
+},
+{
+"q": "What romantic period author created the Byronic hero, Heathcliff?",
+"options": [
+"Lord Byron",
+"Anne Bronte",
+"Emily Bronte",
+"Charlotte Bronte"
+],
+"answer": "Emily Bronte",
+"d": "medium"
+},
+{
+"q": "Hans Christian Andersen was born on April 2, 1805. What was his nationality?",
+"options": [
+"Danish",
+"Norwegian",
+"Swedish",
+"German"
+],
+"answer": "Danish",
+"d": "medium"
+},
+{
+"q": "Left Behind character Bruce Barnes believes The Tribulation would last how many years?",
+"options": [
+"3 and a half",
+"7",
+"5",
+"1000"
+],
+"answer": "7",
+"d": "medium"
+},
+{
+"q": "The novel \"Jane Eyre\" was written by what author?",
+"options": [
+"Anne Bront\u00eb",
+"Emily Bront\u00eb",
+"Jane Eyre herself",
+"Charlotte Bront\u00eb"
+],
+"answer": "Charlotte Bront\u00eb",
+"d": "medium"
+},
+{
+"q": "Who was the author of the 1954 novel, \"Lord of the Flies\"?",
+"options": [
+"George Orwell",
+"William Golding",
+"one of the boys themselves",
+"Aldous Huxley"
+],
+"answer": "William Golding",
+"d": "medium"
+},
+{
+"q": "In which book of the Harry Potter series is Draco Malfoy made Prefect of his house?",
+"options": [
+"Prisoner of Azkaban",
+"Half-Blood Prince",
+"Goblet of Fire",
+"Order of the Phoenix"
+],
+"answer": "Order of the Phoenix",
+"d": "medium"
+},
+{
+"q": "The book \"The Little Prince\" was written by...",
+"options": [
+"F. Scott Fitzgerald",
+"Jane Austen",
+"Antoine de Saint-Exup\u00e9ry",
+"Miguel de Cervantes Saavedra"
+],
+"answer": "Antoine de Saint-Exup\u00e9ry",
+"d": "medium"
+},
+{
+"q": "Which of the following is NOT a work done by Shakespeare?",
+"options": [
+"Measure For Measure",
+"Titus Andronicus",
+"Trial of Temperance",
+"Cymbeline"
+],
+"answer": "Trial of Temperance",
+"d": "medium"
+},
+{
+"q": "In the Harry Potter series, who created the Ravenclaw House when Hogwarts was built?",
+"options": [
+"Rowana Ravenclaw",
+"Rovena Ravenclaw",
+"Rowena Ravenclaw",
+"Ronald Ravenclaw"
+],
+"answer": "Rowena Ravenclaw",
+"d": "medium"
+},
+{
+"q": "What is the name of the fictional submarine, commanded by Captain Nemo, in the novel Twenty Thousand Leagues Under the Sea?",
+"options": [
+"Subatilus",
+"The Neptune",
+"Nautilus",
+"The Yellow Submarine"
+],
+"answer": "Nautilus",
+"d": "medium"
+},
+{
+"q": "What is the mysterious substance that is being researched in the North by Lord Asriel in Phillip Pullmans book The Golden Compass?",
+"options": [
+"Stardust",
+"Aether",
+"Fairy dandruff",
+"Dust"
+],
+"answer": "Dust",
+"d": "medium"
+},
+{
+"q": "In the novel Gone with the Wind, what was the name of Scarletts first house -- the house she had her childhood in and loved more than anything?",
+"options": [
+"Twelve Oaks",
+"Fontenoy Hall",
+"Tara",
+"Manderley"
+],
+"answer": "Tara",
+"d": "medium"
+},
+{
+"q": "Iago is the antagonist of which play by William Shakespeare?",
+"options": [
+"King Lear",
+"Othello",
+"The Merry Wives of Windsor",
+"Macbeth"
+],
+"answer": "Othello",
+"d": "medium"
+},
+{
+"q": "What spell is used in the Harry Potter books to produce fire?",
+"options": [
+"Flagrate",
+"Incendio",
+"Lumos",
+"Confringo"
+],
+"answer": "Incendio",
+"d": "medium"
+},
+{
+"q": "What is Stephen Kings first published novel?",
+"options": [
+"The Telekinetic Teen",
+"Carrie",
+"'Salem's Lot",
+"The Shining"
+],
+"answer": "Carrie",
+"d": "medium"
+},
+{
+"q": "In 2008, EW.com asked readers for their choice for favorite author of the last 25 years. Which author received the most votes?",
+"options": [
+"Stephen King",
+"J. K. Rowling",
+"William Shakespeare",
+"Dan Brown"
+],
+"answer": "J. K. Rowling",
+"d": "medium"
+},
+{
+"q": "In which Stephen King story do we meet the evil Randall Flagg?",
+"options": [
+"Pet Sematary",
+"Salems Lot",
+"Cujo",
+"The Stand"
+],
+"answer": "The Stand",
+"d": "medium"
+},
+{
+"q": "In the Harry Potter universe, who does Draco Malfoy end up marrying?",
+"options": [
+"Astoria Greengrass",
+"Pansy Parkinson",
+"Daphne Greengrass",
+"Hermione Granger"
+],
+"answer": "Astoria Greengrass",
+"d": "medium"
+},
+{
+"q": "Known as the \u201cSage of Concord\u201d, what American Transcendentalist owned the land where Henry David Thoreau built his cabin near Walden Pond in Massachusetts?",
+"options": [
+"Paul Revere",
+"Ralph Waldo Emerson",
+"Henry David Thoreau",
+"Nathaniel Hawthorne"
+],
+"answer": "Ralph Waldo Emerson",
+"d": "medium"
+},
+{
+"q": "What was Hagrid buying in Knockturn Alley?",
+"options": [
+"Industrial-Strength Slug Shampoo",
+"Flesh-Eating Slug Attractant",
+"Flesh-Eating Slug Repellent",
+"Flesh-Eating Snail Repellent"
+],
+"answer": "Flesh-Eating Slug Repellent",
+"d": "medium"
+},
+{
+"q": "Bella, the protagonist of the novel Twilight, is tracked by a vampire intent on killing her. What is his name?",
+"options": [
+"Laurent",
+"Victor",
+"James",
+"Edward"
+],
+"answer": "James",
+"d": "medium"
+},
+{
+"q": "Who wrote the children's story \"The Little Match Girl\"?",
+"options": [
+"Dr. Seuss",
+"Hans Christian Andersen",
+"The Brothers Grimm",
+"Charles Dickens"
+],
+"answer": "Hans Christian Andersen",
+"d": "medium"
+},
+{
+"q": "What potion do Harry Potter, Ron Weasley and Hermione Granger use to infiltrate the Ministry of Magic?",
+"options": [
+"Felix Felicis",
+"Draught of Living Death",
+"Amortentia",
+"Polyjuice Potion"
+],
+"answer": "Polyjuice Potion",
+"d": "medium"
+},
+{
+"q": "The former nurse Annie Wilkes is a character from which Stephen King story?",
+"options": [
+"Gerald's Game",
+"Misery",
+"Dolores Claiborne",
+"The Number One Fan"
+],
+"answer": "Misery",
+"d": "medium"
+},
+{
+"q": "In which Stephen King story do we meet a red-headed character named Malachai?",
+"options": [
+"Children of the Corn",
+"'Salem's Lot",
+"The Lawnmower Man",
+"Return to the Cornfield"
+],
+"answer": "Children of the Corn",
+"d": "medium"
+},
+{
+"q": "Ian Malcolm, a character from the book Jurassic Park, is an expert in which field?",
+"options": [
+"Dinosaur wrangling",
+"Statistics",
+"Chaos Theory",
+"Paleontology"
+],
+"answer": "Chaos Theory",
+"d": "medium"
+},
+{
+"q": "How does young Juliet Capulet die in Shakespeares tragedy Romeo and Juliet?",
+"options": [
+"She stabs herself with a dagger.",
+"She drinks the leftover poison.",
+"She takes the Friar's sleeping potion.",
+"She dies of a broken heart."
+],
+"answer": "She stabs herself with a dagger.",
+"d": "medium"
+},
+{
+"q": "What best-selling American author, born Howard Allen O\u2019Brien, created the vampire Lestat de Lioncourt?",
+"options": [
+"Poppy Z. Brite",
+"Anne Radcliffe",
+"Anne Rice",
+"Stephenie Meyer"
+],
+"answer": "Anne Rice",
+"d": "medium"
+},
+{
+"q": "What character does Harry Potter first meet at Madam Malkins?",
+"options": [
+"Draco",
+"Lord Voldemort",
+"Ron",
+"Neville"
+],
+"answer": "Draco",
+"d": "medium"
+},
+{
+"q": "The novel entitled Cosette ou le Temps des Illusions (Cosette or the Time of Illusions), written by Francois Ceresa, is sequel to what Victor Hugo novel?",
+"options": [
+"The Count of Monte Cristo",
+"War and Peace",
+"The Hunchback of Notre-Dame",
+"Les Miserables"
+],
+"answer": "Les Miserables",
+"d": "medium"
+},
+{
+"q": "What Shakespearean character usurped the throne by murdering his brother and then married the late kings widow?",
+"options": [
+"Bottom",
+"Richard III",
+"Claudius",
+"Macbeth"
+],
+"answer": "Claudius",
+"d": "medium"
+},
+{
+"q": "What was the last message of the Dolphins in \"The Hitchhiker's Guide to the Galaxy\"?",
+"options": [
+"\"The answer is 42.\"",
+"\"So long, and thanks for all the fish.\"",
+"\"Land of the brave.\"",
+"\"Goodbye cruel world!\""
+],
+"answer": "\"So long, and thanks for all the fish.\"",
+"d": "medium"
+},
+{
+"q": "How long does Dudleys tongue become, after eating Fred and Georges candies, in the fourth book of the Harry Potter series?",
+"options": [
+"1.5 ft.",
+"1 ft.",
+"2 ft.",
+"10 ft."
+],
+"answer": "1 ft.",
+"d": "medium"
+},
+{
+"q": "What is the name of the gang that Ponyboy is a part of in the book, The Outsiders?",
+"options": [
+"The Socs",
+"The Mafia",
+"The Outsiders",
+"The Greasers"
+],
+"answer": "The Greasers",
+"d": "medium"
+},
+{
+"q": "By what name was the author Eric Blair better known?",
+"options": [
+"Aldous Huxley",
+"Ernest Hemingway",
+"George Orwell",
+"Ray Bradbury"
+],
+"answer": "George Orwell",
+"d": "medium"
+},
+{
+"q": "What is the name of the protagonist of J.D. Salinger's novel Catcher in the Rye?",
+"options": [
+"Holden Caulfield",
+"Holden McGroin",
+"Augie March",
+"Nick Carraway"
+],
+"answer": "Holden Caulfield",
+"d": "medium"
+},
+{
+"q": "The book \"Fahrenheit 451\" was written by whom?",
+"options": [
+"R. L. Stine",
+"Stephen King",
+"Wolfgang Amadeus Mozart",
+"Ray Bradbury"
+],
+"answer": "Ray Bradbury",
+"d": "medium"
+},
+{
+"q": "What did the crew of the ship in The Rime of the Ancient Mariner put around the Mariners neck to shame him?",
+"options": [
+"The albatross",
+"A heavy iron chain",
+"A crown of seaweed",
+"A necklace of dead fish"
+],
+"answer": "The albatross",
+"d": "medium"
+},
+{
+"q": "How does this Oscar Wilde quote end: My wallpaper and I are fighting a duel to the death. ................................ ?",
+"options": [
+"One or other of us has got to go",
+"and I intend to win.",
+"it has quite appalling taste.",
+"so I have summoned a decorator."
+],
+"answer": "One or other of us has got to go",
+"d": "medium"
+},
+{
+"q": "In the Hellraiser film series, what is the name of the puzzle-box used to open the gateway to the other world?",
+"options": [
+"Requiem configuration",
+"Sorrow configuration",
+"Lament configuration",
+"Rubik configuration"
+],
+"answer": "Lament configuration",
+"d": "medium"
+},
+{
+"q": "What do the initials T. S. stand for in the name of the famous poet T. S. Eliot?",
+"options": [
+"Tyrannosaurus Steve",
+"Thomas Sterling",
+"Theodore Simpson",
+"Thomas Stearns"
+],
+"answer": "Thomas Stearns",
+"d": "medium"
+},
+{
+"q": "When was the original movie The Grapes of Wrath released?",
+"options": [
+"1940",
+"1939",
+"1942",
+"1985"
+],
+"answer": "1940",
+"d": "medium"
+},
+{
+"q": "Which of these poems was written by Lord George Gordon Byron?",
+"options": [
+"She Walks In Beauty",
+"Roses Are Red, Violets Are Blue",
+"The Solitary Reaper",
+"Ozymandias"
+],
+"answer": "She Walks In Beauty",
+"d": "medium"
+},
+{
+"q": "In Harry Potter and the Half-Blood Prince, who was bitten by the werewolf Fenfir Greyback?",
+"options": [
+"Bill",
+"Ron",
+"Percy",
+"Charlie"
+],
+"answer": "Bill",
+"d": "medium"
+},
+{
+"q": "Where was Edgar Allan Poe born?",
+"options": [
+"Maryland",
+"Massachusetts",
+"France",
+"Virginia"
+],
+"answer": "Massachusetts",
+"d": "medium"
+},
+{
+"q": "The popular Globe Theatre was owned by actors in what famous playing company of the Elizabethan age?",
+"options": [
+"The Admiral's Men",
+"Lord Chamberlains Men",
+"The Queen's Men",
+"The Merry Bards of Southwark"
+],
+"answer": "Lord Chamberlains Men",
+"d": "medium"
+},
+{
+"q": "What is the name of Dolores Claibornes wealthy employer in the Stephen King novel Dolores Claiborne?",
+"options": [
+"Vera Donovan",
+"Vera Chalmers",
+"Lady Moneybags",
+"Vera Donahue"
+],
+"answer": "Vera Donovan",
+"d": "medium"
+},
+{
+"q": "In which classic novel by Mark Twain did a beggar and Prince of Wales switch clothes, and learn about social class inequality?",
+"options": [
+"Hamlet",
+"The Prince and the Pauper",
+"The Adventures of Tom Sawyer",
+"The Prince and the Peasant"
+],
+"answer": "The Prince and the Pauper",
+"d": "medium"
+},
+{
+"q": "What novel by Jules Verne was used as a base for a 2008 3-D science fiction movie directed by Eric Brevig?",
+"options": [
+"The Mysterious Island",
+"Twenty Thousand Leagues Under the Sea",
+"From the Earth to the Moon",
+"Journey to the Center of the Earth"
+],
+"answer": "Journey to the Center of the Earth",
+"d": "medium"
+},
+{
+"q": "Which of these fairy tales by Hans Christian Andersen ends with the death of a poor girl in the streets?",
+"options": [
+"The Red Shoes",
+"The Ugly Duckling",
+"The Little Fir Tree",
+"The Little Match Girl"
+],
+"answer": "The Little Match Girl",
+"d": "medium"
+},
+{
+"q": "Which American author is popularly known as the chronicler of the Jazz Age - the period between World War I and World War II?",
+"options": [
+"Sinclair Lewis",
+"F. Scott Fitzgerald",
+"Mark Twain",
+"Ernest Hemingway"
+],
+"answer": "F. Scott Fitzgerald",
+"d": "medium"
+},
+{
+"q": "Jud Crandall and Louis Creed are characters in which Stephen King story?",
+"options": [
+"Christine",
+"Pet Sematary",
+"Cujo",
+"The Shining"
+],
+"answer": "Pet Sematary",
+"d": "medium"
+},
+{
+"q": "Which classic horror character killed Elizabeth Lavenza?",
+"options": [
+"Count Dracula",
+"The Invisible Man",
+"Frankenstein's Monster",
+"Dr. Victor Frankenstein"
+],
+"answer": "Frankenstein's Monster",
+"d": "medium"
+},
+{
+"q": "What was the pen name of novelist, Mary Ann Evans?",
+"options": [
+"George Saunders",
+"George Orwell",
+"George Eliot",
+"George Bernard Shaw"
+],
+"answer": "George Eliot",
+"d": "medium"
+},
+{
+"q": "What Mark Twain book is the following line from: All right, then, Ill go to hell!?",
+"options": [
+"A Connecticut Yankee in King Arthurs Court",
+"Life on the Mississippi",
+"The Adventures of Tom Sawyer",
+"Huckleberry Finn"
+],
+"answer": "Huckleberry Finn",
+"d": "medium"
+},
+{
+"q": "Which of these series was not written by Isaac Asimov?",
+"options": [
+"Robot series",
+"Galactic Empire series",
+"Foundation series",
+"Dune series"
+],
+"answer": "Dune series",
+"d": "medium"
+},
+{
+"q": "In the poem The Rime of the Ancient Mariner, the Ancient Mariner tells his tale to a person he pulls aside from what event?",
+"options": [
+"A funeral",
+"A pub quiz",
+"A wedding",
+"A christening"
+],
+"answer": "A wedding",
+"d": "medium"
+},
+{
+"q": "Which poet wrote the poems Still I Rise, I Know Why the Caged Bird Sings, and Remembrance?",
+"options": [
+"Dr. Seuss",
+"Gwendolyn Brooks",
+"Nikki Giovanni",
+"Maya Angelou"
+],
+"answer": "Maya Angelou",
+"d": "medium"
+},
+{
+"q": "In the \"Harry Potter\" series, what is Headmaster Dumbledore's full name?",
+"options": [
+"Albus Percival Wulfric Brian Dumbledore",
+"Albus Brian Wulfric Percival Dumbledore",
+"Albus 'Big Al' Dumbledore",
+"Albus Percival Brian Wulfric Dumbledore"
+],
+"answer": "Albus Percival Wulfric Brian Dumbledore",
+"d": "medium"
+},
+{
+"q": "In the novel The Golden Compass, what do the storytellers call those on the General Oblation Board?",
+"options": [
+"The Oblaters",
+"Gobblers",
+"Gubblers",
+"Panserbjorne"
+],
+"answer": "Gobblers",
+"d": "medium"
+},
+{
+"q": "What author, born in the American South, won the Pulitzer Prize for her only novel?",
+"options": [
+"Flannery OConnor",
+"Carson McCullers",
+"Harper Lee",
+"Mark Twain"
+],
+"answer": "Harper Lee",
+"d": "medium"
+},
+{
+"q": "In Margaret Atwood's \"The Handmaid's Tale\", what is Offred's real name is implied to be?",
+"options": [
+"May",
+"Julie",
+"Serena Joy",
+"June"
+],
+"answer": "June",
+"d": "medium"
+},
+{
+"q": "Which of the following books, published in 1903, brought everlasting fame to Jack London?",
+"options": [
+"The Sea-Wolf",
+"Fifty Shades of Grey",
+"White Fang",
+"The Call of the Wild"
+],
+"answer": "The Call of the Wild",
+"d": "medium"
+},
+{
+"q": "Where does Stephen King's \"IT\" take place?",
+"options": [
+"Kingsland, Texas",
+"Innsmouth, Massachusetts",
+"Derry, Maine",
+"Rockford, Illinois"
+],
+"answer": "Derry, Maine",
+"d": "medium"
+},
+{
+"q": "In what book does Hermione develop a crush on Gilderoy Lockhart?",
+"options": [
+"Harry Potter and the Chamber of Secrets",
+"Harry Potter and the Cursed Child",
+"Harry Potter and the Deathly Hallows",
+"Harry Potter and the Prisoner of Azkaban"
+],
+"answer": "Harry Potter and the Chamber of Secrets",
+"d": "medium"
+},
+{
+"q": "Which fantasy series by C.S. Lewis includes a book entitled The Voyage of the Dawn Treader?",
+"options": [
+"The Wardrobe Chronicles",
+"The Chronicles of Narnia",
+"The Worlds of Chrestomanci",
+"The Chronicles of Prydain"
+],
+"answer": "The Chronicles of Narnia",
+"d": "medium"
+},
+{
+"q": "In which book of the Twilight series did Edward propose to Bella?",
+"options": [
+"Eclipse",
+"New Moon",
+"Twilight",
+"Breaking Dawn"
+],
+"answer": "Eclipse",
+"d": "medium"
+},
+{
+"q": "Which classic book opens with the line \"Call me Ishmael\"?",
+"options": [
+"Treasure Island",
+"Moby Dick",
+"The Old Man and the Sea",
+"The Cat in the Hat"
+],
+"answer": "Moby Dick",
+"d": "medium"
+},
+{
+"q": "The famous Wedding March is incorporated in the music that German composer Felix Mendelssohn wrote in 1842 for what Shakespeare play?",
+"options": [
+"A Midsummer Nights Dream",
+"Hamlet",
+"The Tempest",
+"Twelfth Night"
+],
+"answer": "A Midsummer Nights Dream",
+"d": "medium"
+},
+{
+"q": "What is the name of the town in which Lily and James Potter are buried?",
+"options": [
+"Little Whinging",
+"Ottery St. Catchpole",
+"Godric's Hollow",
+"Diagon Alley"
+],
+"answer": "Godric's Hollow",
+"d": "medium"
+},
+{
+"q": "In the \"Harry Potter\" novels, what must a Hogwarts student do to enter the Ravenclaw Common Room?",
+"options": [
+"Knock in sequence",
+"Rhythmically tap barrels with a wand",
+"Answer a riddle",
+"Speak a password"
+],
+"answer": "Answer a riddle",
+"d": "medium"
+},
+{
+"q": "What did Shakespeare leave to his wife Anne in his will?",
+"options": [
+"his London house",
+"his best bed",
+"his second best bed",
+"his collected plays"
+],
+"answer": "his second best bed",
+"d": "medium"
+},
+{
+"q": "What Shakespearean tragic heroine is advised by her father to lock herself from Hamlets resort?",
+"options": [
+"Juliet",
+"Ophelia",
+"Desdemona",
+"Gertrude"
+],
+"answer": "Ophelia",
+"d": "medium"
+},
+{
+"q": "Which term refers to a prose fiction work that is longer than a short story but shorter than a novel?",
+"options": [
+"An epic",
+"A vignette",
+"A novella",
+"A novelette"
+],
+"answer": "A novella",
+"d": "medium"
+},
+{
+"q": "What was Lord Byron\u2019s original name?",
+"options": [
+"Reginald Fitzwiggle",
+"Gilbert Gordon",
+"George Aldous Noel",
+"George Gordon"
+],
+"answer": "George Gordon",
+"d": "medium"
+},
+{
+"q": "Which author co-wrote \"The Communist Manifesto\" alongside Karl Marx?",
+"options": [
+"Leon Trotsky",
+"Groucho Marx",
+"Friedrich Engels",
+"Vladimir Lenin"
+],
+"answer": "Friedrich Engels",
+"d": "medium"
+},
+{
+"q": "Which list contains the names of the Bennet sisters, depicted by Jane Austin in Pride and Prejudice?",
+"options": [
+"Elisabeth, Jane, Lydia, Kitty, Charlotte",
+"Elisabeth, Jane, Lydia, Kitty, Mary",
+"Elisabeth, Jane, Lydia, Mary, Caroline",
+"Elisabeth, Jane, Lydia, Kitty, Beyonce"
+],
+"answer": "Elisabeth, Jane, Lydia, Kitty, Mary",
+"d": "medium"
+},
+{
+"q": "What is the pen name of the Russian-born American novelist known for her best-selling novels The Fountainhead and Atlas Shrugged?",
+"options": [
+"Ann Rand",
+"Pearl S Buck",
+"Anya Rosenbaum",
+"Ayn Rand"
+],
+"answer": "Ayn Rand",
+"d": "medium"
+},
+{
+"q": "What word does Holden Caulfield use to refer to everyone and everything he rejects?",
+"options": [
+"fake",
+"phony",
+"codswallop",
+"corny"
+],
+"answer": "phony",
+"d": "medium"
+},
+{
+"q": "What novel by Jane Austen was originally titled Elinor and Marianne?",
+"options": [
+"Sense and Sensibility",
+"Mansfield Park",
+"Persuasion",
+"Wuthering Heights"
+],
+"answer": "Sense and Sensibility",
+"d": "medium"
+},
+{
+"q": "H. G. Wells sci-fi novel The Island of Doctor Moreau focuses on experiments involving which of the following?",
+"options": [
+"vivisection",
+"time travel",
+"hypnosis",
+"genetic breeding"
+],
+"answer": "vivisection",
+"d": "medium"
+},
+{
+"q": "American illustrator and writer Maurice Sendak is most well-known for writing which children's book?",
+"options": [
+"Fifty Shades of Grey",
+"Where The Wild Things Are",
+"The Cat in the Hat",
+"The Gruffalo"
+],
+"answer": "Where The Wild Things Are",
+"d": "medium"
+},
+{
+"q": "Which Shakespearean heroine is not correctly matched with the play in which she appears?",
+"options": [
+"Titania - Twelfth Night",
+"Lady Capulet - Romeo and Juliet",
+"Beatrice - Much Ado About Nothing",
+"The Three Witches - Macbeth"
+],
+"answer": "Titania - Twelfth Night",
+"d": "medium"
+},
+{
+"q": "Who lost the list of passwords for the Gryffindor tower in Harry Potter and the Prisoner of Azkaban?",
+"options": [
+"Neville Longbottom",
+"Sir Cadogan",
+"Ron Weasley",
+"Seamus Finnigan"
+],
+"answer": "Neville Longbottom",
+"d": "medium"
+},
+{
+"q": "What poem was written by William Blake in 1794?",
+"options": [
+"The Tiger Who Came to Tea",
+"The Tyger",
+"Ode to a Nightingale",
+"Kubla Khan"
+],
+"answer": "The Tyger",
+"d": "medium"
+},
+{
+"q": "In the novel Gone with the Wind, what is Scarlett O Haras first name?",
+"options": [
+"Kathleen",
+"Mammy",
+"Caroline",
+"Katie"
+],
+"answer": "Katie",
+"d": "medium"
+},
+{
+"q": "Who takes the main character of The Golden Compass as a personal assistant?",
+"options": [
+"Mrs. Coulter",
+"Lord Asriel",
+"The head cook",
+"The Master"
+],
+"answer": "Mrs. Coulter",
+"d": "medium"
+},
+{
+"q": "In what genre of literature other than science fiction did Isaac Asimov write?",
+"options": [
+"romance novels",
+"vampire romance",
+"westerns",
+"mystery"
+],
+"answer": "mystery",
+"d": "medium"
+},
+{
+"q": "Who does Dr. Faustus summon, after he sells his soul to the devil for power and knowledge, in the play The Tragical History of Doctor Faustus?",
+"options": [
+"the ghost of Julius Caesar",
+"Helen of Troy",
+"Aphrodite",
+"Cleopatra"
+],
+"answer": "Helen of Troy",
+"d": "medium"
+},
+{
+"q": "In The Silmarillion, Morgoth was a corrupt Ainu, a servant of Iluvatar, responsible for much evil on Middle Earth. What was his original name?",
+"options": [
+"Melkor",
+"Manwe",
+"Sauron",
+"Melian"
+],
+"answer": "Melkor",
+"d": "hard"
+},
+{
+"q": "Who wrote the epic poem The Rape of the Lock in 1714?",
+"options": [
+"John Dryden",
+"William McGonagall",
+"Alexander Pope",
+"Jonathan Swift"
+],
+"answer": "Alexander Pope",
+"d": "hard"
+},
+{
+"q": "Who does Lyra inadvertently destroy in The Amber Spyglass when trying to help him?",
+"options": [
+"A passing cliff-ghast",
+"The angel Xaphania",
+"Metatron",
+"The Authority"
+],
+"answer": "The Authority",
+"d": "hard"
+},
+{
+"q": "Which of the following Steven King books is not connected to the Dark Tower series?",
+"options": [
+"Salems Lot",
+"The Eye of the Dragon",
+"Rose Madder",
+"They are all connected."
+],
+"answer": "They are all connected.",
+"d": "hard"
+},
+{
+"q": "The title of the 2004 movie Eternal Sunshine of the Spotless Mind was taken from the poem Eloisa to Abelard written by which English poet?",
+"options": [
+"A greeting-card writer",
+"John Milton",
+"John Dryden",
+"Alexander Pope"
+],
+"answer": "Alexander Pope",
+"d": "hard"
+},
+{
+"q": "What was the first ever entry written for the SCP Foundation collaborative writing project?",
+"options": [
+"SCP-99999",
+"SCP-001",
+"SCP-002",
+"SCP-173"
+],
+"answer": "SCP-173",
+"d": "hard"
+},
+{
+"q": "What animal is used in the novel The Grapes of Wrath to symbolize the familys problems?",
+"options": [
+"Dog",
+"Turtle",
+"Snake",
+"Jackrabbit"
+],
+"answer": "Turtle",
+"d": "hard"
+},
+{
+"q": "Luke is the main character in which of the following books?",
+"options": [
+"Uprising",
+"Among the Hidden",
+"Luke Skywalker's Diary",
+"Found"
+],
+"answer": "Among the Hidden",
+"d": "hard"
+},
+{
+"q": "What name was applied to the group of British playwrights and novelists from the 1950s, which included John Osborne, John Braine, and Alan Sillitoe?",
+"options": [
+"The Angry Young Men",
+"The Bright Young Things",
+"The Young Rebels",
+"The Kitchen Sink Set"
+],
+"answer": "The Angry Young Men",
+"d": "hard"
+},
+{
+"q": "The paraplegic Marty Coslaw is a character in which Stephen King story?",
+"options": [
+"It",
+"Cujo",
+"Full Moon Fever",
+"Silver Bullet"
+],
+"answer": "Silver Bullet",
+"d": "hard"
+},
+{
+"q": "In the film Gone with the Wind, Scarletts first husband died in the early days of the Civil War. What was the cause of his death?",
+"options": [
+"Measles and influenza",
+"Measles and pneumonia",
+"Typhoid fever",
+"A duel"
+],
+"answer": "Measles and pneumonia",
+"d": "hard"
+},
+{
+"q": "Which character of the novel The Amber Spyglass calls Lyra to the Land of the Dead?",
+"options": [
+"Lee Scoresby",
+"Roger",
+"A homesick ghost",
+"Serafina Pekkala"
+],
+"answer": "Roger",
+"d": "hard"
+}
+]
+}

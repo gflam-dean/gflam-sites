@@ -1,0 +1,1472 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "Television",
+"count": 130,
+"questions": [
+{
+"q": "What does Elmer J. Fudd usually hunt in the Looney Tunes animated series?",
+"options": [
+"Rabbits",
+"Foxes",
+"Deer",
+"Ducks"
+],
+"answer": "Rabbits",
+"d": "easy"
+},
+{
+"q": "In the show Stranger Things, what is Eleven's favorite breakfast food?",
+"options": [
+"Toaster Strudels",
+"Pop-Tarts",
+"Leftover Pizza",
+"Eggo Waffles"
+],
+"answer": "Eggo Waffles",
+"d": "easy"
+},
+{
+"q": "In Supernatural, what's is Sam's brothers name?",
+"options": [
+"Bobby",
+"Crowley",
+"Castiel",
+"Dean"
+],
+"answer": "Dean",
+"d": "easy"
+},
+{
+"q": "On November 22, 1963 which president did Walter Cronkite announce had died?",
+"options": [
+"Truman",
+"Kennedy",
+"Eisenhower",
+"Lincoln"
+],
+"answer": "Kennedy",
+"d": "easy"
+},
+{
+"q": "Which of these characters in \"Stranger Things\" has the power of Telekinesis?",
+"options": [
+"Steve",
+"Max",
+"Eleven",
+"Will"
+],
+"answer": "Eleven",
+"d": "easy"
+},
+{
+"q": "Which of the four Teenage Mutant Ninja Turtles wore the purple mask?",
+"options": [
+"Donatello",
+"Leonardo",
+"Michelangelo",
+"Splinter"
+],
+"answer": "Donatello",
+"d": "easy"
+},
+{
+"q": "I am married to a man, named Ricky and my best friend is Ethel. What TV show was I on?",
+"options": [
+"The Honeymooners",
+"The Brady Bunch",
+"The Dick Van Dyke Show",
+"I Love Lucy"
+],
+"answer": "I Love Lucy",
+"d": "easy"
+},
+{
+"q": "In \"Breaking Bad\", Walter White is a high school teacher diagnosed with which form of cancer?",
+"options": [
+"Prostate Cancer",
+"Testicular Cancer",
+"Throat Cancer",
+"Lung Cancer"
+],
+"answer": "Lung Cancer",
+"d": "easy"
+},
+{
+"q": "What NBC sitcom once saw two of its characters try to pitch NBC on a sitcom about nothing?",
+"options": [
+"Frasier",
+"Friends",
+"Seinfeld",
+"Curb Your Enthusiasm"
+],
+"answer": "Seinfeld",
+"d": "easy"
+},
+{
+"q": "The HBO series \"Game of Thrones\" is based on which series of books?",
+"options": [
+"A Clash of Kings",
+"The Wheel of Time",
+"The Notebook",
+"A Song of Ice and Fire"
+],
+"answer": "A Song of Ice and Fire",
+"d": "easy"
+},
+{
+"q": "What fruit does Spongebob live in?",
+"options": [
+"Pineapple",
+"Coconut",
+"Mango",
+"Watermelon"
+],
+"answer": "Pineapple",
+"d": "easy"
+},
+{
+"q": "In Breaking Bad, the initials W.W. refer to which of the following?",
+"options": [
+"William Wolf",
+"Wally Walrus",
+"Winnie the Pooh",
+"Walter White"
+],
+"answer": "Walter White",
+"d": "easy"
+},
+{
+"q": "What breed of dog is \"Scooby Doo\"?",
+"options": [
+"Mastiff",
+"Chihuahua",
+"Weimaraner",
+"Great Dane"
+],
+"answer": "Great Dane",
+"d": "easy"
+},
+{
+"q": "In the original Star Trek TV series, what was Captain James T. Kirk's middle name?",
+"options": [
+"Thaddeus",
+"Tiberius",
+"Tarquin",
+"Tobias"
+],
+"answer": "Tiberius",
+"d": "easy"
+},
+{
+"q": "What is the surname of the character Daryl in AMC's show The Walking Dead?",
+"options": [
+"Dixon",
+"Dixson",
+"Crossbow",
+"Grimes"
+],
+"answer": "Dixon",
+"d": "easy"
+},
+{
+"q": "Don't have a cow, man! and Eat my shorts! are the catch phrases used by what character on The Simpsons?",
+"options": [
+"Bart",
+"Mr. Burns",
+"Lisa",
+"Homer"
+],
+"answer": "Bart",
+"d": "easy"
+},
+{
+"q": "In AMC's TV Series \"The Walking Dead\" what are \"Zombies\" referred to as?",
+"options": [
+"Draggers",
+"Walkers",
+"Creepers",
+"Munchers"
+],
+"answer": "Walkers",
+"d": "easy"
+},
+{
+"q": "Who is the star of the AMC series Breaking Bad?",
+"options": [
+"Walter White",
+"Saul Goodman",
+"Jesse Pinkman",
+"Skyler White"
+],
+"answer": "Walter White",
+"d": "easy"
+},
+{
+"q": "What TV show is about a grandfather dragging his grandson around on adventures?",
+"options": [
+"Peppa Pig",
+"Solar Opposites",
+"Rick & Morty",
+"Futurama"
+],
+"answer": "Rick & Morty",
+"d": "easy"
+},
+{
+"q": "In the show, Doctor Who, what does T.A.R.D.I.S stand for?",
+"options": [
+"Time And Roving Dimensions In Space",
+"Time And Relative Dimensions In Space",
+"Toilet Aid Rope Dog Is Soup",
+"Time And Relative Distance In Space"
+],
+"answer": "Time And Relative Dimensions In Space",
+"d": "easy"
+},
+{
+"q": "Do, or do not. There is no try was a mystical phrase used in which classic film?",
+"options": [
+"Star Wars: Return of the Jedi",
+"Star Trek II: The Wrath of Khan",
+"Star Wars V: The Empire Strikes Back",
+"Star Wars: A New Hope"
+],
+"answer": "Star Wars V: The Empire Strikes Back",
+"d": "easy"
+},
+{
+"q": "Which actor portrays \"Walter White\" in the series \"Breaking Bad\"?",
+"options": [
+"Bob Odenkirk",
+"Andrew Lincoln",
+"Bryan Cranston",
+"Aaron Paul"
+],
+"answer": "Bryan Cranston",
+"d": "easy"
+},
+{
+"q": "What is the setting of the show \"Parks and Recreation\"?",
+"options": [
+"Eagleton, Indiana",
+"Pawnee, Indiana",
+"Indianapolis, Indiana",
+"Springfield, USA"
+],
+"answer": "Pawnee, Indiana",
+"d": "medium"
+},
+{
+"q": "Which character on Buffy the Vampire Slayer was played by actress Eliza Dushku?",
+"options": [
+"Kendra",
+"Buffy",
+"Faith",
+"Cordelia"
+],
+"answer": "Faith",
+"d": "medium"
+},
+{
+"q": "Which track by \"Massive Attack\" is used for the theme of \"House\"?",
+"options": [
+"Greensleeves",
+"Unfinished Sympathy",
+"Teardrop",
+"Angel"
+],
+"answer": "Teardrop",
+"d": "medium"
+},
+{
+"q": "In the cartoon 'SpongeBob SquarePants', what did the acronym E.V.I.L stand for?",
+"options": [
+"Every Villain Is Lazy",
+"Every Villain Is Limes",
+"Every Villain Is Lemons",
+"Every Villain Is Lemonade"
+],
+"answer": "Every Villain Is Lemons",
+"d": "medium"
+},
+{
+"q": "Which of these Bojack Horseman characters is a human?",
+"options": [
+"Tom Jumbo-Grumbo",
+"Princess Carolyn",
+"Mr. Peanutbutter",
+"Todd Chavez"
+],
+"answer": "Todd Chavez",
+"d": "medium"
+},
+{
+"q": "Which character dies in the Buffy the Vampire Slayer episode Passion?",
+"options": [
+"Buffy",
+"Giles",
+"Jenny",
+"Joyce"
+],
+"answer": "Jenny",
+"d": "medium"
+},
+{
+"q": "In the show \"The Office\" who does Michael Scott eventually end up with?",
+"options": [
+"His World's Best Boss mug",
+"Pam Beesly",
+"Holly Flax",
+"Jan Levinson"
+],
+"answer": "Holly Flax",
+"d": "medium"
+},
+{
+"q": "In Desperate Housewives season one, how many children does Lynette have?",
+"options": [
+"five",
+"two",
+"four",
+"a dozen"
+],
+"answer": "four",
+"d": "medium"
+},
+{
+"q": "In the TV show \"Mad Men\", what was Donald Draper's birthname?",
+"options": [
+"Donald Whitman",
+"Richard Draper",
+"Richard \"Dick\" Whitman",
+"Bob Benson"
+],
+"answer": "Richard \"Dick\" Whitman",
+"d": "medium"
+},
+{
+"q": "The TV series The Wonder Years, created by Carol Black and Neal Marlens, focuses on which fictional family?",
+"options": [
+"The Pfeiffers",
+"The Arnolds",
+"The Coopers",
+"The Cleavers"
+],
+"answer": "The Arnolds",
+"d": "medium"
+},
+{
+"q": "In the 80s cartoon Thundercats what was the name of Lion-Os sword?",
+"options": [
+"Excalibur",
+"Sword of Omens",
+"Sword of Thundera",
+"Blade of Omens"
+],
+"answer": "Sword of Omens",
+"d": "medium"
+},
+{
+"q": "What is the name of Jacks father on the TV show Lost?",
+"options": [
+"Christian",
+"Jacob",
+"Ray",
+"Darth Vader"
+],
+"answer": "Christian",
+"d": "medium"
+},
+{
+"q": "What is Xanders special power in Buffy the Vampire Slayer?",
+"options": [
+"Super strength",
+"Telepathy",
+"Turning into a hyena",
+"None"
+],
+"answer": "None",
+"d": "medium"
+},
+{
+"q": "In the comedy series \"Trailer Park Boys\", which of the following characters takes care of stray cats?",
+"options": [
+"Bubbles",
+"Garfield",
+"Julian",
+"Ricky"
+],
+"answer": "Bubbles",
+"d": "medium"
+},
+{
+"q": "Which of these singers has never appeared on the Mickey Mouse Club?",
+"options": [
+"Jessica Simpson",
+"Ryan Gosling",
+"Christina Aguilera",
+"Britney Spears"
+],
+"answer": "Jessica Simpson",
+"d": "medium"
+},
+{
+"q": "In Game of Thrones, what is Littlefinger's real name?",
+"options": [
+"Jorah Mormont",
+"Hodor",
+"Petyr Baelish",
+"Varys"
+],
+"answer": "Petyr Baelish",
+"d": "medium"
+},
+{
+"q": "In Game of Thrones what is the name of Jon Snow's sword?",
+"options": [
+"Ice",
+"Longclaw",
+"Sting",
+"Needle"
+],
+"answer": "Longclaw",
+"d": "medium"
+},
+{
+"q": "Which company has exclusive rights to air episodes of the \"The Grand Tour\"?",
+"options": [
+"Netflix",
+"CCTV",
+"BBC",
+"Amazon"
+],
+"answer": "Amazon",
+"d": "medium"
+},
+{
+"q": "Who played Agent Fox Mulder in the TV sci-fi drama \"The X-Files\"?",
+"options": [
+"David Duchovny",
+"Gillian Anderson",
+"Robert Patrick",
+"Mitch Pileggi"
+],
+"answer": "David Duchovny",
+"d": "medium"
+},
+{
+"q": "What part did Robert Lowe play in three seasons of The West Wing?",
+"options": [
+"Leo McGarry",
+"Sam Seaborn",
+"President Bartlet",
+"Josh Lyman"
+],
+"answer": "Sam Seaborn",
+"d": "medium"
+},
+{
+"q": "In season one of the Netflix political drama \"House of Cards\", what government position does Frank Underwood hold?",
+"options": [
+"House Majority Whip",
+"House Majority Leader",
+"Secretary of State",
+"Vice President"
+],
+"answer": "House Majority Whip",
+"d": "medium"
+},
+{
+"q": "When did Spongebob Squarepants first air?",
+"options": [
+"May 1, 1999",
+"May 1, 1998",
+"July 17, 1999",
+"April 1, 2000"
+],
+"answer": "May 1, 1999",
+"d": "medium"
+},
+{
+"q": "Who plays the character of Dennis Reynolds on It's Always Sunny in Philadelphia?",
+"options": [
+"Charlie Day",
+"Glenn Howerton",
+"Rob McElhenney",
+"Danny DeVito"
+],
+"answer": "Glenn Howerton",
+"d": "medium"
+},
+{
+"q": "Which Star Trek race advances itself through assimilation?",
+"options": [
+"Romulan",
+"Borg",
+"Ewok",
+"Klingon"
+],
+"answer": "Borg",
+"d": "medium"
+},
+{
+"q": "In Star Trek: The Next Generation, what is the name of Data's cat?",
+"options": [
+"Data Jr.",
+"Whiskers",
+"Spot",
+"Riker"
+],
+"answer": "Spot",
+"d": "medium"
+},
+{
+"q": "In \"Breaking Bad,\" which main character was planned to be killed in Season 1 but wasn't because the show creator liked the actor?",
+"options": [
+"Hank Schrader",
+"Jesse Pinkman",
+"Skyler White",
+"Heisenberg"
+],
+"answer": "Jesse Pinkman",
+"d": "medium"
+},
+{
+"q": "In DuckTales, what is the name of the city where all the main characters live?",
+"options": [
+"Mallardton",
+"Quacktown",
+"Duckville",
+"Duckburg"
+],
+"answer": "Duckburg",
+"d": "medium"
+},
+{
+"q": "In the TV show \"Cheers\", Sam Malone was a former relief pitcher for which baseball team?",
+"options": [
+"Boston Red Sox",
+"Boston Braves",
+"Chicago Cubs",
+"New York Yankees"
+],
+"answer": "Boston Red Sox",
+"d": "medium"
+},
+{
+"q": "What is the name of the main character in \"The Flash\" TV series?",
+"options": [
+"Bart Allen",
+"Wally West",
+"Bruce Wayne",
+"Barry Allen"
+],
+"answer": "Barry Allen",
+"d": "medium"
+},
+{
+"q": "What was the name of the toy shell SpongeBob and Patrick had with them in the Kelp Woods?",
+"options": [
+"Magic conch shell",
+"Magic Clam Shell",
+"Mystic Sea Shell",
+"Talking Sand Dollar"
+],
+"answer": "Magic conch shell",
+"d": "medium"
+},
+{
+"q": "What is the name of the \"Flash\" and \"Arrow\" spinoff featuring a team of characters that have appeared on both shows?",
+"options": [
+"Legends of Tomorrow",
+"Titans",
+"Legends of the Hidden Temple",
+"Heroes of Tomorrow"
+],
+"answer": "Legends of Tomorrow",
+"d": "medium"
+},
+{
+"q": "In Game of Thrones, what continent lies across the Narrow Sea from Westeros?",
+"options": [
+"Easteros",
+"Sothoryos",
+"Essos",
+"Ulthos"
+],
+"answer": "Essos",
+"d": "medium"
+},
+{
+"q": "What was the name of Ross' pet monkey on \"Friends\"?",
+"options": [
+"Coco",
+"Marcel",
+"Marcus",
+"Curious George"
+],
+"answer": "Marcel",
+"d": "medium"
+},
+{
+"q": "From what show is the character \"James Doakes\"?",
+"options": [
+"Dexter",
+"Boardwalk Empire",
+"The Wire",
+"Sesame Street"
+],
+"answer": "Dexter",
+"d": "medium"
+},
+{
+"q": "When did the TV show Lost premier?",
+"options": [
+"August 2004",
+"September 1994",
+"October 2004",
+"September 2004"
+],
+"answer": "September 2004",
+"d": "medium"
+},
+{
+"q": "Who is Izzie talking about on the show Greys Anatomy when she asks the following question: What self-respecting surgeon wears salmon-colored scrubs??",
+"options": [
+"Dr. McDreamy",
+"Addison",
+"Cristina",
+"Callie"
+],
+"answer": "Addison",
+"d": "medium"
+},
+{
+"q": "Which show is known for the songs \"You are a Pirate\", \"Cooking by the Book\" and \"We Are Number One\"?",
+"options": [
+"Sofia the First",
+"Yo Gabba Gabba!",
+"Teletubbies",
+"LazyTown"
+],
+"answer": "LazyTown",
+"d": "medium"
+},
+{
+"q": "What was the first song fictional character Hannah Montana ever sang?",
+"options": [
+"Best of Both Worlds",
+"Nobody's Perfect",
+"If We Were a Movie",
+"The Best of Both"
+],
+"answer": "Best of Both Worlds",
+"d": "medium"
+},
+{
+"q": "How long was Ken Jennings' win streak on Jeopardy?",
+"options": [
+"1000",
+"75",
+"74",
+"68"
+],
+"answer": "74",
+"d": "medium"
+},
+{
+"q": "What TV show featured older women named Blanche, Rose, Dorothy and Sophia?",
+"options": [
+"The Wonder Years",
+"Designing Women",
+"The Golden Palace",
+"The Golden Girls"
+],
+"answer": "The Golden Girls",
+"d": "medium"
+},
+{
+"q": "Where does Jim decide to go on vacation in The Office, season 2?",
+"options": [
+"Austrailia",
+"Mordor",
+"Fiji",
+"Hong Kong"
+],
+"answer": "Austrailia",
+"d": "medium"
+},
+{
+"q": "Who was the winner of the first season of Americas Next Top Model?",
+"options": [
+"Adrianne Curry",
+"Elyse Sewell",
+"Tyra Banks",
+"Shannon Stewart"
+],
+"answer": "Adrianne Curry",
+"d": "medium"
+},
+{
+"q": "What 1970s show, starring Peter Falk, popularized the inverted detective story format?",
+"options": [
+"Columbo",
+"McCloud",
+"Murder She Wrote",
+"Kojak"
+],
+"answer": "Columbo",
+"d": "medium"
+},
+{
+"q": "What color hat does Timmy, the main character of The Fairly OddParents, wear?",
+"options": [
+"Red",
+"Rainbow",
+"Pink",
+"Purple"
+],
+"answer": "Pink",
+"d": "medium"
+},
+{
+"q": "Who composed the theme song for The Simpsons?",
+"options": [
+"Bart Simpson",
+"Alf Clausen",
+"Danny Elfman",
+"Hans Zimmer"
+],
+"answer": "Danny Elfman",
+"d": "medium"
+},
+{
+"q": "When did the TV show Rick and Morty first air on Adult Swim?",
+"options": [
+"1999",
+"2012",
+"2014",
+"2013"
+],
+"answer": "2013",
+"d": "medium"
+},
+{
+"q": "In Two and a Half Men, what is Alan Harper's son's name?",
+"options": [
+"Chuck",
+"Jake",
+"Charlie",
+"Jack"
+],
+"answer": "Jake",
+"d": "medium"
+},
+{
+"q": "British actor David Morrissey stars as which role in \"The Walking Dead\"?",
+"options": [
+"The Governor",
+"Negan",
+"Merle Dixon",
+"Rick Grimes"
+],
+"answer": "The Governor",
+"d": "medium"
+},
+{
+"q": "In the Star Trek universe, what color is Vulcan blood?",
+"options": [
+"Purple",
+"Green",
+"Blue",
+"Fluorescent Pink"
+],
+"answer": "Green",
+"d": "medium"
+},
+{
+"q": "What was the favorite after-school hangout for the students in Happy Days?",
+"options": [
+"Al's",
+"The Krusty Burger",
+"Arnolds",
+"Rosie's"
+],
+"answer": "Arnolds",
+"d": "medium"
+},
+{
+"q": "In the Doctor Who universe, how many times can a time lord normally regenerate?",
+"options": [
+"10",
+"13",
+"12",
+"Infinite"
+],
+"answer": "12",
+"d": "medium"
+},
+{
+"q": "How many gallons are there in a barrel of oil?",
+"options": [
+"40 US gallons",
+"42 US gallons",
+"100 US gallons",
+"55 US gallons"
+],
+"answer": "42 US gallons",
+"d": "medium"
+},
+{
+"q": "Who plays the part of A.C. Slater on Saved by the Bell?",
+"options": [
+"Mario Suarez",
+"Super Mario",
+"Mario Lopez",
+"Mario Ruiz"
+],
+"answer": "Mario Lopez",
+"d": "medium"
+},
+{
+"q": "What is the name of the main antagonists in Battlestar Galactica?",
+"options": [
+"The Daleks",
+"The Cylons",
+"The Colonials",
+"The Borg"
+],
+"answer": "The Cylons",
+"d": "medium"
+},
+{
+"q": "Which member of the Office staff often calls Pam hot?",
+"options": [
+"Ryan",
+"Creed",
+"Stanley",
+"Kevin"
+],
+"answer": "Kevin",
+"d": "medium"
+},
+{
+"q": "What unforgettable question did Jay Leno ask Hugh Grant on July 10, 1995 on the The Tonight Show in reference to Hughs arrest for being with a prostitute?",
+"options": [
+"Don't you have a wife at home?",
+"And how was she?",
+"Have you lost your mind?",
+"What the hell were you thinking?"
+],
+"answer": "What the hell were you thinking?",
+"d": "medium"
+},
+{
+"q": "Who plays the recurring character of Mr. Big?",
+"options": [
+"John Corbett",
+"Kyle MacLachlan",
+"Chris Meloni",
+"Chris Noth"
+],
+"answer": "Chris Noth",
+"d": "medium"
+},
+{
+"q": "In what year did \"The Big Bang Theory\" debut on CBS?",
+"options": [
+"2008",
+"1969",
+"2007",
+"2006"
+],
+"answer": "2007",
+"d": "medium"
+},
+{
+"q": "What is the name of the mad scientist who owns Planet Express in Futurama?",
+"options": [
+"Ogden Wernstrom",
+"Hubert J. Farnsworth",
+"Rick Sanchez",
+"Hubert Zoidberg"
+],
+"answer": "Hubert J. Farnsworth",
+"d": "medium"
+},
+{
+"q": "What is the gadget which insures that no one can overhear the discussions in the Chiefs office on the Get Smart TV show?",
+"options": [
+"The Cone of Shame",
+"Sound Dome",
+"Privacy Shield",
+"Cone of Silence"
+],
+"answer": "Cone of Silence",
+"d": "medium"
+},
+{
+"q": "The fictional movie 'Rochelle, Rochelle' features in which sitcom?",
+"options": [
+"Curb Your Enthusiasm",
+"Friends",
+"Seinfeld",
+"Gilligan's Island"
+],
+"answer": "Seinfeld",
+"d": "medium"
+},
+{
+"q": "What was the name of the teenage witch played by Melisa Joan Hart who lives with her witch aunts Hilda and Zelda?",
+"options": [
+"Wanda",
+"Hermione",
+"Sabrina",
+"Samantha"
+],
+"answer": "Sabrina",
+"d": "medium"
+},
+{
+"q": "In the show \"Futurama\" what is Fry's full name?",
+"options": [
+"Fry Philip Jr.",
+"Philip J. Fry",
+"Fry Rodr\u00edguez",
+"Phillip J. Fry"
+],
+"answer": "Philip J. Fry",
+"d": "medium"
+},
+{
+"q": "Who is Ravens best friend on the show That's So Raven?",
+"options": [
+"Chelsea",
+"Alana",
+"Hannah Montana",
+"Sydney"
+],
+"answer": "Chelsea",
+"d": "medium"
+},
+{
+"q": "Who was Fred and Barneys boss in the popular animated series The Flintstones?",
+"options": [
+"Mr. Rockhead",
+"Mr. Spacely",
+"Mr. Slate",
+"Mr. Granite"
+],
+"answer": "Mr. Slate",
+"d": "medium"
+},
+{
+"q": "In the television show Breaking Bad, what is the street name of Walter and Jesse's notorious product?",
+"options": [
+"Blue Ice",
+"Smurf Dust",
+"Blue Sky",
+"Heisenberg Blue"
+],
+"answer": "Blue Sky",
+"d": "medium"
+},
+{
+"q": "At which university do \"The Big Bang Theory\" characters Mr. Wolowitz and Drs. Cooper, Hofstadter and Koothrappali work?",
+"options": [
+"Caltech",
+"Stanford",
+"Hogwarts",
+"UCLA"
+],
+"answer": "Caltech",
+"d": "medium"
+},
+{
+"q": "Who was the original voice actor of Shaggy Rogers in Scooby-Doo?",
+"options": [
+"Matthew Lillard",
+"Don Messick",
+"Casey Kasem",
+"Frank Welker"
+],
+"answer": "Casey Kasem",
+"d": "medium"
+},
+{
+"q": "Who played Nora Tyler Bing, Chandlers mother in Friends?",
+"options": [
+"Christina Pickles",
+"Betty White",
+"Morgan Fairchild",
+"Kathleen Turner"
+],
+"answer": "Morgan Fairchild",
+"d": "medium"
+},
+{
+"q": "In the TV show 'M*A*S*H', what was the nickname of Corporal Walter O'Reilly?",
+"options": [
+"Klinger",
+"Radar",
+"Sonar",
+"Sparky"
+],
+"answer": "Radar",
+"d": "medium"
+},
+{
+"q": "Cesar Romero played which iconic Batman villain from the 1960's TV show?",
+"options": [
+"The Joker",
+"The Riddler",
+"The Penguin",
+"The Hamburglar"
+],
+"answer": "The Joker",
+"d": "medium"
+},
+{
+"q": "What is the name of the planet that the Doctor from television series \"Doctor Who\" comes from?",
+"options": [
+"Gallifrey",
+"Mondas",
+"Tatooine",
+"Skaro"
+],
+"answer": "Gallifrey",
+"d": "medium"
+},
+{
+"q": "Which employee does Michael Scott run into with his car in an episode of The Office?",
+"options": [
+"Phyllis",
+"Oscar",
+"Meredith",
+"Stanley"
+],
+"answer": "Meredith",
+"d": "medium"
+},
+{
+"q": "In Star Trek, what is the name of Spock's father?",
+"options": [
+"Tuvok",
+"T'Pal",
+"Surak",
+"Sarek"
+],
+"answer": "Sarek",
+"d": "medium"
+},
+{
+"q": "What's Dr. Doofenshmirtz first name?",
+"options": [
+"Hans",
+"Heinz",
+"Heidi",
+"Hank"
+],
+"answer": "Heinz",
+"d": "medium"
+},
+{
+"q": "Which British writer wrote for both Doctor Who and Sherlock?",
+"options": [
+"Steven Moffatt",
+"William Shakespeare",
+"Chris Chibnall",
+"Russell T Davies"
+],
+"answer": "Steven Moffatt",
+"d": "medium"
+},
+{
+"q": "Who was Peyton going out with in the very first episode?",
+"options": [
+"Jake",
+"Nathan",
+"Lucas",
+"Whitey"
+],
+"answer": "Nathan",
+"d": "medium"
+},
+{
+"q": "Who was the winner of the 2016 WWE Royal Rumble?",
+"options": [
+"Santa Claus",
+"Roman Reigns",
+"Dean Ambrose",
+"Triple H"
+],
+"answer": "Triple H",
+"d": "medium"
+},
+{
+"q": "Dr. Daniel Jackson is a member of a secret military team that travels through space in which TV series?",
+"options": [
+"Stargate SG-1",
+"Quantum Leap",
+"Babylon 5",
+"Battlestar Galactica"
+],
+"answer": "Stargate SG-1",
+"d": "medium"
+},
+{
+"q": "When did Judge Judy first air on American television?",
+"options": [
+"1997",
+"1999",
+"1996",
+"1985"
+],
+"answer": "1996",
+"d": "medium"
+},
+{
+"q": "In which British seaside town was the BBC sitcom \"Fawlty Towers\" set?",
+"options": [
+"Torquay",
+"Skegness",
+"Brighton",
+"Paignton"
+],
+"answer": "Torquay",
+"d": "medium"
+},
+{
+"q": "What was Kels occupation in the Kath Kim TV series?",
+"options": [
+"Greengrocer",
+"Brain surgeon",
+"Butcher",
+"Baker"
+],
+"answer": "Butcher",
+"d": "medium"
+},
+{
+"q": "What game show host has a Black Belt in Martial Arts and studied under Chuck Norris?",
+"options": [
+"Alex Trebek",
+"Chuck Norris",
+"Bob Barker",
+"Pat Sajak"
+],
+"answer": "Bob Barker",
+"d": "medium"
+},
+{
+"q": "What was the last name of Chachi, the character from Happy Days, who eventually married Joanie Cunningham?",
+"options": [
+"Cunningham",
+"Malachi",
+"Fonzarelli",
+"Arcola"
+],
+"answer": "Arcola",
+"d": "medium"
+},
+{
+"q": "How many seasons did The Flintstones air?",
+"options": [
+"5",
+"20",
+"8",
+"6"
+],
+"answer": "6",
+"d": "medium"
+},
+{
+"q": "On the TV show Supernatural, Dean Winchesters most beloved possession is his automobile. What kind of vehicle does he drive?",
+"options": [
+"The Batmobile",
+"Chevrolet Impala",
+"Ford Mustang",
+"Dodge Charger"
+],
+"answer": "Chevrolet Impala",
+"d": "medium"
+},
+{
+"q": "When Jim Halpert has an interview with the company CEO on the TV show The Office, what comment does the CEO make about Jim?",
+"options": [
+"He needs an MBA to advance in the company.",
+"He makes a good impression on everyone he meets.",
+"He reminds me of myself.",
+"He has a firm handshake."
+],
+"answer": "He makes a good impression on everyone he meets.",
+"d": "medium"
+},
+{
+"q": "Which widowed TV mother travelled around in a colorful bus with her children Keith, Laurie, Danny, Christopher and Tracy?",
+"options": [
+"Morticia Addams",
+"Marion Cunningham",
+"Shirley Partridge",
+"Carol Brady"
+],
+"answer": "Shirley Partridge",
+"d": "medium"
+},
+{
+"q": "Which character was played by Dustin Diamond in the sitcom 'Saved by the Bell'?",
+"options": [
+"Zack Morris",
+"Mr. Belding",
+"Screech",
+"A.C. Slater"
+],
+"answer": "Screech",
+"d": "medium"
+},
+{
+"q": "Guy's Grocery Games is hosted by which presenter?",
+"options": [
+"Guy Fieri",
+"Guy Martin",
+"Bobby Flay",
+"Guy Ritchie"
+],
+"answer": "Guy Fieri",
+"d": "medium"
+},
+{
+"q": "What year was Netflix founded?",
+"options": [
+"1997",
+"1975",
+"1998",
+"1999"
+],
+"answer": "1997",
+"d": "medium"
+},
+{
+"q": "Which of the following actors portrayed the Ninth Doctor in the British television show \"Doctor Who\"?",
+"options": [
+"Tom Baker",
+"Christopher Eccleston",
+"Matt Smith",
+"David Tennant"
+],
+"answer": "Christopher Eccleston",
+"d": "medium"
+},
+{
+"q": "In TV series The Saint, what is the Saints actual name?",
+"options": [
+"Sebastian Cain",
+"Artemus Gordon",
+"Simon Templar",
+"Bruce Wayne"
+],
+"answer": "Simon Templar",
+"d": "medium"
+},
+{
+"q": "In the Sci-Fi television show Doctor Who, who plays the Tenth Doctor?",
+"options": [
+"Christopher Eccleston",
+"Matt Smith",
+"David Tennant",
+"Rowan Atkinson"
+],
+"answer": "David Tennant",
+"d": "medium"
+},
+{
+"q": "Grant Gustin plays which superhero on the CW show of the same name?",
+"options": [
+"Aquaman",
+"The Flash",
+"The Arrow",
+"The Atom"
+],
+"answer": "The Flash",
+"d": "medium"
+},
+{
+"q": "What was the name of the family featured in the TV comedy Bewitched?",
+"options": [
+"Stephens",
+"Munster",
+"Tate",
+"Kravitz"
+],
+"answer": "Stephens",
+"d": "medium"
+},
+{
+"q": "The \"Psycho\" series of videos on YouTube was created by which of the following?",
+"options": [
+"RiDGiD Films",
+"Billy Familia",
+"PewDiePie",
+"RiDGiD STUDiOS"
+],
+"answer": "RiDGiD STUDiOS",
+"d": "hard"
+},
+{
+"q": "What is the favorite band of Phineas and Ferbs parents on the popular animated TV series?",
+"options": [
+"Slamm",
+"The Beatles",
+"Love Handel",
+"The Bettys"
+],
+"answer": "Love Handel",
+"d": "hard"
+},
+{
+"q": "Which of the following awards do Matt Stone and Trey Parker NOT have?",
+"options": [
+"Tony",
+"Emmy",
+"Oscar",
+"Grammy"
+],
+"answer": "Oscar",
+"d": "hard"
+},
+{
+"q": "Which of these Nickelodeon game shows aired first?",
+"options": [
+"Finders Keepers",
+"Nick Arcade",
+"Nickelodeon Guts",
+"Double Dare"
+],
+"answer": "Double Dare",
+"d": "hard"
+},
+{
+"q": "What was the callsign of Commander William Adama in Battlestar Galactica (2004)?",
+"options": [
+"Starbuck",
+"Husker",
+"Apollo",
+"Crashdown"
+],
+"answer": "Husker",
+"d": "hard"
+},
+{
+"q": "Who played the role of Oliver Wendell Douglas on TV show, Green Acres?",
+"options": [
+"Eddie Albert",
+"Pat Buttram",
+"Mister Ed",
+"Buddy Ebsen"
+],
+"answer": "Eddie Albert",
+"d": "hard"
+},
+{
+"q": "Alan Reed is known for providing the voice of which character?",
+"options": [
+"Mickey Mouse",
+"Fred Flintstone",
+"Yogi Bear",
+"Barney Rubble"
+],
+"answer": "Fred Flintstone",
+"d": "hard"
+},
+{
+"q": "How many episodes of the animated show Top Cat were aired on television?",
+"options": [
+"30",
+"100",
+"52",
+"26"
+],
+"answer": "30",
+"d": "hard"
+},
+{
+"q": "How many seasons did \"Stargate SG-1\" have?",
+"options": [
+"10",
+"12",
+"3",
+"9"
+],
+"answer": "10",
+"d": "hard"
+},
+{
+"q": "Which actor was not a major character in TV Show Freaks and Geeks?",
+"options": [
+"James Franco",
+"Seth Rogen",
+"Jason Segel",
+"Jonah Hill"
+],
+"answer": "Jonah Hill",
+"d": "hard"
+},
+{
+"q": "What was the name of the woman with whom Captain Kirk had a 2-year relationship in the Star Trek series?",
+"options": [
+"Ruth",
+"Edith",
+"Lieutenant Uhura",
+"Anatonia"
+],
+"answer": "Anatonia",
+"d": "hard"
+},
+{
+"q": "What Days of Our Lives character choked on their own doughnut?",
+"options": [
+"Julie",
+"Stefano",
+"Marlena",
+"Alice"
+],
+"answer": "Alice",
+"d": "hard"
+}
+]
+}

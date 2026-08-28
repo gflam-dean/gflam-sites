@@ -1,0 +1,1758 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "Animals",
+"count": 156,
+"questions": [
+{
+"q": "On which of these continents can you find the Salt Water Crocodile?",
+"options": [
+"North America",
+"Antarctica",
+"Australia",
+"Africa"
+],
+"answer": "Australia",
+"d": "easy"
+},
+{
+"q": "Wombats are native to which Country?",
+"options": [
+"Papua New Guinea",
+"Switzerland",
+"Australia",
+"New Zealand"
+],
+"answer": "Australia",
+"d": "easy"
+},
+{
+"q": "What is the collective noun for a group of crows?",
+"options": [
+"Flock",
+"Gossip",
+"Murder",
+"Parliament"
+],
+"answer": "Murder",
+"d": "easy"
+},
+{
+"q": "Which of the following color of egg is incorrect for a chicken egg?",
+"options": [
+"pink",
+"white",
+"blue",
+"black"
+],
+"answer": "black",
+"d": "easy"
+},
+{
+"q": "What is the name of a rabbit's abode?",
+"options": [
+"Sett",
+"Burrow",
+"Penthouse",
+"Den"
+],
+"answer": "Burrow",
+"d": "easy"
+},
+{
+"q": "What is the fastest animal?",
+"options": [
+"Peregrine Falcon",
+"Cheetah",
+"Golden Eagle",
+"Horsefly"
+],
+"answer": "Peregrine Falcon",
+"d": "easy"
+},
+{
+"q": "Which is the national animal of India?",
+"options": [
+"Kangaroo",
+"Tiger",
+"Asiatic Lion",
+"Indian Elephant"
+],
+"answer": "Tiger",
+"d": "easy"
+},
+{
+"q": "Which of these is only a dog food brand?",
+"options": [
+"Eukanuba",
+"Purina",
+"Cesar",
+"Iams"
+],
+"answer": "Cesar",
+"d": "easy"
+},
+{
+"q": "What is a baby kangaroo called?",
+"options": [
+"A pup",
+"A joey",
+"A calf",
+"A cub"
+],
+"answer": "A joey",
+"d": "easy"
+},
+{
+"q": "What type of animal is the cottonmouth?",
+"options": [
+"Turtle",
+"Lizard",
+"Snake",
+"Mouse"
+],
+"answer": "Snake",
+"d": "easy"
+},
+{
+"q": "What is the predominant color in Amazon Parrots plumage?",
+"options": [
+"Green",
+"Red",
+"Jet black",
+"Yellow"
+],
+"answer": "Green",
+"d": "easy"
+},
+{
+"q": "What is the only place in the world you can see platypuses in the wild?",
+"options": [
+"Papua New Guinea",
+"Australia and Tasmania",
+"The Amazon rainforest",
+"New Zealand"
+],
+"answer": "Australia and Tasmania",
+"d": "easy"
+},
+{
+"q": "What is a group of lions called?",
+"options": [
+"Pride",
+"Herd",
+"Gaggle",
+"Pack"
+],
+"answer": "Pride",
+"d": "easy"
+},
+{
+"q": "The diet of the koala consists mainly of what plant species?",
+"options": [
+"Acacia",
+"Cactus",
+"Eucalyptus",
+"Bamboo"
+],
+"answer": "Eucalyptus",
+"d": "easy"
+},
+{
+"q": "Which of the following statements is true about mosquitoes?",
+"options": [
+"Mosquitoes feed only on fizzy drink.",
+"Only female mosquitoes suck blood.",
+"Every mosquito on Earth drinks blood.",
+"Only male mosquitoes suck blood."
+],
+"answer": "Only female mosquitoes suck blood.",
+"d": "easy"
+},
+{
+"q": "How many horns does the Indian Rhinoceros, found only in Asia, have on its snout?",
+"options": [
+"Two",
+"None",
+"A dozen",
+"One"
+],
+"answer": "One",
+"d": "easy"
+},
+{
+"q": "What is the special talent of the penguin Mumble from the 2006 animated movie Happy Feet?",
+"options": [
+"Ice skating",
+"Singing",
+"Break dancing",
+"Tap dancing"
+],
+"answer": "Tap dancing",
+"d": "easy"
+},
+{
+"q": "What do male lions have which females do not possess?",
+"options": [
+"A bushy beard",
+"A mane",
+"Sharper teeth",
+"Longer claws"
+],
+"answer": "A mane",
+"d": "easy"
+},
+{
+"q": "What is the scientific name for modern day humans?",
+"options": [
+"Homo Sapiens",
+"Homo Sofaus",
+"Homo Erectus",
+"Homo Habilis"
+],
+"answer": "Homo Sapiens",
+"d": "easy"
+},
+{
+"q": "What dog breed has an elongated body, very short legs, short shiny coat and a long snout?",
+"options": [
+"Basset Hound",
+"Great Dane",
+"Dachshund",
+"Corgi"
+],
+"answer": "Dachshund",
+"d": "easy"
+},
+{
+"q": "The kookaburra is best known for its distinctive what?",
+"options": [
+"Long tail",
+"Laughing call",
+"Bright blue feathers",
+"Nightly hooting"
+],
+"answer": "Laughing call",
+"d": "easy"
+},
+{
+"q": "Which of these marine mammals matches the description: Very large body, has tusks and whiskers?",
+"options": [
+"Sea lion",
+"Mermaid",
+"Elephant seal",
+"Walrus"
+],
+"answer": "Walrus",
+"d": "easy"
+},
+{
+"q": "In what novel one of the main characters is a white whale hunted by a whaling ship?",
+"options": [
+"The Old Man and the Sea",
+"Free Willy: The Novel",
+"Twenty Thousand Leagues Under the Sea",
+"Moby-Dick"
+],
+"answer": "Moby-Dick",
+"d": "easy"
+},
+{
+"q": "What is the fastest  land animal?",
+"options": [
+"Pronghorn Antelope",
+"Thomson's Gazelle",
+"Three-toed Sloth",
+"Cheetah"
+],
+"answer": "Cheetah",
+"d": "easy"
+},
+{
+"q": "What term is used to refer to the young of the kangaroo?",
+"options": [
+"Skippy",
+"Cub",
+"Kit",
+"Joey"
+],
+"answer": "Joey",
+"d": "easy"
+},
+{
+"q": "Surprisingly, the number one killer among animals with about 2-3 million human fatalities a year is a tiny insect. Which is it?",
+"options": [
+"Mosquito",
+"Tsetse fly",
+"Kissing bug",
+"Butterfly"
+],
+"answer": "Mosquito",
+"d": "easy"
+},
+{
+"q": "Which class of animals are newts members of?",
+"options": [
+"Birds",
+"Amphibian",
+"Fish",
+"Reptiles"
+],
+"answer": "Amphibian",
+"d": "easy"
+},
+{
+"q": "To what geographic area is the ostrich native?",
+"options": [
+"South America",
+"Africa",
+"Australia",
+"Antarctica"
+],
+"answer": "Africa",
+"d": "easy"
+},
+{
+"q": "Which cartoon dog is one of Mickey Mouses best friends?",
+"options": [
+"Minnie",
+"Goofy",
+"Donald",
+"Scooby-Doo"
+],
+"answer": "Goofy",
+"d": "easy"
+},
+{
+"q": "What is the breed of animal created from the crossing of a male lion and a female tiger?",
+"options": [
+"Tigon",
+"Liger",
+"Ligron",
+"Roarstripe"
+],
+"answer": "Liger",
+"d": "easy"
+},
+{
+"q": "To what geographic area is the koala endemic?",
+"options": [
+"Australia and New Zealand",
+"Australia",
+"Australia and Tasmania",
+"Australia and New Guinea"
+],
+"answer": "Australia",
+"d": "easy"
+},
+{
+"q": "How many legs do ants have?",
+"options": [
+"4",
+"100",
+"6",
+"8"
+],
+"answer": "6",
+"d": "easy"
+},
+{
+"q": "In what Latin American country did the Chihuahua dog breed originate?",
+"options": [
+"Honduras",
+"Guatemala",
+"Greenland",
+"Mexico"
+],
+"answer": "Mexico",
+"d": "easy"
+},
+{
+"q": "What term is used to refer to the infant koala, as well as to any other baby marsupial?",
+"options": [
+"Joey",
+"Jerry",
+"Jellybean",
+"Jimmy"
+],
+"answer": "Joey",
+"d": "easy"
+},
+{
+"q": "What animal is the number one predator of zebras?",
+"options": [
+"Hyena",
+"Lion",
+"Cheetah",
+"House cat"
+],
+"answer": "Lion",
+"d": "easy"
+},
+{
+"q": "What is an adult male rooster known as?",
+"options": [
+"Drake",
+"Hen",
+"Gobbler",
+"Rooster"
+],
+"answer": "Rooster",
+"d": "easy"
+},
+{
+"q": "What actor directed and starred in the popular 1990 movie Dances with Wolves?",
+"options": [
+"Mel Gibson",
+"Kevin Costner",
+"Kevin Bacon",
+"Pee-wee Herman"
+],
+"answer": "Kevin Costner",
+"d": "easy"
+},
+{
+"q": "Which breed of dog is traditionally associated with firefighters?",
+"options": [
+"Chihuahua",
+"Labrador",
+"Dalmatians",
+"German Shepherd"
+],
+"answer": "Dalmatians",
+"d": "easy"
+},
+{
+"q": "How many legs do butterflies have?",
+"options": [
+"100",
+"6",
+"4",
+"8"
+],
+"answer": "6",
+"d": "easy"
+},
+{
+"q": "Which of these things is something you should never feed your dog?",
+"options": [
+"Milk",
+"Chocolate",
+"Carrots",
+"Dog biscuits"
+],
+"answer": "Chocolate",
+"d": "easy"
+},
+{
+"q": "What is a common nickname for the Yorkshire Terriers?",
+"options": [
+"Terry",
+"Yorktie",
+"Yorkie",
+"Fluff-monster"
+],
+"answer": "Yorkie",
+"d": "easy"
+},
+{
+"q": "Which of the following cartoon dogs was a beagle?",
+"options": [
+"Snoopy",
+"Pluto",
+"Odie",
+"Scooby Doo"
+],
+"answer": "Snoopy",
+"d": "easy"
+},
+{
+"q": "On what continent can aardvarks be found?",
+"options": [
+"South America",
+"Africa",
+"Antarctica",
+"Asia"
+],
+"answer": "Africa",
+"d": "easy"
+},
+{
+"q": "What is the name of the Tasmanian devil cartoon character from Looney Tunes by Warner Bros.?",
+"options": [
+"Tess",
+"Devlin",
+"Tassie",
+"Taz"
+],
+"answer": "Taz",
+"d": "easy"
+},
+{
+"q": "How many arms do octopuses have?",
+"options": [
+"8",
+"10",
+"100",
+"6"
+],
+"answer": "8",
+"d": "easy"
+},
+{
+"q": "What is the common term for bovine spongiform encephalopathy (BSE)?",
+"options": [
+"Mad Cow disease",
+"Weil's disease",
+"Milk fever",
+"Foot-and-mouth disease"
+],
+"answer": "Mad Cow disease",
+"d": "easy"
+},
+{
+"q": "What is a female sheep called or known as?",
+"options": [
+"fleece",
+"lamb",
+"ewe",
+"ram"
+],
+"answer": "ewe",
+"d": "easy"
+},
+{
+"q": "The Tasmanian devil is native only to which state?",
+"options": [
+"Victoria",
+"Western Australia",
+"Tasmania",
+"South Australia"
+],
+"answer": "Tasmania",
+"d": "easy"
+},
+{
+"q": "Which of these is not a sound made by cheetahs?",
+"options": [
+"Hiss",
+"Roar",
+"Yelp",
+"Purr"
+],
+"answer": "Roar",
+"d": "medium"
+},
+{
+"q": "In what European country did the Rough Collie dog breed originate?",
+"options": [
+"Scotland",
+"Vatican City",
+"Wales",
+"Ireland"
+],
+"answer": "Scotland",
+"d": "medium"
+},
+{
+"q": "Which of these is not an actual breed of sheep?",
+"options": [
+"Merino",
+"Hampshire",
+"Scottish black-face",
+"Dakota"
+],
+"answer": "Dakota",
+"d": "medium"
+},
+{
+"q": "What is the life span of a rhino?",
+"options": [
+"30 years",
+"120 years",
+"25 years",
+"40 years"
+],
+"answer": "40 years",
+"d": "medium"
+},
+{
+"q": "To which of these geographical areas are hummingbirds indigenous?",
+"options": [
+"Antarctica and Greenland",
+"North and South America",
+"Central and South America",
+"Africa and Asia"
+],
+"answer": "North and South America",
+"d": "medium"
+},
+{
+"q": "How did the glass lizard, also known as glass snake, get its interesting name?",
+"options": [
+"Its scales are almost see-through.",
+"It is smooth and shiny like glass.",
+"It breaks easily.",
+"It hisses like shattering glass."
+],
+"answer": "It breaks easily.",
+"d": "medium"
+},
+{
+"q": "How long does the gestation period of elephants last?",
+"options": [
+"22 months",
+"20 months",
+"24 months",
+"48 months"
+],
+"answer": "22 months",
+"d": "medium"
+},
+{
+"q": "The red kangaroo appears on the Coat of Arms of Australia together with what other endemic Australian animal?",
+"options": [
+"Platypus",
+"Koala",
+"Emu",
+"Drop bear"
+],
+"answer": "Emu",
+"d": "medium"
+},
+{
+"q": "What type of creature is a Bonobo?",
+"options": [
+"Ape",
+"Fish",
+"Monkey",
+"Lemur"
+],
+"answer": "Ape",
+"d": "medium"
+},
+{
+"q": "What does the Latin word omnivore stand for?",
+"options": [
+"Eating meat",
+"Eating everything",
+"Eating plants",
+"Eating in the dark"
+],
+"answer": "Eating everything",
+"d": "medium"
+},
+{
+"q": "Which of these statements is true about cockroaches?",
+"options": [
+"They have one pair of wings and six legs.",
+"They have two pairs of wings and six legs.",
+"They are wingless and have six legs.",
+"They have ten legs and antennae for wings."
+],
+"answer": "They have two pairs of wings and six legs.",
+"d": "medium"
+},
+{
+"q": "The Chihuahua Gidget is famous for what reason?",
+"options": [
+"It was a mascot for Taco Bell.",
+"It belonged to Paris Hilton.",
+"It won Best in Show at Westminster.",
+"It was the Taco John's mascot."
+],
+"answer": "It was a mascot for Taco Bell.",
+"d": "medium"
+},
+{
+"q": "How many species of elephant exist today?",
+"options": [
+"1",
+"3",
+"4",
+"2"
+],
+"answer": "3",
+"d": "medium"
+},
+{
+"q": "What group of dogs does the beagle belong to?",
+"options": [
+"terriers",
+"lapdogs",
+"hound",
+"retrievers"
+],
+"answer": "hound",
+"d": "medium"
+},
+{
+"q": "Which statement about elephants is untrue?",
+"options": [
+"Elephants do not have great memories",
+"There are some pink elephants in India",
+"Elephants sleep standing up",
+"Elephants cry"
+],
+"answer": "Elephants do not have great memories",
+"d": "medium"
+},
+{
+"q": "How many living species of bears are there?",
+"options": [
+"20",
+"7",
+"8",
+"9"
+],
+"answer": "8",
+"d": "medium"
+},
+{
+"q": "Dolphins are considered some of the most intelligent animals on the planet. How are they classified according to their diet?",
+"options": [
+"They are herbivores.",
+"They graze only on seaweed.",
+"They are carnivores.",
+"They are omnivores."
+],
+"answer": "They are carnivores.",
+"d": "medium"
+},
+{
+"q": "How many hours of sleep do sloths normally need per day?",
+"options": [
+"14-16 hours",
+"12-13 hours",
+"Almost 24 hours",
+"Less than 10 hours"
+],
+"answer": "Less than 10 hours",
+"d": "medium"
+},
+{
+"q": "Representatives of three of these species produce venom of their own. Which is the odd species?",
+"options": [
+"Mosquitos",
+"Lizards",
+"Scorpions",
+"Frogs"
+],
+"answer": "Mosquitos",
+"d": "medium"
+},
+{
+"q": "The Giant Panda and which of the following serve as an Asian countrys national emblem?",
+"options": [
+"The dragon",
+"The red-crowned crane",
+"The goldfish",
+"The Bengal tiger"
+],
+"answer": "The dragon",
+"d": "medium"
+},
+{
+"q": "The now extinct species \"Thylacine\" was native to where?",
+"options": [
+"Wallachia, Romania",
+"Oregon, United States",
+"Tasmania, Australia",
+"Baluchistan, Pakistan"
+],
+"answer": "Tasmania, Australia",
+"d": "medium"
+},
+{
+"q": "Where does the kookaburra, a common Australian bird, get its name from?",
+"options": [
+"The food it eats",
+"Its bright appearance",
+"The aboriginal name for it",
+"The sound it makes"
+],
+"answer": "The aboriginal name for it",
+"d": "medium"
+},
+{
+"q": "What decade did the pop culture icon the plastic lawn flamingo come into existence?",
+"options": [
+"50s",
+"70s",
+"1690s",
+"60s"
+],
+"answer": "60s",
+"d": "medium"
+},
+{
+"q": "Which of these types of frogs shares its name with an animal that is not a frog?",
+"options": [
+"tree frog",
+"leopard frog",
+"arrow frog",
+"horned frog"
+],
+"answer": "horned frog",
+"d": "medium"
+},
+{
+"q": "Which of these is not a species of hyena?",
+"options": [
+"Brown",
+"Striped",
+"Spotted",
+"Golden"
+],
+"answer": "Golden",
+"d": "medium"
+},
+{
+"q": "What colour is the female blackbird?",
+"options": [
+"Dark grey",
+"Bright blue",
+"Black",
+"Brown"
+],
+"answer": "Brown",
+"d": "medium"
+},
+{
+"q": "What type of food does the guinea pig naturally feed on?",
+"options": [
+"Insects",
+"Leaves and clover",
+"Grass",
+"Seeds and grain"
+],
+"answer": "Grass",
+"d": "medium"
+},
+{
+"q": "Hippocampus is the Latin name for which marine creature?",
+"options": [
+"Pipefish",
+"Seahorse",
+"Cuttlefish",
+"Sea sausage"
+],
+"answer": "Seahorse",
+"d": "medium"
+},
+{
+"q": "Why does a cat bury his/ her waste?",
+"options": [
+"Because they are very clean animals.",
+"To mark their territory boundary",
+"To protect their trail from predators",
+"To bury treats for later"
+],
+"answer": "To protect their trail from predators",
+"d": "medium"
+},
+{
+"q": "One of these is not a true breed of chicken. Which one?",
+"options": [
+"Leghorn",
+"Red-tailed",
+"Hamburg",
+"Plymouth Rock"
+],
+"answer": "Red-tailed",
+"d": "medium"
+},
+{
+"q": "In what country was the goldfish first domesticated?",
+"options": [
+"Japan",
+"China",
+"Atlantis",
+"Ancient Rome"
+],
+"answer": "China",
+"d": "medium"
+},
+{
+"q": "What is the world's longest venomous snake?",
+"options": [
+"Yellow Bellied Sea Snake",
+"King Cobra",
+"Inland Taipan",
+"Green Anaconda"
+],
+"answer": "King Cobra",
+"d": "medium"
+},
+{
+"q": "What are rhino's horn made of?",
+"options": [
+"Bone",
+"Keratin",
+"Skin",
+"Ivory"
+],
+"answer": "Keratin",
+"d": "medium"
+},
+{
+"q": "What frog is the most poisonous?",
+"options": [
+"Cane Toad",
+"Corroboree Frog",
+"Kermit the Frog",
+"Dart Frog"
+],
+"answer": "Dart Frog",
+"d": "medium"
+},
+{
+"q": "The platypus and echidna are unusual among mammals because they do what?",
+"options": [
+"Live underwater",
+"Lay eggs",
+"Have pouches like marsupials",
+"Are cold-blooded"
+],
+"answer": "Lay eggs",
+"d": "medium"
+},
+{
+"q": "Pandas spend 10-16 hours a day eating, the rest of the time they are usually resting. When are pandas most active?",
+"options": [
+"only during a full moon",
+"only at night",
+"between 2pm and 10pm",
+"at dusk and at dawn"
+],
+"answer": "at dusk and at dawn",
+"d": "medium"
+},
+{
+"q": "Jaguars closely resemble which other big cats in physical appearance?",
+"options": [
+"Lion",
+"Cheetah",
+"Leopard",
+"Ocelot"
+],
+"answer": "Leopard",
+"d": "medium"
+},
+{
+"q": "How many toes do ostriches have?",
+"options": [
+"Four toes",
+"Ten toes",
+"Three toes",
+"Two toes"
+],
+"answer": "Two toes",
+"d": "medium"
+},
+{
+"q": "\"Decapods\" are an order of ten-footed crustaceans.  Which of these are NOT decapods?",
+"options": [
+"Lobsters",
+"Crabs",
+"Krill",
+"Crayfish"
+],
+"answer": "Krill",
+"d": "medium"
+},
+{
+"q": "Which of these is NOT a species of rhinoceros?",
+"options": [
+"Indian Rhino",
+"Sumatran Rhino",
+"African Rhino",
+"Javan Rhino"
+],
+"answer": "African Rhino",
+"d": "medium"
+},
+{
+"q": "Why is it not recommended to be keep raccoons as pets?",
+"options": [
+"They can be aggressive.",
+"They have and intense odor.",
+"Their fur promotes allergies.",
+"They transmit many diseases."
+],
+"answer": "They can be aggressive.",
+"d": "medium"
+},
+{
+"q": "Cashmere is the wool from which kind of animal?",
+"options": [
+"Camel",
+"Goat",
+"Sheep",
+"Llama"
+],
+"answer": "Goat",
+"d": "medium"
+},
+{
+"q": "How many types of bats are there?",
+"options": [
+"50",
+"900",
+"750",
+"600"
+],
+"answer": "900",
+"d": "medium"
+},
+{
+"q": "What color are wild goldfish?",
+"options": [
+"Silver",
+"Green",
+"Bright pink",
+"Orange"
+],
+"answer": "Green",
+"d": "medium"
+},
+{
+"q": "In which European country did the Dalmatian dog breed originate?",
+"options": [
+"Denmark",
+"England, from the film",
+"Serbia",
+"Croatia"
+],
+"answer": "Croatia",
+"d": "medium"
+},
+{
+"q": "The Labrador Retriever is considered a medium-sized dog. How much does it weigh when fully grown?",
+"options": [
+"150 - 200 pounds",
+"65 - 90 pounds",
+"55 - 80 pounds",
+"40 - 55 pounds"
+],
+"answer": "55 - 80 pounds",
+"d": "medium"
+},
+{
+"q": "Which Rough Collie was awarded a star on the Hollywood Walk of Fame?",
+"options": [
+"Lassie",
+"Rex",
+"Rin Tin Tin",
+"Sir Barksalot"
+],
+"answer": "Lassie",
+"d": "medium"
+},
+{
+"q": "Where are vampire bats mostly found?",
+"options": [
+"Asia",
+"Mexico, Central America and South America",
+"Southern USA and Canada",
+"Antarctica"
+],
+"answer": "Mexico, Central America and South America",
+"d": "medium"
+},
+{
+"q": "What animals do wolves generally prefer to feed on?",
+"options": [
+"Rabbits and hares",
+"Earthworms",
+"Rodents",
+"Ungulates"
+],
+"answer": "Ungulates",
+"d": "medium"
+},
+{
+"q": "Which of these is true about the sloths diet?",
+"options": [
+"Sloths are omnivores.",
+"Sloths are carnivores.",
+"Sloths photosynthesise like plants.",
+"Sloths are herbivores."
+],
+"answer": "Sloths are omnivores.",
+"d": "medium"
+},
+{
+"q": "What notable feature does the Gentoo Penguin possess which makes it easily recognizable?",
+"options": [
+"A bright orange crest",
+"A red stripe on the top of its head",
+"A polka-dot belly",
+"A white stripe on the top of its head"
+],
+"answer": "A white stripe on the top of its head",
+"d": "medium"
+},
+{
+"q": "What is the collective noun for rats?",
+"options": [
+"Mischief",
+"Race",
+"Drift",
+"Pack"
+],
+"answer": "Mischief",
+"d": "medium"
+},
+{
+"q": "How many individual muscles are in an elephants trunk?",
+"options": [
+"30,000",
+"12",
+"40,000",
+"10,000"
+],
+"answer": "40,000",
+"d": "medium"
+},
+{
+"q": "In the book Jurassic Park, the fictional island Isla Nublar, where recreated dinosaur species live, is situated in which part of the world?",
+"options": [
+"Near Mexico",
+"Near Antarctica",
+"Near Panama",
+"Near Costa Rica"
+],
+"answer": "Near Costa Rica",
+"d": "medium"
+},
+{
+"q": "Which one of these movies tells the story of Littlefoot, an Apatosaurus in search of the Great Valley where dinosaurs can live in peace?",
+"options": [
+"King Kong",
+"The Land Before Time",
+"Ice Age",
+"The Good Dinosaur"
+],
+"answer": "The Land Before Time",
+"d": "medium"
+},
+{
+"q": "How long does it take for a sloth to digest its food completely?",
+"options": [
+"A full year",
+"About two weeks",
+"A month or more",
+"A few days"
+],
+"answer": "A month or more",
+"d": "medium"
+},
+{
+"q": "What actor voiced the guinea pig character called Rodney in the 1998 comedy movie Dr. Dolittle?",
+"options": [
+"Chris Tucker",
+"An actual guinea pig",
+"Eddie Murphy",
+"Chris Rock"
+],
+"answer": "Chris Rock",
+"d": "medium"
+},
+{
+"q": "What name is commonly used to refer to the guinea pig?",
+"options": [
+"Squeaky pig",
+"Rockrat",
+"Cavy",
+"Coney"
+],
+"answer": "Cavy",
+"d": "medium"
+},
+{
+"q": "A crocodile bite strength is up to how many pounds psi (per square inch)?",
+"options": [
+"2000 psi",
+"3700 psi",
+"3000 psi",
+"50 psi"
+],
+"answer": "3000 psi",
+"d": "medium"
+},
+{
+"q": "Which of these mammals was brought to Australia by humans?",
+"options": [
+"The echidna",
+"The drop bear",
+"The koala",
+"The dingo"
+],
+"answer": "The dingo",
+"d": "medium"
+},
+{
+"q": "The beagle was developed mainly for tracking what animal?",
+"options": [
+"kangaroos",
+"squirrels",
+"foxes",
+"rabbits"
+],
+"answer": "rabbits",
+"d": "medium"
+},
+{
+"q": "What type of animal is the dik-dik, indigenous to Africa?",
+"options": [
+"Rodent",
+"Deer",
+"A tiny bird",
+"Antelope"
+],
+"answer": "Antelope",
+"d": "medium"
+},
+{
+"q": "What color is a polar bears skin?",
+"options": [
+"White",
+"Blue",
+"Black",
+"Grey"
+],
+"answer": "Black",
+"d": "medium"
+},
+{
+"q": "What is Grumpy Cat's real name?",
+"options": [
+"Tardar Sauce",
+"Sir Grumpsalot",
+"Pepper",
+"Tabasco Sauce"
+],
+"answer": "Tardar Sauce",
+"d": "medium"
+},
+{
+"q": "Which dog breed is named after a region in Croatia",
+"options": [
+"Dalmatian",
+"Pomeranian",
+"Chihuahua",
+"Pekingnese"
+],
+"answer": "Dalmatian",
+"d": "medium"
+},
+{
+"q": "What is the average maximal speed a lion can reach?",
+"options": [
+"40 mph / 64 km/h",
+"35 mph / 56 km/h",
+"70 mph / 113 km/h",
+"30 mph / 48 km/h"
+],
+"answer": "35 mph / 56 km/h",
+"d": "medium"
+},
+{
+"q": "Some small spider species, as well as the young of larger species, are known for floating in the wind. What is this activity commonly known as?",
+"options": [
+"Ballooning",
+"Skydiving",
+"Gliding",
+"Parachuting"
+],
+"answer": "Ballooning",
+"d": "medium"
+},
+{
+"q": "Which word refers to the sound peacocks make?",
+"options": [
+"Scream",
+"Squawk",
+"Yodel",
+"Screech"
+],
+"answer": "Scream",
+"d": "medium"
+},
+{
+"q": "The Papillon is a small dog breed of the Toy group. What does the word Papillon mean in French?",
+"options": [
+"Moth",
+"Pancake",
+"Feather",
+"Butterfly"
+],
+"answer": "Butterfly",
+"d": "medium"
+},
+{
+"q": "What is the other name of Mola mola, a fish generally considered to be the most massive bony fish in the world?",
+"options": [
+"Ocean Sunfish",
+"Pufferfish",
+"Blobfish",
+"Triggerfish"
+],
+"answer": "Ocean Sunfish",
+"d": "medium"
+},
+{
+"q": "What type of animal is a natterjack?",
+"options": [
+"Fish",
+"Bird",
+"Toad",
+"Frog"
+],
+"answer": "Toad",
+"d": "medium"
+},
+{
+"q": "To which animal class do octopuses belong?",
+"options": [
+"Amphibian",
+"Mollusk",
+"Cephalopod",
+"Gastropod"
+],
+"answer": "Cephalopod",
+"d": "medium"
+},
+{
+"q": "What is located on the end of every arm of a starfish?",
+"options": [
+"Suction cup",
+"Nostril",
+"Eye",
+"Tiny mouth"
+],
+"answer": "Eye",
+"d": "medium"
+},
+{
+"q": "One of these is not a true breed of cat. Which one?",
+"options": [
+"Pixie-bob",
+"Maine coon",
+"Ragdoll",
+"French Twist"
+],
+"answer": "French Twist",
+"d": "medium"
+},
+{
+"q": "In what European city is the popular bronze statue Capitoline Wolf located?",
+"options": [
+"Vatican City",
+"Rome",
+"Florence",
+"Athens"
+],
+"answer": "Rome",
+"d": "medium"
+},
+{
+"q": "Which of the following is NOT a venomous snake?",
+"options": [
+"Reticulated python",
+"Malayan Krait",
+"Black mamba",
+"Yellow bellied sea snake"
+],
+"answer": "Reticulated python",
+"d": "medium"
+},
+{
+"q": "What is the name of the communities formed by rabbits living together?",
+"options": [
+"Fluff piles",
+"Dens",
+"Warrens",
+"Burrows"
+],
+"answer": "Warrens",
+"d": "medium"
+},
+{
+"q": "What famous beer brand uses the Clydesdale horse as its mascot?",
+"options": [
+"Guinness",
+"Coors",
+"Red Bull",
+"Anheuser-Busch"
+],
+"answer": "Anheuser-Busch",
+"d": "medium"
+},
+{
+"q": "What is the common name for baby sharks?",
+"options": [
+"fry",
+"sharklets",
+"cubs",
+"pups"
+],
+"answer": "pups",
+"d": "medium"
+},
+{
+"q": "What type of food do Tasmanian devils prefer in the wild?",
+"options": [
+"Carrion",
+"Eucalyptus leaves",
+"Insects",
+"Small live prey"
+],
+"answer": "Carrion",
+"d": "medium"
+},
+{
+"q": "What does the diet of the Eastern Tiger Salamander mainly consist of?",
+"options": [
+"Small birds",
+"Seeds",
+"Leaves",
+"Insects"
+],
+"answer": "Insects",
+"d": "medium"
+},
+{
+"q": "Which one of these dinosaurs was herbivorous?",
+"options": [
+"Velociraptor",
+"Tyrannosaurus",
+"Protoceratops",
+"Allosaurus"
+],
+"answer": "Protoceratops",
+"d": "medium"
+},
+{
+"q": "This dog breed was developed as a gun dog in Canada?",
+"options": [
+"Golden Retriever",
+"Labrador Retriever",
+"Chihuahua",
+"Chesapeake Bay Retriever"
+],
+"answer": "Labrador Retriever",
+"d": "medium"
+},
+{
+"q": "What popular cartoon character from a 1995 animated movie keeps a raccoon as a pet?",
+"options": [
+"Jasmine",
+"Pocahontas",
+"Mulan",
+"Shrek"
+],
+"answer": "Pocahontas",
+"d": "medium"
+},
+{
+"q": "What notable feature does the Fennec Fox possess, that makes it easily recognizable?",
+"options": [
+"Very large ears",
+"Glow-in-the-dark fur",
+"A long bushy tail",
+"Unusually long whiskers"
+],
+"answer": "Very large ears",
+"d": "medium"
+},
+{
+"q": "How many fingers did the Tyrannosaurus rex have on its forelimbs?",
+"options": [
+"3",
+"4",
+"10",
+"2"
+],
+"answer": "2",
+"d": "medium"
+},
+{
+"q": "In what year did the dodo become extinct?",
+"options": [
+"1662",
+"1681",
+"1693",
+"1901"
+],
+"answer": "1681",
+"d": "medium"
+},
+{
+"q": "Which of the following statements about echidnas, mammals native to Australia, is wrong?",
+"options": [
+"Echidnas have snouts.",
+"Echidnas are marsupials.",
+"Echidnas lay eggs.",
+"Echidnas are covered with spines."
+],
+"answer": "Echidnas are marsupials.",
+"d": "medium"
+},
+{
+"q": "Which large flightless bird appears on the Australian coat of arms alongside the kangaroo?",
+"options": [
+"Emu",
+"Brolga",
+"Cassowary",
+"Bush turkey"
+],
+"answer": "Emu",
+"d": "medium"
+},
+{
+"q": "What is a group of jellyfish called?",
+"options": [
+"cluster",
+"bloom",
+"wobble",
+"school"
+],
+"answer": "bloom",
+"d": "medium"
+},
+{
+"q": "What have raccoons been mostly hunted for throughout history?",
+"options": [
+"Their fur",
+"Their tails",
+"Their meat",
+"Their little masks"
+],
+"answer": "Their fur",
+"d": "medium"
+},
+{
+"q": "Which of the following characters is a chicken?",
+"options": [
+"Foghorn Leghorn",
+"Kermit",
+"Dori",
+"Daffy"
+],
+"answer": "Foghorn Leghorn",
+"d": "medium"
+},
+{
+"q": "Which of these animals cannot be found in North America?",
+"options": [
+"Beaver",
+"Dingo",
+"Walrus",
+"Flamingo"
+],
+"answer": "Dingo",
+"d": "medium"
+},
+{
+"q": "Which one of these dinosaurs was bigger than a dog?",
+"options": [
+"Triceratops",
+"Parvicursor",
+"Microraptor",
+"Saltopus"
+],
+"answer": "Triceratops",
+"d": "medium"
+},
+{
+"q": "Where is the natural habitat of sloths?",
+"options": [
+"Central and South America",
+"Central and South Asia",
+"The Arctic Circle",
+"South Africa"
+],
+"answer": "Central and South America",
+"d": "medium"
+},
+{
+"q": "Which of the following octopuses could most easily kill a human?",
+"options": [
+"The Giant Pacific Octopus",
+"The Common Octopus",
+"The Blue Ringed Octopus",
+"The Dumbo Octopus"
+],
+"answer": "The Blue Ringed Octopus",
+"d": "medium"
+},
+{
+"q": "What body part of the giraffe can indicate its gender?",
+"options": [
+"Tail",
+"Horns",
+"Neck",
+"Eyelashes"
+],
+"answer": "Horns",
+"d": "hard"
+},
+{
+"q": "What defense tactic does the chinchilla use in order to escape from its predators, which include birds of prey, skunks, felines, snakes and canines?",
+"options": [
+"Rolling into a ball",
+"Biting",
+"Playing dead",
+"Spraying urine"
+],
+"answer": "Spraying urine",
+"d": "hard"
+},
+{
+"q": "Jack jumper ants, yellowish-orange carnivorous ants named after their characteristic jumpy motions, can be found only on which continent?",
+"options": [
+"Australia",
+"South America",
+"Antarctica",
+"Africa"
+],
+"answer": "Australia",
+"d": "hard"
+},
+{
+"q": "What important bone-building mineral do the cartilage of bats finger bones lack, which makes them very flexible?",
+"options": [
+"Calcium",
+"Phosphorus",
+"Magnesium",
+"Gold"
+],
+"answer": "Calcium",
+"d": "hard"
+},
+{
+"q": "The Komodo Dragon is NOT native to which of these islands?",
+"options": [
+"Gili Motang",
+"Rinca",
+"Savalhi",
+"Flores"
+],
+"answer": "Savalhi",
+"d": "hard"
+},
+{
+"q": "Which species of Brown Bear is not extinct?",
+"options": [
+"Mexican Grizzly Bear",
+"Atlas Bear",
+"California Grizzly Bear",
+"Syrian Brown Bear"
+],
+"answer": "Syrian Brown Bear",
+"d": "hard"
+},
+{
+"q": "The sound of what musical instrument does the call of the Macaroni Penguin resemble?",
+"options": [
+"Bagpipes",
+"Saxophone",
+"Trumpet",
+"Trombone"
+],
+"answer": "Trumpet",
+"d": "hard"
+},
+{
+"q": "How many subspecies of the tiger are left nowadays?",
+"options": [
+"25",
+"6",
+"5",
+"9"
+],
+"answer": "6",
+"d": "hard"
+},
+{
+"q": "What is the literal meaning of the word giraffe considering its Arabic origin?",
+"options": [
+"Tall",
+"Elegant",
+"Cloud-nibbler",
+"Graceful"
+],
+"answer": "Tall",
+"d": "hard"
+},
+{
+"q": "How many species of penguins live in warm or even tropical environments?",
+"options": [
+"6",
+"20",
+"5",
+"4"
+],
+"answer": "4",
+"d": "hard"
+},
+{
+"q": "Adult Goliath beetles, found in Africas tropical forests, feed on what?",
+"options": [
+"Small birds",
+"Leaves and flowers",
+"Rotting wood",
+"Fruits and tree sap"
+],
+"answer": "Fruits and tree sap",
+"d": "hard"
+},
+{
+"q": "Throughout the period from the 1970s to the end of the 20th century, the rhinoceros numbers declined by approximately what percentage?",
+"options": [
+"10%",
+"85%",
+"70%",
+"90%"
+],
+"answer": "90%",
+"d": "hard"
+}
+]
+}

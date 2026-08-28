@@ -316,6 +316,11 @@
   /* ------------------------------------------------------------ the builder -- */
   function openBuilder(format, game){
     var t = TYPES[format];
+    if(format === "trivia" && !TRIVIA_INDEX){
+      fetch("/data/trivia/index.json").then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(d){ if(d){ TRIVIA_INDEX = d; if($("dlg").open) drawItems(); } })
+        .catch(function(){});
+    }
     editing = { format:format, id: game ? game.id : null,
                 title: game ? game.title : "",
                 items: (game && game.config && game.config.items) ? game.config.items.slice() : [] };
@@ -326,12 +331,88 @@
     $("dlg").showModal();
   }
 
+  /* ------------------------------------------------------- ready made rounds --
+     A host who bought this an hour before people arrive has not got forty
+     questions in them. Pick a category, get ten, edit any you do not like.
+
+     Ten at a time on purpose: that is a round. Press it four times with four
+     different categories and you have the four rounds of ten a quiz night
+     actually looks like.
+
+     The questions come from the same bank VenuePlay uses, which is CC BY-SA
+     with named attributions. Each pack carries its own copy of the licence and
+     the credits travel with them into the dialog, because using the questions
+     and dropping the attribution is not a thing we get to do. */
+  var TRIVIA_INDEX = null;
+  var PACKS = {};
+
+  function packFor(slug){
+    if(PACKS[slug]) return Promise.resolve(PACKS[slug]);
+    return fetch("/data/trivia/" + encodeURIComponent(slug) + ".json")
+      .then(function(r){ if(!r.ok) throw new Error("Could not load that category."); return r.json(); })
+      .then(function(d){ PACKS[slug] = d; return d; });
+  }
+
+  function fillFromCategory(slug, howMany){
+    return packFor(slug).then(function(pack){
+      // Never repeat a question already in this round, and never repeat one the
+      // host has in another round of the same party either.
+      var used = {};
+      editing.items.forEach(function(it){ if(it.q) used[it.q.trim().toLowerCase()] = 1; });
+      GAMES.forEach(function(g){
+        ((g.config && g.config.items) || []).forEach(function(it){
+          if(it && it.q) used[String(it.q).trim().toLowerCase()] = 1; });
+      });
+      var pool = pack.questions.filter(function(q){ return !used[q.q.trim().toLowerCase()]; });
+      if(!pool.length) throw new Error("You have used every question in that category.");
+      // Shuffle so two parties on the same category do not get the same ten.
+      for(var i = pool.length - 1; i > 0; i--){
+        var j = Math.floor(Math.random() * (i + 1)); var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+      }
+      // Drop the blank starter row if nothing has been typed into it.
+      if(editing.items.length === 1 && !editing.items[0].q && !editing.items[0].a) editing.items = [];
+      pool.slice(0, howMany).forEach(function(q){
+        editing.items.push({ q:q.q, a:q.answer, options:q.options.slice(), src:pack.category });
+      });
+      editing.credit = pack;
+      return pool.length;
+    });
+  }
+
+  function categoryStrip(){
+    if(editing.format !== "trivia") return "";
+    var opts = (TRIVIA_INDEX ? TRIVIA_INDEX.categories : []).map(function(c){
+      return '<option value="' + esc(c.slug) + '">' + esc(c.category) + '</option>'; }).join("");
+    return '<div class="qrow" style="background:rgba(255,255,255,.03)">' +
+      '<label style="margin-bottom:8px">Not got questions ready?</label>' +
+      '<p class="hint" style="margin:0 0 10px">Pick a category and we will put ten in. ' +
+      'Edit any you do not like, or press it again with another category for a second round.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<select id="catPick" style="flex:1 1 180px">' + opts + '</select>' +
+      '<button type="button" class="addq" id="catFill" style="margin:0;flex:0 0 auto">Add ten</button>' +
+      '</div><p class="hint" id="catNote" style="margin:8px 0 0"></p></div>';
+  }
+
+  function creditLine(){
+    var c = editing.credit;
+    if(!c) return "";
+    var who = (c.attributions || []).map(function(a){
+      return typeof a === "string" ? a : (a.name || a.source || ""); }).filter(Boolean).join(", ");
+    return '<p class="hint" style="margin-top:14px">Questions from ' + esc(who || "the open trivia bank") +
+           ', used under ' + esc(c.license || "CC BY-SA 4.0") + '.</p>';
+  }
+
   function drawItems(){
     var t = TYPES[editing.format];
     if(t.picker) return drawPicker(t);
-    var h = '<label for="gTitle">Give it a name</label>' +
+    /* "Give it a name" told the host nothing about what the name was for or
+       what happens if they leave it, and the placeholder repeating the game's
+       own name made it look like it had already been filled in. */
+    var h = '<label for="gTitle">Name this round</label>' +
+            '<p class="hint" style="margin:-2px 0 8px">Goes on the big screen when it starts. ' +
+            'Leave it blank and we will just call it ' + esc(t.name) + '.</p>' +
             '<input type="text" id="gTitle" value="' + esc(editing.title || "") + '" placeholder="' + esc(t.name) + '">' +
-            '<div style="height:16px"></div>';
+            '<div style="height:16px"></div>' + categoryStrip();
     editing.items.forEach(function(it, i){
       h += '<div class="qrow"><div class="n"><span>' + (i+1) + '</span>' +
            (editing.items.length > 1 ? '<button type="button" data-rm="' + i + '">Remove</button>' : '') +
@@ -341,7 +422,22 @@
            '</div></div>';
     });
     h += '<button type="button" class="addq" id="addItem">+ ' + esc(t.addLabel) + '</button>';
+    h += creditLine();
     $("dBody").innerHTML = h;
+
+    var fill = $("catFill");
+    if(fill) fill.addEventListener("click", function(){
+      var sel = $("catPick"); if(!sel || !sel.value) return;
+      harvest();                         // keep anything typed before this click
+      fill.disabled = true; fill.textContent = "Adding...";
+      fillFromCategory(sel.value, 10)
+        .then(function(left){
+          drawItems();
+          var n = $("catNote");
+          if(n) n.textContent = "Ten added. " + (left - 10) + " more left in that category.";
+        })
+        .catch(function(e){ fill.disabled = false; fill.textContent = "Add ten"; toast(e.message); });
+    });
   }
 
   /* Guess the Photo is built FROM the album rather than typed from nothing. The

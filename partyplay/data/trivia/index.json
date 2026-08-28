@@ -1,0 +1,106 @@
+{
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "categories": [
+  {
+   "category": "General Knowledge",
+   "slug": "general-knowledge",
+   "count": 240,
+   "file": "data/trivia/general-knowledge.json"
+  },
+  {
+   "category": "Music",
+   "slug": "music",
+   "count": 240,
+   "file": "data/trivia/music.json"
+  },
+  {
+   "category": "Film",
+   "slug": "film",
+   "count": 179,
+   "file": "data/trivia/film.json"
+  },
+  {
+   "category": "Television",
+   "slug": "television",
+   "count": 130,
+   "file": "data/trivia/television.json"
+  },
+  {
+   "category": "Geography",
+   "slug": "geography",
+   "count": 217,
+   "file": "data/trivia/geography.json"
+  },
+  {
+   "category": "History",
+   "slug": "history",
+   "count": 198,
+   "file": "data/trivia/history.json"
+  },
+  {
+   "category": "Science & Nature",
+   "slug": "science-nature",
+   "count": 240,
+   "file": "data/trivia/science-nature.json"
+  },
+  {
+   "category": "Animals",
+   "slug": "animals",
+   "count": 156,
+   "file": "data/trivia/animals.json"
+  },
+  {
+   "category": "Food & Drink",
+   "slug": "food-drink",
+   "count": 134,
+   "file": "data/trivia/food-drink.json"
+  },
+  {
+   "category": "Books",
+   "slug": "books",
+   "count": 160,
+   "file": "data/trivia/books.json"
+  },
+  {
+   "category": "Video Games",
+   "slug": "video-games",
+   "count": 157,
+   "file": "data/trivia/video-games.json"
+  }
+ ]
+}

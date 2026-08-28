@@ -1,0 +1,2011 @@
+{
+"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"sources": [
+{
+"name": "Open Trivia Database",
+"url": "https://opentdb.com",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 4320
+},
+{
+"name": "OpenTriviaQA",
+"url": "https://github.com/uberspot/OpenTriviaQA",
+"license": "CC BY-SA 4.0",
+"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+"commercialUse": "permitted with attribution and share-alike",
+"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"questionCount": 6310
+},
+{
+"name": "VenuePlay original",
+"url": "",
+"license": "VenuePlay original content",
+"licenseUrl": "",
+"commercialUse": "owned by VenuePlay; no third-party attribution required",
+"attribution": "Australian pub-culture questions authored by VenuePlay.",
+"questionCount": 76
+}
+],
+"attributions": [
+"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+],
+"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+"category": "Film",
+"count": 179,
+"questions": [
+{
+"q": "What name did Tom Hanks give to his volleyball companion in the film `Cast Away`?",
+"options": [
+"Friday",
+"Wilson",
+"Jones",
+"Wilton"
+],
+"answer": "Wilson",
+"d": "easy"
+},
+{
+"q": "In which movie does Robin Williams' character have to disguise themselves into a woman?",
+"options": [
+"Jumanji",
+"The Birdcage",
+"Mrs. Doubtfire",
+"Popeye"
+],
+"answer": "Mrs. Doubtfire",
+"d": "easy"
+},
+{
+"q": "What is the name of the character Nicolas Cage plays in the movie \"National Treasure?\"",
+"options": [
+"Benjamin Franklin Gates",
+"George Washington Swanson",
+"Abraham Lincoln Gates",
+"Thomas Jefferson Gage"
+],
+"answer": "Benjamin Franklin Gates",
+"d": "easy"
+},
+{
+"q": "In which film does Humphrey Bogart say the famous line, \"Here's looking at you, kid\"?",
+"options": [
+"Citizen Kane",
+"Casablanca",
+"The Treasure of the Sierra Madre",
+"The Maltese Falcon"
+],
+"answer": "Casablanca",
+"d": "easy"
+},
+{
+"q": "Which actor played the main character in the 1990 film \"Edward Scissorhands\"?",
+"options": [
+"Edward Norton",
+"Leonardo DiCaprio",
+"Christian Slater",
+"Johnny Depp"
+],
+"answer": "Johnny Depp",
+"d": "easy"
+},
+{
+"q": "\"The first rule is: you don't talk about it\" is a reference to which movie?",
+"options": [
+"The Island",
+"Snatch",
+"Fight Club",
+"American Pie"
+],
+"answer": "Fight Club",
+"d": "easy"
+},
+{
+"q": "In the Back to the Future movie series, what was the family name of Michael J. Foxs character?",
+"options": [
+"McFly",
+"McFerrin",
+"McFisher",
+"McFlynn"
+],
+"answer": "McFly",
+"d": "easy"
+},
+{
+"q": "Yippee-Ki-Yay *#%^#% is a quote used by Det. John McClane in which series of police thrillers?",
+"options": [
+"Die Hard",
+"Dirty Harry",
+"Lethal Weapon",
+"The Naked Gun"
+],
+"answer": "Die Hard",
+"d": "easy"
+},
+{
+"q": "In the 1971 film \"Willy Wonka & the Chocolate Factory\", who played Willy Wonka?",
+"options": [
+"Gene Wilder",
+"Peter Ostrum",
+"Johnny Depp",
+"Danny DeVito"
+],
+"answer": "Gene Wilder",
+"d": "easy"
+},
+{
+"q": "What is the last word that Charles Foster Kane utters before his death in the 1941 movie Citizen Kane?",
+"options": [
+"Rosebud",
+"Cheeseburger",
+"Bluebell",
+"Rosewood"
+],
+"answer": "Rosebud",
+"d": "easy"
+},
+{
+"q": "In the movie \"Cast Away\" the main protagonist's best friend while on the island is named",
+"options": [
+"Wilson",
+"Wilbur",
+"Willy",
+"Jackson"
+],
+"answer": "Wilson",
+"d": "easy"
+},
+{
+"q": "Who directed \"E.T. the Extra-Terrestrial\" (1982)?",
+"options": [
+"James Cameron",
+"Steven Spielberg",
+"Tim Burton",
+"Stanley Kubrick"
+],
+"answer": "Steven Spielberg",
+"d": "easy"
+},
+{
+"q": "What does Johnny say to Dr Houseman near the end of the film Dirty Dancing?",
+"options": [
+"Nobody puts Baby in a corner.",
+"Nobody makes Baby cry.",
+"Nobody tells Baby what to do.",
+"Nobody puts that lamp in the corner."
+],
+"answer": "Nobody puts Baby in a corner.",
+"d": "easy"
+},
+{
+"q": "What is the nickname of the Gingerbread Man from the Shrek movies?",
+"options": [
+"Ginger",
+"Cookie",
+"Snap",
+"Gingy"
+],
+"answer": "Gingy",
+"d": "easy"
+},
+{
+"q": "In the movie Gremlins, after what time of day should you not feed Mogwai?",
+"options": [
+"Sunset",
+"Noon",
+"Breakfast",
+"Midnight"
+],
+"answer": "Midnight",
+"d": "easy"
+},
+{
+"q": "What is the special talent of Alex the Lion from the 2008 animated comedy movie Madagascar: Escape 2 Africa?",
+"options": [
+"He can juggle.",
+"He can fly.",
+"He can dance.",
+"He can sing."
+],
+"answer": "He can dance.",
+"d": "easy"
+},
+{
+"q": "What weapon does Puss in Boots always carry around in the Shrek movies?",
+"options": [
+"Crossbow",
+"Dagger",
+"Sword",
+"Slingshot"
+],
+"answer": "Sword",
+"d": "easy"
+},
+{
+"q": "In the movie \"Back to the Future,\" what speed does Doc Brown's DeLorean need to reach in order to travel through time?",
+"options": [
+"8 mph",
+"80 mph",
+"100 mph",
+"88 mph"
+],
+"answer": "88 mph",
+"d": "easy"
+},
+{
+"q": "Who played Batman in the 1997 film \"Batman and Robin\"?",
+"options": [
+"Val Kilmer",
+"George Clooney",
+"Adam West",
+"Michael Keaton"
+],
+"answer": "George Clooney",
+"d": "easy"
+},
+{
+"q": "Who stars as NYPD police officer John McClane in the hit movie Die Hard?",
+"options": [
+"Harrison Ford",
+"Mr. Bean",
+"Bruce Willis",
+"Mel Gibson"
+],
+"answer": "Bruce Willis",
+"d": "easy"
+},
+{
+"q": "From what famous movie is the quote I'm the king of the world!?",
+"options": [
+"Titanic",
+"The Lion King",
+"Rocky",
+"The Aviator"
+],
+"answer": "Titanic",
+"d": "easy"
+},
+{
+"q": "What is the name of the character voiced by Tom Hanks in the Toy Story movies?",
+"options": [
+"Mr. Potato Head",
+"Buzz Lightyear",
+"Slinky Dog",
+"Woody"
+],
+"answer": "Woody",
+"d": "easy"
+},
+{
+"q": "Which of these actors have NOT played Spiderman in the movies?",
+"options": [
+"Michael Cera",
+"Tom Holland",
+"Tobey Maguire",
+"Andrew Garfield"
+],
+"answer": "Michael Cera",
+"d": "easy"
+},
+{
+"q": "Who plays the character of Po in the Kung Fu Panda movies?",
+"options": [
+"McConahey Ramses",
+"Jack Black",
+"Mirana Jonnes",
+"Jim Petersson"
+],
+"answer": "Jack Black",
+"d": "easy"
+},
+{
+"q": "This movie contains the quote, \"I feel the need ... the need for speed!\"",
+"options": [
+"Days of Thunder",
+"Cocktail",
+"Top Gun",
+"The Color of Money"
+],
+"answer": "Top Gun",
+"d": "easy"
+},
+{
+"q": "What 1997 sci-fi movie featured Agent K and former NYPD officer, Agent J?",
+"options": [
+"Space Jam",
+"The Iron Giant",
+"Independence Day",
+"Men in Black"
+],
+"answer": "Men in Black",
+"d": "easy"
+},
+{
+"q": "Which movie released in 2016 features Superman and Batman fighting?",
+"options": [
+"Batman v Superman: Knightfall",
+"Batman v Superman: Superapocalypse",
+"Batman v Superman: Black of Knight",
+"Batman v Superman: Dawn of Justice"
+],
+"answer": "Batman v Superman: Dawn of Justice",
+"d": "easy"
+},
+{
+"q": "What is the name of the first \"Star Wars\" film by release order?",
+"options": [
+"A New Hope",
+"The Rise of Skywalker",
+"The Empire Strikes Back",
+"The Phantom Menace"
+],
+"answer": "A New Hope",
+"d": "easy"
+},
+{
+"q": "Who is Han Solos partner in smuggling in the Star Wars saga?",
+"options": [
+"Boba Fett",
+"Jar Jar Binks",
+"Lando Calrissian",
+"Chewbacca"
+],
+"answer": "Chewbacca",
+"d": "easy"
+},
+{
+"q": "What actor portrayed Batman in the 2008 movie The Dark Knight, one of the highest-grossing movies of all time?",
+"options": [
+"Christian Bale",
+"Heath Ledger",
+"Adam West",
+"George Clooney"
+],
+"answer": "Christian Bale",
+"d": "easy"
+},
+{
+"q": "What movie starring Bruce Willis contains the line \"I see dead people\"?",
+"options": [
+"The Sixth Sense",
+"Die Hard",
+"Armageddon",
+"The Fifth Element"
+],
+"answer": "The Sixth Sense",
+"d": "easy"
+},
+{
+"q": "Which of the following movie characters says this phrase: Yo, Adrian, its me...?",
+"options": [
+"Adrian Pennino",
+"Rocky Balboa",
+"Apollo Creed",
+"Paulie Pennino"
+],
+"answer": "Rocky Balboa",
+"d": "easy"
+},
+{
+"q": "What is Supermans secret identity, and where does he work?",
+"options": [
+"Clark Kent, Daily Bugle",
+"Clark Kent, Daily Planet",
+"Clark Kent, Daily Report",
+"Bruce Wayne, Daily Planet"
+],
+"answer": "Clark Kent, Daily Planet",
+"d": "easy"
+},
+{
+"q": "The 2016 Disney animated film 'Moana' is based on which culture?",
+"options": [
+"Polynesian",
+"Melanesian",
+"Aboriginal Australian",
+"Atlantean"
+],
+"answer": "Polynesian",
+"d": "easy"
+},
+{
+"q": "Which of these movies is an all time favorite about a romance during World War II and stars film legends Humphrey Bogart and Ingrid Bergman?",
+"options": [
+"Pearl Harbor",
+"From Here to Eternity",
+"The African Queen",
+"Casablanca"
+],
+"answer": "Casablanca",
+"d": "easy"
+},
+{
+"q": "This movie contains the quote, \"Nobody puts Baby in a corner.\"",
+"options": [
+"Dirty Dancing",
+"Pretty in Pink",
+"Footloose",
+"Three Men and a Baby"
+],
+"answer": "Dirty Dancing",
+"d": "easy"
+},
+{
+"q": "In the 2003 movie Elf, Will Ferrell plays an oversized Elf whose name is what?",
+"options": [
+"Buddy",
+"Jangle",
+"Santa",
+"Barney"
+],
+"answer": "Buddy",
+"d": "easy"
+},
+{
+"q": "What name does Chuck give to the volleyball in the movie Cast Away?",
+"options": [
+"Wilson",
+"Spalding",
+"Winston",
+"Walter"
+],
+"answer": "Wilson",
+"d": "easy"
+},
+{
+"q": "What is the oldest Disney film?",
+"options": [
+"Fantasia",
+"Pinocchio",
+"Snow White and the Seven Dwarfs",
+"Dumbo"
+],
+"answer": "Snow White and the Seven Dwarfs",
+"d": "easy"
+},
+{
+"q": "What Hollywood actress starred in the 1942 film Casablanca, ranked the second best movie of all time by the American Film Institute?",
+"options": [
+"Ingrid Bergman",
+"Rita Hayworth",
+"Lauren Bacall",
+"Marilyn Monroe"
+],
+"answer": "Ingrid Bergman",
+"d": "easy"
+},
+{
+"q": "In the movie Anchorman, Brian Fantana attempts to hit on Veronica. What special cologne does he apply for this occasion?",
+"options": [
+"Sex Panther",
+"Eau de Ron Burgundy",
+"Midnight Musk",
+"Black Panther"
+],
+"answer": "Sex Panther",
+"d": "easy"
+},
+{
+"q": "What celebrated action movie made actor Bruce Willis world famous?",
+"options": [
+"Moonlighting",
+"The Last Boy Scout",
+"Die Hard",
+"Armageddon"
+],
+"answer": "Die Hard",
+"d": "easy"
+},
+{
+"q": "What year did the James Cameron film \"Titanic\" come out in theaters?",
+"options": [
+"1998",
+"1996",
+"1912",
+"1997"
+],
+"answer": "1997",
+"d": "easy"
+},
+{
+"q": "Which actor plays Obi-Wan Kenobi in Star Wars Episodes I-III?",
+"options": [
+"Alec Guinness",
+"Ewan McGregor",
+"Liam Neeson",
+"Hayden Christensen"
+],
+"answer": "Ewan McGregor",
+"d": "easy"
+},
+{
+"q": "What is the name of the sequel to 2007s Transformers?",
+"options": [
+"Transformers 2 Revenge of the Fallen",
+"Transformers 2 Rise of the Decepticons",
+"Transformers 2 War of the Machines",
+"Transformers 2 Return of the Autobots"
+],
+"answer": "Transformers 2 Revenge of the Fallen",
+"d": "easy"
+},
+{
+"q": "Who directed the movie \"Alien\"?",
+"options": [
+"James Cameron",
+"John Carpenter",
+"Ridley Scott",
+"Steven Spielberg"
+],
+"answer": "Ridley Scott",
+"d": "easy"
+},
+{
+"q": "Who said: You're gonna need a bigger boat.?",
+"options": [
+"Robert Shaw in Jaws",
+"Richard Dreyfuss in Jaws",
+"Captain Ahab in Moby Dick",
+"Roy Scheider in Jaws"
+],
+"answer": "Roy Scheider in Jaws",
+"d": "easy"
+},
+{
+"q": "What was Dorothys surname in the 1939 classic The Wizard of Oz?",
+"options": [
+"Gale",
+"Grange",
+"Oz",
+"Gable"
+],
+"answer": "Gale",
+"d": "easy"
+},
+{
+"q": "This movie contains the quote, \"Houston, we have a problem.\"",
+"options": [
+"Capricorn One",
+"The Right Stuff",
+"Apollo 13",
+"Marooned"
+],
+"answer": "Apollo 13",
+"d": "easy"
+},
+{
+"q": "What was the first feature-length computer-animated movie?",
+"options": [
+"101 Dalmatians",
+"Lion king",
+"Toy Story",
+"Tron"
+],
+"answer": "Toy Story",
+"d": "easy"
+},
+{
+"q": "What is the orange and white bot's name in \"Star Wars: The Force Awakens\"?",
+"options": [
+"BB-3",
+"AA-A",
+"BB-8",
+"R2-D2"
+],
+"answer": "BB-8",
+"d": "easy"
+},
+{
+"q": "Who played Alfred in the 2005 movie Batman Begins?",
+"options": [
+"Michael Caine",
+"Rowan Atkinson",
+"Jim Broadbent",
+"Michael Gambon"
+],
+"answer": "Michael Caine",
+"d": "easy"
+},
+{
+"q": "Peter Jackson directed which one of these trilogies?",
+"options": [
+"Pirates of the Caribbean",
+"The Lord of the Rings",
+"The Chronicles of Narnia",
+"The Twilight Saga"
+],
+"answer": "The Lord of the Rings",
+"d": "easy"
+},
+{
+"q": "Who directed the movie The Godfather?",
+"options": [
+"Al Capone",
+"Sergio Leone",
+"Martin Scorsese",
+"Francis Ford Coppola"
+],
+"answer": "Francis Ford Coppola",
+"d": "easy"
+},
+{
+"q": "Which of these movies, starring Tom Hanks won the most Oscars?",
+"options": [
+"Toy Story",
+"Cast Away",
+"Forrest Gump",
+"Apollo 13"
+],
+"answer": "Forrest Gump",
+"d": "easy"
+},
+{
+"q": "Who played Clark Kent and Superman in the first Superman movie?",
+"options": [
+"Christopher Reeve",
+"Brandon Routh",
+"Nicolas Cage",
+"George Reeves"
+],
+"answer": "Christopher Reeve",
+"d": "easy"
+},
+{
+"q": "Who plays protagonist Ethan Hunt in the \"Mission: Impossible\" film-series?",
+"options": [
+"Sean Connery",
+"Pierce Brosnan",
+"Johnny Depp",
+"Tom Cruise"
+],
+"answer": "Tom Cruise",
+"d": "easy"
+},
+{
+"q": "This movie contains the quote, \"I love the smell of napalm in the morning!\"",
+"options": [
+"Full Metal Jacket",
+"Platoon",
+"Top Gun",
+"Apocalypse Now"
+],
+"answer": "Apocalypse Now",
+"d": "easy"
+},
+{
+"q": "What actor uttered the phrase Carpe diem. Seize the day, boys. Make your lives extraordinary in the 1989 movie Dead Poets Society?",
+"options": [
+"Jack Black",
+"Ethan Hawke",
+"Robin Williams",
+"Tom Hanks"
+],
+"answer": "Robin Williams",
+"d": "easy"
+},
+{
+"q": "In The Chronicles of Narnia: The Lion, the Witch and the Wardrobe the four main characters are Peter, Edmund, Lucy and who else?",
+"options": [
+"Aslan",
+"Sarah",
+"Susan",
+"Sally"
+],
+"answer": "Susan",
+"d": "easy"
+},
+{
+"q": "Daniel Radcliffe became a global star in the film industry due to his performance in which film franchise?",
+"options": [
+"Pirates of the Caribbean",
+"Ted",
+"Harry Potter",
+"Spy Kids"
+],
+"answer": "Harry Potter",
+"d": "easy"
+},
+{
+"q": "What does Mick Dundee say when he sees the thief holding a knife in the 1986 movie Crocodile Dundee?",
+"options": [
+"Crikey, put that away, mate!",
+"Now that's a knife.",
+"You call that a knife?",
+"That's not a knife."
+],
+"answer": "That's not a knife.",
+"d": "easy"
+},
+{
+"q": "Who directed the movies \"Pulp Fiction\", \"Reservoir Dogs\" and \"Django Unchained\"?",
+"options": [
+"Steven Spielberg",
+"Quentin Tarantino",
+"Martin Scorsese",
+"James Cameron"
+],
+"answer": "Quentin Tarantino",
+"d": "easy"
+},
+{
+"q": "Who portrayed Han Solo in the Star Wars main film series?",
+"options": [
+"Harrison Ford",
+"Alec Guinness",
+"Peter Cushing",
+"Mark Hamill"
+],
+"answer": "Harrison Ford",
+"d": "easy"
+},
+{
+"q": "Peter Jackson's film series \"The Lord of the Rings\" was shot entirely in which country?",
+"options": [
+"Australia",
+"Antarctica",
+"New Zealand",
+"Iceland"
+],
+"answer": "New Zealand",
+"d": "easy"
+},
+{
+"q": "Who plays \"Bruce Wayne\" in the 2008 movie \"The Dark Knight\"?",
+"options": [
+"Heath Ledger",
+"Christian Bale",
+"Ben Affleck",
+"Michael Keaton"
+],
+"answer": "Christian Bale",
+"d": "easy"
+},
+{
+"q": "Which James Bond film had the theme song written and performed by English singer-songwriter Adele?",
+"options": [
+"Casino Royale",
+"Skyfall",
+"Spectre",
+"Quantum of Solace"
+],
+"answer": "Skyfall",
+"d": "easy"
+},
+{
+"q": "Who is the main protagonist in, the 1985 film, Back to the Future?",
+"options": [
+"George McFly",
+"Marty McFly",
+"Emmett \"Doc\" Brown",
+"Biff Tannen"
+],
+"answer": "Marty McFly",
+"d": "easy"
+},
+{
+"q": "In the film \"John Wick\" why does John Wick get out of retirement?",
+"options": [
+"His wife is kidnapped for ransom",
+"His dog runs away and his watch is stolen",
+"His puppy is killed and his car was stolen",
+"His pizza was delivered cold"
+],
+"answer": "His puppy is killed and his car was stolen",
+"d": "easy"
+},
+{
+"q": "Who is Melman the Giraffe in love with in the 2008 animated comedy movie Madagascar: Escape 2 Africa?",
+"options": [
+"Gloria",
+"Marty the zebra",
+"Alex the lion",
+"A lady giraffe"
+],
+"answer": "Gloria",
+"d": "easy"
+},
+{
+"q": "Leonardo Di Caprio won his first Best Actor Oscar for his performance in which film?",
+"options": [
+"The Wolf of Wall Street",
+"The Aviator",
+"The Revenant",
+"Titanic"
+],
+"answer": "The Revenant",
+"d": "easy"
+},
+{
+"q": "What African American actor starred as Sidney Deane in the 1992 movie White Men Can't Jump?",
+"options": [
+"Damon Wayans",
+"Michael Jordan",
+"Cuba Gooding Jr.",
+"Wesley Snipes"
+],
+"answer": "Wesley Snipes",
+"d": "medium"
+},
+{
+"q": "Who did the score to the original Blade Runner?",
+"options": [
+"Vangelis",
+"Enya",
+"Jean-Michel Jarre",
+"Kitaro"
+],
+"answer": "Vangelis",
+"d": "medium"
+},
+{
+"q": "Who performed the opening theme song for the James Bond 007 movie \"Goldfinger\"?",
+"options": [
+"Tom Jones",
+"Dusty Springfield",
+"Shirley Basey",
+"Sheena Easton"
+],
+"answer": "Shirley Basey",
+"d": "medium"
+},
+{
+"q": "Who plays Anakin Skywalker in Star Wars Episode 1: The Phantom Menace?",
+"options": [
+"Frankie Muniz",
+"Hayden Christensen",
+"Haley Joel Osment",
+"Jake Lloyd"
+],
+"answer": "Jake Lloyd",
+"d": "medium"
+},
+{
+"q": "The following words were spoken by the character Carl Denham in which 1933 movie: Oh, no. It wasn't the airplanes. It was Beauty killed the Beast?",
+"options": [
+"Godzilla",
+"Son of Kong",
+"King Kong",
+"The Lost World"
+],
+"answer": "King Kong",
+"d": "medium"
+},
+{
+"q": "Which Scary Movie film spoofed Scream, The 6th Sense, I Know What You Did Last Summer and Halloween?",
+"options": [
+"Scary Movie 3",
+"Scary Movie",
+"Scary Movie 5",
+"Scary Movie 2"
+],
+"answer": "Scary Movie",
+"d": "medium"
+},
+{
+"q": "What disease takes the life of Nicole Kidmans character, Satine, in the 2001 musical Moulin Rouge!?",
+"options": [
+"Tuberculosis",
+"A broken heart",
+"Pneumonia",
+"Cholera"
+],
+"answer": "Tuberculosis",
+"d": "medium"
+},
+{
+"q": "What was the first movie in color to win the Best Picture Academy Award?",
+"options": [
+"Avatar",
+"Fantasia",
+"The Wizard of Oz",
+"Gone with the Wind"
+],
+"answer": "Gone with the Wind",
+"d": "medium"
+},
+{
+"q": "When did the movie Scream hit the theaters?",
+"options": [
+"1998",
+"1995",
+"1996",
+"1997"
+],
+"answer": "1996",
+"d": "medium"
+},
+{
+"q": "What 1960 movie, directed by John Sturges, is an American remake of the Japanese movie Shichinin no samurai?",
+"options": [
+"The Great Escape",
+"The Wild Bunch",
+"The Magnificent Seven",
+"Seven Brides for Seven Brothers"
+],
+"answer": "The Magnificent Seven",
+"d": "medium"
+},
+{
+"q": "Which 1987 movie won the Best Picture Award?",
+"options": [
+"Moonstruck",
+"Broadcast News",
+"The Last Emperor",
+"Ishtar"
+],
+"answer": "The Last Emperor",
+"d": "medium"
+},
+{
+"q": "Which of these movie characters based on real people was not portrayed by Robert De Niro?",
+"options": [
+"Jake LaMotta",
+"Don Michael Corleone",
+"Jimmy Conway",
+"Vito Corleone"
+],
+"answer": "Don Michael Corleone",
+"d": "medium"
+},
+{
+"q": "What was the code name of Captain Hilts, the fictional character portrayed by Steve McQueen in The Great Escape?",
+"options": [
+"The Forger",
+"The Scrounger",
+"The Cooler King",
+"The Motorcycle King"
+],
+"answer": "The Cooler King",
+"d": "medium"
+},
+{
+"q": "In which movies does Rambo fight the Russians?",
+"options": [
+"First Blood and Rambo III",
+"Rambo and Rambo III",
+"Rambo III and First Blood pt. II",
+"He never fights the Russians"
+],
+"answer": "Rambo III and First Blood pt. II",
+"d": "medium"
+},
+{
+"q": "Who plays Rosie in the movie Princess Protection Program?",
+"options": [
+"Demi Lovato",
+"Vanessa Hudgens",
+"Selena Gomez",
+"Miley Cyrus"
+],
+"answer": "Demi Lovato",
+"d": "medium"
+},
+{
+"q": "What movie is famous for its depiction of the Omaha beachhead assault of 1944 in its opening 24 minutes?",
+"options": [
+"Dunkirk",
+"The Thin Red Line",
+"Saving Private Ryan",
+"The Longest Day"
+],
+"answer": "Saving Private Ryan",
+"d": "medium"
+},
+{
+"q": "What historical object was Indiana Jones father searching for his whole life?",
+"options": [
+"The Holy Grail",
+"The Ark of the Covenant",
+"The Spear of Destiny",
+"The lost city of Atlantis"
+],
+"answer": "The Holy Grail",
+"d": "medium"
+},
+{
+"q": "What female artist performed the theme song of the 1995 Bond movie GoldenEye?",
+"options": [
+"Shirley Bassey",
+"Britney Spears",
+"Tina Turner",
+"Sheena Easton"
+],
+"answer": "Tina Turner",
+"d": "medium"
+},
+{
+"q": "In the movie 8 Mile, which one of B-Rabbits friends shot himself in the leg by mistake?",
+"options": [
+"Cheddar Bob",
+"Sol",
+"DJ Iz",
+"B-Rabbit himself"
+],
+"answer": "Cheddar Bob",
+"d": "medium"
+},
+{
+"q": "What car is Robbie saving for in the popular movie Dirty Dancing?",
+"options": [
+"Corvette",
+"Alpha Romeo",
+"A watermelon truck",
+"Aston Martin"
+],
+"answer": "Alpha Romeo",
+"d": "medium"
+},
+{
+"q": "For which of the movies listed below did Steven Spielberg win Oscars for Best Director?",
+"options": [
+"Jaws and E.T.",
+"Saving Private Ryan and Munich",
+"Schindlers List and Lincoln",
+"Schindlers List and Saving Private Ryan"
+],
+"answer": "Schindlers List and Saving Private Ryan",
+"d": "medium"
+},
+{
+"q": "What is the name of the condition, from which the main character suffers in Memento?",
+"options": [
+"Anterograde Amnesia",
+"Chronic hiccups",
+"Dementia",
+"Retrograde amnesia"
+],
+"answer": "Anterograde Amnesia",
+"d": "medium"
+},
+{
+"q": "Who played Deputy Marshal Samuel Gerard in the 1993 film \"The Fugitive\"?",
+"options": [
+"Martin Landau",
+"Harrison Ford",
+"Harvey Keitel",
+"Tommy Lee Jones"
+],
+"answer": "Tommy Lee Jones",
+"d": "medium"
+},
+{
+"q": "Which of these actors did not appear in Woody Allens 1977 comedy movie Annie Hall?",
+"options": [
+"Woody Allen",
+"Jack Nicholson",
+"Sigourney Weaver",
+"Diane Keaton"
+],
+"answer": "Jack Nicholson",
+"d": "medium"
+},
+{
+"q": "Why is Tom Hankss character, Sam Baldwin, a lonely father in the 1993 romantic comedy Sleepless in Seattle?",
+"options": [
+"His wife ran off with a radio host.",
+"He is a widower.",
+"His wife left him for another man.",
+"He is divorced."
+],
+"answer": "He is a widower.",
+"d": "medium"
+},
+{
+"q": "Who played Mrs. Robinson in The Graduate?",
+"options": [
+"Faye Dunaway",
+"Anne Bancroft",
+"Anne Baxter",
+"Betty White"
+],
+"answer": "Anne Bancroft",
+"d": "medium"
+},
+{
+"q": "In three of these movies James Bond drove an Aston Martin DB5. Can you spot the odd one?",
+"options": [
+"Thunderball",
+"Goldfinger",
+"GoldenEye",
+"Dr. No"
+],
+"answer": "Dr. No",
+"d": "medium"
+},
+{
+"q": "Who was the director of the 1975 movie One Flew Over the Cuckoos Nest?",
+"options": [
+"Roman Polanski",
+"Sidney Lumet",
+"Milos Forman",
+"Jack Nicholson"
+],
+"answer": "Milos Forman",
+"d": "medium"
+},
+{
+"q": "I killed a helicopter with a car. Who am I?",
+"options": [
+"Indiana Jones",
+"Mr. Bean",
+"Rambo",
+"John McClane"
+],
+"answer": "John McClane",
+"d": "medium"
+},
+{
+"q": "What film did James Cameron's Avatar dethrone as the highest-grossing film ever?",
+"options": [
+"Titanic",
+"The Return of the King",
+"Shrek 2",
+"Star Wars"
+],
+"answer": "Titanic",
+"d": "medium"
+},
+{
+"q": "What was Dorothy's surname in 'The Wizard Of Oz'?",
+"options": [
+"Perkins",
+"Day",
+"Parker",
+"Gale"
+],
+"answer": "Gale",
+"d": "medium"
+},
+{
+"q": "What character did Danny DeVito voice in the 1997 animated movie Hercules?",
+"options": [
+"Hermes",
+"Philoctetes",
+"Pain and Panic",
+"Amphitryon"
+],
+"answer": "Philoctetes",
+"d": "medium"
+},
+{
+"q": "What actor took the award for Best Actor in a Leading Role at the 72nd Academy Awards 2000?",
+"options": [
+"Jim Carrey",
+"Kevin Spacey",
+"Denzel Washington",
+"Russell Crowe"
+],
+"answer": "Kevin Spacey",
+"d": "medium"
+},
+{
+"q": "Which DC superhero was NOT included in the 2017 movie \"Justice League\"?",
+"options": [
+"Green Arrow",
+"Cyborg",
+"Wonder Woman",
+"Batman"
+],
+"answer": "Green Arrow",
+"d": "medium"
+},
+{
+"q": "What breed of dog was Marley in the film \"Marley & Me\" (2008)?",
+"options": [
+"Shiba Inu",
+"Golden Retriever",
+"Dalmatian",
+"Labrador Retriever"
+],
+"answer": "Labrador Retriever",
+"d": "medium"
+},
+{
+"q": "What is the Pink Panther from the 2006 comedy movie The Pink Panther?",
+"options": [
+"A Paris nightclub",
+"A famous racehorse",
+"The cartoon cat mascot",
+"A pink diamond"
+],
+"answer": "A pink diamond",
+"d": "medium"
+},
+{
+"q": "In the movie Monty Pythons Life of Brian, what group are Brian, Reg and the others a part of?",
+"options": [
+"The Judean Popular Front",
+"The Peoples Front of Judea",
+"The Judean Popular Peoples Front",
+"The Romans Go Home Committee"
+],
+"answer": "The Peoples Front of Judea",
+"d": "medium"
+},
+{
+"q": "What Disney movie contains the line, A fine conscience I turned out to be!?",
+"options": [
+"Dumbo",
+"Frozen",
+"Pinocchio",
+"Bambi"
+],
+"answer": "Pinocchio",
+"d": "medium"
+},
+{
+"q": "What was the rating for the film Little Miss Sunshine?",
+"options": [
+"PG-13",
+"NC-17",
+"PG",
+"R"
+],
+"answer": "R",
+"d": "medium"
+},
+{
+"q": "In \"The Hobbit,\" who was head of the White Council?",
+"options": [
+"Bilbo Baggins",
+"Lady Galadriel",
+"Gandalf",
+"Saruman"
+],
+"answer": "Saruman",
+"d": "medium"
+},
+{
+"q": "What type of car did Benjamin receive for his 21st birthday in the movie The Graduate?",
+"options": [
+"Alfa Romeo",
+"Triumph",
+"a golf buggy",
+"Fiat Spider"
+],
+"answer": "Alfa Romeo",
+"d": "medium"
+},
+{
+"q": "What is the nickname of Marilyn Monroes character in the 1959 film Some Like It Hot?",
+"options": [
+"Daphne",
+"Sugar",
+"Kitten",
+"Honey"
+],
+"answer": "Sugar",
+"d": "medium"
+},
+{
+"q": "What was the name of John Candys character in the movie Planes, Trains Automobiles?",
+"options": [
+"Del the Shower Ring Guy",
+"Del Griffing",
+"Del Griffith",
+"Del Griffin"
+],
+"answer": "Del Griffith",
+"d": "medium"
+},
+{
+"q": "What 1970 movie was honored with an Academy Award for Best Picture at the 43rd Academy Awards in 1971?",
+"options": [
+"M*A*S*H",
+"Airport",
+"Love Story",
+"Patton"
+],
+"answer": "Patton",
+"d": "medium"
+},
+{
+"q": "What actor portrayed the T-1000 android in the 1991 movie Terminator 2: Judgment Day, directed by James Cameron?",
+"options": [
+"Arnold Schwarzenegger",
+"Danny DeVito",
+"Robert Patrick",
+"Michael Biehn"
+],
+"answer": "Robert Patrick",
+"d": "medium"
+},
+{
+"q": "What is the birth name of Michael Caine?",
+"options": [
+"Maurice Micklewhite",
+"Alfred Pennyworth",
+"Michael Whitfield",
+"Maurice Dempsey"
+],
+"answer": "Maurice Micklewhite",
+"d": "medium"
+},
+{
+"q": "What was the name of the planet in \"Aliens\"?",
+"options": [
+"LV-426",
+"FR-838",
+"DI-621",
+"Weyland Yutani Corporation Base"
+],
+"answer": "LV-426",
+"d": "medium"
+},
+{
+"q": "What is the name of B-Rabbits best friend who hosts the battles at the Shelter in the movie 8 Mile?",
+"options": [
+"DJ Iz",
+"Sol",
+"Future",
+"Slim Shady"
+],
+"answer": "Future",
+"d": "medium"
+},
+{
+"q": "Which film has been critically regarded as the best film of all time?",
+"options": [
+"The Godfather Part II",
+"The Room",
+"Citizen Kane",
+"Avatar"
+],
+"answer": "Citizen Kane",
+"d": "medium"
+},
+{
+"q": "What decade was Andy Dufresne sent to the Shawshank prison in the movie The Shawshank Redemption?",
+"options": [
+"1930s",
+"1950s",
+"1940s",
+"1990s"
+],
+"answer": "1940s",
+"d": "medium"
+},
+{
+"q": "In the 1994 movie \"Speed\", what is the minimum speed the bus must go to prevent to bomb from exploding?",
+"options": [
+"55 mph",
+"50 mph",
+"60 mph",
+"150 mph"
+],
+"answer": "50 mph",
+"d": "medium"
+},
+{
+"q": "What is the name of the island that \"Jurassic Park\" is built on?",
+"options": [
+"Isla Pena",
+"Isla Sorna",
+"Isla Muerta",
+"Isla Nublar"
+],
+"answer": "Isla Nublar",
+"d": "medium"
+},
+{
+"q": "What is the family name of the heroine in the 1979 thriller Alien?",
+"options": [
+"Riley",
+"Ridley",
+"Rambo",
+"Ripley"
+],
+"answer": "Ripley",
+"d": "medium"
+},
+{
+"q": "In Lord of the Rings, what is Boromir\u2019s younger brother\u2019s name?",
+"options": [
+"Faramir",
+"Beregond",
+"Denethor",
+"Gollum"
+],
+"answer": "Faramir",
+"d": "medium"
+},
+{
+"q": "What is the name of the palace where Indiana Jones and Co. end up in the movie Indiana Jones and the Temple of Doom?",
+"options": [
+"Kali Palace",
+"Mayapore Palace",
+"Pankot Palace",
+"Doom Palace"
+],
+"answer": "Pankot Palace",
+"d": "medium"
+},
+{
+"q": "The movie Back to the Future, directed by Robert Zemeckis, was released in what year?",
+"options": [
+"1985",
+"2015",
+"1986",
+"1984"
+],
+"answer": "1985",
+"d": "medium"
+},
+{
+"q": "Who directed the horror film House of 1000 Corpses?",
+"options": [
+"Rob Zombie",
+"Rob Cohen",
+"Rob Reiner",
+"Robbie Williams"
+],
+"answer": "Rob Zombie",
+"d": "medium"
+},
+{
+"q": "Who starred as Bruce Wayne and Batman in Tim Burton's 1989 movie \"Batman\"?",
+"options": [
+"Michael Keaton",
+"Val Kilmer",
+"George Clooney",
+"Adam West"
+],
+"answer": "Michael Keaton",
+"d": "medium"
+},
+{
+"q": "In the movie \"V for Vendetta,\" what is the date that masked vigilante \"V\" urges people to remember?",
+"options": [
+"November 5th",
+"October 31st",
+"November 4th",
+"November 6th"
+],
+"answer": "November 5th",
+"d": "medium"
+},
+{
+"q": "In the 2012 film, \"The Lorax\", who is the antagonist?",
+"options": [
+"Ted Wiggins",
+"Grammy Norma",
+"The Once-Ler",
+"Aloysius O'Hare"
+],
+"answer": "Aloysius O'Hare",
+"d": "medium"
+},
+{
+"q": "Blazing Saddles was a comedy western about the first Black sheriff in the west. Do you know who played the role of Sheriff Bart?",
+"options": [
+"Cleavon Little",
+"Richard Pryor",
+"Billy Dee Williams",
+"Samuel L. Jackson"
+],
+"answer": "Cleavon Little",
+"d": "medium"
+},
+{
+"q": "What was Bruce Campbell's iconic one-liner after getting a chainsaw hand in Evil Dead 2?",
+"options": [
+"Nice.",
+"Perfect.",
+"Groovy.",
+"Gnarly."
+],
+"answer": "Groovy.",
+"d": "medium"
+},
+{
+"q": "What was the name of the Warden in the hit movie The Shawshank Redemption ?",
+"options": [
+"Samuel Newton",
+"Samuel Norton",
+"Andy Dufresne",
+"Byron Hadley"
+],
+"answer": "Samuel Norton",
+"d": "medium"
+},
+{
+"q": "What was Marilyn Monroe`s character's first name in the film \"Some Like It Hot\"?",
+"options": [
+"Sugar",
+"Honey",
+"Marmalade",
+"Candy"
+],
+"answer": "Sugar",
+"d": "medium"
+},
+{
+"q": "What season is it when Bambis mother is shot by the poachers in the movie Bambi?",
+"options": [
+"spring",
+"winter",
+"autumn",
+"monsoon season"
+],
+"answer": "winter",
+"d": "medium"
+},
+{
+"q": "In the movie Joe Dirt, who plays Robbie, the guy who always kicks up dirt in Joes face with his car?",
+"options": [
+"Ozzy Osbourne",
+"Kid Rock",
+"Fred Durst",
+"Peter DeLuise"
+],
+"answer": "Kid Rock",
+"d": "medium"
+},
+{
+"q": "How many Academy Awards did the 1939 film Gone with the Wind win out of 13 nominations?",
+"options": [
+"Ten",
+"None",
+"Twelve",
+"Eight"
+],
+"answer": "Ten",
+"d": "medium"
+},
+{
+"q": "Who sang the theme song to 1965 James Bond movie, Thunderball?",
+"options": [
+"Austin Powers",
+"Shirley Bassey",
+"Tom Jones",
+"Engelbert Humperdinck"
+],
+"answer": "Tom Jones",
+"d": "medium"
+},
+{
+"q": "Brendan Fraser starred in the following movies, except which one?",
+"options": [
+"Encino Man",
+"Monkeybone",
+"Titanic",
+"Mrs. Winterbourne"
+],
+"answer": "Titanic",
+"d": "medium"
+},
+{
+"q": "What is the last thing humans do in the fictional story of Bambi?",
+"options": [
+"Build a car park",
+"Start a forest fire",
+"Chop down the forest",
+"Set a hunting trap"
+],
+"answer": "Start a forest fire",
+"d": "medium"
+},
+{
+"q": "Which of these actresses did not appear in the 1997 horror movie I Know What You Did Last Summer?",
+"options": [
+"Sarah Michelle Gellar",
+"Anne Heche",
+"Brandy",
+"Jennifer Love Hewitt"
+],
+"answer": "Brandy",
+"d": "medium"
+},
+{
+"q": "What 1973 movie is this quote from: You're telling me that I should take my daughter to a witch doctor? Is that it??",
+"options": [
+"The Exorcist",
+"Rosemarys Baby",
+"Ghostbusters",
+"The Omen"
+],
+"answer": "The Exorcist",
+"d": "medium"
+},
+{
+"q": "In what Disney film was the following question asked: What do you want me to do, dress in drag and do the hula?",
+"options": [
+"Aladdin",
+"Hercules",
+"Bambi",
+"The Lion King"
+],
+"answer": "The Lion King",
+"d": "medium"
+},
+{
+"q": "What is the name of the female saber-toothed squirrel that makes a debut appearance in Ice Age 3?",
+"options": [
+"Sandy",
+"Scratte",
+"Scratchie",
+"Scarlett"
+],
+"answer": "Scratte",
+"d": "medium"
+},
+{
+"q": "Where and when does the movie Indiana Jones and the Temple of Doom begin?",
+"options": [
+"Cairo, Egypt 1935",
+"Shanghai, China 1935",
+"Shanghai, China 1937",
+"The Temple of Doom, 3000 BC"
+],
+"answer": "Shanghai, China 1935",
+"d": "medium"
+},
+{
+"q": "Which movie contains the quote, \"Say hello to my little friend!\"?",
+"options": [
+"Reservoir Dogs",
+"Scarface",
+"Heat",
+"Goodfellas"
+],
+"answer": "Scarface",
+"d": "medium"
+},
+{
+"q": "What was the name of the protagonist in the movie Commando (1985)?",
+"options": [
+"John Matrix",
+"Harry Tasker",
+"John Rambo",
+"Douglas Quaid"
+],
+"answer": "John Matrix",
+"d": "medium"
+},
+{
+"q": "What 1996 movie won the Academy Award for Best Picture at the 69th Academy Awards in 1997?",
+"options": [
+"Independence Day",
+"Fargo",
+"Shine",
+"The English Patient"
+],
+"answer": "The English Patient",
+"d": "medium"
+},
+{
+"q": "In Finding Nemo, what was the name of Nemo's mom?",
+"options": [
+"Coral",
+"Marina",
+"Pearl",
+"Bubbles"
+],
+"answer": "Coral",
+"d": "medium"
+},
+{
+"q": "In Star Wars, what's the name of the new Government created after the defeat of the Galactic Empire?",
+"options": [
+"The Galactic Republic",
+"The New Republic",
+"The Ewok Empire",
+"The Rebel Alliance"
+],
+"answer": "The New Republic",
+"d": "medium"
+},
+{
+"q": "What is Mr. Jones eating in the movie Friday when he catches Craig in the refrigerator?",
+"options": [
+"A giant turkey leg",
+"Fried chicken",
+"Grapes",
+"Cherries"
+],
+"answer": "Grapes",
+"d": "medium"
+},
+{
+"q": "Mark Wahlberg played the titular character of which 2008 video-game adaptation?",
+"options": [
+"Hitman",
+"Max Payne",
+"Doom",
+"Pac-Man"
+],
+"answer": "Max Payne",
+"d": "medium"
+},
+{
+"q": "What was Navins last name in the 1979 comedy The Jerk?",
+"options": [
+"Johnson",
+"Jamison",
+"Rockefeller",
+"Johnston"
+],
+"answer": "Johnson",
+"d": "medium"
+},
+{
+"q": "What American actor directed and co-starred alongside Emily Blunt in 2018's horror film \"A Quiet Place\"?",
+"options": [
+"Bradley Cooper",
+"Josh Brolin",
+"Rowan Atkinson",
+"John Krasinski"
+],
+"answer": "John Krasinski",
+"d": "medium"
+},
+{
+"q": "What was the name of the character played by Dustin Hoffman in The Graduate?",
+"options": [
+"Benjamin Button",
+"Benjamin Barnes",
+"Benjamin Braddock",
+"Benjamin Bradley"
+],
+"answer": "Benjamin Braddock",
+"d": "medium"
+},
+{
+"q": "Which of these Academy Awards did the 1998 movie Saving Private Ryan not win?",
+"options": [
+"Best Director",
+"Best Sound",
+"Best Cinematography",
+"Best Picture"
+],
+"answer": "Best Picture",
+"d": "medium"
+},
+{
+"q": "When was the film Bambi released?",
+"options": [
+"1942",
+"1940",
+"1972",
+"1943"
+],
+"answer": "1942",
+"d": "medium"
+},
+{
+"q": "In the film \"Requiem for a Dream\", what drug does Jared Leto's character get addicted to?",
+"options": [
+"Methamphetamine",
+"Cocaine",
+"Heroin",
+"Caffeine"
+],
+"answer": "Heroin",
+"d": "medium"
+},
+{
+"q": "The 1939 movie The Wizard of Oz is based on which novel by L. Frank Baum?",
+"options": [
+"The Wonderful Wizard of Oz",
+"The Wizard of Oz Strikes Back",
+"Ozma of Oz",
+"The Marvelous Land of Oz"
+],
+"answer": "The Wonderful Wizard of Oz",
+"d": "medium"
+},
+{
+"q": "What is the title of the short story on which the movie Memento is based?",
+"options": [
+"Memento Mori",
+"Memento Mei",
+"Carpe Diem",
+"Forget Me Not"
+],
+"answer": "Memento Mori",
+"d": "medium"
+},
+{
+"q": "Which movie of film director Stanley Kubrick is known to be an adaptation of a Stephen King novel?",
+"options": [
+"2001: A Space Odyssey",
+"Full Metal Jacket",
+"A Clockwork Orange",
+"The Shining"
+],
+"answer": "The Shining",
+"d": "medium"
+},
+{
+"q": "Who portrays Carter in the Disney movie Princess Protection Program?",
+"options": [
+"Hannah Montana",
+"Demi Lovato",
+"Miley Cyrus",
+"Selena Gomez"
+],
+"answer": "Selena Gomez",
+"d": "medium"
+},
+{
+"q": "What movie won 8 Academy Awards out of 10 nominations at the 81st Academy Awards 2009?",
+"options": [
+"Milk",
+"Slumdog Millionaire",
+"The Curious Case of Benjamin Button",
+"High School Musical 3"
+],
+"answer": "Slumdog Millionaire",
+"d": "medium"
+},
+{
+"q": "Which of these is not one of the nicknames of the characters in the movie American Pie?",
+"options": [
+"Wally",
+"Stifler",
+"Oz",
+"Finch"
+],
+"answer": "Wally",
+"d": "medium"
+},
+{
+"q": "Tony Shalhoub provided the voice of which of these characters from the animated film Cars?",
+"options": [
+"Sheriff",
+"Luigi",
+"Ramone",
+"Guido"
+],
+"answer": "Luigi",
+"d": "medium"
+},
+{
+"q": "Who wrote and directed the 1986 film 'Platoon'?",
+"options": [
+"Oliver Stone",
+"Michael Cimino",
+"Francis Ford Coppola",
+"Stanley Kubrick"
+],
+"answer": "Oliver Stone",
+"d": "medium"
+},
+{
+"q": "What was the name of Vadas uncle in My Girl, who had a steel plate put in his head?",
+"options": [
+"Gary",
+"Tin-Head",
+"Bill",
+"Phil"
+],
+"answer": "Phil",
+"d": "hard"
+},
+{
+"q": "What was the name of Craigs love interest in the movie Next Friday?",
+"options": [
+"Karla",
+"Sugar",
+"Nita",
+"Kayla"
+],
+"answer": "Karla",
+"d": "hard"
+},
+{
+"q": "Ed Koch, the Mayor of New York in 1984, played himself in which Muppets movie?",
+"options": [
+"The Muppet Movie",
+"The Great Muppet Caper",
+"The Muppets Take Manhattan",
+"Muppets from Space"
+],
+"answer": "The Muppets Take Manhattan",
+"d": "hard"
+},
+{
+"q": "Gojira is the result of combining two Japanese words. What do these two words mean in English?",
+"options": [
+"Big and Angry",
+"Sea and Monster",
+"Whale and Ape",
+"Dragon and Whale"
+],
+"answer": "Whale and Ape",
+"d": "hard"
+},
+{
+"q": "What does TIE stand for in reference to the TIE Fighter in \"Star Wars\"?",
+"options": [
+"Terribly Inefficient Engine",
+"Twin Ion Engine",
+"Twin Iron Engine",
+"Twin Intercept Engine"
+],
+"answer": "Twin Ion Engine",
+"d": "hard"
+},
+{
+"q": "What was the first superhero film James Gunn was involved with?",
+"options": [
+"Guardians of the Galaxy",
+"Brightburn",
+"The Specials",
+"Super"
+],
+"answer": "The Specials",
+"d": "hard"
+},
+{
+"q": "What is Alan Rickmans birth date?",
+"options": [
+"February 21, 1945",
+"January 21, 1946",
+"February 21, 1946",
+"February 22, 1946"
+],
+"answer": "February 21, 1946",
+"d": "hard"
+},
+{
+"q": "What actor received the award for Best Actor in a Supporting Role at the 72nd Academy Awards 2000?",
+"options": [
+"Michael Caine",
+"Jude Law",
+"Michael Clarke Duncan",
+"Tom Cruise"
+],
+"answer": "Michael Caine",
+"d": "hard"
+},
+{
+"q": "Which of Abigails collections does Ben Gates contribute to in the movie National Treasure?",
+"options": [
+"Silver thimble",
+"Coin shaped pin",
+"Enamel brooch",
+"Old postage stamp"
+],
+"answer": "Coin shaped pin",
+"d": "hard"
+},
+{
+"q": "What does the drunk say when entering the aliens\u2019 spaceship at the end of the 1996 movie Independence Day?",
+"options": [
+"You're welcome!",
+"Say hello to my little friend!",
+"Adios, amigos!",
+"I'm Back!"
+],
+"answer": "I'm Back!",
+"d": "hard"
+},
+{
+"q": "In the movie Die Hard, throughout his ordeal in the building, McClane stays in radio contact with which LAPD Sgt.?",
+"options": [
+"Al Powers",
+"Sgt. Twinkie",
+"Rick Holland",
+"Al Powell"
+],
+"answer": "Al Powell",
+"d": "hard"
+},
+{
+"q": "In 1945, Robert Altman joined the military service and served as what?",
+"options": [
+"a bombardier",
+"a pilot",
+"a navigator",
+"an army cook"
+],
+"answer": "a pilot",
+"d": "hard"
+}
+]
+}
