@@ -145,14 +145,21 @@
                   q:"Question", a:"Answer", addLabel:"Add a question" },
     howwell:    { icon:"\u{1F382}", name:"How well do you know...",  blurb:"About the guest of honour", ready:true,
                   q:"Question about them", a:"The real answer", addLabel:"Add a question" },
-    truths:     { icon:"\u{1F914}", name:"Two truths and a lie", ready:true, blurb:"Guests add their own on the night" },
+    truths:     { icon:"\u{1F914}", name:"Two truths and a lie", ready:true,
+                  blurb:"Nothing to set up. Each guest types their own three on their phone when you start it" },
     headstails: { icon:"\u{1FA99}", name:"Heads or tails",    blurb:"Ninety seconds. Nothing to set up.", ready:true },
     whohere:    { icon:"\u{1F465}", name:"Who here has ever", ready:true, blurb:"Prompts to get people talking",
                   q:"Find someone who...", a:null, addLabel:"Add a prompt" },
     photos:     { icon:"\u{1F5BC}", name:"Guess the photo",   ready:true, picker:true,
                   blurb:"Baby photos, holiday photos, whatever you have",
                   q:"Clue", a:"Who is it?", addLabel:"Add a photo" },
-    playlist:   { icon:"\u{1F3B5}", name:"The playlist",      ready:true, blurb:"Guests add songs on the night" },
+    /* RETIRED, not deleted. A host cannot add a new one, because there is no way
+       to bring your own music to it and a queue nobody can play is a let-down
+       rather than a game. Parties that already have one keep working: the
+       renderer looks the format up here, so removing the entry outright would
+       leave those hosts with a nameless row. */
+    playlist:   { icon:"\u{1F3B5}", name:"The playlist",      ready:true, retired:true,
+                  blurb:"Guests add songs from their phones on the night" },
     draw:       { icon:"\u{1F3AB}", name:"Prize draw",        ready:true, blurb:"Nothing to set up." },
 
     /* The two games where a screen is a problem rather than a help. `screenOff`
@@ -288,7 +295,7 @@
     });
 
     h += '<div class="bar"><div><h2>Add a game</h2></div></div><div class="add">';
-    Object.keys(TYPES).filter(function(k){ return TYPES[k].ready; }).forEach(function(k){
+    Object.keys(TYPES).filter(function(k){ return TYPES[k].ready && !TYPES[k].retired; }).forEach(function(k){
       var t = TYPES[k];
       h += '<button data-add="' + k + '"><b>' + t.icon + " " + esc(t.name) + '</b><span>' + esc(t.blurb) + '</span></button>';
     });
@@ -297,7 +304,7 @@
          '<p class="hint" id="albumHint">Guests can add photos all night from the camera button on their phone.</p></div></div>' +
          '<div id="album"></div>';
 
-    var soon = Object.keys(TYPES).filter(function(k){ return !TYPES[k].ready; });
+    var soon = Object.keys(TYPES).filter(function(k){ return !TYPES[k].ready && !TYPES[k].retired; });
     if(soon.length){
       h += '<p class="hint" style="margin-top:16px">On the way: ' +
            soon.map(function(k){ return esc(TYPES[k].name); }).join(", ") + '.</p>';
@@ -486,12 +493,23 @@
     if(el.hasAttribute("data-add")){
       var fmt = el.getAttribute("data-add");
       if(!TYPES[fmt].q){
-        // Nothing to build. Add it and get out of the way.
+        /* Nothing to build. Add it and get out of the way.
+
+           ONE CLICK, ONE GAME. Every tap used to fire its own POST, and the
+           list does not redraw until the round trip comes back, so an
+           impatient double tap on a phone added the game twice and the host
+           was left deleting one. Games with a builder are safe because the
+           builder opens instantly; these instant ones were not.
+
+           The button is disabled for the whole round trip, and re-enabled on
+           failure so a dropped connection does not leave a dead button. */
+        if(el.disabled) return;
+        el.disabled = true;
         api("/games", { method:"POST", body: JSON.stringify({ code:CODE, key:KEY, format:fmt, config:{} }) })
           .then(function(){ toast(TYPES[fmt].name + " added");
             return api("/games?code=" + encodeURIComponent(CODE) + "&key=" + encodeURIComponent(KEY)); })
           .then(function(d){ GAMES = d.games || []; render(); })
-          .catch(function(e){ toast(e.message); });
+          .catch(function(e){ el.disabled = false; toast(e.message); });
       } else openBuilder(fmt, null);
       return;
     }

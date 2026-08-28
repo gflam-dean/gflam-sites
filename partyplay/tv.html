@@ -81,8 +81,20 @@
   var $ = function(id){ return document.getElementById(id); };
   var CODE = (new URLSearchParams(location.search).get("code") || "").toUpperCase();
   /* A television gets set up once and used all night, then again next year. If a
-     code was typed in before, the bare address works from then on. */
-  if(!CODE){ try{ CODE = (localStorage.getItem("ppTvCode") || "").toUpperCase(); }catch(e){} }
+     code was typed in before, the bare address works from then on.
+
+     BUT THE REMEMBERED CODE HAS TO FOLLOW THE LATEST PARTY. It used to be saved
+     only when somebody typed it into the telly, never when it arrived in the
+     address. So a host who opened /tv?code=NEW saw the new party, and the next
+     person who opened the bare /tv address got the OLD code back, still sitting
+     in storage from the first party this television ever showed. The TV showed
+     one code while the host console showed another, and there was nothing on
+     screen to change it. */
+  if(CODE){
+    try{ localStorage.setItem("ppTvCode", CODE); }catch(e){}
+  } else {
+    try{ CODE = (localStorage.getItem("ppTvCode") || "").toUpperCase(); }catch(e){}
+  }
   var players = [];
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
@@ -139,7 +151,23 @@
           '<span class="lbl">and put in this code</span>' +
           '<div class="code">' + esc(CODE) + '</div>' +
         '</div>' +
-      '</div></div>');
+      '</div>' +
+      /* A WAY OUT. Without this a television that has ever shown one party is
+         stuck on it: the bare address always resolves to the stored code and
+         nothing on screen offers to change it. Deliberately quiet, because it
+         sits under the code all night and must not compete with it. */
+      '<p class="foot" style="margin-top:3vh">Wrong party? ' +
+        '<a href="#" id="changecode" style="color:var(--mute)">Use a different code</a></p>' +
+      '</div>');
+    var cc = document.getElementById("changecode");
+    if(cc) cc.addEventListener("click", function(e){
+      e.preventDefault();
+      try{ localStorage.removeItem("ppTvCode"); }catch(e2){}
+      CODE = "";
+      // Drop ?code= too, or the address puts the old one straight back.
+      if(location.search) { location.search = ""; return; }
+      askForCode();
+    });
     var el = $("qr");
     if(window.QRCode && el){
       QRCode.toCanvas(el, SITE + "/play?code=" + encodeURIComponent(CODE),
