@@ -337,6 +337,46 @@ def local_checks(which):
                     late.append('%s uses %s before %s' % (short(f), g, lib))
     ok('every shared script loads before it is used', not late, why='; '.join(late[:3]))
 
+    head('D. Founding pages: the code, the month and the date agree')
+    """Each state page carries its founding code, its month in prose, and a
+    closing date, in several places. They are edited by hand and they drift. On
+    28 Aug a month replacement produced "31 September 2026", a date that does not
+    exist, and left "31 August" further down the same page saying something else.
+    A venue reads the page and is charged on the code."""
+    import calendar as _cal
+    MON = ('January|February|March|April|May|June|July|August|September|October|'
+           'November|December')
+    ABBR = {m[:3].upper(): i + 1 for i, m in enumerate(
+        ['January','February','March','April','May','June','July','August',
+         'September','October','November','December'])}
+    wrong = []
+    for f in files:
+        b = os.path.basename(f)
+        if b not in ('nsw.html','qld.html','vic.html','sa.html','wa.html','nt.html','tas.html','act.html'):
+            continue
+        src = io.open(f, encoding='utf-8').read()
+        codes = set(re.findall(r'[A-Z]{2,3}-([A-Z]{3})-(20\d\d)', src))
+        if len(codes) != 1:
+            wrong.append('%s has %d different codes' % (b, len(codes)))
+            continue
+        mon3, yr = codes.pop()
+        num = ABBR.get(mon3)
+        if not num:
+            wrong.append('%s: %s is not a month' % (b, mon3))
+            continue
+        name = _cal.month_name[num]
+        last = _cal.monthrange(int(yr), num)[1]
+        text = re.sub(r'<script.*?</script>|<style.*?</style>', '', src, flags=re.S)
+        text = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', text))
+        for m in re.finditer(r'(\d{1,2})?\s*(%s)\b' % MON, text):
+            day, said = m.group(1), m.group(2)
+            if said != name:
+                wrong.append('%s says %s but its code says %s' % (b, said, name)); break
+            if day and int(day) != last:
+                wrong.append('%s says %s %s, but %s %s has %d days'
+                             % (b, day, said, said, yr, last)); break
+    ok('every founding page agrees with its own code', not wrong, why='; '.join(wrong[:3]))
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
