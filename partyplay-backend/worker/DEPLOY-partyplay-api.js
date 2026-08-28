@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 28 Aug 2026, 16:41:29   fingerprint f70ffa4b70e4
+   Built 29 Aug 2026, 08:40:38   fingerprint 5b2f18a65233
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '28 Aug 2026, 16:41 · ccfbfad5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '29 Aug 2026, 01:11 · c4d304aa';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -1823,13 +1823,38 @@ export default {
          genuinely does work without it: the games all run, only the album is
          dead. But it must be VISIBLE. */
       const photos = !!env.PHOTOS;
+
+      /* CAN ANYBODY ACTUALLY GET IN?
+
+         Migration 11 moved admin sign-in to phone OTP and made pp_admins the
+         table that decides who gets past it. It seeded no rows. So the moment
+         the shared key came off the sign-in screen, that table was empty and
+         every admin action answered 403 'no', including comping a party.
+
+         Nothing noticed, because the release check tests that admin routes
+         REFUSE an unauthenticated caller, and refusing is exactly what they
+         did. It proved the lock worked. It could not tell that no key fitted.
+
+         So health now counts the admins. Zero is not a warning, it is a
+         locked-out product. */
+      let admins = null;
+      try {
+        const rows = await sb(env, 'pp_admins?active=is.true&select=mobile');
+        admins = Array.isArray(rows) ? rows.length : null;
+      } catch (e) { admins = null; }
+      const lockedOut = (admins === 0 && !env.ADMIN_KEY);
+
+      const warnings = [];
+      if (!photos) warnings.push('R2 is not bound as PHOTOS. Every photo and video upload will fail, and the album will be empty.');
+      if (lockedOut) warnings.push('pp_admins has no active rows and no ADMIN_KEY is set, so NOBODY can sign in to the admin. Comping a party, refunds and resends will all answer "no". Seed your mobile: partyplay-12-seed-first-admin.sql.');
+
       return json({
         build: BUILD,
-        ok: !missing.length && photos,
+        ok: !missing.length && photos && !lockedOut,
         missing,
         photos,
-        warning: photos ? undefined
-          : 'R2 is not bound as PHOTOS. Every photo and video upload will fail, and the album will be empty.'
+        admins,
+        warning: warnings.length ? warnings.join(' ') : undefined
       }, missing.length ? 503 : 200, ch);
     }
     const missing = missingSecrets(env);
