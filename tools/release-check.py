@@ -554,6 +554,27 @@ def every_page_is_reachable(name, base, folder, skip=()):
     ok('all %d page(s) serve' % len(pages), not bad, why='not served: ' + ', '.join(bad[:5]))
 
 
+# Which source file each deployed Worker is pasted from, so a build stamp coming
+# back from /health can be compared with the one in the repo.
+WORKER_SOURCE = {
+    'VenuePlay game':    'venueplay-backend/worker/venueplay-game.js',
+    'VenuePlay billing': 'venueplay-backend/worker/venueplay-api-FULL.js',
+    'PartyPlay':         'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+}
+
+
+def repo_build(name):
+    """The stamp the repo says this Worker should be carrying."""
+    src_path = WORKER_SOURCE.get(name)
+    if not src_path:
+        return None
+    p = os.path.join(ROOT, src_path)
+    if not os.path.isfile(p):
+        return None
+    m = re.search(r"const BUILD = '([0-9a-f]{8})'", io.open(p, encoding='utf-8').read())
+    return m.group(1) if m else None
+
+
 def worker_health(name, api, needs_config=True):
     head('%s Worker' % name)
     status, body, _ = get(api + '/health')
@@ -568,6 +589,22 @@ def worker_health(name, api, needs_config=True):
             for cap, on in (d.get('can') or {}).items():
                 ok('%s can %s' % (name, cap), bool(on),
                    why='not configured, and it fails without saying anything')
+            # A Worker is deployed by pasting it into a browser: no build, no
+            # version, no way to tell which copy is running. "Did I paste that?"
+            # was unanswerable, and today it was asked about a fix that decides
+            # whether a discount can be applied at all.
+            want = repo_build(name)
+            if want:
+                live = d.get('build')
+                if not live:
+                    note('%s build' % name,
+                         'this deployed copy predates build stamps. Paste it once more and '
+                         'this becomes a straight yes or no.')
+                else:
+                    ok('%s is running the current code' % name, live == want,
+                       'build %s' % live,
+                       why='deployed %s, repo has %s. Paste %s.'
+                           % (live, want, os.path.basename(WORKER_SOURCE[name])))
             if 'photos' in d:
                 ok('%s photo store is bound' % name, d.get('photos') is True,
                    why='R2 is not bound as PHOTOS, so every photo and video upload '

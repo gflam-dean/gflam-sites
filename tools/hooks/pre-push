@@ -12,6 +12,15 @@ ROOT="$(git rev-parse --show-toplevel)"
 echo
 echo "── pre-push: checking before this goes to a live venue ──"
 
+# A Worker whose stamp does not match its own contents would report a build that
+# is not the one running, which is worse than no stamp at all.
+if ! python3 "$ROOT/tools/stamp-workers.py" --check; then
+  echo
+  echo "PUSH REFUSED. A Worker changed without being restamped."
+  echo "Run: python3 tools/stamp-workers.py"
+  exit 1
+fi
+
 if ! python3 "$ROOT/tools/release-check.py" --local; then
   echo
   echo "PUSH REFUSED. Fix the above, or push with --no-verify if you are certain."

@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-
+const BUILD = '28 Aug 2026, 16:32 · ccfbfad5';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -1718,6 +1718,7 @@ export default {
          dead. But it must be VISIBLE. */
       const photos = !!env.PHOTOS;
       return json({
+        build: BUILD,
         ok: !missing.length && photos,
         missing,
         photos,
