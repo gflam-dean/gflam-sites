@@ -96,6 +96,17 @@ def ok(label, good, detail='', why=''):
         print('  %sFAIL%s %s %s' % (RED, OFF, label.ljust(52), msg))
 
 
+def note(label, detail=''):
+    """Something looked at but NOT judged. Counts as neither a pass nor a fail.
+
+    A check that cannot decide must not answer "ok". The stale-session check only
+    judges between four and ten in the morning, and at 10:04 it reported ok on a
+    session that was still sitting there open. That is the exact false pass this
+    tool exists to prevent, produced by the tool itself.
+    """
+    print('  %snote%s %s %s%s%s' % (YEL, OFF, label.ljust(52), DIM, detail, OFF))
+
+
 def head(title):
     print('\n%s── %s ──%s' % (YEL, title, OFF))
 
@@ -672,8 +683,9 @@ def no_session_left_open():
                    'Set a Cron Trigger on the game Worker (0 17 * * * is 3am Brisbane) '
                    'so the nightly sweep runs.' % hour)
         elif live and not fmt:
-            ok('%s has no session left open' % slug, True,
-               'live with no game, but it is %02d:00 so that may be a real lobby' % hour)
+            note('%s: cannot judge right now' % slug,
+                 'a session is live with no game running, but at %02d:00 that may be a '
+                 'real lobby. Run this again between 4am and 10am for an answer.' % hour)
         else:
             ok('%s has no session left open' % slug, True,
                'live=%s game=%s' % (live, fmt or 'none'))
