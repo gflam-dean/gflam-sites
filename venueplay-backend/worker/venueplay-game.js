@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Aug 2026, 19:16 · 7624be73';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '29 Aug 2026, 01:01 · e565a86d';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -364,6 +364,61 @@ async function handleAdminSweep(request, env, json) {
  * Host creates a lobby session for their venue. Auth is enforced twice: a valid
  * Supabase host JWT, then staff membership at the target venue.
  */
+/* ONE GAME AT A TIME, PER VENUE.
+
+   The schema allows a venue only one live session, and /session is an idempotent
+   open, so a host who runs musical bingo and then starts BINGO does not get a new
+   session: they get handed the musical one back, with its vp_games row still
+   status 'running'. Everything downstream then reads the venue as being mid
+   musical set. A player typing the venue code is sent to musical bingo, eleven
+   songs in, while the host is drawing balls.
+
+   That happened to a real room. Ending the previous game was left to the host
+   remembering to press End game, and hosts do not, because from where they stand
+   they already moved on.
+
+   So starting a game now ends any OTHER format still running on that venue's live
+   session. Same format is left alone: that is a host reloading, re-pairing a TV or
+   starting round two, and killing their game would be far worse than the bug.
+*/
+async function endOtherRunningGames(env, venueId, keepFormat) {
+  try {
+    const live = await sbGet(env, 'vp_sessions',
+      'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id&order=created_at.desc&limit=1');
+    if (!live.length) return { ended: 0 };
+    const games = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(live[0].id) + '&status=eq.running&select=id,format');
+    /* Formats are written more than one way in this codebase: a bingo game is
+       reported as 'bingo' but its vp_games row is 'bingo90', and musical bingo
+       is 'musical' in some places and 'musical_bingo' in others. Comparing the
+       raw strings makes a game end ITSELF, which the tests caught. So reduce
+       each to its leading word with any trailing digits stripped. */
+    const root = function (f) {
+      return String(f || '').toLowerCase().split('_')[0].replace(/\d+$/, '');
+    };
+    const keep = root(keepFormat);
+    // No format means we cannot tell what is starting, and the safe answer to
+    // "which games should I end" when you do not know is none of them.
+    if (!keep) return { ended: 0 };
+    const same = function (f) {
+      const a = root(f);
+      return !!a && a === keep;
+    };
+    const stale = games.filter(function (g) { return !same(g.format); });
+    for (const g of stale) {
+      await sbPatch(env, 'vp_games', 'id=eq.' + enc(g.id),
+                    { status: 'finished', ended_at: new Date().toISOString() });
+      console.log('[one-game] ended ' + g.format + ' on venue ' + venueId + ' because ' + keep + ' started');
+    }
+    return { ended: stale.length };
+  } catch (e) {
+    // Never fail the caller. The game starting matters more than the tidy-up,
+    // and the sweep will catch anything left behind.
+    console.log('[one-game] could not tidy up: ' + String((e && e.message) || e));
+    return { ended: 0, error: true };
+  }
+}
+
 async function handleCreateSession(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
   const b = await readJson(request);
@@ -381,6 +436,10 @@ async function handleCreateSession(request, env, json) {
   const liveNow = await sbGet(env, 'vp_sessions',
     'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code,tv_pairing_code,plan_cap_at_start&order=created_at.desc&limit=1');
   if (liveNow.length) {
+    /* Reusing a session is exactly the moment a venue can end up with two games
+       believing they are on air. If the console told us which format it is
+       starting, end any other one still running before we hand the session back. */
+    if (b.format) await endOtherRunningGames(env, venueId, b.format);
     return json({ session_id: liveNow[0].id, join_code: liveNow[0].join_code, tv_pairing_code: liveNow[0].tv_pairing_code, plan_cap: (liveNow[0].plan_cap_at_start != null ? liveNow[0].plan_cap_at_start : null), reused: true });
   }
 
@@ -983,6 +1042,12 @@ async function handleReport(request, env, json) {
       'id=eq.' + enc(reportId) + '&venue_id=eq.' + enc(venueId), row);
     return json({ ok: true, id: reportId });
   }
+  /* Bingo reports the moment a game STARTS, which is the only server-side signal
+     broadcast bingo gives us. Use it: this fires even when the console has not
+     been updated to send a format on /session, so the fix works on the Worker
+     alone. Only on the insert, never on the patch that ends a game. */
+  if (!row.ended_at) await endOtherRunningGames(env, venueId, row.format);
+
   const ins = await sbInsert(env, 'vp_game_reports', row, true);
   const created = Array.isArray(ins) ? ins[0] : ins;
   const newId = (created && created.id) || null;

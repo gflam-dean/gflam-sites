@@ -1336,7 +1336,7 @@
     try{
       var v = __ctx && __ctx.venue; if(!v || !v.id) return;
       if(!(window.VP && VP.gameApiPost)) return;
-      VP.gameApiPost("/session", { venue_id: v.id }).then(function(r){
+      VP.gameApiPost("/session", { venue_id: v.id, format: "bingo" }).then(function(r){
         if(!r || r.error || !r.session_id) return;
         G.sessionId = r.session_id;
         G.joinCode  = r.join_code || null;

@@ -504,7 +504,7 @@
   function openSession(){
     if(!G.venueId) return Promise.reject(new Error("No venue linked to this login"));
     if(G.sessionId) return Promise.resolve(G.sessionId);
-    return apiPost("/session",{ venue_id:G.venueId }).then(function(r){ G.sessionId=r.session_id;
+    return apiPost("/session",{ venue_id:G.venueId, format:"raffle" }).then(function(r){ G.sessionId=r.session_id;
       // Remember the night so it can be CLOSED on sign-out. Closing is what marks the
       // session finished and bills any approved busy-night overage; nothing else does it.
       VP.noteOpenSession(r.session_id, G.venueId);   // so the night is closed (and any approved overage billed) on sign-out

@@ -339,6 +339,13 @@ def local_checks(which):
             ok(f, r.returncode == 0 and 'All good' in r.stdout,
                (r.stdout.strip().splitlines() or [''])[-1])
 
+    gt = os.path.join(ROOT, 'venueplay-backend', 'worker', 'one-game.test.js')
+    if os.path.isfile(gt):
+        r = subprocess.run([JSC, gt], capture_output=True, text=True)
+        out = (r.stdout + r.stderr).strip().splitlines()
+        line = out[-1] if out else ''
+        ok('one-game.test.js', 'ALL' in line and 'PASSED' in line, line)
+
     head('D. A shared script is loaded before it is used')
     """A page that uses PPConfig above the tag that loads it throws a
     ReferenceError and everything after it in that block simply never runs. It is
