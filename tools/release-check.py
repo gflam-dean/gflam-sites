@@ -289,6 +289,34 @@ def local_checks(which):
             ok(f, r.returncode == 0 and 'All good' in r.stdout,
                (r.stdout.strip().splitlines() or [''])[-1])
 
+    head('D. A shared script is loaded before it is used')
+    """A page that uses PPConfig above the tag that loads it throws a
+    ReferenceError and everything after it in that block simply never runs. It is
+    silent: the page looks fine, the feature just never happens. partyplay's
+    parties counter was dead this way and nobody could have noticed, because it
+    hides itself below 25 parties and there are none yet."""
+    GLOBALS = {'pp-config.js': 'PPConfig', 'pp-ticket.js': 'PPTicket', 'pp-quiz.js': 'PPQuiz',
+               'pp-photo.js': 'PPPhoto', 'pp-video.js': 'PPVideo', 'vp-sign.js': 'VPSign',
+               'vp-gaming.js': 'VPGaming', 'vp-follow.js': 'VPFollow',
+               'vp-screen-router.js': 'VPScreenRouter', 'vp-session.js': 'VPSession'}
+    late = []
+    for f in files:
+        if not f.endswith('.html'):
+            continue
+        src = io.open(f, encoding='utf-8').read()
+        loads = {}
+        for m in re.finditer(r'<script[^>]*\bsrc="([^"]+)"', src):
+            loads.setdefault(m.group(1).split('/')[-1], m.start())
+        for tag, body in re.findall(r'(<script(?![^>]*\bsrc=)[^>]*>)(.*?)</script>', src, re.S):
+            at = src.index(body)
+            for lib, g in GLOBALS.items():
+                if lib not in loads:
+                    continue
+                m = re.search(r'(?<![.\w])' + g + r'\s*\.', body)
+                if m and at + m.start() < loads[lib]:
+                    late.append('%s uses %s before %s' % (short(f), g, lib))
+    ok('every shared script loads before it is used', not late, why='; '.join(late[:3]))
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
