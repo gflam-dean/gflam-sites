@@ -66,3 +66,46 @@ check('nothing running, nothing ended', run([], 'bingo'), []);
 check('a blank format ends nothing', run(['musical'], ''), []);
 
 print(FAIL === 0 ? ('ALL ' + PASS + ' CHECKS PASSED') : (FAIL + ' FAILED of ' + (PASS + FAIL)));
+
+/* THE HALF THAT WAS MISSING.
+
+   Ending the musical game fixes the phone that typed the VENUE code. It does
+   nothing for the phone that typed the SESSION join code, which takes the
+   latest game of any status and finds the finished musical row. Bingo has to
+   write a row of its own or that path stays broken. These check it does.
+*/
+function runMark(existingGames, existingSeq, format, hasSession) {
+  var inserted = [];
+  var body = src.match(/async function markBroadcastGameLive[\s\S]*?\n\}\n/)[0];
+  var f = new Function('enc', 'console', 'sbGet', 'sbInsert',
+    body + '; return markBroadcastGameLive;')(
+    encodeURIComponent,
+    { log: function () {} },
+    function (env, table, q) {
+      if (table === 'vp_sessions') return Promise.resolve(hasSession ? [{ id: 'S1' }] : []);
+      if (table === 'vp_games' && String(q).indexOf('status=eq.running') >= 0)
+        return Promise.resolve(existingGames.map(function (x, i) { return { id: 'G' + i, format: x }; }));
+      if (table === 'vp_games') return Promise.resolve(existingSeq == null ? [] : [{ seq: existingSeq }]);
+      return Promise.resolve([]);
+    },
+    function (env, table, row) { inserted.push(row); return Promise.resolve({}); });
+  f({}, 'V1', format);
+  drainMicrotasks();
+  return inserted;
+}
+
+check('bingo writes the row it never wrote',
+      runMark([], 3, 'bingo', true).map(function (r) { return [r.format, r.status, r.seq]; }),
+      [['bingo90', 'running', 4]]);
+check('first game of the night gets seq 1',
+      runMark([], null, 'bingo', true).map(function (r) { return r.seq; }), [1]);
+check('a second report does not write a second row',
+      runMark(['bingo90'], 3, 'bingo', true), []);
+check('trivia is left alone, it writes its own row',
+      runMark([], 3, 'trivia', true), []);
+check('musical is left alone too',
+      runMark([], 3, 'musical', true), []);
+check('no live session, nothing written',
+      runMark([], 3, 'bingo', false), []);
+
+print(FAIL === 0 ? ('ALL ' + PASS + ' CHECKS PASSED') : (FAIL + ' FAILED of ' + (PASS + FAIL)));

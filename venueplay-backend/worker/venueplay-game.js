@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '29 Aug 2026, 01:01 · e565a86d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '29 Aug 2026, 01:08 · 0aafd4f5';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -381,6 +381,62 @@ async function handleAdminSweep(request, env, json) {
    session. Same format is left alone: that is a host reloading, re-pairing a TV or
    starting round two, and killing their game would be far worse than the bug.
 */
+/* BINGO HAS TO LEAVE THE SAME TRACE EVERY OTHER GAME LEAVES.
+
+   Ending the old game is only half the fix, and the half that was missing is
+   the one that would have kept biting.
+
+   A phone resolves what to load in two different ways, and they do not agree:
+
+     - typing the VENUE code looks for a RUNNING game. Ending the musical set is
+       enough there: nothing is running, so the phone falls through to bingo.
+     - typing the SESSION join code, the six characters that were on the TV all
+       through the musical set, takes the latest game of ANY status. The musical
+       row is still the latest one, finished or not, so that phone is sent right
+       back into musical bingo.
+
+   Trivia, musical and raffles all write a vp_games row. Broadcast bingo never
+   has, so it leaves nothing for the second path to find. That is the actual
+   root of tonight's fault, and ending games does not touch it.
+
+   So when a bingo game starts, write the row bingo has always been missing.
+   Now it is the latest game AND the running one, and both paths land on bingo.
+   Idempotent: a report retry or a second start finds the row already there.
+*/
+async function markBroadcastGameLive(env, venueId, format) {
+  try {
+    const root = String(format || '').toLowerCase().split('_')[0].replace(/\d+$/, '');
+    if (root !== 'bingo') return { ok: false };          // only bingo lacks a row
+    const live = await sbGet(env, 'vp_sessions',
+      'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id&order=created_at.desc&limit=1');
+    if (!live.length) return { ok: false };              // no session, nothing to mark
+    const sid = live[0].id;
+    const existing = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(sid) + '&status=eq.running&select=id,format');
+    for (const g of existing) {
+      const r = String(g.format || '').toLowerCase().split('_')[0].replace(/\d+$/, '');
+      if (r === 'bingo') return { ok: true, already: true };
+    }
+    const seqRows = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(sid) + '&select=seq&order=seq.desc&limit=1');
+    const seq = (seqRows.length && seqRows[0].seq != null) ? (parseInt(seqRows[0].seq, 10) || 0) + 1 : 1;
+    await sbInsert(env, 'vp_games', {
+      session_id: sid,
+      seq: seq,
+      format: 'bingo90',      // the value migration 07 widened the check constraint to allow
+      status: 'running',
+      started_at: new Date().toISOString(),
+    }, false);
+    console.log('[one-game] bingo now has a game row on session ' + sid + ' seq ' + seq);
+    return { ok: true, seq: seq };
+  } catch (e) {
+    // The game is on air either way. A missing row costs us the second lookup
+    // path, not the night.
+    console.log('[one-game] could not mark bingo live: ' + String((e && e.message) || e));
+    return { ok: false, error: true };
+  }
+}
+
 async function endOtherRunningGames(env, venueId, keepFormat) {
   try {
     const live = await sbGet(env, 'vp_sessions',
@@ -1046,7 +1102,10 @@ async function handleReport(request, env, json) {
      broadcast bingo gives us. Use it: this fires even when the console has not
      been updated to send a format on /session, so the fix works on the Worker
      alone. Only on the insert, never on the patch that ends a game. */
-  if (!row.ended_at) await endOtherRunningGames(env, venueId, row.format);
+  if (!row.ended_at) {
+    await endOtherRunningGames(env, venueId, row.format);
+    await markBroadcastGameLive(env, venueId, row.format);
+  }
 
   const ins = await sbInsert(env, 'vp_game_reports', row, true);
   const created = Array.isArray(ins) ? ins[0] : ins;
