@@ -321,6 +321,9 @@
         .then(function(d){ if(d){ TRIVIA_INDEX = d; if($("dlg").open) drawItems(); } })
         .catch(function(){});
     }
+    if(WORDY[format] && !WORD_INDEX[format]){
+      wordIndexFor(format).then(function(d){ if(d && $("dlg").open) drawItems(); }).catch(function(){});
+    }
     editing = { format:format, id: game ? game.id : null,
                 title: game ? game.title : "",
                 items: (game && game.config && game.config.items) ? game.config.items.slice() : [] };
@@ -345,6 +348,46 @@
      and dropping the attribution is not a thing we get to do. */
   var TRIVIA_INDEX = null;
   var PACKS = {};
+  /* Charades and Who am I have the same problem as trivia: a host staring at an
+     empty box trying to think of twenty words. Same shape of answer, different
+     content, so they share the machinery and differ only in where the list
+     comes from and what a "batch" is. Ten words rather than ten questions,
+     because ten is about one turn each around a room. */
+  var WORD_INDEX = {};        // by format
+  var WORD_PACKS = {};        // by format + slug
+  var WORDY = { charades: "charades", guesswho: "guesswho" };
+
+  function wordIndexFor(fmt){
+    if(WORD_INDEX[fmt]) return Promise.resolve(WORD_INDEX[fmt]);
+    return fetch("/data/words/" + WORDY[fmt] + "-index.json")
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ if(d) WORD_INDEX[fmt] = d; return d; });
+  }
+
+  function fillWords(fmt, slug, howMany){
+    var key = fmt + ":" + slug;
+    var got = WORD_PACKS[key]
+      ? Promise.resolve(WORD_PACKS[key])
+      : fetch("/data/words/" + WORDY[fmt] + "-" + encodeURIComponent(slug) + ".json")
+          .then(function(r){ if(!r.ok) throw new Error("Could not load that category."); return r.json(); })
+          .then(function(d){ WORD_PACKS[key] = d; return d; });
+    return got.then(function(pack){
+      var used = {};
+      editing.items.forEach(function(it){ if(it.q) used[it.q.trim().toLowerCase()] = 1; });
+      GAMES.forEach(function(g){
+        ((g.config && g.config.items) || []).forEach(function(it){
+          if(it && it.q) used[String(it.q).trim().toLowerCase()] = 1; });
+      });
+      var pool = pack.words.filter(function(w){ return !used[w.trim().toLowerCase()]; });
+      if(!pool.length) throw new Error("You have used every word in that category.");
+      for(var i = pool.length - 1; i > 0; i--){
+        var j = Math.floor(Math.random() * (i + 1)); var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+      }
+      if(editing.items.length === 1 && !editing.items[0].q && !editing.items[0].a) editing.items = [];
+      pool.slice(0, howMany).forEach(function(w){ editing.items.push({ q:w, a:"" }); });
+      return pool.length;
+    });
+  }
 
   function packFor(slug){
     if(PACKS[slug]) return Promise.resolve(PACKS[slug]);
@@ -380,13 +423,17 @@
   }
 
   function categoryStrip(){
-    if(editing.format !== "trivia") return "";
-    var opts = (TRIVIA_INDEX ? TRIVIA_INDEX.categories : []).map(function(c){
+    var fmt = editing.format, idx = null, thing = "questions", noun = "question";
+    if(fmt === "trivia"){ idx = TRIVIA_INDEX; }
+    else if(WORDY[fmt]){ idx = WORD_INDEX[fmt]; thing = "words"; noun = "word"; }
+    else return "";
+    var opts = (idx ? idx.categories : []).map(function(c){
       return '<option value="' + esc(c.slug) + '">' + esc(c.category) + '</option>'; }).join("");
+    if(!opts) return "";
     return '<div class="qrow" style="background:rgba(255,255,255,.03)">' +
-      '<label style="margin-bottom:8px">Not got questions ready?</label>' +
+      '<label style="margin-bottom:8px">Not got ' + thing + ' ready?</label>' +
       '<p class="hint" style="margin:0 0 10px">Pick a category and we will put ten in. ' +
-      'Edit any you do not like, or press it again with another category for a second round.</p>' +
+      'Edit any you do not like, or press it again with another category for more.</p>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
       '<select id="catPick" style="flex:1 1 180px">' + opts + '</select>' +
       '<button type="button" class="addq" id="catFill" style="margin:0;flex:0 0 auto">Add ten</button>' +
@@ -430,7 +477,8 @@
       var sel = $("catPick"); if(!sel || !sel.value) return;
       harvest();                         // keep anything typed before this click
       fill.disabled = true; fill.textContent = "Adding...";
-      fillFromCategory(sel.value, 10)
+      (editing.format === "trivia" ? fillFromCategory(sel.value, 10)
+                                   : fillWords(editing.format, sel.value, 10))
         .then(function(left){
           drawItems();
           var n = $("catNote");

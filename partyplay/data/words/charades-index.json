@@ -1,0 +1,41 @@
+{
+ "note": "Written for a mixed-age Australian lounge room: a nine year old and a grandparent should both know it, and it has to be actable without specialist knowledge.",
+ "categories": [
+  {
+   "category": "Films and TV",
+   "slug": "films-and-tv",
+   "count": 25,
+   "file": "data/words/charades-films-and-tv.json"
+  },
+  {
+   "category": "Animals",
+   "slug": "animals",
+   "count": 25,
+   "file": "data/words/charades-animals.json"
+  },
+  {
+   "category": "Things people do",
+   "slug": "things-people-do",
+   "count": 25,
+   "file": "data/words/charades-things-people-do.json"
+  },
+  {
+   "category": "Jobs",
+   "slug": "jobs",
+   "count": 25,
+   "file": "data/words/charades-jobs.json"
+  },
+  {
+   "category": "Very Australian",
+   "slug": "very-australian",
+   "count": 25,
+   "file": "data/words/charades-very-australian.json"
+  },
+  {
+   "category": "Songs everyone knows",
+   "slug": "songs-everyone-knows",
+   "count": 20,
+   "file": "data/words/charades-songs-everyone-knows.json"
+  }
+ ]
+}

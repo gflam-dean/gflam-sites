@@ -67,3 +67,34 @@ check('the same seed gives the same order every time', stable);
 
 print(FAIL === 0 ? ('ALL ' + PASS + ' CHECKS PASSED (' + totalQ + ' questions)')
                  : (FAIL + ' FAILED of ' + (PASS + FAIL)));
+
+/* The charades and Who am I word packs. Different content, same failure modes:
+   a duplicate word means the same turn twice, an empty one is a dead turn, and
+   a word long enough to wrap on a phone is unreadable to the person acting. */
+['charades', 'guesswho'].forEach(function (kind) {
+  var wi = JSON.parse(readFile('/Users/dean.tindale/gflam-sites-current/partyplay/data/words/' + kind + '-index.json'));
+  check(kind + ' index lists categories', wi.categories && wi.categories.length >= 4,
+        'got ' + (wi.categories ? wi.categories.length : 0));
+  var all = {}, empty = 0, tooLong = 0, dupWithin = 0, words = 0;
+  wi.categories.forEach(function (c) {
+    var pack = JSON.parse(readFile('/Users/dean.tindale/gflam-sites-current/partyplay/' + c.file));
+    var seen = {};
+    check(kind + '/' + c.slug + ' has enough for a turn each', pack.words.length >= 15,
+          pack.words.length + ' words');
+    pack.words.forEach(function (w) {
+      words++;
+      var k = String(w).trim().toLowerCase();
+      if (!k) empty++;
+      if (String(w).length > 34) tooLong++;
+      if (seen[k]) dupWithin++;
+      seen[k] = 1;
+      all[k] = (all[k] || 0) + 1;
+    });
+  });
+  check(kind + ' has no empty words', empty === 0, empty + ' empty');
+  check(kind + ' has nothing too long to act or read', tooLong === 0, tooLong + ' over 34 chars');
+  check(kind + ' repeats nothing inside a category', dupWithin === 0, dupWithin + ' repeated');
+  check(kind + ' has a decent total', words >= 100, words + ' words');
+});
+
+print(FAIL === 0 ? ('ALL ' + PASS + ' CHECKS PASSED') : (FAIL + ' FAILED of ' + (PASS + FAIL)));
