@@ -88,7 +88,7 @@
 
   /* The key travels in a header, never in the URL. A key in a query string is in
      browser history, in the Worker's logs, and in any screenshot of the tab. */
-  function api(path, opts){
+  function rawApi(path, opts){
     opts = opts || {};
     /* Two ways in, and the page does not care which it has. A staff member signs
        in with their mobile and travels on a Supabase token; the shared key is
@@ -104,7 +104,46 @@
       headers: Object.assign(h, opts.headers||{}),
       body: opts.body
     }).then(function(r){ return r.json().then(function(j){
-      if(!r.ok) throw new Error(j && j.error ? j.error : ("HTTP "+r.status)); return j; }); });
+      if(!r.ok){
+        var er = new Error(j && j.error ? j.error : ("HTTP "+r.status));
+        er.status = r.status; throw er;
+      }
+      return j; }); });
+  }
+
+  /* A Supabase access token lasts about an hour, and this console is a page
+     somebody leaves open all evening. Before this, the first thing clicked after
+     that hour came back as the Worker's bare word "no" - its word for "not you" -
+     which reads as the button refusing rather than the sign-in having run out.
+     That is exactly what "I cannot remove anyone, it just says no" was.
+
+     Now an auth failure spends the refresh token once, quietly, and retries. Only
+     if that fails does it fall back to the shared key, and only if there is no key
+     does it say in plain words that the sign-in ran out. */
+  function refreshSession(){
+    var rt = refreshTok();
+    if(!rt || !supa() || !supa().auth.refreshSession) return Promise.resolve(false);
+    return supa().auth.refreshSession({ refresh_token: rt }).then(function(r){
+      var ss = r && r.data && r.data.session;
+      if(!ss || !ss.access_token) return false;
+      setSession(ss.access_token, ss.refresh_token || rt);
+      return true;
+    }).catch(function(){ return false; });
+  }
+
+  function api(path, opts){
+    return rawApi(path, opts).catch(function(e){
+      /* Only an auth refusal is worth retrying, and only when we were travelling
+         on a token in the first place. A 400 means the request was wrong, not us. */
+      if(!(e.status === 403 || e.message === "no") || !token()) throw e;
+      return refreshSession().then(function(ok){
+        if(ok) return rawApi(path, opts);
+        setSession("", "");
+        if(key()) return rawApi(path, opts);
+        askKey("Your sign-in ran out. Sign in again.");
+        var er = new Error("signed out"); er.handled = true; throw er;
+      });
+    });
   }
   function out(id, text, bad){
     var el=$(id); el.textContent=text; el.classList.add("show");
@@ -122,6 +161,13 @@
   }
   function token(){ try{ return localStorage.getItem("ppAdminTok") || ""; }catch(e){ return ""; } }
   function setToken(v){ try{ v ? localStorage.setItem("ppAdminTok", v) : localStorage.removeItem("ppAdminTok"); }catch(e){} }
+  /* The refresh token is what buys a new hour without another text message. It was
+     thrown away before, which is why a session could only ever last one hour. */
+  function refreshTok(){ try{ return localStorage.getItem("ppAdminRef") || ""; }catch(e){ return ""; } }
+  function setSession(access, refresh){
+    setToken(access || "");
+    try{ refresh ? localStorage.setItem("ppAdminRef", refresh) : localStorage.removeItem("ppAdminRef"); }catch(e){}
+  }
 
   function askKey(msg){
     $("forget").hidden = true;
@@ -151,7 +197,7 @@
 
     $("kgo").addEventListener("click", function(){
       var v=($("k").value||"").trim(); if(!v) return;
-      setToken(""); setKey(v); boot();
+      setSession("", ""); setKey(v); boot();
     });
     $("k").addEventListener("keydown", function(e){ if(e.key==="Enter") $("kgo").click(); });
 
@@ -199,9 +245,10 @@
       var b=$("ogo"); b.disabled=true; b.textContent="Checking...";
       supa().auth.verifyOtp({ phone: mob, token: code, type: "sms" }).then(function(r){
         if(r && r.error){ b.disabled=false; b.textContent="Sign in"; out("oout", r.error.message||"That code did not work.", true); return; }
-        var tok = r && r.data && r.data.session && r.data.session.access_token;
+        var sess = r && r.data && r.data.session;
+        var tok = sess && sess.access_token;
         if(!tok){ b.disabled=false; b.textContent="Sign in"; out("oout","Signed in, but no session came back. Try the key.",true); return; }
-        setKey(""); setToken(tok); boot();
+        setKey(""); setSession(tok, sess.refresh_token || ""); boot();
       }).catch(function(e){
         b.disabled=false; b.textContent="Sign in"; out("oout", e.message||"That code did not work.", true);
       });
@@ -308,7 +355,7 @@
           .catch(function(e){ nb.disabled=false; nb.textContent="Try again"; $("nudgeout").textContent=e.message; });
       });
     }).catch(function(e){
-      if(/^HTTP 403/.test(e.message)||e.message==="no"){ setKey(""); setToken(""); askKey("That did not get you in. Sign in again."); return; }
+      if(/^HTTP 403/.test(e.message)||e.message==="no"){ setKey(""); setSession("", ""); askKey("That did not get you in. Sign in again."); return; }
       $("stats").innerHTML='<p>'+esc(e.message)+'</p>';
     });
 
@@ -347,13 +394,13 @@
           if(!name || !mob){ out("sout","Both a name and a mobile.",true); return; }
           api("/admin/staff/add",{ method:"POST", body:JSON.stringify({ name:name, mobile:mob }) })
             .then(function(){ screen(); })
-            .catch(function(e){ out("sout", e.message, true); });
+            .catch(function(e){ if(!e.handled) out("sout", e.message, true); });
         });
         $("staff").addEventListener("click", function(e){
           var b=e.target.closest("[data-off]"); if(!b) return;
           api("/admin/staff/off",{ method:"POST", body:JSON.stringify({ mobile:b.getAttribute("data-off") }) })
             .then(function(){ screen(); })
-            .catch(function(err){ out("sout", err.message, true); });
+            .catch(function(err){ if(!err.handled) out("sout", err.message, true); });
         });
       });
     }).catch(function(e){
@@ -466,7 +513,7 @@
   }
 
   $("forget").addEventListener("click", function(){
-    setKey(""); setToken("");
+    setKey(""); setSession("", "");
     try{ if(supa()) supa().auth.signOut(); }catch(e){}
     askKey();
   });
