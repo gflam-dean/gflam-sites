@@ -785,6 +785,10 @@
 
   /* ================= VENUES ================= */
   function isArchived(v){ return v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling"; }
+  function venueById(id){
+    for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i]; }
+    return null;
+  }
   function venuePasses(v){
     /* Archived venues are off every list unless you go looking for them. They are not customers
        any more, and leaving them in the main view makes every count wrong and every scan slower.
@@ -1181,10 +1185,28 @@
     // reachable: setting a rate for a period is done from a venue's Details, and with no rows
     // there was nothing to open. So fall back to listing the venues themselves, with the
     // metered columns blank. Every venue is actionable from day one, not from first invoice.
-    var rows = S.usageMonth ? usageForMonth() : S.venues.map(function(v){
-      return { venue_id:v.id, plan_cap:(v.max_players!=null?v.max_players:null),
-               overage_players:0, peak_billable_players:null, _noUsageYet:true };
-    });
+    /* ARCHIVED VENUES ARE NOT CUSTOMERS. venuePasses() takes them off every other
+       list and its comment says the billing screen does its own filtering, "in
+       renderBilling, not here". That filtering was never written, so every
+       archived venue sat in this list forever with a discount form under it,
+       offering a discount to somebody who left.
+
+       The nuance the comment describes is real and is kept: a venue archived
+       part-way through a month still has an invoice for that month, so if there
+       is metered usage against it, it stays. What goes is an archived venue with
+       nothing to bill, and every archived venue in the no-usage-yet fallback,
+       where there is no invoice to speak of at all. */
+    var rows = S.usageMonth
+      ? usageForMonth().filter(function(u){
+          var v = venueById(u.venue_id);
+          if (!v || !isArchived(v)) return true;
+          var billable = (u.peak_billable_players || 0) + (u.overage_players || 0);
+          return billable > 0;                    // a real invoice for the month they left
+        })
+      : S.venues.filter(function(v){ return !isArchived(v); }).map(function(v){
+          return { venue_id:v.id, plan_cap:(v.max_players!=null?v.max_players:null),
+                   overage_players:0, peak_billable_players:null, _noUsageYet:true };
+        });
     if(!rows.length){ b.innerHTML='<tr><td colspan="7"><div class="empty" style="border:none;background:none">No venues yet.</div></td></tr>'; renderDiscounts(); return; }
     if(!S.usageMonth) $("billMonth").textContent = "· no metered usage yet";
     rows.sort(function(a,b){ return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
