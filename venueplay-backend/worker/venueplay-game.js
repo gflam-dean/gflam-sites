@@ -1,4 +1,4 @@
-/**
+ QLD/**
  * VenuePlay GAME Worker  (venueplay-game)  -- REVIEWED + HARDENED 4 Aug 2026; FIXES 7 Aug 2026.
  * Review blockers fixed: a failed start no longer ends the live game; overage is HOST-APPROVED
  * (a game over the plan cap will NOT start until the host taps OK via /host/overage/ack, and
