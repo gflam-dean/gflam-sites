@@ -30,11 +30,12 @@ WORKERS = [
     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
 ]
 LINE = re.compile(r"^const BUILD = '[^']*';.*$", re.M)
-# For hashing, the whole line INCLUDING its newline, and the blank line the
-# insert leaves behind it. Blanking the line but keeping its newline made the
-# fingerprint depend on whether a stamp was present, so running this twice
-# produced two different answers and the stamp never settled.
-FOR_HASH = re.compile(r"\n*^const BUILD = '[^']*';.*$\n*", re.M)
+# For hashing: exactly the stamp line and its own newline. NOT the blank lines
+# around it. An earlier version used \n* on both sides, which greedily ate a
+# blank line that belonged to the file, so a stamped file hashed differently from
+# the same file unstamped, and the stamp could never agree with its own contents.
+# The pre-push gate caught that, on my own push, which is what it is for.
+FOR_HASH = re.compile(r"^const BUILD = '[^']*';.*\n", re.M)
 STAMP = re.compile(r"^const BUILD = '(?:.*\u00b7 )?([0-9a-f]{8})';", re.M)
 
 
@@ -44,7 +45,7 @@ def fingerprint(src):
     The surrounding blank lines go too: an unstamped file and the same file
     stamped must hash identically, or the tool can never agree with itself.
     """
-    return hashlib.sha256(FOR_HASH.sub('\n', src).encode('utf-8')).hexdigest()[:8]
+    return hashlib.sha256(FOR_HASH.sub('', src).encode('utf-8')).hexdigest()[:8]
 
 
 def stamp(path, check_only=False):
@@ -72,6 +73,11 @@ def stamp(path, check_only=False):
         anchor = src.find('*/')
         at = src.index('\n', anchor) + 1 if anchor != -1 else 0
         src = src[:at] + line + '\n' + src[at:]
+    # The stamp must describe the file it is sitting in. If writing it changes
+    # the answer, the tool disagrees with itself and every later check is noise.
+    if fingerprint(src) != want:
+        raise SystemExit('stamping changed the fingerprint of %s (%s -> %s). '
+                         'The tool is wrong, not the file.' % (path, want, fingerprint(src)))
     io.open(p, 'w', encoding='utf-8').write(src)
     return 'stamped', want
 

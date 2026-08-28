@@ -245,6 +245,15 @@ def local_checks(which):
             for f in fs:
                 if f.endswith('.html') or (f.endswith('.js') and not f.endswith('.test.js')):
                     files.append(os.path.join(d, f))
+        # The Workers too. They were NOT in this sweep, and on 28 Aug a Worker
+        # with three junk characters injected before its opening comment went
+        # through the pre-push gate untouched, straight to main. The gate had
+        # never once parsed the file it was letting past.
+        wdir = os.path.join(ROOT, 'venueplay-backend', 'worker')
+        if os.path.isdir(wdir):
+            for f in sorted(os.listdir(wdir)):
+                if f.endswith('.js') and not f.endswith('.test.js'):
+                    files.append(os.path.join(wdir, f))
     if which in ('both', 'partyplay') and os.path.isdir(PARTYPLAY_LOCAL):
         for sub in ('site', 'site/lib', 'lib', 'worker'):
             d = os.path.join(PARTYPLAY_LOCAL, sub)
