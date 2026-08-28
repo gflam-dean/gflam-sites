@@ -278,6 +278,13 @@
         <button class="btn ghost sp" id="quietRefresh">Refresh</button>
       </div>
     </div>
+    <div class="panel" style="margin-bottom:14px">
+      <div class="lblk" style="margin:0 0 6px">Venues that have left</div>
+      <div class="note" style="margin:0 0 10px">A venue whose owner has cancelled is archived automatically 30 days after their paid period ends, so departed venues stop sitting on the active lists. It never touches a venue that is still paying, still inside its paid period, or that has run a night since cancelling. Check first, then run it.</div>
+      <button class="btn ghost sp" id="archiveCheck">Check who would be archived</button>
+      <button class="btn sp" id="archiveRun" hidden>Archive them now</button>
+      <div id="archiveOut" style="margin-top:10px"></div>
+    </div>
     <div class="panel"><div class="tscroll"><table>
       <thead><tr><th>Venue</th><th>Quiet for</th><th>Last game</th><th>State</th><th></th></tr></thead>
       <tbody id="quietRows"></tbody>
@@ -767,7 +774,9 @@
                                     : v.long_gone ? '<span style="color:var(--roll)">over a year</span>'
                                     : esc(v.last_game||""))+'</td>'
               + '<td>'+state+'</td>'
-              + '<td><button class="mini" data-viewas="'+esc(v.id)+'">View as</button></td></tr>';
+              + '<td><button class="mini" data-history="'+esc(v.id)+'">History</button> '
+              + '<button class="mini" data-viewas="'+esc(v.id)+'">View as</button></td>'
+              + '</tr><tr class="histrow" id="hist-'+esc(v.id)+'" hidden><td colspan="5"></td></tr>';
       });
       tb.innerHTML=html;
     }).catch(function(){ tb.innerHTML='<tr><td colspan="5" class="empty">Could not load that just now.</td></tr>'; });
@@ -779,9 +788,141 @@
     var t=$("quietRows");
     if(t) t.addEventListener("click", function(e){
       var va=e.target.closest("button[data-viewas]");
-      if(va) viewAs(va.getAttribute("data-viewas"));
+      if(va){ viewAs(va.getAttribute("data-viewas")); return; }
+      var h=e.target.closest("button[data-history]");
+      if(h) toggleHistory(h.getAttribute("data-history"));
     });
   })();
+
+  /* The 30-day archive. Deliberately two clicks: the first only looks.
+
+     An automatic job that quietly switches venues off is exactly the sort of
+     thing that should be inspectable before it is trusted, so the same sweep
+     the nightly cron runs is exposed here as a dry run first. */
+  function renderArchive(res, acted){
+    var box=$("archiveOut"), run=$("archiveRun");
+    var a=res.archived||[], sk=res.skipped||[];
+    var html="";
+    if(!a.length){
+      html='<div class="empty">Nobody is due to be archived. '
+         + (res.checked ? (res.checked+(res.checked===1?" cancelling venue checked.":" cancelling venues checked.")) : "")+'</div>';
+      if(run) run.hidden=true;
+    } else {
+      html='<table><thead><tr><th>Venue</th><th>Gone for</th><th>Stripe</th></tr></thead><tbody>';
+      a.forEach(function(v){
+        html+='<tr><td><b>'+esc(v.venue||"")+'</b></td>'
+            + '<td class="mono">'+(v.days_since_period_end||0)+' days past their paid period</td>'
+            + '<td class="mono">'+esc(v.sub_state||"")+'</td></tr>';
+      });
+      html+='</tbody></table>';
+      html = (acted ? '<div class="lblk" style="margin:0 0 6px">Archived</div>'
+                    : '<div class="lblk" style="margin:0 0 6px">Would be archived</div>') + html;
+      if(run) run.hidden = !!acted;
+    }
+    if(sk.length){
+      html+='<div class="note" style="margin-top:10px"><b>Left alone:</b> '
+          + sk.map(function(x){ return esc(x.venue||"")+" ("+esc(x.why||"")+")"; }).join("; ")+'</div>';
+    }
+    box.innerHTML=html;
+  }
+  (function(){
+    var c=$("archiveCheck"), r=$("archiveRun");
+    if(c) c.addEventListener("click", function(){
+      $("archiveOut").innerHTML='<div class="empty">Looking…</div>';
+      workerPost("/admin/auto-archive", { dry_run:true }).then(function(res){
+        if(res.error){ $("archiveOut").innerHTML='<div class="empty">'+esc(res.error)+'</div>'; return; }
+        renderArchive(res, false);
+      }).catch(function(){ $("archiveOut").innerHTML='<div class="empty">Could not check just now.</div>'; });
+    });
+    if(r) r.addEventListener("click", function(){
+      r.disabled=true;
+      workerPost("/admin/auto-archive", { dry_run:false }).then(function(res){
+        r.disabled=false;
+        if(res.error){ $("archiveOut").innerHTML='<div class="empty">'+esc(res.error)+'</div>'; return; }
+        renderArchive(res, true);
+        loadQuiet();
+      }).catch(function(){ r.disabled=false; $("archiveOut").innerHTML='<div class="empty">Could not run that just now.</div>'; });
+    });
+  })();
+
+  /* A venue's own history, and whether they are still paying.
+
+     Two venues that look identical on the list above ("quiet 9 days") can be a
+     venue that ran three good nights and got busy, or a venue whose card was
+     declined three weeks ago. Those need different phone calls, and until now
+     HQ could not tell them apart. Both halves are read-only. */
+  function fmtWhen(ts){
+    if(!ts) return "";
+    var d=new Date(ts); if(isNaN(d)) return "";
+    return d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+  }
+  var FORMAT_NAME={ trivia:"Trivia", musical:"Musical bingo", musical_bingo:"Musical bingo",
+                    raffle:"Raffle", bingo:"Bingo", bingo90:"Bingo", members:"Members draw" };
+  function formatLabel(f){ return FORMAT_NAME[f] || (f ? (f.charAt(0).toUpperCase()+f.slice(1)) : "Game"); }
+
+  function subLine(sub){
+    if(!sub) return '<span class="empty">No billing information.</span>';
+    if(!sub.known) return '<span class="empty">'+esc(sub.why||"Subscription state is not available.")+'</span>';
+    var s=sub.state||"unknown";
+    // Say what it MEANS, not what Stripe calls it. "past_due" on a screen at
+    // 11pm is not a useful sentence to anybody.
+    var say = s==="active" ? "Paying, subscription active"
+            : s==="trialing" ? "On trial"
+            : s==="past_due" ? "PAYMENT FAILED, subscription past due"
+            : s==="unpaid" ? "UNPAID, Stripe has given up retrying"
+            : s==="canceled" ? "Cancelled"
+            : s==="incomplete"||s==="incomplete_expired" ? "Never completed sign-up"
+            : s;
+    var bad = (s==="past_due"||s==="unpaid"||s==="canceled"||s==="incomplete_expired");
+    var out='<b style="color:'+(bad?"var(--roll)":"inherit")+'">'+esc(say)+'</b>';
+    if(sub.cancel_at_period_end) out+=' <span class="badge suspend">Cancelling</span>';
+    if(sub.period_end) out+=' <span class="mono">'+(sub.cancel_at_period_end||s==="canceled"?"ends ":"renews ")+esc(sub.period_end)+'</span>';
+    if(sub.card) out+=' <span class="mono" style="opacity:.75">'+esc(sub.card)+'</span>';
+    if(sub.contact_email) out+='<br><span class="mono" style="opacity:.75">'+esc(sub.contact_email)+'</span>';
+    return out;
+  }
+
+  function toggleHistory(id){
+    var row=$("hist-"+id); if(!row) return;
+    if(!row.hidden){ row.hidden=true; return; }
+    row.hidden=false;
+    var cell=row.firstChild;
+    cell.innerHTML='<div class="empty">Looking…</div>';
+    workerPost("/admin/venue-history", { venue_id:id }).then(function(res){
+      if(res.error){ cell.innerHTML='<div class="empty">'+esc(res.error)+'</div>'; return; }
+      var n=res.nights||[];
+      var html='<div style="padding:10px 4px 4px"><div class="lblk" style="margin:0 0 6px">'
+             + esc((res.venue&&res.venue.name)||"Venue")+' &middot; billing</div>'
+             + '<div style="margin-bottom:12px">'+subLine(res.subscription)+'</div>'
+             + '<div class="lblk" style="margin:0 0 6px">What they have run</div>';
+      if(!n.length){
+        html+='<div class="empty">Nothing recorded. This venue has never run a night.</div>';
+      } else {
+        html+='<div class="tscroll"><table><thead><tr><th>When</th><th>What</th>'
+            + '<th>Players</th><th>How it went</th></tr></thead><tbody>';
+        n.forEach(function(x){
+          var what = (x.formats&&x.formats.length)
+                   ? x.formats.map(formatLabel).filter(function(v,i,a){return a.indexOf(v)===i;}).join(", ")
+                   : (x.kind==="report" ? "Bingo" : "Nothing started");
+          /* The row that matters most. A session opened with no game and nobody
+             in it is a venue that tried and gave up, and it does not show up
+             anywhere else in HQ. */
+          var how = x.abandoned
+                  ? '<span style="color:var(--roll)">opened, then abandoned</span>'
+                  : (x.status==="finished" ? "finished properly"
+                    : x.status==="cancelled" ? "cancelled"
+                    : x.ended_at ? "ended" : "never formally ended");
+          html+='<tr><td class="mono">'+esc(fmtWhen(x.at))+'</td>'
+              + '<td>'+esc(what)+'</td>'
+              + '<td class="mono">'+(x.players||0)+(x.tickets?(" &middot; "+x.tickets+" tickets"):"")+'</td>'
+              + '<td>'+how+'</td></tr>';
+        });
+        html+='</tbody></table></div>';
+      }
+      html+='<div class="note">Newest first, the last 60 nights. Sessions cover trivia, musical bingo and raffles; broadcast bingo opens no session and appears from its game report. Subscription state is read live from Stripe.</div></div>';
+      cell.innerHTML=html;
+    }).catch(function(){ cell.innerHTML='<div class="empty">Could not load that just now.</div>'; });
+  }
 
   /* ================= VENUES ================= */
   function isArchived(v){ return v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling"; }

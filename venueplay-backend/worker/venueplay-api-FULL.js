@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Aug 2026, 18:24 · 4ea3cd12';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Aug 2026, 19:11 · 141d8de3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -142,6 +142,8 @@ export default {
       if (request.method === 'POST' && path === '/admin/discount'        && typeof vpaHandleDiscount === 'function')       return await vpaHandleDiscount(request, env, json);
       if (request.method === 'POST' && path === '/admin/discount-remove' && typeof vpaHandleDiscountRemove === 'function') return await vpaHandleDiscountRemove(request, env, json);
       if (request.method === 'POST' && path === '/admin/quiet-venues'    && typeof vpaHandleQuietVenues === 'function')    return await vpaHandleQuietVenues(request, env, json);
+      if (request.method === 'POST' && path === '/admin/venue-history'   && typeof vpaHandleVenueHistory === 'function')   return await vpaHandleVenueHistory(request, env, json);
+      if (request.method === 'POST' && path === '/admin/auto-archive'   && typeof vpaHandleAutoArchive === 'function')   return await vpaHandleAutoArchive(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-status'    && typeof vpaHandleVenueStatus === 'function')    return await vpaHandleVenueStatus(request, env, json);
       if (request.method === 'POST' && path === '/admin/venue-gaming'    && typeof vpaHandleVenueGaming === 'function')    return await vpaHandleVenueGaming(request, env, json);
       if (request.method === 'POST' && path === '/admin/gst'             && typeof vpaHandleGst === 'function')            return await vpaHandleGst(request, env, json);
@@ -161,6 +163,31 @@ export default {
         body._detail = (m ? ('CONSTRAINT: ' + m[1] + '. ') : '') + (col ? ('COLUMN: ' + col[1] + '. ') : '') + raw.slice(0, 500);
       }
       return json(body, 500);
+    }
+  },
+
+  /* THE 30-DAY ARCHIVE, unattended.
+
+     Needs a Cron Trigger on this Worker. Without one this never runs and the
+     archive stays a button somebody has to press, which is exactly where it
+     was before. Suggested schedule: "30 17 * * *", once a day, well away from
+     any venue's trading hours.
+
+     It shares vpaAutoArchiveSweep with the button, so the dry run in HQ shows
+     precisely what the nightly job will do. No separate code path to drift. */
+  async scheduled(event, env, ctx) {
+    const actor = { actorId: null, label: 'automatic (30-day archive)' };
+    try {
+      const res = await vpaAutoArchiveSweep(env, actor, 30, false);
+      if (res && res.archived && res.archived.length) {
+        await vpaAudit(env, actor, 'auto_archive_run', null,
+          { archived: res.archived.length, checked: res.checked });
+      }
+    } catch (e) {
+      // A failed sweep must never take the Worker down. Nothing here is urgent:
+      // a venue that should have been archived tonight can be archived tomorrow.
+      try { await vpaAudit(env, actor, 'auto_archive_failed', null,
+                           { error: String((e && e.message) || e).slice(0, 300) }); } catch (e2) {}
     }
   },
 };
@@ -1716,6 +1743,294 @@ async function vpaHandleVenueGaming(request, env, json) {
   }, false).catch(function () {});
 
   return json({ ok: true, venue: saved });
+}
+
+
+/* ------------------------- POST /admin/venue-history -------------------------
+   ONE venue, everything it has actually done, and whether it is still paying.
+
+   HQ could already say "Wellshot Hotel, quiet 9 days". It could not say what
+   they tried, and it could not say whether their card is still good. Those two
+   look identical from the outside and they need completely different phone
+   calls, which is the whole reason this exists.
+
+   Read-only. It writes nothing and changes nothing. */
+async function vpaHandleVenueHistory(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+
+  const b = await request.json().catch(() => ({}));
+  const venueId = (b.venue_id || '').trim();
+  if (!venueId) return json({ error: 'venue_id is required.' }, 400);
+  const vid = encodeURIComponent(venueId);
+
+  const vrows = await vpaSelect(env, 'vp_venues',
+    'id=eq.' + vid + '&select=id,name,slug,status,suspended_reason,cancel_at_period_end,' +
+    'founding_id,group_id,max_players,created_at,au_state,postcode');
+  const venue = vrows && vrows[0];
+  if (!venue) return json({ error: 'That venue no longer exists.' }, 404);
+
+  /* Bounded, for the same reason vpaHandleQuietVenues is bounded: this is a
+     retention screen, not an archive. The most recent 60 nights answers every
+     question anybody opens this panel to ask. */
+  const sessions = await vpaSelect(env, 'vp_sessions',
+    'venue_id=eq.' + vid + '&select=id,join_code,status,opened_at,started_at,ended_at,created_at' +
+    '&order=created_at.desc&limit=60') || [];
+
+  /* What was actually PLAYED in each of those nights. A session on its own only
+     says somebody opened the console; the game rows say whether a trivia round
+     or a musical set ever started, which is exactly the difference between
+     "they tried and it did not land" and "they never got going". */
+  let games = [];
+  if (sessions.length) {
+    // Same shape the rest of this Worker uses for an in() list: encode each id,
+    // join with raw commas. Encoding the whole joined string turns the commas
+    // into %2C, which works but is a second pattern for no reason.
+    const ids = sessions.map(function (x) { return encodeURIComponent(x.id); }).join(',');
+    games = await vpaSelect(env, 'vp_games',
+      'session_id=in.(' + ids + ')' +
+      '&select=id,session_id,seq,format,status,ended_at,created_at&order=seq.asc') || [];
+  }
+
+  /* How many people were in the room. Counted, not stored: there is no player
+     total on a session row. */
+  let players = [];
+  if (sessions.length) {
+    const pids = sessions.map(function (x) { return encodeURIComponent(x.id); }).join(',');
+    players = await vpaSelect(env, 'vp_players',
+      'session_id=in.(' + pids + ')&select=id,session_id') || [];
+  }
+  const headcount = {};
+  for (const p of players) { headcount[p.session_id] = (headcount[p.session_id] || 0) + 1; }
+
+  const byId = {};
+  for (const g of games) { (byId[g.session_id] = byId[g.session_id] || []).push(g); }
+
+  const nights = sessions.map(function (s) {
+    const gs = byId[s.id] || [];
+    return {
+      kind: 'session',
+      at: s.started_at || s.opened_at || s.created_at,
+      ended_at: s.ended_at || null,
+      status: s.status,
+      join_code: s.join_code,
+      players: headcount[s.id] || 0,
+      formats: gs.map(function (g) { return g.format; }).filter(Boolean),
+      games: gs.length,
+      /* The tell-tale we are looking for. A session opened, nobody joined, no
+         game ever started: that is a venue that tried and gave up, and it is
+         invisible on every other screen we have. */
+      abandoned: gs.length === 0 && (headcount[s.id] || 0) === 0,
+    };
+  });
+
+  /* Broadcast bingo opens no session at all, so it exists ONLY here. Leaving it
+     out would make a bingo-only venue look like it had never run a night. */
+  const reports = await vpaSelect(env, 'vp_game_reports',
+    'venue_id=eq.' + vid + '&select=id,format,players,tickets,started_at,ended_at,created_at' +
+    '&order=created_at.desc&limit=60') || [];
+  for (const r of reports) {
+    nights.push({
+      kind: 'report',
+      at: r.started_at || r.created_at,
+      ended_at: r.ended_at || null,
+      status: r.ended_at ? 'finished' : 'unfinished',
+      players: r.players || 0,
+      tickets: r.tickets || 0,
+      formats: r.format ? [r.format] : [],
+      games: 1,
+      abandoned: false,
+    });
+  }
+  nights.sort(function (a, c) { return Date.parse(c.at || 0) - Date.parse(a.at || 0); });
+
+  /* ARE THEY STILL PAYING? HQ's billing panel has always said out loud that it
+     cannot answer this, and pointed at a Worker feed that was never written.
+     This is that feed, for one venue at a time. Stripe is the only source of
+     truth here; our own row only records what we last asked for. */
+  let subscription = { known: false, why: 'This venue has no founding record, so there is no subscription to look up.' };
+  if (venue.founding_id) {
+    try {
+      const accts = await vpaSelect(env, 'venueplay_founding',
+        'id=eq.' + encodeURIComponent(venue.founding_id) +
+        '&select=id,stripe_subscription_id,plan,contact_email,status');
+      const acct = accts && accts[0];
+      if (!acct || !acct.stripe_subscription_id) {
+        subscription = { known: false, why: 'No Stripe subscription is recorded against this account yet.' };
+      } else {
+        const info = await vpbSubItem(env, acct.stripe_subscription_id);
+        const sub = info && info.sub;
+        subscription = {
+          known: !!sub,
+          state: sub ? sub.status : null,                 // active, past_due, canceled, unpaid...
+          cancel_at_period_end: sub ? !!sub.cancel_at_period_end : !!venue.cancel_at_period_end,
+          period_end: (info && info.periodEnd) ? vpaFmtDate(info.periodEnd) : null,
+          period_end_ts: (info && info.periodEnd) || null,
+          card: (info && info.brand) ? (info.brand + ' ending ' + info.last4) : null,
+          plan: acct.plan || null,
+          contact_email: acct.contact_email || null,
+        };
+      }
+    } catch (e) {
+      // Never fail the whole panel because Stripe had a bad minute: the history
+      // above is the half somebody opened this to read.
+      subscription = { known: false, why: 'Could not reach Stripe just now: ' + String((e && e.message) || e).slice(0, 160) };
+    }
+  }
+
+  const last = nights.length ? nights[0].at : null;
+  return json({
+    ok: true,
+    venue: {
+      id: venue.id, name: venue.name, slug: venue.slug, status: venue.status,
+      suspended_reason: venue.suspended_reason || null,
+      archived: venue.suspended_reason === 'archived' || venue.suspended_reason === 'archived_cancelling',
+      cancelling: !!venue.cancel_at_period_end,
+      max_players: venue.max_players, created_at: venue.created_at,
+      au_state: venue.au_state || null,
+    },
+    last_activity: last,
+    days_quiet: last ? Math.floor((Date.now() - Date.parse(last)) / 86400000) : null,
+    nights: nights.slice(0, 60),
+    subscription: subscription,
+  });
+}
+
+
+/* ------------------------- POST /admin/auto-archive -------------------------
+   Archive a venue 30 days after the owner told us they were leaving.
+
+   The rule Dean asked for: they say leave, we give them a month, then the venue
+   moves off the active lists by itself. Today that is a manual job somebody has
+   to remember, and a forgotten one leaves a departed venue sitting on every
+   screen with a discount form under it.
+
+   WHY THIS TOUCHES NO MONEY. The trigger for auto-archiving IS the owner having
+   cancelled, so cancel_at_period_end is already true and Stripe has already
+   been told. vpaHandleVenueStatus only reaches Stripe to SET that flag for a
+   venue we archived out of the blue; here there is nothing left to set. So this
+   writes two columns and an audit line, and no invoice moves. That is deliberate:
+   an automatic job that can move money is an automatic job that can bill somebody
+   wrongly at 3am with nobody watching.
+
+   The reason written is 'archived_cancelling', the same value the manual path
+   uses when the OWNER cancelled first. That matters later: un-archiving reads it
+   and refuses to silently restart billing the owner had stopped.
+
+   FOUR THINGS MUST ALL BE TRUE, and any one of them failing means we leave it:
+     1. the owner is cancelling (we never auto-archive a paying venue)
+     2. their paid period ended, and 30+ days have passed since
+     3. they have not played since (a venue that came back is not gone)
+     4. it is not already archived or suspended
+
+   Defaults to a DRY RUN. You have to ask for it to act. */
+async function vpaHandleAutoArchive(request, env, json) {
+  const actor = await vpaRequireAdmin(request, env, ['owner', 'accounts']);
+  if (actor.error) return json({ error: actor.error }, actor.status);
+  const b = await request.json().catch(() => ({}));
+  // Absent means dry run. Only an explicit false actually archives anything.
+  const dryRun = b.dry_run !== false;
+  let days = parseInt(b.days, 10);
+  if (!(days >= 1)) days = 30;
+  return json(await vpaAutoArchiveSweep(env, actor, days, dryRun));
+}
+
+async function vpaAutoArchiveSweep(env, actor, days, dryRun) {
+  const now = Date.now();
+  const graceMs = days * 86400000;
+
+  const venues = await vpaSelect(env, 'vp_venues',
+    'status=eq.active&cancel_at_period_end=is.true' +
+    '&select=id,name,slug,status,suspended_reason,founding_id,cancel_at_period_end') || [];
+  if (!venues.length) {
+    return { ok: true, days: days, dry_run: dryRun, checked: 0, archived: [], skipped: [],
+             note: 'No active venue is currently set to cancel, so there is nothing to archive.' };
+  }
+
+  /* When did they last play? Same two sources as the Quiet tab, because a venue
+     that ran a night after cancelling has changed its mind in the only way that
+     counts, and must not be archived out from under itself. */
+  const lookback = new Date(now - Math.max(graceMs, 90 * 86400000)).toISOString();
+  const lastPlayed = {};
+  const note = function (id, ts) {
+    if (!id || !ts) return;
+    const t = Date.parse(ts);
+    if (isFinite(t) && (!lastPlayed[id] || t > lastPlayed[id])) lastPlayed[id] = t;
+  };
+  const sess = await vpaSelect(env, 'vp_sessions',
+    'select=venue_id,opened_at,started_at,ended_at' +
+    '&or=(started_at.gte.' + lookback + ',opened_at.gte.' + lookback + ',ended_at.gte.' + lookback + ')') || [];
+  for (const r of sess) note(r.venue_id, r.started_at || r.opened_at || r.ended_at);
+  const reps = await vpaSelect(env, 'vp_game_reports',
+    'select=venue_id,ended_at,created_at' +
+    '&or=(ended_at.gte.' + lookback + ',created_at.gte.' + lookback + ')') || [];
+  for (const r of reps) note(r.venue_id, r.ended_at || r.created_at);
+
+  const archived = [];
+  const skipped = [];
+  for (const v of venues) {
+    if (v.suspended_reason === 'archived' || v.suspended_reason === 'archived_cancelling') {
+      skipped.push({ venue: v.name, why: 'already archived' }); continue;
+    }
+    if (!v.founding_id) {
+      skipped.push({ venue: v.name, why: 'no founding record, so no period end to measure from' }); continue;
+    }
+
+    /* WHEN did their paid period end? Stripe, not us. If we cannot find out we
+       do NOT archive: a missing date must never be read as an expired one. */
+    let periodEnd = null, subState = null;
+    try {
+      const accts = await vpaSelect(env, 'venueplay_founding',
+        'id=eq.' + encodeURIComponent(v.founding_id) + '&select=id,stripe_subscription_id');
+      const acct = accts && accts[0];
+      if (acct && acct.stripe_subscription_id) {
+        const info = await vpbSubItem(env, acct.stripe_subscription_id);
+        periodEnd = (info && info.periodEnd) ? (info.periodEnd * 1000) : null;
+        subState = (info && info.sub) ? info.sub.status : null;
+      }
+    } catch (e) {
+      skipped.push({ venue: v.name, why: 'could not read Stripe: ' + String((e && e.message) || e).slice(0, 90) });
+      continue;
+    }
+    if (!periodEnd) {
+      skipped.push({ venue: v.name, why: 'no period end on the subscription, so the 30 days cannot be counted' });
+      continue;
+    }
+    if (now < periodEnd) {
+      skipped.push({ venue: v.name, why: 'still inside their paid period' }); continue;
+    }
+    const over = now - periodEnd;
+    if (over < graceMs) {
+      const left = Math.floor((graceMs - over) / 86400000);
+      skipped.push({ venue: v.name, why: left + (left === 1 ? ' more day of grace' : ' more days of grace') });
+      continue;
+    }
+    const played = lastPlayed[v.id] || 0;
+    if (played && played > periodEnd) {
+      skipped.push({ venue: v.name, why: 'played again after their period ended, so they are not gone' });
+      continue;
+    }
+
+    const row = { venue: v.name, id: v.id,
+                  days_since_period_end: Math.floor(over / 86400000),
+                  sub_state: subState };
+    if (!dryRun) {
+      await vpaPatch(env, 'vp_venues', 'id=eq.' + encodeURIComponent(v.id), {
+        status: 'suspended',
+        // The OWNER cancelled first, so this is the reason the manual path would
+        // also write. Un-archiving reads it and will not restart their billing.
+        suspended_reason: 'archived_cancelling',
+      });
+      await vpaAudit(env, actor, 'venue_archived', 'venue:' + v.id,
+        { status: 'archived', name: v.name, automatic: true,
+          reason: 'cancelled and quiet for ' + days + '+ days',
+          days_since_period_end: row.days_since_period_end });
+    }
+    archived.push(row);
+  }
+
+  return { ok: true, days: days, dry_run: dryRun, checked: venues.length,
+           archived: archived, skipped: skipped };
 }
 
 async function vpaHandleVenueStatus(request, env, json) {
