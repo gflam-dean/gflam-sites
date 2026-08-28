@@ -189,8 +189,70 @@
     }catch(e){}
   }
 
+  /* SIGNING IN, which did not exist.
+
+     A host arrives here from a link in their welcome email that carries the
+     code and the host key. Lose that email and this page said "open this from
+     the link in your email" and stopped: no way in, no way to get the email
+     again, on a product somebody has already paid for. The Worker has had a
+     resend endpoint the whole time and nothing on the site reached it.
+
+     The tips are here rather than only in the setup guide because this is the
+     screen a host is looking at when they are getting ready, which is exactly
+     when the advice is worth having. */
+  function signIn(err){
+    $("app").innerHTML =
+      '<div class="gate" style="text-align:left">' +
+        '<div class="big" style="text-align:center">Open your party</div>' +
+        '<p style="text-align:center">Both of these are in your welcome email.</p>' +
+        '<label for="siCode" style="display:block;margin:18px 0 6px;color:var(--faint);font-size:14px">Party code</label>' +
+        '<input id="siCode" maxlength="10" autocapitalize="characters" autocomplete="off" ' +
+          'spellcheck="false" placeholder="ABC123" style="width:100%;padding:14px;border-radius:11px;' +
+          'border:1px solid var(--line);background:rgba(255,255,255,.05);color:inherit;font:inherit;text-align:center">' +
+        '<label for="siKey" style="display:block;margin:14px 0 6px;color:var(--faint);font-size:14px">Host key</label>' +
+        '<input id="siKey" autocomplete="off" spellcheck="false" placeholder="the long one" ' +
+          'style="width:100%;padding:14px;border-radius:11px;border:1px solid var(--line);' +
+          'background:rgba(255,255,255,.05);color:inherit;font:inherit;text-align:center">' +
+        (err ? '<p style="color:var(--pink);margin-top:12px">' + esc(err) + '</p>' : '') +
+        '<button class="callbtn" id="siGo" style="margin-top:18px;width:100%">Open my party</button>' +
+        '<p style="margin-top:16px;text-align:center">Lost the email? ' +
+          '<a href="#" id="siResend">Send it again</a></p>' +
+        '<div style="margin-top:26px;padding-top:20px;border-top:1px solid var(--line)">' +
+          '<div style="font-weight:800;margin-bottom:10px">Twenty minutes before people arrive</div>' +
+          '<ul style="margin:0;padding-left:20px;color:var(--faint);line-height:1.75">' +
+            '<li><b>Get the screen working</b> with nobody watching. It is the only part worth doing early.</li>' +
+            '<li><b>Have a practice run</b> so the first game in front of people is not your first ever. ' +
+              '<a href="/practice">Try one now</a>, it does not use any of your time.</li>' +
+            '<li><b>Plug the laptop in.</b> A flat battery halfway through the bingo is a sad way to end a game.</li>' +
+            '<li><b>Turn off the screen saver</b> on the telly or the laptop.</li>' +
+            '<li><b>Decide what they are playing for</b> and put it where everyone can see it.</li>' +
+          '</ul>' +
+        '</div>' +
+      '</div>';
+
+    function go(){
+      var c = ($("siCode").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      var k = ($("siKey").value || "").trim();
+      if(c.length < 4 || !k) return signIn("Put in both the code and the host key.");
+      // Straight into the address the rest of the page already reads, so there
+      // is one way in and nothing new to keep in step.
+      location.search = "?code=" + encodeURIComponent(c) + "&key=" + encodeURIComponent(k);
+    }
+    $("siGo").addEventListener("click", go);
+    $("siKey").addEventListener("keydown", function(e){ if(e.key === "Enter") go(); });
+    $("siResend").addEventListener("click", function(e){
+      e.preventDefault();
+      var c = ($("siCode").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if(c.length < 4) return signIn("Put your party code in first, then press send it again.");
+      api("/licence/resend", { method:"POST", body: JSON.stringify({ code:c }) })
+        .then(function(){ toast("If that code is one of ours, the email is on its way."); })
+        .catch(function(){ toast("If that code is one of ours, the email is on its way."); });
+    });
+    $("siCode").focus();
+  }
+
   function load(){
-    if(!CODE||!KEY){ $("app").innerHTML='<div class="gate">Open this from the link in your email, which has your host key in it.</div>'; return; }
+    if(!CODE||!KEY){ signIn(); return; }
     $("tvlink").href="/tv?code="+encodeURIComponent(CODE);
     $("buildlink").href="/host?code="+encodeURIComponent(CODE)+"&key="+encodeURIComponent(KEY);
     nightLoad();
