@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Aug 2026, 16:42 · 0b4ae145';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Aug 2026, 18:24 · 4ea3cd12';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -88,6 +88,29 @@ export default {
               '. No sms means staff never get their sign-in code.'
             : undefined
         }, missing.length ? 503 : 200);
+      }
+
+      /* IS THIS FOUNDING WINDOW STILL OPEN?
+         Public, and it answers with a yes or a no and nothing else.
+
+         The state pages are static HTML with a code baked into them, and the
+         Worker decides the price from FOUNDING_CODES. Those two can disagree, and
+         when they do the page keeps promising $2.50 while the venue is charged
+         $3.00, with nothing on screen to explain it. That has happened before:
+         this Worker's own comments describe a venue seeing the founding price on
+         /qld or /vic and being charged standard "with no error and no
+         explanation".
+
+         So the page asks, on load, and tells the truth either way. Closing a
+         window becomes one edit to an environment variable, and every page that
+         depends on it corrects itself. */
+      if (request.method === 'GET' && path === '/founding') {
+        const want = (url.searchParams.get('code') || '').trim().toUpperCase();
+        const live = (env.FOUNDING_CODES || '').split(',')
+                       .map(function (c) { return c.trim().toUpperCase(); })
+                       .filter(Boolean);
+        return json({ code: want, open: want !== '' && live.indexOf(want) !== -1 },
+                    200, { 'cache-control': 'public, max-age=300' });
       }
 
       if (request.method === 'POST' && path === '/checkout') return await handleCheckout(request, env, json);

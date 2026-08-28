@@ -1665,5 +1665,56 @@
   upd();
 })();
 </script>
+
+<!-- ===================================================================
+     IF THIS FOUNDING WINDOW HAS CLOSED, SAY SO.
+
+     This page is static and has its code baked in; the Worker decides the
+     price from FOUNDING_CODES. When those two disagree the page keeps
+     promising the founding rate while the venue is charged standard, with
+     nothing on screen to explain it. That has happened before.
+
+     So: ask, once, on load. If the window is shut, put a banner at the top,
+     turn the founding wording down, and stop the page making a promise the
+     Worker will not keep. Closing a window is then one edit to an environment
+     variable, and every state page corrects itself.
+
+     If the Worker cannot be reached the page is left exactly as it is: a
+     venue seeing the offer is better than a venue seeing a scary banner
+     because our API had a bad minute.
+     =================================================================== -->
+<script>
+(function () {
+  var CODE = 'NT-SEP-2026';
+  var API  = 'https://venueplay-api.dean-tindale.workers.dev';
+  if (!CODE || !API || API.indexOf('PASTE_') !== -1) return;
+
+  fetch(API + '/founding?code=' + encodeURIComponent(CODE))
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d || d.open !== false) return;          // open, or we could not tell
+
+      var bar = document.createElement('div');
+      bar.setAttribute('style',
+        'background:#2A2239;color:#FFF1E6;padding:14px 18px;text-align:center;' +
+        'font-family:Manrope,system-ui,sans-serif;font-size:15.5px;line-height:1.5;' +
+        'border-bottom:2px solid #FF1F8E;position:relative;z-index:99');
+      bar.innerHTML = '<b>Founding has closed for this state.</b> ' +
+        'You can still sign up today at the standard rate of $3.00 per player a month, ' +
+        'and everything else works exactly the same.';
+      document.body.insertBefore(bar, document.body.firstChild);
+
+      // Stop the page promising a price it will not be charged.
+      document.querySelectorAll('.hero-note').forEach(function (el) {
+        el.textContent = 'Founding has closed for this state. Standard rate, $3.00 per player a month.';
+      });
+      document.querySelectorAll('a.btn-primary').forEach(function (el) {
+        if (/founding/i.test(el.textContent)) el.textContent = 'Get started';
+      });
+      document.title = document.title.replace(/founding/i, 'now open');
+    })
+    .catch(function () {});     // leave the page alone rather than alarm anybody
+})();
+</script>
 </body>
 </html>
