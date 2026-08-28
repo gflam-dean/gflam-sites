@@ -277,6 +277,36 @@ def local_checks(which):
     ok('every script in %d file(s) parses' % len(files), bad == 0,
        '' if bad == 0 else '%d broken' % bad)
 
+    """A WORKER MUST ALSO LOAD, NOT JUST PARSE.
+
+    A stray token pasted above the opening comment, ' QLD/**' instead of '/**',
+    parses perfectly: JavaScript reads it as an expression statement. It then
+    throws ReferenceError the instant the module is evaluated, and the entire
+    Worker is dead, every route, on the first request.
+
+    That got into main and sat there. The parse check said fine, and check-defs
+    only looks at things that are CALLED, so a bare identifier sailed past both.
+    This runs the module's top level and insists it survives. It is the only
+    check here that asks whether the code would actually start.
+
+    Handlers are never invoked: nothing reaches the network or the database. All
+    that runs is what a Worker runs at load, which is the declarations."""
+    worker_bad = []
+    for f in files:
+        b = os.path.basename(f)
+        if not b.endswith('.js') or 'worker' not in f.replace('\\', '/'):
+            continue
+        src = io.open(f, encoding='utf-8').read()
+        src = re.sub(r'^export default', 'var _d =', src, flags=re.M)
+        io.open('/tmp/_rc_load.js', 'w', encoding='utf-8').write(src)
+        r = subprocess.run([JSC, '-e',
+            'try{ (new Function(readFile("/tmp/_rc_load.js")))(); print("OK"); }'
+            'catch(e){ print("ERR "+e); }'], capture_output=True, text=True)
+        if 'OK' not in r.stdout:
+            worker_bad.append('%s: %s' % (b, r.stdout.strip()[:90]))
+    ok('every Worker actually loads, not just parses', not worker_bad,
+       why='; '.join(worker_bad[:2]))
+
     head('B. Nothing calls a function that does not exist')
     checker = os.path.join(PARTYPLAY_LOCAL, 'check-defs.py')
     if os.path.isfile(checker):

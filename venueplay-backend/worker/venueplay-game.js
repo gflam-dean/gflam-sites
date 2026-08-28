@@ -1,4 +1,4 @@
- QLD/**
+/**
  * VenuePlay GAME Worker  (venueplay-game)  -- REVIEWED + HARDENED 4 Aug 2026; FIXES 7 Aug 2026.
  * Review blockers fixed: a failed start no longer ends the live game; overage is HOST-APPROVED
  * (a game over the plan cap will NOT start until the host taps OK via /host/overage/ack, and
@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Aug 2026, 16:41 · 88ee44c6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '28 Aug 2026, 19:16 · 7624be73';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
