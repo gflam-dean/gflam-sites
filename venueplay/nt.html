@@ -1699,14 +1699,14 @@
         'background:#2A2239;color:#FFF1E6;padding:14px 18px;text-align:center;' +
         'font-family:Manrope,system-ui,sans-serif;font-size:15.5px;line-height:1.5;' +
         'border-bottom:2px solid #FF1F8E;position:relative;z-index:99');
-      bar.innerHTML = '<b>Founding has closed for this state.</b> ' +
+      bar.innerHTML = '<b>Founding is not open for this state right now.</b> ' +
         'You can still sign up today at the standard rate of $3.00 per player a month, ' +
         'and everything else works exactly the same.';
       document.body.insertBefore(bar, document.body.firstChild);
 
       // Stop the page promising a price it will not be charged.
       document.querySelectorAll('.hero-note').forEach(function (el) {
-        el.textContent = 'Founding has closed for this state. Standard rate, $3.00 per player a month.';
+        el.textContent = 'Founding is not open for this state right now. Standard rate, $3.00 per player a month.';
       });
       document.querySelectorAll('a.btn-primary').forEach(function (el) {
         if (/founding/i.test(el.textContent)) el.textContent = 'Get started';
