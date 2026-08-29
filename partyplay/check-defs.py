@@ -145,6 +145,10 @@ for f in [t for t in targets if os.path.isfile(t)]:
         for nm in re.findall(r"(?:^|,)\s*([A-Za-z_$][\w$]*)\s*(?==|,|$)", decl):
             defined.add(nm)
     defined |= set(re.findall(r"(?:var|let|const)\s+([A-Za-z_$][\w$]*)", js))
+    # Object-method shorthand: `async scheduled(event, env, ctx) {` and
+    # `fetch(request, env) {`. Without this the DEFINITION reads as a call to
+    # itself, and a Worker's own entry points were reported as undefined.
+    defined |= set(re.findall(r"(?m)^\s*(?:async\s+)?([A-Za-z_$][\w$]*)\s*\([^()]*\)\s*\{", js))
     for m in re.finditer(r"function[^(]*\(([^)]*)\)", js):                    # parameters
         for a in m.group(1).split(","):
             a = a.strip()

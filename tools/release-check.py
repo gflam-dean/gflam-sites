@@ -65,6 +65,20 @@ def _load_scanner():
         sys.argv, sys.stdout = argv, out
     return getattr(mod, 'strip_comments', None)
 JSC = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
+
+# THE PARTYPLAY FILES THAT DEPLOY ARE IN THIS REPO, and for a long time this
+# gate read a different copy of them. ~/partyplay is an older working copy: it
+# has no practice.html at all, and its admin, host, index, run and tv pages had
+# all drifted from the ones on partyplay.com.au. So the sweep was parsing five
+# pages nobody serves, skipping one that everybody does, and blessing a Worker
+# build that was two changes behind its own source.
+#
+# Everything now reads the repo. The old copy is still where Dean edits by hand
+# sometimes, so it is checked too when it is there, but it is never the one that
+# decides. One comment further down already warned about this for the trivia
+# packs; it turned out to be true of nearly the whole PartyPlay half.
+PARTYPLAY_SITE  = os.path.join(ROOT, 'partyplay')
+PARTYPLAY_BACK  = os.path.join(ROOT, 'partyplay-backend')
 PARTYPLAY_LOCAL = os.path.expanduser('~/partyplay')
 _scanner = None   # filled in at start-up, see _load_scanner
 
@@ -210,7 +224,7 @@ def parses(js):
 
 def short(path):
     """A path you can actually go and open, not a bare filename."""
-    for base, name in ((ROOT, ''), (PARTYPLAY_LOCAL, 'partyplay/')):
+    for base, name in ((ROOT, ''), (PARTYPLAY_LOCAL, '~/partyplay/')):
         if path.startswith(base):
             return name + os.path.relpath(path, base)
     return path
@@ -254,9 +268,10 @@ def local_checks(which):
             for f in sorted(os.listdir(wdir)):
                 if f.endswith('.js') and not f.endswith('.test.js'):
                     files.append(os.path.join(wdir, f))
-    if which in ('both', 'partyplay') and os.path.isdir(PARTYPLAY_LOCAL):
-        for sub in ('site', 'site/lib', 'lib', 'worker'):
-            d = os.path.join(PARTYPLAY_LOCAL, sub)
+    if which in ('both', 'partyplay'):
+        for d in (PARTYPLAY_SITE, os.path.join(PARTYPLAY_SITE, 'lib'),
+                  os.path.join(PARTYPLAY_BACK, 'lib'),
+                  os.path.join(PARTYPLAY_BACK, 'worker')):
             if not os.path.isdir(d):
                 continue
             for f in sorted(os.listdir(d)):
@@ -308,11 +323,13 @@ def local_checks(which):
        why='; '.join(worker_bad[:2]))
 
     head('B. Nothing calls a function that does not exist')
-    checker = os.path.join(PARTYPLAY_LOCAL, 'check-defs.py')
+    checker = os.path.join(PARTYPLAY_SITE, 'check-defs.py')
+    if not os.path.isfile(checker):
+        checker = os.path.join(PARTYPLAY_LOCAL, 'check-defs.py')
     if os.path.isfile(checker):
         args = [a for a in files if a.endswith('.html') or a.endswith('.js')]
         r = subprocess.run([sys.executable, checker] + args,
-                           capture_output=True, text=True, cwd=PARTYPLAY_LOCAL)
+                           capture_output=True, text=True, cwd=ROOT)
         out = (r.stdout + r.stderr).strip().splitlines()
         ok('definition check across %d file(s)' % len(args), r.returncode == 0,
            out[-1].strip() if out else '')
@@ -320,9 +337,9 @@ def local_checks(which):
         ok('definition checker present', False, 'check-defs.py not found')
 
     head('C. Unit tests')
-    for base in ([PARTYPLAY_LOCAL] if which in ('both', 'partyplay') else []):
-        for sub in ('lib', 'worker'):
-            d = os.path.join(base, sub)
+    for base in ([PARTYPLAY_SITE, PARTYPLAY_BACK] if which in ('both', 'partyplay') else []):
+        for sub in ('', 'lib', 'worker'):
+            d = os.path.join(base, sub) if sub else base
             if not os.path.isdir(d):
                 continue
             for f in sorted(os.listdir(d)):
@@ -339,14 +356,10 @@ def local_checks(which):
             ok(f, r.returncode == 0 and 'All good' in r.stdout,
                (r.stdout.strip().splitlines() or [''])[-1])
 
-    # The packs live in the REPO's partyplay tree, not the separate working copy
-    # PARTYPLAY_LOCAL points at, so this must not use that constant.
-    tp = os.path.join(ROOT, 'partyplay', 'lib', 'pp-trivia-pack.test.js')
-    if os.path.isfile(tp):
-        r = subprocess.run([JSC, tp], capture_output=True, text=True)
-        out = (r.stdout + r.stderr).strip().splitlines()
-        line = out[-1] if out else ''
-        ok('pp-trivia-pack.test.js', 'ALL' in line and 'PASSED' in line, line)
+    # The trivia pack suite used to be run by name here, because the loop above
+    # only knew about the OTHER working copy and would never have found it. The
+    # loop reads the repo now, so it picks the suite up like every other one and
+    # running it again by name only printed it twice.
 
     gt = os.path.join(ROOT, 'venueplay-backend', 'worker', 'one-game.test.js')
     if os.path.isfile(gt):
@@ -443,13 +456,39 @@ def local_checks(which):
         ok(label, not hits, why=', '.join(hits[:4]))
 
     head('E. The Worker you are about to paste')
-    dep = os.path.join(PARTYPLAY_LOCAL, 'worker', 'DEPLOY-partyplay-api.js')
+    dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):
         src = io.open(dep, encoding='utf-8').read()
         stamp = re.search(r'Built ([^\n]+?)\s+fingerprint', src)
         good, msg = parses(re.sub(r'^export default', 'var _d =', src, flags=re.M))
         ok('deploy build parses', good, msg if not good else (stamp.group(1) if stamp else ''))
         ok('the licence library is inlined, not a marker', 'const PPLicence = (function' in src)
+
+        """AND IT MUST BE BUILT FROM THE SOURCE AS IT STANDS NOW.
+
+        Every check around this one reads the DEPLOY file, so a deploy file that
+        was never rebuilt passes all of them while the change you just made sits
+        only in the source. That is exactly what happened to the admin count in
+        /health: written into the source at 01:32, and the file Dean pastes was
+        still the build from the afternoon before, so the live Worker answered
+        without it and this tool reported the gap as a note about the DEPLOYED
+        Worker being old. It was not. The paste file was.
+
+        build-worker.py copies the source's own BUILD line into the build, so
+        the two lines agreeing is the same question as "was this built from
+        that", and it needs no rebuild to ask."""
+        stamp_line = lambda t: (re.search(r"^const BUILD = '[^']*';", t, re.M) or [''])[0] \
+            if re.search(r"^const BUILD = '[^']*';", t, re.M) else ''
+        srcf = os.path.join(PARTYPLAY_BACK, 'worker', 'SOURCE-do-not-paste-partyplay-api.js')
+        if os.path.isfile(srcf):
+            want = re.search(r"^const BUILD = '([^']*)';", io.open(srcf, encoding='utf-8').read(), re.M)
+            got = re.search(r"^const BUILD = '([^']*)';", src, re.M)
+            ok('the build is this source, not an older one',
+               bool(want and got) and want.group(1) == got.group(1),
+               got.group(1) if got else 'no stamp in the build',
+               why='the source says %s and the build says %s. Run '
+                   'partyplay-backend/tools/build-worker.py.'
+                   % (want.group(1) if want else '?', got.group(1) if got else '?'))
         # The file's own header lists the names of the secrets to set, with
         # "sk_live_..." as an example. Only a plausible VALUE counts.
         leak = re.search(r'(sk_live_|rk_live_|whsec_|re_)[A-Za-z0-9_\-]{20,}'
@@ -727,7 +766,7 @@ def public_key_cannot_reach_data():
     head('The public Supabase key must not reach anything')
     cfg = None
     for candidate in (os.path.join(ROOT, 'venueplay', 'app', 'trivia', 'screen.html'),
-                      os.path.join(PARTYPLAY_LOCAL, 'site', 'lib', 'pp-config.js')):
+                      os.path.join(PARTYPLAY_SITE, 'lib', 'pp-config.js')):
         if os.path.isfile(candidate):
             cfg = io.open(candidate, encoding='utf-8').read()
             break
