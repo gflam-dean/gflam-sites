@@ -356,6 +356,25 @@ def local_checks(which):
             ok(f, r.returncode == 0 and 'All good' in r.stdout,
                (r.stdout.strip().splitlines() or [''])[-1])
 
+    """AND EVERY LINK ON THOSE PAGES GOES SOMEWHERE.
+
+    The pages are checked. What is ON them was not, and the cold outreach is
+    about to send venue owners to them, where a dead link is the entire first
+    impression. check-links.py resolves our own links against the repo rather
+    than following them, because Pages answers a missing path with the homepage
+    and a 200, so following them would call every broken one healthy."""
+    lp = os.path.join(ROOT, 'tools', 'check-links.py')
+    if os.path.isfile(lp):
+        r = subprocess.run([sys.executable, lp,
+                            which if which in ('venueplay', 'partyplay') else 'both'],
+                           capture_output=True, text=True, cwd=ROOT)
+        out = [l for l in (r.stdout + r.stderr).strip().splitlines() if l.strip()]
+        summary = next((l.strip() for l in out if 'link(s) followed' in l), '')
+        broken = [l for l in out if 'BROKEN' in l]
+        ok('every link on our own pages goes somewhere', r.returncode == 0,
+           re.sub(r'\033\[[0-9;]*m', '', summary),
+           why='; '.join(re.sub(r'\033\[[0-9;]*m', '', b).strip() for b in broken[:3]))
+
     # The trivia pack suite used to be run by name here, because the loop above
     # only knew about the OTHER working copy and would never have found it. The
     # loop reads the repo now, so it picks the suite up like every other one and
@@ -680,12 +699,38 @@ def every_page_is_reachable(name, base, folder, skip=()):
             if rel in skip:
                 continue
             pages.append(rel)
+    """HTTP 200 PROVES NOTHING ON THESE SITES.
+
+    Cloudflare Pages serves the homepage, with a 200, for any path it does not
+    have. /does-not-exist-probe returns the same 20 KB of index.html a real typo
+    would. So this check, which asked for a 200 and a body over 300 bytes, would
+    have passed a page that was never deployed at all - which is the only thing
+    it was here to catch.
+
+    The fallback is recognisable, though: it IS the homepage. So fetch the
+    homepage once, and a page that comes back identical to it did not deploy.
+    index.html is excused, being the homepage on purpose."""
+    def same_page(x, y):
+        """Two responses of the SAME page are not byte-identical: Cloudflare
+        re-encodes every obfuscated email address with a fresh key on each
+        response, so the homepage differs from itself in about 115 characters.
+        Normalise those away and the comparison means what it says."""
+        n = lambda t: re.sub(r'email-protection#[0-9a-f]+', 'email-protection',
+                     re.sub(r'data-cfemail="[0-9a-f]+"', '', t or ''))
+        return bool(x) and bool(y) and n(x) == n(y)
+
+    _, home, _ = get(base + '/')
+    home_len = len(home or '')
     for rel in sorted(pages):
         url = base + '/' + rel
         status, body, _ = get(url)
         if status != 200 or len(body) < 300:
             bad.append('%s (HTTP %s)' % (rel, status))
-    ok('all %d page(s) serve' % len(pages), not bad, why='not served: ' + ', '.join(bad[:5]))
+        elif rel != 'index.html' and same_page(body, home):
+            bad.append('%s (the homepage came back, so this page is not deployed)' % rel)
+    ok('all %d page(s) serve, and none of them is the homepage in disguise' % len(pages),
+       not bad, '%d KB homepage to compare against' % (home_len // 1024),
+       why='not served: ' + ', '.join(bad[:5]))
 
 
 # Which source file each deployed Worker is pasted from, so a build stamp coming
