@@ -318,7 +318,12 @@
        linked to a venue never needs pairing, and once a join code exists the host is plainly
        already connected, so from either point on the only thing this screen should offer the
        room is the player join link. */
-    var setupDone = !!VENUE_SLUG || !!joinCode;
+    /* Once a host is talking to us they do not need telling how to pair, and until
+       the session opens this line was putting a SECOND six-character code on the
+       wall next to the player one. A punter who reads the pairing code out lands on
+       a channel with no game on it. Same fix as the musical screen; raffle and
+       members already had it. */
+    var setupDone = !!VENUE_SLUG || !!joinCode || !!state.hostSeen;
     $("hostLine").classList.toggle("hidden", setupDone);
     if(!setupDone) $("hostLineCode").textContent=CODE;
     $("tvJoinCode").textContent = shownCode();

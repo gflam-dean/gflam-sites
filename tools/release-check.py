@@ -504,6 +504,31 @@ def local_checks(which):
        why='no pid, so every rejoin mints and bills another player: ' +
            ', '.join(sorted(set(joiners))[:3]))
 
+    """AND NO SCREEN MAY SHOW A SECOND CODE.
+
+    Every game screen carries a setup line telling a host which code to type. It is
+    a DIFFERENT code from the player one, and a live musical bingo night had both on
+    the wall at once, because the line was only hidden once a session opened. A
+    punter who reads the pairing code out lands on a channel with no game on it.
+
+    The rule: whatever decides to hide that line must include the host being seen.
+    Checked by reading the decision itself, because the failure looks like nothing
+    at all until there are two codes in front of a room."""
+    unhidden = []
+    for game in ('trivia', 'musical', 'raffle', 'members'):
+        f = os.path.join(ROOT, 'venueplay', 'app', game, 'screen.html')
+        if not os.path.isfile(f):
+            continue
+        src = io.open(f, encoding='utf-8').read()
+        if 'hostLine' not in src and 'hostline' not in src:
+            continue
+        # The line that decides, whichever shape that screen uses.
+        decides = re.findall(r'(?:setupDone\s*=|hostLine"?\)?\.classList\.toggle\("hidden",)([^;\n]*)', src)
+        if not any('hostSeen' in d for d in decides):
+            unhidden.append('%s/screen.html' % game)
+    ok('no screen leaves a second code up once the host is connected', not unhidden,
+       why='the pairing code stays on the wall beside the player code on: ' + ', '.join(unhidden))
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
@@ -911,6 +936,33 @@ def venue_code(slug):
     return out
 
 
+def venue_codes_are_unique():
+    """ONE CODE, ONE VENUE.
+
+    A venue's join code is a hash of its slug, so two venues can land on the same
+    six characters, and the Worker's lookup used to keep whichever it read last:
+    every phone typing that code would have joined the wrong pub's game, and any
+    marketing opt-in behind it would have been written to the wrong venue's list.
+    The Worker now refuses an ambiguous code for both venues and counts the clashes.
+
+    This asks it. The count must be zero, and it matters before it is a problem,
+    because these codes go on printed signage."""
+    head('Every venue has a code of its own')
+    status, body, _ = get(VP_GAME + '/health')
+    try:
+        d = json.loads(body)
+    except Exception:
+        d = {}
+    if 'venue_code_clashes' not in d:
+        note('venue code clashes', 'the deployed game Worker predates this check')
+        return
+    n = d.get('venue_code_clashes')
+    ok('no two venues share a join code', n == 0,
+       '%s venue(s) clash' % n if n else 'checked against every venue',
+       why=str(d.get('venue_code_clash_detail'))[:160] +
+           '. Re-slug one of them, and do not print signage for either until it is fixed.')
+
+
 def founding_windows_are_open():
     """THE PAGE PROMISES A PRICE. THE WORKER DECIDES ONE. Do they agree?
 
@@ -1141,6 +1193,7 @@ def main():
             worker_health('VenuePlay billing', VP_API)
             cors_checks('VenuePlay', VP_GAME, '/play/live',
                         ['https://venueplay.com.au', 'https://www.venueplay.com.au'])
+            venue_codes_are_unique()
             founding_windows_are_open()
             no_session_left_open()
         if which in ('both', 'partyplay'):

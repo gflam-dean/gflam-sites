@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '29 Aug 2026, 01:08 · 0aafd4f5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Aug 2026, 09:38 · 12ea6eff';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -201,14 +201,26 @@ export default {
         const need = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SUPABASE_JWT_SECRET', 'IP_HASH_SALT'];
         const missing = need.filter((k) => !env[k]);
         const rl = !!env.RL;
+        /* Two venues whose slugs hash to the same six characters. Reported here
+           because a clash is invisible from everywhere else: both venues keep
+           working normally except that the shared code stops resolving, and the
+           codes are on printed signage, so somebody has to be told BEFORE the
+           second venue's table talkers go to the printer. */
+        let clashes = [];
+        try { await refreshVenueCodes(env); clashes = _vcDupes || []; } catch (e) { clashes = []; }
         return json({
           worker: 'venueplay-game',
           build: BUILD,
-          ok: !missing.length && rl,
+          ok: !missing.length && rl && !clashes.length,
           missing,
           rateLimiter: rl,
-          warning: rl ? undefined
-            : 'The RL KV namespace is not bound. Anti-abuse limiting and join dedup are in allow-mode, and player counts are what venues are billed on.'
+          venue_code_clashes: clashes.length,
+          venue_code_clash_detail: clashes.length ? clashes.slice(0, 5) : undefined,
+          warning: clashes.length
+            ? ('Two venues share a join code (' + clashes.map(function (c) { return c.slugs.join(' / '); }).join('; ') +
+               '). That code is refused for both until one is re-slugged. Do not print signage for either.')
+            : (rl ? undefined
+                  : 'The RL KV namespace is not bound. Anti-abuse limiting and join dedup are in allow-mode, and player counts are what venues are billed on.')
         }, missing.length ? 503 : 200);
       }
 
@@ -668,17 +680,49 @@ function fnvVenueCode(slug) {
   for (let j = 0; j < 6; j++) { x = (Math.imul(x, 1103515245) + 12345) >>> 0; out += A[x % A.length]; }
   return out;
 }
+/* EVERY VENUE'S CODE HAS TO BE ITS OWN.
+
+   The code is a hash of the slug, so two different venues CAN land on the same six
+   characters. This map used to be built with a plain assignment, which means the
+   second venue quietly overwrote the first and every phone typing that code went to
+   the wrong pub: the wrong game, and a marketing opt-in written against the wrong
+   venue's list. Nothing anywhere would have said so.
+
+   It is not a hypothetical for much longer. Six venues is one chance in about
+   thirty thousand; five thousand venues is better than even money. Signage carries
+   these codes, so the answer cannot be to change one after the fact.
+
+   So a clash is recorded rather than resolved. An ambiguous code stops working for
+   BOTH venues, which is a phone saying "check the code" instead of a room joining
+   somebody else's night, and the count is reported by /health so the release check
+   can watch it and Dean gets told before a sign is printed. */
+let _vcDupes = [];
 async function venueByCode(env, code) {
   code = String(code || '').trim().toUpperCase();
   if (!/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/.test(code)) return null;
+  await refreshVenueCodes(env);
+  const hit = _vcMap[code];
+  return (hit && hit !== AMBIGUOUS) ? hit : null;
+}
+const AMBIGUOUS = '__two_venues__';
+async function refreshVenueCodes(env) {
   const now = Date.now();
-  if (!_vcMap || now - _vcAt > 60000) {
-    const rows = await sbGet(env, 'vp_venues', 'select=id,slug&limit=5000');
-    const map = {};
-    for (const v of rows) { if (v && v.slug) map[fnvVenueCode(v.slug)] = v.id; }
-    _vcMap = map; _vcAt = now;
+  if (_vcMap && now - _vcAt <= 60000) return;
+  const rows = await sbGet(env, 'vp_venues', 'select=id,slug&limit=5000');
+  const map = {}, seen = {}, dupes = [];
+  for (const v of rows) {
+    if (!v || !v.slug) continue;
+    const c = fnvVenueCode(v.slug);
+    if (map[c] && seen[c] !== v.slug) {
+      map[c] = AMBIGUOUS;
+      dupes.push({ code: c, slugs: [seen[c], v.slug] });
+      console.log('[venue-code] CLASH on ' + c + ': ' + seen[c] + ' and ' + v.slug +
+                  '. Both are refused until one venue is re-slugged.');
+      continue;
+    }
+    map[c] = v.id; seen[c] = v.slug;
   }
-  return _vcMap[code] || null;
+  _vcMap = map; _vcAt = now; _vcDupes = dupes;
 }
 
 /* Opt-in capture for a broadcast game. Anon; best-effort. Stores ONLY the fields the venue's
