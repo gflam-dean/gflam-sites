@@ -468,6 +468,42 @@ def local_checks(which):
                              % (b, day, said, said, yr, last)); break
     ok('every founding page agrees with its own code', not wrong, why='; '.join(wrong[:3]))
 
+    """EVERY PAGE THAT JOINS A PLAYER MUST SAY WHICH DEVICE IT IS.
+
+    The Worker de-duplicates a re-join on the `pid` the phone sends. A page that
+    posts /join without one mints a NEW metered player row every time, so a
+    refresh, or a phone hopped from the venue link into a game room, is billed as
+    another person. /play did that for the whole of its life, and the comment
+    above the call said the opposite, which is why nothing caught it: the claim
+    was checked by eye and believed.
+
+    This is a money check, not a tidiness one."""
+    joiners = []
+    for f in files:
+        if not f.endswith('.html'):
+            continue
+        # VenuePlay only, deliberately. PartyPlay's /join is not metered and is not
+        # per head: a party is one flat price, and its phone keeps its token in
+        # storage and reuses it, so a reload does not re-join. The most a second
+        # trip through its join form costs is a guest called "Sam 2". Worth tidying
+        # one day; it is not this check's fault to raise.
+        if '%svenueplay%s' % (os.sep, os.sep) not in f:
+            continue
+        src = io.open(f, encoding='utf-8').read()
+        # Every POST to /join in the file, with the object literal that follows it.
+        for m in re.finditer(r'["\']/join["\']\s*,\s*(\{[^}]*\}|[A-Za-z_$][\w$]*)', src):
+            arg = m.group(1)
+            if arg.startswith('{'):
+                if 'pid' not in arg:
+                    joiners.append(short(f))
+            else:
+                # A variable: it has to be built with a pid somewhere in the file.
+                if not re.search(r'\b%s\s*=\s*\{[^}]*pid' % re.escape(arg), src):
+                    joiners.append(short(f))
+    ok('every page that joins a player sends its device id', not joiners,
+       why='no pid, so every rejoin mints and bills another player: ' +
+           ', '.join(sorted(set(joiners))[:3]))
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
@@ -1042,6 +1078,19 @@ def summary(which, ran_live):
     5. Play a musical bingo clip and confirm the room can hear it.
     6. On PartyPlay: charades shows the word on ONE phone and nothing on the TV.
     7. Watch the browser console on every screen. It should be silent.
+
+  And the six that a musical bingo night found on 31 Aug, none of which any
+  tool here can see. Check them EVERY time a game is touched:
+
+    8.  ONE code on the wall, and it is the one the console shows.
+    9.  Join, refresh, and join again from the table link: the player count
+        goes up by ONE, not by three. This is billed per head.
+   10.  Album art stays up while a song plays, including when somebody joins.
+   11.  The card does not flash when a song is played.
+   12.  Open a lobby right after ending a game and leave it: it stays a lobby
+        and does not drop to the ads.
+   13.  Turn the room volume up past 100% and confirm the TV gets louder than
+        the device on its own can go, without distorting.
 
   If the release only touched copy, a document or an email template, the list
   above can be skipped. If it touched a game, it cannot.""")
