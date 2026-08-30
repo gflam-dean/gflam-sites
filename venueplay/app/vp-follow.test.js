@@ -5,6 +5,28 @@ function ok(c,m){ if(c) pass++; else { fail++; notes.push("  FAIL  "+m); } }
 
 /* A fake page: a clock we control, a fetch that answers what we say, and a
    location that records where it was sent instead of going there. */
+/* FIND THE FILE, FROM WHEREVER THIS IS RUN.
+
+   This suite pointed at /tmp/vp-work, a scratch copy from the day it was written.
+   That folder is long gone, so the test could only ever fail, and nothing ran it:
+   the release check named its VenuePlay suites one by one and this was not on the
+   list. It swept the folder instead, and found this on the first run.
+
+   A test that reads a path only one machine ever had is a test that is not being
+   run, whatever the file says. */
+function readSource(){
+  var tries = [
+    "venueplay/app/vp-follow.js",
+    "vp-follow.js",
+    "../vp-follow.js",
+    "/Users/dean.tindale/gflam-sites-current/venueplay/app/vp-follow.js"
+  ];
+  for (var i = 0; i < tries.length; i++){
+    try { var t = readFile(tries[i]); if (t && t.length > 200) return t; } catch(e){}
+  }
+  throw new Error("could not find vp-follow.js from this working directory");
+}
+
 function harness(reply){
   var g = { went:null, calls:0, timers:[] };
   g.window = g;
@@ -19,7 +41,7 @@ function harness(reply){
   g.clearTimeout = function(){};
   g.encodeURIComponent = encodeURIComponent;
   (new Function("globalThis","window","location","fetch","setTimeout","setInterval","clearTimeout",
-                readFile("/tmp/vp-work/venueplay/app/vp-follow.js")))
+                readSource()))
     (g, g, g.location, g.fetch, g.setTimeout, g.setInterval, g.clearTimeout);
   return g;
 }

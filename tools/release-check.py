@@ -380,12 +380,28 @@ def local_checks(which):
     # loop reads the repo now, so it picks the suite up like every other one and
     # running it again by name only printed it twice.
 
+    """VenuePlay's own suites, wherever they sit.
+
+    one-game.test.js used to be named here on its own, so the musical draw suite
+    written after the live night would have sat in the repo passing nothing. Sweep
+    the game folders instead: a suite that is added is a suite that runs.
+
+    They are run from ROOT because each one reads the page or the library it is
+    about, rather than a copy of it, and resolves those paths from here."""
+    vp_suites = []
     gt = os.path.join(ROOT, 'venueplay-backend', 'worker', 'one-game.test.js')
     if os.path.isfile(gt):
-        r = subprocess.run([JSC, gt], capture_output=True, text=True)
+        vp_suites.append(gt)
+    appdir = os.path.join(ROOT, 'venueplay', 'app')
+    for d, _, fs in os.walk(appdir):
+        for f in sorted(fs):
+            if f.endswith('.test.js'):
+                vp_suites.append(os.path.join(d, f))
+    for t in vp_suites:
+        r = subprocess.run([JSC, t], capture_output=True, text=True, cwd=ROOT)
         out = (r.stdout + r.stderr).strip().splitlines()
         line = out[-1] if out else ''
-        ok('one-game.test.js', 'ALL' in line and 'PASSED' in line, line)
+        ok(os.path.basename(t), 'ALL' in line and 'PASSED' in line, line)
 
     head('D. A shared script is loaded before it is used')
     """A page that uses PPConfig above the tag that loads it throws a
