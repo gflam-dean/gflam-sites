@@ -438,6 +438,19 @@ def local_checks(which):
             wrong.append('%s has %d different codes' % (b, len(codes)))
             continue
         mon3, yr = codes.pop()
+        # AND IT MUST BE THIS STATE'S CODE. The month check would not blink at
+        # tas.html carrying VIC-OCT-2026, and the Worker prices founding off the
+        # POSTCODE's state, so every Tasmanian venue would see $2.50 on the page
+        # and be charged $3.00 with nothing on screen to explain it. These pages
+        # are made by cloning each other, which is exactly how that happens.
+        # ACT and NSW are deliberately one market: the Worker accepts an ACT
+        # postcode on an NSW code and says so where it does it.
+        pre = set(re.findall(r'([A-Z]{2,3})-[A-Z]{3}-20\d\d', src))
+        want = b[:-5].upper()
+        allowed = {want} | ({'NSW'} if want == 'ACT' else set())
+        if not pre or not pre <= allowed:
+            wrong.append('%s carries %s' % (b, ', '.join(sorted(pre)) or 'no code'))
+            continue
         num = ABBR.get(mon3)
         if not num:
             wrong.append('%s: %s is not a month' % (b, mon3))
@@ -862,6 +875,47 @@ def venue_code(slug):
     return out
 
 
+def founding_windows_are_open():
+    """THE PAGE PROMISES A PRICE. THE WORKER DECIDES ONE. Do they agree?
+
+    A state page is static HTML with a founding code baked into it. The Worker
+    grants the founding rate only if that code is in its FOUNDING_CODES
+    environment variable. Nothing has ever compared the two, and when they
+    disagree the venue reads $2.50 on the page, is charged $3.00 at the card,
+    and there is nothing on screen to explain it. The Worker's own comments
+    describe that happening on /qld and /vic.
+
+    /founding?code= is public and answers yes or no, so this can ask for every
+    page in the repo. A window Dean has deliberately retired should have had its
+    page taken down or its code rolled to the new month, so a "no" here is worth
+    a look either way.
+    """
+    head('Every founding page can still get the price it promises')
+    root = os.path.join(ROOT, 'venueplay')
+    pages = [f for f in sorted(os.listdir(root))
+             if f in ('nsw.html','qld.html','vic.html','sa.html','wa.html',
+                      'nt.html','tas.html','act.html')] if os.path.isdir(root) else []
+    if not pages:
+        return
+    shut = []
+    for b in pages:
+        src = io.open(os.path.join(root, b), encoding='utf-8').read()
+        codes = sorted(set(re.findall(r'[A-Z]{2,3}-[A-Z]{3}-20\d\d', src)))
+        if not codes:
+            continue
+        code = codes[0]
+        status, body, _ = get(VP_API + '/founding?code=' + code)
+        try:
+            open_ = json.loads(body).get('open') is True
+        except Exception:
+            open_ = False
+        if not open_:
+            shut.append('%s (%s)' % (b, code))
+    ok('all %d founding page(s) have a live code' % len(pages), not shut,
+       why='the Worker will charge STANDARD on: ' + ', '.join(shut[:4]) +
+           '. Either add the code to FOUNDING_CODES or take the page down.')
+
+
 def no_session_left_open():
     """A session nobody closed is a billing problem, not just untidy.
 
@@ -1038,6 +1092,7 @@ def main():
             worker_health('VenuePlay billing', VP_API)
             cors_checks('VenuePlay', VP_GAME, '/play/live',
                         ['https://venueplay.com.au', 'https://www.venueplay.com.au'])
+            founding_windows_are_open()
             no_session_left_open()
         if which in ('both', 'partyplay'):
             pages_live('PartyPlay', PP, PP_PAGES)
