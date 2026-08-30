@@ -228,6 +228,10 @@
             <input type="text" id="plSearch" placeholder="Search a theme&hellip; e.g. 80s, rock, aussie" autocomplete="off" style="margin-bottom:10px">
             <div id="plGrid" class="plgrid"><div class="plnone">Loading songs&hellip;</div></div>
             <select id="playlistSel" style="display:none"></select>
+            <label class="optin" for="hitsChk" style="display:flex;align-items:center;gap:9px;margin-top:10px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="hitsChk" checked style="width:18px;height:18px;flex:none;accent-color:var(--pink)">
+              <span>Well-known songs only<small style="display:block;color:var(--faint);font-size:11.5px">On, the night leans hard on the songs everyone knows. Off, every song in the playlist is equally likely, deep cuts and all.</small></span>
+            </label>
           </div>
           <div class="field">
             <label>Winning pattern</label>
@@ -270,6 +274,13 @@
             <div class="audioctl">
               <button class="btn ghost" id="playPauseBtn" disabled>Pause</button>
               <button class="btn pink" id="playNextBtn">Play song</button>
+            </div>
+            <div class="volrow" style="margin-top:10px">
+              <label for="volRange" style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
+                <span>Room volume</span><span id="volVal">140%</span>
+              </label>
+              <input type="range" id="volRange" min="100" max="400" step="10" value="140" style="width:100%;accent-color:var(--pink)">
+              <div style="font-size:11px;color:var(--faint);margin-top:2px">Above 100% the screen amplifies the clip past what the device alone can do. Turn the TV or amp up first, then use this for the last bit.</div>
             </div>
             <button class="btn ghost" id="monitorBtn" style="width:100%;margin-top:8px;font-size:13px">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
             <div class="clipwarn hidden" id="clipWarn">No preview clip for this one. Play it yourself through the PA, then tap Mark called.</div>
@@ -377,10 +388,45 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // mark, which is exactly what happened on the first test night (40 songs, nobody marked one).
   // At 60 it is 40%, so a line lands in the teens and a full house inside a normal night.
   var GAME_SONGS=60;
+  /* WHY A NIGHT FULL OF SONGS NOBODY KNEW.
+
+     Every playlist in the library is ordered by how well known the track is: it was
+     built by taking each artist's most popular songs first. The 2000s list opens with
+     Yellow, Mr. Brightside and Lose Yourself, and by two thirds of the way down it is
+     album tracks, guest features and, in the 80s list, something called 50 Minute
+     Womb Sounds.
+
+     This drew SIXTY songs uniformly at random from all five hundred, so about three
+     quarters of a night came from the part of the list nobody has ever heard. The
+     order was right there and was being thrown away. Musical bingo does not work if
+     the room cannot name the song: there is nothing to sing along to and nothing to
+     mark on the card.
+
+     So the draw stays on the well-known end by default, and a host who wants the
+     obscure ones can still have the whole list. The pool is always at least three
+     times the number of songs a game needs, so no night is ever the same sixty. */
+  /* Weighted by position, not sliced at it. A hard cut at the top third still let a
+     third of the night come from the bottom of that third, and it made every night
+     draw from the same songs. Weighting keeps the famous end far more likely while
+     leaving the whole list reachable, so two nights running are not the same sixty.
+     A song at position 0 is about ten times as likely as one at position 400. */
+  var HITS_ALPHA=45;
   function drawGameSet(list){
     if(list.length<=GAME_SONGS) return list;
-    var pool=list.slice(), out=[];
-    for(var i=0;i<GAME_SONGS;i++){ var k=cryptoInt(pool.length); out.push(pool[k]); pool.splice(k,1); }
+    var idx=[], w=[], i, total=0;
+    for(i=0;i<list.length;i++){
+      idx.push(i);
+      var wi = G.hitsOnly ? 1/(1+i/HITS_ALPHA) : 1;
+      w.push(wi); total+=wi;
+    }
+    var out=[];
+    for(var n=0; n<GAME_SONGS && idx.length; n++){
+      // cryptoInt is integer-only, so scale the running total into its range.
+      var r=(cryptoInt(1000000)/1000000)*total, acc=0, hit=idx.length-1;
+      for(var k=0;k<idx.length;k++){ acc+=w[idx[k]]; if(acc>=r){ hit=k; break; } }
+      var pick=idx[hit];
+      out.push(list[pick]); total-=w[pick]; idx.splice(hit,1);
+    }
     return out;
   }
   function loadLibrary(){
@@ -408,6 +454,27 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     });
   }
   // song objects for a playlist id ("all" = every song), de-duplicated, order preserved
+  /* THE CODE THE ROOM IS LOOKING AT.
+
+     The TV shows the venue's PERMANENT code, hashed from the slug, because that is
+     what is printed on the table talkers and it never changes. This console showed
+     G.joinCode, the random code the Worker mints for tonight's session. Both are six
+     characters and both look exactly like "the code", so a live test had two of them
+     in the room at once and people were reading out whichever one they could see.
+
+     They are not interchangeable to a punter. The permanent one is on the signs and
+     goes through the venue lookup; the session one only works if it is typed exactly.
+     So the console now says what the wall says. The session code is still what the
+     screen and the phones use underneath, and it still travels in t:"session"; it is
+     just not a second thing to read out loud.
+
+     A console paired by scanning the screen's QR has no slug, and there the session
+     code IS what the screen is showing, so it stays. */
+  function roomCode(){
+    if(G.slug && window.VP && VP.venueCode) return VP.venueCode(G.slug);
+    return G.joinCode || "------";
+  }
+
   function songsForPlaylist(plId){
     var ids, out=[], seen={};
     if(plId==="all"){ for(var i=0;i<LIB.songs.length;i++){ out.push(LIB.songs[i]); } return out; }
@@ -484,9 +551,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // no longer generates or broadcasts cards. It DOES keep the played set (by title) to drive
   // the song list, the "now playing" panel and the cosmetic daub broadcast.
   var G={
-    venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
+    venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"", slug:"",
     status:"setup", pattern:"one", prize:"the prize", autoDaub:true,
-    playlistId:"", playlistName:"All songs",
+    playlistId:"", playlistName:"All songs", hitsOnly:true,
     songs:[],              // song objects in play this game (each gains song_id from the Worker at start)
     byTitle:{},            // normTitle -> song object (with song_id + previewUrl), for playSong/claim render
     byId:{},               // song_id -> song object; the identity that actually distinguishes two songs
@@ -627,12 +694,48 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
 
   // ---- broadcasts (instant UX only; the DB is the source of truth) ----
   function sendState(){
-    bcast({ t:"state", pattern:G.pattern, prize:G.prize, played:playedArray(), played_ids:playedIdArray(), active:(G.status==="running"), autoDaub:G.autoDaub, playerCount:playerCount(), game_id:G.gameId });
+    /* `lobby` is not cosmetic. The screen winds itself back to the venue's ads 18
+       seconds after a night ends, and "ended" and "waiting in an open lobby" looked
+       identical from there: both arrive as idle followed by state. So opening a new
+       lobby within 18 seconds of the last game ending had the wall drop to
+       advertising with a room full of people scanning the QR. Saying which one this
+       is costs one field. */
+    bcast({ t:"state", pattern:G.pattern, prize:G.prize, played:playedArray(), played_ids:playedIdArray(), active:(G.status==="running"), lobby:(G.status==="lobby"), autoDaub:G.autoDaub, playerCount:playerCount(), game_id:G.gameId });
   }
   function sendPlayers(){ bcast({ t:"players", count:playerCount() }); }
 
   // ================= AUDIO ENGINE (this device is plugged into the PA) =================
   var audio=$("clip"), prefetchEl=null;
+
+  /* ROOM VOLUME. An <audio> element cannot go above the file's own level, so a laptop
+     on HDMI tops out at whatever the track was mastered at however far the TV is
+     turned up. Both the screen and this console now run the clip through a gain
+     stage and a limiter, so there is real headroom above unity. The screen is
+     normally the venue's sound source, so the slider broadcasts; the graph here is
+     for a console that has been put through the PA itself.
+     If the graph cannot be built, playback is exactly what it always was. */
+  var _hac=null, _hsrc=null, _hgain=null, _hlim=null, _hboost=1.4, _hdead=false;
+  function hostBuildBoost(){
+    if(_hsrc || _hdead) return;
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC){ _hdead=true; return; }
+      if(!_hac) _hac=new AC();
+      _hsrc=_hac.createMediaElementSource(audio);
+      _hgain=_hac.createGain(); _hgain.gain.value=_hboost;
+      _hlim=_hac.createDynamicsCompressor();
+      _hlim.threshold.value=-6; _hlim.knee.value=0; _hlim.ratio.value=20;
+      _hlim.attack.value=0.003; _hlim.release.value=0.25;
+      _hsrc.connect(_hgain); _hgain.connect(_hlim); _hlim.connect(_hac.destination);
+    }catch(e){ _hdead=true; _hsrc=null; }
+  }
+  function setRoomVolume(pct){
+    var v=Math.max(100, Math.min(400, Number(pct)||140));
+    _hboost=v/100;
+    if(_hgain){ try{ _hgain.gain.value=_hboost; }catch(e){} }
+    var lbl=$("volVal"); if(lbl) lbl.textContent=v+"%";
+    try{ localStorage.setItem("vpMusicVolume", String(v)); }catch(e){}
+    bcast({ t:"volume", level:v/100 });   // the screen is usually the one actually making the noise
+  }
   function fmtTime(s){ s=Math.max(0,Math.floor(s||0)); var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
   function resetClipUI(){ $("clipFill").style.width="0%"; $("clipElapsed").textContent="0:00"; $("clipTotal").textContent="0:30"; }
   function updateClipUI(){
@@ -682,6 +785,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
          that can make a sound, and staying muted means the song plays to nobody.
          That is what happens when a host tests on their own, and when a venue's
          TV never came up. So: be the sound system, and say so. */
+      audio.crossOrigin="anonymous";   // before the src, or the boost graph would get silence
       audio.src=song.previewUrl; audio.volume=1.0;
       audio.muted = !(G.hostMonitor || soundIsOnlyHere());
       noteIfAlone();
@@ -756,7 +860,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
       else _ob.style.display="none";
     }
-    $("setupCode").textContent=G.joinCode||"------";
+    $("setupCode").textContent=roomCode();
     $("playerCount").textContent=playerCount();
     if(!live){
       $("startBtn").textContent = lobby ? "Start game" : "Open lobby";
@@ -865,7 +969,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       G.joinCode=r.join_code;
       openGameChannel(G.joinCode);                                          // players' channel
       send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });  // hand the real code to the screen
-      $("setupCode").textContent=G.joinCode;
+      $("setupCode").textContent=roomCode();
       return r;
     });
   }
@@ -1167,6 +1271,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   $("connectBtn").addEventListener("click", tryConnect);
   $("playlistSel").addEventListener("change", function(){ G.playlistId=this.value; });
+  (function bindHits(){
+    var c=$("hitsChk"); if(!c) return;
+    try{ var saved=localStorage.getItem("vpMusicHitsOnly"); if(saved!==null) c.checked=(saved==="1"); }catch(e){}
+    G.hitsOnly=c.checked;
+    c.addEventListener("change", function(){
+      G.hitsOnly=c.checked;
+      try{ localStorage.setItem("vpMusicHitsOnly", c.checked?"1":"0"); }catch(e){}
+    });
+  })();
   if($("plSearch")) $("plSearch").addEventListener("input", function(){ renderPlCards(this.value); });
   // auto-daub is a per-player choice (Easy mode on the phone), not a host setting
   /* Musical bingo is bingo to every regulator, but the line they draw is paid entry, not prize
@@ -1208,6 +1321,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     hostError("No screen is connected, so the music is coming out of this device. "+
               "Put it through the PA, or open the venue screen and it will take over.");
   }
+  (function bindVolume(){
+    var r=$("volRange"); if(!r) return;
+    var saved=140; try{ saved=parseInt(localStorage.getItem("vpMusicVolume")||"140",10)||140; }catch(e){}
+    r.value=String(saved); setRoomVolume(saved);
+    r.addEventListener("input", function(){ setRoomVolume(r.value); });
+    // The graph can only be built once audio is actually going, so do it on the first play.
+    audio.addEventListener("playing", function(){
+      if(_hac && _hac.state==="suspended"){ try{ _hac.resume(); }catch(e){} }
+      hostBuildBoost();
+    });
+  })();
+
   $("monitorBtn").addEventListener("click", function(){
     G.hostMonitor=!G.hostMonitor;
     audio.muted = !(G.hostMonitor || soundIsOnlyHere());
@@ -1257,6 +1382,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(!ctx.authed){ $("statusText").textContent="Not signed in"; showSignIn("You need your venue host login to start a live game."); return; }
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
+      G.slug=(ctx.venue && ctx.venue.slug) || "";   // so the console can show the code the ROOM is shown
       // Tell vp-session when a game is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open
       // so signing back in restores it instead of burning the once-a-week musical slot.

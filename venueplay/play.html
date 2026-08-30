@@ -937,8 +937,10 @@
      and /join only writes display_name when a name is actually present. So the
      row stayed nameless for the whole night and every screen that reads it (the
      trivia leaderboard, the winner card) fell back to "Player".
-     Re-posting /join with the name patches the same row: it is matched on
-     device_id, so this neither mints a second player nor bills the venue twice. */
+     Re-posting /join with the name patches the same row: it is matched on the pid
+     this phone sends, so this neither mints a second player nor bills the venue
+     twice. It DID both, for as long as this call left the pid out, and the comment
+     here said otherwise the whole time. */
   var _namePushed="";
   function pushNameToServer(){
     if(!P.name || _namePushed===P.name) return;
@@ -948,7 +950,7 @@
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(d){
         if(!d || !d.live || !d.join_code) return;
-        return playerPost("/join", { code:d.join_code, name:P.name })
+        return playerPost("/join", { code:d.join_code, name:P.name, pid:deviceId() })
           .then(function(j){
             if(j && j.token){
               P.token=j.token;                                  // the patch mints a fresh token
@@ -1196,13 +1198,40 @@
      because the code behind it exists only while the game runs. The punter sees none of this.
      Entirely best-effort. No session, no Worker, no token: the night runs on the broadcast channel
      exactly as it always has, and a capture without a token is stored but marked unverified. */
+  /* THE SAME PHONE MUST BE THE SAME PERSON, on every page of the night.
+
+     The Worker dedupes a re-join on the `pid` it is sent, and neither call in this
+     file sent one, so every reload minted ANOTHER metered player row. A phone that
+     scanned the table sign and was then hopped to the musical bingo room counted as
+     two people, and the room's rejoin after a wifi drop counted as a third. The
+     comment on pushNameToServer said this was matched on device_id and it was not:
+     it could not be, because nothing here had ever told the server which device it
+     was. The venue was billed for the difference.
+
+     One key, "vpDeviceId", the same one /app/musical/play and /app/trivia/play use,
+     so the identity survives the hop between them. */
+  function deviceId(){
+    var K="vpDeviceId", v="";
+    try{ v=localStorage.getItem(K)||""; }catch(e){}
+    if(!/^[A-Za-z0-9_-]{6,64}$/.test(v)){
+      v=randId()+randId();
+      try{ localStorage.setItem(K, v); }catch(e){}
+    }
+    return v;
+  }
+  function savedToken(code){ try{ return localStorage.getItem("vp-token-"+code)||""; }catch(e){ return ""; } }
+
   function claimIdentity(code){
     if(P.token) return;
+    // A token we already hold is this phone's identity for the night. Reusing it is
+    // what stops a refresh looking like a new arrival.
+    var had=savedToken(code);
+    if(had){ P.token=had; if(P.capture) saveCapture(); return; }
     fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(d){
         if(!d || !d.live || !d.join_code || P.token) return;
-        return playerPost("/join", { code: d.join_code, name: loadName(code) || P.name || "" })
+        return playerPost("/join", { code: d.join_code, name: loadName(code) || P.name || "", pid: deviceId() })
           .then(function(j){
             if(j && j.token){
               P.token = j.token;

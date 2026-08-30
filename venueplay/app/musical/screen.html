@@ -262,9 +262,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
        linked to a venue never needs pairing, and once a join code exists the host is plainly
        already connected, so from either point on the only thing this screen should offer the
        room is the player join link. */
-    var setupDone = !!VENUE_SLUG || !!joinCode;
+    /* AND HIDE IT THE MOMENT A HOST IS THERE. A screen paired by QR has no slug and
+       no join code until the session opens, so for that whole window the wall showed
+       the PAIRING code beside the player code box: two six-character codes at once,
+       one of which sends a punter to a channel with no game on it. A host who is
+       already talking to us does not need to be told how to pair. */
+    var setupDone = !!VENUE_SLUG || !!joinCode || !!state.hostSeen;
     var hl=document.querySelector(".hostline");
     if(hl) hl.classList.toggle("hidden", setupDone);
+    // Labelled, for the one case it is still shown: nobody should ever read this to the room.
     $("hostLineCode").textContent = CODE;
     $("tvJoinCode").textContent = shownCode();
     $("lobbyPlaying").textContent=state.playerCount;
@@ -286,6 +292,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }
   }
   function renderRun(){ renderMeta(); renderBoard(); }
+  /* What is actually on the wall right now, so a re-statement of the same song can be
+     told apart from a new one. */
+  var _shownTitle="";
   function setArt(url){
     var img=$("tvNowArt");
     if(url){ img.src=url; img.classList.remove("hidden"); }
@@ -297,6 +306,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     $("tvNowEye").textContent="Get ready";
     $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
     setArt("");
+    _shownTitle="";
     $("tvNowTitle").textContent="Ready to play"; $("tvNowArtist").textContent="First song coming up";
     renderRun();
   }
@@ -310,6 +320,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
       setArt(artwork);
       $("tvNowTitle").textContent=title||"Now playing"; $("tvNowArtist").textContent=artist||"";
+      _shownTitle=title||"";
       renderBoard();
     }, 850);
   }
@@ -466,12 +477,61 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     try{ tvSend({ t:"tv_audio_blocked" }); }catch(e){}
   }
   function audioOk(){ _audioWarned=false; var w=document.getElementById("audioWarn"); if(w) w.remove(); }
+  /* ============ LOUDER THAN THE LAPTOP CAN GO ============================
+
+     An <audio> element's volume is a fraction of the source, so 1.0 IS the file,
+     and the loudest a laptop on HDMI can make the room is whatever that file was
+     mastered at. In a live test the music would not go past the top of the
+     laptop's own volume, which for a pub full of people is not loud enough to
+     sing along to.
+
+     So the clip goes through Web Audio instead: a gain stage that can go ABOVE
+     unity, into a compressor used as a limiter, so the extra gain lands as
+     loudness rather than as clipping. Roughly what a PA's own limiter does.
+
+     Two things make this safe to ship:
+
+       1. It needs CORS. A cross-origin media element without it feeds SILENCE
+          into the graph rather than erroring. Apple's preview host answers
+          access-control-allow-origin: *, so the previews qualify, but a future
+          source that does not must never take the music down with it: if the
+          graph cannot be built, the element plays exactly as it always did,
+          straight to the speakers, un-boosted.
+
+       2. The graph is built once, after a play has actually started, so it never
+          interferes with the autoplay unlock a kiosk screen has to satisfy. */
+  var _ac2=null, _srcNode=null, _boostNode=null, _limiter=null, _boost=2.4, _graphDead=false;
+  function buildBoost(){
+    if(_srcNode || _graphDead) return;
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC){ _graphDead=true; return; }
+      if(!_ac2) _ac2=new AC();
+      _srcNode=_ac2.createMediaElementSource(clipAudio);
+      _boostNode=_ac2.createGain(); _boostNode.gain.value=_boost;
+      _limiter=_ac2.createDynamicsCompressor();
+      // A limiter, not a squash: leave everything under the ceiling alone, catch the peaks.
+      _limiter.threshold.value=-6; _limiter.knee.value=0; _limiter.ratio.value=20;
+      _limiter.attack.value=0.003; _limiter.release.value=0.25;
+      _srcNode.connect(_boostNode); _boostNode.connect(_limiter); _limiter.connect(_ac2.destination);
+    }catch(e){ _graphDead=true; _srcNode=null; }
+  }
+  function setBoost(x){
+    var v=Number(x); if(!isFinite(v)) return;
+    _boost=Math.max(1, Math.min(4, v));
+    if(_boostNode){ try{ _boostNode.gain.value=_boost; }catch(e){} }
+  }
   function playClip(url){
     if(!url) return;
     try{
+      clipAudio.crossOrigin="anonymous";   // must be set before load, or the graph gets silence
       clipAudio.src=url; clipAudio.currentTime=0; clipAudio.volume=1.0;
       var pr=clipAudio.play();
-      if(pr&&pr.then) pr.then(audioOk).catch(audioBlocked);
+      if(pr&&pr.then) pr.then(function(){
+        audioOk();
+        if(_ac2 && _ac2.state==="suspended"){ try{ _ac2.resume(); }catch(e){} }
+        buildBoost();
+      }).catch(audioBlocked);
+      else buildBoost();
     }catch(e){ audioBlocked(); }
   }
   function stopClip(){ try{ clipAudio.pause(); clipAudio.removeAttribute("src"); clipAudio.load(); }catch(e){} }
@@ -491,6 +551,11 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(m.t==="idle"){ stopClip(); state.phase="lobby"; stopCelebrate(); state.winner=null; show("tvLobby"); renderLobby(); scheduleBackToAds(); return; }
     if(m.t==="state"){
       state.hostSeen=true;
+      /* An OPEN LOBBY is not an ended night. Both look like idle-then-state from here,
+         which is why "state" sits in the keep list, and the cost of that was a lobby
+         being yanked to the ads 18 seconds after the host opened it. A host sitting in
+         a lobby, or a room with players already in it, is a night still going. */
+      if(m.lobby || (typeof m.playerCount==="number" && m.playerCount>0)) cancelBackToAds();
       /* A routine state refresh must NOT wipe a claim or a winner off the wall. The host resends
          state whenever any phone re-announces, and phones re-announce whenever they wake. On a
          progressive prize the game stays "running" while the host types the next prize, so one
@@ -508,8 +573,22 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
         if(state.played.length>0){
           var t=state.played[state.played.length-1];
           $("tvNowEye").textContent="Now playing"; $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
-          setArt("");
-          $("tvNowTitle").textContent=t; $("tvNowArtist").textContent="";
+          /* THE COVER ART USED TO VANISH HERE, and this is the line that did it.
+
+             A state refresh carries the song TITLES played, not the artwork, so it
+             blanked the art and rewrote the title with the plain text one. The host
+             sends state whenever any phone announces itself, and phones announce on
+             every join, rejoin and wake, so in a busy room the art disappeared over
+             and over while the same song was still playing.
+
+             A refresh is a re-statement of what is already on the wall. It has no
+             new artwork to give, so it leaves the artwork alone, and it only writes
+             the title if the song has actually changed. */
+          if(t !== _shownTitle){
+            setArt("");
+            $("tvNowTitle").textContent=t; $("tvNowArtist").textContent="";
+            _shownTitle=t;
+          }
           renderRun();
         } else { showReady(); }
       } else {
@@ -533,6 +612,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       // minutes later and over the top of the host talking.
       if(!m.replay) playClip(m.previewUrl);   // the venue hears the clip from this screen
     }
+    else if(m.t==="volume"){ setBoost(m.level); }   // the host turning the room up
     else if(m.t==="clipctl"){   // host pause/resume follows through to the venue sound
       if(m.action==="pause"){ try{ clipAudio.pause(); }catch(e){} }
       else if(m.action==="play"){ try{ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }

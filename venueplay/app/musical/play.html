@@ -355,27 +355,54 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       }
     }
   }
+  var _cardSig="";   // the 25 titles as dealt, so a re-render can tell a new card from a repaint
   function renderCard(){
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
     // we never name the song - the player recognises it by ear and taps it on their card (or turns on Easy mode)
     $("lastCalled").innerHTML = P.played.length ? ("<b>"+P.played.length+"</b> played &middot; listen and tap it on your card") : "No songs played yet";
     var set=playedSet();
-    var wrap=$("cardGrid"); wrap.innerHTML="";
-    for(var i=0;i<25;i++){
-      var cell=document.createElement("div");
-      if(i===12){ cell.className="cc free daub"; cell.textContent="FREE";
-        cell.setAttribute("aria-label","Free square, already marked for you"); cell.title="This one is free, it is already marked";
-        wrap.appendChild(cell); continue; }
-      var t=cellTitle(i);
-      cell.className="cc";
-      cell.setAttribute("data-i",i);
-      cell.textContent=t;
-      if(P.daubs[i]) cell.classList.add("daub");
-      if(P.assist && t && set[t]) cell.classList.add("on");   // no song hint on the card unless Easy mode is on
-      wrap.appendChild(cell);
+    var wrap=$("cardGrid");
+
+    /* THE CARD IS PATCHED, NOT REBUILT.
+
+       This used to empty the grid and make 25 fresh elements every time a song was
+       played, and the host plays a song every thirty seconds or so. Throwing away
+       the DOM under someone's thumb is what the flash was: the whole card blanked
+       and re-laid-out mid-song, and any tap landing in that window hit an element
+       that was already gone.
+
+       The card only actually CHANGES when a new one is dealt. Everything else is a
+       class going on or off, so build once and then patch. fitCells() only has to
+       run when the cells are new, which is the other half of the flicker: it
+       measures and rewrites font sizes across all 25. */
+    var titles=[]; for(var n=0;n<25;n++) titles.push(n===12?"FREE":cellTitle(n));
+    var sig=titles.join("\u0001");
+    var fresh = (_cardSig!==sig) || wrap.children.length!==25;
+    if(fresh){
+      wrap.innerHTML="";
+      for(var i=0;i<25;i++){
+        var cell=document.createElement("div");
+        if(i===12){ cell.className="cc free daub"; cell.textContent="FREE";
+          cell.setAttribute("aria-label","Free square, already marked for you"); cell.title="This one is free, it is already marked";
+          wrap.appendChild(cell); continue; }
+        cell.className="cc";
+        cell.setAttribute("data-i",i);
+        cell.textContent=titles[i];
+        wrap.appendChild(cell);
+      }
+      _cardSig=sig;
     }
-    fitCells();
+    for(var j=0;j<25;j++){
+      if(j===12) continue;
+      var el=wrap.children[j]; if(!el) continue;
+      var t=titles[j];
+      var wantDaub=!!P.daubs[j];
+      var wantOn=!!(P.assist && t && set[t]);   // no song hint on the card unless Easy mode is on
+      if(el.classList.contains("daub")!==wantDaub) el.classList.toggle("daub", wantDaub);
+      if(el.classList.contains("on")!==wantOn) el.classList.toggle("on", wantOn);
+    }
+    if(fresh) fitCells();
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); }
     else { $("bingoBtn").disabled=false; setMsg("Tap a title when you hear it. Hit BINGO when you have the pattern.",""); }
   }
