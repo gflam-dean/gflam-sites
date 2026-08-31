@@ -378,8 +378,27 @@
            drawn ticket off the TV, and the host was left with no winner card, no Claim and no
            redraw, while the result row stayed "drawn" so that number could never come up again.
            The snapshot already carries last_seq and last_tickets; we just never used them.
-           remaining:0 because the claim clock is not restarted: the host decides now. */
-        if(g.last_seq!=null && Array.isArray(g.last_tickets) && g.last_tickets.length){
+           remaining:0 because the claim clock is not restarted: the host decides now.
+
+           BUT ONLY IF THAT ROUND IS STILL UNRESOLVED. This looked at last_seq and
+           nothing else, so a round that had already been CLAIMED came back with a
+           live winner card and both buttons armed. Hand over the meat tray, let the
+           tablet lock, reopen the console, tap "Not here, redraw" - and the Worker
+           patches that result row to no_show unconditionally and draws a second
+           ticket for a prize that is already in somebody's hands. Two winners, one
+           tray, and the record now says the real winner never showed.
+
+           The outcome is right there in the snapshot: g.results is what the history
+           table is rebuilt from a few lines above. */
+        var _lastOutcome = "";
+        if(Array.isArray(g.results)){
+          for(var _r=0;_r<g.results.length;_r++){
+            if(g.results[_r] && g.results[_r].seq===g.last_seq){ _lastOutcome=String(g.results[_r].outcome||""); break; }
+          }
+        }
+        var _stillLive = !(_lastOutcome==="claimed" || _lastOutcome==="no_show");
+        if(!_stillLive){ renderRange(); renderResults(); }
+        if(_stillLive && g.last_seq!=null && Array.isArray(g.last_tickets) && g.last_tickets.length){
           hostStatus("Recovered your raffle");
           renderRange(); renderResults();
           /* Rebuild the live round through the SAME path a fresh draw takes, so the winner card,
@@ -387,7 +406,11 @@
              rather than a second hand-built copy that can drift. */
           revealServer({ seq:g.last_seq, tickets:g.last_tickets.slice(), pad:g.pad,
                          allow_redraw:(g.allow_redraw!==false),
-                         time_to_present:(g.time_to_present!=null?g.time_to_present:0),
+                         /* Zero, which is what the comment above has always said and what the
+                            members console actually does. Passing the full time restarted a
+                            fresh three minute countdown on a round that was drawn before the
+                            tablet locked, on the console and on the wall. */
+                         time_to_present:0,
                          prize:(g.prize||prizeLabel()) });
           hostError("Picked up where you left off. Confirm the ticket on screen: Claim if they are here, or Not here to redraw.");
           return true;

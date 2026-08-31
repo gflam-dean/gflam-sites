@@ -158,7 +158,7 @@
         if(m.t==="hand" && G && G.mode==="whohere" && m.name && m.i===G.i){
           if(!G.hands.some(function(x){ return x.i===m.i && x.name===m.name; })){
             G.hands.push({i:m.i,name:m.name});
-            send({t:"big",text:esc(G.items[G.i].q),
+            send({t:"big",text:G.items[G.i].q,
                   sub:G.hands.filter(function(x){return x.i===G.i;}).map(function(x){return x.name;}).join(", ")});
             paintWhoHere();
           }
@@ -356,7 +356,7 @@
      knows anybody has won. */
   function onClaim(name, kind){
     toast((name||"Someone") + (kind === "full" ? " has a full house!" : " has a line!"));
-    send({t:"big", text:esc(name||"Winner"), sub: kind === "full" ? "Full house" : "Line"});
+    send({t:"big", text:(name||"Winner"), sub: kind === "full" ? "Full house" : "Line"});
   }
 
   function callName(n){
@@ -469,7 +469,7 @@
     if(!pool.length) return;
     var w=pool[pick(pool.length)];
     G.won.push(w); G.last=w;
-    send({t:"big",text:esc(w),sub:"Come and get it"});
+    send({t:"big",text:w,sub:"Come and get it"});
     paintDraw();
   }
 
@@ -625,7 +625,7 @@
     G.guesser=players[G.done.length % players.length];
     G.done.push(G.guesser);
     send({t:"guesswho", i:G.i, of:G.items.length, answer:it.q, guesser:G.guesser});
-    send({t:"big", text:it.q, sub:esc(G.guesser||"They")+", eyes off the screen"});
+    send({t:"big", text:it.q, sub:(G.guesser||"They")+", eyes off the screen"});
     paintGuessWho();
   }
 
@@ -748,7 +748,7 @@
     if(G.inPlay.length<=1){
       var w = G.inPlay[0];
       if(w){ nightAdd([{name:w, score:PPQuiz.CORRECT_POINTS}]); }
-      send({t:"big", text: w?esc(w):"All out", sub: w?"Heads or tails winner":""});
+      send({t:"big", text: w?w:"All out", sub: w?"Heads or tails winner":""});
     } else {
       send({t:"big", text:side.toUpperCase(), sub:G.inPlay.length+" still in"});
     }
@@ -811,7 +811,7 @@
       else if(g.format==="photos") runPhotos(g);
       else if(g.format==="charades") runCharades(g);
       else if(g.format==="guesswho") runGuessWho(g);
-      else { send({t:"big",text:esc(g.title||g.format),sub:"Off we go"}); toast("Running "+(g.title||g.format)); }
+      else { send({t:"big",text:(g.title||g.format),sub:"Off we go"}); toast("Running "+(g.title||g.format)); }
       return;
     }
     if(el.id==="charstart" || el.id==="charnext"){ charadesGo(); return; }
@@ -825,7 +825,7 @@
       var right=G.answers.filter(function(a){ return a.i===G.i && a.answer===po.correct; });
       send({t:"photoresult", i:G.i, correct:po.correct,
             board:right.map(function(a){ return {name:a.name, score:PPQuiz.CORRECT_POINTS}; })});
-      send({t:"big", text:esc(po.correct), sub:right.length+(right.length===1?" got it":" got it")});
+      send({t:"big", text:po.correct, sub:right.length+(right.length===1?" got it":" got it")});
       paintPhotos(); return;
     }
     if(el.id==="photonext"){
@@ -844,7 +844,7 @@
           .sort(function(a,b){return b.score-a.score;});
         if(!G.banked){ nightAdd(fin); G.banked=true; }
         send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
-        send({t:"big", text:fin.length?esc(fin[0].name):"Done", sub:fin.length?fin[0].score+" points":""});
+        send({t:"big", text:fin.length?fin[0].name:"Done", sub:fin.length?fin[0].score+" points":""});
       }
       paintPhotos(); return;
     }
@@ -859,28 +859,28 @@
       var it=G.items[G.i];
       if(it) send({t:"hands", i:G.i, q:it.q});
       else send({t:"lobby"});
-      send({t:"big", text: it?esc(it.q):"That is the lot", sub: it?"Tap if it is you":""});
+      send({t:"big", text: it?it.q:"That is the lot", sub: it?"Tap if it is you":""});
       paintWhoHere(); return;
     }
     if(el.id==="truthsgo"){
       G.phase="play"; G.turn=0; G.shown=false;
       var t0=G.subs[0];
       send({t:"truthvote", turn:0, name:t0.name, lines:t0.lines});
-      send({t:"big", text:esc(t0.name), sub:"Which one is the lie?"});
+      send({t:"big", text:t0.name, sub:"Which one is the lie?"});
       paintTruths(); return;
     }
     if(el.id==="truthreveal"){
       G.shown=true;
       var tt=G.subs[G.turn];
       send({t:"truthresult", turn:G.turn, lie:tt.lie, line:tt.lines[tt.lie]});
-      send({t:"big", text:esc(tt.lines[tt.lie]), sub:"was the lie"});
+      send({t:"big", text:tt.lines[tt.lie], sub:"was the lie"});
       paintTruths(); return;
     }
     if(el.id==="truthnext"){
       G.turn++; G.shown=false;
       var tn=G.subs[G.turn];
       if(tn){ send({t:"truthvote", turn:G.turn, name:tn.name, lines:tn.lines});
-              send({t:"big", text:esc(tn.name), sub:"Which one is the lie?"}); }
+              send({t:"big", text:tn.name, sub:"Which one is the lie?"}); }
       else { send({t:"lobby"}); nightAdd(truthsTally(G.votes)); }
       paintTruths(); return;
     }
@@ -902,7 +902,7 @@
       // Tell the phones what was right, so each guest sees their own result
       // rather than having to find themselves on a list on the television.
       send({t:"result", i:G.i, correct:o.correct, board:board().slice(0,10)});
-      send({t:"big", text:esc(it.a||""), sub:it.q});
+      send({t:"big", text:(it.a||""), sub:it.q});
       paintTrivia(); return; }
     if(el.id==="next"){
       G.i++; G.shown=false;
@@ -910,14 +910,14 @@
       if(it2){
         var o2=PPQuiz.options(G.items,G.i,G.seed);
         send({t:"ask", i:G.i, q:it2.q, options:o2.options, n:G.i+1, of:G.items.length});
-        send({t:"big", text:esc(it2.q), sub:"Question "+(G.i+1)+" of "+G.items.length});
+        send({t:"big", text:it2.q, sub:"Question "+(G.i+1)+" of "+G.items.length});
       } else {
         var fin=board();
         // Bank it once. G.banked stops a host who taps Next again at the end from
         // adding the same round to the night twice.
         if(!G.banked){ nightAdd(fin); G.banked=true; }
         send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
-        send({t:"big", text: fin.length?esc(fin[0].name):"That is the lot",
+        send({t:"big", text: fin.length?fin[0].name:"That is the lot",
               sub: fin.length? fin[0].score+" points" : ""});
       }
       paintTrivia(); return;
