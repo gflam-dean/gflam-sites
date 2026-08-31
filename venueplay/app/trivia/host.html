@@ -308,6 +308,19 @@
   function gsend(obj){ if(window.VPSign){ VPSign.signSend(obj, rawGsend); } else { rawGsend(obj); } }
   function gflush(){ while(gQueue.length && gch){ gch.send({ type:"broadcast", event:"msg", payload:gQueue.shift() }); } }
   function bcast(obj){ send(obj); gsend(obj); }
+
+  /* THE CONSOLE SAYS IT IS STILL HERE, every thirty seconds, while a lobby is open
+     or a quiz is on. The big screen uses it to tell an open lobby from a console
+     that has been closed. It is not the only signal, and deliberately so: an iPad
+     that locks stops sending this, so the screen also asks the Worker whether the
+     session is still open before it clears anything. See trivia/screen.html.
+
+     host_here is on the screen's presence list and on the router's do-not-hop
+     list, so this keeps the wall alive without ever looking like a game starting. */
+  var HEARTBEAT_MS = 30000;
+  setInterval(function(){
+    if(G.status && G.status !== "setup") bcast({ t:"host_here" });
+  }, HEARTBEAT_MS);
   function openGameChannel(joinCode){
     if(gch){ try{ client.removeChannel(gch); }catch(e){} gch=null; gsub=false; }
     gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });

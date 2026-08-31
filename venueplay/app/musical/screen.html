@@ -451,13 +451,36 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
      Deliberately five minutes and not one: venue wifi drops, tabs get
      backgrounded, and a host walking to the bar and back must not cost them
      their lobby. Any host traffic at all resets it. */
-  var LOBBY_SILENCE_MS=5*60*1000, _lastHostAt=Date.now();
+  var LOBBY_SILENCE_MS=5*60*1000, _lastHostAt=Date.now(), _asking=false;
   function noteHost(){ _lastHostAt=Date.now(); }
   setInterval(function(){
     if(!VENUE_SLUG) return;                       // a paired screen has no ads to go back to
     if(state.phase!=="lobby") return;             // a game being played is its own proof of life
     if(Date.now()-_lastHostAt < LOBBY_SILENCE_MS) return;
-    window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
+    if(_asking) return;
+    /* SILENCE IS NOT PROOF THE HOST HAS GONE.
+
+       A LOCKED IPAD RUNS NO JAVASCRIPT. Neither does a backgrounded tab, much of
+       the time. So the heartbeat this used to rely on stops the moment a host
+       opens the lobby at seven and puts the tablet down for the hour before the
+       quiz, which is a completely normal thing to do, and the wall would have
+       dropped to advertising at about five past.
+
+       The session is the real answer, and it is a row in the database, not
+       something a sleeping tablet can forget. Ask. A night that is still open
+       keeps the lobby up however long the host leaves it; only a definite "there
+       is no session" sends the screen back to the ads. No answer at all changes
+       nothing, because an unreachable Worker is a bad reason to clear a wall. */
+    _asking=true;
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG)))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        _asking=false;
+        if(!d) return;                            // no answer: leave the room alone, ask again later
+        if(d.live){ noteHost(); return; }         // the night is open, the console is just asleep
+        window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
+      })
+      .catch(function(){ _asking=false; });
   }, 30000);
   function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
   // ---- clip audio: this screen is the venue's sound source (whichever screen is wired to the amp) ----

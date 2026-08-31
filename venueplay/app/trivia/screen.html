@@ -544,13 +544,36 @@
   // real game activity cancels it, so a quick next round or restart never bounces.
   var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1 };
   function cancelBackToAds(){ if(_backToAdsT){ clearTimeout(_backToAdsT); _backToAdsT=null; } }
+
+  /* A LOBBY LEFT OPEN, AND A LOBBY LEFT BEHIND, told apart by asking the Worker.
+     Same as the musical screen: a host who opens the lobby an hour before the quiz
+     and locks the iPad stops sending anything at all, so silence cannot mean they
+     have gone. The session can say. See that file for the full reasoning. */
+  var LOBBY_SILENCE_MS=5*60*1000, _lastHostAt=Date.now(), _asking=false;
+  function noteHost(){ _lastHostAt=Date.now(); }
+  setInterval(function(){
+    if(!VENUE_SLUG) return;
+    if(state.phase!=="lobby") return;
+    if(Date.now()-_lastHostAt < LOBBY_SILENCE_MS) return;
+    if(_asking) return;
+    _asking=true;
+    fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(venueCode(VENUE_SLUG)))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        _asking=false;
+        if(!d) return;
+        if(d.live){ noteHost(); return; }
+        window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
+      })
+      .catch(function(){ _asking=false; });
+  }, 30000);
   function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
   function onMsg(m){
     _router.seen();   // our game is still talking, so it is genuinely live
     if(!m||!m.t) return;
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                       // ignore our own presence pings
-    if(HOST_TYPES[m.t]){ state.hostSeen=true; tvSend({ t:"tv_here" }); }
+    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
     if(m.t==="mode"){ if(state.phase!=="lobby"){ /* stay */ } return; }
