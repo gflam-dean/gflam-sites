@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Aug 2026, 11:53 · cad38d31';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Sep 2026, 07:53 · b52b588d';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -229,6 +229,8 @@ export default {
       if (method === 'POST' && path === '/join')               return await handleJoin(request, env, json);
       if (method === 'POST' && path === '/join/info')          return await handleJoinInfo(request, env, json);
       if (method === 'POST' && path === '/capture')            return await handleCapture(request, env, json);
+      if (method === 'POST' && path === '/feedback')           return await handleFeedback(request, env, json);
+      if (method === 'GET'  && path === '/feedback/tally')     return await handleFeedbackTally(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
       /* Broadcast signing (migrations 38 + 55). vp-sign.js has been loaded by every TV, phone and
@@ -740,6 +742,85 @@ async function venueHasGameOpen(env, venueId) {
       'venue_id=eq.' + enc(venueId) + '&started_at=gte.' + enc(since) + '&select=id&limit=1');
     return !!(rows && rows.length);
   } catch (e) { return true; }
+}
+
+/* ------------------------------ POST /feedback ---------------------------
+ * How was that? One tap, three options, from the room or from the host.
+ *
+ * Anonymous on purpose and it stores NOTHING about who tapped: no name, no
+ * device id, no player id, no free text. A rating is not worth the consent
+ * conversation any of those would start. That also means there is nothing here
+ * worth forging - the worst somebody with the venue code can do is tell us
+ * their own night was good - so this asks for no token from a player, only a
+ * rate limit so a bored punter cannot sit there tapping.
+ *
+ * The HOST's answer is different: it goes in the same table under source
+ * 'host' and is read separately, because the host knows whether the tech
+ * worked while the room knows whether it was fun. That one needs the host's
+ * JWT, or a rating from the venue's own staff would be worth nothing.
+ */
+const FEEDBACK_MAX_PER_IP = 12;
+
+async function handleFeedback(request, env, json) {
+  const b = await readJson(request);
+  const rating = parseInt(b.rating, 10);
+  if (!(rating >= 1 && rating <= 3)) return json({ error: 'rating must be 1, 2 or 3' }, 400);
+  const source = b.source === 'host' ? 'host' : 'player';
+
+  const ipHash = await abuseIpHash(request, env);
+  if (ipHash) {
+    const rl = await rateLimit(env, 'fb:ip:' + ipHash, FEEDBACK_MAX_PER_IP, 300);
+    if (!rl.ok) return json({ ok: true, throttled: true });   // never an error to a punter
+  }
+
+  const code = String(b.code || '').trim().toUpperCase();
+  let venueId = null, sessionId = null;
+  if (code) {
+    const live = await sbGet(env, 'vp_sessions',
+      'join_code=eq.' + enc(code) + '&status=in.(lobby,running,paused)&select=id,venue_id&limit=1');
+    if (live.length) { venueId = live[0].venue_id; sessionId = live[0].id; }
+    else venueId = await venueByCode(env, code);
+  }
+  if (b.session_id) { assertUuid(String(b.session_id), 'session_id'); sessionId = String(b.session_id); }
+
+  if (source === 'host') {
+    // A venue rating its own night has to be the venue.
+    const authUserId = await verifyHostJwt(request, env);
+    if (!venueId) return json({ error: 'Unknown venue' }, 404);
+    await requireStaff(env, authUserId, venueId);
+  }
+  if (!venueId) return json({ ok: true, ignored: 'unknown code' });   // silent, like /capture
+
+  await sbInsert(env, 'vp_game_feedback', {
+    venue_id: venueId,
+    session_id: sessionId || null,
+    game_id: b.game_id ? String(b.game_id) : null,
+    format: b.format ? String(b.format).slice(0, 24) : null,
+    source,
+    rating,
+  });
+  return json({ ok: true });
+}
+
+/* What the host sees the moment the game ends: the room's answer, live.
+ * Public and countable only - no rows, no identities, nothing to mine. */
+async function handleFeedbackTally(request, env, json) {
+  const url = new URL(request.url);
+  const sessionId = String(url.searchParams.get('session') || '').trim();
+  if (!sessionId) return json({ ratings: 0 });
+  assertUuid(sessionId, 'session');
+  const rows = await sbGet(env, 'vp_game_feedback',
+    'session_id=eq.' + enc(sessionId) + '&source=eq.player&select=rating&limit=2000');
+  const n = rows.length;
+  const loved = rows.filter((r) => r.rating === 3).length;
+  const ok = rows.filter((r) => r.rating === 2).length;
+  return json({
+    ratings: n,
+    loved,
+    ok,
+    poor: n - loved - ok,
+    positive_pct: n ? Math.round((100 * (loved + ok)) / n) : null,
+  });
 }
 
 async function handleCapture(request, env, json) {

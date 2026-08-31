@@ -196,6 +196,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-follow.js"></script>
+<script src="/app/vp-feedback.js"></script>
 <script>
 (function(){
   "use strict";
@@ -330,8 +331,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
   function route(){
-    if(P.won){ $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo; show("vWon"); return; }
-    if(P.ended){ show("vLost"); return; }
+    /* The end screens are where a punter will actually answer something: the game
+       is over and there is nothing to do until the host starts another. One tap,
+       asked once per game, and it never blocks the screen if the Worker is away. */
+    if(P.won){ $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo; show("vWon"); askHowItWent("vWon"); return; }
+    if(P.ended){ show("vLost"); askHowItWent("vLost"); return; }
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
     if(P.active && P.cells){ renderCard(); show("vCard"); return; }
@@ -356,6 +360,14 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }
   }
   var _cardSig="";   // the 25 titles as dealt, so a re-render can tell a new card from a repaint
+  function askHowItWent(where){
+    try{
+      if(!window.VPFeedback) return;
+      VPFeedback.ask({ api:VP_GAME_API, code:P.room, mount:where,
+                       gameId:P.gameId, format:"musical" });
+    }catch(e){}
+  }
+
   function renderCard(){
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;

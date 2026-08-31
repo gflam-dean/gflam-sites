@@ -223,6 +223,16 @@
       <!-- left: run -->
       <div class="panel">
         <div id="setupBlock">
+          <div class="field hidden" id="fbBlock" style="background:rgba(53,208,127,.07);border:1px solid rgba(53,208,127,.25);border-radius:12px;padding:12px 14px">
+            <div class="lbl" style="margin-bottom:6px">How the room found it</div>
+            <div id="fbSummary" style="font-size:14px;color:var(--text)">No ratings yet</div>
+            <div style="font-size:12px;color:var(--faint);margin-top:8px">And you? One tap, it goes with the night's record.</div>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+              <button class="btn ghost" data-hostrate="3" style="flex:1;min-width:88px;font-size:13px">&#128516; Great</button>
+              <button class="btn ghost" data-hostrate="2" style="flex:1;min-width:88px;font-size:13px">&#128578; Fine</button>
+              <button class="btn ghost" data-hostrate="1" style="flex:1;min-width:88px;font-size:13px">&#128528; Poor</button>
+            </div>
+          </div>
           <div class="field">
             <label>Playlist / theme</label>
             <input type="text" id="plSearch" placeholder="Search a theme&hellip; e.g. 80s, rock, aussie" autocomplete="off" style="margin-bottom:10px">
@@ -1112,7 +1122,50 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     try{ send({ t:"to_ads" }); }catch(e){}   // and back to the venue's own advertising
     renderConsole();
     if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(e){ hostError(e.message); }); }
+    showRoomVerdict(gid);
   }
+
+  /* WHAT THE ROOM SAID, shown to the host the moment the game ends.
+
+     This is the half that makes the asking worth anything. A host who never sees
+     the answer has no reason to care whether players tap it, and a venue paying
+     for this deserves to know whether the night landed rather than only how many
+     phones were on it. Ratings arrive over the following minute as people look
+     up from their phones, so it re-reads a couple of times rather than once.
+
+     Entirely best effort: a venue on an older Worker gets no panel and no error. */
+  var _fbGid=null, _fbTimers=[];
+  function showRoomVerdict(gameId){
+    _fbGid=gameId||null;
+    _fbTimers.forEach(clearTimeout); _fbTimers=[];
+    var blk=$("fbBlock"); if(!blk) return;
+    blk.classList.remove("hidden");
+    $("fbSummary").textContent="No ratings yet";
+    [1500, 15000, 45000].forEach(function(ms){
+      _fbTimers.push(setTimeout(readVerdict, ms));
+    });
+  }
+  function readVerdict(){
+    if(!G.sessionId) return;
+    fetch(VP_GAME_API+"/feedback/tally?session="+encodeURIComponent(G.sessionId))
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(d){
+        if(!d || !d.ratings) return;
+        var el=$("fbSummary"); if(!el) return;
+        el.innerHTML = "<b>"+d.ratings+"</b> "+(d.ratings===1?"person":"people")+" rated it"+
+          (d.positive_pct!=null ? (", <b>"+d.positive_pct+"%</b> positive") : "")+
+          (d.loved ? " &middot; "+d.loved+" loved it" : "");
+      })
+      .catch(function(){});
+  }
+  document.addEventListener("click", function(e){
+    var b=e.target && e.target.closest && e.target.closest("[data-hostrate]");
+    if(!b) return;
+    var rating=parseInt(b.getAttribute("data-hostrate"),10);
+    b.parentNode.innerHTML='<div style="font-size:13px;color:var(--win);font-weight:700">Thanks, noted against tonight</div>';
+    apiPost("/feedback", { rating:rating, source:"host", session_id:G.sessionId||undefined,
+                           game_id:_fbGid||undefined, format:"musical" }).catch(function(){});
+  });
   // Progressive prizes: after a win we can carry the SAME cards on to the next pattern with a new
   // prize (one line -> two lines -> full house). A full house is the end, so no carry-on from there.
   function nextPat(cur){ return cur==="one"?"two":cur==="two"?"full":""; }
