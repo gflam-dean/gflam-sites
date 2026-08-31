@@ -1574,6 +1574,20 @@
       }
     }catch(e){}
     G.sessionId=null; G.joinCode=null;
+      /* AND THE CONSENT GOES WITH THE SESSION.
+
+         newGame resets this two hundred lines below, with the reason written out:
+         consent does not carry into the next game, because the charge does not
+         either. Ending a game and starting another is MORE of a new game than
+         newGame is - it closes the session and opens a fresh one - and this was
+         the one path that kept the flag.
+
+         So a venue that went over its plan, tapped OK, ended the game and ran a
+         second one was never asked again, never posted an ack for the second
+         session, and applyOverageCharge returns early on a session with no
+         approval. Every game after the first, all night, was billed nothing.
+         Only reloading the page cleared it. */
+      overageAcked=false; overageApproved=0;
     G.status="setup"; G.claims=[]; G.claimIdx=-1; G.won=false; G.lastWins=[];
     send({ t:"idle" });   // TV returns to the advertising loop
     sendState();
