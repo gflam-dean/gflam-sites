@@ -87,7 +87,7 @@ def main():
     todo = [s for s in songs if s['id'] not in done]
     if '--limit' in sys.argv:
         todo = todo[:int(sys.argv[sys.argv.index('--limit') + 1])]
-    nthreads = int(sys.argv[sys.argv.index('--threads') + 1]) if '--threads' in sys.argv else 2
+    nthreads = int(sys.argv[sys.argv.index('--threads') + 1]) if '--threads' in sys.argv else 1
     print('  %d songs, %d already answered, %d to ask about' % (len(songs), len(done), len(todo)), flush=True)
 
     q = queue.Queue(); [q.put(s) for s in todo]
@@ -112,7 +112,12 @@ def main():
                 if year: hits[0] += 1
                 if n[0] % 100 == 0:
                     print('     ... %d of %d, %d dated' % (n[0], len(todo), hits[0]), flush=True)
-            time.sleep(0.9)   # Apple starts refusing above roughly this rate
+            # Apple's search API allows about twenty calls a minute. Two threads at 0.9s
+    # is a hundred and thirty, so most came back refused, got retried, and were
+    # refused again: 38 of every 100 answered, and the job spent its time arguing
+    # with a rate limiter. One thread at 3.2s is under the limit, so nearly every
+    # request counts. Slower on paper, faster in practice.
+    time.sleep(3.2)
     ts = [threading.Thread(target=work, daemon=True) for _ in range(nthreads)]
     [t.start() for t in ts]; [t.join() for t in ts]
     f.close()

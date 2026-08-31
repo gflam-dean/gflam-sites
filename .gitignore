@@ -7,3 +7,5 @@ Thumbs.db
 
 # internal ops workspace - never deploy
 gflam-ai-team/
+venueplay-backend/tools/song-years.jsonl
+venueplay-backend/tools/song-audit.csv
