@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '28 Aug 2026, 19:11 · 141d8de3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Aug 2026, 12:36 · f6a82c03';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -923,13 +923,59 @@ function vpaSlugify(s) {
   return String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-async function vpaUniqueSlug(env, base, seed) {
-  let slug = base || ('venue-' + String(seed || '').replace(/[^a-z0-9]/gi, '').slice(0, 8));
-  const taken = await vpaSelect(env, 'vp_venues', 'slug=eq.' + encodeURIComponent(slug) + '&select=id');
-  if (taken && taken.length) {
-    slug = slug + '-' + String(seed || Date.now()).replace(/[^a-z0-9]/gi, '').slice(0, 6);
+/* THE SLUG IS THE VENUE'S IDENTITY, AND AUSTRALIA REUSES PUB NAMES CONSTANTLY.
+
+   Measured against the 18,567 licensed venues in the prospect database: 376 names
+   are shared by more than one venue, covering 1,376 venues, about seven per cent.
+   There are 100 Royal Hotels, 68 Commercials, 37 Railways, 24 Imperials. That
+   list is comprehensive for NSW and partial elsewhere, so the real figure is
+   higher than seven per cent, not lower.
+
+   This matters more than a tidy URL. The venue's join code is a hash of its slug,
+   so two venues sharing a slug share a code, and the game Worker refuses a code it
+   cannot attribute: BOTH venues lose the ability to be joined. The slug also goes
+   on printed table talkers, so it can never be corrected after the fact.
+
+   The old fallback appended six characters of a UUID, which gave the second Royal
+   Hotel royal-hotel-a1b2c3 on its signage, and checked only once: if that name was
+   somehow taken too, it was returned anyway.
+
+   So the postcode separates them, which is Dean's suggestion and the right one.
+   Every venue has one (it is what sets the state for gaming rules and founding
+   pricing), it is meaningful to the venue itself, and it reads on a sign:
+
+       royal-hotel                first one in
+       royal-hotel-2026           the Bondi one
+       royal-hotel-2026-2         two Royals in the same postcode, which happens
+       royal-hotel-2026-a1b2c3    nine of them, which does not
+
+   Existing venues are untouched. This only decides the name a NEW venue gets. */
+async function vpaSlugTaken(env, slug) {
+  const rows = await vpaSelect(env, 'vp_venues', 'slug=eq.' + encodeURIComponent(slug) + '&select=id&limit=1');
+  return !!(rows && rows.length);
+}
+
+async function vpaUniqueSlug(env, base, seed, postcode) {
+  const pc = String(postcode || '').replace(/\D/g, '').slice(0, 4);
+  const stem = base || ('venue-' + String(seed || '').replace(/[^a-z0-9]/gi, '').slice(0, 8));
+
+  if (!(await vpaSlugTaken(env, stem))) return stem;
+
+  if (pc) {
+    const withPc = stem + '-' + pc;
+    if (!(await vpaSlugTaken(env, withPc))) return withPc;
   }
-  return slug;
+
+  // Two venues of the same name in the same postcode. Rare, and it does happen.
+  const root = pc ? stem + '-' + pc : stem;
+  for (let n = 2; n <= 9; n++) {
+    const cand = root + '-' + n;
+    if (!(await vpaSlugTaken(env, cand))) return cand;
+  }
+
+  /* Nine of them. Something is wrong, but a signup must not fail over a name, so
+     fall back to what cannot collide and let it be ugly. */
+  return root + '-' + String(seed || Date.now()).replace(/[^a-z0-9]/gi, '').slice(0, 6);
 }
 
 // Australian mobile -> E.164 (+61...). Falls back to a bare +digits form.
@@ -1002,7 +1048,7 @@ async function vpaHandleVenue(request, env, json) {
     return json({ error: "billing.type must be 'founding' or 'group'." }, 400);
   }
 
-  const slug = await vpaUniqueSlug(env, slugIn, name);
+  const slug = await vpaUniqueSlug(env, slugIn, name, String((b.postcode || '')).replace(/\D/g, '').slice(0, 4));
   let foundingId = null;
   let foundingRow = null;
   // HQ's Add venue form has always offered a comp/demo tick and this Worker has always ignored
@@ -2320,7 +2366,7 @@ async function vpaProvisionFromCheckout(env, session) {
     let venue = (await vpaSelect(env, 'vp_venues',
       'founding_id=eq.' + encodeURIComponent(foundingId) + '&select=id,name,slug'))[0];
     if (!venue) {
-      const slug = await vpaUniqueSlug(env, vpaSlugify(venueName), foundingId);
+      const slug = await vpaUniqueSlug(env, vpaSlugify(venueName), foundingId, f.postcode);
       venue = await vpaInsert(env, 'vp_venues', {
         founding_id: foundingId,
         name: venueName,
@@ -2541,7 +2587,7 @@ async function vpaProvisionOneVenue(env, opts) {
     'founding_id=eq.' + encodeURIComponent(foundingId) +
     '&name=eq.' + encodeURIComponent(name) + '&select=id,name,slug'))[0];
   if (!venue) {
-    const slug = await vpaUniqueSlug(env, vpaSlugify(name), foundingId + ':' + name);
+    const slug = await vpaUniqueSlug(env, vpaSlugify(name), foundingId + ':' + name, opts.postcode);
     venue = await vpaInsert(env, 'vp_venues', {
       founding_id: foundingId,
       group_id: groupId || undefined,

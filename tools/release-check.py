@@ -389,14 +389,14 @@ def local_checks(which):
     They are run from ROOT because each one reads the page or the library it is
     about, rather than a copy of it, and resolves those paths from here."""
     vp_suites = []
-    gt = os.path.join(ROOT, 'venueplay-backend', 'worker', 'one-game.test.js')
-    if os.path.isfile(gt):
-        vp_suites.append(gt)
-    appdir = os.path.join(ROOT, 'venueplay', 'app')
-    for d, _, fs in os.walk(appdir):
-        for f in sorted(fs):
-            if f.endswith('.test.js'):
-                vp_suites.append(os.path.join(d, f))
+    # Both trees, swept. one-game.test.js used to be named here on its own, and the
+    # slug ladder suite written next to it would have run nowhere.
+    for base in (os.path.join(ROOT, 'venueplay', 'app'),
+                 os.path.join(ROOT, 'venueplay-backend', 'worker')):
+        for d, _, fs in os.walk(base):
+            for f in sorted(fs):
+                if f.endswith('.test.js'):
+                    vp_suites.append(os.path.join(d, f))
     for t in vp_suites:
         r = subprocess.run([JSC, t], capture_output=True, text=True, cwd=ROOT)
         out = (r.stdout + r.stderr).strip().splitlines()
