@@ -39,6 +39,25 @@ FOR_HASH = re.compile(r"^const BUILD = '[^']*';.*\n", re.M)
 STAMP = re.compile(r"^const BUILD = '(?:.*\u00b7 )?([0-9a-f]{8})';", re.M)
 
 
+def _write_atomic(path, text):
+    """Write to a neighbour and rename over the top.
+
+    open(path, 'w') truncates FIRST and writes second, so a process that dies in
+    between leaves a nought byte file. That happened to venueplay-api-FULL.js on
+    31 Aug: the source of the billing Worker, emptied on disk, while the pre-push
+    gate said every script parses. An empty file parses perfectly.
+
+    os.replace is atomic on this filesystem, so the file at `path` is either the
+    old contents or the new ones, never nothing.
+    """
+    tmp = path + '.writing'
+    with io.open(tmp, 'w', encoding='utf-8') as f:
+        f.write(text)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
 def fingerprint(src):
     """Of the file WITHOUT its stamp, or stamping would change the answer.
 
@@ -78,7 +97,7 @@ def stamp(path, check_only=False):
     if fingerprint(src) != want:
         raise SystemExit('stamping changed the fingerprint of %s (%s -> %s). '
                          'The tool is wrong, not the file.' % (path, want, fingerprint(src)))
-    io.open(p, 'w', encoding='utf-8').write(src)
+    _write_atomic(p, src)
     return 'stamped', want
 
 

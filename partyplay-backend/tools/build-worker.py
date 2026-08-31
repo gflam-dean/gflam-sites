@@ -57,6 +57,10 @@ r2 = subprocess.run([JSC, '-e',
 if 'LIVE' not in r2.stdout:
     sys.exit('refusing to write, PPLicence did not inline correctly:\n' + r2.stdout + r2.stderr)
 
-io.open(OUT, 'w', encoding='utf-8').write(built)
+# Atomic: a half-written Worker is a file somebody could paste. See stamp-workers.py.
+_tmp = OUT + '.writing'
+with io.open(_tmp, 'w', encoding='utf-8') as _f:
+    _f.write(built); _f.flush(); os.fsync(_f.fileno())
+os.replace(_tmp, OUT)
 print('  %s' % OUT)
 print('  %d lines, fingerprint %s, built %s' % (built.count('\n') + 1, fp, stamp))

@@ -564,6 +564,34 @@ def local_checks(which):
             hits.append(short(f))
         ok(label, not hits, why=', '.join(hits[:4]))
 
+    """A WORKER FILE THAT IS EMPTY PARSES PERFECTLY.
+
+    venueplay-api-FULL.js was found at nought bytes on 31 Aug, truncated by a
+    writer that died between the truncate and the write. Every check above was
+    happy: an empty file parses, and an empty module loads without throwing. The
+    only reason it was noticed is that a test tried to read it for something else.
+
+    That file is the source of the billing Worker and it is deployed by pasting.
+    So: it has to be big, and it has to still have the thing that makes it a
+    Worker. Both tools that write these files use an atomic rename now, which
+    should mean this never fires. It is here because it did.
+    """
+    for rel, floor in (('venueplay-backend/worker/venueplay-game.js', 150),
+                       ('venueplay-backend/worker/venueplay-api-FULL.js', 150),
+                       ('partyplay-backend/worker/DEPLOY-partyplay-api.js', 50),
+                       ('partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js', 50)):
+        f = os.path.join(ROOT, rel)
+        if not os.path.isfile(f):
+            continue
+        kb = os.path.getsize(f) / 1024.0
+        src = io.open(f, encoding='utf-8').read()
+        ok('%s is whole' % os.path.basename(rel),
+           kb >= floor and 'export default' in src,
+           '%d KB' % kb,
+           why='%d KB and %s an entry point. A truncated Worker still parses, so nothing '
+               'else here would have caught it.'
+               % (kb, 'has' if 'export default' in src else 'has NO'))
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):
