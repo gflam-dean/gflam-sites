@@ -549,11 +549,32 @@
      Same as the musical screen: a host who opens the lobby an hour before the quiz
      and locks the iPad stops sending anything at all, so silence cannot mean they
      have gone. The session can say. See that file for the full reasoning. */
+
+  /* AN HOUR IS THE LONGEST A LOBBY SITS ON A WALL.
+
+     Dean, asked how long a host might leave one open before the quiz: "lets just
+     make it 60 mins max. I dont think people will want longer than that."
+
+     So the session check above answers "is this night still real", and this
+     answers "has this been on the wall long enough". Both have to pass. A lobby
+     that has been up for an hour goes back to the venue's advertising even if the
+     session is still open, because at that point the room is looking at a join
+     screen for something that is not about to happen.
+
+     Nothing here touches the session. Ending a night is the host's to do, or the
+     sweep's, and both of those are billing decisions that a television must not
+     make on its own. */
+  var LOBBY_MAX_MS=60*60*1000, _lobbySince=null;
   var LOBBY_SILENCE_MS=5*60*1000, _lastHostAt=Date.now(), _asking=false;
   function noteHost(){ _lastHostAt=Date.now(); }
   setInterval(function(){
     if(!VENUE_SLUG) return;
-    if(state.phase!=="lobby") return;
+    if(state.phase!=="lobby"){ _lobbySince=null; return; }   // a game being played is its own proof of life
+    if(_lobbySince===null) _lobbySince=Date.now();
+    if(Date.now()-_lobbySince >= LOBBY_MAX_MS){
+      window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
+      return;
+    }
     if(Date.now()-_lastHostAt < LOBBY_SILENCE_MS) return;
     if(_asking) return;
     _asking=true;

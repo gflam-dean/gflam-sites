@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Aug 2026, 09:38 · 12ea6eff';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '31 Aug 2026, 11:53 · cad38d31';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1068,8 +1068,23 @@ async function handlePlayLive(request, env, json) {
   const url = new URL(request.url);
   const venueId = await venueByCode(env, url.searchParams.get('code') || '');
   if (!venueId) return json({ exists: false, live: false });
-  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
+  const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,status&limit=1');
   const name = (vrows && vrows[0] && vrows[0].name) || '';
+  /* BILLING CLOSING SOMETHING HAS TO REACH THE WALL.
+
+     This asked the session and nothing else, so a venue suspended for non-payment
+     kept a lobby up on its own television inviting the room to join a night that
+     the kill-switch would refuse to start. The suspension is enforced everywhere
+     that costs money (starting a game, joining, claiming, minting a key) and was
+     invisible on the one surface the public actually looks at.
+
+     Answering live:false here clears the wall within one check and stops phones
+     being sent into a game that cannot run. It does not end anything: closing a
+     session is a billing action and stays with the host, HQ and the sweep. */
+  if (vrows.length && vrows[0].status === 'suspended') {
+    return json({ exists: true, name, live: false, suspended: true });
+  }
+
   const sessions = await sbGet(env, 'vp_sessions',
     'venue_id=eq.' + enc(venueId) + '&status=in.(lobby,running,paused)&select=id,join_code&order=created_at.desc&limit=1');
   if (!sessions.length) return json({ exists: true, name, live: false });
