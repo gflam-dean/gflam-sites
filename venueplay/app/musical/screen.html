@@ -439,6 +439,26 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
    dead join QR until the parent /tv gave up 90 minutes later. */
 var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, players:1, state:1 };
   function cancelBackToAds(){ if(_backToAdsT){ clearTimeout(_backToAdsT); _backToAdsT=null; } }
+
+  /* AND A LOBBY NOBODY IS BEHIND SHOULD NOT STAY UP ALL NIGHT.
+
+     The other half of the console's heartbeat. A host who shuts the laptop, or
+     whose tab sleeps, leaves a lobby on the wall with a QR the room can still
+     scan, and until the parent /tv gave up after ninety minutes that is what a
+     pub looked at. With a heartbeat arriving every thirty seconds, silence for
+     five minutes genuinely means the console is gone.
+
+     Deliberately five minutes and not one: venue wifi drops, tabs get
+     backgrounded, and a host walking to the bar and back must not cost them
+     their lobby. Any host traffic at all resets it. */
+  var LOBBY_SILENCE_MS=5*60*1000, _lastHostAt=Date.now();
+  function noteHost(){ _lastHostAt=Date.now(); }
+  setInterval(function(){
+    if(!VENUE_SLUG) return;                       // a paired screen has no ads to go back to
+    if(state.phase!=="lobby") return;             // a game being played is its own proof of life
+    if(Date.now()-_lastHostAt < LOBBY_SILENCE_MS) return;
+    window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG);
+  }, 30000);
   function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
   // ---- clip audio: this screen is the venue's sound source (whichever screen is wired to the amp) ----
   var clipAudio=$("clipAudio"), _clipUnlocked=false;
@@ -541,7 +561,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     if(!m||!m.t) return;
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                 // ignore our own presence pings
-    if(HOST_TYPES[m.t]){ state.hostSeen=true; tvSend({ t:"tv_here" }); }
+    if(HOST_TYPES[m.t]){ state.hostSeen=true; noteHost(); tvSend({ t:"tv_here" }); }
     if(m.t==="host_here"){ if(state.phase==="lobby") renderLobby(); return; }
     if(m.t==="session"){ if(m.join_code && CODE_RE.test(m.join_code)){ joinCode=m.join_code; } if(state.phase==="lobby") renderLobby(); else drawLobbyQR(); return; }
     if(m.t==="mode"){ return; }                 // format handshake; the layers below drive the view

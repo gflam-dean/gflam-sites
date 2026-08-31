@@ -704,6 +704,25 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function sendPlayers(){ bcast({ t:"players", count:playerCount() }); }
 
+  /* A CONSOLE THAT IS OPEN SHOULD SAY SO, ONCE IN A WHILE.
+
+     This console spoke only when something happened, so a host who opened a lobby
+     and then waited for the room to fill went completely silent. Two things hung
+     off that silence and neither could tell an open lobby from a closed laptop:
+     the big screen had nothing to keep it alive, and /tv only gives up after
+     ninety minutes, so a lobby left behind kept a joinable QR on the wall for an
+     hour and a half with nobody coming.
+
+     Thirty seconds is often enough for the screen to trust it and rare enough to
+     be nothing on the wire. It also means a host can leave a lobby open for as
+     long as they like, which is the actual question: half an hour before the quiz
+     starts is normal, and it used to work only because ninety minutes is longer
+     than half an hour. */
+  var HEARTBEAT_MS = 30000;
+  setInterval(function(){
+    if(G.status === "lobby" || G.status === "running") sendState();
+  }, HEARTBEAT_MS);
+
   // ================= AUDIO ENGINE (this device is plugged into the PA) =================
   var audio=$("clip"), prefetchEl=null;
 
