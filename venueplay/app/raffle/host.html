@@ -785,7 +785,15 @@
       G.venueId=ctx.currentVenueId;
       // Tell vp-session when a raffle is actually on, so the forced sign-out leaves the night
       // open instead of finishing it mid-draw. The host is still signed out on time.
-      if(VP.setGameActive) VP.setGameActive(function(){ return !!G.gameId; });
+      /* LIVE MEANS A WINNER NOBODY HAS RESOLVED YET, not "a raffle happened tonight".
+
+         G.gameId is set on the first draw and cleared only by New raffle, so this
+         said "a game is live" for the rest of the evening. vp-session skips
+         closeOpenSessions() whenever that is true, so the four hour sign-out left
+         the session open, and closing is the ONLY thing that marks a night
+         finished and bills any approved overage. The comment at openSession says
+         exactly that. Members has always had this right: !!G.round. */
+      if(VP.setGameActive) VP.setGameActive(function(){ return !!G.round; });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";

@@ -427,7 +427,16 @@
        the round has been cleared, so either one used to blank the drawn number mid-announcement.
        This screen had no phase at all, so it is tracked here. An explicit "idle" is the host
        saying they have finished with this prize, and still clears. */
-    if((m.t==="host_here" || m.t==="state") && (S.phase==="winner" || S.phase==="result")) return;
+    /* A SPIN IS A LIVE PHASE TOO, and it was the one left out.
+
+       G.round is null for the whole four seconds of a draw, so the host answers a
+       routine tv_here with sendState() - and /tv pings tv_here on every game
+       channel each time its realtime reconnects, which nobody has to touch. That
+       state landed here, fell past this guard, and rendered the idle card: the
+       drum roll dropped back to "get your tickets" mid-draw and the winning
+       number then appeared out of nowhere. */
+    if((m.t==="host_here" || m.t==="state") &&
+       (S.phase==="winner" || S.phase==="result" || S.phase==="drawing")) return;
     if(m.t==="host_here"){ S.phase="idle"; renderIdle(); return; }
     if(m.t==="state" || m.t==="idle"){ S.phase="idle"; renderIdle(); if(m.t==="idle") scheduleAdsReturn(); }
     else if(m.t==="drawing"){ S.phase="drawing"; renderDrawing(); }
