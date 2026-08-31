@@ -952,6 +952,31 @@ def venue_code(slug):
     return out
 
 
+def each_worker_is_the_right_worker():
+    """IS THE THING AT THIS URL THE WORKER THAT BELONGS HERE?
+
+    A Worker is deployed by pasting a file into a browser, and there are three of
+    them. On 31 Aug the game Worker went into the billing Worker's slot. Checkout
+    answered 404, every founding page lost its price check, the account page and
+    the add-card links died, and what this tool said was "billing health HTTP 503",
+    which is true and tells you nothing about why.
+
+    Each Worker already says its own name in /health. Ask it. A Worker that is
+    healthy but is the WRONG ONE is the failure that reads as something else."""
+    head('Each Worker is the one that belongs at its URL')
+    for label, url, want in (('billing', VP_API, 'venueplay-api'),
+                             ('game', VP_GAME, 'venueplay-game')):
+        status, body, _ = get(url + '/health')
+        try:
+            got = (json.loads(body) or {}).get('worker')
+        except Exception:
+            got = None
+        ok('the %s URL is answering as %s' % (label, want), got == want,
+           got or 'no name in the reply',
+           why='it is answering as "%s". The wrong file was pasted into this Worker: '
+               'billing takes venueplay-api-FULL.js, game takes venueplay-game.js.' % got)
+
+
 def venue_codes_are_unique():
     """ONE CODE, ONE VENUE.
 
@@ -1209,6 +1234,7 @@ def main():
             worker_health('VenuePlay billing', VP_API)
             cors_checks('VenuePlay', VP_GAME, '/play/live',
                         ['https://venueplay.com.au', 'https://www.venueplay.com.au'])
+            each_worker_is_the_right_worker()
             venue_codes_are_unique()
             founding_windows_are_open()
             no_session_left_open()
