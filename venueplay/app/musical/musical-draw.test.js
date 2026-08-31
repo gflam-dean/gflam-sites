@@ -113,6 +113,21 @@ for (var p = 0; p < packs.length; p++){
   pass(packs[p] + ": at least half the night is from the top third",
        topThird >= GAME_SONGS / 2, topThird + " of " + GAME_SONGS);
 
+  /* NO TWO SQUARES ON THE CARD MAY READ THE SAME.
+
+     The card shows titles only; the artist is revealed on the TV. So a game
+     holding Wagon Wheel by two artists hands the room two identical squares and
+     a coin flip, while the Worker marks by song id and is quietly right. Before
+     this was guarded, four Disco games in five contained a pair. */
+  var titles = {}, dupes = 0;
+  for (var t2 = 0; t2 < drawn.length; t2++){
+    var key = String(drawn[t2].title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (key && titles[key]) dupes++;
+    if (key) titles[key] = 1;
+  }
+  pass(packs[p] + ": no two songs on the card read the same", dupes === 0,
+       dupes ? dupes + " duplicate title(s) dealt" : "");
+
   /* And the switch has to actually do something, or a host turning it off changes
      nothing and the setting is a lie. */
   G.hitsOnly = false;

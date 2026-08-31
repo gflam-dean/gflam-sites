@@ -419,13 +419,29 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       var wi = G.hitsOnly ? 1/(1+i/HITS_ALPHA) : 1;
       w.push(wi); total+=wi;
     }
-    var out=[];
+    /* AND NEVER TWO SONGS WITH THE SAME TITLE IN ONE GAME.
+
+       The player's card shows the TITLE and nothing else - the artist only
+       appears on the TV when the song is revealed - so a game holding both
+       versions of Wagon Wheel, or Twist and Shout by two different acts, gives
+       the room two identical squares and a coin flip. The Worker marks by song
+       id, so the referee is right and the human is guessing, which is the worst
+       shape a dispute can take at a bar.
+
+       It is commoner than it sounds: on the Disco pack, four games in five used
+       to contain a pair. Skipping the second one costs nothing, because there
+       are hundreds of songs left in the pool. */
+    var out=[], seenTitle={};
     for(var n=0; n<GAME_SONGS && idx.length; n++){
       // cryptoInt is integer-only, so scale the running total into its range.
       var r=(cryptoInt(1000000)/1000000)*total, acc=0, hit=idx.length-1;
       for(var k=0;k<idx.length;k++){ acc+=w[idx[k]]; if(acc>=r){ hit=k; break; } }
       var pick=idx[hit];
-      out.push(list[pick]); total-=w[pick]; idx.splice(hit,1);
+      total-=w[pick]; idx.splice(hit,1);
+      var t=String((list[pick]&&list[pick].title)||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+      if(t && seenTitle[t]){ n--; continue; }   // already on the card under another artist
+      if(t) seenTitle[t]=true;
+      out.push(list[pick]);
     }
     return out;
   }

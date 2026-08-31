@@ -51,6 +51,24 @@ GENRES = [
 # Packs a person curated. Never rebuilt, only checked.
 CURATED = {'Pub Classics', 'Aussie', '80s Rock', 'Disco', 'Funk', 'Soul & Motown', 'Modern Pop'}
 
+# Things that are in the library and should not be in a pack a pub plays.
+NOT_THE_RECORD = re.compile(r'\((?:re-?recorded|re-?recording)\)|\bre-?recorded\b', re.I)
+CHRISTMAS = re.compile(r'\b(christmas|xmas|santa|sleigh|noel|jingle bell|silent night|'
+                       r'winter wonderland|feliz navidad|auld lang syne)\b', re.I)
+
+def unfit(song):
+    """A title a venue would not want dealt on an ordinary Tuesday."""
+    t = song.get('title') or ''
+    a = song.get('artist') or ''
+    if NOT_THE_RECORD.search(t):
+        return 're-recording'          # not the take the room remembers
+    if CHRISTMAS.search(t):
+        return 'christmas'             # fine in December, wrong in March
+    if t.strip().lower() == a.strip().lower():
+        return 'title is just the artist name'   # "Snoop Dogg" by Snoop Dogg
+    return None
+
+
 def main():
     lib = json.load(open(LIB))
     facts = {}
@@ -71,9 +89,17 @@ def main():
     order = {s['id']: i for i, s in enumerate(songs)}     # the library's own order = popularity
     byid  = {s['id']: s for s in songs}
 
+    dropped = collections.Counter()
+
     def eligible(sid):
         f = facts.get(sid)
-        return bool(f and f.get('in_au_store'))
+        if not (f and f.get('in_au_store')):
+            return False
+        why = unfit(byid[sid])
+        if why:
+            dropped[why] += 1
+            return False
+        return True
 
     def capped(ids):
         seen, out = collections.Counter(), []
@@ -99,7 +125,11 @@ def main():
             if not eligible(s['id']):
                 continue
             g = (facts[s['id']].get('genre') or '').strip().lower()
-            if g and any(g == k or g.startswith(k) for k in keys):
+            # SUBSTRING, not prefix. The store answers "Contemporary Country",
+            # "Traditional Country" and "Rock & Roll", none of which START with
+            # the bucket word, so a prefix rule quietly dropped every subgenre
+            # into no pack at all.
+            if g and any(k in g for k in keys):
                 ids.append(s['id'])
         built[name] = capped(ids)
 
@@ -108,6 +138,9 @@ def main():
         was = len(existing[name]['songIds']) if name in existing else 0
         report.append((name, was, len(ids), 'rebuilt' if name in existing else 'new'))
 
+    if dropped:
+        print('  left out of every pack: ' +
+              ', '.join('%s %d' % (k, v) for k, v in dropped.most_common()))
     print('\n  %-16s %8s %8s   %s' % ('pack', 'was', 'now', ''))
     kept = {}
     for name, was, now, how in sorted(report, key=lambda r: -r[2]):
