@@ -51,9 +51,11 @@ def lookup(title, artist, tries=3):
     return None
 
 def pick(results, title, artist):
-    """The earliest edition whose title AND artist actually match."""
+    """The earliest edition whose title AND artist actually match, plus what Apple
+    calls it. The genre comes back in the same response, and asking 5,000 times is
+    slow enough that it would be daft to do it twice for two fields."""
     t, a = norm(title), norm(artist)
-    years, exact = [], False
+    years, exact, genre = [], False, None
     for r in results or []:
         rt, ra = norm(r.get('trackName')), norm(r.get('artistName'))
         if not rt or not ra:
@@ -62,10 +64,12 @@ def pick(results, title, artist):
         same_a = ra == a or a in ra or ra in a
         if same_t and same_a:
             exact = True
+            if not genre and r.get('primaryGenreName'):
+                genre = str(r['primaryGenreName'])
             d = str(r.get('releaseDate') or '')[:4]
             if re.fullmatch(r'(19|20)\d\d', d):
                 years.append(int(d))
-    return (min(years) if years else None), exact
+    return (min(years) if years else None), exact, genre
 
 def main():
     lib = json.load(open(LIB))
@@ -73,12 +77,17 @@ def main():
     done = set()
     if os.path.exists(OUT):
         for line in open(OUT):
-            try: done.add(json.loads(line)['id'])
-            except Exception: pass
+            try:
+                r = json.loads(line)
+                # Only a request that came back counts as answered. A refusal is asked again.
+                if r.get('ok') and 'genre' in r:
+                    done.add(r['id'])
+            except Exception:
+                pass
     todo = [s for s in songs if s['id'] not in done]
     if '--limit' in sys.argv:
         todo = todo[:int(sys.argv[sys.argv.index('--limit') + 1])]
-    nthreads = int(sys.argv[sys.argv.index('--threads') + 1]) if '--threads' in sys.argv else 4
+    nthreads = int(sys.argv[sys.argv.index('--threads') + 1]) if '--threads' in sys.argv else 2
     print('  %d songs, %d already answered, %d to ask about' % (len(songs), len(done), len(todo)), flush=True)
 
     q = queue.Queue(); [q.put(s) for s in todo]
@@ -88,16 +97,22 @@ def main():
             try: s = q.get_nowait()
             except queue.Empty: return
             res = lookup(s['title'], s['artist'])
-            year, in_au = pick(res, s['title'], s['artist'])
+            year, in_au, genre = pick(res, s['title'], s['artist'])
             rec = {'id': s['id'], 'title': s['title'], 'artist': s['artist'],
-                   'year': year, 'in_au_store': bool(in_au)}
+                   'year': year, 'in_au_store': bool(in_au), 'genre': genre,
+                   # DID APPLE ACTUALLY ANSWER? Without this, a throttled request and a
+                   # song genuinely not sold here are the same record, and the first run
+                   # of this filed Hey Jude, We Are the Champions and It's a Long Way to
+                   # the Top as "not in the AU store". An audit built on that would have
+                   # thrown out the best songs in the library.
+                   'ok': res is not None}
             with lock:
                 f.write(json.dumps(rec) + '\n'); f.flush()
                 n[0] += 1
                 if year: hits[0] += 1
                 if n[0] % 100 == 0:
                     print('     ... %d of %d, %d dated' % (n[0], len(todo), hits[0]), flush=True)
-            time.sleep(0.35)
+            time.sleep(0.9)   # Apple starts refusing above roughly this rate
     ts = [threading.Thread(target=work, daemon=True) for _ in range(nthreads)]
     [t.start() for t in ts]; [t.join() for t in ts]
     f.close()
