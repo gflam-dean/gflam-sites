@@ -1272,6 +1272,26 @@ def summary(which, ran_live):
 
   If the release only touched copy, a document or an email template, the list
   above can be skipped. If it touched a game, it cannot.""")
+
+    print('%sTHE RELEASE, IN ORDER%s' % (YEL, OFF))
+    print("""  Every one of these exists because skipping it cost something real.
+
+    1. Run this tool BEFORE the push. A red gate is cheaper than a red venue.
+    2. Push. The site deploys itself from main; Workers and SQL do not.
+    3. Run any new migration FIRST, then paste the Worker that needs it.
+       A Worker writing to a table that is not there fails silently.
+    4. Paste each Worker into the Worker whose NAME matches the file. On
+       31 Aug the game Worker went into the billing slot: checkout answered
+       404 and nobody could sign up until it was noticed.
+    5. RUN THIS TOOL AGAIN, AFTER. This is the step that gets skipped and it
+       is the one that catches a bad paste. It asks each Worker its own name
+       and compares its build stamp to the repo, so a file that went to the
+       wrong URL, or a paste that did not land, is named in one line.
+    6. If the release touched a game, do the live list above. No tool here
+       can open a browser or hear a pub.
+
+  Nothing is deployed until step 5 says so. "I pasted it" is not evidence;
+  /health answering with the right build is.""")
     return 1 if failed else 0
 
 
