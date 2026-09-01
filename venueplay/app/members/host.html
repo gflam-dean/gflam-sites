@@ -360,6 +360,34 @@
   function sendIdle(){ var d=curDraw();
     send({ t:"idle", drawName:d?d.name:"Members Draw", jackpotCents:d?(d.current_jackpot_cents||0):0, draws:drawsForScreen() }); }
 
+  /* THE BOARD STAYS UP WHILE THIS CONSOLE IS OPEN.
+
+     The comment further down this file says what is supposed to happen, in as
+     many words: "a club wants the draws board up on the wall from 5pm for a 7:30
+     draw". The screen does not agree with it. Its return-to-advertising is armed
+     on every state carrying playing:false and on every idle, and it is sixty
+     seconds, so the board stayed up for one minute after the host's last tap and
+     then went back to the venue's ads for the two and a half hours that
+     mattered.
+
+     Nothing on the screen needs changing: that timer is really "sixty seconds
+     after the last thing the host said", and the console simply never said
+     anything again. Saying so every thirty seconds makes the timer mean what it
+     looks like it means, and the board comes down a minute after the console is
+     closed, which is right.
+
+     Skipped while a draw is live: those phases have their own screens and their
+     own guards, and a state arriving mid-celebration is the exact thing the
+     screen's winner guard exists to refuse. */
+  var MEMBERS_HEARTBEAT_MS = 30000;
+  setInterval(function(){
+    try{
+      if(G.busy || G.round) return;      // a live draw speaks for itself
+      if(!G.venueId) return;             // not signed in yet
+      sendState();
+    }catch(e){}
+  }, MEMBERS_HEARTBEAT_MS);
+
   // ---- render console ----
   function renderStats(){
     var d=curDraw();

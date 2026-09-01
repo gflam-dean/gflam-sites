@@ -442,7 +442,32 @@
     if(!validRange()){ line.innerHTML='<span class="warn">Enter a valid ticket range.</span>'; return; }
     var drew=drawnCount();
     line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"+(drew?" · "+drew+" already drawn":"");
-    if(!G.round) sendIdle();
+    scheduleIdleBroadcast();
+  }
+
+  /* ONE BROADCAST WHEN THE TYPING STOPS, not one per keystroke.
+
+     renderRange is bound to the input event of five fields, and it used to
+     broadcast immediately. So typing a twenty character prize name sent twenty
+     signed broadcasts, and the screen tore down and rebuilt its prize menu
+     twenty times, stopped the spin and countdown twenty times, and re-armed its
+     sixty second return-to-ads twenty times. The wall visibly flickered while
+     the host typed.
+
+     The local text under the inputs still updates on every keystroke, because
+     that is the host's own screen and it should feel instant. Only the thing
+     that leaves this device waits.
+
+     The G.busy guard is the one renderPrizeList already has and this function
+     was missing: mid-draw, G.round is null for the whole spin, so an idle sent
+     from here is what wiped the drum roll off the wall. */
+  var _idleBroadcastT=null;
+  function scheduleIdleBroadcast(){
+    if(_idleBroadcastT) clearTimeout(_idleBroadcastT);
+    _idleBroadcastT=setTimeout(function(){
+      _idleBroadcastT=null;
+      if(!G.round && !G.busy) sendIdle();
+    }, 700);
   }
 
   // ---- saved prizes (READ from vp_raffle_prizes for this venue; new prizes stay local) ----
