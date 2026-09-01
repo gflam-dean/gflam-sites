@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '29 Aug 2026, 01:11 · c4d304aa';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Sep 2026, 18:39 · d49d7228';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -1476,7 +1476,44 @@ async function handleWebhook(request, env) {
   if (!ok) return json({ error: 'bad signature' }, 400);
 
   const evt = JSON.parse(raw);
-  if (evt.type !== 'checkout.session.completed') return json({ ok: true, ignored: evt.type });
+  /* THE OTHER HALF OF THE DELAYED-PAYMENT STORY.
+
+     The comment below is right that BECS and bank transfer complete the session
+     as 'unpaid' and must not be granted a licence. What was missing is the event
+     Stripe sends DAYS LATER to say the money arrived. Only
+     checkout.session.completed was acted on, so every other event - including
+     async_payment_succeeded - was answered with {ok:true, ignored} and dropped.
+
+     What that costs: an Australian buyer picks bank transfer at the Stripe page,
+     the money leaves their account, and the licence sits at 'pending' forever.
+     No code, no host key, no welcome email. The admin console labels the row
+     "somebody who started checkout and never finished", so whoever answers the
+     phone is misdirected too, and handleStats never counts the revenue, so the
+     loss is invisible from the inside.
+
+     async_payment_succeeded arrives with payment_status 'paid' and the same
+     metadata, so it can take the identical path: the PATCH below is filtered on
+     status=eq.pending, which makes it idempotent whichever event gets there
+     first.
+
+     And a payment that FAILS or a session that EXPIRES marks the row cancelled,
+     so pending rows stop accumulating forever and support can tell "never paid"
+     from "paid and waiting". */
+  const GRANTS = { 'checkout.session.completed': 1, 'checkout.session.async_payment_succeeded': 1 };
+  const KILLS  = { 'checkout.session.async_payment_failed': 1, 'checkout.session.expired': 1 };
+
+  if (KILLS[evt.type]) {
+    const dead = evt.data.object;
+    const deadId = (dead.metadata && dead.metadata.licence_id) || dead.client_reference_id;
+    if (deadId) {
+      await sb(env, 'pp_licences?id=eq.' + deadId + '&status=eq.pending', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+    }
+    return json({ ok: true, cancelled: evt.type });
+  }
+  if (!GRANTS[evt.type]) return json({ ok: true, ignored: evt.type });
 
   const s = evt.data.object;
   const licenceId = (s.metadata && s.metadata.licence_id) || s.client_reference_id;
