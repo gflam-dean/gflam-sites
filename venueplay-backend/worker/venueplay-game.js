@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Sep 2026, 07:53 · b52b588d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Sep 2026, 18:44 · 3593ca6a';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2194,13 +2194,41 @@ async function handleMembersResolve(request, env, json) {
   const draw = draws[0];
   await requireStaff(env, authUserId, draw.venue_id);            // ENFORCED: staff at the draw's venue (also kill-switch)
 
-  // Idempotency: a double-tap (or retry) on resolve must not write a second audit row or
-  // advance the jackpot twice. If this draw was resolved in the last 30s, treat it as the
-  // same action and return the current state unchanged. A genuine re-resolve after the next
-  // draw (minutes later) proceeds normally.
+  /* Idempotency: a double-tap or a retry must not write a second audit row or
+     advance the jackpot twice.
+
+     THIRTY SECONDS WAS SHORTER THAN THE CONSOLE'S OWN PATIENCE. The members
+     console aborts its fetch at FIFTEEN seconds and tells the host "Could not
+     roll the jackpot over. Try again." A host reads that, looks up, and taps
+     again forty seconds later - past the window - so the rollover row was
+     written twice and the increment applied twice. A $2,400 jackpot with a $100
+     increment became $2,600 rather than $2,500, permanently, and the wall
+     announced the wrong number every week after. The claim path has the same
+     shape: a second 'claimed' row means the prizes-given report says the venue
+     handed over $2,900 when it handed over $2,400.
+
+     Five minutes covers a human reading a banner and trying again, and is far
+     inside the gap between two genuine draws on the same draw row: resolving,
+     drawing again and resolving again inside five minutes is not something a
+     members draw does. */
   const lastResolved = draw.last_resolved_at ? new Date(draw.last_resolved_at).getTime() : 0;
-  if (lastResolved && (Date.now() - lastResolved) < 30000) {
-    return json({ draw_id: drawId, outcome, amount_cents: draw.current_jackpot_cents,
+  if (lastResolved && (Date.now() - lastResolved) < 300000) {
+    /* AND REPORT WHAT ACTUALLY HAPPENED, not what the jackpot is now.
+
+       This returned draw.current_jackpot_cents, which after a claim is the
+       RESET starting amount. The console feeds that straight to the TV, so a
+       room that had just been told the winner took $2,400 watched the screen
+       count up to $500. The audit row is the truth; read it. */
+    let saidAmount = draw.current_jackpot_cents, saidOutcome = outcome;
+    try {
+      const prev = await sbGet(env, 'vp_member_draw_results',
+        'draw_id=eq.' + enc(drawId) + '&select=outcome,amount_cents&order=created_at.desc&limit=1');
+      if (prev.length) {
+        if (prev[0].amount_cents != null) saidAmount = prev[0].amount_cents;
+        if (prev[0].outcome) saidOutcome = prev[0].outcome;
+      }
+    } catch (e) { /* fall back to the draw row rather than fail a duplicate */ }
+    return json({ draw_id: drawId, outcome: saidOutcome, amount_cents: saidAmount,
       new_jackpot_cents: draw.current_jackpot_cents,
       increment_cents: draw.increment_cents != null ? draw.increment_cents : 0, duplicate: true });
   }
