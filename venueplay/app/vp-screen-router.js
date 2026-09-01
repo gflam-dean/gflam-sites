@@ -107,8 +107,22 @@
     });
 
     /* The page calls this from its own message handler, so we can tell a game
-       being played from one that was abandoned mid-question. */
-    return { seen: function () { lastOwn = Date.now(); } };
+       being played from one that was abandoned mid-question.
+
+       PASS THE MESSAGE. Without it every scrap of traffic counts as proof our
+       game is live, and the consoles now send a heartbeat every thirty seconds
+       while they are merely OPEN - which is under the ninety second window, so
+       lastOwn never went stale and ourGameIsLive() was true for the rest of the
+       night. A host who finished a quiz and left the tab open owned the wall:
+       start the raffle and the screen stayed on the podium. That is fault 2 in
+       this file's own header, reintroduced by the heartbeats that fixed a
+       different fault.
+
+       onAir() is the judgement this file already makes, and it puts host_here,
+       idle, session, players and a state with nothing playing on the wrong side
+       of it. The screens were bypassing it. A caller that passes nothing keeps
+       the old behaviour, so nothing breaks while the pages are updated. */
+    return { seen: function (m) { if (arguments.length === 0 || onAir(m)) lastOwn = Date.now(); } };
   }
 
   root.VPScreenRouter = { start: start, onAir: onAir };

@@ -440,7 +440,7 @@
   function applyDraws(m){ if(Array.isArray(m.draws)) state.draws=m.draws; }
 
   function onMsg(m){
-    _router.seen();   // our game is still talking, so it is genuinely live
+    _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
     // Any word from the host means pairing is done: never put the setup line back on the wall.
     state.hostSeen=true;

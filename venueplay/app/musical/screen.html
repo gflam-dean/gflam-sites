@@ -622,7 +622,7 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
   function stopClip(){ try{ clipAudio.pause(); clipAudio.removeAttribute("src"); clipAudio.load(); }catch(e){} }
 
   function onMsg(m){
-    _router.seen();   // our game is still talking, so it is genuinely live
+    _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                 // ignore our own presence pings

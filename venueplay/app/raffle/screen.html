@@ -406,7 +406,7 @@
   // replies tv_here so a freshly (re)loaded console re-syncs, same handshake as the trivia TV.
   var HOST_TYPES={host_here:1,state:1,idle:1,drawing:1,winner:1,claimed:1,redraw:1};
   function onMsg(m){
-    _router.seen();   // our game is still talking, so it is genuinely live
+    _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
     if(m.t==="tv_here") return;                       // ignore our own presence pings
     if(HOST_TYPES[m.t]){ S.hostSeen=true; tvSend({ t:"tv_here" }); }

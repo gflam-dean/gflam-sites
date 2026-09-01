@@ -590,7 +590,7 @@
   }, 30000);
   function scheduleBackToAds(){ if(!VENUE_SLUG) return; cancelBackToAds(); _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 18000); }
   function onMsg(m){
-    _router.seen();   // our game is still talking, so it is genuinely live
+    _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
     if(!m||!m.t) return;
     if(!_adsKeep[m.t]) cancelBackToAds();
     if(m.t==="tv_here") return;                       // ignore our own presence pings

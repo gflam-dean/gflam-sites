@@ -84,6 +84,28 @@ pass("the console says which one it is (lobby vs ended)",
        "without it the screen cannot tell an open lobby from a closed laptop");
 });
 
+/* 4b. A HEARTBEAT MUST NOT COUNT AS "OUR GAME IS ON AIR".
+
+   The screen router refuses to hand the wall to another game while our own game
+   is still talking, on a 90 second window. The consoles send a heartbeat every
+   30 seconds while merely OPEN, so once the screens started passing that through
+   unfiltered, a host who finished a quiz and left the tab open owned the wall for
+   the rest of the night. It is fault 2 in vp-screen-router's own header, and it
+   came back the day the heartbeats were added.
+
+   The router's onAir() already puts host_here, idle and an inactive state on the
+   right side of the line. These checks exist so the screens keep asking it. */
+var router = read([ "venueplay/app/vp-screen-router.js", "../vp-screen-router.js",
+                    "/Users/dean.tindale/gflam-sites-current/venueplay/app/vp-screen-router.js" ], 500);
+pass("the router filters its own liveness signal",
+     !!router && /seen:\s*function\s*\(m\)[\s\S]{0,120}onAir\(m\)/.test(router),
+     "seen() counts any traffic again, so a heartbeat pins the wall to a finished game");
+[["trivia", trivScreen], ["musical", screenSrc]].forEach(function (p2){
+  pass(p2[0] + ": the screen passes the message to seen()",
+       /_router\.seen\(m\)/.test(p2[1]),
+       "calls seen() with nothing, so every heartbeat counts as gameplay");
+});
+
 /* 5. THE ROOM COULD NOT GET LOUD ENOUGH.
    An <audio> element cannot exceed the file's own level, so a laptop on HDMI tops
    out at whatever the track was mastered at. The clip runs through a gain stage
