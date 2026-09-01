@@ -545,6 +545,63 @@ def local_checks(which):
     ok('no screen leaves a second code up once the host is connected', not unhidden,
        why='the pairing code stays on the wall beside the player code on: ' + ', '.join(unhidden))
 
+    """A COMMENT MAY NOT CLAIM AN EXEMPTION THE CODE DOES NOT GRANT.
+
+    Five files said a message type was exempt from broadcast signing. The list
+    in vp-sign.js is screen_refresh, tv_here, hello and rollcall, and none of
+    the five named any of those. They all named to_ads or idle, which are the
+    "give the wall back" messages, so on a venue with signing enforced every one
+    of those pagehide handlers was silently a no-op and the TV sat on a finished
+    game until the 90 minute timeout.
+
+    That is the single most common fault in this codebase: a comment read as
+    documentation that was never true, or stopped being true. A general check
+    for lying comments is not possible. A check for THIS claim is, and it is the
+    one that decides whether a pub's screen gets released."""
+    signp = os.path.join(ROOT, 'venueplay', 'app', 'vp-sign.js')
+    if os.path.isfile(signp):
+        src = io.open(signp, encoding='utf-8').read()
+        m = re.search(r'var EXEMPT\s*=\s*\{([^}]*)\}', src)
+        real = set(re.findall(r'(\w+)\s*:', m.group(1))) if m else set()
+        liars = []
+        for d, _, fs in os.walk(os.path.join(ROOT, 'venueplay')):
+            for f in sorted(fs):
+                if not (f.endswith('.html') or f.endswith('.js')):
+                    continue
+                fp = os.path.join(d, f)
+                if fp == signp:
+                    continue
+                for line in io.open(fp, encoding='utf-8', errors='replace'):
+                    for claim in re.findall(r'(\w+)\s+is\s+EXEMPT', line):
+                        if claim not in real:
+                            liars.append('%s says %s' % (short(fp), claim))
+        ok('no file claims an exemption vp-sign does not grant', not liars,
+           'the real list is ' + ', '.join(sorted(real)),
+           why='; '.join(liars[:3]) + '. Those messages are DROPPED under enforce.')
+
+    """AND TWO MIGRATIONS MAY NOT SHARE A NUMBER.
+
+    partyplay-12 exists twice. Migrations are run by hand, in order, from a
+    folder listing, so two files with the same number is two people each
+    believing they ran 12. This is cheap to check and impossible to notice."""
+    for label, folder in (('VenuePlay', 'venueplay-backend/supabase'),
+                          ('PartyPlay', 'partyplay-backend/supabase')):
+        d = os.path.join(ROOT, folder)
+        if not os.path.isdir(d):
+            continue
+        nums = {}
+        for f in sorted(os.listdir(d)):
+            # A letter suffix (12b) is a deliberate sibling of an already-run
+            # migration, not a collision: renumbering a migration that has been
+            # applied would tell the next person to run it again.
+            m = re.match(r'\w+?-(\d+[a-z]?)-', f)
+            if m:
+                nums.setdefault(m.group(1), []).append(f)
+        dupes = ['%s: %s' % (n, ' and '.join(v)) for n, v in sorted(nums.items()) if len(v) > 1]
+        ok('%s migrations are numbered once each' % label, not dupes,
+           '%d migrations' % len(nums),
+           why='; '.join(dupes[:2]))
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging

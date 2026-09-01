@@ -764,7 +764,7 @@
   // Tell the room before you go. Neither sign-out path did, so the wall kept showing a frozen
   // board with the last number on it and every phone kept its card, until a 90 minute timer.
   // Sync (rawSend), not the async signed send: this fires as the host signs out / the tab unloads, and
-  // an async signature never completes before the page dies. idle is EXEMPT so enforce still honours it.
+  // an async signature never completes before the page dies. idle is NOT exempt, so under enforce this is dropped too; see vp-sign.js EXEMPT.
   /* BINGO WAS THE ONLY FORMAT THAT NEVER TOLD THE WALL IT HAD GONE.
 
      Musical, trivia, raffle and members all send this on pagehide. Bingo sent

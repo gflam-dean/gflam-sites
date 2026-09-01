@@ -920,7 +920,7 @@
      is left alone: closing the tab mid-claim must not wipe the drawn ticket off the screen. */
   window.addEventListener("pagehide", function(){
     if(G.round) return;
-    try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; async signed send never lands before the page dies (to_ads is EXEMPT)
+    try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT
   });
 
   (function(){ var b=document.getElementById("toAdsBtn"); if(!b) return;
