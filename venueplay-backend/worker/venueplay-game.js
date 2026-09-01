@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Sep 2026, 18:44 · 3593ca6a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '1 Sep 2026, 19:40 · a30365f5';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -3769,7 +3769,9 @@ async function handleOverageAck(request, env, json) {
      the amount was whatever the count happened to be at close, hours later, with no ceiling. */
   const roster = await sbGet(env, 'vp_players',
     'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
-  const approvedCount = countPlayers(roster);
+  // Counted the same way the charge counts, or the approved figure and the
+  // billed figure are unrelated numbers again.
+  const approvedCount = countPlayersWhoPlayed(roster, await playerIdsWhoPlayed(env, sessionId));
   await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId),
     { overage_approved: true, overage_approved_at: new Date().toISOString(),
       overage_approved_count: approvedCount });
@@ -3991,6 +3993,56 @@ function overageCeiling(session, planCap) {
    Rows with no device_id predate migration 39, or came from a page that sends none: those are
    counted individually, which is the old behaviour and errs in the venue's favour rather than
    silently collapsing two real patrons into one. Callers must select device_id. */
+/* WHO ACTUALLY PLAYED, as opposed to who opened the page.
+
+   Dean's rule, and it is the right one: "They have to be in the game and have
+   to answer one question."
+
+   A vp_players row is minted the moment a phone loads /play while a session is
+   live - before any name is typed, before any game starts. So somebody who
+   scanned the QR on the table, looked at it and put the phone back in their
+   pocket was a billable player, and the host's console never showed them,
+   because the console counts people who typed a name and joined. The venue was
+   invoiced for a room bigger than the one the host was looking at.
+
+   What the server genuinely knows about participation:
+
+     trivia          a row in vp_trivia_answers. Literally answered a question.
+     bingo, musical  a row in vp_cards. A card is only ever dealt to a player who
+                     is in the game when it starts, or who joins it after.
+
+   Anything else - raffle, members draw - mints no vp_players at all and is
+   unaffected.
+
+   If this lookup fails for any reason it returns null and the caller falls back
+   to counting every row, which is exactly what happened before this existed. A
+   billing change must not become a billing outage. */
+async function playerIdsWhoPlayed(env, sessionId) {
+  try {
+    const games = await sbGet(env, 'vp_games',
+      'session_id=eq.' + enc(sessionId) + '&select=id&limit=200');
+    if (!games.length) return new Set();
+    const ids = games.map((g) => g.id).join(',');
+    const played = new Set();
+    const cards = await sbGet(env, 'vp_cards',
+      'game_id=in.(' + ids + ')&select=player_id&limit=5000');
+    for (const c of cards) if (c && c.player_id) played.add(c.player_id);
+    const answers = await sbGet(env, 'vp_trivia_answers',
+      'game_id=in.(' + ids + ')&select=player_id&limit=20000');
+    for (const a of answers) if (a && a.player_id) played.add(a.player_id);
+    return played;
+  } catch (e) {
+    console.log('[overage] could not tell who played: ' + String((e && e.message) || e));
+    return null;   // caller falls back to the old count
+  }
+}
+
+/* Only the rows that belong to somebody who played, deduped by device. */
+function countPlayersWhoPlayed(rows, played) {
+  if (!played) return countPlayers(rows);
+  return countPlayers((rows || []).filter((p) => p && played.has(p.id)));
+}
+
 function countPlayers(rows) {
   const seen = new Set();
   let n = 0;
@@ -4159,7 +4211,12 @@ async function chargeNightOverage(env, session) {
   if (!cap) return;
   const players = await sbGet(env, 'vp_players',
     'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id');
-  const counted = countPlayers(players);
+  const played = await playerIdsWhoPlayed(env, session.id);
+  const counted = countPlayersWhoPlayed(players, played);
+  if (played && players.length !== counted) {
+    console.log('[overage] session ' + session.id + ': ' + players.length + ' phones opened the page, ' +
+                counted + ' actually played. Billing the ' + counted + '.');
+  }
   /* Never bill past what the host approved. The count is re-read here, hours after the tap, so
      without this the approved figure and the billed figure were unrelated numbers. */
   const ceiling = overageCeiling(session, cap);

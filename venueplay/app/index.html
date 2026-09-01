@@ -1501,8 +1501,22 @@
     var extra=cnt-cap;
     // Name the actual number. This modal is the venue's consent to a charge and it used to give
     // no price at all, while implying the extras were a one-off for the rest of the period.
-    $("ovgBody").innerHTML="You have <b>"+cnt+"</b> players and your plan includes <b>"+cap+"</b>. "+
-      "Tonight's <b>"+extra+"</b> extra player"+(extra===1?"":"s")+" cost <b>$2 each</b>, so <b>$"+(extra*2).toFixed(2)+"</b> on your next bill. "+
+    /* SAY THAT THE NUMBER KEEPS MOVING.
+
+       This quoted a figure and a dollar amount as though both were settled, and
+       they are not: the room keeps filling after the host taps, and the charge
+       is worked out at the end of the night from everyone who played. So a
+       modal saying "4 extra players, $8.00" was making a promise the billing
+       never kept, and the difference turned up on an invoice weeks later with
+       nothing to explain it.
+
+       Dean's wording, and it is the honest one: anyone who joins from here is
+       added too. Name the price per head rather than a total, because the price
+       per head is the part that is actually fixed. */
+    $("ovgBody").innerHTML="You have <b>"+cnt+"</b> playing and your plan includes <b>"+cap+"</b>. "+
+      "Extra players are <b>$2 each</b> on your next bill, so right now that is <b>$"+(extra*2).toFixed(2)+"</b>. "+
+      "Tap Start game and <b>anyone who joins from here is added too</b>, at the same $2. "+
+      "The final number is whoever actually plays tonight. "+
       "Go over three weeks running and the third night is $1 a head and we lift your plan to suit, so it never costs more than moving up.";
     var m=$("ovgModal"); m.classList.remove("hidden");
     $("ovgGo").onclick=function(){
