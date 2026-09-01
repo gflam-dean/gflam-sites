@@ -390,10 +390,22 @@
 
            The outcome is right there in the snapshot: g.results is what the history
            table is rebuilt from a few lines above. */
-        var _lastOutcome = "";
+        var _lastOutcome = "", _lastPrize = "";
         if(Array.isArray(g.results)){
           for(var _r=0;_r<g.results.length;_r++){
-            if(g.results[_r] && g.results[_r].seq===g.last_seq){ _lastOutcome=String(g.results[_r].outcome||""); break; }
+            if(g.results[_r] && g.results[_r].seq===g.last_seq){
+              _lastOutcome=String(g.results[_r].outcome||"");
+              /* THE PRIZE THAT ROUND WAS DRAWN FOR, not the next one in the queue.
+
+                 This used g.prize (the prize baked into the game row, usually empty
+                 on a multi-prize night because startDraw clears the input) falling
+                 back to prizeLabel(), which returns the NEXT prize waiting to be
+                 drawn. So a recovered winner was announced on the wall under the
+                 wrong prize name while the database held the right one. The
+                 snapshot carries prize_text per round; use it. */
+              _lastPrize=String(g.results[_r].prize_text||"");
+              break;
+            }
           }
         }
         var _stillLive = !(_lastOutcome==="claimed" || _lastOutcome==="no_show");
@@ -411,7 +423,7 @@
                             fresh three minute countdown on a round that was drawn before the
                             tablet locked, on the console and on the wall. */
                          time_to_present:0,
-                         prize:(g.prize||prizeLabel()) });
+                         prize:(_lastPrize||g.prize||prizeLabel()) });
           hostError("Picked up where you left off. Confirm the ticket on screen: Claim if they are here, or Not here to redraw.");
           return true;
         }
@@ -461,6 +473,29 @@
      The G.busy guard is the one renderPrizeList already has and this function
      was missing: mid-draw, G.round is null for the whole spin, so an idle sent
      from here is what wiped the drum roll off the wall. */
+  /* THE WALL STAYS WHILE THIS CONSOLE IS OPEN.
+
+     The screen returns to the venue's advertising 60 seconds after a claim, and
+     the host's own idle nine seconds later re-arms another 60. So the raffle
+     came off the wall about 69 seconds after a winner, which is less time than
+     handing over a meat tray and writing the next prize on the console takes in
+     any pub. Then the next Draw had to bring the whole screen back from /tv,
+     and a screen that arrives mid-spin shows the idle card for the whole draw.
+
+     Same fix as the members board: that timer is really "60 seconds after the
+     last thing the host said", and between prizes the console said nothing.
+     Saying so every 30 seconds makes the timer mean what it looks like it
+     means. Nothing is sent while a round is live: those phases have their own
+     screens and their own guards. */
+  var RAFFLE_HEARTBEAT_MS = 30000;
+  setInterval(function(){
+    try{
+      if(G.round || G.busy) return;      // a live round speaks for itself
+      if(!G.venueId) return;             // not signed in yet
+      sendIdle();
+    }catch(e){}
+  }, RAFFLE_HEARTBEAT_MS);
+
   var _idleBroadcastT=null;
   function scheduleIdleBroadcast(){
     if(_idleBroadcastT) clearTimeout(_idleBroadcastT);
