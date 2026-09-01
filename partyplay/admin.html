@@ -463,6 +463,18 @@
     $("findgo").addEventListener("click", lookup);
     $("q").addEventListener("keydown", function(e){ if(e.key==="Enter") lookup(); });
 
+    /* ONCE. This listener is on `document`, and screen() runs again after every
+       staff add and every staff removal - rewriting $("app").innerHTML does not
+       remove a handler bound to the document, so they stacked.
+
+       That is not cosmetic. After adding one staff member every [data-do] click
+       fired twice: two "Why? (goes in the log)" prompts, two POSTs to
+       /admin/party/do, and "Give them 24h more" handed over 48 hours, because
+       the Worker adds the hours to expires_at each time. Two staff members and
+       it was 72. The audit log records each as a separate deliberate action, so
+       it reads as though the operator meant it. */
+    if(!window.__ppAdminClickBound){
+    window.__ppAdminClickBound = true;
     document.addEventListener("click", function(ev){
       var b = ev.target.closest ? ev.target.closest("[data-cp],[data-do]") : null;
       if(!b) return;
@@ -486,6 +498,7 @@
         .then(function(j){ out.textContent = j.did; setTimeout(lookup, 600); })
         .catch(function(e){ out.className = "out show bad"; out.textContent = e.message; });
     });
+    }
 
     $("compgo").addEventListener("click", function(){
       var b={ name:($("cn").value||"").trim(), email:($("ce").value||"").trim(),

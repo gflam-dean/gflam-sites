@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '1 Sep 2026, 18:39 · d49d7228';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '2 Sep 2026, 07:09 · 91f1ca6f';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -747,10 +747,26 @@ async function handleSendAlbums(request, env) {
     const lic = await sb(env, 'pp_licences?id=eq.' + r.licence_id +
       '&expires_at=lt.' + encodeURIComponent(now) + '&select=share_key,party_name,expires_at');
     if (!lic.length) continue;                       // party still running, ask again later
-    await sb(env, 'pp_album_requests?id=eq.' + r.id, {
-      method: 'PATCH', body: JSON.stringify({ sent_at: now })
-    });
-    try { await sendAlbumEmail(env, r, lic[0]); sent++; } catch (e) { console.log('album email failed: ' + e.message); }
+    /* STAMP AFTER THE SEND, not before it.
+
+       This marked the request sent and then tried to send, and a failure only
+       logged. The job selects sent_at=is.null, so that guest was never retried:
+       one Resend hiccup and somebody who asked for the photos at the party never
+       got them, with nothing anywhere showing it had gone wrong.
+
+       The other two jobs in this file stamp first on purpose, and that is right
+       for them: under-sending marketing beats sending it twice. This one is a
+       promise made to a guest at a party, so it fails the other way. The worst
+       case here is a duplicate album link, which nobody minds. */
+    try {
+      await sendAlbumEmail(env, r, lic[0]);
+      await sb(env, 'pp_album_requests?id=eq.' + r.id, {
+        method: 'PATCH', body: JSON.stringify({ sent_at: now })
+      });
+      sent++;
+    } catch (e) {
+      console.log('album email failed, will retry next run: ' + e.message);
+    }
   }
   return json({ ok: true, pending: pending.length, sent });
 }
