@@ -53,7 +53,10 @@ CURATED = {'Pub Classics', 'Aussie', '80s Rock', 'Disco', 'Funk', 'Soul & Motown
 
 # Things that are in the library and should not be in a pack a pub plays.
 NOT_THE_RECORD = re.compile(r'\((?:re-?recorded|re-?recording)\)|\bre-?recorded\b', re.I)
-CHRISTMAS = re.compile(r'\b(christmas|xmas|santa|sleigh|noel|jingle bell|silent night|'
+# Bare "santa" is a place name as often as a saint: it caught Santa Monica by
+# Everclear and Santa Cruz by The Thrills, which are exactly the songs a pub
+# wants. Losing a Santa Baby is the cheaper mistake.
+CHRISTMAS = re.compile(r'\b(christmas|xmas|sleigh|jingle bell|silent night|santa claus|'
                        r'winter wonderland|feliz navidad|auld lang syne)\b', re.I)
 
 def unfit(song):
@@ -90,6 +93,7 @@ def main():
     byid  = {s['id']: s for s in songs}
 
     dropped = collections.Counter()
+    dropped_ids = set()
 
     def eligible(sid):
         f = facts.get(sid)
@@ -97,17 +101,35 @@ def main():
             return False
         why = unfit(byid[sid])
         if why:
-            dropped[why] += 1
+            # eligible() is asked once per pack, so counting calls here reported
+            # 23 Christmas songs as 322. Count the SONG, once.
+            if sid not in dropped_ids:
+                dropped_ids.add(sid)
+                dropped[why] += 1
             return False
         return True
 
     def capped(ids):
-        seen, out = collections.Counter(), []
+        """Three per artist, and one per TITLE.
+
+        The draw already refuses to deal two songs with the same title into one
+        game, because the player's card shows titles only. But a pack that holds
+        Wagon Wheel by Darius Rucker at position 1 and Wagon Wheel by Old Crow
+        Medicine Show at position 2 has spent its two most-weighted slots on one
+        song, and the draw then skips whichever it reaches second. Keep the
+        better-known recording and give the slot to something else.
+        """
+        seen, titles, out = collections.Counter(), set(), []
         for sid in sorted(ids, key=lambda x: order.get(x, 1 << 30)):
             a = (byid[sid]['artist'] or '').strip().lower()
             if seen[a] >= PER_ARTIST:
                 continue
+            t = re.sub(r'[^a-z0-9]', '', (byid[sid]['title'] or '').lower())
+            if t and t in titles:
+                continue
             seen[a] += 1
+            if t:
+                titles.add(t)
             out.append(sid)
         return out
 
