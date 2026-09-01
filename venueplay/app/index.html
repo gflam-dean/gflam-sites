@@ -765,6 +765,28 @@
   // board with the last number on it and every phone kept its card, until a 90 minute timer.
   // Sync (rawSend), not the async signed send: this fires as the host signs out / the tab unloads, and
   // an async signature never completes before the page dies. idle is EXEMPT so enforce still honours it.
+  /* BINGO WAS THE ONLY FORMAT THAT NEVER TOLD THE WALL IT HAD GONE.
+
+     Musical, trivia, raffle and members all send this on pagehide. Bingo sent
+     nothing: closing the tab, the tablet sleeping, or tapping Games to go to
+     another format left the board or the lobby sitting in the room until the
+     TV's 90 minute host-silence timer eventually gave up. A dead bingo board in
+     front of a pub for an hour and a half.
+
+     A live game is left alone, deliberately: closing the tab mid-round must not
+     wipe a running board off the wall.
+
+     One honest caveat the other consoles get wrong in their comments: to_ads is
+     NOT on vp-sign's exempt list, so on a venue with broadcast signing enforced
+     this unsigned send is dropped. The signed path cannot be used here because
+     an async signature never completes before the page dies. Enforce is off by
+     default per venue; where it is on, that venue falls back to the same 90
+     minute timer this fixes for everyone else. */
+  window.addEventListener("pagehide", function(){
+    if(G.idx>=0 && !G.won) return;                        // a round is being played
+    try{ rawSend({ t:"to_ads" }); }catch(e){}
+  });
+
   function releaseRoom(){ try{ if(subscribed && ch){ rawSend({ t:"idle" }); } }catch(e){} }
   function endShift(){
     releaseRoom(); closeOpenNight(); try{ localStorage.removeItem("vpShiftStart"); }catch(e){} if(shiftTimer){ clearTimeout(shiftTimer); shiftTimer=null; } }

@@ -1007,7 +1007,7 @@
     }catch(err){ $("statusText").textContent="Reconnecting"; setTimeout(connectRealtime, 3000); }
   }
 
-  var HOST_TYPES={host_here:1,session:1,mode:1,idle:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
+  var HOST_TYPES={host_here:1,session:1,mode:1,idle:1,to_ads:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
   function onMsg(m){
     if(!m||!m.t) return;
     if(m.t==="tv_here") return; // ignore our own presence pings
@@ -1043,7 +1043,11 @@
       else enterHolding(m.mode);
       return;
     }
-    if(m.t==="idle"){ enterAds(); return; }
+    /* to_ads had no branch here at all, so even a console that sent it was
+       talking to nobody: it is not in HOST_TYPES and matched nothing, and was
+       dropped silently. It means the same thing as idle on this channel - the
+       host has finished with the room - so it lands in the same place. */
+    if(m.t==="idle" || m.t==="to_ads"){ enterAds(); return; }
 
     if(m.t==="state"){
       /* THE CODE ON THE WALL DOES NOT CHANGE. It is deliberately the venue's permanent one: it is
