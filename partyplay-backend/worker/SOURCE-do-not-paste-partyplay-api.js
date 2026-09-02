@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '3 Sep 2026, 09:07 · 7761eef8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Sep 2026, 09:39 · 1e7aa1c5';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -1842,6 +1842,13 @@ export default {
       if (lockedOut) warnings.push('pp_admins has no active rows and no ADMIN_KEY is set, so NOBODY can sign in to the admin. Comping a party, refunds and resends will all answer "no". Seed your mobile: partyplay-12-seed-first-admin.sql.');
 
       return json({
+        /* SAY WHICH WORKER THIS IS. On 31 Aug the VenuePlay game Worker was pasted
+           into the billing slot: checkout answered 404 and nobody could sign up
+           until somebody noticed by hand. What catches that now is each Worker
+           naming itself at /health, and the gate asking each URL who it is. Both
+           VenuePlay Workers do it. This one did not, so a file pasted into the
+           wrong slot here would still look healthy. */
+        worker: 'partyplay-api',
         build: BUILD,
         ok: !missing.length && photos && !lockedOut,
         missing,

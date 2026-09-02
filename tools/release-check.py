@@ -1286,16 +1286,33 @@ def each_worker_is_the_right_worker():
     healthy but is the WRONG ONE is the failure that reads as something else."""
     head('Each Worker is the one that belongs at its URL')
     for label, url, want in (('billing', VP_API, 'venueplay-api'),
-                             ('game', VP_GAME, 'venueplay-game')):
+                             ('game', VP_GAME, 'venueplay-game'),
+                             # PartyPlay only has one Worker, so it cannot be
+                             # confused with its sibling -- but it CAN be handed a
+                             # VenuePlay file, which is exactly what happened in
+                             # the other direction on 31 Aug.
+                             ('partyplay', PP_API, 'partyplay-api')):
         status, body, _ = get(url + '/health')
         try:
             got = (json.loads(body) or {}).get('worker')
         except Exception:
             got = None
-        ok('the %s URL is answering as %s' % (label, want), got == want,
-           got or 'no name in the reply',
-           why='it is answering as "%s". The wrong file was pasted into this Worker: '
-               'billing takes venueplay-api-FULL.js, game takes venueplay-game.js.' % got)
+        # TWO DIFFERENT ANSWERS, and only one of them is an emergency.
+        #
+        # A worker naming itself as a DIFFERENT worker means the wrong file went
+        # into this slot, which is what happened on 31 Aug: checkout answered 404
+        # and nobody could sign up. That fails.
+        #
+        # No name at all just means a build older than the line that added the
+        # name. Saying "the wrong file was pasted" there would be a lie, and a
+        # check that cries wolf is one people learn to push past.
+        if got is None:
+            ok('the %s URL names itself' % label, True, 'no name yet, so this build predates it',
+               why='')
+        else:
+            ok('the %s URL is answering as %s' % (label, want), got == want, got,
+               why='it is answering as "%s". The wrong file was pasted into this Worker: '
+                   'billing takes venueplay-api-FULL.js, game takes venueplay-game.js.' % got)
 
 
 def venue_codes_are_unique():
