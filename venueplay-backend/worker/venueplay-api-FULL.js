@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '31 Aug 2026, 12:36 · f6a82c03';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '2 Sep 2026, 10:27 · 8331f8d3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -1378,10 +1378,26 @@ async function vpaHandleDiscount(request, env, json) {
         // Stripe consumes it on the next invoice by itself. Same mechanism the annual release
         // credit already uses, so a venue sees one consistent "credit held" figure.
         const cents = Math.round(value * 100);
+        /* KEYED, because the percent branch above is guarded and this one was not.
+
+           That branch refuses outright when a discount already sits on the
+           subscription. The dollar branch had neither a guard nor an
+           idempotency key, so two HQ tabs, or an operator pressing Apply again
+           after a slow response, banked the credit twice and wrote two
+           vp_discounts rows. Removing it only reverses one, and the reversal is
+           capped at the outstanding balance, so once an invoice has eaten the
+           first credit the second cannot be recovered from HQ at all.
+
+           Scoped to the day on purpose. Stripe's own idempotency window is 24
+           hours, so this matches it: the same dollar amount to the same
+           customer twice today is the double-click we are stopping, while the
+           same amount next week is a deliberate second discount and goes
+           through. */
+        const discDay = new Date().toISOString().slice(0, 10);
         const txn = await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions', {
           amount: -cents, currency: 'aud',
           description: 'VenuePlay discount' + (note ? ': ' + note : ''),
-        });
+        }, 'disc:' + target.customer + ':' + cents + ':' + discDay);
         if (!txn || txn.error || !txn.id) {
           return json({ error: 'Stripe would not add that credit: ' + ((txn && txn.error && txn.error.message) || 'unknown error') }, 502);
         }
@@ -4018,10 +4034,20 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
       return { kind: 'charge', cents: cents, months: months };
     }
     // Negative balance on a Stripe customer IS a credit; it is consumed by the next invoice.
+    /* KEYED, like the two charges above it. This call had three arguments and
+       no key, while both charge paths in this same function pass one, and this
+       function's own header says to key anything that MOVES MONEY.
+
+       Two tabs on the billing page - or an owner and an HQ admin on View as -
+       pressing Save on the same reduction inside the second it takes to read
+       the account both see the same current count, both compute the same delta,
+       and both bank the credit. The later restore is keyed, so it charges once
+       and the second credit is kept. On an annual account releasing 50 players
+       that is four figures given away, silently. */
     const cRes = await vpbStripePost(env, 'customers/' + encodeURIComponent(customer) + '/balance_transactions', {
       amount: -cents, currency: 'aud',
       description: who + players + ' released, credit carried to your next renewal (' + months + ' months)',
-    });
+    }, idemTag ? ('prel:' + idemTag) : null);
     if (cRes && cRes.error) { console.log('[billing] credit FAILED: ' + (cRes.error.message || '')); return { kind: 'failed', cents: cents }; }
     return { kind: 'credit', cents: cents, months: months };
   } catch (_) { return null; /* the quantity change still governs ongoing billing */ }
@@ -4069,7 +4095,7 @@ async function vpbSetPlayers(request, env, json) {
     // Take back the credit the scheduled reduction banked. Without this, an annual venue could
     // reduce, pocket the credit, restore, and repeat.
     const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - basis, o.account.plan, venue.name,
-      venueId + ':' + current + ':' + ((rinfo.sub && rinfo.sub.current_period_end) || '0')) : null;
+      venueId + ':' + current + ':' + (rinfo.periodEnd || '0')) : null;
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_reduction_cancelled',
       target: 'venue:' + venueId, detail: { players: current, from_billed: billedNow, billing: rAdj, actor_user: o.authUserId },
@@ -4097,7 +4123,7 @@ async function vpbSetPlayers(request, env, json) {
     // Charge for the players they are actually gaining over what they are billed today. Using
     // players-current understated it whenever a reduction was already scheduled.
     const iAdj = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name,
-      venueId + ':' + players + ':' + ((info.sub && info.sub.current_period_end) || '0'));
+      venueId + ':' + players + ':' + (info.periodEnd || '0'));
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
@@ -4131,7 +4157,7 @@ async function vpbSetPlayers(request, env, json) {
   // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
   // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
   const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name,
-    venueId + ':' + players + ':' + ((dinfo.sub && dinfo.sub.current_period_end) || '0')) : null;
+    venueId + ':' + players + ':' + (dinfo.periodEnd || '0')) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },
@@ -4189,7 +4215,7 @@ async function vpbAddVenue(request, env, json) {
   // A whole new venue is an increase like any other: one month on monthly, pro rata to the
   // renewal date on annual (it used to be charged a single month even on an annual account).
   const aAdj = billingOk ? await vpbAdjustPlayerBilling(env, info, players, o.account.plan, name,
-    'newvenue:' + String(name || '').slice(0,40) + ':' + players + ':' + ((info.sub && info.sub.current_period_end) || '0')) : null;
+    'newvenue:' + String(name || '').slice(0,40) + ':' + players + ':' + (info.periodEnd || '0')) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o),
     action: billingOk ? 'venue_added' : 'venue_added_billing_pending',
