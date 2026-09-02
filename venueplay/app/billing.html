@@ -616,12 +616,24 @@
   function gateSections(d){
     if (d.is_owner) return; // the account owner sees everything
     var p = d.perms || {};
+    // A section is a .label and everything after it until the next .label.
+    // The labels sit INSIDE a tab panel, not directly under #content, so find
+    // each label wherever it lives and walk its own siblings from there.
+    // (Before 2 Sep 2026 this read $("content").children, whose only children
+    // are the tab bar and the panels, so it matched nothing and every gate
+    // below was a no-op: a manager saw sections the owner had switched off.)
     function section(labelText){
-      var out=[], started=false, kids=$("content").children, lt=labelText.toLowerCase();
-      for (var i=0;i<kids.length;i++){
-        var el=kids[i], isLabel=el.classList&&el.classList.contains("label");
-        if (isLabel && el.textContent.trim().toLowerCase()===lt){ started=true; out.push(el); continue; }
-        if (started){ if (isLabel || el.id==="msg") break; out.push(el); }
+      var out=[], lt=labelText.toLowerCase();
+      var labels=$("content").querySelectorAll(".label");
+      for (var i=0;i<labels.length;i++){
+        var head=labels[i];
+        if (head.textContent.trim().toLowerCase()!==lt) continue;
+        out.push(head);
+        for (var el=head.nextElementSibling; el; el=el.nextElementSibling){
+          if (el.classList&&el.classList.contains("label")) break;
+          if (el.id==="msg") break;
+          out.push(el);
+        }
       }
       return out;
     }

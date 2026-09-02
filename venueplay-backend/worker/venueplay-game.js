@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '1 Sep 2026, 19:40 · a30365f5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '2 Sep 2026, 12:17 · 52879437';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2351,6 +2351,9 @@ async function handleMembersSettings(request, env, json) {
   if (staff.role !== 'owner' && staff.role !== 'manager') {
     return json({ error: 'Only a manager or owner can change the draw and jackpot settings' }, 403);
   }
+  if (!staffCan(staff, 'draws_raffles')) {
+    return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
+  }
 
   // Build the patch from the numeric/schedule columns only.
   const patch = {};
@@ -2440,6 +2443,9 @@ async function handleMembersRoster(request, env, json) {
   if (_rstaff.role !== 'owner' && _rstaff.role !== 'manager') {
     return json({ error: 'Only a manager or owner can change the members list' }, 403);
   }
+  if (!staffCan(_rstaff, 'draws_raffles')) {
+    return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
+  }
 
   await sbPatch(env, 'vp_members', 'id=eq.' + enc(memberId), { status, updated_at: new Date().toISOString() });
   return json({ member_id: memberId, status });
@@ -2472,6 +2478,9 @@ async function handleMembersImport(request, env, json) {
   const staff = await requireStaff(env, authUserId, venueId);
   if (staff.role !== 'owner' && staff.role !== 'manager') {
     return json({ error: 'Only a manager or owner can add to the members list' }, 403);
+  }
+  if (!staffCan(staff, 'draws_raffles')) {
+    return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
   }
 
   // Find (or create) one members list for the venue.
@@ -2533,6 +2542,9 @@ async function handleMembersRemove(request, env, json) {
   if (staff.role !== 'owner' && staff.role !== 'manager') {
     return json({ error: 'Only a manager or owner can change the members list' }, 403);
   }
+  if (!staffCan(staff, 'draws_raffles')) {
+    return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
+  }
 
   const num = parseInt(b.number, 10);
   if (isNaN(num)) return json({ error: 'Enter the member number to remove' }, 400);
@@ -2592,6 +2604,9 @@ async function handleDrawRemove(request, env, json) {
   if (staff.role !== 'owner' && staff.role !== 'manager') {
     return json({ error: 'Only a manager or owner can remove a draw' }, 403);
   }
+  if (!staffCan(staff, 'draws_raffles')) {
+    return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
+  }
   // Answer "is it already gone" only AFTER proving the caller has rights here, so this cannot be
   // used to probe whether a draw id exists at a venue the caller has nothing to do with.
   if (dr[0].archived_at) return json({ ok: true, already: true });
@@ -2636,6 +2651,9 @@ async function handleRafflePrizeAdd(request, env, json) {
   if (staff.role !== 'owner' && staff.role !== 'manager') {
     return json({ error: 'Only a manager or owner can change the prize list' }, 403);
   }
+  if (!staffCan(staff, 'draws_raffles')) {
+    return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
+  }
   const made = await sbInsert(env, 'vp_raffle_prizes', { venue_id: venueId, label: label }, true);
   return json({ ok: true, prize: Array.isArray(made) ? made[0] : made });
 }
@@ -2653,6 +2671,9 @@ async function handleRafflePrizeRemove(request, env, json) {
   const staff = await requireStaff(env, authUserId, rows[0].venue_id);
   if (staff.role !== 'owner' && staff.role !== 'manager') {
     return json({ error: 'Only a manager or owner can change the prize list' }, 403);
+  }
+  if (!staffCan(staff, 'draws_raffles')) {
+    return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
   }
   await sbDelete(env, 'vp_raffle_prizes', 'id=eq.' + enc(prizeId));
   return json({ ok: true });
@@ -4319,7 +4340,7 @@ async function requireStaff(env, authUserId, venueId) {
   assertUuid(authUserId, 'user');     // sub claim from the verified JWT
   assertUuid(venueId, 'venue_id');    // re-derived per request; never trusted raw
   const rows = await sbGet(env, 'vp_venue_staff',
-    'auth_user_id=eq.' + enc(authUserId) + '&venue_id=eq.' + enc(venueId) + '&select=id,role,venue_id');
+    'auth_user_id=eq.' + enc(authUserId) + '&venue_id=eq.' + enc(venueId) + '&select=id,role,venue_id,permissions');
   if (!rows.length) {
     /* A VenuePlay HQ admin using "View as" is staff nowhere, and this Worker had no concept of an
        admin at all, so every host route refused them. The consoles do not refuse them: they read
@@ -4353,6 +4374,21 @@ async function requireStaff(env, authUserId, venueId) {
   // regardless of a valid host login or Stripe state.
   await assertVenueActive(env, venueId);
   return Object.assign({ auth_user_id: authUserId }, rows[0]);
+}
+
+/* An owner can switch OFF an individual manager's rights, per manager, from the billing console.
+   The billing Worker honours that (vpbCan) and billing.html hides the sections, but THIS Worker
+   only ever asked the role, so a manager with "Draws & raffles" switched off could still set a
+   jackpot to any figure, import or delete the members list, or archive a draw -- by calling the
+   route the hidden button would have called. A permission enforced in one of the two places that
+   check it is not enforced at all.  (2 Sep 2026)
+
+   Same rule as vpbCan(): no perms object means full rights (owners and View-as admins have none),
+   and a right is only withheld when the owner has explicitly set it false. */
+function staffCan(staff, key) {
+  if (!staff || staff.role === 'owner') return true;
+  const p = staff.permissions;
+  return !p || p[key] !== false;
 }
 
 // M6 kill-switch, shared by requireStaff (host routes) and the player routes
