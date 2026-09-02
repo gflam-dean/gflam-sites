@@ -790,23 +790,13 @@
     enterEmbed(d.game);
   });
   function playFanfare(){
-    try{
-      var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
-      if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume();
-      var ctx=_ac, now=ctx.currentTime;
-      var master=ctx.createGain(); master.gain.value=0.6;
-      var comp=ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);   // keep it full without clipping
-      function tone(freq,start,dur,peak,type){
-        var o=ctx.createOscillator(), g=ctx.createGain();
-        o.type=type||"triangle"; o.frequency.value=freq;
-        g.gain.setValueAtTime(0.0001,start); g.gain.exponentialRampToValueAtTime(peak,start+0.03); g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
-        o.connect(g); g.connect(master); o.start(start); o.stop(start+dur+0.05);
-      }
-      var notes=[523.25,659.25,783.99,1046.50];                       // C-E-G-C rising arpeggio
-      for(var i=0;i<notes.length;i++){ tone(notes[i], now+i*0.12, 0.55, 0.5, "triangle"); }
-      var tc=now+notes.length*0.12, chord=[523.25,1046.50,1318.51,1567.98];   // sparkle chord to finish
-      for(var j=0;j<chord.length;j++){ tone(chord[j], tc, 1.05, j===0?0.5:0.32, "sine"); }
-    }catch(e){}
+    /* One copy, in /app/vp-celebrate.js. This was written out eight times
+       across the phones and the screens and had already drifted into three
+       versions. The page keeps its own name and its own audio context, so
+       every call site and the kiosk unlock are untouched. If the shared file
+       does not load we stay silent rather than throw: a missing celebration
+       is cosmetic, an exception during a win is not. */
+    try{ if(window.VPCelebrate) VPCelebrate.fanfare({ profile:"pa", ctx:_ac }); }catch(e){}
   }
   function celebrate(ms){
     playFanfare();

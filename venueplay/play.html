@@ -820,25 +820,13 @@
   function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
   document.addEventListener("pointerdown", unlockAudio, { once:true });   // browsers need a gesture before audio plays
   function playFanfare(){
-    try{
-      var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
-      if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume();
-      var ctx=_ac, now=ctx.currentTime;
-      var notes=[523.25,659.25,783.99,1046.50];   // C-E-G-C major arpeggio
-      for(var i=0;i<notes.length;i++){
-        var t=now+i*0.11, o=ctx.createOscillator(), g=ctx.createGain();
-        o.type="triangle"; o.frequency.value=notes[i];
-        g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.03); g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
-        o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.55);
-      }
-      var chord=[1046.50,1318.51,1567.98], tc=now+notes.length*0.11;   // sparkle chord to finish
-      for(var j=0;j<chord.length;j++){
-        var oc=ctx.createOscillator(), gc=ctx.createGain();
-        oc.type="sine"; oc.frequency.value=chord[j];
-        gc.gain.setValueAtTime(0.0001,tc); gc.gain.exponentialRampToValueAtTime(0.2,tc+0.04); gc.gain.exponentialRampToValueAtTime(0.0001,tc+0.9);
-        oc.connect(gc); gc.connect(ctx.destination); oc.start(tc); oc.stop(tc+0.95);
-      }
-    }catch(e){}
+    /* One copy, in /app/vp-celebrate.js. This was written out eight times
+       across the phones and the screens and had already drifted into three
+       versions. The page keeps its own name and its own audio context, so
+       every call site and the kiosk unlock are untouched. If the shared file
+       does not load we stay silent rather than throw: a missing celebration
+       is cosmetic, an exception during a win is not. */
+    try{ if(window.VPCelebrate) VPCelebrate.fanfare({ profile:"phone", ctx:_ac }); }catch(e){}
   }
   function confettiBurst(){
     try{
