@@ -98,6 +98,7 @@
   .songrow .info{min-width:0;flex:1}
   .songrow .st{font-weight:700;color:#fff;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .songrow .sa{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .songrow .sy{opacity:.65;font-variant-numeric:tabular-nums}
   .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:6px 13px;border-radius:20px;cursor:pointer;user-select:none;border:1px solid transparent;transition:.15s;min-width:96px;justify-content:center}
   .pill.play{background:rgba(255,31,142,.12);color:var(--pink);border-color:rgba(255,31,142,.28)}
   .pill.on{background:rgba(53,208,127,.14);color:var(--win);border-color:rgba(53,208,127,.28)}
@@ -956,7 +957,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       var row=document.createElement("div"); row.className="songrow"+(done?" done":"");
       var pillCls=now?"playing":(done?"on":"play");
       var pillTxt=s.previewUrl ? (now?"Playing":(done?"Played &#10003;":"Play")) : (done?"Called &#10003;":"Mark called");
-      row.innerHTML='<div class="info"><div class="st">'+esc(s.title)+'</div><div class="sa">'+esc(s.artist)+'</div></div>'+
+      // The year, next to the artist. A host building a night can see at a glance
+      // whether a pack is landing where they meant it to, which is the whole
+      // reason the years were fetched.
+      var yr = s.year ? ' <span class="sy">'+s.year+'</span>' : '';
+      row.innerHTML='<div class="info"><div class="st">'+esc(s.title)+'</div><div class="sa">'+esc(s.artist)+yr+'</div></div>'+
         '<span class="pill '+pillCls+'" data-i="'+i+'" data-title="'+esc(s.title)+'">'+pillTxt+'</span>';
       box.appendChild(row);
     }

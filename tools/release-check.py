@@ -434,9 +434,18 @@ def local_checks(which):
 
     esc() is what stands between text a venue typed and the screen, and it was
     ELEVEN DIFFERENT FUNCTIONS across 23 files. Fifteen of them left quotes
-    alone. Nothing was exploitable when it was found -- every interpolation into
-    an attribute was checked, and there were none -- but the next one written in
-    the wrong file would have been, silently, with no way to notice.
+    alone.
+
+    CORRECTION, same day: the first pass here reported no attribute
+    interpolations in those files. That was wrong, and wrong because the
+    detector was: its pattern could not cross the JavaScript string quote that
+    always sits between an attribute quote and the value, so
+    data-title="'+esc(s.title)+'" did not match. There were four such sites, in
+    musical/host.html and billing.html. None was exploitable, but for a weaker
+    reason than "there are none": every one carried an id or a song title of
+    ours, never text a venue or a player typed. Venue names went into element
+    text, not attributes. One new attribute in either file would have changed
+    that with nothing to notice it.
 
     cryptoInt() is the unbiased draw behind every raffle and members draw, in 11
     files. One copy quietly losing its rejection loop is a biased draw, and that
