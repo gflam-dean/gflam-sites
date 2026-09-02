@@ -83,8 +83,7 @@
   var KEYSTORE="ppAdminKey";
   function key(){ try{ return localStorage.getItem(KEYSTORE)||""; }catch(e){ return ""; } }
   function setKey(v){ try{ v?localStorage.setItem(KEYSTORE,v):localStorage.removeItem(KEYSTORE); }catch(e){} }
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
-    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   /* The key travels in a header, never in the URL. A key in a query string is in
      browser history, in the Worker's logs, and in any screenshot of the tab. */

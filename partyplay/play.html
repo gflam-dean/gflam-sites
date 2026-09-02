@@ -177,8 +177,7 @@
   function load(){ try{ return JSON.parse(localStorage.getItem(SAVE)||"null"); }catch(e){ return null; } }
   function save(o){ try{ localStorage.setItem(SAVE, JSON.stringify(o)); }catch(e){} }
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
-    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   function api(path, opts){
     return fetch(API+path, Object.assign({ headers:{ "content-type":"application/json" } }, opts||{}))

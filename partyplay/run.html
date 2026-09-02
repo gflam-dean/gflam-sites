@@ -107,8 +107,7 @@
       .sort(function(a,b){ return b.score-a.score || a.name.localeCompare(b.name); });
   }
 
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
-    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function toast(m){ var t=$("toast"); t.textContent=m; t.classList.add("show");
     clearTimeout(toast._t); toast._t=setTimeout(function(){t.classList.remove("show");},1700); }
   function api(p,o){ return fetch(API+p,Object.assign({headers:{"content-type":"application/json"}},o||{}))

@@ -380,7 +380,10 @@
   if(VENUE_SLUG){ var _tvs=document.querySelector(".tv-status"); if(_tvs) _tvs.style.display="none"; }   // no "connected" pill on a live venue screen
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });   // match the host + the unified TV convention
   var tvSubscribed=false;
-  function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
+  /* The try/catch is not decoration: ch.send throws once the socket is gone, and
+     this is called from repaint paths. Unguarded it takes the whole render with it
+     and the wall goes black. tv.html had it; these three did not. */
+  function tvSend(obj){ if(tvSubscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); }catch(e){} } }
   ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, function(_m){
     // The venue saved a logo or a slide on the Account page. Re-read it now rather than
     // leaving the screen showing whatever it happened to load with.

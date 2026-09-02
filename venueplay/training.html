@@ -426,7 +426,7 @@
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
-  function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
   function shuffle(a){ for(var j=a.length-1;j>0;j--){ var k=cryptoInt(j+1); var t=a[j]; a[j]=a[k]; a[k]=t; } return a; }
 

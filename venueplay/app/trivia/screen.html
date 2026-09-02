@@ -201,6 +201,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/app/vp-qr.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-screen-router.js"></script>
 <script>
@@ -209,7 +210,7 @@
   var VP_SCREEN_API='https://venueplay-game.dean-tindale.workers.dev';
   function $(id){ return document.getElementById(id); }
   function el(tag,cls,html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
-  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
   var LETTERS=["A","B","C","D"];
@@ -303,8 +304,8 @@
     // blank white square: .qrbig paints a lit white panel, so drawing nothing left a glowing slab
     // on the pub wall for the whole lobby.
     var url = shownJoinURL();
-    drawQR($("qrBig"), 720, url);
-    drawQR($("qrMini"), 240, url);
+    drawQR($("qrBig"), url, 720);
+    drawQR($("qrMini"), url, 240);
     /* The code shown is now the venue's permanent one, which is valid whether or not a host has
        opened a session, so the address beside it has to be there too. It used to say "Waiting for
        the host", leaving the room looking at a code with nowhere to type it. */
@@ -517,7 +518,10 @@
   }
   var ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
   var tvSubscribed=false;
-  function tvSend(obj){ if(tvSubscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } }
+  /* The try/catch is not decoration: ch.send throws once the socket is gone, and
+     this is called from repaint paths. Unguarded it takes the whole render with it
+     and the wall goes black. tv.html had it; these three did not. */
+  function tvSend(obj){ if(tvSubscribed && ch){ try{ ch.send({ type:"broadcast", event:"msg", payload:obj }); }catch(e){} } }
   ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, function(_m){
     // The venue saved a logo or a slide on the Account page. Re-read it now rather than
     // leaving the screen showing whatever it happened to load with.
@@ -650,7 +654,7 @@
   function countKeys(o){ var n=0,k; for(k in o){ if(o.hasOwnProperty(k)) n++; } return n; }
 
   // ---- init ----
-  function drawQR(el2, size, url){ if(window.QRCode&&el2&&url){ QRCode.toCanvas(el2, url, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
+  function drawQR(el, url, size){ VPQR.draw(el, url, size); }
   show("tvLobby");
   renderLobby();   // draws the pairing QR (flips to the player QR once a session opens)
 

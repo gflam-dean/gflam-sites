@@ -229,7 +229,7 @@
     }
     return v;
   }
-  function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   /* "One line" on a 5x5 card with a FREE centre reads as any row, column or diagonal to anyone
    who has played bingo anywhere else, and the free square makes it look even more like a

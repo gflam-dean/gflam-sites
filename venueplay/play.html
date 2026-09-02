@@ -338,7 +338,7 @@
   function randId(){ var s=""; for(var i=0;i<12;i++) s+="abcdefghijklmnopqrstuvwxyz0123456789".charAt(cryptoInt(36)); return s; }
 
   var PATTERN_NAMES={one:"One line",two:"Two lines",full:"Full house",corners:"Four corners",top:"Top line",middle:"Middle line",bottom:"Bottom line"};
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   var SUPA_URL='https://gpoolavkghnxedzrmtmc.supabase.co';
   var SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE';

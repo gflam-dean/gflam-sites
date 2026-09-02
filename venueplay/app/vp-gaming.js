@@ -409,11 +409,7 @@
     document.head.appendChild(s);
   }
 
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   /* Mirrors the localStorage flag in memory, so a kiosk tablet that clears storage, or a private
      window, still only sees this once. Without it a raffle with eight prizes showed eight modals,

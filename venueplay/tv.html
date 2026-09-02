@@ -305,12 +305,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/app/vp-qr.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script>
 (function(){
   "use strict";
   function $(id){ return document.getElementById(id); }
-  function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function escBr(s){ return esc(s).replace(/\r?\n/g,"<br>"); }
   function cryptoInt(max){ var a=new Uint32Array(1),lim=Math.floor(4294967296/max)*max,x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=lim); return x%max; }
 
@@ -635,8 +636,6 @@
     if(code && CODE_RE.test(code)){ joinCode=code; playURL=playURLFor(code); }
     $("lobbyCode").textContent=joinCode;
     $("tvJoinCode").textContent=joinCode;
-    drawQR($("qrBig"), playURL, 720);
-    drawQR($("qrMini"), playURL, 240);
     drawQR($("qrBig"), playURL, 720);
     drawQR($("qrMini"), playURL, 240);
   }
@@ -1103,7 +1102,7 @@
   }
 
   // ================= INIT =================
-  function drawQR(el, url, size){ if(window.QRCode&&el){ QRCode.toCanvas(el, url, { width:size, margin:1, color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(err){}); } }
+  function drawQR(el, url, size){ VPQR.draw(el, url, size); }
 
   buildAds();
   enterAds(); // ads up FIRST, before anything external can fail - the screen is never black

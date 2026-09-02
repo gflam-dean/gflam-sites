@@ -46,8 +46,7 @@
   "use strict";
   var $=function(i){return document.getElementById(i);};
   var SHARE=(new URLSearchParams(location.search).get("share")||"").trim();
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
-    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   if(!SHARE){ $("app").innerHTML='<div class="state">This link is missing something.</div>'; return; }
 

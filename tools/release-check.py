@@ -424,6 +424,67 @@ def local_checks(which):
         line = out[-1] if out else ''
         ok(os.path.basename(t), 'ALL' in line and 'PASSED' in line, line)
 
+    head('D. One answer per question, everywhere it is asked')
+    """THE SAME FUNCTION, COPIED INTO TWENTY FILES, DRIFTS.
+
+    Dean, 31 Aug, on a rule fixed in one place a month earlier: "I asked you to
+    fix this a month ago and you only fixed it in one place." This is the check
+    for that, on the handful of functions where a difference is dangerous rather
+    than merely untidy.
+
+    esc() is what stands between text a venue typed and the screen, and it was
+    ELEVEN DIFFERENT FUNCTIONS across 23 files. Fifteen of them left quotes
+    alone. Nothing was exploitable when it was found -- every interpolation into
+    an attribute was checked, and there were none -- but the next one written in
+    the wrong file would have been, silently, with no way to notice.
+
+    cryptoInt() is the unbiased draw behind every raffle and members draw, in 11
+    files. One copy quietly losing its rejection loop is a biased draw, and that
+    is a licence matter, not a bug.
+
+    tvSend() is called from repaint paths and ch.send throws once the socket is
+    gone. tv.html caught that; the other three screens did not, so the same dead
+    socket left bingo's wall alone and blacked out musical, trivia and raffle.
+
+    NOT drawQR: signage prints a wider quiet zone on purpose, and see-a-night
+    draws a fake one for the marketing page. Different jobs, same name."""
+    SAME = ['esc', 'cryptoInt', 'tvSend']
+    def fnbody(src, name):
+        m = re.search(r'\n\s*function\s+' + name + r'\s*\(', src)
+        if not m:
+            return None
+        i = src.index('{', m.end() - 1)
+        d = 0
+        for j in range(i, len(src)):
+            if src[j] == '{':
+                d += 1
+            elif src[j] == '}':
+                d -= 1
+                if d == 0:
+                    return src[m.start():j + 1]
+        return None
+
+    def flatten(t):
+        t = re.sub(r'/\*.*?\*/', '', t, flags=re.S)
+        t = re.sub(r'//[^\n]*', '', t)
+        return re.sub(r'\s+', ' ', t).strip()
+
+    for name in SAME:
+        seen = {}
+        for f in files:
+            if not (f.endswith('.html') or f.endswith('.js')):
+                continue
+            b = fnbody(io.open(f, encoding='utf-8', errors='replace').read(), name)
+            if b:
+                seen.setdefault(flatten(b), []).append(short(f))
+        if not seen:
+            continue
+        biggest = max(seen.values(), key=len)
+        odd = [f for v in seen.values() if v is not biggest for f in v]
+        ok('%s() is the same in all %d file(s)' % (name, sum(len(v) for v in seen.values())),
+           len(seen) == 1, '%d file(s)' % sum(len(v) for v in seen.values()),
+           why='%d version(s); the odd ones out: %s' % (len(seen), ', '.join(odd[:4])))
+
     head('D. The song library holds together')
     """5,131 songs and 19 playlists in one JSON file that every musical bingo night
     is dealt from, and nothing checked it. A playlist pointing at a song id that is
@@ -473,7 +534,8 @@ def local_checks(which):
                'pp-photo.js': 'PPPhoto', 'pp-video.js': 'PPVideo', 'vp-sign.js': 'VPSign',
                'vp-gaming.js': 'VPGaming', 'vp-follow.js': 'VPFollow',
                'vp-screen-router.js': 'VPScreenRouter', 'vp-session.js': 'VPSession',
-               'vp-feedback.js': 'VPFeedback', 'vp-celebrate.js': 'VPCelebrate'}
+               'vp-feedback.js': 'VPFeedback', 'vp-celebrate.js': 'VPCelebrate',
+               'vp-qr.js': 'VPQR'}
     late = []
     for f in files:
         if not f.endswith('.html'):

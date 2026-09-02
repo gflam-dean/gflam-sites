@@ -283,6 +283,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script src="/app/vp-qr.js"></script>
 <script>
 (function(){
   "use strict";
@@ -324,12 +325,8 @@
 
   // ---- paint every sign on the page ----
   var state={ slug:"", name:"", whats:"", head:"", line:"", logo:"" };
-  function drawQR(el, url, px){
-    if(!window.QRCode || !el || !url) return;
-    // level M with a healthy quiet zone: still reads off a beer-splashed table card.
-    QRCode.toCanvas(el, url, { width:px, margin:2, errorCorrectionLevel:'M',
-      color:{ dark:'#0A0A0B', light:'#ffffff' } }, function(){});
-  }
+  // A printed table card gets a wider quiet zone: it still reads off a beer-splashed table.
+  function drawQR(el, url, px){ VPQR.draw(el, url, px, { margin:2 }); }
   // ---- auto-fit ----
   // Every length on a sign is a multiple of --u, so the whole thing scales linearly. Rather than
   // hard-code a unit per paper size and hope, we measure what the content actually needs and
@@ -421,7 +418,7 @@
   var headIn=$("headIn"), lineIn=$("lineIn");
   if(headIn) headIn.addEventListener("input", function(){ state.head=headIn.value.trim(); render(); });
   if(lineIn) lineIn.addEventListener("input", function(){ state.line=lineIn.value.trim(); render(); });
-  function esc(t){ return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   var typed=false;   // once the venue types a name, a lookup must not overwrite it
   function onSlug(){
     state.slug=cleanSlug(slugIn.value);

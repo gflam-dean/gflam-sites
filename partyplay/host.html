@@ -179,8 +179,7 @@
     var t = $("toast"); t.textContent = msg; t.classList.add("show");
     clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove("show"); }, 1800);
   }
-  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){
-    return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   function api(path, opts){
     return fetch(API + path, Object.assign({ headers:{ "content-type":"application/json" } }, opts||{}))

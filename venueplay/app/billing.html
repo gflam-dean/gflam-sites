@@ -609,7 +609,7 @@
     }
   }
 
-  function esc(s){ return String(s==null?"":s).replace(/[<>&]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]; }); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   // Restricted managers only see the sections their toggles allow; owner-only sections are
   // hidden. (The Worker independently blocks the actions, so this is UX, not the security line.)
