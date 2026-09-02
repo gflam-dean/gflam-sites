@@ -994,6 +994,39 @@ def wait_for_deploy(minutes=30):
     return False
 
 
+def shared_scripts_live(base, folder):
+    """EVERY shared script a page loads must come back as JavaScript.
+
+    Cloudflare Pages answers a path it does not have with the HOMEPAGE and a 200,
+    so a script that failed to deploy does not 404: the browser fetches 107 KB of
+    HTML, fails to parse it, and the global it was supposed to define is simply
+    not there. Nothing throws until the first call. On 2 Sep vp-qr.js came back
+    exactly like that while it was mid-deploy, and the only symptom would have
+    been no QR code on the venue's television.
+
+    The list is derived from the folder rather than written down, because the
+    hand-kept table above is where vp-qr.js, vp-feedback.js and vp-celebrate.js
+    were all missing: a list of the files is a second copy of the files, and it
+    goes stale the moment somebody adds one."""
+    head('Shared scripts: served as JavaScript, not the homepage in disguise')
+    names = sorted(f for f in os.listdir(folder)
+                   if f.endswith('.js') and not f.endswith('.test.js'))
+    for f in names:
+        local = io.open(os.path.join(folder, f), encoding='utf-8').read()
+        m = re.search(r'root\.(VP[A-Za-z]+)\s*=', local)
+        status, body, _ = get(base + '/app/' + f)
+        looks_html = '<html' in body[:2000].lower() or '<!doctype' in body[:200].lower()
+        why = ''
+        good = status == 200 and not looks_html
+        if looks_html:
+            why = 'the homepage came back, so this script is not deployed'
+        elif status != 200:
+            why = 'HTTP %s' % status
+        elif m and m.group(1) not in body:
+            good, why = False, 'served, but does not define %s' % m.group(1)
+        ok(f, good, '%s' % (('defines ' + m.group(1)) if (good and m) else ''), why=why)
+
+
 def pages_live(name, base, table):
     head('%s pages: is the CURRENT build actually being served%s'
          % (name, '' if base in (VP, PP) else '   [%s]' % base))
@@ -1497,6 +1530,7 @@ def main():
             wait_for_deploy()
         if which in ('both', 'venueplay'):
             pages_live('VenuePlay', VP, VP_PAGES)
+            shared_scripts_live(VP, os.path.join(ROOT, 'venueplay', 'app'))
             every_page_is_reachable('VenuePlay', VP, 'venueplay',
                                     skip=('test.html',))
             worker_health('VenuePlay game', VP_GAME)
