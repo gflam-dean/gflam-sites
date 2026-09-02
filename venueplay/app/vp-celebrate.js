@@ -115,5 +115,44 @@
     } catch (e) { /* a celebration is never worth an exception mid-win */ }
   }
 
-  root.VPCelebrate = { fanfare: fanfare };
+  /* ---- CONFETTI ----------------------------------------------------------
+
+     Five copies of this existed, in two versions, and the whole difference was
+     data: the TV used five brand colours and a 3800ms lifetime, the trivia
+     screen six colours and 3900ms. One of them also built its div through a
+     local helper instead of createElement, which is the same thing written
+     twice.
+
+     So the colours and the lifetime are arguments and the behaviour is not.
+     Each caller passes its own host element, because a screen drops confetti
+     over its own container and nothing else.
+
+     The random source is handed in too. These pages draw from a CSPRNG rather
+     than Math.random, and a shared module has no business quietly downgrading
+     that on a product that runs gambling-adjacent games. */
+  var DEFAULT_COLOURS = ["#FF1F8E", "#FFC24B", "#35D07F", "#FFFFFF", "#C70F69"];
+
+  function burst(host, count, opts) {
+    try {
+      if (!host) return;
+      opts = opts || {};
+      var colours = opts.colours || DEFAULT_COLOURS;
+      var life = opts.lifeMs || 3800;
+      var rnd = opts.rand || function (n) { return Math.floor(Math.random() * n); };
+      for (var i = 0; i < count; i++) {
+        var c = document.createElement("div");
+        c.className = opts.className || "confetti";
+        c.style.left = rnd(100) + "%";
+        c.style.background = colours[i % colours.length];
+        c.style.animationDelay = (rnd(400) / 1000) + "s";
+        c.style.animationDuration = (2.1 + rnd(180) / 100) + "s";
+        host.appendChild(c);
+        (function (el) {
+          setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, life);
+        })(c);
+      }
+    } catch (e) { /* confetti is never worth an exception mid-win */ }
+  }
+
+  root.VPCelebrate = { fanfare: fanfare, burst: burst };
 })(window);

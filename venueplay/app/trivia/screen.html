@@ -438,14 +438,14 @@
 
   // ---- confetti ----
   function spawnBurst(count){
-    var tv=$("tv"), colors=["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#4D8DFF","#FF4D4D"];
-    for(var i=0;i<count;i++){
-      var c=el("div","confetti");
-      c.style.left=cryptoInt(100)+"%"; c.style.background=colors[i%colors.length];
-      c.style.animationDelay=(cryptoInt(400)/1000)+"s"; c.style.animationDuration=(2.1+cryptoInt(180)/100)+"s";
-      tv.appendChild(c);
-      (function(e){ setTimeout(function(){ if(e.parentNode) e.parentNode.removeChild(e); },3900); })(c);
-    }
+    /* One copy, in /app/vp-celebrate.js. This existed five times in two
+       versions, and the entire difference was data: this screen's colours
+       and how long a piece of confetti lives. Both are passed, so nothing
+       about how this screen looks has changed. cryptoInt goes with them
+       because these pages draw from a CSPRNG, and a shared helper has no
+       business quietly downgrading that. */
+    try{ if(window.VPCelebrate) VPCelebrate.burst($("tv"), count, {
+      colours: ["#FF1F8E","#FFC24B","#35D07F","#FFFFFF","#4D8DFF","#FF4D4D"], lifeMs: 3900, rand: cryptoInt }); }catch(e){}
   }
   var celebrateTimer=null;
   // ---- win fanfare through the venue PA (synthesised, no audio file; Fully Kiosk must allow autoplay to sound) ----
