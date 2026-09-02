@@ -59,17 +59,30 @@
   .cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
   .cardhead .pn{font-weight:800;color:#fff;font-size:16px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
   .cardpat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:5px 12px;border-radius:20px;white-space:nowrap}
-  .card5{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;width:calc(100% * var(--cz,1));min-width:0}
+  .card5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:calc(100% * var(--cz,1));min-width:0}
   #cardWrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .cardctl{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
   .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px}
   .czbtn:active{background:var(--pink);color:#fff;border-color:transparent}
   .czbtn.fs{font-size:13px;min-width:0}
   .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
-  .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;text-align:center;
-    font-family:'Manrope',sans-serif;font-weight:600;font-size:9px;line-height:1.08;color:var(--text);
+  /* TALLER THAN WIDE, ON PURPOSE.
+
+     These cells were square, and a square cell on a 390px phone is about 68px
+     across. A song title is words, not a number, so the fitter shrank the text
+     until it fitted and bottomed out at its 6px floor: unreadable at arm's
+     length in a lit room, let alone a dark pub, on the one surface that IS the
+     game. The numeric bingo card gets away with squares because it only ever
+     holds two digits.
+
+     Height is the cheapest fix available. Going to 1:1.3 buys two more lines of
+     text at the same width, so nothing has to scroll sideways - the zoom
+     control already existed and costs a second hand to pan, which a punter
+     holding a beer does not have. */
+  .cc{aspect-ratio:1/1.3;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-family:'Manrope',sans-serif;font-weight:600;font-size:11px;line-height:1.12;color:var(--text);
     background:var(--ink-3);border:1px solid var(--line);border-radius:9px;cursor:pointer;user-select:none;
-    transition:.12s;overflow:hidden;padding:3px;word-break:break-word;hyphens:auto}
+    transition:.12s;overflow:hidden;padding:3px 2px;word-break:break-word;hyphens:auto}
   .cc:active{transform:scale(.94)}
   .cc.free{cursor:default;background:linear-gradient(135deg,var(--pink),var(--pink-deep));color:#fff;border-color:transparent;
     font-family:'Anton',sans-serif;font-size:13px;letter-spacing:.04em;cursor:default}
@@ -352,9 +365,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     var cells=document.querySelectorAll("#cardGrid .cc");
     for(var i=0;i<cells.length;i++){
       var el=cells[i]; if(el.classList.contains("free")) continue;
-      var size=10*cz;
+      /* The floor was 6px, which is not a size anybody can read across a table.
+         With the taller cells there is room to hold 11px for all but the very
+         longest titles, and a title that still will not fit is better slightly
+         clipped than rendered at a size nobody can use. */
+      var size=12*cz;
       el.style.fontSize=size+"px";
-      while(size>6 && (el.scrollHeight>el.clientHeight || el.scrollWidth>el.clientWidth)){
+      while(size>11 && (el.scrollHeight>el.clientHeight || el.scrollWidth>el.clientWidth)){
         size-=0.5; el.style.fontSize=size+"px";
       }
     }
