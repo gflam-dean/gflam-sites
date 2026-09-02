@@ -51,6 +51,17 @@ DROP = re.compile(
 # A different recording. Never touched.
 KEEP = re.compile(r'\b(live|acoustic|remix|radio edit|demo|instrumental|karaoke)\b', re.I)
 
+# A YEAR WE DO NOT BELIEVE IS WORSE THAN NO YEAR, because the decade packs get
+# rebuilt from these numbers and a wrong one puts a song in front of the wrong
+# room. The store hands back a COMPILATION's release date when it has nothing
+# better, and it shows: 13 songs claim 1900, two claim 1913, and "The Sound of
+# Silence" claims 1920. From 1955 the counts climb smoothly (7, 6, 12, 9, 8, 16,
+# 13, 26, 29, 41, 42, 57, 66) like a real catalogue; below it they are scattered
+# singletons around a spike of 13. That is a default value, not a distribution.
+# The band is contaminated rather than merely old: "Ring of Fire" sits in it at
+# 1947, and it is 1963.
+MIN_YEAR = 1955
+
 
 def clean_title(t):
     if KEEP.search(t):
@@ -76,6 +87,8 @@ def main():
     dated = retitled = 0
     for s in songs:
         y = years.get(s['id'])
+        if y and y < MIN_YEAR:
+            y = None
         if y and not s.get('year'):
             s['year'] = y
             dated += 1
@@ -83,6 +96,13 @@ def main():
         if t and t != s['title']:
             s['title'] = t
             retitled += 1
+
+    # ---- 2b. forget the years we do not believe ----
+    forgot = 0
+    for s in songs:
+        if s.get('year') and s['year'] < MIN_YEAR:
+            del s['year']
+            forgot += 1
 
     # ---- 3. one row per song ----
     # Keep the FIRST occurrence, so position (and therefore how well known the
@@ -123,6 +143,7 @@ def main():
     print('songs        %d -> %d   (%d duplicate row(s) merged)' % (len(songs), len(keep), len(songs) - len(keep)))
     print('years added  %d   (%d song(s) still have none)' % (dated, sum(1 for s in keep if not s.get('year'))))
     print('titles tidied %d' % retitled)
+    print('years dropped as not believable %d  (before %d)' % (forgot, MIN_YEAR))
     print('playlist entries repointed %d, removed as duplicates %d' % (moved, dropped))
 
     left = 0

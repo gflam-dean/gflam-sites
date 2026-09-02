@@ -35,7 +35,11 @@ PER_ARTIST = 3
 MIN_PACK   = 60          # a pack smaller than a single game is not a pack
 
 DECADES = [('60s', 1960, 1969), ('70s', 1970, 1979), ('80s', 1980, 1989),
-           ('90s', 1990, 1999), ('2000s', 2000, 2009), ('2010s', 2010, 2019)]
+           ('90s', 1990, 1999), ('2000s', 2000, 2009), ('2010s', 2010, 2019),
+           # The library holds 434 songs from this decade and there was no pack
+           # for any of them: a host wanting a recent night had "Modern Pop" or
+           # nothing. Ends at 2029 so it keeps filling itself as songs are added.
+           ('2020s', 2020, 2029)]
 
 # Apple's genre names, grouped into what a pub would actually call a night.
 GENRES = [
