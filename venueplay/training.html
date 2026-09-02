@@ -643,7 +643,7 @@
     steps.push({
       focus:"tv", hint:null, tip:null,
       run:function(){ S.phase="win"; S.you.claimPending=false; S.you.won=true; S.winner={ name:S.you.name, cardNo:S.you.cardNo }; S.claim=null; S.confetti=true; },
-      cap:"The big screen celebrates and your phone shows You won. Show it at the bar to collect the prize. That is a full game: pair, advertise, lobby, call, claim, verify, winner. Tap Restart to run it again, or Next step to walk a venue through it slowly."
+      cap:"The big screen celebrates and your phone shows You won. Show it to the host to collect the prize. That is a full game: pair, advertise, lobby, call, claim, verify, winner. Tap Restart to run it again, or Next step to walk a venue through it slowly."
     });
 
     return { steps:steps };
@@ -768,7 +768,7 @@
          '<div class="wname">'+esc(S.winner?S.winner.name:"Player")+'</div>'+
          '<div class="winslabel">Wins</div>'+
          '<div class="winprize">'+esc(S.prize)+'</div>'+
-         '<div class="wincard">Card <b>#'+(S.winner?S.winner.cardNo:"000")+'</b> &middot; show your phone at the bar</div></div>';
+         '<div class="wincard">Card <b>#'+(S.winner?S.winner.cardNo:"000")+'</b> &middot; show your phone to the host</div></div>';
     }
     $("tvScreen").innerHTML=h;
     if(S.confetti) spawnConfetti();
@@ -843,7 +843,7 @@
     if(S.you.won){
       h+='<div class="ph-body ph-center wonwrap"><div style="font-size:46px">&#127881;</div>'+
          '<div class="pbig" style="color:var(--win)">You won!</div>'+
-         '<div class="psub">Show this screen at the bar to claim</div>'+
+         '<div class="psub">Show this screen to the host to claim</div>'+
          '<div class="prizebox">'+esc(S.prize)+'</div>'+
          '<div class="pnote">Card <b style="color:var(--muted)">#'+S.you.cardNo+'</b></div></div>';
     } else if(!S.you.joined){

@@ -621,6 +621,34 @@ def local_checks(which):
             hits.append(short(f))
         ok(label, not hits, why=', '.join(hits[:4]))
 
+    """A WINNER IS SENT TO THE HOST, NEVER TO THE BAR.
+
+    Dean's locked rule for bingo and paid tickets. It was applied to the phone a
+    month ago and left standing in four other places: the TV's own win card, and
+    three in the training simulator. So the room's two screens disagreed with
+    each other in front of a winner, for a month, because a rule was fixed where
+    somebody happened to be looking rather than everywhere it was written.
+
+    That is the shape of half the faults in this codebase, and it is the one
+    thing here a check can genuinely prevent. Copy only: the comment scanner
+    strips code, so the several honest comments about "a dispute at the bar" and
+    "a host walking to the bar" are not breaches.
+
+    MEMBERS DRAWS ARE EXEMPT, deliberately. A club members' draw really is
+    claimed at the bar, the member has to be present, and that is the venue's
+    own practice rather than ours to overrule. If that ever changes it is a
+    decision to make here, not an oversight to tidy."""
+    bar_hits = []
+    for f in files:
+        if not f.endswith('.html') or '/members/' in f.replace('\\', '/'):
+            continue
+        for m in re.finditer(r'[^<>]{0,70}\b(?:at|to) the bar\b[^<>]{0,40}', copy_text(f), re.I):
+            line = m.group(0)
+            if re.search(r'\b(claim|collect|show|present|winner|prize|jackpot)\b', line, re.I):
+                bar_hits.append('%s: "%s"' % (short(f), line.strip()[:60]))
+    ok('a winner is sent to the host, never the bar', not bar_hits,
+       why='; '.join(bar_hits[:3]))
+
     """A WORKER FILE THAT IS EMPTY PARSES PERFECTLY.
 
     venueplay-api-FULL.js was found at nought bytes on 31 Aug, truncated by a
