@@ -177,7 +177,7 @@
     },
 
     ACT: {
-      confirmed: true, name: 'the ACT', regulator: 'the Gambling and Racing Commission',
+      confirmed: true, name: 'ACT', regulator: 'the Gambling and Racing Commission',
       phones: { bingo: false },
       paperBingo: 'ACT housie rules do not allow players to hold electronic devices in the playing area, so phones cannot be used as bingo tickets here. Run paper and use our calling and our screen. Trivia is unaffected.',
       for_profit: {

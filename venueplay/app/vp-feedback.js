@@ -35,7 +35,14 @@
     { r: 1, face: "😐", word: "Not for me" }
   ];
 
-  function askedKey(o) { return "vpFb-" + (o.gameId || o.sessionId || o.code || "x"); }
+  /* ASKED ONCE PER GAME, and the caller says what a game is.
+
+     Broadcast bingo has no game id and no session id on the phone at all, so it
+     would fall back to the room code -- which is permanent, printed on the table
+     talker. One rating and that punter is never asked again, on any night, at
+     that venue. A page with no server handle passes its own key instead (bingo
+     uses the room and the date, so it asks once a night). */
+  function askedKey(o) { return "vpFb-" + (o.key || o.gameId || o.sessionId || o.code || "x"); }
   function alreadyAsked(o) {
     try { return !!localStorage.getItem(askedKey(o)); } catch (e) { return false; }
   }
@@ -82,7 +89,7 @@
       b.innerHTML = '<span class="face">' + L.face + "</span>" + L.word;
       b.addEventListener("click", function () {
         markAsked(o);
-        wrap.innerHTML = '<div class="thanks">Thanks — that helps the venue</div>';
+        wrap.innerHTML = '<div class="thanks">Thanks, that helps the venue</div>';
         /* Best effort, and deliberately so: the punter has already been thanked.
            A rating that does not arrive is worth less than a punter watching a
            spinner at the end of a game they just lost. */

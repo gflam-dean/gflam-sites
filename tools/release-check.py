@@ -249,6 +249,27 @@ def copy_text(path):
     return re.sub(r'/\*.*?\*/', '', src, flags=re.S)
 
 
+_JS_LIT = re.compile(r'"((?:[^"\\\n]|\\.)*)"|\'((?:[^\'\\\n]|\\.)*)\'|`((?:[^`\\]|\\.)*)`', re.S)
+
+
+def js_prose(path):
+    """The sentences inside a .js file: its string literals, comments already
+    stripped, and only the ones that read like prose.
+
+    A literal with no space in it is a route, a key, a class name or an id, and
+    "/host/members/roster" is not a house-rule breach. Requiring a space and
+    three letters keeps the scan to things a punter could actually read, which
+    is what the rules are about. Checked when it was written: two real breaches,
+    no false positives, across every shipped script in both products.
+    """
+    out = []
+    for m in _JS_LIT.finditer(copy_text(path)):
+        lit = m.group(1) or m.group(2) or m.group(3) or ''
+        if ' ' in lit and re.search(r'[A-Za-z]{3}', lit):
+            out.append(lit)
+    return '\n'.join(out)
+
+
 def local_checks(which):
     head('A. Every script parses')
     files = []
@@ -412,7 +433,8 @@ def local_checks(which):
     GLOBALS = {'pp-config.js': 'PPConfig', 'pp-ticket.js': 'PPTicket', 'pp-quiz.js': 'PPQuiz',
                'pp-photo.js': 'PPPhoto', 'pp-video.js': 'PPVideo', 'vp-sign.js': 'VPSign',
                'vp-gaming.js': 'VPGaming', 'vp-follow.js': 'VPFollow',
-               'vp-screen-router.js': 'VPScreenRouter', 'vp-session.js': 'VPSession'}
+               'vp-screen-router.js': 'VPScreenRouter', 'vp-session.js': 'VPSession',
+               'vp-feedback.js': 'VPFeedback', 'vp-celebrate.js': 'VPCelebrate'}
     late = []
     for f in files:
         if not f.endswith('.html'):
@@ -606,15 +628,28 @@ def local_checks(which):
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
     # forty of those buries the one real breach.
-    rules = [('no em dashes in copy', r'\w\s*[—–]\s*\w'),
-             ('never "the ACT"', r'\bthe ACT\b'),
-             ('never "roster" in copy', r'>[^<>]{0,60}\broster\b')]
-    for label, pat in rules:
+    #
+    # THE .js FILES COUNT TOO. This scanned .html only, and shared widgets are
+    # exactly where reusable player-facing copy now lives, so all three rules
+    # were blind to them. On 2 Sep that was hiding an em dash in the feedback
+    # widget every player sees after a game, and "the ACT" in the gaming licence
+    # advice, a month after Dean asked for ACT. Both had been rewritten in every
+    # .html and left standing in the one file no rule could see.
+    rules = [('no em dashes in copy', r'\w\s*[—–]\s*\w', r'\w\s*[—–]\s*\w'),
+             ('never "the ACT"', r'\bthe ACT\b', r'\bthe ACT\b'),
+             # In markup a bare word is copy. In code "roster" is a table name, a
+             # route and a variable, and those stay: only prose counts.
+             ('never "roster" in copy', r'>[^<>]{0,60}\broster\b', r'\broster\b')]
+    for label, pat, jspat in rules:
         hits = []
         for f in files:
-            if not f.endswith('.html'):
+            if f.endswith('.html'):
+                text, p2 = copy_text(f), pat
+            elif f.endswith('.js'):
+                text, p2 = js_prose(f), jspat
+            else:
                 continue
-            if not re.search(pat, copy_text(f), re.I if 'roster' in label else 0):
+            if not re.search(p2, text, re.I if 'roster' in label else 0):
                 continue
             # Full path: both products have an index.html, and "index.html" on
             # its own sent me looking in the wrong one.

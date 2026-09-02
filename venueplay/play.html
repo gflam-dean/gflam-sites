@@ -313,6 +313,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-feedback.js"></script>
 <script>
 (function(){
   "use strict";
@@ -527,6 +528,27 @@
   // ---- views ----
   var VIEWS=["vNoRoom","vJoin","vWait","vCard","vWon","vLost"];
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
+  /* "How was that?", one tap, on the screen the punter is already looking at.
+
+     Broadcast bingo has no game id and no session id on the phone, so the widget
+     is given an explicit key: the room and the NIGHT. A night runs 2am to 2am on
+     a Brisbane clock, the same boundary the Worker's brisbaneNightKey uses to
+     count a venue's nights, so a game finishing at 12:30am is still the night it
+     started and nobody is asked twice for it. Without a key the widget would
+     fall back to the room code, which is printed on the table talker and never
+     changes: one rating, and that punter is never asked again at that venue. */
+  function bingoNightKey(){
+    try { return P.room + ":" + new Date(Date.now() + 8*60*60*1000).toISOString().slice(0,10); }
+    catch(e){ return P.room; }
+  }
+  function askHowItWent(where){
+    try{
+      if(!window.VPFeedback) return;
+      VPFeedback.ask({ api:VP_GAME_API, code:P.room, mount:where,
+                       key:bingoNightKey(), format:"bingo" });
+    }catch(e){}
+  }
+
   function route(){
     if(P.won){
       $("wonPrize").textContent=P.prize;
@@ -540,9 +562,9 @@
           sw.classList.remove("hidden");
         } else { sw.classList.add("hidden"); }
       }
-      show("vWon"); return;
+      show("vWon"); askHowItWent("vWon"); return;
     }
-    if(P.ended){ show("vLost"); return; }
+    if(P.ended){ show("vLost"); askHowItWent("vLost"); return; }
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
     if(P.active && P.cards.length){ renderCards(); show("vCard"); return; }
