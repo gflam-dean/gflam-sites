@@ -1,4 +1,22 @@
-load("/Users/dean.tindale/partyplay/worker/_test-sha256.js");
+/* WHERE THE CODE ACTUALLY IS.
+
+   Every path in here used to be an absolute one into /Users/dean.tindale/partyplay,
+   a copy of this project that stopped being the one we ship. On 3 Sep that copy was
+   6.5 KB and 148 lines behind the repo, so this suite reported ALL 63 CHECKS PASSED
+   while testing a Worker nobody deploys. A test pointed at the wrong file cannot
+   fail, and it is worse than no test because the green line says it did the job.
+
+   Resolved against this file's own location instead, so it follows the repo. */
+function repo(rel) {
+  var here = "/Users/dean.tindale/gflam-sites-current/partyplay-backend/";
+  var tries = [here + rel, "partyplay-backend/" + rel, rel, "../" + rel];
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 200) return tries[i]; } catch (e) {}
+  }
+  throw new Error("cannot find " + rel + " anywhere");
+}
+
+load(repo("worker/_test-sha256.js"));
 
 /* ---------------- platform stubs: only what the Worker actually touches ------ */
 var _seed = 12345;
@@ -54,10 +72,10 @@ globalThis.fetch = function(url, init){
 
 /* ---------------- load the modules under test ------------------------------- */
 var m = { exports: {} };
-(new Function("module","globalThis", readFile("/Users/dean.tindale/partyplay/lib/pp-licence.js")))(m, globalThis);
+(new Function("module","globalThis", readFile(repo("lib/pp-licence.js"))))(m, globalThis);
 globalThis.PPLicence = m.exports;
 
-var wsrc = readFile("/Users/dean.tindale/partyplay/worker/SOURCE-do-not-paste-partyplay-api.js").replace(/^export default/m, "globalThis.WORKER =");
+var wsrc = readFile(repo("worker/SOURCE-do-not-paste-partyplay-api.js")).replace(/^export default/m, "globalThis.WORKER =");
 (new Function(wsrc))();
 var W = globalThis.WORKER;
 
@@ -174,7 +192,7 @@ test("rejects days outside 1 to 3", function(){
 });
 test("no date is needed at all", function(){
   // the stopwatch model: nothing about WHEN is asked for or stored at purchase
-  var src = readFile("/Users/dean.tindale/partyplay/worker/SOURCE-do-not-paste-partyplay-api.js");
+  var src = readFile(repo("worker/SOURCE-do-not-paste-partyplay-api.js"));
   ok(src.indexOf("start_date: date") < 0, "checkout stores no date");
   ok(src.indexOf("au_state: w.state") < 0, "checkout stores no state");
   return Promise.resolve();
@@ -396,6 +414,47 @@ test("staff list needs proof", function(){
 test("whoami needs proof", function(){
   return W.fetch(req("GET","/admin/whoami"), ENV).then(function(r){
     ok(r.status===403, "expected 403, got "+r.status); });
+});
+
+/* A LINK SCANNER MUST NOT UNSUBSCRIBE ANYBODY.
+   Outlook SafeLinks and Gmail both fetch the links in a message before a human
+   sees it. Losing a subscriber that way would only cost us a subscriber; the
+   problem is that this handler ALSO cancels any album email not yet sent, so a
+   scanner following the footer link would silently kill the album a guest at
+   that party is still waiting for. The GET asks. The POST acts. */
+print("== unsubscribe: the GET must not change anything ==");
+test("GET /unsubscribe writes nothing", function(){
+  FETCH.calls = []; FETCH.plan = [];
+  return W.fetch(req("GET","/unsubscribe?e=someone%40example.com"), ENV).then(function(r){
+    var writes = FETCH.calls.filter(function(c){
+      return c.init && c.init.method && c.init.method !== "GET";
+    });
+    ok(r.status===200, "answers 200, got "+r.status);
+    ok(writes.length===0, "no write was made, saw "+writes.length);
+    return r.text().then(function(b){
+      ok(b.indexOf("<form") >= 0 && b.indexOf("POST") >= 0, "offers a form that POSTs");
+      ok(b.indexOf("someone@example.com") >= 0, "names the address being removed");
+    });
+  });
+});
+test("POST /unsubscribe does the work", function(){
+  FETCH.calls = []; FETCH.plan = [];
+  return W.fetch(req("POST","/unsubscribe?e=someone%40example.com"), ENV).then(function(r){
+    var patches = FETCH.calls.filter(function(c){
+      return c.init && c.init.method === "PATCH";
+    });
+    ok(r.status===200, "answers 200, got "+r.status);
+    ok(patches.length >= 1, "patched the subscriber, saw "+patches.length+" PATCH(es)");
+    var hit = patches.some(function(c){ return String(c.url).indexOf("pp_subscribers") >= 0; });
+    ok(hit, "the patch was against pp_subscribers");
+  });
+});
+test("a bad address is refused without writing", function(){
+  FETCH.calls = []; FETCH.plan = [];
+  return W.fetch(req("POST","/unsubscribe?e=not-an-email"), ENV).then(function(r){
+    var writes = FETCH.calls.filter(function(c){ return c.init && c.init.method === "PATCH"; });
+    ok(writes.length===0, "nothing written for a malformed address");
+  });
 });
 
 print("== routing ==");

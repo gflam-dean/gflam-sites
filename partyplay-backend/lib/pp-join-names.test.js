@@ -1,3 +1,18 @@
+/* WHERE THE CODE ACTUALLY IS.
+
+   These paths used to point into /Users/dean.tindale/partyplay, a copy of this
+   project that stopped being the one we ship. On 3 Sep it was 6.5 KB and 148
+   lines behind the repo, so every PartyPlay suite reported all checks passing
+   against code nobody deploys. A test pointed at the wrong file cannot fail, and
+   that is worse than no test: the green line says it did the job. */
+function ppFile(rel) {
+  var tries = ["/Users/dean.tindale/gflam-sites-current/" + rel, rel, "../" + rel, "../../" + rel];
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 100) return tries[i]; } catch (e) {}
+  }
+  throw new Error("cannot find " + rel);
+}
+
 /* TWO PEOPLE CALLED SAM.
  *
  * Ordinary at a party of twenty, and it used to put two identical names on the
@@ -15,7 +30,7 @@
  *
  *   jsc lib/pp-join-names.test.js
  */
-load("/Users/dean.tindale/partyplay/worker/_test-sha256.js");
+load(ppFile("partyplay-backend/worker/_test-sha256.js"));
 
 globalThis.crypto = { getRandomValues: function (a) { for (var i=0;i<a.length;i++) a[i]=(i*77)%251; return a; }, subtle: {} };
 globalThis.TextEncoder = function () { this.encode = function (s) { return SHA.utf8(s); }; };
@@ -36,7 +51,7 @@ globalThis.fetch = function (u, o) {
   return reply([]);
 };
 
-var src = readFile("/Users/dean.tindale/partyplay/worker/DEPLOY-partyplay-api.js")
+var src = readFile(ppFile("partyplay-backend/worker/DEPLOY-partyplay-api.js"))
             .replace(/^export default/m, "var _d =");
 var W = new Function(src + "\n; return { handleJoin: handleJoin };")();
 var ENV = { SUPABASE_URL: "https://x.supabase.co", SUPABASE_SERVICE_KEY: "s" };

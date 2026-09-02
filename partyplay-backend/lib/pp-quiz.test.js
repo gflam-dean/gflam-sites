@@ -1,5 +1,20 @@
+/* WHERE THE CODE ACTUALLY IS.
+
+   These paths used to point into /Users/dean.tindale/partyplay, a copy of this
+   project that stopped being the one we ship. On 3 Sep it was 6.5 KB and 148
+   lines behind the repo, so every PartyPlay suite reported all checks passing
+   against code nobody deploys. A test pointed at the wrong file cannot fail, and
+   that is worse than no test: the green line says it did the job. */
+function ppFile(rel) {
+  var tries = ["/Users/dean.tindale/gflam-sites-current/" + rel, rel, "../" + rel, "../../" + rel];
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 100) return tries[i]; } catch (e) {}
+  }
+  throw new Error("cannot find " + rel);
+}
+
 var m={exports:{}};
-(new Function("module","globalThis", readFile("/Users/dean.tindale/partyplay/lib/pp-quiz.js")))(m, this);
+(new Function("module","globalThis", readFile(ppFile("partyplay-backend/lib/pp-quiz.js"))))(m, this);
 var Q=m.exports;
 var pass=0,fail=0;
 function ok(c,msg){ if(c) pass++; else { fail++; print("  FAIL  "+msg); } }

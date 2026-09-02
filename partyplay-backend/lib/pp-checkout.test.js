@@ -1,3 +1,18 @@
+/* WHERE THE CODE ACTUALLY IS.
+
+   These paths used to point into /Users/dean.tindale/partyplay, a copy of this
+   project that stopped being the one we ship. On 3 Sep it was 6.5 KB and 148
+   lines behind the repo, so every PartyPlay suite reported all checks passing
+   against code nobody deploys. A test pointed at the wrong file cannot fail, and
+   that is worse than no test: the green line says it did the job. */
+function ppFile(rel) {
+  var tries = ["/Users/dean.tindale/gflam-sites-current/" + rel, rel, "../" + rel, "../../" + rel];
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 100) return tries[i]; } catch (e) {}
+  }
+  throw new Error("cannot find " + rel);
+}
+
 /* CAN SOMEBODY ACTUALLY BUY A PARTY?
  *
  * On 28 Aug 2026 the answer was no. Every checkout answered 500, because
@@ -16,7 +31,7 @@
  *
  *   jsc lib/pp-checkout.test.js
  */
-load("/Users/dean.tindale/partyplay/worker/_test-sha256.js");
+load(ppFile("partyplay-backend/worker/_test-sha256.js"));
 
 globalThis.crypto = { getRandomValues: function (a) { for (var i=0;i<a.length;i++) a[i]=(i*97)%251; return a; }, subtle: {} };
 globalThis.TextEncoder = function () { this.encode = function (s) { return SHA.utf8(s); }; };
@@ -50,7 +65,7 @@ globalThis.fetch = function (u, o) {
   return reply([]);
 };
 
-var src = readFile("/Users/dean.tindale/partyplay/worker/DEPLOY-partyplay-api.js")
+var src = readFile(ppFile("partyplay-backend/worker/DEPLOY-partyplay-api.js"))
             .replace(/^export default/m, "var _d =");
 var W = new Function(src + "\n; return { handleCheckout: handleCheckout };")();
 var ENV = { STRIPE_SECRET_KEY:"sk_test_x", STRIPE_WEBHOOK_SECRET:"whsec",

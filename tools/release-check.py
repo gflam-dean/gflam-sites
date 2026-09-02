@@ -424,6 +424,36 @@ def local_checks(which):
         line = out[-1] if out else ''
         ok(os.path.basename(t), 'ALL' in line and 'PASSED' in line, line)
 
+    head('D. No test reads code from outside the repo')
+    """A TEST POINTED AT THE WRONG FILE CANNOT FAIL, and it is worse than no test,
+    because the green line says it did the job.
+
+    This has now happened twice. vp-follow.test.js read from /tmp/vp-work, a
+    scratch directory that no longer existed. partyplay-api.test.js read the
+    Worker from /Users/dean.tindale/partyplay, a copy of the project that stopped
+    being the one we ship: on 3 Sep it was 6.5 KB and 148 lines behind, and the
+    suite reported ALL 63 CHECKS PASSED against a Worker nobody deploys.
+
+    Both were only found by reading the test, never by running it. So: no suite
+    may name an absolute path outside this repo. A path inside it is allowed,
+    since that is still the code we ship."""
+    strays = []
+    for d, _, fs in os.walk(ROOT):
+        if '/.git' in d or 'node_modules' in d:
+            continue
+        for f in fs:
+            if not f.endswith('.test.js'):
+                continue
+            full = os.path.join(d, f)
+            src = io.open(full, encoding='utf-8', errors='replace').read()
+            for m in re.finditer(r'["\'](/(?:Users|tmp|var|private)/[^"\']{4,})["\']', src):
+                path = m.group(1)
+                if path.startswith(ROOT + os.sep) or path == ROOT:
+                    continue
+                strays.append('%s -> %s' % (short(full), path))
+    ok('every test reads the code this repo ships', not strays,
+       why='; '.join(strays[:3]))
+
     head('D. One answer per question, everywhere it is asked')
     """THE SAME FUNCTION, COPIED INTO TWENTY FILES, DRIFTS.
 

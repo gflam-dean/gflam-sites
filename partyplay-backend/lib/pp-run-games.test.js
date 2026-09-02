@@ -1,3 +1,18 @@
+/* WHERE THE CODE ACTUALLY IS.
+
+   These paths used to point into /Users/dean.tindale/partyplay, a copy of this
+   project that stopped being the one we ship. On 3 Sep it was 6.5 KB and 148
+   lines behind the repo, so every PartyPlay suite reported all checks passing
+   against code nobody deploys. A test pointed at the wrong file cannot fail, and
+   that is worse than no test: the green line says it did the job. */
+function ppFile(rel) {
+  var tries = ["/Users/dean.tindale/gflam-sites-current/" + rel, rel, "../" + rel, "../../" + rel];
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 100) return tries[i]; } catch (e) {}
+  }
+  throw new Error("cannot find " + rel);
+}
+
 /* CHARADES AND WHO AM I: the secrecy is the whole game.
  *
  * These two are the only games where showing something to the wrong screen ruins
@@ -6,7 +21,7 @@
  *
  *   jsc lib/pp-run-games.test.js
  */
-var src = readFile("/Users/dean.tindale/partyplay/site/run.html");
+var src = readFile(ppFile("partyplay/run.html"));
 var body = src.match(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/)[1];
 
 var sent = [], toasts = [], dom = {};

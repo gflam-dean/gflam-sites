@@ -1,3 +1,18 @@
+/* WHERE THE CODE ACTUALLY IS.
+
+   These paths used to point into /Users/dean.tindale/partyplay, a copy of this
+   project that stopped being the one we ship. On 3 Sep it was 6.5 KB and 148
+   lines behind the repo, so every PartyPlay suite reported all checks passing
+   against code nobody deploys. A test pointed at the wrong file cannot fail, and
+   that is worse than no test: the green line says it did the job. */
+function ppFile(rel) {
+  var tries = ["/Users/dean.tindale/gflam-sites-current/" + rel, rel, "../" + rel, "../../" + rel];
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 100) return tries[i]; } catch (e) {}
+  }
+  throw new Error("cannot find " + rel);
+}
+
 /* THE ADMIN CONSOLE'S SIGN-IN, AND THE HOUR IT USED TO DIE AT.
  *
  * A Supabase access token lasts about an hour. The console is a page somebody
@@ -25,7 +40,7 @@ var CANDIDATES = [
   "partyplay/admin.html",
   "../partyplay/admin.html",
   "/Users/dean.tindale/gflam-sites-current/partyplay/admin.html",
-  "/Users/dean.tindale/partyplay/site/admin.html",
+  ppFile("partyplay/admin.html"),
   "../gflam-sites-current/partyplay/admin.html",
   "site/admin.html"
 ];

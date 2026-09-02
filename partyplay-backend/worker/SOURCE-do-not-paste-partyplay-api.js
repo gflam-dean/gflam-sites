@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '2 Sep 2026, 07:09 · 91f1ca6f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Sep 2026, 09:07 · 7761eef8';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -901,14 +901,41 @@ async function handlePhotoSweep(request, env) {
   return json({ ok: true, deleted: gone, remaining: due.length === 500 ? 'more' : 0 });
 }
 
-/* GET /unsubscribe?e=<email>   and   POST /unsubscribe
+/* GET /unsubscribe?e=<email>   shows a button
+   POST /unsubscribe             actually does it
+
    Every follow-up email links here and the route did not exist. It 404'd, so
    pp_subscribers.unsubscribed_at could never be set by a recipient and the check
    that reads it was dead code. Under the Spam Act a working unsubscribe is not
-   optional, so this is a compliance fix, not a feature. */
+   optional, so this is a compliance fix, not a feature.
+
+   IT USED TO UNSUBSCRIBE ON THE GET. Mail clients and corporate scanners follow
+   the links in a message before a human sees it -- Outlook SafeLinks and Gmail
+   both do -- so a recipient could be taken off the list without ever clicking.
+   Losing a subscriber that way would only cost us a subscriber. The problem is
+   the second thing this handler does: it also cancels any album email that has
+   not gone out yet, so a scanner following the footer link would silently kill
+   the album a guest at that party is still waiting for.
+
+   So the GET only asks. One button, still one click, and the POST does the work.
+   RFC 8058 one-click unsubscribe is a POST for exactly this reason. */
 async function handleUnsubscribe(request, env) {
   const u = new URL(request.url);
-  const email = String(u.searchParams.get('e') || '').trim().toLowerCase();
+  let email = String(u.searchParams.get('e') || '').trim().toLowerCase();
+  if (request.method === 'POST' && !email) {
+    /* The form posts it, so a mail client that rewrites the query string cannot
+       lose it. Accepts either encoding; a party guest is not sending JSON. */
+    const ct = request.headers.get('content-type') || '';
+    try {
+      if (ct.indexOf('application/json') >= 0) {
+        const b = await request.json();
+        email = String((b && b.email) || '').trim().toLowerCase();
+      } else {
+        const f = await request.formData();
+        email = String(f.get('email') || '').trim().toLowerCase();
+      }
+    } catch (e) {}
+  }
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
   const page = (title, body) => new Response(
     '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
@@ -923,6 +950,25 @@ async function handleUnsubscribe(request, env) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return page('That link looks wrong', 'Email hello@partyplay.com.au and we will take you off by hand.');
   }
+
+  if (request.method !== 'POST') {
+    /* Nothing has changed yet. This page is the only thing a link scanner gets. */
+    return new Response(
+      '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>Unsubscribe | PartyPlay</title>' +
+      '<body style="margin:0;background:#12101A;color:#FFF1E6;font-family:system-ui,sans-serif;' +
+      'display:grid;place-items:center;min-height:100vh;padding:30px;text-align:center">' +
+      '<div style="max-width:34ch"><h1 style="font-size:28px;margin:0 0 12px">Come off the list?</h1>' +
+      '<p style="color:#B6ADC2;line-height:1.6">We will stop emailing ' + escapeHtml(email) + '. ' +
+      'Nothing you have paid for is affected and your party code still works.</p>' +
+      '<form method="POST" action="/unsubscribe" style="margin-top:22px">' +
+      '<input type="hidden" name="email" value="' + escapeHtml(email) + '">' +
+      '<button type="submit" style="background:#FF1F8E;color:#fff;border:0;border-radius:12px;' +
+      'padding:14px 22px;font:600 16px system-ui,sans-serif;cursor:pointer">Yes, unsubscribe</button>' +
+      '</form></div>',
+      { headers: { 'content-type': 'text/html; charset=utf-8' } });
+  }
+
   await sb(env, 'pp_subscribers?email=eq.' + encodeURIComponent(email), {
     method: 'PATCH', body: JSON.stringify({ opted_in: false, unsubscribed_at: new Date().toISOString() })
   });
