@@ -424,6 +424,45 @@ def local_checks(which):
         line = out[-1] if out else ''
         ok(os.path.basename(t), 'ALL' in line and 'PASSED' in line, line)
 
+    head('D. The song library holds together')
+    """5,131 songs and 19 playlists in one JSON file that every musical bingo night
+    is dealt from, and nothing checked it. A playlist pointing at a song id that is
+    not there deals a blank cell nobody can ever tap, and a song held twice can be
+    played twice in one night.
+
+    Cheap to check and impossible to notice by reading: this is data, not code, so
+    it parses fine no matter how wrong it is."""
+    libp = os.path.join(ROOT, 'venueplay', 'data', 'musical-library.json')
+    try:
+        lib = json.load(io.open(libp, encoding='utf-8'))
+        songs, pls = lib['songs'], lib['playlists']
+        ids = set()
+        dupe_ids = [s_['id'] for s_ in songs if s_['id'] in ids or ids.add(s_['id'])]
+        pairs = {}
+        same = []
+        for s_ in songs:
+            k = (s_['title'].lower(), s_['artist'].lower())
+            if k in pairs:
+                same.append(s_['title'])
+            pairs[k] = 1
+        broken = [(p_['name'], i) for p_ in pls for i in p_['songIds'] if i not in ids]
+        empty = [p_['name'] for p_ in pls if not p_['songIds']]
+        noaudio = [s_['title'] for s_ in songs if not s_.get('previewUrl')]
+        dated = sum(1 for s_ in songs if s_.get('year'))
+        ok('every playlist points at songs that exist', not broken,
+           '%d songs, %d playlists' % (len(songs), len(pls)),
+           why='; '.join('%s -> %s' % b for b in broken[:3]))
+        ok('no song is held twice', not dupe_ids and not same,
+           why='; '.join((dupe_ids + same)[:3]))
+        ok('every song has audio', not noaudio, why='; '.join(noaudio[:3]))
+        ok('no playlist is empty', not empty, why=', '.join(empty[:3]))
+        # A host picking "2000s" gets the 2000s only if the years are actually there.
+        ok('songs know what year they are', dated >= int(len(songs) * 0.95),
+           '%d of %d dated' % (dated, len(songs)),
+           why='only %d%% dated' % (100 * dated // max(1, len(songs))))
+    except Exception as e:
+        ok('the song library parses', False, why=str(e)[:120])
+
     head('D. A shared script is loaded before it is used')
     """A page that uses PPConfig above the tag that loads it throws a
     ReferenceError and everything after it in that block simply never runs. It is
