@@ -18,8 +18,7 @@ function readSource(){
   var tries = [
     "venueplay/app/vp-follow.js",
     "vp-follow.js",
-    "../vp-follow.js",
-    "/Users/dean.tindale/gflam-sites-current/venueplay/app/vp-follow.js"
+    "../vp-follow.js"
   ];
   for (var i = 0; i < tries.length; i++){
     try { var t = readFile(tries[i]); if (t && t.length > 200) return t; } catch(e){}

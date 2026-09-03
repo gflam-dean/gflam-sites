@@ -6,8 +6,7 @@
    against code nobody deploys. A test pointed at the wrong file cannot fail, and
    that is worse than no test: the green line says it did the job. */
 function ppFile(rel) {
-  var tries = [rel, "partyplay-backend/" + rel, "../" + rel, "../../" + rel,
-               "/Users/dean.tindale/gflam-sites-current/" + rel];
+  var tries = [rel, "partyplay-backend/" + rel, "../" + rel, "../../" + rel + rel];
   for (var i = 0; i < tries.length; i++) {
     try { var t = readFile(tries[i]); if (t && t.length > 100) return tries[i]; } catch (e) {}
   }
@@ -40,7 +39,6 @@ function pass(n, c){ print((c ? "  ok   " : "  FAIL ") + n); if(!c) bad++; }
 var CANDIDATES = [
   "partyplay/admin.html",
   "../partyplay/admin.html",
-  "/Users/dean.tindale/gflam-sites-current/partyplay/admin.html",
   ppFile("partyplay/admin.html"),
   "../gflam-sites-current/partyplay/admin.html",
   "site/admin.html"

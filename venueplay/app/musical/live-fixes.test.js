@@ -23,8 +23,7 @@ function read(paths, min){
 }
 function find(rel){
   return read([ "venueplay/app/" + rel,
-                rel,
-                "/Users/dean.tindale/gflam-sites-current/venueplay/app/" + rel ], 1000);
+                rel + rel ], 1000);
 }
 
 var screenSrc  = find("musical/screen.html");
@@ -95,8 +94,7 @@ pass("the console says which one it is (lobby vs ended)",
 
    The router's onAir() already puts host_here, idle and an inactive state on the
    right side of the line. These checks exist so the screens keep asking it. */
-var router = read([ "venueplay/app/vp-screen-router.js", "../vp-screen-router.js",
-                    "/Users/dean.tindale/gflam-sites-current/venueplay/app/vp-screen-router.js" ], 500);
+var router = read([ "venueplay/app/vp-screen-router.js", "../vp-screen-router.js" ], 500);
 pass("the router filters its own liveness signal",
      !!router && /seen:\s*function\s*\(m\)[\s\S]{0,120}onAir\(m\)/.test(router),
      "seen() counts any traffic again, so a heartbeat pins the wall to a finished game");
@@ -126,8 +124,7 @@ pass("the host console can turn the room up",
 /* 6. AND THE ONE THAT COSTS MONEY.
    The Worker de-duplicates a rejoin on the pid a phone sends. A page that omits it
    mints and BILLS another player row every time somebody reloads. */
-var vpPlay = read([ "venueplay/play.html", "../../play.html",
-                    "/Users/dean.tindale/gflam-sites-current/venueplay/play.html" ], 1000);
+var vpPlay = read([ "venueplay/play.html", "../../play.html" ], 1000);
 pass("/play still sends its device id when it joins",
      !!vpPlay && /pid:\s*deviceId\(\)/.test(vpPlay),
      "every rejoin mints and bills another player again");

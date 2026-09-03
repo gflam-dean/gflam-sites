@@ -16,8 +16,7 @@ function pass(n, c, extra){ print((c ? "  ok   " : "  FAIL ") + n + (extra ? "  
 
 var CANDIDATES = [
   "venueplay-backend/worker/venueplay-api-FULL.js",
-  "venueplay-api-FULL.js",
-  "/Users/dean.tindale/gflam-sites-current/venueplay-backend/worker/venueplay-api-FULL.js"
+  "venueplay-api-FULL.js"
 ];
 var src = null;
 for (var i = 0; i < CANDIDATES.length; i++){

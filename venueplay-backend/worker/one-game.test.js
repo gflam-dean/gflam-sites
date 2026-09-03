@@ -8,7 +8,16 @@
    Runs endOtherRunningGames against stubbed storage, so it exercises the real
    function out of the Worker rather than a copy of it.
 */
-var src = readFile('/Users/dean.tindale/gflam-sites-current/venueplay-backend/worker/venueplay-game.js')
+/* Resolved against whatever tree this is run from, never a path typed in. */
+function firstThatReads(tries) {
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 200) return tries[i]; } catch (e) {}
+  }
+  throw new Error("cannot find " + tries[0]);
+}
+
+var src = readFile(firstThatReads(['venueplay-backend/worker/venueplay-game.js',
+                          'venueplay-game.js', '../venueplay-game.js']))
             .replace(/^export default/m, 'var _default =');
 
 var PASS = 0, FAIL = 0;

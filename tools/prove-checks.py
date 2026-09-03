@@ -47,7 +47,12 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # find may also be a directive:
 #
 #   <<ALL:text>>   replace every occurrence, not the first
-#   <<TRUNCATE>>   cut the file in half, which is what a bad paste looks like
+#   <<TRUNCATE>>   cut the file in half
+#   <<EMPTY>>      leave it zero bytes
+#
+# Half a Worker does not parse, so four other checks catch it before the
+# wholeness check is reached. Zero bytes parses perfectly, which is the case
+# that check was actually written for.
 MUTATIONS = [
     ('every playlist points at songs that exist',
      'venueplay/data/musical-library.json',
@@ -157,7 +162,7 @@ MUTATIONS = [
 
     ('check-venue-scoping.py',
      'venueplay/app/index.html',
-     'founding_id', 'founding_id_removed',
+     '<<ALL:founding_id>>', 'founding_id_removed',
      'the venue switcher stops narrowing by account and shows one operator everybody else venues'),
 
     ('no song is held twice',
@@ -191,13 +196,20 @@ MUTATIONS = [
     # ---- the Workers you paste ----
     ('venueplay-game.js is whole',
      'venueplay-backend/worker/venueplay-game.js',
-     '<<TRUNCATE>>', '',
-     'half a Worker is pasted, which is what a bad copy actually looks like'),
+     '<<EMPTY>>', '',
+     'the Worker file ends up empty, which is the case this check exists for: '
+     'zero bytes parses perfectly and half a file does not, so the parser catches '
+     'the truncation and only this catches the emptying'),
 
+    # This check compares the BUILD STAMP the source carries against the one in
+    # the built file, so the mutation has to move the stamp. Editing the source's
+    # code does not: the stamp only changes when stamp-workers.py runs, which the
+    # pre-push hook does before this ever runs. That is the real guard against an
+    # edited-but-unbuilt source, and it is why editing code here proves nothing.
     ('the build is this source, not an older one',
      'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
-     'async function handleJoin', 'async function handleJoinEdited',
-     'the source moves on and the built file is left behind'),
+     "const BUILD = '", "const BUILD = 'not the same stamp",
+     'the source is rebuilt and the deployed copy is left behind'),
 ]
 
 
@@ -240,7 +252,9 @@ def main():
             skipped += 1
             continue
         before = io.open(path, encoding='utf-8').read()
-        if find == '<<TRUNCATE>>':
+        if find == '<<EMPTY>>':
+            after = ''
+        elif find == '<<TRUNCATE>>':
             after = before[:len(before) // 2]
         elif find.startswith('<<ALL:'):
             target = find[len('<<ALL:'):-2] if find.endswith('>>') else find[len('<<ALL:'):]

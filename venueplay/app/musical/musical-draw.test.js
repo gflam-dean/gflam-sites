@@ -16,13 +16,11 @@ function pass(n, c, extra){ print((c ? "  ok   " : "  FAIL ") + n + (extra ? "  
 
 var CANDIDATES = [
   "venueplay/app/musical/host.html",
-  "../musical/host.html",
-  "/Users/dean.tindale/gflam-sites-current/venueplay/app/musical/host.html"
+  "../musical/host.html"
 ];
 var LIBS = [
   "venueplay/data/musical-library.json",
-  "../../data/musical-library.json",
-  "/Users/dean.tindale/gflam-sites-current/venueplay/data/musical-library.json"
+  "../../data/musical-library.json"
 ];
 function firstReadable(list, min){
   for (var i=0;i<list.length;i++){
