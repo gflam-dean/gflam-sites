@@ -586,10 +586,17 @@ def local_checks(which):
         for tag, body in re.findall(r'(<script(?![^>]*\bsrc=)[^>]*>)(.*?)</script>', src, re.S):
             at = src.index(body)
             for lib, g in GLOBALS.items():
-                if lib not in loads:
-                    continue
                 m = re.search(r'(?<![.\w])' + g + r'\s*\.', body)
-                if m and at + m.start() < loads[lib]:
+                if not m:
+                    continue
+                # NOT LOADED AT ALL is worse than loaded late, and this used to
+                # skip it: `if lib not in loads: continue` meant a page calling
+                # VPFeedback.ask() while loading nothing passed silently. Found by
+                # prove-checks.py, which broke the page that way and watched this
+                # stay green.
+                if lib not in loads:
+                    late.append('%s uses %s but never loads %s' % (short(f), g, lib))
+                elif at + m.start() < loads[lib]:
                     late.append('%s uses %s before %s' % (short(f), g, lib))
     ok('every shared script loads before it is used', not late, why='; '.join(late[:3]))
 
