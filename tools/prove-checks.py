@@ -249,6 +249,12 @@ MUTATIONS = [
     ('musical-draw.test.js', 'venueplay/app/musical/host.html',
      'HITS_ALPHA', 'HITS_ALPHA_REMOVED',
      'the weighting that keeps a night singable is renamed away'),
+    ('money.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (annual) return tier === 'founding' ? 2.30 : 2.85;",
+     "  if (annual) return tier === 'founding' ? 2.40 : 2.85;",
+     'the two Workers stop agreeing on the price, so a venue is quoted one '
+     'number and charged another'),
+
     ('one-game.test.js', 'venueplay-backend/worker/venueplay-game.js',
      'endOtherRunningGames', 'endOtherRunningGamesRenamed',
      'the one-game-at-a-time rule is renamed away'),
