@@ -456,6 +456,42 @@ test("a bad address is refused without writing", function(){
   });
 });
 
+/* PHOTOS WITH NO ROW LEFT TO FIND THEM BY.
+   pp_photos cascades from pp_licences, so deleting a licence takes the rows and
+   leaves the R2 objects. The album page promises guests their photos go after
+   thirty days, and the sweep works off rows, so those objects would stay forever.
+   Only objects older than a day count, or an upload whose row insert is still in
+   flight would be mistaken for an orphan. */
+print("== the photo sweep clears orphaned files ==");
+test("an old file with no row is deleted, a new one and a known one are not", function(){
+  var deleted = [];
+  var DAY = 24*60*60*1000;
+  var ENV2 = Object.assign({}, ENV, { PHOTOS: {
+    put: function(){ return Promise.resolve(); },
+    get: function(){ return Promise.resolve(null); },
+    "delete": function(k){ deleted.push(k); return Promise.resolve(); },
+    list: function(){
+      return Promise.resolve({ truncated:false, objects:[
+        { key:"orphan-old.jpg",  uploaded: new Date(Date.now()-3*DAY).toISOString() },
+        { key:"orphan-fresh.jpg",uploaded: new Date(Date.now()-60*1000).toISOString() },
+        { key:"known.jpg",       uploaded: new Date(Date.now()-3*DAY).toISOString() }
+      ]});
+    }
+  }});
+  FETCH.calls = [];
+  // first call is the due-by-date sweep (none due), second is the key lookup
+  FETCH.plan = [ {status:200, body:"[]"}, {status:200, body:JSON.stringify([{object_key:"known.jpg"}])} ];
+  return W.fetch(req("POST","/admin/sweep-photos",{key:"test-admin-key"},
+                     {"x-admin-key":"test-admin-key"}), ENV2).then(function(r){
+    return r.json().then(function(j){
+      ok(deleted.indexOf("orphan-old.jpg") >= 0, "the old orphan was deleted");
+      ok(deleted.indexOf("orphan-fresh.jpg") < 0, "an upload from a minute ago was left alone");
+      ok(deleted.indexOf("known.jpg") < 0, "a file that still has its row was left alone");
+      ok(j.orphans === 1, "it reported 1 orphan, said " + j.orphans);
+    });
+  });
+});
+
 print("== routing ==");
 test("unknown route is 404", function(){
   return W.fetch(req("GET","/nope"), ENV).then(function(r){ ok(r.status===404, "404 for unknown, got "+r.status); });

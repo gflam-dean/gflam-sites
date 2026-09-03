@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 03 Sep 2026, 09:39:10   fingerprint d27ab933c805
+   Built 03 Sep 2026, 13:39:41   fingerprint 58b0b1362e71
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '3 Sep 2026, 09:39 · 1e7aa1c5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Sep 2026, 13:39 · 4f1b01ca';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -1004,7 +1004,46 @@ async function handlePhotoSweep(request, env) {
     await sb(env, 'pp_photos?id=eq.' + r.id, { method: 'DELETE' });
     gone++;
   }
-  return json({ ok: true, deleted: gone, remaining: due.length === 500 ? 'more' : 0 });
+  /* AND THE ONES WITH NO ROW LEFT TO FIND THEM BY.
+
+     pp_photos.licence_id cascades on delete, so removing a licence takes its
+     photo rows with it and leaves the R2 objects behind. Nothing deletes a
+     licence in code today, but the day somebody clears out test parties in the
+     SQL editor, every photo those guests took stays in the bucket forever: the
+     sweep above works off ROWS, and there is no row any more.
+
+     That is not a storage bill, it is a broken promise. The album page tells
+     guests their photos go after thirty days.
+
+     Only objects older than a day are considered, so an upload whose row insert
+     is still in flight is never mistaken for an orphan. */
+  let orphans = 0;
+  try {
+    const DAY = 24 * 60 * 60 * 1000;
+    let cursor = undefined;
+    for (let page = 0; page < 10; page++) {
+      const listed = await env.PHOTOS.list({ limit: 200, cursor });
+      const old = (listed.objects || []).filter(function (o) {
+        return o.uploaded && (Date.now() - new Date(o.uploaded).getTime()) > DAY;
+      });
+      if (old.length) {
+        const keys = old.map(function (o) { return '"' + o.key + '"'; }).join(',');
+        const known = await sb(env, 'pp_photos?object_key=in.(' + encodeURIComponent(keys) +
+                                   ')&select=object_key');
+        const have = new Set((known || []).map(function (r) { return r.object_key; }));
+        for (const o of old) {
+          if (!have.has(o.key)) {
+            try { await env.PHOTOS.delete(o.key); orphans++; } catch (e) {}
+          }
+        }
+      }
+      if (!listed.truncated) break;
+      cursor = listed.cursor;
+    }
+  } catch (e) { /* listing is best effort; the row sweep above is the main job */ }
+
+  return json({ ok: true, deleted: gone, orphans: orphans,
+                remaining: due.length === 500 ? 'more' : 0 });
 }
 
 /* GET /unsubscribe?e=<email>   shows a button
