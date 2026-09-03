@@ -1550,6 +1550,17 @@ def summary(which, ran_live):
     6. If the release touched a game, do the live list above. No tool here
        can open a browser or hear a pub.
 
+    7. NOT EVERY TIME, but before a release that matters and after adding a
+       check: python3 tools/prove-checks.py
+
+       It breaks the thing each check watches, in a scratch copy, and requires
+       that check to go red. A check that cannot fail is worse than no check,
+       because the green line says the job was done. It takes about fifteen
+       minutes and it has already caught a live one: the win fanfare was silent
+       on all eight screens for half a day because a shared script was called
+       and never loaded, and the check that should have said so skipped any
+       script a page did not load at all.
+
   Nothing is deployed until step 5 says so. "I pasted it" is not evidence;
   /health answering with the right build is.""")
     return 1 if failed else 0
