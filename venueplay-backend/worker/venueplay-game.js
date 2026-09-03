@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '2 Sep 2026, 12:17 · 52879437';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '3 Sep 2026, 14:09 · 51c8dbbf';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -208,12 +208,36 @@ export default {
            second venue's table talkers go to the printer. */
         let clashes = [];
         try { await refreshVenueCodes(env); clashes = _vcDupes || []; } catch (e) { clashes = []; }
+
+        /* IS THE BROADCAST SIGNING ACTUALLY ON, and for how many venues?
+           Realtime channels are named from a hash of the venue's PUBLIC slug and
+           carry no RLS, so anyone with the anon key printed in every page could
+           join a venue's channel and send on it: fake balls, a fake winner, mid
+           game, on the TV and every phone. ECDSA signing closed that on 22 Aug.
+           But enforcement is per venue and defaults OFF, so the code being
+           present says nothing about whether any room is actually protected.
+           That distinction is what made the original hole so hard to see: it
+           read as closed in every file you would look at.
+           Two numbers, so it takes a curl instead of a database session. */
+        let signing = null;
+        try {
+          const vs = await sbGet(env, 'vp_venues', 'select=id,broadcast_enforce&limit=2000');
+          const ks = await sbGet(env, 'vp_venue_signing_keys', 'select=venue_id&limit=2000');
+          const keyed = new Set(ks.map(function (k) { return k.venue_id; }));
+          signing = {
+            venues: vs.length,
+            with_a_key: vs.filter(function (v) { return keyed.has(v.id); }).length,
+            enforcing: vs.filter(function (v) { return v.broadcast_enforce; }).length
+          };
+        } catch (e) { signing = { error: 'could not be read' }; }
+
         return json({
           worker: 'venueplay-game',
           build: BUILD,
           ok: !missing.length && rl && !clashes.length,
           missing,
           rateLimiter: rl,
+          broadcast_signing: signing,
           venue_code_clashes: clashes.length,
           venue_code_clash_detail: clashes.length ? clashes.slice(0, 5) : undefined,
           warning: clashes.length
