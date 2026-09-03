@@ -39,16 +39,20 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0m'
 
 # (what we expect to go red, file, find, replace, why this mutation is the right one)
+#
+# A mutation has to actually change what the check reads. Three of the first
+# batch did not, and were reported as blind checks when the fault was mine:
+# 'function' -> 'function ' is a no-op, and replacing the FIRST '"year":' takes
+# the year off one song out of 5,080 when the check allows 5% to be missing. So
+# find may also be a directive:
+#
+#   <<ALL:text>>   replace every occurrence, not the first
+#   <<TRUNCATE>>   cut the file in half, which is what a bad paste looks like
 MUTATIONS = [
     ('every playlist points at songs that exist',
      'venueplay/data/musical-library.json',
      '"songIds":["', '"songIds":["no-such-song","',
      'a playlist pointing at a song that is not there deals a blank cell'),
-
-    ('no song is held twice',
-     'venueplay/app/musical/host.html',
-     None, None,
-     'needs a duplicate row in the library, done in memory'),
 
     ('esc() is the same in all',
      'venueplay/app/musical/host.html',
@@ -101,6 +105,99 @@ MUTATIONS = [
      '<script src="/app/vp-sign.js"></script>\n<script src="/app/vp-feedback.js"></script>',
      '<script src="/app/vp-sign.js"></script>',
      'a page uses a global and never loads the script that defines it'),
+
+    # ---- the basics: does anything catch a broken file at all ----
+    ('every script in',
+     'venueplay/play.html',
+     'function route(){', 'function route(){ this is not javascript',
+     'a page ships with a syntax error'),
+
+    ('every Worker actually loads',
+     'venueplay-backend/worker/venueplay-game.js',
+     'async function handleFeedback(', 'async function handleFeedback(((',
+     'a Worker parses but cannot be loaded'),
+
+    ('definition check across',
+     'venueplay/tv.html',
+     'function renderLobby(){', 'function renderLobby(){ aFunctionThatDoesNotExistAnywhere();',
+     'a page calls something that does not exist'),
+
+    # ---- the test suites: can each one still fail? ----
+    ('pp-ticket.test.js',
+     'partyplay-backend/lib/pp-ticket.js',
+     '<<ALL:return>>', 'return null; //', 'the ticket library changes under its own suite'),
+
+    ('pp-licence.test.js',
+     'partyplay-backend/lib/pp-licence.js',
+     '<<ALL:days>>', 'daze', 'the licence library changes under its own suite'),
+
+    ('pp-quiz.test.js',
+     'partyplay-backend/lib/pp-quiz.js',
+     '<<ALL:return>>', 'return null; //', 'the quiz library changes under its own suite'),
+
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "if (request.method !== 'POST') {", 'if (false) {',
+     'unsubscribe goes back to firing on a GET'),
+
+    ('manager-permissions.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "&select=id,role,venue_id,permissions", "&select=id,role,venue_id",
+     'requireStaff stops fetching the column every permission check reads'),
+
+    ('live-fixes.test.js',
+     'venueplay/app/musical/screen.html',
+     'LOBBY_MAX_MS', 'LOBBY_MAX_MS_DISABLED',
+     'the 60 minute lobby cap disappears'),
+
+    ('slug-ladder.test.js',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     'vpaUniqueSlug', 'vpaUniqueSlugRenamed',
+     'the slug ladder that keeps 100 Royal Hotels apart is renamed away'),
+
+    ('check-venue-scoping.py',
+     'venueplay/app/index.html',
+     'founding_id', 'founding_id_removed',
+     'the venue switcher stops narrowing by account and shows one operator everybody else venues'),
+
+    ('no song is held twice',
+     'venueplay/data/musical-library.json',
+     '"songs":[', '"songs":[{"id":"the-horses-daryl-braithwaite","title":"The Horses",'
+                  '"artist":"Daryl Braithwaite","previewUrl":"https://x","artworkUrl":"https://x"},',
+     'the same song is in the library twice and can be played twice in a night'),
+
+    # ---- the data ----
+    ('every song has audio',
+     'venueplay/data/musical-library.json',
+     '"previewUrl":"https', '"previewUrl":"", "x":"https',
+     'a song loses its audio and the host plays silence'),
+
+    ('songs know what year they are',
+     'venueplay/data/musical-library.json',
+     '<<ALL:"year":>>', '"yearWas":',
+     'the years vanish and every decade pack empties'),
+
+    # ---- the house rules and the locked wording ----
+    ('never "roster" in copy',
+     'venueplay/app/billing.html',
+     '<h1>', '<h1>roster ',
+     'the word Dean banned reaches the screen'),
+
+    ('no file claims an exemption vp-sign does not grant',
+     'venueplay/app/vp-screen-router.js',
+     'screen_refresh', 'screen_refresh, winner',
+     'a file claims an exemption the signer does not actually grant'),
+
+    # ---- the Workers you paste ----
+    ('venueplay-game.js is whole',
+     'venueplay-backend/worker/venueplay-game.js',
+     '<<TRUNCATE>>', '',
+     'half a Worker is pasted, which is what a bad copy actually looks like'),
+
+    ('the build is this source, not an older one',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     'async function handleJoin', 'async function handleJoinEdited',
+     'the source moves on and the built file is left behind'),
 ]
 
 
@@ -143,12 +240,29 @@ def main():
             skipped += 1
             continue
         before = io.open(path, encoding='utf-8').read()
-        if find not in before:
+        if find == '<<TRUNCATE>>':
+            after = before[:len(before) // 2]
+        elif find.startswith('<<ALL:'):
+            target = find[len('<<ALL:'):-2] if find.endswith('>>') else find[len('<<ALL:'):]
+            if target not in before:
+                print('  %s----%s %s %sthe mutation no longer applies, rewrite it%s'
+                      % (YEL, OFF, label.ljust(52), DIM, OFF))
+                skipped += 1
+                continue
+            after = before.replace(target, repl)
+        elif find not in before:
             print('  %s----%s %s %sthe mutation no longer applies, rewrite it%s'
                   % (YEL, OFF, label.ljust(52), DIM, OFF))
             skipped += 1
             continue
-        io.open(path, 'w', encoding='utf-8').write(before.replace(find, repl, 1))
+        else:
+            after = before.replace(find, repl, 1)
+        if after == before:
+            print('  %s----%s %s %sthe mutation changes nothing, rewrite it%s'
+                  % (YEL, OFF, label.ljust(52), DIM, OFF))
+            skipped += 1
+            continue
+        io.open(path, 'w', encoding='utf-8').write(after)
         caught = gate(label, repo)
         io.open(path, 'w', encoding='utf-8').write(before)
         if caught:

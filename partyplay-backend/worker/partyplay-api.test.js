@@ -9,7 +9,7 @@
    Resolved against this file's own location instead, so it follows the repo. */
 function repo(rel) {
   var here = "/Users/dean.tindale/gflam-sites-current/partyplay-backend/";
-  var tries = [here + rel, "partyplay-backend/" + rel, rel, "../" + rel];
+  var tries = ["partyplay-backend/" + rel, rel, "../" + rel, here + rel];
   for (var i = 0; i < tries.length; i++) {
     try { var t = readFile(tries[i]); if (t && t.length > 200) return tries[i]; } catch (e) {}
   }
