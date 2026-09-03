@@ -20,9 +20,11 @@ took to write. Restore-afterwards is not a safety property. Never-touch-it is.
 For each entry: break the thing the check watches in the COPY, run the gate
 there, and require that THAT check goes red.
 
-WHAT IT DOES NOT DO. Only the checks listed here are proven. The rest are
-printed as UNPROVEN so the gap is visible rather than assumed away, which is the
-whole point: the failure being guarded against is quiet confidence.
+WHAT IT DOES NOT DO. Only the checks listed here are proven, and it says so: it
+asks the gate what checks it actually runs and names the ones with no mutation.
+Without that the summary reads "0 without a mutation yet" while covering half of
+them, which is the exact failure this tool exists to catch, committed by the tool
+itself.
 
   prove-checks.py            prove them all
   prove-checks.py esc        just the ones whose label matches
@@ -84,8 +86,7 @@ MUTATIONS = [
 
     ('every test reads the code this repo ships',
      'venueplay/app/vp-follow.test.js',
-     '"/Users/dean.tindale/gflam-sites-current/venueplay/app/vp-follow.js"',
-     '"/Users/dean.tindale/somewhere-else/vp-follow.js"',
+     '"vp-follow.js",', '"/Users/dean.tindale/an-old-copy/vp-follow.js",',
      'a suite starts testing a copy nobody ships'),
 
     # AIM AT THE THING THE CHECK WATCHES. The first version of this replaced the
@@ -160,9 +161,12 @@ MUTATIONS = [
      'vpaUniqueSlug', 'vpaUniqueSlugRenamed',
      'the slug ladder that keeps 100 Royal Hotels apart is renamed away'),
 
+    # NOT founding_id_removed: the check asks whether "founding_id" appears in the
+    # picker, and founding_id_removed still CONTAINS it. A mutation has to remove
+    # the thing, not decorate it.
     ('check-venue-scoping.py',
      'venueplay/app/index.html',
-     '<<ALL:founding_id>>', 'founding_id_removed',
+     '<<ALL:founding_id>>', 'acct_ref',
      'the venue switcher stops narrowing by account and shows one operator everybody else venues'),
 
     ('no song is held twice',
@@ -188,10 +192,13 @@ MUTATIONS = [
      '<h1>', '<h1>roster ',
      'the word Dean banned reaches the screen'),
 
+    # The check reads the literal phrase "<name> is EXEMPT" out of comments and
+    # compares it against the real EXEMPT list in vp-sign.js. So the mutation has
+    # to write that claim, not edit a list somewhere.
     ('no file claims an exemption vp-sign does not grant',
      'venueplay/app/vp-screen-router.js',
-     'screen_refresh', 'screen_refresh, winner',
-     'a file claims an exemption the signer does not actually grant'),
+     '"use strict";', '"use strict";  // winner is EXEMPT from signing',
+     'a comment claims an exemption the signer does not actually grant'),
 
     # ---- the Workers you paste ----
     ('venueplay-game.js is whole',
@@ -210,6 +217,96 @@ MUTATIONS = [
      'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
      "const BUILD = '", "const BUILD = 'not the same stamp",
      'the source is rebuilt and the deployed copy is left behind'),
+
+    # ---- the rest of the suites ----
+    ('pp-photo.test.js', 'partyplay-backend/lib/pp-photo.js',
+     '<<ALL:return>>', 'return null; //', 'the photo library changes under its own suite'),
+    ('pp-video.test.js', 'partyplay-backend/lib/pp-video.js',
+     '<<ALL:return>>', 'return null; //', 'the video library changes under its own suite'),
+    ('pp-run-games.test.js', 'partyplay/run.html',
+     'function runCharades', 'function runCharadesRenamed',
+     'the charades runner is renamed out from under its suite'),
+    # The suite runs admin.html's real script under stubs, so the mutation has to
+    # break the SCRIPT. Changing the page's wording proved nothing.
+    ('pp-admin-auth.test.js', 'partyplay/admin.html',
+     'function askKey', 'function askKeyRenamed',
+     'the admin sign-in is renamed out from under its suite'),
+    # THESE TWO READ THE BUILT WORKER, not the source. Mutating the source proved
+    # nothing about them, which is exactly the trap this tool exists to catch,
+    # walked into by the tool's own author.
+    ('pp-checkout.test.js', 'partyplay-backend/worker/DEPLOY-partyplay-api.js',
+     'async function handleCheckout', 'async function handleCheckoutRenamed',
+     'checkout is renamed out from under its suite'),
+    ('pp-join-names.test.js', 'partyplay-backend/worker/DEPLOY-partyplay-api.js',
+     "const taken = await sb(env, 'pp_players?licence_id=eq.'",
+     "const taken = [] || await sb(env, 'pp_players?licence_id=eq.'",
+     'two guests called Sam both join as Sam and charades shows the word to both'),
+    ('pp-trivia-pack.test.js', 'partyplay/host.html',
+     '<<ALL:trivia>>', 'quizzz', 'the trivia pack wiring is renamed'),
+    ('vp-follow.test.js', 'venueplay/app/vp-follow.js',
+     '<<ALL:root.VPFollow>>', 'root.VPFollowRenamed',
+     'the follow-the-host library stops exporting itself'),
+    ('musical-draw.test.js', 'venueplay/app/musical/host.html',
+     'HITS_ALPHA', 'HITS_ALPHA_REMOVED',
+     'the weighting that keeps a night singable is renamed away'),
+    ('one-game.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     'endOtherRunningGames', 'endOtherRunningGamesRenamed',
+     'the one-game-at-a-time rule is renamed away'),
+    ('check-tv-watchdog.py', 'venueplay/tv.html',
+     '<<ALL:tv_reload>>', 'tv_reload_disabled',
+     'the screen loses the remote reload it repairs itself with'),
+
+    # ---- the rest of the data and the rules ----
+    ('cryptoInt() is the same in all', 'venueplay/training.html',
+     'function cryptoInt', 'function cryptoInt(max){ return 0; } function cryptoIntOld',
+     'one copy of the unbiased draw is quietly replaced, which is a licence matter'),
+    ('no playlist is empty', 'venueplay/data/musical-library.json',
+     '"songIds":[', '"songIds":[],"wasSongIds":[',
+     'a pack empties and a host picks a night with nothing in it'),
+    ('every founding page agrees with its own code', 'venueplay/qld.html',
+     '<<ALL:30 September>>', '31 September',
+     'a founding page carries a date that does not exist'),
+    ('no screen leaves a second code up once the host is connected',
+     'venueplay/app/musical/screen.html',
+     '<<ALL:hostSeen>>', 'hostSighted',
+     'a screen stops hiding its pairing code and two codes are on the wall'),
+    ('every link on our own pages goes somewhere', 'venueplay/index.html',
+     '</body>', '<a href="/a-page-that-does-not-exist">x</a></body>',
+     'a link on our own site goes nowhere'),
+
+    # ---- the pasted Workers ----
+    ('venueplay-api-FULL.js is whole', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     '<<EMPTY>>', '', 'the billing Worker file ends up empty'),
+    ('DEPLOY-partyplay-api.js is whole', 'partyplay-backend/worker/DEPLOY-partyplay-api.js',
+     '<<EMPTY>>', '', 'the built PartyPlay Worker ends up empty'),
+    ('SOURCE-do-not-paste-partyplay-api.js is whole',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     '<<EMPTY>>', '', 'the PartyPlay Worker source ends up empty'),
+    ('deploy build parses', 'partyplay-backend/worker/DEPLOY-partyplay-api.js',
+     'async function handleJoin', 'async function handleJoin(((',
+     'the file about to be pasted does not parse'),
+    ('the licence library is inlined, not a marker',
+     'partyplay-backend/worker/DEPLOY-partyplay-api.js',
+     'const PPLicence = (function', 'const PPLicence = /*INLINE-MARKER*/ (function_',
+     'the build ships a marker instead of the licence library'),
+    # ASSEMBLED, NOT WRITTEN DOWN. Spelling a Stripe-shaped key out in this file
+    # got the push rejected by GitHub's secret scanning, which cannot tell a
+    # decoy from the real thing and should not try. The mutation builds the
+    # shape at run time so the repo never contains it.
+    ('no secret got baked into it', 'partyplay-backend/worker/DEPLOY-partyplay-api.js',
+     "const BUILD = '",
+     "const NOT_A_REAL_KEY = '" + "sk_" + "live_" + ("0" * 24) + "';\nconst BUILD = '",
+     'a key is pasted into the file by accident'),
+
+    # ---- migration numbering: needs a second file, not an edit ----
+    ('VenuePlay migrations are numbered once each',
+     'venueplay-backend/supabase/venueplay-17-manager-permissions.sql',
+     '<<COPYTO:venueplay-backend/supabase/venueplay-17-a-second-file.sql>>', '',
+     'two migrations claim the same number and one gets skipped'),
+    ('PartyPlay migrations are numbered once each',
+     'partyplay-backend/supabase/partyplay-01-core.sql',
+     '<<COPYTO:partyplay-backend/supabase/partyplay-01-a-second-file.sql>>', '',
+     'two migrations claim the same number and one gets skipped'),
 ]
 
 
@@ -252,6 +349,16 @@ def main():
             skipped += 1
             continue
         before = io.open(path, encoding='utf-8').read()
+        if find.startswith('<<COPYTO:'):
+            # Duplicating a migration NUMBER needs a second file, not an edit.
+            dest = os.path.join(repo, find[len('<<COPYTO:'):].rstrip('>'))
+            io.open(dest, 'w', encoding='utf-8').write(before)
+            caught = gate(label, repo)
+            os.remove(dest)
+            (proven, broken) = (proven + 1, broken) if caught else (proven, broken + 1)
+            print(('  %sok%s   %s %s%s%s' % (GRN, OFF, label.ljust(52), DIM, why, OFF)) if caught
+                  else ('  %sBLIND%s %s stayed green while %s' % (RED, OFF, label.ljust(52), why)))
+            continue
         if find == '<<EMPTY>>':
             after = ''
         elif find == '<<TRUNCATE>>':
@@ -286,8 +393,29 @@ def main():
             broken += 1
             print('  %sBLIND%s %s stayed green while %s' % (RED, OFF, label.ljust(52), why))
 
+    # WHAT THE GATE RUNS THAT NOBODY HAS BROKEN YET. Asked of the gate rather
+    # than counted from the list above, because a list of the checks is a second
+    # copy of the checks and goes stale the moment somebody adds one.
+    r = subprocess.run([sys.executable, os.path.join(repo, 'tools', 'release-check.py'), '--local'],
+                       capture_output=True, text=True, cwd=repo)
+    clean = re.sub(r'\033\[[0-9;]*m', '', r.stdout + r.stderr)
+    labels = []
+    for line in clean.splitlines():
+        m = re.match(r'\s+(?:ok|FAIL)\s+(.+?)(?:\s{2,}.*)?$', line)
+        if m:
+            labels.append(m.group(1).strip())
+    covered = [m[0] for m in MUTATIONS]
+    naked = [l for l in labels if not any(c in l for c in covered)]
+
     shutil.rmtree(tmp, ignore_errors=True)
-    print('\n  %d proven, %d BLIND, %d without a mutation yet' % (proven, broken, skipped))
+    print('\n  %d proven, %d BLIND, %d mutation(s) that no longer apply' % (proven, broken, skipped))
+    print('  %d of the %d checks the gate runs have a mutation (%d%%)'
+          % (len(labels) - len(naked), len(labels),
+             100 * (len(labels) - len(naked)) // max(1, len(labels))))
+    if naked:
+        print('\n  %sNOT YET PROVEN. Nobody has broken these on purpose:%s' % (YEL, OFF))
+        for l in naked:
+            print('     %s' % l[:70])
     if broken:
         print('  %sA check that stays green while its subject is broken is not a check.%s' % (RED, OFF))
     return 1 if broken else 0
