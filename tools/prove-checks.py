@@ -252,6 +252,14 @@ MUTATIONS = [
     # The rejection sampler is what makes the draw unbiased. Take the loop away
     # and x % max favours the low numbers, which for bingo means some balls come
     # out first more often than others. That is the whole of clause 4.7.1.
+    # The state map is HALF of the founding gate. Take QLD's alternate range away
+    # and a Gold Coast venue reading the founding price on /qld is charged
+    # standard, silently, which is exactly what happened before.
+    ('founding-gate.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  if ((n >= 4000 && n <= 4999) || (n >= 9000 && n <= 9999)) return 'QLD';",
+     "  if (n >= 4000 && n <= 4999) return 'QLD';",
+     'a Gold Coast 9xxx venue quietly loses the founding price it was shown'),
+
     ('rng-evidence.test.js', 'venueplay-backend/worker/venueplay-game.js',
      '  do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);',
      '  crypto.getRandomValues(buf); x = buf[0];',
