@@ -255,6 +255,12 @@ MUTATIONS = [
     # The state map is HALF of the founding gate. Take QLD's alternate range away
     # and a Gold Coast venue reading the founding price on /qld is charged
     # standard, silently, which is exactly what happened before.
+    ('no corner of a screen mixes cqw and px', 'venueplay/tv.html',
+     '"position:absolute;top:6.2cqw;right:2.4cqw;z-index:6;pointer-events:none;"+',
+     '"position:fixed;left:22px;bottom:16px;z-index:60;pointer-events:none;"+',
+     'the venue name goes back into the corner that already holds the join panel, '
+     'and prints across the QR at anything under 800px wide'),
+
     ('founding-gate.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  if ((n >= 4000 && n <= 4999) || (n >= 9000 && n <= 9999)) return 'QLD';",
      "  if (n >= 4000 && n <= 4999) return 'QLD';",

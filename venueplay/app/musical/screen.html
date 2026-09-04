@@ -28,7 +28,13 @@
   .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
   .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
   .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
-  .tv-status{position:absolute;top:2cqw;left:2.4cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  /* Top-CENTRE, not top-left. The venue's LOGO is pinned top-left at top:20px with
+   z-index 60, and this sat under it at top:2cqw with z-index 6: on a 1920 screen
+   2cqw is 38px, inside the logo's 20-84px band. So any venue with a logo had its
+   Reconnecting indicator hidden behind it, at the one moment it matters. Same fault
+   that put a venue's name across the join panel on 5 Sep: two elements in one corner,
+   one in cqw and one in px, only ever correct at a single screen width. */
+  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
   .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 

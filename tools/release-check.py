@@ -524,6 +524,61 @@ def local_checks(which):
            len(seen) == 1, '%d file(s)' % sum(len(v) for v in seen.values()),
            why='%d version(s); the odd ones out: %s' % (len(seen), ', '.join(odd[:4])))
 
+    head('D. Nothing shares a corner of the venue TV')
+    """A TV is the one surface a whole room looks at, and its corners are crowded.
+
+    On 5 Sep a venue called The Mini Bar had a screen reading "Join now UZRHJU bar".
+    Three things were pinned bottom-left: the fullscreen button at bottom:2.4cqw,
+    the join panel carrying the QR and the code at bottom:2cqw, and the venue name
+    at bottom:16px. cqw is 1% of the stage width, so on a 1920 TV the name sat
+    clear beneath the panel, and at 800px wide 2cqw IS 16px and the panel landed
+    on top of it. The name's z-index was ten times the panel's, so it drew across
+    the QR with its tail hanging out the side.
+
+    Mixing cqw and px in one corner is the fault, not the exact numbers: the two
+    move at different rates, so they are only ever correct at one screen width."""
+    corners = []
+    for rel in ('venueplay/tv.html', 'venueplay/signage.html',
+                'venueplay/app/musical/screen.html', 'venueplay/app/trivia/screen.html',
+                'venueplay/app/raffle/screen.html', 'venueplay/app/members/screen.html'):
+        f = os.path.join(ROOT, rel)
+        if not os.path.isfile(f):
+            continue
+        # COMMENTS STRIPPED FIRST. The first version of this scanned the raw file
+        # and its only finding was the comment I had just written ABOUT the bug,
+        # which describes bottom:2cqw and left:22px in prose. A check that reads
+        # its own documentation as evidence is worse than no check.
+        src = copy_text(f)
+        # Anything anchored to a corner, with the units it used to get there.
+        pinned = {}
+        # THE GAP MUST ALLOW A SEMICOLON. The first version used [^;"'], which
+        # cannot cross the ; that separates two CSS declarations, so the only
+        # thing it ever matched was comment prose where the separator is a comma.
+        # It reported my own documentation and stayed silent on the real rule.
+        for m in re.finditer(r'(bottom|top)\s*:\s*([0-9.]+)(cqw|px|cqh|%)[^{}]{0,90}?'
+                             r'(left|right)\s*:\s*([0-9.]+)(cqw|px|cqh|%)', src):
+            if not (m.group(5) == '50' and m.group(6) == '%'):
+                pinned.setdefault((m.group(1), m.group(4)), set()).add((m.group(3), m.group(6)))
+        for m in re.finditer(r'(left|right)\s*:\s*([0-9.]+)(cqw|px|cqh|%)[^{}]{0,90}?'
+                             r'(bottom|top)\s*:\s*([0-9.]+)(cqw|px|cqh|%)', src):
+            if not (m.group(2) == '50' and m.group(3) == '%'):
+                pinned.setdefault((m.group(4), m.group(1)), set()).add((m.group(6), m.group(3)))
+        # left:50% with a translate is CENTRING, not a corner anchor. Counting it
+        # made the check report a three-way "% and cqw and px" clash the moment I
+        # centred the status indicator to get it OUT of a corner.
+        for m in re.finditer(r'(left|top)\s*:\s*50%', src):
+            pass
+        pinned = {k: v for k, v in pinned.items()}
+        for corner, unitsets in pinned.items():
+            units = set()
+            for a, b in unitsets:
+                units.add(a); units.add(b)
+            if len(units) > 1:
+                corners.append('%s: %s-%s mixes %s' %
+                               (short(f), corner[0], corner[1], ' and '.join(sorted(units))))
+    ok('no corner of a screen mixes cqw and px', not corners,
+       why='; '.join(corners[:3]) + '. Two units in one corner are only correct at one width.')
+
     head('D. The song library holds together')
     """5,131 songs and 19 playlists in one JSON file that every musical bingo night
     is dealt from, and nothing checked it. A playlist pointing at a song id that is

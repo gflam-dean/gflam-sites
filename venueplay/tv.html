@@ -33,7 +33,13 @@
   .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
   .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
   .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
-  .tv-status{position:absolute;top:2cqw;left:2.4cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
+  /* Top-CENTRE, not top-left. The venue's LOGO is pinned top-left at top:20px with
+   z-index 60, and this sat under it at top:2cqw with z-index 6: on a 1920 screen
+   2cqw is 38px, inside the logo's 20-84px band. So any venue with a logo had its
+   Reconnecting indicator hidden behind it, at the one moment it matters. Same fault
+   that put a venue's name across the join panel on 5 Sep: two elements in one corner,
+   one in cqw and one in px, only ever correct at a single screen width. */
+  .tv-status{position:absolute;top:2cqw;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.45);border-radius:1cqw;padding:.4cqw 1cqw;display:flex;align-items:center;gap:.7cqw;z-index:6;font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(8px,1.1cqw,13px);color:var(--muted)}
   .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 
@@ -1221,18 +1227,31 @@
         document.body.appendChild(el); }
       el.src=url; el.style.display="block";
     }
-    // The venue's NAME in plain text, bottom-left, always on. So anyone glancing at a screen can see
-    // WHICH venue it is showing (a TV pointed at the wrong venue is otherwise only noticeable by its
-    // sound). Subtle, never over a game's own content.
+    /* The venue's NAME in plain text, so anyone glancing at a screen can see WHICH venue it is
+       showing (a TV pointed at the wrong venue is otherwise only noticeable by its sound).
+
+       IT USED TO SIT BOTTOM-LEFT AND THAT CORNER IS TAKEN. Three things were pinned there: the
+       fullscreen button (left:2cqw, bottom:2.4cqw), the join panel with the QR and the code
+       (left:2cqw, bottom:2cqw) and this, at left:22px, bottom:16px. Two unit systems in one
+       corner. cqw is 1% of the stage width, so on a 1920 TV 2cqw is 38px and the name sits
+       clear underneath, but at 800px wide 2cqw IS 16px and the join panel lands exactly on the
+       name. This has z-index 60 against the panel's 6, so the name drew straight across the QR
+       with its tail hanging past the panel's right edge: Dean's screen read "Join now UZRHJU bar"
+       for a venue called The Mini Bar. Reported live 5 Sep 2026.
+
+       Now top-right, under the VenuePlay mark, inside the stage and in cqw like everything else
+       around it, so it scales with the screen instead of racing it. Nothing else lives there. */
     function setVenueName(name){
       var el=document.getElementById("venueNameTag");
       var nm=String(name||"").trim();
       if(!nm){ if(el) el.style.display="none"; return; }
       if(!el){ el=document.createElement("div"); el.id="venueNameTag";
-        el.style.cssText="position:fixed;left:22px;bottom:16px;z-index:60;pointer-events:none;"+
-          "font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;letter-spacing:.02em;"+
+        el.style.cssText="position:absolute;top:6.2cqw;right:2.4cqw;z-index:6;pointer-events:none;"+
+          "max-width:34cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;"+
+          "font-family:'Hanken Grotesk',sans-serif;font-weight:800;"+
+          "font-size:clamp(11px,1.5cqw,20px);letter-spacing:.02em;"+
           "color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)";
-        document.body.appendChild(el); }
+        (document.getElementById("tv")||document.body).appendChild(el); }
       el.textContent=nm; el.style.display="block";
     }
     /* THE WHOLE SCREEN, IN ONE CALL, THROUGH THE WORKER.
