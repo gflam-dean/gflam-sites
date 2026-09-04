@@ -24,7 +24,10 @@ var GAME = find("venueplay-game.js");
 var BILL = find("venueplay-api-FULL.js");
 
 function lift(src, name) {
-  var m = new RegExp("function\\s+" + name + "\\s*\\(").exec(src);
+  // The optional `async ` matters: without it the lifted text starts at `function`
+  // and every `await` inside becomes a syntax error, which reads as the Worker
+  // being malformed rather than the harness being wrong.
+  var m = new RegExp("(?:async\\s+)?function\\s+" + name + "\\s*\\(").exec(src);
   if (!m) return null;
   var i = src.indexOf("{", m.index), d = 0;
   for (var j = i; j < src.length; j++) {
@@ -94,6 +97,59 @@ if (ceilSrc) {
        overageCeiling({ overage_approved_count: 100000 }, 40) === 500,
        "a join flood cannot bill a venue into the thousands");
   pass("the ceiling always sits above the cap", overageCeiling({}, 1) > 1);
+}
+
+print("\nEVERY FORMAT CAN ACTUALLY BE BILLED");
+/* Overage counts only players who PLAYED, to stop a venue being charged twice for
+   one crowd across two formats. But vp_cards is written only inside /host/game and
+   the musical starter, and the bingo console never calls /host/game: broadcast
+   bingo has no server game at all, so a night survives a Worker outage. The set
+   came back EMPTY, peak was 0, and chargeNightOverage returned before billing a
+   cent. The flagship format was free, and the three-big-nights plan uplift could
+   never fire for a bingo-only venue. Found by audit 5 Sep 2026, and it was my own
+   regression from fixing the double-count. */
+var pw = lift(GAME, "playerIdsWhoPlayed");
+var cw = lift(GAME, "countPlayersWhoPlayed");
+var cp = lift(GAME, "countPlayers");
+pass("the Worker has the who-played counters", !!pw && !!cw && !!cp);
+if (pw && cw && cp) {
+  var GAMES = [], CARDS = [], ANSWERS = [];
+  globalThis.sbGet = function (e, t) {
+    return Promise.resolve(t === "vp_games" ? GAMES : t === "vp_cards" ? CARDS
+                         : t === "vp_trivia_answers" ? ANSWERS : []);
+  };
+  globalThis.enc = function (x) { return String(x); };
+  eval(pw); eval(cw); eval(cp);
+  function roster(n){ var r=[]; for (var i=0;i<n;i++) r.push({id:"p"+i, device_id:"d"+i}); return r; }
+
+  // Synchronous drain: these promises resolve immediately, so collect and report.
+  var results = {};
+  function scenario(name, games, cards, answers, size, then) {
+    GAMES = games; CARDS = cards; ANSWERS = answers;
+    return playerIdsWhoPlayed({}, "s").then(function (set) {
+      results[name] = countPlayersWhoPlayed(roster(size), set);
+      if (then) then();
+    });
+  }
+  scenario("bingo", [{id:"g1"}], [], [], 180, function () {
+    scenario("trivia", [{id:"g1"}], [], [{player_id:"p0"},{player_id:"p1"},{player_id:"p2"}], 180, function () {
+      scenario("musical", [{id:"g1"}], [{player_id:"p0"},{player_id:"p1"}], [], 180, function () {
+        scenario("nogames", [], [], [], 50, function () {
+          pass("broadcast bingo, 180 phones and no cards, counts 180 not 0",
+               results.bingo === 180, "counted " + results.bingo);
+          pass("trivia still counts only those who answered", results.trivia === 3,
+               "counted " + results.trivia + " of 180 joined");
+          pass("musical still counts only those dealt a card", results.musical === 2,
+               "counted " + results.musical + " of 180 joined");
+          pass("no game rows at all counts everyone, not nobody", results.nogames === 50,
+               "counted " + results.nogames);
+          print("\n" + (bad ? bad + " FAILED, " + ran + " run" : "ALL " + ran + " CHECKS PASSED"));
+        });
+      });
+    });
+  });
+  // The tail print happens inside the chain above.
+  var _deferred = true;
 }
 
 print("\nWHICH NIGHT A GAME BELONGS TO");

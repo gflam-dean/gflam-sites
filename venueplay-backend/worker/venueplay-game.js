@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 07:59 · 06f57388';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 08:08 · d930eeb6';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -4079,7 +4079,7 @@ async function playerIdsWhoPlayed(env, sessionId) {
   try {
     const games = await sbGet(env, 'vp_games',
       'session_id=eq.' + enc(sessionId) + '&select=id&limit=200');
-    if (!games.length) return new Set();
+    if (!games.length) return null;   // no game rows at all: cannot tell, count everyone
     const ids = games.map((g) => g.id).join(',');
     const played = new Set();
     const cards = await sbGet(env, 'vp_cards',
@@ -4088,6 +4088,22 @@ async function playerIdsWhoPlayed(env, sessionId) {
     const answers = await sbGet(env, 'vp_trivia_answers',
       'game_id=in.(' + ids + ')&select=player_id&limit=20000');
     for (const a of answers) if (a && a.player_id) played.add(a.player_id);
+
+    /* BROADCAST BINGO LEAVES NO PER-PLAYER TRACE, AND THIS FUNCTION MADE IT FREE.
+       vp_cards is written only inside /host/game and the musical starter. The bingo
+       console never calls /host/game -- broadcast bingo has no server game at all,
+       by design, so a night survives a Worker outage. So the set came back EMPTY,
+       peak was 0, and chargeNightOverage returned before billing a cent. The
+       flagship format has been unbillable since the day this was written, and the
+       overage_streak never advanced either, so the three-big-nights plan uplift
+       could never fire for a bingo-only venue. Found by audit 5 Sep 2026; it is my
+       own regression from fixing a double-count.
+
+       An empty set is not evidence that nobody played. It is evidence that this
+       format records nothing, so fall back to counting PEOPLE who joined, which is
+       both the old behaviour and the number the host was shown and consented to.
+       The ceiling still clamps it to what they approved. */
+    if (!played.size) return null;
     return played;
   } catch (e) {
     console.log('[overage] could not tell who played: ' + String((e && e.message) || e));

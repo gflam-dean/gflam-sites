@@ -33,17 +33,32 @@ pass("the Worker defines vpaStateFromPostcode", !!m);
 if (!m) { print("\n1 FAILED"); throw new Error("stop"); }
 eval(m[0]);
 
-/* The gate, lifted as the Worker computes it. Kept in one place here so the test
-   fails if either half of the union is removed. */
-var STATE_DIGIT = { QLD:'4', NSW:'2', ACT:'2', VIC:'3', SA:'5', WA:'6', TAS:'7', NT:'0' };
-function gateSaysFounding(postcode, codeState) {
-  var reqDigit = STATE_DIGIT[codeState] || '';
-  var pc = String(postcode || '').trim();
-  var pcState = vpaStateFromPostcode(pc);
-  return (reqDigit !== '' && pc.charAt(0) === reqDigit) ||
-         (pcState !== null && pcState === codeState) ||
-         (pcState === 'ACT' && codeState === 'NSW') ||
-         (pcState === 'NSW' && codeState === 'ACT');
+/* THE REAL GATE, LIFTED OUT OF THE WORKER. Not a copy.
+
+   The first version of this file re-implemented the union here, and that is
+   precisely why a SECOND broken gate survived 38 passing checks: these tests
+   would have passed unchanged if the Worker's gate had been deleted, and they
+   never looked at vpaFoundingForPostcode at all. HQ-onboarded venues in SA 58xx,
+   WA 68xx and TAS 78xx were put on the standard price for life while these
+   checks were green. Found by audit 5 Sep 2026. */
+var gsrc = /function vpaFoundingStateOk\(postcode, codeState\)[\s\S]*?\n\}/.exec(SRC);
+var dsrc = /const VPA_STATE_DIGIT = \{[^}]*\};/.exec(SRC);
+pass("the Worker defines ONE shared gate", !!gsrc && !!dsrc,
+     "if this fails, somebody has re-introduced a second copy");
+if (!gsrc || !dsrc) { print("\n" + bad + " FAILED, " + ran + " run"); throw new Error("stop"); }
+// eval of a `const` keeps it inside the eval's own scope, so the lifted
+// function cannot see it. Hoist it onto the global instead.
+eval(dsrc[0].replace('const VPA_STATE_DIGIT =', 'globalThis.VPA_STATE_DIGIT ='));
+eval(gsrc[0]);
+var gateSaysFounding = vpaFoundingStateOk;
+
+/* And the HQ path, which is the one that was wrong. It loops the live codes and
+   must reach the same answer as checkout for the same postcode. */
+var hq = /function vpaFoundingForPostcode\(env, postcode\)[\s\S]*?\n\}/.exec(SRC);
+pass("the HQ path exists", !!hq);
+if (hq) { eval(hq[0]); }
+function hqSaysFounding(postcode, codeState) {
+  return vpaFoundingForPostcode({ FOUNDING_CODES: codeState + '-SEP-2026' }, postcode);
 }
 
 print("\nTHE ORDINARY CASE: a venue in the state the code is for");
@@ -85,6 +100,21 @@ print("\nAND A VENUE IN THE WRONG STATE MUST NOT");
 });
 pass("a postcode that is not a postcode pays standard", gateSaysFounding('', 'QLD') === false);
 pass("nonsense pays standard", gateSaysFounding('abcd', 'QLD') === false);
+
+print("\nHQ ONBOARDING AND SELF-SERVE MUST AGREE, FOR EVERY POSTCODE");
+/* Two links to the same product. A venue that qualifies through /qld must qualify
+   through the welcome email too, or its price depends on which door it came in. */
+var disagree = [], checked = 0;
+['QLD','NSW','VIC','SA','WA','TAS','NT','ACT'].forEach(function (st) {
+  for (var pc = 200; pc <= 9999; pc += 1) {
+    var p = String(pc);
+    while (p.length < 4) p = '0' + p;
+    checked++;
+    if (gateSaysFounding(p, st) !== hqSaysFounding(p, st)) disagree.push(st + ' ' + p);
+  }
+});
+pass("both paths agree on all " + checked + " postcode and state pairs", disagree.length === 0,
+     disagree.length ? (disagree.length + " disagree, e.g. " + disagree.slice(0, 4).join(', ')) : "");
 
 print("\nEVERY STATE MAPS SOMEWHERE, AND NOTHING MAPS TWICE");
 var seen = {}, clash = [];

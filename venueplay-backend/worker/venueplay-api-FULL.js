@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 07:59 · 85704604';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 08:08 · c1d95539';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -252,24 +252,17 @@ async function handleCheckout(request, env, json) {
   // full price. Codes look like "QLD-AUG-2026"; the state prefix maps to the leading postcode
   // digit (QLD=4, NSW/ACT=2, VIC=3, SA=5, WA=6, TAS=7, NT=0). env FOUNDING_CODES = the active
   // codes (comma-separated). Cold visitors send no code and pay standard.
-  const STATE_DIGIT = { QLD: '4', NSW: '2', ACT: '2', VIC: '3', SA: '5', WA: '6', TAS: '7', NT: '0' };
   const activeCodes = (env.FOUNDING_CODES || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
   const foundingCode = (b.founding_code || '').trim();
   const codeActive = foundingCode !== '' && activeCodes.indexOf(foundingCode) !== -1;
   const codeState = foundingCode.split('-')[0].toUpperCase();
-  const reqDigit = STATE_DIGIT[codeState] || '';
   const foundingPostcode = ((b.postcode || (venues[0] && venues[0].postcode) || '') + '').trim();
   // The leading-digit test alone was WRONG for four states, and it failed SILENTLY: the venue saw
   // the founding price on /qld or /vic, then got charged standard with no error and no explanation.
   // This Worker's own vpaStateFromPostcode() already knows QLD is 4xxx AND 9xxx, VIC 3xxx AND 8xxx,
   // NSW 1xxx-2xxx and ACT 02xx, so ask it. Kept as a UNION with the old digit test so this can only
   // ever accept MORE venues than before, never newly reject one.
-  const pcState = vpaStateFromPostcode(foundingPostcode);
-  const stateOk = (reqDigit !== '' && foundingPostcode.charAt(0) === reqDigit) ||
-                  (pcState !== null && pcState === codeState) ||
-                  // ACT and NSW are one market for founding: an ACT venue on an NSW code qualifies.
-                  (pcState === 'ACT' && codeState === 'NSW') ||
-                  (pcState === 'NSW' && codeState === 'ACT');
+  const stateOk = vpaFoundingStateOk(foundingPostcode, codeState);
   const founding = codeActive && stateOk;
   const price = founding
     ? (plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY)
@@ -2540,6 +2533,37 @@ function vpaStateFromPostcode(pc) {
 
 // AU postcode -> IANA timezone (best-effort; QLD fallback). Same postcode->state map as above, so a
 // venue's members-draw "Tonight" shows on the right day in the venue's own time.
+/* DOES THIS POSTCODE QUALIFY FOR THIS STATE'S FOUNDING WINDOW? One answer.
+
+   There were two. The self-serve gate inside handleCheckout was a UNION of the
+   postcode->state map and the old leading-digit test, because each covers the
+   other's gaps: the map knows QLD is 4xxx AND 9xxx, and the digit knows SA 58xx,
+   WA 68xx and TAS 78xx, which the map returns null for. vpaFoundingForPostcode,
+   used by HQ onboarding at /add-card and by the welcome email, had only the map
+   and returned false when it came back null.
+
+   So the same venue in the same live window got a different price purely by which
+   link they signed up through. A 200-player venue in SA 5800 onboarded by HQ pays
+   $3.00 instead of $2.50 a head, for life, silently: the welcome email is built
+   from the same broken gate, so the quoted rate matches the wrong charge and
+   nothing looks inconsistent. About $1,200 a year, or $1,320 on annual.
+
+   Found by audit 5 Sep 2026. Both callers now use this. */
+const VPA_STATE_DIGIT = { QLD: '4', NSW: '2', ACT: '2', VIC: '3', SA: '5', WA: '6', TAS: '7', NT: '0' };
+
+function vpaFoundingStateOk(postcode, codeState) {
+  const pc = String(postcode || '').trim();
+  const want = String(codeState || '').toUpperCase();
+  const digit = VPA_STATE_DIGIT[want] || '';
+  const pcState = vpaStateFromPostcode(pc);
+  if (digit !== '' && pc.charAt(0) === digit) return true;
+  if (pcState !== null && pcState === want) return true;
+  // ACT and NSW are one market for founding.
+  if (pcState === 'ACT' && want === 'NSW') return true;
+  if (pcState === 'NSW' && want === 'ACT') return true;
+  return false;
+}
+
 function vpaTimezoneFromPostcode(pc) {
   switch (vpaStateFromPostcode(pc)) {
     case 'NSW': case 'ACT': return 'Australia/Sydney';
@@ -2886,14 +2910,8 @@ async function vpaCardLink(env, foundingId) {
 function vpaFoundingForPostcode(env, postcode) {
   const codes = (env.FOUNDING_CODES || '').split(',').map(function (c) { return c.trim(); }).filter(Boolean);
   if (!codes.length) return false;
-  const pcState = vpaStateFromPostcode(postcode);
-  if (!pcState) return false;
   for (const code of codes) {
-    const codeState = String(code.split('-')[0] || '').toUpperCase();
-    if (codeState === pcState) return true;
-    // ACT and NSW are one market for founding, same as at checkout.
-    if (codeState === 'NSW' && pcState === 'ACT') return true;
-    if (codeState === 'ACT' && pcState === 'NSW') return true;
+    if (vpaFoundingStateOk(postcode, String(code.split('-')[0] || ''))) return true;
   }
   return false;
 }
