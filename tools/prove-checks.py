@@ -249,6 +249,14 @@ MUTATIONS = [
     ('musical-draw.test.js', 'venueplay/app/musical/host.html',
      'HITS_ALPHA', 'HITS_ALPHA_REMOVED',
      'the weighting that keeps a night singable is renamed away'),
+    # The rejection sampler is what makes the draw unbiased. Take the loop away
+    # and x % max favours the low numbers, which for bingo means some balls come
+    # out first more often than others. That is the whole of clause 4.7.1.
+    ('rng-evidence.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     '  do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);',
+     '  crypto.getRandomValues(buf); x = buf[0];',
+     'the draw stops rejecting and quietly favours the low numbers'),
+
     ('money.test.js', 'venueplay-backend/worker/venueplay-game.js',
      "  if (annual) return tier === 'founding' ? 2.30 : 2.85;",
      "  if (annual) return tier === 'founding' ? 2.40 : 2.85;",
