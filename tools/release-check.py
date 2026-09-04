@@ -1701,6 +1701,30 @@ def main():
         if wait:
             wait_for_deploy()
         if which in ('both', 'venueplay'):
+            # EVERY COLUMN THE CODE NAMES, ASKED OF THE LIVE DATABASE.
+            #
+            # Three of the worst faults found on 5 Sep were one thing: a column the
+            # database does not have. PostgREST rejects the whole statement and the
+            # code turns that into an empty list or swallows it, so nothing looks
+            # broken. Nobody could START A PARTYPLAY PARTY they had paid for; the
+            # members draw announced the RESET jackpot to a room that had just been
+            # told the winner took $2,400; HQ reported zero games on every night
+            # ever recorded.
+            #
+            # check-schema.py existed, covered 65 of ~400 column references, could
+            # not see write bodies or order= clauses by its own admission, did not
+            # look at PartyPlay at all, and was never wired in here.
+            _cc = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'check-columns.py')],
+                                 capture_output=True, text=True, cwd=ROOT)
+            _out = re.sub(r'\033\[[0-9;]*m', '', _cc.stdout + _cc.stderr)
+            _sum = [l.strip() for l in _out.splitlines() if ' present,' in l]
+            _miss = [l.strip() for l in _out.splitlines() if 'MISSING' in l or 'NO TABLE' in l]
+            ok('every column the code names exists in the live database',
+               _cc.returncode == 0,
+               _sum[0] if _sum else '',
+               why=('; '.join(_miss[:3]) if _miss else
+                    ('the checker itself could not run: ' + _out.strip().splitlines()[-1][:90]
+                     if _out.strip() else 'no output')))
             pages_live('VenuePlay', VP, VP_PAGES)
             shared_scripts_live(VP, os.path.join(ROOT, 'venueplay', 'app'))
             every_page_is_reachable('VenuePlay', VP, 'venueplay',
