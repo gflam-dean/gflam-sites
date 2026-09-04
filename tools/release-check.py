@@ -1714,6 +1714,21 @@ def main():
             # check-schema.py existed, covered 65 of ~400 column references, could
             # not see write bodies or order= clauses by its own admission, did not
             # look at PartyPlay at all, and was never wired in here.
+            # CAN A STRANGER CHANGE WHAT THE PUBLIC SITES SHOW? The gate had a check
+            # for whether the public key could READ these tables and none for
+            # whether it could WRITE, so the worst hole found on 5 Sep -- an empty
+            # POST to /reviews returning 201 Created with stars = 5, rendering
+            # immediately on a customer-facing page -- was invisible to it.
+            _cw = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'check-writes.py')],
+                                 capture_output=True, text=True, cwd=ROOT)
+            _wo = re.sub(r'\033\[[0-9;]*m', '', _cw.stdout + _cw.stderr)
+            _wsum = [l.strip() for l in _wo.splitlines() if 'finding(s)' in l]
+            _wbad = [l.strip() for l in _wo.splitlines() if 'THE PUBLIC KEY CAN' in l or l.strip().startswith('STOP')]
+            ok('a stranger cannot change what the public sites show',
+               _cw.returncode == 0, _wsum[0] if _wsum else '',
+               why=('; '.join(_wbad[:3]) if _wbad else
+                    ('the checker could not run: ' + (_wo.strip().splitlines() or [''])[-1][:90])))
+
             _cc = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'check-columns.py')],
                                  capture_output=True, text=True, cwd=ROOT)
             _out = re.sub(r'\033\[[0-9;]*m', '', _cc.stdout + _cc.stderr)
