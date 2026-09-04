@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 08:08 · d930eeb6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 09:47 · 7cecd3e9';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -3961,8 +3961,29 @@ async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
                        + added + ' extra pro rata to renewal (' + months + ' months)',
           }, 'uplift_' + venue.id + '_' + newMax + '_' + Math.floor(periodEnd / 86400));
           if (res && res.error) {
+            /* AN ANNUAL UPLIFT IS COLLECTED BY THIS CALL AND NOTHING ELSE.
+               The quantity update above carries proration_behavior 'none' on an
+               annual plan, so it changes what they pay from the NEXT renewal and
+               collects nothing now. This invoiceitem is the only thing that bills
+               the extra capacity before then. quantityOk stayed true when it
+               failed, so the venue kept the bigger plan, paid nothing for it until
+               renewal, and stopped paying per head as well: the exact outcome the
+               comment above says was fixed -- "an annual venue that outgrew its
+               plan in month two got the bigger plan, and an end to paying per head,
+               free until renewal".
+               There was also no audit row, and the one written below recorded
+               effective: 'next_invoice' because prorata was null, which is
+               indistinguishable from a monthly venue. Found by audit 5 Sep 2026. */
             console.log('[overage] venue ' + venue.id + ' annual pro rata FAILED: ' +
-                        ((res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
+                        ((res.error && res.error.message) || 'unknown') + '; rolling the uplift back');
+            await sbInsert(env, 'vp_admin_audit', {
+              action: 'plan_uplift_rolled_back_charge_failed',
+              target: 'venue:' + venue.id,
+              detail: { from: current, attempted: newMax, nights: peaks, cents: cents,
+                        months: months, tier: tier,
+                        stripe_error: (res.error && res.error.message) || 'unknown' },
+            }, false).catch(() => {});
+            quantityOk = false;
           } else {
             prorata = { cents: cents, months: months, added: added };
           }
@@ -4193,10 +4214,33 @@ async function applyOverageCharge(env, o) {
   // the authoritative source (no price-id guessing, no extra env vars). If we cannot read a
   // known tier, do NOT guess a rate on real money: log and skip for manual handling.
   let tier = '';
+  let subStatus = '';
   try {
     const sub = await stripeGet(env, 'subscriptions/' + enc(acct.stripe_subscription_id));
     tier = (sub && sub.metadata && sub.metadata.tier) || '';
+    subStatus = (sub && sub.status) || '';
   } catch (e) { tier = ''; }
+
+  /* THE FREE MONTH HAD FOUR DIFFERENT DEFINITIONS AND STRIPE'S IS THE REAL ONE.
+     venueInFreeMonth reads vp_venues.created_at + 30 days. The billing Worker asks
+     Stripe whether the subscription is trialing. The bingo console counts a
+     CALENDAR month. And Stripe's own trial_end is set when the card is added.
+
+     For an HQ-onboarded venue created_at is when HQ BUILT the venue, which can be
+     weeks before the owner adds a card, and the billing Worker says so in as many
+     words: "Their free month starts when they add the card, not when HQ built the
+     venue." So HQ builds on day 0, the card goes in on day 20, Stripe's trial runs
+     to day 50, and days 30 to 50 were billed $2 a head inside a window the welcome
+     email and the terms both call free.
+
+     This path already reads the subscription for metadata.tier and never looked at
+     status. Stripe is the only one of the four that knows when the trial actually
+     ends, so ask it. Found by audit 5 Sep 2026. */
+  if (subStatus === 'trialing') {
+    console.log('[overage] ' + o.idemKey + ' subscription is trialing: inside the free month, not charging');
+    return;
+  }
+
   if (tier !== 'founding' && tier !== 'standard') {
     console.log('[overage] ' + o.idemKey + ' unknown tier (metadata.tier="' + tier +
                 '"): skipping charge for manual review');
@@ -4222,7 +4266,30 @@ async function applyOverageCharge(env, o) {
   // A bigger room later the same night replaces that night's figure rather than adding to the run.
   if (sameNight && peaks.length) peaks[peaks.length - 1] = Math.max(peaks[peaks.length - 1], peak);
   const thirdInARow = !sameNight && peaks.length >= 3;
-  const rateDollars = thirdInARow ? 1.00 : 2.00;
+
+  /* THE HALF PRICE IS PAID FOR BY THE UPLIFT, SO DO THE UPLIFT FIRST.
+     $1 a head on the third night exists because the venue moves up a plan and
+     starts paying more every month from then on. upliftPlan returns null WITHOUT
+     erroring in three ordinary cases: the venue has a reduction already scheduled,
+     it raised its own cap mid-streak, or the Stripe call failed and was rolled
+     back. The charge went out at $1 BEFORE any of that was known, its return value
+     was discarded, and the streak was reset regardless -- so the venue got the
+     discount, no uplift, and a fresh run. Repeatable for ever: a venue holding a
+     scheduled reduction paid $20 instead of $40 every third big night, indefinitely.
+
+     Attempting it first costs nothing: the pro-rata invoiceitem and the overage
+     invoiceitem are separate documents and the order between them does not matter.
+     Found by audit 5 Sep 2026. */
+  let upliftedTo = null;
+  if (thirdInARow) {
+    upliftedTo = await upliftPlan(env, venue, acct, Math.min.apply(null, peaks), peaks, tier);
+    if (upliftedTo == null) {
+      console.log('[overage] ' + o.idemKey + ' third big night but the uplift did not happen: ' +
+                  'charging the full $2 and keeping the streak');
+    }
+  }
+  const halfPrice = thirdInARow && upliftedTo != null;
+  const rateDollars = halfPrice ? 1.00 : 2.00;
   const amountCents = Math.round(overage * rateDollars * 100);
   if (amountCents <= 0) return;
 
@@ -4234,7 +4301,7 @@ async function applyOverageCharge(env, o) {
     amount: amountCents,
     description: 'Big night extra players - ' + (venue.name || 'venue') + ' - ' + when +
                  ' - ' + overage + ' over ' + cap + ' at $' + rateDollars.toFixed(2) +
-                 (thirdInARow ? ' (third big night in a row)' : ''),
+                 (halfPrice ? ' (third big night in a row)' : ''),
   }, o.idemKey);
   if (!res || res.error) {
     console.log('[overage] ' + o.idemKey + ' Stripe invoiceitem FAILED: ' +
@@ -4264,14 +4331,14 @@ async function applyOverageCharge(env, o) {
     return;
   }
 
-  if (!thirdInARow) {
+  // The streak only resets when the uplift actually happened. Without that, a
+  // venue whose uplift keeps returning null starts a fresh run every third night
+  // and collects the discount again each time.
+  if (!halfPrice) {
     await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
       { overage_streak: peaks.length, overage_streak_peaks: peaks, overage_streak_day: night });
     return;
   }
-  // Third in a row: move them up to the crowd they proved every time, and start counting again.
-  const newMax = Math.min.apply(null, peaks);
-  await upliftPlan(env, venue, acct, newMax, peaks, tier);
   await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id),
     { overage_streak: 0, overage_streak_peaks: [], overage_streak_day: null });
 }

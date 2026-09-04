@@ -215,3 +215,46 @@ print("\nAN IDEMPOTENCY KEY DESCRIBES THE MOVE, NOT THE DESTINATION");
        (setp || '').indexOf("':" + dir + "' + (") !== -1,
        "same target number, opposite move, must not share a key");
 });
+
+print("\nTHE FREE MONTH HAS ONE DEFINITION, AND IT IS STRIPE'S");
+/* There were four: created_at + 30 days in the game Worker, sub.status === trialing
+   in the billing Worker, a CALENDAR month in the bingo console, and Stripe's own
+   trial_end set when the card is added. For an HQ-onboarded venue created_at is
+   when HQ BUILT the venue, so a card added on day 20 gives a Stripe trial to day
+   50 while the charge path stopped protecting them on day 30. Days 30 to 50 were
+   billed inside a window the welcome email calls free. */
+var chg = lift(GAME, 'applyOverageCharge');
+pass("the charge path exists", !!chg);
+pass("it reads the subscription status", !!chg && /subStatus/.test(chg));
+pass("and refuses to charge a trialing subscription",
+     !!chg && /subStatus === 'trialing'/.test(chg),
+     "Stripe is the only one of the four that knows when the trial ends");
+
+print("\nTHE THIRD-NIGHT HALF PRICE REQUIRES THE UPLIFT IT PAYS FOR");
+/* $1 a head exists because the venue moves up a plan and pays more every month
+   after. upliftPlan returns null without erroring when a reduction is already
+   scheduled, when the venue raised its own cap, or when Stripe failed and was
+   rolled back. The charge went out at $1 before any of that was known and the
+   streak reset regardless, so a venue holding a scheduled reduction paid $20
+   instead of $40 every third big night, for ever. */
+pass("the uplift is attempted before the rate is decided",
+     !!chg && chg.indexOf('upliftedTo = await upliftPlan') < chg.indexOf('const rateDollars'),
+     "otherwise the discount is given before anyone knows if it was earned");
+pass("half price requires the uplift to have happened",
+     !!chg && /halfPrice = thirdInARow && upliftedTo != null/.test(chg));
+pass("and the streak only resets when it did", !!chg && /if \(!halfPrice\) \{/.test(chg),
+     "a reset without an uplift lets the discount repeat for ever");
+
+print("\nA FAILED ANNUAL UPLIFT CHARGE IS ROLLED BACK");
+/* On an annual plan the quantity update carries proration_behavior 'none', so the
+   pro-rata invoiceitem is the ONLY thing that collects money before renewal. When
+   it failed, quantityOk stayed true: the venue kept the bigger plan, paid nothing
+   for it until renewal, and stopped paying per head too. */
+var up = lift(GAME, 'upliftPlan');
+pass("upliftPlan exists", !!up);
+pass("a failed pro-rata sets quantityOk false", !!up &&
+     /annual pro rata FAILED[\s\S]{0,600}?quantityOk = false/.test(up),
+     "so the rollback below actually runs");
+pass("and it leaves an audit row naming the failure", !!up &&
+     /plan_uplift_rolled_back_charge_failed/.test(up),
+     "the old one recorded effective: next_invoice, indistinguishable from monthly");
