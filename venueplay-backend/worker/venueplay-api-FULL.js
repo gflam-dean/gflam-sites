@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 08:08 · c1d95539';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 08:22 · 354e3f97';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4006,7 +4006,17 @@ function vpbYearFractionLeft(info) {
 /* idemTag identifies the LOGICAL change (which venue, to what number, in which billing period),
    so a racing duplicate of the same change collapses into one charge while a genuine second
    change later in the period still goes through. */
-async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag) {
+/* dryRun QUOTES the charge and posts nothing.
+
+   The billing page needs the real figure BEFORE it charges. Its only price
+   sentence read "Extra players are charged a full month at $2.30 per player",
+   which is right for monthly and wrong by a factor of twelve for annual, where the
+   charge is delta x rate x 12 x the fraction of the year left. Adding 50 players
+   to an annual account with ten months to run is $1,149.95 against the $115 the
+   page implied, taken on one click with no confirmation and no amount anywhere.
+   The DECREASE path already returns credit_cents and billing.html prints the
+   dollars; the charge named nothing. Found by audit 5 Sep 2026. */
+async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag, dryRun) {
   try {
     if (!delta || !info) return null;
     const customer = info.sub && info.sub.customer;
@@ -4033,6 +4043,7 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
       if (delta < 0) return null;                            // monthly reductions need no money move
       const cents = Math.round(rate * 100) * n;
       if (!(cents > 0)) return null;
+      if (dryRun) return { kind: 'quote', cents: cents };
       const mRes = await vpbStripePost(env, 'invoiceitems', {
         customer: customer, amount: cents, currency: 'aud',
         description: who + n + ' extra ' + (n === 1 ? 'player' : 'players') + ', full month',
@@ -4050,6 +4061,7 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
     const months = Math.round(frac * 12 * 10) / 10;
 
     if (delta > 0) {
+      if (dryRun) return { kind: 'quote', cents: cents };
       const aRes = await vpbStripePost(env, 'invoiceitems', {
         customer: customer, amount: cents, currency: 'aud',
         description: who + players + ' added, pro rata to renewal (' + months + ' months)',
@@ -4103,6 +4115,13 @@ async function vpbSetPlayers(request, env, json) {
   // Using the billed figure on monthly invented charges out of nothing. A venue that dropped
   // 100 to 50 and changed its mind was billed a full month for 50 players it had never lost,
   // and 100 to 50 to 120 charged a full month for 70 when only 20 were genuinely new.
+  /* PREVIEW: what would this cost? Quotes and writes nothing.
+     The page cannot state the figure otherwise, and it must, because for an annual
+     account the charge is twelve times the only price sentence on screen. Putting
+     the arithmetic in the page instead would be a second copy of the pricing, which
+     is how the two founding gates came to disagree. */
+  const previewOnly = b.preview === true;
+
   const annualPlan = o.account.plan === 'annual';
   const basis = annualPlan ? billedNow : current;
 
@@ -4119,7 +4138,7 @@ async function vpbSetPlayers(request, env, json) {
     // Take back the credit the scheduled reduction banked. Without this, an annual venue could
     // reduce, pocket the credit, restore, and repeat.
     const rAdj = rinfo ? await vpbAdjustPlayerBilling(env, rinfo, current - basis, o.account.plan, venue.name,
-      venueId + ':' + current + ':' + (rinfo.periodEnd || '0')) : null;
+      venueId + ':restore' + (current - basis) + ':' + current + ':' + (rinfo.periodEnd || '0')) : null;
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_reduction_cancelled',
       target: 'venue:' + venueId, detail: { players: current, from_billed: billedNow, billing: rAdj, actor_user: o.authUserId },
@@ -4146,13 +4165,30 @@ async function vpbSetPlayers(request, env, json) {
     }
     // Charge for the players they are actually gaining over what they are billed today. Using
     // players-current understated it whenever a reduction was already scheduled.
+    if (previewOnly) {
+      const q = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name,
+        null, true);
+      return json({ ok: true, preview: true, players: players, from: current,
+                    charge_cents: (q && q.cents) || 0, plan: o.account.plan });
+    }
+
+    /* THE KEY DESCRIBES THE MOVE, NOT THE DESTINATION. It used to be
+       venueId:players:periodEnd, which omits direction and size, so 100 -> 50 ->
+       100 -> 50 inside Stripe's 24 hour idempotency window reused the first
+       decrease's key and the second credit never happened: the venue ended on 50
+       players having paid a full year for capacity it gave back. Reverse it and
+       the venue ends on 150 having paid nothing. Including the delta and the
+       direction makes each move its own event. Found by audit 5 Sep 2026. */
     const iAdj = await vpbAdjustPlayerBilling(env, info, players - basis, o.account.plan, venue.name,
-      venueId + ':' + players + ':' + (info.periodEnd || '0'));
+      venueId + ':up' + (players - basis) + ':' + players + ':' + (info.periodEnd || '0'));
     await vpaInsert(env, 'vp_admin_audit', {
       ...vpbActorFields(o), action: 'players_increased',
       target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, new_total: newTotal, billing: iAdj, actor_user: o.authUserId },
     }, false).catch(() => {});
     return json({ ok: true, applied: 'now', players: players,
+                  // Name the money. The page could not tell the venue what it had
+                  // just been charged, only that something would appear later.
+                  charge_cents: (iAdj && iAdj.cents) || 0,
                   charge_failed: (iAdj && iAdj.kind === 'failed') ? true : false });
   }
 
@@ -4181,7 +4217,7 @@ async function vpbSetPlayers(request, env, json) {
   // Annual only: the year is already paid, so bank the unused value as a credit for next renewal
   // instead of letting it evaporate. Monthly returns null here (the lower quantity is the fix).
   const dAdj = dinfo ? await vpbAdjustPlayerBilling(env, dinfo, players - basis, o.account.plan, venue.name,
-    venueId + ':' + players + ':' + (dinfo.periodEnd || '0')) : null;
+    venueId + ':down' + (basis - players) + ':' + players + ':' + (dinfo.periodEnd || '0')) : null;
   await vpaInsert(env, 'vp_admin_audit', {
     ...vpbActorFields(o), action: 'players_reduction_scheduled',
     target: 'venue:' + venueId, detail: { from: current, to: players, from_billed: billedNow, billing: dAdj, actor_user: o.authUserId },

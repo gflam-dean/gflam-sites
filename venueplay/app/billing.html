@@ -459,7 +459,18 @@
       var pending = (d.venues || []).filter(function(v){ return (v.pending != null && v.pending !== v.players) || v.cancelling; });
       var note = d.comp
         ? "Your account is on us, so nothing on this page is charged. Add as many players or venues as you like."
-        : "Extra players are charged a full month at " + money(rate) + " per player from the day you add them, and the totals above update straight away.";
+        /* PLAN-AWARE, because it was not and the difference is twelvefold. On monthly
+           a player added today costs one month. On ANNUAL the charge is the rest of
+           the year: rate x 12 x the fraction remaining. This sentence said "a full
+           month" to both, so an annual venue adding 50 players read $115 and was
+           charged $1,149.95. The exact figure is now quoted before anything is
+           charged, from the Worker, so there is only ever one copy of the sum. */
+        : (d.plan === "annual"
+            ? ("Extra players are charged for the rest of your year at " + money(rate) +
+               " per player per month, so the amount depends on how long is left. "
+               + "We will show you the exact figure before anything is charged.")
+            : ("Extra players are charged a full month at " + money(rate) +
+               " per player from the day you add them, and the totals above update straight away."));
       if (pending.length){
         note = "The totals above are your current cover. A scheduled change (a player reduction or a venue you cancelled) takes effect at your next renewal" +
                (d.next_charge ? " on " + d.next_charge : "") + ", and the figures update then. Adding players or a venue applies straight away.";
@@ -542,6 +553,32 @@
       }
       save.addEventListener("click", function(){
         var n = parseInt(input.value,10)||0; if(n<1){ showMsg("Enter at least 1 player."); return; }
+        /* AN INCREASE IS A CHARGE, SO SAY THE NUMBER FIRST. This fired straight at
+           /account/players with no confirmation and no amount, and on an annual
+           account the amount is twelve times the page's own price sentence. The
+           overage flow will not start a game until the host taps OK on a named
+           figure for $2 a head; this took four figures on one click. The quote comes
+           from the Worker so the arithmetic is never duplicated here. */
+        if (n > (parseInt(v.players,10)||0)) {
+          save.disabled = true; save.textContent = "Checking…";
+          api("/account/players", { venue_id:v.id, players:n, preview:true }).then(function(q){
+            save.disabled = false; save.textContent = "Save";
+            if (q && q.error) { showMsg(q.error); return; }
+            var cents = (q && q.charge_cents) || 0;
+            var words = cents > 0
+              ? ("Adding " + (n - v.players) + " player" + ((n - v.players) === 1 ? "" : "s") +
+                 " will be charged " + money(cents / 100) +
+                 (q.plan === "annual" ? " now, covering the rest of your year." : " now.") +
+                 "\n\nGo ahead?")
+              : ("Change " + v.players + " players to " + n + "?");
+            if (!confirm(words)) return;
+            doSavePlayers(n);
+          });
+          return;
+        }
+        doSavePlayers(n);
+      });
+      function doSavePlayers(n){
         save.disabled = true; save.textContent = "Saving…";
         api("/account/players", { venue_id:v.id, players:n }).then(function(r){
           if (r.error){ showMsg(r.error); save.disabled=false; save.textContent="Save"; return; }
@@ -574,7 +611,7 @@
           save.disabled=false; save.textContent="Save";
           load();
         });
-      });
+      }
       var canx = row.querySelector(".canxlink");
       if (canx){
         canx.addEventListener("click", function(){

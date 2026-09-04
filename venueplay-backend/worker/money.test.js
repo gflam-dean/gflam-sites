@@ -14,14 +14,18 @@ var bad = 0, ran = 0;
 function pass(n, c, extra){ ran++; print((c ? "  ok   " : "  FAIL ") + n + (extra ? "   " + extra : "")); if(!c) bad++; }
 
 function find(rel) {
-  var tries = ["venueplay-backend/worker/" + rel, rel, "../" + rel, "../../" + rel];
+  // Repo-relative and named in full. A list that guesses wrong first still
+  // WORKS, but jsc writes "Could not open file" to stderr and the release
+  // check reads the LAST line of the run, so a harmless miss reads as a
+  // failed suite.
+  var tries = [rel, "../" + rel, "../../" + rel];
   for (var i = 0; i < tries.length; i++) {
     try { var t = readFile(tries[i]); if (t && t.length > 1000) return t; } catch (e) {}
   }
   throw new Error("cannot find " + rel);
 }
-var GAME = find("venueplay-game.js");
-var BILL = find("venueplay-api-FULL.js");
+var GAME = find("venueplay-backend/worker/venueplay-game.js");
+var BILL = find("venueplay-backend/worker/venueplay-api-FULL.js");
 
 function lift(src, name) {
   // The optional `async ` matters: without it the lifted text starts at `function`
@@ -172,4 +176,42 @@ if (nightSrc) {
        "the boundary is 2am, not midnight");
 }
 
-print("\n" + (bad ? bad + " FAILED, " + ran + " run" : "ALL " + ran + " CHECKS PASSED"));
+/* The verdict is printed by the async chain above, which resolves after every
+   synchronous check in this file has run. Two summaries confused the release
+   check, which reads only the LAST line. */
+
+print("\nAN INCREASE IS QUOTED BEFORE IT IS CHARGED");
+/* The billing page's only price sentence said "a full month at $2.30 per player".
+   True for monthly. For ANNUAL the charge is rate x 12 x the fraction of the year
+   left, so adding 50 players with ten months to run is $1,149.95 against the $115
+   implied, taken on one click with no confirmation and no amount. The decrease path
+   already named its credit; the charge named nothing. */
+var adj = lift(BILL, 'vpbAdjustPlayerBilling');
+pass("the charge function exists", !!adj);
+pass("it supports a dry run", !!adj && /dryRun/.test(adj),
+     "the page cannot state the figure without one");
+pass("the dry run posts nothing", !!adj &&
+     (adj.match(/if \(dryRun\) return \{ kind: 'quote'/g) || []).length === 2,
+     "one exit before each Stripe post, monthly and annual");
+var setp = lift(BILL, 'vpbSetPlayers');
+pass("the endpoint honours preview", !!setp && /previewOnly/.test(setp));
+pass("the reply names the amount charged", !!setp && /charge_cents/.test(setp),
+     "so the page can tell the venue what just happened");
+var page = find("venueplay/app/billing.html");
+pass("the page asks for a quote before an increase", /preview:true/.test(page));
+pass("and confirms with the figure", /confirm\(words\)/.test(page));
+pass("the price sentence is plan-aware", /d\.plan === "annual"/.test(page),
+     "one sentence for both plans was wrong by a factor of twelve");
+
+print("\nAN IDEMPOTENCY KEY DESCRIBES THE MOVE, NOT THE DESTINATION");
+/* venueId:players:periodEnd omits direction and size. 100 -> 50 -> 100 -> 50 inside
+   Stripe's 24 hour window reused the first decrease's key, so the second credit
+   never happened and the venue ended on 50 players having paid a year for capacity
+   it gave back. Reverse it and the venue ends on 150 having paid nothing. */
+['up', 'down', 'restore'].forEach(function (dir) {
+  pass("the " + dir + " key carries its direction and delta",
+       // Plain indexOf, not a built regex: escaping a paren through two layers
+       // of quoting got it wrong and the error read as a malformed Worker.
+       (setp || '').indexOf("':" + dir + "' + (") !== -1,
+       "same target number, opposite move, must not share a key");
+});
