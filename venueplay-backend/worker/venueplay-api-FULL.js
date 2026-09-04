@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '2 Sep 2026, 11:33 · 2de73f5c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 07:59 · 85704604';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -1852,7 +1852,12 @@ async function vpaHandleVenueHistory(request, env, json) {
     const ids = sessions.map(function (x) { return encodeURIComponent(x.id); }).join(',');
     games = await vpaSelect(env, 'vp_games',
       'session_id=in.(' + ids + ')' +
-      '&select=id,session_id,seq,format,status,ended_at,created_at&order=seq.asc') || [];
+      // started_at, NOT created_at: vp_games has no created_at, so this select was
+      // rejected and vpaSelect turned the error into []. Every night in the
+      // retention panel read "games: 0, formats: [], abandoned: true". Same shape
+      // as the 19 Aug empty-HQ incident: correct-looking code, a database that
+      // quietly disagrees, an error flattened into an empty list.
+      '&select=id,session_id,seq,format,status,ended_at,started_at&order=seq.asc') || [];
   }
 
   /* How many people were in the room. Counted, not stored: there is no player

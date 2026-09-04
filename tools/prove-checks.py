@@ -271,6 +271,12 @@ MUTATIONS = [
      '  crypto.getRandomValues(buf); x = buf[0];',
      'the draw stops rejecting and quietly favours the low numbers'),
 
+    ('shift-timer.test.js', 'venueplay/app/index.html',
+     '  function enforceShift(){\n    if(window.VP && VP.setGameActive){',
+     '  function enforceShift(){\n    setTimeout(function(){}, 4*3600*1000);\n    if(false){',
+     'a console goes back to its own frozen shift timer, which signs out the next '
+     'host mid-game and closes a live night'),
+
     ('money.test.js', 'venueplay-backend/worker/venueplay-game.js',
      "  if (annual) return tier === 'founding' ? 2.30 : 2.85;",
      "  if (annual) return tier === 'founding' ? 2.40 : 2.85;",

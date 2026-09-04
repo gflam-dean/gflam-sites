@@ -788,15 +788,43 @@
   });
 
   function releaseRoom(){ try{ if(subscribed && ch){ rawSend({ t:"idle" }); } }catch(e){} }
+  /* THE SHIFT TIMER LIVES IN vp-session.js. This console had its own copy and it
+     shadowed the shared one, which is the only place three things happen:
+
+       - gameIsLive(): VP leaves a live night OPEN. The local endShift() called
+         closeOpenNight() unconditionally, so a 4 hour timeout landing mid-bingo
+         closed the session and finished every running game. That is the exact
+         behaviour vp-session.js:485 says "killed live nights".
+       - retryPendingCloses(): a close lost to a wifi blip is drained on the next
+         sign-in. Its own comment claims "every one of them calls enforceShift()",
+         and this console was the one that did not, so on a bingo-only venue's
+         tablet a lost close sat unbilled indefinitely.
+       - an INTERVAL that re-reads the deadline, not a single setTimeout frozen at
+         page load. The frozen version fires against the OLD deadline, which after
+         a handover signs out the NEXT host, mid-game.
+
+     VP.endShift was exported and had zero callers anywhere, because this local
+     definition shadowed it. Found by audit, 5 Sep 2026. */
+  /* THE HOST PRESSING SIGN OUT is not the same event as the 4 hour timeout, and
+     they need opposite treatment. A deliberate sign-out CLOSES the night, because
+     that is what bills an approved overage and the host has already confirmed
+     through a dialog naming the running game. The timeout must LEAVE a live night
+     alone, because nobody asked it to end anything. VP.endShift is guarded for the
+     timed case; this is the unguarded one, and only the two sign-out buttons use it. */
   function endShift(){
-    releaseRoom(); closeOpenNight(); try{ localStorage.removeItem("vpShiftStart"); }catch(e){} if(shiftTimer){ clearTimeout(shiftTimer); shiftTimer=null; } }
+    releaseRoom();
+    closeOpenNight();
+    try{ localStorage.removeItem("vpShiftStart"); }catch(e){}
+  }
   function enforceShift(){
-    var MAX=4*3600*1000, now=Date.now(), start=0;
-    try{ start=parseInt(localStorage.getItem("vpShiftStart"),10)||0; }catch(e){}
-    if(start && (now-start)>MAX){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } return; }
-    if(!start){ start=now; try{ localStorage.setItem("vpShiftStart", String(start)); }catch(e){} }
-    if(shiftTimer) clearTimeout(shiftTimer);
-    shiftTimer=setTimeout(function(){ endShift(); if(window.VP){ VP.signOut(); } else { go("vSignIn"); } }, Math.max(1000, MAX-(now-start)));
+    if(window.VP && VP.setGameActive){
+      // A night is live while a game is running, or a claim is waiting on the host.
+      VP.setGameActive(function(){ return G.status==="running" || G.status==="lobby" || !!G.claimQueue && G.claimQueue.length>0; });
+    }
+    if(window.VP && VP.enforceShift){ VP.enforceShift(); return; }
+    // No shared helper: release the room and send them to sign-in rather than
+    // leaving a tablet signed in all night with no timer at all.
+    releaseRoom(); go("vSignIn");
   }
   function proceedVenue(){
     enforceShift();

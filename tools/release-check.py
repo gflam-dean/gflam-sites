@@ -136,9 +136,17 @@ class _Follow308(urllib.request.HTTPRedirectHandler):
 _opener = urllib.request.build_opener(_Follow308)
 
 
-def get(url, timeout=20):
-    """Body and status, following redirects. Never trust the status alone."""
-    req = urllib.request.Request(url, headers={'User-Agent': BROWSER_UA})
+def get(url, timeout=20, headers=None):
+    """Body and status, following redirects. Never trust the status alone.
+
+    headers was missing until 5 Sep, and the RLS check below built an apikey
+    header and handed it to a function that had nowhere to put it. Every request
+    went out unauthenticated, came back 401, and the check read that as "no rows
+    leaked". Seven tables were reported safe by a probe that never asked."""
+    h = {'User-Agent': BROWSER_UA}
+    if headers:
+        h.update(headers)
+    req = urllib.request.Request(url, headers=h)
     try:
         with _opener.open(req, timeout=timeout) as r:
             return r.status, r.read().decode('utf-8', 'replace'), r.geturl()
@@ -1299,16 +1307,38 @@ def public_key_cannot_reach_data():
     url, key = url.group(0), key.group(0)
     h = {'apikey': key, 'authorization': 'Bearer ' + key}
 
+    # PROVE THE PROBE WORKS BEFORE TRUSTING A CLEAN RESULT. A table that is
+    # readable must come back as a JSON LIST. If the key is refused, or the URL is
+    # wrong, the answer is an object, and "no rows in an object" is not evidence of
+    # anything. So a non-list is a FAILURE of the check, not a pass.
+    reachable, _rb, _ = get(url + '/rest/v1/vp_venues?select=id&limit=1', headers=h)
+    ok('the RLS probe can actually reach the database', reachable == 200,
+       'HTTP %s' % reachable,
+       why='the probe never asked, so every result below would be meaningless')
+
     for t in ('vp_venues', 'vp_players', 'vp_sessions', 'vp_captures',
               'pp_licences', 'pp_admins', 'vp_games'):
-        status, body, _ = get(url + '/rest/v1/' + t + '?select=*&limit=1')
-        leaked = False
+        status, body, _ = get(url + '/rest/v1/' + t + '?select=*&limit=1', headers=h)
+        # FOUR ANSWERS, and only two of them are good:
+        #   a list with rows   -> the table is READABLE. This is the leak.
+        #   an empty list      -> reachable, RLS returned nothing. Good.
+        #   permission denied  -> no grant at all. Better than good.
+        #   anything else      -> we never asked, and silence is not safety.
+        good, note = False, ''
         try:
             d = json.loads(body)
-            leaked = isinstance(d, list) and len(d) > 0
+            if isinstance(d, list):
+                good = len(d) == 0
+                note = 'IT RETURNED %d ROW(S)' % len(d)
+            else:
+                msg = str(d.get('message') or '')
+                if 'permission denied' in msg.lower() or d.get('code') == '42501':
+                    good, note = True, 'no grant at all'
+                else:
+                    note = 'the probe could not ask: %s %s' % (status, msg[:60])
         except Exception:
-            pass
-        ok('cannot READ %s' % t, not leaked, why='IT RETURNED ROWS')
+            note = 'the probe could not ask: unreadable answer, HTTP %s' % status
+        ok('cannot READ %s' % t, good, note if good else '', why=note)
 
     for t in ('vp_venues', 'pp_licences', 'pp_admins'):
         status, body = post(url + '/rest/v1/' + t, {}, h)
@@ -1426,7 +1456,7 @@ def founding_windows_are_open():
                       'nt.html','tas.html','act.html')] if os.path.isdir(root) else []
     if not pages:
         return
-    shut = []
+    shut, unreachable = [], []
     for b in pages:
         src = io.open(os.path.join(root, b), encoding='utf-8').read()
         codes = sorted(set(re.findall(r'[A-Z]{2,3}-[A-Z]{3}-20\d\d', src)))
@@ -1434,12 +1464,25 @@ def founding_windows_are_open():
             continue
         code = codes[0]
         status, body, _ = get(VP_API + '/founding?code=' + code)
+        # AN UNANSWERED QUESTION IS NOT A NO. /founding lives on the billing
+        # Worker, so when the wrong file is pasted into that slot the route 404s
+        # and every page looked shut. On 5 Sep this printed "the Worker will
+        # charge STANDARD on act, nsw, nt, qld" when the truth was that nothing
+        # had been asked. Say which, because the two need opposite actions: one
+        # is an env var to edit, the other is a Worker to re-paste.
         try:
-            open_ = json.loads(body).get('open') is True
+            answer = json.loads(body)
         except Exception:
-            open_ = False
-        if not open_:
+            answer = None
+        if not isinstance(answer, dict) or 'open' not in answer:
+            unreachable.append('%s (HTTP %s)' % (b, status))
+        elif answer.get('open') is not True:
             shut.append('%s (%s)' % (b, code))
+    if unreachable:
+        ok('the founding-code route answers at all', False,
+           why='%s could not be asked: %s. That is the billing Worker refusing, '
+               'not a closed window. Check the right file is in the venueplay-api slot.'
+               % (len(unreachable), ', '.join(unreachable[:4])))
     ok('all %d founding page(s) have a live code' % len(pages), not shut,
        why='the Worker will charge STANDARD on: ' + ', '.join(shut[:4]) +
            '. Either add the code to FOUNDING_CODES or take the page down.')

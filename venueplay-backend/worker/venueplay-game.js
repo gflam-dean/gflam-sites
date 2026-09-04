@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 07:12 · fa51a2b7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 07:59 · 06f57388';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2252,8 +2252,14 @@ async function handleMembersResolve(request, env, json) {
        count up to $500. The audit row is the truth; read it. */
     let saidAmount = draw.current_jackpot_cents, saidOutcome = outcome;
     try {
+      // drawn_at, NOT created_at: this table has no created_at, so PostgREST
+      // rejected the whole select and the catch below swallowed it. The fallback
+      // is draw.current_jackpot_cents, which after a claim is the RESET starting
+      // amount -- exactly the fault the comment above says was fixed. A room told
+      // the winner took $2,400 watched the screen count up to $500. This read has
+      // never once succeeded. Confirmed against the live database 5 Sep 2026.
       const prev = await sbGet(env, 'vp_member_draw_results',
-        'draw_id=eq.' + enc(drawId) + '&select=outcome,amount_cents&order=created_at.desc&limit=1');
+        'draw_id=eq.' + enc(drawId) + '&select=outcome,amount_cents&order=drawn_at.desc&limit=1');
       if (prev.length) {
         if (prev[0].amount_cents != null) saidAmount = prev[0].amount_cents;
         if (prev[0].outcome) saidOutcome = prev[0].outcome;
