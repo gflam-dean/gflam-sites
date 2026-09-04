@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '3 Sep 2026, 14:09 · 51c8dbbf';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 07:12 · fa51a2b7';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -330,9 +330,15 @@ export default {
      as it would have been, with the same Stripe idempotency key per session. Sessions younger
      than the cutoff are left alone: a long night is not an abandoned one.
 
-     Needs a Cron Trigger on this Worker in the Cloudflare dashboard. Suggested: "0 17 * * *"
-     (3am Brisbane). With no trigger configured this simply never runs, which is today's
-     behaviour, so it is safe to deploy before the trigger is set up. */
+     THE TRIGGER IS SET AND IT WORKS. "0 17 * * *", 3am Brisbane, confirmed live on
+     5 Sep 2026: session 9206e83c opened 6 Aug, collected 12 players across two separate
+     occasions because nothing closed it, and this sweep ended it at 17:00:42 UTC on
+     28 Aug, which is 03:00:42 Brisbane. Forty-two seconds after the cron fired.
+
+     The lag was the DEPLOY, not the trigger. This handler landed in the repo on 18 Aug
+     and the Workers go in by hand, so the first 3am run after the paste is what closed a
+     session that had been open for 23 days. Nothing to fix here; the note that used to
+     say the trigger had never been set was wrong and was read as evidence. */
   async scheduled(event, env, ctx) {
     ctx.waitUntil(sweepStaleSessions(env).then(function (r) {
       // A sweep whose query failed used to print exactly what a quiet night prints. Say which.
@@ -380,9 +386,10 @@ async function sweepStaleSessions(env, staleHours) {
 }
 
 /* POST /admin/sweep-sessions  (Gflam owner/accounts) : close the stale ones NOW.
- * The Cron Trigger is the real answer, but it has to be set in the Cloudflare dashboard and
- * evidently has not been, so HQ needs a way to clear what has already piled up without waiting
- * for a nightly run that may never come. Same function, same billing, same idempotency key. */
+ * The nightly Cron Trigger is the real answer and it IS set and working (see the scheduled
+ * handler above). This stays because a paste can precede the next 3am run by a whole day, and
+ * because a night that needs closing now should not wait for one. Same function, same billing,
+ * same idempotency key, so a swept close is identical whichever way it is started. */
 async function handleAdminSweep(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);
   const admins = await sbGet(env, 'vp_platform_admins',
