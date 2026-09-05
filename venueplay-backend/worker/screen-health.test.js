@@ -185,7 +185,13 @@ ok("it can address every venue at once", /body\.all[\s\S]{0,200}slug=not\.is\.nu
 ok("bulk skips suspended venues", /status=neq\.suspended/.test(W));
 
 // HQ: one button, and the old machinery actually gone.
-ok("HQ asks NOW or 3AM", /Type NOW[\s\S]{0,200}Type 3AM/.test(HQ));
+ok("HQ offers a dropdown, not a typed answer",
+   /id="reloadScreensWhen"[\s\S]{0,300}value="3am"[\s\S]{0,200}value="now"/.test(HQ),
+   "the first version asked Dean to TYPE NOW or 3AM, which is a quiz, not a control");
+ok("3am is the default, because it interrupts nobody",
+   /value="3am" selected/.test(HQ));
+ok("and the choice is read from the dropdown", /sel \? sel\.value : "3am"/.test(HQ));
+ok("it still confirms before acting", /confirm\(\s*\n?\s*"Reload " \+ targets\.length/.test(HQ));
 ok("3am is computed as 17:00 UTC (Brisbane has no daylight saving)",
    /setUTCHours\(17, 0, 0, 0\)/.test(HQ));
 ok("and rolls to tomorrow if 3am has passed", /\+ 24 \* 3600 \* 1000/.test(HQ));

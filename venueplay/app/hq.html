@@ -236,8 +236,12 @@
     <div class="lblk" id="venuesLbl">All venues</div>
     <div class="panel" style="margin-bottom:12px">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="reloadScreensWhen" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
+          <option value="3am" selected>at 3am Brisbane</option>
+          <option value="now">right now</option>
+        </select>
         <button class="mini" id="reloadScreens">Reload every venue screen</button>
-        <span class="note" style="flex:1;min-width:220px">Pushes a refresh to every TV so a new version lands now rather than within four hours. Safe at any time: a screen showing the ads reloads straight away, and a screen mid-game holds it until that game finishes. Venues never have to do anything, and screens pick up new versions on their own within ten minutes anyway.</span>
+        <span class="note" style="flex:1;min-width:220px">Every screen reads this off the poll it already makes every thirty seconds, so it lands even on a screen whose connection has dropped. <b>3am</b> is the safe default: it is stored as a time, so each screen simply acts when it gets there and no room is ever interrupted. <b>Right now</b> is for a fix that cannot wait.</span>
       </div>
       <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
     </div>
@@ -1268,17 +1272,16 @@
 
     var when3 = nextThreeAmBrisbane();
     var pretty = when3.toLocaleString("en-AU", { weekday:"short", hour:"numeric", minute:"2-digit", hour12:true });
-    var answer = prompt(
-      "Reload " + targets.length + " venue screen" + (targets.length===1?"":"s") + ".\n\n" +
-      "Type NOW to do it immediately.\n" +
-      "Type 3AM to schedule it for " + pretty + " Brisbane, so no room is interrupted.\n\n" +
-      "Anything else cancels.", "3AM");
-    if(!answer) return;
-    answer = String(answer).trim().toUpperCase();
-    var at = null;
-    if(answer === "NOW"){ at = null; }
-    else if(answer === "3AM" || answer === "3 AM"){ at = when3.toISOString(); }
-    else { return; }
+    /* A dropdown, not a typed answer. The first version asked Dean to type NOW or
+       3AM into a prompt, which is a quiz, not a control: a typo silently cancelled
+       and nothing said why. */
+    var sel = $("reloadScreensWhen");
+    var choice = sel ? sel.value : "3am";
+    var at = (choice === "now") ? null : when3.toISOString();
+    if(!confirm(
+        "Reload " + targets.length + " venue screen" + (targets.length===1?"":"s") + "?\n\n" +
+        (at ? ("They will do it at " + pretty + " Brisbane. Nothing is interrupted, and a screen that is switched off now will still take it when it comes back.")
+            : ("They will do it within 30 seconds. A screen mid-game is interrupted, so only choose this if it cannot wait.")))) return;
 
     var btn=$("reloadScreens"); if(btn){ btn.disabled=true; btn.textContent="Sending…"; }
     if(out) out.textContent="Sending…";
