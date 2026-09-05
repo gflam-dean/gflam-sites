@@ -546,7 +546,12 @@
       // Separate + fault-tolerant on purpose: hide_from_trusted (migration 54) is NOT named in
       // listVenues, because a not-yet-migrated column there would 400 and empty the whole list. Here
       // a 400 just leaves the flag map empty and every Hide button defaults to "Hide from homepage".
-      c.from("vp_venues").select("id,hide_from_trusted")
+      c.from("vp_venues").select("id,hide_from_trusted"),
+      /* Separate and fault-tolerant for the same reason as the line above: naming
+         screen_seen_at in listVenues would 400 the whole venue list on a database
+         that has not run migration 64, and an ops indicator is never worth the list
+         it is printed on. A 400 here just leaves every screen "unknown". */
+      c.from("vp_venues").select("id,screen_seen_at")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -556,6 +561,7 @@
       }
       S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
       S.hideHp={}; ((r[9] && r[9].data) || []).forEach(function(v){ S.hideHp[v.id]=!!v.hide_from_trusted; });   // homepage-marquee visibility (migration 54)
+      S.screenSeen={}; ((r[10] && r[10].data) || []).forEach(function(v){ S.screenSeen[v.id]=v.screen_seen_at||null; });   // screen heartbeat (migration 64)
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
       S.discounts=(r[2] && r[2].data) || [];
@@ -957,6 +963,25 @@
     // Venues that share a founding account (a self-serve multi-venue account) are one account,
     // even without a negotiated operator group. Count them so they read as merged, not separate.
     var acctCount={}; S.venues.forEach(function(x){ if(x.founding_id) acctCount[x.founding_id]=(acctCount[x.founding_id]||0)+1; });
+    /* IS THE SCREEN ACTUALLY LISTENING?
+       "Live now" and "Active" describe the venue's SESSION, not its screen. A screen
+       that has lost its realtime socket keeps rotating the advertising perfectly and
+       hears nothing from the host or from here, and until this badge existed the only
+       way to find out was to press Reload TV and watch nothing happen. The screen
+       polls every thirty seconds, so anything past two minutes has missed at least
+       three in a row. */
+    function screenBadge(v){
+      if(!v.slug) return "";                                  // no screen address yet: nothing to say
+      var seen = S.screenSeen ? S.screenSeen[v.id] : undefined;
+      if(seen === undefined) return "";                       // column not there (pre-migration): say nothing rather than guess
+      if(!seen) return '<span class="badge idle" title="No screen at this venue has ever polled us. Open venueplay.com.au/tv?'+esc(v.slug)+' on the screen.">No screen yet</span>';
+      var mins = Math.floor((Date.now() - Date.parse(seen)) / 60000);
+      if(!isFinite(mins)) return "";
+      if(mins <= 2)  return '<span class="badge live" title="Polled us within the last two minutes.">Screen ok</span>';
+      if(mins <= 15) return '<span class="badge grouped" title="Last heard from '+mins+' minutes ago. It polls every 30 seconds, so it has missed several.">Screen quiet '+mins+'m</span>';
+      var hrs = Math.floor(mins/60);
+      return '<span class="badge suspend" title="Last heard from '+mins+' minutes ago. This screen is not receiving anything: the host cannot reach it and neither can Reload TV. It needs a power cycle at the venue.">Screen DOWN '+(hrs>=1? hrs+'h' : mins+'m')+'</span>';
+    }
     list.forEach(function(v){
       var suspended=v.status==="suspended";
       var inAccount = !v.group_id && v.founding_id && acctCount[v.founding_id]>1;
@@ -966,6 +991,7 @@
       var statusCell = (v.suspended_reason==='archived') ? '<span class="badge suspend">Archived</span>'
                      : suspended ? '<span class="badge suspend">'+(v.suspended_reason==='nonpayment'?'Unpaid':v.suspended_reason==='ended'?'Ended':'Paused')+'</span>'
                        : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
+      statusCell += " " + screenBadge(v);
       var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
                   '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
                   (v.slug ? '<button class="mini" data-tvreload="'+esc(v.id)+'">Reload TV</button>' : '')+

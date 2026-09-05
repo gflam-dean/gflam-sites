@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 17:57 · b580c4fd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 18:15 · 2517c14c';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1121,11 +1121,37 @@ async function handleVenueLookup(request, env, json) {
      cost of getting it wrong should not be every venue's wall, so ask for the column
      and fall back to the old select if the database does not have it yet. */
   let rows = await sbGet(env, 'vp_venues',
-    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at&limit=1').catch(() => null);
+    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at&limit=1')
+    .catch(() => null);
   if (!rows || !rows.length) {
     rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
   }
   const v = (rows && rows[0]) || {};
+
+  /* THE HEARTBEAT WE WERE THROWING AWAY.
+     This request happens every thirty seconds from every screen, over ordinary
+     HTTPS, whatever the websocket is doing. That makes it the only reliable
+     evidence a screen is alive - and until now nothing recorded it, so a screen
+     with a dead socket was indistinguishable in HQ from a working one. It cost
+     most of an afternoon on 5 Sep, because every diagnosis had to begin by
+     guessing whether the screen was receiving anything at all.
+
+     Written at most once every 25 seconds per venue: the poll is 30s, so this is
+     one write per poll in the normal case and none at all if two screens at the
+     same venue happen to land together. Awaited rather than left dangling, because
+     an unawaited promise in a Worker can be cancelled when the response returns,
+     and a heartbeat that only sometimes records is worse than none. Best effort:
+     a screen must never be told its venue is missing because a bookkeeping write
+     failed. */
+  if ('screen_seen_at' in v) {
+    const last = v.screen_seen_at ? Date.parse(v.screen_seen_at) : 0;
+    if (!isFinite(last) || Date.now() - last > 25000) {
+      try {
+        await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venueId),
+          { screen_seen_at: new Date().toISOString() });
+      } catch (e) { /* never let this affect the answer */ }
+    }
+  }
   /* reload_at RIDES THIS REQUEST ON PURPOSE.
      The screen already calls this every thirty seconds over ordinary HTTPS, so a
      reload delivered here reaches a screen whose websocket has died - which is
