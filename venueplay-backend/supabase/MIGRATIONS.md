@@ -57,6 +57,7 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 64 | screen-heartbeat | applied 5 Sep |
 | 65 | screen-command | applied 5 Sep |
 | 66 | screen-version | applied 5 Sep |
+| 67 | group-invoicing | **not yet - run it BEFORE pasting the Worker** |
 
 Verified against the live database on 5 Sep 2026, not from memory: vp_captures
 .player_id and .source exist, vp_venues.overage_streak_day exists,

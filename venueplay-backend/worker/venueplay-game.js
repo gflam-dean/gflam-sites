@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 18:52 · 20e05078';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 19:34 · a2a39154';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -259,6 +259,7 @@ export default {
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
       if (method === 'POST' && path === '/screen/command')     return await handleScreenCommand(request, env, json, await readJson(request));
+      if (method === 'GET'  && path === '/admin/group-overage') return await handleGroupOverage(request, env, json);
       /* Broadcast signing (migrations 38 + 55). vp-sign.js has been loaded by every TV, phone and
          console since 20 Aug calling these three; they were never written, so every page fell back
          to send-unsigned / render-everything and the signing was decorative. */
@@ -1186,6 +1187,75 @@ async function handleVenueLookup(request, env, json) {
  * advertising is timed locally, and has had to be reset by hand. HQ still fires the
  * broadcast as well, because when it works it is instant. This is the floor.
  */
+/* GET /admin/group-overage?months=3   (HQ admin only)
+ *
+ * WHAT A GROUP OWES THAT NOTHING HAS ASKED FOR.
+ *
+ * venueCanBeCharged returns false for a venue with no founding_id - a grouped venue -
+ * and its comment says "invoiced by hand". That is a deliberate decision and it is
+ * also a leak: the host is never shown the overage consent screen, nothing is
+ * charged, and NOTHING ANYWHERE tells anyone the night happened. Invoicing by hand
+ * requires knowing what to invoice, and there was no way to know.
+ *
+ * So this is the missing half, and it is deliberately only a REPORT. It reads
+ * sessions, works out which grouped venues went past their plan and by how much, and
+ * prices it at the rate the rest of the system already uses. It charges nothing and
+ * changes nothing: what a group is billed is a conversation, and this is the sheet
+ * you have that conversation from.
+ */
+async function handleGroupOverage(request, env, json) {
+  const admin = await requireScreenAdmin(request, env, json);
+  if (admin.error) return admin.error;
+  const url = new URL(request.url);
+  let months = parseInt(url.searchParams.get('months') || '3', 10);
+  if (!isFinite(months) || months < 1) months = 3;
+  if (months > 24) months = 24;
+  const since = new Date(Date.now() - months * 31 * 24 * 3600 * 1000).toISOString();
+
+  /* Grouped venues only: a venue with a founding_id is metered and charged the normal
+     way, and including it here would double-count money already taken. */
+  const venues = await sbGet(env, 'vp_venues',
+    'group_id=not.is.null&founding_id=is.null&select=id,name,slug,group_id,max_players&limit=2000');
+  if (!venues || !venues.length) {
+    return json({ ok: true, months: months, venues: 0, nights: [], total_cents: 0,
+                  note: 'no grouped venues without their own billing account' });
+  }
+  const byId = {};
+  for (const v of venues) byId[v.id] = v;
+
+  /* Asked per venue rather than one in.() of every id: that URL would be absurd at
+     scale, there are not many grouped venues, and this is an on-demand report rather
+     than a hot path. */
+  const nights = [];
+  let total = 0;
+  for (const v of venues) {
+    const sessions = await sbGet(env, 'vp_sessions',
+      'venue_id=eq.' + enc(v.id) + '&opened_at=gte.' + enc(since) +
+      '&select=id,opened_at,ended_at,status,players_attached&order=opened_at.desc&limit=200')
+      .catch(() => null);
+    if (!sessions) continue;
+    const cap = parseInt(v.max_players, 10) || 0;
+    for (const ses of sessions) {
+      const peak = parseInt(ses.players_attached, 10) || 0;
+      if (!cap || peak <= cap) continue;
+      const over = peak - cap;
+      // $2 a head, the same figure the metered path charges for a first big night.
+      const cents = over * 200;
+      total += cents;
+      nights.push({
+        venue: v.name, slug: v.slug, group_id: v.group_id,
+        night: String(ses.opened_at || '').slice(0, 10),
+        plan_cap: cap, players: peak, over: over, cents: cents,
+        session: ses.id, still_open: ses.status !== 'finished',
+      });
+    }
+  }
+  nights.sort((a, b) => (a.night < b.night ? 1 : -1));
+  return json({ ok: true, months: months, venues: venues.length,
+                nights: nights.length, rows: nights, total_cents: total,
+                note: 'a report only: nothing here has been charged or asked for' });
+}
+
 /* POST /screen/command   { slug, command }   (HQ admin only)
  *   command: 'ads'     put the venue's advertising back on the wall and hold it
  *            'reload'  restart the page (what /screen/reload did)
@@ -4133,13 +4203,34 @@ async function subscriptionInterval(env, acct) {
 
 async function collectNow(env, acct, idemKey, why) {
   if (!acct || !acct.stripe_customer_id) return { ok: false, reason: 'no_customer' };
-  const inv = await stripePost(env, 'invoices', {
+
+  /* A GROUP BILLED BY INVOICE MUST NOT HAVE ITS CARD CHARGED.
+     Everything here used to be charge_automatically, which is right for one pub and
+     wrong for a group: a fifteen-venue total can exceed what a business card takes
+     in a single charge, and groups generally will not pay by card at all - they want
+     an invoice, a PO reference on it, and terms. So for those accounts we issue the
+     invoice and let it sit until it is paid, rather than collecting now. See
+     migration 67. */
+  const byInvoice = acct.bill_by_invoice === true;
+  const body = {
     customer: acct.stripe_customer_id,
-    collection_method: 'charge_automatically',
-    auto_advance: true,                       // Stripe finalises and attempts payment
+    auto_advance: true,                       // finalise either way; only the collection differs
     pending_invoice_items_behavior: 'include',
     description: why || 'VenuePlay extras',
-  }, idemKey ? ('inv_' + idemKey) : null);
+  };
+  if (byInvoice) {
+    body.collection_method = 'send_invoice';
+    // Stripe REQUIRES days_until_due with send_invoice, and rejects the call without
+    // it, so a missing terms value falls back rather than failing the charge.
+    body.days_until_due = Math.max(1, Math.min(120, parseInt(acct.invoice_terms_days, 10) || 14));
+    if (acct.invoice_reference) {
+      body['custom_fields[0][name]'] = 'Reference';
+      body['custom_fields[0][value]'] = String(acct.invoice_reference).slice(0, 30);
+    }
+  } else {
+    body.collection_method = 'charge_automatically';
+  }
+  const inv = await stripePost(env, 'invoices', body, idemKey ? ('inv_' + idemKey) : null);
   if (!inv || inv.error) {
     /* The line is still on the customer, so nothing is lost: it will go out on the
        renewal invoice, which is the old behaviour rather than a new failure. Say so
@@ -4469,7 +4560,7 @@ async function applyOverageCharge(env, o) {
   // can never bill a venue or push one onto a bigger plan.
   if (!o.approved) return;
   const accts = await sbGet(env, 'venueplay_founding',
-    'id=eq.' + enc(venue.founding_id) + '&select=id,stripe_customer_id,stripe_subscription_id');
+    'id=eq.' + enc(venue.founding_id) + '&select=id,stripe_customer_id,stripe_subscription_id,bill_by_invoice,invoice_terms_days,invoice_reference');
   const acct = accts && accts[0];
   if (!acct || !acct.stripe_customer_id || !acct.stripe_subscription_id) return;   // comp/test venue: never charge
 

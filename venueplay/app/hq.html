@@ -302,7 +302,26 @@
 
   <!-- ============ BILLING ============ -->
   <div id="paneBilling" class="hidden">
-    <div class="lblk" style="margin-top:0">Export for Xero</div>
+    <div class="lblk" style="margin-top:0">Group nights nobody has billed</div>
+    <div class="panel pad" style="margin-bottom:14px">
+      <div class="filterbar" style="align-items:flex-end">
+        <div class="field" style="margin:0"><label>Look back</label>
+          <select id="goMonths" style="width:auto">
+            <option value="1">1 month</option>
+            <option value="3" selected>3 months</option>
+            <option value="6">6 months</option>
+            <option value="12">12 months</option>
+          </select>
+        </div>
+        <button class="btn ghost" id="goRun">Show me</button>
+        <button class="btn ghost" id="goCsv" style="display:none">Download CSV</button>
+      </div>
+      <div class="note">A venue in a group has no billing account of its own, so nothing meters it: the host is never shown the overage screen and nothing is charged. That is deliberate - groups are invoiced by hand - but until now nothing told you WHAT to invoice. This is that list: every night a grouped venue went past its plan, priced at $2 a head, the same figure the metered path uses. <b>Nothing here has been charged or even asked for.</b></div>
+      <div id="goOut" class="note" style="margin-top:8px"></div>
+      <div id="goRows" style="margin-top:8px"></div>
+    </div>
+
+    <div class="lblk">Export for Xero</div>
     <div class="panel pad" style="margin-bottom:14px">
       <div class="filterbar" style="align-items:flex-end">
         <div class="field" style="margin:0"><label>From (month)</label><input type="month" id="xeroFrom" style="width:auto"></div>
@@ -486,6 +505,23 @@
         });
     }).catch(function(){ return { error:"Could not reach the game service. Please try again." }; });
   }
+  /* The GET twin of gameWorkerPost. Same auth, same graceful 404, because a report
+     route that is not deployed yet should say so rather than look like an empty
+     result - "no group nights to bill" and "this Worker has no such route" are very
+     different answers and must not look alike. */
+  function gameWorkerGet(path){
+    return authToken().then(function(tok){
+      var headers={};
+      if(tok) headers["Authorization"]="Bearer "+tok;
+      return fetch(VP_GAME_WORKER+path, { headers:headers })
+        .then(function(res){
+          if(res.status===404) return { error:"The game Worker does not have "+path+" yet. Paste venueplay-game.js and try again." };
+          return res.json().then(function(j){ return res.ok ? j : { error:(j && j.error) || ("Request failed ("+res.status+")") }; })
+                           .catch(function(){ return { error:"Unexpected response from the server." }; });
+        });
+    }).catch(function(){ return { error:"Could not reach the game service. Please try again." }; });
+  }
+
   function workerPost(path, body){
     return authToken().then(function(tok){
       var headers={ "Content-Type":"application/json" };
@@ -1103,6 +1139,57 @@
     });
   }
   (function(){ var b=$("reloadScreens"); if(b) b.addEventListener("click", reloadAllScreens); })();
+
+  /* GROUP NIGHTS NOBODY HAS BILLED.
+     A grouped venue has no founding_id, so venueCanBeCharged says no, so the host is
+     never asked to approve an overage and nothing is charged. The Worker's own comment
+     calls it "invoiced by hand" - which needs somebody to know what to invoice, and
+     nothing told them. Read-only: this asks, prints and offers a CSV. */
+  var goLast = null;
+  function goMoney(c){ return "$" + (c/100).toFixed(2); }
+  function runGroupOverage(){
+    if(!canBilling()) return;
+    var out=$("goOut"), rows=$("goRows"), btn=$("goRun");
+    var months=($("goMonths")||{}).value || "3";
+    btn.disabled=true; out.textContent="Looking…"; rows.innerHTML="";
+    gameWorkerGet("/admin/group-overage?months="+encodeURIComponent(months)).then(function(r){
+      btn.disabled=false;
+      if(!r || r.error){ out.textContent = "Could not load that: " + ((r&&r.error)||"no answer"); return; }
+      goLast = r;
+      $("goCsv").style.display = (r.rows && r.rows.length) ? "" : "none";
+      if(!r.rows || !r.rows.length){
+        out.textContent = r.venues + " grouped venue" + (r.venues===1?"":"s") + " checked. No night went past plan in that window.";
+        return;
+      }
+      out.innerHTML = "<b>" + r.nights + "</b> night" + (r.nights===1?"":"s") + " across " +
+        r.venues + " grouped venue" + (r.venues===1?"":"s") + ", <b>" + goMoney(r.total_cents) +
+        "</b> at $2 a head. Nothing has been charged.";
+      var h = '<table class="tbl"><thead><tr><th>Night</th><th>Venue</th><th>Plan</th><th>Players</th><th>Over</th><th>Amount</th></tr></thead><tbody>';
+      r.rows.forEach(function(x){
+        h += '<tr><td class="mono">'+esc(x.night)+'</td><td>'+esc(x.venue)+
+             (x.still_open?' <span class="badge suspend">session still open</span>':'')+
+             '</td><td>'+x.plan_cap+'</td><td>'+x.players+'</td><td><b>'+x.over+'</b></td><td>'+goMoney(x.cents)+'</td></tr>';
+      });
+      rows.innerHTML = h + '</tbody></table>';
+    });
+  }
+  function groupOverageCsv(){
+    if(!goLast || !goLast.rows) return;
+    var lines = ["Night,Venue,Slug,Plan cap,Players,Over,Amount AUD"];
+    goLast.rows.forEach(function(x){
+      lines.push([x.night, '"'+String(x.venue||"").replace(/"/g,'""')+'"', x.slug||"",
+                  x.plan_cap, x.players, x.over, (x.cents/100).toFixed(2)].join(","));
+    });
+    var blob=new Blob([lines.join("\n")],{type:"text/csv"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="group-nights-to-invoice.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  (function(){
+    var r=$("goRun"); if(r) r.addEventListener("click", runGroupOverage);
+    var c=$("goCsv"); if(c) c.addEventListener("click", groupOverageCsv);
+  })();
   /* THE TIME DEFAULT HAS TO FOLLOW THE ACTION.
      "Ads back on" is what you press BECAUSE a wall is showing something wrong this
      second. Defaulting it to 3am - which is what the shared dropdown did - meant Dean
