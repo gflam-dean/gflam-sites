@@ -793,8 +793,24 @@
      A lobby counts. The subscribe path above used to send t:"mode" only when the
      status was "running", the same gap musical had, so a lobby was never put back
      even on a full reload. */
+  /* WHAT COUNTS AS STILL BEING ON. A console that is merely OPEN is not a night in
+     progress. The first version of this re-asserted any loaded game, so an abandoned
+     lobby from hours earlier recaptured the wall every time the host tabbed back to
+     the tab - the TV faithfully showing a game nobody was running. A real night
+     produces activity; a forgotten one does not, so an untouched game stops being
+     pushed to the screen and the venue's advertising keeps the wall. The console
+     itself is untouched: the host can still finish or end the game from it. */
+  var STALE_GAME_MS = 3 * 60 * 60 * 1000;
+  var lastGameTouch = Date.now();
+  function touchGame(){ lastGameTouch = Date.now(); }
   function reassertToTv(){
     if(!(G.status==="running" || G.status==="lobby")) return;
+    if(Date.now() - lastGameTouch > STALE_GAME_MS){
+      console.info("[vp] not putting a " +
+        Math.round((Date.now()-lastGameTouch)/3600000) +
+        "h-old game back on the TV; end it from here if it is finished");
+      return;
+    }
     send({ t:"mode", mode:"bingo" });
     sendState();
     if(G.status==="running" && G.claims.length){ sendClaimPending(); }
@@ -968,6 +984,7 @@
   var SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
   function gameKey(code){ return "vpHostGame-"+code; }
   function saveGame(){
+    touchGame();
     if(!G.code) return;
     try{
       // The tapping happens in the LOBBY and between rounds, which is exactly when this used to

@@ -732,6 +732,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
 
   // ---- broadcasts (instant UX only; the DB is the source of truth) ----
   function sendState(){
+    touchGame();
     /* `lobby` is not cosmetic. The screen winds itself back to the venue's ads 18
        seconds after a night ends, and "ended" and "waiting in an open lobby" looked
        identical from there: both arrive as idle followed by state. So opening a new
@@ -1425,8 +1426,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   });
   $("cancelLobbyBtn").addEventListener("click", cancelLobby);
   $("newGameBtn").addEventListener("click", newGame);
+  /* An abandoned lobby must not recapture the wall every time the host tabs back.
+     See the same guard in app/index.html: a console being OPEN is not a night in
+     progress, and the venue's advertising is the better default. */
+  var STALE_GAME_MS = 3 * 60 * 60 * 1000;
+  var lastGameTouch = Date.now();
+  function touchGame(){ lastGameTouch = Date.now(); }
   function reassertToTv(){
     if(!(G.status==="running" || G.status==="lobby")) return;
+    if(Date.now() - lastGameTouch > STALE_GAME_MS) return;
     send({ t:"mode", mode:"musical" });
     sendState();
     if(G.status==="running" && G.nowSong){ send({ t:"played", replay:true, title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub }); }
