@@ -1014,27 +1014,40 @@
                      : suspended ? '<span class="badge suspend">'+(v.suspended_reason==='nonpayment'?'Unpaid':v.suspended_reason==='ended'?'Ended':'Paused')+'</span>'
                        : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
       statusCell += " " + screenBadge(v);
+      /* TWO BUTTONS PER ROW, NOT NINE.
+         At 400 venues a row of nine controls is 3,600 buttons on one page: unusable,
+         and worse than unusable for the dangerous ones, which sat one careless click
+         from a live venue. View as and Details are the two used constantly.
+         Everything else now lives inside the Details panel that already existed for
+         each venue, which is where somebody is already looking when they want to
+         change that venue. Nothing was removed. */
       var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
-                  '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
-                  /* ONE per-venue control, not two. "Reload TV" only restarts a
-                     screen - it comes back on the ads and anything still broadcasting
-                     takes the wall again within seconds, which is why reloading a
-                     stuck screen never fixed one. This pushes the STATE and holds it.
-                     Reloading every screen is the master button above. */
-                  (v.slug ? '<button class="mini" data-tvads="'+esc(v.id)+'">Ads back on</button>' : '')+
-                  (canBilling() ? '<button class="mini" data-disc="'+esc(v.id)+'">Discount</button>' : '')+
-                  /* For a venue that was onboarded here and never added a card. The welcome email
-                     fires once, at creation, and there was no second chance: the only fix was to
-                     delete the venue and build it again. */
-                  (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">Resend welcome</button>' : '')+
-                  '<button class="mini" data-hidehp="'+esc(v.id)+'">'+(S.hideHp[v.id]?"Show on homepage":"Hide from homepage")+'</button>'+
-                  '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
+                  '<button class="mini" data-details="'+esc(v.id)+'">'+
+                    (S.openVenue===v.id ? 'Close' : 'Details')+'</button>';
+
+      /* The rest, for the Details panel below. Ordered by how often it is wanted, with
+         the two that change a venue's trading status last and visually separated. */
+      var moreActions =
+        (v.slug ? '<button class="mini" data-tvads="'+esc(v.id)+'">Ads back on</button>' : '')+
+        (canBilling() ? '<button class="mini" data-disc="'+esc(v.id)+'">Discount</button>' : '')+
+        /* For a venue that was onboarded here and never added a card. The welcome email
+           fires once, at creation, and there was no second chance: the only fix was to
+           delete the venue and build it again. */
+        (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">Resend welcome</button>' : '')+
+        '<button class="mini" data-hidehp="'+esc(v.id)+'">'+(S.hideHp[v.id]?"Show on homepage":"Hide from homepage")+'</button>'+
+        '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
       if(canBilling()){
-        actions+='<button class="mini'+(suspended?' win':' roll')+'" data-suspend="'+esc(v.id)+'" data-to="'+(suspended?'active':'suspended')+'">'+(suspended?"Reactivate":"Pause")+'</button>';
+        /* SEPARATED, AND TYPED, NOT CLICKED. These two stop a venue trading. They sat
+           in the same undifferentiated row as "Resend welcome", one click from a live
+           pub, behind a confirm dialog that is muscle memory by the fiftieth venue.
+           They now ask for the venue's name, which cannot be dismissed by reflex. */
+        moreActions += '<span style="flex-basis:100%;height:1px;background:var(--line-2);margin:8px 0"></span>'+
+          '<button class="mini'+(suspended?' win':' roll')+'" data-suspend="'+esc(v.id)+'" data-to="'+(suspended?'active':'suspended')+'">'+(suspended?"Reactivate":"Pause")+'</button>';
         // Archive is deliberately a SEPARATE action from pausing, and deliberately manual. A quiet
         // venue is a retention call before it is a filing job, so nothing archives itself.
-        if(v.suspended_reason!=='archived') actions+='<button class="mini" data-archive="'+esc(v.id)+'">Archive</button>';
+        if(v.suspended_reason!=='archived') moreActions+='<button class="mini" data-archive="'+esc(v.id)+'">Archive</button>';
       }
+
       var tr=document.createElement("tr"); if(suspended) tr.className="off";
       tr.innerHTML='<td><div class="vn">'+esc(v.name)+'</div><div class="vt mono">'+esc(v.slug||"(no slug)")+'</div></td>'+
         '<td>'+esc(tzShort(v.timezone))+'</td>'+
@@ -1079,11 +1092,32 @@
         '<b>Billing</b> '+billTxt+' &middot; '+
         '<b>Created</b> '+esc(fmtWhen(v.created_at))+
         gaming+
+        /* The seven controls that used to sit in the row. Here, where somebody is
+           already looking at this one venue, rather than repeated 400 times down a
+           table. */
+        '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2)">'+
+          '<div class="actcell" style="flex-wrap:wrap;gap:6px">'+moreActions+'</div>'+
+        '</div>'+
         '</td>';
       b.appendChild(dt);
     });
   }
   (function(){ var b=$("reloadScreens"); if(b) b.addEventListener("click", reloadAllScreens); })();
+  /* THE TIME DEFAULT HAS TO FOLLOW THE ACTION.
+     "Ads back on" is what you press BECAUSE a wall is showing something wrong this
+     second. Defaulting it to 3am - which is what the shared dropdown did - meant Dean
+     pressed it, nothing happened, and the command sat waiting eight hours. He then
+     reported the screen still broken, correctly, and we both went looking for a fault
+     that was not there. A restart can wait for 3am; putting the ads back cannot. */
+  (function(){
+    var act=$("screensAction"), when=$("reloadScreensWhen");
+    if(!act || !when) return;
+    function syncWhen(){
+      when.value = (act.value === "reload") ? "3am" : "now";
+    }
+    act.addEventListener("change", syncWhen);
+    syncWhen();
+  })();
   $("venueSearch").addEventListener("input", function(){ S.vSearch=this.value.trim(); renderVenues(); });
   $("venueFilter").addEventListener("change", function(){ S.vFilter=this.value; renderVenues(); });
   $("venueRows").addEventListener("click", function(e){
@@ -1340,7 +1374,7 @@
   function archiveVenue(id, btn){
     if(!canBilling()) return;
     var name=venueName(id);
-    if(!confirm("Archive "+name+"?\n\nTheir games stop, they drop off the active list, and we stop billing them at the end of the period they have already paid for. Nothing is deleted and you can bring them back any time, billing included. Worth a retention call first.")) return;
+    if(!confirmByName(name, "Archive "+name+"?\n\nTheir games stop, they drop off the active list, and we stop billing them at the end of the period they have already paid for. Nothing is deleted and you can bring them back any time, billing included. Worth a retention call first.")) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     workerPost("/admin/venue-status", { venue_id:id, status:"archived" }).then(function(res){
       btn.disabled=false; btn.textContent=old;
@@ -1354,6 +1388,25 @@
       renderStats(); renderVenues(); loadAuditOnly();
     });
   }
+  /* TYPE THE NAME, DO NOT CLICK OK.
+     Pausing or archiving a venue stops them trading. Both sat in the same
+     undifferentiated row of nine buttons as "Resend welcome", one careless click from
+     a live pub, and behind a confirm() - which by the fiftieth venue is muscle memory,
+     dismissed before it is read. Typing the venue's name cannot be done by reflex, and
+     it makes you look at WHICH venue you have got. Reactivating is not gated: putting
+     a venue back on air harms nobody.
+     Case and surrounding space are forgiven, because this is a safety check and not a
+     spelling test. */
+  function confirmByName(name, heading){
+    var typed = prompt(heading + "\n\nType the venue's name to confirm:\n" + name, "");
+    if(typed === null) return false;
+    if(String(typed).trim().toLowerCase() !== String(name).trim().toLowerCase()){
+      alert("That did not match \"" + name + "\", so nothing was changed.");
+      return false;
+    }
+    return true;
+  }
+
   function suspendVenue(id, to, btn){
     if(!canBilling()) return;
     var name=venueName(id);
@@ -1363,7 +1416,9 @@
     var q = live
       ? ("⚠️ "+name+" has a GAME RUNNING RIGHT NOW.\n\nSuspending it ends that game immediately, mid-round, in front of the room.\n\nSuspend anyway?")
       : ((to==="suspended"?"Suspend ":"Reactivate ")+name+"?");
-    if(!confirm(q)) return;
+    if(to==="suspended"){
+      if(!confirmByName(name, q)) return;
+    } else if(!confirm(q)) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     workerPost("/admin/venue-status", { venue_id:id, status:to }).then(function(res){
       btn.disabled=false; btn.textContent=old;

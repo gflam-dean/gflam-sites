@@ -261,6 +261,54 @@ ok("an unknown command is refused", /unknown command/.test(W));
 ok("bulk + ads is a valid combination (no command-specific branch blocks it)",
    !/body\.all[\s\S]{0,300}cmd !== 'reload'/.test(W),
    "ads for all venues must not be quietly special-cased away");
+
+/* ==========================================================================
+   THE ADS DEFAULT, AND THE ADMIN ROW.
+
+   Dean pressed "Put the ads back on" and nothing happened, correctly: the shared time
+   dropdown was on its default of 3am, so the command sat waiting eight hours while we
+   both looked for a fault that was not there. command_at read 17:00Z - 3am Brisbane -
+   which is the mechanism working exactly as built and the default being wrong.
+   ========================================================================== */
+ok("the time default follows the action", /function syncWhen\(\)/.test(HQ));
+ok("ads means now", /act\.value === "reload"\) \? "3am" : "now"/.test(HQ),
+   "you press ads BECAUSE a wall is wrong this second");
+ok("and it re-syncs when the action changes", /addEventListener\("change", syncWhen\)/.test(HQ));
+ok("and is applied on load, not only on change", /syncWhen\(\);\s*\}\)\(\);/.test(HQ));
+
+/* NINE BUTTONS x 400 VENUES IS 3,600 BUTTONS. Two per row, the rest inside the
+   Details panel that already existed for each venue. */
+var rowBlock = HQ.slice(HQ.indexOf("var actions='<button"), HQ.indexOf("var moreActions ="));
+var inlineButtons = (rowBlock.match(/<button|<a class="mini"/g) || []).length;
+ok("the row itself has two controls, not nine", inlineButtons === 2,
+   inlineButtons + " inline");
+ok("everything else moved to a moreActions list", /var moreActions =/.test(HQ));
+ok("and moreActions is actually rendered in the Details panel",
+   /actcell[^']*'\+moreActions\+'/.test(HQ),
+   "moving them out of the row and never drawing them would be worse than the clutter");
+ok("Details toggles to Close so the row says what the button will do",
+   /S\.openVenue===v\.id \? 'Close' : 'Details'/.test(HQ));
+
+/* THE TWO THAT STOP A VENUE TRADING. A confirm() is muscle memory by the fiftieth
+   venue. Typing the name is not. */
+ok("there is a type-the-name confirmation", /function confirmByName/.test(HQ));
+ok("pausing requires it", /if\(to==="suspended"\)\{\s*\n\s*if\(!confirmByName/.test(HQ));
+ok("archiving requires it", /confirmByName\(name, "Archive "/.test(HQ));
+ok("reactivating does NOT require it", /\} else if\(!confirm\(q\)\) return;/.test(HQ),
+   "putting a venue back on air harms nobody");
+ok("a mismatch changes nothing and says so", /so nothing was changed/.test(HQ));
+
+// The matcher itself: forgiving about case and space, strict about the name.
+function nameOk(typed, name){
+  return String(typed).trim().toLowerCase() === String(name).trim().toLowerCase();
+}
+ok("exact name passes", nameOk("The Mini Bar", "The Mini Bar"));
+ok("different case passes", nameOk("the mini bar", "The Mini Bar"));
+ok("stray spaces pass", nameOk("  The Mini Bar  ", "The Mini Bar"));
+ok("a different venue does NOT pass", nameOk("The Mini Bar", "Wallsend Hotel") === false,
+   "the whole point is noticing you have the wrong row");
+ok("empty does not pass", nameOk("", "The Mini Bar") === false);
+ok("a partial name does not pass", nameOk("Mini", "The Mini Bar") === false);
 print("");
 if (fail) { print(fail + " OF " + (pass + fail) + " CHECKS FAILED: " + failed.join(", ")); throw new Error(fail + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");
