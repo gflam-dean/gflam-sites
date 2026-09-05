@@ -236,12 +236,16 @@
     <div class="lblk" id="venuesLbl">All venues</div>
     <div class="panel" style="margin-bottom:12px">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="screensAction" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
+          <option value="ads" selected>Put the ads back on</option>
+          <option value="reload">Restart the page</option>
+        </select>
         <select id="reloadScreensWhen" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:6px;color:#fff;font-family:inherit;font-size:13px;padding:6px 10px">
           <option value="3am" selected>at 3am Brisbane</option>
           <option value="now">right now</option>
         </select>
-        <button class="mini" id="reloadScreens">Reload every venue screen</button>
-        <span class="note" style="flex:1;min-width:220px">Every screen reads this off the poll it already makes every thirty seconds, so it lands even on a screen whose connection has dropped. <b>3am</b> is the safe default: it is stored as a time, so each screen simply acts when it gets there and no room is ever interrupted. <b>Right now</b> is for a fix that cannot wait.</span>
+        <button class="mini" id="reloadScreens">Apply to every screen</button>
+        <span class="note" style="flex:1;min-width:220px">Every screen reads this off the poll it already makes every thirty seconds, so it lands even on one whose connection has dropped. <b>Put the ads back on</b> takes a stuck game off the wall and holds the advertising for two minutes so nothing can reclaim it. <b>Restart the page</b> picks up a new version. <b>3am</b> is the safe default - it is stored as a time, so each screen acts when it gets there and no room is interrupted.</span>
       </div>
       <div class="note" id="reloadScreensOut" style="margin-top:8px"></div>
     </div>
@@ -1292,27 +1296,32 @@
     var sel = $("reloadScreensWhen");
     var choice = sel ? sel.value : "3am";
     var at = (choice === "now") ? null : when3.toISOString();
+    var actSel = $("screensAction");
+    var cmd = (actSel && actSel.value === "reload") ? "reload" : "ads";
+    var what = (cmd === "reload")
+      ? "restart the page on"
+      : "put the venue's advertising back on";
     if(!confirm(
-        "Reload " + targets.length + " venue screen" + (targets.length===1?"":"s") + "?\n\n" +
-        (at ? ("They will do it at " + pretty + " Brisbane. Nothing is interrupted, and a screen that is switched off now will still take it when it comes back.")
-            : ("They will do it within 30 seconds. A screen mid-game is interrupted, so only choose this if it cannot wait.")))) return;
+        "This will " + what + " " + targets.length + " screen" + (targets.length===1?"":"s") + ".\n\n" +
+        (at ? ("When: " + pretty + " Brisbane. Nothing is interrupted, and a screen switched off now still takes it when it comes back.")
+            : ("When: within 30 seconds. Any game currently on a wall WILL be taken off it.")))) return;
 
     var btn=$("reloadScreens"); if(btn){ btn.disabled=true; btn.textContent="Sending…"; }
     if(out) out.textContent="Sending…";
-    var body = { all:true, command:"reload" };
+    var body = { all:true, command:cmd };
     if(at) body.at = at;
     gameWorkerPost("/screen/command", body).then(function(r){
-      if(btn){ btn.disabled=false; btn.textContent="Reload every venue screen"; }
+      if(btn){ btn.disabled=false; btn.textContent="Apply to every screen"; }
       if(r && r.error){ if(out) out.textContent="Could not do that: "+r.error; return; }
       var n = (r && r.venues) || 0;
       if(out){
         out.textContent = at
-          ? ("Scheduled for " + pretty + " Brisbane on " + n + " venue screen" + (n===1?"":"s") +
-             ". They pick it up within 30 seconds of that time, whether or not their connection is healthy.")
-          : ("Asked " + n + " venue screen" + (n===1?"":"s") +
-             " to reload. They act within 30 seconds.");
+          ? (n + " screen" + (n===1?"":"s") + " will " + what.replace("put the venue's","put their") +
+             " at " + pretty + " Brisbane. They pick it up within 30 seconds of that time, whether or not their connection is healthy.")
+          : (n + " screen" + (n===1?"":"s") + ": asked to " + what.replace("put the venue's","put their") +
+             " now. They act within 30 seconds.");
       }
-      auditBestEffort("tv_reload_all", "venues:"+n, { at: at || "now" });
+      auditBestEffort("screens_all", "venues:"+n, { command: cmd, at: at || "now" });
     });
   }
 

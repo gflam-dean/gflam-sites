@@ -191,7 +191,8 @@ ok("HQ offers a dropdown, not a typed answer",
 ok("3am is the default, because it interrupts nobody",
    /value="3am" selected/.test(HQ));
 ok("and the choice is read from the dropdown", /sel \? sel\.value : "3am"/.test(HQ));
-ok("it still confirms before acting", /confirm\(\s*\n?\s*"Reload " \+ targets\.length/.test(HQ));
+ok("it still confirms before acting, naming how many screens",
+   /confirm\([\s\S]{0,200}targets\.length \+ " screen"/.test(HQ));
 ok("3am is computed as 17:00 UTC (Brisbane has no daylight saving)",
    /setUTCHours\(17, 0, 0, 0\)/.test(HQ));
 ok("and rolls to tomorrow if 3am has passed", /\+ 24 \* 3600 \* 1000/.test(HQ));
@@ -235,6 +236,31 @@ ok("polling but silent about its build -> ok-old", badge(1, null) === "ok-old");
 ok("polling and admits it is old -> ok-old", badge(1, "pre-5-sep") === "ok-old");
 ok("an old page that has also stopped polling still reads down", badge(300, "pre-5-sep") === "down",
    "not talking to us at all is the more urgent fact");
+
+/* ==========================================================================
+   ONE CONTROL: WHAT, AND WHEN, FOR EVERY SCREEN.
+
+   Dean asked for an ads-back-on that applies to all of them, not just one row at a
+   time: "we do reset all TV's and we do an ads back on and a restart then a dropdown
+   with time". Two dropdowns, one button.
+   ========================================================================== */
+ok("there is an action dropdown", /id="screensAction"/.test(HQ));
+ok("it offers ads back on", /<option value="ads" selected>/.test(HQ));
+ok("and restart", /<option value="reload">/.test(HQ));
+ok("ads is the default, because it interrupts less", /value="ads" selected/.test(HQ));
+ok("the chosen action is what gets sent", /command:\s*cmd/.test(HQ));
+ok("and it applies to every venue", /\{ all:true, command:cmd \}/.test(HQ));
+ok("the confirm says which action and which time",
+   /This will " \+ what \+ "[\s\S]{0,300}When: /.test(HQ),
+   "a control that does two things must say which one it is about to do");
+
+// The Worker takes both commands in bulk, and only those two.
+ok("the Worker's command allowlist is exactly ads and reload",
+   /SCREEN_COMMANDS = \{ ads: 1, reload: 1 \}/.test(W));
+ok("an unknown command is refused", /unknown command/.test(W));
+ok("bulk + ads is a valid combination (no command-specific branch blocks it)",
+   !/body\.all[\s\S]{0,300}cmd !== 'reload'/.test(W),
+   "ads for all venues must not be quietly special-cased away");
 print("");
 if (fail) { print(fail + " OF " + (pass + fail) + " CHECKS FAILED: " + failed.join(", ")); throw new Error(fail + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");
