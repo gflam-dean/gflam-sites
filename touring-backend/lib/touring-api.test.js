@@ -221,10 +221,36 @@ run(req('POST', '/shows', { key: GOOD.MANAGE_PASSWORD, body: { rows: [{ venue: '
          b && b.rows ? JSON.stringify(b.rows[0] && b.rows[0].id) : 'no rows');
     });
 
-// 11. a browser preflight is answered
+/* 11. THE ORDER COLUMN MUST BE ONE THAT EXISTS.
+   The first deploy of this worker invented `sort_order` for three of the four
+   tables. shows read fine and the other three answered "read failed", because
+   PostgREST refuses an order on a column that is not there, and it cost a paste
+   and a round trip to find. manage.html is the authority: it has been reading
+   these tables for months with orders that work, so compare against it. */
+var manageSrc = null;
+try { manageSrc = readFile('touring/manage.html'); } catch (e) {
+  try { manageSrc = readFile('../touring/manage.html'); } catch (e2) {}
+}
+if (!manageSrc) {
+  ok('found manage.html to compare orders against', false, 'not found');
+} else {
+  var wanted = {};
+  var re = /rest\/v1\/(shows|experience|ticket_milestones|tour_categories)\?[^`]*?order=([a-z_]+\.(?:asc|desc))/g, mm;
+  while ((mm = re.exec(manageSrc)) !== null) { if (!wanted[mm[1]]) wanted[mm[1]] = mm[2]; }
+  var names = Object.keys(wanted);
+  ok('manage.html names an order for all four tables', names.length === 4, names.join(', '));
+  names.forEach(function (t) {
+    var m2 = src.match(new RegExp(t + ':\\s*\\{ order: \'([^\']+)\''));
+    ok('the worker orders ' + t + ' by a real column',
+       !!m2 && m2[1] === wanted[t],
+       'worker=' + (m2 ? m2[1] : 'none') + '  manage.html=' + wanted[t]);
+  });
+}
+
+// 12. a browser preflight is answered
 run(req('OPTIONS', '/shows'), env(), function (s) { ok('OPTIONS preflight is answered', s === 204, 'status ' + s); });
 
-var EXPECTED = 25;   // bump this when you add a check; a suite that silently
+var EXPECTED = 30;   // bump this when you add a check; a suite that silently
                      // stops running assertions must not still say it passed.
 steps.reduce(function (chain, step) {
   return chain.then(step);

@@ -27,11 +27,15 @@
  * those tables now, and it never leaves Cloudflare.
  */
 
+/* THE ORDER COLUMN HAS TO BE THE ONE THAT EXISTS. The first version of this file
+   invented `sort_order` for three of these tables. shows read fine and the other
+   three answered "read failed", because PostgREST rejects an order on a column
+   that is not there. These are the orders manage.html has always used. */
 const TABLES = {
   shows:             { order: 'show_date.asc' },
-  experience:        { order: 'sort_order.asc' },
-  ticket_milestones: { order: 'sort_order.asc' },
-  tour_categories:   { order: 'sort_order.asc' },
+  experience:        { order: 'created_at.asc' },
+  ticket_milestones: { order: 'created_at.asc' },
+  tour_categories:   { order: 'priority.asc' },
 };
 
 const BUILD = '5 Sep 2026 · touring-api 1';
@@ -117,7 +121,10 @@ export default {
        public key, so requiring a password here would buy nothing and break them. */
     if (request.method === 'GET') {
       const r = await sb(env, table + '?select=*&order=' + TABLES[table].order);
-      return json(r.ok ? r.body : { error: 'read failed' }, r.ok ? 200 : 502);
+      // Pass the database's own complaint through. A bare "read failed" is what
+      // made the bad order column take a round trip to diagnose.
+      return json(r.ok ? r.body : { error: 'read failed', status: r.status, detail: r.body },
+                  r.ok ? 200 : 502);
     }
 
     if (request.method !== 'POST') return json({ error: 'method not allowed' }, 405);
