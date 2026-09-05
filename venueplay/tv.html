@@ -30,7 +30,13 @@
     background:radial-gradient(1200px 700px at 80% -10%, rgba(255,31,142,.12), transparent 60%), #050506}
   .hidden{display:none!important}
 
-  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
+  /* Two lines, not two absolutely positioned things. The venue name used to be its
+     own element at top:6.2cqw while this block sits at top:2cqw and is only about
+     21px tall, so on a wide TV the name floated some 60px below the wordmark and
+     read as unrelated to it. As a wrapped second line inside this block the gap is
+     one small margin instead of a number that has to be re-guessed per screen size. */
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:.8cqw;opacity:.92;z-index:6;max-width:40cqw}
+  .tv-corner .venuename{flex:0 0 100%;margin-top:.15cqw;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(10px,1.3cqw,17px);letter-spacing:.02em;color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)}
   .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
   .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
   /* Top-CENTRE, not top-left. The venue's LOGO is pinned top-left at top:20px with
@@ -1252,13 +1258,15 @@
       var el=document.getElementById("venueNameTag");
       var nm=String(name||"").trim();
       if(!nm){ if(el) el.style.display="none"; return; }
-      if(!el){ el=document.createElement("div"); el.id="venueNameTag";
-        el.style.cssText="position:absolute;top:6.2cqw;right:2.4cqw;z-index:6;pointer-events:none;"+
-          "max-width:34cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;"+
-          "font-family:'Hanken Grotesk',sans-serif;font-weight:800;"+
-          "font-size:clamp(11px,1.5cqw,20px);letter-spacing:.02em;"+
-          "color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)";
-        (document.getElementById("tv")||document.body).appendChild(el); }
+      if(!el){
+        el=document.createElement("div"); el.id="venueNameTag";
+        el.className="venuename"; el.style.pointerEvents="none";
+        /* INSIDE the corner, not floating near it. All the styling lives in the
+           .tv-corner .venuename rule so there is one place to change it and no
+           inline top: to drift away from the wordmark on a different screen. */
+        var corner=document.getElementById("tvCorner");
+        (corner||document.getElementById("tv")||document.body).appendChild(el);
+      }
       el.textContent=nm; el.style.display="block";
     }
     /* THE WHOLE SCREEN, IN ONE CALL, THROUGH THE WORKER.

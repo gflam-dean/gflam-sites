@@ -918,6 +918,30 @@
      the screen when the host closed the tab, tapped "Games" or was signed out by the 4 hour
      timer, so the wall sat on "Raffle tonight" until /tv gave up 90 minutes later. A live round
      is left alone: closing the tab mid-claim must not wipe the drawn ticket off the screen. */
+  function reassertToTv(){
+    send({ t:"mode", mode:"raffle" });
+    if(typeof sendState === "function") sendState();
+  }
+  /* PUT THE GAME BACK ON THE WALL WHEN WE RETURN.
+     Every console tells the TV t:"to_ads" on pagehide and not one of them had a
+     pageshow or visibilitychange handler, so nothing ever said "I am back". Tab
+     away, switch apps, or let the tablet sleep and the wall dropped to the venue's
+     ads and stayed there until the TV's 90 minute host-silence timer gave up.
+     Both events, because they do not fire in the same situations: pageshow covers a
+     restore from the back/forward cache, visibilitychange covers tabbing away and
+     back without a navigation. Guarded so a burst of both only speaks once. */
+  var _lastReassert = 0;
+  function reassertOnReturn(){
+    var now = Date.now();
+    if(now - _lastReassert < 1200) return;
+    _lastReassert = now;
+    reassertToTv();
+  }
+  window.addEventListener("pageshow", reassertOnReturn);
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible") reassertOnReturn();
+  });
+
   window.addEventListener("pagehide", function(){
     if(G.round) return;
     try{ rawSend({ t:"to_ads" }); }catch(e){}   // sync on unload; an async signed send never lands before the page dies. NOT exempt: under enforce this is dropped, see vp-sign.js EXEMPT

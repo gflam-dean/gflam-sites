@@ -622,6 +622,41 @@ def local_checks(which):
        '%d subscribe callbacks across %d consoles' % (cbs, len(consoles)),
        why='; '.join(deaf[:3]) or 'found only %d callbacks, expected at least 7' % cbs)
 
+    """A CONSOLE THAT SENDS THE TV TO THE ADS MUST BE ABLE TO BRING IT BACK.
+
+    All five consoles tell the TV t:"to_ads" on pagehide, and not one had a
+    pageshow or visibilitychange handler. So tabbing away from the console,
+    switching apps, or letting the tablet sleep with a lobby open dropped the wall
+    to the venue's advertising and left it there until the TV's 90 minute
+    host-silence timer gave up. Reported live at The Mini Bar: host panel still
+    holding the game, TV showing ads.
+
+    Checked as a pair. Sending to_ads is right; sending it with no way back is the
+    fault."""
+    consoles = [os.path.join(ROOT, 'venueplay', 'app', x) for x in
+                ('index.html', 'musical/host.html', 'trivia/host.html',
+                 'raffle/host.html', 'members/host.html')]
+    oneway = []
+    for f in consoles:
+        if not os.path.exists(f):
+            oneway.append('%s is missing' % short(f)); continue
+        body = io.open(f, encoding='utf-8').read()
+        # LOOK FOR THE LISTENER, NOT THE WORD. The first version of this check
+        # searched the file for "pageshow", which appears in the comment ABOVE the
+        # listener explaining why it is there. Deleting the listener therefore left
+        # the check green: it was reading my own prose as evidence of the code.
+        sends_to_ads = re.search(r'''t:\s*["']to_ads["']''', body) is not None
+        comes_back = (re.search(r'''addEventListener\(\s*["']pageshow["']''', body) or
+                      re.search(r'''addEventListener\(\s*["']visibilitychange["']''', body))
+        if sends_to_ads and not comes_back:
+            oneway.append('%s sends to_ads and never says it is back' % short(f))
+        if comes_back and 'reassertToTv' not in body:
+            oneway.append('%s listens for the return but replays nothing' % short(f))
+    ok('a console can put the game back on the wall', not oneway,
+       '%d consoles' % len(consoles),
+       why='; '.join(oneway[:3]) + '. The TV drops to ads on pagehide and nothing '
+           'restores it until the 90 minute silence timer.')
+
     """THE PUBLIC KEY MUST NOT WRITE THE TOUR TABLES.
 
     touring/manage.html used to insert, update and delete shows, experience,

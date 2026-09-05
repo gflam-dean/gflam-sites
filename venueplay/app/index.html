@@ -782,6 +782,38 @@
      an async signature never completes before the page dies. Enforce is off by
      default per venue; where it is on, that venue falls back to the same 90
      minute timer this fixes for everyone else. */
+  /* PUT THE GAME BACK ON THE WALL WHEN WE RETURN.
+     Every console tells the TV t:"to_ads" on pagehide, and not one of them had a
+     pageshow or visibilitychange handler, so nothing ever said "I am back". Tab
+     away from the console, switch apps, or let the tablet sleep with a LOBBY open
+     and the wall dropped to the venue's ads and stayed there until the TV's 90
+     minute host-silence timer gave up - which is exactly what Dean saw at The Mini
+     Bar: host panel still holding the game, TV showing ads.
+
+     A lobby counts. The subscribe path above used to send t:"mode" only when the
+     status was "running", the same gap musical had, so a lobby was never put back
+     even on a full reload. */
+  function reassertToTv(){
+    if(!(G.status==="running" || G.status==="lobby")) return;
+    send({ t:"mode", mode:"bingo" });
+    sendState();
+    if(G.status==="running" && G.claims.length){ sendClaimPending(); }
+  }
+  /* Both events, because they do not fire in the same situations: pageshow covers a
+     restore from the back/forward cache, visibilitychange covers tabbing away and
+     back without a navigation. Guarded so a burst of both only speaks once. */
+  var _lastReassert = 0;
+  function reassertOnReturn(){
+    var now = Date.now();
+    if(now - _lastReassert < 1200) return;
+    _lastReassert = now;
+    reassertToTv();
+  }
+  window.addEventListener("pageshow", reassertOnReturn);
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible") reassertOnReturn();
+  });
+
   window.addEventListener("pagehide", function(){
     if(G.idx>=0 && !G.won) return;                        // a round is being played
     try{ rawSend({ t:"to_ads" }); }catch(e){}
@@ -1922,11 +1954,7 @@
         // the TV runs on its own screen; the host console is ready to go regardless
         $("statusDot").classList.add("on"); $("statusText").textContent="Ready";
         $("pairedChip").innerHTML="&middot; ready";
-        // if we reloaded mid game, put the screen back on bingo and replay the state so
-        // a TV that stayed up (or came back) shows the running game, not the ads loop
-        if(G.status==="running"){ send({ t:"mode", mode:"bingo" }); }
-        sendState();
-        if(G.status==="running" && G.claims.length){ sendClaimPending(); }
+        reassertToTv();
         // roll call: ask every joined phone to re-announce so we rebuild seats and
         // re-deal the current card. players answer with a join; we answer that join with
         // card/state (never another roll call), so the exchange terminates and cannot loop.
