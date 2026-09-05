@@ -963,6 +963,10 @@
   // A live game always produces host traffic, so silence for this long means nobody is running
   // anything. Ads are always safe to show, and going there re-arms every other protection.
   var HOST_SILENCE_MS=90*60*1000, lastHostAt=Date.now();
+  /* When the five game channels went deaf, or 0 while they are healthy. A screen with
+     no channel hears nothing at all: no host, no HQ reload. The ads keep rotating
+     locally, so nothing on the wall says anything is wrong. */
+  var gameChannelsDeafSince=0;
   /* Set only by traffic on the BINGO channel, so "is bingo actually on air" can be answered
      without another format's chatter answering it for us. */
   var BINGO_LIVE_MS=2*60*1000, lastBingoAt=0;
@@ -1220,32 +1224,56 @@
     }
     GAMES.forEach(function(game){
       var c=client.channel("vp-"+venueCode(game+"-"+VENUE_SLUG), { config:{ broadcast:{ self:false } } });
+      // Named, because re-subscribing after a dropped socket has to reattach it.
+      function onGameMsg(e){ vpGate(e.payload, function(m){
+        if(!m) return;
+        noteHostAlive();
+        if(m.t==="mode" || (tvMode==="ads" && onAir(m))) onGameMode(game);
+      }); }
       /* ANY traffic on a game channel is proof a host is running something. noteHostAlive() was
          only ever called from the bingo channel, so a trivia or musical night past 90 minutes,
          or a members-draw board put up at 5pm for a 7:30 draw, hit the host-silence timer and
          was torn down to the ad loop mid-service. It could not come back on its own either:
          re-embedding needs a fresh t:"mode", which the destroyed iframe never asks for. */
-      c.on("broadcast",{ event:"msg" },function(e){ vpGate(e.payload, function(m){
-        if(!m) return;
-        noteHostAlive();
-        /* Re-embed on game traffic while we are on the ad loop, not only on t:"mode".
-           A game announces its mode once, at the start. If the TV later fell back to ads for any
-           reason (the raffle screen's own 60s timer, 90 minutes of quiet, a failed embed), every
-           later drawing/winner/claimed/ball/question message was received here and thrown away,
-           so the rest of the night played out behind the venue's advertising with no way back.
-
-           But "any traffic" was too broad, and it put the TV into a game nobody had started.
-           Simply OPENING a host console announces itself (host_here, session, players), so the
-           big screen jumped to the trivia lobby the moment a host opened the trivia page, and
-           closing the lobby could not stick: t:"idle" sent the screen back to ads, and the next
-           housekeeping message dragged it straight into the lobby again.
-
-           So: presence and housekeeping never re-embed. Anything else still does, because the
-           point of this is to recover a night that is genuinely on air, and a denylist keeps
-           that true for message types nobody has invented yet. */
-        if(m.t==="mode" || (tvMode==="ads" && onAir(m))) onGameMode(game);
-      }); });
-      c.subscribe(function(st){ if(st==="SUBSCRIBED"){ try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){} } });
+      c.on("broadcast",{ event:"msg" }, onGameMsg);
+      /* A DEAF SCREEN LOOKS EXACTLY LIKE A HEALTHY ONE.
+         This callback used to handle SUBSCRIBED and nothing else. These five channels
+         are the only way anything reaches this screen - the host's mode and state, and
+         HQ's reload - and when the socket drops they go dead silently. The ads keep
+         rotating because they are built and timed locally, so a venue screen on a
+         Fire Stick that lost wifi for ten seconds carries on looking perfectly fine
+         and never hears another word. That is why resetting a venue appeared to work
+         and then stopped: each reset re-subscribed, and the next blip deafened it
+         again. The pairing channel above has handled this since August; these never
+         did.
+         Re-subscribe with a backoff, and count how long we have been deaf so the
+         watchdog can reload as a last resort. */
+      var tries = 0, retryT = null;
+      function join(){
+        c.subscribe(function(st){
+          if(st === "SUBSCRIBED"){
+            tries = 0;
+            gameChannelsDeafSince = 0;
+            try{ c.send({ type:"broadcast", event:"msg", payload:{ t:"tv_here", hello:true } }); }catch(e){}
+            return;
+          }
+          if(st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED"){
+            if(!gameChannelsDeafSince) gameChannelsDeafSince = Date.now();
+            if(retryT) return;                     // one retry in flight is enough
+            var wait = Math.min(30000, 2000 * Math.pow(2, Math.min(tries, 4)));
+            tries++;
+            retryT = setTimeout(function(){
+              retryT = null;
+              try{ client.removeChannel(c); }catch(e){}
+              c = client.channel("vp-" + venueCode(game + "-" + VENUE_SLUG),
+                                 { config:{ broadcast:{ self:false } } });
+              c.on("broadcast", { event:"msg" }, onGameMsg);
+              join();
+            }, wait);
+          }
+        });
+      }
+      join();
     });
   })();
 
@@ -1391,6 +1419,20 @@
 
     function idle(){ try { return tvMode === "ads"; } catch(e){ return true; } }
 
+    /* DEAF FOR TOO LONG IS A REASON TO RELOAD, WHATEVER IS ON SCREEN.
+       The four-hourly reload is idle-only, which is right for a screen that is
+       working: never interrupt a room. But a screen whose game channels have
+       dropped is not working, and it cannot be told to reload either, because the
+       reload command travels on the very channels that are down. That is the state
+       a venue screen can sit in all night looking perfectly healthy. So once the
+       channels have been deaf for this long, reload regardless of mode: it is the
+       only move left, and a screen that hears nothing has nothing to protect. */
+    var DEAF_MS = 4 * 60 * 1000;
+    function deafTooLong(){
+      try { return gameChannelsDeafSince && (Date.now() - gameChannelsDeafSince) > DEAF_MS; }
+      catch(e){ return false; }
+    }
+
     // Anyone who opens devtools on a real venue screen should be able to see this is armed,
     // and see why it last reloaded. Costs nothing and answers the first question every time.
     try{
@@ -1428,6 +1470,8 @@
         // Pick up new code by itself. This is the part that means a fix reaches a venue we are
         // never going to physically visit.
         if(idle() && (Date.now() - loadedAt) > MAX_AGE){ reload("max-age"); return; }
+        // Not idle-only: a deaf screen cannot be reached any other way. See deafTooLong.
+        if(deafTooLong()){ reload("channels-deaf"); return; }
 
         if(screenIsAlive()){ strikes = 0; return; }
 
