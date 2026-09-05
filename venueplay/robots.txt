@@ -19,4 +19,6 @@ Disallow: /worker/
 Disallow: /tools/
 Disallow: /data/
 
+# A plain-language summary of this site for AI assistants:
+# https://www.venueplay.com.au/llms.txt
 Sitemap: https://www.venueplay.com.au/sitemap.xml

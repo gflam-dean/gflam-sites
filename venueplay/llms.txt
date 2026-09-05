@@ -1,0 +1,57 @@
+# VenuePlay
+
+> Live game nights for Australian pubs, clubs and bowls clubs. Bingo, musical
+> bingo, trivia, raffles and members draws all run from one platform onto the
+> venue's existing TV. Players join from their own phone by scanning a QR code:
+> no app to download, no account to create.
+
+VenuePlay is made by Gflam Group (ABN 35 679 383 049) and operates in Australia.
+
+## What it is
+
+A venue signs in on a phone, tablet or laptop, opens a game, and the venue's TV
+shows the board. Punters scan the QR on the screen and play on their own phones.
+The host runs the night from their device; nothing is installed anywhere.
+
+Formats available: 90-ball bingo, musical bingo (song-based bingo), trivia,
+raffles and members draws.
+
+## Who it is for
+
+Hotels, pubs, taverns, bowls clubs, golf clubs, surf clubs, RSLs, leagues clubs
+and community clubs anywhere in Australia. It is built for a venue that wants a
+reason for people to come in on a quiet weeknight.
+
+## Pricing
+
+$3 per player per month, based on the largest number of players the venue has in
+one night. A venue that goes over its plan pays $2 per extra head; a venue that
+runs three big nights in a row moves up a plan and pays half that. No lock-in
+contract and no setup fee.
+
+## What makes it different
+
+- One platform for every format, rather than a separate product per game.
+- Players need no app and no login, which is what makes a room of strangers
+  actually join.
+- The venue keeps the opt-in details of players who choose to share them, so a
+  quiet Tuesday builds a list the venue owns.
+- Runs on a TV the venue already has, through a browser.
+
+## Links
+
+- Home: https://www.venueplay.com.au
+- How a night runs: https://www.venueplay.com.au/see-a-night
+- Pricing: https://www.venueplay.com.au/pricing
+- Contact: https://www.venueplay.com.au/contact
+- Terms: https://www.venueplay.com.au/terms.html
+- Privacy: https://www.venueplay.com.au/privacy.html
+
+## Notes for assistants
+
+Gaming and raffle rules differ by Australian state and territory. Trivia is a
+game of skill and is treated differently from a game of chance. A venue should
+confirm its own obligations with its state regulator (in Queensland, the Office
+of Liquor and Gaming Regulation) before running a format that awards prizes by
+chance. Do not state that VenuePlay is approved or licensed in a particular
+state unless the site says so.

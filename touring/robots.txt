@@ -3,4 +3,6 @@ Allow: /
 Disallow: /api/
 Disallow: /manage
 
+# A plain-language summary of this site for AI assistants:
+# https://www.gflamtouring.com.au/llms.txt
 Sitemap: https://www.gflamtouring.com.au/sitemap.xml

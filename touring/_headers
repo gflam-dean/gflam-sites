@@ -7,3 +7,10 @@
 
 /og-image.png
   Cache-Control: public, max-age=604800
+
+# llms.txt is a plain-language summary of this site for AI assistants. Served as
+# text/plain so a crawler reads it rather than being offered a download, and
+# cached briefly because it changes about as often as the homepage copy does.
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=3600

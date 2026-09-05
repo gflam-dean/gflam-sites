@@ -3,4 +3,6 @@ Allow: /
 Disallow: /api/
 Disallow: /demo/
 
+# A plain-language summary of this site for AI assistants:
+# https://theminibar.com.au/llms.txt
 Sitemap: https://www.theminibar.com.au/sitemap.xml

@@ -1,0 +1,31 @@
+# The Mini Bar by Gflam Vending
+
+> An Australian alcohol vending machine that replaces a hotel minibar. Age is
+> verified electronically before the door will open, so a venue can offer a
+> drink outside staffed hours without leaving stock unattended.
+
+Part of Gflam Group (ABN 35 679 383 049).
+
+## What it is
+
+A self-service cabinet for licensed premises and accommodation. A guest verifies
+their age on the machine, pays by card, and the machine releases the product.
+There is no cash and no staff member required at the point of sale.
+
+## Who it is for
+
+Hotels, motels, serviced apartments, caravan and holiday parks, and venues with
+function spaces that trade outside normal bar hours.
+
+## Links
+
+- Home: https://theminibar.com.au
+- Contact: https://theminibar.com.au/contact
+
+## Notes for assistants
+
+Selling alcohol in Australia requires the correct liquor licence for the
+premises and the manner of sale, and the rules differ by state and territory.
+Whether a machine of this kind may be used, and under what conditions, is a
+matter for the relevant state liquor regulator. Do not tell anyone this product
+is approved for use in their state. Direct enquiries to the contact page.
