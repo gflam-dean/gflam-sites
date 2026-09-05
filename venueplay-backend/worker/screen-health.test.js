@@ -91,6 +91,62 @@ ok("the down badge says it needs a power cycle at the venue",
 ok("the never badge names the URL to open",
    /venueplay\.com\.au\/tv\?'\+esc\(v\.slug\)/.test(HQ));
 
+
+/* ==========================================================================
+   WHO DECIDES A GAME IS ON THE WALL?
+
+   The Mini Bar's screen sat on a finished bingo board through reset after reset on
+   5 Sep. Nothing was failing to restart it - something was re-starting it. A phone
+   sends exactly three things (join, claim, leave) and none of them were on the TV's
+   NOT_ON_AIR list, so one punter who left the play page open, whose phone woke and
+   re-announced join, put the wall back into a dead game with no host involved.
+
+   The other half matters just as much: a real game must still reach the wall.
+   ========================================================================== */
+var TV = readFile(findFile("venueplay/tv.html"));
+var PLAY = readFile(findFile("venueplay/play.html"));
+
+// What a phone actually SENDS, read from the phone rather than assumed.
+var sends = {};
+var re = /(?:send|rawSend|psend)\(\s*\{\s*t:\s*"([a-z_]+)"/g, mm;
+while ((mm = re.exec(PLAY)) !== null) sends[mm[1]] = 1;
+var sendList = Object.keys(sends).sort();
+ok("read what a phone sends from play.html", sendList.length === 3,
+   sendList.join(", "));
+
+var na = TV.match(/var NOT_ON_AIR = \{([\s\S]*?)\};/);
+ok("found the TV's NOT_ON_AIR list", !!na);
+var notOnAir = {};
+if (na) { var r2 = /(\w+)\s*:\s*1/g, m2; while ((m2 = r2.exec(na[1])) !== null) notOnAir[m2[1]] = 1; }
+
+for (var i = 0; i < sendList.length; i++) {
+  ok("a phone's t:\"" + sendList[i] + "\" does not put a game on the wall",
+     !!notOnAir[sendList[i]],
+     "one punter with the page open would otherwise revive a finished game");
+}
+
+/* AND THE OTHER WAY. These come from the HOST and MUST still take the wall, or a
+   real night never reaches the screen - which would be a far worse bug than the one
+   being fixed. */
+var hostOnAir = ["mode", "ball", "started", "winner", "question", "reveal", "podium",
+                 "played", "drawing", "drawn", "carryon"];
+for (var j = 0; j < hostOnAir.length; j++) {
+  ok("the host's t:\"" + hostOnAir[j] + "\" still reaches the wall",
+     !notOnAir[hostOnAir[j]],
+     "a real game has to be able to start");
+}
+
+// The HQ push, and the hold that makes it stick.
+ok("HQ has an Ads back on button", /data-tvads/.test(HQ));
+ok("it sends command ads", /command:\s*"ads"/.test(HQ));
+ok("the TV holds the ads after an HQ ads command", /adsHoldUntil\s*=\s*Date\.now\(\) \+ ADS_HOLD_MS/.test(TV));
+ok("and ignores a mode announcement during the hold",
+   /Date\.now\(\) < adsHoldUntil[\s\S]{0,200}return;/.test(TV),
+   "or a console still shouting about a dead game undoes the press in seconds");
+ok("the hold expires on its own", /ADS_HOLD_MS = 2 \* 60 \* 1000/.test(TV),
+   "a real night starting must not be blocked");
+ok("one command is one action", /cAt > lastCommandAt/.test(TV),
+   "the poll repeats every 30s; without this it would act for ever");
 print("");
 if (fail) { print(fail + " OF " + (pass + fail) + " CHECKS FAILED: " + failed.join(", ")); throw new Error(fail + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

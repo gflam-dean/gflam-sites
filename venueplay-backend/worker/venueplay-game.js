@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 18:15 · 2517c14c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 18:32 · 300b8898';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -258,6 +258,7 @@ export default {
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
+      if (method === 'POST' && path === '/screen/command')     return await handleScreenCommand(request, env, json, await readJson(request));
       /* Broadcast signing (migrations 38 + 55). vp-sign.js has been loaded by every TV, phone and
          console since 20 Aug calling these three; they were never written, so every page fell back
          to send-unsigned / render-everything and the signing was decorative. */
@@ -1121,7 +1122,7 @@ async function handleVenueLookup(request, env, json) {
      cost of getting it wrong should not be every venue's wall, so ask for the column
      and fall back to the old select if the database does not have it yet. */
   let rows = await sbGet(env, 'vp_venues',
-    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at&limit=1')
+    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at,screen_command,screen_command_at&limit=1')
     .catch(() => null);
   if (!rows || !rows.length) {
     rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
@@ -1161,6 +1162,11 @@ async function handleVenueLookup(request, env, json) {
     exists: true,
     name: v.name || '',
     reload_at: v.screen_reload_at || null,
+    // A STATE, not just a restart. A reload puts the ads up and then anything still
+    // broadcasting takes the wall straight back, which is why a reload alone could
+    // not rescue a screen stuck on a finished board. See migration 65.
+    command: v.screen_command || null,
+    command_at: v.screen_command_at || null,
   });
 }
 
@@ -1174,6 +1180,57 @@ async function handleVenueLookup(request, env, json) {
  * advertising is timed locally, and has had to be reset by hand. HQ still fires the
  * broadcast as well, because when it works it is instant. This is the floor.
  */
+/* POST /screen/command   { slug, command }   (HQ admin only)
+ *   command: 'ads'     put the venue's advertising back on the wall and hold it
+ *            'reload'  restart the page (what /screen/reload did)
+ *
+ * Same delivery as the reload: a column the screen reads on the poll it already
+ * makes every thirty seconds over ordinary HTTPS. Nothing here touches a realtime
+ * channel, because the screens that need instructing are the ones that cannot hear
+ * one.
+ */
+const SCREEN_COMMANDS = { ads: 1, reload: 1 };
+
+async function handleScreenCommand(request, env, json, body) {
+  const admin = await requireScreenAdmin(request, env, json);
+  if (admin.error) return admin.error;
+  const slug = String((body && body.slug) || '').trim().toLowerCase().slice(0, 80);
+  const cmd = String((body && body.command) || '').trim().toLowerCase();
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) return json({ error: 'bad slug' }, 400);
+  if (!SCREEN_COMMANDS[cmd]) return json({ error: 'unknown command' }, 400);
+  const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id,name&limit=1');
+  const venue = rows && rows[0];
+  if (!venue) return json({ error: 'no such venue' }, 404);
+  const at = new Date().toISOString();
+  const patch = { screen_command: cmd, screen_command_at: at };
+  // Keep reload_at in step so an older screen, still running the migration-63 page,
+  // at least restarts rather than ignoring the press entirely.
+  if (cmd === 'reload') patch.screen_reload_at = at;
+  const ok = await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id), patch);
+  if (ok === false) return json({ error: 'could not set it' }, 502);
+  try {
+    await sbInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: admin.label,
+      action: 'screen_command',
+      target: venue.id,
+      detail: { venue_name: venue.name || null, command: cmd, at: at, auth_user: admin.auth },
+    }, false);
+  } catch (e) { /* audit is best effort */ }
+  return json({ ok: true, command: cmd, at: at, note: 'screens act within 30 seconds' });
+}
+
+/* The same admin test both screen routes use. Written once: requireStaff already
+   made the mistake of accepting any vp_platform_admins row, which handed a Gflam
+   'staff' admin owner rights at every venue in the country. */
+async function requireScreenAdmin(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  if (!authUserId) return { error: json({ error: 'sign in first' }, 401) };
+  const admins = await sbGet(env, 'vp_platform_admins',
+    'auth_user_id=eq.' + enc(authUserId) + '&role=in.(owner,accounts)&select=auth_user_id,role');
+  if (!admins || !admins.length) return { error: json({ error: 'not allowed' }, 403) };
+  return { label: 'hq:' + (admins[0].role || 'admin'), auth: authUserId };
+}
+
 async function handleScreenReload(request, env, json, body) {
   /* HQ ADMINS ONLY, and the same definition the rest of this file uses: a row in
      vp_platform_admins with role owner or accounts. requireStaff already made the

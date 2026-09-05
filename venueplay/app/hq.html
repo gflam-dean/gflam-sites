@@ -995,6 +995,11 @@
       var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
                   '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
                   (v.slug ? '<button class="mini" data-tvreload="'+esc(v.id)+'">Reload TV</button>' : '')+
+                  /* RELOAD IS NOT ENOUGH ON ITS OWN. A restarted screen comes back on
+                     the ads and then anything still broadcasting takes the wall back
+                     within seconds, which is why a screen stuck on a finished board
+                     could be reloaded all day. This pushes the STATE. */
+                  (v.slug ? '<button class="mini" data-tvads="'+esc(v.id)+'">Ads back on</button>' : '')+
                   (canBilling() ? '<button class="mini" data-disc="'+esc(v.id)+'">Discount</button>' : '')+
                   /* For a venue that was onboarded here and never added a card. The welcome email
                      fires once, at creation, and there was no second chance: the only fix was to
@@ -1108,6 +1113,8 @@
     }
     var tr=e.target.closest("button[data-tvreload]");
     if(tr){ reloadOneScreen(tr.getAttribute("data-tvreload"), tr); return; }
+    var ta=e.target.closest("button[data-tvads]");
+    if(ta){ adsBackOn(ta.getAttribute("data-tvads"), ta); return; }
     var hh=e.target.closest("button[data-hidehp]");
     if(hh){ toggleHideHomepage(hh.getAttribute("data-hidehp"), hh); return; }
     var pcb=e.target.closest("button[data-pcsave]");
@@ -1203,6 +1210,26 @@
   /* One venue, from its row. Unlike the master button this does NOT skip a live venue: picking a
      single venue is a deliberate act, usually because that screen is the one misbehaving. It
      warns instead, and names what a mid-game reload costs. */
+  /* Put the venue's advertising back on the wall. Travels on the screen's own
+     thirty-second HTTPS poll, so it reaches a screen whose websocket has died -
+     which is the screen this is for. The screen holds the ads for two minutes
+     afterwards so a console still announcing an abandoned game cannot immediately
+     undo it, and the hold expires so a real night is never blocked. */
+  function adsBackOn(id, btn){
+    var v=venueById(id); if(!v || !v.slug){ alert("That venue has no screen address yet."); return; }
+    if(!confirm("Put the venue's advertising back on the screen at "+v.name+"?\n\nIf a game is genuinely running there it will be taken off the wall. The screen acts within 30 seconds and holds the ads for two minutes.")) return;
+    btn.disabled=true; var old=btn.textContent; btn.textContent="…";
+    gameWorkerPost("/screen/command", { slug:v.slug, command:"ads" }).then(function(r){
+      /* alert, not flash: flash needs a banner element on the page and the two ids I
+         first used here (venueOk, venueErr) do not exist, so every result would have
+         been swallowed silently - which is the failure mode this whole afternoon was
+         about. */
+      if(r && r.error) alert("Could not do that: " + r.error);
+    });
+    auditBestEffort("screen_ads", "venue:"+id, { name:v.name });
+    setTimeout(function(){ btn.disabled=false; btn.textContent=old; }, 2500);
+  }
+
   function reloadOneScreen(id, btn){
     var v=venueById(id); if(!v || !v.slug){ alert("That venue has no screen address yet."); return; }
     var liveNow=!!S.live[id];

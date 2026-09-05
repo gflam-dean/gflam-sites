@@ -404,6 +404,15 @@
      a reload asked for BEFORE this page loaded is not obeyed again on every poll -
      which would be a screen that reloads for ever. */
   var PAGE_LOADED_AT = Date.now();
+  /* The newest HQ command this page has already carried out, so one press is one
+     action even though the poll repeats every thirty seconds. */
+  var lastCommandAt = 0;
+  /* While this is in the future, the wall belongs to the venue's advertising and a
+     game announcement does not take it. Two minutes: long enough to be useful when
+     a console is stuck announcing a finished game, short enough that a real night
+     starting is not held up. */
+  var ADS_HOLD_MS = 2 * 60 * 1000;
+  var adsHoldUntil = 0;
   function validateVenue(){
     if(!VENUE_SLUG) return;   // no venue linked: the pair panel already prompts them
     /* ASK TWICE, AND KEEP CHECKING. This ran once and, on a single exists:false, put a
@@ -435,6 +444,30 @@
              the screen reloads itself. Works with a dead socket, a channel that
              errored out, and signing enforced. Thirty seconds instead of instant is
              the whole cost, and the broadcast still fires first when it can. */
+          /* A STATE PUSHED FROM HQ, not just a restart.
+             A reload puts the ads up and then a console still announcing an
+             abandoned game takes the wall straight back, which is why restarting a
+             screen stuck on a finished board never fixed it. "ads" puts the venue's
+             advertising up and HOLDS it, so the wall is the venue's again
+             immediately. The hold expires on its own, because a real game starting
+             two minutes later must not be blocked. */
+          if(d.command && d.command_at){
+            var cAt = Date.parse(d.command_at);
+            if(isFinite(cAt) && cAt > PAGE_LOADED_AT && cAt > lastCommandAt){
+              lastCommandAt = cAt;
+              if(d.command === "ads"){
+                adsHoldUntil = Date.now() + ADS_HOLD_MS;
+                try{ sessionStorage.setItem("vpTvReloadWhy","hq-ads"); }catch(e){}
+                enterAds();
+                return;
+              }
+              if(d.command === "reload"){
+                try{ sessionStorage.setItem("vpTvReloadWhy","hq-command"); }catch(e){}
+                if(window.__vpTvReload) window.__vpTvReload("hq-command"); else location.reload();
+                return;
+              }
+            }
+          }
           if(d.reload_at){
             var asked = Date.parse(d.reload_at);
             if(isFinite(asked) && asked > PAGE_LOADED_AT){
@@ -1107,6 +1140,15 @@
     if(m.t==="host_here"){ return; }
     if(m.t==="session"){ sessionId=m.session_id||sessionId; if(m.join_code) setJoinCode(m.join_code); return; }
     if(m.t==="mode"){
+      /* HQ has just put the venue's advertising back on. Ignore a game announcement
+         for the length of the hold, or a console still shouting about an abandoned
+         game would undo the press within seconds - which is exactly what made this
+         impossible to fix from HQ before. */
+      if(Date.now() < adsHoldUntil){
+        console.info("[tv] ignoring mode:" + m.mode + " - HQ asked for the ads, holding for " +
+                     Math.ceil((adsHoldUntil - Date.now())/1000) + "s");
+        return;
+      }
       if(m.mode==="bingo") enterBingo();
       else enterHolding(m.mode);
       return;
@@ -1232,8 +1274,18 @@
        a code for a game nobody was running, and left it there for the full 90 minute host-silence
        timeout. resume is deliberately NOT here: musical broadcasts it mid-game when a claim is
        waved off and the room plays on, so it is real gameplay. */
+    /* A PUNTER IS NOT THE AUTHORITY ON WHETHER A GAME IS ON.
+       join, claim and leave are the only three things a phone sends, and none of them
+       were on this list. So a single punter who left the play page open on their
+       phone - it wakes, re-announces join - put the venue's wall back into a bingo
+       game that had finished hours earlier, over and over, with no host involved at
+       all. That is what kept The Mini Bar's screen on a dead board through every
+       reset on 5 Sep: nothing was restarting it, something was re-starting it.
+       A live game always produces HOST traffic (bingo calls a ball every few
+       seconds), so requiring that loses nothing and settles who decides. */
     var NOT_ON_AIR = { tv_here:1, host_here:1, session:1, players:1, idle:1, rollcall:1,
-                       tv_audio_blocked:1, screen_refresh:1, tv_reload:1, to_ads:1 };
+                       tv_audio_blocked:1, screen_refresh:1, tv_reload:1, to_ads:1,
+                       join:1, claim:1, leave:1 };
     /* t:"state" is the awkward one: every format sends it, and it means "here is where things
        stand", which is just as often "nothing is on" as "a game is running". Musical ends a game
        with idle THEN state, and members does the same, so treating state as proof of life put the
