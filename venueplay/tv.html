@@ -900,7 +900,23 @@
   })();
   /* Set when a reload arrived mid-game. Honoured the moment the ads come back up, so an update
      always lands, just never over the top of a room that is playing. */
-  var reloadWhenIdle=false;
+  var reloadWhenIdle=false, reloadIdleTimer=null;
+  function armStuckReload(){
+    if(reloadIdleTimer) clearTimeout(reloadIdleTimer);
+    reloadIdleTimer=setTimeout(function(){
+      reloadIdleTimer=null;
+      if(!reloadWhenIdle) return;                       // it already went, or was cancelled
+      if(tvMode==="ads") return;                        // enterAds handles this case itself
+      var quiet=Date.now() - Math.max(lastBingoAt||0, lastHostAt||0);
+      if(quiet < STUCK_MS){ armStuckReload(); return; }  // genuinely busy: look again later
+      reloadWhenIdle=false;
+      if(window.__vpTvReload) window.__vpTvReload("deferred-stuck"); else location.reload();
+    }, STUCK_MS);
+  }
+  /* How long a screen may claim to be busy while receiving nothing before a pending
+     reload stops waiting for it. Longer than BINGO_LIVE_MS so a real round is never
+     interrupted, far shorter than the 90 minute host-silence timeout. */
+  var STUCK_MS=3*60*1000;
   function enterAds(){
     ballInFlight=false;
     tvMode="ads"; stopCelebrate(); cancelHolding(); cancelEmbedWatch(); hideGameFrame();
@@ -1037,15 +1053,25 @@
          session, so they were invisible to HQ but are perfectly visible from here.
          force:true still reloads instantly. That is the per-venue button in HQ, which is a
          deliberate act on one screen and warns before it sends. */
-      /* A FORCED RELOAD NEEDS TO BE VOUCHED FOR. HQ cannot sign - it holds no venue
-         private key - so tv_reload is exempt and arrives marked _unverified. Honour
-         the polite path from anyone, because a reload that waits for the game to end
-         can hurt nobody, but never interrupt a live room on an unsigned instruction.
-         When the venue is not enforcing, nothing is marked and force works as before. */
-      if(m.force && !m._unverified){ if(window.__vpTvReload) window.__vpTvReload("remote-forced"); else location.reload(); return; }
-      if(m.force && m._unverified){ console.warn("[tv] forced reload arrived unsigned; waiting for the game to finish instead"); }
+      /* FORCE IS HONOURED WHETHER OR NOT IT IS SIGNED, AND THAT IS DELIBERATE.
+         I briefly required a signature here. HQ cannot produce one - the venue key is
+         minted in the host console and never leaves it - so at an enforcing venue that
+         removed the ONLY remote way to rescue a stuck screen, which is the situation
+         the button exists for. The worst an unsigned force can do is reload a screen;
+         the worst refusing it can do is leave a pub looking at a frozen board all
+         night. Enforcement already stops the thing that actually matters, which is
+         faking gameplay. */
+      if(m.force){ if(window.__vpTvReload) window.__vpTvReload("remote-forced"); else location.reload(); return; }
       if(tvMode==="ads"){ if(window.__vpTvReload) window.__vpTvReload("remote"); else location.reload(); return; }
+      /* A DEFERRED RELOAD MUST NOT WAIT FOR A GAME THAT IS NOT HAPPENING.
+         "Reload when the game ends" assumed a game always ends. A host that closes
+         its tab, sleeps, or loses the network never sends idle, so the screen sat on a
+         finished board and quietly held the reload for the full 90 minute
+         host-silence timeout. Bingo already knows what a live round looks like - a
+         ball every few seconds - so if nothing has arrived for a couple of minutes,
+         there is no room to protect and the reload goes ahead. */
       reloadWhenIdle=true;
+      armStuckReload();
       return;
     }
     // any host broadcast means a host is connected this session: hide the pair QR
