@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 19:34 · a2a39154';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 21:44 · bd7b059c';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1231,12 +1231,22 @@ async function handleGroupOverage(request, env, json) {
   for (const v of venues) {
     const sessions = await sbGet(env, 'vp_sessions',
       'venue_id=eq.' + enc(v.id) + '&opened_at=gte.' + enc(since) +
-      '&select=id,opened_at,ended_at,status,players_attached&order=opened_at.desc&limit=200')
+      '&select=id,opened_at,ended_at,status&order=opened_at.desc&limit=200')
       .catch(() => null);
     if (!sessions) continue;
     const cap = parseInt(v.max_players, 10) || 0;
     for (const ses of sessions) {
-      const peak = parseInt(ses.players_attached, 10) || 0;
+      /* COUNTED THE SAME WAY THE MONEY IS COUNTED.
+         The first version of this read vp_sessions.players_attached, which is not
+         what the billing path uses and appears nowhere else in this file. The
+         authoritative figure is countPlayers over vp_players, deduplicated by
+         device_id - one phone is one player, however many times it joined. A report
+         that quotes a different number from the one we would charge is worse than no
+         report: it would be quoted to a group and then not match the invoice. */
+      const roster = await sbGet(env, 'vp_players',
+        'session_id=eq.' + enc(ses.id) + '&select=id,device_id&limit=2000').catch(() => null);
+      if (!roster) continue;
+      const peak = countPlayers(roster);
       if (!cap || peak <= cap) continue;
       const over = peak - cap;
       // $2 a head, the same figure the metered path charges for a first big night.

@@ -36,6 +36,33 @@ ok("it only looks at GROUPED venues",
 ok("it charges nothing", !/handleGroupOverage[\s\S]{0,3000}stripePost/.test(W),
    "a report that quietly bills is the worst possible version of this");
 ok("it prices at the same $2 a head the metered path uses", /over \* 200/.test(W));
+
+/* AND COUNTS THE SAME WAY. My first draft read vp_sessions.players_attached, which is
+   not what the billing path uses and appears nowhere else in the Worker. The money is
+   counted by countPlayers over vp_players, deduplicated by device_id: one phone is one
+   player however many times it joined. A report quoting a different number would be
+   read out to a group and then not match the invoice. */
+ok("the report calls countPlayers, not some other tally",
+   /handleGroupOverage[\s\S]{0,3000}countPlayers\(roster\)/.test(W));
+ok("and it reads the roster it counts", /session_id=eq\.' \+ enc\(ses\.id\) \+ '&select=id,device_id/.test(W));
+ok("players_attached is not used for money anywhere",
+   (W.match(/players_attached/g) || []).length <= 1,
+   "one mention is the comment explaining why not");
+
+/* countPlayers itself: one phone is one player. */
+function countPlayers(rows){
+  const seen=new Set(); let n=0;
+  for(const p of (rows||[])){ const d=p&&p.device_id; if(d){ if(!seen.has(d)){seen.add(d);n++;} } else n++; }
+  return n;
+}
+ok("three joins from one phone is one player",
+   countPlayers([{id:1,device_id:'a'},{id:2,device_id:'a'},{id:3,device_id:'a'}]) === 1,
+   "a punter whose phone slept and rejoined is not three punters");
+ok("three phones is three players",
+   countPlayers([{id:1,device_id:'a'},{id:2,device_id:'b'},{id:3,device_id:'c'}]) === 3);
+ok("a row with no device still counts once",
+   countPlayers([{id:1}]) === 1, "an old row without a device id is a real person");
+ok("an empty roster is nobody", countPlayers([]) === 0);
 ok("the look-back is bounded", /months > 24\) months = 24/.test(W));
 
 // The arithmetic, on real numbers.
