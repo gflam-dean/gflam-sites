@@ -27,10 +27,10 @@
 // The service key is what makes this work: it is the only key that may write
 // those tables now, and it never leaves Cloudflare.
 
-// THE ORDER COLUMN HAS TO BE THE ONE THAT EXISTS. The first version of this file
-// invented sort_order for three of these tables. shows read fine and the other
-// three answered "read failed", because PostgREST rejects an order on a column
-// that is not there. These are the orders manage.html has always used.
+// Each table is ordered by a column it really has, and these are the orders
+// manage.html has always used. An order on a column that does not exist makes
+// PostgREST refuse the whole read, so the wrong one here takes three of the four
+// tables offline while the fourth looks fine.
 const TABLES = {
   shows:             { order: 'show_date.asc' },
   experience:        { order: 'created_at.asc' },
