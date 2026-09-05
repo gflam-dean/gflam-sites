@@ -1,31 +1,31 @@
-
-  // touring-api  -  the only thing allowed to write the touring tables.
-  // =====================================================================
-  // WHY THIS EXISTS. manage.html used to write shows, experience,
-  // ticket_milestones and tour_categories straight from the browser with the
-  // PUBLIC Supabase key, behind a four digit "PIN" whose SHA-256 sat in the page
-  // source. That is ten thousand guesses, and it was decorative regardless: the
-  // writes went out under the public key with or without it, so anybody who
-  // opened dev tools could rewrite the tour listings. Those tables were later
-  // locked (writes now answer 42501) which was right, and which is why Save on
-  // manage.html has been dead.
-  //
-  // The password now lives in a Worker secret and is compared in constant time.
-  // The browser never holds anything that can write to the database.
-  //
-  // DEPLOY
-  // 1. Cloudflare -> Workers -> Create -> name it exactly:  touring-api
-  // 2. Paste this whole file over the default worker.js. Save and deploy.
-  // 3. Settings -> Variables -> add three SECRETS (not plain text):
-  // MANAGE_PASSWORD    a long password you choose. This replaces the PIN.
-  // SUPABASE_URL       https://gpoolavkghnxedzrmtmc.supabase.co
-  // SUPABASE_SERVICE_KEY   the SERVICE key, not the anon one
-  // and one plain variable:
-  // SITE_ORIGIN        https://www.gflamtouring.com.au
-  // 4. Check it answers:  curl -s https://touring-api.<your>.workers.dev/health
-  //
-  // The service key is what makes this work: it is the only key that may write
-  // those tables now, and it never leaves Cloudflare.
+// touring-api  -  the only thing allowed to write the touring tables.
+// =====================================================================
+// WHY THIS EXISTS. manage.html used to write shows, experience,
+// ticket_milestones and tour_categories straight from the browser with the
+// PUBLIC Supabase key, behind a four digit "PIN" whose SHA-256 sat in the page
+// source. That is ten thousand guesses, and it was decorative regardless: the
+// writes went out under the public key with or without it, so anybody who
+// opened dev tools could rewrite the tour listings. Those tables were later
+// locked (writes now answer 42501) which was right, and which is why Save on
+// manage.html has been dead.
+//
+// The password now lives in a Worker secret and is compared in constant time.
+// The browser never holds anything that can write to the database.
+//
+// DEPLOY
+// 1. Cloudflare -> Workers -> Create -> name it exactly:  touring-api
+// 2. Paste this whole file over the default worker.js. Save and deploy.
+// 3. Settings -> Variables and Secrets. Add three as SECRET (encrypted):
+//      MANAGE_PASSWORD        a long password you choose; replaces the old PIN
+//      SUPABASE_URL           https://gpoolavkghnxedzrmtmc.supabase.co
+//      SUPABASE_SERVICE_KEY   the SERVICE key, NOT the anon one
+//    and one as plain text:
+//      SITE_ORIGIN            https://www.gflamtouring.com.au
+// 4. Deploy again, then open /health in a browser: it should say ok:true with an
+//    empty missing list, and it never echoes a secret's value.
+//
+// The service key is what makes this work: it is the only key that may write
+// those tables now, and it never leaves Cloudflare.
 
 // THE ORDER COLUMN HAS TO BE THE ONE THAT EXISTS. The first version of this file
 // invented sort_order for three of these tables. shows read fine and the other
