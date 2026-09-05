@@ -113,8 +113,19 @@ export default {
                                       : json({ ok: false, reason: 'bad_password' }, 401);
     }
 
+    /* Somebody typing the bare worker URL into a browser is a person, not a bug.
+       It answered {"error":"not found"} and read like a fault when it was working
+       perfectly, so say what this is and where to look instead. */
+    if (path === '/') {
+      return json({
+        worker: 'touring-api',
+        what: 'Writes the gflamtouring.com.au tour tables. There is no page here.',
+        try: '/health for status. The manager UI is https://www.gflamtouring.com.au/manage.html',
+      });
+    }
+
     const m = path.match(/^\/(shows|experience|ticket_milestones|tour_categories)$/);
-    if (!m) return json({ error: 'not found' }, 404);
+    if (!m) return json({ error: 'not found', path: path }, 404);
     const table = m[1];
 
     /* Reading stays public: the tour pages already read these tables with the
@@ -166,6 +177,25 @@ export default {
         const d = await sb(env, table + '?id=eq.' + encodeURIComponent(String(id)), { method: 'DELETE' });
         if (!d.ok) return json({ error: 'delete failed', status: d.status, detail: d.body }, 502);
         deleted++;
+      }
+    }
+
+    /* EVERY ROW MUST CARRY THE SAME KEYS. PostgREST rejects a bulk insert outright
+       when they differ, and the caller only sees "save failed". That is exactly
+       what happened on the first real save: two existing shows carried an id, the
+       new one did not, and the whole request was refused. The page now mints an id
+       for new rows, but normalising here means no future caller can reintroduce
+       it - a key missing from one row is sent as null rather than absent. */
+    if (rows.length > 1) {
+      const keys = new Set();
+      for (const r of rows) {
+        if (!r || typeof r !== 'object' || Array.isArray(r)) {
+          return json({ error: 'every row must be an object' }, 400);
+        }
+        for (const k of Object.keys(r)) keys.add(k);
+      }
+      for (const r of rows) {
+        for (const k of keys) if (!(k in r)) r[k] = null;
       }
     }
 

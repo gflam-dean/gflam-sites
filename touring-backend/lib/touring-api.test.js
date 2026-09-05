@@ -247,10 +247,40 @@ if (!manageSrc) {
   });
 }
 
-// 12. a browser preflight is answered
+/* 12. ROWS WITH DIFFERENT KEYS. This is what broke the first real save: PostgREST
+   refuses a bulk insert whose objects do not all carry the same keys, and all the
+   caller sees is "save failed". */
+run(req('POST', '/shows', { key: GOOD.MANAGE_PASSWORD, body: { rows: [
+        { id: 'aaaaaaaa-1111-2222-3333-444444444444', venue: 'The Bowlo', host: 'Kiki' },
+        { venue: 'The Royal' }                       // no id, no host
+      ] } }), env(), function (s, b) {
+  var sent = sbCalls.filter(function (c) { return c.method === 'POST'; });
+  var body = sent.length ? JSON.parse(sent[sent.length - 1].body) : [];
+  var keysMatch = body.length === 2 &&
+    JSON.stringify(Object.keys(body[0]).sort()) === JSON.stringify(Object.keys(body[1]).sort());
+  ok('rows with different keys are squared up before sending', s === 200 && keysMatch,
+     body.length ? Object.keys(body[0]).sort().join(',') + ' vs ' + Object.keys(body[1]).sort().join(',') : 'nothing sent');
+  ok('the missing key goes as null, not absent',
+     body.length === 2 && body[1].id === null && body[1].host === null);
+});
+run(req('POST', '/shows', { key: GOOD.MANAGE_PASSWORD, body: { rows: [{ a: 1 }, 'not-an-object'] } }), env(),
+    function (s) { ok('a row that is not an object is refused', s === 400, 'status ' + s); });
+
+// 13. the bare URL is a person who typed it, not a bug
+run(req('GET', '/'), env(), function (s, b) {
+  ok('the root explains what this worker is', s === 200 && b && b.worker === 'touring-api',
+     'status ' + s);
+  ok('and does not read like an error', !(b && b.error));
+});
+run(req('GET', '/nonsense'), env(), function (s, b) {
+  ok('an unknown path still 404s, and names itself', s === 404 && b && b.path === '/nonsense',
+     'status ' + s);
+});
+
+// 14. a browser preflight is answered
 run(req('OPTIONS', '/shows'), env(), function (s) { ok('OPTIONS preflight is answered', s === 204, 'status ' + s); });
 
-var EXPECTED = 30;   // bump this when you add a check; a suite that silently
+var EXPECTED = 36;   // bump this when you add a check; a suite that silently
                      // stops running assertions must not still say it passed.
 steps.reduce(function (chain, step) {
   return chain.then(step);

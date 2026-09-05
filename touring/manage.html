@@ -188,6 +188,18 @@ const SUPABASE_URL = "https://gpoolavkghnxedzrmtmc.supabase.co";
 const TOURING_API = "https://touring-api.dean-tindale.workers.dev";
 let MANAGE_KEY = "";        // held for this tab only; never written to storage
 
+function newId() {
+  try { if (crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+  // Same shape, from the same CSPRNG, for anything without randomUUID.
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" +
+         h.slice(16, 20) + "-" + h.slice(20);
+}
+
 async function apiSave(table, body) {
   if (!MANAGE_KEY) throw new Error("Session expired. Reload and sign in again.");
   const r = await fetch(`${TOURING_API}/${table}`, {
@@ -200,7 +212,17 @@ async function apiSave(table, body) {
   if (!r.ok) {
     if (r.status === 401) throw new Error("Wrong password. Reload and try again.");
     if (r.status === 503) throw new Error("The touring worker is not configured yet (check its secrets).");
-    throw new Error((d && (d.error || d.detail)) || `save failed (${r.status})`);
+    /* SAY WHAT WENT WRONG. "failed to save" sent us looking in the wrong place:
+       the real answer was PostgREST refusing a bulk insert whose rows did not all
+       carry the same keys, and it was sitting in detail.message all along. */
+    let why = (d && d.error) || `save failed (${r.status})`;
+    const inner = d && d.detail;
+    if (inner) {
+      const msg = inner.message || inner.hint || (typeof inner === "string" ? inner : "");
+      const code = inner.code ? ` [${inner.code}]` : "";
+      if (msg) why += `: ${msg}${code}`;
+    }
+    throw new Error(why);
   }
   return d;
 }
@@ -482,9 +504,16 @@ async function saveShows() {
         go_live_time: show.displayTime || "00:00",
         show_type: show.showType || "other"
       };
-      // An id only goes up when the database gave us one. Sending a blank id
-      // would make the upsert try to write null into the primary key.
-      if (typeof show.id === "string" && show.id.length === 36) row.id = show.id;
+      /* EVERY ROW GETS AN id, INCLUDING A BRAND NEW ONE.
+         PostgREST refuses a bulk insert whose objects do not all carry the same
+         keys, so a save with two existing shows and one new one - id, id, no id -
+         was rejected outright and the page just said it failed. Minting the id
+         here rather than letting the database do it makes the keys match, and it
+         makes the save idempotent: pressing Save twice upserts the same row
+         instead of inserting a second copy. */
+      row.id = (typeof show.id === "string" && show.id.length === 36)
+        ? show.id
+        : (show.id = newId());
       return row;
     });
     const res = await apiSave("shows", { rows: rows, delete: pendingDeletes.slice() });
