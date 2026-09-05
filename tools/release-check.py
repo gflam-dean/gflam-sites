@@ -587,6 +587,105 @@ def local_checks(which):
     ok('no corner of a screen mixes cqw and px', not corners,
        why='; '.join(corners[:3]) + '. Two units in one corner are only correct at one width.')
 
+    """A DROPPED CHANNEL MUST NOT BE WRITTEN INTO.
+
+    Every console keeps a boolean saying whether its realtime channel is up, and
+    every send is queued instead when it is down. The bingo console said
+    "Reconnecting" on screen and never cleared the flag, so it kept calling
+    ch.send() into a dead socket: balls, claim resolutions and the winner
+    announcement went nowhere and the room simply stopped. Bingo has no game
+    Worker behind it - the broadcast IS the game - so it was the one format that
+    could lose a whole house with nothing to replay from. Musical had the same
+    gap on its players' channel.
+
+    Reading the code will not catch this: the drop branch LOOKS handled because it
+    updates the status text. The flag is the part that matters."""
+    consoles = [os.path.join(ROOT, 'venueplay', 'app', x) for x in
+                ('index.html', 'musical/host.html', 'trivia/host.html',
+                 'raffle/host.html', 'members/host.html')]
+    deaf = []
+    cbs = 0
+    for f in consoles:
+        if not os.path.exists(f):
+            deaf.append('%s is missing' % short(f)); continue
+        body = io.open(f, encoding='utf-8').read()
+        for m in re.finditer(r'\.subscribe\(function\(status\)\s*\{', body):
+            cbs += 1
+            win = body[m.start(): m.start() + 2600]
+            drops = re.findall(r'CHANNEL_ERROR|TIMED_OUT|CLOSED', win)
+            if not drops:
+                deaf.append('%s: a subscribe with no drop branch' % short(f)); continue
+            after = win[win.index(drops[0]):][:900]
+            if not re.search(r'(subscribed|gsub|tvSubscribed)\s*=\s*false', after):
+                deaf.append('%s: drop branch never clears the flag' % short(f))
+    ok('a dropped channel is never written into', not deaf and cbs >= 7,
+       '%d subscribe callbacks across %d consoles' % (cbs, len(consoles)),
+       why='; '.join(deaf[:3]) or 'found only %d callbacks, expected at least 7' % cbs)
+
+    """A RELOADED TV MUST GET THE LOBBY BACK.
+
+    A screen announces itself with hello:true and the host replays whatever is on
+    air. musical replayed only when the game was already "running", so a TV that
+    reloaded while the room was still filling up was never told the format or the
+    lobby state: the host could see players joining and the wall showed nothing,
+    with no way back short of ending the game. sendState() has always carried
+    lobby:, and the console's own resize path has always used both statuses, so
+    only the hello path was wrong.
+
+    Checked as "the hello replay covers a lobby", not as an exact string, so
+    rewording the condition does not break the check."""
+    lobbyless = []
+    for f in [os.path.join(ROOT, 'venueplay', 'app', x) for x in
+              ('musical/host.html', 'trivia/host.html')]:
+        if not os.path.exists(f):
+            continue
+        body = io.open(f, encoding='utf-8').read()
+        i = body.find('m.hello')
+        if i < 0:
+            lobbyless.append('%s: nothing handles hello' % short(f)); continue
+        block = body[i: i + 1600]
+        # The wording differs on purpose: musical says lobby || running, trivia says
+        # != setup. Both cover a lobby. The fault is gating the replay on "running"
+        # ALONE, so check for that rather than for a particular spelling - the first
+        # draft of this check looked for the word "lobby" and wrongly failed trivia.
+        gates = re.findall(r'G\.status\s*(===|!==)\s*"(\w+)"', block)
+        covers_lobby = any(
+            (op == '===' and val in ('lobby',)) or (op == '!==' and val == 'setup')
+            for op, val in gates)
+        if gates and not covers_lobby:
+            lobbyless.append('%s: the hello replay only fires for %s'
+                             % (short(f), ', '.join(sorted({v for o, v in gates}))))
+    ok('a reloaded TV gets the lobby back', not lobbyless,
+       why='; '.join(lobbyless[:3]) + '. A screen that reloads mid-lobby is then '
+           'stuck and the host cannot recover it without ending the game.')
+
+    """A JOIN MUST NOT REBUILD A HOST CONSOLE.
+
+    renderConsole reaches the panel that holds the host's own controls. In bingo
+    that panel carries the "Next prize" dropdown, so a punter scanning in while
+    the host was choosing the next pattern silently reset the choice and "Keep
+    playing" ran a pattern nobody picked. In trivia it rebuilds the "Next
+    question" button with a fresh listener, and in musical the whole song list.
+    People join constantly on a busy night, which is why hosts reported taps
+    going nowhere."""
+    rebuilt = []
+    for f in consoles:
+        if not os.path.exists(f):
+            continue
+        body = io.open(f, encoding='utf-8').read()
+        i = body.find('m.t==="join"')
+        if i < 0:
+            continue
+        # the handler runs until the next else-if branch
+        j = body.find('else if(m.t', i)
+        handler = body[i: j if j > i else i + 2600]
+        if re.search(r'\brenderConsole\(\)', handler):
+            rebuilt.append(short(f))
+    ok('a join never rebuilds a host console', not rebuilt,
+       '%d consoles' % len(consoles),
+       why=', '.join(rebuilt) + ' calls renderConsole() on a join, which replaces the '
+           'host\'s own controls mid-tap. Update the counts only.')
+
     head('D. The song library holds together')
     """5,131 songs and 19 playlists in one JSON file that every musical bingo night
     is dealt from, and nothing checked it. A playlist pointing at a song id that is

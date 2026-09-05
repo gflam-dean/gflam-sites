@@ -288,9 +288,9 @@
             </div>
             <div class="volrow" style="margin-top:10px">
               <label for="volRange" style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
-                <span>Room volume</span><span id="volVal">140%</span>
+                <span>Room volume</span><span id="volVal">240%</span>
               </label>
-              <input type="range" id="volRange" min="100" max="400" step="10" value="140" style="width:100%;accent-color:var(--pink)">
+              <input type="range" id="volRange" min="100" max="400" step="10" value="240" style="width:100%;accent-color:var(--pink)">
               <div style="font-size:11px;color:var(--faint);margin-top:2px">Above 100% the screen amplifies the clip past what the device alone can do. Turn the TV or amp up first, then use this for the last bit.</div>
             </div>
             <button class="btn ghost" id="monitorBtn" style="width:100%;margin-top:8px;font-size:13px">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
@@ -570,7 +570,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(gch){ try{ client.removeChannel(gch); }catch(e){} gch=null; gsub=false; }
     gch=client.channel("vp-"+joinCode, { config:{ broadcast:{ self:false } } });
     gch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
-    gch.subscribe(function(status){ if(status==="SUBSCRIBED"){ gsub=true; gflush(); gsend({ t:"rollcall" }); } });
+    gch.subscribe(function(status){
+      if(status==="SUBSCRIBED"){ gsub=true; gflush(); gsend({ t:"rollcall" }); return; }   // ask connected players to re-announce so the roster rebuilds
+      /* gsub was never reset here, so after a dropped channel gsend() kept posting
+         into a dead socket: the song, the daub and the WINNER announcement stopped
+         reaching phones and nothing on the console said so. trivia/host.html has
+         had this branch for a while and musical did not. Queue instead, so whatever
+         the room missed is flushed the moment it reconnects. */
+      if(status==="CHANNEL_ERROR" || status==="TIMED_OUT" || status==="CLOSED"){
+        gsub=false;
+        hostError("Lost the connection to the players' phones. Reconnecting: hold off on the next song for a moment.");
+      }
+    });
   }
 
   // ---- host game state (the Worker is authoritative; this is the console's view) ----
@@ -760,7 +771,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
      normally the venue's sound source, so the slider broadcasts; the graph here is
      for a console that has been put through the PA itself.
      If the graph cannot be built, playback is exactly what it always was. */
-  var _hac=null, _hsrc=null, _hgain=null, _hlim=null, _hboost=1.4, _hdead=false;
+  // 2.4, NOT 1.4. screen.html has always started its own gain at 2.4, so a console
+  // showing "140%" was lying about what the room could hear, and the first touch of
+  // the slider dropped the volume mid-song. Matching two constants by hand is what
+  // let them drift, so the console also states the volume on connect (see tvHere).
+  var _hac=null, _hsrc=null, _hgain=null, _hlim=null, _hboost=2.4, _hdead=false;
   function hostBuildBoost(){
     if(_hsrc || _hdead) return;
     try{
@@ -775,7 +790,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }catch(e){ _hdead=true; _hsrc=null; }
   }
   function setRoomVolume(pct){
-    var v=Math.max(100, Math.min(400, Number(pct)||140));
+    var v=Math.max(100, Math.min(400, Number(pct)||240));
     _hboost=v/100;
     if(_hgain){ try{ _hgain.gain.value=_hboost; }catch(e){} }
     var lbl=$("volVal"); if(lbl) lbl.textContent=v+"%";
@@ -896,6 +911,24 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
 
   // ---- render console ----
+  // A JOIN MUST NOT REBUILD THE CONSOLE. renderConsole calls renderLive, which
+  // replaces the whole song list and the claim card, buttons and all. A punter
+  // scanning in at the moment the host is tapping "Play" or "Confirm winner"
+  // therefore had the button swapped out from under their finger and the tap went
+  // nowhere - on a busy night people join constantly, so this is the lost tap the
+  // hosts have been reporting. A join only changes counts and the chip list, so
+  // that is all it is allowed to touch.
+  function renderJoinCounts(){
+    var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
+    var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
+    var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
+    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
+    if(_ob){
+      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
+      else _ob.style.display="none";
+    }
+    renderPlayers();
+  }
   function renderConsole(){
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
@@ -1244,11 +1277,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(m && m.hello){
       send({ t:"host_here" });
       if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
-      if(G.status==="running"){
+      // State the volume rather than trusting the screen's default to match ours.
+      try{ bcast({ t:"volume", level:_hboost }); }catch(e){}
+      // A LOBBY HAS TO BE REPLAYED TOO. This used to fire only for "running", so a
+      // TV that reloaded while the room was still filling up was never told the
+      // format or the lobby state, and the host could not get the lobby back
+      // without ending the game. sendState() already carries lobby:, and the
+      // resize path at the top of this file has always used both statuses.
+      if(G.status==="lobby" || G.status==="running"){
         send({ t:"mode", mode:"musical" });
         sendState();
-        if(G.nowSong){ send({ t:"played", replay:true, title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub }); }
-        if(G.claim) send({ t:"claim_pending", name:G.claim.name });
+        if(G.status==="running" && G.nowSong){ send({ t:"played", replay:true, title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub }); }
+        if(G.status==="running" && G.claim) send({ t:"claim_pending", name:G.claim.name });
       }
     }
   }
@@ -1270,7 +1310,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
       sendPlayers();
       if(G.status==="running") sendState();   // nudge a late joiner's phone to fetch its card
-      renderConsole();
+      renderJoinCounts();                    // NOT renderConsole: see above
+
     }
     else if(m.t==="claim"){
       // A phone only broadcasts a claim the Worker already judged VALID (it carries the
@@ -1416,7 +1457,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   (function bindVolume(){
     var r=$("volRange"); if(!r) return;
-    var saved=140; try{ saved=parseInt(localStorage.getItem("vpMusicVolume")||"140",10)||140; }catch(e){}
+    var saved=240; try{ saved=parseInt(localStorage.getItem("vpMusicVolume")||"240",10)||240; }catch(e){}
     r.value=String(saved); setRoomVolume(saved);
     r.addEventListener("input", function(){ setRoomVolume(r.value); });
     // The graph can only be built once audio is actually going, so do it on the first play.

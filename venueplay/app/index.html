@@ -1300,6 +1300,23 @@
     else txt="Set the pattern and what they are playing for, then open the lobby to put the join code on the TV.";
     el.innerHTML=txt;
   }
+  // A JOIN MUST NOT REBUILD THE CONSOLE. renderConsole reaches renderClaimQueue,
+  // which rewrites the resolve buttons AND the "Next prize" dropdown. So a punter
+  // scanning in while the host was choosing the next pattern silently reset that
+  // choice back to the default, and "Keep playing" then ran a pattern the host had
+  // not picked. The same rebuild swaps Confirm out from under a finger mid-tap.
+  // A join only changes counts and the chip list, so that is all it may touch.
+  function renderJoinCounts(){
+    var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
+    var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
+    var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
+    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
+    if(_ob){
+      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be added to this month's bill when you start."); }
+      else _ob.style.display="none";
+    }
+    renderPlayers();
+  }
   function renderConsole(){
     setCoach();
     var live=G.status==="running", lobby=G.status==="lobby";
@@ -1723,7 +1740,12 @@
     G.claims.splice(i,1);
     if(!G.claims.length && !G.lastWins.length){
       G.claimIdx=-1;
-      send({ t:"resume" });          // nobody left waiting and nobody won: whole room plays on
+      // Whole room plays on, but SAY WHO WAS WAVED OFF. A bare resume reaches every
+      // phone, and any punter whose claim was still in flight was told "the host
+      // said not yet" without ever having been looked at. pids names the one player
+      // this rejection was about; a phone not in that list resumes without being
+      // told it lost. No pid field, so an older phone still plays on as before.
+      send({ t:"resume", pids:[c.pid] });
     } else {
       // Someone else is still in the running (or has already won), so the game is NOT resuming.
       // Release just this player's phone, or they sit on "checking your ticket" forever.
@@ -1819,7 +1841,7 @@
       sendPlayers();
       sendState();
       saveGame();
-      renderConsole();
+      renderJoinCounts();     // NOT renderConsole: see above
     }
     else if(m.t==="claim"){
       /* ALWAYS ANSWER A CLAIM. play.html sets claimPending and disables the BINGO button until it
@@ -1909,7 +1931,16 @@
         // re-deal the current card. players answer with a join; we answer that join with
         // card/state (never another roll call), so the exchange terminates and cannot loop.
         send({ t:"rollcall" });
-      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
+      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+        /* subscribed WAS NEVER RESET HERE. It said "Reconnecting" on screen and then
+           kept calling ch.send() into a dead socket, so every ball, every claim
+           resolution and the winner announcement itself went nowhere and the room
+           just stopped. Bingo has no game Worker to fall back on - the broadcast IS
+           the game - so this was the one format that could lose a whole house with
+           nothing to replay from. Clearing the flag sends everything to sendQueue
+           instead, and flushQueue() posts the backlog the moment it reconnects.
+           trivia and raffle have had this line for a while; bingo did not. */
+        subscribed=false;
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
         $("pairedChip").innerHTML="&middot; reconnecting";
       }

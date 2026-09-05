@@ -1104,7 +1104,13 @@
       // No pid means the whole room plays on. A pid means only that player was waved off,
       // which happens when they called at the same time as someone whose ticket stood up.
       if(m.pid && m.pid!==P.pid) return;
-      if(P.claimPending){ P.claimPending=false; $("bingoBtn").disabled=false; setMsg("The host said not yet. Keep playing!","no"); }
+      // pids, when present, names who was actually rejected. Everyone else plays on
+      // without being told they lost - their claim may not have been looked at yet.
+      var waved = !m.pids || !m.pids.length || m.pids.indexOf(P.pid) >= 0;
+      if(P.claimPending){
+        P.claimPending=false; $("bingoBtn").disabled=false;
+        setMsg(waved ? "The host said not yet. Keep playing!" : "Play on!", "no");
+      }
     }
     else if(m.t==="winner"){
       P.claimPending=false;

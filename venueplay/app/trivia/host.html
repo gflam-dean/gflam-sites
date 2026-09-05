@@ -456,6 +456,22 @@
   }
 
   // ---- render console ----
+  // A JOIN MUST NOT REBUILD THE CONSOLE. renderConsole reaches renderRun, which
+  // empties runBody and rebuilds the "Next question" button with a fresh listener.
+  // A punter scanning in at the moment the host taps it therefore had the button
+  // swapped out from under their finger and the round stalled. A join changes the
+  // player count and the chip list and nothing else, so that is all it may touch.
+  function renderJoinCounts(){
+    var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
+    var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
+    var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
+    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
+    if(_ob){
+      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be charged to your card for this billing period."); }
+      else _ob.style.display="none";
+    }
+    renderPlayers();
+  }
   function renderConsole(){
     var live=(G.status!=="setup" && G.status!=="lobby");   // lobby keeps the setup panel visible
     $("setupBlock").classList.toggle("hidden", live);
@@ -789,7 +805,7 @@
       if(!G.players[m.pid]){ G.players[m.pid]={ name:(m.name||"Player") }; G.order.push(m.pid); }
       else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
       bcast({ t:"players", count:playerCount() });
-      renderConsole();
+      renderJoinCounts();     // NOT renderConsole: see above
     }
     else if(m.t==="answer"){
       if(G.status!=="question" || m.qseq!==G.answeredQseq || !m.pid) return;   // cosmetic "answered" ticker
