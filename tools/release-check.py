@@ -622,6 +622,43 @@ def local_checks(which):
        '%d subscribe callbacks across %d consoles' % (cbs, len(consoles)),
        why='; '.join(deaf[:3]) or 'found only %d callbacks, expected at least 7' % cbs)
 
+    """EVERY UNSIGNED ADMIN BROADCAST MUST BE EXEMPT FROM SIGNING.
+
+    HQ and billing.html broadcast straight onto a venue channel. They cannot sign:
+    the venue private key is minted in the host console and never leaves it. So the
+    moment a venue is switched to broadcast_enforce, any message type they send
+    that is not on vp-sign.js's EXEMPT list is silently dropped.
+
+    That happened. tv_reload was missing from the list, and the day The Mini Bar
+    was switched to enforce, "reload all TVs" in HQ quietly did nothing - no error
+    anywhere, because being dropped is the correct behaviour for an unsigned
+    message. screen_refresh was already exempt, which is what made it look fine."""
+    signp = os.path.join(ROOT, 'venueplay', 'app', 'vp-sign.js')
+    admin_pages = [os.path.join(ROOT, 'venueplay', 'app', x) for x in
+                   ('hq.html', 'billing.html', 'settings.html', 'onboard.html')]
+    unexempt = []
+    raw_types = set()
+    if not os.path.exists(signp):
+        unexempt.append('vp-sign.js is missing')
+    else:
+        sign = io.open(signp, encoding='utf-8').read()
+        m = re.search(r'var EXEMPT\s*=\s*\{([^}]*)\}', sign)
+        exempt = set(re.findall(r'(\w+)\s*:', m.group(1))) if m else set()
+        for f in admin_pages:
+            if not os.path.exists(f):
+                continue
+            body = io.open(f, encoding='utf-8').read()
+            for mm in re.finditer(r'\.send\(\s*\{\s*type\s*:\s*["\']broadcast["\']'
+                                  r'[^}]*payload\s*:\s*\{\s*t\s*:\s*["\'](\w+)["\']',
+                                  body, re.S):
+                t = mm.group(1)
+                raw_types.add(t)
+                if t not in exempt:
+                    unexempt.append('%s broadcasts t:"%s" unsigned and it is not EXEMPT'''
+                                    % (short(f), t))
+    ok('an unsigned admin broadcast is exempt from signing', not unexempt,
+       '%d raw type(s): %s' % (len(raw_types), ', '.join(sorted(raw_types)) or 'none'),
+       why='; '.join(unexempt[:3]) + '. Any venue on broadcast_enforce drops it, silently.')
     """A CONSOLE THAT SENDS THE TV TO THE ADS MUST BE ABLE TO BRING IT BACK.
 
     All five consoles tell the TV t:"to_ads" on pagehide, and not one had a

@@ -1037,7 +1037,13 @@
          session, so they were invisible to HQ but are perfectly visible from here.
          force:true still reloads instantly. That is the per-venue button in HQ, which is a
          deliberate act on one screen and warns before it sends. */
-      if(m.force){ if(window.__vpTvReload) window.__vpTvReload("remote-forced"); else location.reload(); return; }
+      /* A FORCED RELOAD NEEDS TO BE VOUCHED FOR. HQ cannot sign - it holds no venue
+         private key - so tv_reload is exempt and arrives marked _unverified. Honour
+         the polite path from anyone, because a reload that waits for the game to end
+         can hurt nobody, but never interrupt a live room on an unsigned instruction.
+         When the venue is not enforcing, nothing is marked and force works as before. */
+      if(m.force && !m._unverified){ if(window.__vpTvReload) window.__vpTvReload("remote-forced"); else location.reload(); return; }
+      if(m.force && m._unverified){ console.warn("[tv] forced reload arrived unsigned; waiting for the game to finish instead"); }
       if(tvMode==="ads"){ if(window.__vpTvReload) window.__vpTvReload("remote"); else location.reload(); return; }
       reloadWhenIdle=true;
       return;

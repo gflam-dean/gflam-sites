@@ -59,7 +59,20 @@
      without a fresh message from the host. The channel name is a public function of the
      venue slug, so any patron who could read the screen could kill the night, repeatedly.
      What is left is genuinely harmless: a screen saying hello, or asking who is there. */
-  var EXEMPT = { screen_refresh: 1, tv_here: 1, hello: 1, rollcall: 1 };
+  /* HOUSEKEEPING THAT ARRIVES UNSIGNED, AND MUST STILL BE HEARD.
+     HQ and billing.html broadcast these straight onto the channel: they hold no
+     venue private key, and cannot - the key is minted in the host console and
+     never leaves it. So the moment a venue was switched to enforce, every one of
+     these was dropped.
+
+     tv_reload was NOT on this list, which is why reloading a venue's screens from
+     HQ silently did nothing at The Mini Bar the day enforcement went on. It is the
+     same kind of message as screen_refresh, which was already exempt.
+
+     What an unsigned reload may NOT do is force. See vpGate: an exempt message is
+     delivered with _unverified on it, and tv.html refuses to interrupt a live game
+     on the word of a message it could not check. */
+  var EXEMPT = { screen_refresh: 1, tv_here: 1, hello: 1, rollcall: 1, tv_reload: 1 };
 
   function b64uFromBytes(bytes) {
     var s = "";
@@ -235,7 +248,13 @@
         return VPSign.verify(payload).then(function (verdict) {
           if (verdict === "ok") { try { cb(payload); } catch (e) { } return; }
           var t = payload && payload.t;
-          if (t && EXEMPT[t]) { try { cb(payload); } catch (e) { } return; }         // harmless lifecycle nudge
+          if (t && EXEMPT[t]) {
+            // Delivered, but MARKED. A receiver that can do something disruptive on
+            // this message needs to know nobody vouched for it.
+            try { payload._unverified = true; } catch (e) { }
+            try { cb(payload); } catch (e) { }
+            return;
+          }
           console.warn("[VPSign] dropped " + verdict + " message" + (t ? " (" + t + ")" : "") + " (enforce on)");
         });
       });

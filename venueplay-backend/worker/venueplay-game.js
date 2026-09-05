@@ -3912,6 +3912,60 @@ function upliftRate(tier, annual) {
   return tier === 'founding' ? 2.50 : 3.00;
 }
 
+/* WHO ACTUALLY COLLECTS A PENDING INVOICE ITEM.
+ *
+ * Every charge in this file is a Stripe invoiceitem, which is a line waiting for
+ * an invoice. On a MONTHLY plan the next cycle is at most a month away and sweeps
+ * it up, which is what we want: one invoice, all the extras on it.
+ *
+ * On an ANNUAL plan the next invoice can be eleven months away. Until then the
+ * line just sits there, does not appear on any invoice, and IS DISCARDED IF THE
+ * VENUE CANCELS. So an annual venue could run big night after big night, agree to
+ * every charge on the console, and we would never be paid for any of it. There are
+ * no annual venues yet, which is the only reason this has not already cost money.
+ *
+ * Two details matter and both are easy to get wrong:
+ *
+ *  - An invoiceitem created WITH `subscription` is reserved for that
+ *    subscription's next invoice, and a standalone invoice will not pick it up.
+ *    So for the annual path the item must be created WITHOUT it.
+ *  - pending_invoice_items_behavior 'include' sweeps every unattached pending item
+ *    for that customer, which is what we want: if an earlier night's charge is
+ *    still sitting there, it should go out on this invoice too rather than wait
+ *    another year.
+ *
+ * Keyed, because this moves money and a retry must not raise a second invoice.
+ */
+async function subscriptionInterval(env, acct) {
+  try {
+    if (!acct || !acct.stripe_subscription_id) return null;
+    const sub = await stripeGet(env, 'subscriptions/' + enc(acct.stripe_subscription_id));
+    const item = sub && sub.items && sub.items.data && sub.items.data[0];
+    return (item && item.price && item.price.recurring && item.price.recurring.interval) || null;
+  } catch (e) { return null; }
+}
+
+async function collectNow(env, acct, idemKey, why) {
+  if (!acct || !acct.stripe_customer_id) return { ok: false, reason: 'no_customer' };
+  const inv = await stripePost(env, 'invoices', {
+    customer: acct.stripe_customer_id,
+    collection_method: 'charge_automatically',
+    auto_advance: true,                       // Stripe finalises and attempts payment
+    pending_invoice_items_behavior: 'include',
+    description: why || 'VenuePlay extras',
+  }, idemKey ? ('inv_' + idemKey) : null);
+  if (!inv || inv.error) {
+    /* The line is still on the customer, so nothing is lost: it will go out on the
+       renewal invoice, which is the old behaviour rather than a new failure. Say so
+       loudly, because on an annual plan that could be months away. */
+    console.log('[billing] could not raise an invoice to collect now: ' +
+                ((inv && inv.error && inv.error.message) || 'unknown') +
+                ' - the item stays pending until renewal');
+    return { ok: false, reason: (inv && inv.error && inv.error.message) || 'unknown' };
+  }
+  return { ok: true, invoice: inv.id, cents: inv.amount_due };
+}
+
 async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
   const current = parseInt(venue.max_players, 10) || 0;
   if (!(newMax > current)) return null;
@@ -3952,14 +4006,19 @@ async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
         const cents = Math.round(added * upliftRate(tier, true) * 12 * frac * 100);
         if (cents > 0) {
           const months = Math.round(frac * 12 * 10) / 10;
+          /* NO `subscription` HERE, DELIBERATELY. This branch only runs on an annual
+             plan, so the next subscription invoice is up to eleven months away and an
+             item reserved for it would sit unbilled until then - and be discarded if
+             the venue cancelled. Left unattached it can be swept onto an invoice we
+             raise right now, a few lines below. */
+          const idem = 'uplift_' + venue.id + '_' + newMax + '_' + Math.floor(periodEnd / 86400);
           const res = await stripePost(env, 'invoiceitems', {
             customer: acct.stripe_customer_id,
-            subscription: acct.stripe_subscription_id,
             currency: 'aud',
             amount: cents,
             description: (venue.name || 'Venue') + ': plan raised to ' + newMax + ' players after three big nights, '
                        + added + ' extra pro rata to renewal (' + months + ' months)',
-          }, 'uplift_' + venue.id + '_' + newMax + '_' + Math.floor(periodEnd / 86400));
+          }, idem);
           if (res && res.error) {
             /* AN ANNUAL UPLIFT IS COLLECTED BY THIS CALL AND NOTHING ELSE.
                The quantity update above carries proration_behavior 'none' on an
@@ -3986,6 +4045,24 @@ async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
             quantityOk = false;
           } else {
             prorata = { cents: cents, months: months, added: added };
+            const got = await collectNow(env, acct, idem,
+              (venue.name || 'Venue') + ': plan raised to ' + newMax + ' players');
+            if (!got.ok) {
+              /* The line is still on the customer and the renewal will carry it, so
+                 the uplift is NOT rolled back - they keep the bigger plan and we are
+                 paid, just later than intended. Recorded so it can be chased. */
+              prorata.collected = false;
+              prorata.collect_error = got.reason;
+              await sbInsert(env, 'vp_admin_audit', {
+                action: 'plan_uplift_prorata_left_pending',
+                target: 'venue:' + venue.id,
+                detail: { from: current, to: newMax, cents: cents, months: months,
+                          tier: tier, reason: got.reason },
+              }, false).catch(() => {});
+            } else {
+              prorata.collected = true;
+              prorata.invoice = got.invoice;
+            }
           }
         }
       }
@@ -4294,15 +4371,24 @@ async function applyOverageCharge(env, o) {
   if (amountCents <= 0) return;
 
   const when = new Date().toISOString().slice(0, 10);
-  const res = await stripePost(env, 'invoiceitems', {
+  /* ANNUAL IS BILLED NOW, MONTHLY RIDES THE NEXT INVOICE.
+     A pending invoiceitem needs an invoice to land on. Monthly gets one within the
+     month, so attach it to the subscription and let the cycle collect it. Annual
+     might not see another invoice for eleven months, and the item is discarded if
+     they cancel, so it is raised on its own invoice immediately - which means NOT
+     attaching it to the subscription, or a standalone invoice cannot pick it up. */
+  const interval = await subscriptionInterval(env, acct);
+  const billNow = interval === 'year';
+  const item = {
     customer: acct.stripe_customer_id,
-    subscription: acct.stripe_subscription_id,
     currency: 'aud',
     amount: amountCents,
     description: 'Big night extra players - ' + (venue.name || 'venue') + ' - ' + when +
                  ' - ' + overage + ' over ' + cap + ' at $' + rateDollars.toFixed(2) +
                  (halfPrice ? ' (third big night in a row)' : ''),
-  }, o.idemKey);
+  };
+  if (!billNow) item.subscription = acct.stripe_subscription_id;
+  const res = await stripePost(env, 'invoiceitems', item, o.idemKey);
   if (!res || res.error) {
     console.log('[overage] ' + o.idemKey + ' Stripe invoiceitem FAILED: ' +
                 ((res && res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
@@ -4329,6 +4415,25 @@ async function applyOverageCharge(env, o) {
       }, false);
     } catch (e) { /* audit is best effort; never let it mask the billing failure */ }
     return;
+  }
+
+  if (billNow) {
+    const got = await collectNow(env, acct, o.idemKey,
+      'VenuePlay: big night extra players, ' + (venue.name || 'venue') + ' ' + when);
+    if (!got.ok) {
+      /* Not a failure to bill: the line is still on the customer and the renewal
+         invoice will carry it. But on an annual plan that is months away, so it is
+         worth an audit row somebody can find. */
+      try {
+        await sbInsert(env, 'vp_admin_audit', {
+          actor_admin: null, actor_label: 'system',
+          action: 'overage_left_pending_until_renewal',
+          target: venue.id,
+          detail: { source: o.idemKey, venue_name: venue.name || null,
+                    amount_cents: amountCents, reason: got.reason },
+        }, false);
+      } catch (e) { /* audit is best effort */ }
+    }
   }
 
   // The streak only resets when the uplift actually happened. Without that, a
