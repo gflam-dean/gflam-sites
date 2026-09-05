@@ -119,7 +119,14 @@
 
   /* ---- bingo running ---- */
   .runlayer{flex-direction:row;gap:3cqw;align-items:center;justify-content:center;padding:3.5% 5%}
-  .runleft{flex:0 0 41%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  /* THE JOIN BADGE SITS IN THIS COLUMN'S CORNER. .tv-join is pinned bottom-left
+     with z-index 6 and nothing reserved room for it, so on a running bingo game
+     the last line of this column - "Playing for <prize>" - ran underneath the QR
+     and the prize was unreadable. Reserving the badge's own height means the
+     column can never reach into that corner, and it is written as the same clamp
+     the badge uses so the two cannot drift apart: 2cqw of offset, .8cqw of
+     padding top and bottom, the QR itself, then a little air. */
+  .runleft{flex:0 0 41%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:calc(5.1cqw + clamp(44px,8cqw,110px))}
   .runright{flex:1;min-width:0}
   .balleye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(9px,1.7cqw,14px);color:var(--muted)}
   /* the resting "number called" is itself a bingo ball, so the big reveal settles into an

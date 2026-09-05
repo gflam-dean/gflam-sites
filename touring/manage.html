@@ -102,13 +102,14 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
   </div>
 </div>
 
-<!-- PIN GATE -->
+<!-- MANAGER GATE -->
 <div class="gate" id="gate">
   <div class="gate-box">
     <div class="gate-icon">&#128274;</div>
     <div class="gate-title">Show Manager<span class="dot">.</span></div>
-    <div class="gate-sub">Enter your PIN to manage tours.</div>
-    <input type="password" class="pin-input" id="pinInput" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="&#183;&#183;&#183;&#183;" oninput="onPinInput(this)" autofocus>
+    <div class="gate-sub">Enter the manager password to edit tours.</div>
+    <input type="password" class="pin-input" id="pinInput" maxlength="120" autocomplete="current-password" placeholder="Password" autofocus onkeydown="if(event.key==='Enter')submitPin()">
+    <button id="pinGo" onclick="submitPin()" style="margin-top:14px;width:100%;padding:12px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Unlock</button>
     <div class="pin-error" id="pinError"></div>
   </div>
 </div>
@@ -173,6 +174,36 @@ html,body{background:var(--dark);color:#fff;font-family:"DM Sans",sans-serif;fon
 <script>
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://gpoolavkghnxedzrmtmc.supabase.co";
+
+/* WRITES GO THROUGH A WORKER NOW, NOT STRAIGHT TO THE DATABASE.
+   This page used to insert, update and delete shows, experiences, milestones and
+   categories with the PUBLIC Supabase key, behind a four digit PIN whose SHA-256
+   was in the source of this very file. Ten thousand guesses, and beside the point
+   anyway: the key went out with every request whether the PIN was entered or not,
+   so anyone who opened dev tools could rewrite the tour listings. Those tables
+   are now locked (writes answer 42501) and only touring-api may write them, with
+   the service key held as a Cloudflare secret.
+   READS still go direct: the public tour pages already read these tables, so
+   there is nothing to protect and no reason to add a hop. */
+const TOURING_API = "https://touring-api.dean-tindale.workers.dev";
+let MANAGE_KEY = "";        // held for this tab only; never written to storage
+
+async function apiSave(table, body) {
+  if (!MANAGE_KEY) throw new Error("Session expired. Reload and sign in again.");
+  const r = await fetch(`${TOURING_API}/${table}`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "X-Manage-Key": MANAGE_KEY },
+    body: JSON.stringify(body)
+  });
+  let d = null;
+  try { d = await r.json(); } catch (e) {}
+  if (!r.ok) {
+    if (r.status === 401) throw new Error("Wrong password. Reload and try again.");
+    if (r.status === 503) throw new Error("The touring worker is not configured yet (check its secrets).");
+    throw new Error((d && (d.error || d.detail)) || `save failed (${r.status})`);
+  }
+  return d;
+}
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2hueGVkenJtdG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjM3MzcsImV4cCI6MjA5Mjc5OTczN30.5si7UoInmLJqkllXNnyVn9yBw_U9GhBARDZvgR_p0DE";
 const SB_HEADERS = {
   "apikey": SUPABASE_KEY,
@@ -182,40 +213,38 @@ const SB_HEADERS = {
 };
 // SHA-256 hash of the access PIN - the actual PIN is never in this file.
 // To rotate: compute new SHA-256 of your chosen PIN and replace this string.
-const PIN_HASH = "827b209fa167fa5c0302fcb45e4ca3ac2076713ee96b88179a7d9cd4cb1bf834";
-const SESSION_KEY = "gflam_mgr_session";
-const SESSION_TTL_MS = 1000 * 60 * 60 * 4; // 4 hours
 
 // ─── STATE ─────────────────────────────────────────────────────────────────
 let shows = [];
 
 // ─── PIN GATE ──────────────────────────────────────────────────────────────
-async function sha256Hex(text) {
-  const buf = new TextEncoder().encode(text);
-  const hash = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function onPinInput(el) {
+/* THE GATE IS THE WORKER'S NOW. The old version hashed four digits in the browser
+   and compared against a hash sitting in this file, which is ten thousand guesses
+   offline. This sends the password to touring-api, which compares it in constant
+   time against a Cloudflare secret. Nothing here can tell you whether a password
+   is right, which is the point. */
+async function submitPin() {
+  const el = document.getElementById("pinInput");
+  const err = document.getElementById("pinError");
   const v = el.value;
-  if (v.length < 4) { document.getElementById("pinError").textContent = ""; return; }
-  if (v.length === 4) {
-    const h = await sha256Hex(v);
-    if (h === PIN_HASH) { unlock(); }
-    else {
-      document.getElementById("pinError").textContent = "Incorrect PIN. Try again.";
-      el.value = "";
-    }
+  if (!v) { err.textContent = "Enter the password."; return; }
+  err.textContent = "Checking\u2026";
+  try {
+    const r = await fetch(`${TOURING_API}/check`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "X-Manage-Key": v }
+    });
+    if (r.ok) { MANAGE_KEY = v; el.value = ""; err.textContent = ""; unlock(); return; }
+    if (r.status === 503) { err.textContent = "The touring worker has no password set yet."; return; }
+    err.textContent = "Incorrect password.";
+    el.value = "";
+  } catch (e) {
+    err.textContent = "Could not reach the touring worker. Check your connection.";
   }
 }
 
 function unlock() {
   // Set short-lived session so refresh doesn't re-prompt
-  try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now() }));
-  } catch (e) {}
   document.getElementById("gate").style.display = "none";
   document.getElementById("app").classList.add("show");
   document.getElementById("lockBtn").style.display = "inline-block";
@@ -226,24 +255,15 @@ function unlock() {
 }
 
 function lockOut() {
-  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
   location.reload();
 }
 
-function checkSession() {
-  try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return false;
-    const { ts } = JSON.parse(raw);
-    if (Date.now() - ts > SESSION_TTL_MS) {
-      sessionStorage.removeItem(SESSION_KEY);
-      return false;
-    }
-    return true;
-  } catch (e) { return false; }
-}
-
-if (checkSession()) { unlock(); }
+/* NO SESSION RESTORE ANY MORE, ON PURPOSE. The password authorises every save and
+   is deliberately never written to sessionStorage, because anything kept there is
+   readable by any script that gets into this page. The old code restored a session
+   flag and opened the editor, which under the new arrangement would show the whole
+   app and then fail on every Save with no clue why. Asking again after a refresh
+   is the honest behaviour. */
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
 function formatShowDate(dateStr) {
@@ -443,16 +463,9 @@ async function saveShows() {
   btn.disabled = true;
   btn.textContent = "Saving...";
   try {
-    // Process deletes first
-    for (const id of pendingDeletes) {
-      await fetch(`${SUPABASE_URL}/rest/v1/shows?id=eq.${id}`, {
-        method: "DELETE", headers: SB_HEADERS
-      });
-    }
-    pendingDeletes.length = 0;
-
-    // Then upsert remaining shows
-    for (const show of shows) {
+    // One call: the ids to drop, then every row on screen. The worker deletes
+    // first so a row removed and re-added in the same Save cannot collide.
+    const rows = shows.map((show) => {
       const row = {
         show_date: show.showDate || null,
         time: show.time || "",
@@ -469,19 +482,25 @@ async function saveShows() {
         go_live_time: show.displayTime || "00:00",
         show_type: show.showType || "other"
       };
-      const isExisting = typeof show.id === "string" && show.id.length === 36;
-      if (isExisting) {
-        await fetch(`${SUPABASE_URL}/rest/v1/shows?id=eq.${show.id}`, {
-          method: "PATCH", headers: SB_HEADERS, body: JSON.stringify(row)
-        });
-      } else {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/shows`, {
-          method: "POST", headers: SB_HEADERS, body: JSON.stringify(row)
-        });
-        const data = await res.json();
-        if (Array.isArray(data) && data[0] && data[0].id) show.id = data[0].id;
-      }
+      // An id only goes up when the database gave us one. Sending a blank id
+      // would make the upsert try to write null into the primary key.
+      if (typeof show.id === "string" && show.id.length === 36) row.id = show.id;
+      return row;
+    });
+    const res = await apiSave("shows", { rows: rows, delete: pendingDeletes.slice() });
+    pendingDeletes.length = 0;
+    // Take the new ids back, or the next Save inserts duplicates instead of
+    // editing the rows it just created.
+    if (res && Array.isArray(res.rows)) {
+      res.rows.forEach((saved) => {
+        if (!saved || !saved.id) return;
+        const match = shows.find((sh) =>
+          sh.id === saved.id ||
+          (!sh.id && sh.venue === saved.venue && (sh.showDate || null) === saved.show_date));
+        if (match) match.id = saved.id;
+      });
     }
+
     const t = document.getElementById("toast");
     t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 2800);
@@ -533,14 +552,9 @@ async function saveTkts(){
   const btn = document.getElementById('tktSaveBtn');
   btn.disabled = true; btn.textContent = 'Saving…';
   try{
-    const del = await fetch(`${SUPABASE_URL}/rest/v1/ticket_milestones?id=not.is.null`, {method:'DELETE', headers: SB_HEADERS});
-    if(!del.ok) throw new Error('delete '+del.status);
     const clean = tkts.filter(t => (t.show_name||'').trim() && (parseInt(t.tickets)||0) > 0)
                       .map(t => ({show_name: t.show_name.trim(), tickets: parseInt(t.tickets)||0}));
-    if(clean.length){
-      const ins = await fetch(`${SUPABASE_URL}/rest/v1/ticket_milestones`, {method:'POST', headers: SB_HEADERS, body: JSON.stringify(clean)});
-      if(!ins.ok) throw new Error('insert '+ins.status);
-    }
+    await apiSave('ticket_milestones', { replace: true, rows: clean, allow_empty: true });
     document.getElementById('tktStatusText').textContent = `${clean.length} milestone${clean.length===1?'':'s'} saved`;
     const toast = document.getElementById('tktToast');
     toast.style.opacity = '1'; setTimeout(()=>{toast.style.opacity='0'}, 2500);
@@ -610,14 +624,9 @@ function toggleLock(i){
 async function saveExps(){
   const btn=document.getElementById('expSaveBtn'); btn.disabled=true; btn.textContent='Saving…';
   try{
-    const del=await fetch(`${SUPABASE_URL}/rest/v1/experience?id=not.is.null`,{method:'DELETE',headers:SB_HEADERS});
-    if(!del.ok) throw new Error('delete '+del.status);
     const clean=exps.filter(e=>(e.name||'').trim())
                     .map(e=>({name:e.name.trim(),base_years:parseInt(e.base_years)||0,locked:!!e.locked,lock_year:e.locked?(e.lock_year||new Date().getFullYear()):null}));
-    if(clean.length){
-      const ins=await fetch(`${SUPABASE_URL}/rest/v1/experience`,{method:'POST',headers:SB_HEADERS,body:JSON.stringify(clean)});
-      if(!ins.ok) throw new Error('insert '+ins.status);
-    }
+    await apiSave('experience', { replace: true, rows: clean, allow_empty: true });
     document.getElementById('expStatusText').textContent=`${clean.length} team member${clean.length===1?'':'s'} saved`;
     const t=document.getElementById('expToast'); t.style.opacity='1'; setTimeout(()=>{t.style.opacity='0'},2500);
     await loadExps();
@@ -813,8 +822,6 @@ document.getElementById("yr").textContent=new Date().getFullYear();
 async function saveTCs(){
   const btn=document.getElementById('tcSaveBtn');btn.disabled=true;btn.textContent='Saving…';
   try{
-    const del=await fetch(`${SUPABASE_URL}/rest/v1/tour_categories?id=not.is.null`,{method:'DELETE',headers:SB_HEADERS});
-    if(!del.ok)throw new Error('delete '+del.status);
     const clean=tcs.filter(c=>(c.name||'').trim()).map(c=>({
       name:c.name.trim(),eyebrow:(c.eyebrow||'').trim(),description:(c.description||'').trim(),
       button_label:(c.button_label||'').trim(),button_link:(c.button_link||'').trim(),
@@ -822,10 +829,7 @@ async function saveTCs(){
       auto_hide:!!c.auto_hide,categories:Array.isArray(c.categories)?c.categories:[],priority:parseInt(c.priority)||100,
       tour_key:(c.tour_key&&c.tour_key.trim())?c.tour_key.trim():slugify(c.name)
     }));
-    if(clean.length){
-      const ins=await fetch(`${SUPABASE_URL}/rest/v1/tour_categories`,{method:'POST',headers:SB_HEADERS,body:JSON.stringify(clean)});
-      if(!ins.ok)throw new Error('insert '+ins.status);
-    }
+    await apiSave('tour_categories', { replace: true, rows: clean, allow_empty: true });
     document.getElementById('tcStatusText').textContent=`${clean.length} tour card${clean.length===1?'':'s'} saved`;
     const t=document.getElementById('tcToast');t.style.opacity='1';setTimeout(()=>{t.style.opacity='0'},2500);
     await loadTCs();

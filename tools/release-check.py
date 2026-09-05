@@ -622,6 +622,35 @@ def local_checks(which):
        '%d subscribe callbacks across %d consoles' % (cbs, len(consoles)),
        why='; '.join(deaf[:3]) or 'found only %d callbacks, expected at least 7' % cbs)
 
+    """THE PUBLIC KEY MUST NOT WRITE THE TOUR TABLES.
+
+    touring/manage.html used to insert, update and delete shows, experience,
+    ticket_milestones and tour_categories straight from the browser under the
+    PUBLIC Supabase key, behind a four digit PIN whose SHA-256 was in the page
+    source. Ten thousand guesses, and beside the point: the key went out with
+    every request whether the PIN was typed or not. The tables are now locked and
+    only touring-api may write them.
+
+    Reads are deliberately still direct - the public tour pages read the same
+    tables - so this looks for a WRITE, not for any mention of the table."""
+    mp = os.path.join(ROOT, 'touring', 'manage.html')
+    leaks = []
+    if not os.path.exists(mp):
+        leaks.append('touring/manage.html is missing')
+    else:
+        body = io.open(mp, encoding='utf-8').read()
+        for m in re.finditer(r'fetch\(\s*`?\$?\{?SUPABASE_URL\}?/rest/v1/'
+                             r'(shows|experience|ticket_milestones|tour_categories)'
+                             r'[^`\)]*`?\s*,\s*\{([^}]{0,220})', body):
+            opts = m.group(2)
+            if re.search(r"method\s*:\s*['\"](POST|PATCH|PUT|DELETE)", opts, re.I):
+                leaks.append('%s writes %s with the public key' % (short(mp), m.group(1)))
+        if 'PIN_HASH' in body:
+            leaks.append('%s still carries a PIN hash in its source' % short(mp))
+    ok('the public key cannot write the tour tables', not leaks,
+       why='; '.join(leaks[:3]) + '. Those tables answer 42501 now, so the write '
+           'fails anyway - route it through touring-api.')
+
     """A RELOADED TV MUST GET THE LOBBY BACK.
 
     A screen announces itself with hello:true and the host replays whatever is on

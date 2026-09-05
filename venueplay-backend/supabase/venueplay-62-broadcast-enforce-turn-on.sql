@@ -36,43 +36,47 @@ select v.slug,
  order by has_key desc, last_session desc nulls last;
 
 -- =====================================================================
--- STEP 2. Pick a venue that is NOT the live one.
+-- STEP 2. Do it now, while the pubs are empty.
 -- =====================================================================
--- The Mini Bar is a paying venue with real punters in the room. It is the LAST
--- venue to switch on, not the first. Choose a venue from step 1 that has a key
--- and that you can watch, and run a whole game on it with enforce still off.
+-- Checked 5 Sep via the public route, which needs no login:
 --
--- While that game runs, open the browser console on the TV. With enforce off a
--- bad signature logs and still renders:
+--   curl -s 'https://venueplay-game.dean-tindale.workers.dev/venue/signing/public?venue=the-mini-bar'
+--   -> { "exists": true, "enforce": false, "kid": "06b823ff36..." }
 --
---     [VPSign] bad signature, rendered (enforce off)
---
--- A clean night with no such line is what earns the flip. If the line appears,
--- do NOT switch that venue on: the signing is wrong somewhere and enforcing it
--- would black out the screen.
+-- So The Mini Bar HAS minted a key and is not enforcing. It is the only venue we
+-- can confirm has one, and with nobody playing there is no room to black out, so
+-- this is the moment to try it rather than a night in the future that never comes.
 --
 -- =====================================================================
--- STEP 3. Flip that ONE venue. Edit the slug; do not run it as it stands.
+-- STEP 3. Turn it on. This one IS meant to be run.
 -- =====================================================================
 
--- update vp_venues set broadcast_enforce = true where slug = 'PUT-THE-SLUG-HERE';
+update vp_venues set broadcast_enforce = true where slug = 'the-mini-bar';
+
+-- Then check the Worker agrees (it reads the flag per message, no redeploy):
+--   curl -s 'https://venueplay-game.dean-tindale.workers.dev/venue/signing/public?venue=the-mini-bar'
+--   "enforce" should now be true.
 
 -- =====================================================================
--- STEP 4. The rollback, ready to paste if a screen goes dark.
+-- STEP 4. Prove it on a real screen before you walk away.
 -- =====================================================================
--- This takes effect on the venue's next message. Nobody has to redeploy
--- anything, and the screens fail open the moment the flag is off.
+--   1. Open the host console, sign in to The Mini Bar, open a bingo lobby.
+--   2. Open the TV on another screen: venueplay.com.au/tv?the-mini-bar
+--   3. The join code must appear. If the TV stays on the ads or goes blank,
+--      enforcement is dropping real messages -> run STEP 5 immediately.
+--   4. Start the game and call two or three numbers. They must land on the TV.
+--   5. Join on a phone and check the card deals.
+--
+-- If all five work, it is on and it stays on.
 
--- update vp_venues set broadcast_enforce = false where slug = 'PUT-THE-SLUG-HERE';
+-- =====================================================================
+-- STEP 5. The undo. Takes effect on the very next message.
+-- =====================================================================
 
--- To drop enforcement everywhere at once, in a hurry:
+-- update vp_venues set broadcast_enforce = false where slug = 'the-mini-bar';
+
+-- Panic version, drops enforcement everywhere:
 -- update vp_venues set broadcast_enforce = false where broadcast_enforce;
 
--- =====================================================================
--- STEP 5. Confirm the Worker agrees with the database.
--- =====================================================================
---   curl -s https://venueplay-game.dean-tindale.workers.dev/health
--- "enforcing" should have gone up by exactly one.
---
 -- Safe to run more than once. Nothing here is destructive: every statement that
 -- writes is commented out on purpose so that pasting the whole file only reads.
