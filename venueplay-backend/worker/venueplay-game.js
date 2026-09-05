@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 18:39 · e07b0cfd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 18:52 · 20e05078';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1122,7 +1122,7 @@ async function handleVenueLookup(request, env, json) {
      cost of getting it wrong should not be every venue's wall, so ask for the column
      and fall back to the old select if the database does not have it yet. */
   let rows = await sbGet(env, 'vp_venues',
-    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at,screen_command,screen_command_at&limit=1')
+    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at,screen_version,screen_command,screen_command_at&limit=1')
     .catch(() => null);
   if (!rows || !rows.length) {
     rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
@@ -1146,10 +1146,16 @@ async function handleVenueLookup(request, env, json) {
      failed. */
   if ('screen_seen_at' in v) {
     const last = v.screen_seen_at ? Date.parse(v.screen_seen_at) : 0;
-    if (!isFinite(last) || Date.now() - last > 25000) {
+    /* The screen sends the build it is running. A screen that sends nothing is, by
+       that silence, from before this existed - which is exactly the state that had a
+       screen reporting healthy while ignoring every reload, because it predated the
+       reload code. Recorded so HQ can say "ok, and current" rather than just "ok". */
+    const ver = String(url.searchParams.get('v') || '').slice(0, 24).replace(/[^A-Za-z0-9.-]/g, '')
+                || 'pre-5-sep';
+    if (!isFinite(last) || Date.now() - last > 25000 || ver !== v.screen_version) {
       try {
         await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venueId),
-          { screen_seen_at: new Date().toISOString() });
+          { screen_seen_at: new Date().toISOString(), screen_version: ver });
       } catch (e) { /* never let this affect the answer */ }
     }
   }

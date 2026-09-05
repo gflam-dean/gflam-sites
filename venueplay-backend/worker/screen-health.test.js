@@ -45,7 +45,7 @@ ok("it only writes when the column is really there",
 
 // ---- HQ end: the thresholds ------------------------------------------------
 ok("HQ fetches the column in its own fault-tolerant query",
-   /select\("id,screen_seen_at"\)/.test(HQ),
+   /select\("id,screen_seen_at(,screen_version)?"\)/.test(HQ),
    "naming it in listVenues would 400 the whole venue list pre-migration");
 
 // The decision, on real numbers. Mirrors the badge's own boundaries.
@@ -198,6 +198,43 @@ ok("and rolls to tomorrow if 3am has passed", /\+ 24 \* 3600 \* 1000/.test(HQ));
 ok("the broadcast machinery is gone, not dormant",
    !/sendTvReload|reloadOneScreen|data-tvreload/.test(HQ),
    "dead code around something this fragile gets called again in six months");
+
+/* ==========================================================================
+   HEALTHY IS NOT THE SAME AS CURRENT.
+
+   The Mini Bar's screen reported "Screen ok" in HQ - it really was polling every
+   thirty seconds - and still ignored every reload, because it was running a page
+   from before the reload code existed. Both facts were true at once, and from HQ
+   they looked identical. That is the same blindness the heartbeat was meant to cure,
+   one level down.
+   ========================================================================== */
+ok("the TV reports its build on the poll", /TV_BUILD\s*=\s*"[0-9a-z.-]+"/.test(TV));
+ok("and sends it as ?v=", /\/venue\?code="\+encodeURIComponent\(CODE\)\+"&v="/.test(TV));
+ok("the Worker records it", /screen_version: ver/.test(W));
+ok("a screen that sends nothing is recorded as old", /\|\|\s*'pre-5-sep'/.test(W),
+   "silence IS the signal: it predates the feature");
+ok("the version is sanitised before it is stored",
+   /replace\(\/\[\^A-Za-z0-9\.-\]\/g, ''\)/.test(W), "it arrives from the open internet");
+ok("a version change forces a write even inside the throttle",
+   /ver !== v\.screen_version/.test(W), "or an upgrade would not show for 25 seconds");
+ok("HQ reads the version", /screen_seen_at,screen_version/.test(HQ));
+ok("HQ says OLD PAGE for a healthy screen running an old build",
+   /Screen ok &middot; OLD PAGE/.test(HQ));
+ok("and that badge tells Dean what to do about it",
+   /power cycle at the venue, once/.test(HQ));
+
+// The distinction, on the values themselves.
+function badge(mins, ver){
+  var stale = (ver === "pre-5-sep" || !ver);
+  if (mins <= 2) return stale ? "ok-old" : "ok";
+  if (mins <= 15) return "quiet";
+  return "down";
+}
+ok("polling and current  -> ok",       badge(1, "2026-09-05c") === "ok");
+ok("polling but silent about its build -> ok-old", badge(1, null) === "ok-old");
+ok("polling and admits it is old -> ok-old", badge(1, "pre-5-sep") === "ok-old");
+ok("an old page that has also stopped polling still reads down", badge(300, "pre-5-sep") === "down",
+   "not talking to us at all is the more urgent fact");
 print("");
 if (fail) { print(fail + " OF " + (pass + fail) + " CHECKS FAILED: " + failed.join(", ")); throw new Error(fail + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

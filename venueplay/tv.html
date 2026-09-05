@@ -404,6 +404,14 @@
      a reload asked for BEFORE this page loaded is not obeyed again on every poll -
      which would be a screen that reloads for ever. */
   var PAGE_LOADED_AT = Date.now();
+  /* WHICH PAGE IS THIS SCREEN ACTUALLY RUNNING?
+     On 5 Sep a screen reported healthy - it was polling us every thirty seconds -
+     and still would not obey a reload, because it was running a page from before the
+     reload code existed. From HQ those two look identical, and there was no way to
+     tell them apart without walking into the pub. The screen now says which build it
+     is, on the request it already makes, so "Screen ok" can mean "and it is current".
+     A screen that sends no version at all is, by that silence, an old one. */
+  var TV_BUILD = "2026-09-05c";
   /* The newest HQ command this page has already carried out, so one press is one
      action even though the poll repeats every thirty seconds. */
   var lastCommandAt = 0;
@@ -424,7 +432,8 @@
     var strikes=0;
     function ask(){
       try{
-        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)).then(function(r){ return r.ok?r.json():null; }).then(function(d){
+        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&v="+encodeURIComponent(TV_BUILD))
+          .then(function(r){ return r.ok?r.json():null; }).then(function(d){
           if(!d){ return; }                       // unreachable or old Worker: never false-alarm
           if(d.exists===false){
             strikes++;

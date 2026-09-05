@@ -555,7 +555,7 @@
          screen_seen_at in listVenues would 400 the whole venue list on a database
          that has not run migration 64, and an ops indicator is never worth the list
          it is printed on. A 400 here just leaves every screen "unknown". */
-      c.from("vp_venues").select("id,screen_seen_at")
+      c.from("vp_venues").select("id,screen_seen_at,screen_version")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -565,7 +565,11 @@
       }
       S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
       S.hideHp={}; ((r[9] && r[9].data) || []).forEach(function(v){ S.hideHp[v.id]=!!v.hide_from_trusted; });   // homepage-marquee visibility (migration 54)
-      S.screenSeen={}; ((r[10] && r[10].data) || []).forEach(function(v){ S.screenSeen[v.id]=v.screen_seen_at||null; });   // screen heartbeat (migration 64)
+      S.screenSeen={}; S.screenVer={};
+      ((r[10] && r[10].data) || []).forEach(function(v){
+        S.screenSeen[v.id]=v.screen_seen_at||null;                 // heartbeat (migration 64)
+        S.screenVer[v.id]=v.screen_version||null;                  // which page it runs (migration 66)
+      });
       S.groups=(r[1] && r[1].data) || [];
       S.groupById={}; S.groups.forEach(function(g){ S.groupById[g.id]=g; });
       S.discounts=(r[2] && r[2].data) || [];
@@ -981,7 +985,17 @@
       if(!seen) return '<span class="badge idle" title="No screen at this venue has ever polled us. Open venueplay.com.au/tv?'+esc(v.slug)+' on the screen.">No screen yet</span>';
       var mins = Math.floor((Date.now() - Date.parse(seen)) / 60000);
       if(!isFinite(mins)) return "";
-      if(mins <= 2)  return '<span class="badge live" title="Polled us within the last two minutes.">Screen ok</span>';
+      /* HEALTHY IS NOT THE SAME AS CURRENT. A screen polling us happily while running
+         a page from before the reload code existed reported "Screen ok" and ignored
+         every reload, and from here that was indistinguishable from a working one.
+         Say which it is. */
+      var ver = S.screenVer ? S.screenVer[v.id] : null;
+      var stale = (ver === "pre-5-sep" || !ver);
+      if(mins <= 2){
+        return stale
+          ? '<span class="badge grouped" title="This screen is talking to us but is running a page from before remote reload existed, so it cannot act on one. It needs a power cycle at the venue, once.">Screen ok &middot; OLD PAGE</span>'
+          : '<span class="badge live" title="Polled us within the last two minutes, running ' + esc(ver) + '.">Screen ok</span>';
+      }
       if(mins <= 15) return '<span class="badge grouped" title="Last heard from '+mins+' minutes ago. It polls every 30 seconds, so it has missed several.">Screen quiet '+mins+'m</span>';
       var hrs = Math.floor(mins/60);
       return '<span class="badge suspend" title="Last heard from '+mins+' minutes ago. This screen is not receiving anything: the host cannot reach it and neither can Reload TV. It needs a power cycle at the venue.">Screen DOWN '+(hrs>=1? hrs+'h' : mins+'m')+'</span>';
