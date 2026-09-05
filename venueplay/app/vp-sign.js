@@ -59,7 +59,17 @@
      without a fresh message from the host. The channel name is a public function of the
      venue slug, so any patron who could read the screen could kill the night, repeatedly.
      What is left is genuinely harmless: a screen saying hello, or asking who is there. */
-  /* HOUSEKEEPING THAT ARRIVES UNSIGNED, AND MUST STILL BE HEARD.
+  /* A CHANGE TO THIS LIST CANNOT BE DELIVERED BY THE THING IT GATES.
+     Learned the hard way on 5 Sep. tv_reload was missing below, so HQ's reload
+     button did nothing at an enforcing venue. Adding it here fixed the code
+     instantly and fixed the screens not at all: a TV already on air is running the
+     copy of this file it loaded BEFORE the fix, and that copy still drops the very
+     message you would use to make it fetch the new one.
+     So after ANY change to EXEMPT or to vpGate, a screen at an enforcing venue has
+     to be reloaded by hand once, or left to the four-hourly reload in tv.html. It
+     self-heals within four hours; it does not self-heal in four seconds.
+
+     HOUSEKEEPING THAT ARRIVES UNSIGNED, AND MUST STILL BE HEARD.
      HQ and billing.html broadcast these straight onto the channel: they hold no
      venue private key, and cannot - the key is minted in the host console and
      never leaves it. So the moment a venue was switched to enforce, every one of
