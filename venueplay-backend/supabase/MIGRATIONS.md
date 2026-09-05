@@ -49,7 +49,17 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 55 | broadcast-enforce | yes, run 22 Aug |
 | 56 | one-enforce-flag | **not yet** |
 | 57 | overage-streak-day | **not yet** |
-| 58 | bingo-optins-reachable | **not yet** |
+| 58 | bingo-optins-reachable | applied |
+| 59 | capture-player | applied |
+| 60 | game-feedback | applied |
+| 61 | lock-remaining-views | applied |
+
+Verified against the live database on 5 Sep 2026, not from memory: vp_captures
+.player_id and .source exist, vp_venues.overage_streak_day exists,
+vp_game_feedback answers, and v_vp_prizes_given refuses the public key. Nothing
+is pending. This table said "58 not yet" for weeks after 58 had gone in, which is
+the drift that makes a ledger worse than no ledger - so check the database, and
+correct this line when you do.
 
 56, 57 and 58 all say at the top that they go AFTER the Worker paste, and 56
 carries the query to run first in case a venue was switched to enforce under the
