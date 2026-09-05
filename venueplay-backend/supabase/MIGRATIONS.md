@@ -53,6 +53,7 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 59 | capture-player | applied |
 | 60 | game-feedback | applied |
 | 61 | lock-remaining-views | applied |
+| 63 | screen-reload-pull | **not yet - run it BEFORE pasting the Worker** |
 
 Verified against the live database on 5 Sep 2026, not from memory: vp_captures
 .player_id and .source exist, vp_venues.overage_streak_day exists,

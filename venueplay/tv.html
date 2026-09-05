@@ -400,6 +400,10 @@
   if(window.VPSign && VENUE_SLUG){ VPSign.initReceiver(VP_GAME_API, VENUE_SLUG); }
   function vpGate(payload, cb){ if(window.VPSign){ VPSign.gate(payload, cb); } else { cb(payload); } }
   function showBadVenue(){ var el=$("badVenue"); if(el) el.classList.remove("hidden"); }
+  /* Recorded once, at parse time. Compared against the reload timestamp HQ sets, so
+     a reload asked for BEFORE this page loaded is not obeyed again on every poll -
+     which would be a screen that reloads for ever. */
+  var PAGE_LOADED_AT = Date.now();
   function validateVenue(){
     if(!VENUE_SLUG) return;   // no venue linked: the pair panel already prompts them
     /* ASK TWICE, AND KEEP CHECKING. This ran once and, on a single exists:false, put a
@@ -420,6 +424,25 @@
           }
           strikes=0;
           var el=$("badVenue"); if(el) el.classList.add("hidden");   // it resolved: take the card down
+          /* A RELOAD THE SCREEN PULLS, RATHER THAN ONE IT HAS TO HEAR.
+             Every remote reload before this rode a realtime broadcast, and a screen
+             whose socket has dropped is exactly the screen that needs reloading and
+             cannot be told over the socket it lost. It looks completely healthy from
+             the room, because the advertising is built and timed locally and keeps
+             rotating. Dean has reset screens by hand more than once because of it.
+             This request already happens every thirty seconds over ordinary HTTPS,
+             so the answer carries a timestamp: newer than this page's own load and
+             the screen reloads itself. Works with a dead socket, a channel that
+             errored out, and signing enforced. Thirty seconds instead of instant is
+             the whole cost, and the broadcast still fires first when it can. */
+          if(d.reload_at){
+            var asked = Date.parse(d.reload_at);
+            if(isFinite(asked) && asked > PAGE_LOADED_AT){
+              try{ sessionStorage.setItem("vpTvReloadWhy","hq-asked"); }catch(e){}
+              if(window.__vpTvReload) window.__vpTvReload("hq-asked"); else location.reload();
+              return;
+            }
+          }
         }).catch(function(){});
       }catch(e){}
     }

@@ -1132,8 +1132,29 @@
   /* Send t:"tv_reload" to one venue's screens. Five channels, because the four game screens each
      sit on their own game-namespaced channel and only the bare code is bingo's. Same list
      billing.html uses to push a logo or a slide. */
+  /* THE BROADCAST IS THE FAST PATH, NOT THE ONLY PATH.
+     A screen whose websocket has dropped hears nothing and looks perfectly healthy,
+     because its advertising is built and timed locally. That screen is the one that
+     needs reloading and is the one a broadcast can never reach - which is why these
+     have had to be reset by hand. So ask the Worker to set a timestamp as well: the
+     screen picks that up on the GET /venue poll it already makes every thirty
+     seconds, over ordinary HTTPS, with no socket involved. Broadcast first because
+     when it works it is instant; the poll is the floor under it. */
+  function askScreenReloadByPoll(slug){
+    /* gameWorkerPost degrades on a 404, which is exactly right here: an older Worker
+       that has not been pasted yet simply does not have the route, and the broadcast
+       below still does what it always did. Nothing is announced either way - this is
+       a belt to the braces, and a venue's screen reloading is its own confirmation. */
+    try{
+      return gameWorkerPost("/screen/reload", { slug: slug }).then(function(r){
+        if(r && r.error) console.warn("[hq] screen reload by poll: " + r.error);
+        return r;
+      });
+    }catch(e){ return null; }
+  }
   function sendTvReload(slug, force){
     if(!slug) return;
+    askScreenReloadByPoll(slug);
     var c=VP.getClient();
     var codes=[ VP.venueCode(slug) ];
     ["trivia","musical","raffle","members"].forEach(function(g){ codes.push(VP.venueCode(g+"-"+slug)); });

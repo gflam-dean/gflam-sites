@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 17:15 · e3928032';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 17:57 · b580c4fd';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -257,6 +257,7 @@ export default {
       if (method === 'GET'  && path === '/feedback/tally')     return await handleFeedbackTally(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
+      if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
       /* Broadcast signing (migrations 38 + 55). vp-sign.js has been loaded by every TV, phone and
          console since 20 Aug calling these three; they were never written, so every page fell back
          to send-unsigned / render-everything and the signing was decorative. */
@@ -1111,8 +1112,73 @@ async function handleVenueLookup(request, env, json) {
   const url = new URL(request.url);
   const venueId = await venueByCode(env, url.searchParams.get('code') || '');
   if (!venueId) return json({ exists: false });
-  const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
-  return json({ exists: true, name: (rows && rows[0] && rows[0].name) || '' });
+  /* SURVIVE BEING PASTED BEFORE THE MIGRATION.
+     This route is what the screen polls every thirty seconds to check its venue
+     still exists, and two consecutive failures put a full-screen "not linked to an
+     account" card over the venue's advertising. If this Worker went in before
+     migration 63, selecting screen_reload_at would answer 42703 and every screen in
+     the country would show that card. The order in MIGRATIONS.md is right, but the
+     cost of getting it wrong should not be every venue's wall, so ask for the column
+     and fall back to the old select if the database does not have it yet. */
+  let rows = await sbGet(env, 'vp_venues',
+    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at&limit=1').catch(() => null);
+  if (!rows || !rows.length) {
+    rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
+  }
+  const v = (rows && rows[0]) || {};
+  /* reload_at RIDES THIS REQUEST ON PURPOSE.
+     The screen already calls this every thirty seconds over ordinary HTTPS, so a
+     reload delivered here reaches a screen whose websocket has died - which is
+     precisely the screen that needs reloading, and the one a broadcast can never
+     reach. Costs no extra request and no extra query. */
+  return json({
+    exists: true,
+    name: v.name || '',
+    reload_at: v.screen_reload_at || null,
+  });
+}
+
+/* POST /screen/reload   { slug }   (HQ admin only)
+ *
+ * Rings the doorbell. Sets vp_venues.screen_reload_at, and every screen at that
+ * venue picks it up on its next poll and reloads itself.
+ *
+ * This exists because the broadcast path cannot be trusted as the only path: a
+ * screen with a dropped socket hears nothing, looks completely healthy because the
+ * advertising is timed locally, and has had to be reset by hand. HQ still fires the
+ * broadcast as well, because when it works it is instant. This is the floor.
+ */
+async function handleScreenReload(request, env, json, body) {
+  /* HQ ADMINS ONLY, and the same definition the rest of this file uses: a row in
+     vp_platform_admins with role owner or accounts. requireStaff already made the
+     mistake of accepting any row once, which handed a Gflam 'staff' admin owner
+     rights at every venue in the country, so this matches it rather than inventing
+     a second answer to the same question. */
+  const authUserId = await verifyHostJwt(request, env);
+  if (!authUserId) return json({ error: 'sign in first' }, 401);
+  const admins = await sbGet(env, 'vp_platform_admins',
+    'auth_user_id=eq.' + enc(authUserId) + '&role=in.(owner,accounts)&select=auth_user_id,role');
+  if (!admins || !admins.length) return json({ error: 'not allowed' }, 403);
+  const admin = { id: null, label: 'hq:' + (admins[0].role || 'admin'), auth: authUserId };
+  const slug = String((body && body.slug) || '').trim().toLowerCase().slice(0, 80);
+  if (!slug || !/^[a-z0-9-]+$/.test(slug)) return json({ error: 'bad slug' }, 400);
+  const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id,name&limit=1');
+  const venue = rows && rows[0];
+  if (!venue) return json({ error: 'no such venue' }, 404);
+  const at = new Date().toISOString();
+  const ok = await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id), { screen_reload_at: at });
+  if (ok === false) return json({ error: 'could not set it' }, 502);
+  try {
+    await sbInsert(env, 'vp_admin_audit', {
+      actor_admin: null,
+      actor_label: admin.label,
+      action: 'screen_reload_requested',
+      target: venue.id,
+      detail: { venue_name: venue.name || null, at: at, via: 'poll',
+                auth_user: admin.auth },
+    }, false);
+  } catch (e) { /* audit is best effort */ }
+  return json({ ok: true, at: at, note: 'screens reload within 30 seconds' });
 }
 
 /* What is on at this venue right now?  (anon)
