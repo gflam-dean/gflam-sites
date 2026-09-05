@@ -147,6 +147,51 @@ ok("the hold expires on its own", /ADS_HOLD_MS = 2 \* 60 \* 1000/.test(TV),
    "a real night starting must not be blocked");
 ok("one command is one action", /cAt > lastCommandAt/.test(TV),
    "the poll repeats every 30s; without this it would act for ever");
+
+/* ==========================================================================
+   ONE BUTTON, NOW OR 3AM.
+
+   A reload is a deployment, and a deployment must not interrupt a Friday night. The
+   condition that makes that work is easy to get exactly backwards: a time in the
+   FUTURE is a schedule, not an instruction, and without that check a reload set for
+   3am fires the instant it is saved.
+   ========================================================================== */
+function wouldAct(commandAt, now, pageLoadedAt, lastCommandAt){
+  var cAt = Date.parse(commandAt);
+  if (!isFinite(cAt)) return false;
+  return cAt <= now && cAt > pageLoadedAt && cAt > lastCommandAt;
+}
+var T8PM = Date.parse("2026-09-05T10:00:00Z");            // page loaded
+var T3AM = Date.parse("2026-09-05T17:00:00Z");            // 3am Brisbane = 17:00 UTC
+ok("a 3am reload does NOT fire when it is set at 8pm",
+   wouldAct("2026-09-05T17:00:00Z", T8PM + 1000, T8PM, 0) === false,
+   "the whole point of scheduling it");
+ok("it fires once 3am arrives",
+   wouldAct("2026-09-05T17:00:00Z", T3AM + 1000, T8PM, 0) === true);
+ok("a screen that loaded AFTER 3am does not fire it again",
+   wouldAct("2026-09-05T17:00:00Z", T3AM + 60000, T3AM + 30000, 0) === false);
+ok("and it does not fire twice on the next poll",
+   wouldAct("2026-09-05T17:00:00Z", T3AM + 31000, T8PM, T3AM) === false);
+ok("a NOW reload fires immediately",
+   wouldAct("2026-09-05T10:00:05Z", T8PM + 6000, T8PM, 0) === true);
+ok("the TV really has all three conditions",
+   /cAt <= Date\.now\(\) && cAt > PAGE_LOADED_AT && cAt > lastCommandAt/.test(TV));
+
+// The Worker end of the same thing.
+ok("the Worker accepts a scheduled time", /body\.at[\s\S]{0,200}Date\.parse/.test(W));
+ok("and refuses one absurdly far ahead", /48 \* 3600 \* 1000/.test(W),
+   "a typo must not park a reload on every screen for a month");
+ok("it can address every venue at once", /body\.all[\s\S]{0,200}slug=not\.is\.null/.test(W));
+ok("bulk skips suspended venues", /status=neq\.suspended/.test(W));
+
+// HQ: one button, and the old machinery actually gone.
+ok("HQ asks NOW or 3AM", /Type NOW[\s\S]{0,200}Type 3AM/.test(HQ));
+ok("3am is computed as 17:00 UTC (Brisbane has no daylight saving)",
+   /setUTCHours\(17, 0, 0, 0\)/.test(HQ));
+ok("and rolls to tomorrow if 3am has passed", /\+ 24 \* 3600 \* 1000/.test(HQ));
+ok("the broadcast machinery is gone, not dormant",
+   !/sendTvReload|reloadOneScreen|data-tvreload/.test(HQ),
+   "dead code around something this fragile gets called again in six months");
 print("");
 if (fail) { print(fail + " OF " + (pass + fail) + " CHECKS FAILED: " + failed.join(", ")); throw new Error(fail + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

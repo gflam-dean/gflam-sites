@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 18:32 · 300b8898';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '5 Sep 2026, 18:39 · e07b0cfd';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1194,29 +1194,60 @@ const SCREEN_COMMANDS = { ads: 1, reload: 1 };
 async function handleScreenCommand(request, env, json, body) {
   const admin = await requireScreenAdmin(request, env, json);
   if (admin.error) return admin.error;
-  const slug = String((body && body.slug) || '').trim().toLowerCase().slice(0, 80);
   const cmd = String((body && body.command) || '').trim().toLowerCase();
-  if (!slug || !/^[a-z0-9-]+$/.test(slug)) return json({ error: 'bad slug' }, 400);
   if (!SCREEN_COMMANDS[cmd]) return json({ error: 'unknown command' }, 400);
-  const rows = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id,name&limit=1');
-  const venue = rows && rows[0];
-  if (!venue) return json({ error: 'no such venue' }, 404);
-  const at = new Date().toISOString();
+
+  /* WHEN, not just what. A screen reload is a deployment, and a deployment has no
+     business interrupting a room at 8pm on a Friday. So HQ can hand a time, and the
+     screens act at that time instead of now - the timestamp simply sits in the
+     column until their poll finds it is in the past. Nothing has to stay awake or
+     remember anything: the schedule IS the stored time.
+     Capped at 48 hours so a typo cannot park a reload on every screen in the country
+     for a month. */
+  let at = new Date().toISOString();
+  if (body && body.at) {
+    const t = Date.parse(String(body.at));
+    if (!isFinite(t)) return json({ error: 'bad time' }, 400);
+    if (t > Date.now() + 48 * 3600 * 1000) return json({ error: 'too far ahead' }, 400);
+    at = new Date(t).toISOString();
+  }
+
+  /* ONE VENUE OR ALL OF THEM. Dean asked for a single button rather than three, so
+     the bulk case is a mode of the same route: one place for this to be right or
+     wrong, rather than two that can drift apart. */
+  let venues;
+  if (body && body.all) {
+    venues = await sbGet(env, 'vp_venues',
+      'slug=not.is.null&status=neq.suspended&select=id,name,slug&limit=2000');
+  } else {
+    const slug = String((body && body.slug) || '').trim().toLowerCase().slice(0, 80);
+    if (!slug || !/^[a-z0-9-]+$/.test(slug)) return json({ error: 'bad slug' }, 400);
+    venues = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id,name,slug&limit=1');
+  }
+  if (!venues || !venues.length) return json({ error: 'no venues matched' }, 404);
+
   const patch = { screen_command: cmd, screen_command_at: at };
-  // Keep reload_at in step so an older screen, still running the migration-63 page,
-  // at least restarts rather than ignoring the press entirely.
+  // Keep reload_at in step so a screen still on the migration-63 page at least
+  // restarts rather than ignoring the press entirely.
   if (cmd === 'reload') patch.screen_reload_at = at;
-  const ok = await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id), patch);
-  if (ok === false) return json({ error: 'could not set it' }, 502);
+
+  let done = 0, failed = 0;
+  for (const v of venues) {
+    const ok = await sbPatch(env, 'vp_venues', 'id=eq.' + enc(v.id), patch);
+    if (ok === false) failed++; else done++;
+  }
   try {
     await sbInsert(env, 'vp_admin_audit', {
       actor_admin: null, actor_label: admin.label,
       action: 'screen_command',
-      target: venue.id,
-      detail: { venue_name: venue.name || null, command: cmd, at: at, auth_user: admin.auth },
+      target: (body && body.all) ? ('venues:' + done) : (venues[0] && venues[0].id),
+      detail: { command: cmd, at: at, venues: done, failed: failed,
+                all: !!(body && body.all), auth_user: admin.auth },
     }, false);
   } catch (e) { /* audit is best effort */ }
-  return json({ ok: true, command: cmd, at: at, note: 'screens act within 30 seconds' });
+  return json({ ok: true, command: cmd, at: at, venues: done, failed: failed,
+                scheduled: at > new Date().toISOString(),
+                note: 'screens act within 30 seconds of that time' });
 }
 
 /* The same admin test both screen routes use. Written once: requireStaff already

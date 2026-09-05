@@ -55,7 +55,7 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 61 | lock-remaining-views | applied |
 | 63 | screen-reload-pull | applied 5 Sep |
 | 64 | screen-heartbeat | applied 5 Sep |
-| 65 | screen-command | **not yet - run it BEFORE pasting the Worker** |
+| 65 | screen-command | applied 5 Sep |
 
 Verified against the live database on 5 Sep 2026, not from memory: vp_captures
 .player_id and .source exist, vp_venues.overage_streak_day exists,

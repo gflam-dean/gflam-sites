@@ -994,11 +994,11 @@
       statusCell += " " + screenBadge(v);
       var actions='<button class="mini" data-viewas="'+esc(v.id)+'">View as</button>'+
                   '<button class="mini" data-details="'+esc(v.id)+'">Details</button>'+
-                  (v.slug ? '<button class="mini" data-tvreload="'+esc(v.id)+'">Reload TV</button>' : '')+
-                  /* RELOAD IS NOT ENOUGH ON ITS OWN. A restarted screen comes back on
-                     the ads and then anything still broadcasting takes the wall back
-                     within seconds, which is why a screen stuck on a finished board
-                     could be reloaded all day. This pushes the STATE. */
+                  /* ONE per-venue control, not two. "Reload TV" only restarts a
+                     screen - it comes back on the ads and anything still broadcasting
+                     takes the wall again within seconds, which is why reloading a
+                     stuck screen never fixed one. This pushes the STATE and holds it.
+                     Reloading every screen is the master button above. */
                   (v.slug ? '<button class="mini" data-tvads="'+esc(v.id)+'">Ads back on</button>' : '')+
                   (canBilling() ? '<button class="mini" data-disc="'+esc(v.id)+'">Discount</button>' : '')+
                   /* For a venue that was onboarded here and never added a card. The welcome email
@@ -1111,8 +1111,6 @@
       }, 60);
       return;
     }
-    var tr=e.target.closest("button[data-tvreload]");
-    if(tr){ reloadOneScreen(tr.getAttribute("data-tvreload"), tr); return; }
     var ta=e.target.closest("button[data-tvads]");
     if(ta){ adsBackOn(ta.getAttribute("data-tvads"), ta); return; }
     var hh=e.target.closest("button[data-hidehp]");
@@ -1173,75 +1171,38 @@
      screen picks that up on the GET /venue poll it already makes every thirty
      seconds, over ordinary HTTPS, with no socket involved. Broadcast first because
      when it works it is instant; the poll is the floor under it. */
-  function askScreenReloadByPoll(slug){
-    /* gameWorkerPost degrades on a 404, which is exactly right here: an older Worker
-       that has not been pasted yet simply does not have the route, and the broadcast
-       below still does what it always did. Nothing is announced either way - this is
-       a belt to the braces, and a venue's screen reloading is its own confirmation. */
-    try{
-      return gameWorkerPost("/screen/reload", { slug: slug }).then(function(r){
-        if(r && r.error) console.warn("[hq] screen reload by poll: " + r.error);
-        return r;
-      });
-    }catch(e){ return null; }
-  }
-  function sendTvReload(slug, force){
-    if(!slug) return;
-    askScreenReloadByPoll(slug);
-    var c=VP.getClient();
-    var codes=[ VP.venueCode(slug) ];
-    ["trivia","musical","raffle","members"].forEach(function(g){ codes.push(VP.venueCode(g+"-"+slug)); });
-    codes.forEach(function(code){
-      var ch=c.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
-      var dropped=false;
-      /* removeChannel, not unsubscribe: in supabase-js v2 unsubscribe leaves the channel
-         registered on the client, so every press of the master button left 5 per venue attached
-         for the life of the page and walked towards the ~100 channel ceiling. */
-      function drop(){ if(dropped) return; dropped=true; try{ VP.getClient().removeChannel(ch); }catch(e){ try{ ch.unsubscribe(); }catch(_){} } }
-      ch.subscribe(function(st){
-        if(st!=="SUBSCRIBED") return;
-        try{ ch.send({ type:"broadcast", event:"msg", payload:{ t:"tv_reload", force:!!force } }); }catch(e){}
-        setTimeout(drop, 1200);
-      });
-      setTimeout(drop, 8000);   // never leave a channel attached because a join never landed
-    });
-  }
-
-  /* One venue, from its row. Unlike the master button this does NOT skip a live venue: picking a
-     single venue is a deliberate act, usually because that screen is the one misbehaving. It
-     warns instead, and names what a mid-game reload costs. */
-  /* Put the venue's advertising back on the wall. Travels on the screen's own
-     thirty-second HTTPS poll, so it reaches a screen whose websocket has died -
-     which is the screen this is for. The screen holds the ads for two minutes
-     afterwards so a console still announcing an abandoned game cannot immediately
-     undo it, and the hold expires so a real night is never blocked. */
+  /* Put the venue's advertising back on the wall, for ONE venue.
+     A reload only restarts a screen: it comes back on the ads and anything still
+     broadcasting takes the wall again within seconds, which is why reloading a stuck
+     screen never fixed one. This pushes the STATE, and the screen holds the ads for
+     two minutes afterwards so a console still announcing a dead game cannot undo it.
+     The hold expires on its own, so a real night starting is never blocked. */
   function adsBackOn(id, btn){
     var v=venueById(id); if(!v || !v.slug){ alert("That venue has no screen address yet."); return; }
     if(!confirm("Put the venue's advertising back on the screen at "+v.name+"?\n\nIf a game is genuinely running there it will be taken off the wall. The screen acts within 30 seconds and holds the ads for two minutes.")) return;
     btn.disabled=true; var old=btn.textContent; btn.textContent="…";
     gameWorkerPost("/screen/command", { slug:v.slug, command:"ads" }).then(function(r){
-      /* alert, not flash: flash needs a banner element on the page and the two ids I
-         first used here (venueOk, venueErr) do not exist, so every result would have
-         been swallowed silently - which is the failure mode this whole afternoon was
-         about. */
+      /* alert, not flash: the two ids I first used here (venueOk, venueErr) do not
+         exist on this page, so every result would have been swallowed in silence -
+         which is the exact failure mode this whole exercise was about. */
       if(r && r.error) alert("Could not do that: " + r.error);
+      btn.disabled=false; btn.textContent=old;
     });
     auditBestEffort("screen_ads", "venue:"+id, { name:v.name });
-    setTimeout(function(){ btn.disabled=false; btn.textContent=old; }, 2500);
   }
 
-  function reloadOneScreen(id, btn){
-    var v=venueById(id); if(!v || !v.slug){ alert("That venue has no screen address yet."); return; }
-    var liveNow=!!S.live[id];
-    var msg="Reload the screen at "+v.name+"?";
-    if(liveNow) msg+="\n\nA game is ON AIR there right now. The screen recovers by itself, but if it is musical bingo the current song stops and the room is quiet until the next one.";
-    else msg+="\n\nIt comes back on the current version within a few seconds.";
-    if(!confirm(msg)) return;
-    btn.disabled=true; var old=btn.textContent; btn.textContent="…";
-    sendTvReload(v.slug, true);   // deliberate, on one screen, already warned: go now
-    auditBestEffort("tv_reload", "venue:"+id, { name:v.name, live:liveNow });
-    setTimeout(function(){ btn.disabled=false; btn.textContent=old; }, 2500);
-  }
+  /* THE BROADCAST PATH IS GONE FROM HERE, ON PURPOSE.
+     Screen instructions used to be a t:"tv_reload" fired at five realtime channels
+     per venue, in batches of four, because twenty websocket joins in flight is where
+     a browser starts dropping them silently. All of that machinery existed to make an
+     unreliable transport slightly less unreliable, and it still could not reach the
+     screens that most needed reaching: a screen with a dropped socket hears nothing,
+     and looks perfectly healthy while doing so.
+     Every instruction is now one row update per venue, which the screens read on the
+     poll they already make every thirty seconds over ordinary HTTPS. No channels, no
+     batching, no join ceiling, and it works on a screen that cannot hear a thing.
+     Deleted rather than left dormant: dead code around something this fragile is how
+     the wrong path gets called again in six months. */
 
   /* Club or pub, guessed from the venue's name.
      The postcode gives us the STATE automatically, but nothing about a postcode says whether the
@@ -1276,44 +1237,66 @@
 
      Five channels per venue, because the four game screens each sit on their own
      game-namespaced channel and only the bare code is bingo's. Same list billing.html uses. */
+  /* ONE BUTTON, AND A CHOICE OF WHEN.
+     There used to be three ways to poke a screen: a master reload that fired a
+     broadcast at five channels per venue in batches of four, a per-venue reload, and
+     an ads button. Dean asked for one. The batching existed because each press meant
+     twenty websocket joins in flight and a browser will silently drop half of them on
+     a long list - none of which is needed any more, because the instruction is a
+     single row update per venue that the screens read on the poll they already make.
+
+     NOW or 3AM, because a reload is a deployment and a deployment has no business
+     interrupting a room on a Friday night. 3am is a time, not a timer: it is stored
+     in the column and every screen simply finds it in the past when it gets there.
+     Nothing has to stay awake, and a screen that was off comes back and sees it. */
+  function nextThreeAmBrisbane(){
+    /* Brisbane is UTC+10 all year - Queensland has no daylight saving - so this is
+       arithmetic rather than a timezone library. 3am there is 17:00 UTC the day
+       before. */
+    var now = new Date();
+    var d = new Date(now.getTime());
+    d.setUTCHours(17, 0, 0, 0);                 // 03:00 Brisbane
+    if (d.getTime() <= now.getTime()) d = new Date(d.getTime() + 24 * 3600 * 1000);
+    return d;
+  }
+
   function reloadAllScreens(){
     if(!canBilling()) return;
     var out=$("reloadScreensOut");
-    reloadAllScreensNow();
-  }
-  /* No liveness guessing any more. HQ cannot see a bingo night or a members draw at all, because
-     neither opens a session, so any check here was always going to be wrong for two of the five
-     formats. The TV decides instead: it takes the reload, and if a game is on screen it holds it
-     until the ads come back. Nothing is ever interrupted, and nothing is skipped either. */
-  function reloadAllScreensNow(){
-    var out=$("reloadScreensOut");
     var targets=S.venues.filter(function(v){ return v.status!=="suspended" && v.slug; });
-    var live=[];
-    if(!targets.length){ out.textContent="No venues with a screen address yet."; return; }
-    if(!confirm("Reload "+targets.length+" venue screen"+(targets.length===1?"":"s")+"?"+
-                "\n\nA screen showing the ads reloads within a few seconds. A screen mid-game holds the reload and takes it the moment that game finishes, so nothing is interrupted.")) return;
+    if(!targets.length){ if(out) out.textContent="No venues with a screen address yet."; return; }
 
-    var btn=$("reloadScreens"); btn.disabled=true; btn.textContent="Reloading…";
-    out.textContent="Sending…";
-    var done=0;   // the sending itself is sendTvReload's job now
+    var when3 = nextThreeAmBrisbane();
+    var pretty = when3.toLocaleString("en-AU", { weekday:"short", hour:"numeric", minute:"2-digit", hour12:true });
+    var answer = prompt(
+      "Reload " + targets.length + " venue screen" + (targets.length===1?"":"s") + ".\n\n" +
+      "Type NOW to do it immediately.\n" +
+      "Type 3AM to schedule it for " + pretty + " Brisbane, so no room is interrupted.\n\n" +
+      "Anything else cancels.", "3AM");
+    if(!answer) return;
+    answer = String(answer).trim().toUpperCase();
+    var at = null;
+    if(answer === "NOW"){ at = null; }
+    else if(answer === "3AM" || answer === "3 AM"){ at = when3.toISOString(); }
+    else { return; }
 
-    /* In batches. One channel join per game per venue is 5x the venue count, and firing them all
-       at once on a big list is how you get a browser to drop half of them silently. */
-    var BATCH=4, i=0;   // 4 venues x 5 channels = 20 joins in flight, well under the client ceiling
-    (function next(){
-      if(i>=targets.length){
-        btn.disabled=false; btn.textContent="Reload every venue screen";
-        // "Asked", not "sent": sendTvReload is fire and forget, so nothing here saw a send land.
-        out.textContent="Asked "+done+" venue"+(done===1?"":"s")+" to reload. "+
-          "Idle screens come back within a few seconds; any mid-game screen takes it when its game ends.";
-        auditBestEffort("tv_reload_all", "venues:"+done, {});
-        return;
+    var btn=$("reloadScreens"); if(btn){ btn.disabled=true; btn.textContent="Sending…"; }
+    if(out) out.textContent="Sending…";
+    var body = { all:true, command:"reload" };
+    if(at) body.at = at;
+    gameWorkerPost("/screen/command", body).then(function(r){
+      if(btn){ btn.disabled=false; btn.textContent="Reload every venue screen"; }
+      if(r && r.error){ if(out) out.textContent="Could not do that: "+r.error; return; }
+      var n = (r && r.venues) || 0;
+      if(out){
+        out.textContent = at
+          ? ("Scheduled for " + pretty + " Brisbane on " + n + " venue screen" + (n===1?"":"s") +
+             ". They pick it up within 30 seconds of that time, whether or not their connection is healthy.")
+          : ("Asked " + n + " venue screen" + (n===1?"":"s") +
+             " to reload. They act within 30 seconds.");
       }
-      var slice=targets.slice(i, i+BATCH); i+=BATCH;
-      slice.forEach(function(v){ sendTvReload(v.slug); done++; });
-      out.textContent="Sending… "+Math.min(i,targets.length)+" of "+targets.length;
-      setTimeout(next, 1500);   // longer than drop()'s 1200ms, so batches do not overlap
-    })();
+      auditBestEffort("tv_reload_all", "venues:"+n, { at: at || "now" });
+    });
   }
 
   /* ---- VIEW AS (impersonation) ---- */

@@ -453,7 +453,16 @@
              two minutes later must not be blocked. */
           if(d.command && d.command_at){
             var cAt = Date.parse(d.command_at);
-            if(isFinite(cAt) && cAt > PAGE_LOADED_AT && cAt > lastCommandAt){
+            /* THREE CONDITIONS, AND THE FIRST IS THE ONE THAT MAKES 3AM WORK.
+               cAt <= now : a time in the FUTURE is a schedule, not an instruction.
+                            Without this a reload set for 3am fires the instant it
+                            is saved, which is the opposite of the point.
+               cAt > PAGE_LOADED_AT : the request must be newer than this page, or a
+                            reloaded screen carries out the same instruction again,
+                            for ever.
+               cAt > lastCommandAt : the poll repeats every thirty seconds, so one
+                            press has to be one action. */
+            if(isFinite(cAt) && cAt <= Date.now() && cAt > PAGE_LOADED_AT && cAt > lastCommandAt){
               lastCommandAt = cAt;
               if(d.command === "ads"){
                 adsHoldUntil = Date.now() + ADS_HOLD_MS;
