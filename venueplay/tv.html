@@ -1549,8 +1549,25 @@
 
     // A game on screen is its own proof of life. Otherwise there must be a slide that is
     // genuinely visible, not merely built.
+    /* HOW A SCREEN GETS STRANDED, AND WHY THIS LINE WAS THE CAUSE.
+       This used to read `if(!idle()) return true;` - a game on the wall was proof of
+       life, full stop. That one line disabled every escape a screen has at once: the
+       four-hourly reload is idle-only, this watchdog declared the screen healthy, and
+       so a board frozen since last night sat there for ever. On 5 Sep The Mini Bar's
+       screen was in exactly that state, polling us happily, and there was no remote
+       lever of any kind that could reach it. It had to be reloaded by hand.
+       A game is proof of life only while something is still ARRIVING. A real night
+       produces host traffic constantly - bingo calls a ball every few seconds - so ten
+       minutes of complete silence behind a game on screen means the game is over and
+       nobody told us. */
+    var FROZEN_GAME_MS = 10 * 60 * 1000;
+    function gameLooksFrozen(){
+      if(idle()) return false;
+      var quiet = Date.now() - Math.max(lastHostAt || 0, lastBingoAt || 0);
+      return quiet > FROZEN_GAME_MS;
+    }
     function screenIsAlive(){
-      if(!idle()) return true;
+      if(!idle()) return !gameLooksFrozen();
       var host = document.getElementById("tvAds");
       if(!host) return false;
       if(!host.querySelector(".ad")) return false;         // nothing was built
@@ -1570,6 +1587,10 @@
 
         strikes++;
         if(strikes < 2) return;                 // one bad sample can just be a slide swapping over
+        /* A FROZEN GAME IS NOT A BROKEN AD LOOP. Rebuilding the slides cannot help a
+           board that has been sitting there since last night - they are behind it -
+           so skip the repair and start clean. */
+        if(gameLooksFrozen()){ reload("frozen-game"); return; }
         if(strikes === 2){                      // cheap repair first: rebuild in place
           try{ adBuilt = false; buildAds(); startAds(); }catch(e){}
           return;

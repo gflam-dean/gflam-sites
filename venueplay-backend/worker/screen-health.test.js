@@ -309,6 +309,45 @@ ok("a different venue does NOT pass", nameOk("The Mini Bar", "Wallsend Hotel") =
    "the whole point is noticing you have the wrong row");
 ok("empty does not pass", nameOk("", "The Mini Bar") === false);
 ok("a partial name does not pass", nameOk("Mini", "The Mini Bar") === false);
+
+/* ==========================================================================
+   HOW A SCREEN GETS STRANDED.
+
+   On 5 Sep The Mini Bar's screen sat on a bingo board that had finished hours
+   earlier. It was polling us every thirty seconds - HQ read "Screen ok" - and there
+   was no remote lever of any kind that could reach it. It had to be reloaded by hand.
+
+   The cause was one line: screenIsAlive() began `if(!idle()) return true;`, so a game
+   on the wall was proof of life full stop. That disabled every escape at once - the
+   four-hourly reload is idle-only, and the watchdog declared the screen healthy - and
+   the command pull did not exist in that page yet.
+
+   A game is proof of life only while something is still ARRIVING.
+   ========================================================================== */
+ok("a frozen game is no longer proof of life",
+   !/function screenIsAlive\(\)\{\s*\n\s*if\(!idle\(\)\) return true;/.test(TV),
+   "that one line stranded a screen for a whole evening");
+ok("there is a frozen-game test", /function gameLooksFrozen\(\)/.test(TV));
+ok("it measures silence, not mode", /Date\.now\(\) - Math\.max\(lastHostAt \|\| 0, lastBingoAt \|\| 0\)/.test(TV));
+ok("ten minutes, comfortably longer than a gap between balls",
+   /FROZEN_GAME_MS = 10 \* 60 \* 1000/.test(TV));
+ok("a frozen game reloads instead of rebuilding the ads",
+   /gameLooksFrozen\(\)\)\{ reload\("frozen-game"\); return; \}/.test(TV),
+   "the slides are behind the board; rebuilding them cannot help");
+
+// The decision itself.
+function frozen(mode, lastTraffic, now){
+  if (mode === "ads") return false;
+  return (now - lastTraffic) > 10*60*1000;
+}
+var NOW2 = 1788700000000, MIN = 60000;
+ok("a live bingo game, ball 20 seconds ago -> not frozen", frozen("bingo", NOW2-20000, NOW2) === false);
+ok("a game with a 5 minute gap -> not frozen", frozen("bingo", NOW2-5*MIN, NOW2) === false,
+   "a host pausing to sort a prize must not trip this");
+ok("a game silent for 11 minutes -> frozen", frozen("bingo", NOW2-11*MIN, NOW2) === true);
+ok("a board silent since last night -> frozen", frozen("bingo", NOW2-600*MIN, NOW2) === true);
+ok("the ads loop is never 'frozen' in this sense", frozen("ads", NOW2-600*MIN, NOW2) === false,
+   "an idle screen is handled by the ad-slide check instead");
 print("");
 if (fail) { print(fail + " OF " + (pass + fail) + " CHECKS FAILED: " + failed.join(", ")); throw new Error(fail + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");
