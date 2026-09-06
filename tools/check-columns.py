@@ -83,6 +83,26 @@ def files():
                     continue
                 if n.endswith('.js') or n.endswith('.html'):
                     out.append(os.path.join(dirpath, n))
+    # ONLY FILES THIS REPO SHIPS. venueplay/worker/ holds three untracked
+    # leftovers from the 18 Aug move to venueplay-backend/. They are a month
+    # behind the Workers that actually deploy, and on 7 Sep they were the sole
+    # reason this tool reported vp_venue_staff.label missing: the live Worker
+    # writes display_name and always has. A column named only by dead code is
+    # not a missing column, it is a false alarm that outranks the real ones.
+    try:
+        import subprocess
+        r = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard'],
+                           capture_output=True, text=True, cwd=ROOT)
+        loose = {os.path.abspath(os.path.join(ROOT, l.strip()))
+                 for l in r.stdout.splitlines() if l.strip()}
+        if loose:
+            skipped = [f for f in out if os.path.abspath(f) in loose]
+            out = [f for f in out if os.path.abspath(f) not in loose]
+            if skipped:
+                print('  note  %d untracked file(s) skipped, git does not track them: %s'
+                      % (len(skipped), ', '.join(os.path.relpath(f, ROOT) for f in skipped[:4])))
+    except Exception:
+        pass
     return out
 
 

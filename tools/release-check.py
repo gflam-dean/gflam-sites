@@ -309,6 +309,33 @@ def local_checks(which):
                 if f.endswith('.html') or f.endswith('.js'):
                     files.append(os.path.join(d, f))
 
+    """AND EVERY FILE SCANNED MUST BE ONE THIS REPO ACTUALLY SHIPS.
+
+    On 7 Sep the gate reported a missing database column and a Worker calling
+    eleven functions it never defines. Both were real readings of real files,
+    and both were meaningless: venueplay/worker/ held three UNTRACKED leftovers
+    from the 18 Aug move to venueplay-backend/. Nothing deploys them, git does
+    not know them, and they had drifted a month behind the Workers that do ship.
+    The gate spent two of its three failures describing dead code, which is the
+    same fault as a test pointed at the wrong checkout: it cannot be right, and
+    it hides whatever is actually wrong.
+
+    A file git is not tracking is not a release artefact. Skip it, and SAY SO,
+    because a silent skip is how the count stops meaning anything."""
+    untracked = []
+    try:
+        r = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard'],
+                           capture_output=True, text=True, cwd=ROOT)
+        loose = {os.path.join(ROOT, l.strip()) for l in r.stdout.splitlines() if l.strip()}
+        if loose:
+            untracked = sorted(f for f in files if os.path.abspath(f) in loose)
+            files = [f for f in files if os.path.abspath(f) not in loose]
+    except Exception:
+        pass
+    ok('every file checked is one git tracks', not untracked,
+       '%d file(s) scanned' % len(files),
+       why='not tracked, so not shipped: ' + ', '.join(short(f) for f in untracked[:4]))
+
     bad = 0
     for f in files:
         for n, js in enumerate(js_blocks(f)):
