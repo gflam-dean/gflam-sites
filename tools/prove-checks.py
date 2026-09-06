@@ -56,6 +56,74 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 5 Sep: the screen-reachability work ---------------------------------
+    # Each of these was broken by hand and watched go red as it was written. Written
+    # down here so the next person does not have to take that on trust, and so a
+    # later edit that quietly guts one of them is caught.
+    ('a dropped channel is never written into',
+     'venueplay/app/index.html',
+     '        subscribed=false;\n        $("statusDot").classList.remove("on");',
+     '        $("statusDot").classList.remove("on");',
+     'bingo says Reconnecting and keeps posting into a dead socket'),
+
+    ('a console can put the game back on the wall',
+     'venueplay/app/musical/host.html',
+     # BOTH listeners. The check is satisfied by either, which is correct - one is
+     # enough to recover a screen - so removing only pageshow left it green and read
+     # as a blind check when the mutation was simply too weak.
+     '  window.addEventListener("pageshow", reassertOnReturn);\n  document.addEventListener("visibilitychange", function(){',
+     '  document.addEventListener("nothing", function(){',
+     'a console sends the TV to the ads and can never bring it back'),
+
+    ('a reloaded TV gets the lobby back',
+     'venueplay/app/musical/host.html',
+     'if(G.status==="lobby" || G.status==="running"){\n        send({ t:"mode", mode:"musical" });',
+     'if(G.status==="running"){\n        send({ t:"mode", mode:"musical" });',
+     'a TV reloading mid-lobby is stranded on the ads'),
+
+    ('a join never rebuilds a host console',
+     'venueplay/app/trivia/host.html',
+     'renderJoinCounts();     // NOT renderConsole: see above',
+     'renderConsole();',
+     "a punter joining rebuilds the panel under the host's finger"),
+
+    ('an unsigned admin broadcast is exempt from signing',
+     'venueplay/app/vp-sign.js',
+     # screen_refresh, NOT tv_reload. Deleting hq.html's broadcast machinery on 5 Sep
+     # left nothing sending tv_reload, so taking it off the exempt list guards nothing
+     # and the mutation was vacuous. billing.html still broadcasts screen_refresh
+     # unsigned, which is the live subject this check exists for.
+     'var EXEMPT = { screen_refresh: 1,',
+     'var EXEMPT = {',
+     "billing.html's screen refresh is dropped silently at any enforcing venue"),
+
+    ('the public key cannot write the tour tables',
+     'touring/manage.html',
+     'const res = await apiSave("shows", { rows: rows, delete: pendingDeletes.slice() });',
+     'const res = await fetch(`${SUPABASE_URL}/rest/v1/shows`, {method:"POST", headers:SB_HEADERS, body:JSON.stringify(rows)});',
+     'the tour listings go back to being world-writable'),
+
+    # ---- 5 Sep: the three new suites ----------------------------------------
+    ('screen-reload.test.js',
+     'venueplay/tv.html',
+     # The reload_at block, which is what this suite reads. The first version mutated
+     # the newer COMMAND block instead, so the suite never saw it and reported blind.
+     'if(isFinite(asked) && asked > PAGE_LOADED_AT){',
+     'if(isFinite(asked)){',
+     'a reloaded screen obeys the same reload request again on every poll, for ever'),
+
+    ('screen-health.test.js',
+     'venueplay/tv.html',
+     '      if(!idle()) return !gameLooksFrozen();',
+     '      if(!idle()) return true;',
+     'a board frozen since last night counts as a healthy screen'),
+
+    ('group-billing.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     'const peak = countPlayers(roster);',
+     'const peak = (roster||[]).length;',
+     'a group is quoted a different number from the one we would charge'),
+
     ('every playlist points at songs that exist',
      'venueplay/data/musical-library.json',
      '"songIds":["', '"songIds":["no-such-song","',
@@ -256,10 +324,12 @@ MUTATIONS = [
     # and a Gold Coast venue reading the founding price on /qld is charged
     # standard, silently, which is exactly what happened before.
     ('no corner of a screen mixes cqw and px', 'venueplay/tv.html',
-     '"position:absolute;top:6.2cqw;right:2.4cqw;z-index:6;pointer-events:none;"+',
-     '"position:fixed;left:22px;bottom:16px;z-index:60;pointer-events:none;"+',
-     'the venue name goes back into the corner that already holds the join panel, '
-     'and prints across the QR at anything under 800px wide'),
+     # The venue name stopped being an inline style on 5 Sep - it is a wrapped second
+     # line inside .tv-corner now - so the old mutation had nothing to match. Mix the
+     # units on the corner rule itself, which is what the check actually reads.
+     '.tv-corner{position:absolute;top:2cqw;right:2.4cqw;',
+     '.tv-corner{position:absolute;top:2cqw;right:18px;',
+     'a corner is pinned in two different units and only lines up at one screen width'),
 
     ('founding-gate.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
      "  if ((n >= 4000 && n <= 4999) || (n >= 9000 && n <= 9999)) return 'QLD';",
