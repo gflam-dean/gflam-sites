@@ -5,12 +5,28 @@
    buttons), and a licence block that got dropped on the way through. The last
    one has happened before on this exact bank.
 */
+/* WHERE THE DATA ACTUALLY IS.
+
+   These paths were hardcoded to /Users/dean.tindale/gflam-sites-current, a
+   second checkout that is not the one this repo ships. It happened to hold the
+   same packs on 7 Sep, so the suite was green by luck: the moment the two
+   copies drift, every check here passes against files nobody deploys. That has
+   already happened twice on this project. Resolve against the repo instead, the
+   same way every other suite does. */
+function ppFile(rel) {
+  var tries = ['partyplay/' + rel, rel, '../' + rel, '../../' + rel];  // release-check runs from the repo root
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 20) return tries[i]; } catch (e) {}
+  }
+  throw new Error('cannot find ' + rel);
+}
+
 var PASS = 0, FAIL = 0;
 function check(name, ok, detail) {
   if (ok) { PASS++; } else { FAIL++; print('  FAIL ' + name + (detail ? ': ' + detail : '')); }
 }
 
-var idx = JSON.parse(readFile('/Users/dean.tindale/gflam-sites-current/partyplay/data/trivia/index.json'));
+var idx = JSON.parse(readFile(ppFile('data/trivia/index.json')));
 check('the index lists categories', idx.categories && idx.categories.length >= 8,
       'got ' + (idx.categories ? idx.categories.length : 0));
 check('the index carries the licence', !!idx.license);
@@ -18,7 +34,7 @@ check('the index carries attributions', !!(idx.attributions && idx.attributions.
 
 var totalQ = 0, badAnswer = 0, dupOption = 0, noLicence = 0, tooFew = 0, longQ = 0;
 idx.categories.forEach(function (c) {
-  var pack = JSON.parse(readFile('/Users/dean.tindale/gflam-sites-current/partyplay/' + c.file));
+  var pack = JSON.parse(readFile(ppFile(c.file)));
   if (!pack.license || !pack.attributions || !pack.attributions.length) noLicence++;
   if (pack.questions.length < 40) tooFew++;
   pack.questions.forEach(function (q) {
@@ -44,12 +60,12 @@ check('there are enough questions overall', totalQ >= 1500, totalQ + ' total');
 /* And they must survive the thing that actually renders them. A bank question
    carries its own options, which pp-quiz must use verbatim rather than
    inventing decoys from the other answers in the round. */
-var quizSrc = readFile('/Users/dean.tindale/gflam-sites-current/partyplay/lib/pp-quiz.js');
+var quizSrc = readFile(ppFile('lib/pp-quiz.js'));
 var module = { exports: {} };
 (new Function('module', 'exports', quizSrc))(module, module.exports);
 var PPQuiz = module.exports;
 
-var sample = JSON.parse(readFile('/Users/dean.tindale/gflam-sites-current/partyplay/data/trivia/music.json'));
+var sample = JSON.parse(readFile(ppFile('data/trivia/music.json')));
 var items = sample.questions.slice(0, 10).map(function (q) {
   return { q: q.q, a: q.answer, options: q.options.slice() };
 });
@@ -72,12 +88,12 @@ print(FAIL === 0 ? ('ALL ' + PASS + ' CHECKS PASSED (' + totalQ + ' questions)')
    a duplicate word means the same turn twice, an empty one is a dead turn, and
    a word long enough to wrap on a phone is unreadable to the person acting. */
 ['charades', 'guesswho'].forEach(function (kind) {
-  var wi = JSON.parse(readFile('/Users/dean.tindale/gflam-sites-current/partyplay/data/words/' + kind + '-index.json'));
+  var wi = JSON.parse(readFile(ppFile('data/words/' + kind + '-index.json')));
   check(kind + ' index lists categories', wi.categories && wi.categories.length >= 4,
         'got ' + (wi.categories ? wi.categories.length : 0));
   var all = {}, empty = 0, tooLong = 0, dupWithin = 0, words = 0;
   wi.categories.forEach(function (c) {
-    var pack = JSON.parse(readFile('/Users/dean.tindale/gflam-sites-current/partyplay/' + c.file));
+    var pack = JSON.parse(readFile(ppFile(c.file)));
     var seen = {};
     check(kind + '/' + c.slug + ' has enough for a turn each', pack.words.length >= 15,
           pack.words.length + ' words');
