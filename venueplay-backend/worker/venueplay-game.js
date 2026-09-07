@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '7 Sep 2026, 21:05 · 505c6172';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '7 Sep 2026, 21:29 · 70d2f1f9';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1183,7 +1183,7 @@ async function handleVenueLookup(request, env, json) {
      cost of getting it wrong should not be every venue's wall, so ask for the column
      and fall back to the old select if the database does not have it yet. */
   let rows = await sbGet(env, 'vp_venues',
-    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at,screen_version,screen_command,screen_command_at&limit=1')
+    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at,screen_version,screen_command,screen_command_at,slug&limit=1')
     .catch(() => null);
   if (!rows || !rows.length) {
     rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
@@ -1228,6 +1228,13 @@ async function handleVenueLookup(request, env, json) {
   return json({
     exists: true,
     name: v.name || '',
+    /* THE SLUG, SO A SCREEN CAN BE SENT TO ITS OWN ADDRESS.
+       A venue that lands on the wrong address can key in the six characters
+       already shown on the host console; this is what lets the screen then send
+       itself to /tv?venue=<slug>, remember it, and print it for the venue to
+       write down. The code is a hash of the slug and every screen already asks
+       this route every thirty seconds, so nothing new is exposed. */
+    slug: v.slug || '',
     reload_at: v.screen_reload_at || null,
     // A STATE, not just a restart. A reload puts the ads up and then anything still
     // broadcasting takes the wall straight back, which is why a reload alone could

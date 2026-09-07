@@ -124,10 +124,16 @@
   /* Postcode entry. A television is driven by a remote, so there is no keyboard:
      the digits are tiles like everything else here. Four presses beats spelling
      out a slug on an on-screen keyboard, and everyone knows their own postcode. */
-  .pcode{font-family:'Anton',sans-serif;font-size:clamp(30px,7cqw,86px);letter-spacing:.18em;
-         color:#fff;margin:.6cqw 0 1.4cqw;min-height:1.1em}
+  .pcode{font-family:'Anton',sans-serif;font-size:clamp(24px,5.2cqw,64px);letter-spacing:.16em;
+         color:#fff;margin:.4cqw 0 1cqw;min-height:1.1em}
   .pcode span{color:var(--line)}
   .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:.8cqw;max-width:52cqw;margin:0 auto}
+  /* 29 letters plus two labels is 31 keys. At the digit keypad's size that runs
+     off the bottom of the card, and a key below the edge of a television cannot
+     be pressed. Ten across, smaller, and it fits in three rows. */
+  .keys.keys-wide{grid-template-columns:repeat(10,1fr);max-width:66cqw;gap:.55cqw}
+  .keys.keys-wide a{padding:.7cqw 0;font-size:clamp(12px,1.9cqw,24px);border-radius:.6cqw}
+  .keys.keys-wide a.wide{font-size:clamp(10px,1.3cqw,16px)}
   .keys a{display:block;text-decoration:none;background:var(--ink);border:1px solid var(--line);
           border-radius:.8cqw;padding:1.1cqw 0;color:#fff;text-align:center;
           font-family:'Anton',sans-serif;font-size:clamp(16px,2.6cqw,34px)}
@@ -561,6 +567,57 @@
      common pub name is the normal case, not an edge one. Ninety-nine tiles cannot
      be shown on a television and cannot be reached on a remote. Four digits
      narrows it to one almost every time. */
+  /* OR JUST KEY IN THE CODE THE CONSOLE IS ALREADY SHOWING.
+     The host console shows this venue's six-character code. Somebody standing at
+     the television with the console in their hand can key that in and be done:
+     no name matching, no postcode, and it cannot land on the wrong pub, because
+     the code is a hash of one venue's slug. It is the shortest path we have when
+     the address typed was wrong, and it is the only one that works when the
+     venue's name is not what is written over the door.
+     Offered NEXT TO the postcode rather than instead of it: a screen being set up
+     before anyone has signed in to a console has no code to read. */
+  var CODE_ALPHA = "ACDEFGHJKMNPQRSTUVWXYZ2345679";
+  function askCode(back){
+    var typed = "", err = "";
+    function draw(){
+      var shown = (typed + "______").slice(0,6).split("").map(function(c){
+        return c === "_" ? '<span>_</span>' : c; }).join(" ");
+      var keys = CODE_ALPHA.split("").map(function(c){
+        return '<a href="#" data-ck="' + c + '">' + c + '</a>'; }).join("");
+      pickCard("Put in the screen code",
+        "It is the six characters on your host console, under the venue name.",
+        '<div class="pcode">' + shown + '</div>' +
+        '<div class="keys keys-wide">' + keys +
+          '<a class="wide" href="#" data-ck="del">Delete</a>' +
+          '<a class="wide" href="#" data-ck="back">Go back</a>' +
+        '</div>' +
+        (err ? '<div class="gotnote" style="margin-top:1.2cqw;color:var(--pink)">' + esc(err) + '</div>' : ''),
+        true);
+      $("vpList").onclick = function(ev){
+        var a = ev.target && ev.target.closest ? ev.target.closest("a[data-ck]") : null;
+        if(!a) return;
+        ev.preventDefault();
+        var k = a.getAttribute("data-ck");
+        if(k === "back"){ back(); return; }
+        if(k === "del"){ typed = typed.slice(0,-1); err=""; draw(); return; }
+        if(typed.length < 6) typed += k;
+        err = "";
+        draw();
+        if(typed.length === 6){
+          var code = typed;
+          fetch(VP_GAME_API + "/venue?code=" + encodeURIComponent(code))
+            .then(function(r){ return r.ok ? r.json() : null; })
+            .then(function(d){
+              if(d && d.exists && d.slug){ showChosen({ slug: d.slug, name: d.name || d.slug, postcode: "", state: "" }); }
+              else { typed = ""; err = "No screen with that code. Check the console and try again."; draw(); }
+            })
+            .catch(function(){ typed=""; err="Could not check that code just now."; draw(); });
+        }
+      };
+    }
+    draw();
+  }
+
   function askPostcode(m){
     var typed = "";
     function draw(){
@@ -574,7 +631,7 @@
         '<div class="pcode">' + shown + '</div>' +
         '<div class="keys">' + digits +
           '<a class="wide" href="#" data-key="del">Delete</a>' +
-          '<a class="wide" href="#" data-key="clr">Start again</a>' +
+          '<a class="wide" href="#" data-key="code">Use the screen code</a>' +
         '</div>' +
         '<div class="gotnote" style="margin-top:1.2cqw">' +
           (narrowed.length ? narrowed.length + " match" + (narrowed.length===1?"":"es") + " so far"
@@ -585,8 +642,8 @@
         if(!a) return;
         ev.preventDefault();
         var k = a.getAttribute("data-key");
+        if(k === "code"){ askCode(function(){ askPostcode(m); }); return; }
         if(k === "del") typed = typed.slice(0, -1);
-        else if(k === "clr") typed = "";
         else if(typed.length < 4) typed += k;
         var now = m.filter(function(v){ return String(v.postcode||"").indexOf(typed) === 0; });
         if(typed.length >= 3 && now.length && now.length <= PICK_FITS){ showMatches(now, "typed"); return; }
@@ -603,9 +660,14 @@
     pickCard("Which one is this?",
       "There " + (m.length === 1 ? "is 1 venue" : "are " + m.length + " venues") +
       " by that name. Press the one this screen is in.",
-      renderVenues(m, state));
+      renderVenues(m, state) +
+      '<a href="#" data-usecode="1" style="grid-column:1/-1;color:var(--muted)">' +
+      '<strong style="font-size:clamp(11px,1.5cqw,18px)">Not sure? Put in the screen code from your console</strong></a>');
     var list = $("vpList");
     list.onclick = function(ev){
+      if(ev.target && ev.target.closest && ev.target.closest("a[data-usecode]")){
+        ev.preventDefault(); askCode(function(){ showMatches(m, state); }); return;
+      }
       var a = ev.target && ev.target.closest ? ev.target.closest("a[data-slug]") : null;
       if(!a) return;
       ev.preventDefault();
