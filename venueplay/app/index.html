@@ -503,7 +503,10 @@
     var bar=document.createElement("div");
     bar.id="vpImpBar";
     bar.style.cssText="position:sticky;top:0;z-index:60;background:rgba(255,194,75,.12);border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
-    bar.innerHTML='<span>Viewing <b>'+String(name||"this venue").replace(/[<>&]/g,"")+'</b> from VenuePlay Admin</span>'+
+    // esc(), not a second sanitiser of its own. Stripping [<>&] is injection-safe but
+    // it eats the ampersand, and pubs are full of them: "Bar & Grill" was displayed
+    // as "Bar  Grill" in this banner. There is one esc() in this file for a reason.
+    bar.innerHTML='<span>Viewing <b>'+esc(name||"this venue")+'</b> from VenuePlay Admin</span>'+
       '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
     document.body.insertBefore(bar, document.body.firstChild);
     document.getElementById("vpImpBack").addEventListener("click", function(){ clearImp(); window.location.href="hq.html"; });
