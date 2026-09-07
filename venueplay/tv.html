@@ -125,12 +125,23 @@
      the digits are tiles like everything else here. Four presses beats spelling
      out a slug on an on-screen keyboard, and everyone knows their own postcode. */
   .pcode{font-family:'Anton',sans-serif;font-size:clamp(24px,5.2cqw,64px);letter-spacing:.16em;
-         color:#fff;margin:.4cqw 0 1cqw;min-height:1.1em}
-  .pcode span{color:var(--line)}
+         color:#fff;margin:.4cqw 0 1cqw;line-height:1.15;min-height:1.15em}
+  /* An empty slot is a box to be filled, not an underscore hanging below the
+     line with a hole above it. On a television across a room the boxes are what
+     make it obvious how many characters are still wanted. */
+  .pcode span{display:inline-block;width:.62em;border-bottom:.09em solid var(--line);
+              vertical-align:baseline;color:transparent}
   .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:.8cqw;max-width:52cqw;margin:0 auto}
   /* 29 letters plus two labels is 31 keys. At the digit keypad's size that runs
      off the bottom of the card, and a key below the edge of a television cannot
      be pressed. Ten across, smaller, and it fits in three rows. */
+  /* Delete / Go back / Start now are NOT keys and must not sit in the key grid.
+     As grid items they took the first cells of a row and hung off to the left,
+     which looked broken on every one of these screens. */
+  .keyacts{display:flex;justify-content:center;flex-wrap:wrap;gap:.8cqw;margin-top:1cqw}
+  .keyacts a{display:block;text-decoration:none;background:var(--ink);border:1px solid var(--line);
+             border-radius:.8cqw;padding:.9cqw 2.2cqw;color:var(--muted);text-align:center;
+             font-family:'Manrope',sans-serif;font-weight:800;font-size:clamp(11px,1.5cqw,19px)}
   .keys.keys-wide{grid-template-columns:repeat(10,1fr);max-width:66cqw;gap:.55cqw}
   .keys.keys-wide a{padding:.7cqw 0;font-size:clamp(12px,1.9cqw,24px);border-radius:.6cqw}
   .keys.keys-wide a.wide{font-size:clamp(10px,1.3cqw,16px)}
@@ -144,6 +155,15 @@
   .gotlink{font-family:'Anton',sans-serif;font-size:clamp(18px,3.4cqw,46px);color:var(--pink);
            word-break:break-all;line-height:1.15;margin:1.2cqw 0}
   .gotnote{font-family:'Manrope',sans-serif;font-size:clamp(12px,1.7cqw,22px);color:var(--muted)}
+  /* A countdown you can watch. The sentence alone did not read as a timer, and
+     this screen is the one thing the venue has to act on before it disappears. */
+  .cdown{margin:1.4cqw auto 0;max-width:44cqw}
+  .cdown .bar{height:.7cqw;min-height:5px;background:var(--ink);border:1px solid var(--line);
+              border-radius:99px;overflow:hidden}
+  .cdown .bar i{display:block;height:100%;width:100%;background:var(--pink);
+                transition:width 1s linear}
+  .cdown .num{font-family:'Anton',sans-serif;font-size:clamp(16px,2.6cqw,34px);color:#fff;
+              margin-bottom:.6cqw}
 
   /* ---- holding card ---- */
   #tvHold .heye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
@@ -550,14 +570,15 @@
       '<div class="gotlink">' + esc(link) + '</div>' +
       '<div class="gotnote">Write this down. It is the link for this screen, and for any ' +
       'other screen in the venue.</div>' +
-      '<div class="keys" style="margin-top:1.6cqw"><a class="wide" href="/tv?venue=' +
-      encodeURIComponent(v.slug) + '">Start now</a></div>' +
-      '<div class="gotnote" style="margin-top:1cqw" id="vpCount">Starting in ' + GO_AFTER + ' seconds</div>', true);
+      '<div class="keyacts"><a href="/tv?venue=' + encodeURIComponent(v.slug) + '">Start now</a></div>' +
+      '<div class="cdown"><div class="num" id="vpCount">' + GO_AFTER + '</div>' +
+      '<div class="bar"><i id="vpBar"></i></div></div>', true);
     var left = GO_AFTER;
     var t = setInterval(function(){
       left--;
-      var c = $("vpCount");
-      if(c) c.textContent = left > 0 ? "Starting in " + left + " second" + (left===1?"":"s") : "Starting\u2026";
+      var c = $("vpCount"), b = $("vpBar");
+      if(c) c.textContent = left > 0 ? String(left) : "\u2026";
+      if(b) b.style.width = Math.max(0, (100 * left / GO_AFTER)) + "%";
       if(left <= 0){ clearInterval(t); location.href = "/tv?venue=" + encodeURIComponent(v.slug); }
     }, 1000);
   }
@@ -581,15 +602,16 @@
     var typed = "", err = "";
     function draw(){
       var shown = (typed + "______").slice(0,6).split("").map(function(c){
-        return c === "_" ? '<span>_</span>' : c; }).join(" ");
+        return c === "_" ? '<span>\u00a0</span>' : c; }).join(" ");
       var keys = CODE_ALPHA.split("").map(function(c){
         return '<a href="#" data-ck="' + c + '">' + c + '</a>'; }).join("");
       pickCard("Put in the screen code",
         "It is the six characters on your host console, under the venue name.",
         '<div class="pcode">' + shown + '</div>' +
-        '<div class="keys keys-wide">' + keys +
-          '<a class="wide" href="#" data-ck="del">Delete</a>' +
-          '<a class="wide" href="#" data-ck="back">Go back</a>' +
+        '<div class="keys keys-wide">' + keys + '</div>' +
+        '<div class="keyacts">' +
+          '<a href="#" data-ck="del">Delete</a>' +
+          '<a href="#" data-ck="back">Go back</a>' +
         '</div>' +
         (err ? '<div class="gotnote" style="margin-top:1.2cqw;color:var(--pink)">' + esc(err) + '</div>' : ''),
         true);
@@ -622,16 +644,17 @@
     var typed = "";
     function draw(){
       var shown = (typed + "____").slice(0,4).split("").map(function(c){
-        return c === "_" ? '<span>_</span>' : c; }).join(" ");
+        return c === "_" ? '<span>\u00a0</span>' : c; }).join(" ");
       var narrowed = typed ? m.filter(function(v){ return String(v.postcode||"").indexOf(typed) === 0; }) : m;
       var digits = "1234567890".split("").map(function(d){
         return '<a href="#" data-key="' + d + '">' + d + '</a>'; }).join("");
       pickCard("Which one is this?",
         "There are " + m.length + " venues by that name. Put in the postcode.",
         '<div class="pcode">' + shown + '</div>' +
-        '<div class="keys">' + digits +
-          '<a class="wide" href="#" data-key="del">Delete</a>' +
-          '<a class="wide" href="#" data-key="code">Use the screen code</a>' +
+        '<div class="keys">' + digits + '</div>' +
+        '<div class="keyacts">' +
+          '<a href="#" data-key="del">Delete</a>' +
+          '<a href="#" data-key="code">Use the screen code</a>' +
         '</div>' +
         '<div class="gotnote" style="margin-top:1.2cqw">' +
           (narrowed.length ? narrowed.length + " match" + (narrowed.length===1?"":"es") + " so far"
