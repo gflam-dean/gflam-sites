@@ -316,6 +316,12 @@ MUTATIONS = [
     ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
      '"license"', '"licence_dropped"',
      'the licence block is dropped from the question bank'),
+    # Trivia is the launch format in Queensland and the one with a leaderboard on
+    # the wall, so wrong scoring puts the wrong team's name up in front of the room.
+    ('trivia-score.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     'bonus = Math.round(base * 0.5 * (remaining / secs));',
+     'bonus = Math.round(base * 1.0 * (remaining / secs));',
+     'the speed bonus doubles: a fast answer scores 200 instead of 150'),
     # The expensive one: a two-line prize paid out on a single completed line.
     # play.html decides this on the player's phone before the host sees the
     # claim, so a wrong answer is a wrong payout in front of a room.
