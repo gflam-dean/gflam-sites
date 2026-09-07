@@ -316,6 +316,12 @@ MUTATIONS = [
     ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
      '"license"', '"licence_dropped"',
      'the licence block is dropped from the question bank'),
+    # The id fallback: an older host broadcasts titles alone, and without the
+    # fallback every card in the room stays blank for the rest of that night.
+    ('musical-win.test.js', 'venueplay/app/musical/play.html',
+     'if(set.hasIds && id) return !!set.id[id];',
+     'return !!set.id[id];',
+     'a host on an older page leaves every musical card blank all night'),
     # The black screen, twice in a real pub: the ads never rebuild after a game
     # and the wall stays dark for the rest of the night.
     ('tv-states.test.js', 'venueplay/tv.html',
