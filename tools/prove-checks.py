@@ -316,6 +316,12 @@ MUTATIONS = [
     ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
      '"license"', '"licence_dropped"',
      'the licence block is dropped from the question bank'),
+    # The expensive one: a two-line prize paid out on a single completed line.
+    # play.html decides this on the player's phone before the host sees the
+    # claim, so a wrong answer is a wrong payout in front of a room.
+    ('bingo-win.test.js', 'venueplay/play.html',
+     'if(P.pattern==="two") return rows>=2;', 'if(P.pattern==="two") return rows>=1;',
+     'a two-line prize pays out on one line'),
     ('vp-follow.test.js', 'venueplay/app/vp-follow.js',
      '<<ALL:root.VPFollow>>', 'root.VPFollowRenamed',
      'the follow-the-host library stops exporting itself'),
