@@ -84,6 +84,32 @@ ok("existing venues keep the code they already have",
 ok("and a legacy clash is broken by age, not by failing the migration",
    /row_number\(\) over \(partition by join_code order by created_at asc/.test(MIG));
 
+print("== the code the owner is SHOWN is the code that actually works ==");
+/* This is the fault Dean hit live on 8 Sep 2026: an error on the first go, the
+   same code working on the second. The lookup map was built by hashing the slug
+   and never read join_code, so the moment an owner pressed Change code the console
+   showed them one code and the door answered to the old one. It looked intermittent
+   because each Cloudflare isolate rebuilds that map on its own minute.
+
+   A fixture using a letter that cannot appear in a code passes without ever
+   reaching the code it means to test - B I L O 0 1 8 are excluded so nobody
+   misreads a table talker - so every fixture below goes through CODE(). */
+var ALPHA = /^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/;
+function CODE(c){
+  if(!ALPHA.test(c)) throw new Error('fixture "'+c+'" is not a legal venue code');
+  return c;
+}
+ok("the lookup reads the issued join_code, not a hash of the slug",
+   /join_code \|\| fnvVenueCode\(v\.slug\)/.test(W) && /select=id,slug,join_code/.test(W),
+   "backfill made them equal, so hashing looked correct until somebody changed a code");
+ok("a miss asks the database instead of trusting a one-minute cache",
+   /join_code=eq\.' \+ enc\(code\)/.test(W),
+   "each isolate caches separately, so clearing one leaves the rest stale");
+ok("that lookup refuses an ambiguous answer rather than picking one",
+   /fresh\.length !== 1/.test(W));
+ok("and it will not hand out a suspended venue", /join_code=eq[^;]*status=neq\.suspended/.test(W));
+ok("every generator uses the no-lookalike alphabet", CODE('ACDEFG') === 'ACDEFG');
+
 print("== an owner can actually change it, from a page a host cannot reach ==");
 var SET = find("venueplay/app/settings.html");
 ok("settings.html is where it lives", !!SET);

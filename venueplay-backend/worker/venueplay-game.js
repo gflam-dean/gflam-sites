@@ -745,7 +745,29 @@ async function venueByCode(env, code) {
   if (!/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/.test(code)) return null;
   await refreshVenueCodes(env);
   const hit = _vcMap[code];
-  return (hit && hit !== AMBIGUOUS) ? hit : null;
+  if (hit === AMBIGUOUS) return null;
+  if (hit) return hit;
+
+  /* A MISS IS NOT AN ANSWER, IT IS A STALE CACHE.
+
+     The map is rebuilt at most once a minute, and each of Cloudflare's isolates
+     holds its own copy, so clearing it after a refresh only clears the ONE isolate
+     that served the refresh. Every other isolate keeps the old code working and
+     the new one failing until its own minute is up - which is exactly the fault
+     Dean hit: an error, then the same code working on the second go, because the
+     second request landed somewhere else.
+
+     A venue created in the last minute has the same problem, and that one is worse:
+     a brand new venue types the code off its own console and is told it is wrong.
+
+     So a miss asks the database, which is the only thing that actually knows. It
+     costs one query on a code that was going to fail anyway, and it means a code
+     works the moment it exists rather than up to a minute later. */
+  const fresh = await sbGet(env, 'vp_venues',
+    'join_code=eq.' + enc(code) + '&status=neq.suspended&select=id,slug&limit=2');
+  if (!fresh || fresh.length !== 1) return null;   // 0 = no such code, 2 = ambiguous
+  _vcMap[code] = fresh[0].id;
+  return fresh[0].id;
 }
 const AMBIGUOUS = '__two_venues__';
 /* THE VENUE'S OWN CODE, ISSUED ONCE.
@@ -783,11 +805,21 @@ async function refreshVenueCodes(env) {
   if (_vcMap && now - _vcAt <= 60000) return;
   /* A suspended venue cannot run a game, so it has no business holding a code -
      and before this it was still taking up one of the 5,000 slots. */
-  const rows = await sbGetAll(env, 'vp_venues', 'slug=not.is.null&status=neq.suspended&select=id,slug');
+  const rows = await sbGetAll(env, 'vp_venues',
+    'slug=not.is.null&status=neq.suspended&select=id,slug,join_code');
   const map = {}, seen = {}, dupes = [];
   for (const v of rows) {
     if (!v || !v.slug) continue;
-    const c = fnvVenueCode(v.slug);
+    /* THE CODE IS THE ONE THE VENUE WAS ISSUED, not the one we can derive.
+
+       This used to hash the slug. Migration 68 made the code a column the venue
+       OWNS - unique by constraint, changeable by the owner - and the backfill set
+       it to the same hash, so every existing venue kept working and nothing looked
+       wrong. The moment an owner pressed "Change code", though, the console showed
+       them the new code and this map still answered to the old one: the code on
+       their screen was refused and the code they had just replaced still let people
+       in. A test only catches that if it uses a join_code that is NOT the hash. */
+    const c = v.join_code || fnvVenueCode(v.slug);
     if (map[c] && seen[c] !== v.slug) {
       map[c] = AMBIGUOUS;
       dupes.push({ code: c, slugs: [seen[c], v.slug] });
