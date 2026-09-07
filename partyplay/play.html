@@ -218,13 +218,30 @@
         '<span>Also send me the occasional party idea. Nothing to do with tonight, ' +
         'and one click to stop.</span></label>' +
       '</div>' +
-      '<button class="go" id="go">Join</button>' +
-      (err ? '<div class="err">' + esc(err) + '</div>' : '');
+      /* THE ERROR GOES ABOVE THE BUTTON, NOT BELOW IT. It used to render after
+         the Join button, which put it 104px past the bottom of the screen on a
+         1440x689 window and further down on a phone, with no scroll. Someone
+         typing the wrong party code - the commonest mistake there is - pressed
+         Join, saw absolutely nothing happen, and pressed it again. The reason
+         was on the page the whole time, just below the fold. */
+      (err ? '<div class="err">' + esc(err) + '</div>' : '') +
+      '<button class="go" id="go">Join</button>';
     $("go").addEventListener("click", doJoin);
     $("code").addEventListener("keydown", function(e){ if(e.key==="Enter") $("name").focus(); });
     $("name").addEventListener("keydown", function(e){ if(e.key==="Enter") $("email").focus(); });
     $("email").addEventListener("keydown", function(e){ if(e.key==="Enter") doJoin(); });
     ($("code").value ? $("name") : $("code")).focus();
+    /* AND BRING THE MESSAGE INTO VIEW, AFTER THE FOCUS AND NOT BEFORE IT.
+       The form is taller than a phone screen even with the error moved above the
+       button, so it still needs scrolling to. Doing it before .focus() achieved
+       nothing at all: focusing an input scrolls that input into view, which
+       scrolled straight back to the top and undid it. Measured, not assumed.
+       behavior:"smooth" was tried and silently does nothing in some browsers:
+       it does not throw either, so a try/catch fallback never fires and the
+       message stays off screen while the code looks correct. Plain, instant
+       scrolling is the one that actually moves the page. */
+    var _e = document.querySelector(".err");
+    if (_e && _e.scrollIntoView) { try { _e.scrollIntoView({ block: "center" }); } catch (x) {} }
   }
 
   function doJoin(){
