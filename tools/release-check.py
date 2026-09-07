@@ -343,19 +343,28 @@ def local_checks(which):
 
     A file git is not tracking is not a release artefact. Skip it, and SAY SO,
     because a silent skip is how the count stops meaning anything."""
-    untracked = []
+    untracked, asked_git = [], False
     try:
         r = subprocess.run(['git', 'ls-files', '--others', '--exclude-standard'],
                            capture_output=True, text=True, cwd=ROOT)
-        loose = {os.path.join(ROOT, l.strip()) for l in r.stdout.splitlines() if l.strip()}
-        if loose:
+        asked_git = r.returncode == 0
+        if asked_git:
+            loose = {os.path.join(ROOT, l.strip()) for l in r.stdout.splitlines() if l.strip()}
             untracked = sorted(f for f in files if os.path.abspath(f) in loose)
             files = [f for f in files if os.path.abspath(f) not in loose]
     except Exception:
         pass
-    ok('every file checked is one git tracks', not untracked,
-       '%d file(s) scanned' % len(files),
-       why='not tracked, so not shipped: ' + ', '.join(short(f) for f in untracked[:4]))
+    if not asked_git:
+        # NOT A PASS. prove-checks copies the repo without .git, so git cannot
+        # answer there and this check has no way to fail. Saying "ok" would be
+        # the exact thing this gate exists to stop: a green line for a question
+        # nobody asked.
+        note('every file checked is one git tracks',
+             'SKIPPED, not a git checkout: %d file(s) scanned unfiltered' % len(files))
+    else:
+        ok('every file checked is one git tracks', not untracked,
+           '%d file(s) scanned' % len(files),
+           why='not tracked, so not shipped: ' + ', '.join(short(f) for f in untracked[:4]))
 
     bad = 0
     for f in files:

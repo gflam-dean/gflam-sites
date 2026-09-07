@@ -309,8 +309,13 @@ MUTATIONS = [
      "const taken = await sb(env, 'pp_players?licence_id=eq.'",
      "const taken = [] || await sb(env, 'pp_players?licence_id=eq.'",
      'two guests called Sam both join as Sam and charades shows the word to both'),
-    ('pp-trivia-pack.test.js', 'partyplay/host.html',
-     '<<ALL:trivia>>', 'quizzz', 'the trivia pack wiring is renamed'),
+    # WAS partyplay/host.html, a file this suite never opens, so the mutation
+    # could not fail it and the check read BLIND. The suite reads the pack
+    # index, the packs and pp-quiz.js; the licence block is the thing it was
+    # written to guard, and dropping one has happened on this bank before.
+    ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
+     '"license"', '"licence_dropped"',
+     'the licence block is dropped from the question bank'),
     ('vp-follow.test.js', 'venueplay/app/vp-follow.js',
      '<<ALL:root.VPFollow>>', 'root.VPFollowRenamed',
      'the follow-the-host library stops exporting itself'),

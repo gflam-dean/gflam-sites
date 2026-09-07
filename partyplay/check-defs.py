@@ -93,7 +93,16 @@ def strip_comments(src):
             while k >= 0 and out[k] in " \t\n":
                 k -= 1
             prev = out[k] if k >= 0 else ""
-            if prev == "" or prev in "(,=:[!&|?{};+-*%<>~^":
+            # `</b>` IS NOT A REGEX. '<' is a JavaScript operator, so "</div>"
+            # in an HTML file read as a regex opening after '<', ran to the '/'
+            # of the NEXT closing tag, and deleted every word in between. On
+            # 7 Sep that removed "show your phone to the host" from tv.html
+            # before the copy checks saw it, so the locked wording, the em dash
+            # rule and the roster rule were all blind on every page: a check
+            # that reads an empty string always passes. A real `a < /re/.test(x)`
+            # is vanishingly rare next to a closing tag, so require that the
+            # slash is not the one in '</'.
+            if (prev == "" or prev in "(,=:[!&|?{};+-*%<>~^") and not (i and src[i - 1] == "<"):
                 j = i + 1
                 while j < n:
                     if src[j] == "\\":
