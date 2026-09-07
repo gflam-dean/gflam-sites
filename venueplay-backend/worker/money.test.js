@@ -123,6 +123,15 @@ if (pw && cw && cp) {
                          : t === "vp_trivia_answers" ? ANSWERS : []);
   };
   globalThis.enc = function (x) { return String(x); };
+  /* playerIdsWhoPlayed pages now, because a fixed limit there under-bills a big
+     night silently. Lift the REAL pager too rather than stubbing it: it runs on
+     the stubbed sbGet above, so the pagination is exercised here instead of
+     being assumed. Without this the function calls an undefined sbGetAll, the
+     promise rejects, and the four checks below never run - which is exactly what
+     happened, quietly, when the Worker changed. */
+  var pgr = lift(GAME, "sbGetAll");
+  pass("the paged reader is still in the Worker", !!pgr);
+  if (pgr) eval(pgr);
   eval(pw); eval(cw); eval(cp);
   function roster(n){ var r=[]; for (var i=0;i<n;i++) r.push({id:"p"+i, device_id:"d"+i}); return r; }
 
@@ -133,6 +142,11 @@ if (pw && cw && cp) {
     return playerIdsWhoPlayed({}, "s").then(function (set) {
       results[name] = countPlayersWhoPlayed(roster(size), set);
       if (then) then();
+    }).catch(function (e) {
+      /* A rejected promise here used to end the chain and take the remaining
+         checks with it, with no failure printed and no summary line: the suite
+         simply stopped. Say so instead. */
+      pass("the who-played counter runs at all (" + name + ")", false, String(e).slice(0, 90));
     });
   }
   scenario("bingo", [{id:"g1"}], [], [], 180, function () {

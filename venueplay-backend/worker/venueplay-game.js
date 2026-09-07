@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 06:28 · a3d3f77a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 06:34 · b86387d7';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -4536,11 +4536,18 @@ async function playerIdsWhoPlayed(env, sessionId) {
     if (!games.length) return null;   // no game rows at all: cannot tell, count everyone
     const ids = games.map((g) => g.id).join(',');
     const played = new Set();
-    const cards = await sbGet(env, 'vp_cards',
-      'game_id=in.(' + ids + ')&select=player_id&limit=5000');
+    /* PAGED, because a truncated read here UNDER-BILLS and says nothing.
+       This set decides who is charged for a big night. A fixed limit does not
+       raise an error when it is hit, it just returns fewer players, so the
+       fail-open guard above - which catches an exception and falls back to
+       counting everyone - never fires. A busy club running several rounds is
+       exactly the night this matters on, and exactly the night that overruns
+       the cap. */
+    const cards = await sbGetAll(env, 'vp_cards',
+      'game_id=in.(' + ids + ')&select=player_id');
     for (const c of cards) if (c && c.player_id) played.add(c.player_id);
-    const answers = await sbGet(env, 'vp_trivia_answers',
-      'game_id=in.(' + ids + ')&select=player_id&limit=20000');
+    const answers = await sbGetAll(env, 'vp_trivia_answers',
+      'game_id=in.(' + ids + ')&select=player_id');
     for (const a of answers) if (a && a.player_id) played.add(a.player_id);
 
     /* BROADCAST BINGO LEAVES NO PER-PLAYER TRACE, AND THIS FUNCTION MADE IT FREE.
