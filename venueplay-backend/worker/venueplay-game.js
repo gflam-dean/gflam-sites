@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 07:36 · 68c3eec1';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 07:45 · 706afdcf';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1598,6 +1598,29 @@ async function handleScreen(request, env, json) {
   const slug = String(url.searchParams.get('venue') || '').trim().toLowerCase().slice(0, 80);
   if (!slug || !/^[a-z0-9-]+$/.test(slug)) return json({ exists: false });
 
+  /* THE DRAWS BOARD DOES NOT DEPEND ON THE SCREEN CONFIG, SO IT SHOULD NOT WAIT
+     BEHIND IT.
+
+     Every TV asks this endpoint every thirty seconds, always, whether a game is
+     on or not, so it is the single most-called thing in the product and its cost
+     is multiplied by every venue that exists. Measured on 8 Sep 2026 it took
+     about 700ms, of which roughly 435ms was database: three round trips, one
+     after another, because they were written in reading order rather than
+     dependency order.
+
+     Only two of them actually depend on each other - the venue row is found via
+     the screen config's venue_id. The draws board is keyed on the slug we already
+     have, so it can be in flight the whole time the other two are talking.
+
+     Its .catch is attached HERE, at creation, not at the await. A promise that
+     rejects before anything is awaiting it is an unhandled rejection, and in a
+     Worker that can take down the request that a venue's screen is waiting on.
+     The board was always a nicety that must never fail the screen; starting it
+     early must not quietly change that. */
+  const drawsPromise = sbGet(env, 'v_vp_screen_draws',
+    'slug=eq.' + enc(slug) + '&select=name,current_jackpot_cents,draw_day,draw_time,timezone')
+    .catch(() => null);
+
   const rows = await sbGet(env, 'vp_venue_screen',
     'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1');
   const cfg = (rows && rows[0]) || null;
@@ -1617,8 +1640,7 @@ async function handleScreen(request, env, json) {
   // also what takes an archived or retired draw off the screen.
   let draws = [];
   try {
-    const d = await sbGet(env, 'v_vp_screen_draws',
-      'slug=eq.' + enc(slug) + '&select=name,current_jackpot_cents,draw_day,draw_time,timezone');
+    const d = await drawsPromise;          // already in flight since the top
     draws = (d || []).filter((x) => x && x.draw_day);
   } catch (e) { /* the board is a nicety; never fail the whole screen for it */ }
 

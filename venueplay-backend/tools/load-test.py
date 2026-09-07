@@ -230,8 +230,19 @@ def ramp(args):
     codes = [args.code] if args.code else []
     for rate in stages:
         st = Stats(); stop = threading.Event()
-        nthreads = min(args.threads, max(4, rate // 8))
-        delay = nthreads / float(rate)
+        # HOW MANY THREADS IT TAKES IS SET BY LATENCY, NOT BY THE RATE.
+        # Little's Law: to hold R requests a second when each takes L seconds you
+        # need R*L of them in flight. Sizing threads off the rate alone produced
+        # 4 threads against a 750ms endpoint, which can never exceed about 5/sec,
+        # and the run then reported 6/sec as though that were a finding about the
+        # server. It was a finding about the test.
+        need = int(rate * (base_ms / 1000.0) * 1.3) + 2
+        nthreads = max(4, min(args.threads, need))
+        delay = max(0.0, nthreads / float(rate) - (base_ms / 1000.0))
+        if need > args.threads:
+            print('%9d   needs ~%d threads at %.0fms latency, capped at %d - this laptop '
+                  'cannot generate this rate' % (rate, need, base_ms, args.threads))
+            break
 
         def worker():
             while not stop.is_set():
@@ -302,7 +313,7 @@ def main():
                     help='people per venue, low-high; skewed to the low end (default 30-100)')
     ap.add_argument('--minutes', type=float, default=2)
     ap.add_argument('--profile', choices=list(PROFILES), default='peak')
-    ap.add_argument('--threads', type=int, default=40)
+    ap.add_argument('--threads', type=int, default=250)
     ap.add_argument('--seconds-per-question', type=int, default=20)
     ap.add_argument('--ladder', type=lambda s:[int(x) for x in s.split(',')],
                     help='comma-separated venue counts, e.g. 500,3000,10000,50000')
