@@ -84,6 +84,19 @@ ok("existing venues keep the code they already have",
 ok("and a legacy clash is broken by age, not by failing the migration",
    /row_number\(\) over \(partition by join_code order by created_at asc/.test(MIG));
 
+print("== an owner can actually change it, from a page a host cannot reach ==");
+var SET = find("venueplay/app/settings.html");
+ok("settings.html is where it lives", !!SET);
+ok("and that page turns a host away", !!SET && /canEdit\s*=\s*ctx\.isAdmin\s*\|\|\s*ctx\.role==="owner"\s*\|\|\s*ctx\.role==="manager"/.test(SET),
+   "the Worker checks the role too, but a host should never see the button");
+ok("there is a button", !!SET && /id="refreshCodeBtn"/.test(SET));
+ok("it calls the refresh endpoint", !!SET && /gameApiPost\("\/venue\/code\/refresh"/.test(SET));
+ok("it warns about reprinting table talkers BEFORE changing anything",
+   !!SET && /TABLE TALKERS[\s\S]{0,120}REPRINT/.test(SET),
+   "the code is printed in the room: changing it silently is the fault, not the change");
+ok("the warning is a confirm the owner has to accept", !!SET && /if\(!confirm\(/.test(SET));
+ok("the code is shown, not just changeable", !!SET && /id="venueCodeVal"/.test(SET));
+
 print("== the console shows the venue code, never the channel ==");
 ok("vp-session exposes venueJoinCode", /venueJoinCode: venueJoinCode/.test(SESS));
 ok("it reads the stored column first", /select\("join_code,slug"\)/.test(SESS));

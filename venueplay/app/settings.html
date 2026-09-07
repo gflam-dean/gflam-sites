@@ -111,6 +111,17 @@
       <div class="row"><div class="t"><div class="n">Ask players to opt in</div><div class="d">Default OFF. When on, the tick is always shown UNTICKED, and the player must tick it themselves (this is a locked rule, never pre-ticked).</div></div><div class="sw" data-k="collect_marketing_optin"></div></div>
     </div>
 
+    <div class="card">
+      <div class="lbl">Your venue code</div>
+      <div class="sublbl">The six characters players type to join, shown on your host console and on the big screen once a game is on. It stays the same, so it is safe to print on table talkers.</div>
+      <div class="row">
+        <div class="t"><div class="n"><span id="venueCodeVal" style="font-family:monospace;letter-spacing:.18em;font-size:19px;color:#fff">------</span></div>
+        <div class="d" id="venueCodeWhen">Assigned when your venue was set up.</div></div>
+        <button class="btn ghost" id="refreshCodeBtn" type="button">Change code</button>
+      </div>
+      <div class="sublbl" style="margin-top:6px">Changing it stops the old code working straight away, so anything already printed with it becomes wrong. A host cannot change this.</div>
+    </div>
+
     <button class="btn pink" id="saveBtn">Save settings</button>
     <div class="msg" id="msg"></div>
   </div>
@@ -131,6 +142,51 @@
 
   $("signOut").addEventListener("click", function(){ VP.signOut(); });
 
+
+  /* THE VENUE'S CODE, AND CHANGING IT.
+     Only an owner or a manager reaches this page at all (canEdit above sends a
+     host home), and the Worker checks the role again rather than trusting that.
+     The confirm is not ceremony: the code is printed in the room, so changing it
+     invalidates whatever is on the tables, and that is worth one deliberate
+     press rather than a stray tap on an iPad behind a bar. */
+  function paintVenueCode(){
+    if(!VP.venueJoinCode) return;
+    VP.venueJoinCode(venueId).then(function(code){
+      if(code) $("venueCodeVal").textContent = code;
+    }).catch(function(){});
+  }
+  var _refreshBusy = false;
+  function wireRefreshCode(){
+    var b = $("refreshCodeBtn");
+    if(!b) return;
+    b.addEventListener("click", function(){
+      if(_refreshBusy) return;
+      if(!confirm(
+        "Change this venue's code?\n\n" +
+        "IF YOU HAVE TABLE TALKERS, POSTERS OR ANYTHING ELSE PRINTED WITH THE OLD CODE, " +
+        "YOU WILL NEED TO REPRINT THEM.\n\n" +
+        "The old code stops working the moment you press OK, and players typing it will " +
+        "not get into your game.\n\nChange it anyway?")) return;
+      _refreshBusy = true; b.disabled = true; var was = b.textContent; b.textContent = "Changing\u2026";
+      VP.gameApiPost("/venue/code/refresh", { venue_id: venueId }).then(function(r){
+        if(r && r.ok && r.join_code){
+          $("venueCodeVal").textContent = r.join_code;
+          $("venueCodeWhen").textContent = "Changed just now. Reprint anything showing the old code.";
+          var m=$("msg"); m.className="msg ok";
+          m.textContent="Venue code changed to " + r.join_code + ". Reprint anything showing the old one.";
+        } else {
+          var m=$("msg"); m.className="msg err";
+          m.textContent=(r && r.error) || "Could not change the code. Please try again.";
+        }
+      }).catch(function(){
+        var m=$("msg"); m.className="msg err";
+        m.textContent="Could not change the code. Please try again.";
+      }).then(function(){
+        _refreshBusy = false; b.disabled = false; b.textContent = was;
+      });
+    });
+  }
+
   // Manager/owner (or admin). If a ?venue= is passed (from HQ), switch to it first.
   var want=qp("venue");
   VP.ready().then(function(ctx){
@@ -148,6 +204,8 @@
     $("vSub").textContent="Settings"+(ctx.venue&&ctx.venue.slug?(" for "+ctx.venue.slug):"")+(ctx.isAdmin?" (admin)":(" ("+ctx.role+")"));
     fill(ctx.settings||{});
     gateMarketing(ctx);
+    paintVenueCode();
+    wireRefreshCode();
     $("body").classList.remove("hidden");
   });
 
