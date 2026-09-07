@@ -316,6 +316,12 @@ MUTATIONS = [
     ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
      '"license"', '"licence_dropped"',
      'the licence block is dropped from the question bank'),
+    # A ticket that has already won being drawn again, in a room, for a prize.
+    # rng-evidence proves the generator; this proves the code that USES it.
+    ('draw-fairness.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     'if (drawn[n] || chosen[n] || inExcluded(n)) continue;',
+     'if (chosen[n]) continue;',
+     'a raffle ticket already drawn can win a second time'),
     # Trivia is the launch format in Queensland and the one with a leaderboard on
     # the wall, so wrong scoring puts the wrong team's name up in front of the room.
     ('trivia-score.test.js', 'venueplay-backend/worker/venueplay-game.js',
