@@ -109,6 +109,7 @@
      The NAME is the same on every tile - that is the whole problem - so the
      postcode and state are what the eye needs, and they are set brighter and
      bigger than the name rather than as a footnote under it. */
+  .bvpick.plain{display:block}
   .bvpick{margin-top:1.4cqw;display:grid;gap:.7cqw;
           grid-template-columns:repeat(auto-fit,minmax(11cqw,1fr));align-content:start}
   .bvpick a{display:block;text-decoration:none;background:var(--ink);border:1px solid var(--line);
@@ -120,6 +121,23 @@
      edge of a television cannot be reached at all, and a Fire Stick remote
      cannot scroll a box. */
   .bvcard{max-height:94cqh;overflow:auto}
+  /* Postcode entry. A television is driven by a remote, so there is no keyboard:
+     the digits are tiles like everything else here. Four presses beats spelling
+     out a slug on an on-screen keyboard, and everyone knows their own postcode. */
+  .pcode{font-family:'Anton',sans-serif;font-size:clamp(30px,7cqw,86px);letter-spacing:.18em;
+         color:#fff;margin:.6cqw 0 1.4cqw;min-height:1.1em}
+  .pcode span{color:var(--line)}
+  .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:.8cqw;max-width:52cqw;margin:0 auto}
+  .keys a{display:block;text-decoration:none;background:var(--ink);border:1px solid var(--line);
+          border-radius:.8cqw;padding:1.1cqw 0;color:#fff;text-align:center;
+          font-family:'Anton',sans-serif;font-size:clamp(16px,2.6cqw,34px)}
+  .keys a.wide{grid-column:span 2;font-family:'Manrope',sans-serif;font-weight:800;
+               font-size:clamp(12px,1.7cqw,22px);color:var(--muted)}
+  /* The confirmation. The whole point is that the venue WRITES THIS DOWN, so the
+     link is the biggest thing on the wall and it sits there long enough to copy. */
+  .gotlink{font-family:'Anton',sans-serif;font-size:clamp(18px,3.4cqw,46px);color:var(--pink);
+           word-break:break-all;line-height:1.15;margin:1.2cqw 0}
+  .gotnote{font-family:'Manrope',sans-serif;font-size:clamp(12px,1.7cqw,22px);color:var(--muted)}
 
   /* ---- holding card ---- */
   #tvHold .heye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
@@ -475,33 +493,144 @@
      which one this screen is in, and one press sets it - and because the chosen
      slug is real, the screen then remembers it for good. */
   var _pickAsked = false;
+  /* HOW MANY TILES ACTUALLY FIT ON A WALL. Measured against the real worst case:
+     22 sits comfortably in four columns with nothing clipped and nothing to
+     scroll. Past that the card would have to scroll, and a Fire Stick remote
+     cannot scroll a box, so a tile below the fold is a venue that cannot be
+     chosen at all. */
+  var PICK_FITS = 24;
+
+  function pickCard(title, text, html, plain){
+    var box=$("venuePick"), list=$("vpList"), t=$("vpText"), h=$("vpTitle");
+    if(!box || !list) return;
+    /* The tile grid must be switched off for anything that is not tiles, or the
+       keypad digits and the postcode underscores get dealt out into its cells
+       one per column, which is exactly what happened the first time. */
+    list.classList.toggle("plain", !!plain);
+    if(h) h.textContent = title;
+    if(t) t.textContent = text;
+    list.innerHTML = html;
+    var bad=$("badVenue"); if(bad) bad.classList.add("hidden");   // it was never a dead link
+    box.classList.remove("hidden");
+  }
+
+  function renderVenues(m, state){
+    /* If every match has the same name - which is the whole reason this screen
+       is up - printing it on all of them is noise costing the space the tiles
+       need. Show it only when it distinguishes. */
+    var sameName = m.length > 1 && m.every(function(v){ return (v.name||"") === (m[0].name||""); });
+    return m.map(function(v){
+      /* Once a state has been chosen, printing it on all 31 tiles says nothing:
+         the postcode is the only thing left that tells them apart. */
+      var where=[v.postcode, state ? "" : v.state].filter(Boolean).join(" ");
+      return '<a href="/tv?venue=' + encodeURIComponent(v.slug) + '" data-slug="' + esc(v.slug) + '">' +
+             '<strong>' + esc(where || v.name) + '</strong>' +
+             (where && !sameName ? esc(v.name) : '') + '</a>';
+    }).join("");
+  }
+
+  /* ONCE THEY HAVE PICKED, TELL THEM WHAT THEIR LINK ACTUALLY IS.
+     Pressing a tile sets this screen and nothing else. The venue still does not
+     know their own slug, so the next screen they set up, or this one after the
+     browser data is cleared, lands them right back on this page. So the link goes
+     on the wall, as the biggest thing on it, and stays there long enough to be
+     copied down before the screen goes on with its night. */
+  var GO_AFTER = 45;
+  function showChosen(v){
+    var link = "venueplay.com.au/tv?venue=" + v.slug;
+    var where = [v.postcode, v.state].filter(Boolean).join(" ");
+    pickCard("This screen is set",
+      esc(v.name) + (where ? " \u00b7 " + where : ""),
+      '<div class="gotlink">' + esc(link) + '</div>' +
+      '<div class="gotnote">Write this down. It is the link for this screen, and for any ' +
+      'other screen in the venue.</div>' +
+      '<div class="keys" style="margin-top:1.6cqw"><a class="wide" href="/tv?venue=' +
+      encodeURIComponent(v.slug) + '">Start now</a></div>' +
+      '<div class="gotnote" style="margin-top:1cqw" id="vpCount">Starting in ' + GO_AFTER + ' seconds</div>', true);
+    var left = GO_AFTER;
+    var t = setInterval(function(){
+      left--;
+      var c = $("vpCount");
+      if(c) c.textContent = left > 0 ? "Starting in " + left + " second" + (left===1?"":"s") : "Starting\u2026";
+      if(left <= 0){ clearInterval(t); location.href = "/tv?venue=" + encodeURIComponent(v.slug); }
+    }, 1000);
+  }
+
+  /* ASK FOR THE POSTCODE WHEN THE LIST IS TOO BIG FOR A WALL.
+     There are 99 Royal Hotels, 75 Commercials and 45 Railways on the books, so a
+     common pub name is the normal case, not an edge one. Ninety-nine tiles cannot
+     be shown on a television and cannot be reached on a remote. Four digits
+     narrows it to one almost every time. */
+  function askPostcode(m){
+    var typed = "";
+    function draw(){
+      var shown = (typed + "____").slice(0,4).split("").map(function(c){
+        return c === "_" ? '<span>_</span>' : c; }).join(" ");
+      var narrowed = typed ? m.filter(function(v){ return String(v.postcode||"").indexOf(typed) === 0; }) : m;
+      var digits = "1234567890".split("").map(function(d){
+        return '<a href="#" data-key="' + d + '">' + d + '</a>'; }).join("");
+      pickCard("Which one is this?",
+        "There are " + m.length + " venues by that name. Put in the postcode.",
+        '<div class="pcode">' + shown + '</div>' +
+        '<div class="keys">' + digits +
+          '<a class="wide" href="#" data-key="del">Delete</a>' +
+          '<a class="wide" href="#" data-key="clr">Start again</a>' +
+        '</div>' +
+        '<div class="gotnote" style="margin-top:1.2cqw">' +
+          (narrowed.length ? narrowed.length + " match" + (narrowed.length===1?"":"es") + " so far"
+                           : "No venue by that name in that postcode") + '</div>', true);
+      var list = $("vpList");
+      list.onclick = function(ev){
+        var a = ev.target && ev.target.closest ? ev.target.closest("a[data-key]") : null;
+        if(!a) return;
+        ev.preventDefault();
+        var k = a.getAttribute("data-key");
+        if(k === "del") typed = typed.slice(0, -1);
+        else if(k === "clr") typed = "";
+        else if(typed.length < 4) typed += k;
+        var now = m.filter(function(v){ return String(v.postcode||"").indexOf(typed) === 0; });
+        if(typed.length >= 3 && now.length && now.length <= PICK_FITS){ showMatches(now, "typed"); return; }
+        draw();
+      };
+    }
+    draw();
+  }
+
+  function showMatches(m, state){
+    if(!m.length) return false;
+    if(m.length === 1){ showChosen(m[0]); return true; }
+    if(!state && m.length > PICK_FITS){ askPostcode(m); return true; }
+    pickCard("Which one is this?",
+      "There " + (m.length === 1 ? "is 1 venue" : "are " + m.length + " venues") +
+      " by that name. Press the one this screen is in.",
+      renderVenues(m, state));
+    var list = $("vpList");
+    list.onclick = function(ev){
+      var a = ev.target && ev.target.closest ? ev.target.closest("a[data-slug]") : null;
+      if(!a) return;
+      ev.preventDefault();
+      var v = m.filter(function(x){ return x.slug === a.getAttribute("data-slug"); })[0];
+      if(v) showChosen(v);
+    };
+    return true;
+  }
+
+  /* THE BARE NAME IS A FAMILY, NOT A TYPO.
+     Twenty-seven per cent of Australian venues share their name with another, so
+     new slugs carry the postcode: the-grand-hotel-4210. Somebody setting a screen
+     up types what is written over the door, the-grand-hotel, which is an entirely
+     reasonable thing to type. Until now that was treated as a dead link: "not
+     linked to an account", sixty seconds later, with nothing to do about it but
+     guess a postcode on a TV remote.
+     We already hold every one of those pubs, so the bare name becomes a page that
+     asks which one this screen is in. The chosen slug is real, so the screen then
+     remembers it for good. */
   function askWhichVenue(){
     if(_pickAsked) return; _pickAsked = true;      // one lookup, not one per poll
     if(!VENUE_SLUG) return;
     fetch(VP_GAME_API + "/venues/like?slug=" + encodeURIComponent(VENUE_SLUG))
       .then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(d){
-        var m = (d && d.matches) || [];
-        if(!m.length) return;            // nothing of that name: the error card is right
-        var box=$("venuePick"), list=$("vpList"), t=$("vpText"), h=$("vpTitle");
-        if(!box || !list) return;
-        if(h) h.textContent = m.length === 1 ? "Is this you?" : "Which one is this?";
-        if(t) t.textContent = m.length === 1
-          ? "One venue goes by that name. Press it to set this screen."
-          : "There are " + m.length + " venues by that name. Press the one this screen is in.";
-        /* If every match has the same name - which is the whole reason this
-           screen is up - printing it on all twenty-two tiles is noise that costs
-           the vertical space the tiles need. Show it only when it distinguishes. */
-        var sameName = m.length > 1 && m.every(function(v){ return (v.name||"") === (m[0].name||""); });
-        list.innerHTML = m.map(function(v){
-          var where=[v.postcode, v.state].filter(Boolean).join(" ");
-          return '<a href="/tv?venue=' + encodeURIComponent(v.slug) + '">' +
-                 '<strong>' + esc(where || v.name) + '</strong>' +
-                 (where && !sameName ? esc(v.name) : '') + '</a>';
-        }).join("");
-        var bad=$("badVenue"); if(bad) bad.classList.add("hidden");   // it was never a dead link
-        box.classList.remove("hidden");
-      })
+      .then(function(d){ showMatches((d && d.matches) || [], ""); })
       .catch(function(){ /* the error card on its own is still correct */ });
   }
   /* Recorded once, at parse time. Compared against the reload timestamp HQ sets, so

@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '7 Sep 2026, 20:44 · cf24e41d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '7 Sep 2026, 21:05 · 505c6172';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1144,8 +1144,18 @@ async function handleVenueLike(request, env, json) {
   /* PostgREST 'or' with a like: the slug itself, or the slug plus a dash and
      anything. The dash matters - without it the-grand would match the-grande
      and hand somebody a different pub's screen. */
+  /* 25 WAS NOT ENOUGH. The prospect register holds 99 Royal Hotels, 75
+     Commercials and 45 Railways: a cap of 25 would have silently hidden 74 Royal
+     Hotels from the one screen trying to find itself, and there is no way for
+     the venue to tell that the list they are looking at is a third of the truth.
+     The biggest real family is 99, so 200 covers it with room to spare and is
+     still far too small a page to be worth scraping.
+     A state can be given to narrow it, which is what the screen does once a
+     family is too big to fit on a wall. */
+  const state = String(url.searchParams.get('state') || '').trim().toUpperCase().slice(0, 3);
   const q = 'or=(slug.eq.' + enc(typed) + ',slug.like.' + enc(typed + '-*') + ')'
-          + '&select=slug,name,postcode,state&order=postcode.asc&limit=25';
+          + (/^[A-Z]{2,3}$/.test(state) ? '&state=eq.' + enc(state) : '')
+          + '&select=slug,name,postcode,state&order=state.asc,postcode.asc&limit=200';
   let rows = [];
   try {
     rows = (await sbGet(env, 'vp_venues', q)) || [];
