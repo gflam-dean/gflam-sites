@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 07:45 · 706afdcf';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 09:52 · db4fbe8e';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -743,32 +743,41 @@ let _vcDupes = [];
 async function venueByCode(env, code) {
   code = String(code || '').trim().toUpperCase();
   if (!/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/.test(code)) return null;
+
+  /* ASK FOR THE ONE ROW. DO NOT BUILD A MAP OF EVERY VENUE TO ANSWER IT.
+   *
+   * This used to call refreshVenueCodes first, which reads EVERY venue in the
+   * table. A Cloudflare isolate starts with that map empty, so every fresh
+   * isolate paid for a full table scan before it could answer, and a burst of
+   * traffic spawns a lot of isolates. On 8 Sep a ramp at fifty requests a second
+   * measured a median of 413ms and a 95th percentile of ELEVEN SECONDS with no
+   * errors at all: almost everything fine, a few requests scanning the table.
+   * It also gets worse with every venue signed, which is the wrong direction for
+   * something on the path a television takes.
+   *
+   * Migration 68 put a unique index on join_code, so this is one indexed row and
+   * two venues cannot hold the same code - the ambiguity the map existed to
+   * catch is now impossible by constraint rather than by sweep. limit=2 anyway,
+   * because trusting a constraint you have not checked is how the first version
+   * of this went wrong.
+   *
+   * The map survives for two things that are not on this path: venues whose
+   * join_code is still null because migration 68 has not reached them, and the
+   * clash count /health reports. */
+  const hit = await sbGet(env, 'vp_venues',
+    'join_code=eq.' + enc(code) + '&status=neq.suspended&select=id&limit=2').catch(() => null);
+  if (hit && hit.length === 1) return hit[0].id;
+  if (hit && hit.length > 1) return null;          // should be impossible; refuse rather than guess
+
+  /* Nothing stored under that code. It may still be a venue that predates the
+     migration and is only reachable through the derived code, so fall back to
+     the map - which is the slow path now, taken once per isolate, and only for
+     a code that would otherwise have failed. */
   await refreshVenueCodes(env);
-  const hit = _vcMap[code];
-  if (hit === AMBIGUOUS) return null;
-  if (hit) return hit;
-
-  /* A MISS IS NOT AN ANSWER, IT IS A STALE CACHE.
-
-     The map is rebuilt at most once a minute, and each of Cloudflare's isolates
-     holds its own copy, so clearing it after a refresh only clears the ONE isolate
-     that served the refresh. Every other isolate keeps the old code working and
-     the new one failing until its own minute is up - which is exactly the fault
-     Dean hit: an error, then the same code working on the second go, because the
-     second request landed somewhere else.
-
-     A venue created in the last minute has the same problem, and that one is worse:
-     a brand new venue types the code off its own console and is told it is wrong.
-
-     So a miss asks the database, which is the only thing that actually knows. It
-     costs one query on a code that was going to fail anyway, and it means a code
-     works the moment it exists rather than up to a minute later. */
-  const fresh = await sbGet(env, 'vp_venues',
-    'join_code=eq.' + enc(code) + '&status=neq.suspended&select=id,slug&limit=2');
-  if (!fresh || fresh.length !== 1) return null;   // 0 = no such code, 2 = ambiguous
-  _vcMap[code] = fresh[0].id;
-  return fresh[0].id;
+  const legacy = _vcMap[code];
+  return (legacy && legacy !== AMBIGUOUS) ? legacy : null;
 }
+
 const AMBIGUOUS = '__two_venues__';
 /* THE VENUE'S OWN CODE, ISSUED ONCE.
  *

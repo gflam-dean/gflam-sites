@@ -106,7 +106,12 @@ ok("a miss asks the database instead of trusting a one-minute cache",
    /join_code=eq\.' \+ enc\(code\)/.test(W),
    "each isolate caches separately, so clearing one leaves the rest stale");
 ok("that lookup refuses an ambiguous answer rather than picking one",
-   /fresh\.length !== 1/.test(W));
+   /hit\.length > 1\) return null/.test(W),
+   "two rows for one code should be impossible under the unique index; refusing beats guessing");
+ok("the hot path is ONE indexed row, not a scan of every venue",
+   /join_code=eq\.' \+ enc\(code\)[^;]*limit=2/.test(W) &&
+   W.indexOf("await refreshVenueCodes(env);\n  const legacy") > 0,
+   "a full table scan per cold isolate is what made the 95th percentile 11 seconds");
 ok("and it will not hand out a suspended venue", /join_code=eq[^;]*status=neq\.suspended/.test(W));
 ok("every generator uses the no-lookalike alphabet", CODE('ACDEFG') === 'ACDEFG');
 
