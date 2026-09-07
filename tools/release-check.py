@@ -39,6 +39,7 @@ broadcasts on no real venue's channel: VenuePlay has a live client.
         serves branch SITE code but talks to the same Workers and the same
         database as production, so play on it with a throwaway venue slug.
 """
+import hashlib
 import io, json, os, re, subprocess, sys, urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1183,6 +1184,49 @@ def local_checks(which):
            why='%d KB and %s an entry point. A truncated Worker still parses, so nothing '
                'else here would have caught it.'
                % (kb, 'has' if 'export default' in src else 'has NO'))
+
+    """AND ITS STAMP HAS TO BE THE STAMP OF WHAT IS IN IT.
+
+    A Worker is deployed by pasting, so /health's BUILD line is the only way to
+    answer "is my fix live". That answer is worth nothing if the line can be
+    stale. This morning it was: the venue-code fix went into venueplay-game.js
+    and stamp-workers.py was never run, so the file Dean pasted carried the
+    PREVIOUS build's fingerprint. He pasted the right code, /health reported the
+    old id, and neither of us could tell from outside whether it had landed. The
+    gate was green through all of it, because nothing here compared the stamp to
+    the bytes underneath it.
+
+    stamp-workers.py already computes that hash. It just was not asked."""
+    try:
+        sys.path.insert(0, os.path.join(ROOT, 'tools'))
+        import stamp_workers as _sw
+    except Exception:
+        _sw = None
+    if _sw is None:
+        try:
+            import importlib.util as _ilu
+            _spec = _ilu.spec_from_file_location('stamp_workers', os.path.join(ROOT, 'tools', 'stamp-workers.py'))
+            _sw = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_sw)
+        except Exception as e:
+            _sw = None
+            ok('the stamp tool can be asked', False, str(e)[:60],
+               why='without it nothing can compare a Worker stamp to its own contents')
+    if _sw is not None:
+        for rel in getattr(_sw, 'WORKERS', []):
+            f = os.path.join(ROOT, rel)
+            if not os.path.isfile(f):
+                continue
+            src = io.open(f, encoding='utf-8').read()
+            want = _sw.FOR_HASH.sub('', src)
+            digest = hashlib.sha256(want.encode('utf-8')).hexdigest()[:8]
+            got = _sw.STAMP.search(src)
+            got = got.group(1) if got else None
+            ok('%s carries its own fingerprint' % os.path.basename(rel),
+               got == digest,
+               (got or 'no stamp at all'),
+               why='the file hashes to %s and the stamp says %s, so /health would report a '
+                   'build that is not the one running. Run tools/stamp-workers.py.'
+                   % (digest, got or 'nothing'))
 
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
