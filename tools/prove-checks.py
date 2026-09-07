@@ -316,6 +316,12 @@ MUTATIONS = [
     ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
      '"license"', '"licence_dropped"',
      'the licence block is dropped from the question bank'),
+    # The black screen, twice in a real pub: the ads never rebuild after a game
+    # and the wall stays dark for the rest of the night.
+    ('tv-states.test.js', 'venueplay/tv.html',
+     'adBuilt=false;   // rebuild from the latest loaded slides so the ads always come back (never black)',
+     '// adBuilt stays true',
+     'the ads never rebuild, so the venue TV goes black after a game'),
     # A ticket that has already won being drawn again, in a room, for a prize.
     # rng-evidence proves the generator; this proves the code that USES it.
     ('draw-fairness.test.js', 'venueplay-backend/worker/venueplay-game.js',
