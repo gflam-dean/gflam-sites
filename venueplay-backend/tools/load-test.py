@@ -28,7 +28,7 @@ and a load test that takes their night down is worse than no load test.
   python3 load-test.py --plan            just print what it WOULD send, and stop
 """
 import argparse, collections, json, os, random, ssl, statistics, string, sys, threading, time
-import urllib.request, urllib.error
+import http.client, urllib.parse, urllib.request, urllib.error
 
 PROD = ('venueplay-game.dean-tindale.workers.dev',
         'venueplay-api.dean-tindale.workers.dev',
@@ -81,7 +81,62 @@ class Stats:
                 print('   %5d  %s' % (n, e))
 
 
+# A REAL TELEVISION DOES NOT RECONNECT FOR EVERY POLL.
+#
+# urllib opens a new connection per request, so every single call paid for a TCP
+# handshake and a full TLS negotiation. Against a Worker over the internet that is
+# several round trips of pure setup on top of the request, which does three things
+# wrong: it caps what this laptop can generate (the live run stalled at 51/sec
+# while the same tool does 700/sec locally), it makes the measured latency mostly
+# handshake, and it puts a load on the far end that no real client produces.
+#
+# One connection per thread, reused, which is what a screen on a wall actually
+# does. A connection that dies is rebuilt on the next call rather than failing it.
+_conns = threading.local()
+
+def _conn(url):
+    parts = urllib.parse.urlsplit(url)
+    key = (parts.scheme, parts.netloc)
+    have = getattr(_conns, 'c', None)
+    if have and have[0] == key:
+        return have[1], parts
+    if have:
+        try: have[1].close()
+        except Exception: pass
+    if parts.scheme == 'https':
+        c = http.client.HTTPSConnection(parts.netloc, timeout=20, context=CTX)
+    else:
+        c = http.client.HTTPConnection(parts.netloc, timeout=20)
+    _conns.c = (key, c)
+    return c, parts
+
+
 def call(stats, kind, url, body=None, timeout=20):
+    """One request on this thread's kept-open connection."""
+    t0 = time.time()
+    path = urllib.parse.urlsplit(url)
+    path = (path.path or '/') + (('?' + path.query) if path.query else '')
+    for attempt in (0, 1):
+        try:
+            c, _ = _conn(url)
+            data = json.dumps(body).encode() if body is not None else None
+            c.request('POST' if data else 'GET', path, body=data, headers=UA)
+            r = c.getresponse()
+            r.read(200000)
+            stats.add(kind, (time.time() - t0) * 1000, r.status)
+            return
+        except Exception as e:
+            # A kept connection can be closed by the far end between calls. That is
+            # normal and is not a failure of the system under test - rebuild once
+            # and only report if the retry also fails.
+            try: _conns.c[1].close()
+            except Exception: pass
+            _conns.c = None
+            if attempt:
+                stats.add(kind, (time.time() - t0) * 1000, 0, e)
+
+
+def _call_no_keepalive(stats, kind, url, body=None, timeout=20):
     t0 = time.time()
     try:
         data = json.dumps(body).encode() if body is not None else None
@@ -221,12 +276,19 @@ def ramp(args):
             return 2
         warm.append(ms)
     warm.sort(); base_ms = warm[len(warm)//2]
-    print('baseline: %s answers in %.0fms (median of 6, fastest %.0f, slowest %.0f)\n'
+    print('baseline: %s answers in %.0fms (median of 6, fastest %.0f, slowest %.0f)'
           % (args.canary, base_ms, warm[0], warm[-1]))
+    if warm[-1] > max(3000, base_ms * 4):
+        print('NOTE: one warm call took %.1f seconds against a %.0fms median. That is a stall,'
+              % (warm[-1] / 1000.0, base_ms))
+        print('      not noise, and a venue hitting it sees the screen hang. Worth chasing')
+        print('      separately from anything this ramp finds.')
+    print()
 
     print('%9s %9s %9s %9s %9s   %s' % ('target/s', 'actual/s', 'p50', 'p95', 'errors', 'live venue'))
     stages = [25, 50, 100, 200, 400, 800, 1600, 3200]
     knee = None
+    history = []
     codes = [args.code] if args.code else []
     for rate in stages:
         st = Stats(); stop = threading.Event()
@@ -272,11 +334,20 @@ def ramp(args):
         # fast system, which is every system worth protecting. The floor is now
         # 250ms, which is roughly where a person notices, and the multiple does
         # the work on anything slower than that.
+        # A MULTIPLE IS NOT ENOUGH ON ITS OWN.
+        # Three times a 567ms baseline is 1.7 seconds, and a television taking
+        # 1.7 seconds to answer is bad whatever multiple that happens to be. On
+        # 8 Sep the canary reached 1500ms and this let it through because 1500
+        # is less than 1701. So there is an absolute ceiling as well, and the
+        # tighter of the two wins.
+        ceil_ms = max(250, min(base_ms * 3, args.max_live_ms))
         hurt = []
-        if not live_ok:                        hurt.append('LIVE VENUE FAILED')
-        elif live_ms > max(250, base_ms * 3):  hurt.append('live venue %.0fms, was %.0f' % (live_ms, base_ms))
-        if bad:                                hurt.append('%d errors/429s' % bad)
-        if p95 > max(800, base_ms * 5):        hurt.append('p95 %.0fms' % p95)
+        if not live_ok:                  hurt.append('LIVE VENUE FAILED')
+        elif live_ms > ceil_ms:          hurt.append('live venue %.0fms, was %.0f (ceiling %.0f)'
+                                                     % (live_ms, base_ms, ceil_ms))
+        if bad:                          hurt.append('%d errors/429s' % bad)
+        if p95 > max(800, base_ms * 5):  hurt.append('p95 %.0fms' % p95)
+        history.append((actual, p50, p95, live_ms))
 
         print('%9d %9.0f %7.0fms %7.0fms %9d   %s'
               % (rate, actual, p50, p95, bad, ('%.0fms' % live_ms) if live_ok else 'FAILED'))
@@ -287,10 +358,32 @@ def ramp(args):
         # target rate claims a ceiling the test never actually reached.
         knee = actual
         if actual < rate * 0.6:
-            print('\nSTOPPED at %d/sec: this laptop could only generate %.0f/sec, so '
-                  'everything above that is untested, not proven. The system was still '
-                  'healthy at %.0f/sec - it was the load generator that ran out, not the '
-                  'server.' % (rate, actual, actual))
+            # WHICH END RAN OUT? Falling short of the target rate does not say.
+            # If the request times CLIMBED while the rate stalled, the far end is
+            # the thing bending and the shortfall is a symptom of it. If they
+            # stayed flat, this machine simply could not push harder. Reporting
+            # the first as the second is how a real ceiling gets written off as a
+            # laptop limitation, which is exactly what this printed on 8 Sep while
+            # the live venue had gone from 512ms to 1500ms.
+            first = history[0] if history else (actual, p50, p95, live_ms)
+            rose = (p95 > first[2] * 1.4) or (live_ms > first[3] * 1.4)
+            print()
+            if rose:
+                # The stage that bent is not a stage that held. Crediting it would
+                # print "the server was bending at 29/sec" and "held cleanly to
+                # 29/sec" in the same breath. The last CLEAN stage is the answer.
+                knee = history[-2][0] if len(history) > 1 else None
+                print('STOPPED at %d/sec: only reached %.0f/sec AND the times climbed while '
+                      'it stalled (p95 %.0f to %.0fms, live venue %.0f to %.0fms).'
+                      % (rate, actual, first[2], p95, first[3], live_ms))
+                print('That pattern is the SERVER bending, not this laptop running out.')
+                print('The last stage that was actually clean is the honest number; this one')
+                print('is already degraded. Confirm from a second machine before trusting it.')
+            else:
+                print('STOPPED at %d/sec: only reached %.0f/sec, and the times did NOT climb '
+                      '(p95 %.0f to %.0fms).' % (rate, actual, first[2], p95))
+                print('Flat latency with a stalled rate is this laptop running out, not the')
+                print('server. Everything above %.0f/sec is untested, not proven.' % actual)
             break
 
     print()
@@ -324,6 +417,8 @@ def main():
                     help='the REAL venue whose health stops the test')
     ap.add_argument('--code', help='a real venue code, to exercise the code lookup too')
     ap.add_argument('--stage-seconds', type=int, default=20)
+    ap.add_argument('--max-live-ms', type=int, default=1200,
+                    help='absolute ceiling for the live venue, whatever the multiple')
     ap.add_argument('--plan', action='store_true', help='print the shape of the load and stop')
     ap.add_argument('--write', action='store_true', help='also POST (opens sessions). Default is read-only.')
     ap.add_argument('--yes-production', action='store_true')
