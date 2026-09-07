@@ -364,12 +364,37 @@
   // Remember the venue on this screen so the slug only ever gets typed once. After that, plain
   // venueplay.com.au/tv works (nobody has to peck a slug into a TV remote). ?venue= in the URL
   // always wins and updates what's remembered.
+  /* A SLUG THAT TURNS OUT TO BE WRONG MUST NOT BE REMEMBERED FOR EVER.
+     The slug is still written the moment it appears in the URL, because a screen
+     has to survive booting with no network: a Fire Stick that comes up before the
+     wifi does, or a Worker mid-deploy, must still know which venue it is. Waiting
+     for confirmation before writing was tried and is worse, because an unreachable
+     Worker then means the screen forgets the venue entirely and drops to the
+     pairing panel in front of a room full of people.
+     What was missing is the other half. Type the-grand-hotel when the venue is
+     the-grand-hotel-4210 and the wrong slug used to stay saved for good: the "not
+     linked to an account" card came up, and reloading plain /tv read the bad slug
+     straight back, so the screen was dead for ever and looked like our fault.
+     CODE is derived from the slug too, so the six characters on the wall belonged
+     to a venue that does not exist and every punter who typed them got nothing.
+     So it is now forgotten as soon as the Worker has CONFIRMED there is no such
+     venue, which takes two strikes thirty seconds apart, the same protection that
+     stops one bad read throwing a card over a working screen. */
   var VENUE_SLUG=(function(){
     var fromUrl=tvVenueSlug();
-    if(fromUrl){ try{ localStorage.setItem("vpTvVenue", fromUrl); }catch(e){} return fromUrl; }
+    if(fromUrl){ rememberVenue(fromUrl); return fromUrl; }
     try{ var s=localStorage.getItem("vpTvVenue"); if(s) return s; }catch(e){}
     return "";
   })();
+  function rememberVenue(slug){
+    try{ if(slug) localStorage.setItem("vpTvVenue", slug); }catch(e){}
+  }
+  function forgetVenue(){
+    /* Only ever called after validateVenue has said exists:false TWICE, thirty
+       seconds apart. A single bad read during a Worker deploy must not wipe a
+       working screen's memory. */
+    try{ localStorage.removeItem("vpTvVenue"); }catch(e){}
+  }
   // ---- stable code, persists across refreshes so the link works forever ----
   var CODE=(function(){
     if(VENUE_SLUG) return venueCode(VENUE_SLUG);   // venue link: derive the shared code, no pairing
@@ -437,7 +462,7 @@
           if(!d){ return; }                       // unreachable or old Worker: never false-alarm
           if(d.exists===false){
             strikes++;
-            if(strikes>=2) showBadVenue();
+            if(strikes>=2){ showBadVenue(); forgetVenue(); }
             return;
           }
           strikes=0;
@@ -1436,6 +1461,7 @@
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(d){
           if(!d || !d.exists) return;
+          rememberVenue(slug);   // confirmed real: safe to keep on this screen
           if(Array.isArray(d.slides)) ADS.slides=d.slides;
           /* An empty routine is no routine. A saved-but-blank raffle object is still truthy, so
              without this the screen rotated a card with no words on it and the venue had no way
