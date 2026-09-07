@@ -162,6 +162,27 @@
     });
   }
 
+  /* THE CODE A PERSON USES, from the venue record.
+     venueCode(slug) below is the BROADCAST CHANNEL: derived on purpose so a
+     console and a TV meet with no round trip, never shown to anybody, and not
+     secret either since the algorithm sits in public page JavaScript. The code a
+     host reads off the iPad and a player types is issued once per venue and
+     stored, so it is unique by constraint and stays put on a table talker.
+     Falls back to the derived value when migration 68 has not run, which is what
+     every venue trading today already has. */
+  function venueJoinCode(id) {
+    var ctx = getContext();
+    var vid = id || (ctx && ctx.currentVenueId);
+    if (!vid) return Promise.resolve(null);
+    return getClient().from("vp_venues").select("join_code,slug").eq("id", vid).maybeSingle()
+      .then(function (r) {
+        var v = (r && r.data) || null;
+        if (!v) return null;
+        return v.join_code || (v.slug ? venueCode(v.slug) : null);
+      })
+      .catch(function () { return null; });
+  }
+
   function loadVenue(client, id) {
     if (!id) return Promise.resolve(null);
     return client.from("vp_venues").select("*").eq("id", id).maybeSingle()
@@ -605,6 +626,7 @@
     signOut: signOut,
     homeHref: homeHref,
     venueCode: venueCode,
+    venueJoinCode: venueJoinCode,
     suspensionBanner: suspensionBanner,
     noteOpenSession: noteOpenSession,
     closeOpenSessions: closeOpenSessions,

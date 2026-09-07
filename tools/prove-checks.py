@@ -316,6 +316,12 @@ MUTATIONS = [
     ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
      '"license"', '"licence_dropped"',
      'the licence block is dropped from the question bank'),
+    # A fresh random code per session is what made the wall change mid-night and
+    # made a table talker impossible to print.
+    ('venue-code.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     'const joinCode = (attempt === 0 && ownCode) ? ownCode : genCode(6);',
+     'const joinCode = genCode(6);',
+     'a session mints its own code again, so the venue has two'),
     # The ceiling Dean spotted: every venue ever created, cancelled ones
     # included, counted toward 5,000 - so live venues stop resolving silently.
     ('venue-scale.test.js', 'venueplay-backend/worker/venueplay-game.js',

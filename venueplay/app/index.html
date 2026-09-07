@@ -174,6 +174,19 @@
   .bnum.cur{background:var(--gold);color:#1a1000;border-color:transparent;box-shadow:0 0 14px rgba(255,194,75,.6)}
 
   .pairedchip{font-size:11px;color:var(--win);font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  /* THE SCREEN CODE, WHERE THE HOST CAN READ IT OFF THE IPAD.
+     The venue TV asks for "the six characters on your host console" when it
+     lands on a name that matches more than one venue, or none. This element
+     already held exactly that code - VP.venueCode(slug), the same one the TV
+     derives - and it was display:none, so the instruction on the wall pointed at
+     nothing. It sits on the console's home screen because that is where the host
+     is standing when the screen is asking. */
+  .screencode{margin-left:auto;display:inline-flex;align-items:baseline;gap:7px;
+              background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+              border-radius:8px;padding:5px 10px}
+  .screencode i{font-style:normal;font-size:9.5px;letter-spacing:.14em;color:var(--faint)}
+  .screencode b{font-family:'Hanken Grotesk',monospace;font-size:15px;letter-spacing:.18em;
+                color:#fff;font-weight:800}
   .hidden{display:none!important}
 </style>
 </head>
@@ -292,8 +305,8 @@
   <!-- ============ HOST CONSOLE ============ -->
   <div id="vConsole" class="hidden">
     <div class="lbl">
-      <span id="roomCode" style="display:none"></span>
       On your venue screen <span class="pairedchip" id="pairedChip">&middot; connecting</span>
+      <span class="screencode"><i>Screen code</i><b id="roomCode">------</b></span>
     </div>
 
     <!-- game selection landing: /app opens here, you pick a game, every game has a Games button back -->
@@ -1994,8 +2007,19 @@
       }
     });
     go("vConsole");
-    $("roomCode").textContent=code;
+    /* The chip on the console home screen shows the code a PERSON uses: the
+       venue's own join code, the same one the wall shows in a lobby and the same
+       one the TV asks for when it lands on the wrong slug. `code` here is the
+       broadcast channel, which is plumbing and must never be shown, so the chip
+       is filled from the venue record instead and only falls back to the channel
+       value while that is still loading. */
+    $("roomCode").textContent = (window.__vpJoinCode || code);
     $("setupCode").textContent=code;
+    if(VP && VP.venueJoinCode){
+      VP.venueJoinCode().then(function(jc){
+        if(jc){ window.__vpJoinCode = jc; $("roomCode").textContent = jc; }
+      }).catch(function(){});
+    }
     buildBoard();
     // Land on the game selection. If the host reloaded mid-game, drop straight back into the live bingo board.
     if(G.status==="running" || G.status==="lobby"){ selectGame("bingo"); } else { showGameSelect(); }

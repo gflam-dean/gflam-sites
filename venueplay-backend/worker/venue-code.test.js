@@ -1,0 +1,93 @@
+/* ONE CODE PER VENUE, AND NO TWO VENUES SHARE ONE.
+
+   There used to be two codes and both were wrong.
+
+     * The SCREEN code was fnvVenueCode(slug), a hash. Two unrelated slugs can
+       land on the same six characters - roughly 0.75% likely somewhere at 3,000
+       venues, 3% at 6,000, 8% at 10,000 - and the only defence was to refuse
+       BOTH venues until one was re-slugged. It also moved if a slug was ever
+       corrected, which invalidates a printed table talker.
+     * The PLAYER code was genCode(6) at session creation: new every session. The
+       wall changed codes the moment a host opened a lobby, which is fault 8 on
+       the live-test list, and nothing printable was ever right for long.
+
+   Migration 68 gives each venue one code it owns. The BROADCAST CHANNEL stays
+   derived from the slug deliberately: it is plumbing nobody sees, and deriving
+   it is what lets a TV and console meet with no round trip so a night survives a
+   Worker outage. It is not secret and never was - the algorithm is in public
+   page JavaScript - so signing protects it, not obscurity.
+
+   Run: jsc venueplay-backend/worker/venue-code.test.js
+*/
+var bad = 0, pass = 0;
+function ok(n, c, extra){
+  if (c) { pass++; print("  ok   " + n); }
+  else { bad++; print("  FAIL " + n + (extra ? "   " + extra : "")); }
+}
+function find(rel){
+  var tries = [rel, "../" + rel, "../../" + rel];
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 500) return t; } catch (e) {}
+  }
+  return null;
+}
+var W = find("venueplay-backend/worker/venueplay-game.js");
+var TV = find("venueplay/tv.html");
+var SESS = find("venueplay/app/vp-session.js");
+var MIG = find("venueplay-backend/supabase/venueplay-68-venue-join-code.sql");
+ok("the Worker, the TV, the session lib and migration 68 are all here", !!W && !!TV && !!SESS && !!MIG);
+if (!W || !TV || !SESS || !MIG) throw new Error("missing source");
+
+print("== a session uses the venue's own code, not a new one ==");
+ok("session creation asks for the venue's code", /const ownCode = await venueJoinCode\(env, venueId\)/.test(W));
+ok("and only mints one if the venue has none",
+   /const joinCode = \(attempt === 0 && ownCode\) \? ownCode : genCode\(6\)/.test(W),
+   "a fresh code per session is what made the wall change mid-night");
+ok("venueJoinCode reads the stored column", /select=join_code,slug/.test(W));
+ok("and falls back to the legacy hash if the migration has not run",
+   /v\.join_code \|\| \(v\.slug \? fnvVenueCode\(v\.slug\) : null\)/.test(W),
+   "pasting the Worker before the migration must not leave a venue codeless");
+
+print("== the screen is told the code rather than deriving it ==");
+ok("/screen returns join_code", /join_code: joinCode/.test(W));
+ok("the TV uses what it is given", /if\(d\.join_code && CODE_RE\.test\(d\.join_code\)\) setJoinCode\(d\.join_code\)/.test(TV));
+
+print("== the channel stays derived, and stays hidden ==");
+ok("the broadcast channel is still built from CODE", /client\.channel\("vp-"\+CODE/.test(TV),
+   "deriving the channel is what lets a night survive a Worker outage");
+/* The hiding is on the WRAPPER, not the span: <div class="pt-code"
+   style="display:none"><span id="pairCode">. The first version of this check
+   looked for it on the span and failed a product that was correct. */
+ok("the channel code is not displayed on the TV",
+   /class="pt-code"[^>]*style="display:\s*none"[^>]*>\s*<span id="pairCode"/.test(TV),
+   "it is plumbing, and showing it invites somebody to type it");
+
+print("== only an owner or a manager can change a venue's code ==");
+var h = /async function handleVenueCodeRefresh[\s\S]*?\n\}/.exec(W);
+ok("the refresh endpoint exists", !!h);
+ok("it is routed", /path === '\/venue\/code\/refresh'/.test(W));
+ok("it requires a signed-in host token", !!h && /verifyHostJwt/.test(h[0]));
+ok("it requires staff AT THAT VENUE", !!h && /requireStaff\(env, authUserId, venueId\)/.test(h[0]));
+ok("a HOST is refused", !!h && /role !== 'owner' && role !== 'manager'/.test(h[0]),
+   "the code is printed in the room, so a host must not be able to change it");
+ok("it retries when the code is already taken", !!h && /res\.status === 409\) continue/.test(h[0]));
+ok("and it clears the cached code map", !!h && /_vcMap = null/.test(h[0]),
+   "otherwise the old code keeps resolving for up to a minute");
+ok("the change is audited", !!h && /venue_code_refreshed/.test(h[0]));
+
+print("== the database is what actually stops two venues sharing a code ==");
+ok("migration 68 adds the column", /add column if not exists join_code text/.test(MIG));
+ok("with a UNIQUE index, not a hope", /create unique index[\s\S]{0,120}vp_venues \(join_code\)/.test(MIG));
+ok("existing venues keep the code they already have",
+   /set join_code = vp_legacy_venue_code\(slug\)/.test(MIG),
+   "a trading venue may have theirs on a table talker already");
+ok("and a legacy clash is broken by age, not by failing the migration",
+   /row_number\(\) over \(partition by join_code order by created_at asc/.test(MIG));
+
+print("== the console shows the venue code, never the channel ==");
+ok("vp-session exposes venueJoinCode", /venueJoinCode: venueJoinCode/.test(SESS));
+ok("it reads the stored column first", /select\("join_code,slug"\)/.test(SESS));
+
+print("");
+if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
+print("ALL " + pass + " CHECKS PASSED");

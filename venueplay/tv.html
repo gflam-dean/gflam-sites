@@ -126,12 +126,12 @@
      out a slug on an on-screen keyboard, and everyone knows their own postcode. */
   .pcode{font-family:'Anton',sans-serif;font-size:clamp(24px,5.2cqw,64px);letter-spacing:.16em;
          color:#fff;margin:.4cqw 0 1cqw;line-height:1.15;min-height:1.15em}
+  .keys{display:grid;gap:.8cqw;margin:0 auto}
   /* An empty slot is a box to be filled, not an underscore hanging below the
      line with a hole above it. On a television across a room the boxes are what
      make it obvious how many characters are still wanted. */
   .pcode span{display:inline-block;width:.62em;border-bottom:.09em solid var(--line);
               vertical-align:baseline;color:transparent}
-  .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:.8cqw;max-width:52cqw;margin:0 auto}
   /* 29 letters plus two labels is 31 keys. At the digit keypad's size that runs
      off the bottom of the card, and a key below the edge of a television cannot
      be pressed. Ten across, smaller, and it fits in three rows. */
@@ -519,6 +519,7 @@
      which one this screen is in, and one press sets it - and because the chosen
      slug is real, the screen then remembers it for good. */
   var _pickAsked = false;
+  window.__T=function(m){ showMatches(m,""); };
   /* HOW MANY TILES ACTUALLY FIT ON A WALL. Measured against the real worst case:
      22 sits comfortably in four columns with nothing clipped and nothing to
      scroll. Past that the card would have to scroll, and a Fire Stick remote
@@ -640,46 +641,17 @@
     draw();
   }
 
-  function askPostcode(m){
-    var typed = "";
-    function draw(){
-      var shown = (typed + "____").slice(0,4).split("").map(function(c){
-        return c === "_" ? '<span>\u00a0</span>' : c; }).join(" ");
-      var narrowed = typed ? m.filter(function(v){ return String(v.postcode||"").indexOf(typed) === 0; }) : m;
-      var digits = "1234567890".split("").map(function(d){
-        return '<a href="#" data-key="' + d + '">' + d + '</a>'; }).join("");
-      pickCard("Which one is this?",
-        "There are " + m.length + " venues by that name. Put in the postcode.",
-        '<div class="pcode">' + shown + '</div>' +
-        '<div class="keys">' + digits + '</div>' +
-        '<div class="keyacts">' +
-          '<a href="#" data-key="del">Delete</a>' +
-          '<a href="#" data-key="code">Use the screen code</a>' +
-        '</div>' +
-        '<div class="gotnote" style="margin-top:1.2cqw">' +
-          (narrowed.length ? narrowed.length + " match" + (narrowed.length===1?"":"es") + " so far"
-                           : "No venue by that name in that postcode") + '</div>', true);
-      var list = $("vpList");
-      list.onclick = function(ev){
-        var a = ev.target && ev.target.closest ? ev.target.closest("a[data-key]") : null;
-        if(!a) return;
-        ev.preventDefault();
-        var k = a.getAttribute("data-key");
-        if(k === "code"){ askCode(function(){ askPostcode(m); }); return; }
-        if(k === "del") typed = typed.slice(0, -1);
-        else if(typed.length < 4) typed += k;
-        var now = m.filter(function(v){ return String(v.postcode||"").indexOf(typed) === 0; });
-        if(typed.length >= 3 && now.length && now.length <= PICK_FITS){ showMatches(now, "typed"); return; }
-        draw();
-      };
-    }
-    draw();
-  }
-
   function showMatches(m, state){
     if(!m.length) return false;
     if(m.length === 1){ showChosen(m[0]); return true; }
-    if(!state && m.length > PICK_FITS){ askPostcode(m); return true; }
+    /* TOO MANY TO PUT ON A WALL: ASK FOR THE CODE.
+       There were two ways out of this and only one of them was needed. The
+       postcode keypad narrowed a family of 99 Royal Hotels down to one, but the
+       six characters on the host console do the same job in one step, cannot
+       land on the wrong pub, and work even when the venue's registered name is
+       not what is written over the door. Dean's call, and the right one: two
+       ways to do the same thing is one more than anybody needs on a television. */
+    if(!state && m.length > PICK_FITS){ askCode(function(){ showMatches(m, state); }); return true; }
     pickCard("Which one is this?",
       "There " + (m.length === 1 ? "is 1 venue" : "are " + m.length + " venues") +
       " by that name. Press the one this screen is in.",
@@ -1755,6 +1727,15 @@
         .then(function(d){
           if(!d || !d.exists){ askWhichVenue(); return; }
           rememberVenue(slug);   // confirmed real: safe to keep on this screen
+          /* THE VENUE'S OWN CODE, NOT ONE DERIVED HERE.
+             CODE stays the broadcast channel, which is derived from the slug on
+             purpose so a TV and a console meet with no round trip and a night
+             survives a Worker outage. The code a PERSON sees is different: it is
+             issued once per venue, unique by constraint, and printable. If the
+             Worker has not handed one over (migration 68 not run, or offline)
+             joinCode keeps the derived value, which is what every existing venue
+             already has, so nothing goes blank. */
+          if(d.join_code && CODE_RE.test(d.join_code)) setJoinCode(d.join_code);
           if(Array.isArray(d.slides)) ADS.slides=d.slides;
           /* An empty routine is no routine. A saved-but-blank raffle object is still truthy, so
              without this the screen rotated a card with no words on it and the venue had no way

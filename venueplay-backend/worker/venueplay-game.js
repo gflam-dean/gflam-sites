@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 06:34 · b86387d7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 07:00 · 9d8e625e';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -258,6 +258,7 @@ export default {
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
+      if (method === 'POST' && path === '/venue/code/refresh')  return await handleVenueCodeRefresh(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
       if (method === 'POST' && path === '/screen/command')     return await handleScreenCommand(request, env, json, await readJson(request));
       if (method === 'GET'  && path === '/admin/group-overage') return await handleGroupOverage(request, env, json);
@@ -575,9 +576,14 @@ async function handleCreateSession(request, env, json) {
   // Generate a join code from the 29-char ambiguity-free alphabet. A partial
   // unique index enforces uniqueness among live sessions, so retry on a clash.
   const tvPairingCode = genCode(4);
+  /* THE VENUE'S CODE, NOT A NEW ONE. A fresh random code per session is why the
+     wall changed codes when a lobby opened, and why nothing could be printed.
+     If the venue somehow has no code (migration 68 not run), fall back to minting
+     one so a night can still start - a missing column must not stop a game. */
+  const ownCode = await venueJoinCode(env, venueId);
   let session = null;
   for (let attempt = 0; attempt < 6; attempt++) {
-    const joinCode = genCode(6);
+    const joinCode = (attempt === 0 && ownCode) ? ownCode : genCode(6);
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_sessions', {
       method: 'POST',
       headers: { ...sbHeaders(env), 'Prefer': 'return=representation' },
@@ -742,6 +748,36 @@ async function venueByCode(env, code) {
   return (hit && hit !== AMBIGUOUS) ? hit : null;
 }
 const AMBIGUOUS = '__two_venues__';
+/* THE VENUE'S OWN CODE, ISSUED ONCE.
+ *
+ * Two codes used to exist and both were wrong. The screen code was a HASH of the
+ * slug, so two unrelated venues can land on the same six characters (about 0.75%
+ * likely somewhere at 3,000 venues, 3% at 6,000, 8% at 10,000) and the only
+ * defence was to refuse BOTH until somebody re-slugged one. The player code was
+ * random and NEW EVERY SESSION, so nothing printable was ever right for long and
+ * the wall changed codes the moment a lobby opened.
+ *
+ * Migration 68 gives each venue one code it owns: unique by constraint rather
+ * than by luck, independent of the slug so correcting a slug does not invalidate
+ * a table talker, and the same code the console shows and a player types.
+ *
+ * The BROADCAST CHANNEL is deliberately still derived from the slug and is not
+ * this. It is plumbing nobody sees, and deriving it is what lets a TV and a
+ * console find each other with no round trip - which is why bingo survives a
+ * Worker outage. It was never secret either: the algorithm is in public page
+ * JavaScript, so anyone can compute it. Broadcast SIGNING is the protection
+ * there, not obscurity.
+ */
+async function venueJoinCode(env, venueId) {
+  const rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=join_code,slug&limit=1')
+    .catch(() => null);
+  const v = rows && rows[0];
+  if (!v) return null;
+  // Fall back to the legacy hash if migration 68 has not run yet, so pasting this
+  // Worker before the migration cannot leave a venue with no code at all.
+  return v.join_code || (v.slug ? fnvVenueCode(v.slug) : null);
+}
+
 async function refreshVenueCodes(env) {
   const now = Date.now();
   if (_vcMap && now - _vcAt <= 60000) return;
@@ -1137,6 +1173,54 @@ async function handleSigningMint(request, env, json) {
      * at most twenty-five come back, and only the four fields needed to tell
        them apart on a wall: name, suburb by postcode, state, and the slug to
        click. */
+
+/* POST /venue/code/refresh   { venue_id }   (owner or manager, never a host)
+ *
+ * A venue's code is printed on table talkers, so it must not change on a whim -
+ * a host reprinting the room because they fancied a new code is a support call.
+ * But it has to be changeable deliberately: a code can leak, or a venue can
+ * simply want a new one. So this sits with the people who own the account.
+ *
+ * Refusing a HOST is the point of this endpoint, not an afterthought.
+ */
+async function handleVenueCodeRefresh(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const venueId = String(b.venue_id || '').trim();
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  assertUuid(venueId, 'venue_id');
+
+  const staff = await requireStaff(env, authUserId, venueId);   // staff at THIS venue (also kill-switch)
+  const role = String((staff && staff.role) || '').toLowerCase();
+  if (role !== 'owner' && role !== 'manager') {
+    return json({ error: 'Only the account owner or a manager can change the venue code. It is printed in the room, so a host cannot.' }, 403);
+  }
+
+  /* Unique across every venue, not just the live ones: a cancelled venue's code
+     must never be handed to somebody else while the old table talkers are still
+     on a wall somewhere. The unique index is what actually enforces it; this
+     retries on the 409 it raises. */
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const code = genCode(6);
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_venues?id=eq.' + enc(venueId), {
+      method: 'PATCH',
+      headers: { ...sbHeaders(env), 'Prefer': 'return=representation' },
+      body: JSON.stringify({ join_code: code, join_code_set_at: new Date().toISOString() }),
+    });
+    if (res.ok) {
+      _vcMap = null;          // the code map is now stale; rebuild on the next lookup
+      await sbInsert(env, 'vp_admin_audit', {
+        action: 'venue_code_refreshed', target: 'venue:' + venueId,
+        detail: { by: authUserId, role: role },
+      }, false).catch(() => {});
+      return json({ ok: true, join_code: code });
+    }
+    if (res.status === 409) continue;    // taken by another venue, draw again
+    throw dbError('update', 'vp_venues', await res.text());
+  }
+  return json({ error: 'Could not allocate a free code, please try again' }, 409);
+}
+
 async function handleVenueLike(request, env, json) {
   const url = new URL(request.url);
   const typed = String(url.searchParams.get('slug') || '').trim().toLowerCase().slice(0, 80);
@@ -1486,10 +1570,15 @@ async function handleScreen(request, env, json) {
     'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1');
   const cfg = (rows && rows[0]) || null;
 
-  let name = '';
+  let name = '', joinCode = '';
   if (cfg && cfg.venue_id) {
-    const v = await sbGet(env, 'vp_venues', 'id=eq.' + enc(cfg.venue_id) + '&select=name&limit=1');
+    const v = await sbGet(env, 'vp_venues',
+      'id=eq.' + enc(cfg.venue_id) + '&select=name,join_code&limit=1').catch(() => null);
     name = (v && v[0] && v[0].name) || '';
+    /* The venue's own code, so the screen shows what the console shows and what a
+       player types. Absent until migration 68 runs, and the TV falls back to the
+       legacy derived code in that case rather than showing nothing. */
+    joinCode = (v && v[0] && v[0].join_code) || '';
   }
 
   // The members-draw board, same one venue. Only draws with a night set are advertised, which is
@@ -1504,6 +1593,7 @@ async function handleScreen(request, env, json) {
   return json({
     exists: !!cfg,
     name: name,
+    join_code: joinCode,
     logo_url: (cfg && cfg.logo_url) || '',
     slides: (cfg && Array.isArray(cfg.slides)) ? cfg.slides : [],
     raffle: (cfg && cfg.raffle) || null,
