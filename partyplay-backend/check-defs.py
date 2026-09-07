@@ -75,6 +75,43 @@ def strip_comments(src):
             out.append(c)
             i += 1
             continue
+        # A REGEX LITERAL IS NOT CODE EITHER.
+        #
+        # tv.html carries /(^|\/)tv(\.html)?$/i, and "tv(" inside it read as a
+        # call to a function named tv. It went unnoticed for as long as that
+        # file happened to have a local `var tv` somewhere, and surfaced the day
+        # a refactor removed it - as a FAILING gate on a correct change, which
+        # is the most expensive kind of false alarm: it teaches people that red
+        # means nothing.
+        #
+        # Telling a regex from a division is the classic ambiguity. The standard
+        # test is what came before it: after a value (an identifier, a number, a
+        # closing bracket) a slash is division, and after an operator, a comma,
+        # an opening bracket or the start of a statement it opens a regex.
+        if c == "/" and i + 1 < n and src[i + 1] not in "/*":
+            k = len(out) - 1
+            while k >= 0 and out[k] in " \t\n":
+                k -= 1
+            prev = out[k] if k >= 0 else ""
+            if prev == "" or prev in "(,=:[!&|?{};+-*%<>~^":
+                j = i + 1
+                while j < n:
+                    if src[j] == "\\":
+                        j += 2
+                        continue
+                    if src[j] == "\n":
+                        break            # a regex cannot span a line: we were wrong
+                    if src[j] == "/":
+                        while j + 1 < n and src[j + 1].isalpha():
+                            j += 1       # trailing flags
+                        out.append(" ")  # the whole literal becomes whitespace
+                        i = j + 1
+                        break
+                    j += 1
+                else:
+                    j = n
+                if i == j + 1 or (j < n and src[j] == "/"):
+                    continue
         if c == "/" and i + 1 < n and src[i + 1] == "/":
             while i < n and src[i] != "\n":
                 i += 1

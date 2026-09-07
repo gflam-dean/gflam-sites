@@ -44,12 +44,22 @@ import io, json, os, re, subprocess, sys, urllib.error, urllib.request
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+_SCANNER_ERROR = None
+
+
 def _load_scanner():
     """check-defs.py owns the comment scanner. Import it rather than keeping a
     second copy that will drift, which is exactly how four screen routers ended
     up disagreeing with each other."""
     import importlib.util
-    p = os.path.join(os.path.expanduser('~/partyplay'), 'check-defs.py')
+    # WAS ~/partyplay/check-defs.py: a copy outside this repo entirely, and a
+    # different one again from the two inside it. Three versions of the scanner
+    # existed on 7 Sep and the gate used whichever the lookup reached first. The
+    # backend copy is the one that ships nowhere and is therefore the only one
+    # safe to depend on.
+    p = os.path.join(ROOT, 'partyplay-backend', 'check-defs.py')
+    if not os.path.isfile(p):
+        p = os.path.join(os.path.expanduser('~/partyplay'), 'check-defs.py')
     if not os.path.isfile(p):
         return None
     spec = importlib.util.spec_from_file_location('_cd', p)
@@ -57,10 +67,21 @@ def _load_scanner():
     argv, out = sys.argv[:], sys.stdout
     sys.argv = ['check-defs.py', '--no-targets-on-purpose']
     sys.stdout = io.StringIO()          # it prints its own summary on import
+    # A BROKEN SCANNER MUST NOT TAKE THE WHOLE GATE WITH IT. Breaking this file
+    # on purpose on 7 Sep did not produce a failed check: it produced a
+    # traceback, exit 1, and not one of the other 65 checks ran. The push was
+    # correctly refused, so nothing unsafe got through, but the operator learns
+    # nothing about the release they are trying to make and has no way to tell a
+    # broken tool from a broken change. Catch it, hand back nothing, and let the
+    # caller report it as the one failure it is.
+    global _SCANNER_ERROR
     try:
         spec.loader.exec_module(mod)
     except SystemExit:
         pass
+    except Exception as e:
+        _SCANNER_ERROR = '%s: %s' % (type(e).__name__, str(e)[:120])
+        return None
     finally:
         sys.argv, sys.stdout = argv, out
     return getattr(mod, 'strip_comments', None)
@@ -379,7 +400,12 @@ def local_checks(which):
        why='; '.join(worker_bad[:2]))
 
     head('B. Nothing calls a function that does not exist')
-    checker = os.path.join(PARTYPLAY_SITE, 'check-defs.py')
+    # partyplay/ is the directory Pages deploys, so a tool kept there is served
+    # to the public: check-defs.py was downloadable from partyplay.com.au on
+    # 7 Sep. Run the backend copy, which ships nowhere.
+    checker = os.path.join(ROOT, 'partyplay-backend', 'check-defs.py')
+    if not os.path.isfile(checker):
+        checker = os.path.join(PARTYPLAY_SITE, 'check-defs.py')
     if not os.path.isfile(checker):
         checker = os.path.join(PARTYPLAY_LOCAL, 'check-defs.py')
     if os.path.isfile(checker):
@@ -1921,6 +1947,12 @@ def main():
     global _scanner
     _scanner = _load_scanner()
     print('%sRELEASE CHECK%s  %s%s' % (YEL, OFF, which, '  (local only)' if local_only else ''))
+    # Say it out loud if the scanner did not load. Everything that depends on it
+    # would otherwise just quietly check less, and the run would still end in a
+    # green summary line.
+    if _SCANNER_ERROR:
+        head('The tools this gate is built from')
+        ok('the comment scanner loads', False, why=_SCANNER_ERROR)
 
     if not live_only:
         local_checks(which)
