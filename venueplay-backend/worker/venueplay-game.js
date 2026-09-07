@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '7 Sep 2026, 21:29 · 70d2f1f9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 06:28 · a3d3f77a';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -221,8 +221,8 @@ export default {
            Two numbers, so it takes a curl instead of a database session. */
         let signing = null;
         try {
-          const vs = await sbGet(env, 'vp_venues', 'select=id,broadcast_enforce&limit=2000');
-          const ks = await sbGet(env, 'vp_venue_signing_keys', 'select=venue_id&limit=2000');
+          const vs = await sbGetAll(env, 'vp_venues', 'select=id,broadcast_enforce');
+          const ks = await sbGetAll(env, 'vp_venue_signing_keys', 'select=venue_id');
           const keyed = new Set(ks.map(function (k) { return k.venue_id; }));
           signing = {
             venues: vs.length,
@@ -745,7 +745,9 @@ const AMBIGUOUS = '__two_venues__';
 async function refreshVenueCodes(env) {
   const now = Date.now();
   if (_vcMap && now - _vcAt <= 60000) return;
-  const rows = await sbGet(env, 'vp_venues', 'select=id,slug&limit=5000');
+  /* A suspended venue cannot run a game, so it has no business holding a code -
+     and before this it was still taking up one of the 5,000 slots. */
+  const rows = await sbGetAll(env, 'vp_venues', 'slug=not.is.null&status=neq.suspended&select=id,slug');
   const map = {}, seen = {}, dupes = [];
   for (const v of rows) {
     if (!v || !v.slug) continue;
@@ -1282,7 +1284,7 @@ async function handleGroupOverage(request, env, json) {
   /* Grouped venues only: a venue with a founding_id is metered and charged the normal
      way, and including it here would double-count money already taken. */
   const venues = await sbGet(env, 'vp_venues',
-    'group_id=not.is.null&founding_id=is.null&select=id,name,slug,group_id,max_players&limit=2000');
+    'group_id=not.is.null&founding_id=is.null&select=id,name,slug,group_id,max_players');
   if (!venues || !venues.length) {
     return json({ ok: true, months: months, venues: 0, nights: [], total_cents: 0,
                   note: 'no grouped venues without their own billing account' });
@@ -1371,7 +1373,7 @@ async function handleScreenCommand(request, env, json, body) {
   let venues;
   if (body && body.all) {
     venues = await sbGet(env, 'vp_venues',
-      'slug=not.is.null&status=neq.suspended&select=id,name,slug&limit=2000');
+      'slug=not.is.null&status=neq.suspended&select=id,name,slug');
   } else {
     const slug = String((body && body.slug) || '').trim().toLowerCase().slice(0, 80);
     if (!slug || !/^[a-z0-9-]+$/.test(slug)) return json({ error: 'bad slug' }, 400);
@@ -5586,6 +5588,41 @@ async function sbGet(env, table, query) {
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query, { headers: sbHeaders(env) });
   if (!res.ok) throw dbError('read', table, await res.text());   // M5: log detail, return generic + code
   return await res.json();
+}
+
+/* EVERY row, not the first N of them.
+ *
+ * A `limit=5000` on a table that only grows is a wall you hit silently. The
+ * venue-code map was built that way: PostgREST returned the first 5,000 venues,
+ * every venue after that had no code, and their screens showed "not linked to an
+ * account" while their join codes resolved to nothing. No error anywhere. And
+ * the count is every venue EVER created - three thousand trading plus three
+ * thousand cancelled is six thousand rows, so live venues would have broken
+ * while cancelled ones held the slots, in whatever order Postgres felt like.
+ *
+ * Pages until a short page comes back, so there is no ceiling to raise later.
+ * Capped at 40 pages (40,000 rows) purely so a runaway query cannot spin a
+ * Worker for ever; if that is ever reached the venue count is a happier problem
+ * than this bug.
+ */
+async function sbGetAll(env, table, query, pageSize) {
+  const size = pageSize || 1000;
+  let out = [], offset = 0;
+  for (let page = 0; page < 40; page++) {
+    const q = query + '&limit=' + size + '&offset=' + offset;
+    const rows = await sbGet(env, table, q);
+    if (!Array.isArray(rows) || rows.length === 0) break;
+    out = out.concat(rows);
+    /* Advance by what CAME BACK, and stop only on an empty page.
+       Stopping on a SHORT page was the first version of this and it has the same
+       fault as the bug it replaces: Supabase enforces its own max-rows on
+       PostgREST, so if that ceiling is lower than the page size asked for, every
+       page is short, the loop stops after one, and the truncation is silent
+       again. Asking until nothing comes back is correct whatever the platform
+       cap turns out to be. */
+    offset += rows.length;
+  }
+  return out;
 }
 
 // obj may be a single object or an array of rows. returnRep=true asks Supabase

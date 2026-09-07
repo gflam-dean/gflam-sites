@@ -316,6 +316,12 @@ MUTATIONS = [
     ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
      '"license"', '"licence_dropped"',
      'the licence block is dropped from the question bank'),
+    # The ceiling Dean spotted: every venue ever created, cancelled ones
+    # included, counted toward 5,000 - so live venues stop resolving silently.
+    ('venue-scale.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "await sbGetAll(env, 'vp_venues', 'slug=not.is.null&status=neq.suspended&select=id,slug')",
+     "await sbGet(env, 'vp_venues', 'select=id,slug&limit=5000')",
+     'the venue-code map is capped again, so venues past it stop working'),
     # The id fallback: an older host broadcasts titles alone, and without the
     # fallback every card in the room stays blank for the rest of that night.
     ('musical-win.test.js', 'venueplay/app/musical/play.html',
