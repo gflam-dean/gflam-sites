@@ -96,10 +96,30 @@
 
   /* ---- wrong-link prompt (full overlay) ---- */
   .badvenue{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,5,6,.93);backdrop-filter:blur(4px);padding:6cqw}
-  .bvcard{max-width:64cqw;text-align:center;background:var(--ink-2);border:1px solid var(--line);border-radius:2cqw;padding:4cqw 4.5cqw}
-  .bvtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,4.4cqw,52px);color:var(--pink);line-height:1.05;margin-bottom:2cqw}
+  .bvcard{max-width:76cqw;text-align:center;background:var(--ink-2);border:1px solid var(--line);border-radius:2cqw;padding:2.6cqw 3cqw}
+  .bvtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,3.6cqw,44px);color:var(--pink);line-height:1.05;margin-bottom:1.2cqw}
   .bvtext{font-family:'Manrope',sans-serif;font-size:clamp(13px,2.1cqw,26px);color:var(--text);line-height:1.5}
   .bvtext b{color:#fff}
+  /* A GRID, NOT A LIST, AND NOTHING THAT HAS TO BE SCROLLED.
+     This is a television. Plenty of them are driven by a Fire Stick remote,
+     which cannot scroll a box, so a list that runs off the bottom of the card is
+     a list of venues you cannot reach. Twenty-two is the realistic worst case
+     (Grand Hotel, Royal Hotel), so the tiles are laid out in as many columns as
+     fit and sized to get that many on the wall at once.
+     The NAME is the same on every tile - that is the whole problem - so the
+     postcode and state are what the eye needs, and they are set brighter and
+     bigger than the name rather than as a footnote under it. */
+  .bvpick{margin-top:1.4cqw;display:grid;gap:.7cqw;
+          grid-template-columns:repeat(auto-fit,minmax(11cqw,1fr));align-content:start}
+  .bvpick a{display:block;text-decoration:none;background:var(--ink);border:1px solid var(--line);
+            border-radius:.8cqw;padding:.75cqw 1cqw;color:var(--muted);text-align:center;
+            font-family:'Manrope',sans-serif;font-size:clamp(10px,1.25cqw,16px);line-height:1.2}
+  .bvpick a strong{display:block;color:#fff;font-weight:800;
+                   font-size:clamp(13px,1.9cqw,26px);letter-spacing:.01em}
+  /* The card must never grow past the wall it is on: a tile below the bottom
+     edge of a television cannot be reached at all, and a Fire Stick remote
+     cannot scroll a box. */
+  .bvcard{max-height:94cqh;overflow:auto}
 
   /* ---- holding card ---- */
   #tvHold .heye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
@@ -254,6 +274,17 @@
     <div class="bvcard">
       <div class="bvtitle">Not linked to an account</div>
       <div class="bvtext">This link doesn't seem to be linked to an account. You can sign up at <b>www.venueplay.com.au</b>, or contact us at <b>hello@venueplay.com.au</b> if you think this is wrong.</div>
+    </div>
+  </div>
+
+  <!-- WHICH ONE OF THESE IS YOU? Shown when a slug names a family of venues
+       rather than a single one: /tv?venue=the-grand-hotel with 22 Grand Hotels
+       on the books. This is not an error state and must not look like one. -->
+  <div class="badvenue hidden" id="venuePick">
+    <div class="bvcard">
+      <div class="bvtitle" id="vpTitle">Which one is this?</div>
+      <div class="bvtext" id="vpText"></div>
+      <div class="bvpick" id="vpList"></div>
     </div>
   </div>
 
@@ -424,7 +455,55 @@
   // absent or enforce off it simply delivers, so the TV behaves exactly as before.
   if(window.VPSign && VENUE_SLUG){ VPSign.initReceiver(VP_GAME_API, VENUE_SLUG); }
   function vpGate(payload, cb){ if(window.VPSign){ VPSign.gate(payload, cb); } else { cb(payload); } }
-  function showBadVenue(){ var el=$("badVenue"); if(el) el.classList.remove("hidden"); }
+  function pickerIsUp(){ var p=$("venuePick"); return !!(p && !p.classList.contains("hidden")); }
+  function showBadVenue(){
+    /* If we have already offered the list, the screen is not lost, it is waiting
+       to be told which venue it is. Throwing "not linked to an account" over the
+       top of that would be wrong and would hide the answer. */
+    if(pickerIsUp()) return;
+    var el=$("badVenue"); if(el) el.classList.remove("hidden");
+  }
+
+  /* THE BARE NAME IS A FAMILY, NOT A TYPO.
+     Seven per cent of Australian venue names are shared, so new slugs carry the
+     postcode: the-grand-hotel-4210. Somebody setting a screen up types what is
+     over the door, the-grand-hotel, and that is a perfectly reasonable thing to
+     type. Until now it was treated as a dead link: "not linked to an account",
+     sixty seconds later, with nothing to do about it but guess a postcode on a
+     TV remote.
+     We already hold every Grand Hotel. So the bare name becomes a page that asks
+     which one this screen is in, and one press sets it - and because the chosen
+     slug is real, the screen then remembers it for good. */
+  var _pickAsked = false;
+  function askWhichVenue(){
+    if(_pickAsked) return; _pickAsked = true;      // one lookup, not one per poll
+    if(!VENUE_SLUG) return;
+    fetch(VP_GAME_API + "/venues/like?slug=" + encodeURIComponent(VENUE_SLUG))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        var m = (d && d.matches) || [];
+        if(!m.length) return;            // nothing of that name: the error card is right
+        var box=$("venuePick"), list=$("vpList"), t=$("vpText"), h=$("vpTitle");
+        if(!box || !list) return;
+        if(h) h.textContent = m.length === 1 ? "Is this you?" : "Which one is this?";
+        if(t) t.textContent = m.length === 1
+          ? "One venue goes by that name. Press it to set this screen."
+          : "There are " + m.length + " venues by that name. Press the one this screen is in.";
+        /* If every match has the same name - which is the whole reason this
+           screen is up - printing it on all twenty-two tiles is noise that costs
+           the vertical space the tiles need. Show it only when it distinguishes. */
+        var sameName = m.length > 1 && m.every(function(v){ return (v.name||"") === (m[0].name||""); });
+        list.innerHTML = m.map(function(v){
+          var where=[v.postcode, v.state].filter(Boolean).join(" ");
+          return '<a href="/tv?venue=' + encodeURIComponent(v.slug) + '">' +
+                 '<strong>' + esc(where || v.name) + '</strong>' +
+                 (where && !sameName ? esc(v.name) : '') + '</a>';
+        }).join("");
+        var bad=$("badVenue"); if(bad) bad.classList.add("hidden");   // it was never a dead link
+        box.classList.remove("hidden");
+      })
+      .catch(function(){ /* the error card on its own is still correct */ });
+  }
   /* Recorded once, at parse time. Compared against the reload timestamp HQ sets, so
      a reload asked for BEFORE this page loaded is not obeyed again on every poll -
      which would be a screen that reloads for ever. */
@@ -1460,7 +1539,7 @@
       fetch(VP_GAME_API+"/screen?venue="+encodeURIComponent(slug))
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(d){
-          if(!d || !d.exists) return;
+          if(!d || !d.exists){ askWhichVenue(); return; }
           rememberVenue(slug);   // confirmed real: safe to keep on this screen
           if(Array.isArray(d.slides)) ADS.slides=d.slides;
           /* An empty routine is no routine. A saved-but-blank raffle object is still truthy, so

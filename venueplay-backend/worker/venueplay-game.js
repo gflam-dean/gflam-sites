@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 21:44 · bd7b059c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '7 Sep 2026, 20:44 · cf24e41d';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -257,6 +257,7 @@ export default {
       if (method === 'GET'  && path === '/feedback/tally')     return await handleFeedbackTally(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
+      if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
       if (method === 'POST' && path === '/screen/command')     return await handleScreenCommand(request, env, json, await readJson(request));
       if (method === 'GET'  && path === '/admin/group-overage') return await handleGroupOverage(request, env, json);
@@ -1107,6 +1108,55 @@ async function handleSigningMint(request, env, json) {
     private_jwk: key.private_jwk,
     public_jwk: key.public_jwk,
     kid: await signingKid(key.public_jwk),
+  });
+}
+
+
+/* WHICH GRAND HOTEL DID YOU MEAN?
+   ---------------------------------------------------------------------------
+   Seven per cent of Australian venue names are shared, so new slugs carry the
+   postcode: the-grand-hotel-4210. Somebody setting up a screen types what is
+   over the door, the-grand-hotel, and gets "not linked to an account" with no
+   idea that twenty-two other Grand Hotels are the reason the plain name was not
+   free. Telling them to guess a postcode on a TV remote is not an answer.
+
+   So the screen can ask what a typed slug ALMOST matches and offer the list.
+
+   WHAT THIS DELIBERATELY WILL NOT DO. It will not hand over the venue list.
+   Anyone can already confirm one slug at a time through /screen, but a search
+   that answers a bare letter would turn that into a download of every customer
+   we have. So:
+
+     * the typed slug must be at least six characters, which means you have to
+       know most of a venue's name before this will say anything at all,
+     * it only matches that exact slug or that slug followed by a dash, never a
+       substring, so "hotel" finds nothing and "the-grand-hotel" finds the
+       Grand Hotels and no other pub,
+     * at most twenty-five come back, and only the four fields needed to tell
+       them apart on a wall: name, suburb by postcode, state, and the slug to
+       click. */
+async function handleVenueLike(request, env, json) {
+  const url = new URL(request.url);
+  const typed = String(url.searchParams.get('slug') || '').trim().toLowerCase().slice(0, 80);
+  if (!typed || !/^[a-z0-9-]+$/.test(typed)) return json({ matches: [] });
+  if (typed.length < 6) return json({ matches: [], why: 'too short to search' });
+
+  /* PostgREST 'or' with a like: the slug itself, or the slug plus a dash and
+     anything. The dash matters - without it the-grand would match the-grande
+     and hand somebody a different pub's screen. */
+  const q = 'or=(slug.eq.' + enc(typed) + ',slug.like.' + enc(typed + '-*') + ')'
+          + '&select=slug,name,postcode,state&order=postcode.asc&limit=25';
+  let rows = [];
+  try {
+    rows = (await sbGet(env, 'vp_venues', q)) || [];
+  } catch (e) {
+    return json({ matches: [] });     // a search that fails is not a screen that fails
+  }
+  return json({
+    matches: rows.map((r) => ({
+      slug: r.slug, name: r.name || r.slug,
+      postcode: r.postcode || '', state: r.state || '',
+    })),
   });
 }
 
