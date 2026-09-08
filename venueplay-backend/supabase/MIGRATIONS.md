@@ -57,12 +57,12 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 64 | screen-heartbeat | applied 5 Sep |
 | 65 | screen-command | applied 5 Sep |
 | 66 | screen-version | applied 5 Sep |
-| 67 | group-invoicing | **not yet - run it BEFORE pasting the Worker** |
-| 68 | venue-join-code | believed applied 8 Sep; confirm with check-schema.py |
-| 69 | members-draw-hold | believed applied 8 Sep; confirm with check-schema.py |
-| 70 | bingo-server-draw | **not yet - run it BEFORE pasting the Worker.** If the Worker goes first nothing breaks (the console calls the night from the tablet, as it always did) but no draw is recorded until it runs |
-| 71 | one-trip-answer | applied on SYDNEY only (8 Sep). Not on Singapore. The Worker falls back to the old path where the function is missing, so order is safe |
-| 72 | one-trip-screen-poll | applied on SYDNEY only (8 Sep). Not on Singapore. Same fallback |
+| 67 | group-invoicing | applied on live and Sydney (columns seen in both databases, 9 Sep) |
+| 68 | venue-join-code | applied on live and Sydney (vp_venues.join_code seen in both, 9 Sep) |
+| 69 | members-draw-hold | applied on live and Sydney (last_drawn_at seen in both, 9 Sep) |
+| 70 | bingo-server-draw | applied on live and Sydney (vp_bingo_draws exists in both, 9 Sep) |
+| 71 | one-trip-answer | applied on SYDNEY (8 Sep). Opened for Dean to paste on live 9 Sep; confirm with check-schema.py. The Worker falls back to the old path where the function is missing, so order is safe |
+| 72 | one-trip-screen-poll | applied on SYDNEY (8 Sep). Opened for Dean to paste on live 9 Sep; confirm with check-schema.py. Same fallback |
 
 Verified against the live database on 5 Sep 2026, not from memory: vp_captures
 .player_id and .source exist, vp_venues.overage_streak_day exists,
