@@ -28,7 +28,18 @@ function lift(n) {
   do { if (src[k] === '{') d++; else if (src[k] === '}') d--; k++; } while (d > 0 && k < src.length);
   return src.slice(i, k) + '\n';
 }
-var EXPECT = 14;
+function liftLine(re) {
+  var m = re.exec(src);
+  if (!m) throw new Error('cannot find line ' + re + ' - a test that cannot find its subject cannot fail');
+  /* eval() keeps a let/const to its own scope; var is what reaches the functions lifted next. */
+  return m[0].replace(/^(let|const) /, 'var ') + '\n';
+}
+function liftBlock(startRe) {   // a `const X = {` object literal up to its closing `};`
+  var m = startRe.exec(src); if (!m) throw new Error('cannot find ' + startRe);
+  var i = m.index, k = src.indexOf('};', i);
+  return src.slice(i, k + 2).replace(/^const /, 'var ') + '\n';
+}
+var EXPECT = 19;
 var bad = 0, ran = 0;
 function ok(n, c, extra) {
   ran++;
@@ -37,13 +48,25 @@ function ok(n, c, extra) {
 
 /* ---- the least the handler needs ---- */
 var enc = encodeURIComponent;
-function json(o) { return { _json: o }; }
+function json(o, status) { if (status) o._status = status; return { _json: o }; }
 function readJson(r) { return Promise.resolve(r.body || {}); }
 function verifyHostJwt() { return Promise.resolve('host-1'); }
 function assertUuid() {}
 function getSession() { return Promise.resolve({ id: 's1', venue_id: 'v1', status: 'running' }); }
 function requireStaff() { return Promise.resolve({ id: 'staff-1', role: 'host' }); }
 function actorRef() { return 'staff-1'; }
+var console = { log: function () {}, warn: function () {} };
+function sbHeaders() { return {}; }
+function dbError(kind, fn, detail) { return new Error('db ' + kind + ' ' + fn + ': ' + detail); }
+var ENV73 = { SUPABASE_URL: 'https://db' };
+/* Migration 73: the reveal asks vp_host_reveal first. This scripted PostgREST answers however
+   the scene says: a jsonb reply (the function is there), 404 (not run yet) or an error word. */
+var rpc = { status: 404, body: null, calls: [] };
+function fetch(url, opts) {
+  rpc.calls.push({ url: url, body: JSON.parse(opts.body) });
+  return Promise.resolve({ status: rpc.status, ok: rpc.status === 200,
+    json: function () { return Promise.resolve(rpc.body); }, text: function () { return Promise.resolve(''); } });
+}
 var emitted = [];
 function emitEvent(env, session, type, payload) { emitted.push({ type: type, payload: payload }); return Promise.resolve(); }
 
@@ -92,13 +115,44 @@ function sbPatch(env, table, filter, obj) {
   if (table === 'vp_trivia_games') DB.phase = obj.phase;
   return Promise.resolve();
 }
+eval(liftBlock(/^const HOST_TRIVIA_STATUS = \{/m));
+eval(liftLine(/^let hostTriviaRpcMissing[^\n]*/m));
+eval(lift('hostTriviaRpc'));
 eval(lift('handleHostReveal'));
+eval(lift('handleHostRevealManyTrips'));
 function req() { return { body: { game_id: 'g1' } }; }
 function idx(prefix) { for (var i = 0; i < log.length; i++) if (log[i].indexOf(prefix) === 0) return i; return -1; }
 
-print('== a normal reveal ==');
+print('== the one-trip function is there (migration 73) ==');
 base();
-handleHostReveal(req(), {}, json).then(function (r) {
+rpc.status = 200; rpc.body = { status: 'ok', qseq: 3, correct_index: 2, split: [0, 1, 2, 0], leaderboard: [{ name: 'p1', points: 138 }], already: false };
+handleHostReveal(req(), ENV73, json).then(function (r) {
+  var d = r._json;
+  ok('vp_host_reveal was asked, for this game, as this host',
+     rpc.calls.length === 1 && /vp_host_reveal$/.test(rpc.calls[0].url) && rpc.calls[0].body.p_game_id === 'g1' && rpc.calls[0].body.p_auth_user_id === 'host-1',
+     JSON.stringify(rpc.calls));
+  ok('and its answer is the reply: nothing else was read or written', d.correct_index === 2 && d.split.length === 4 && d.already === false && log.length === 0,
+     'log: ' + log.join(' | '));
+  base(); rpc.calls = [];
+  rpc.body = { status: 'not_staff' };
+  return handleHostReveal(req(), ENV73, json);
+}).then(function (r) {
+  ok('a status word becomes the same refusal the old path gave', r._json._status === 403 && /not staff/.test(r._json.error), JSON.stringify(r._json));
+  base(); rpc.calls = [];
+  rpc.status = 404; rpc.body = null;    // migration 73 not run on this database
+  return handleHostReveal(req(), ENV73, json);
+}).then(function (r) {
+  ok('when PostgREST says the function is missing, the old path answers', r._json.correct_index === 2 && hostTriviaRpcMissing === true && log.length > 0);
+  var before = rpc.calls.length;
+  base();
+  return handleHostReveal(req(), ENV73, json).then(function () {
+    ok('and this isolate stops asking', rpc.calls.length === before);
+  });
+}).then(function () {
+  print('\n== a normal reveal (the many-trip path, exercised in full) ==');
+  base();
+  return handleHostReveal(req(), {}, json);
+}).then(function (r) {
   var d = r._json;
   ok('it reveals', d.correct_index === 2 && d.qseq === 3);
   var flip = idx('CAS vp_trivia_games'), read = idx('GET vp_trivia_answers');

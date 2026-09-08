@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 20:39 · ffa8cbf5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '9 Sep 2026, 00:21 · 870a8665';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -3852,9 +3852,86 @@ async function handleHostPlay(request, env, json) {
  * correct_index is returned ONLY in this response, which reaches the authenticated host
  * console alone (host staff legitimately hold the answers). Scoring stays server-side.
  */
-async function handleHostQuestion(request, env, json) {
+/* The host's Next question and Reveal in ONE database trip each (migration 73). Measured
+ * 8 Sep 2026 under a Tuesday-shaped load of 1,000 rooms: both took 5 to 6 s at only 3 host
+ * requests a second, because each is eight to twelve round trips made one after another
+ * (game, trivia state, session, staff, venue, group, question, compare-and-set, event,
+ * preview; a reveal also reads every answer and writes one PATCH per points bucket), and at
+ * the gateway's ceiling every trip queues behind every other room's. vp_host_question and
+ * vp_host_reveal make the same checks in the same order and return a status word plus the
+ * same fields; the table below maps the word to the exact reply the many-trip path gave.
+ *
+ * If the functions are not there yet (migration 73 not run) PostgREST answers 404 and we
+ * fall back to the old path, so the paste order cannot break a night. */
+const HOST_TRIVIA_STATUS = {
+  no_game:         [404, 'Game not found'],
+  not_trivia:      [400, 'Not a trivia game'],
+  not_running:     [409, 'This game is not running'],
+  no_session:      [404, 'Session not found'],
+  session_closed:  [409, 'This session is closed'],
+  not_staff:       [403, 'Not authorised: you are not staff at this venue'],
+  venue_missing:   [403, 'Venue not available'],
+  venue_paused:    [403, 'Games are paused here tonight. Have a word with the staff.'],
+  moved_on:        [409, 'That question has already moved on. Check the screen before tapping again.'],
+  no_question:     [409, 'No question to reveal'],
+  no_question_row: [404, 'Question not found'],
+};
+let hostTriviaRpcMissing = false;   // per isolate: once PostgREST says the functions are not there, stop asking
+// Common front half of both host routes: verify the host, read the body, ask the function.
+// Returns { rpc: <parsed jsonb> } on success, { pre } when the function is missing (fall back),
+// or { reply } when the status word maps to an error reply.
+async function hostTriviaRpc(request, env, json, fn) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
   const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return { reply: json({ error: 'Missing game_id' }, 400) };
+  assertUuid(gameId, 'game_id');
+  const pre = { authUserId, b, gameId };
+  if (hostTriviaRpcMissing) return { pre };
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST', headers: sbHeaders(env),
+    body: JSON.stringify({ p_game_id: gameId, p_auth_user_id: authUserId }),
+  });
+  if (res.status === 404) {   // function not deployed yet: old path, and remember for this isolate
+    hostTriviaRpcMissing = true;
+    console.warn(fn + ' missing (migration 73 not run); answering the slow way');
+    return { pre };
+  }
+  if (!res.ok) throw dbError('rpc', fn, await res.text());
+  const rpc = await res.json();
+  const status = rpc && rpc.status;
+  if (status === 'ok' || status === 'done') return { rpc };
+  const reply = HOST_TRIVIA_STATUS[status];
+  if (!reply) throw dbError('rpc', fn, 'unexpected status ' + status);
+  return { reply: json({ error: reply[1] }, reply[0]) };
+}
+
+async function handleHostQuestion(request, env, json) {
+  const r = await hostTriviaRpc(request, env, json, 'vp_host_question');
+  if (r.reply) return r.reply;
+  if (r.pre) return handleHostQuestionManyTrips(request, env, json, r.pre);
+  const d = r.rpc;
+  if (d.status === 'done') return json({ done: true });
+  // HOST-ONLY response (authenticated staff): may include correct_index for the console.
+  // The public trivia.question event was emitted inside the function, options only.
+  return json({
+    qseq: d.qseq, qi: d.qi, qtotal: d.qtotal,
+    text: d.text, options: d.options, correct_index: d.correct_index,
+    ends_at: d.ends_at, secs: d.secs, image_url: d.image_url || null,
+    next_preview: d.next_preview ? {
+      qseq: d.next_preview.qseq, text: d.next_preview.text,
+      options: Array.isArray(d.next_preview.options) ? d.next_preview.options : [],
+      correct_index: d.next_preview.correct_index,
+      image_url: d.next_preview.image_url || null,
+    } : null,
+  });
+}
+
+// The pre-73 path, kept only as the fallback above. `pre` carries the verified host and the
+// body already read (a request body can only be read once).
+async function handleHostQuestionManyTrips(request, env, json, pre) {
+  const authUserId = pre ? pre.authUserId : await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = pre ? pre.b : await readJson(request);
   const gameId = String(b.game_id || '').trim();
   if (!gameId) return json({ error: 'Missing game_id' }, 400);
   assertUuid(gameId, 'game_id');
@@ -3983,8 +4060,17 @@ async function handleHostQuestion(request, env, json) {
  * and only THEN emits the correct_index + updated leaderboard on the PUBLIC channel.
  */
 async function handleHostReveal(request, env, json) {
-  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
-  const b = await readJson(request);
+  const r = await hostTriviaRpc(request, env, json, 'vp_host_reveal');
+  if (r.reply) return r.reply;
+  if (r.pre) return handleHostRevealManyTrips(request, env, json, r.pre);
+  const d = r.rpc;   // the phase was flipped, the answers scored and trivia.reveal emitted inside the function
+  return json({ qseq: d.qseq, correct_index: d.correct_index, split: d.split, leaderboard: d.leaderboard, already: d.already === true });
+}
+
+// The pre-73 path, kept only as the fallback above (see handleHostQuestionManyTrips).
+async function handleHostRevealManyTrips(request, env, json, pre) {
+  const authUserId = pre ? pre.authUserId : await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = pre ? pre.b : await readJson(request);
   const gameId = String(b.game_id || '').trim();
   if (!gameId) return json({ error: 'Missing game_id' }, 400);
   assertUuid(gameId, 'game_id');
