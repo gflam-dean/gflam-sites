@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 11:16 · 85cf0bd5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 11:47 · 549bad36';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2523,6 +2523,17 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
   });
 }
 
+/* How long a draw button is locked after a draw, in ms: the spin the room is watching plus two
+ * seconds of grace. Shared by the raffle and the members draw so the two cannot drift apart. The
+ * spin comes from the caller (the raffle console sends it, the members draw stores it); anything
+ * unparseable falls back to the default and everything is clamped to what the consoles offer. */
+function drawHoldMs(spinSeconds, dflt, lo, hi) {
+  let spin = parseInt(spinSeconds, 10);
+  if (!(spin >= 0)) spin = dflt;
+  spin = Math.max(lo, Math.min(hi, spin));
+  return (spin + 2) * 1000;
+}
+
 /* ------------------------------ POST /host/draw ------------------------------
  * The host taps Draw. The Worker (NOT the phone or the TV) picks the winning ticket
  * number(s) UNIFORMLY at random in [range_min, range_max] with a rejection-sampled CSPRNG
@@ -2575,14 +2586,18 @@ async function handleHostDraw(request, env, json) {
     if (prior[i].seq != null && prior[i].seq > maxSeq) maxSeq = prior[i].seq;
   }
 
-  // Double-tap guard: if a draw for this raffle just happened (<3s ago), treat a second tap as
-  // the same click and do NOT draw again - stops duplicate winners / a colliding round number
-  // from a fast double-click. A deliberate later draw is unaffected. (A redraw is a separate,
-  // explicit action and is not gated here.)
+  // Double-tap guard, sized to the SPIN. The TV animates a draw for the spin length the host
+  // chose (3 to 8 seconds), so a second draw inside that window lands a new winner while the
+  // first is still spinning on the wall: one number settles and a different one is announced.
+  // The old guard was a flat 3 seconds, shorter than every spin but the shortest. The console
+  // sends its spin length; it is clamped to the range the console offers, defaults to the
+  // console's default, and gets two seconds of grace. Dean's call, 8 Sep 2026. A deliberate
+  // later draw is unaffected. (A redraw is a separate, explicit action and is not gated here.)
   if (!isRedraw && prior.length && prior[0].drawn_at) {
     const since = Date.now() - new Date(prior[0].drawn_at).getTime();
-    if (since >= 0 && since < 3000) {
-      return json({ error: 'A draw just happened. Give it a second before drawing again.' }, 429);
+    const holdMs = drawHoldMs(b.spin_seconds, 4, 3, 8);
+    if (since >= 0 && since < holdMs) {
+      return json({ error: 'The draw is still on the screen. You can draw again in ' + Math.ceil((holdMs - since) / 1000) + ' seconds.' }, 429);
     }
   }
 
@@ -2750,6 +2765,26 @@ async function handleMembersDraw(request, env, json) {
   const draw = draws[0];
   await requireStaff(env, authUserId, draw.venue_id);            // ENFORCED: staff at the draw's venue (also kill-switch)
 
+  // Double-tap guard, sized to the SPIN (migration 69 adds last_drawn_at). The console locks
+  // its own Draw button, but two hosts on two consoles, or one request retried on bad wifi,
+  // reach here with nothing in the way, and the raffle had a guard while this never did. A
+  // second draw inside the spin names a second member while the first is still spinning on the
+  // wall. Nothing is written until the host resolves, so no money was ever at risk; the room's
+  // trust in the draw was. Read separately and forgiven if the column is not there yet, so a
+  // Worker pasted before the migration still draws.
+  const holdMs = drawHoldMs(draw.draw_length_seconds, 4, 2, 30);
+  let lastAt = null;
+  try {
+    const t = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=last_drawn_at');
+    lastAt = t.length ? t[0].last_drawn_at : null;
+  } catch (e) { lastAt = null; }
+  if (lastAt) {
+    const since = Date.now() - new Date(lastAt).getTime();
+    if (since >= 0 && since < holdMs) {
+      return json({ error: 'The draw is still on the screen. You can draw again in ' + Math.ceil((holdMs - since) / 1000) + ' seconds.' }, 429);
+    }
+  }
+
   const members = await validMembers(env, draw);
   if (!members.length) return json({ error: 'No valid members to draw from' }, 409);
 
@@ -2761,8 +2796,14 @@ async function handleMembersDraw(request, env, json) {
 
   // Once-per-day schedule audit stamp (schema column last_drawn_date). Host-allowed,
   // not metered. We stamp it rather than hard-block a re-draw so testing stays easy.
+  // last_drawn_at is what the guard above reads; written first so the guard is armed before
+  // the winner is returned, and retried without it if the column is not there yet.
   const today = new Date().toISOString().slice(0, 10);
-  await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId), { last_drawn_date: today });
+  try {
+    await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId), { last_drawn_date: today, last_drawn_at: new Date().toISOString() });
+  } catch (e) {
+    await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId), { last_drawn_date: today });
+  }
 
   return json({
     draw_id: drawId, draw_name: draw.name,

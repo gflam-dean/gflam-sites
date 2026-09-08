@@ -341,6 +341,11 @@ MUTATIONS = [
      "'game_id=eq.' + enc(gameId) + '&phase=eq.asking', { phase: 'revealed' });",
      "'game_id=eq.' + enc(gameId), { phase: 'revealed' });",
      'a question is scored while phones can still answer it, and the last tap is never scored'),
+    # The page-side hold stops holding: busy() says free, so a double tap draws two balls.
+    ('draw-hold.test.js', 'venueplay/app/vp-hold.js',
+     "    if (Date.now() >= holds[k].until) { release(btn); return false; }\n    return true;",
+     "    if (Date.now() >= holds[k].until) { release(btn); return false; }\n    return false;",
+     'a fumbled double tap on the bar tablet draws two bingo balls and the TV abandons the first mid-call'),
     # /health goes back to reading every venue into the Worker to count them.
     ('health.test.js', 'venueplay-backend/worker/venueplay-game.js',
      "sbCount(env, 'vp_venues', 'select=id'),",

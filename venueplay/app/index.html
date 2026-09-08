@@ -456,6 +456,7 @@
 <script src="vp-session.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-hold.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1072,6 +1073,7 @@
     }catch(e){ return false; }
   }
   function syncNextBtn(){
+    if(VP_HOLD.busy($("nextBtn"))) return;   // mid-hold: the countdown owns the button until it ends
     if(G.status==="running" && G.idx>=89){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
     // Before the first ball it is not "next", it is the start of the game. Hosts read the button.
     else { $("nextBtn").disabled=false; $("nextBtn").textContent = (G.idx<0) ? "Start calling" : "Next number"; }
@@ -1740,7 +1742,7 @@
     saveGame();   // status is now "setup", so this clears the saved game for this code
     renderConsole();
   }
-  var _ballBusy=false;
+  var BALL_HOLD_SECONDS=5;
   function nextBall(){
     if(G.status!=="running" || G.draw.length>=90) return;
     /* AFTER "Finish game" the status is still "running" and lastWins has been cleared by
@@ -1750,11 +1752,10 @@
     if(G.won){ showToast("That game is done. Tap New game for another, or End game to put the ads back on."); return; }
     /* No debounce existed here at all. A fumbled double tap on a bar tablet drew TWO balls, and
        the TV abandons the first reveal mid-flight, so the room hears one number called while two
-       are on the board. There is no undo. Musical's Play button got this guard; this never had it. */
-    if(_ballBusy) return;
-    _ballBusy=true;
-    var _nb=$("nextBtn"); if(_nb) _nb.disabled=true;
-    setTimeout(function(){ _ballBusy=false; var b=$("nextBtn"); if(b && G.status==="running" && !G.won) b.disabled=false; }, 1200);
+       are on the board. There is no undo. The hold itself lives in /app/vp-hold.js (one copy for
+       every console) and is set BELOW, once a ball has actually been drawn: the 1.2s version here
+       used to lock the button even when the tap was refused for an unsorted claim. */
+    if(VP_HOLD.busy($("nextBtn"))) return;
     // Never call over an unresolved claim. Moving the ball on left the queue stranded on the old
     // number, and because the window is keyed to that ball, EVERY later claim was then refused in
     // silence: the next genuine winner got "the host said not yet" for a call nobody ever saw.
@@ -1776,6 +1777,10 @@
     var _nb=$("nextBtn"); if(_nb && G.pool.length) _nb.textContent="Next number";
     renderLive(); updateBoard();
     if(!G.pool.length){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
+    // Five seconds: long enough for the room to hear the number and daub it, and for a second
+    // tap to be a mistake rather than the next call. The label counts down so the host can see
+    // the button is holding on purpose. Dean's call, 8 Sep 2026.
+    else VP_HOLD.hold($("nextBtn"), BALL_HOLD_SECONDS, function(left){ return "Next number in "+left+"s"; }, syncNextBtn);
   }
   // Move one queued claim into the confirmed list. Nothing is broadcast yet: the host still has
   // to decide play on or finish, and with a tie they may confirm two or three people first.

@@ -616,7 +616,9 @@
     }).then(function(r){ G.gameId=r.game_id; G.gameSig=sig; G.drawn={}; if(r.pad) G.serverPad=r.pad; saveRaffle(); });
   }
   function drawBody(){
-    var body={ game_id:G.gameId, winners:G.winnersCount };
+    // spin_seconds is what the Worker sizes its double-tap guard to (the spin plus two seconds),
+    // so a second Draw cannot land while the TV is still spinning this one.
+    var body={ game_id:G.gameId, winners:G.winnersCount, spin_seconds:G.drawLength };
     if(G.jackOn){ body.prize="Cash jackpot"; body.prize_type="cash"; body.prize_value_cents=Math.round(G.jackAmt*100); }
     else { body.prize=drawingPrize(); body.prize_type="other"; }
     return body;
