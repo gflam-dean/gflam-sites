@@ -235,6 +235,23 @@ MUTATIONS = [
      '      drawBtnWaiting(nums);\n', '',
      'the Draw button reads Drawing… for the whole claim window and a host thinks it has hung'),
 
+    # The bingo ball order lives on the server (migration 70). Four ways it can quietly stop.
+    ('bingo-server-draw.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "      if (since >= 0 && since < BINGO_SERVER_HOLD_MS) {", "      if (false) {",
+     'the server hold goes; a retried request draws a second ball while the first is still going up'),
+    ('bingo-server-draw.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  if (draw.mode === 'local') return json({ error: 'This game is being called from the tablet' }, 409);\n", "",
+     'after the tablet takes over the server keeps handing out balls, and one repeats a number the room already daubed'),
+    ('bingo-server-draw.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "  return json({ draw_id: row.id });", "  return json({ draw_id: row.id, draw_order: row.draw_order });",
+     'the whole future order is sent to the tablet, which is the one thing the licence forbids'),
+    ('bingo-server-draw.test.js', 'venueplay/app/index.html',
+     "      if(n==null) n=drawFromPool();\n", "",
+     'the fallback goes: when the Worker is down the console stops calling and the room sits there'),
+    ('bingo-server-draw.test.js', 'venueplay-backend/supabase/venueplay-70-bingo-server-draw.sql',
+     "grant execute on function public.vp_bingo_next_ball(uuid) to service_role;", "grant execute on function public.vp_bingo_next_ball(uuid) to service_role, anon;",
+     'the public key printed in every page can draw the next ball'),
+
     ('every decade pack holds only its decade',
      'venueplay/data/musical-library.json',
      '"name":"80s Rock","songIds":["', '"name":"80s Rock","songIds":["long-way-to-the-top-ac-dc","',

@@ -1002,7 +1002,8 @@
           draw:G.draw, idx:G.idx, called:G.called,
           players:G.players, order:G.order,
           claims:G.claims, claimIdx:G.claimIdx, lastWins:G.lastWins, won:G.won,
-          reportId:G.reportId
+          reportId:G.reportId,
+          drawId:G.drawId||null, drawMode:G.drawMode||"local"
         }));
       } else {
         localStorage.removeItem(gameKey(G.code));
@@ -1056,6 +1057,11 @@
       // Carry the report row forward, so a host who reloads mid-game still finishes the SAME
       // row instead of leaving an open one behind and starting a second.
       G.reportId=s.reportId||null;
+      /* The server draw this game is riding. A save from before 8 Sep 2026 has none, and a game
+         with no server draw is a tablet-called game: there is nothing to ask and nothing to
+         record to, so it finishes the way it started. */
+      G.drawId=s.drawId||null;
+      G.drawMode=(s.drawMode==="server" && G.drawId) ? "server" : "local";
       return true;
     }catch(e){ return false; }
   }
@@ -1139,6 +1145,57 @@
     return G.pool.splice(k,1)[0];   // removed from the pool: never drawn twice
   }
   function isCalled(n){ return !!G.called[n]; }
+
+  /* ---- THE BALL ORDER LIVES ON THE SERVER (migration 70, 8 Sep 2026) ----
+     Every ball used to be picked right here by drawFromPool(). It still can be, and that is the
+     point: the Worker shuffles 1..90 at game start and hands the balls out one at a time, so the
+     order is provably fair and every call is on the record with a time against it, which is what
+     OLGR's RNG standard asks for. But a pub's wifi drops. If the Worker does not answer inside
+     four seconds the console calls the REST OF THAT GAME from its own pool, tells the host once,
+     and reports each tablet ball to the server best-effort so the record stays honest about
+     which balls came from where. A room never waits on a server. */
+  var DRAW_CALL_MS=4000;
+  function openServerDraw(){
+    G.drawId=null; G.drawMode="server"; G.drawOpening=null; G.drawWhy="";
+    G.gen=(G.gen||0)+1;   // which game a reply belongs to; a reply for an earlier game is dropped
+    var v=__ctx && __ctx.venue;
+    if(!v || !v.id || !(window.VP && VP.gameApiCall)){ G.drawMode="local"; return; }
+    G.drawOpening=VP.gameApiCall("/host/bingo/draw", { venue_id:v.id, session_id:G.sessionId||null }, DRAW_CALL_MS)
+      .then(function(r){
+        if(r && r.status===200 && r.json && r.json.draw_id){ G.drawId=r.json.draw_id; saveGame(); }
+        else goLocalDraw("draw open answered "+(r&&r.status));
+      }, function(err){ goLocalDraw("draw open failed: "+(err&&err.message||err)); })
+      .then(function(){ G.drawOpening=null; });
+  }
+  function goLocalDraw(why){
+    if(G.drawMode==="local") return;
+    G.drawMode="local"; G.drawWhy=String(why||"").slice(0,200);
+    showToast("Server not answering. Calling from this tablet for the rest of this game.");
+    saveGame();
+  }
+  /* Resolves {number} from the server, {wait:msg} when the server says the last ball is still
+     going up, or {local:true} when the console should draw the ball itself. Never rejects. */
+  function serverBall(){
+    if(G.drawMode!=="server" || !(window.VP && VP.gameApiCall)) return Promise.resolve({ local:true });
+    var open=G.drawOpening || Promise.resolve();
+    return open.then(function(){
+      if(G.drawMode!=="server" || !G.drawId) return { local:true };
+      return VP.gameApiCall("/host/bingo/ball", { draw_id:G.drawId }, DRAW_CALL_MS).then(function(r){
+        var j=r && r.json;
+        if(r && r.status===200 && j && j.number>=1 && j.number<=90) return { number:j.number };
+        if(r && r.status===429) return { wait:(j && j.error) || "Wait a moment, then call again." };
+        // Anything else (server error, signed out, draw gone): the night carries on from here.
+        goLocalDraw("ball answered "+(r&&r.status)+(j&&j.error?" "+j.error:""));
+        return { local:true };
+      }, function(err){ goLocalDraw("ball failed: "+(err&&err.message||err)); return { local:true }; });
+    });
+  }
+  // A tablet-called ball goes on the server's record too, best effort. The Worker refuses a
+  // repeat or a clash rather than write a record that lies, and the console does not care.
+  function reportLocalBall(n, ordinal){
+    if(!G.drawId || !(window.VP && VP.gameApiPost)) return;
+    try{ VP.gameApiPost("/host/bingo/fallback", { draw_id:G.drawId, number:n, ordinal:ordinal, reason:G.drawWhy||"worker unreachable" }).catch(function(){}); }catch(e){}
+  }
   function rowComplete(card,row){ for(var c=0;c<9;c++){ var v=card[row][c]; if(v && !isCalled(v)) return false; } return true; }
   function completeRows(card){ var n=0; for(var r=0;r<3;r++){ if(rowComplete(card,r)) n++; } return n; }
   // the four "corners" of a 3x9 ticket = the first and last actual number of the top and bottom rows
@@ -1664,6 +1721,7 @@
     G.paidMode=$("paidSel").value;
     G.defaultCards=clampCards($("cardsSel").value);
     G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
+    openServerDraw();   // the ball order is shuffled on the server; the console asks for each ball
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     G.peak=G.order.length;   // the room as it stands at the first ball
@@ -1687,6 +1745,7 @@
     overageAcked=false; overageApproved=0;
     G.peak=G.order.length;   // this game's peak starts at whoever is already in the room
     G.draw=[]; G.pool=freshPool(); G.idx=-1; G.called={};
+    openServerDraw();   // a fresh order for the fresh game
     G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
     G.reportId=null; postReport(true);   // the next round is on the record from ball one too
@@ -1752,9 +1811,35 @@
     // bingo was refused as "late" with nothing shown to anyone, and that player sat on "the host
     // is checking your ticket" until the round was finally announced for somebody else.
     if(G.lastWins.length){ showToast("Announce the win first: keep playing, or finish the game."); return; }
-    var n=drawFromPool();
-    if(n==null){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; return; }
+    /* The ball comes from the server when it can and from this tablet when it must (see
+       openServerDraw). While the request is out the button is dead and says so, and G.calling
+       stops a second tap starting a second request; both are undone on every path below. */
+    if(G.calling) return;
+    G.calling=true;
+    var _btn=$("nextBtn"); if(_btn){ _btn.disabled=true; _btn.textContent="Calling..."; }
+    var _gen=G.gen;
+    serverBall().then(function(res){
+      G.calling=false;
+      // The host ended the game or started a new one while this was out: the ball is not ours.
+      if(_gen!==G.gen || G.status!=="running"){ syncNextBtn(); return; }
+      if(res.wait){ showToast(res.wait); syncNextBtn(); return; }
+      var n=null, fromServer=false;
+      if(res.number!=null){
+        var k=G.pool.indexOf(res.number);
+        // The server can only hand out a number this console has not seen if the two agree on
+        // the game. If they do not (a save restored against a different draw), trust the room:
+        // what is on the board stays on the board, and the tablet calls the rest.
+        if(k>=0){ n=G.pool.splice(k,1)[0]; fromServer=true; }
+        else goLocalDraw("server ball "+res.number+" already on the board");
+      }
+      if(n==null) n=drawFromPool();
+      if(n==null){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; return; }
+      commitBall(n, fromServer);
+    }, function(){ G.calling=false; syncNextBtn(); });
+  }
+  function commitBall(n, fromServer){
     G.draw.push(n); G.idx=G.draw.length-1; G.called[n]=true;
+    if(!fromServer) reportLocalBall(n, G.idx+1);
     send({ t:"ball", number:n, called:calledArray(), index:G.idx });
     saveGame();
     /* The button still read "Start calling" for the whole game. renderConsole() has always set it

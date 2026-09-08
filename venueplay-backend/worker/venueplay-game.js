@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 12:42 · 63f5786a';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 13:16 · 26d5b174';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -235,6 +235,9 @@ export default {
       if (method === 'POST' && path === '/host/overage/ack')   return await handleOverageAck(request, env, json);
       if (method === 'POST' && path === '/host/game/end')      return await handleGameEnd(request, env, json);
       if (method === 'POST' && path === '/host/ball')          return await handleHostBall(request, env, json);
+      if (method === 'POST' && path === '/host/bingo/draw')      return await handleBingoDrawStart(request, env, json);
+      if (method === 'POST' && path === '/host/bingo/ball')      return await handleBingoBall(request, env, json);
+      if (method === 'POST' && path === '/host/bingo/fallback')  return await handleBingoFallback(request, env, json);
       if (method === 'POST' && path === '/host/play')          return await handleHostPlay(request, env, json);
       if (method === 'POST' && path === '/host/song/flag')      return await handleSongFlag(request, env, json);
       if (method === 'POST' && path === '/host/question')      return await handleHostQuestion(request, env, json);
@@ -4087,6 +4090,116 @@ async function handleHostBall(request, env, json) {
   }, actorRef(staff));
 
   return json({ number, index: newIndex });
+}
+
+/* ------------------------------ POST /host/bingo/draw ------------------------------
+ * THE BINGO CONSOLE'S DRAW LIVES HERE NOW. The console on /app is broadcast-only: it deals
+ * its own cards and talks to the TV and the phones over the realtime channel, and for two
+ * years of pub nights it also picked every ball itself, one at a time, with a rejection-
+ * sampled CSPRNG. That is fair but not provable: the pick happened on the host's tablet and
+ * nothing recorded it until the end-of-game report, which the same tablet wrote.
+ *
+ * From 8 Sep 2026 the console asks the Worker for a draw at game start and for every ball
+ * after that. The whole order of 1..90 is shuffled here (shuffle1to90, the same Fisher-Yates
+ * the Worker-dealt bingo uses), written to vp_bingo_draws and NEVER returned to any client;
+ * each ball is handed over one at a time by vp_bingo_next_ball, which advances the index and
+ * writes the ball row in one statement. Migration 70.
+ *
+ * FOOLPROOF BEATS PURE. If this Worker cannot be reached inside a few seconds the console
+ * carries on from its own remaining pool for the rest of that game, exactly as it always
+ * did, and reports the fallback here (best effort). A night must never stall on a server.
+ * The record then says honestly which balls came from where. (Dean, 8 Sep 2026: "fine as
+ * long as it's foolproof and also legal".)
+ */
+const BINGO_SERVER_HOLD_MS = 4000;   // the console holds 5s; this is the backstop against a double request
+
+async function handleBingoDrawStart(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const venueId = String(b.venue_id || '').trim();
+  if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+  assertUuid(venueId, 'venue_id');
+  await requireStaff(env, authUserId, venueId);            // staff at THIS venue, and the kill-switch
+  await assertVenueActive(env, venueId);
+  let sessionId = null;
+  if (b.session_id) { try { assertUuid(String(b.session_id), 'session_id'); sessionId = String(b.session_id); } catch (e) { sessionId = null; } }
+
+  const rows = await sbInsert(env, 'vp_bingo_draws', {
+    venue_id: venueId,
+    session_id: sessionId,
+    draw_seed: randomTokenHex(16),
+    draw_order: shuffle1to90(),   // never leaves this function
+    draw_index: 0,
+  }, true);
+  const row = Array.isArray(rows) ? rows[0] : rows;
+  return json({ draw_id: row.id });
+}
+
+async function handleBingoBall(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const drawId = String(b.draw_id || '').trim();
+  if (!drawId) return json({ error: 'Missing draw_id' }, 400);
+  assertUuid(drawId, 'draw_id');
+
+  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,draw_index,mode,finished_at');
+  if (!draws.length) return json({ error: 'Draw not found' }, 404);
+  const draw = draws[0];
+  await requireStaff(env, authUserId, draw.venue_id);
+  if (draw.finished_at) return json({ error: 'This game is finished' }, 409);
+  // Once the tablet has taken over, the server order is abandoned for the rest of the game:
+  // handing out a server ball now could repeat a number the room has already daubed.
+  if (draw.mode === 'local') return json({ error: 'This game is being called from the tablet' }, 409);
+
+  // Double-request guard. The console holds its own button for five seconds; this catches a
+  // second console, or one request retried by a phone on bad wifi. Read from the ball log, so
+  // it is the time the LAST ball was actually written, not a timestamp anyone else maintains.
+  if (draw.draw_index > 0) {
+    const last = await sbGet(env, 'vp_bingo_draw_balls',
+      'draw_id=eq.' + enc(drawId) + '&select=drawn_at&order=ordinal.desc&limit=1');
+    if (last.length && last[0].drawn_at) {
+      const since = Date.now() - new Date(last[0].drawn_at).getTime();
+      if (since >= 0 && since < BINGO_SERVER_HOLD_MS) {
+        return json({ error: 'The last ball is still going up. You can call again in ' + Math.ceil((BINGO_SERVER_HOLD_MS - since) / 1000) + ' seconds.' }, 429);
+      }
+    }
+  }
+
+  const drawn = await sbRpc(env, 'vp_bingo_next_ball', { p_draw: drawId });
+  const row = Array.isArray(drawn) ? drawn[0] : drawn;
+  if (!row || row.number == null) return json({ error: 'All 90 balls have been drawn' }, 409);
+  return json({ number: row.number, index: row.new_index });
+}
+
+/* The console could not reach us and has started calling from its own pool. Record that,
+ * and every ball it calls from then on, so the game's record is complete and honest. Best
+ * effort from the console's side; from ours, refuse anything that does not add up (a number
+ * already out, an ordinal that skips) rather than write a record that lies. */
+async function handleBingoFallback(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+  const drawId = String(b.draw_id || '').trim();
+  if (!drawId) return json({ error: 'Missing draw_id' }, 400);
+  assertUuid(drawId, 'draw_id');
+  const draws = await sbGet(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId) + '&select=id,venue_id,draw_index,mode');
+  if (!draws.length) return json({ error: 'Draw not found' }, 404);
+  const draw = draws[0];
+  await requireStaff(env, authUserId, draw.venue_id);
+
+  const number = parseInt(b.number, 10);
+  const ordinal = parseInt(b.ordinal, 10);
+  if (!(number >= 1 && number <= 90) || !(ordinal >= 1 && ordinal <= 90)) return json({ error: 'Bad ball' }, 400);
+
+  if (draw.mode !== 'local') {
+    await sbPatch(env, 'vp_bingo_draws', 'id=eq.' + enc(drawId), {
+      mode: 'local', fallback_at: ordinal,
+      fallback_why: String(b.reason || 'worker unreachable').slice(0, 200),
+    });
+  }
+  // The unique (draw_id, number) and primary key (draw_id, ordinal) refuse a repeat or a clash
+  // with a server ball; sbInsert turns that into a 409, which the console ignores.
+  await sbInsert(env, 'vp_bingo_draw_balls', { draw_id: drawId, ordinal, number, source: 'local' }, false);
+  return json({ ok: true });
 }
 
 /* ------------------------------ POST /player/claim ------------------------------

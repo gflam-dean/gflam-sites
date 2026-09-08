@@ -58,6 +58,9 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 65 | screen-command | applied 5 Sep |
 | 66 | screen-version | applied 5 Sep |
 | 67 | group-invoicing | **not yet - run it BEFORE pasting the Worker** |
+| 68 | venue-join-code | believed applied 8 Sep; confirm with check-schema.py |
+| 69 | members-draw-hold | believed applied 8 Sep; confirm with check-schema.py |
+| 70 | bingo-server-draw | **not yet - run it BEFORE pasting the Worker.** If the Worker goes first nothing breaks (the console calls the night from the tablet, as it always did) but no draw is recorded until it runs |
 
 Verified against the live database on 5 Sep 2026, not from memory: vp_captures
 .player_id and .source exist, vp_venues.overage_streak_day exists,

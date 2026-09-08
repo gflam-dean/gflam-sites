@@ -610,6 +610,34 @@
       }).then(function (res) { return res.json().catch(function () { return null; }); });
     }).catch(function () { return null; });
   }
+  /* The same POST, for a caller that needs to know WHAT happened. Resolves with
+     {status, json} for any HTTP answer, including 4xx and 5xx; REJECTS on no
+     answer at all (no token, network down, or nothing back inside timeoutMs).
+     The bingo console uses the difference: a 429 means "wait", a rejection means
+     "the server is gone, call the rest of the night from this tablet". gameApiPost
+     above flattens both into null, which is right for a side record and wrong
+     for a draw. */
+  function gameApiCall(path, body, timeoutMs) {
+    var c; try { c = getClient(); } catch (e) { return Promise.reject(new Error("no client")); }
+    var ms = timeoutMs || 4000;
+    var ctrl = (typeof AbortController === "function") ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, ms);
+    return c.auth.getSession().then(function (r) {
+      var tok = (r && r.data && r.data.session && r.data.session.access_token) || "";
+      if (!tok) throw new Error("not signed in");
+      return fetch(GAME_API + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tok },
+        body: JSON.stringify(body || {}),
+        signal: ctrl ? ctrl.signal : undefined
+      });
+    }).then(function (res) {
+      return res.json().catch(function () { return null; }).then(function (j) {
+        return { status: res.status, json: j };
+      });
+    }).then(function (out) { clearTimeout(timer); return out; },
+            function (err) { clearTimeout(timer); throw err; });
+  }
 
   root.VP = {
     getClient: getClient,
@@ -620,6 +648,7 @@
     setCurrentVenue: setCurrentVenue,
     listVenues: listVenues,
     gameApiPost: gameApiPost,
+    gameApiCall: gameApiCall,
     loadSettings: loadSettings,
     saveSettings: saveSettings,
     requireAuth: requireAuth,
