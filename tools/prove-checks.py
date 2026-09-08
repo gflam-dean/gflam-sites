@@ -224,6 +224,17 @@ MUTATIONS = [
      'if(_redrawArm){ disarmRedraw(); onRedraw(false); return; }', 'disarmRedraw(); onRedraw(false); return;',
      'Not here, redraw goes back to one tap and voids a genuine winner who is walking up'),
 
+    # A reloading host loses its spin: the snapshot stops carrying it and the label goes back to 4.
+    ('draw-hold.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "        spin_seconds: cfg.spin_seconds != null ? cfg.spin_seconds : null,\n", "",
+     'a host who reloads mid-raffle gets a 4 second spin whatever the venue chose'),
+    ('draw-hold.test.js', 'venueplay/app/raffle/host.html',
+     '        if([3,4,5,6,8].indexOf(g.spin_seconds)>=0){ G.drawLength=g.spin_seconds; $("drawLenLbl").textContent=g.spin_seconds; }\n', '',
+     'the snapshot carries the spin and the console ignores it'),
+    ('redraw-confirm.test.js', 'venueplay/app/raffle/host.html',
+     '      drawBtnWaiting(nums);\n', '',
+     'the Draw button reads Drawing… for the whole claim window and a host thinks it has hung'),
+
     ('every decade pack holds only its decade',
      'venueplay/data/musical-library.json',
      '"name":"80s Rock","songIds":["', '"name":"80s Rock","songIds":["long-way-to-the-top-ac-dc","',

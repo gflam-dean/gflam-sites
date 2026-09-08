@@ -355,6 +355,7 @@
         if(g.range_max!=null) $("rfEnd").value=g.range_max;
         if(g.time_to_present!=null) $("rfTime").value=g.time_to_present;
         $("rfAllowRedraw").checked=(g.allow_redraw!==false);
+        if([3,4,5,6,8].indexOf(g.spin_seconds)>=0){ G.drawLength=g.spin_seconds; $("drawLenLbl").textContent=g.spin_seconds; }
         $("rfJackOn").checked=jackOn; show("rfJackWrap", jackOn); show("prizeField", !jackOn);
         if(jackOn && g.jackpot_amount_cents!=null) $("rfJackAmt").value=Math.round(g.jackpot_amount_cents/100);
         if(!jackOn && g.prize) $("rfPrize").value=g.prize;
@@ -574,6 +575,10 @@
   function drawBtnIdle(){ var b=$("drawBtn"); b.disabled=false; b.textContent=drawLabel(); b.classList.remove("nextmode"); }
   function drawBtnNext(){ var b=$("drawBtn"); b.disabled=false; b.textContent=drawLabel(); b.classList.add("nextmode"); }
   function drawBtnBusy(){ var b=$("drawBtn"); b.disabled=true; b.textContent="Drawing…"; b.classList.remove("nextmode"); }
+  /* The winner is up and the host must Claim or redraw before the next draw. This used to keep
+     reading "Drawing…" for the whole claim window, which looks like a hang to a host on a phone.
+     Say what it is waiting on instead. */
+  function drawBtnWaiting(nums){ var b=$("drawBtn"); b.disabled=true; b.textContent="Waiting on ticket "+nums.map(pad).join(", ")+" \u00b7 claim or redraw below"; b.classList.remove("nextmode"); }
 
   // ---- timers ----
   function stopSpin(){ if(G.spinTimer){ clearInterval(G.spinTimer); G.spinTimer=null; } }
@@ -674,6 +679,7 @@
 
     if(allowRedraw){
       show("wcResolve",true);
+      drawBtnWaiting(nums);
       updateCd();
       /* At zero this fires a REAL redraw: the holder is marked no_show, their number is taken out
          of the pool for good, and someone else is drawn, with no confirmation. If the holder of

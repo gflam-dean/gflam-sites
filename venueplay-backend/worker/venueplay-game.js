@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 12:06 · 7d31525c';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 12:42 · 63f5786a';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -5575,6 +5575,9 @@ async function getPublicSnapshot(env, sessionId) {
         range_max: r.range_max != null ? r.range_max : null,
         winners: r.draws_count != null ? r.draws_count : null,
         allow_redraw: r.allow_redraw !== false,
+        /* Baked at start; a reloading host restores its spin from here, not from the venue template,
+           so a spin changed mid-night survives the reload the same way the range and prize do. */
+        spin_seconds: cfg.spin_seconds != null ? cfg.spin_seconds : null,
         time_to_present: r.time_to_claim_seconds != null ? r.time_to_claim_seconds : null,
         jackpot_on: !!r.jackpot_on,
         jackpot_amount_cents: r.jackpot_amount_cents != null ? r.jackpot_amount_cents : null,

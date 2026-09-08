@@ -26,7 +26,7 @@ var MUSICAL = find('venueplay/app/musical/host.html');
 var RAFFLE = find('venueplay/app/raffle/host.html');
 var MIG = find('venueplay-backend/supabase/venueplay-69-members-draw-hold.sql');
 
-var EXPECT = 37, ran = 0, bad = 0;
+var EXPECT = 39, ran = 0, bad = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 function lift(n) {
   var i = W.indexOf('async function ' + n + '('); if (i < 0) i = W.indexOf('function ' + n + '(');
@@ -65,6 +65,14 @@ ok('the trivia defaults the console reads are written too', /trivia_speed_bonus:
    'migration 50 added columns the consoles read and nothing on main ever wrote');
 ok('the raffle console sends its spin when the game is made', /time_to_present:G\.time, spin_seconds:G\.drawLength/.test(RAFFLE));
 ok('the console pre-fills the spin from the template', /indexOf\(t\.spin_seconds\)>=0\)\{ G\.drawLength=t\.spin_seconds/.test(RAFFLE));
+/* Found live on 8 Sep 2026: the template saved spin 8, the host reloaded mid-raffle, and the label
+   said 4. Recovery restores the live game instead of reading the template, so the spin has to ride
+   the snapshot like the range and the prize do. */
+ok('the snapshot carries the baked spin, so a reloading host gets it back',
+   /snap\.game = \{[\s\S]{0,600}spin_seconds: cfg\.spin_seconds != null \? cfg\.spin_seconds : null/.test(W),
+   'recovery skips the template pre-fill, so without this the label reads 4 after every reload');
+ok('and the console restores it from the snapshot',
+   /function restoreRaffle\(\)[\s\S]{0,2500}indexOf\(g\.spin_seconds\)>=0\)\{ G\.drawLength=g\.spin_seconds/.test(RAFFLE));
 ok('readInputs no longer resets the spin to 4 before every draw', !/G\.drawLength=4;/.test(RAFFLE.slice(RAFFLE.indexOf('function readInputs'), RAFFLE.indexOf('function readInputs')+2000)),
    'the control cycled 3 to 8 on the screen and every draw still spun for 4');
 ok('and compares the last draw time against it', /since < holdMs/.test(raffle));

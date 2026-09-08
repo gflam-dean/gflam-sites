@@ -14,7 +14,7 @@ function find(rel) {
   throw new Error('cannot open ' + rel);
 }
 var H = find('venueplay/app/raffle/host.html');
-var EXPECT = 9, ran = 0, bad = 0;
+var EXPECT = 10, ran = 0, bad = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 function lift(name) {
   var i = H.indexOf('function ' + name + '(');
@@ -56,6 +56,12 @@ ok('and the button is plain again afterwards', !btn.cls.armed && btn.textContent
 
 ok('claiming the ticket disarms a half-tapped redraw', /G\.round\.resolved=true; clearTimers\(\); disarmRedraw\(\);/.test(H),
    'otherwise the arm outlives the round and the next winner\'s first tap is a second tap');
+
+/* Live on 8 Sep 2026 the Draw button read "Drawing…" for the whole claim window, which on a phone
+   looks like a hang. While a winner is up it should say what it is waiting on. */
+ok('while a winner is up, the Draw button says what it is waiting on, not Drawing…',
+   /if\(allowRedraw\)\{\s*show\("wcResolve",true\);\s*drawBtnWaiting\(nums\);/.test(H) &&
+   /function drawBtnWaiting\(nums\)\{[^\n]*"Waiting on ticket "\+nums\.map\(pad\)/.test(H));
 
 if (ran !== EXPECT) { print('ONLY ' + ran + ' OF ' + EXPECT + ' CHECKS RAN'); throw new Error('incomplete'); }
 if (bad) { print(bad + ' OF ' + EXPECT + ' FAILED'); throw new Error(bad + ' failed'); }
