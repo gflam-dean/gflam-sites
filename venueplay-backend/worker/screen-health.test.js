@@ -210,7 +210,8 @@ ok("the broadcast machinery is gone, not dormant",
    one level down.
    ========================================================================== */
 ok("the TV reports its build on the poll", /TV_BUILD\s*=\s*"[0-9a-z.-]+"/.test(TV));
-ok("and sends it as ?v=", /\/venue\?code="\+encodeURIComponent\(CODE\)\+"&v="/.test(TV));
+ok("and sends it as ?v=", /\/venue\?code="\+encodeURIComponent\(CODE\)\+"&venue="\+encodeURIComponent\(VENUE_SLUG\)\+"&v="/.test(TV),
+   "the poll carries the slug as well since 8 Sep: the hashed code alone is one Change code from exists:false");
 ok("the Worker records it", /screen_version: ver/.test(W));
 ok("a screen that sends nothing is recorded as old", /\|\|\s*'pre-5-sep'/.test(W),
    "silence IS the signal: it predates the feature");

@@ -325,9 +325,52 @@ MUTATIONS = [
     # The ceiling Dean spotted: every venue ever created, cancelled ones
     # included, counted toward 5,000 - so live venues stop resolving silently.
     ('venue-scale.test.js', 'venueplay-backend/worker/venueplay-game.js',
-     "await sbGetAll(env, 'vp_venues', 'slug=not.is.null&status=neq.suspended&select=id,slug')",
-     "await sbGet(env, 'vp_venues', 'select=id,slug&limit=5000')",
-     'the venue-code map is capped again, so venues past it stop working'),
+     "const rows = await sbGetAll(env, 'vp_venues',\n    'slug=not.is.null&select=id,slug,join_code,status');",
+     "const rows = await sbGet(env, 'vp_venues', 'slug=not.is.null&select=id,slug,join_code,status&limit=1000');",
+     'the venue-code map reads one page again, so venues past it stop working'),
+    # 8 Sep: the TV, the console and the table talkers all use a HASH of the slug
+    # as the venue code; the owner can change the ISSUED code. Drop the fallback
+    # that lets the hash resolve and Change code blanks the venue's television.
+    ('venue-channel.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     'const derived = _vcHashMap[code];',
+     'const derived = null;',
+     'an owner presses Change code and the venue TV says "not linked to an account" and forgets its venue'),
+    # The reveal's compare-and-set loses its condition: two reveals both win, and
+    # a plain write is what let phones keep answering while the scoring ran.
+    ('trivia-reveal.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "'game_id=eq.' + enc(gameId) + '&phase=eq.asking', { phase: 'revealed' });",
+     "'game_id=eq.' + enc(gameId), { phase: 'revealed' });",
+     'a question is scored while phones can still answer it, and the last tap is never scored'),
+    # /health goes back to reading every venue into the Worker to count them.
+    ('health.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "sbCount(env, 'vp_venues', 'select=id'),",
+     "sbGetAll(env, 'vp_venues', 'select=id').then((r) => r.length),",
+     'a public route reads the whole venue table on every call again'),
+    # The 11-second path: skip the indexed row and every lookup scans the table.
+    ('venue-code-scan.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     'if (hit && hit.length === 1) return hit[0].id;',
+     'if (false && hit && hit.length === 1) return hit[0].id;',
+     'the hot path goes back to scanning every venue before it answers a television'),
+    # Only a draw with a night set goes on the wall; that filter is also what
+    # takes a retired or archived draw off the screen.
+    ('screen-endpoint.test.js', 'venueplay-backend/worker/venueplay-game.js',
+     "draws = (d || []).filter((x) => x && x.draw_day);",
+     "draws = d || [];",
+     'a retired members draw goes back up on the wall with its old jackpot'),
+    # A byte changes after stamping: /health would report a build that is not
+    # the one running, which is the blindness the stamp exists to cure.
+    ('venueplay-game.js carries its own fingerprint', 'venueplay-backend/worker/venueplay-game.js',
+     'function fnvVenueCode(slug) {',
+     'function fnvVenueCode(slug) { /* edited after stamping */',
+     'the Worker is edited after stamping, so /health reports a build that is not running'),
+    ('venueplay-api-FULL.js carries its own fingerprint', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "const BUILD = '",
+     "const EDITED_AFTER_STAMPING = 1;\nconst BUILD = '",
+     'the billing Worker is edited after stamping'),
+    ('SOURCE-do-not-paste-partyplay-api.js carries its own fingerprint', 'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "const BUILD = '",
+     "const EDITED_AFTER_STAMPING = 1;\nconst BUILD = '",
+     'the PartyPlay Worker source is edited after stamping'),
     # The id fallback: an older host broadcasts titles alone, and without the
     # fallback every card in the room stays blank for the rest of that night.
     ('musical-win.test.js', 'venueplay/app/musical/play.html',

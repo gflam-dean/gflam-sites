@@ -1298,10 +1298,28 @@
              wall) and a trivia or musical session is live under it. Hop to THAT room, not the
              code they typed, or the phone lands in the right app on the wrong channel. */
           if(to){ window.location.replace(to+"?room="+encodeURIComponent((r && r.room_code) || code)); return; }
+          /* THE CHANNEL IS NOT THE CODE. The TV, the console and every phone off a table talker
+             meet on a channel hashed from the venue's slug, which never changes. The code on the
+             wall is the one the owner was ISSUED, and since Change code shipped the owner can
+             replace it. The two were identical for every venue until then, so a phone that typed
+             the new code sat on a channel with nobody on it, "waiting for the host" all night, and
+             nothing on the console or the TV looked wrong. The Worker sends the venue's channel
+             back; if this phone is not on it, move over. Once: P.room matches from then on. */
+          if(r && r.channel && CODE_RE.test(r.channel) && r.channel!==P.room){ rehome(r.channel, code); }
           if(++tries<225) setTimeout(look, 8000);     // ~30 minutes: a lobby routinely outlasts 4
         })
         .catch(function(){ if(++tries<225) setTimeout(look, 8000); });  // worker blip: bingo still works
     })();
+  }
+  function rehome(channel, shown){
+    // Carry this phone's identity across, so a regular is the same player to the host either way.
+    var pid=loadPid(P.room); if(pid && !loadPid(channel)) savePid(channel, pid);
+    var nm=loadName(P.room); if(nm && !loadName(channel)) saveName(channel, nm);
+    try{ if(ch) ch.unsubscribe(); }catch(e){}
+    ch=null; subscribed=false;
+    connect(channel);
+    // Show the code that is on the wall, not the channel behind it: that is what they typed.
+    $("roomLabel").textContent=shown; $("joinCode").textContent=shown;
   }
   function roomGo(){
     var v=roomIn.value.toUpperCase().trim();

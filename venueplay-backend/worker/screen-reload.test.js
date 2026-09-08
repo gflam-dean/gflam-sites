@@ -82,7 +82,7 @@ ok("and it is HQ-admin gated", /handleScreenReload[\s\S]{0,900}vp_platform_admin
    over the venue's advertising. Selecting a column the database does not have yet
    would do that to every venue at once, so the select has to fall back. */
 ok("selecting the new column has a fallback",
-   /select=name,screen_reload_at[\s\S]{0,400}catch\(\(\) => null\)[\s\S]{0,300}select=name&limit=1/.test(W),
+   /select=name,screen_reload_at[\s\S]{0,400}catch\(\(\) => null\)[\s\S]{0,300}select=name,status&limit=1/.test(W),
    "or a Worker pasted before migration 63 blanks every screen");
 
 print("");

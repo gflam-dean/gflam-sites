@@ -701,7 +701,13 @@
      tell them apart without walking into the pub. The screen now says which build it
      is, on the request it already makes, so "Screen ok" can mean "and it is current".
      A screen that sends no version at all is, by that silence, an old one. */
-  var TV_BUILD = "2026-09-05c";
+  var TV_BUILD = "2026-09-08a";
+  /* THE SLUG GOES WITH THE CODE. CODE is a hash of the slug, and since migration
+     68 the code a venue is issued can be changed by its owner; once it is, the
+     hash on its own no longer names this venue, and two exists:false answers in a
+     row are what puts "not linked to an account" over the advertising and forgets
+     the venue. The slug is what this screen actually knows. The Worker prefers
+     it and falls back to the code for screens that have not reloaded yet. */
   /* The newest HQ command this page has already carried out, so one press is one
      action even though the poll repeats every thirty seconds. */
   var lastCommandAt = 0;
@@ -722,7 +728,7 @@
     var strikes=0;
     function ask(){
       try{
-        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&v="+encodeURIComponent(TV_BUILD))
+        fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD))
           .then(function(r){ return r.ok?r.json():null; }).then(function(d){
           if(!d){ return; }                       // unreachable or old Worker: never false-alarm
           if(d.exists===false){

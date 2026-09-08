@@ -10,8 +10,17 @@ running system "the code you are SHOWING this venue: does it actually let anyone
 in?" can, and that is one question, asked live, read-only, in under a second.
 
 WHAT IT WILL NOT DO. It never writes. It opens no sessions, joins no games, bills
-nothing. Every request below is a GET that a TV on a wall makes anyway, so running
-it every morning costs a venue nothing and cannot take a night down.
+nothing. Every request below is one a TV on a wall or a phone on the join screen
+makes anyway (the one POST, /join/info, only reads), so running it every morning
+costs a venue nothing and cannot take a night down.
+
+THE SECOND 8 SEP FAULT. The TV, the console and every table talker do not use the
+issued code at all: they use a HASH of the slug, computed on the page with no round
+trip. The two were equal for every venue until Change code shipped. So this also
+asks the door about the code the TV actually sends, and asks /join/info for the
+channel a phone will be moved to, and requires it to be that same hash. The first
+version of this audit could not see either, because it only ever asked about the
+code the console displays.
 
   python3 daily-venue-audit.py                       the venues in VENUES below
   python3 daily-venue-audit.py --slug the-average-joe --slug some-other-pub
@@ -45,6 +54,34 @@ def jget(url):
     try: return s, json.loads(body), ms
     except Exception: return s, None, ms
 
+def jpost(url, obj, timeout=15):
+    t0 = time.time()
+    try:
+        req = urllib.request.Request(url, data=json.dumps(obj).encode('utf-8'), method='POST',
+                                     headers={'User-Agent': 'venueplay-daily-audit', 'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            body = r.read().decode('utf-8', 'replace'); st = r.status
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', 'replace'); st = e.code
+    except Exception as e:
+        return 0, None, (time.time() - t0) * 1000
+    try: return st, json.loads(body), (time.time() - t0) * 1000
+    except Exception: return st, None, (time.time() - t0) * 1000
+
+ALPHABET = 'ACDEFGHJKMNPQRSTUVWXYZ2345679'
+def fnv_venue_code(slug):
+    """The code tv.html, play.html, vp-session.js and the Worker all derive from a slug.
+    Same arithmetic, 32-bit, so the audit asks the door about the code the TV really sends.
+    Checked against the live venue: the-average-joe -> 3A7TES."""
+    s = ''.join(c for c in str(slug or '').lower() if c.isalnum() and c.isascii())
+    h = 2166136261
+    for ch in s:
+        h ^= ord(ch); h = (h * 16777619) & 0xFFFFFFFF
+    x = h or 1; out = ''
+    for _ in range(6):
+        x = (x * 1103515245 + 12345) & 0xFFFFFFFF; out += ALPHABET[x % len(ALPHABET)]
+    return out
+
 
 def audit_platform():
     print('\nTHE PLATFORM ITSELF')
@@ -68,6 +105,11 @@ def audit_platform():
     if b.get('venues') and b.get('with_a_key') is not None:
         ok('broadcast signing keys', '%s of %s venues hold one, %s enforcing'
            % (b['with_a_key'], b['venues'], b.get('enforcing')))
+    else:
+        # 8 Sep: these became HEAD count=exact requests instead of two full scans.
+        # If the count header is not what the Worker expects this is where it shows.
+        fail('broadcast signing can be counted', 'health says %s - the signing figures are unreadable, '
+             'so nobody can tell how many rooms are actually protected' % (b or 'nothing'))
     return h
 
 
@@ -116,7 +158,41 @@ def audit_venue(slug):
     else:
         ok('it works on every try, not just the first', '6 of 6')
 
-    # 5. The pages a venue actually opens.
+    # 5. THE CODE THE TV ACTUALLY SENDS. Not the one on the console: tv.html hashes its
+    #    slug and polls /venue with that, and it is the channel every phone must be on.
+    #    Once an owner presses Change code the two differ, and only this asks about it.
+    hashed = fnv_venue_code(slug)
+    note = 'same as the shown code' if hashed == code else 'this venue has changed its code: %s on the wall, %s behind it' % (code, hashed)
+    s, tvv, ms = jget(GAME + '/venue?code=' + hashed)          # a TV that has not reloaded since the fix
+    if s != 200 or not tvv or not tvv.get('exists') or (tvv.get('slug') or '') != slug:
+        fail('the code the TV polls with still opens this venue',
+             '%s (a hash of the slug) got exists=%s slug=%s - in 60 seconds the TV shows "not linked to an '
+             'account" and forgets its venue' % (hashed, (tvv or {}).get('exists'), (tvv or {}).get('slug')))
+    else:
+        ok('the code the TV polls with still opens this venue', '%s, %s' % (hashed, note))
+    s, tvv2, ms = jget(GAME + '/venue?code=%s&venue=%s&v=daily-audit' % (hashed, slug))   # what a reloaded TV sends
+    if s != 200 or not tvv2 or not tvv2.get('exists') or (tvv2.get('slug') or '') != slug:
+        fail('the TV poll with the slug on it opens this venue', 'exists=%s' % (tvv2 or {}).get('exists'))
+    else:
+        ok('the TV poll with the slug on it opens this venue', '%.0fms' % ms)
+
+    # 6. WHERE A PHONE THAT TYPES THE CODE ENDS UP. /join/info tells play.html the venue's
+    #    channel; it must be the hash the TV is on, or the phone waits for a host all night.
+    s, ji, ms = jpost(GAME + '/join/info', {'code': code})
+    if s != 200 or not ji:
+        fail('the join screen can ask about the shown code', 'HTTP %s' % s)
+    elif not ji.get('channel'):
+        fail('a phone typing the shown code is sent to the channel the TV is on',
+             '/join/info sends no channel at all: the Worker running is from before 8 Sep and cannot move a '
+             'phone. Harmless while the shown code equals %s; the day this venue presses Change code, every '
+             'phone that types the new code joins an empty room' % hashed)
+    elif ji.get('channel') != hashed:
+        fail('a phone typing the shown code is sent to the channel the TV is on',
+             '/join/info says channel=%r, the TV is on %s - the phone joins an empty room' % (ji.get('channel'), hashed))
+    else:
+        ok('a phone typing the shown code is sent to the channel the TV is on', '%s, %.0fms' % (hashed, ms))
+
+    # 7. The pages a venue actually opens.
     for path, needle, what in (('/tv?slug=' + slug, 'CODE_ALPHABET', 'the TV page'),
                                ('/app/', 'venueplay', 'the console')):
         s, body, ms = get(SITE + path)
@@ -128,27 +204,124 @@ def audit_venue(slug):
 
 
 def prove():
-    """A check that cannot go red is decoration. Break each one and require a FAIL."""
-    print('PROVING THE CHECKS (each is deliberately broken; each must go red)\n')
+    """A check that cannot go red is decoration. Break each one and require ITS line to go red.
+
+    The first version of this only cut the network, which proves the audit notices an
+    outage and nothing else: nine checks, two ways to fail, seven never shown to work.
+    This stands up a fake Worker and a fake site on localhost, scripts one wrong answer
+    at a time, and requires the check that owns that answer to be the one that fails.
+    The fake venue has ALREADY pressed Change code (shown KQ7M2N, channel behind it the
+    hash), because that is the case the two newest checks exist for and the live venue
+    cannot show it."""
+    import http.server, threading, urllib.parse
     global GAME, SITE
-    cases = [
-        ('the Worker is unreachable',      lambda: ('http://127.0.0.1:9', SITE)),
-        ('the site is unreachable',        lambda: (GAME, 'http://127.0.0.1:9')),
-    ]
+    slug = 'the-royal-hotel-4217'
+    HASH = fnv_venue_code(slug)
+    SHOWN = 'KQ7M2N'
+    assert SHOWN != HASH
+    state = {'mut': None, 'n': 0}
+
+    class Fake(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *a): pass
+        def send(self, body, status=200, ctype='application/json'):
+            if not isinstance(body, str): body = json.dumps(body)
+            b = body.encode('utf-8')
+            self.send_response(status); self.send_header('Content-Type', ctype)
+            self.send_header('Content-Length', str(len(b))); self.end_headers(); self.wfile.write(b)
+        def do_GET(self):
+            m = state['mut']; u = urllib.parse.urlparse(self.path); q = urllib.parse.parse_qs(u.query)
+            if u.path == '/health':
+                h = {'worker': 'venueplay-game', 'build': 'fake', 'ok': True, 'missing': [],
+                     'broadcast_signing': {'venues': 1, 'with_a_key': 1, 'enforcing': 0}, 'venue_code_clashes': 0}
+                if m == 'bindings': h['ok'] = False; h['missing'] = ['SUPABASE_URL']
+                if m == 'clash-count-gone': del h['venue_code_clashes']
+                if m == 'clash': h['venue_code_clashes'] = 1
+                if m == 'signing-unreadable': h['broadcast_signing'] = {'error': 'could not be read'}
+                return self.send(h)
+            if u.path == '/screen':
+                if m == 'screen-missing': return self.send({'exists': False})
+                code = '' if m == 'no-code' else ('AB0O1I' if m == 'untypable' else SHOWN)
+                return self.send({'exists': True, 'name': 'The Royal Hotel', 'join_code': code})
+            if u.path == '/venue':
+                code = (q.get('code') or [''])[0]; by_slug = 'venue' in q
+                state['n'] += 1
+                if code == SHOWN and not by_slug:
+                    if m == 'door-refuses': return self.send({'exists': False})
+                    if m == 'wrong-venue': return self.send({'exists': True, 'slug': 'the-royal-hotel-2000', 'name': 'x'})
+                    if m == 'flaky' and state['n'] % 3 == 0: return self.send({'exists': False})
+                if code == HASH and not by_slug and m == 'tv-hash-refused': return self.send({'exists': False})
+                if by_slug and m == 'slug-poll-refused': return self.send({'exists': False})
+                if code in (SHOWN, HASH) or by_slug:
+                    return self.send({'exists': True, 'slug': slug, 'name': 'The Royal Hotel', 'suspended': False})
+                return self.send({'exists': False})
+            if u.path == '/tv':
+                return self.send('<html>homepage</html>' if m == 'tv-is-homepage' else '<html>CODE_ALPHABET</html>', ctype='text/html')
+            if u.path == '/app/':
+                return self.send('<html>homepage</html>' if m == 'console-is-homepage' else '<html>venueplay</html>', ctype='text/html')
+            return self.send({'error': 'not found'}, 404)
+        def do_POST(self):
+            m = state['mut']; u = urllib.parse.urlparse(self.path)
+            try: self.rfile.read(int(self.headers.get('Content-Length') or 0))
+            except Exception: pass
+            if u.path == '/join/info':
+                if m == 'no-channel': return self.send({'format': '', 'collect': {}})
+                if m == 'wrong-channel': return self.send({'format': '', 'channel': 'ZZZZZZ', 'collect': {}})
+                return self.send({'format': '', 'channel': HASH, 'collect': {}})
+            return self.send({'error': 'not found'}, 404)
+
+    srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Fake)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    fake = 'http://127.0.0.1:%d' % srv.server_address[1]
     good_game, good_site = GAME, SITE
+
+    # (mutation, the check that must be the one to go red)
+    cases = [
+        ('worker-down',         'the game Worker answers at all'),
+        ('bindings',            'the Worker reports itself healthy'),
+        ('clash-count-gone',    'clashing venue codes are being counted'),
+        ('clash',               'no two venues share a code'),
+        ('signing-unreadable',  'broadcast signing can be counted'),
+        ('screen-missing',      'the TV finds this venue'),
+        ('no-code',             'the venue has a code to show'),
+        ('untypable',           'the code can actually be typed'),
+        ('door-refuses',        'the code the venue is SHOWN lets people in'),
+        ('wrong-venue',         'the code opens the RIGHT venue'),
+        ('flaky',               'the code works EVERY time, not most times'),
+        ('tv-hash-refused',     'the code the TV polls with still opens this venue'),
+        ('slug-poll-refused',   'the TV poll with the slug on it opens this venue'),
+        ('no-channel',          'a phone typing the shown code is sent to the channel the TV is on'),
+        ('wrong-channel',       'a phone typing the shown code is sent to the channel the TV is on'),
+        ('tv-is-homepage',      'the TV page is the real page'),
+        ('console-is-homepage', 'the console is the real page'),
+        ('site-down',           'the TV page loads'),
+    ]
+    print('PROVING THE CHECKS (each is deliberately broken; the check that owns it must go red)\n')
+    import io as _io, contextlib
     passed = 0
-    for name, mut in cases:
-        GAME, SITE = mut()
+    for mut, owner in cases:
+        state['mut'] = None if mut in ('worker-down', 'site-down') else mut
+        state['n'] = 0
+        GAME = 'http://127.0.0.1:9' if mut == 'worker-down' else fake
+        SITE = 'http://127.0.0.1:9' if mut == 'site-down' else fake
         del BAD[:]
-        try:
-            audit_platform(); audit_venue(VENUES[0])
-        except Exception:
-            pass
-        red = len(BAD) > 0
-        print('  %-36s %s' % (name, 'went red, good' if red else 'STAYED GREEN - BLIND CHECK'))
-        passed += 1 if red else 0
-        GAME, SITE = good_game, good_site
-    return 0 if passed == len(cases) else 1
+        with contextlib.redirect_stdout(_io.StringIO()):
+            try: audit_platform(); audit_venue(slug)
+            except Exception as e: BAD.append(('the audit itself crashed', str(e)))
+        red = [w for w, _ in BAD]
+        hit = owner in red
+        print('  %-22s %-66s %s' % (mut, owner, 'went red, good' if hit else 'STAYED GREEN - BLIND CHECK  (red: %s)' % (red or 'nothing')))
+        passed += 1 if hit else 0
+    state['mut'] = None; GAME, SITE = good_game, good_site
+    del BAD[:]
+    with contextlib.redirect_stdout(_io.StringIO()):
+        GAME = SITE = fake
+        audit_platform(); audit_venue(slug)
+    clean = not BAD
+    print('  %-22s %-66s %s' % ('nothing broken', 'the whole audit is green on a correct venue', 'green, good' if clean else 'RED ON A GOOD VENUE: %s' % BAD))
+    GAME, SITE = good_game, good_site
+    srv.shutdown()
+    print('\n  %d of %d checks proven%s' % (passed, len(cases), '' if clean else ', and the audit is wrong on a good venue'))
+    return 0 if passed == len(cases) and clean else 1
 
 
 def main():

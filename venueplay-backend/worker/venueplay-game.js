@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 09:52 · db4fbe8e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 11:16 · 85cf0bd5';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -197,56 +197,7 @@ export default {
          no host can sign in at all.
 
          Names and booleans only. Never a value: this endpoint is public. */
-      if (method === 'GET' && path === '/health') {
-        const need = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SUPABASE_JWT_SECRET', 'IP_HASH_SALT'];
-        const missing = need.filter((k) => !env[k]);
-        const rl = !!env.RL;
-        /* Two venues whose slugs hash to the same six characters. Reported here
-           because a clash is invisible from everywhere else: both venues keep
-           working normally except that the shared code stops resolving, and the
-           codes are on printed signage, so somebody has to be told BEFORE the
-           second venue's table talkers go to the printer. */
-        let clashes = [];
-        try { await refreshVenueCodes(env); clashes = _vcDupes || []; } catch (e) { clashes = []; }
-
-        /* IS THE BROADCAST SIGNING ACTUALLY ON, and for how many venues?
-           Realtime channels are named from a hash of the venue's PUBLIC slug and
-           carry no RLS, so anyone with the anon key printed in every page could
-           join a venue's channel and send on it: fake balls, a fake winner, mid
-           game, on the TV and every phone. ECDSA signing closed that on 22 Aug.
-           But enforcement is per venue and defaults OFF, so the code being
-           present says nothing about whether any room is actually protected.
-           That distinction is what made the original hole so hard to see: it
-           read as closed in every file you would look at.
-           Two numbers, so it takes a curl instead of a database session. */
-        let signing = null;
-        try {
-          const vs = await sbGetAll(env, 'vp_venues', 'select=id,broadcast_enforce');
-          const ks = await sbGetAll(env, 'vp_venue_signing_keys', 'select=venue_id');
-          const keyed = new Set(ks.map(function (k) { return k.venue_id; }));
-          signing = {
-            venues: vs.length,
-            with_a_key: vs.filter(function (v) { return keyed.has(v.id); }).length,
-            enforcing: vs.filter(function (v) { return v.broadcast_enforce; }).length
-          };
-        } catch (e) { signing = { error: 'could not be read' }; }
-
-        return json({
-          worker: 'venueplay-game',
-          build: BUILD,
-          ok: !missing.length && rl && !clashes.length,
-          missing,
-          rateLimiter: rl,
-          broadcast_signing: signing,
-          venue_code_clashes: clashes.length,
-          venue_code_clash_detail: clashes.length ? clashes.slice(0, 5) : undefined,
-          warning: clashes.length
-            ? ('Two venues share a join code (' + clashes.map(function (c) { return c.slugs.join(' / '); }).join('; ') +
-               '). That code is refused for both until one is re-slugged. Do not print signage for either.')
-            : (rl ? undefined
-                  : 'The RL KV namespace is not bound. Anti-abuse limiting and join dedup are in allow-mode, and player counts are what venues are billed on.')
-        }, missing.length ? 503 : 200);
-      }
+      if (method === 'GET' && path === '/health')             return await handleHealth(env, json);
 
       if (method === 'POST' && path === '/session')            return await handleCreateSession(request, env, json);
       if (method === 'POST' && path === '/session/close')      return await handleSessionClose(request, env, json);
@@ -525,6 +476,67 @@ async function endOtherRunningGames(env, venueId, keepFormat) {
   }
 }
 
+/* GET /health. Public, unauthenticated, and polled by the release gate, the daily
+   audit and anyone curious, so nothing in here may cost more than a few indexed
+   round trips or grow with the number of venues. The clash sweep is the one
+   exception and it is cached per isolate for sixty seconds in refreshVenueCodes. */
+async function handleHealth(env, json) {
+  const need = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SUPABASE_JWT_SECRET', 'IP_HASH_SALT'];
+  const missing = need.filter((k) => !env[k]);
+  const rl = !!env.RL;
+  /* Two venues whose slugs hash to the same six characters. Reported here
+     because a clash is invisible from everywhere else: both venues keep
+     working normally except that the shared code stops resolving, and the
+     codes are on printed signage, so somebody has to be told BEFORE the
+     second venue's table talkers go to the printer. */
+  let clashes = [];
+  try { await refreshVenueCodes(env); clashes = _vcDupes || []; } catch (e) { clashes = []; }
+
+  /* IS THE BROADCAST SIGNING ACTUALLY ON, and for how many venues?
+     Realtime channels are named from a hash of the venue's PUBLIC slug and
+     carry no RLS, so anyone with the anon key printed in every page could
+     join a venue's channel and send on it: fake balls, a fake winner, mid
+     game, on the TV and every phone. ECDSA signing closed that on 22 Aug.
+     But enforcement is per venue and defaults OFF, so the code being
+     present says nothing about whether any room is actually protected.
+     That distinction is what made the original hole so hard to see: it
+     read as closed in every file you would look at.
+     Two numbers, so it takes a curl instead of a database session. */
+  /* COUNTED BY THE DATABASE, NOT READ INTO THE WORKER. This used to pull every
+   venue and every signing key into memory to count them: two full scans on a
+   public, unauthenticated route, on every call, growing with every venue signed.
+   At nineteen venues it took most of the route's 2.7 seconds; at three thousand
+   it would be a free denial-of-service against the Worker's subrequest budget.
+   Three HEAD requests with count=exact answer the same three numbers in one
+   round trip each, whatever the table size. venue_id is the signing table's
+   primary key, so its row count IS the number of venues holding a key. */
+let signing = null;
+try {
+  const [venues, withKey, enforcing] = await Promise.all([
+    sbCount(env, 'vp_venues', 'select=id'),
+    sbCount(env, 'vp_venue_signing_keys', 'select=venue_id'),
+    sbCount(env, 'vp_venues', 'select=id&broadcast_enforce=is.true'),
+  ]);
+  signing = { venues, with_a_key: withKey, enforcing };
+} catch (e) { signing = { error: 'could not be read' }; }
+
+  return json({
+    worker: 'venueplay-game',
+    build: BUILD,
+    ok: !missing.length && rl && !clashes.length,
+    missing,
+    rateLimiter: rl,
+    broadcast_signing: signing,
+    venue_code_clashes: clashes.length,
+    venue_code_clash_detail: clashes.length ? clashes.slice(0, 5) : undefined,
+    warning: clashes.length
+      ? ('Two venues share a join code (' + clashes.map(function (c) { return c.slugs.join(' / '); }).join('; ') +
+         '). That code is refused for both until one is re-slugged. Do not print signage for either.')
+      : (rl ? undefined
+            : 'The RL KV namespace is not bound. Anti-abuse limiting and join dedup are in allow-mode, and player counts are what venues are billed on.')
+  }, missing.length ? 503 : 200);
+}
+
 async function handleCreateSession(request, env, json) {
   const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
   const b = await readJson(request);
@@ -679,9 +691,20 @@ async function handleJoinInfo(request, env, json) {
      other venue data, so this stays what it has always been, a public lookup for one join code. */
   let venueName = '';
   let paperBingo = false;
+  /* THE CHANNEL THE ROOM IS ON.
+     Bingo's broadcast channel is named from a hash of the slug: the television and
+     the console derive it with no round trip, which is what lets a bingo night
+     survive this Worker being down. A phone, though, connects to a channel named
+     from whatever code was TYPED, and since migration 68 the typed code is the
+     issued join_code, which an owner can change. Once changed, every phone in the
+     room sat on an empty channel while the wall called balls. So tell the phone
+     where the room actually is. It is the hash of a public slug that /venue already
+     returns, so nothing new is exposed. */
+  let channel = '';
   try {
-    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state&limit=1');
+    const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,au_state,slug&limit=1');
     if (vrows && vrows[0] && vrows[0].name) venueName = String(vrows[0].name);
+    if (vrows && vrows[0] && vrows[0].slug) channel = fnvVenueCode(vrows[0].slug);
     /* PAPER-TICKET STATES. Three jurisdictions still expect a printed ticket in the player's hand
        for bingo, so a phone must not show one:
          SA  - the rules recognise only physical bingo sheets bought from a licensed supplier
@@ -701,7 +724,7 @@ async function handleJoinInfo(request, env, json) {
       paperBingo = true;
     }
   } catch (e) { /* the notice falls back to "the venue you are playing at" */ }
-  return json({ format: format, room_code: roomCode, venue_name: venueName, paper_bingo: paperBingo, collect: {
+  return json({ format: format, room_code: roomCode, channel: channel, venue_name: venueName, paper_bingo: paperBingo, collect: {
     first_name: cfg.collect_first_name !== false, // first name defaults on
     last_name: !!cfg.collect_last_name,
     postcode: !!cfg.collect_postcode,
@@ -715,7 +738,7 @@ async function handleJoinInfo(request, env, json) {
    venue_id. Bingo has no session to look up, so we recompute the code for every venue and match.
    Keyed by the unique slug/id, so two same-named venues never collide. The venue list is cached
    ~60s in the isolate to avoid a full scan on every capture. */
-let _vcMap = null, _vcAt = 0;
+let _vcMap = null, _vcAt = 0, _vcHashMap = {}, _vcMapAll = {}, _vcSuspended = {};
 function fnvVenueCode(slug) {
   let s = String(slug || '').toLowerCase().replace(/[^a-z0-9]/g, ''), h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
@@ -740,9 +763,16 @@ function fnvVenueCode(slug) {
    somebody else's night, and the count is reported by /health so the release check
    can watch it and Dean gets told before a sign is printed. */
 let _vcDupes = [];
-async function venueByCode(env, code) {
+async function venueByCode(env, code, opts) {
   code = String(code || '').trim().toUpperCase();
   if (!/^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/.test(code)) return null;
+  /* A SUSPENDED VENUE STILL EXISTS. Every caller that spends money (join, capture,
+     report, signing) wants a suspended venue to read as absent, and that is the
+     default. The television and /play/live are different: they need to know the
+     venue is there AND suspended, so they can say so instead of telling the room
+     the venue does not exist. Before this flag the suspended branch in /play/live
+     could never run, because this function had already answered null. */
+  const includeSuspended = !!(opts && opts.includeSuspended);
 
   /* ASK FOR THE ONE ROW. DO NOT BUILD A MAP OF EVERY VENUE TO ANSWER IT.
    *
@@ -765,7 +795,7 @@ async function venueByCode(env, code) {
    * join_code is still null because migration 68 has not reached them, and the
    * clash count /health reports. */
   const hit = await sbGet(env, 'vp_venues',
-    'join_code=eq.' + enc(code) + '&status=neq.suspended&select=id&limit=2').catch(() => null);
+    'join_code=eq.' + enc(code) + (includeSuspended ? '' : '&status=neq.suspended') + '&select=id&limit=2').catch(() => null);
   if (hit && hit.length === 1) return hit[0].id;
   if (hit && hit.length > 1) return null;          // should be impossible; refuse rather than guess
 
@@ -774,8 +804,34 @@ async function venueByCode(env, code) {
      the map - which is the slow path now, taken once per isolate, and only for
      a code that would otherwise have failed. */
   await refreshVenueCodes(env);
-  const legacy = _vcMap[code];
-  return (legacy && legacy !== AMBIGUOUS) ? legacy : null;
+  const legacy = (includeSuspended ? _vcMapAll : _vcMap)[code];
+  if (legacy && legacy !== AMBIGUOUS) return legacy;
+
+  /* THE CODE A SCREEN DERIVES, NOT THE CODE A VENUE WAS ISSUED.
+
+     tv.html has no round trip at boot: it hashes its slug into six characters and
+     uses that as the broadcast channel AND as the code it polls /venue with every
+     thirty seconds. The console, and every bingo phone that arrives off a table
+     talker (/play?venue=slug), do the same, which is why bingo survives a Worker
+     outage: nothing in the room needs this Worker to agree on a channel.
+
+     Migration 68 made the ISSUED code a column the owner can change. The two were
+     equal for every venue that existed (the backfill made them so), which is how
+     this went unnoticed: the moment an owner pressed Change code, the screen's
+     hashed code stopped resolving here, the poll answered exists:false twice, the
+     wall showed "not linked to an account" and forgot its venue, and every phone
+     off a table talker lost its identity claim, so the night went unmetered.
+     Nothing in the console looked wrong. The Average Joe's two codes are identical
+     today, so this has not happened to them yet.
+
+     So BOTH codes name the venue: the issued one (one indexed row, above) and the
+     derived one (this map). The derived code is not a secret an owner can revoke,
+     because it is a hash of a slug that is in the venue's public URL; Change code
+     changes the code printed in the room, and the channel stays put. */
+  const derived = _vcHashMap[code];
+  if (!derived || derived === AMBIGUOUS) return null;
+  if (!includeSuspended && _vcSuspended[derived]) return null;
+  return derived;
 }
 
 const AMBIGUOUS = '__two_venues__';
@@ -814,11 +870,21 @@ async function refreshVenueCodes(env) {
   if (_vcMap && now - _vcAt <= 60000) return;
   /* A suspended venue cannot run a game, so it has no business holding a code -
      and before this it was still taking up one of the 5,000 slots. */
+  /* Suspended venues are read and then kept OUT of the issued-code map, rather
+     than filtered in the query, because the screen index below needs them: a
+     suspended venue's television must still know which venue it is. */
   const rows = await sbGetAll(env, 'vp_venues',
-    'slug=not.is.null&status=neq.suspended&select=id,slug,join_code');
-  const map = {}, seen = {}, dupes = [];
+    'slug=not.is.null&select=id,slug,join_code,status');
+  const map = {}, seen = {}, dupes = [], hashMap = {}, hashSeen = {}, all = {}, susp = {};
   for (const v of rows) {
     if (!v || !v.slug) continue;
+    /* The derived code, for every venue whatever its status. Two slugs CAN hash
+       alike (that is why the issued code exists), so the same clash rule applies. */
+    const h = fnvVenueCode(v.slug);
+    if (hashMap[h] && hashSeen[h] !== v.slug) hashMap[h] = AMBIGUOUS;
+    else { hashMap[h] = v.id; hashSeen[h] = v.slug; }
+    if (v.join_code) all[v.join_code] = v.id;
+    if (v.status === 'suspended') { susp[v.id] = true; continue; }
     /* THE CODE IS THE ONE THE VENUE WAS ISSUED, not the one we can derive.
 
        This used to hash the slug. Migration 68 made the code a column the venue
@@ -838,7 +904,7 @@ async function refreshVenueCodes(env) {
     }
     map[c] = v.id; seen[c] = v.slug;
   }
-  _vcMap = map; _vcAt = now; _vcDupes = dupes;
+  _vcMap = map; _vcAt = now; _vcDupes = dupes; _vcHashMap = hashMap; _vcMapAll = all; _vcSuspended = susp;
 }
 
 /* Opt-in capture for a broadcast game. Anon; best-effort. Stores ONLY the fields the venue's
@@ -1299,7 +1365,19 @@ async function handleVenueLike(request, env, json) {
 
 async function handleVenueLookup(request, env, json) {
   const url = new URL(request.url);
-  const venueId = await venueByCode(env, url.searchParams.get('code') || '');
+  /* THE SCREEN KNOWS ITS SLUG. ASK BY THAT.
+     A screen that identifies itself by a hash of its slug is one Change code away
+     from being told it does not exist (see the derived-code fallback in venueByCode). tv.html now sends
+     the slug as well, which is one indexed row and cannot drift from anything.
+     The code is still honoured, for every screen in the field that has not
+     reloaded yet - and the reload it needs rides this very answer. */
+  const slug = String(url.searchParams.get('venue') || '').trim().toLowerCase().slice(0, 80);
+  let venueId = null;
+  if (slug && /^[a-z0-9-]+$/.test(slug)) {
+    const bySlug = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id&limit=1').catch(() => null);
+    venueId = (bySlug && bySlug[0] && bySlug[0].id) || null;
+  }
+  if (!venueId) venueId = await venueByCode(env, url.searchParams.get('code') || '', { includeSuspended: true });
   if (!venueId) return json({ exists: false });
   /* SURVIVE BEING PASTED BEFORE THE MIGRATION.
      This route is what the screen polls every thirty seconds to check its venue
@@ -1310,10 +1388,10 @@ async function handleVenueLookup(request, env, json) {
      cost of getting it wrong should not be every venue's wall, so ask for the column
      and fall back to the old select if the database does not have it yet. */
   let rows = await sbGet(env, 'vp_venues',
-    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at,screen_version,screen_command,screen_command_at,slug&limit=1')
+    'id=eq.' + enc(venueId) + '&select=name,screen_reload_at,screen_seen_at,screen_version,screen_command,screen_command_at,slug,status&limit=1')
     .catch(() => null);
   if (!rows || !rows.length) {
-    rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name&limit=1');
+    rows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,status&limit=1');
   }
   const v = (rows && rows[0]) || {};
 
@@ -1355,6 +1433,11 @@ async function handleVenueLookup(request, env, json) {
   return json({
     exists: true,
     name: v.name || '',
+    /* A suspended venue's screen keeps its venue and its advertising. It is the
+       lobby and the join code that must not be offered, and /play/live carries
+       that. Before this the screen was told the venue did not exist and forgot it,
+       so a venue that settled up came back to a wall asking to be paired again. */
+    suspended: v.status === 'suspended',
     /* THE SLUG, SO A SCREEN CAN BE SENT TO ITS OWN ADDRESS.
        A venue that lands on the wrong address can key in the six characters
        already shown on the host console; this is what lets the screen then send
@@ -1666,7 +1749,9 @@ async function handleScreen(request, env, json) {
 
 async function handlePlayLive(request, env, json) {
   const url = new URL(request.url);
-  const venueId = await venueByCode(env, url.searchParams.get('code') || '');
+  /* includeSuspended, or the suspended branch below is unreachable: the default
+     lookup answers null for a suspended venue and this returned exists:false first. */
+  const venueId = await venueByCode(env, url.searchParams.get('code') || '', { includeSuspended: true });
   if (!venueId) return json({ exists: false, live: false });
   const vrows = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=name,status&limit=1');
   const name = (vrows && vrows[0] && vrows[0].name) || '';
@@ -1895,6 +1980,14 @@ async function handleJoin(request, env, json) {
   }
 
   // Broadcast player.joined (this insert is what pushes the TV welcome ticker).
+  // AUDIT 8 SEP 2026, LOOKED AT AND LEFT: this reads every player in the session on
+  // every join, so a 200-seat lobby reads about 20,000 rows over the night. It is
+  // bounded by the ROOM, not by how many venues we have, so it is not the kind of
+  // cost that grows with the business. A count query cannot replace it, because
+  // countPlayers dedupes by device_id (a phone that rejoins is one player, and that
+  // is the number the host is billed on) and PostgREST has no count-distinct. Doing
+  // it properly means a Postgres view; two extra selected columns is cheaper than a
+  // migration for a read that costs a few milliseconds.
   const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id');
   const payload = { player_count: countPlayers(players) };   // the number the host is billed on
   if (name) payload.display_name = name;       // name on TV only if the player gave one
@@ -3762,7 +3855,37 @@ async function handleHostReveal(request, env, json) {
   if (!tg.length) return json({ error: 'Not a trivia game' }, 404);
   const t = tg[0];
   if (!t.current_seq) return json({ error: 'No question to reveal' }, 409);
-  const already = t.phase === 'revealed';   // idempotent: do not re-stamp or double-broadcast
+
+  /* CLOSE THE QUESTION FIRST, THEN SCORE IT. Not the other way round.
+
+     This read the answers, scored them, and only THEN flipped the phase to revealed.
+     For the whole of that stretch (a read plus a PATCH per points bucket, several
+     hundred milliseconds in a full room) /player/answer still saw phase 'asking' and
+     kept accepting answers. Any answer that landed in the gap was stored with
+     is_correct null and never scored: the reveal had already read the table, and
+     nothing ever comes back for a question once the round moves on. A host who
+     reveals as the clock hits zero, which is every host, hits this with the
+     player who tapped last. That player answered in time by the server's own
+     clock and was scored as if they had not answered at all.
+
+     The same shape let a double tap on Reveal run two full reveals: both read
+     'asking', both scored, both broadcast.
+
+     So the phase is flipped with a compare-and-set BEFORE anything is read:
+     phase=eq.asking in the filter, and an empty result means either it was
+     already revealed or another reveal got there first. From that instant
+     /player/answer refuses. Only then are the answers read, so the set is closed.
+     What can still slip through is an insert that passed the phase check before
+     the flip and landed after our read; that is one round trip wide instead of
+     the whole scoring pass, and the unscored-row sweep below picks it up on any
+     later call. */
+  let already = t.phase === 'revealed';
+  let racedOut = false;   // another reveal is flipping it RIGHT NOW; it will do the scoring
+  if (!already) {
+    const flipped = await sbPatchReturning(env, 'vp_trivia_games',
+      'game_id=eq.' + enc(gameId) + '&phase=eq.asking', { phase: 'revealed' });
+    if (!flipped.length) { already = true; racedOut = true; }
+  }
 
   const qrows = await sbGet(env, 'vp_questions',
     'set_id=eq.' + enc(t.question_set_id) + '&seq=eq.' + t.current_seq +
@@ -3786,7 +3909,15 @@ async function handleHostReveal(request, env, json) {
   for (let i = 0; i < answers.length; i++) {
     const a = answers[i];
     if (a.answer_index >= 0 && a.answer_index < split.length) split[a.answer_index]++;
-    if (already) continue;
+    /* Score whatever is UNSCORED, whether or not this call did the reveal. A row with
+       is_correct null after a reveal is a player the race above left behind, or a
+       reveal that threw between buckets; skipping them on the second call was how a
+       question stayed half-scored for good. Scored rows are never touched again. The
+       one caller that scores nothing is the loser of the compare-and-set above: the
+       winner is scoring this same set at this same moment, and a later retry sweeps
+       anything either of them missed. */
+    if (racedOut) continue;
+    if (a.is_correct !== null && a.is_correct !== undefined) continue;
     const correct = a.answer_index === q.correct_index;
     let pts = 0;
     if (correct) {
@@ -3812,7 +3943,7 @@ async function handleHostReveal(request, env, json) {
      of round trips to a handful. Grouping rather than upserting on purpose: an upsert has to
      satisfy every NOT NULL column on the insert path, and the base schema for this table is not
      in the repo to check against. */
-  if (!already && scored.length) {
+  if (scored.length) {
     const buckets = new Map();
     for (const r of scored) {
       const key = r.is_correct + ':' + r.points_awarded;
@@ -3826,7 +3957,7 @@ async function handleHostReveal(request, env, json) {
     }
   }
 
-  if (!already) await sbPatch(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId), { phase: 'revealed' });
+  // (the phase was flipped above, before the answers were read)
 
   // Running totals from the leaderboard view (sums points_awarded per player).
   const board = await sbGet(env, 'v_vp_trivia_leaderboard',
@@ -3838,7 +3969,7 @@ async function handleHostReveal(request, env, json) {
     qseq: t.current_seq, correct_index: q.correct_index, options, split, leaderboard,
   }, actorRef(staff));
 
-  return json({ qseq: t.current_seq, correct_index: q.correct_index, split, leaderboard });
+  return json({ qseq: t.current_seq, correct_index: q.correct_index, split, leaderboard, already });
 }
 
 /* ------------------------------ POST /host/ball ------------------------------
@@ -5748,6 +5879,20 @@ async function sbGet(env, table, query) {
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + query, { headers: sbHeaders(env) });
   if (!res.ok) throw dbError('read', table, await res.text());   // M5: log detail, return generic + code
   return await res.json();
+}
+
+/* HOW MANY, without reading any of them. PostgREST answers a HEAD with
+   Prefer: count=exact by putting the total after the slash in Content-Range
+   ("0-0/19", or "*\/0" for an empty table). One round trip, no rows, no growth. */
+async function sbCount(env, table, query) {
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/' + table + '?' + (query || 'select=id') + '&limit=1', {
+    method: 'HEAD', headers: Object.assign({}, sbHeaders(env), { 'Prefer': 'count=exact' }),
+  });
+  if (!res.ok) throw dbError('count', table, '');
+  const range = res.headers.get('content-range') || '';
+  const n = parseInt(range.split('/')[1], 10);
+  if (!Number.isFinite(n)) throw dbError('count', table, 'no count in Content-Range: ' + range);
+  return n;
 }
 
 /* EVERY row, not the first N of them.

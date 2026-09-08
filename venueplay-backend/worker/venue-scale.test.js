@@ -36,7 +36,11 @@ var rc = /async function refreshVenueCodes[\s\S]*?\n\}/.exec(src);
 ok("refreshVenueCodes is still there", !!rc);
 ok("it reads every page, not the first one", !!rc && /sbGetAll/.test(rc[0]),
    "must page until the rows run out");
-ok("it ignores suspended venues", !!rc && /status=neq\.suspended/.test(rc[0]),
+/* Suspended venues are READ (their screen still has to know which venue it is, 8 Sep)
+   and then kept out of the issued-code map, so the check is on the loop, not the query. */
+ok("it reads the status of every venue", !!rc && /select=id,slug,join_code,status/.test(rc[0]),
+   "without status a suspended venue holds a code like a live one");
+ok("it keeps suspended venues out of the code map", !!rc && /if \(v\.status === 'suspended'\) \{ susp\[v\.id\] = true; continue; \}/.test(rc[0]),
    "a venue that cannot run a game should not hold a code, or take up a slot");
 
 print("== the pager stops on an EMPTY page, never a short one ==");
