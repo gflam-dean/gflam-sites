@@ -101,15 +101,28 @@ for (var p = 0; p < packs.length; p++){
   for (var d = 0; d < drawn.length; d++){ if (ids[drawn[d].id]) dupes++; ids[drawn[d].id] = 1; }
   pass(packs[p] + ": no song is dealt twice", dupes === 0);
 
-  var r = ranksOf(list, drawn);
-  var med = median(r), mid = Math.floor(list.length / 2);
-  pass(packs[p] + ": the night leans on the well-known end",
-       med < mid * 0.75, "median position " + med + " of " + list.length);
+  /* THE LEAN IS MEASURED OVER MANY NIGHTS, NOT ONE.
 
-  var topThird = 0, third = Math.ceil(list.length / 3);
-  for (var k = 0; k < r.length; k++) if (r[k] < third) topThird++;
+     One seeded draw is one night, and one night is noisy: on a 252-song pack the
+     draw puts 33 or 34 of 60 songs in the best-known third on average, with a
+     spread of about 4 either way, so a single night can land on 27 and this test
+     used to call that a fault. On 9 Sep 2026 it did exactly that on the 90s and
+     2000s packs the morning after they were curated down from 800 songs to 250.
+     The question this test asks is about the draw, not about one roll of it, so
+     it now averages 200 nights. A real regression (weighting off, or a flat draw)
+     moves the average by 10 or more; noise moves it by a fraction of a song. */
+  var NIGHTS = 200, medSum = 0, topSum = 0, third = Math.ceil(list.length / 3);
+  for (var night = 0; night < NIGHTS; night++){
+    var rr = ranksOf(list, drawGameSet(list));
+    medSum += median(rr);
+    for (var k = 0; k < rr.length; k++) if (rr[k] < third) topSum++;
+  }
+  var med = Math.round(medSum / NIGHTS), mid = Math.floor(list.length / 2);
+  var topThird = topSum / NIGHTS;
+  pass(packs[p] + ": the night leans on the well-known end",
+       med < mid * 0.75, "median position " + med + " of " + list.length + " over " + NIGHTS + " nights");
   pass(packs[p] + ": at least half the night is from the top third",
-       topThird >= GAME_SONGS / 2, topThird + " of " + GAME_SONGS);
+       topThird >= GAME_SONGS / 2, topThird.toFixed(1) + " of " + GAME_SONGS + " on average");
 
   /* NO TWO SQUARES ON THE CARD MAY READ THE SAME.
 
@@ -129,8 +142,9 @@ for (var p = 0; p < packs.length; p++){
   /* And the switch has to actually do something, or a host turning it off changes
      nothing and the setting is a lie. */
   G.hitsOnly = false;
-  var flat = drawGameSet(list);
-  var medFlat = median(ranksOf(list, flat));
+  var flatSum = 0;
+  for (var night2 = 0; night2 < NIGHTS; night2++) flatSum += median(ranksOf(list, drawGameSet(list)));
+  var medFlat = Math.round(flatSum / NIGHTS);
   pass(packs[p] + ": turning the switch off reaches the whole list",
        medFlat > med, "median goes " + med + " -> " + medFlat);
 }
