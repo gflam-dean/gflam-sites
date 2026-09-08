@@ -50,7 +50,7 @@ function liftLine(re) {
   return m[0].replace(/^(let|const) /, 'var ') + '\n';
 }
 
-var EXPECT = 27;
+var EXPECT = 29;
 var bad = 0, ran = 0;
 function ok(n, c, extra) {
   ran++;
@@ -72,7 +72,7 @@ function URL(u) {
 function json(o) { return { _json: o }; }
 function readJson(r) { return Promise.resolve(r.body || {}); }
 var PAPER_BINGO_STATES = { has: function () { return false; } };
-var console = { log: function () {} };
+var console = { log: function () {}, warn: function () {} };
 
 /* The venues. ONE has an issued code that differs from its hash: that is the
    whole point. Nothing else in the repo tests that case. */
@@ -101,6 +101,13 @@ function sbGet(env, table, q) {
 }
 function sbGetAll(env, table, q) { scans++; order.push('SCAN ' + table); return Promise.resolve(VENUES.map(function (v) { return Object.assign({}, v); })); }
 function sbPatch() { return Promise.resolve([]); }
+/* Migration 72: the poll asks vp_screen_poll first. Here the function is "not deployed"
+   (PostgREST 404), so the Worker must remember that and walk the three-trip path, which
+   is what the rest of this file checks. The body it sent is kept to check it asked right. */
+var rpcCalls = [];
+function sbHeaders() { return {}; }
+function fetch(url, opts) { rpcCalls.push({ url: url, body: JSON.parse(opts.body) }); return Promise.resolve({ status: 404, ok: false }); }
+var env72 = { SUPABASE_URL: 'https://db' };
 
 eval(lift('fnvVenueCode'));
 eval(liftLine(/^let _vcMap = null[^\n]*/m));
@@ -108,7 +115,10 @@ eval(liftLine(/^let _vcDupes[^\n]*/m));
 eval(liftLine(/^const AMBIGUOUS[^\n]*/m));
 eval(lift('refreshVenueCodes'));
 eval(lift('venueByCode'));
+eval(liftLine(/^let screenPollRpcMissing[^\n]*/m));
 eval(lift('handleVenueLookup'));
+eval(lift('venueLookupThreeTrips'));
+eval(lift('venueLookupReply'));
 eval(lift('handleJoinInfo'));
 eval(lift('handlePlayLive'));
 
@@ -143,9 +153,13 @@ venueByCode({}, ROYAL.join_code).then(function (id) {
   ok('a venue migration 68 has not reached (join_code null) still resolves by its hash', id === 'v-joe', id);
 
   print('\n== the screen poll: a TV that has not reloaded sends only the hashed code ==');
-  return handleVenueLookup(get('/venue?code=' + HASH), {}, json);
+  return handleVenueLookup(get('/venue?code=' + HASH), env72, json);
 }).then(function (r) {
   var d = r._json;
+  ok('the one-trip function was asked first, with the code the TV sent',
+     rpcCalls.length === 1 && /\/rpc\/vp_screen_poll$/.test(rpcCalls[0].url) && rpcCalls[0].body.p_code === HASH && rpcCalls[0].body.p_slug === '',
+     JSON.stringify(rpcCalls));
+  ok('and when PostgREST said it was missing, the old path answered', screenPollRpcMissing === true && d.exists === true);
   ok('exists:true', d.exists === true, JSON.stringify(d));
   ok('and names the right venue', d.slug === ROYAL.slug, d.slug);
   ok('and it is not suspended', d.suspended === false);

@@ -61,6 +61,8 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 68 | venue-join-code | believed applied 8 Sep; confirm with check-schema.py |
 | 69 | members-draw-hold | believed applied 8 Sep; confirm with check-schema.py |
 | 70 | bingo-server-draw | **not yet - run it BEFORE pasting the Worker.** If the Worker goes first nothing breaks (the console calls the night from the tablet, as it always did) but no draw is recorded until it runs |
+| 71 | one-trip-answer | applied on SYDNEY only (8 Sep). Not on Singapore. The Worker falls back to the old path where the function is missing, so order is safe |
+| 72 | one-trip-screen-poll | applied on SYDNEY only (8 Sep). Not on Singapore. Same fallback |
 
 Verified against the live database on 5 Sep 2026, not from memory: vp_captures
 .player_id and .source exist, vp_venues.overage_streak_day exists,

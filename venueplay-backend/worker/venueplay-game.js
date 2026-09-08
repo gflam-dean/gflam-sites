@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 20:08 · 873eebdc';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 20:39 · ffa8cbf5';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1372,6 +1372,8 @@ async function handleVenueLike(request, env, json) {
   });
 }
 
+let screenPollRpcMissing = false;   // per isolate: once PostgREST says the function is not there, stop asking
+
 async function handleVenueLookup(request, env, json) {
   const url = new URL(request.url);
   /* THE SCREEN KNOWS ITS SLUG. ASK BY THAT.
@@ -1381,13 +1383,55 @@ async function handleVenueLookup(request, env, json) {
      The code is still honoured, for every screen in the field that has not
      reloaded yet - and the reload it needs rides this very answer. */
   const slug = String(url.searchParams.get('venue') || '').trim().toLowerCase().slice(0, 80);
+  const slugOk = !!slug && /^[a-z0-9-]+$/.test(slug);
+  /* The screen sends the build it is running. A screen that sends nothing is, by
+     that silence, from before this existed - which is exactly the state that had a
+     screen reporting healthy while ignoring every reload, because it predated the
+     reload code. Recorded so HQ can say "ok, and current" rather than just "ok". */
+  const ver = String(url.searchParams.get('v') || '').slice(0, 24).replace(/[^A-Za-z0-9.-]/g, '') || 'pre-5-sep';
+
+  /* ONE TRIP, NOT THREE (migration 72).
+     This is the most frequent request the Worker gets: every screen, every thirty
+     seconds, for as long as the venue is open. On 8 Sep 2026 the load test measured
+     the Supabase gateway at about fifty REST calls a second on the compute we have,
+     and this route spent three of them one after the other (find the venue, read the
+     row, write the heartbeat). vp_screen_poll does the same three things in one call
+     and hands back the same fields. If the function is not there yet (migration 72
+     not run) PostgREST answers 404 and this isolate takes the old path from then on;
+     any other failure falls through to the old path for this one request, because a
+     screen must never be told its venue is missing over a bookkeeping call. An empty
+     answer also falls through: the old path still knows the derived-code map for a
+     venue whose join_code predates migration 68. */
+  let v = null;
+  if (!screenPollRpcMissing) {
+    const code = String(url.searchParams.get('code') || '').trim().toUpperCase().slice(0, 6);
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_screen_poll', {
+      method: 'POST', headers: sbHeaders(env),
+      body: JSON.stringify({ p_slug: slugOk ? slug : '', p_code: code, p_version: ver }),
+    }).catch(() => null);
+    if (res && res.status === 404) {
+      screenPollRpcMissing = true;
+      console.warn('vp_screen_poll missing (migration 72 not run); polling the slow way');
+    } else if (res && res.ok) {
+      const rows = await res.json().catch(() => null);
+      if (Array.isArray(rows) && rows.length === 1) v = rows[0];
+    }
+  }
+  if (v === null) v = await venueLookupThreeTrips(env, url, slugOk ? slug : '', ver);
+  if (v === null) return json({ exists: false });
+  return venueLookupReply(json, v);
+}
+
+/* The pre-72 path, kept as the fallback above. Returns the venue row (the fields the
+   reply needs) or null when no venue answers to the slug or the code. */
+async function venueLookupThreeTrips(env, url, slug, ver) {
   let venueId = null;
-  if (slug && /^[a-z0-9-]+$/.test(slug)) {
+  if (slug) {
     const bySlug = await sbGet(env, 'vp_venues', 'slug=eq.' + enc(slug) + '&select=id&limit=1').catch(() => null);
     venueId = (bySlug && bySlug[0] && bySlug[0].id) || null;
   }
   if (!venueId) venueId = await venueByCode(env, url.searchParams.get('code') || '', { includeSuspended: true });
-  if (!venueId) return json({ exists: false });
+  if (!venueId) return null;
   /* SURVIVE BEING PASTED BEFORE THE MIGRATION.
      This route is what the screen polls every thirty seconds to check its venue
      still exists, and two consecutive failures put a full-screen "not linked to an
@@ -1421,12 +1465,6 @@ async function handleVenueLookup(request, env, json) {
      failed. */
   if ('screen_seen_at' in v) {
     const last = v.screen_seen_at ? Date.parse(v.screen_seen_at) : 0;
-    /* The screen sends the build it is running. A screen that sends nothing is, by
-       that silence, from before this existed - which is exactly the state that had a
-       screen reporting healthy while ignoring every reload, because it predated the
-       reload code. Recorded so HQ can say "ok, and current" rather than just "ok". */
-    const ver = String(url.searchParams.get('v') || '').slice(0, 24).replace(/[^A-Za-z0-9.-]/g, '')
-                || 'pre-5-sep';
     if (!isFinite(last) || Date.now() - last > 25000 || ver !== v.screen_version) {
       try {
         await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venueId),
@@ -1434,11 +1472,15 @@ async function handleVenueLookup(request, env, json) {
       } catch (e) { /* never let this affect the answer */ }
     }
   }
-  /* reload_at RIDES THIS REQUEST ON PURPOSE.
-     The screen already calls this every thirty seconds over ordinary HTTPS, so a
-     reload delivered here reaches a screen whose websocket has died - which is
-     precisely the screen that needs reloading, and the one a broadcast can never
-     reach. Costs no extra request and no extra query. */
+  return v;
+}
+
+/* The reply a screen gets, from either path. reload_at RIDES THIS REQUEST ON PURPOSE.
+   The screen already calls this every thirty seconds over ordinary HTTPS, so a
+   reload delivered here reaches a screen whose websocket has died - which is
+   precisely the screen that needs reloading, and the one a broadcast can never
+   reach. Costs no extra request and no extra query. */
+function venueLookupReply(json, v) {
   return json({
     exists: true,
     name: v.name || '',
