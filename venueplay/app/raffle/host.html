@@ -60,6 +60,8 @@
   .btn.win:hover{filter:brightness(1.08)}
   .btn.roll{background:var(--roll);color:#1a1000}
   .btn.roll:hover{filter:brightness(1.08)}
+  .btn.roll.armed{background:#d9342b;color:#fff;animation:armpulse 1s ease-in-out infinite}
+  @keyframes armpulse{50%{filter:brightness(1.25)}}
   .btn.nextmode{background:var(--gold);color:#1a1000;box-shadow:0 8px 20px rgba(255,194,75,.3)}
   .btn.nextmode:hover{filter:brightness(1.06)}
   .btn.big{width:100%;padding:16px;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
@@ -712,7 +714,7 @@
   var _suppressIdle=false;
   function onClaim(){
     if(!G.round||G.round.resolved) return;
-    G.round.resolved=true; clearTimers();
+    G.round.resolved=true; clearTimers(); disarmRedraw();
     var nums=G.round.numbers.slice(), pz=G.round.prize, seq=G.round.seq;
     logResults("claimed");
     for(var i=0;i<nums.length;i++){ G.drawn[nums[i]]=true; }
@@ -837,7 +839,27 @@
   /* State gaming rules, once a night, before the first draw. */
   $("drawBtn").addEventListener("click", function(){ if(window.VPGaming) VPGaming.gateFor("raffle", startDraw); else startDraw(); });
   $("claimBtn").addEventListener("click", onClaim);
-  $("redrawBtn").addEventListener("click", function(){ onRedraw(false); });
+  /* "Not here, redraw" was one tap and final: the ticket is marked no_show, taken out of the pool
+     for good, and someone else is drawn, with no way back. A host who catches it while the holder
+     is walking up from the beer garden has just voided a genuine winner in front of the room. So
+     it is two taps now: the first arms the button for four seconds and names the ticket it is
+     about to void, the second fires. Not a browser confirm(): those block a kiosk tablet and the
+     TV countdown keeps running behind them. */
+  var REDRAW_ARM_MS=4000, _redrawArm=null;
+  function redrawLabelIdle(){ return "Not here \u00b7 redraw"; }
+  function disarmRedraw(){
+    if(_redrawArm){ clearTimeout(_redrawArm); _redrawArm=null; }
+    var b=$("redrawBtn"); if(b){ b.textContent=redrawLabelIdle(); b.classList.remove("armed"); }
+  }
+  function tapRedraw(){
+    if(!G.round||G.round.resolved||G.busy) return;
+    if(_redrawArm){ disarmRedraw(); onRedraw(false); return; }
+    var b=$("redrawBtn");
+    b.textContent="Tap again to void ticket "+G.round.numbers.map(pad).join(", ");
+    b.classList.add("armed");
+    _redrawArm=setTimeout(function(){ _redrawArm=null; disarmRedraw(); }, REDRAW_ARM_MS);
+  }
+  $("redrawBtn").addEventListener("click", tapRedraw);
   $("newRaffleBtn").addEventListener("click", newRaffle);
   $("drawLenWrap").addEventListener("click", function(){   // now a real control: tap to cycle the spin length
     var opts=[3,4,5,6,8]; var i=opts.indexOf(G.drawLength); G.drawLength=opts[(i+1)%opts.length];

@@ -886,6 +886,25 @@ def local_checks(which):
         ok('songs know what year they are', dated >= int(len(songs) * 0.95),
            '%d of %d dated' % (dated, len(songs)),
            why='only %d%% dated' % (100 * dated // max(1, len(songs))))
+        # A pack CALLED a decade holds only that decade. On 8 Sep 2026 "80s Rock" held 122
+        # songs from the 70s, 90s and 2000s (Aerosmith 1975, Bon Jovi 2000): a punter who
+        # knows their music calls that out across the room. An undated song in a decade
+        # pack counts as wrong too, because nobody can say it belongs.
+        by_id = {s_['id']: s_ for s_ in songs}
+        stray = []
+        for p_ in pls:
+            m_ = re.search(r'(\d{2})s\b', p_['name'])
+            if not m_:
+                continue
+            d_ = int(m_.group(1))
+            d_ = 1900 + d_ if d_ >= 50 else 2000 + d_
+            for i in p_['songIds']:
+                y_ = by_id.get(i, {}).get('year')
+                if not y_ or not (d_ <= int(str(y_)[:4]) < d_ + 10):
+                    stray.append('%s: %s (%s)' % (p_['name'], by_id.get(i, {}).get('title', i), y_ or 'undated'))
+        ok('every decade pack holds only its decade', not stray,
+           '%d decade packs' % sum(1 for p_ in pls if re.search(r'(\d{2})s\b', p_['name'])),
+           why='%d stray; ' % len(stray) + '; '.join(stray[:3]))
     except Exception as e:
         ok('the song library parses', False, why=str(e)[:120])
 

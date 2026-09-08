@@ -627,6 +627,11 @@
     }).catch(function(err){ btn.disabled=false; btn.textContent="Send code"; otpSendError(err); });
   });
   $("otpIn").addEventListener("input", function(){ this.value=this.value.replace(/\D/g,"").slice(0,6); $("otpErr").textContent=""; });
+  /* Enter submits. The TV pairing box below has done this since the start and these two never
+     did, so on a laptop a host typed the code, pressed Enter, and nothing happened. On a phone the
+     keyboard's Go key is the same event. */
+  $("mobileIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("sendCodeBtn").click(); } });
+  $("otpIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("verifyBtn").click(); } });
   $("verifyBtn").addEventListener("click", function(){
     var code=($("otpIn").value||"").replace(/\D/g,"");
     if(code.length<6){ $("otpErr").textContent="Enter the 6-digit code from your phone."; return; }

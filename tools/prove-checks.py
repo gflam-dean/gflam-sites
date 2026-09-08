@@ -219,6 +219,21 @@ MUTATIONS = [
      "&select=id,role,venue_id,permissions", "&select=id,role,venue_id",
      'requireStaff stops fetching the column every permission check reads'),
 
+    ('redraw-confirm.test.js',
+     'venueplay/app/raffle/host.html',
+     'if(_redrawArm){ disarmRedraw(); onRedraw(false); return; }', 'disarmRedraw(); onRedraw(false); return;',
+     'Not here, redraw goes back to one tap and voids a genuine winner who is walking up'),
+
+    ('every decade pack holds only its decade',
+     'venueplay/data/musical-library.json',
+     '"name":"80s Rock","songIds":["', '"name":"80s Rock","songIds":["long-way-to-the-top-ac-dc","',
+     'a 1975 AC/DC track is dealt in the 80s pack and the room calls it out'),
+
+    ('sign-in.test.js',
+     'venueplay/app/index.html',
+     '$("otpIn").addEventListener("keydown"', '$("otpIn").addEventListener("keyDOWN"',
+     'a host types the SMS code, presses Enter on a laptop, and nothing happens'),
+
     ('live-fixes.test.js',
      'venueplay/app/musical/screen.html',
      'LOBBY_MAX_MS', 'LOBBY_MAX_MS_DISABLED',
