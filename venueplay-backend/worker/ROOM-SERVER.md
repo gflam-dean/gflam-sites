@@ -62,9 +62,10 @@ arrived by Supabase or by the room, and the signature check still protects it.
 * Everything else (Supabase Realtime bigger tiers, Ably, Pusher) is priced per
   connection or per message and puts the ceiling back, just higher.
 
-## Cost (nothing spent yet; a decision for Dean)
+## Cost
 
 Durable Objects need the **Workers Paid plan, US$5 a month** for the account.
+Dean turned it on 9 Sep 2026, before the first test ran.
 The free plan allows Durable Objects but caps them at 100,000 requests a day,
 which one Tuesday would exceed. Usage after that: about US$0.15 per million
 messages and a little for time awake. A Tuesday of 4,000 rooms sending roughly
@@ -173,8 +174,9 @@ need nothing.
 
 1. `jsc venueplay-backend/worker/venueplay-room.test.js` (it has never run).
    Then break `relay()` on purpose and confirm the test goes red.
-2. Decide the US$5 Workers Paid plan. Without it the staging test still works
-   (100k requests a day is plenty for a test) but live cannot go on it.
+2. Workers Paid: DONE 9 Sep. Supabase compute stays on Micro until the room
+   server is live and re-measured; if the numbers then say Small, it is a
+   two-minute dashboard change the night before cutover.
 3. Wire per the list above, gate, deploy to `venueplay-game-sydney` with
    `--do-class=VenueRoom`, and smoke-test with `python3 tools/room-smoke.py`
    (written 9 Sep, never run: two sockets on a made-up room, the host sends,
