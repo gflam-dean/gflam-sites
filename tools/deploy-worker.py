@@ -22,6 +22,14 @@ What it does, in order, and it stops at the first thing that is wrong:
 
 The token can only edit Workers (the "Edit Cloudflare Workers" template): no DNS, no
 billing, no Pages.
+
+--do-class=VenueRoom (added 9 Sep 2026 for the room server, see
+venueplay-backend/worker/ROOM-SERVER.md; NOT YET EXERCISED against the API): binds a
+Durable Object class the file exports as env.ROOM. The first time the class is seen on
+that Worker the upload carries a new_sqlite_classes migration; every time after, the
+existing binding is simply kept, because Cloudflare rejects a "new class" migration for
+a class that already exists. Needs the Workers Paid plan for anything beyond 100k
+requests a day. Staging first, always.
 """
 import io, json, re, sys, time, urllib.request, urllib.error
 from pathlib import Path
@@ -91,12 +99,16 @@ def fetch_health(name):
     except Exception as x:
         return f'/health unreachable ({type(x).__name__})'
 
-def upload(tok, acct, name, path):
+DO_BINDING = 'ROOM'   # the name the Worker reads: env.ROOM
+
+def upload(tok, acct, name, path, do_class=None):
     src = path.read_text()
     m = STAMP.search(src)
     if not m: die(f'{path.name} has no BUILD stamp line; run tools/stamp-workers.py')
     stamped, actual = m.group(1), fingerprint(src)
     if stamped != actual: die(f'{path.name} is stamped {stamped} but hashes to {actual}; run tools/stamp-workers.py')
+    if do_class and not re.search(r'^export\s+class\s+' + re.escape(do_class) + r'\b', src, re.M):
+        die(f'{path.name} does not "export class {do_class}"; a Durable Object binding to it would fail at upload')
     # current settings: keep the compatibility date and confirm the bindings we are keeping
     st, d = cf(tok, 'GET', f'/accounts/{acct}/workers/scripts/{name}/settings')
     if st != 200: die(f'could not read settings of {name}: ' + errors(d))
@@ -109,6 +121,16 @@ def upload(tok, acct, name, path):
         'compatibility_flags': cur.get('compatibility_flags') or [],
         'keep_bindings': sorted({t for t, _ in kept} | {'secret_text', 'plain_text', 'kv_namespace'}),
     }
+    if do_class:
+        have = [b for b in cur.get('bindings', []) if b.get('type') == 'durable_object_namespace' and b.get('class_name') == do_class]
+        if have:
+            print(f'  Durable Object {do_class} already bound as {have[0].get("name")}; keeping it')
+        else:
+            # First time: the class must be created by a migration in the same upload, and the
+            # binding is sent explicitly (keep_bindings only keeps what already exists).
+            meta['migrations'] = {'new_sqlite_classes': [do_class]}
+            meta['bindings'] = [{'type': 'durable_object_namespace', 'name': DO_BINDING, 'class_name': do_class}]
+            print(f'  first deploy of Durable Object {do_class}: creating it and binding it as {DO_BINDING}')
     boundary = 'vp' + str(int(time.time() * 1000))
     body = io.BytesIO()
     def part(fieldname, filename, ctype, data):
@@ -150,9 +172,16 @@ def main():
     if not slot: die(f'{path.name} is not a Worker file this tool knows ({", ".join(SLOT_OF_FILE)})')
     if not name.startswith(slot): die(f'{path.name} belongs in a Worker named {slot}*, not {name}')
     if name in LIVE and '--live' not in flags: die(f'{name} is LIVE (a venue is on it). Add --live if you mean it, after the gate is green.')
+    do_class = None
+    for f in flags:
+        if f.startswith('--do-class='):
+            do_class = f.split('=', 1)[1]
+            if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', do_class): die(f'--do-class needs a class name, got {do_class!r}')
+    unknown = flags - {'--live', '--list'} - {f for f in flags if f.startswith('--do-class=')}
+    if unknown: die('unknown flag(s): ' + ', '.join(sorted(unknown)))
     print(f"DEPLOY {path.name} -> {name}{'  (LIVE)' if name in LIVE else '  (staging)'}")
     print(f'  before: {fetch_health(name)}')
-    stamp = upload(tok, acct, name, path)
+    stamp = upload(tok, acct, name, path, do_class)
     ok = wait_for_build(name, stamp)
     print('DEPLOYED and proved by /health' if ok else 'UPLOADED but /health has not confirmed the build; do not trust it yet')
     sys.exit(0 if ok else 2)

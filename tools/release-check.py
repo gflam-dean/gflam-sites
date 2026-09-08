@@ -225,6 +225,16 @@ def is_real_page(body):
 #  A. BEFORE YOU PUSH.  Run in the working copy, no network needed.
 # ===========================================================================
 
+def unexport(src):
+    """A Worker is an ES module and jsc -e / new Function are not. `export default`
+    has always been rewritten here; the room server (9 Sep) adds `export class
+    VenueRoom` (Cloudflare needs the Durable Object class exported by name) and a
+    named export list. All three become plain script; nothing else changes."""
+    src = re.sub(r'^export default', 'var _d =', src, flags=re.M)
+    src = re.sub(r'^export\s+(?=(async\s+)?(class|function|const|let|var)\b)', '', src, flags=re.M)
+    src = re.sub(r'^export\s*\{[^}]*\}\s*;?', '', src, flags=re.M)
+    return src
+
 def js_blocks(path):
     """Only the things a browser will actually run as script.
 
@@ -234,7 +244,7 @@ def js_blocks(path):
     src = io.open(path, encoding='utf-8').read()
     if path.endswith('.js'):
         # `export default` is valid in a Worker module and not in new Function.
-        return [re.sub(r'^export default', 'var _x =', src, flags=re.M)]
+        return [unexport(src)]
     out = []
     for tag, body in re.findall(r'(<script(?![^>]*\bsrc=)[^>]*>)(.*?)</script>', src, re.S):
         t = re.search(r'type\s*=\s*["\']([^"\']+)', tag)
@@ -399,7 +409,7 @@ def local_checks(which):
         if not b.endswith('.js') or 'worker' not in f.replace('\\', '/'):
             continue
         src = io.open(f, encoding='utf-8').read()
-        src = re.sub(r'^export default', 'var _d =', src, flags=re.M)
+        src = unexport(src)
         io.open('/tmp/_rc_load.js', 'w', encoding='utf-8').write(src)
         r = subprocess.run([JSC, '-e',
             'try{ (new Function(readFile("/tmp/_rc_load.js")))(); print("OK"); }'
@@ -1252,7 +1262,7 @@ def local_checks(which):
     if which in ('both', 'partyplay') and os.path.isfile(dep):
         src = io.open(dep, encoding='utf-8').read()
         stamp = re.search(r'Built ([^\n]+?)\s+fingerprint', src)
-        good, msg = parses(re.sub(r'^export default', 'var _d =', src, flags=re.M))
+        good, msg = parses(unexport(src))
         ok('deploy build parses', good, msg if not good else (stamp.group(1) if stamp else ''))
         ok('the licence library is inlined, not a marker', 'const PPLicence = (function' in src)
 
