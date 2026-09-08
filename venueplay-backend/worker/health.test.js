@@ -23,7 +23,7 @@ function lift(n) {
   do { if (src[k] === '{') d++; else if (src[k] === '}') d--; k++; } while (d > 0 && k < src.length);
   return src.slice(i, k) + '\n';
 }
-var EXPECT = 11, bad = 0, ran = 0;
+var EXPECT = 12, bad = 0, ran = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 
 var BUILD = 'test';
@@ -77,7 +77,11 @@ sbCount(ENV, 'vp_venues', 'select=id').then(function (n) {
   print('\n== what it says when things are wrong ==');
   return handleHealth({ RL: {} }, json);
 }).then(function (r) {
-  ok('a missing binding is a 503 with the names', r.status === 503 && r._json.missing.length === 4, JSON.stringify(r._json.missing));
+  // Three, not four: SUPABASE_JWT_SECRET stopped being required on 8 Sep 2026. A project on
+  // asymmetric signing keys verifies hosts against its public keys and has no shared secret.
+  ok('a missing binding is a 503 with the names', r.status === 503 && r._json.missing.length === 3 &&
+     r._json.missing.indexOf('SUPABASE_JWT_SECRET') === -1, JSON.stringify(r._json.missing));
+  ok('and it says how hosts are checked', r._json.host_login === 'public keys only', JSON.stringify(r._json.host_login));
   RANGES = {};
   return handleHealth(ENV, json);
 }).then(function (r) {

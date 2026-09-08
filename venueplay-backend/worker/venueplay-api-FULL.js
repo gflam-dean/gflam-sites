@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '5 Sep 2026, 08:22 · 354e3f97';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 19:16 · 8bf0392b';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -761,8 +761,10 @@ async function vpaVerifyJWT(token, secret, env) {
       ok = await crypto.subtle.verify('HMAC', key, sig, signed);
     } else if (header.alg === 'ES256') {
       // New Supabase asymmetric signing keys: verify against the published JWKS public key.
-      const keys = env ? await vpaFetchJwks(env) : [];
-      const jwk = keys.find(function (k) { return k.kid === header.kid; }) || keys[0];
+      let keys = env ? await vpaFetchJwks(env) : [];
+      let jwk = keys.find(function (k) { return k.kid === header.kid; });
+      if (!jwk && env) { _vpaJwks = null; keys = await vpaFetchJwks(env); jwk = keys.find(function (k) { return k.kid === header.kid; }); }   // a key rotated since we cached
+      if (!jwk) jwk = keys[0];
       if (!jwk) return null;
       const key = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
       ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, sig, signed);

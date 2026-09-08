@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 13:16 · 26d5b174';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 20:08 · 873eebdc';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -484,8 +484,12 @@ async function endOtherRunningGames(env, venueId, keepFormat) {
    round trips or grow with the number of venues. The clash sweep is the one
    exception and it is cached per isolate for sixty seconds in refreshVenueCodes. */
 async function handleHealth(env, json) {
-  const need = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'SUPABASE_JWT_SECRET', 'IP_HASH_SALT'];
+  // SUPABASE_JWT_SECRET is only needed while the project signs host logins with the
+  // legacy shared secret. A project on asymmetric signing keys (Sydney) verifies hosts
+  // against its published public keys instead, so it is reported, not required.
+  const need = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY', 'IP_HASH_SALT'];
   const missing = need.filter((k) => !env[k]);
+  const hostLogin = env.SUPABASE_JWT_SECRET ? 'shared secret + public keys' : 'public keys only';
   const rl = !!env.RL;
   /* Two venues whose slugs hash to the same six characters. Reported here
      because a clash is invisible from everywhere else: both venues keep
@@ -525,10 +529,12 @@ try {
 
   return json({
     worker: 'venueplay-game',
+    host_login: hostLogin,
     build: BUILD,
     ok: !missing.length && rl && !clashes.length,
     missing,
-    rateLimiter: rl,
+    rateLimiter: 'memory',   // per isolate since 8 Sep 2026; no store on the request path
+    joinDedupCache: rl,
     broadcast_signing: signing,
     venue_code_clashes: clashes.length,
     venue_code_clash_detail: clashes.length ? clashes.slice(0, 5) : undefined,
@@ -536,7 +542,7 @@ try {
       ? ('Two venues share a join code (' + clashes.map(function (c) { return c.slugs.join(' / '); }).join('; ') +
          '). That code is refused for both until one is re-slugged. Do not print signage for either.')
       : (rl ? undefined
-            : 'The RL KV namespace is not bound. Anti-abuse limiting and join dedup are in allow-mode, and player counts are what venues are billed on.')
+            : 'The RL KV namespace is not bound. The join dedup cache is off (the device_id column still dedups, one database read slower), and player counts are what venues are billed on.')
   }, missing.length ? 503 : 200);
 }
 
@@ -1872,8 +1878,8 @@ async function handleJoin(request, env, json) {
   const ua = request.headers.get('user-agent') || '';
   const deviceHint = ua ? (await sha256Hex(salt + ':ua:' + ua)).slice(0, 32) : null;
 
-  // Anti-abuse rate limit (LIVE when the env.RL KV binding exists; degrades safely
-  // to allow-and-warn when absent). /join is the one unauthenticated write and it
+  // Anti-abuse rate limit (in this isolate's memory; see rateLimit). /join is the
+  // one unauthenticated write and it
   // mints a metered vp_players row, so a scripted flood would inflate an honest
   // venue onto peak-player overage, spam the TV and grow rows unbounded. Cap per
   // network (generous: a whole venue shares one NAT IP) and per device hint.
@@ -1893,7 +1899,9 @@ async function handleJoin(request, env, json) {
   // Kill-switch: a suspended venue (or its group) must not accrue more metered
   // rows/events, even though /join has no host login to gate on. Same check
   // requireStaff applies to host routes.
-  await assertVenueActive(env, session.venue_id);
+  /* The venue kill-switch and the device dedup below both need only the session, so they
+     are asked together (assertVenueActive throws, and Promise.all lets the throw through). */
+  const venueCheck = assertVenueActive(env, session.venue_id);
 
   const name = cleanName(b.name);
 
@@ -1938,26 +1946,36 @@ async function handleJoin(request, env, json) {
      the same person was inserted again and billed again. device_id (migration 39) is the durable
      record, so look there whenever the fast path misses. */
   if (devIdValid) {
-    let priorId = null;
-    if (dedupKey) { try { priorId = await env.RL.get(dedupKey); } catch (e) { rlWarn(); } }
-    if (!priorId) {
-      const byDevice = await sbGet(env, 'vp_players',
+    /* The cache and the durable column are read at the same time, alongside the venue check:
+       three trips that used to queue behind each other. The database row wins when it exists
+       (it already proves session + not kicked); the cache only matters in the seconds before
+       the row is visible. */
+    const [cached, byDevice] = await Promise.all([
+      dedupKey ? env.RL.get(dedupKey).catch(function () { rlWarn(); return null; }) : null,
+      sbGet(env, 'vp_players',
         'session_id=eq.' + enc(session.id) + '&device_id=eq.' + enc(devId) +
-        '&kicked=eq.false&select=id&order=joined_at.asc&limit=1');
-      if (byDevice.length) priorId = byDevice[0].id;
-    }
+        '&kicked=eq.false&select=id&order=joined_at.asc&limit=1'),
+      venueCheck,
+    ]);
+    let priorId = byDevice.length ? byDevice[0].id : null;
+    let proven = !!priorId;   // the row came from the session-scoped, not-kicked query
+    if (!priorId && cached && UUID_RE.test(cached)) priorId = cached;
     if (priorId && UUID_RE.test(priorId)) {
-      const existing = await sbGet(env, 'vp_players',
+      const existing = proven ? [{ id: priorId }] : await sbGet(env, 'vp_players',
         'id=eq.' + enc(priorId) + '&session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id');
       if (existing.length) {
         const token = randomTokenHex(32);            // fresh 256-bit token onto the SAME row
         const patch = { token_hash: await sha256Hex(token), last_seen_at: new Date().toISOString() };
         if (name) patch.display_name = name;
-        await sbPatch(env, 'vp_players', 'id=eq.' + enc(priorId), patch);
-        const snapshot = await getPublicSnapshot(env, session.id);
+        const [, snapshot] = await Promise.all([
+          sbPatch(env, 'vp_players', 'id=eq.' + enc(priorId), patch),
+          getPublicSnapshot(env, session.id),
+        ]);
         return json({ token, snapshot });
       }
     }
+  } else {
+    await venueCheck;
   }
 
   const token = randomTokenHex(32);            // 256-bit, returned once, never stored raw
@@ -1978,8 +1996,11 @@ async function handleJoin(request, env, json) {
   const newPlayer = Array.isArray(inserted) ? inserted[0] : inserted;
 
   // Remember this device's player_id so the next rapid re-join reuses this row.
+  // Not awaited: a KV write is the slowest thing on this path (0.5 to 1 s) and the phone
+  // does not need it to finish before it hears "you're in". The durable record is the
+  // device_id column; this is only the cache in front of it.
   if (dedupKey && newPlayer && newPlayer.id) {
-    try { await env.RL.put(dedupKey, newPlayer.id, { expirationTtl: JOIN_DEDUP_TTL }); } catch (e) { rlWarn(); }
+    try { env.RL.put(dedupKey, newPlayer.id, { expirationTtl: JOIN_DEDUP_TTL }).catch(function () { rlWarn(); }); } catch (e) { rlWarn(); }
   }
 
   // Broadcast player.joined (this insert is what pushes the TV welcome ticker).
@@ -1991,12 +2012,15 @@ async function handleJoin(request, env, json) {
   // is the number the host is billed on) and PostgREST has no count-distinct. Doing
   // it properly means a Postgres view; two extra selected columns is cheaper than a
   // migration for a read that costs a few milliseconds.
-  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id');
-  const payload = { player_count: countPlayers(players) };   // the number the host is billed on
-  if (name) payload.display_name = name;       // name on TV only if the player gave one
-  await emitEvent(env, session, 'player.joined', payload, 'system');
-
-  const snapshot = await getPublicSnapshot(env, session.id);
+  // The TV's welcome ticker (count, then the event) and the phone's snapshot do not
+  // depend on each other, so they run side by side.
+  const ticker = sbGet(env, 'vp_players', 'session_id=eq.' + enc(session.id) + '&kicked=eq.false&select=id,device_id')
+    .then(function (players) {
+      const payload = { player_count: countPlayers(players) };   // the number the host is billed on
+      if (name) payload.display_name = name;       // name on TV only if the player gave one
+      return emitEvent(env, session, 'player.joined', payload, 'system');
+    });
+  const [, snapshot] = await Promise.all([ticker, getPublicSnapshot(env, session.id)]);
   return json({ token, snapshot });
 }
 
@@ -4213,7 +4237,7 @@ async function handlePlayerClaim(request, env, json) {
   if (!gameId) return json({ error: 'Missing game_id' }, 400);
   assertUuid(gameId, 'game_id');   // reject non-UUID before it reaches PostgREST
 
-  // Anti-abuse rate limit (LIVE with env.RL, else allow-and-warn). A joined
+  // Anti-abuse rate limit (in this isolate's memory; see rateLimit). A joined
   // attacker could otherwise spam claims, flooding vp_claims and the TV overlay.
   const rl = await rateLimit(env, 'claim:player:' + player.id, CLAIM_MAX_PER_PLAYER, 60);
   if (!rl.ok) return json({ error: 'Too many claims right now, please wait a moment' }, 429);
@@ -4300,16 +4324,83 @@ async function handlePlayerClaim(request, env, json) {
  * (game_id, question_id, player_id) unique index makes a second answer a no-op. No
  * correctness is ever returned here; scoring happens only at /host/reveal.
  */
+/* The whole answer in ONE database trip (migration 71). Before this the phone paid eight
+ * round trips in a row (token, game, session, venue, group, trivia state, question, insert),
+ * 1.25 s on an idle project and 2 s under a hundred rooms, while a TV lookup on the same
+ * Worker took 0.15 s. vp_player_answer makes the same checks in the same order and returns a
+ * status word; the table below maps it to the exact reply the eight-trip path gave, so a
+ * phone cannot tell the difference except that it stops waiting.
+ *
+ * The rate limit is an anti-flood guard (30 a minute), not a correctness check, so it runs
+ * ALONGSIDE the database call rather than before it: one answer that squeaks through while
+ * the limiter is being read is still bounded by the one-per-question unique constraint.
+ *
+ * If the function is not there yet (migration 71 not run) PostgREST answers 404 and we fall
+ * back to the old path, so the paste order cannot break a night. */
+const ANSWER_STATUS = {
+  bad_token:       [401, 'Invalid player token'],
+  kicked:          [403, 'You have been removed from this game'],
+  no_game:         [404, 'Game not found'],
+  not_trivia:      [400, 'Not a trivia game'],
+  wrong_game:      [403, 'Player is not in this game'],
+  not_running:     [409, 'This game is not running'],
+  no_session:      [404, 'Session not found'],
+  session_closed:  [409, 'This session is closed'],
+  venue_missing:   [403, 'Venue not available'],
+  venue_paused:    [403, 'Games are paused here tonight. Have a word with the staff.'],
+  no_question:     [409, 'No question is open'],
+  time_up:         [409, 'Time is up for this question'],
+  moved_on:        [409, 'That question has moved on'],
+  no_question_row: [404, 'Question not found'],
+  bad_index:       [400, 'Invalid answer_index'],
+};
+let answerRpcMissing = false;   // per isolate: once PostgREST says the function is not there, stop asking
 async function handlePlayerAnswer(request, env, json) {
-  const player = await verifyPlayerToken(request, env);           // ENFORCED: valid player token
+  if (answerRpcMissing) return handlePlayerAnswerEightTrips(request, env, json);
+  const raw = request.headers.get('X-Player-Token') || '';
+  if (!raw) throw httpError(401, 'Missing X-Player-Token');
   const b = await readJson(request);
   const gameId = String(b.game_id || '').trim();
   if (!gameId) return json({ error: 'Missing game_id' }, 400);
   assertUuid(gameId, 'game_id');
   const answerIndex = parseInt(b.answer_index, 10);
   if (!(answerIndex >= 0 && answerIndex <= 9)) return json({ error: 'Invalid answer_index' }, 400);
+  const qseq = b.qseq != null && b.qseq !== '' ? parseInt(b.qseq, 10) : null;
+  const hash = await sha256Hex(raw);
 
-  // Anti-abuse rate limit (LIVE with env.RL, else allow-and-warn).
+  const rpc = fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_player_answer', {
+    method: 'POST', headers: sbHeaders(env),
+    body: JSON.stringify({ p_token_hash: hash, p_game_id: gameId, p_answer_index: answerIndex, p_qseq: Number.isFinite(qseq) ? qseq : null }),
+  });
+  const [res, rl] = await Promise.all([rpc, rateLimit(env, 'answer:player:' + hash, ANSWER_MAX_PER_PLAYER, 60)]);
+  if (res.status === 404) {   // function not deployed yet: old path, and remember for this isolate
+    answerRpcMissing = true;
+    console.warn('vp_player_answer missing (migration 71 not run); answering the slow way');
+    return handlePlayerAnswerEightTrips(request, env, json, { player: null, b, gameId, answerIndex, raw });
+  }
+  if (!res.ok) throw dbError('rpc', 'vp_player_answer', await res.text());
+  if (!rl.ok) return json({ error: 'Too many answers right now, please wait a moment' }, 429);
+  const rows = await res.json();
+  const status = rows && rows[0] && rows[0].status;
+  if (status === 'recorded') return json({ ok: true, recorded: true });   // NO correctness: that is only known after reveal
+  if (status === 'already')  return json({ ok: true, recorded: false, reason: 'already_answered' });
+  const reply = ANSWER_STATUS[status];
+  if (!reply) throw dbError('rpc', 'vp_player_answer', 'unexpected status ' + status);
+  return json({ error: reply[1] }, reply[0]);
+}
+
+// The pre-71 path, kept only as the fallback above. `pre` carries the body already read
+// (a request body can only be read once).
+async function handlePlayerAnswerEightTrips(request, env, json, pre) {
+  const player = pre && pre.raw ? await verifyPlayerTokenRaw(pre.raw, env) : await verifyPlayerToken(request, env);   // ENFORCED: valid player token
+  const b = pre ? pre.b : await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+  const answerIndex = parseInt(b.answer_index, 10);
+  if (!(answerIndex >= 0 && answerIndex <= 9)) return json({ error: 'Invalid answer_index' }, 400);
+
+  // Anti-abuse rate limit (in this isolate's memory; see rateLimit).
   const rl = await rateLimit(env, 'answer:player:' + player.id, ANSWER_MAX_PER_PLAYER, 60);
   if (!rl.ok) return json({ error: 'Too many answers right now, please wait a moment' }, 429);
 
@@ -5475,6 +5566,9 @@ async function assertVenueActive(env, venueId) {
 async function verifyPlayerToken(request, env) {
   const raw = request.headers.get('X-Player-Token') || '';
   if (!raw) throw httpError(401, 'Missing X-Player-Token');
+  return verifyPlayerTokenRaw(raw, env);
+}
+async function verifyPlayerTokenRaw(raw, env) {
   const hash = await sha256Hex(raw);
   // L14: select only the columns the caller needs, never *.
   const rows = await sbGet(env, 'vp_players', 'token_hash=eq.' + enc(hash) + '&select=id,session_id,display_name,kicked');
@@ -5514,10 +5608,21 @@ async function emitEvent(env, session, type, payload, actor) {
 
 async function getPublicSnapshot(env, sessionId) {
   assertUuid(sessionId, 'session');   // the ?session= query param is validated here before any PostgREST use
-  const sessions = await sbGet(env, 'vp_sessions',
-    'id=eq.' + enc(sessionId) + '&select=id,venue_id,status,state_version,join_code,plan_cap_at_start,title');
+  /* Three reads that only need the session id go out together, and every running game
+     of the session comes back in one read instead of one read per format. Measured 8 Sep
+     2026: a lobby snapshot was six trips one after another (session, slug, players, then
+     bingo, trivia, musical, raffle each asked separately), a trivia one was nine, at 0.1 to
+     0.15 s each, so the join answered in over a second. The result is byte-for-byte what it
+     was: the same fields, the same one-game-wins-in-this-order rule below. */
+  const [sessions, players, running] = await Promise.all([
+    sbGet(env, 'vp_sessions', 'id=eq.' + enc(sessionId) + '&select=id,venue_id,status,state_version,join_code,plan_cap_at_start,title'),
+    sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id'),
+    sbGet(env, 'vp_games', 'session_id=eq.' + enc(sessionId) + '&status=eq.running&select=id,seq,format,config,status&order=seq.desc'),
+  ]);
   if (!sessions.length) throw httpError(404, 'Session not found');
   const s = sessions[0];
+  // the newest running game of a format, or an empty list: what each per-format read returned
+  const runningOf = (format) => { const g = running.find((x) => x.format === format); return g ? [g] : []; };
   /* The venue's slug, because a broadcast-bingo phone now joins with a SESSION code and still has
      to find the venue's realtime channel, which is named from the slug. Without this the phone
      would know its session and not know which room it is in. */
@@ -5527,7 +5632,6 @@ async function getPublicSnapshot(env, sessionId) {
     venueSlug = (vs && vs[0] && vs[0].slug) || null;
   } catch (e) { venueSlug = null; }
 
-  const players = await sbGet(env, 'vp_players', 'session_id=eq.' + enc(sessionId) + '&kicked=eq.false&select=id,device_id');
   const playerCount = countPlayers(players);   // devices, not joins: matches what the venue is billed on
 
   const snap = {
@@ -5544,8 +5648,7 @@ async function getPublicSnapshot(env, sessionId) {
   };
 
   // Current running bingo game, public state only.
-  const games = await sbGet(env, 'vp_games',
-    'session_id=eq.' + enc(sessionId) + '&format=eq.bingo90&status=eq.running&select=id,seq,format,config,status&order=seq.desc&limit=1');
+  const games = runningOf('bingo90');
   if (games.length) {
     const g = games[0];
     const bg = await sbGet(env, 'vp_bingo_games', 'game_id=eq.' + enc(g.id) + '&select=draw_order,draw_index,pattern');
@@ -5573,8 +5676,7 @@ async function getPublicSnapshot(env, sessionId) {
   // late-joining phone). The correct_index is exposed ONLY once the phase is
   // 'revealed'; while a question is 'asking'/'locked' it is never in the projection.
   if (!snap.game) {
-    const tgames = await sbGet(env, 'vp_games',
-      'session_id=eq.' + enc(sessionId) + '&format=eq.trivia&status=eq.running&select=id,seq,config&order=seq.desc&limit=1');
+    const tgames = runningOf('trivia');
     if (tgames.length) {
       const g = tgames[0];
       const cfg = g.config || {};
@@ -5622,8 +5724,7 @@ async function getPublicSnapshot(env, sessionId) {
   // the projection exposes the songs played so far; the per-player card is fetched by the
   // phone via /player/card, never here.
   if (!snap.game) {
-    const mgames = await sbGet(env, 'vp_games',
-      'session_id=eq.' + enc(sessionId) + '&format=eq.musical_bingo&status=eq.running&select=id,seq,config&order=seq.desc&limit=1');
+    const mgames = runningOf('musical_bingo');
     if (mgames.length) {
       const g = mgames[0];
       const cfg = g.config || {};
@@ -5654,8 +5755,7 @@ async function getPublicSnapshot(env, sessionId) {
   // Current running raffle, public projection only. Raffle is HOST-ONLY (no players), so
   // this is purely so a reconnecting TV can redraw the prize and the latest winning ticket(s).
   if (!snap.game) {
-    const rgames = await sbGet(env, 'vp_games',
-      'session_id=eq.' + enc(sessionId) + '&format=eq.raffle&status=eq.running&select=id,seq,config&order=seq.desc&limit=1');
+    const rgames = runningOf('raffle');
     if (rgames.length) {
       const g = rgames[0];
       const cfg = g.config || {};
@@ -6026,8 +6126,10 @@ async function verifyJwtHS256(token, secret, env) {
     const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
     ok = await crypto.subtle.verify('HMAC', key, sigBytes, signed);
   } else if (header.alg === 'ES256') {
-    const keys = env ? await fetchJwks(env) : [];
-    const jwk = keys.find(function (k) { return k.kid === header.kid; }) || keys[0];
+    let keys = env ? await fetchJwks(env) : [];
+    let jwk = keys.find(function (k) { return k.kid === header.kid; });
+    if (!jwk && env) { _gameJwks = null; keys = await fetchJwks(env); jwk = keys.find(function (k) { return k.kid === header.kid; }); }   // a key rotated since we cached
+    if (!jwk) jwk = keys[0];
     if (!jwk) throw httpError(401, 'No verification key available');
     const key = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
     ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, sigBytes, signed);
@@ -6216,7 +6318,7 @@ function httpError(status, message) {
   return e;
 }
 
-/* ---- anti-abuse: soft rate limit (Workers KV binding env.RL) ---- */
+/* ---- anti-abuse: soft rate limit (per-isolate memory; env.RL only for the join dedup cache) ---- */
 
 // One-time warning so an absent/erroring KV binding is visible in logs without
 // spamming every request. Isolate-level flag; resets on a cold start, which is fine.
@@ -6224,27 +6326,40 @@ let rlWarned = false;
 function rlWarn() {
   if (rlWarned) return;
   rlWarned = true;
-  console.log('[RL] KV binding env.RL absent or erroring: anti-abuse limiter/dedup is in DEGRADED (allow) mode. Add a KV namespace binding named RL at deploy to enforce.');
+  console.log('[RL] KV binding env.RL absent or erroring: the join dedup cache is off (the device_id column still dedups). Add a KV namespace binding named RL at deploy.');
 }
 
-// Increment a salted counter in KV and report whether it is within the limit.
-// Workers KV is eventually consistent and get-then-put is not atomic, so this is
-// a SOFT limiter (it can under-count under a heavy concurrent burst) which is
-// acceptable for abuse control. Degrades safely when env.RL is absent or errors:
-// it warns once and allows the request, so the endpoint still functions.
+// Count requests per key in THIS isolate's memory and report whether the key is
+// within its limit. No store on the request path.
+//
+// Until 8 Sep 2026 this did a KV get and an awaited KV put per call, and that put was
+// the wait: measured on an idle Worker in the same city as the database, an answer
+// took 0.8 to 1.3 s of which the database work was 20 ms. Every rate-limited route
+// paid it (join twice, answer, claim, report, capture, feedback). It also could not
+// do its job: KV is cached for at least 60 s at the edge, so a counter written by
+// the last request was invisible to the next one for the whole window, and KV allows
+// one write per second per key, so a room of phones joining together tripped that
+// limit on the shared join:ip key and the limiter fell back to allow. A limiter that
+// is slow when idle and blind under a burst is the wrong tool.
+//
+// Memory is exact, instant, and per isolate. A burst from one source lands in one
+// Cloudflare location, so the count that matters is the local one. It is still SOFT
+// (a spread-out attacker gets the limit once per location, an evicted isolate starts
+// from zero), which is what this was always meant to be: abuse control, not a quota.
+// env.RL is still used by the join dedup cache, so the binding stays.
+const rlMem = new Map();   // key -> { n, until }
+let rlSweptAt = 0;
 async function rateLimit(env, key, limit, windowSecs) {
-  if (!env.RL) { rlWarn(); return { ok: true, degraded: true }; }
-  try {
-    const cur = await env.RL.get(key);
-    const n = cur ? (parseInt(cur, 10) || 0) : 0;
-    if (n >= limit) return { ok: false, count: n };
-    // Workers KV requires expirationTtl >= 60; the TTL is the rolling window.
-    await env.RL.put(key, String(n + 1), { expirationTtl: Math.max(60, windowSecs) });
-    return { ok: true, count: n + 1 };
-  } catch (e) {
-    rlWarn();
-    return { ok: true, degraded: true };
+  const now = Date.now();
+  if (now - rlSweptAt > 30000) {
+    rlSweptAt = now;
+    for (const [k, v] of rlMem) if (v.until <= now) rlMem.delete(k);
   }
+  let m = rlMem.get(key);
+  if (!m || m.until <= now) { m = { n: 0, until: now + windowSecs * 1000 }; rlMem.set(key, m); }
+  if (m.n >= limit) return { ok: false, count: m.n };
+  m.n += 1;
+  return { ok: true, count: m.n };
 }
 
 /* ---- validation + safe-error helpers (injection defence + M5) ---- */
