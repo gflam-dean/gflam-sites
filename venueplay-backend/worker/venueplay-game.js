@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 11:47 · 549bad36';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '8 Sep 2026, 12:06 · 7d31525c';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2255,6 +2255,17 @@ async function hostStartTrivia(env, json, b, session, staff, seq) {
   const speedBonus = b.speed_bonus !== false;   // default on
   config.speed_bonus = speedBonus;
 
+  // Remember this venue's trivia settings (migration 50), so the next night pre-fills to what they
+  // last used instead of resetting to the built-in defaults. Only writes the fields the host actually
+  // sent, and never fails a game start if it cannot save. Built on fix/audit-40 in Aug 2026 and
+  // never merged: the console read these columns for a month while nothing wrote them.
+  if (session.venue_id) {
+    const prefs = { venue_id: session.venue_id, trivia_speed_bonus: speedBonus };
+    if (config.time_limit_s != null) prefs.trivia_time_limit_s = config.time_limit_s;
+    if (config.base_points != null) prefs.trivia_base_points = config.base_points;
+    try { await sbUpsert(env, 'vp_venue_settings', prefs, 'venue_id'); } catch (e) { /* non-fatal */ }
+  }
+
   const gameRows = await sbInsert(env, 'vp_games', {
     session_id: session.id, seq, format: 'trivia', status: 'running', config,
     started_at: new Date().toISOString(),
@@ -2481,12 +2492,35 @@ async function hostStartRaffle(env, json, b, session, staff, seq) {
     config.excluded_ranges = excluded;   // straight onto the config the game row is built from
   }
 
+  // The spin the TV runs when a ticket is drawn, fixed onto the raffle when it is created. The
+  // draw's double-tap guard is sized from THIS (plus two seconds), so a console cannot shrink the
+  // guard under the animation the room is watching. Clamped to the 3 to 8 the console offers.
+  let spinSeconds = parseInt(b.spin_seconds, 10);
+  if (!(spinSeconds >= 0)) spinSeconds = 4;
+  config.spin_seconds = Math.max(3, Math.min(8, spinSeconds));
+
   const gameRows = await sbInsert(env, 'vp_games', {
     session_id: session.id, seq, format: 'raffle', status: 'running', config,
     started_at: new Date().toISOString(),
   }, true);
   const game = Array.isArray(gameRows) ? gameRows[0] : gameRows;
   await finishOtherRunningGames(env, session.id, game.id);   // now safe: the new round exists
+
+  // Remember this raffle's SETUP as the venue's template (migration 51), so a weekly raffle pre-fills
+  // to what they last ran instead of re-entering the range, times and settings each week. The prizes
+  // were already saved per venue; this is the rest of the setup, spin length included. Best-effort,
+  // never fails a draw. Built on fix/audit-40 in Aug 2026 and never merged: the console read this
+  // column for a month while nothing wrote it, so every venue re-typed its raffle every week.
+  if (session.venue_id) {
+    try {
+      await sbUpsert(env, 'vp_venue_settings', { venue_id: session.venue_id, raffle_template: {
+        range_min: rangeMin, range_max: rangeMax, time_to_present: timeToPresent, winners: winners,
+        allow_redraw: allowRedraw, jackpot_on: jackpotOn, jackpot_amount_cents: jackpotCents,
+        leading_zeros: leadingZeros, excluded_ranges: config.excluded_ranges || null,
+        prizes: config.prizes || null, spin_seconds: config.spin_seconds,
+      } }, 'venue_id');
+    } catch (e) { /* non-fatal */ }
+  }
 
   const rngSeed = randomTokenHex(16);   // stored for audit ("prove the draw was fair")
   await sbInsert(env, 'vp_raffle_games', {
@@ -2595,7 +2629,11 @@ async function handleHostDraw(request, env, json) {
   // later draw is unaffected. (A redraw is a separate, explicit action and is not gated here.)
   if (!isRedraw && prior.length && prior[0].drawn_at) {
     const since = Date.now() - new Date(prior[0].drawn_at).getTime();
-    const holdMs = drawHoldMs(b.spin_seconds, 4, 3, 8);
+    // The spin fixed onto the raffle when it was created is the floor; a console may send a longer
+    // one (it can change the spin mid-raffle) but can never send a shorter one and get under it.
+    const baked = parseInt(game.config && game.config.spin_seconds, 10) || 0;
+    const sent = parseInt(b.spin_seconds, 10) || 0;
+    const holdMs = drawHoldMs(Math.max(baked, sent) || undefined, 4, 3, 8);
     if (since >= 0 && since < holdMs) {
       return json({ error: 'The draw is still on the screen. You can draw again in ' + Math.ceil((holdMs - since) / 1000) + ' seconds.' }, 429);
     }

@@ -441,7 +441,9 @@
     G.jackOn=$("rfJackOn").checked; G.jackAmt=Math.max(0,parseInt($("rfJackAmt").value,10)||0);
     G.winnersCount = 1;   // one winner per draw; the host draws again (with a new prize) for each additional prize
     G.time=parseInt($("rfTime").value,10); if(isNaN(G.time)||G.time<0) G.time=180;
-    G.drawLength=4;
+    /* G.drawLength used to be reset to 4 here, and startDraw() calls this first, so the "tap to
+       change" spin control set a label and nothing else: every draw spun for 4 seconds whatever it
+       said. The spin now lives with the tap and the venue's saved template, not with the inputs. */
     G.allowRedraw=$("rfAllowRedraw").checked;
   }
   function validRange(){ return !(isNaN(G.min)||isNaN(G.max)||G.max<G.min); }
@@ -607,7 +609,7 @@
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"raffle",
         range_min:G.min, range_max:G.max, excluded_ranges:parseSkips(),
-        winners:G.winnersCount, time_to_present:G.time,
+        winners:G.winnersCount, time_to_present:G.time, spin_seconds:G.drawLength,
         allow_redraw:G.allowRedraw, leading_zeros:true,
         jackpot_on:G.jackOn, jackpot_amount_cents:G.jackOn?Math.round(G.jackAmt*100):null,
         prize:G.jackOn?null:G.prize, prize_type:G.jackOn?"cash":"other",
@@ -893,6 +895,7 @@
           function setv(id,v){ var el=$(id); if(el&&v!=null&&v!=="") el.value=v; }
           setv("rfStart", t.range_min); setv("rfEnd", t.range_max);
           if(t.time_to_present!=null) setv("rfTime", t.time_to_present);
+          if([3,4,5,6,8].indexOf(t.spin_seconds)>=0){ G.drawLength=t.spin_seconds; var dl=$("drawLenLbl"); if(dl) dl.textContent=t.spin_seconds; }
           if(t.jackpot_on){ var jo=$("rfJackOn"); if(jo){ jo.checked=true; var jw=$("rfJackWrap"); if(jw) jw.classList.remove("hidden"); if(t.jackpot_amount_cents) setv("rfJackAmt", Math.round(t.jackpot_amount_cents/100)); } }
           var ar=$("rfAllowRedraw"); if(ar && typeof t.allow_redraw==="boolean") ar.checked=t.allow_redraw;
           if(Array.isArray(t.excluded_ranges) && t.excluded_ranges.length){ var sk=$("rfSkip"); if(sk) sk.value=t.excluded_ranges.map(function(r){ return r[0]===r[1]?(""+r[0]):(r[0]+"-"+r[1]); }).join(", "); }

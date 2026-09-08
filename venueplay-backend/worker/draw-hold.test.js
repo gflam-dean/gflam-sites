@@ -26,7 +26,7 @@ var MUSICAL = find('venueplay/app/musical/host.html');
 var RAFFLE = find('venueplay/app/raffle/host.html');
 var MIG = find('venueplay-backend/supabase/venueplay-69-members-draw-hold.sql');
 
-var EXPECT = 31, ran = 0, bad = 0;
+var EXPECT = 37, ran = 0, bad = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 function lift(n) {
   var i = W.indexOf('async function ' + n + '('); if (i < 0) i = W.indexOf('function ' + n + '(');
@@ -49,8 +49,24 @@ ok('a negative is treated as rubbish', drawHoldMs(-5, 4, 3, 8) === 6000);
 
 print('\n== the raffle actually uses it ==');
 var raffle = body('handleHostDraw');
-ok('the raffle guard is sized by drawHoldMs', /drawHoldMs\(b\.spin_seconds, 4, 3, 8\)/.test(raffle),
+/* The spin is baked onto the game when it is created, so the guard does not have to
+   trust what the draw request says. The longer of the two wins: a console cannot
+   shorten the hold by sending a smaller number than the game was made with. */
+ok('the raffle guard is sized by drawHoldMs, from the spin baked onto the game',
+   /const baked = parseInt\(game\.config && game\.config\.spin_seconds, 10\) \|\| 0/.test(raffle) &&
+   /drawHoldMs\(Math\.max\(baked, sent\) \|\| undefined, 4, 3, 8\)/.test(raffle),
    'a flat 3 seconds was shorter than every spin but the shortest');
+var create = body('hostStartRaffle');
+ok('the spin is baked onto the raffle when it is created', /config\.spin_seconds = Math\.max\(3, Math\.min\(8, spinSeconds\)\)/.test(create),
+   'otherwise the guard depends on the console telling the truth at draw time');
+ok('and remembered for next time, so it is a venue setting', /raffle_template: \{[\s\S]{0,400}spin_seconds: config\.spin_seconds/.test(create),
+   'the console read raffle_template for a week before anything wrote it');
+ok('the trivia defaults the console reads are written too', /trivia_speed_bonus: speedBonus/.test(W),
+   'migration 50 added columns the consoles read and nothing on main ever wrote');
+ok('the raffle console sends its spin when the game is made', /time_to_present:G\.time, spin_seconds:G\.drawLength/.test(RAFFLE));
+ok('the console pre-fills the spin from the template', /indexOf\(t\.spin_seconds\)>=0\)\{ G\.drawLength=t\.spin_seconds/.test(RAFFLE));
+ok('readInputs no longer resets the spin to 4 before every draw', !/G\.drawLength=4;/.test(RAFFLE.slice(RAFFLE.indexOf('function readInputs'), RAFFLE.indexOf('function readInputs')+2000)),
+   'the control cycled 3 to 8 on the screen and every draw still spun for 4');
 ok('and compares the last draw time against it', /since < holdMs/.test(raffle));
 ok('and tells the host how long', /You can draw again in ' \+ Math\.ceil\(\(holdMs - since\) \/ 1000\)/.test(raffle));
 ok('a redraw is still not gated', /if \(!isRedraw && prior\.length && prior\[0\]\.drawn_at\)/.test(raffle));
