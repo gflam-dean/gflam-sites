@@ -65,7 +65,15 @@ export class VenueRoom {
     if (a.n > ROOM_MAX_PER_SEC) return;                      // a flood is dropped; the socket stays up
     let obj;
     try { obj = JSON.parse(message); } catch (e) { return; }
-    if (!obj || typeof obj !== 'object' || typeof obj.type !== 'string') return;
+    /* A GAME MESSAGE IS {t: "ball"}, NOT {type: "ball"}.
+       This asked for `type` and dropped everything else, so on 10 Sep the console and
+       two TVs all joined the room correctly, presence counted three, and not one ball
+       reached the wall. The smoke test passed throughout because it sends {type:"smoke"},
+       which is the only shape in the codebase that uses that key. Every real message
+       from every console and every phone uses `t`.
+       Both are accepted, because /publish from the Worker does use `type` (reload,
+       command) and the pages use `t`. */
+    if (!obj || typeof obj !== 'object' || !(typeof obj.t === 'string' || typeof obj.type === 'string')) return;
     this.relay(JSON.stringify(obj), ws);
   }
 
@@ -82,7 +90,7 @@ export class VenueRoom {
     let body;
     try { body = await request.json(); } catch (e) { return roomJson({ error: 'bad json' }, 400); }
     const payload = body && body.payload;
-    if (!payload || typeof payload !== 'object' || typeof payload.type !== 'string') return roomJson({ error: 'payload needs a type' }, 400);
+    if (!payload || typeof payload !== 'object' || !(typeof payload.t === 'string' || typeof payload.type === 'string')) return roomJson({ error: 'payload needs a type' }, 400);
     const str = JSON.stringify(payload);
     if (str.length > ROOM_MAX_MSG_CHARS) return roomJson({ error: 'too big' }, 413);
     return roomJson({ ok: true, delivered: this.relay(str, null) });

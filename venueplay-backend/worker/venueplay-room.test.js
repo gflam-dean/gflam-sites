@@ -20,7 +20,7 @@ function find(rel) {
   throw new Error('cannot open ' + rel);
 }
 var src = find('venueplay-backend/worker/venueplay-room.js');
-var EXPECT = 20;
+var EXPECT = 23;
 var bad = 0, ran = 0;
 function ok(n, c, extra) {
   ran++;
@@ -91,6 +91,22 @@ join('tv').then(function (r) { tv = r.webSocket.of; ok('the TV is accepted with 
   ok('both phones heard it', p1.got.length === 1 && p2.got.length === 1);
   ok('the host did NOT hear its own message (self:false, as on Supabase)', host.got.length === 0);
   ok('the message arrived untouched, signature included', tv.got[0]._sig === 'x');
+
+  /* AND THE SHAPE THE PRODUCT ACTUALLY SPEAKS, which is not the one above.
+     Every console, TV and phone in VenuePlay sends {t:"ball"}. The room demanded
+     obj.type and silently dropped everything else, so on 10 Sep 2026 the host tablet
+     and two TVs all joined the room, presence counted three, and not one ball reached
+     the wall. This suite passed the whole time, because {type:...} is the only message
+     shape in the codebase that uses that key and it is one this test invented.
+     A test that only ever sends what the code expects cannot find this. */
+  print('\n== a real game message, which uses t, not type ==');
+  var tBefore = tv.got.length, hBefore = host.got.length;
+  room.webSocketMessage(host, JSON.stringify({ t: 'ball', n: 7 }));
+  ok('a ball in the product\'s own shape reaches the TV',
+     tv.got.length === tBefore + 1 && tv.got[tv.got.length - 1].t === 'ball' && tv.got[tv.got.length - 1].n === 7,
+     'the room dropped {t:...} and every game message uses it');
+  ok('both phones heard that one too', p1.got.length === 2 && p2.got.length === 2);
+  ok('and the host still does not hear its own', host.got.length === hBefore);
 
   print('\n== junk goes nowhere ==');
   var before = tv.got.length;
