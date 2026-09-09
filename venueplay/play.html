@@ -392,10 +392,12 @@
   }
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=null, subscribed=false, sendQueue=[];
-  /* ?room=1 puts THIS phone on the room server instead of Supabase Realtime. Off by
+  /* ?roomserver=1 puts THIS phone on the room server instead of Supabase Realtime.
+     NOT ?room=1: ?room= is this page's own game-code parameter, and ?room=1 made it show
+     "No room" and connect to nothing at all. Off by
      default. See venueplay-backend/worker/ROOM-SERVER.md. */
   var _useRoom=false, _roomTried=false, _room=null;
-  try{ _useRoom=/[?&]room=1\b/.test(location.search); }catch(e){ _useRoom=false; }
+  try{ _useRoom=/[?&]roomserver=1\b/.test(location.search); }catch(e){ _useRoom=false; }
   function wireOut(obj){
     if(_room){ try{ _room.send(obj); return true; }catch(e){ return false; } }
     if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); return true; }
@@ -1297,7 +1299,7 @@
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
     // forged messages in enforce mode. No key / enforce off / script absent -> renders as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
-    /* THE ROOM SERVER, opt in only (?room=1). One WebSocket to the venue's room on
+    /* THE ROOM SERVER, opt in only (?roomserver=1). One WebSocket to the venue's room on
        Cloudflare instead of a Supabase Realtime channel. Everything below stays as it
        is: if the Worker says the room is not enabled, or the socket will not open, the
        page connects to Supabase exactly as it always has. The messages are the same

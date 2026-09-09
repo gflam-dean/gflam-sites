@@ -509,11 +509,12 @@
   // so role resolution and gameplay broadcast run on a single client.
   if(window.VP){ VP.useClient(client); }
   var ch=null, subscribed=false, sendQueue=[];
-  /* ?room=1 puts THIS console on the room server instead of Supabase Realtime. Off by
+  /* ?roomserver=1 puts THIS console on the room server instead of Supabase Realtime.
+     NOT ?room=1: that already means the game room code on the player page. Off by
      default, and a room only works if everyone is in it: a host in a room is talking to
      an empty room unless the TV and the phones are in it too. See ROOM-SERVER.md. */
   var _useRoom=false, _roomTried=false, _room=null;
-  try{ _useRoom=/[?&]room=1\b/.test(location.search); }catch(e){ _useRoom=false; }
+  try{ _useRoom=/[?&]roomserver=1\b/.test(location.search); }catch(e){ _useRoom=false; }
   function rawSend(p){
     if(_room){ try{ _room.send(p); return; }catch(e){} }
     if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); }

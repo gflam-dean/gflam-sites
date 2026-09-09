@@ -192,7 +192,7 @@ Everything in the "morning" list below except the last step, and all of it prove
    (against up to 30 seconds for the poll it replaces), the host did not hear its
    own message, junk was dropped, and presence went back to nobody when they left.
 
-Still to do: `vp-room.js` into tv.html behind `?room=1`, then a live test on The
+Still to do: `vp-room.js` into tv.html behind `?roomserver=1`, then a live test on The
 Mini Bar. The live game Worker is untouched and still on 870a8665; nothing about
 this reaches a venue until Dean deploys and the page opts in.
 
@@ -208,5 +208,5 @@ this reaches a venue until Dean deploys and the page opts in.
    (written 9 Sep, never run: two sockets on a made-up room, the host sends,
    the TV hears it, the host does not, presence says 2 then 0; it refuses a
    LIVE Worker and stops politely at a 503 when the binding is not there).
-4. Then, and only then, add `vp-room.js` to tv.html behind `?room=1` and test
+4. Then, and only then, add `vp-room.js` to tv.html behind `?roomserver=1` and test
    on The Mini Bar.

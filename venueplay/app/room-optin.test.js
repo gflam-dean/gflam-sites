@@ -20,7 +20,7 @@ var TV = find('venueplay/tv.html');
 var CONSOLE = find('venueplay/app/index.html');
 var PLAY = find('venueplay/play.html');
 var CLIENT = find('venueplay/app/vp-room.js');
-var EXPECT = 25;
+var EXPECT = 27;
 var ran = 0, bad = 0;
 function ok(n, c, extra) {
   ran++;
@@ -34,9 +34,20 @@ ok('the phone loads vp-room.js', /<script src="\/app\/vp-room\.js">/.test(PLAY))
 
 print('== and none of them joins one unless the link asks ==');
 [['TV', TV], ['console', CONSOLE], ['phone', PLAY]].forEach(function (p) {
-  ok(p[0] + ' only opts in on ?room=1', /_useRoom\s*=\s*\/\[\?&\]room=1/.test(p[1]),
+  ok(p[0] + ' only opts in on ?roomserver=1', /_useRoom\s*=\s*\/\[\?&\]roomserver=1/.test(p[1]),
      'a page that joins a room by default would go silent against a Worker with no binding');
 });
+
+/* THE FLAG IS NOT CALLED room. ?room= ALREADY MEANS THE GAME ROOM CODE on the player
+   page (?room=UZRHJU), so ?room=1 read as a game code of "1", failed the code test, and
+   the phone showed "No room" and connected to nothing at all. Dean: "Phone has not
+   rejoined at all the link is open". Naming the flag `room` broke the one page that
+   already owned that word. */
+ok('the phone still owns ?room= for its game code', /\[\?&\]room=\(\[\^&\]\+\)/.test(PLAY),
+   'the player page reads the game code out of ?room=');
+ok('and no page uses ?room=1 as the room-server flag',
+   !/\[\?&\]room=1/.test(TV) && !/\[\?&\]room=1/.test(CONSOLE) && !/\[\?&\]room=1/.test(PLAY),
+   'that collides with the game code parameter');
 
 print('== a room that is not there must send the page back to Supabase ==');
 ok('the client treats 503 as not enabled', /r\.status === 503/.test(CLIENT));
