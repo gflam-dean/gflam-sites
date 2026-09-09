@@ -61,8 +61,8 @@
 
   /* ---- advertising loop (default state) ---- */
   #adsRoot{position:absolute;inset:0;z-index:1}
-  /* The branded floor sits under the ad rotation. buildAds() only ever clears #tvAds,
-     so if the rotation renders nothing, the room sees this rather than a black screen. */
+  /* The branded floor sits under the ad rotation. Nothing ever clears #adsRoot, so if the
+     rotation renders nothing, the room sees this rather than a black screen. */
   #tvFloor{z-index:0}
   #tvAds{z-index:1}
   .ad{opacity:0;transition:opacity .8s ease}
@@ -735,7 +735,7 @@
        cost a venue their screen for the night. Now it has to say so twice, thirty seconds apart,
        and it re-checks afterwards so the card clears itself the moment the venue really is
        findable again. */
-    var strikes=0;
+    var strikes=0, lastContentAt=null;
     function ask(){
       try{
         fetch(VP_GAME_API+"/venue?code="+encodeURIComponent(CODE)+"&venue="+encodeURIComponent(VENUE_SLUG)+"&v="+encodeURIComponent(TV_BUILD))
@@ -748,6 +748,26 @@
           }
           strikes=0;
           var el=$("badVenue"); if(el) el.classList.add("hidden");   // it resolved: take the card down
+          /* A SCREEN THAT WAS NOT LISTENING STILL CATCHES UP.
+             When an owner saves their slides, billing.html broadcasts screen_refresh and every
+             screen that is listening calls loadScreen() a second later. The screen that was OFF,
+             or asleep, or on a channel that had quietly dropped, hears nothing, and nothing
+             afterwards ever told it: this poll carries a reload instruction and an HQ command,
+             never a word about the content. So a venue that pulled a promo down would swear it
+             worked, because the screen they were standing in front of updated. Dean, 10 Sep
+             2026: "if someone adds a slide all the tvs get it?"
+             content_at is a stamp of when this venue's screen content last changed. The poll
+             already happens every thirty seconds, so noticing costs nothing at all. The Worker
+             does not send it YET (the exact addition is in the report), and a Worker that sends
+             nothing simply never triggers this, which is why the slow catch-up in
+             loadVenueScreen is there as well. First sight only remembers; a CHANGE acts.
+             loadScreen(), never a reload: a reload is a black frame on a wall. */
+          if(d.content_at){
+            if(lastContentAt !== null && d.content_at !== lastContentAt){
+              if(reloadVenueScreen) reloadVenueScreen();
+            }
+            lastContentAt = d.content_at;
+          }
           /* A RELOAD THE SCREEN PULLS, RATHER THAN ONE IT HAS TO HEAR.
              Every remote reload before this rode a realtime broadcast, and a screen
              whose socket has dropped is exactly the screen that needs reloading and
@@ -933,27 +953,71 @@
            '<div class="adbig">'+escBr(s.head)+'</div>'+
            (s.sub?'<div class="adsub">'+escBr(s.sub)+'</div>':"");
   }
-  var adIdx=0, adTimer=null, adBuilt=false, adFadeTimer=null;
-  // Per-slide try/catch, and never finish with an empty container. One null row in the venue's
-  // slides JSON used to throw out of here AFTER innerHTML="" had already run, so the rotation was
-  // wiped, the watchdog saw no slides, its repair called this same failing code, and the screen
-  // reloaded every three minutes forever on identical data. One bad row must cost one slide.
-  function buildAds(){
-    var host=$("tvAds"), built=0;
-    host.innerHTML="";
+  var adIdx=0, adTimer=null, adBuilt=false, adFadeTimer=null, adsSig=null;
+  /* WHAT THE ROTATION WOULD LOOK LIKE, AS ONE STRING.
+     Built from the same two functions that render the slides, so if this matches, the DOM
+     buildAds would produce is identical to the DOM already on the wall and there is nothing
+     to do. It picks up a changed slide list, a changed raffle, changed draw jackpots and the
+     day rolling over, because entryInner() recomputes the weekday every time it runs. */
+  function adsSignature(entries){
+    var parts=[];
+    for(var i=0;i<entries.length;i++){
+      var c="?", h="?";
+      try{ c=entryClass(entries[i]); }catch(e){}
+      try{ h=entryInner(entries[i]); }catch(e){}
+      // Length prefixed, so two different slide lists can never join up into the same string.
+      parts.push(c.length+":"+c+" "+h.length+":"+h);
+    }
+    return entries.length+"/"+parts.join(" ");
+  }
+  /* Per-slide try/catch, and never finish with an empty container. One null row in the venue's
+     slides JSON used to throw out of here AFTER innerHTML="" had already run, so the rotation was
+     wiped, the watchdog saw no slides, its repair called this same failing code, and the screen
+     reloaded every three minutes forever on identical data. One bad row must cost one slide.
+
+     A REBUILD MUST NEVER EMPTY WHAT IS ON THE WALL, AND MOSTLY MUST NOT HAPPEN AT ALL.
+     This used to clear #tvAds and then re-append every slide, so the container passed through
+     a state with nothing in it. That is the flash Dean saw watching the wall on 10 Sep, and it
+     is worse than a flash: an empty #tvAds is exactly what screenIsAlive() reads as a dead
+     screen, so every rebuild was a moment when the watchdog could decide a perfectly healthy
+     wall was broken. Now the new slides are built in a DETACHED container and swapped in
+     complete, so there is never a frame with nothing in it.
+     And most of the callers are not changes at all: waking the tab, the venue-screen poll and
+     the watchdog's cheap repair all landed here with byte-identical content. If the signature
+     matches what is already up, the wall is left alone entirely.
+     force: rebuild even on a match. Only the watchdog uses it, because its whole reason for
+     calling is that it does not trust the DOM it can see.
+     Returns true if the slides were actually replaced. */
+  function buildAds(force){
+    var host=$("tvAds"); if(!host) return false;
     var entries=[];
     try{ entries=loopEntries(); }catch(e){ entries=[{type:"holding"}]; }
+    var sig=adsSignature(entries);
+    if(!force && adsSig!==null && sig===adsSig && host.querySelector(".ad")){
+      adBuilt=true;       // what is on screen is already right: do not touch it
+      return false;
+    }
+    var pending=document.createElement("div"), built=0;
     entries.forEach(function(e){
       try{
         var div=document.createElement("div"); div.className="layer ad "+entryClass(e);
-        div.innerHTML=entryInner(e); host.appendChild(div); built++;
+        div.innerHTML=entryInner(e); pending.appendChild(div); built++;
       }catch(err){}
     });
     if(!built){
       var d=document.createElement("div"); d.className="layer ad ad-a";
-      d.innerHTML=entryInner({type:"holding"}); host.appendChild(d);
+      d.innerHTML=entryInner({type:"holding"}); pending.appendChild(d);
+      sig=null;   // whatever went wrong, do not remember the fallback as the venue's real slides
     }
-    adBuilt=true;
+    /* The swap. New slides in first, old ones out after, so the container is never empty even
+       for an instant. replaceChildren() is not on every Fire Stick browser, so it is done by
+       hand. The list of old nodes is taken BEFORE appending, or it would include the new ones. */
+    var old=[], i;
+    for(i=0;i<host.childNodes.length;i++) old.push(host.childNodes[i]);
+    while(pending.firstChild) host.appendChild(pending.firstChild);
+    for(i=0;i<old.length;i++){ try{ host.removeChild(old[i]); }catch(e){} }
+    adBuilt=true; adsSig=sig;
+    return true;
   }
   function stopAds(){
     if(adTimer){ clearTimeout(adTimer); clearInterval(adTimer); adTimer=null; }
@@ -968,8 +1032,18 @@
     var slides=$("tvAds").querySelectorAll(".ad");
     if(!slides.length) return;
     var entries=loopEntries(); // same order buildAds used, so seconds line up per slide
-    adIdx=0;
-    slides.forEach(function(s,i){ s.classList.toggle("show", i===0); });
+    /* KEEP THE HOST'S PLACE IN THE ROTATION.
+       This used to set adIdx=0 every single time it ran, and it runs on plenty of things that
+       are not the start of anything: bringing the tab forward, the venue-screen poll, the day
+       rolling over, the watchdog's repair. So a wall three slides into its loop jumped back to
+       slide one, over and over. Dean, 10 Sep 2026: "the tv also seems to start on the Saturday
+       slide everytime i switch to that tab."
+       If the slide that is lit is still one of these slides, carry on from it. A genuinely
+       different set has just been swapped in with nothing lit, so that starts at the top. */
+    var cur = adIdx;
+    if(!(cur>=0 && cur<slides.length && slides[cur] && slides[cur].classList.contains("show"))) cur=0;
+    adIdx=cur;
+    slides.forEach(function(s,i){ s.classList.toggle("show", i===cur); });
     if(slides.length<2) return;
     function secsFor(i){
       var e=entries[i];
@@ -999,7 +1073,7 @@
       }, FADE_MS + 60);
       adTimer = setTimeout(advance, secsFor(adIdx));
     }
-    adTimer=setTimeout(advance, secsFor(0));
+    adTimer=setTimeout(advance, secsFor(cur));
   }
 
   // ================= BINGO SCREEN =================
@@ -1215,6 +1289,26 @@
 
   // ================= MODE SWITCH =================
   var tvMode="ads";
+  /* THE VENUE LOGO NEVER SITS ON AN ADVERTISING SLIDE.
+     An ad is the venue's own paid artwork and our corner mark does not belong on top of it.
+     The VenuePlay mark already comes off for the ads (enterAds hides #tvCorner), but the venue
+     logo is a fixed element on the body, so it stayed on the wall over every slide. It comes
+     off in the ads state and goes back for every other one. Dean, 10 Sep 2026.
+     Kept as a URL rather than read off the element, because the mode changes many times a night
+     and the logo does not. Wrapped, because this is called from the mode switches and NOTHING
+     is allowed to stop enterAds() reaching startAds(): that is how the wall goes black. */
+  var venueLogoUrl="";
+  function applyVenueLogo(){
+    try{
+      var el=document.getElementById("venueLogo");
+      if(el) el.style.display=(venueLogoUrl && tvMode!=="ads") ? "block" : "none";
+      /* The small venue-name caption does NOT come back when the logo goes. A venue that
+         uploaded a logo has already chosen how it is named on the wall, and a caption that
+         appears only on the ad slides is worse than none. It lives inside #tvCorner, which
+         enterAds hides anyway, so this is belt and braces. */
+      if(venueLogoUrl){ var nt=document.getElementById("venueNameTag"); if(nt) nt.style.display="none"; }
+    }catch(e){}
+  }
   var GAME_LABELS={bingo:"Bingo","members-draw":"Members Draw",members_draw:"Members Draw",raffle:"Raffle",trivia:"Trivia","musical-bingo":"Musical Bingo",musical_bingo:"Musical Bingo"};
   function gameLabel(k){
     if(GAME_LABELS[k]) return GAME_LABELS[k];
@@ -1234,6 +1328,7 @@
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
+    applyVenueLogo();
     try{ sessionStorage.setItem("vpTvHop", VENUE_SLUG); }catch(e){}   // shared with the iframe, so the game screen never bounces to /tv
     var f=document.getElementById("gameFrame");
     // No .html: Pages 308s it, and the iframe was paying a redirect before the
@@ -1308,6 +1403,7 @@
     if(hostConnected) hidePairPanel(); else showPairPanel();
     adBuilt=false;   // rebuild from the latest loaded slides so the ads always come back (never black)
     startAds();
+    applyVenueLogo();   // the venue's logo comes off its own advertising
     if(reloadWhenIdle){
       /* Re-check when it FIRES, not when it was scheduled. A round starting inside these four
          seconds (bingo New game, the next raffle prize) would otherwise be reloaded through,
@@ -1327,6 +1423,7 @@
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
     $("pairPanel").classList.add("hidden");
+    applyVenueLogo();
     applyBingo();
   }
   // "Starting <game>..." is a HANDOVER card, never a resting state. It used to have no way out:
@@ -1373,6 +1470,7 @@
     $("holdGame").textContent=gameLabel(mode);
     showBingoLayer("tvHold");
     cancelHolding();
+    applyVenueLogo();
     holdT=setTimeout(function(){ if(tvMode==="holding") enterAds(); }, HOLD_MAX_MS);
   }
 
@@ -1712,25 +1810,32 @@
   (function loadVenueScreen(){
     var slug=VENUE_SLUG; if(!slug) return;   // the already-parsed slug (handles /tv?venue= AND /tv?bare-slug AND the remembered one)
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
-    // buildAds() empties the container and recreates every slide with no "show" class, so
-    // whatever rebuilds MUST restart the rotation or the screen is left black. The old guard
-    // was !hostConnected, but hostConnected is never reset once a host has paired, so after
-    // one game night this went black and stayed black. tvMode is the real question: if ads
-    // are what is on screen, show them.
-    function refreshAds(){ if(tvMode!=="ads") { adBuilt=false; return; } adBuilt=false; buildAds(); startAds(); }
-    // Venue logo: top-left corner, over games and ads. Injected once so no HTML anchor is needed.
+    // When buildAds() DOES replace the slides it hands back a set with no "show" class on any
+    // of them, so whatever rebuilds MUST call startAds() or the screen is left black. The old
+    // guard was !hostConnected, but hostConnected is never reset once a host has paired, so
+    // after one game night this went black and stayed black. tvMode is the real question: if
+    // ads are what is on screen, show them.
+    /* The venue-screen poll lands here every time it answers, almost always with exactly the
+       same slides. buildAds() compares before it touches anything, so an unchanged answer now
+       costs nothing on the wall; a real change swaps the new set in and starts it at the top. */
+    function refreshAds(){ if(tvMode!=="ads") { adBuilt=false; return; } buildAds(); startAds(); }
+    /* Venue logo: top-left corner, over the games. Injected once so no HTML anchor is needed.
+       NOT over the ads: applyVenueLogo() decides whether it is on screen, from the mode. */
     function setVenueLogo(url){
+      venueLogoUrl=String(url||"").trim();
       var el=document.getElementById("venueLogo");
-      if(!url){ if(el) el.style.display="none"; return; }
-      if(!el){ el=document.createElement("img"); el.id="venueLogo";
-        el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
-        document.body.appendChild(el); }
-      el.src=url; el.style.display="block";
-      /* A logo says which venue this is better than a caption does, so the small name
-         under the VenuePlay mark comes off once a logo is up. Without a logo the name
-         stays, because a TV pointed at the wrong venue is otherwise only noticeable by
-         its sound. One or the other, never both. */
-      var nt=document.getElementById("venueNameTag"); if(nt) nt.style.display="none";
+      if(venueLogoUrl){
+        if(!el){ el=document.createElement("img"); el.id="venueLogo";
+          el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
+          document.body.appendChild(el); }
+        el.src=venueLogoUrl;
+      }
+      /* A logo says which venue this is better than a caption does, so the small name under the
+         VenuePlay mark comes off once a venue HAS a logo. Not once the logo is on screen: the
+         logo is off for the ads, and a caption that turns up only on the ad slides is worse
+         than none. Without a logo at all the name stays, because a TV pointed at the wrong
+         venue is otherwise only noticeable by its sound. One or the other, never both. */
+      applyVenueLogo();
     }
     /* The venue's NAME in plain text, so anyone glancing at a screen can see WHICH venue it is
        showing (a TV pointed at the wrong venue is otherwise only noticeable by its sound).
@@ -1759,9 +1864,9 @@
         var corner=document.getElementById("tvCorner");
         (corner||document.getElementById("tv")||document.body).appendChild(el);
       }
-      var lg=document.getElementById("venueLogo");
-      var logoUp = !!(lg && lg.style.display !== "none" && lg.getAttribute("src"));
-      el.textContent=nm; el.style.display = logoUp ? "none" : "block";   // the logo wins
+      // The venue HAS a logo, not "the logo is on screen right now": it is off for the ads,
+      // and the caption must not reappear on an ad slide. See applyVenueLogo().
+      el.textContent=nm; el.style.display = venueLogoUrl ? "none" : "block";   // the logo wins
       var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
       if(la && lan){ lan.textContent=nm; la.style.display=""; }
     }
@@ -1811,6 +1916,18 @@
     // four hourly reload. billing.html broadcasts t:"screen_refresh" the moment it saves.
     reloadVenueScreen=function(){ try{ loadScreen(); }catch(e){} };
     loadScreen();
+    /* THE BACKSTOP FOR A SCREEN THAT MISSED THE BROADCAST.
+       The thirty second poll will do this for free the moment the Worker carries content_at
+       (see validateVenue above). Until then, and afterwards as a belt-and-braces for anything
+       the stamp does not cover, ask again on a slow timer.
+       Ten minutes, and ONLY while the ads are up, so it never runs during a game and never
+       competes with a live room for the gateway. That is one extra request per screen per ten
+       minutes, against a poll that already runs twenty times in the same window.
+       It goes through loadScreen -> refreshAds -> buildAds, which now leaves the wall alone
+       when nothing has changed and swaps in place when it has, so a screen catching up neither
+       flashes nor restarts the loop at slide one. */
+    var SCREEN_REFRESH_MS = 10*60*1000;
+    setInterval(function(){ try{ if(tvMode==="ads") loadScreen(); }catch(e){} }, SCREEN_REFRESH_MS);
   })();
 
   // An always-on venue TV must flip "Tonight" when the day rolls over. buildAds() bakes the board once,
@@ -1819,7 +1936,7 @@
     var day=todayAU();
     setInterval(function(){
       var d=todayAU();
-      if(d!==day){ day=d; if(tvMode==="ads"){ adBuilt=false; buildAds(); startAds(); } }
+      if(d!==day){ day=d; if(tvMode==="ads"){ buildAds(); startAds(); } }   // the draws board bakes "Tonight", so the signature really has changed
     }, 60000);
   })();
 
@@ -1945,7 +2062,10 @@
            so skip the repair and start clean. */
         if(gameLooksFrozen()){ reload("frozen-game"); return; }
         if(strikes === 2){                      // cheap repair first: rebuild in place
-          try{ adBuilt = false; buildAds(); startAds(); }catch(e){}
+          // FORCED. Everything else that rebuilds skips the work when the content has not
+          // changed, which is right for them and wrong here: this one is called precisely
+          // because the slides on screen cannot be trusted, changed or not.
+          try{ adBuilt = false; buildAds(true); startAds(); }catch(e){}
           return;
         }
         reload("black-screen");                 // the repair did not take, so start clean
@@ -1954,10 +2074,14 @@
       }
     }, CHECK_MS);
 
-    // Waking from sleep leaves a stale frame on screen.
+    /* Waking from sleep can leave a stale frame on screen, so the rotation is nudged. It is
+       NOT a reason to throw the slides away and start again at the top: this fired on every
+       tab switch, rebuilt byte-identical slides, flashed the wall through an empty container
+       and dropped the loop back to slide one. buildAds() now leaves the wall alone when
+       nothing has changed, and startAds() carries on from the slide that is lit. */
     document.addEventListener("visibilitychange", function(){
       if(document.visibilityState !== "visible" || !idle()) return;
-      try{ adBuilt = false; buildAds(); startAds(); }catch(e){ reload("wake"); }
+      try{ buildAds(); startAds(); }catch(e){ reload("wake"); }
     });
 
     // An uncaught error can stop the rotation with the last slide still lit, which looks alive to

@@ -155,8 +155,24 @@
     letter-spacing:.14em;text-transform:uppercase;color:#9A9AA4;z-index:4}
 
   /* The venue's own logo, pulled from their screen settings so they never upload it twice.
-     Sits above the name; the sign is theirs, we are the small mark at the bottom. */
-  .sign .vlogo{max-height:14cqh;max-width:52cqw;object-fit:contain;margin:0 auto .6cqh;display:block}
+     Sits above the name; the sign is theirs, we are the small mark at the bottom.
+
+     The logo gets a SLOT of a fixed height rather than a max-height, and the picture is fitted
+     inside it. A max-height sizes the box from the picture, and a picture that has not downloaded
+     yet is nothing at all: the sign was measured and fitted around a logo of zero height, the logo
+     then arrived at full size and shoved the name, the headline and the code into each other and
+     into the VenuePlay mark at the foot. The slot is the same height before and after the picture
+     lands, so what was measured is what prints. A tall narrow logo is fitted to the slot height, a
+     wide short one to the slot width, and neither can push anything else.
+
+     display:block beat the browser's own [hidden] rule, so a venue with NO logo still had an empty
+     block and its margin sitting above the name. The [hidden] line below puts that back. */
+  .sign .vlogo{height:14cqh;width:auto;max-width:52cqw;object-fit:contain;object-position:center bottom;
+    margin:0 auto .6cqh;display:block}
+  .sign .vlogo[hidden]{display:none}
+  /* The tent face reads left aligned and the QR already owns a column, so the logo is narrower
+     there and sits over the words rather than over the middle of the paper. */
+  .sign.wide .vlogo{max-width:30cqw;object-position:left bottom;margin:0 0 .6cqh}
 
   /* ---- print ---- */
   /* The page margin was already zeroed, so the second sheet was NOT the margin. It was
@@ -333,6 +349,9 @@
   // solve for the --u that fills the sign without spilling. That matters because the venue name
   // and the venue's own bottom line are free text: "The Kurrawa Surf Life Saving Supporters Club"
   // has to fit the same A6 card as "The Pub".
+  /* venueplay/signage-logo.test.js reads the block between these two markers straight out of this
+     file and runs it against a fake sign, so the maths it tests is the maths that prints. */
+  // VP-SIGN-FIT-START
   function px(v){ return parseFloat(v)||0; }
   function textWidth(el){
     if(!el) return 0;
@@ -352,10 +371,14 @@
     // Measured with a Range, NOT scrollWidth: on the tent the headline sits in a 1fr grid track,
     // so its box is the full track width and scrollWidth would report the track, not the words.
     var h2=el.querySelector("h2"), wH=textWidth(h2);
+    // The logo was never in the width sum, so a wide logo could sit past the edge of the paper and
+    // get sliced by the overflow. Its height is already inside hH, because it lives in .head.
+    var lg=el.querySelector(".vlogo");
+    var wL=(lg && !lg.hidden) ? lg.getBoundingClientRect().width : 0;
     if(el.classList.contains("wide")){
-      return { h: padY + Math.max(hQ, hH+gapY+hT), w: padX + wQ + gapX + Math.max(wH, u*16) };
+      return { h: padY + Math.max(hQ, hH+gapY+hT), w: padX + wQ + gapX + Math.max(wH, u*16, wL) };
     }
-    return { h: padY + hH + gapY + hQ + gapY + hT, w: padX + Math.max(wQ, wH) };
+    return { h: padY + hH + gapY + hQ + gapY + hT, w: padX + Math.max(wQ, wH, wL) };
   }
   // Binary search rather than a fixed-point iteration: a smaller --u also narrows the sign, so
   // text can rewrap onto an extra line and make the content TALLER. That is not monotone enough
@@ -375,6 +398,7 @@
     // under-filled on paper, where a container-relative one scales to whatever it lands on.
     el.style.setProperty("--u", (lo/box.height*100*0.985).toFixed(4)+"cqh");
   }
+  // VP-SIGN-FIT-END
 
   /* Mark the last sheet that is actually going to print, so nothing forces a blank page after
      it. Runs on every render and again on beforeprint, which covers Ctrl+P as well as our button. */
@@ -387,7 +411,37 @@
     }
     if(last) last.classList.add("is-last");
   }
-  window.addEventListener("beforeprint", markLastSheet);
+  function refitAll(){
+    var signs=document.querySelectorAll("[data-sign]");
+    for(var i=0;i<signs.length;i++) fitSign(signs[i]);
+  }
+  /* A logo arrives from the network long after the sign has been drawn and fitted. Fit it again the
+     moment the picture is really there, and again if it never turns up, so the sign on the paper is
+     the sign that was measured. Wired once per image: render() runs on every keystroke. */
+  function watchLogo(img){
+    if(img.getAttribute("data-fitwired")) return;
+    img.setAttribute("data-fitwired","1");
+    img.addEventListener("load", refitAll);
+    img.addEventListener("error", function(){ img.hidden=true; img.removeAttribute("src"); refitAll(); });
+  }
+  /* Do not open the print dialog while a logo is still on its way: whatever has not painted is not
+     on the paper. Capped, because a logo that never answers must not hold the print button hostage. */
+  function logosReady(){
+    var imgs=document.querySelectorAll("[data-logo]"), pending=[], i;
+    for(i=0;i<imgs.length;i++){ if(imgs[i].getAttribute("src") && !imgs[i].complete) pending.push(imgs[i]); }
+    if(!pending.length) return Promise.resolve();
+    return new Promise(function(done){
+      var left=pending.length, timer=setTimeout(finish, 2500), fired=false;
+      function finish(){ if(fired) return; fired=true; clearTimeout(timer); done(); }
+      function one(){ if(--left<=0) finish(); }
+      pending.forEach(function(im){
+        im.addEventListener("load", one, { once:true });
+        im.addEventListener("error", one, { once:true });
+      });
+    });
+  }
+  // Ctrl+P skips our button, so the fit is redone here as well.
+  window.addEventListener("beforeprint", function(){ markLastSheet(); refitAll(); });
   function render(){
     var slug=state.slug;
     var code=slug ? venueCode(slug) : "------";
@@ -402,7 +456,12 @@
       var nl=s.querySelector("[data-no]");
       if(nl) nl.textContent = state.line || "No app. No account. Just your phone.";
       var lg=s.querySelector("[data-logo]");
-      if(lg){ if(state.logo){ lg.src=state.logo; lg.hidden=false; } else { lg.removeAttribute("src"); lg.hidden=true; } }
+      // Only touch src when it has actually changed: setting it again restarts the download and
+      // the load event, and render() runs on every keystroke in the venue name box.
+      if(lg){
+        if(state.logo){ watchLogo(lg); if(lg.getAttribute("src")!==state.logo) lg.setAttribute("src", state.logo); lg.hidden=false; }
+        else { lg.removeAttribute("src"); lg.hidden=true; }
+      }
       s.querySelector("[data-code]").textContent=code;
       var w=s.querySelector("[data-whats]");
       if(state.whats){ w.textContent=state.whats; w.hidden=false; } else { w.textContent=""; w.hidden=true; }
@@ -484,7 +543,10 @@
       .catch(function(){ setStatus("Could not check right now. The sign is still correct if your venue link matches your screen link.", "warn"); });
   }
   $("checkBtn").addEventListener("click", check);
-  $("printBtn").addEventListener("click", function(){ render(); setTimeout(function(){ window.print(); }, 60); });
+  $("printBtn").addEventListener("click", function(){
+    render();
+    logosReady().then(function(){ refitAll(); setTimeout(function(){ window.print(); }, 60); });
+  });
 
   // ---- open with ?venue=<slug> (the account page links straight here) ----
   (function init(){

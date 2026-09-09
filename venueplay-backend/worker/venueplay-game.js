@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '9 Sep 2026, 18:10 · 9d7b4457';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Sep 2026, 07:08 · f39b940b';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -526,6 +526,8 @@ async function handleHealth(env, json) {
    Three HEAD requests with count=exact answer the same three numbers in one
    round trip each, whatever the table size. venue_id is the signing table's
    primary key, so its row count IS the number of venues holding a key. */
+let oneTrip = null;
+  try { oneTrip = await oneTripPresent(env); } catch (e) { oneTrip = null; }
 let signing = null;
 try {
   const [venues, withKey, enforcing] = await Promise.all([
@@ -545,6 +547,7 @@ try {
     rateLimiter: 'memory',   // per isolate since 8 Sep 2026; no store on the request path
     joinDedupCache: rl,
     room: !!env.ROOM,        // the room server binding: a boolean, never a value
+    one_trip: oneTrip,       // which of migrations 71/72/73 this database really has
     broadcast_signing: signing,
     venue_code_clashes: clashes.length,
     venue_code_clash_detail: clashes.length ? clashes.slice(0, 5) : undefined,
@@ -6691,6 +6694,48 @@ async function sbDelete(env, table, filter) {
 
 // Call a Postgres function over PostgREST RPC with the service_role headers.
 // Used for the atomic vp_emit_event and vp_draw_next_ball (M2/M3).
+/* ARE THE ONE-TRIP DATABASE FUNCTIONS ACTUALLY ON THIS DATABASE?
+ *
+ * Migrations 71, 72 and 73 replace a handful of round trips with one, and the Worker
+ * falls back to the slow path on a PostgREST 404, which is what makes pasting them
+ * safe in any order. The cost of that safety is that nothing tells you whether they
+ * landed: the venue simply stays slow and nobody knows why.
+ *
+ * It cannot be asked from outside either. PostgREST answers a function the caller may
+ * not execute with the SAME "could not find the function" 404 it gives a name that was
+ * never there, so a probe with the public key reports every function as missing,
+ * including vp_emit_event, which every join in the country depends on. Checked on
+ * 10 Sep 2026: a known-present function and a made-up one were indistinguishable.
+ *
+ * So the Worker asks, with the service key, on a route that already exists. Each one is
+ * called with arguments that cannot match anything real, so the answer is about the
+ * FUNCTION and never about a venue. Cached for five minutes, because /health is public
+ * and this is three round trips.
+ */
+const ONE_TRIP_FNS = ['vp_player_answer', 'vp_screen_poll', 'vp_host_staff', 'vp_host_question', 'vp_host_reveal'];
+let _otAt = 0, _otSeen = null;
+async function oneTripPresent(env) {
+  const now = Date.now();
+  if (_otSeen && now - _otAt < 300000) return _otSeen;
+  const out = {};
+  try {
+    /* PostgREST publishes its own OpenAPI description at the root, and every function the
+       caller may execute appears in it as an /rpc/<name> path. One request answers all five,
+       and it cannot be fooled the way calling the function can: a call with the wrong
+       ARGUMENT NAMES answers PGRST202 "could not find the function" exactly as a missing
+       function does, so the first version of this check reported all three as absent on a
+       database that demonstrably has them. */
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/', { headers: sbHeaders(env) });
+    if (!res.ok) throw new Error('spec ' + res.status);
+    const spec = await res.text();
+    ONE_TRIP_FNS.forEach(function (fn) { out[fn] = spec.indexOf('/rpc/' + fn) >= 0; });
+  } catch (e) {
+    ONE_TRIP_FNS.forEach(function (fn) { out[fn] = null; });   // could not tell: never call an unknown present
+  }
+  _otSeen = out; _otAt = now;
+  return out;
+}
+
 async function sbRpc(env, fn, args) {
   const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/' + fn, {
     method: 'POST', headers: sbHeaders(env), body: JSON.stringify(args),

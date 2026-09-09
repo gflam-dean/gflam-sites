@@ -57,6 +57,10 @@ function stopCelebrate(){} function cancelHolding(){ holdT = null; }
 function cancelEmbedWatch(){} function hideGameFrame(){} function hideBingoLayers(){}
 function hidePairPanel(){} function showPairPanel(){} function stopAds(){}
 function showBingoLayer(){} function gameLabel(m){ return String(m||""); }
+/* The mode switches tell the venue logo which state the wall is in (it comes off the
+   ads and goes back for everything else). Stubbed here; tv-logo.test.js is the suite
+   that checks what it actually does. */
+function applyVenueLogo(){}
 var adsStarted = 0;
 function startAds(){ adsStarted++; }
 function setTimeout_(fn, ms){ timers.push({fn:fn, ms:ms}); return timers.length; }

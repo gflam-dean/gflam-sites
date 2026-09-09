@@ -491,14 +491,20 @@ def local_checks(which):
     They are run from ROOT because each one reads the page or the library it is
     about, rather than a copy of it, and resolves those paths from here."""
     vp_suites = []
-    # Both trees, swept. one-game.test.js used to be named here on its own, and the
-    # slug ladder suite written next to it would have run nowhere.
-    for base in (os.path.join(ROOT, 'venueplay', 'app'),
-                 os.path.join(ROOT, 'venueplay-backend', 'worker')):
+    # EVERY .test.js under venueplay/ and venueplay-backend/, not two named folders.
+    # This swept venueplay/app and venueplay-backend/worker only, so a suite written
+    # beside the page it tests ran nowhere: on 10 Sep 2026 a new suite for
+    # venueplay/signage.html sat at venueplay/ level and was silently never run. A
+    # test that does not run is the same as no test, except that nobody knows.
+    for base in (os.path.join(ROOT, 'venueplay'),
+                 os.path.join(ROOT, 'venueplay-backend')):
         for d, _, fs in os.walk(base):
+            if os.sep + 'node_modules' in d or os.sep + '.git' in d:
+                continue
             for f in sorted(fs):
                 if f.endswith('.test.js'):
                     vp_suites.append(os.path.join(d, f))
+    vp_suites = sorted(set(vp_suites))
     for t in vp_suites:
         r = subprocess.run([JSC, t], capture_output=True, text=True, cwd=ROOT)
         out = (r.stdout + r.stderr).strip().splitlines()

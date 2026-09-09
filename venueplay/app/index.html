@@ -119,6 +119,9 @@
   .lbval{font-family:'Anton',sans-serif;font-size:54px;color:#fff;line-height:1;margin:6px 0}
   .prevballs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
   .prevball{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:6px;padding:3px 9px}
+  /* An empty slot still takes up its room, so the strip is its full height from ball one and
+     the Next number button never moves under the host's finger. See renderLive(). */
+  .prevball.ghost{visibility:hidden}
   .prizeline2{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-align:center;margin:0 0 14px}
   .prizeline2 b{color:var(--gold)}
 
@@ -332,7 +335,10 @@
 
     <!-- bingo console -->
     <div id="bingoView" class="console hidden">
-      <div id="coach" style="grid-column:1/-1;margin:0 0 4px;padding:11px 15px;background:rgba(255,31,142,.08);border:1px solid rgba(255,31,142,.28);border-radius:12px;color:var(--text);font-size:13.5px;line-height:1.5"></div>
+      <!-- min-height is two lines of this text. The coach line rewrites itself as the game moves
+           on, and it sits above the whole console, so a message that grew from one line to two
+           used to push the Next number button down the screen between taps. -->
+      <div id="coach" style="grid-column:1/-1;margin:0 0 4px;padding:11px 15px;background:rgba(255,31,142,.08);border:1px solid rgba(255,31,142,.28);border-radius:12px;color:var(--text);font-size:13.5px;line-height:1.5;min-height:65px"></div>
       <div id="overBanner" style="grid-column:1/-1;display:none;margin:0 0 4px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px"></div>
       <!-- left: run -->
       <div class="panel">
@@ -1278,10 +1284,19 @@
      going up, or {local:true} when the console should draw the ball itself. Never rejects. */
   function serverBall(){
     if(G.drawMode!=="server" || !(window.VP && VP.gameApiCall)) return Promise.resolve({ local:true });
+    /* ONE BUDGET FOR THE WHOLE TAP, NOT ONE PER ROUND TRIP.
+       The FIRST ball of a game waits on two: the draw being opened, then the ball itself. Each
+       had its own four second timeout, so a host who tapped Start calling the moment the game
+       opened could sit on a dead-looking "Calling..." button for eight seconds with the room
+       watching. The rule this route was written to is that a room never waits on a server for
+       longer than DRAW_CALL_MS, so the open gets what is left of that and the ball gets the
+       rest, with a floor so a nearly spent budget does not throw away a request about to land. */
+    var deadline=Date.now()+DRAW_CALL_MS;
     var open=G.drawOpening || Promise.resolve();
     return open.then(function(){
       if(G.drawMode!=="server" || !G.drawId) return { local:true };
-      return VP.gameApiCall("/host/bingo/ball", { draw_id:G.drawId }, DRAW_CALL_MS).then(function(r){
+      var left=Math.max(1200, deadline-Date.now());
+      return VP.gameApiCall("/host/bingo/ball", { draw_id:G.drawId }, left).then(function(r){
         var j=r && r.json;
         if(r && r.status===200 && j && j.number>=1 && j.number<=90) return { number:j.number };
         if(r && r.status===429) return { wait:(j && j.error) || "Wait a moment, then call again." };
@@ -1518,15 +1533,32 @@
   // choice back to the default, and "Keep playing" then ran a pattern the host had
   // not picked. The same rebuild swaps Confirm out from under a finger mid-tap.
   // A join only changes counts and the chip list, so that is all it may touch.
+  /* THE OVER-PLAN BANNER, WRITTEN ONCE, AND IT NEVER MOVES A LIVE BUTTON.
+     Two copies of this used to sit a few lines apart, and both of them could drop a 46px
+     banner in above the whole console while a game was running: a player scanning in on ball
+     forty pushed the Next number button down the screen between taps. So while a game is
+     running the banner is left exactly as it is. Nothing is lost by that. The host has already
+     been asked to approve going over the plan at Start, the extra players are counted by the
+     server either way, and if the room crosses the cap mid-game they get a toast, which floats
+     over the page and moves nothing. The banner picks the change up at the next game boundary,
+     when nobody is about to tap. */
+  var _overToldLive=false;
+  function renderOverBanner(){
+    var el=$("overBanner"); if(!el) return;
+    var cap=playerCap(), cnt=playerCount(), over=(cap>0 && cnt>cap);
+    if(G.status==="running"){
+      if(over && !_overToldLive){ _overToldLive=true; showToast(cnt+" players in, "+(cnt-cap)+" over your plan."); }
+      return;
+    }
+    _overToldLive=over;   // already over when the game starts: no toast, they have seen it
+    if(over) el.innerHTML="Heads up: <b>"+cnt+"</b> players in, <b>"+(cnt-cap)+"</b> over the <b>"+cap+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be added to this month's bill when you start.");
+    el.style.display = over ? "" : "none";
+  }
   function renderJoinCounts(){
     var _sp=$("setupPlayers"); if(_sp) _sp.textContent=playerCount();
     var _pc=$("playerCount");  if(_pc) _pc.textContent=playerCount();
     var _lp=$("livePlayers");  if(_lp) _lp.textContent=playerCount();
-    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
-    if(_ob){
-      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be added to this month's bill when you start."); }
-      else _ob.style.display="none";
-    }
+    renderOverBanner();
     renderPlayers();
   }
   function renderConsole(){
@@ -1540,11 +1572,7 @@
       ? "Players are scanning in on their phones. Start calling numbers when you are ready."
       : "Puts the join screen on the TV so players can scan in. You start calling numbers when you are ready.";
     $("setupPlayers").textContent=playerCount();
-    var _ob=$("overBanner"), _oc=playerCap(), _op=playerCount();
-    if(_ob){
-      if(_oc>0 && _op>_oc){ _ob.style.display=""; _ob.innerHTML="Heads up: <b>"+_op+"</b> players in, <b>"+(_op-_oc)+"</b> over the <b>"+_oc+"</b> your plan includes. "+(inFirstMonth()?"Your first month is free, so no charge this time.":"The extra will be added to this month's bill when you start."); }
-      else _ob.style.display="none";
-    }
+    renderOverBanner();
     $("setupCode").textContent=G.code;
     $("playerCount").textContent=playerCount();
     renderPlayers();
@@ -1589,8 +1617,24 @@
       : "Your tab has run a bit long. Settle up on your account page and we will get your games going again.");
     return true;
   }
+  /* A NEW GAME STARTS WITH A LIVE BUTTON, ALWAYS.
+     Two things could leave Next number dead and silent across a game boundary, and both looked
+     to the host like a lag somebody had put there on purpose.
+       1. The five second hold that runs after every ball is keyed to the BUTTON, not to the
+          game. A host who ended a game inside those five seconds met the last game's countdown
+          on the next one: the button read "Next number in 3s" and a tap did nothing.
+       2. G.calling stays true until a ball request that was still in flight comes back, which
+          is up to four seconds, and nextBall returns on it without saying a word.
+     Neither belongs to the game about to be played, so both are cleared at every boundary.
+     G.gen already makes sure a late reply for the old game is thrown away.
+     Dean, live at The Mini Bar, 10 Sep 2026: "you cant call numbers straight away". */
+  function clearCallGuards(){
+    G.calling=false;
+    try{ if(window.VP_HOLD) VP_HOLD.release($("nextBtn")); }catch(e){}
+  }
   function openLobby(){
     if(blockedByHold()) return;
+    clearCallGuards();
     G.pattern=$("patternSel").value;
     var _p=requirePrize(); if(_p===null) return;
     G.prize=_p;
@@ -1630,7 +1674,32 @@
       }).catch(function(){});
     }catch(e){}
   }
+  /* THE NUMBER THE BILL IS WORKED OUT FROM, ASKED OF THE SERVER.
+     The end-of-night card used to show Math.max(G.peak, G.order.length), which is only what
+     THIS tablet heard on the broadcast channel: a phone that joined while the tablet was
+     locked, or through a wifi blip, was never counted in it. The bill is not worked out from
+     that number. The Worker counts vp_players for the session and dedupes by device_id, so one
+     phone is one player however many times it rejoined, and for broadcast bingo that IS the
+     figure chargeNightOverage bills (playerIdsWhoPlayed returns null for a format that writes
+     no vp_cards, so countPlayersWhoPlayed falls back to exactly this count).
+     GET /snapshot is public and hands it over as player_count. It is the same route the trivia,
+     musical and raffle consoles already recover themselves from, so nothing new is needed on
+     the Worker and this works against the one that is live right now.
+     Resolves to null on anything at all going wrong, and the card then keeps the tablet's own
+     number AND the line that says so. A figure is never shown as the billed one unless it came
+     from the server. */
+  function serverPlayerCount(sessionId){
+    if(!sessionId) return Promise.resolve(null);
+    var ctrl=(typeof AbortController==="function") ? new AbortController() : null;
+    var timer=setTimeout(function(){ if(ctrl) ctrl.abort(); }, 6000);
+    return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(sessionId), { signal: ctrl?ctrl.signal:undefined })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){ clearTimeout(timer); var n=j && j.player_count;
+        return (typeof n==="number" && isFinite(n) && n>=0) ? n : null; })
+      .catch(function(){ clearTimeout(timer); return null; });
+  }
   function cancelLobby(){
+    clearCallGuards();
     G.status="setup";
     send({ t:"idle" });                  // TV back to the advertising loop
     sendState();
@@ -1678,8 +1747,16 @@
     $("livePattern").textContent=PATTERN_NAMES[G.pattern];
     $("livePlayers").textContent=playerCount();
     $("lastBallVal").textContent = G.idx>=0 ? G.draw[G.idx] : "–";
+    /* THE STRIP HOLDS ITS FULL HEIGHT FROM BALL ONE.
+       It used to be empty on the first ball and one row tall on the second, so the prize line
+       and the Next number button dropped down the screen the moment the second number landed.
+       A host tapping where that button WAS is a mis-tap in a live room, and there is no undo on
+       a called ball. Both slots are always rendered now and an empty one is simply invisible,
+       which also stops the visible chips sliding sideways as the second one arrives.
+       Reported live at The Mini Bar, 10 Sep 2026. */
     var pv=$("livePrev"); pv.innerHTML="";
-    for(var i=1;i<=2;i++){ var pi=G.idx-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=G.draw[pi]; pv.appendChild(d); } }
+    for(var i=1;i<=2;i++){ var pi=G.idx-i, have=pi>=0, d=document.createElement("div");
+      d.className=have?"prevball":"prevball ghost"; d.textContent=have?G.draw[pi]:"00"; pv.appendChild(d); }
     $("prizeLine2").innerHTML="Playing for <b>"+esc(G.prize)+"</b>";
     renderClaimQueue();
   }
@@ -1824,6 +1901,7 @@
     if(blockedByHold()) return;
     var _cnt=playerCount(), _cap=playerCap();
     if(_cap>0 && _cnt>_cap && !inFirstMonth() && !overageAcked){ showOverage(_cnt, _cap, startGame); return; }
+    clearCallGuards();
     G.pattern=$("patternSel").value;
     var _p=requirePrize(); if(_p===null) return;
     G.prize=_p;
@@ -1870,6 +1948,7 @@
     $("ngCancel").onclick=function(){ m.classList.add("hidden"); };
   }
   function newGame(){
+    clearCallGuards();
     postReport();   // report the round just finished before a fresh one begins
     /* Consent does not carry into the next game, because the charge does not either. The room can
        grow between games and each one is billed on its own, so each one is asked on its own. */
@@ -1889,6 +1968,7 @@
     renderConsole();
   }
   function endGame(){
+    clearCallGuards();
     postReport();   // send this game's figures to the backend before returning to ads
     /* Closing the session is what meters and bills the night: chargeNightOverage counts the
        vp_players rows against the plan cap frozen at kick-off. Same path every other format
@@ -1898,6 +1978,8 @@
         VP.gameApiPost("/session/close", { session_id: G.sessionId }).catch(function(){});
       }
     }catch(e){}
+    // The night card asks the server for the real headcount, so keep the id past this line.
+    var _sid=G.sessionId;
     G.sessionId=null; G.joinCode=null;
       /* AND THE CONSENT GOES WITH THE SESSION.
 
@@ -1918,17 +2000,24 @@
     sendState();
     saveGame();   // status is now "setup", so this clears the saved game for this code
     renderConsole();
-    showNightCard();
+    showNightCard(_sid);
   }
   /* One card, after End game: players, games, prizes. Before this the tap posted the report and
      put the menu back with nothing said, so the host (and a manager reading over their shoulder)
-     never saw "Tonight: 42 players, 3 games". Built only from what this tablet saw. */
-  function showNightCard(){
+     never saw "Tonight: 42 players, 3 games".
+
+     PLAYERS JOINED IS THE SERVER'S NUMBER NOW. It was the tablet's own count with a line under
+     it saying the bill used a different one, which is a card that answers the question and then
+     takes the answer back. Dean, 10 Sep 2026: "If these numbers are accurate you can get rid of
+     the billing thing." They are, so it is gone: see serverPlayerCount above for why this is the
+     same figure the overage is billed on. The tablet's count is still what goes up first, and it
+     stays, with its line, if the server cannot be reached. */
+  function showNightCard(sessionId){
     var m=$("nightModal"); if(!m) return;
     var players=Math.max(NIGHT.peak||0, G.peak||0, G.order.length), games=NIGHT.games||0, prizes=NIGHT.prizes||[];
     if(!games && !players){ return; }   // a lobby that never started: nothing to report
     $("nightStats").innerHTML=
-      '<div class="box"><div class="k">Players joined</div><div class="v g">'+players+'</div></div>'+
+      '<div class="box"><div class="k">Players joined</div><div class="v g" id="nightPlayers">'+players+'</div></div>'+
       '<div class="box"><div class="k">Games run</div><div class="v">'+games+'</div></div>'+
       '<div class="box"><div class="k">Prizes given</div><div class="v">'+prizes.length+'</div></div>';
     var h="";
@@ -1942,10 +2031,18 @@
     } else {
       h+='<div style="color:var(--muted)">No prizes were recorded tonight.</div>';
     }
-    h+='<div style="font-size:12px;color:var(--faint);margin-top:12px">Counted on this tablet. Extra players over your plan are worked out on the bill from the server count.</div>';
+    h+='<div id="nightCounted" style="font-size:12px;color:var(--faint);margin-top:12px">Counted on this tablet. Extra players over your plan are worked out on the bill from the server count.</div>';
     $("nightPrizes").innerHTML=h;
     m.classList.remove("hidden");
     $("nightDone").onclick=function(){ m.classList.add("hidden"); };
+    /* Up straight away on the tablet's figure, then the server's the moment it lands, which is
+       usually well inside a second. Nothing is held up waiting for it. If it never lands the
+       tablet number stays and so does the line explaining it. */
+    serverPlayerCount(sessionId).then(function(n){
+      if(n==null) return;
+      var pv=$("nightPlayers"); if(pv) pv.textContent=n;
+      var nc=$("nightCounted"); if(nc && nc.parentNode) nc.parentNode.removeChild(nc);
+    });
     nightReset();
   }
   var BALL_HOLD_SECONDS=5;

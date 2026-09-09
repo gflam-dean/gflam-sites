@@ -177,9 +177,23 @@
   .msg.err{color:#ff6b6b;border-color:rgba(255,107,107,.55)}
   .msg.ok{color:var(--win);border-color:rgba(53,208,127,.55)}
   .muted{color:var(--muted)}
-  .hostvenues{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 2px}
-  .hostchk{display:inline-flex;align-items:center;gap:7px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;cursor:pointer}
-  .hostchk input{accent-color:var(--pink);width:16px;height:16px}
+  /* Adding a person asks two different questions, "which venues can they run" and "what are they
+     allowed to do", and both used to be a loose wrap of tiny ticks under one grey word. They wrapped
+     into ragged part-rows on a phone and nothing told you what you had ticked. Each question is its
+     own block now, the ticks are full-width rows a fingertip can hit, and a line underneath says in
+     plain English what the ticks add up to. */
+  .hostvenues{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:4px 0 2px}
+  .hostchk{display:flex;align-items:center;gap:10px;min-height:44px;background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;line-height:1.3;cursor:pointer}
+  .hostchk span{min-width:0;overflow-wrap:anywhere}
+  .hostchk input{accent-color:var(--pink);width:18px;height:18px;flex:0 0 auto}
+  .hostchk.on{border-color:rgba(255,31,142,.5);background:rgba(255,31,142,.07)}
+  .hostchk:has(input:checked){border-color:rgba(255,31,142,.5);background:rgba(255,31,142,.07)}
+  .qgroup{background:var(--ink-3);border:1px solid var(--line-2);border-radius:14px;padding:13px 14px;margin-top:2px}
+  .qhead{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;color:#fff;letter-spacing:.01em}
+  .qhint{color:var(--muted);font-size:12.5px;margin:3px 0 9px;line-height:1.45}
+  .qfixed{font-size:13.5px;color:var(--text);margin:0;line-height:1.5}
+  .qsum{font-size:12.5px;color:var(--text);margin:9px 0 0;line-height:1.45}
+  .qsum.none{color:var(--roll)}
   .hostrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0}
   .hostrow .hn{flex:1 1 150px;min-width:0}
   .hostrow .hn b{display:block;font-size:15px;color:#fff}
@@ -289,8 +303,17 @@
         <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="host-mobile">Mobile</label>
           <input type="tel" id="host-mobile" placeholder="0400 000 000" autocomplete="tel"></div>
       </div>
-      <label class="flabel" style="margin-top:2px">Venues they can run</label>
-      <div class="hostvenues" id="host-venues"></div>
+      <div class="qgroup" id="host-q-venues">
+        <div class="qhead">Which venues can they run?</div>
+        <p class="qhint" id="host-venues-hint">Tick every venue this person hosts at. You can change it later with Edit venues.</p>
+        <p class="qfixed" id="host-venues-only" style="display:none"></p>
+        <div class="hostvenues" id="host-venues"></div>
+        <p class="qsum" id="host-venues-sum"></p>
+      </div>
+      <div class="qgroup">
+        <div class="qhead">What they can do</div>
+        <p class="qfixed">A host runs the games on the night, and that is all. Billing, settings, your members list and player exports stay with you.</p>
+      </div>
       <button class="go" id="host-go" style="align-self:flex-start">Add host</button>
     </div>
 
@@ -306,14 +329,23 @@
           <div class="ffield" style="flex:1 1 140px"><label class="flabel" for="mgr-mobile">Mobile</label>
             <input type="tel" id="mgr-mobile" placeholder="0400 000 000" autocomplete="tel"></div>
         </div>
-        <label class="flabel" style="margin-top:2px">Venues they manage</label>
-        <div class="hostvenues" id="mgr-venues"></div>
-        <label class="flabel" style="margin-top:8px">What they can do</label>
-        <div class="hostvenues" id="mgr-perms">
-          <label class="hostchk"><input type="checkbox" class="mgr-p" value="advertising" checked><span>Advertising</span></label>
-          <label class="hostchk"><input type="checkbox" class="mgr-p" value="draws_raffles" checked><span>Draws &amp; raffles</span></label>
-          <label class="hostchk"><input type="checkbox" class="mgr-p" value="players_optin" checked><span>Players &amp; opt-in export</span></label>
-          <label class="hostchk"><input type="checkbox" class="mgr-p" value="add_hosts" checked><span>Add hosts</span></label>
+        <div class="qgroup" id="mgr-q-venues">
+          <div class="qhead">Which venues do they manage?</div>
+          <p class="qhint" id="mgr-venues-hint">Tick every venue this manager looks after. You can change it later with Edit venues.</p>
+          <p class="qfixed" id="mgr-venues-only" style="display:none"></p>
+          <div class="hostvenues" id="mgr-venues"></div>
+          <p class="qsum" id="mgr-venues-sum"></p>
+        </div>
+        <div class="qgroup">
+          <div class="qhead">What are they allowed to do?</div>
+          <p class="qhint">On the venues you ticked above. Billing and the player-data rules always stay with you.</p>
+          <div class="hostvenues" id="mgr-perms">
+            <label class="hostchk"><input type="checkbox" class="mgr-p" value="advertising" checked><span>Advertising</span></label>
+            <label class="hostchk"><input type="checkbox" class="mgr-p" value="draws_raffles" checked><span>Draws &amp; raffles</span></label>
+            <label class="hostchk"><input type="checkbox" class="mgr-p" value="players_optin" checked><span>Players &amp; opt-in export</span></label>
+            <label class="hostchk"><input type="checkbox" class="mgr-p" value="add_hosts" checked><span>Add hosts</span></label>
+          </div>
+          <p class="qsum" id="mgr-perms-sum"></p>
         </div>
         <button class="go" id="mgr-go" style="align-self:flex-start;margin-top:8px">Add manager</button>
       </div>
@@ -976,6 +1008,8 @@
       l.innerHTML = '<input type="checkbox" class="ve-v" value="'+esc(v.id)+'"'+(have[v.id]?" checked":"")+'><span>'+esc(v.name)+'</span>';
       checks.appendChild(l);
     });
+    vpMarkTicked(checks);
+    checks.onchange = function(){ vpMarkTicked(checks); };
     var actions = document.createElement("div"); actions.style.cssText = "display:flex;gap:10px;align-items:center;margin-top:8px";
     var save = document.createElement("button"); save.className = "go"; save.textContent = "Save venues";
     var cancel = document.createElement("button"); cancel.className = "canxlink"; cancel.type = "button"; cancel.textContent = "Cancel";
@@ -1041,33 +1075,117 @@
       wrap.appendChild(row);
     });
   }
+  /* What the ticks add up to, in words, and the exact body the page posts. Kept pure and free of the
+     DOM so venueplay/app/billing-hosts.test.js can read this very block out of this very file and run
+     it: a test that copies the logic instead is a test that goes green after the page has drifted. */
+  // VP-HOSTS-HELPERS-START
+  function vpJoinList(items){
+    if (!items.length) return "";
+    if (items.length === 1) return items[0];
+    if (items.length === 2) return items[0] + " and " + items[1];
+    return items.slice(0, items.length - 1).join(", ") + " and " + items[items.length - 1];
+  }
+  // names = the venues ticked, total = how many venues the account has, word = "run" or "manage".
+  function vpVenueSummary(names, total, word){
+    if (!names.length) return { none:true, text:"No venues ticked yet. Add them like this and they can sign in but have no venue to " + word + ", so tick at least one." };
+    if (total > 1 && names.length >= total) return { none:false, text:"They can " + word + " all " + total + " of your venues." };
+    return { none:false, text:"They can " + word + " " + vpJoinList(names) + "." };
+  }
+  // labels = the permission names ticked, in the order they are shown.
+  function vpPermSummary(labels){
+    if (!labels.length) return { none:true, text:"Nothing ticked. They can still run and set up their venues, but not advertising, draws and raffles, player exports, or adding hosts." };
+    if (labels.length >= 4) return { none:false, text:"They can do everything on this list: " + vpJoinList(labels) + "." };
+    return { none:false, text:"They can do " + vpJoinList(labels) + ", and nothing else on this list." };
+  }
+  /* Returns { error } with the words to show, or { payload } to post. One venue on the account is not
+     a question worth asking, so the picker is not shown and the single venue is used. */
+  function vpHostAddPayload(f){
+    var name = (f.name || "").trim(), mobile = (f.mobile || "").trim();
+    if (!name) return { error:"Enter the host's name." };
+    if (!mobile) return { error:"Enter the host's mobile." };
+    var ids = (f.venueIds || []).slice(), all = !!f.allVenues;
+    if (!all && !ids.length) return { error: (f.totalVenues > 1)
+      ? "Tick at least one venue for this host. Without one they can sign in but have no games to run."
+      : "We could not tell which venue to add them to. Refresh the page and try again." };
+    return { payload:{ mobile:mobile, label:name, venue_ids:ids, all_venues:all } };
+  }
+  function vpMgrAddPayload(f){
+    var name = (f.name || "").trim(), mobile = (f.mobile || "").trim();
+    if (!name) return { error:"Enter the manager's name." };
+    if (!mobile) return { error:"Enter the manager's mobile." };
+    var ids = (f.venueIds || []).slice();
+    if (!ids.length) return { error:"Tick at least one venue for this manager. Without one there is nothing for them to manage." };
+    var perms = { advertising:false, draws_raffles:false, players_optin:false, add_hosts:false };
+    (f.permKeys || []).forEach(function(k){ if (perms[k] === false) perms[k] = true; });
+    return { payload:{ label:name, mobile:mobile, venue_ids:ids, permissions:perms } };
+  }
+  // VP-HOSTS-HELPERS-END
+
+  // Paints the pink outline on a ticked row for browsers without :has(), and never assumes one.
+  function vpMarkTicked(box){
+    box.querySelectorAll(".hostchk").forEach(function(l){
+      var i = l.querySelector("input");
+      if (i) l.classList.toggle("on", !!i.checked);
+    });
+  }
+  var hostVenueCount = 0;
   function buildHostVenuePicker(venues){
     var box = $("host-venues"); box.innerHTML = "";
-    var all = document.createElement("label"); all.className = "hostchk";
-    all.innerHTML = '<input type="checkbox" id="host-all"><span>All venues</span>';
-    box.appendChild(all);
+    hostVenueCount = venues.length;
+    var only = $("host-venues-only"), hint = $("host-venues-hint"), sum = $("host-venues-sum");
+    /* One venue means there is nothing to choose, so the question collapses to a line of text. The
+       venue's tick box is still built, hidden and already on, so the button below sends the same
+       body it always did instead of a second code path that could drift. */
+    var single = venues.length === 1;
+    if (!single){
+      var all = document.createElement("label"); all.className = "hostchk";
+      all.innerHTML = '<input type="checkbox" id="host-all"><span>All venues</span>';
+      box.appendChild(all);
+    }
     venues.forEach(function(v){
       var l = document.createElement("label"); l.className = "hostchk";
-      l.innerHTML = '<input type="checkbox" class="host-v" value="' + esc(v.id) + '"><span>' + esc(v.name) + '</span>';
+      l.innerHTML = '<input type="checkbox" class="host-v" value="' + esc(v.id) + '"' + (single ? " checked" : "") + '><span>' + esc(v.name) + '</span>';
+      if (single) l.style.display = "none";
       box.appendChild(l);
     });
+    if (only) only.style.display = single ? "" : "none";
+    if (hint) hint.style.display = single ? "none" : "";
+    if (sum) sum.style.display = single ? "none" : "";
+    if (single && only) only.textContent = "They will host " + (venues[0].name || "your venue") + ", your only venue.";
+    if (single) return;
+    function refresh(e){
+      /* Unticking one venue after "All venues" was ticked has to turn All off. It did not, so the
+         body still said all_venues and the Worker gave them every venue: the untick vanished without
+         a word. Now the screen and what gets sent are the same thing. */
+      var t = e && e.target;
+      if (t && t.classList && t.classList.contains("host-v") && !t.checked && $("host-all").checked){
+        $("host-all").checked = false;
+        box.querySelectorAll(".host-v").forEach(function(c){ c.parentNode.style.opacity = 1; });
+      }
+      var names = [];
+      box.querySelectorAll(".host-v:checked").forEach(function(c){ names.push(c.parentNode.querySelector("span").textContent); });
+      var s = vpVenueSummary(names, venues.length, "run");
+      sum.textContent = s.text; sum.className = "qsum" + (s.none ? " none" : "");
+      vpMarkTicked(box);
+    }
     $("host-all").addEventListener("change", function(){
       var on = $("host-all").checked;
       box.querySelectorAll(".host-v").forEach(function(c){ c.checked = on; c.parentNode.style.opacity = on ? .5 : 1; });
     });
+    box.onchange = refresh;   // assigned, not added: the picker is rebuilt on every load
+    refresh();
   }
   $("hostToggle").addEventListener("click", function(){ $("hostForm").classList.toggle("show"); });
   $("host-go").addEventListener("click", function(){
-    var mobile = $("host-mobile").value.trim();
-    var name = $("host-name").value.trim();
-    var all = $("host-all") && $("host-all").checked;
     var ids = [];
     $("host-venues").querySelectorAll(".host-v:checked").forEach(function(c){ ids.push(c.value); });
-    if (!name){ showMsg("Enter the host's name."); return; }
-    if (!mobile){ showMsg("Enter the host's mobile."); return; }
-    if (!all && !ids.length){ showMsg("Tick at least one venue for this host."); return; }
+    var built = vpHostAddPayload({
+      name: $("host-name").value, mobile: $("host-mobile").value,
+      allVenues: !!($("host-all") && $("host-all").checked), venueIds: ids, totalVenues: hostVenueCount
+    });
+    if (built.error){ showMsg(built.error); return; }
     $("host-go").disabled = true; $("host-go").textContent = "Adding…";
-    api("/account/host-add", { mobile:mobile, label:name, venue_ids:ids, all_venues: !!all }).then(function(r){
+    api("/account/host-add", built.payload).then(function(r){
       $("host-go").disabled = false; $("host-go").textContent = "Add host";
       if (r.error){ showMsg(r.error); return; }
       $("host-mobile").value = ""; $("host-name").value = ""; $("hostForm").classList.remove("show");
@@ -1543,6 +1661,27 @@
       l.innerHTML = '<input type="checkbox" class="mgr-v" value="' + esc(v.id) + '"><span>' + esc(v.name) + '</span>';
       box.appendChild(l);
     });
+    var sum = $("mgr-venues-sum");
+    function refresh(){
+      var names = [];
+      box.querySelectorAll(".mgr-v:checked").forEach(function(c){ names.push(c.parentNode.querySelector("span").textContent); });
+      var s = vpVenueSummary(names, venues.length, "manage");
+      sum.textContent = s.text; sum.className = "qsum" + (s.none ? " none" : "");
+      vpMarkTicked(box);
+    }
+    box.onchange = refresh;   // assigned, not added: the picker is rebuilt on every load
+    refresh();
+    // The four toggles start ticked, so the line under them has to be painted once at the start too.
+    var pbox = $("mgr-perms"), psum = $("mgr-perms-sum");
+    function prefresh(){
+      var labels = [];
+      pbox.querySelectorAll(".mgr-p:checked").forEach(function(c){ labels.push(c.parentNode.querySelector("span").textContent); });
+      var s = vpPermSummary(labels);
+      psum.textContent = s.text; psum.className = "qsum" + (s.none ? " none" : "");
+      vpMarkTicked(pbox);
+    }
+    pbox.onchange = prefresh;
+    prefresh();
   }
   function renderManagers(managers, venues){
     var vmap = {}; venues.forEach(function(v){ vmap[v.id] = v.name; });
@@ -1572,7 +1711,8 @@
         row.appendChild(permBox); box.appendChild(row); return;
       }
       var permLbl = document.createElement("div");
-      permLbl.className = "flabel"; permLbl.textContent = "What " + (m.label || "this manager") + " can do";
+      permLbl.className = "qhead"; permLbl.textContent = "What " + (m.label || "this manager") + " is allowed to do";
+      var permSum = document.createElement("p"); permSum.className = "qsum";
       var checks = document.createElement("div"); checks.className = "hostvenues";
       [["advertising","Advertising"],["draws_raffles","Draws & raffles"],
        ["players_optin","Players & opt-in export"],["add_hosts","Add hosts"]].forEach(function(pair){
@@ -1581,9 +1721,18 @@
           (p[pair[0]] !== false ? " checked" : "") + '><span>' + esc(pair[1]) + '</span>';
         checks.appendChild(l);
       });
-      permBox.appendChild(permLbl); permBox.appendChild(checks);
+      permBox.appendChild(permLbl); permBox.appendChild(checks); permBox.appendChild(permSum);
       row.appendChild(permBox);
+      function permRefresh(){
+        var labels = [];
+        checks.querySelectorAll(".mgr-edit-p:checked").forEach(function(c){ labels.push(c.parentNode.querySelector("span").textContent); });
+        var s = vpPermSummary(labels);
+        permSum.textContent = s.text; permSum.className = "qsum" + (s.none ? " none" : "");
+        vpMarkTicked(checks);
+      }
+      permRefresh();
       checks.addEventListener("change", function(){
+        permRefresh();
         var next = {};
         checks.querySelectorAll(".mgr-edit-p").forEach(function(c){ next[c.value] = c.checked; });
         var boxes = checks.querySelectorAll(".mgr-edit-p");
@@ -1618,16 +1767,13 @@
     });
   }
   function addManager(){
-    var name = $("mgr-name").value.trim(), mobile = $("mgr-mobile").value.trim();
-    if (!name){ showMsg("Enter the manager's name."); return; }
-    if (!mobile){ showMsg("Enter the manager's mobile."); return; }
-    var ids = [];
+    var ids = [], keys = [];
     $("mgr-venues").querySelectorAll(".mgr-v:checked").forEach(function(c){ ids.push(c.value); });
-    if (!ids.length){ showMsg("Tick at least one venue for this manager."); return; }
-    var perms = { advertising:false, draws_raffles:false, players_optin:false, add_hosts:false };
-    $("mgr-perms").querySelectorAll(".mgr-p:checked").forEach(function(c){ perms[c.value] = true; });
+    $("mgr-perms").querySelectorAll(".mgr-p:checked").forEach(function(c){ keys.push(c.value); });
+    var built = vpMgrAddPayload({ name: $("mgr-name").value, mobile: $("mgr-mobile").value, venueIds: ids, permKeys: keys });
+    if (built.error){ showMsg(built.error); return; }
     var btn = $("mgr-go"); btn.disabled = true; btn.textContent = "Adding…";
-    api("/account/manager-add", { label:name, mobile:mobile, venue_ids:ids, permissions:perms }).then(function(r){
+    api("/account/manager-add", built.payload).then(function(r){
       btn.disabled = false; btn.textContent = "Add manager";
       if (r.error){ showMsg(r.error); return; }
       $("mgr-name").value = ""; $("mgr-mobile").value = ""; $("mgrForm").classList.remove("show");
