@@ -92,7 +92,7 @@
   <div id="body" class="hidden">
     <div id="migWarn" class="warn hidden">The player-data options are still being switched on for your venue. Until then, only the name style below saves.</div>
 
-    <div class="warn" id="ownerOnlyNote" style="display:none">Name display and what players are asked for are set by your account owner, so they are shown here but cannot be changed. Ask your account owner if they need changing. Your venue code below is still yours to change.</div>
+    <div class="warn" id="ownerOnlyNote" style="display:none">Name display and what players are asked for are set by your account owner. Ask them if you need any of it changed. Your venue code below is still yours to change.</div>
 
     <div class="card owneronly">
       <div class="lbl">Name display on the TV</div>
@@ -234,10 +234,14 @@
       .then(function(r){
         var row = r && r.data;
         if (!row || !row.permissions) return;   // full access, or we could not tell: leave as it was
+        /* HIDDEN, not dimmed. Dean, 10 Sep 2026: "Can we hide those options from the
+           manager so they never see it?" A greyed-out card still tells a manager what
+           the venue collects about its players and invites them to ask for it. It also
+           looked like something they had broken. The note below says who to ask, so the
+           page does not just silently lose a section. */
         document.querySelectorAll(".owneronly").forEach(function(card){
-          card.style.opacity = ".62";
-          card.style.pointerEvents = "none";
-          card.setAttribute("aria-disabled", "true");
+          card.style.display = "none";
+          card.setAttribute("aria-hidden", "true");
         });
         var sb = $("saveBtn"); if (sb) sb.style.display = "none";
         var n = $("ownerOnlyNote"); if (n) n.style.display = "";
