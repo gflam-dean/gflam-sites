@@ -20,7 +20,7 @@ var TV = find('venueplay/tv.html');
 var CONSOLE = find('venueplay/app/index.html');
 var PLAY = find('venueplay/play.html');
 var CLIENT = find('venueplay/app/vp-room.js');
-var EXPECT = 27;
+var EXPECT = 36;
 var ran = 0, bad = 0;
 function ok(n, c, extra) {
   ran++;
@@ -34,7 +34,7 @@ ok('the phone loads vp-room.js', /<script src="\/app\/vp-room\.js">/.test(PLAY))
 
 print('== and none of them joins one unless the link asks ==');
 [['TV', TV], ['console', CONSOLE], ['phone', PLAY]].forEach(function (p) {
-  ok(p[0] + ' only opts in on ?roomserver=1', /_useRoom\s*=\s*\/\[\?&\]roomserver=1/.test(p[1]),
+  ok(p[0] + ' only opts in on ?roomserver=1', /roomserver=\(\[01\]\)/.test(p[1]),
      'a page that joins a room by default would go silent against a Worker with no binding');
 });
 
@@ -48,6 +48,23 @@ ok('the phone still owns ?room= for its game code', /\[\?&\]room=\(\[\^&\]\+\)/.
 ok('and no page uses ?room=1 as the room-server flag',
    !/\[\?&\]room=1/.test(TV) && !/\[\?&\]room=1/.test(CONSOLE) && !/\[\?&\]room=1/.test(PLAY),
    'that collides with the game code parameter');
+
+print('== the switch survives a redirect, and says so out loud ==');
+/* Dean, 10 Sep: "roomserver=1 in the app lead me to HQ page". Opening the console as an
+   HQ admin bounces through hq.html, which drops the query string, so the console came
+   back on the OLD transport looking perfectly healthy. A setting that lives only in the
+   address bar is one redirect away from being lost in silence. */
+[['TV', TV], ['console', CONSOLE], ['phone', PLAY]].forEach(function (p) {
+  ok(p[0] + ' remembers the switch across a navigation', /sessionStorage\.setItem\("vpRoomServer"/.test(p[1]),
+     'the query string does not survive the HQ redirect');
+  ok(p[0] + ' can be turned back off with roomserver=0', /roomserver=\(\[01\]\)/.test(p[1]));
+});
+/* And every one of these faults was invisible: a page said Connected while talking to
+   nobody. Each page now names the road it is on, so three screens can be compared at a
+   glance instead of by reading a presence endpoint. */
+ok('the console says it is on the room server', /Ready \\u00b7 room server/.test(CONSOLE));
+ok('the TV says it is on the room server', /Connected \\u00b7 room server/.test(TV));
+ok('the phone says it is on the room server', /room server/.test(PLAY));
 
 print('== a room that is not there must send the page back to Supabase ==');
 ok('the client treats 503 as not enabled', /r\.status === 503/.test(CLIENT));

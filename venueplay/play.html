@@ -396,8 +396,20 @@
      NOT ?room=1: ?room= is this page's own game-code parameter, and ?room=1 made it show
      "No room" and connect to nothing at all. Off by
      default. See venueplay-backend/worker/ROOM-SERVER.md. */
+  /* THE SWITCH IS STICKY, ON PURPOSE.
+     ?roomserver=1 turns it on for this browser and it STAYS on until ?roomserver=0.
+     It cannot live in the address bar alone: opening the console as an HQ admin bounces
+     through hq.html, which drops the query string, so the page came back on the OLD
+     transport while looking exactly the same. Every fault in this feature so far has
+     been one half of a venue on one road and the other half on the other, which is why
+     the switch now survives a redirect and why the page says out loud which road it is
+     on (see the status line). */
   var _useRoom=false, _roomTried=false, _room=null;
-  try{ _useRoom=/[?&]roomserver=1\b/.test(location.search); }catch(e){ _useRoom=false; }
+  try{
+    var _rq=/[?&]roomserver=([01])/.exec(location.search);
+    if(_rq){ _useRoom = _rq[1]==="1"; try{ sessionStorage.setItem("vpRoomServer", _rq[1]); }catch(e){} }
+    else { try{ _useRoom = sessionStorage.getItem("vpRoomServer")==="1"; }catch(e){ _useRoom=false; } }
+  }catch(e){ _useRoom=false; }
   function wireOut(obj){
     if(_room){ try{ _room.send(obj); return true; }catch(e){ return false; } }
     if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); return true; }
@@ -1319,6 +1331,9 @@
               subscribed=true; flushQueue();
               if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); setConn("waiting"); }
               else { setConn("ready"); }
+              // say it out loud: a phone in a room and a host that is not is the one
+              // failure this feature keeps producing, and it looks identical to working.
+              try{ $("statusText").textContent = $("statusText").textContent + " \u00b7 room server"; }catch(e){}
             } else { subscribed=false; setConn("reconnecting"); }
           }
         });

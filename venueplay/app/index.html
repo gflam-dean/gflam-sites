@@ -513,8 +513,20 @@
      NOT ?room=1: that already means the game room code on the player page. Off by
      default, and a room only works if everyone is in it: a host in a room is talking to
      an empty room unless the TV and the phones are in it too. See ROOM-SERVER.md. */
+  /* THE SWITCH IS STICKY, ON PURPOSE.
+     ?roomserver=1 turns it on for this browser and it STAYS on until ?roomserver=0.
+     It cannot live in the address bar alone: opening the console as an HQ admin bounces
+     through hq.html, which drops the query string, so the page came back on the OLD
+     transport while looking exactly the same. Every fault in this feature so far has
+     been one half of a venue on one road and the other half on the other, which is why
+     the switch now survives a redirect and why the page says out loud which road it is
+     on (see the status line). */
   var _useRoom=false, _roomTried=false, _room=null;
-  try{ _useRoom=/[?&]roomserver=1\b/.test(location.search); }catch(e){ _useRoom=false; }
+  try{
+    var _rq=/[?&]roomserver=([01])/.exec(location.search);
+    if(_rq){ _useRoom = _rq[1]==="1"; try{ sessionStorage.setItem("vpRoomServer", _rq[1]); }catch(e){} }
+    else { try{ _useRoom = sessionStorage.getItem("vpRoomServer")==="1"; }catch(e){ _useRoom=false; } }
+  }catch(e){ _useRoom=false; }
   function rawSend(p){
     if(_room){ try{ _room.send(p); return; }catch(e){} }
     if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); }
@@ -2343,7 +2355,7 @@
               subscribed=true;
               send({ t:"host_here" });
               flushQueue();
-              $("statusDot").classList.add("on"); $("statusText").textContent="Ready";
+              $("statusDot").classList.add("on"); $("statusText").textContent="Ready \u00b7 room server";
               $("pairedChip").innerHTML="&middot; ready";
               reassertToTv();
               send({ t:"rollcall" });
