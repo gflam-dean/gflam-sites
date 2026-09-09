@@ -126,7 +126,7 @@ MUTATIONS = [
 
     ('every playlist points at songs that exist',
      'venueplay/data/musical-library.json',
-     '"songIds":["', '"songIds":["no-such-song","',
+     '"songIds": [\n', '"songIds": [\n    "no-such-song",\n',
      'a playlist pointing at a song that is not there deals a blank cell'),
 
     ('esc() is the same in all',
@@ -254,7 +254,8 @@ MUTATIONS = [
 
     ('every decade pack holds only its decade',
      'venueplay/data/musical-library.json',
-     '"name":"80s Rock","songIds":["', '"name":"80s Rock","songIds":["long-way-to-the-top-ac-dc","',
+     '"name": "80s Rock",\n   "songIds": [\n',
+     '"name": "80s Rock",\n   "songIds": [\n    "long-way-to-the-top-ac-dc",\n',
      'a 1975 AC/DC track is dealt in the 80s pack and the room calls it out'),
 
     ('sign-in.test.js',
@@ -282,14 +283,14 @@ MUTATIONS = [
 
     ('no song is held twice',
      'venueplay/data/musical-library.json',
-     '"songs":[', '"songs":[{"id":"the-horses-daryl-braithwaite","title":"The Horses",'
-                  '"artist":"Daryl Braithwaite","previewUrl":"https://x","artworkUrl":"https://x"},',
+     '"songs": [\n', '"songs": [\n  {"id": "the-horses-daryl-braithwaite", "title": "The Horses", '
+                      '"artist": "Daryl Braithwaite", "previewUrl": "https://x", "artworkUrl": "https://x"},\n',
      'the same song is in the library twice and can be played twice in a night'),
 
     # ---- the data ----
     ('every song has audio',
      'venueplay/data/musical-library.json',
-     '"previewUrl":"https', '"previewUrl":"", "x":"https',
+     '"previewUrl": "https', '"previewUrl": "", "x": "https',
      'a song loses its audio and the host plays silence'),
 
     ('songs know what year they are',
@@ -532,7 +533,7 @@ MUTATIONS = [
      'function cryptoInt', 'function cryptoInt(max){ return 0; } function cryptoIntOld',
      'one copy of the unbiased draw is quietly replaced, which is a licence matter'),
     ('no playlist is empty', 'venueplay/data/musical-library.json',
-     '"songIds":[', '"songIds":[],"wasSongIds":[',
+     '"songIds": [\n', '"songIds": [], "wasSongIds": [\n',
      'a pack empties and a host picks a night with nothing in it'),
     ('every founding page agrees with its own code', 'venueplay/qld.html',
      '<<ALL:30 September>>', '31 September',
