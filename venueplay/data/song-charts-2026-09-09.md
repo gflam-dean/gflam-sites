@@ -165,10 +165,86 @@ fifteen Elvis singles from 1961.
 - Omg (feat. will.i.am), USHER (2010)
 - Shape of You, Ed Sheeran (2017)
 
+## The order the additions sit in
+
+Added on 9 September, then re-ordered the same day. The first pass put them on
+the end of each pack in alphabetical order of their id, which meant A Bar Song
+(Tipsy) sat ahead of We Are the World and Nothing Compares 2 U. That is not a
+harmless detail: the host page does not deal a pack evenly. drawGameSet weights
+position i by 1 / (1 + i / 45) and takes 60 songs, so position 0 is worth 1.00,
+position 256 is worth 0.15 and position 500 is worth 0.08.
+
+Each added song now carries one known-ness score out of about 100, built only
+from the chart evidence saved in song-charts-strength-2026-09-09.json:
+
+| Evidence | Score |
+| --- | --- |
+| Year-end placing | 102 minus 2 x rank. Year-end number one 100, top five 92 or better, 25th 52 |
+| Australian number one | 85 flat |
+| Top ten peak | 84 minus 4 x peak. A number two peak 76, a number nine peak 48 |
+| triple j all time placing | 92 minus 0.42 x rank. First 92, hundredth 50 |
+
+A song takes the best of whichever apply, then gains 6 if two independent
+charts rate it, and gains 20 for a triple j all time placing but only in the
+Aussie, Alternative and Rock packs. Killing in the Name never troubled a
+year-end top 25 and still belongs near the front of a rock pack. The same
+placing earns nothing extra in Pop or Country.
+
+A year-end top five therefore beats an Australian number one, which beats a
+number nine peak. Ties break on the better year-end placing, then the older
+song, then the id, so a re-run gives the identical order every time.
+
+### What that bought, measured on the real draw
+
+1,500 simulated games per pack, using drawGameSet exactly: weight 1 / (1 + i / 45),
+60 songs a game, same-title songs skipped. "Best 20" is the twenty best known
+additions in that pack, the SAME twenty songs followed through both orderings.
+
+| Pack | Kept songs, each | Best 20 before | Best 20 after |
+| --- | ---: | ---: | ---: |
+| Pub Classics | 19.8% | 8.1% | 9.1% |
+| 80s Rock | 29.4% | 15.5% | 15.7% |
+| 80s | 19.1% | 7.5% | 8.6% |
+| 90s | 19.2% | 7.5% | 9.1% |
+| Aussie | 23.0% | 10.6% | 11.2% |
+| Country | 31.0% | 16.7% | 16.7% |
+| 2000s | 19.8% | 8.3% | 9.3% |
+| Disco | 31.8% | 17.1% | 17.1% |
+| Soul & Motown | 31.8% | 16.8% | 16.8% |
+| Modern Pop | 23.6% | 10.6% | 11.9% |
+| Pop | 14.5% | 4.4% | 6.2% |
+| Rock | 18.9% | 7.3% | 8.6% |
+| 2010s | 19.2% | 7.4% | 8.8% |
+| Hip-Hop & R&B | 24.9% | 10.6% | 12.6% |
+| 70s | 18.0% | 6.7% | 8.0% |
+| Alternative | 24.8% | 11.6% | 12.4% |
+| 60s | 22.8% | 10.8% | 11.1% |
+| Dance & Club | 29.5% | 14.9% | 15.6% |
+| 2020s | 27.2% | 12.9% | 14.0% |
+| **Average** | **22.8%** | **10.8%** | **11.7%** |
+
+Read that honestly: the order inside the tail is now right, but it wins less
+than it looks like it should. Pop, the biggest tail, goes from 4.4% to 6.2%,
+which is 42% better. Across every pack the average gain is 9%.
+The reason is the weight curve, not the sorting: everything
+from position 250 onward is worth between 0.15 and 0.06, so shuffling within
+that stretch cannot buy much. The gap that matters is between the front of a
+pack and the whole tail, and closing it means moving songs that were already
+there, which this job was told not to do.
+
+If Dean wants it closed, the measured option is to lift the best twenty
+additions in each pack to sit right behind the existing top fifty. That takes
+them from 10.8% to 27.0% on average, level with the 22.8% an existing song
+gets. It is not applied and it needs his say-so, because it does move the
+hand-ranked front of every pack.
+
 ## How to re-run it
 
     python3 tools/add-charted-songs.py
+    python3 tools/order-charted-songs.py
     python3 tools/release-check.py --local
 
-The tool is add only. It never reorders a pack, never removes a song and never
-rewrites a pack list. Running it twice changes nothing the second time.
+The first tool is add only. The second re-orders the appended tail and nothing
+else: it refuses to write if the front of any pack no longer matches the
+pre-charts backup. Neither removes a song. Running either twice changes nothing
+the second time.
