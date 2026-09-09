@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '9 Sep 2026, 17:08 · aea4f311';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '9 Sep 2026, 18:10 · 9d7b4457';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -260,6 +260,7 @@ export default {
       if (method === 'POST' && path === '/host/members/roster')       return await handleMembersRoster(request, env, json);
       if (method === 'POST' && path === '/host/members/import')        return await handleMembersImport(request, env, json);
       if (method === 'POST' && path === '/host/members/remove')        return await handleMembersRemove(request, env, json);
+      if (method === 'POST' && path === '/host/members/update')        return await handleMembersUpdate(request, env, json);
       if (method === 'POST' && path === '/host/members/draw-remove')   return await handleDrawRemove(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-add')      return await handleRafflePrizeAdd(request, env, json);
       if (method === 'POST' && path === '/host/raffle/prize-remove')   return await handleRafflePrizeRemove(request, env, json);
@@ -3360,7 +3361,83 @@ async function handleMembersImport(request, env, json) {
     rows.push({ roster_id: rosterId, member_number: num, first_name: first, last_name: last, status: 'valid' });
   });
   if (rows.length) await sbInsert(env, 'vp_members', rows, false);
-  return json({ ok: true, added: rows.length, roster_id: rosterId });
+  /* "Added 0" on a re-paste reads like a failure when it is the list already being right.
+     skipped_existing is the difference between "nothing happened" and "they were all
+     already there", and the account page shows it the moment it arrives. */
+  const skipped = members.length - rows.length;
+  return json({ ok: true, added: rows.length, skipped_existing: skipped > 0 ? skipped : 0, roster_id: rosterId });
+}
+
+/* POST /host/members/update  (MANAGER/OWNER) : fix a name on the members list.
+ *   body: { draw_id | venue_id, number, first_name?, last_name?, name? }  -> { ok, member }
+ *
+ * Import splits a pasted name on the FIRST space, so "Mary Anne Smith" is stored as first name
+ * Mary and surname "Anne Smith", and that is what goes on the TV when she wins. Until now the
+ * only fix was to remove her and paste her back, which also detaches her past wins. This edits
+ * the row in place. Either send first_name and last_name separately, which is the whole point,
+ * or send name and it splits the same way import does.
+ * The member NUMBER is not editable here on purpose: it is the key the club prints on cards and
+ * the one thing the draw is announced by. Changing it is a remove and a re-add, deliberately.
+ */
+async function handleMembersUpdate(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);
+  const b = await readJson(request);
+
+  let venueId, rosterId = null;
+  const drawId = b.draw_id != null ? String(b.draw_id).trim() : '';
+  if (drawId) {
+    assertUuid(drawId, 'draw_id');
+    const dr = await sbGet(env, 'vp_member_draws', 'id=eq.' + enc(drawId) + '&select=venue_id,roster_id');
+    if (!dr.length) return json({ error: 'Draw not found' }, 404);
+    venueId = dr[0].venue_id; rosterId = dr[0].roster_id || null;
+  } else {
+    venueId = String(b.venue_id || '').trim();
+    if (!venueId) return json({ error: 'Missing venue_id' }, 400);
+    assertUuid(venueId, 'venue_id');
+  }
+
+  const staff = await requireStaff(env, authUserId, venueId);
+  if (staff.role !== 'owner' && staff.role !== 'manager') {
+    return json({ error: 'Only a manager or owner can change the members list' }, 403);
+  }
+  if (!staffCan(staff, 'draws_raffles')) {
+    return json({ error: 'You do not have permission to change draws and raffles. Ask the account owner.' }, 403);
+  }
+
+  const num = parseInt(b.number, 10);
+  if (isNaN(num)) return json({ error: 'Enter the member number to change' }, 400);
+
+  if (!rosterId) {
+    const rosters = await sbGet(env, 'vp_member_rosters', 'venue_id=eq.' + enc(venueId) + '&select=id&limit=1');
+    if (!rosters.length) return json({ error: 'This venue has no members list yet' }, 404);
+    rosterId = rosters[0].id;
+  }
+
+  const found = await sbGet(env, 'vp_members',
+    'roster_id=eq.' + enc(rosterId) + '&member_number=eq.' + enc(String(num)) + '&select=id,first_name,last_name&limit=1');
+  if (!found.length) return json({ error: 'No member with that number on this list' }, 404);
+
+  let first = b.first_name != null ? String(b.first_name).trim() : null;
+  let last = b.last_name != null ? String(b.last_name).trim() : null;
+  if (first === null && last === null && b.name != null) {
+    const nm = String(b.name).trim();
+    const sp = nm.indexOf(' ');
+    first = sp === -1 ? nm : nm.slice(0, sp);
+    last = sp === -1 ? '' : nm.slice(sp + 1).trim();
+  }
+  if (first === null && last === null) return json({ error: 'Send the name to change it to' }, 400);
+  const patch = {};
+  if (first !== null) {
+    if (!first) return json({ error: 'A member needs a first name' }, 400);
+    patch.first_name = first.slice(0, 80);
+  }
+  if (last !== null) patch.last_name = last.slice(0, 80);
+
+  const ok = await sbPatch(env, 'vp_members', 'id=eq.' + enc(found[0].id), patch);
+  if (ok === false) return json({ error: 'Could not save that name. Please try again.' }, 502);
+  return json({ ok: true, member: { number: num,
+    first_name: patch.first_name != null ? patch.first_name : found[0].first_name,
+    last_name: patch.last_name != null ? patch.last_name : found[0].last_name } });
 }
 
 /* POST /host/members/remove  (MANAGER/OWNER) : take one person off the members list.

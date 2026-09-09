@@ -589,7 +589,7 @@
     // expired card. Dean's line, in the voice the rest of the product uses.
     bar.innerHTML = nonpay
       ? 'Your tab has run a bit long. Settle up and we will pour you another round of bingo. ' +
-        '<a href="billing.html" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
+        '<a href="billing.html#pastDue" style="color:#180d00;text-decoration:underline">Update your card</a> and everything comes straight back on, exactly as you left it.'
       : 'Your games are on hold for the moment. Nothing has been lost. Give us a shout at hello@venueplay.com.au and we will sort it out.';
     if (document.body.firstChild) document.body.insertBefore(bar, document.body.firstChild);
     else document.body.appendChild(bar);

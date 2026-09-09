@@ -437,6 +437,16 @@
       <button class="go" id="mdImport" style="margin-top:8px">Add to members list</button>
       <input type="file" id="md-csv" accept=".csv,text/csv" style="display:none">
       <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
+        <div class="scardhead" style="font-size:13px">Fix a name</div>
+        <p class="snote">A pasted name is split at the first space, so "Mary Anne Smith" is stored with the surname "Anne Smith" and that is what goes on the TV when she wins. Fix it here without taking her off the list.</p>
+        <div class="btnrow">
+          <input type="text" id="md-fixnum" class="mono" placeholder="Member number" style="max-width:150px">
+          <input type="text" id="md-fixfirst" placeholder="First name" style="max-width:170px">
+          <input type="text" id="md-fixlast" placeholder="Surname" style="max-width:170px">
+          <button class="go" id="mdFix" type="button">Save name</button>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line-2)">
         <div class="scardhead" style="font-size:13px">Take someone off the list</div>
         <p class="snote">If a member leaves, or asks to be taken off, remove them by their member number. Any draws they have already won stay on your records.</p>
         <div class="btnrow">
@@ -602,6 +612,10 @@
           else { pdp.style.display = "none"; }
         }
         pd.style.display = "";
+        /* The suspension banner links here as billing.html#pastDue. The browser cannot jump to
+           an anchor that was display:none when the page loaded, and this notice is hidden until
+           the account data arrives, so the jump happens here instead, once it is really on screen. */
+        try{ if(location.hash === "#pastDue" && pd.scrollIntoView) pd.scrollIntoView({ block:"center" }); }catch(e){}
       } else { pd.style.display = "none"; }
     }
     // Card tile removed: we do not hold the card's last 4 digits, so it only ever said "on file".
@@ -1404,6 +1418,29 @@
       showMsg("Members draw saved. Your TV updates in a few seconds.", true);
     });
   }
+  /* Import splits a pasted name at the first space, which is right for "Jane Smith" and wrong
+     for "Mary Anne Smith". Removing and re-adding her was the only fix, and that also detaches
+     the wins she already has. This edits the row in place. The member NUMBER is not editable:
+     it is what the club prints on cards and what the win is announced by. */
+  function fixMemberName(){
+    if (!mdCurrent){ showMsg("Pick a venue first."); return; }
+    var num = $("md-fixnum").value.trim();
+    var first = $("md-fixfirst").value.trim();
+    var last = $("md-fixlast").value.trim();
+    if (!num){ showMsg("Enter the member number to change."); return; }
+    if (!first){ showMsg("Enter the first name."); return; }
+    var btn=$("mdFix"); btn.disabled=true; btn.textContent="Saving…";
+    var body = mdDraw ? { draw_id: mdDraw.id } : { venue_id: mdCurrent };
+    body.number = num; body.first_name = first; body.last_name = last;
+    gameApi("/host/members/update", body).then(function(r){
+      btn.disabled=false; btn.textContent="Save name";
+      if (r.error){ showMsg(r.error); return; }
+      $("md-fixnum").value = ""; $("md-fixfirst").value = ""; $("md-fixlast").value = "";
+      var m = r.member || {};
+      showMsg("Member " + num + " is now " + ((m.first_name || first) + " " + (m.last_name || last)).trim() + ".", true);
+    });
+  }
+
   /* Someone asking to come off a list a venue holds about them is a privacy request, not a
      preference, so this is a real delete rather than a hidden flag. */
   function removeMember(){
@@ -1795,6 +1832,7 @@
     $("mdSave").addEventListener("click", saveMembersDraw);
     $("mdOffTv").addEventListener("click", membersDrawOffTv);
     $("mdRemove").addEventListener("click", removeMember);
+  $("mdFix").addEventListener("click", fixMemberName);
     $("mdRemoveDraw").addEventListener("click", removeDraw);
     $("mdImport").addEventListener("click", importMembers);
     ["md-start","md-startjp","md-inc"].forEach(function(id){ $(id).addEventListener("input", mdRecalc); $(id).addEventListener("change", mdRecalc); });
