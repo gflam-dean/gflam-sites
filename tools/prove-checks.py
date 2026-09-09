@@ -449,6 +449,35 @@ MUTATIONS = [
     ('bingo-win.test.js', 'venueplay/play.html',
      'if(P.pattern==="two") return rows>=2;', 'if(P.pattern==="two") return rows>=1;',
      'a two-line prize pays out on one line'),
+    # ---- 9 Sep: the 72-finding build. Each of these was broken by hand and watched
+    # go red before it was written down here.
+    # A host locked out of their own members draw for the night: the button was
+    # disabled before the confirm written for exactly that case could fire.
+    ('draw-again.test.js', 'venueplay/app/members/host.html',
+     'var b=$("drawBtn"); b.disabled=false;', 'var b=$("drawBtn"); b.disabled=alreadyDrawnTonight();',
+     'the draw button disables itself again, so a lost reply locks the host out for the night'),
+    # The raffle TV was told to go idle 21 seconds before its celebration ended.
+    ('unsold-and-hold.test.js', 'venueplay/app/raffle/host.html',
+     'var CLAIM_CELEBRATE_MS=30000', 'var CLAIM_CELEBRATE_MS=9000',
+     'the console and the TV disagree again about how long a win stays up'),
+    # A manager could open the owner Stripe portal: every invoice, and the card.
+    ('owner-only-routes.test.js', 'venueplay-backend/worker/venueplay-api-FULL.js',
+     "  { const g = vpbOwnerOnly(o, json); if (g) return g; }\n  const customer = o.account",
+     "  const customer = o.account",
+     'a manager can open the owner Stripe portal, which shows every invoice and changes the card'),
+    # The picture round: the builder must post to the route the Worker actually has.
+    ('trivia-night.test.js', 'venueplay/app/trivia/builder.html',
+     '"/host/trivia/image-upload"', '"/host/trivia/picture"',
+     'the picture upload posts to a route that does not exist, which is how it broke in August'),
+    # The room server: its own test, against its own file.
+    ('venueplay-room.test.js', 'venueplay-backend/worker/venueplay-room.js',
+     'if (all[i] === except) continue;', 'if (false) continue;',
+     'the room sends a message back to the screen that sent it, which is not what Supabase does'),
+    # And the copy of it that actually runs, inside the game Worker.
+    ('the room server in the game Worker matches venueplay-room.js',
+     'venueplay-backend/worker/venueplay-room.js',
+     'const ROOM_MAX_PER_SEC   = 20;', 'const ROOM_MAX_PER_SEC   = 21;',
+     'the room server is fixed in one of its two copies and not the other'),
     ('vp-follow.test.js', 'venueplay/app/vp-follow.js',
      '<<ALL:root.VPFollow>>', 'root.VPFollowRenamed',
      'the follow-the-host library stops exporting itself'),
