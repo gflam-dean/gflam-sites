@@ -105,6 +105,68 @@ print("== an unknown pattern must refuse, not guess ==");
 P.pattern = "whatever-the-host-typed";
 ok("an unrecognised pattern is never a win", !cardMeetsPattern(CARD, called(join(TOP, MID, BOT))));
 
+/* A LINE WIN MUST SURVIVE THE NEXT BALL.
+   It used to be announced with setMsg, the one message line under the tickets, and the very next
+   ball (or any state message, and the host sends one every time somebody joins) repainted that
+   line with "Mark off your numbers". The winner was left holding a live ticket with no proof for
+   the host. The win now has its own pinned box, renderStageWin, which the ball path repaints
+   rather than clears. These run the real functions out of play.html against a stub box. */
+print("== a line win stays on screen when the next ball lands ==");
+var stageSrc = ["idleMsg", "nameList", "renderStageWin"].map(grab);
+ok("the stage win banner is still in play.html", stageSrc.every(function (s) { return !!s; }),
+   "renderStageWin / idleMsg / nameList");
+if (stageSrc.every(function (s) { return !!s; })) {
+  var BOX = { innerHTML: "", className: "" };
+  function $(id){ return id === "stageWin" ? BOX : null; }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  var PATTERN_NAMES = { one:"One line", two:"Two lines", full:"Full house", corners:"Four corners",
+                        top:"Top line", middle:"Middle line", bottom:"Bottom line" };
+  eval(stageSrc.join("\n"));
+
+  P.stageWins = []; P.stageNote = ""; P.pattern = "one";
+  renderStageWin();
+  ok("nothing won yet, so no banner", BOX.className.indexOf("hidden") >= 0);
+
+  P.stageWins = [{ pattern:"one", prize:"$50 bar tab", cardNo:412, shared:false, sharedWith:[] }];
+  P.pattern = "full";
+  renderStageWin();
+  var first = BOX.innerHTML;
+  ok("the banner names the line that was won", first.indexOf("You won One line") >= 0, first);
+  ok("it tells them to see the host", first.indexOf("See the host") >= 0);
+  ok("it names the prize for that line, not the house prize", first.indexOf("$50 bar tab") >= 0);
+  ok("it shows the card number to claim on", first.indexOf("#412") >= 0);
+  ok("it says what they are playing for now", first.indexOf("Full house") >= 0);
+  ok("the banner is visible", BOX.className.indexOf("hidden") < 0, BOX.className);
+
+  // the ball path: setMsg gets the resting line, renderStageWin repaints the banner
+  var resting = idleMsg();
+  ok("the resting line no longer carries the win", resting.indexOf("You won") < 0, resting);
+  ok("the resting line says what is being played for", resting.indexOf("Full house") >= 0, resting);
+  renderStageWin();
+  ok("the win is still on screen after the next ball", BOX.innerHTML === first);
+  ok("and still visible", BOX.className.indexOf("hidden") < 0);
+
+  // a tie, and a second stage won by the same phone
+  P.stageWins.push({ pattern:"two", prize:"$100", cardNo:412, shared:true, sharedWith:["Kate","Sam"] });
+  renderStageWin();
+  ok("a shared line says who it is shared with", BOX.innerHTML.indexOf("Kate and Sam") >= 0, BOX.innerHTML);
+  ok("an earlier win tonight is still listed", BOX.innerHTML.indexOf("One line") >= 0);
+
+  // somebody else won the stage
+  P.stageWins = []; P.stageNote = "Kate won One line.";
+  renderStageWin();
+  ok("somebody else's win is shown too", BOX.innerHTML.indexOf("Kate won One line") >= 0, BOX.innerHTML);
+  ok("and it is not dressed up as your win", BOX.className.indexOf("others") >= 0, BOX.className);
+
+  // a name with markup in it must not reach the page as markup
+  P.stageWins = [{ pattern:"one", prize:"<b>x</b>", cardNo:1, shared:true, sharedWith:["<script>"] }];
+  P.stageNote = "";
+  renderStageWin();
+  ok("a name or prize with tags in it is escaped", BOX.innerHTML.indexOf("<script>") < 0 &&
+     BOX.innerHTML.indexOf("<b>x</b>") < 0, BOX.innerHTML);
+}
+
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

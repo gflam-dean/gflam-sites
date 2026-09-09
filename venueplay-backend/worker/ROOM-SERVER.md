@@ -170,6 +170,32 @@ need nothing.
 * A socket that sends more than 20 messages a second or a message over 16 KB
   is dropped, not served. A venue's whole night is a few hundred messages.
 
+## What has actually run (9 Sep 2026, afternoon)
+
+Everything in the "morning" list below except the last step, and all of it proved:
+
+1. `jsc venueplay-room.test.js`: **ALL 20 CHECKS PASSED**. Then the test was broken
+   on purpose twice, once so relay stopped skipping the sender (1 of 20 failed) and
+   once so relay delivered to nobody (4 of 9 failed and it said which), then restored.
+   The test can fail, so its green means something.
+2. The class is now WIRED into venueplay-game.js: copied in under a
+   `ROOM SERVER` banner, the two routes added next to `/venue`, `/screen/reload`
+   and `/screen/command` publish into the room after their database write, and
+   /health reports `room` as a boolean. release-check.py gained a check that the
+   copy in the game Worker matches venueplay-room.js byte for byte, and that check
+   was broken on purpose and went red before being restored.
+3. Deployed to STAGING with `--do-class=VenueRoom`. The tool created the Durable
+   Object and bound it as ROOM, kept all six existing bindings, and /health on
+   venueplay-game-sydney answers `build ac056336, room: true`.
+4. `python3 tools/room-smoke.py`: **ROOM SMOKE PASSED**. Two sockets on a made-up
+   room, presence counted them, the host spoke and the TV heard it in **20 ms**
+   (against up to 30 seconds for the poll it replaces), the host did not hear its
+   own message, junk was dropped, and presence went back to nobody when they left.
+
+Still to do: `vp-room.js` into tv.html behind `?room=1`, then a live test on The
+Mini Bar. The live game Worker is untouched and still on 870a8665; nothing about
+this reaches a venue until Dean deploys and the page opts in.
+
 ## What to do in the morning
 
 1. `jsc venueplay-backend/worker/venueplay-room.test.js` (it has never run).

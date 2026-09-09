@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '8 Sep 2026, 19:16 · 8bf0392b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '9 Sep 2026, 17:08 · ab821ee7';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -137,6 +137,9 @@ export default {
       if (request.method === 'POST' && path === '/account/optin-export'  && typeof vpbOptinExport === 'function')  return await vpbOptinExport(request, env, json);
       if (request.method === 'POST' && path === '/account/host-remove' && typeof vpbRemoveHost === 'function')   return await vpbRemoveHost(request, env, json);
       if (request.method === 'POST' && path === '/account/my-venues'   && typeof vpbMyVenues === 'function')     return await vpbMyVenues(request, env, json);
+      if (request.method === 'POST' && path === '/account/manager-perms' && typeof vpbSetManagerPerms === 'function') return await vpbSetManagerPerms(request, env, json);
+      if (request.method === 'POST' && path === '/account/draw-log'    && typeof vpbDrawLog === 'function')      return await vpbDrawLog(request, env, json);
+      if (request.method === 'POST' && path === '/account/nights'      && typeof vpbNights === 'function')       return await vpbNights(request, env, json);
       // Gflam HQ admin (vpa* functions below). JWT-verified + role-gated inside each handler.
       if (request.method === 'POST' && path === '/admin/venue'           && typeof vpaHandleVenue === 'function')          return await vpaHandleVenue(request, env, json);
       if (request.method === 'POST' && path === '/admin/resend-welcome'  && typeof vpaResendWelcome === 'function')        return await vpaResendWelcome(request, env, json);
@@ -912,6 +915,27 @@ async function vpaFindAuthUser(env, sel) {
     if (users.length < PER) return null;   // last page
   }
   return null;
+}
+
+/* One login by id, best-effort. Used to put the last digits of a mobile beside a name on the
+   Hosts list so two Sams can be told apart. Returns null on any failure: the list must still
+   render when Auth is slow, it just shows the name alone. */
+async function vpaAuthGetUser(env, id) {
+  if (!id) return null;
+  try {
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 4000);
+    const res = await fetch(env.SUPABASE_URL + '/auth/v1/admin/users/' + encodeURIComponent(id),
+      { headers: vpaHeaders(env), signal: abort.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    return await res.json().catch(() => null);
+  } catch (e) { return null; }
+}
+/* "ending 123": enough to tell staff apart, never enough to dial. */
+function vpaMaskMobile(phone) {
+  const d = String(phone || '').replace(/[^\d]/g, '');
+  return d.length >= 3 ? d.slice(-3) : null;
 }
 
 // --- misc helpers ---
@@ -3789,6 +3813,8 @@ async function vpaBillingTargetFor(env, targetType, targetId) {
 async function vpbBillingPortal(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status || 403);
+  // The Stripe portal shows every invoice and changes the card: owner-only, like every other money route.
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }
   const customer = o.account && o.account.stripe_customer_id;
   if (!customer) return json({ error: 'Your billing account links up once your first payment goes through. Invoices will appear here after that.' }, 400);
   const origin = request.headers.get('Origin') || 'https://venueplay.com.au';
@@ -3951,9 +3977,38 @@ async function vpbAccountSummary(request, env, json) {
     }
   } catch (e) { creditCents = 0; }   // never fail the whole page over a balance read
 
+  /* Is the card still good? Stripe emails the owner on a failed payment and the venue is
+     suspended after repeat failures, but this page kept showing a normal "Next payment" tile
+     the whole time. The subscription status is the one honest answer, and when it says the
+     last payment failed we also fetch that invoice so the page can name the date and amount. */
+  const sub = info && info.sub;
+  const subStatus = (sub && !sub.error && sub.status) || null;
+  const pastDue = subStatus === 'past_due' || subStatus === 'unpaid';
+  let failed = null;
+  if (pastDue) {
+    try {
+      const invId = sub.latest_invoice && (typeof sub.latest_invoice === 'string' ? sub.latest_invoice : sub.latest_invoice.id);
+      const inv = invId ? await vpbStripeGet(env, 'invoices/' + encodeURIComponent(invId)) : null;
+      if (inv && !inv.error) {
+        failed = {
+          date: inv.created ? vpaFmtDate(inv.created) : null,
+          amount: typeof inv.amount_due === 'number' ? '$' + (inv.amount_due / 100).toFixed(2) : null,
+          pay_url: inv.hosted_invoice_url || null,
+        };
+      }
+    } catch (e) { failed = null; }   // the notice still shows without the detail
+  }
+
   return json({
     ok: true,
     plan: o.account.plan,
+    /* founding or standard: which price the account is locked to. Shown as a Plan tile so the
+       owner can see their rate and why it is what it is in one glance. Unknown price (no
+       subscription yet) reads as founding, the same way the rate above does. */
+    tier: (!priceId || vpbIsFoundingPrice(env, priceId)) ? 'founding' : 'standard',
+    sub_status: subStatus,
+    past_due: pastDue,
+    failed_payment: failed,
     is_group: o.account.is_group,
     rate: rate,
     venues: venues,
@@ -4662,24 +4717,244 @@ async function vpbListManagers(request, env, json) {
   return json({ managers: Object.keys(byUser).map((k) => byUser[k]), venues: o.venues.map((v) => ({ id: v.id, name: v.name })) });
 }
 
+/* --- POST /account/manager-perms : change an existing manager's four toggles. ---
+   body { auth_user_id, permissions: { advertising, draws_raffles, players_optin, add_hosts } }
+   Until now the toggles could only be set when the manager was added; changing one meant removing
+   them and adding them again, which also re-sent the welcome text. Owner-only. Only rows that
+   ALREADY carry a permissions object are touched: a manager row with none is a full-access login
+   (the venue's own), and writing toggles onto it would lock that person out of billing. */
+async function vpbSetManagerPerms(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  { const g = vpbOwnerOnly(o, json); if (g) return g; }   // only the owner sets what a manager may do
+  const b = await request.json().catch(() => ({}));
+  const target = String(b.auth_user_id || '').trim();
+  if (!target) return json({ error: 'Missing manager.' }, 400);
+  if (target === o.authUserId) return json({ error: 'You cannot change your own permissions.' }, 400);
+  const p = b.permissions || {};
+  const permissions = {
+    advertising: p.advertising !== false,
+    draws_raffles: p.draws_raffles !== false,
+    players_optin: p.players_optin !== false,
+    add_hosts: p.add_hosts !== false,
+  };
+  const venueIds = o.venues.map((v) => v.id);
+  if (!venueIds.length) return json({ error: 'No venues on this account.' }, 404);
+  const rows = await vpaSelect(env, 'vp_venue_staff',
+    'auth_user_id=eq.' + encodeURIComponent(target) +
+    '&venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&role=eq.manager&select=venue_id,permissions');
+  if (!rows || !rows.length) return json({ error: 'That manager is not on this account.' }, 404);
+  if (rows.some((r) => !r.permissions)) {
+    return json({ error: 'That login has full access to this account, so its permissions cannot be changed here.' }, 403);
+  }
+  for (const r of rows) {
+    await vpaPatch(env, 'vp_venue_staff',
+      'auth_user_id=eq.' + encodeURIComponent(target) + '&venue_id=eq.' + encodeURIComponent(r.venue_id) + '&role=eq.manager',
+      { permissions: permissions });
+  }
+  await vpaInsert(env, 'vp_admin_audit', { ...vpbActorFields(o), action: 'manager_perms_set', target: 'user:' + target, detail: { permissions: permissions, venues: rows.length } }, false).catch(() => {});
+  return json({ ok: true, permissions: permissions });
+}
+
+/* --- POST /account/draw-log : every raffle winner and members draw result for one venue. ---
+   body { venue_id, months?: 1..12 }
+   Draws and raffles are recorded in two tables the game Worker writes on the night, and until
+   now nothing on the venue side read them back: the host saw a winner on the TV and the owner
+   had only a single prizes total. This is the log the owner asked for ("who won what, when"),
+   gated by the same "Members draws & raffles" toggle that gates setting them up, and scoped to
+   the caller's venues (a manager's o.venues is already theirs alone). Read-only. Raffle rows
+   join to the venue through vp_games.session_id -> vp_sessions.venue_id, so both hops are
+   bounded: the most recent 300 sessions and 400 rows per table is a year of ordinary nights. */
+async function vpbDrawLog(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  if (!vpbCan(o, 'draws_raffles')) return json({ error: 'You do not have permission to see draws and raffles. Ask your account owner.' }, 403);
+  const b = await request.json().catch(() => ({}));
+  const venueId = String(b.venue_id || '').trim();
+  const venue = o.venues.find((v) => v.id === venueId);
+  if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
+  let months = parseInt(b.months, 10); if (!(months >= 1 && months <= 12)) months = 3;
+  const since = new Date(Date.now() - months * 31 * 86400000).toISOString();
+  const vid = encodeURIComponent(venueId);
+  const rows = [];
+
+  // Members draws: draw rows carry the venue, result rows carry the draw.
+  const draws = await vpaSelect(env, 'vp_member_draws', 'venue_id=eq.' + vid + '&select=id,name') || [];
+  if (draws.length) {
+    const nameById = {}; draws.forEach((d) => { nameById[d.id] = d.name || 'Members draw'; });
+    const res = await vpaSelect(env, 'vp_member_draw_results',
+      'draw_id=in.(' + draws.map((d) => encodeURIComponent(d.id)).join(',') + ')' +
+      '&drawn_at=gte.' + encodeURIComponent(since) +
+      '&select=draw_id,outcome,amount_cents,member_number,winner_name,drawn_at&order=drawn_at.desc&limit=400') || [];
+    for (const r of res) {
+      rows.push({
+        at: r.drawn_at, kind: 'members_draw', name: nameById[r.draw_id] || 'Members draw',
+        outcome: r.outcome === 'claimed' ? 'Claimed' : (r.outcome === 'jackpot_rolled' ? 'Not claimed, jackpot rolled over' : String(r.outcome || '')),
+        number: r.member_number != null ? String(r.member_number) : '',
+        winner: r.winner_name || '',
+        prize: r.amount_cents != null ? ('$' + (r.amount_cents / 100).toFixed(2)) : '',
+        cents: (r.outcome === 'claimed' && r.amount_cents) ? r.amount_cents : 0,
+      });
+    }
+  }
+
+  // Raffles: sessions -> raffle games -> results.
+  const sessions = await vpaSelect(env, 'vp_sessions',
+    'venue_id=eq.' + vid + '&created_at=gte.' + encodeURIComponent(since) + '&select=id&order=created_at.desc&limit=300') || [];
+  if (sessions.length) {
+    const games = await vpaSelect(env, 'vp_games',
+      'session_id=in.(' + sessions.map((x) => encodeURIComponent(x.id)).join(',') + ')&format=eq.raffle&select=id,started_at&order=started_at.desc&limit=300') || [];
+    if (games.length) {
+      const res = await vpaSelect(env, 'vp_raffle_results',
+        'game_id=in.(' + games.map((g) => encodeURIComponent(g.id)).join(',') + ')' +
+        '&select=game_id,seq,ticket_number,status,outcome,drawn_at,prize_text,prize_type,prize_value_cents&order=drawn_at.desc&limit=400') || [];
+      for (const r of res) {
+        /* A ticket that was drawn and never presented keeps its row with status 'no_show', which
+           is also what a redraw stamps on the ticket it replaced. Both mean the same thing to the
+           venue (nobody claimed that number), so say that rather than invent a distinction the
+           data cannot support. 'drawn' is a number called but not yet resolved. */
+        const noShow = r.status === 'no_show' || r.outcome === 'no_show';
+        rows.push({
+          at: r.drawn_at, kind: 'raffle', name: 'Raffle' + (r.seq ? ', draw ' + r.seq : ''),
+          outcome: noShow ? 'Not claimed' : (r.outcome === 'claimed' ? 'Claimed' : 'Drawn'),
+          number: r.ticket_number != null ? String(r.ticket_number) : '',
+          winner: '',
+          prize: r.prize_text || (r.prize_value_cents != null ? '$' + (r.prize_value_cents / 100).toFixed(2) : ''),
+          cents: (!noShow && r.prize_type === 'cash' && r.prize_value_cents) ? r.prize_value_cents : 0,
+        });
+      }
+    }
+  }
+  rows.sort((a, c) => Date.parse(c.at || 0) - Date.parse(a.at || 0));
+  const cashCents = rows.reduce((n, r) => n + (r.cents || 0), 0);
+  return json({ ok: true, venue: { id: venue.id, name: venue.name }, months: months, rows: rows.slice(0, 500), cash_cents: cashCents, cash: '$' + (cashCents / 100).toFixed(2) });
+}
+
+/* --- POST /account/nights : how did the last few nights go, for one venue. ---
+   body { venue_id, limit?: 1..30 }
+   The morning after, an owner or manager opened the app and found the game menu and nothing
+   about last night. The only nights report was HQ's. This is the same assembly, scoped to the
+   caller's venues and stripped of the billing half: date, what was played, how many people
+   joined, how many of them had been on an earlier night (device_id, migration 39), and what
+   was given away. Broadcast bingo opens no session, so its end-of-game reports are merged in
+   the same way HQ does it. Read-only. */
+async function vpbNights(request, env, json) {
+  const o = await vpbRequireOwner(request, env);
+  if (o.error) return json({ error: o.error }, o.status);
+  const b = await request.json().catch(() => ({}));
+  const venueId = String(b.venue_id || '').trim();
+  const venue = o.venues.find((v) => v.id === venueId);
+  if (!venue) return json({ error: 'Pick one of your venues.' }, 400);
+  let limit = parseInt(b.limit, 10); if (!(limit >= 1 && limit <= 30)) limit = 12;
+  const vid = encodeURIComponent(venueId);
+
+  const sessions = await vpaSelect(env, 'vp_sessions',
+    'venue_id=eq.' + vid + '&select=id,status,opened_at,started_at,ended_at,created_at&order=created_at.desc&limit=' + (limit + 10)) || [];
+  let games = [], players = [], seenDevices = [];
+  if (sessions.length) {
+    const ids = sessions.map((x) => encodeURIComponent(x.id)).join(',');
+    games = await vpaSelect(env, 'vp_games', 'session_id=in.(' + ids + ')&select=id,session_id,format,status,started_at&order=seq.asc') || [];
+    players = await vpaSelect(env, 'vp_players', 'session_id=in.(' + ids + ')&select=id,session_id') || [];
+    /* device_id is asked for SEPARATELY, and on purpose. vpaSelect turns any PostgREST refusal
+       into an empty list, so naming a column the live database has not been given yet (migration
+       39) would have returned no players at all and every night would have read "0 players".
+       Split in two, a missing column costs the "came back" figure and nothing else. */
+    seenDevices = await vpaSelect(env, 'vp_players', 'session_id=in.(' + ids + ')&select=session_id,device_id') || [];
+  }
+  const headcount = {}, devices = {};
+  for (const p of players) headcount[p.session_id] = (headcount[p.session_id] || 0) + 1;
+  for (const p of seenDevices) {
+    if (p.device_id) (devices[p.session_id] = devices[p.session_id] || new Set()).add(p.device_id);
+  }
+  const byId = {};
+  for (const g of games) { (byId[g.session_id] = byId[g.session_id] || []).push(g); }
+
+  // Prizes on the night: raffle cash and claimed members draws, by day, so a night can show
+  // "given away" without another join per row.
+  const prizesByDay = {};
+  try {
+    const raffleGames = games.filter((g) => g.format === 'raffle');
+    if (raffleGames.length) {
+      const rr = await vpaSelect(env, 'vp_raffle_results',
+        'game_id=in.(' + raffleGames.map((g) => encodeURIComponent(g.id)).join(',') + ')&status=eq.winner&select=drawn_at,prize_type,prize_value_cents&limit=400') || [];
+      for (const r of rr) { const d = String(r.drawn_at || '').slice(0, 10); prizesByDay[d] = (prizesByDay[d] || 0) + ((r.prize_type === 'cash' && r.prize_value_cents) || 0); }
+    }
+    const draws = await vpaSelect(env, 'vp_member_draws', 'venue_id=eq.' + vid + '&select=id') || [];
+    if (draws.length) {
+      const mr = await vpaSelect(env, 'vp_member_draw_results',
+        'draw_id=in.(' + draws.map((d) => encodeURIComponent(d.id)).join(',') + ')&outcome=eq.claimed&select=drawn_at,amount_cents&order=drawn_at.desc&limit=200') || [];
+      for (const r of mr) { const d = String(r.drawn_at || '').slice(0, 10); prizesByDay[d] = (prizesByDay[d] || 0) + (r.amount_cents || 0); }
+    }
+  } catch (e) { /* the nights still list without prize figures */ }
+
+  // Oldest first so "came back" only counts devices seen on an EARLIER night.
+  const ordered = sessions.slice().sort((a, c) => Date.parse(a.created_at || 0) - Date.parse(c.created_at || 0));
+  const seen = new Set();
+  const nights = [];
+  for (const s of ordered) {
+    const gs = byId[s.id] || [];
+    const devs = devices[s.id] || new Set();
+    let back = 0;
+    devs.forEach((d) => { if (seen.has(d)) back++; });
+    devs.forEach((d) => seen.add(d));
+    const at = s.started_at || s.opened_at || s.created_at;
+    const formats = [];
+    gs.forEach((g) => { if (g.format && formats.indexOf(g.format) === -1) formats.push(g.format); });
+    nights.push({
+      kind: 'session', at: at, ended_at: s.ended_at || null, status: s.status,
+      players: headcount[s.id] || 0, games: gs.length, formats: formats,
+      came_back: back, came_back_known: devs.size > 0,
+      prize_cents: prizesByDay[String(at || '').slice(0, 10)] || 0,
+      abandoned: gs.length === 0 && (headcount[s.id] || 0) === 0,
+    });
+  }
+  const reports = await vpaSelect(env, 'vp_game_reports',
+    'venue_id=eq.' + vid + '&select=id,format,players,tickets,started_at,ended_at,created_at&order=created_at.desc&limit=' + limit) || [];
+  for (const r of reports) {
+    nights.push({
+      kind: 'report', at: r.started_at || r.created_at, ended_at: r.ended_at || null,
+      status: r.ended_at ? 'finished' : 'unfinished',
+      players: r.players || 0, tickets: r.tickets || 0, games: 1, formats: r.format ? [r.format] : [],
+      came_back: 0, came_back_known: false, prize_cents: 0, abandoned: false,
+    });
+  }
+  nights.sort((a, c) => Date.parse(c.at || 0) - Date.parse(a.at || 0));
+  return json({ ok: true, venue: { id: venue.id, name: venue.name }, nights: nights.slice(0, limit) });
+}
+
+/* Each login comes back with a role (owner, manager or host), whether it holds full access, and
+   the last three digits of its mobile. Without those an owner with two "Sam"s could not tell
+   them apart, and could remove a manager thinking they were a host. A manager sees only the
+   logins at their own venues (o.venues is already scoped for them). */
 async function vpbListHosts(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
   const venueIds = o.venues.map((v) => v.id);
   if (!venueIds.length) return json({ hosts: [], venues: [] });
   const staff = await vpaSelect(env, 'vp_venue_staff',
-    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&select=auth_user_id,venue_id,role,display_name');
+    'venue_id=in.(' + venueIds.map(encodeURIComponent).join(',') + ')&select=auth_user_id,venue_id,role,display_name,permissions');
   const byUser = {};
   for (const s of (staff || [])) {
-    if (!byUser[s.auth_user_id]) byUser[s.auth_user_id] = { auth_user_id: s.auth_user_id, label: s.display_name || '', venue_ids: [], is_owner: false };
-    byUser[s.auth_user_id].venue_ids.push(s.venue_id);
-    if (s.role === 'owner') byUser[s.auth_user_id].is_owner = true;
-    if (s.display_name && !byUser[s.auth_user_id].label) byUser[s.auth_user_id].label = s.display_name;
+    if (!byUser[s.auth_user_id]) byUser[s.auth_user_id] = { auth_user_id: s.auth_user_id, label: s.display_name || '', venue_ids: [], role: 'host', is_owner: false, full_access: false, mobile_last3: null };
+    const u = byUser[s.auth_user_id];
+    u.venue_ids.push(s.venue_id);
+    if (s.role === 'owner') { u.is_owner = true; u.role = 'owner'; }
+    else if (s.role === 'manager' && u.role !== 'owner') u.role = 'manager';
+    // A manager row with no permissions object is a full-access login (the venue's own login,
+    // as HQ onboarding creates it). Only the owner may remove or re-scope those.
+    if (s.role !== 'host' && !s.permissions) u.full_access = true;
+    if (s.display_name && !u.label) u.label = s.display_name;
   }
-  if (byUser[o.authUserId]) byUser[o.authUserId].is_owner = true;
+  if (byUser[o.authUserId]) { byUser[o.authUserId].is_owner = true; byUser[o.authUserId].role = 'owner'; byUser[o.authUserId].full_access = true; }
+  // Mobile digits, in parallel and bounded: a slow Auth API costs the digits, never the list.
+  const ids = Object.keys(byUser).slice(0, 60);
+  const users = await Promise.all(ids.map((id) => vpaAuthGetUser(env, id)));
+  users.forEach((u, i) => { if (u && u.phone) byUser[ids[i]].mobile_last3 = vpaMaskMobile(u.phone); });
   return json({
     hosts: Object.keys(byUser).map((k) => byUser[k]),
     venues: o.venues.map((v) => ({ id: v.id, name: v.name })),
+    can_manage_hosts: vpbIsOwner(o) || vpbCan(o, 'add_hosts'),
+    is_owner: vpbIsOwner(o),
   });
 }
 
@@ -4785,10 +5060,23 @@ async function vpbAddHost(request, env, json) {
    vpbRequireOwner entirely: no billing page, no account page, locked out of their own product with
    no audit row to explain it and no self-serve way back. Removing people is owner-only now, and
    nobody can remove the login that pays the bill. */
+/* Who may touch a staff login. The owner: anyone but a full-access login. A manager with the
+   "Add hosts" toggle: HOST-role logins at their own venues only (o.venues is already scoped to
+   theirs, so the rows we see are the rows they may touch). Anything else is refused with the
+   same words the page shows, so the buttons and the Worker agree for once. */
+function vpbStaffGuard(o, targetRows, json) {
+  const rows = targetRows || [];
+  if (vpbIsOwner(o)) return null;
+  if (!vpbCan(o, 'add_hosts')) return json({ error: 'You do not have permission to change hosts. Ask your account owner.' }, 403);
+  if (!rows.length || rows.some((r) => r.role !== 'host')) {
+    return json({ error: 'Only the account owner can change a manager or full-access login.' }, 403);
+  }
+  return null;
+}
+
 async function vpbRemoveHost(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
-  { const g = vpbOwnerOnly(o, json); if (g) return g; }   // a restricted manager cannot remove anyone
   const b = await request.json().catch(() => ({}));
   const target = String(b.auth_user_id || '').trim();
   if (!target) return json({ error: 'Missing host.' }, 400);
@@ -4802,7 +5090,9 @@ async function vpbRemoveHost(request, env, json) {
     'auth_user_id=eq.' + encodeURIComponent(target) +
     '&venue_id=in.(' + o.venues.map((v) => encodeURIComponent(v.id)).join(',') + ')' +
     '&select=role,permissions');
-  const targetIsFullAccess = (targetRows || []).some((r) => (r.role === 'owner') || !r.permissions);
+  // A manager with "Add hosts" may remove host-role logins at their venues; everything else is owner-only.
+  { const g = vpbStaffGuard(o, targetRows, json); if (g) return g; }
+  const targetIsFullAccess = (targetRows || []).some((r) => (r.role === 'owner') || (r.role !== 'host' && !r.permissions));
   if (targetIsFullAccess) {
     return json({ error: 'That login has full access to this account, so it cannot be removed here. Email hello@venueplay.com.au if you need it changed.' }, 403);
   }
@@ -4836,7 +5126,6 @@ async function vpbRemoveHost(request, env, json) {
 async function vpbSetStaffVenues(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
-  { const g = vpbOwnerOnly(o, json); if (g) return g; }   // a restricted manager cannot reassign anyone
   const b = await request.json().catch(() => ({}));
   const target = String(b.auth_user_id || '').trim();
   if (!target) return json({ error: 'Missing host.' }, 400);
@@ -4853,6 +5142,8 @@ async function vpbSetStaffVenues(request, env, json) {
   if (!currentRows || !currentRows.length) {
     return json({ error: 'That person is not set up on this account yet. Add them first.' }, 404);
   }
+  // A manager with "Add hosts" may re-scope host-role logins at their venues; everything else is owner-only.
+  { const g = vpbStaffGuard(o, currentRows, json); if (g) return g; }
   // Never reassign the owner's own login (stored as role 'owner' on at least one venue).
   const ownerLike = currentRows.some((r) => r.role === 'owner');
   if (ownerLike) return json({ error: 'That login has full access and cannot be reassigned here.' }, 403);

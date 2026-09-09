@@ -184,8 +184,9 @@
   .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
   .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
   .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,56px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
-  .playing{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,22px);color:var(--muted);margin-top:1.8cqw}
-  .playing b{color:#fff}
+  /* Where you are, under the code. The player count used to sit here; the TV must not show it. */
+  .lobbyat{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(12px,2.2cqw,26px);color:var(--muted);margin-top:1.8cqw;max-width:40cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lobbyat b{color:#fff}
 
   /* ---- bingo running ---- */
   .runlayer{flex-direction:row;gap:3cqw;align-items:center;justify-content:center;padding:3.5% 5%}
@@ -201,7 +202,7 @@
   .balleye{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:clamp(9px,1.7cqw,14px);color:var(--muted)}
   /* the resting "number called" is itself a bingo ball, so the big reveal settles into an
      identical ball with no visible handoff */
-  .curball{width:min(30cqw,46vh);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:1.4cqw 0;
+  .curball{width:min(26cqw,38vh);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:1.4cqw 0;
     background:radial-gradient(circle at 38% 30%, #ffffff, #ffe0ef 42%, #FF1F8E 100%);
     box-shadow:0 0 60px rgba(255,31,142,.45), inset 0 -1cqw 2.4cqw rgba(0,0,0,.16)}
 
@@ -213,22 +214,30 @@
     box-shadow:0 0 100px rgba(255,31,142,.55), inset 0 -1.2cqw 3cqw rgba(0,0,0,.16)}
   @keyframes brpop{ 0%{transform:scale(.2);opacity:0} 45%{transform:scale(1.06);opacity:1} 70%{transform:scale(.98)} 100%{transform:scale(1);opacity:1} }
   /* the reveal ball glides left into the resting ball (roughly its spot) and fades as it arrives */
-  @keyframes brgo{ 0%{transform:scale(1);opacity:1} 82%{opacity:1} 100%{transform:translate(-30cqw,2cqw) scale(.62);opacity:0} }
+  @keyframes brgo{ 0%{transform:scale(1);opacity:1} 82%{opacity:1} 100%{transform:translate(-30cqw,1cqw) scale(.58);opacity:0} }
   .cbletter{font-family:'Anton',sans-serif;font-size:clamp(16px,5cqw,60px);color:var(--pink);letter-spacing:.05em;text-shadow:0 0 26px rgba(255,31,142,.5)}
-  .cbnum{font-family:'Anton',sans-serif;font-size:min(17cqw,25vh);color:#0A0A0B;line-height:1}
-  .prevballs{display:flex;gap:.8cqw;justify-content:center;flex-wrap:wrap;margin-top:1cqw}
-  .prevball{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.8cqw,15px);color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:.6cqw;padding:.3cqw .9cqw}
-  .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,15px);color:var(--muted);margin-top:1cqw}
+  .cbnum{font-family:'Anton',sans-serif;font-size:min(15cqw,21vh);color:#0A0A0B;line-height:1}
+  /* The last five, newest first, as small grey balls under the big one. Sized to be read from
+     the back of the room: the old 15px cap made them a caption. */
+  .prevballs{display:flex;gap:1cqw;justify-content:center;flex-wrap:nowrap;margin-top:.8cqw}
+  .prevball{width:clamp(30px,4.8cqw,92px);aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+    font-family:'Anton',sans-serif;font-size:clamp(14px,2.6cqw,48px);line-height:1;color:#fff;
+    background:radial-gradient(circle at 38% 30%, rgba(255,255,255,.22), rgba(255,255,255,.06) 60%);border:1px solid var(--line-2)}
+  .prevball:first-child{color:#fff;background:radial-gradient(circle at 38% 30%, rgba(255,31,142,.55), rgba(255,31,142,.18) 65%);border-color:rgba(255,31,142,.45)}
+  .prevball:nth-child(n+3){color:var(--muted)}
+  .ballcount{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,1.9cqw,24px);color:var(--muted);margin-top:.8cqw}
   .ballcount b{color:#fff}
-  .patline{margin-top:1.2cqw;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(11px,2.2cqw,18px)}
-  .patlbl{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:.72em}
+  /* Pattern and prize are the two things people ask each other about. Twice their old size. */
+  .patline{margin-top:.8cqw;font-family:'Hanken Grotesk',sans-serif;font-size:clamp(16px,3.4cqw,46px);line-height:1.1;text-align:center}
+  .patlbl{color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:.5em;display:block;margin-bottom:.2cqw}
   .patval{color:var(--pink);font-weight:800}
-  .prizeline{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,15px);color:var(--muted);margin-top:.5cqw}
+  .prizeline{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(14px,2.4cqw,34px);color:var(--muted);margin-top:.6cqw;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .prizeline b{color:var(--gold)}
   .tvboard{display:flex;gap:.6cqw;width:100%}
   .bcol{display:flex;flex-direction:column;gap:.4cqw;flex:1;min-width:0}
-  .bhead{font-family:'Anton',sans-serif;font-size:clamp(14px,2.6cqw,32px);color:var(--pink);text-align:center;line-height:1;margin-bottom:.3cqw}
-  .bnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(9px,1.5cqw,17px);color:var(--faint);text-align:center;padding:.5cqw 0;border-radius:.4cqw;background:rgba(255,255,255,.02);border:1px solid transparent}
+  /* The board fills the height it has. Digits were capped at 17px whatever the screen. */
+  .bhead{font-family:'Anton',sans-serif;font-size:clamp(14px,3cqw,48px);color:var(--pink);text-align:center;line-height:1;margin-bottom:.3cqw}
+  .bnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(10px,2.2cqw,60px);line-height:1.15;color:var(--faint);text-align:center;padding:.45cqw 0;border-radius:.4cqw;background:rgba(255,255,255,.02);border:1px solid transparent}
   .bnum.lit{background:rgba(255,31,142,.18);color:#fff;border-color:rgba(255,31,142,.4)}
   .bnum.cur{background:var(--gold);color:#1a1000;border-color:transparent;box-shadow:0 0 14px rgba(255,194,75,.6)}
 
@@ -344,7 +353,7 @@
         <div class="lobbyname">Bingo</div>
         <div class="joinurl">venueplay.com.au/play</div>
         <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
-        <div class="playing"><b id="lobbyPlaying">0</b> playing</div>
+        <div class="lobbyat" id="lobbyAt" style="display:none">at <b id="lobbyAtName"></b></div>
       </div>
     </div>
     <div class="jsub" id="lobbySub">Grab your phone and scan to play&hellip;</div>
@@ -993,7 +1002,7 @@
   }
 
   // ================= BINGO SCREEN =================
-  var state={ phase:"lobby", pattern:"one", prize:"the prize", called:[], playerCount:0, winner:null, claimName:"Player", claimCount:1, celebrated:false };
+  var state={ phase:"lobby", pattern:"one", prize:"the prize", called:[], winner:null, claimName:"Player", claimCount:1, celebrated:false };
 
   function buildBoard(){
     var wrap=$("tvBoard"); wrap.innerHTML="";
@@ -1032,7 +1041,6 @@
   function renderLobby(){
     $("lobbyCode").textContent=joinCode;
     $("tvJoinCode").textContent=joinCode;
-    $("lobbyPlaying").textContent=state.playerCount;
     drawQR($("qrBig"), playURL, 720);   // draw now the lobby is actually visible (not blank)
     drawQR($("qrMini"), playURL, 240);
   }
@@ -1106,7 +1114,8 @@
       $("cbNum").textContent = prevN ? prevN : "--";
     }
     var prev=$("tvPrev"); prev.innerHTML="";
-    for(var i=2;i<=3;i++){ var pi=state.called.length-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=state.called[pi]; prev.appendChild(d); } }
+    // the five before the current one, newest first
+    for(var i=2;i<=6;i++){ var pi=state.called.length-i; if(pi>=0){ var d=document.createElement("div"); d.className="prevball"; d.textContent=state.called[pi]; prev.appendChild(d); } }
     $("tvBallCount").innerHTML="<b>"+state.called.length+"</b> of 90 called";
     $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
     $("tvPrize").textContent=state.prize;
@@ -1128,7 +1137,9 @@
     var ws=(m.winners&&m.winners.length) ? m.winners : [{ name:m.name, cardNo:m.cardNo }];
     $("winName").textContent=joinNames(ws.map(function(w){ return w.name; }));
     $("winsLabel").textContent = ws.length>1 ? "Share" : "Wins";
-    $("winPrizeVal").textContent=state.prize;
+    // The stage prize rides on the winner message (hosts built after 9 Sep 2026). An older host
+    // sends none, so the game prize stands in, exactly as before.
+    $("winPrizeVal").textContent=(typeof m.prize==="string" && m.prize) ? m.prize : state.prize;
     // One card number reads as one winner. With a tie, list them all.
     $("winCard").textContent = ws.length>1
       ? ws.map(function(w){ return "#"+(w.cardNo||"000"); }).join(" &middot; ").replace(/&middot;/g,"·")
@@ -1482,7 +1493,6 @@
       if(m.pattern) state.pattern=m.pattern;
       if(typeof m.prize==="string") state.prize=m.prize;
       state.called=m.called||[];
-      if(typeof m.playerCount==="number") state.playerCount=m.playerCount;
       /* A routine state refresh must NOT wipe a claim or a winner off the wall. The host resends
          state whenever any phone re-announces, and phones re-announce whenever they wake or the TV
          reconnects. So one punter's phone coming out of sleep used to erase "BINGO! Ann wins $50"
@@ -1511,8 +1521,7 @@
       revealBall(m.number);   // big-ball reveal for the freshly called number
     }
     else if(m.t==="players"){
-      if(typeof m.count==="number") state.playerCount=m.count;
-      if(tvMode==="bingo" && state.phase==="lobby") $("lobbyPlaying").textContent=state.playerCount;
+      // Host presence only. The count itself is never shown on the wall (locked rule, July 2026).
     }
     else if(m.t==="claim_pending"){
       // names[] when more than one player called on the same ball; name is the first, for
@@ -1529,6 +1538,7 @@
     else if(m.t==="winner"){
       state.winner=m;
       if(m.cont && m.next) state.pattern=m.next;   // game plays on for the next prize
+      if(m.cont && typeof m.nextPrize==="string" && m.nextPrize) state.prize=m.nextPrize;
       state.phase="win"; state.celebrated=false; applyBingo();
       // on a play-on win, celebrate then return to the board so the round continues
       // (the next called ball also brings the board back, whichever comes first)
@@ -1717,6 +1727,8 @@
         (corner||document.getElementById("tv")||document.body).appendChild(el);
       }
       el.textContent=nm; el.style.display="block";
+      var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
+      if(la && lan){ lan.textContent=nm; la.style.display=""; }
     }
     /* THE WHOLE SCREEN, IN ONE CALL, THROUGH THE WORKER.
        This used to read vp_venue_screen and v_vp_screen_draws straight from Supabase with the

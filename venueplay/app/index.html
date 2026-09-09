@@ -69,6 +69,10 @@
   .btn.roll{background:var(--roll);color:#1a1000}
   .btn.roll:hover{filter:brightness(1.08)}
   .btn.big{width:100%;padding:15px;font-size:15px;text-transform:uppercase;letter-spacing:.04em}
+  /* The one button a host taps all night. Tall enough to hit without looking. */
+  #nextBtn{min-height:64px;font-size:19px}
+  #nextBtn.waiting{background:var(--roll);color:#1a1000;opacity:1;box-shadow:none}
+  .resolve .btn{min-height:44px}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
   .skiplink{display:inline-block;margin-top:16px;color:var(--muted);font-size:12.5px;text-decoration:underline;cursor:pointer}
   .skiplink:hover{color:var(--pink)}
@@ -211,7 +215,7 @@
         <svg width="26" height="30" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
         <span class="word">VenuePlay</span>
       </div>
-      <div class="authbig">Host sign in</div>
+      <div class="authbig">Sign in</div>
       <div class="authsub">Sign in with a text code to your mobile.</div>
 
       <div class="authcard">
@@ -434,6 +438,41 @@
     </div>
   </div>
 </div>
+<!-- New game: pattern and prize for the next game, asked before the tickets go out -->
+<div id="ngModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
+  <div style="max-width:440px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:6px">New game</div>
+    <div id="ngNote" style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:14px">Everyone in the room gets fresh tickets.</div>
+    <div class="field"><label for="ngPattern">Winning pattern</label>
+      <select id="ngPattern">
+        <option value="one">One line (any row)</option>
+        <option value="two">Two lines</option>
+        <option value="full">Full house</option>
+        <option value="corners">Four corners</option>
+        <option value="top">Top line</option>
+        <option value="middle">Middle line</option>
+        <option value="bottom">Bottom line</option>
+      </select></div>
+    <div class="field"><label for="ngPrize">Prize</label>
+      <input type="text" class="hostinput" id="ngPrize" placeholder="e.g. $50 bar tab"></div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button type="button" id="ngGo" class="btn pink big" style="flex:1">Deal tickets</button>
+      <button type="button" id="ngCancel" class="btn ghost big" style="flex:0 0 auto">Cancel</button>
+    </div>
+  </div>
+</div>
+<!-- End of night: one card with what happened, shown after End game -->
+<div id="nightModal" class="hidden" style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px">
+  <div style="max-width:460px;width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:24px">
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:19px;color:#fff;margin-bottom:4px">Tonight at a glance</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">The TV is back on your ads. Here is how the night went.</div>
+    <div class="stat" id="nightStats"></div>
+    <div id="nightPrizes" style="font-size:13.5px;color:var(--text);line-height:1.6"></div>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button type="button" id="nightDone" class="btn pink big" style="flex:1">Done</button>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="vp-session.js"></script>
 <script src="vp-gaming.js"></script>
@@ -588,7 +627,7 @@
     var msg=(err&&err.message)?String(err.message).toLowerCase():"";
     var off=(msg.indexOf("phone")>=0 || msg.indexOf("sms")>=0) &&
             (msg.indexOf("disabled")>=0 || msg.indexOf("not enabled")>=0 || msg.indexOf("unsupported")>=0 || msg.indexOf("provider")>=0);
-    if(off){ $("mobileErr").textContent="We could not send a code. We could not text you a code. Try again in a moment, or email hello@venueplay.com.au and we will sort it out."; }
+    if(off){ $("mobileErr").textContent="We could not text you a code. Try again in a moment, or email hello@venueplay.com.au and we will sort it out."; }
     else { $("mobileErr").textContent="We could not send a code, check the number or try again."; }
   }
 
@@ -918,6 +957,18 @@
     claims:[], claimIdx:-1, claimSeq:0, won:false, lastWins:[], prizesWon:[], startedAt:null
   };
   var MAX_TIE=8;   // a sane ceiling on one ball; a real tie is two or three
+  /* THE NIGHT, from Open lobby to End game. Games finished, the most people in the room at once,
+     and every prize handed out, so End game can show the host one card of what happened instead
+     of dropping them back on the menu with nothing. Saved with the game, so a reload keeps it. */
+  var NIGHT={ games:0, peak:0, prizes:[], startedAt:null };
+  function nightReset(){ NIGHT={ games:0, peak:0, prizes:[], startedAt:new Date().toISOString() }; }
+  function nightNote(){
+    // Called when a game closes (New game or End game). A game counts once it has started.
+    if(!G.startedAt) return;
+    NIGHT.games+=1;
+    NIGHT.peak=Math.max(NIGHT.peak||0, G.peak||0, G.order.length);
+    (G.prizesWon||[]).forEach(function(w){ NIGHT.prizes.push(w); });
+  }
   // the natural next prize in a progressive housie game (line -> two lines -> full house)
   function nextPattern(cur){ if(cur==="one") return "two"; if(cur==="two") return "full"; if(cur==="full") return ""; return "full"; }
   var ALL_PATTERNS=[["one","One line"],["two","Two lines"],["full","Full house"],["corners","Four corners"],["top","Top line"],["middle","Middle line"],["bottom","Bottom line"]];
@@ -933,6 +984,7 @@
   function postReport(open){
     try{
       if(!G.code || !G.startedAt) return;
+      if(!open) nightNote();
       var players=Math.max(G.peak||0, G.order.length), tickets=0;
       for(var i=0;i<G.order.length;i++){ var p=G.players[G.order[i]]; if(p&&p.cards) tickets+=p.cards.length; }
       var body={ code:G.code, format:"bingo", players:players, tickets:tickets,
@@ -994,7 +1046,9 @@
       // The tapping happens in the LOBBY and between rounds, which is exactly when this used to
       // delete the key. A reload mid-allocation lost the entire night's till record with nothing
       // to rebuild it from, on the one screen that told the host to do it there.
-      if(G.status==="running" || G.paidMode){
+      // The lobby counts too: that is where the session and the join code are minted, and a
+      // reload there used to leave the session open with nothing on this tablet remembering it.
+      if(G.status==="running" || G.status==="lobby" || G.paidMode){
         localStorage.setItem(gameKey(G.code), JSON.stringify({
           v:1, ts:Date.now(),
           status:G.status, pattern:G.pattern, prize:G.prize, paidMode:G.paidMode,
@@ -1003,7 +1057,13 @@
           players:G.players, order:G.order,
           claims:G.claims, claimIdx:G.claimIdx, lastWins:G.lastWins, won:G.won,
           reportId:G.reportId,
-          drawId:G.drawId||null, drawMode:G.drawMode||"local"
+          drawId:G.drawId||null, drawMode:G.drawMode||"local",
+          /* A reload used to lose all five of these: End game then never closed the session (so
+             the night was not metered until the sign-out backstop hours later), the TV was sent
+             join_code null, the peak restarted from zero and early calls switched themselves off. */
+          sessionId:G.sessionId||null, joinCode:G.joinCode||null, planCapAtStart:(G.planCapAtStart!=null?G.planCapAtStart:null),
+          peak:G.peak||0, allowEarly:!!G.allowEarly,
+          night:NIGHT
         }));
       } else {
         localStorage.removeItem(gameKey(G.code));
@@ -1019,10 +1079,13 @@
       if(s.status!=="running"){
         // Not a running round, but a paid night still has takings worth keeping. Bring back the
         // mode and who paid for what; the game itself stays where it was.
-        if(!s.paidMode) return false;
+        // An open session is worth keeping for the same reason: it is what meters and bills the
+        // night, and the join code on it is what the phones are scanning right now.
+        if(!s.paidMode && !s.sessionId) return false;
         if(!s.ts || (Date.now()-s.ts)>SAVE_MAX_AGE){ localStorage.removeItem(gameKey(code)); return false; }
-        G.code=code; G.paidMode=s.paidMode;
+        G.code=code; G.paidMode=s.paidMode||"";
         G.players=s.players||{}; G.order=Array.isArray(s.order)?s.order:[];
+        restoreNightFields(s);
         var ps=document.getElementById("paidSel"); if(ps){ ps.value=G.paidMode; }
         return false;   // false: there is no ROUND to resume, only the allocation
       }
@@ -1062,14 +1125,52 @@
          record to, so it finishes the way it started. */
       G.drawId=s.drawId||null;
       G.drawMode=(s.drawMode==="server" && G.drawId) ? "server" : "local";
+      restoreNightFields(s);
       return true;
     }catch(e){ return false; }
   }
+  function restoreNightFields(s){
+    if(s.sessionId) G.sessionId=s.sessionId;
+    if(s.joinCode) G.joinCode=s.joinCode;
+    if(s.planCapAtStart!=null) G.planCapAtStart=s.planCapAtStart;
+    if(typeof s.peak==="number") G.peak=s.peak;
+    if(typeof s.allowEarly==="boolean"){ G.allowEarly=s.allowEarly; var a=$("allowEarlyChk"), b=$("allowEarlyLive"); if(a) a.checked=s.allowEarly; if(b) b.checked=s.allowEarly; }
+    if(s.night && typeof s.night=="object"){ NIGHT={ games:s.night.games||0, peak:s.night.peak||0, prizes:Array.isArray(s.night.prizes)?s.night.prizes:[], startedAt:s.night.startedAt||null }; }
+  }
   function syncNextBtn(){
-    if(VP_HOLD.busy($("nextBtn"))) return;   // mid-hold: the countdown owns the button until it ends
-    if(G.status==="running" && G.idx>=89){ $("nextBtn").disabled=true; $("nextBtn").textContent="All 90 called"; }
+    var b=$("nextBtn"); if(!b) return;
+    if(VP_HOLD.busy(b)) return;   // mid-hold: the countdown owns the button until it ends
+    if(G.calling) return;         // a ball is being fetched: nextBall owns the label until it lands
+    b.classList.remove("waiting");
+    /* The biggest button on the screen has to say what the game is doing. It used to read "Next
+       number" after Finish game (a tap only produced a toast) and while a claim sat waiting (a
+       fumbled tap was refused, but the button did not say why). */
+    if(G.status==="running" && G.won){ b.disabled=true; b.textContent="Game done"; }
+    else if(G.status==="running" && G.claims.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Claim waiting"; }
+    else if(G.status==="running" && G.lastWins.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Announce the win"; }
+    else if(G.status==="running" && G.idx>=89){ b.disabled=true; b.textContent="All 90 called"; }
     // Before the first ball it is not "next", it is the start of the game. Hosts read the button.
-    else { $("nextBtn").disabled=false; $("nextBtn").textContent = (G.idx<0) ? "Start calling" : "Next number"; }
+    else { b.disabled=false; b.textContent = (G.idx<0) ? "Start calling" : "Next number"; }
+  }
+  /* 8: THE TABLET SPEAKS UP WHEN SOMEONE CALLS. A claim used to redraw the queue and flip the TV,
+     and the tablet itself did nothing. A host watching the room relied on the shout. Two short
+     tones and a buzz. The audio context is created on the host's first tap, because iPad Safari
+     will not start one any other way; if it cannot play, the claim still lands as before. */
+  var _ac=null;
+  function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
+  document.addEventListener("pointerdown", unlockAudio, { passive:true });
+  function claimChime(){
+    try{ if(navigator.vibrate) navigator.vibrate([0,120,80,120]); }catch(e){}
+    try{
+      if(!_ac) return;
+      var t=_ac.currentTime;
+      [[880,0],[1175,0.16]].forEach(function(n){
+        var o=_ac.createOscillator(), g=_ac.createGain();
+        o.type="sine"; o.frequency.value=n[0];
+        g.gain.setValueAtTime(0.0001, t+n[1]); g.gain.exponentialRampToValueAtTime(0.35, t+n[1]+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t+n[1]+0.28);
+        o.connect(g); g.connect(_ac.destination); o.start(t+n[1]); o.stop(t+n[1]+0.3);
+      });
+    }catch(e){}
   }
 
   // ---- 90-ball ticket: 3 rows x 9 cols, 15 numbers, exactly 5 per row ----
@@ -1495,6 +1596,7 @@
     G.prize=_p;
     G.defaultCards=clampCards($("cardsSel").value);
     G.status="lobby"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
+    nightReset();
     send({ t:"mode", mode:"bingo" });   // TV switches from ads to the join screen
     sendState();                         // active:false -> TV shows the lobby (QR)
     saveGame(); renderConsole();
@@ -1513,6 +1615,9 @@
   function openServerSession(){
     try{
       var v = __ctx && __ctx.venue; if(!v || !v.id) return;
+      // A reload in the lobby brings the session back with the saved game. Reuse it: opening a
+      // second one would leave the first counting a room that had already moved on.
+      if(G.sessionId && G.joinCode){ sendState(); return; }
       if(!(window.VP && VP.gameApiPost)) return;
       VP.gameApiPost("/session", { venue_id: v.id, format: "bingo" }).then(function(r){
         if(!r || r.error || !r.session_id) return;
@@ -1590,6 +1695,7 @@
     return n.slice(0,-1).join(", ")+" and "+n[n.length-1];
   }
   function renderClaimQueue(){
+    syncNextBtn();
     var q=$("claimQueue"), i, p;
     // Resolved: one or more confirmed winners, nothing left waiting on the host.
     if(G.lastWins.length && !G.claims.length && !G.won){
@@ -1599,7 +1705,10 @@
       q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+winnerNames(G.lastWins)+' won '+PATTERN_NAMES[pat]+'! 🎉</span></div>'+
         '<div class="claimsub">'+(many?('A tie on the same number, so '+G.lastWins.length+' winners share the prize. '):'')+
         'Same tickets, same numbers. Play on for another prize, or finish the game.</div>'+
-        '<div style="margin-top:12px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Next prize</label><select id="nextPatternSel">'+opts+'</select></div>'+
+        '<div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+          '<div><label for="nextPatternSel" style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Next pattern</label><select id="nextPatternSel">'+opts+'</select></div>'+
+          '<div><label for="nextPrizeIn" style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Prize for it</label><input type="text" class="hostinput" id="nextPrizeIn" value="'+esc(G.prize)+'" placeholder="e.g. $100 house"></div>'+
+        '</div>'+
         '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="keepplaying">Keep playing</button>'+
         '<button class="btn ghost" data-act="finish">Finish game</button></div></div>';
       return;
@@ -1724,6 +1833,7 @@
     openServerDraw();   // the ball order is shuffled on the server; the console asks for each ball
     G.status="running"; G.won=false; G.claims=[]; G.claimIdx=-1; G.lastWins=[];
     G.prizesWon=[]; G.startedAt=new Date().toISOString();
+    if(!NIGHT.startedAt) nightReset();   // a host who skipped the lobby still gets a night card
     G.peak=G.order.length;   // the room as it stands at the first ball
     G.reportId=null; postReport(true);   // the night is on the record from ball one
     dealCards();
@@ -1734,11 +1844,32 @@
     saveGame();
     renderConsole();
   }
-  function newGame(){
+  /* A new game asks what it is FOR before the tickets go out. The old New game kept the last
+     game's pattern and prize, so a host who wanted a different prize for game two had to End game
+     (TV back to ads) and set it all up again. The modal doubles as the "are you sure" for a game
+     still in progress. */
+  function newGamePrompt(){
     if(blockedByHold()) return;
-    /* This sits in the resolve row, on screen throughout a live round. One tap re-deals every
-       player in the room a brand new card and throws away the balls drawn so far. */
-    if(G.idx>=0 && !G.won && !confirm("Start a brand new game?\n\nEveryone in the room gets a new ticket and the "+(G.idx+1)+" balls drawn so far are cleared.")) return;
+    var m=$("ngModal"); if(!m){ newGame(); return; }
+    $("ngPattern").value=G.pattern||"one";
+    $("ngPrize").value=(G.prize && G.prize!=="the prize") ? G.prize : "";
+    $("ngNote").textContent = (G.idx>=0 && !G.won)
+      ? "This game is still going. Everyone gets fresh tickets and the "+(G.idx+1)+" balls called so far are cleared."
+      : "Everyone in the room gets fresh tickets. Same players, same night.";
+    m.classList.remove("hidden");
+    $("ngGo").onclick=function(){
+      var pz=($("ngPrize").value||"").trim();
+      if(!pz){ showToast("Put in what they are playing for first."); try{ $("ngPrize").focus(); }catch(e){} return; }
+      G.pattern=$("ngPattern").value||"one"; G.prize=pz;
+      // keep the setup form in step, so the next Open lobby starts from the same choice
+      var ps=$("patternSel"); if(ps) ps.value=G.pattern;
+      var pi=$("prizeInput"); if(pi) pi.value=G.prize;
+      m.classList.add("hidden");
+      newGame();
+    };
+    $("ngCancel").onclick=function(){ m.classList.add("hidden"); };
+  }
+  function newGame(){
     postReport();   // report the round just finished before a fresh one begins
     /* Consent does not carry into the next game, because the charge does not either. The room can
        grow between games and each one is billed on its own, so each one is asked on its own. */
@@ -1787,6 +1918,35 @@
     sendState();
     saveGame();   // status is now "setup", so this clears the saved game for this code
     renderConsole();
+    showNightCard();
+  }
+  /* One card, after End game: players, games, prizes. Before this the tap posted the report and
+     put the menu back with nothing said, so the host (and a manager reading over their shoulder)
+     never saw "Tonight: 42 players, 3 games". Built only from what this tablet saw. */
+  function showNightCard(){
+    var m=$("nightModal"); if(!m) return;
+    var players=Math.max(NIGHT.peak||0, G.peak||0, G.order.length), games=NIGHT.games||0, prizes=NIGHT.prizes||[];
+    if(!games && !players){ return; }   // a lobby that never started: nothing to report
+    $("nightStats").innerHTML=
+      '<div class="box"><div class="k">Players joined</div><div class="v g">'+players+'</div></div>'+
+      '<div class="box"><div class="k">Games run</div><div class="v">'+games+'</div></div>'+
+      '<div class="box"><div class="k">Prizes given</div><div class="v">'+prizes.length+'</div></div>';
+    var h="";
+    if(prizes.length){
+      h+='<div class="lbl" style="margin:4px 0 6px">Prizes</div>';
+      prizes.forEach(function(w){
+        h+='<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line-2)">'+
+           '<span>'+esc(PATTERN_NAMES[w.pattern]||w.pattern||"Prize")+(w.shared?' <span style="color:var(--faint)">(shared)</span>':'')+'</span>'+
+           '<span style="text-align:right"><b style="color:var(--gold)">'+esc(w.prize||"")+'</b> <span style="color:var(--muted)">'+esc(w.winner_name||"")+(w.card_no?' #'+esc(String(w.card_no)):'')+'</span></span></div>';
+      });
+    } else {
+      h+='<div style="color:var(--muted)">No prizes were recorded tonight.</div>';
+    }
+    h+='<div style="font-size:12px;color:var(--faint);margin-top:12px">Counted on this tablet. Extra players over your plan are worked out on the bill from the server count.</div>';
+    $("nightPrizes").innerHTML=h;
+    m.classList.remove("hidden");
+    $("nightDone").onclick=function(){ m.classList.add("hidden"); };
+    nightReset();
   }
   var BALL_HOLD_SECONDS=5;
   function nextBall(){
@@ -1900,7 +2060,7 @@
   }
   // Announce whoever the host confirmed. winners[] carries the whole tie; the top-level
   // pid/name/cardNo repeat the first winner so any screen still on the old shape keeps working.
-  function announce(cont, nxt){
+  function announce(cont, nxt, nextPrize){
     if(!G.lastWins.length) return null;
     // Order by who CALLED first, not by the order the host happened to tap Confirm. The legacy
     // pid/name/cardNo below are the first winner, so an out-of-order confirm otherwise named the
@@ -1908,10 +2068,13 @@
     var ws=G.lastWins.slice().sort(function(a,b){ return (a.seq||0)-(b.seq||0); });
     var first=ws[0], pat=first.pattern;
     G.claimIdx=-1;   // the round is decided: the tie window on that ball closes here
-    var msg={ t:"winner", pid:first.pid, name:first.name, cardNo:first.cardNo, pattern:pat,
+    /* prize is what THIS stage was for, so the TV and the phones announce the line prize on a
+       line win rather than the house prize. nextPrize is what the room plays for next. Screens
+       built before 9 Sep 2026 ignore both and fall back to the game prize, as they always did. */
+    var msg={ t:"winner", pid:first.pid, name:first.name, cardNo:first.cardNo, pattern:pat, prize:G.prize,
               winners:ws.map(function(w){ return { pid:w.pid, name:w.name, cardNo:w.cardNo }; }),
               shared:ws.length>1, cont:!!cont };
-    if(cont) msg.next=nxt;
+    if(cont){ msg.next=nxt; if(nextPrize) msg.nextPrize=nextPrize; }
     send(msg);
     ws.forEach(function(w){
       G.prizesWon.push({ pattern:pat, prize:G.prize, winner_name:w.name, card_no:w.cardNo, shared:ws.length>1 });
@@ -1923,16 +2086,18 @@
     if(!G.lastWins.length) return;
     var sel=$("nextPatternSel"), pat=G.lastWins[0].pattern;
     var nxt=(sel&&sel.value)||nextPattern(pat)||"full";
-    announce(true, nxt);
-    G.pattern=nxt; G.won=false;
-    $("nextBtn").disabled=(G.idx>=89);
-    saveGame(); renderConsole();
+    var pin=$("nextPrizeIn"), nextPrize=(pin && pin.value.trim()) || G.prize;
+    announce(true, nxt, nextPrize);   // records the stage just won against ITS prize, before the swap
+    G.pattern=nxt; G.prize=nextPrize; G.won=false;
+    var pi=$("prizeInput"); if(pi) pi.value=G.prize;
+    sendState();   // the TV and every phone show the new pattern and prize straight away
+    saveGame(); renderConsole(); syncNextBtn();
   }
   function finishGame(){
     if(!G.lastWins.length) return;
     announce(false);
     G.won=true;
-    saveGame(); renderConsole();
+    saveGame(); renderConsole(); syncNextBtn();
   }
 
   // ---- incoming ----
@@ -2030,6 +2195,7 @@
                         swapped:swapped, calledOn:(swapped?m.cardNo:0) });
         G.claimIdx=G.idx;
         sendClaimPending();
+        claimChime();
         saveGame();
         renderClaimQueue();
       }
@@ -2170,7 +2336,7 @@
     if(b) b.addEventListener("change", function(){ set(this.checked); });
   })();
   $("nextBtn").addEventListener("click", nextBall);
-  $("newGameBtn").addEventListener("click", newGame);
+  $("newGameBtn").addEventListener("click", newGamePrompt);
   $("endGameBtn").addEventListener("click", endGame);
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;
@@ -2183,8 +2349,8 @@
   });
 
   // ================= INIT =================
-  // (removed "Paired, sign in to start" header chip — the status only shows once actually signed in)
-  // Show a neutral splash until auth resolves, THEN route — the sign-in screen never flashes for
+  // (removed "Paired, sign in to start" header chip: the status only shows once actually signed in)
+  // Show a neutral splash until auth resolves, THEN route, so the sign-in screen never flashes for
   // someone who is actually signed in. Signed-out users fall through to vSignIn once ready resolves.
   go("vBoot");
   if(window.VP){ VP.ready().then(function(ctx){ __ctx=ctx; VP.suspensionBanner(ctx); applyRoute(ctx); }).catch(function(){ go("vSignIn"); }); }

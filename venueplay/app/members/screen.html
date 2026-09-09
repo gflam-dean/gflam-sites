@@ -67,6 +67,9 @@
   .spin{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(56px,20cqw,360px);color:#fff;line-height:1;text-shadow:0 0 40px rgba(255,255,255,.2)}
   .drawing{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(16px,3.4cqw,48px);color:var(--pink);letter-spacing:.1em;margin-top:1.4cqw}
   .winnum{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(60px,22cqw,380px);color:#fff;line-height:.95;text-shadow:0 0 60px rgba(255,31,142,.35)}
+  .winnum.pop{animation:numpop .75s cubic-bezier(.2,.9,.3,1.2)}
+  @keyframes numpop{0%{transform:scale(.6);opacity:0;filter:blur(6px)}55%{transform:scale(1.08);opacity:1;filter:blur(0)}100%{transform:scale(1)}}
+  .spin{display:inline-block;font-variant-numeric:tabular-nums}
   .wname{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,96px);color:var(--pink);line-height:1;margin-top:1cqw;text-shadow:0 0 36px rgba(255,31,142,.55)}
   .present{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,2.8cqw,38px);color:#fff;margin-top:2.4cqw}
   .present b{color:var(--gold)}
@@ -79,8 +82,10 @@
   @keyframes winpop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
   .winburst{position:absolute;inset:0;background:radial-gradient(closest-side, rgba(255,194,75,.13), transparent 68%);opacity:0;z-index:1;transition:opacity .7s ease}
   .winburst.show{opacity:1}
-  .missed{font-family:'JetBrains Mono',monospace;font-size:clamp(10px,1.9cqw,24px);color:var(--faint);margin-top:2.4cqw}
-  .missed b{color:var(--muted)}
+  /* Readable from the back of the room: this used to cap at 24px in the faint grey, so the
+     one line that told the member they had just missed the jackpot could not be read at 3m. */
+  .missed{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(16px,3.2cqw,46px);color:var(--text);margin-top:2cqw;line-height:1.2}
+  .missed b{color:var(--gold);font-family:'JetBrains Mono',monospace}
 
   /* advertising idle */
   .ad{opacity:0;transition:opacity .8s ease}
@@ -138,6 +143,7 @@
     <div class="eyebrow">Drawing now</div>
     <div class="spin" id="tvSpin">00</div>
     <div class="drawing pulse">Good luck&hellip;</div>
+    <div class="jsub" id="drawJack"></div>
   </div>
 
   <!-- winner reveal -->
@@ -146,7 +152,7 @@
     <div class="eyebrow">Winning number</div>
     <div class="winnum" id="tvWinNum">00</div>
     <div class="wname hidden" id="tvWinName">&middot;</div>
-    <div class="present hidden" id="tvPresent">Come to the bar now to claim your <b>jackpot</b></div>
+    <div class="present hidden" id="tvPresent">Come to the host now to claim your <b>jackpot</b></div>
     <div class="present hidden" id="tvClaimCd" style="margin-top:.5cqw;opacity:.92">Claim within <b id="tvClaimT">0:00</b></div>
   </div>
 
@@ -220,7 +226,8 @@
     var nc=makeCode(); try{ localStorage.setItem("vpTvCodeMembers", nc); }catch(e){} return nc;
   })();
 
-  var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0, draws:[], hostSeen:false };
+  var state={ phase:"idle", drawName:"Members Draw", jackpotCents:0, draws:[], hostSeen:false,
+              spinMin:0, spinMax:0, spinSecs:4, holdUntil:0, pendingIdle:null };
   var adTimer=null, adIdx=0, spinTimer=null, nameTimer=null, celebrateTimer=null, countTimer=null, claimCdTimer=null;
   function mmss(s){ s=Math.max(0,s|0); var m=Math.floor(s/60), ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
   function stopClaimCd(){ if(claimCdTimer){ clearInterval(claimCdTimer); claimCdTimer=null; } $("tvClaimCd").classList.add("hidden"); }
@@ -265,7 +272,7 @@
     _backToAdsT=setTimeout(function(){ window.location.href="/tv?venue="+encodeURIComponent(VENUE_SLUG); }, 60000);
   }
   function startAds(){
-    stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.toggle("hidden", !!VENUE_SLUG || !!state.hostSeen);   // linked, or the host is plainly already here
+    stopSpin(); stopCelebrate(); clearHold(); $("winBurst").classList.remove("show"); $("hostLine").classList.toggle("hidden", !!VENUE_SLUG || !!state.hostSeen);   // linked, or the host is plainly already here
     hideAll(); $("tvIdle").classList.remove("hidden"); fillIdle();
     var slides=document.querySelectorAll("#tvIdle .ad"); adIdx=0;
     for(var i=0;i<slides.length;i++){ slides[i].classList.toggle("show", i===0); }
@@ -279,30 +286,55 @@
   }
 
   // ---- drawing ----
-  function stopSpin(){ if(spinTimer){ clearInterval(spinTimer); spinTimer=null; } if(nameTimer){ clearTimeout(nameTimer); nameTimer=null; } }
+  function stopSpin(){ if(spinTimer){ clearTimeout(spinTimer); spinTimer=null; } if(nameTimer){ clearTimeout(nameTimer); nameTimer=null; } }
+  /* The spin shows numbers that exist in THIS draw. It used to flick through 101 to 500 whatever
+     the club's numbers were, so a room of members 1 to 80 watched numbers none of them held.
+     The host sends minNumber/maxNumber with t:"drawing"; with nothing sent (an older console)
+     the old 101 to 500 range stands. It also slows down as the reveal nears, so the moment
+     reads as a draw and not a screen glitch. */
+  function spinRange(){
+    var lo=state.spinMin|0, hi=state.spinMax|0;
+    if(!(hi>lo) || lo<1){ lo=101; hi=500; }
+    return { lo:lo, hi:hi };
+  }
   function showDrawing(){
-    stopAds(); stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
+    stopAds(); stopSpin(); stopCelebrate(); clearHold(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
     hideAll(); $("drawTitle").textContent=state.drawName; $("tvDraw").classList.remove("hidden");
-    var spin=$("tvSpin");
-    spinTimer=setInterval(function(){ spin.textContent=(101+cryptoInt(400)); }, 90);
+    $("drawJack").innerHTML=state.jackpotCents>0 ? "Playing for <b>"+money(state.jackpotCents)+"</b>" : "";
+    var spin=$("tvSpin"), r=spinRange(), span=r.hi-r.lo+1;
+    spin.style.minWidth=(String(r.hi).length+1)+"ch";
+    var total=Math.max(2000,(state.spinSecs||4)*1000), t0=Date.now();
+    function tick(){
+      spin.textContent="#"+(r.lo+cryptoInt(span));
+      var frac=Math.min(1,(Date.now()-t0)/total);
+      spinTimer=setTimeout(tick, 70+Math.round(260*frac*frac));   // 70ms flicks easing out to about 330ms
+    }
+    tick();
   }
 
   // ---- winner ----
   function showWinner(number, name, claimSecs){
-    stopAds(); stopSpin(); stopClaimCd(); $("hostLine").classList.add("hidden");
+    stopAds(); stopSpin(); stopClaimCd(); clearHold(); $("hostLine").classList.add("hidden");
     hideAll(); $("winTitle").textContent=state.drawName; $("tvWin").classList.remove("hidden");
-    $("tvWinNum").textContent = (number==null?"--":("#"+number));
+    var wn=$("tvWinNum"); wn.textContent = (number==null?"--":("#"+number));
+    wn.classList.remove("pop"); void wn.offsetWidth; wn.classList.add("pop");   // restart the reveal animation every draw
     var nm=$("tvWinName"), pr=$("tvPresent"), cd=$("tvClaimCd"), cdT=$("tvClaimT");
     nm.classList.add("hidden"); pr.classList.add("hidden"); cd.classList.add("hidden");
     var secs=(claimSecs|0);
     nameTimer=setTimeout(function(){
       nm.textContent=name||"·"; nm.classList.remove("hidden");
-      pr.classList.remove("hidden");
+      pr.classList.remove("hidden"); spawnBurst(36);
       if(secs>0){
+        cd.innerHTML='Claim within <b id="tvClaimT">0:00</b>'; cdT=$("tvClaimT");
         cdT.textContent=mmss(secs); cd.classList.remove("hidden");
         claimCdTimer=setInterval(function(){
           secs--; cdT.textContent=mmss(secs);
-          if(secs<=0){ clearInterval(claimCdTimer); claimCdTimer=null; }   // host broadcasts the rollover result
+          if(secs<=0){
+            clearInterval(claimCdTimer); claimCdTimer=null;
+            /* Used to stop dead on 0:00 and sit there. The host decides what happens next (claim
+               or roll over), so the room is told that, not left reading a frozen clock. */
+            cd.innerHTML="Time is up. Waiting on the host";
+          }
         }, 1000);
       }
     }, 1500);
@@ -344,6 +376,29 @@
       el.textContent=money(v); if(i>=steps){ el.textContent=money(targetCents); clearInterval(countTimer); countTimer=null; } },34);
   }
 
+  /* HOW LONG A RESULT STAYS UP. These MUST match CLAIM_HOLD_MS / ROLLOVER_HOLD_MS in host.html.
+     The console used to send idle 9 seconds after a claim, and this screen obeyed it, so the
+     winner's name was on the wall for nine seconds of a sixty second celebration. Now the
+     result holds for its full time: an idle that arrives early is kept and applied when the
+     hold ends, and a state refresh is ignored until then. If the host says nothing at all
+     after the hold, the normal drift back to the venue's ads is armed, so the wall is never
+     left on one result all night. */
+  var CLAIM_HOLD_MS=60000, ROLLOVER_HOLD_MS=30000, holdTimer=null;
+  function clearHold(){ if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; } state.holdUntil=0; state.pendingIdle=null; }
+  function holding(){ return state.phase==="result" && state.holdUntil>0 && Date.now()<state.holdUntil; }
+  function holdResult(ms){
+    clearHold(); state.holdUntil=Date.now()+ms;
+    holdTimer=setTimeout(function(){
+      holdTimer=null; state.holdUntil=0;
+      if(state.pendingIdle){ var m=state.pendingIdle; state.pendingIdle=null; goIdle(m); }
+      else scheduleBackToAds();
+    }, ms);
+  }
+  function goIdle(m){
+    applyDraws(m); if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents; if(typeof m.drawName==="string") state.drawName=m.drawName;
+    state.phase="idle"; startAds(); scheduleBackToAds();
+  }
+
   // ---- result: claimed ----
   function showClaimed(name, amountCents, nextResetCents){
     stopAds(); stopSpin(); $("hostLine").classList.add("hidden");
@@ -354,8 +409,8 @@
     $("resWinsLabel").classList.remove("hidden");
     var won=$("resWon"); won.classList.remove("hidden"); countUp(won, amountCents||0);
     $("resNext").classList.add("hidden"); $("resJack").classList.add("hidden"); $("resMissed").classList.add("hidden");
-    $("resSub").textContent="Come to the bar to claim";
-    celebrate(60000);
+    $("resSub").textContent="See the host to collect";
+    celebrate(CLAIM_HOLD_MS); holdResult(CLAIM_HOLD_MS);
   }
 
   // ---- result: rollover ----
@@ -363,13 +418,14 @@
     stopAds(); stopSpin(); stopCelebrate(); $("winBurst").classList.remove("show"); $("hostLine").classList.add("hidden");
     if(typeof nextJackpotCents==="number") state.jackpotCents=nextJackpotCents;
     hideAll(); $("resTitle").textContent=state.drawName; $("tvResult").classList.remove("hidden");
-    $("resEye").innerHTML="Not claimed &middot; rolls over to next week";
+    $("resEye").innerHTML="Not claimed tonight";
     $("resWinName").classList.add("hidden"); $("resWinsLabel").classList.add("hidden"); $("resWon").classList.add("hidden");
+    var mm=$("resMissed"); mm.classList.remove("hidden");
+    mm.innerHTML="<b>#"+(missedNumber==null?"--":esc(missedNumber))+" "+esc(missedName||"")+"</b> was drawn and was not here in time";
     $("resNext").classList.remove("hidden"); $("resNext").textContent="Next week's jackpot";
     $("resJack").classList.remove("hidden"); $("resJack").textContent=money(nextJackpotCents||0);
-    $("resSub").innerHTML="Grew by "+money(incrementCents||0)+" &middot; be here next week";
-    var mm=$("resMissed"); mm.classList.remove("hidden");
-    mm.innerHTML="Drawn tonight: <b>#"+(missedNumber==null?"--":esc(missedNumber))+" "+esc(missedName||"")+"</b>, not present in time";
+    $("resSub").innerHTML="Up <b>"+money(incrementCents||0)+"</b> &middot; be here next week";
+    holdResult(ROLLOVER_HOLD_MS);
   }
 
   // ---- realtime ----
@@ -450,18 +506,27 @@
          G.round is already cleared by then, so a tap behind the bar during the 60 second
          celebration used to put the draws board straight back up over the winner. Same guard
          tv.html got for bingo. A real new draw arrives as t:"drawing". */
-      if(state.phase==="winner" || state.phase==="result") return;
+      if(state.phase==="winner" || holding()) return;
       if(typeof m.drawName==="string") state.drawName=m.drawName;
       if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents;
       applyDraws(m);
       if(!m.playing){ state.phase="idle"; startAds(); scheduleBackToAds(); }
       else if(state.phase==="idle"){ fillIdle(); }   // refresh board while still idle
+      return;
     }
-    else cancelBackToAds(); if(m.t==="drawing"){ if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="drawing"; showDrawing(); }
+    if(m.t==="idle"){
+      if(holding()){ state.pendingIdle=m; return; }   // the result finishes first; the idle is kept, not lost
+      cancelBackToAds(); goIdle(m); return;
+    }
+    cancelBackToAds();
+    if(m.t==="drawing"){
+      if(typeof m.drawName==="string") state.drawName=m.drawName;
+      state.spinMin=(m.minNumber|0); state.spinMax=(m.maxNumber|0); state.spinSecs=(m.spinSecs|0)||4;
+      state.phase="drawing"; showDrawing();
+    }
     else if(m.t==="winner"){ state.phase="winner"; showWinner(m.number, m.name, m.claimSecs); }
     else if(m.t==="claimed"){ state.phase="result"; showClaimed(m.name, m.amountCents, m.nextResetCents); }
     else if(m.t==="rollover"){ state.phase="result"; showRollover(m.nextJackpotCents, m.incrementCents, m.missedNumber, m.missedName); }
-    else if(m.t==="idle"){ applyDraws(m); if(typeof m.jackpotCents==="number") state.jackpotCents=m.jackpotCents; if(typeof m.drawName==="string") state.drawName=m.drawName; state.phase="idle"; startAds(); scheduleBackToAds(); }
   }
 
   // ---- init ----

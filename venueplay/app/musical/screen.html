@@ -54,11 +54,19 @@
   .codebox{display:flex;align-items:center;gap:1.6cqw;margin-top:2cqw}
   .codelbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:clamp(9px,1.6cqw,15px);color:var(--muted)}
   .codeval{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(20px,5cqw,52px);color:var(--gold);letter-spacing:.08em;background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:1.4cqw;padding:.6cqw 2cqw}
-  .playing{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,20px);color:var(--muted);margin-top:1.8cqw}
-  .playing b{color:#fff}
+  /* No player count on the wall (locked design call), so the style that drew it is gone too. */
 
   /* running (now playing) */
   .listen{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,60px);color:var(--pink);line-height:1;margin-top:1.6cqw;text-shadow:0 0 30px rgba(255,31,142,.4)}
+  /* THE MYSTERY PANEL. The wall used to print the title 850ms after the song started, so the
+     room read the answer instead of knowing it and the guessing lasted under a second. The
+     host now chooses when the answer appears; until then this holds the space, so the screen
+     is never blank and never gives it away. */
+  .mystery{display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .qmark{font-family:'Anton',sans-serif;font-size:clamp(70px,20cqw,240px);line-height:.85;color:var(--pink);
+    text-shadow:0 0 60px rgba(255,31,142,.45);animation:qbeat 2.2s ease-in-out infinite}
+  @keyframes qbeat{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
+  .mysub{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(13px,2.8cqw,28px);color:var(--text);margin-top:1.2cqw}
   .nowart{width:clamp(84px,15cqw,210px);height:clamp(84px,15cqw,210px);border-radius:2cqw;object-fit:cover;display:block;margin:0 auto 1.2cqw;border:1px solid var(--line-2);box-shadow:0 0 42px rgba(0,0,0,.55);animation:pop .45s ease-out}
   .nowtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,6cqw,72px);color:#fff;line-height:1.02;margin:1.2cqw 0 .6cqw;animation:pop .45s ease-out;max-width:92cqw}
   .nowartist{font-family:'JetBrains Mono',monospace;font-size:clamp(12px,2.6cqw,24px);color:var(--gold);letter-spacing:.02em}
@@ -78,9 +86,14 @@
     color:var(--gold);margin-top:1.6cqw;line-height:1.15}
   .lprize span{font-weight:700;text-transform:uppercase;letter-spacing:.16em;
     font-size:clamp(9px,1.5cqw,14px);color:var(--muted);display:block}
-  .pboard{display:flex;flex-wrap:wrap;gap:1cqw;justify-content:center;margin-top:2.2cqw;max-width:90cqw;max-height:28cqw;overflow:hidden}
-  .ptok{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(8px,1.7cqw,15px);color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:20px;padding:.5cqw 1.4cqw}
+  /* THE LAST EIGHT, BIG ENOUGH TO READ FROM THE BACK. This used to list every song played at
+     15px, so past the first few tables it was a grey smudge and the wall was carrying sixty
+     unreadable chips instead of eight useful ones. */
+  .pboard{display:flex;flex-wrap:wrap;gap:1cqw;justify-content:center;margin-top:2.2cqw;max-width:90cqw;max-height:20cqw;overflow:hidden}
+  .ptok{font-family:'Manrope',sans-serif;font-weight:600;font-size:clamp(12px,2.4cqw,26px);color:var(--text);background:rgba(255,255,255,.05);border:1px solid var(--line-2);border-radius:20px;padding:.6cqw 1.6cqw;white-space:nowrap;max-width:44cqw;overflow:hidden;text-overflow:ellipsis}
   .ptok.new{background:rgba(255,31,142,.16);border-color:var(--pink);color:#fff;box-shadow:0 0 14px rgba(255,31,142,.3)}
+  .pblabel{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.18em;
+    font-size:clamp(9px,1.5cqw,15px);color:var(--muted);margin-top:2cqw}
 
   /* join corner (running only) */
   .tv-join{position:absolute;left:2cqw;bottom:2cqw;display:flex;align-items:center;gap:1cqw;z-index:6;background:rgba(0,0,0,.42);border:1px solid var(--line-2);border-radius:1.2cqw;padding:.8cqw 1.4cqw .8cqw .8cqw;backdrop-filter:blur(4px)}
@@ -130,7 +143,6 @@
         <div class="lobbyname">Musical Bingo</div>
         <div class="joinurl">venueplay.com.au/play</div>
         <div class="codebox"><span class="codelbl">Code</span><span class="codeval" id="lobbyCode">------</span></div>
-        <div class="playing"><b id="lobbyPlaying">0</b> playing</div>
         <div class="lprize hidden" id="lobbyPrize"><span>Playing for</span><b id="lobbyPrizeVal"></b></div>
       </div>
     </div>
@@ -141,14 +153,19 @@
   <!-- running (now playing) -->
   <div class="layer hidden" id="tvRun">
     <div class="eyebrow" id="tvNowEye">Now playing</div>
-    <div class="listen pulse hidden" id="tvListen">Listen&hellip;</div>
+    <div class="mystery hidden" id="tvListen">
+      <div class="qmark">?</div>
+      <div class="listen pulse">Listen&hellip;</div>
+      <div class="mysub" id="tvListenSub">Know it? Mark it on your card</div>
+    </div>
     <div id="tvNow">
       <img class="nowart hidden" id="tvNowArt" alt="">
       <div class="nowtitle" id="tvNowTitle">Ready to play</div>
       <div class="nowartist" id="tvNowArtist">First song coming up</div>
     </div>
     <div class="mprize"><span>Playing for</span><b id="tvPrize">the prize</b></div>
-    <div class="mpat">Pattern &middot; <b id="tvPattern">One line across</b> &nbsp;&middot;&nbsp; <span id="tvPlayCount">0 playing</span></div>
+    <div class="mpat">Pattern &middot; <b id="tvPattern">One line across</b></div>
+    <div class="pblabel hidden" id="tvBoardLbl">Played so far</div>
     <div class="pboard" id="tvBoard"></div>
   </div>
 
@@ -158,6 +175,7 @@
     <div class="checking">Checking<br>the card</div>
     <div class="holdmusic pulse">Hold the music&hellip;</div>
     <div class="claimname" id="claimName">Player</div>
+    <div class="holdmusic" id="claimMore" style="margin-top:1cqw"></div>
   </div>
 
   <!-- win -->
@@ -167,7 +185,7 @@
     <div class="wname" id="winName">Player</div>
     <div class="winslabel">Wins</div>
     <div class="winprize" id="winPrizeVal">the prize</div>
-    <div class="jsub">Card <b id="winCard">#000</b> &middot; show your card to the host</div>
+    <div class="jsub" id="winSub">Card <b id="winCard">#000</b> &middot; show your card to the host</div>
   </div>
 
   <!-- persistent join corner -->
@@ -296,7 +314,6 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // Labelled, for the one case it is still shown: nobody should ever read this to the room.
     $("hostLineCode").textContent = CODE;
     $("tvJoinCode").textContent = shownCode();
-    $("lobbyPlaying").textContent=state.playerCount;
     /* Only once the host has actually set one. "the prize" is the placeholder the
        console starts with, and putting that on a wall tells the room nothing. */
     var pz=(state.prize||"").trim();
@@ -308,16 +325,24 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     else $("lobbySub").innerHTML="Grab your phone and join, the game is about to start&hellip;";
     drawLobbyQR();
   }
+  /* NO PLAYER COUNT ON THE WALL. Locked design call: a slow night should not advertise
+     itself to the room. The count still reaches the host console, which is where it is
+     actually useful. */
   function renderMeta(){
     $("tvPattern").textContent=PATTERN_NAMES[state.pattern]||state.pattern;
     $("tvPrize").textContent=state.prize;
-    $("tvPlayCount").textContent=state.playerCount+" playing";
   }
+  var TV_BOARD_MAX=8;   // the last eight, at a size the back of the room can read
   function renderBoard(){
     var b=$("tvBoard"); b.innerHTML="";
-    var last=state.played.length-1;
-    for(var i=0;i<state.played.length;i++){
-      var d=document.createElement("div"); d.className="ptok"+(i===last?" new":""); d.textContent=state.played[i]; b.appendChild(d);
+    var all=state.played, start=Math.max(0, all.length-TV_BOARD_MAX), last=all.length-1;
+    for(var i=start;i<all.length;i++){
+      var d=document.createElement("div"); d.className="ptok"+(i===last?" new":""); d.textContent=all[i]; b.appendChild(d);
+    }
+    var lbl=$("tvBoardLbl");
+    if(lbl){
+      lbl.classList.toggle("hidden", all.length===0);
+      lbl.textContent = all.length>TV_BOARD_MAX ? ("Last "+TV_BOARD_MAX+" of "+all.length+" played") : "Played so far";
     }
   }
   function renderRun(){ renderMeta(); renderBoard(); }
@@ -333,25 +358,58 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     show("tvRun");
     if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
     $("tvNowEye").textContent="Get ready";
+    _pendingSong=null; _revealMode="legacy";
     $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
     setArt("");
     _shownTitle="";
     $("tvNowTitle").textContent="Ready to play"; $("tvNowArtist").textContent="First song coming up";
     renderRun();
   }
-  function revealSong(title, artist, artwork){
+  /* WHEN THE WALL GIVES THE ANSWER AWAY.
+
+     The old behaviour was a hard 850ms: the room did not have to know the song, it read the
+     title off the screen and tapped. The host now picks the moment on their console and it
+     rides along with every "played" message:
+
+       instant  straight away (what a host who calls the songs themselves may want)
+       15       fifteen seconds in
+       end      when the clip finishes. This is the default.
+       never    only when the host taps Reveal on TV now
+
+     A host still on the previous build sends no mode at all, and then this does exactly what
+     it always did, so nothing regresses on a half-deployed night. Whatever happens the screen
+     is painted: the mystery panel holds the space, it never goes blank. */
+  var _pendingSong=null, _revealMode="legacy";
+  var REVEAL_END_FALLBACK_MS=32000;   // a blocked or missing clip has no "ended" to wait for
+  function doReveal(){
+    if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
+    if(!_pendingSong) return;
+    var p=_pendingSong; _pendingSong=null;
+    $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
+    setArt(p.artwork);
+    $("tvNowTitle").textContent=p.title||"Now playing"; $("tvNowArtist").textContent=p.artist||"";
+    _shownTitle=p.title||"";
+    renderBoard();
+  }
+  function revealSong(title, artist, artwork, mode, hasClip){
     show("tvRun");
     if(revealTimer){ clearTimeout(revealTimer); revealTimer=null; }
     $("tvNowEye").textContent="Now playing";
+    _pendingSong={ title:title, artist:artist, artwork:artwork };
+    if(!mode){ mode="legacy"; }
+    _revealMode=mode;
+    if(mode==="instant"){ $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden"); renderRun(); doReveal(); return; }
+    var sub=$("tvListenSub");
+    if(sub) sub.textContent = (mode==="never") ? "Name that tune" : "Know it? Mark it on your card";
     $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden");
     renderRun();
-    revealTimer=setTimeout(function(){
-      $("tvListen").classList.add("hidden"); $("tvNow").classList.remove("hidden");
-      setArt(artwork);
-      $("tvNowTitle").textContent=title||"Now playing"; $("tvNowArtist").textContent=artist||"";
-      _shownTitle=title||"";
-      renderBoard();
-    }, 850);
+    if(mode==="legacy") revealTimer=setTimeout(doReveal, 850);
+    else if(mode==="15") revealTimer=setTimeout(doReveal, 15000);
+    /* "end" waits for the clip's own ended event (wired below), with this as the safety net
+       for a clip that never plays: autoplay blocked, a dead preview URL, or no clip at all.
+       Without the net the wall would hold a question mark for the rest of the night. */
+    else if(mode==="end") revealTimer=setTimeout(doReveal, hasClip ? REVEAL_END_FALLBACK_MS : 20000);
+    // "never": nothing is armed. The host's Reveal on TV now button sends { t:"reveal" }.
   }
 
   // ---- confetti ----
@@ -621,6 +679,8 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
     }catch(e){ audioBlocked(); }
   }
   function stopClip(){ try{ clipAudio.pause(); clipAudio.removeAttribute("src"); clipAudio.load(); }catch(e){} }
+  // "Reveal when the clip ends" is this event. The timer above is only the safety net.
+  clipAudio.addEventListener("ended", function(){ if(_revealMode==="end") doReveal(); });
 
   function onMsg(m){
     _router.seen(m);   // only traffic that means a game is ON AIR counts as ours
@@ -670,7 +730,14 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
              A refresh is a re-statement of what is already on the wall. It has no
              new artwork to give, so it leaves the artwork alone, and it only writes
              the title if the song has actually changed. */
-          if(t !== _shownTitle){
+          /* AND IT MUST NOT GIVE THE ANSWER AWAY EITHER. A state refresh carries the song
+             TITLES played, so while the wall is deliberately holding a song back this would
+             have printed it: the whole point of the reveal setting, undone by a phone joining.
+             A song still waiting to be revealed leaves the mystery panel exactly as it is. */
+          if(_pendingSong){
+            $("tvNowEye").textContent="Now playing";
+            $("tvListen").classList.remove("hidden"); $("tvNow").classList.add("hidden");
+          } else if(t !== _shownTitle){
             setArt("");
             $("tvNowTitle").textContent=t; $("tvNowArtist").textContent="";
             _shownTitle=t;
@@ -692,11 +759,18 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       state.hostSeen=true;
       state.played=m.played||state.played;
       state.phase="running";
-      revealSong(m.title, m.artist, m.artworkUrl);
+      revealSong(m.title, m.artist, m.artworkUrl, m.reveal, !!m.previewUrl);
       // A replay is a re-sync after a host or TV reload: put the song back ON SCREEN but do not
       // start the audio again. Without this the room heard the same clip a second time, possibly
       // minutes later and over the top of the host talking.
       if(!m.replay) playClip(m.previewUrl);   // the venue hears the clip from this screen
+    }
+    else if(m.t==="reveal"){   // the host tapped Reveal on TV now
+      if(_pendingSong){
+        if(m.title) _pendingSong.title=m.title;
+        if(typeof m.artist==="string") _pendingSong.artist=m.artist;
+        doReveal();
+      }
     }
     else if(m.t==="volume"){ setBoost(m.level); }   // the host turning the room up
     else if(m.t==="clipctl"){   // host pause/resume follows through to the venue sound
@@ -704,24 +778,40 @@ var _backToAdsT=null, _adsKeep={ idle:1, tv_here:1, host_here:1, session:1, play
       else if(m.action==="play"){ try{ var p=clipAudio.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
     }
     else if(m.t==="players"){
+      // kept in state for nothing but the host's own use; the wall never prints it
       if(typeof m.count==="number") state.playerCount=m.count;
-      if(state.phase==="lobby"){ $("lobbyPlaying").textContent=state.playerCount; }
-      else if(state.phase==="running"){ renderMeta(); }
     }
     else if(m.t==="claim_pending"){
       try{ clipAudio.pause(); }catch(e){}   // quiet the room while the host checks the claim
       state.phase="claim"; show("tvClaim");
       $("claimName").textContent=m.name||"Player";
+      var n=(typeof m.count==="number") ? m.count : 1;
+      $("claimMore").textContent = n>1 ? (n+" people called it on this song") : "";
     }
     else if(m.t==="resume"){
+      /* Another claim is still waiting: the room stays on the claim panel. Without this the
+         wall said "play on" while the host was still looking at a second card. */
+      if(m.more){ $("claimMore").textContent=m.more+(m.more>1?" more cards to check":" more card to check"); return; }
       state.phase="running"; show("tvRun"); renderRun();
+      /* AND THE MUSIC COMES BACK ON. The claim paused this clip; "Play on" only switched the
+         panel, so the rest of the song never played and the host reached for the next one. */
+      try{ if(clipAudio.src && clipAudio.paused && !clipAudio.ended){ var rp=clipAudio.play(); if(rp&&rp.catch) rp.catch(function(){}); } }catch(e){}
     }
     else if(m.t==="winner"){
       stopClip();
       state.winner=m; state.phase="win"; show("tvWin");
       $("winName").textContent=m.name||"Player";
       $("winPrizeVal").textContent=state.prize;
-      $("winCard").textContent="#"+(m.cardNo||"000");
+      /* A SPLIT: two people got there on the same song, so the wall names both cards and says
+         they share it. Written as text, not markup, because these values come off the wire. */
+      var cards=(m.cardNos && m.cardNos.length) ? m.cardNos : [m.cardNo||"000"];
+      var cardTxt=cards.map(function(c){ return "#"+String(c); }).join(" and ");
+      var DOT=" · ", sub=$("winSub");
+      sub.textContent="";
+      sub.appendChild(document.createTextNode(cards.length>1 ? "They share it"+DOT+"cards " : "Card "));
+      var cb=document.createElement("b"); cb.id="winCard"; cb.textContent=cardTxt;
+      sub.appendChild(cb);
+      sub.appendChild(document.createTextNode(DOT+"show your card to the host"));
       celebrate(9000);
     }
     else if(m.t==="carryon"){   // progressive round: resume the running view on the new pattern + prize

@@ -62,10 +62,27 @@
   .btn.roll:hover{filter:brightness(1.08)}
   .btn.roll.armed{background:#d9342b;color:#fff;animation:armpulse 1s ease-in-out infinite}
   @keyframes armpulse{50%{filter:brightness(1.25)}}
+  /* One obvious button per state. Claim is the safe one and it breathes, the same as the members
+     draw console; voiding a ticket is irreversible and does not get to be the button that
+     attracts the thumb. Once the redraw is armed its red takes over and Claim goes still, so the
+     tablet is never showing two things moving at once. */
+  .btn.win.pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
   .btn.nextmode{background:var(--gold);color:#1a1000;box-shadow:0 8px 20px rgba(255,194,75,.3)}
   .btn.nextmode:hover{filter:brightness(1.06)}
   .btn.big{width:100%;padding:16px;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .btn,.addbtn{min-height:44px}
+  /* Phones: every tap target at least 44px tall, and the two resolve buttons stack so neither
+     label is cut short on a 6.1" screen. The redraw button is the muted one on purpose. */
+  .btn.roll{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
+  .btn.roll:hover{border-color:var(--roll);color:#fff;filter:none}
+  @media (max-width:600px){
+    .resolve{grid-template-columns:1fr}
+    .presets button,.prow .px,.check,#toAdsBtn,.errbar .ex{min-height:44px}
+    .prow .px{min-width:44px}
+    .presets button{display:inline-flex;align-items:center}
+  }
 
   .panel{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:18px;margin-bottom:20px}
   .field{margin-bottom:14px}
@@ -194,7 +211,7 @@
         <div class="field"><label>First ticket number</label><input type="number" id="rfStart" class="mono" value="1" min="0"></div>
         <div class="field"><label>Last ticket number</label><input type="number" id="rfEnd" class="mono" value="150" min="0" max="999999"></div>
       </div>
-      <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" min="0"></div>
+      <div class="field"><label>Time to claim (seconds)</label><input type="number" id="rfTime" class="mono" value="180" min="0" step="1"><div class="note" style="margin-top:5px">30 seconds or more. Put 0 for no time limit.</div></div>
       <p class="note" style="margin-top:10px">Draws <b>one winner at a time</b>. For another prize, change the prize above and tap <b>Draw the next prize</b>.</p>
       <label class="check"><input type="checkbox" id="rfJackOn"> This raffle has a cash jackpot</label>
       <div class="field hidden" id="rfJackWrap"><label>Jackpot amount ($)</label><input type="number" id="rfJackAmt" class="mono" value="500" min="0"></div>
@@ -213,7 +230,7 @@
         <div class="wlist hidden" id="wcList"></div>
         <div class="cd" id="wcCd"></div>
         <div class="resolve" id="wcResolve">
-          <button class="btn win" id="claimBtn">Claim &middot; present</button>
+          <button class="btn win" id="claimBtn">They are here: claim</button>
           <button class="btn roll" id="redrawBtn">Not here &middot; redraw</button>
         </div>
       </div>
@@ -335,19 +352,37 @@
   // redraw a number already drawn, so even a partial grid can never produce a duplicate winner.
   var RAFFLE_SAVE_MAX_AGE=6*60*60*1000;   // 6 hours
   function raffleKey(){ return "vpRaffleGame-"+(G.venueId||""); }
+  /* The prize list rides along. It lives only in this console (the Worker stores the venue's
+     saved prize presets, not tonight's order), so a reload used to come back with the drawn
+     tickets but an empty list, and the host had to retype the remaining prizes while the room
+     waited. A list saved before the first draw (no game yet) is kept too. */
   function saveRaffle(){
-    try{ if(G.gameId && G.sessionId){ localStorage.setItem(raffleKey(), JSON.stringify({ v:1, ts:Date.now(), sessionId:G.sessionId })); } }catch(e){}
+    try{
+      if(!G.gameId && !G.prizes.length){ localStorage.removeItem(raffleKey()); return; }
+      localStorage.setItem(raffleKey(), JSON.stringify({ v:2, ts:Date.now(), sessionId:G.sessionId||"", prizes:G.prizes.slice(), prizeIdx:G.prizeIdx|0 }));
+    }catch(e){}
+  }
+  function restorePrizes(p){
+    if(!p || !Array.isArray(p.prizes) || !p.prizes.length) return false;
+    G.prizes=p.prizes.map(String).slice(0,40); G.prizeIdx=Math.min(Math.max(0,p.prizeIdx|0), G.prizes.length);
+    renderPrizeList(); return true;
   }
   function clearRaffle(){ try{ localStorage.removeItem(raffleKey()); }catch(e){} }
   function restoreRaffle(){
     var raw; try{ raw=localStorage.getItem(raffleKey()); }catch(e){ return Promise.resolve(false); }
     if(!raw) return Promise.resolve(false);
     var p; try{ p=JSON.parse(raw); }catch(e){ clearRaffle(); return Promise.resolve(false); }
-    if(!p || !p.sessionId || !p.ts || (Date.now()-p.ts)>RAFFLE_SAVE_MAX_AGE){ clearRaffle(); return Promise.resolve(false); }
+    if(!p || !p.ts || (Date.now()-p.ts)>RAFFLE_SAVE_MAX_AGE){ clearRaffle(); return Promise.resolve(false); }
+    /* Prizes typed, nothing drawn yet: bring the list back, but answer FALSE so the venue's saved
+       template still fills the range, claim time and spin. The prize list is tonight's; the
+       template is the venue's. Answering true here would leave the setup boxes on the defaults. */
+    if(!p.sessionId){ restorePrizes(p); return Promise.resolve(false); }
     return fetch(VP_GAME_API+"/snapshot?session="+encodeURIComponent(p.sessionId))
       .then(function(res){ return res.ok ? res.json() : null; })
       .then(function(snap){
-        if(!snap || snap.status!=="running" || !snap.game || snap.game.format!=="raffle"){ clearRaffle(); return false; }
+        // The raffle is over (or the snapshot is gone). Keep tonight's prize list if there is one,
+        // but answer false so the venue template still fills the setup boxes.
+        if(!snap || snap.status!=="running" || !snap.game || snap.game.format!=="raffle"){ clearRaffle(); restorePrizes(p); return false; }
         var g=snap.game, jackOn=!!g.jackpot_on;
         // Put the recovered settings back into the FORM inputs first: the host reads settings from the DOM
         // (readInputs), so leaving the inputs at defaults would fork a fresh raffle on the next draw.
@@ -359,8 +394,12 @@
         $("rfJackOn").checked=jackOn; show("rfJackWrap", jackOn); show("prizeField", !jackOn);
         if(jackOn && g.jackpot_amount_cents!=null) $("rfJackAmt").value=Math.round(g.jackpot_amount_cents/100);
         if(!jackOn && g.prize) $("rfPrize").value=g.prize;
+        // F2: the unsold-ticket gaps are baked onto the game; if the snapshot carries them, put them
+        // back in the box so the count and the signature match the live game (see Worker handoff).
+        if(Array.isArray(g.excluded_ranges) && g.excluded_ranges.length){ $("rfSkip").value=g.excluded_ranges.map(function(r){ return r[0]===r[1]?(""+r[0]):(r[0]+"-"+r[1]); }).join(", "); }
         readInputs();                       // sync G from the inputs so raffleSig() matches the live game
         G.sessionId=snap.session_id; G.gameId=g.game_id; G.gameSig=raffleSig(); if(g.pad) G.serverPad=g.pad;
+        restorePrizes(p);                   // tonight's prize list and how far through it we were
         // rebuild the drawn grid: all_tickets = every number drawn so far, last_tickets is the fallback
         G.drawn={}; var dt=(Array.isArray(g.all_tickets)&&g.all_tickets.length)?g.all_tickets:(g.last_tickets||[]);
         for(var i=0;i<dt.length;i++){ if(dt[i]!=null) G.drawn[dt[i]]=true; }
@@ -450,15 +489,32 @@
     G.allowRedraw=$("rfAllowRedraw").checked;
   }
   function validRange(){ return !(isNaN(G.min)||isNaN(G.max)||G.max<G.min); }
-  function remainingCount(){ return validRange() ? (G.max-G.min+1) - drawnCount() : 0; }
+  /* How many tickets the unsold boxes take out of the range (clipped to the range, no double
+     counting where blocks overlap, and never counting a ticket that was already drawn). The
+     count used to ignore them, so "150 tickets" stayed on screen with 80 of them unsold, and a
+     draw could be attempted with nothing left while the console still said tickets remained. */
+  function skippedCount(){
+    if(!validRange()) return 0;
+    var seen={}, n=0, sk=parseSkips();
+    for(var i=0;i<sk.length;i++){
+      var a=Math.max(G.min, Math.min(sk[i][0],sk[i][1])), b=Math.min(G.max, Math.max(sk[i][0],sk[i][1]));
+      if(b-a>50000) b=a+50000;   // never loop forever on a typo like 1-99999999
+      for(var t=a;t<=b;t++){ if(!seen[t] && !G.drawn[t]){ seen[t]=true; n++; } }
+    }
+    return n;
+  }
+  function remainingCount(){ return validRange() ? Math.max(0,(G.max-G.min+1) - drawnCount() - skippedCount()) : 0; }
   function drawnCount(){ var n=0; for(var k in G.drawn){ if(G.drawn.hasOwnProperty(k)) n++; } return n; }
 
   function renderRange(){
     readInputs();
     var line=$("rangeLine");
     if(!validRange()){ line.innerHTML='<span class="warn">Enter a valid ticket range.</span>'; return; }
-    var drew=drawnCount();
-    line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"+(drew?" · "+drew+" already drawn":"");
+    var drew=drawnCount(), skipped=skippedCount(), left=remainingCount();
+    line.textContent=(G.max-G.min+1)+" tickets ("+G.min+" to "+G.max+")"
+      +(skipped?" \u00b7 "+skipped+" unsold":"")
+      +(drew?" \u00b7 "+drew+" already drawn":"")
+      +((skipped||drew)?" \u00b7 "+left+" left to draw":"");
     scheduleIdleBroadcast();
   }
 
@@ -535,14 +591,14 @@
     label=(label||"").trim(); if(!label || G.jackOn) return;
     G.prizes.push(label); savePrize(label);   // also remember it as a saved preset for next time
     $("rfPrize").value="";
-    renderPrizeList();
+    renderPrizeList(); saveRaffle();
   }
   function removePrize(i){
     if(i<G.prizeIdx) return;   // can't remove one already drawn
     G.prizes.splice(i,1);
-    renderPrizeList();
+    renderPrizeList(); saveRaffle();
   }
-  function advancePrize(){ if(!G.jackOn && G.prizeIdx < G.prizes.length){ G.prizeIdx++; renderPrizeList(); } }
+  function advancePrize(){ if(!G.jackOn && G.prizeIdx < G.prizes.length){ G.prizeIdx++; renderPrizeList(); saveRaffle(); } }
   function renderPrizeList(){
     var w=$("prizeList"); if(!w) return;
     w.innerHTML="";
@@ -559,11 +615,19 @@
 
   // ---- broadcasts to the screen (instant UX; the DB is the source of truth) ----
   function sendIdle(){
-    if(_suppressIdle) return;   /* a celebration is on the wall; do not paint over it */
+    if(_suppressIdle || celebrating()) return;   /* a celebration is on the wall; do not paint over it */
     send({ t:"idle", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, next:(G.prizeIdx>0 && G.prizeIdx<G.prizes.length), prizes:G.prizes.slice(G.prizeIdx) });
   }
   function sendState(){ send({ t:"state", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
-  function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max }); }
+  function sendDrawing(){ send({ t:"drawing", prizeLabel:prizeLabel(), pad:padWidth(), min:G.min, max:G.max, spinSecs:G.drawLength }); }
+  /* HOW LONG THE WALL CELEBRATES A CLAIM, and how long it announces a redraw before the next spin.
+     Both MUST match screen.html (renderClaimed celebrates for CLAIM_CELEBRATE_MS; the redraw card
+     shows for REDRAW_NOTICE_MS). The console used to send idle 9 seconds after a claim while the
+     screen was 21 seconds from the end of its confetti, so the winner's ticket vanished mid
+     celebration. The screen also refuses idle during the celebration, so this is belt and braces. */
+  var CLAIM_CELEBRATE_MS=30000, REDRAW_NOTICE_MS=3000;
+  var _celebrateUntil=0;
+  function celebrating(){ return Date.now()<_celebrateUntil; }
 
   // ---- draw button modes ----
   function drawLabel(){
@@ -592,7 +656,10 @@
   // ---- ensure a raffle game exists for the current range/jackpot (a changed range = new raffle) ----
   // Range, jackpot, allow-redraw and time-to-present are fixed on the raffle game when it is
   // created, so a change to any of them starts a fresh raffle. Prize + winners are per-draw.
-  function raffleSig(){ return G.min+"-"+G.max+"-"+(G.jackOn?("J"+G.jackAmt):"N")+"-"+(G.allowRedraw?"R":"n")+"-"+G.time; }
+  // The unsold-ticket gaps are part of the signature: they are baked onto the game when it is
+  // created, so editing them after the first draw used to change nothing on the server while the
+  // console looked as if it had. Now it is treated like any other settings change (fresh raffle).
+  function raffleSig(){ return G.min+"-"+G.max+"-"+(G.jackOn?("J"+G.jackAmt):"N")+"-"+(G.allowRedraw?"R":"n")+"-"+G.time+"-"+JSON.stringify(parseSkips()); }
   function openSession(){
     if(!G.venueId) return Promise.reject(new Error("No venue linked to this login"));
     if(G.sessionId) return Promise.resolve(G.sessionId);
@@ -622,7 +689,15 @@
         prize:G.jackOn?null:G.prize, prize_type:G.jackOn?"cash":"other",
         prizes:G.savedPrizes
       });
-    }).then(function(r){ G.gameId=r.game_id; G.gameSig=sig; G.drawn={}; if(r.pad) G.serverPad=r.pad; saveRaffle(); });
+    }).then(function(r){
+      G.gameId=r.game_id; G.drawn={}; if(r.pad) G.serverPad=r.pad;
+      /* The Worker floors a 1 to 29 second claim window to 30 and sends back what it kept. Take
+         that as the truth, or the console counts down from 15 while the wall counts from 30, and
+         raffleSig() differs from the live game so the very next draw asks "start fresh?". */
+      if(r.time_to_present!=null && (r.time_to_present|0)!==G.time){ G.time=r.time_to_present|0; $("rfTime").value=G.time; }
+      G.gameSig=raffleSig();
+      saveRaffle();
+    });
   }
   function drawBody(){
     // spin_seconds is what the Worker sizes its double-tap guard to (the spin plus two seconds),
@@ -644,7 +719,7 @@
     if(remainingCount()<1){ alert("No undrawn tickets left. Tap New raffle to start again."); return; }
 
     G.busy=true; clearTimers();
-    $("winnerCard").classList.remove("show");
+    $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse");
     drawBtnBusy();
     sendDrawing(); startLocalSpin();
 
@@ -680,6 +755,7 @@
     if(allowRedraw){
       show("wcResolve",true);
       drawBtnWaiting(nums);
+      $("claimBtn").classList.add("pulse");   // the safe action is the one that moves
       updateCd();
       /* At zero this fires a REAL redraw: the holder is marked no_show, their number is taken out
          of the pool for good, and someone else is drawn, with no confirmation. If the holder of
@@ -735,20 +811,26 @@
     _suppressIdle=true;
     advancePrize(); renderRange(); drawBtnNext();
     _suppressIdle=false;
-    setTimeout(function(){ if(!G.round && !G.busy) sendIdle(); }, 9000);   // G.busy covers the whole spin, when G.round is still null
+    _celebrateUntil=Date.now()+CLAIM_CELEBRATE_MS;   // the 30 second heartbeat is held off too
+    setTimeout(function(){ _celebrateUntil=0; if(!G.round && !G.busy) sendIdle(); }, CLAIM_CELEBRATE_MS);   // G.busy covers the whole spin, when G.round is still null
     if(G.gameId && seq!=null){ apiPost("/host/draw/resolve",{ game_id:G.gameId, seq:seq, outcome:"claimed" }).catch(function(e){ hostError(e.message); }); }
   }
   // winner not here -> mark that round no_show on the server and draw a replacement
   function onRedraw(auto){
     if(!G.round||G.round.resolved||G.busy) return;
-    G.round.resolved=true; clearTimers();
+    G.round.resolved=true; clearTimers(); disarmRedraw();
+    var _cb=$("claimBtn"); if(_cb) _cb.classList.remove("pulse");   // the spin is starting; nothing on the card is tappable now
     logResults("no_show");
     for(var i=0;i<G.round.numbers.length;i++){ G.drawn[G.round.numbers[i]]=true; }
-    var seq=G.round.seq; G.round=null; renderRange();
-    send({ t:"redraw", pad:padWidth(), min:G.min, max:G.max, prizeLabel:prizeLabel() });
+    var voided=G.round.numbers.slice(), seq=G.round.seq; G.round=null; renderRange();
+    /* Tell the room WHICH ticket missed out and that the same prize is being drawn again, and give
+       that card REDRAW_NOTICE_MS on the wall before the spin starts. It used to send "drawing" in
+       the same tick, so the redraw looked like a second spin for no reason. */
+    send({ t:"redraw", numbers:voided, pad:padWidth(), min:G.min, max:G.max, prizeLabel:prizeLabel(), noticeMs:REDRAW_NOTICE_MS });
 
-    G.busy=true; drawBtnBusy(); sendDrawing(); startLocalSpin();
-    var wait=new Promise(function(res){ setTimeout(res, Math.max(1200, G.drawLength*1000)); });
+    G.busy=true; drawBtnBusy(); startLocalSpin();
+    setTimeout(function(){ if(G.busy) sendDrawing(); }, REDRAW_NOTICE_MS);
+    var wait=new Promise(function(res){ setTimeout(res, REDRAW_NOTICE_MS + Math.max(1200, G.drawLength*1000)); });
     var body=drawBody(); body.redraw_of_seq=seq;
     apiPost("/host/draw", body)
       .then(function(r){ return wait.then(function(){ return r; }); })
@@ -766,7 +848,7 @@
     clearTimers(); G.round=null; G.drawn={};
     G.prizes=[]; G.prizeIdx=0; renderPrizeList();   // a brand new raffle starts with a fresh prize list
     var gid=G.gameId; G.gameId=""; G.gameSig=""; G.serverPad=null;
-    $("winnerCard").classList.remove("show"); drawBtnIdle(); renderRange(); sendIdle();
+    $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse"); drawBtnIdle(); renderRange(); sendIdle();
     if(gid){ apiPost("/host/game/end",{ game_id:gid }).catch(function(){}); }
   }
 
@@ -856,6 +938,7 @@
   function disarmRedraw(){
     if(_redrawArm){ clearTimeout(_redrawArm); _redrawArm=null; }
     var b=$("redrawBtn"); if(b){ b.textContent=redrawLabelIdle(); b.classList.remove("armed"); }
+    var c=$("claimBtn"); if(c){ c.classList.remove("pulse"); if(G.round && !G.round.resolved && !G.busy) c.classList.add("pulse"); }
   }
   function tapRedraw(){
     if(!G.round||G.round.resolved||G.busy) return;
@@ -863,6 +946,7 @@
     var b=$("redrawBtn");
     b.textContent="Tap again to void ticket "+G.round.numbers.map(pad).join(", ");
     b.classList.add("armed");
+    var c=$("claimBtn"); if(c) c.classList.remove("pulse");   // only one thing moves on the tablet at a time
     _redrawArm=setTimeout(function(){ _redrawArm=null; disarmRedraw(); }, REDRAW_ARM_MS);
   }
   $("redrawBtn").addEventListener("click", tapRedraw);
@@ -885,7 +969,15 @@
     var b=e.target.closest("button[data-rm]"); if(!b) return;
     removePrize(parseInt(b.getAttribute("data-rm"),10));
   });
-  ["rfPrize","rfStart","rfEnd","rfTime","rfJackAmt"].forEach(function(id){ $(id).addEventListener("input", renderRange); });
+  ["rfPrize","rfStart","rfEnd","rfTime","rfJackAmt","rfSkip"].forEach(function(id){ $(id).addEventListener("input", renderRange); });
+  /* The Worker floors any claim window of 1 to 29 seconds up to 30 and stores THAT, while the
+     tablet and the TV counted down whatever was typed. Type 15 and the room saw 15 seconds
+     against a record that said 30. Snap it here so what the host reads is what happens. Zero
+     still means no time limit. */
+  $("rfTime").addEventListener("change", function(){
+    var v=parseInt($("rfTime").value,10);
+    if(!isNaN(v) && v>0 && v<30){ $("rfTime").value=30; renderRange(); }
+  });
   $("rfAllowRedraw").addEventListener("change", readInputs);
 
   // ---- boot: resolve the host login, load saved prizes, then pair with the screen ----

@@ -62,6 +62,14 @@
   .msg.err{color:var(--roll)}
   .warn{background:rgba(245,165,36,.08);border:1px solid rgba(245,165,36,.3);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--roll);line-height:1.5;margin-bottom:16px}
   .hidden{display:none!important}
+  /* Phones: a switch you have to hit with a thumb, and a button you cannot miss. */
+  @media(max-width:640px){
+    .sw{width:52px;height:31px}
+    .sw::after{width:25px;height:25px}
+    .sw.on::after{left:23px}
+    .btn{min-height:44px}
+    .seg .opt{min-height:44px;display:flex;align-items:center;justify-content:center}
+  }
 </style>
 </head>
 <body>
@@ -84,7 +92,9 @@
   <div id="body" class="hidden">
     <div id="migWarn" class="warn hidden">The player-data options are still being switched on for your venue. Until then, only the name style below saves.</div>
 
-    <div class="card">
+    <div class="warn" id="ownerOnlyNote" style="display:none">Name display and what players are asked for are set by your account owner, so they are shown here but cannot be changed. Ask your account owner if they need changing. Your venue code below is still yours to change.</div>
+
+    <div class="card owneronly">
       <div class="lbl">Name display on the TV</div>
       <div class="sublbl">How winner and member names appear on the big screen.</div>
       <div class="seg" id="nameSeg">
@@ -94,7 +104,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card owneronly">
       <div class="lbl">What players are asked for when they join</div>
       <div class="sublbl">Only ask for what you will use. Less is friendlier and joins faster.</div>
       <div class="row"><div class="t"><div class="n">First name</div><div class="d">Shown on the TV and leaderboards.</div></div><div class="sw" data-k="collect_first_name"></div></div>
@@ -105,7 +115,7 @@
       <div class="sublbl" id="mktNote" style="display:none;margin-top:6px">Email, mobile and marketing opt-in unlock once your account is approved to hold customer data. Venues are approved automatically; if you run games at venues you don't own, email hello@venueplay.com.au.</div>
     </div>
 
-    <div class="card mktrow">
+    <div class="card mktrow owneronly">
       <div class="lbl">Marketing opt-in</div>
       <div class="sublbl">Whether the join screen asks the player to opt in to your venue's marketing.</div>
       <div class="row"><div class="t"><div class="n">Ask players to opt in</div><div class="d">Default OFF. When on, the tick is always shown UNTICKED, and the player must tick it themselves (this is a locked rule, never pre-ticked).</div></div><div class="sw" data-k="collect_marketing_optin"></div></div>
@@ -204,10 +214,35 @@
     $("vSub").textContent="Settings"+(ctx.venue&&ctx.venue.slug?(" for "+ctx.venue.slug):"")+(ctx.isAdmin?" (admin)":(" ("+ctx.role+")"));
     fill(ctx.settings||{});
     gateMarketing(ctx);
+    gateOwnerOnly(ctx);
     paintVenueCode();
     wireRefreshCode();
     $("body").classList.remove("hidden");
   });
+
+  /* What player data is collected, and how names show on the TV, are OWNER-ONLY decisions: they
+     are the data-governance line in the role model, not a per-manager toggle. The Your account
+     page already hides them from a manager; this page was the second door, and it was open, so a
+     manager could change what every player at the venue is asked for.
+     Owner-ness is "no permissions object on my staff row", exactly as the billing Worker decides
+     it (a real owner's row can be stored with role 'manager', so the role word cannot be trusted
+     on its own). The venue code and Change code stay available to a manager. */
+  function gateOwnerOnly(ctx){
+    if (ctx.isAdmin || ctx.role === "owner") return;
+    ctx.client.from("vp_venue_staff").select("permissions")
+      .eq("auth_user_id", ctx.user.id).eq("venue_id", venueId).maybeSingle()
+      .then(function(r){
+        var row = r && r.data;
+        if (!row || !row.permissions) return;   // full access, or we could not tell: leave as it was
+        document.querySelectorAll(".owneronly").forEach(function(card){
+          card.style.opacity = ".62";
+          card.style.pointerEvents = "none";
+          card.setAttribute("aria-disabled", "true");
+        });
+        var sb = $("saveBtn"); if (sb) sb.style.display = "none";
+        var n = $("ownerOnlyNote"); if (n) n.style.display = "";
+      }).catch(function(){ /* leave the page as it was rather than lock the owner out */ });
+  }
 
   /* This used to hide the marketing fields based on the VENUE NAME, while the database decides
      on the CONTACT EMAIL (migration 28). The two disagreed in both directions: "The Royal Hotel"

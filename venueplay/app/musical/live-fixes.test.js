@@ -132,5 +132,87 @@ pass("/play reuses a token it already holds",
      !!vpPlay && /savedToken/.test(vpPlay),
      "a refresh joins as a new person again");
 
+/* 7. TWO PEOPLE SHOUT BINGO ON THE SAME SONG.
+   The console kept exactly ONE claim. A second valid claim on the same song was
+   dropped on the floor, and then "Play on" for the first told EVERY waiting phone
+   "not yet", so the second player was waved off by a host who never saw their card.
+   Three separate lines make that impossible now, and any one of them going away
+   brings the whole fault back. */
+pass("the host holds a LIST of claims, not one",
+     /G\.claims\s*\.\s*push|G\.claims\.push/.test(hostSrc) && /function\s+sortClaims/.test(hostSrc),
+     "the console is back to a single claim, so a second BINGO is thrown away");
+pass("the claim guard no longer drops a second claim",
+     !/if\s*\(\s*G\.status\s*!==\s*"running"\s*\|\|\s*G\.won\s*\|\|\s*G\.claim\s*\|\|/.test(hostSrc),
+     "the old || G.claim || guard is back: a claim arriving while another is shown is lost");
+pass("the host can confirm both and split the prize",
+     /hostConfirmAll/.test(hostSrc) && /confirmall/.test(hostSrc),
+     "there is no way to pay two people who tied on the same song");
+pass("a rejection names the phone it is for",
+     /t:\s*"resume"\s*,\s*pid:/.test(hostSrc),
+     "resume is broadcast with no pid again, so every waiting phone is told not yet");
+pass("the phone ignores a rejection meant for somebody else",
+     /if\s*\(\s*m\.pid\s*&&\s*m\.pid\s*!==\s*P\.pid\s*\)\s*return;/.test(playSrc),
+     "a second claimant is told the host said no when the host never saw their card");
+
+/* 8. THE TV GIVING THE ANSWER AWAY.
+   The wall printed the title 850ms after the song started, so the room read it
+   instead of naming it. The host now chooses the moment, and the mode travels on
+   every played message. Two ways it can regress: the screen ignoring the mode, or
+   a state refresh printing the title while the wall is holding it back. */
+pass("the TV honours the host's reveal setting",
+     /revealSong\(\s*m\.title\s*,\s*m\.artist\s*,\s*m\.artworkUrl\s*,\s*m\.reveal/.test(screenSrc) &&
+     /_revealMode/.test(screenSrc),
+     "the screen reveals on its own clock again and the room can read the answer off the wall");
+/* Specific to the STATE handler, not just any mention of _pendingSong: the reveal handler
+   tests the same variable, and a check that either one satisfies cannot fail. */
+pass("a state refresh does not reveal a held song",
+     /if\s*\(\s*_pendingSong\s*\)\s*\{[\s\S]{0,260}\}\s*else if\s*\(\s*t\s*!==\s*_shownTitle\s*\)/.test(screenSrc),
+     "a phone joining mid-song prints the title the host was holding back");
+pass("a held song is always revealed in the end",
+     /REVEAL_END_FALLBACK_MS/.test(screenSrc),
+     "a blocked or missing clip leaves a question mark on the wall for the rest of the night");
+pass("the host sends the reveal mode with every song",
+     /reveal:\s*\(replay\s*&&\s*G\.revealed\)/.test(hostSrc),
+     "the played broadcast no longer carries the mode, so the TV falls back to giving it away");
+
+/* 9. "PLAY ON" LEAVING THE ROOM IN SILENCE.
+   A claim paused the clip on the TV; Play on only switched the panel back, so the
+   rest of the song never played and the host reached for the next one. */
+pass("Play on starts the music again",
+     /m\.t===\s*"resume"/.test(screenSrc) && /clipAudio\.src\s*&&\s*clipAudio\.paused/.test(screenSrc),
+     "the TV goes back to the running panel with the music still stopped");
+pass("the host device stops with the room",
+     /function\s+pauseForClaim/.test(hostSrc) && /function\s+resumeAfterClaim/.test(hostSrc),
+     "the host's Pause button lies again: the room is silent while it says Pause");
+
+/* 10. ONE TAP ENDING THE NIGHT, AND ONE TAP SKIPPING A SONG.
+   End game had no confirm at all, and the song list had no hold, so two quick taps
+   marked two songs played while the room heard one. A card could then be certified
+   on a song nobody heard. */
+pass("End game asks first",
+     /confirm\("End this game\?/.test(hostSrc),
+     "one stray tap clears the game and sends the TV back to the ads mid-round");
+pass("the song list has the same hold as the big button",
+     /VP_HOLD\.busy\(_hb\)/.test(hostSrc) && /Stop \\"/.test(hostSrc),
+     "two quick taps down the list mark two songs played and the room hears one");
+
+/* 11. NO PLAYER COUNT ON THE WALL. Locked design call. */
+pass("the TV never prints the player count",
+     !/lobbyPlaying|tvPlayCount/.test(screenSrc),
+     "a slow night is advertising itself on the venue's own screen again");
+
+/* 12. THE PHONE TELLING SOMEBODY THEIR OWN CARD IS WRONG.
+   BINGO is judged against the songs the HOST played. A stray tap gives a full line
+   on the card and a refusal on the button, which reads as broken. */
+pass("the phone explains which squares are in the way",
+     /function\s+sayNotYet/.test(playSrc) && /cc\.early/.test(playSrc),
+     "the phone is back to a flat not yet against a card that looks complete");
+pass("the prize is on the card screen, not just the win screen",
+     /prizeStrip/.test(playSrc),
+     "a player finds out what they were playing for after they have won it");
+pass("a player who missed a song can catch up",
+     /function\s+renderPlayedSheet/.test(playSrc) && /markMissed/.test(playSrc),
+     "someone back from the bar has no way to see what went by");
+
 print(bad ? ("  " + bad + " FAILED") : "ALL CHECKS PASSED");
 if (bad) throw new Error(bad + " failed");

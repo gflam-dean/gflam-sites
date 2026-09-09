@@ -38,8 +38,8 @@
   .sdot{width:.8cqw;height:.8cqw;min-width:8px;min-height:8px;border-radius:50%;background:var(--roll);box-shadow:0 0 8px var(--roll)}
   .sdot.on{background:var(--win);box-shadow:0 0 8px var(--win)}
 
-  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,15px);color:var(--muted)}
-  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,16px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
+  .eyebrow{font-family:'Hanken Grotesk',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:clamp(10px,1.9cqw,26px);color:var(--muted)}
+  .jsub{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2cqw,30px);color:var(--muted);margin-top:2cqw;letter-spacing:.02em}
   .jsub b{color:var(--gold)}
 
   /* idle promo */
@@ -69,8 +69,14 @@
   .winnum{font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;line-height:.92;text-shadow:0 0 60px rgba(255,31,142,.4);white-space:nowrap}
   .winlist{display:flex;flex-wrap:wrap;justify-content:center;gap:2.2cqw;margin-top:1cqw}
   .winlist span{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(28px,9cqw,86px);color:#fff;text-shadow:0 0 40px rgba(255,31,142,.35)}
-  .present{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,2.8cqw,26px);color:#fff;margin-top:2cqw}
+  .present{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,2.8cqw,38px);color:#fff;margin-top:2cqw}
   .present b{color:var(--gold)}
+  .winnum.pop{animation:numpop .75s cubic-bezier(.2,.9,.3,1.2)}
+  @keyframes numpop{0%{transform:scale(.6);opacity:0;filter:blur(6px)}55%{transform:scale(1.08);opacity:1;filter:blur(0)}100%{transform:scale(1)}}
+  /* redraw notice: which ticket missed out, and that the same prize is going again */
+  .missedline{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(16px,3.2cqw,46px);color:var(--text);line-height:1.2;margin-top:1cqw}
+  .missedline b{font-family:'JetBrains Mono',monospace;color:var(--gold)}
+  .againline{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(20px,5cqw,72px);color:var(--pink);line-height:1;margin-top:1.6cqw;text-shadow:0 0 30px rgba(255,31,142,.45)}
   .resmsg{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(24px,6cqw,84px);line-height:1.02;margin-top:.6cqw;color:var(--win);text-shadow:0 0 34px rgba(53,208,127,.4)}
 
   .confetti{position:absolute;top:-2cqw;width:.7cqw;height:1.1cqw;min-width:7px;min-height:11px;border-radius:2px;opacity:.95;z-index:8;pointer-events:none;animation:confettiFall linear forwards}
@@ -105,6 +111,13 @@
     <div class="eyebrow">Drawing now</div>
     <div class="spin" id="tvSpin">0</div>
     <div class="drawing pulse">Good luck&hellip;</div>
+  </div>
+
+  <!-- redraw notice (between a no-show and the next spin) -->
+  <div class="layer hidden" id="tvRedraw">
+    <div class="eyebrow">Not claimed in time</div>
+    <div class="missedline" id="tvRedrawMissed"></div>
+    <div class="againline" id="tvRedrawAgain">Drawing again</div>
   </div>
 
   <!-- winner -->
@@ -184,7 +197,8 @@
 
   // ---- screen state ----
   var S={ padW:3, min:1, max:150, prizeLabel:"", nextUp:false, hostSeen:false, prizes:[],
-          spinTimer:null, countdownTimer:null, remaining:0, celebrateTimer:null };
+          spinTimer:null, countdownTimer:null, remaining:0, celebrateTimer:null,
+          spinSecs:4, redrawTimer:null, holdUntil:0, pendingIdle:null, holdTimer:null };
 
   function pad(n){ var s=String(n); while(s.length<S.padW) s="0"+s; return s; }
   function secsToClock(s){ var m=Math.floor(s/60),r=s%60; return m+":"+(r<10?"0":"")+r; }
@@ -200,7 +214,7 @@
   }
 
   // ---- layers ----
-  var LAYERS=["tvIdle","tvDraw","tvWin","tvResult"];
+  var LAYERS=["tvIdle","tvDraw","tvRedraw","tvWin","tvResult"];
   function showLayer(which){
     for(var i=0;i<LAYERS.length;i++){ $(LAYERS[i]).classList.toggle("hidden", LAYERS[i]!==which); }
     // The host link + code line is only for a screen paired by hand. A venue-linked screen
@@ -209,15 +223,21 @@
   }
 
   // ---- spin ----
-  function stopSpin(){ if(S.spinTimer){ clearInterval(S.spinTimer); S.spinTimer=null; } }
+  function stopSpin(){ if(S.spinTimer){ clearTimeout(S.spinTimer); S.spinTimer=null; } }
+  /* Slows down as the reveal nears (the host sends spinSecs with t:"drawing"; 4 if it did not),
+     so the moment reads as a draw rather than a flicker that stops. */
   function startSpin(){
     stopSpin();
     var el=$("tvSpin");
     fitBig(el, pad(S.max), pad(S.max), 20);
-    S.spinTimer=setInterval(function(){
+    var total=Math.max(1200,(S.spinSecs||4)*1000), t0=Date.now();
+    function tick(){
       var span=Math.max(1,S.max-S.min+1);
       el.textContent=pad(S.min+cryptoInt(span));
-    },90);
+      var frac=Math.min(1,(Date.now()-t0)/total);
+      S.spinTimer=setTimeout(tick, 70+Math.round(260*frac*frac));   // 70ms flicks easing out to about 330ms
+    }
+    tick();
   }
 
   // ---- countdown ----
@@ -295,14 +315,58 @@
     for(var i=0;i<ps.length;i++){ var d=document.createElement("div"); d.className="pmi"; d.textContent=String(ps[i]); box.appendChild(d); }
   }
   function renderDrawing(){
-    cancelAdsReturn();
+    cancelAdsReturn(); clearRedraw(); clearHold();
     stopCountdown(); stopCelebrate();
     $("tvDrawPrize").textContent=S.prizeLabel;
     showLayer("tvDraw");
     startSpin();
   }
-  function renderWinner(nums, allowRedraw, time){
+  /* HOW LONG THE WALL HOLDS A RESULT, and how long a redraw notice shows before the next spin.
+     Both MUST match host.html (CLAIM_CELEBRATE_MS / REDRAW_NOTICE_MS there). */
+  var CLAIM_CELEBRATE_MS=30000, REDRAW_NOTICE_MS=3000;
+  function clearRedraw(){ if(S.redrawTimer){ clearTimeout(S.redrawTimer); S.redrawTimer=null; } }
+  /* The ticket that missed out, named, then the same prize goes again. This used to jump straight
+     into a second spin, so the room saw two spins for one prize and never learned why. The card
+     advances itself: if the host's "drawing" is lost, the spin still starts. */
+  function renderRedraw(nums){
+    cancelAdsReturn(); clearRedraw(); clearHold();
     stopSpin(); stopCountdown(); stopCelebrate();
+    var el=$("tvRedrawMissed");
+    el.innerHTML="";
+    if(nums && nums.length){
+      var b=document.createElement("b"); b.textContent=nums.map(pad).join(", ");
+      el.appendChild(document.createTextNode((nums.length>1?"Tickets ":"Ticket ")));
+      el.appendChild(b);
+      el.appendChild(document.createTextNode(nums.length>1?" were not claimed in time":" was not claimed in time"));
+    } else { el.textContent="The winning ticket was not claimed in time"; }
+    $("tvRedrawAgain").textContent = S.prizeLabel ? ("Drawing again for "+S.prizeLabel) : "Drawing again";
+    showLayer("tvRedraw");
+    /* The host's own "drawing" lands at REDRAW_NOTICE_MS. This fallback sits a beat behind it on
+       purpose, so the normal path is the host's message and the two do not both start a spin
+       (which would restart the slow-down half a second in and look like a stutter). */
+    S.redrawTimer=setTimeout(function(){ S.redrawTimer=null; if(S.phase==="redraw"){ S.phase="drawing"; renderDrawing(); } }, REDRAW_NOTICE_MS+800);
+  }
+  /* A claimed result stays up for its whole celebration. The host's idle used to land 9 seconds
+     in and this screen obeyed it. An idle that arrives early is kept and applied when the hold
+     ends; a state or host_here is ignored until then. The return-to-ads timer armed by
+     renderClaimed still stands, so with a silent host the wall still drifts back to the venue's
+     advertising and is never left dark or stuck. */
+  function clearHold(){ if(S.holdTimer){ clearTimeout(S.holdTimer); S.holdTimer=null; } S.holdUntil=0; S.pendingIdle=null; }
+  function holding(){ return S.phase==="result" && S.holdUntil>0 && Date.now()<S.holdUntil; }
+  function holdResult(ms){
+    clearHold(); S.holdUntil=Date.now()+ms;
+    S.holdTimer=setTimeout(function(){
+      S.holdTimer=null; S.holdUntil=0;
+      if(S.pendingIdle){ var m=S.pendingIdle; S.pendingIdle=null; applyIdle(m); }
+    }, ms);
+  }
+  function applyIdle(m){
+    S.nextUp=!!m.next; if(Array.isArray(m.prizes)) S.prizes=m.prizes.filter(Boolean).slice(0,12);
+    if(typeof m.prizeLabel==="string") S.prizeLabel=m.prizeLabel;
+    S.phase="idle"; renderIdle(); scheduleAdsReturn();
+  }
+  function renderWinner(nums, allowRedraw, time){
+    stopSpin(); stopCountdown(); stopCelebrate(); clearRedraw(); clearHold();
     var multi=nums.length>1;
     $("tvWinPrize").textContent=S.prizeLabel;
     $("tvWinEye").textContent=multi?"Winning tickets":"Winning ticket";
@@ -312,15 +376,24 @@
       for(var i=0;i<nums.length;i++){ var sp=document.createElement("span"); sp.textContent=pad(nums[i]); tl.appendChild(sp); }
     } else {
       $("tvWinList").classList.add("hidden");
-      $("tvWinNum").classList.remove("hidden");
-      fitBig($("tvWinNum"), pad(nums[0]), pad(S.max), 26);
+      var wn=$("tvWinNum"); wn.classList.remove("hidden");
+      fitBig(wn, pad(nums[0]), pad(S.max), 26);
+      wn.classList.remove("pop"); void wn.offsetWidth; wn.classList.add("pop");   // restart the reveal animation every draw
     }
+    spawnBurst(36);
     if(allowRedraw && time>0){
       S.remaining=time;
       $("tvPresent").innerHTML='Claim within <b id="tvCd">'+secsToClock(S.remaining)+'</b>';
-      S.countdownTimer=setInterval(function(){ S.remaining--; updateCd(); if(S.remaining<=0){ stopCountdown(); } },1000);
+      S.countdownTimer=setInterval(function(){ S.remaining--; updateCd();
+        if(S.remaining<=0){
+          stopCountdown();
+          /* Used to stop dead on 0:00. The host decides what happens next, so say that instead
+             of leaving the room reading a frozen clock. */
+          $("tvPresent").innerHTML='Time is up. <b>The host is deciding</b>';
+        }
+      },1000);
     } else {
-      $("tvPresent").innerHTML='<span style="color:var(--win)">Bring your winning ticket to claim</span>';
+      $("tvPresent").innerHTML='<span style="color:var(--win)">Bring your winning ticket to the host</span>';
     }
     showLayer("tvWin");
     /* Outlast the CLAIM WINDOW. This was a flat 60 seconds while the default claim time is 180,
@@ -334,8 +407,9 @@
     var multi=nums.length>1;
     $("tvResMsg").textContent = multi ? (nums.length+" winning tickets!") : ("Ticket "+pad(nums[0])+" wins!");
     $("tvResPrize").textContent=S.prizeLabel;
+    clearRedraw();
     showLayer("tvResult");
-    celebrate(30000);
+    celebrate(CLAIM_CELEBRATE_MS); holdResult(CLAIM_CELEBRATE_MS);
     scheduleAdsReturn();
   }
 
@@ -436,13 +510,19 @@
        drum roll dropped back to "get your tickets" mid-draw and the winning
        number then appeared out of nowhere. */
     if((m.t==="host_here" || m.t==="state") &&
-       (S.phase==="winner" || S.phase==="result" || S.phase==="drawing")) return;
+       (S.phase==="winner" || S.phase==="result" || S.phase==="drawing" || S.phase==="redraw")) return;
+    if(m.t==="idle" && holding()){ S.pendingIdle=m; return; }   // the celebration finishes first; the idle is kept, not lost
     if(m.t==="host_here"){ S.phase="idle"; renderIdle(); return; }
-    if(m.t==="state" || m.t==="idle"){ S.phase="idle"; renderIdle(); if(m.t==="idle") scheduleAdsReturn(); }
-    else if(m.t==="drawing"){ S.phase="drawing"; renderDrawing(); }
+    if(m.t==="state" || m.t==="idle"){ clearHold(); S.phase="idle"; renderIdle(); if(m.t==="idle") scheduleAdsReturn(); }
+    else if(m.t==="drawing"){
+      if(typeof m.spinSecs==="number" && m.spinSecs>0) S.spinSecs=Math.min(12, m.spinSecs);
+      // Arriving during the redraw notice is the NORMAL path: renderDrawing cancels the notice's
+      // own fallback timer, so the spin starts once, here.
+      S.phase="drawing"; renderDrawing();
+    }
     else if(m.t==="winner"){ S.phase="winner"; renderWinner(m.numbers||[], !!m.allowRedraw, m.time||0); }
     else if(m.t==="claimed"){ S.phase="result"; renderClaimed(m.numbers||[]); }
-    else if(m.t==="redraw"){ S.phase="drawing"; renderDrawing(); }
+    else if(m.t==="redraw"){ S.phase="redraw"; renderRedraw(Array.isArray(m.numbers)?m.numbers.slice(0,6):[]); }
   }
 
   // ---- resize keeps big numbers fitted ----

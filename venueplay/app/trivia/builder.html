@@ -8,51 +8,107 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root{ --ink:#0A0A0B; --ink-2:#121214; --ink-3:#17171A; --pink:#FF1F8E; --pink-deep:#C70F69;
-    --gold:#FFC24B; --win:#35D07F; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
+    --gold:#FFC24B; --win:#35D07F; --roll:#F5A524; --text:#E7E7EC; --muted:#9A9AA4; --faint:#6C6C76;
     --line:rgba(255,255,255,0.10); --line-2:rgba(255,255,255,0.06); }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:radial-gradient(700px 420px at 80% -10%, rgba(255,31,142,.10), transparent 60%), var(--ink);
     color:var(--text);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
-  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 60px}
+  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 80px}
   .top{display:flex;align-items:center;gap:12px;padding:6px 0 14px}
-  .back{background:none;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-weight:700;font-size:13px;padding:7px 12px;cursor:pointer;text-decoration:none}
+  .back{background:none;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-weight:700;font-size:13px;padding:10px 14px;min-height:44px;display:inline-flex;align-items:center;cursor:pointer;text-decoration:none}
   .brand{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff}
   h1{font-family:'Anton',sans-serif;font-size:30px;text-transform:uppercase;color:#fff;line-height:1;margin:6px 0 4px}
+  h2{font-family:'Anton',sans-serif;font-size:24px;text-transform:uppercase;color:#fff;line-height:1.05;margin:0 0 4px}
   .sub{color:var(--muted);font-size:13.5px;margin-bottom:18px}
   .card{background:var(--ink-3);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
   .lbl{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#fff;margin-bottom:4px}
-  .hint{font-size:12px;color:var(--faint);margin-bottom:12px}
+  .hint{font-size:12.5px;color:var(--faint);margin-bottom:12px;line-height:1.5}
   label.f{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:10px 0 5px}
-  select,input[type=text],textarea{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px;font-family:'Manrope',sans-serif;font-size:15px;outline:none}
-  input:focus,select:focus,textarea:focus{border-color:var(--pink)}
+  select,input[type=text],input[type=number],textarea{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px;min-height:44px;font-family:'Manrope',sans-serif;font-size:15px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
   textarea{resize:vertical;min-height:64px}
   .row{display:flex;gap:10px;flex-wrap:wrap}
   .row>*{flex:1;min-width:120px}
-  .btn{border:none;border-radius:10px;padding:12px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;cursor:pointer}
-  .btn.pink{background:var(--pink);color:#fff}
-  .btn.pink:active{background:var(--pink-deep)}
-  .btn.ghost{background:var(--ink);color:var(--muted);border:1px solid var(--line)}
+  .btn{border:none;border-radius:10px;padding:12px 16px;min-height:44px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;cursor:pointer;transition:.12s}
+  .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.25)}
+  .btn.pink:active,.btn.pink:hover{background:var(--pink-deep)}
+  .btn.win{background:var(--win);color:#04120a}
+  .btn.ghost{background:var(--ink);color:var(--text);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--pink)}
+  .btn.big{width:100%;padding:16px;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
+  .btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.12s;font-family:'Manrope',sans-serif}
+  .chip{background:var(--ink);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:11px 16px;min-height:44px;font-size:13.5px;font-weight:700;cursor:pointer;transition:.12s;font-family:'Manrope',sans-serif}
   .chip:hover{border-color:var(--pink);color:#fff}
   .chip:disabled{opacity:.5;cursor:default}
-  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .seg{display:flex;gap:5px;background:var(--ink);padding:4px;border-radius:11px;border:1px solid var(--line-2)}
+  .seg button{flex:1;min-height:44px;padding:6px 4px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer}
+  .seg button.on{background:var(--pink);color:#fff}
+
+  /* progress: 1 Start, 2 Questions, 3 Ready */
+  .steps{display:flex;gap:6px;margin:6px 0 18px}
+  .step{flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:var(--ink-3);border:1px solid var(--line-2);color:var(--faint);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.06em}
+  .step .n{width:24px;height:24px;border-radius:50%;background:var(--ink);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;flex:none}
+  .step.on{color:#fff;border-color:rgba(255,31,142,.5);background:rgba(255,31,142,.10)}
+  .step.on .n{background:var(--pink);border-color:var(--pink);color:#fff}
+  .step.done{color:var(--muted)}
+  .step.done .n{background:rgba(53,208,127,.15);border-color:rgba(53,208,127,.5);color:var(--win)}
+  @media (max-width:480px){ .step span.t{display:none} .step.on span.t{display:inline} }
+
+  /* saved nights */
+  .nights{display:flex;flex-direction:column;gap:8px}
+  .night{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--ink);border:1px solid var(--line-2);border-radius:12px;padding:12px 14px;min-height:56px;color:var(--text);cursor:pointer;font-family:'Manrope',sans-serif}
+  .night:hover{border-color:var(--pink)}
+  .night .nt{flex:1;font-weight:700;font-size:14.5px;color:#fff;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .night .nc{font-family:'JetBrains Mono',monospace;color:var(--gold);font-weight:700;font-size:13px;white-space:nowrap}
+  .night .go{color:var(--pink);font-weight:800;font-size:13px;font-family:'Hanken Grotesk',sans-serif}
+
+  /* step 2 */
+  .nighthead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .nighthead h2{flex:1;min-width:0;overflow-wrap:anywhere}
+  .pencil{background:none;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:12.5px;font-weight:700;padding:8px 12px;min-height:44px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif}
+  .pencil:hover{border-color:var(--pink);color:#fff}
+  .saved{font-size:12px;color:var(--win);display:inline-flex;align-items:center;gap:6px}
+  .saved.busy{color:var(--muted)}
+  .addrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+  .addrow .btn{padding:12px 8px;font-size:13px}
+  .addrow .btn.on{background:var(--pink);color:#fff;border-color:var(--pink)}
+  @media (max-width:420px){ .addrow{grid-template-columns:1fr} }
+  .panel{border-top:1px dashed var(--line);padding-top:12px;margin-top:4px}
   .opts .orow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
   .opts .orow input[type=text]{flex:1}
-  .opts .orow label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap;cursor:pointer}
+  .opts .orow label{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);white-space:nowrap;cursor:pointer;min-height:44px;padding:0 4px}
+  .opts .orow label input{width:20px;height:20px;accent-color:var(--pink)}
   .qcount{font-family:'JetBrains Mono',monospace;color:var(--gold);font-weight:700}
   .qlist{display:flex;flex-direction:column;gap:8px;margin-top:6px}
   .qrow{display:flex;gap:10px;align-items:flex-start;background:var(--ink);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px}
-  .qrow .qi{font-family:'JetBrains Mono',monospace;color:var(--muted);font-weight:700;min-width:22px}
-  .qrow .qt{flex:1;font-size:13.5px}
+  .qrow .qi{font-family:'JetBrains Mono',monospace;color:var(--muted);font-weight:700;min-width:22px;padding-top:2px}
+  .qrow .qthumb{width:56px;height:42px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex:none;background:#000}
+  .qrow .qt{flex:1;font-size:13.5px;min-width:0;overflow-wrap:anywhere}
   .qrow .qa{color:var(--win);font-size:12px;margin-top:2px}
   .qrow .qmeta{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
-  .qrow .qx{background:none;border:none;color:var(--faint);font-size:18px;cursor:pointer;line-height:1}
-  .qrow .qx:hover{color:var(--pink)}
-  .status{font-size:13px;color:var(--muted);min-height:18px;margin-top:6px}
+  .qrow .qact{display:flex;flex-direction:column;gap:4px;flex:none}
+  .qrow .qx,.qrow .qe{background:none;border:1px solid transparent;border-radius:8px;color:var(--faint);font-size:16px;cursor:pointer;line-height:1;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center}
+  .qrow .qe:hover{color:#fff;border-color:var(--line)}
+  .qrow .qx:hover{color:var(--pink);border-color:var(--line)}
+  .qrow.editing{border-color:rgba(255,194,75,.5)}
+  .status{font-size:13px;color:var(--muted);min-height:18px;margin-top:6px;line-height:1.45}
   .status.ok{color:var(--win)} .status.err{color:var(--gold)}
+  .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:80;background:#1E1E23;border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 14px 34px -12px rgba(0,0,0,.75);font-size:14px;color:var(--text);max-width:calc(100vw - 32px)}
+  .toast button{background:none;border:1px solid var(--line);border-radius:8px;color:var(--gold);font-weight:800;font-size:13px;padding:8px 12px;min-height:44px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif}
+  .footnav{display:flex;gap:10px;margin-top:18px}
+  .footnav .btn{flex:1}
+  .picwrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .picpre{display:none;height:60px;max-width:110px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#000}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+  .summary .box{background:var(--ink);border:1px solid var(--line-2);border-radius:11px;padding:11px 12px}
+  .summary .k{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-family:'Hanken Grotesk',sans-serif}
+  .summary .v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:#fff;margin-top:3px}
   .hidden{display:none!important}
   .signin{text-align:center;padding:60px 20px;color:var(--muted)}
+  .signin .big{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:30px;color:#fff;line-height:1.02;margin-bottom:8px}
+  .signin p{font-size:14px;margin-bottom:22px}
+  .empty{padding:18px 10px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.5;border:1px dashed var(--line);border-radius:10px}
 </style>
 </head>
 <body>
@@ -62,99 +118,167 @@
     <span class="brand">VenuePlay</span>
   </div>
 
-  <div id="signinView" class="signin hidden">You need your venue host login to build a trivia night.</div>
+  <!-- SIGN IN NEEDED. Used to be a sentence with no way out. -->
+  <div id="signinView" class="signin hidden">
+    <div class="big">Sign in to build a night</div>
+    <p id="signinSub">You need your venue host login to build a trivia night.</p>
+    <a class="btn pink big" href="../index.html" style="display:inline-block;text-decoration:none;max-width:320px">Go to sign in</a>
+  </div>
 
   <div id="builderView" class="hidden">
-    <h1>Trivia night builder</h1>
-    <div class="sub">Build a set from the VenuePlay Trivia Library, write your own questions, or mix both. Saved nights show up in the trivia game's set list.</div>
+    <h1>Build a trivia night</h1>
+    <div class="sub">Three steps. Everything saves as you go, so nothing is lost if you wander off.</div>
 
-    <div class="card">
-      <div class="lbl">Your night</div>
-      <div class="hint">Pick a saved night to keep editing, or start a new one.</div>
-      <div class="row">
-        <select id="setSel"><option value="__new">+ New night</option></select>
-      </div>
-      <div id="nameRow" class="row" style="margin-top:10px">
-        <input type="text" id="setName" placeholder="Name this night (e.g. Thursday Quiz)" maxlength="80">
-        <button type="button" id="createBtn" class="btn pink" style="flex:0 0 auto">Create</button>
-      </div>
+    <div class="steps" id="steps">
+      <div class="step on" data-step="1"><span class="n">1</span><span class="t">Start</span></div>
+      <div class="step" data-step="2"><span class="n">2</span><span class="t">Questions</span></div>
+      <div class="step" data-step="3"><span class="n">3</span><span class="t">Ready</span></div>
     </div>
 
-    <div class="card" id="quickCard">
-      <div class="lbl">One-tap themed night</div>
-      <div class="hint">Tap a theme and we&rsquo;ll build a ready-to-run 20-question night for you. Edit or add more after.</div>
-      <div id="quickChips" class="chips"><span class="hint">Loading themes&hellip;</span></div>
-      <div id="quickStatus" class="status"></div>
-    </div>
-
-    <div id="editArea" class="hidden">
-      <details class="card">
-        <summary class="lbl" style="cursor:pointer">Add from the Trivia Library</summary>
-        <div class="hint">Grab a batch from our 37,000+ question bank.</div>
-        <div class="row">
-          <div><label class="f">Category</label><select id="libCat"></select></div>
-          <div><label class="f">Difficulty</label>
-            <select id="libDiff"><option value="">Any</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
-          <div style="flex:0 0 90px"><label class="f">How many</label><input type="number" inputmode="numeric" min="1" max="100" id="libCount" value="20"></div>
-        </div>
-        <button type="button" id="addLibBtn" class="btn pink" style="width:100%;margin-top:12px">Add to night</button>
-        <div id="libStatus" class="status"></div>
-      </details>
-
-      <details class="card">
-        <summary class="lbl" style="cursor:pointer">Search for a theme</summary>
-        <div class="hint">Type any topic to build a themed night &ndash; e.g. Neighbours, the 90s, Taylor Swift. Searches all 37,000+ questions.</div>
-        <div class="row">
-          <div style="flex:1"><label class="f">Topic</label><input type="text" id="searchQ" placeholder="e.g. Neighbours"></div>
-          <div><label class="f">Difficulty</label>
-            <select id="searchDiff"><option value="">Any</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
-          <div style="flex:0 0 90px"><label class="f">How many</label><input type="number" inputmode="numeric" min="1" max="100" id="searchCount" value="20"></div>
-        </div>
-        <button type="button" id="searchBtn" class="btn pink" style="width:100%;margin-top:12px">Search &amp; add to night</button>
-        <div id="searchStatus" class="status"></div>
-      </details>
-
-      <details class="card">
-        <summary class="lbl" style="cursor:pointer">Write your own</summary>
-        <div class="hint">Type a question, four answers, and tick the correct one.</div>
-        <label class="f">Question</label>
-        <textarea id="ownQ" placeholder="e.g. Which pub is the oldest in this town?"></textarea>
-        <div class="opts" id="ownOpts" style="margin-top:10px">
-          <div class="orow"><input type="text" data-o="0" placeholder="Answer A"><label><input type="radio" name="correct" value="0"> Correct</label></div>
-          <div class="orow"><input type="text" data-o="1" placeholder="Answer B"><label><input type="radio" name="correct" value="1"> Correct</label></div>
-          <div class="orow"><input type="text" data-o="2" placeholder="Answer C"><label><input type="radio" name="correct" value="2"> Correct</label></div>
-          <div class="orow"><input type="text" data-o="3" placeholder="Answer D"><label><input type="radio" name="correct" value="3"> Correct</label></div>
-        </div>
-        <div class="row">
-          <div><label class="f">Category (optional)</label><input type="text" id="ownCat" placeholder="e.g. Local"></div>
-          <div><label class="f">Difficulty</label>
-            <select id="ownDiff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
-        </div>
-        <label class="f">Picture (optional, for a picture round)</label>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <label class="btn" style="cursor:pointer;margin:0;background:var(--ink-3);color:var(--text);border:1px solid var(--line)">Upload a photo<input type="file" id="ownImgFile" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none"></label>
-          <img id="ownImgPreview" alt="" style="display:none;height:46px;max-width:90px;object-fit:cover;border-radius:8px;border:1px solid var(--line)">
-          <button type="button" id="ownImgClear" style="display:none;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit">remove</button>
-        </div>
-        <input type="text" id="ownImg" placeholder="…or paste an image URL" style="margin-top:8px">
-        <button type="button" id="addOwnBtn" class="btn pink" style="width:100%;margin-top:12px">Add question</button>
-        <div id="ownStatus" class="status"></div>
-      </details>
+    <!-- STEP 1: START -->
+    <div id="step1">
+      <div class="card" id="quickCard">
+        <div class="lbl">Ready-made night</div>
+        <div class="hint">Tap a theme and you get a 20-question night in one go. You can change anything after.</div>
+        <div class="seg" id="quickDiff" style="margin-bottom:12px"><button data-v="" class="on">Any level</button><button data-v="easy">Easy</button><button data-v="medium">Medium</button><button data-v="hard">Hard</button></div>
+        <div id="quickChips" class="chips"><span class="hint">Loading themes&hellip;</span></div>
+        <div id="quickStatus" class="status"></div>
+      </div>
 
       <div class="card">
-        <div class="lbl">This night <span class="qcount" id="qCount">(0 questions)</span></div>
+        <div class="lbl">Or build your own from scratch</div>
+        <div class="hint">Starts an empty night with tonight&rsquo;s date as the name. Rename it whenever you like.</div>
+        <button type="button" id="blankBtn" class="btn ghost big">Start a blank night</button>
+        <div id="blankStatus" class="status"></div>
+      </div>
+
+      <div class="card">
+        <div class="lbl">Your saved nights</div>
+        <div class="hint">Tap one to keep editing it, or to run it again.</div>
+        <div class="nights" id="nightList"><div class="hint">Loading&hellip;</div></div>
+      </div>
+    </div>
+
+    <!-- STEP 2: QUESTIONS -->
+    <div id="step2" class="hidden">
+      <div class="card">
+        <div class="nighthead">
+          <h2 id="nightTitle">Trivia Night</h2>
+          <button type="button" class="pencil" id="renameBtn">Rename</button>
+        </div>
+        <div id="renameRow" class="row hidden" style="margin:6px 0 10px">
+          <input type="text" id="renameIn" maxlength="80" placeholder="Name this night">
+          <button type="button" id="renameSave" class="btn pink" style="flex:0 0 auto">Save name</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span class="qcount" id="qCount">0 questions</span>
+          <span class="saved" id="savedNote">&#10003; Saved automatically</span>
+        </div>
+        <div class="hint" style="margin:8px 0 0">Questions play in a random order on the night, so the order here does not matter.</div>
+
+        <div class="addrow">
+          <button type="button" class="btn ghost" data-panel="lib">+ From the library</button>
+          <button type="button" class="btn ghost" data-panel="search">+ Search a topic</button>
+          <button type="button" class="btn ghost" data-panel="own">+ Write your own</button>
+        </div>
+
+        <div class="panel hidden" id="panelLib">
+          <div class="hint">Grab a batch of ready-made questions. Pick a category, or leave it on all.</div>
+          <div class="row">
+            <div><label class="f">Category</label><select id="libCat"></select></div>
+            <div><label class="f">Difficulty</label>
+              <select id="libDiff"><option value="">Any</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
+            <div style="flex:0 0 100px"><label class="f">How many</label><input type="number" inputmode="numeric" min="1" max="100" id="libCount" value="10"></div>
+          </div>
+          <button type="button" id="addLibBtn" class="btn pink" style="width:100%;margin-top:12px">Add to night</button>
+          <div id="libStatus" class="status"></div>
+        </div>
+
+        <div class="panel hidden" id="panelSearch">
+          <div class="hint">Type any topic: Neighbours, the 90s, Taylor Swift, cricket. We find questions about it.</div>
+          <div class="row">
+            <div style="flex:1"><label class="f">Topic</label><input type="text" id="searchQ" placeholder="e.g. Neighbours"></div>
+            <div><label class="f">Difficulty</label>
+              <select id="searchDiff"><option value="">Any</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
+            <div style="flex:0 0 100px"><label class="f">How many</label><input type="number" inputmode="numeric" min="1" max="100" id="searchCount" value="10"></div>
+          </div>
+          <button type="button" id="searchBtn" class="btn pink" style="width:100%;margin-top:12px">Search and add to night</button>
+          <div id="searchStatus" class="status"></div>
+        </div>
+
+        <div class="panel hidden" id="panelOwn">
+          <div class="hint" id="ownHint">Type a question, four answers, and tick the correct one. Add a picture for a picture round.</div>
+          <label class="f">Question</label>
+          <textarea id="ownQ" placeholder="e.g. Which pub is the oldest in this town?"></textarea>
+          <div class="opts" id="ownOpts" style="margin-top:10px">
+            <div class="orow"><input type="text" data-o="0" placeholder="Answer A"><label><input type="radio" name="correct" value="0"> Correct</label></div>
+            <div class="orow"><input type="text" data-o="1" placeholder="Answer B"><label><input type="radio" name="correct" value="1"> Correct</label></div>
+            <div class="orow"><input type="text" data-o="2" placeholder="Answer C"><label><input type="radio" name="correct" value="2"> Correct</label></div>
+            <div class="orow"><input type="text" data-o="3" placeholder="Answer D"><label><input type="radio" name="correct" value="3"> Correct</label></div>
+          </div>
+          <div class="row">
+            <div><label class="f">Category (optional)</label><input type="text" id="ownCat" placeholder="e.g. Local"></div>
+            <div><label class="f">Difficulty</label>
+              <select id="ownDiff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+          </div>
+          <label class="f">Picture (optional, for a picture round)</label>
+          <div class="picwrap">
+            <label class="btn ghost" style="cursor:pointer;margin:0;display:inline-flex;align-items:center">Upload a photo<input type="file" id="ownImgFile" accept="image/*" style="display:none"></label>
+            <img id="ownImgPreview" class="picpre" alt="" onerror="this.style.display='none'">
+            <button type="button" id="ownImgClear" style="display:none;background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;min-height:44px">remove picture</button>
+          </div>
+          <input type="text" id="ownImg" placeholder="or paste a picture link (https://...)" style="margin-top:8px">
+          <div class="hint" style="margin-top:6px">Photos are shrunk on your device to a small web copy before they upload, so a phone photo is fine.</div>
+          <div class="row" style="margin-top:12px">
+            <button type="button" id="addOwnBtn" class="btn pink" style="flex:2">Add question</button>
+            <button type="button" id="cancelEditBtn" class="btn ghost hidden" style="flex:1">Cancel edit</button>
+          </div>
+          <div id="ownStatus" class="status"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="lbl">Questions in this night</div>
         <div class="qlist" id="qList"></div>
         <div id="listStatus" class="status"></div>
       </div>
 
-      <!-- /host/trivia/set/delete existed in the Worker with nothing calling it, so a host could
-           create a night and never get rid of it. Placed last, well away from the controls used
-           every week, and it asks for the night's name because the Worker hard-deletes the set
-           AND its questions with no soft delete and no undo. -->
-      <div class="card" style="margin-top:16px">
-        <div class="lbl">Delete this night</div>
-        <div class="hint">Removes the night and every question in it. Questions you added from the Trivia Library are not affected, they stay in the library. This cannot be undone.</div>
-        <button type="button" id="delSetBtn" class="btn" style="margin-top:10px;border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--muted)">Delete night</button>
+      <div class="footnav">
+        <button type="button" class="btn ghost" id="backTo1">&larr; Start</button>
+        <button type="button" class="btn pink" id="toStep3">Next: name and run &rarr;</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: READY -->
+    <div id="step3" class="hidden">
+      <div class="card">
+        <h2 id="readyTitle">Trivia Night</h2>
+        <div class="hint">This is the name the room sees on the TV.</div>
+        <div class="row">
+          <input type="text" id="readyName" maxlength="80" placeholder="Name this night">
+          <button type="button" id="readySave" class="btn ghost" style="flex:0 0 auto">Save name</button>
+        </div>
+        <div id="readyStatus" class="status"></div>
+        <div class="summary">
+          <div class="box"><div class="k">Questions</div><div class="v" id="sumQs">0</div></div>
+          <div class="box"><div class="k">Pictures</div><div class="v" id="sumPics">0</div></div>
+          <div class="box"><div class="k">Your own</div><div class="v" id="sumOwn">0</div></div>
+        </div>
+        <div id="readyWarn" class="status err"></div>
+        <a class="btn win big" id="runBtn" href="/app/trivia/host.html" style="display:block;text-align:center;text-decoration:none;margin-top:8px">Run it now</a>
+        <div class="hint" style="text-align:center;margin-top:8px">Opens the host console with this night already picked.</div>
+      </div>
+
+      <div class="footnav">
+        <button type="button" class="btn ghost" id="backTo2">&larr; Questions</button>
+        <button type="button" class="btn ghost" id="anotherBtn">Build another night</button>
+      </div>
+
+      <!-- /host/trivia/set/delete hard-deletes the set AND its questions, no soft delete, no undo. So it
+           sits last, well away from the controls used every week. -->
+      <div class="card" style="margin-top:28px;border-color:var(--line-2)">
+        <div class="hint" style="margin-bottom:8px">Finished with this night for good? Deleting removes it and every question in it. Library questions stay in the library.</div>
+        <button type="button" id="delSetBtn" class="btn" style="border:1px solid rgba(255,255,255,.18);background:transparent;color:var(--muted)">Delete this night</button>
         <div id="delStatus" class="status"></div>
       </div>
     </div>
@@ -177,48 +301,41 @@
   function req(method, path, body){ return getToken().then(function(t){
     var opts={ method:method, headers:{ "Authorization":"Bearer "+t } };
     if(body){ opts.headers["Content-Type"]="application/json"; opts.body=JSON.stringify(body); }
-    return fetch(VP_GAME_API+path, opts);
-  }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); throw e; } return d; }); }); }
+    return fetch(VP_GAME_API+path, opts).catch(function(){ var e=new Error("The game server did not answer. Check the venue wifi and try again."); e.status=0; throw e; });
+  }).then(function(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }); }
 
-  var G={ venueId:null, setId:"" };
+  var G={ venueId:null, setId:"", title:"", questions:[], editingId:null, step:1, quickDiff:"", libraryTitles:{} };
 
   function setStatus(id, msg, cls){ var e=$(id); if(!e) return; e.textContent=msg||""; e.className="status"+(cls?" "+cls:""); }
+  function saving(on){ var n=$("savedNote"); if(!n) return; n.classList.toggle("busy", !!on); n.innerHTML= on ? "Saving&hellip;" : "&#10003; Saved automatically"; }
 
-  function loadCategories(){
-    client.from("vp_question_sets").select("title,question_count").eq("visibility","library").order("title")
-      .then(function(r){ var rows=(r&&r.data)||[]; var s=$("libCat"); s.innerHTML="";
-        var any=document.createElement("option"); any.value=""; any.textContent="All categories"; s.appendChild(any);
-        rows.forEach(function(row){ var o=document.createElement("option"); o.value=row.title; o.textContent=row.title+" ("+(row.question_count||0)+")"; s.appendChild(o); });
-        renderQuickChips(rows);
-      }, function(){});
-  }
-  // One-tap themed night: a chip per library theme; tapping it creates the night + pulls 20 of that
-  // theme in a single action (vs New night -> name -> add-from-library). Reuses the same endpoints.
-  function renderQuickChips(rows){
-    var w=$("quickChips"); if(!w) return; w.innerHTML="";
-    var themes=(rows||[]).filter(function(row){ return row && row.title; });
-    if(!themes.length){ w.innerHTML='<span class="hint">No themes yet.</span>'; return; }
-    themes.forEach(function(row){
-      var b=document.createElement("button"); b.type="button"; b.className="chip";
-      b.textContent=row.title+" Night";
-      b.addEventListener("click", function(){ quickNight(row.title); });
-      w.appendChild(b);
+  // ---- steps ----
+  function goStep(n){
+    G.step=n;
+    $("step1").classList.toggle("hidden", n!==1);
+    $("step2").classList.toggle("hidden", n!==2);
+    $("step3").classList.toggle("hidden", n!==3);
+    document.querySelectorAll("#steps .step").forEach(function(s){
+      var k=parseInt(s.getAttribute("data-step"),10);
+      s.classList.toggle("on", k===n); s.classList.toggle("done", k<n);
     });
+    try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
+    if(n===3) renderReady();
+    try{ if(G.setId) localStorage.setItem("vpTriviaBuilderLast-"+G.venueId, G.setId); }catch(e){}
   }
-  function quickNight(theme){
-    if(!G.venueId){ setStatus("quickStatus","No venue linked to this login.","err"); return; }
-    var chips=document.querySelectorAll("#quickChips .chip");
-    for(var i=0;i<chips.length;i++){ chips[i].disabled=true; }
-    setStatus("quickStatus","Building your "+theme+" night…","");
-    req("POST","/host/trivia/set",{ venue_id:G.venueId, title:theme+" Night" }).then(function(r){
-      var sid=r.set_id;
-      return req("POST","/host/trivia/questions/from-library",{ set_id:sid, category:theme, count:20 }).then(function(res){
-        setStatus("quickStatus","Your "+theme+" Night is ready. "+((res&&res.added)||0)+" questions added. Edit below, or run it from the trivia game.","ok");
-        loadMySets(sid);   // selects the new night + opens its editor with the questions loaded
-      });
-    }).catch(function(e){ setStatus("quickStatus", (e&&e.message)||"Could not build the night","err"); })
-      .then(function(){ var c=document.querySelectorAll("#quickChips .chip"); for(var j=0;j<c.length;j++){ c[j].disabled=false; } });
+  function openNight(setId, title){
+    G.setId=setId; G.title=title||"Trivia Night"; G.editingId=null;
+    $("nightTitle").textContent=G.title; $("readyTitle").textContent=G.title; $("readyName").value=G.title;
+    $("renameRow").classList.add("hidden");
+    restoreDraft();
+    goStep(2);
+    loadQuestions();
   }
+  function defaultName(){
+    var d=new Date(), days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return days[d.getDay()]+" Quiz "+d.getDate()+" "+months[d.getMonth()];
+  }
+
   /* This page had no error surface whatsoever, and supabase-js v2 resolves rather than rejects on
      an API error, so every failure looked like an empty result. */
   function builderError(msg){
@@ -235,127 +352,280 @@
     b.textContent=msg;
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
   }
-  function loadMySets(keepId){
+
+  // ---- step 1: themes + saved nights ----
+  function loadCategories(){
+    client.from("vp_question_sets").select("title,question_count").eq("visibility","library").order("title")
+      .then(function(r){ var rows=(r&&r.data)||[]; var s=$("libCat"); s.innerHTML="";
+        var any=document.createElement("option"); any.value=""; any.textContent="All categories"; s.appendChild(any);
+        rows.forEach(function(row){ var o=document.createElement("option"); o.value=row.title; o.textContent=row.title+" ("+(row.question_count||0)+")"; s.appendChild(o); G.libraryTitles[row.title]=true; });
+        renderQuickChips(rows);
+      }, function(){ $("quickChips").innerHTML='<span class="hint">Could not load the themes. Check the wifi and reload.</span>'; });
+  }
+  // One tap: creates the night AND fills it with 20 of that theme, then lands on the question list.
+  function renderQuickChips(rows){
+    var w=$("quickChips"); if(!w) return; w.innerHTML="";
+    var themes=(rows||[]).filter(function(row){ return row && row.title; });
+    if(!themes.length){ w.innerHTML='<span class="hint">No themes yet.</span>'; return; }
+    themes.forEach(function(row){
+      var b=document.createElement("button"); b.type="button"; b.className="chip";
+      b.textContent=row.title+" Night";
+      b.addEventListener("click", function(){ quickNight(row.title); });
+      w.appendChild(b);
+    });
+  }
+  function quickNight(theme){
+    if(!G.venueId){ setStatus("quickStatus","No venue linked to this login.","err"); return; }
+    var chips=document.querySelectorAll("#quickChips .chip");
+    for(var i=0;i<chips.length;i++){ chips[i].disabled=true; }
+    setStatus("quickStatus","Building your "+theme+" night…","");
+    var title=theme+" Night", sid="";
+    req("POST","/host/trivia/set",{ venue_id:G.venueId, title:title }).then(function(r){
+      sid=r.set_id;
+      return req("POST","/host/trivia/questions/from-library",{ set_id:sid, category:theme, difficulty:G.quickDiff||undefined, count:20 });
+    }).then(function(res){
+      setStatus("quickStatus","");
+      openNight(sid, title);
+      setStatus("listStatus", ((res&&res.added)||0)+" questions added. Add more, edit any, or go to the next step.", "ok");
+      loadMySets();
+    }).catch(function(e){
+      if(sid){ openNight(sid, title); setStatus("listStatus","The night was created but the questions did not arrive: "+((e&&e.message)||"")+" Try adding from the library below.","err"); }
+      else setStatus("quickStatus", (e&&e.message)||"Could not build the night","err");
+    }).then(function(){ var c=document.querySelectorAll("#quickChips .chip"); for(var j=0;j<c.length;j++){ c[j].disabled=false; } });
+  }
+  function blankNight(){
+    if(!G.venueId){ setStatus("blankStatus","No venue linked to this login.","err"); return; }
+    var b=$("blankBtn"); b.disabled=true; setStatus("blankStatus","Creating…","");
+    var title=defaultName();
+    req("POST","/host/trivia/set",{ venue_id:G.venueId, title:title }).then(function(r){
+      setStatus("blankStatus","");
+      openNight(r.set_id, r.title||title);
+      loadMySets();
+    }).catch(function(e){ setStatus("blankStatus",(e&&e.message)||"Could not create the night","err"); })
+      .then(function(){ b.disabled=false; });
+  }
+  function loadMySets(){
     client.from("vp_question_sets").select("id,title,question_count").eq("owner_venue_id",G.venueId).order("created_at",{ascending:false})
-      .then(function(r){ var rows=(r&&r.data)||[]; var s=$("setSel"); s.innerHTML='<option value="__new">+ New night</option>';
-        rows.forEach(function(row){ var o=document.createElement("option"); o.value=row.id; o.textContent=row.title+" ("+(row.question_count||0)+")"; s.appendChild(o); });
+      .then(function(r){
+        var rows=(r&&r.data)||[]; var w=$("nightList"); w.innerHTML="";
         if(r && r.error){ builderError("Could not load your trivia nights. Check your connection and reload before building: what you see may be out of date."); return; }
-        if(keepId){ s.value=keepId; onSetChange(); }
+        if(!rows.length){ w.innerHTML='<div class="empty">No saved nights yet. Tap a theme above and you will have one in a few seconds.</div>'; return; }
+        rows.forEach(function(row){
+          var b=document.createElement("button"); b.type="button"; b.className="night";
+          b.innerHTML='<span class="nt">'+esc(row.title||"Untitled night")+'</span><span class="nc">'+(row.question_count||0)+' Qs</span><span class="go">Open &rarr;</span>';
+          b.addEventListener("click", function(){ openNight(row.id, row.title||"Untitled night"); });
+          w.appendChild(b);
+        });
       }, function(){ builderError("Could not load your trivia nights. Check your connection and reload."); });
   }
-  function onSetChange(){
-    var v=$("setSel").value;
-    /* An empty value means the select never got populated, which happens when the read above came
-       back empty after a failed request. Falling into the else branch set G.setId="" while leaving
-       the editing area on screen, and from then on every control (Add, Add from library, Search,
-       Delete) hit a bare early return and silently did nothing, while the previous question list
-       stayed visible. The host kept typing questions and tapping Add, and nothing happened. */
-    if(!v){ $("editArea").classList.add("hidden"); $("nameRow").classList.add("hidden"); return; }
-    if(v==="__new"){ G.setId=""; $("nameRow").classList.remove("hidden"); $("editArea").classList.add("hidden"); $("setName").value=""; }
-    else { G.setId=v; $("nameRow").classList.add("hidden"); $("editArea").classList.remove("hidden"); loadQuestions(); }
+
+  // ---- rename (step 2 inline, and step 3) ----
+  function renameTo(name, statusId, doneCb){
+    name=(name||"").trim().slice(0,80);
+    if(!name || !G.setId){ return; }
+    saving(true); setStatus(statusId,"Saving name…","");
+    req("POST","/host/trivia/set",{ set_id:G.setId, title:name }).then(function(r){
+      G.title=(r&&r.title)||name;
+      $("nightTitle").textContent=G.title; $("readyTitle").textContent=G.title; $("readyName").value=G.title; $("renameIn").value=G.title;
+      setStatus(statusId,"Saved.","ok"); saving(false); loadMySets();
+      if(doneCb) doneCb();
+    }).catch(function(e){ saving(false); setStatus(statusId,(e&&e.message)||"Could not save the name","err"); });
   }
-  (function(){ var d=document.getElementById("delSetBtn"); if(d) d.addEventListener("click", deleteSet); })();
-  function createSet(){
-    var name=($("setName").value||"").trim(); if(!name){ $("setName").focus(); return; }
-    $("createBtn").disabled=true;
-    req("POST","/host/trivia/set",{ venue_id:G.venueId, title:name }).then(function(r){
-      loadMySets(r.set_id);
-    }).catch(function(e){ alert(e.message||"Could not create the night"); }).then(function(){ $("createBtn").disabled=false; });
-  }
-  function deleteSet(){
-    if(!G.setId) return;
-    var sel=$("setSel"), name=sel.options[sel.selectedIndex].textContent.replace(/\s*\(\d+\)\s*$/,"");
-    var typed=prompt('Delete "'+name+'" and every question in it?\n\nThis cannot be undone.\nType the night\'s name to confirm:');
-    if(typed===null) return;
-    if(typed.trim().toLowerCase()!==name.trim().toLowerCase()){ setStatus("delStatus","That did not match the name, so nothing was deleted.","err"); return; }
-    var b=$("delSetBtn"); b.disabled=true; b.textContent="Deleting\u2026";
-    req("POST","/host/trivia/set/delete",{ set_id:G.setId }).then(function(){
-      G.setId=""; $("editArea").classList.add("hidden"); loadMySets();
-      setStatus("delStatus","Deleted.","ok");
-    }).catch(function(e){ setStatus("delStatus",(e&&e.message)||"Could not delete the night","err"); })
-      .then(function(){ b.disabled=false; b.textContent="Delete night"; });
-  }
+
+  // ---- step 2: questions ----
   function loadQuestions(){
     if(!G.setId) return;
     setStatus("listStatus","Loading…","");
     req("GET","/host/trivia/set/questions?set="+encodeURIComponent(G.setId)).then(function(r){
-      renderQuestions(r.questions||[]);
-    }).catch(function(e){ setStatus("listStatus", e.message||"Could not load", "err"); });
+      G.questions=r.questions||[];
+      renderQuestions(G.questions);
+    }).catch(function(e){ setStatus("listStatus", (e&&e.message)||"Could not load the questions", "err"); });
   }
   function renderQuestions(qs){
-    $("qCount").textContent="("+qs.length+" question"+(qs.length===1?"":"s")+")";
+    $("qCount").textContent=qs.length+" question"+(qs.length===1?"":"s");
     var w=$("qList"); w.innerHTML="";
-    if(!qs.length){ w.innerHTML='<div class="hint">No questions yet. Add some from the library or write your own above.</div>'; setStatus("listStatus",""); return; }
+    if(!qs.length){ w.innerHTML='<div class="empty">No questions yet. Use the three buttons above: grab a batch from the library, search a topic, or write your own.</div>'; setStatus("listStatus",""); return; }
     qs.forEach(function(q){
       var ans=(Array.isArray(q.options)&&q.options[q.correct_index])||"";
-      var row=document.createElement("div"); row.className="qrow";
+      var row=document.createElement("div"); row.className="qrow"+(q.id===G.editingId?" editing":""); row.setAttribute("data-qid", q.id);
       row.innerHTML='<span class="qi">'+q.seq+'</span>'+
+        (q.image_url?'<img class="qthumb" alt="" src="'+esc(q.image_url)+'" onerror="this.style.display=\'none\'">':'')+
         '<div class="qt">'+esc(q.question)+
-          (q.image_url?' &#128247;':'')+
           '<div class="qa">&#10003; '+esc(ans)+'</div>'+
-          '<div class="qmeta">'+esc(q.category||"")+(q.difficulty?" &middot; "+esc(q.difficulty):"")+'</div>'+
+          '<div class="qmeta">'+esc(q.category||"")+(q.difficulty?" &middot; "+esc(q.difficulty):"")+(q.image_url?" &middot; picture":"")+'</div>'+
         '</div>'+
-        '<button class="qx" type="button" data-rm="'+q.id+'" title="Remove">&times;</button>';
+        '<div class="qact"><button class="qe" type="button" data-ed="'+esc(q.id)+'" title="Edit this question" aria-label="Edit">&#9998;</button>'+
+        '<button class="qx" type="button" data-rm="'+esc(q.id)+'" title="Remove this question" aria-label="Remove">&times;</button></div>';
       w.appendChild(row);
     });
     setStatus("listStatus","");
   }
+  function showPanel(which){
+    ["lib","search","own"].forEach(function(k){
+      var p=$("panel"+k.charAt(0).toUpperCase()+k.slice(1)); if(p) p.classList.toggle("hidden", k!==which);
+    });
+    document.querySelectorAll("#step2 .addrow .btn").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-panel")===which); });
+    if(which==="own"){ var q=$("ownQ"); if(q && !q.value) q.focus(); }
+  }
   function addFromLibrary(){
     if(!G.setId) return;
-    var count=parseInt($("libCount").value,10)||20;
-    $("addLibBtn").disabled=true; setStatus("libStatus","Adding…","");
+    var count=parseInt($("libCount").value,10)||10;
+    $("addLibBtn").disabled=true; setStatus("libStatus","Adding…",""); saving(true);
     req("POST","/host/trivia/questions/from-library",{ set_id:G.setId, category:$("libCat").value||undefined, difficulty:$("libDiff").value||undefined, count:count })
-      .then(function(r){ setStatus("libStatus","Added "+r.added+" questions.","ok"); loadQuestions(); loadMySets(G.setId); })
-      .catch(function(e){ setStatus("libStatus", e.message||"Could not add", "err"); })
-      .then(function(){ $("addLibBtn").disabled=false; });
+      .then(function(r){ setStatus("libStatus","Added "+r.added+" question"+(r.added==1?"":"s")+".","ok"); loadQuestions(); loadMySets(); })
+      .catch(function(e){ setStatus("libStatus", (e&&e.message)||"Could not add", "err"); })
+      .then(function(){ $("addLibBtn").disabled=false; saving(false); });
   }
   function searchLibrary(){
     if(!G.setId) return;
     var query=($("searchQ").value||"").trim();
     if(query.length<2){ setStatus("searchStatus","Type a topic to search (at least 2 letters).","err"); return; }
-    var count=parseInt($("searchCount").value,10)||20;
-    $("searchBtn").disabled=true; setStatus("searchStatus","Searching…","");
+    var count=parseInt($("searchCount").value,10)||10;
+    $("searchBtn").disabled=true; setStatus("searchStatus","Searching…",""); saving(true);
     req("POST","/host/trivia/questions/search",{ set_id:G.setId, query:query, difficulty:$("searchDiff").value||undefined, count:count })
       .then(function(r){
         if(!r.added){ setStatus("searchStatus",'No questions found for "'+query+'". Try another word.',"err"); }
-        else { setStatus("searchStatus",'Added '+r.added+' question'+(r.added==1?"":"s")+' about "'+query+'".',"ok"); loadQuestions(); loadMySets(G.setId); }
+        else { setStatus("searchStatus",'Added '+r.added+' question'+(r.added==1?"":"s")+' about "'+query+'".',"ok"); loadQuestions(); loadMySets(); }
       })
-      .catch(function(e){ setStatus("searchStatus", e.message||"Could not search", "err"); })
-      .then(function(){ $("searchBtn").disabled=false; });
+      .catch(function(e){ setStatus("searchStatus", (e&&e.message)||"Could not search", "err"); })
+      .then(function(){ $("searchBtn").disabled=false; saving(false); });
   }
-  function addOwn(){
-    if(!G.setId) return;
+
+  // ---- write your own: add, edit, draft ----
+  function readOwnForm(){
     var q=($("ownQ").value||"").trim();
     var opts=[]; document.querySelectorAll("#ownOpts input[data-o]").forEach(function(i){ opts.push((i.value||"").trim()); });
     var ci=parseInt((document.querySelector('input[name="correct"]:checked')||{}).value,10);
-    if(!q || opts.some(function(o){ return !o; }) || !(ci>=0&&ci<4)){ setStatus("ownStatus","Fill the question, all four answers, and tick the correct one.","err"); return; }
-    $("addOwnBtn").disabled=true; setStatus("ownStatus","Adding…","");
-    req("POST","/host/trivia/questions/add",{ set_id:G.setId, questions:[{ question:q, options:opts, correct_index:ci, category:($("ownCat").value||"").trim()||undefined, difficulty:$("ownDiff").value, image_url:($("ownImg").value||"").trim()||undefined }] })
-      .then(function(r){ setStatus("ownStatus","Added.","ok");
-        $("ownQ").value=""; document.querySelectorAll("#ownOpts input[data-o]").forEach(function(i){ i.value=""; }); setOwnImg("");
-        document.querySelectorAll('#ownOpts input[name="correct"]').forEach(function(r){ r.checked=false; });  // force an explicit "correct" pick per question - no sticky A default
-        loadQuestions(); loadMySets(G.setId); })
-      .catch(function(e){ setStatus("ownStatus", e.message||"Could not add", "err"); })
-      .then(function(){ $("addOwnBtn").disabled=false; });
+    return { question:q, options:opts, correct_index:ci, category:($("ownCat").value||"").trim()||undefined, difficulty:$("ownDiff").value, image_url:($("ownImg").value||"").trim()||undefined };
   }
+  function fillOwnForm(q){
+    $("ownQ").value=q.question||"";
+    var ins=document.querySelectorAll("#ownOpts input[data-o]"); for(var i=0;i<ins.length;i++){ ins[i].value=(q.options&&q.options[i])||""; }
+    document.querySelectorAll('#ownOpts input[name="correct"]').forEach(function(r){ r.checked=(parseInt(r.value,10)===q.correct_index); });
+    $("ownCat").value=q.category||""; $("ownDiff").value=q.difficulty||"medium";
+    setOwnImg(q.image_url||"");
+  }
+  function clearOwnForm(){
+    fillOwnForm({ question:"", options:["","","",""], correct_index:-1, category:"", difficulty:"medium", image_url:"" });
+    clearDraft();
+  }
+  function validOwn(f){ return !!(f.question && f.options.length===4 && !f.options.some(function(o){ return !o; }) && f.correct_index>=0 && f.correct_index<4); }
+  function addOwn(){
+    if(!G.setId) return;
+    var f=readOwnForm();
+    if(!validOwn(f)){ setStatus("ownStatus","Fill the question, all four answers, and tick the correct one.","err"); return; }
+    if(f.image_url && !/^https?:\/\//i.test(f.image_url)){ setStatus("ownStatus","The picture link needs to start with https://","err"); return; }
+    if(G.editingId){ saveEdit(f); return; }
+    $("addOwnBtn").disabled=true; setStatus("ownStatus","Adding…",""); saving(true);
+    req("POST","/host/trivia/questions/add",{ set_id:G.setId, questions:[f] })
+      .then(function(){ setStatus("ownStatus","Added. Write the next one, or move on.","ok"); clearOwnForm(); loadQuestions(); loadMySets(); })
+      .catch(function(e){ setStatus("ownStatus", (e&&e.message)||"Could not add", "err"); })
+      .then(function(){ $("addOwnBtn").disabled=false; saving(false); });
+  }
+  function startEdit(qid){
+    var q=null; for(var i=0;i<G.questions.length;i++){ if(G.questions[i].id===qid){ q=G.questions[i]; break; } }
+    if(!q) return;
+    if(!G.editingId){ var cur=readOwnForm(); if(cur.question || cur.options.some(function(o){ return !!o; })) saveDraft(cur); }   // never lose a half-written question to an edit tap
+    G.editingId=qid;
+    showPanel("own");
+    fillOwnForm(q);
+    $("ownHint").textContent="Editing question "+q.seq+". Change what you need, then tap Save changes.";
+    $("addOwnBtn").textContent="Save changes"; $("cancelEditBtn").classList.remove("hidden");
+    setStatus("ownStatus","");
+    renderQuestions(G.questions);
+    try{ $("panelOwn").scrollIntoView({ behavior:"smooth", block:"start" }); }catch(e){}
+  }
+  function cancelEdit(){
+    G.editingId=null;
+    $("ownHint").textContent="Type a question, four answers, and tick the correct one. Add a picture for a picture round.";
+    $("addOwnBtn").textContent="Add question"; $("cancelEditBtn").classList.add("hidden");
+    fillOwnForm({ question:"", options:["","","",""], correct_index:-1, category:"", difficulty:"medium", image_url:"" });
+    restoreDraft();
+    renderQuestions(G.questions);
+  }
+  /* Edit = the update route when the Worker has it; until then, add the corrected copy FIRST and
+     remove the old one second, so a failure half way leaves two copies rather than none. */
+  function saveEdit(f){
+    var qid=G.editingId; if(!qid) return;
+    $("addOwnBtn").disabled=true; setStatus("ownStatus","Saving…",""); saving(true);
+    req("POST","/host/trivia/questions/update",{ question_id:qid, question:f.question, options:f.options, correct_index:f.correct_index, category:f.category||null, difficulty:f.difficulty, image_url:f.image_url||null })
+      .catch(function(e){
+        if(e && e.status===404){
+          return req("POST","/host/trivia/questions/add",{ set_id:G.setId, questions:[f] })
+            .then(function(){ return req("POST","/host/trivia/questions/remove",{ question_id:qid }); });
+        }
+        throw e;
+      })
+      .then(function(){ setStatus("ownStatus","Saved.","ok"); cancelEdit(); clearDraft(); loadQuestions(); loadMySets(); })
+      .catch(function(e){ setStatus("ownStatus", (e&&e.message)||"Could not save the change", "err"); })
+      .then(function(){ $("addOwnBtn").disabled=false; saving(false); });
+  }
+  // Remove with an Undo. The Worker hard-deletes, so Undo re-adds the same question (new id, same words).
+  var undoTimer=null;
   function removeQuestion(qid){
-    req("POST","/host/trivia/questions/remove",{ question_id:qid }).then(function(){ loadQuestions(); loadMySets(G.setId); }).catch(function(e){ setStatus("listStatus", e.message||"Could not remove", "err"); });
+    var q=null; for(var i=0;i<G.questions.length;i++){ if(G.questions[i].id===qid){ q=G.questions[i]; break; } }
+    saving(true);
+    req("POST","/host/trivia/questions/remove",{ question_id:qid }).then(function(){
+      loadQuestions(); loadMySets(); saving(false);
+      if(q) showUndo(q);
+    }).catch(function(e){ saving(false); setStatus("listStatus", (e&&e.message)||"Could not remove", "err"); });
+  }
+  function showUndo(q){
+    hideToast();
+    var t=document.createElement("div"); t.className="toast"; t.id="undoToast";
+    t.innerHTML='<span>Removed "'+esc(String(q.question||"").slice(0,40))+(String(q.question||"").length>40?"…":"")+'"</span>';
+    var b=document.createElement("button"); b.type="button"; b.textContent="Undo";
+    b.addEventListener("click", function(){
+      hideToast(); saving(true);
+      req("POST","/host/trivia/questions/add",{ set_id:G.setId, questions:[{ question:q.question, options:q.options, correct_index:q.correct_index, category:q.category||undefined, difficulty:q.difficulty, image_url:q.image_url||undefined }] })
+        .then(function(){ loadQuestions(); loadMySets(); }).catch(function(e){ setStatus("listStatus",(e&&e.message)||"Could not put it back","err"); }).then(function(){ saving(false); });
+    });
+    t.appendChild(b); document.body.appendChild(t);
+    undoTimer=setTimeout(hideToast, 8000);
+  }
+  function hideToast(){ if(undoTimer){ clearTimeout(undoTimer); undoTimer=null; } var t=$("undoToast"); if(t && t.parentNode) t.parentNode.removeChild(t); }
+
+  // Draft of a half-written question, per night, so a mis-tap or a reload does not eat it.
+  function draftKey(){ return "vpTriviaDraft-"+G.setId; }
+  function saveDraft(f){ try{ if(!G.setId || G.editingId) return; f=f||readOwnForm(); var any=f.question||f.options.some(function(o){ return !!o; })||f.image_url; if(any) localStorage.setItem(draftKey(), JSON.stringify(f)); else localStorage.removeItem(draftKey()); }catch(e){} }
+  function clearDraft(){ try{ if(G.setId) localStorage.removeItem(draftKey()); }catch(e){} }
+  function restoreDraft(){
+    var raw; try{ raw=localStorage.getItem(draftKey()); }catch(e){ return; }
+    if(!raw) return;
+    var f; try{ f=JSON.parse(raw); }catch(e){ clearDraft(); return; }
+    if(!f) return;
+    fillOwnForm(f); showPanel("own");
+    setStatus("ownStatus","Picked up the question you were writing.","ok");
   }
 
   // ---- picture-round image: shrink on the device, upload to storage, fill the picture field ----
+  /* Target under about 280KB. The Worker route caps uploads at 300KB and takes webp or jpeg only,
+     so a 4MB phone photo becomes a 1024px webp here first. Quality steps down until it fits.
+     Returns null when it cannot decode (an odd HEIC, a corrupt file): the caller says so. */
+  var IMG_MAX_BYTES=280*1024;
+  function dataUrlBytes(u){ var i=u.indexOf(","); if(i<0) return 0; var b64=u.slice(i+1); return Math.floor(b64.length*3/4)-(b64.endsWith("==")?2:(b64.endsWith("=")?1:0)); }
   function shrinkImage(dataUrl, cb){
-    if(dataUrl.indexOf("data:image/gif")===0){ cb(dataUrl); return; }   // keep animated GIFs as-is
     var img=new Image();
     img.onload=function(){
-      var MAXW=1280, MAXH=960, w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+      var MAXW=1024, MAXH=768, w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+      if(!w||!h){ cb(null); return; }
       var scale=Math.min(1, MAXW/w, MAXH/h);
       var cv=document.createElement("canvas"); cv.width=Math.round(w*scale)||w; cv.height=Math.round(h*scale)||h;
-      try{ cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height); }catch(e){ cb(dataUrl); return; }
-      var out=cv.toDataURL("image/webp",0.85);
-      if(out.indexOf("data:image/webp")!==0) out=cv.toDataURL("image/jpeg",0.85);
+      try{ cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height); }catch(e){ cb(null); return; }
+      var out=null, qualities=[0.82,0.7,0.58,0.46,0.36];
+      for(var i=0;i<qualities.length;i++){
+        var cand=cv.toDataURL("image/webp", qualities[i]);
+        if(cand.indexOf("data:image/webp")!==0) cand=cv.toDataURL("image/jpeg", qualities[i]);   // Safari older than 14 has no webp encoder
+        out=cand;
+        if(dataUrlBytes(cand)<=IMG_MAX_BYTES) break;
+      }
+      if(out && dataUrlBytes(out)>IMG_MAX_BYTES){   // still too big: halve the canvas once more
+        var cv2=document.createElement("canvas"); cv2.width=Math.max(320, Math.round(cv.width/2)); cv2.height=Math.max(240, Math.round(cv.height/2));
+        try{ cv2.getContext("2d").drawImage(cv,0,0,cv2.width,cv2.height); out=cv2.toDataURL("image/webp",0.6); if(out.indexOf("data:image/webp")!==0) out=cv2.toDataURL("image/jpeg",0.6); }catch(e){}
+      }
       cb(out);
     };
-    img.onerror=function(){ cb(dataUrl); };   // fall back to the original if it will not decode
+    img.onerror=function(){ cb(null); };
     img.src=dataUrl;
   }
   function setOwnImg(url){
@@ -366,39 +636,106 @@
   function onOwnImgFile(){
     var f=this.files&&this.files[0]; this.value="";
     if(!f) return;
-    if(!G.setId){ setStatus("ownStatus","Pick or create a night first, then add a picture.","err"); return; }
-    if(f.size>12*1024*1024){ setStatus("ownStatus","That photo is huge. Keep it under about 12MB.","err"); return; }
-    setStatus("ownStatus","Uploading photo…","");
+    if(!G.setId){ setStatus("ownStatus","Open a night first, then add a picture.","err"); return; }
+    if(f.size>20*1024*1024){ setStatus("ownStatus","That photo is huge. Keep it under about 20MB.","err"); return; }
+    setStatus("ownStatus","Shrinking the photo…","");
     var reader=new FileReader();
+    reader.onerror=function(){ setStatus("ownStatus","Could not read that file. Try a different photo, or paste a picture link below.","err"); };
     reader.onload=function(){ shrinkImage(reader.result, function(data){
+      if(!data){ setStatus("ownStatus","That file did not open as a picture. Try a JPG or PNG, or paste a picture link below.","err"); return; }
+      /* The server takes 300KB. If a photo is still over that after every shrink, say so here
+         rather than letting the upload come back as a bare error. */
+      if(dataUrlBytes(data)>300*1024){ setStatus("ownStatus","That photo is still too big after shrinking. Crop it, or paste a picture link below.","err"); return; }
+      setStatus("ownStatus","Uploading photo ("+Math.round(dataUrlBytes(data)/1024)+"KB)…","");
       req("POST","/host/trivia/image-upload",{ set_id:G.setId, data:data })
-        .then(function(r){ if(r&&r.url){ setOwnImg(r.url); setStatus("ownStatus","Photo added. Now fill the question and answers.","ok"); } else { setStatus("ownStatus","Upload failed.","err"); } })
-        .catch(function(e){ setStatus("ownStatus", e.message||"Upload failed", "err"); });
+        .then(function(r){ if(r&&r.url){ setOwnImg(r.url); saveDraft(); setStatus("ownStatus","Photo added. Now fill in the question and answers.","ok"); } else { setStatus("ownStatus","The upload did not come back with a picture link. Try again, or paste a picture link below.","err"); } })
+        .catch(function(e){
+          if(e && e.status===404){ setStatus("ownStatus","Photo upload is not switched on at the server yet. Paste a picture link (https://...) in the box below instead.","err"); return; }
+          if(e && e.status===0){ setStatus("ownStatus","The upload did not get through. Check the wifi and try again, or paste a picture link below.","err"); return; }
+          setStatus("ownStatus", ((e&&e.message)||"Upload failed")+" You can paste a picture link below instead.", "err");
+        });
     }); };
     reader.readAsDataURL(f);
   }
 
-  $("setSel").addEventListener("change", onSetChange);
-  $("createBtn").addEventListener("click", createSet);
-  $("setName").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); createSet(); } });
+  // ---- step 3 ----
+  function renderReady(){
+    var qs=G.questions||[], pics=0, own=0;
+    qs.forEach(function(q){ if(q.image_url) pics++; if(!q.category || !G.libraryTitles[q.category]) own++; });
+    $("sumQs").textContent=qs.length; $("sumPics").textContent=pics; $("sumOwn").textContent=own;
+    $("readyTitle").textContent=G.title; $("readyName").value=G.title;
+    var run=$("runBtn"); run.href="/app/trivia/host.html?set="+encodeURIComponent(G.setId);
+    var warn=$("readyWarn");
+    if(!qs.length){ warn.textContent="This night has no questions yet, so it cannot run. Go back and add some."; run.style.opacity=".45"; run.style.pointerEvents="none"; }
+    else if(qs.length<5){ warn.textContent="Only "+qs.length+" question"+(qs.length===1?"":"s")+". A pub round usually runs 10 to 20."; run.style.opacity=""; run.style.pointerEvents=""; }
+    else { warn.textContent=""; run.style.opacity=""; run.style.pointerEvents=""; }
+  }
+  function deleteSet(){
+    if(!G.setId) return;
+    var name=G.title||"this night", n=(G.questions||[]).length;
+    if(n<=5){
+      if(!confirm('Delete "'+name+'" and its '+n+' question'+(n===1?"":"s")+'?\n\nThis cannot be undone.')) return;
+    } else {
+      var typed=prompt('Delete "'+name+'" and every one of its '+n+' questions?\n\nThis cannot be undone.\nType the night\'s name to confirm:');
+      if(typed===null) return;
+      if(typed.trim().toLowerCase()!==name.trim().toLowerCase()){ setStatus("delStatus","That did not match the name, so nothing was deleted.","err"); return; }
+    }
+    var b=$("delSetBtn"); b.disabled=true; b.textContent="Deleting…";
+    req("POST","/host/trivia/set/delete",{ set_id:G.setId }).then(function(){
+      clearDraft(); G.setId=""; G.title=""; G.questions=[]; setStatus("delStatus","");
+      loadMySets(); goStep(1);
+    }).catch(function(e){ setStatus("delStatus",(e&&e.message)||"Could not delete the night","err"); })
+      .then(function(){ b.disabled=false; b.textContent="Delete this night"; });
+  }
+
+  // ---- events ----
+  document.querySelectorAll("#quickDiff button").forEach(function(b){ b.addEventListener("click", function(){
+    G.quickDiff=b.getAttribute("data-v")||"";
+    document.querySelectorAll("#quickDiff button").forEach(function(x){ x.classList.remove("on"); }); b.classList.add("on");
+  }); });
+  $("blankBtn").addEventListener("click", blankNight);
+  $("renameBtn").addEventListener("click", function(){ var r=$("renameRow"); r.classList.toggle("hidden"); if(!r.classList.contains("hidden")){ $("renameIn").value=G.title; $("renameIn").focus(); } });
+  $("renameSave").addEventListener("click", function(){ renameTo($("renameIn").value, "listStatus", function(){ $("renameRow").classList.add("hidden"); }); });
+  $("renameIn").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("renameSave").click(); } });
+  $("readySave").addEventListener("click", function(){ renameTo($("readyName").value, "readyStatus"); });
+  $("readyName").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("readySave").click(); } });
+  document.querySelectorAll("#step2 .addrow .btn").forEach(function(b){ b.addEventListener("click", function(){
+    var k=b.getAttribute("data-panel"); var p=$("panel"+k.charAt(0).toUpperCase()+k.slice(1));
+    showPanel(p && !p.classList.contains("hidden") ? "" : k);   // tap again to fold it away
+  }); });
   $("addLibBtn").addEventListener("click", addFromLibrary);
   $("searchBtn").addEventListener("click", searchLibrary);
   $("searchQ").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); searchLibrary(); } });
   $("addOwnBtn").addEventListener("click", addOwn);
+  $("cancelEditBtn").addEventListener("click", cancelEdit);
   $("ownImgFile").addEventListener("change", onOwnImgFile);
-  $("ownImgClear").addEventListener("click", function(){ setOwnImg(""); });
-  $("qList").addEventListener("click", function(e){ var b=e.target.closest("button[data-rm]"); if(b) removeQuestion(b.getAttribute("data-rm")); });
+  $("ownImgClear").addEventListener("click", function(){ setOwnImg(""); saveDraft(); });
+  ["ownQ","ownCat","ownImg"].forEach(function(id){ $(id).addEventListener("input", function(){ saveDraft(); }); });
+  document.querySelectorAll("#ownOpts input").forEach(function(i){ i.addEventListener("input", function(){ saveDraft(); }); i.addEventListener("change", function(){ saveDraft(); }); });
+  $("qList").addEventListener("click", function(e){
+    var rm=e.target.closest("button[data-rm]"); if(rm){ removeQuestion(rm.getAttribute("data-rm")); return; }
+    var ed=e.target.closest("button[data-ed]"); if(ed){ startEdit(ed.getAttribute("data-ed")); }
+  });
+  $("backTo1").addEventListener("click", function(){ goStep(1); loadMySets(); });
+  $("toStep3").addEventListener("click", function(){ goStep(3); });
+  $("backTo2").addEventListener("click", function(){ goStep(2); });
+  $("anotherBtn").addEventListener("click", function(){ G.setId=""; G.title=""; G.questions=[]; G.editingId=null; goStep(1); loadMySets(); });
+  $("delSetBtn").addEventListener("click", deleteSet);
 
   // ---- boot ----
+  function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); }
   if(window.VP){
     VP.ready().then(function(ctx){
-      if(!ctx.authed){ $("signinView").classList.remove("hidden"); return; }
-      if(!ctx.currentVenueId){ $("signinView").textContent="This login is not linked to a venue yet."; $("signinView").classList.remove("hidden"); return; }
+      if(!ctx.authed){ showSignIn("You need your venue host login to build a trivia night."); return; }
+      if(!ctx.currentVenueId){ showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId;
       $("builderView").classList.remove("hidden");
       loadCategories(); loadMySets();
-    }).catch(function(){ $("signinView").textContent="Could not check your sign in. Try reloading."; $("signinView").classList.remove("hidden"); });
-  } else { $("signinView").classList.remove("hidden"); }
+      // ?set=<id> reopens a night straight at its questions (the host console links here).
+      var m=/[?&]set=([0-9a-f-]{36})/i.exec(window.location.search);
+      if(m){ client.from("vp_question_sets").select("id,title").eq("id",m[1]).eq("owner_venue_id",G.venueId).maybeSingle().then(function(r){ if(r&&r.data) openNight(r.data.id, r.data.title); }); }
+    }).catch(function(){ showSignIn("Could not check your sign in. Try reloading."); });
+  } else { showSignIn("Sign in helper failed to load. Try reloading."); }
 })();
 </script>
 </body>

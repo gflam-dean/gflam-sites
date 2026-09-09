@@ -62,7 +62,17 @@
   .btn.roll{background:var(--roll);color:#1a1000}
   .btn.roll:hover{filter:brightness(1.08)}
   .btn.big{width:100%;padding:16px;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
+  .btn.big.again{background:var(--ink-3);color:var(--gold);border:1px solid var(--gold);box-shadow:none;text-transform:none;letter-spacing:0}
   .btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .btn{min-height:44px}
+  /* Phones: everything a thumb lands on is at least 44px tall, and the two resolve buttons stack
+     so neither label is cut short on a 6.1" screen. */
+  @media (max-width:600px){
+    .resolve{grid-template-columns:1fr}
+    .seg button,.mchip,#toAdsBtn,.errbar .ex{min-height:44px}
+    .mchip{display:inline-flex;align-items:center}
+    .bar{gap:10px}
+  }
 
   .console>*{min-width:0}
   .console{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
@@ -188,8 +198,8 @@
           <div class="nm" id="wcName">&middot;</div>
           <div class="cd" id="wcCd"></div>
           <div class="resolve">
-            <button class="btn win" id="claimBtn">Claim &middot; present</button>
-            <button class="btn roll" id="rollBtn">Jackpot to next week</button>
+            <button class="btn win" id="claimBtn">They are here: pay the jackpot</button>
+            <button class="btn ghost" id="rollBtn">Not here: jackpot to next week</button>
           </div>
         </div>
         <div class="drawnote" id="drawNote">The TV spins, reveals the winning member, then waits on your call.</div>
@@ -227,7 +237,7 @@
           </div>
           <div class="two">
             <div class="field"><label>Current jackpot ($)</label><input type="number" id="setCur" class="mono" min="0" step="1"></div>
-            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" style="margin-top:4px">At least 30 seconds. A shorter window rolls the jackpot over before the member can reach the bar.</div></div>
+            <div class="field"><label>Time to claim (seconds)</label><input type="number" id="setClaim" class="mono" min="30" step="1"><div class="note" style="margin-top:4px">At least 30 seconds. A shorter window runs out before the member can reach the host.</div></div>
           </div>
           <div class="two">
             <div class="field"><label>Draw day</label><input type="text" id="setDay" placeholder="Friday"></div>
@@ -239,6 +249,7 @@
             Only a manager or owner can change the jackpot and draw settings.
           </div>
           <div class="note" id="settingsMsg" style="margin-top:8px"></div>
+          <div class="note" style="margin-top:10px">Adding or removing members, and removing a draw altogether, is done on your Account page.</div>
         </div>
 
         <div class="panel">
@@ -335,7 +346,7 @@
     var base="Playing for <b>"+money(G.round.prizeCents)+"</b>";
     $("wcCd").innerHTML = G.round.remaining>0
       ? base+" &middot; claim within <b>"+mmss(G.round.remaining)+"</b>"
-      : base+" &middot; present at the bar to claim";
+      : base+" &middot; time is up, your call";
   }
 
   function curDraw(){ if(G.currentDrawId==="__new") return null; for(var i=0;i<G.draws.length;i++){ if(G.draws[i].id===G.currentDrawId) return G.draws[i]; } return G.draws[0]||null; }
@@ -473,11 +484,15 @@
     G.round=p.round;
     G.round.remaining=0;            // the claim clock is not restarted; the host decides now
     var d=curDraw();
+    // The saved round belongs to a draw; put that draw back in the dropdown and redraw the jackpot,
+    // members and settings panels for it, or the console shows one draw's winner over another's numbers.
+    if(d){ $("drawSel").value=d.id; }
+    renderStats(); renderMembers(); renderSettings();
     $("wcNum").textContent="#"+G.round.number;
     $("wcName").textContent=G.round.name||"\u00b7";
     updateClaimCd();
     $("winnerCard").classList.add("show");
-    $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member standing at the bar, and is not reversible: it should not be the button that attracts the thumb.
+    $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member walking up to the host, and is not reversible: it should not be the button that attracts the thumb.
     $("claimBtn").disabled=false; $("rollBtn").disabled=false;
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call\u2026";
     $("drawNote").textContent="Picked up where you left off. Confirm below: Claim if they are present, or roll the jackpot to next week.";
@@ -486,18 +501,22 @@
   }
   function clearTimers(){ if(G.drawTimer){ clearTimeout(G.drawTimer); G.drawTimer=null; } if(G.idleTimer){ clearTimeout(G.idleTimer); G.idleTimer=null; } stopClaimTimer(); }
   function hideWinnerCard(){ $("winnerCard").classList.remove("show"); $("rollBtn").classList.remove("pulse"); $("claimBtn").classList.remove("pulse"); }
-  // A draw runs once a week. Once it's been drawn tonight (claimed OR rolled to next week), lock the
-  // Draw button so you can't accidentally draw the same members draw again the same night.
+  /* A draw runs once a week, so once it has been drawn tonight the button says so. It must
+     NOT be disabled: last_drawn_date is stamped by the Worker at DRAW time, before anyone has
+     claimed, so a lost reply on bad wifi (or a tablet that reloaded with nothing saved) left
+     the button dead with the words "Drawn tonight" and no winner anywhere. startDraw() has a
+     confirm step for exactly that case, and a disabled button can never reach it. The label
+     is the warning; the confirm is the lock. */
   function alreadyDrawnTonight(){ var d=curDraw(); return !!(d && d.last_drawn_date===new Date().toISOString().slice(0,10)); }
   function drawBtnIdle(){
-    var b=$("drawBtn");
-    if(alreadyDrawnTonight()){ b.disabled=true; b.textContent="Drawn tonight"; }
-    else { b.disabled=false; b.textContent="Draw"; }
+    var b=$("drawBtn"); b.disabled=false;
+    b.classList.toggle("again", alreadyDrawnTonight());
+    b.textContent = alreadyDrawnTonight() ? "Drawn tonight \u00b7 draw again?" : "Draw";
   }
 
   function startDraw(){
     if(!subscribed){ alert("No TV connected yet. Open venueplay.com.au/tv on your screen, then tap Draw."); return; }   // was a silent no-op
-    if(alreadyDrawnTonight() && !confirm("This draw is marked as already done tonight.\n\nThat is also what you see if a draw request was lost on bad wifi. Draw again anyway?")) return;
+    if(alreadyDrawnTonight() && !confirm("This draw has already been drawn tonight.\n\nOnly draw again if the first draw never showed a winner (for example the wifi dropped, or the tablet reloaded). Drawing again picks a new random member.\n\nDraw again?")) return;
     if(G.busy || G.round) return;
     var d=curDraw();
     /* This told a host to fill in the settings on the right and tap Save, while applyRoleGates()
@@ -515,9 +534,12 @@
     G.busy=true;
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
     $("drawNote").textContent="Drawing now on the TV…";
-    send({ t:"drawing", drawName:d.name }); sendState();
-
     var len=Math.max(2000, ((d.draw_length_seconds||4))*1000);
+    var nums=activeMembers(d).map(function(m){ return m.member_number|0; }).filter(function(n){ return n>0; });
+    var lo=nums.length?Math.min.apply(null,nums):0, hi=nums.length?Math.max.apply(null,nums):0;
+    // minNumber/maxNumber let the TV spin through numbers that exist in this draw instead of 101 to 500 every week
+    send({ t:"drawing", drawName:d.name, minNumber:lo, maxNumber:hi, spinSecs:Math.round(len/1000) }); sendState();
+
     var wait=new Promise(function(res){ setTimeout(res, len); });
     apiPost("/host/members/draw", { draw_id:d.id })
       .then(function(r){ return wait.then(function(){ return r; }); })
@@ -540,7 +562,7 @@
     $("wcName").textContent=r.winner_name||"·";
     updateClaimCd();
     $("winnerCard").classList.add("show");
-    $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member standing at the bar, and is not reversible: it should not be the button that attracts the thumb.
+    $("claimBtn").classList.add("pulse");   // pulse the SAFE action. Rolling the jackpot over denies the member walking up to the host, and is not reversible: it should not be the button that attracts the thumb.
     saveRound();   // so a locked tablet does not strand the jackpot
     $("drawBtn").disabled=true; $("drawBtn").textContent="Waiting on your call…";
     $("drawNote").textContent="Confirm below: Claim if they are present, or roll the jackpot to next week.";
@@ -551,8 +573,8 @@
         if(!G.round){ stopClaimTimer(); return; }
         G.round.remaining--; updateClaimCd();
         /* DO NOT roll the jackpot over automatically. This fired while the member was still
-           walking to the bar: silent, irreversible, announced on the TV, and unrepeatable because
-           last_drawn_date then disables the Draw button. The console clock also starts ~1.5s
+           walking up to the host: silent, irreversible, announced on the TV, and unrepeatable
+           without a second confirm. The console clock also starts ~1.5s
            before the TV's, so the wall still showed time remaining. Ask the host instead, exactly
            as the raffle now does. */
         if(G.round.remaining<=0){
@@ -573,7 +595,7 @@
         send({ t:"claimed", name:round.name, amountCents:r.amount_cents, nextResetCents:r.new_jackpot_cents });
         G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
         $("drawNote").textContent="Claimed. Jackpot reset to "+money(d?d.current_jackpot_cents:0)+" for next week.";
-        scheduleIdle(9000);
+        scheduleIdle(CLAIM_HOLD_MS);
       })
       .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not record the claim. The jackpot has NOT been reset: try again."); });
   }
@@ -588,10 +610,17 @@
         send({ t:"rollover", nextJackpotCents:r.new_jackpot_cents, incrementCents:r.increment_cents, missedNumber:round.number, missedName:round.name });
         G.round=null; clearRound(); hideWinnerCard(); renderStats(); renderSettings();
         $("drawNote").textContent="Not claimed. Jackpot grew by "+money(r.increment_cents)+" to "+money(d?d.current_jackpot_cents:0)+".";
-        scheduleIdle(7000);
+        scheduleIdle(ROLLOVER_HOLD_MS);
       })
       .catch(function(e){ cb.disabled=false; rb.disabled=false; hostError(e.message||"Could not roll the jackpot over. Try again."); });
   }
+  /* HOW LONG THE TV KEEPS THE RESULT UP. These MUST match screen.html: showClaimed() celebrates
+     for CLAIM_HOLD_MS and showRollover() holds for ROLLOVER_HOLD_MS. The console used to send
+     idle 9 seconds after a claim while the TV was still 51 seconds into a 60 second
+     celebration, and 7 seconds after a rollover, so the room saw the winner's name flash up
+     and vanish. The screen also refuses idle during its result hold, so this is belt and
+     braces, not the only guard. */
+  var CLAIM_HOLD_MS=60000, ROLLOVER_HOLD_MS=30000;
   function scheduleIdle(delay){
     drawBtnIdle();
     if(G.idleTimer){ clearTimeout(G.idleTimer); }
@@ -599,7 +628,7 @@
       if(G.busy || G.round) return;
       sendIdle();
       $("drawNote").textContent="The TV spins, reveals the winning member, then waits on your call.";
-    }, delay||7000);
+    }, delay||ROLLOVER_HOLD_MS);
   }
 
   // ---- roster management (host-allowed) ----

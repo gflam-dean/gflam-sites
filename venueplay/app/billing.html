@@ -41,6 +41,31 @@
   .sumgrid .nextrow{margin-top:8px;font-size:12.5px;color:var(--muted);display:flex;align-items:baseline;gap:7px}
   .sumgrid .nextrow .nl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
   .sumgrid .nextrow b{color:var(--text);font-weight:800;font-size:14px}
+  /* Failed payment notice. Loud enough to be believed, quiet enough not to look like an error
+     page: the owner needs the date, the amount and one button that fixes it. */
+  .pastdue{background:rgba(255,107,107,.10);border:1px solid rgba(255,107,107,.55);border-radius:16px;padding:16px 18px;margin:0 0 16px}
+  .pastdue .pdtext{font-size:14.5px;line-height:1.5;color:#fff}
+  .pastdue .pdactions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .pastdue .pdpay{color:var(--pink);font-size:13.5px;font-weight:700;text-decoration:underline}
+  /* One night, one row. On a phone the figures drop under the date instead of squeezing. */
+  .night{background:var(--ink-2);border:1px solid var(--line-2);border-radius:14px;padding:14px 16px;margin:9px 0;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .night .nhead{flex:1 1 190px;min-width:0}
+  .night .nhead b{display:block;font-size:16px;color:#fff}
+  .night .nhead small{color:var(--muted);font-size:12.5px}
+  .night .nfigs{display:flex;gap:18px;flex-wrap:wrap}
+  .night .nfig{text-align:right;min-width:58px}
+  .night .nfig b{display:block;font-size:18px;font-weight:800;color:#fff;line-height:1.15}
+  .night .nfig span{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  @media (max-width:520px){ .night .nfigs{flex-basis:100%} .night .nfig{text-align:left} }
+  /* The draw and raffle log: a plain list, one line each, that scrolls sideways on a phone
+     rather than squashing a member number into two characters. */
+  .logwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:10px}
+  .logtable{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+  .logtable th{text-align:left;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);font-weight:400;padding:0 12px 8px 0;white-space:nowrap}
+  .logtable td{padding:9px 12px 9px 0;border-top:1px solid var(--line-2);color:var(--text);vertical-align:top}
+  .logtable td b{color:#fff}
   .label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
   .tabs{display:flex;gap:6px;background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:5px;margin:0 0 22px;position:sticky;top:10px;z-index:5;overflow-x:auto}
   .tabs button{flex:1 0 auto;white-space:nowrap;background:none;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:14px;padding:11px 16px;border-radius:10px;cursor:pointer;transition:.15s}
@@ -77,6 +102,15 @@
   .mdf input,.mdf select{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:10px 12px;font-size:15px;font-family:'Manrope',sans-serif}
   .mdf input[readonly]{opacity:.75;cursor:default}
   @media(max-width:520px){.mdgrid{grid-template-columns:1fr}}
+  /* Phones: nothing you have to tap is smaller than a fingertip. The plus and minus beside a
+     player count decide what a venue is billed, and they were 34px on a phone. */
+  @media(max-width:640px){
+    .stepper button{width:44px;height:44px;font-size:21px}
+    .stepper input{padding:12px 6px}
+    .save,.addbtn,.go,.offtv,.hostrow .rm,.edv{min-height:44px}
+    .canxlink{min-height:44px;display:inline-flex;align-items:center}
+    .tabs{top:6px}
+  }
   .rfchip{display:inline-flex;align-items:center;gap:6px;background:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 12px;margin:0 6px 6px 0;font-size:13px;color:#fff}
   .rfx{background:none;border:0;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;font-family:inherit}
   .rfx:hover{color:var(--pink)}
@@ -131,9 +165,17 @@
   .sw input:checked + .sl{background:var(--pink)}
   .sw input:checked + .sl:before{transform:translateX(21px)}
   .note{color:var(--muted);font-size:12.5px;margin-top:8px}
-  .msg{margin-top:14px;font-size:13.5px;min-height:18px}
-  .msg.err{color:#ff6b6b}
-  .msg.ok{color:var(--win)}
+  /* The one message line used to sit after every tab panel, at the very bottom of a page that is
+     four screens long, so pressing Save near the top showed "Saved" somewhere off screen and
+     owners pressed Save twice. It is a fixed strip at the foot of the window now: it appears
+     wherever you are, and tapping it puts it away. */
+  .msg{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:60;margin:0;
+    max-width:min(560px,calc(100vw - 28px));font-size:14px;line-height:1.45;padding:14px 18px;
+    border-radius:14px;background:var(--ink-2);border:1px solid var(--line);color:var(--text);
+    box-shadow:0 14px 34px rgba(0,0,0,.5);cursor:pointer}
+  .msg:empty{display:none}
+  .msg.err{color:#ff6b6b;border-color:rgba(255,107,107,.55)}
+  .msg.ok{color:var(--win);border-color:rgba(53,208,127,.55)}
   .muted{color:var(--muted)}
   .hostvenues{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 2px}
   .hostchk{display:inline-flex;align-items:center;gap:7px;background:var(--ink-3);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;cursor:pointer}
@@ -171,14 +213,29 @@
 
     <div class="tabs" role="tablist">
       <button class="on" data-tab="billing">Billing</button>
+      <button data-tab="nights">Nights</button>
       <button data-tab="screen">Screen</button>
       <button data-tab="draws">Draws</button>
       <button data-tab="settings">Game settings</button>
     </div>
 
     <div class="tabpanel on" id="tp-billing">
+    <!-- Failed payment. Stripe emails the owner and the venue is suspended after repeat failures,
+         but this page said nothing and kept showing a normal "Next payment" tile. -->
+    <div id="pastDue" class="pastdue" style="display:none">
+      <div class="pdtext" id="pastDueText"></div>
+      <div class="pdactions">
+        <button class="go" type="button" id="pastDueBtn">Update your card</button>
+        <a href="#" id="pastDuePay" target="_blank" rel="noopener" class="pdpay" style="display:none">Pay this invoice now</a>
+      </div>
+    </div>
+
     <div class="card">
       <div class="sumgrid">
+        <div>
+          <div class="k">Your plan</div>
+          <div class="v" id="s-plan" style="font-size:18px">–</div><div class="whenlbl" id="s-plan-sub"></div>
+        </div>
         <div>
           <div class="k">Total players</div>
           <div class="v" id="s-players">–</div><div class="whenlbl">this month</div>
@@ -219,6 +276,7 @@
       <div class="t">Your invoices &amp; payment card<small>View or download every invoice, or update the card we bill.</small></div>
       <button class="addbtn" id="portalBtn" style="margin:0;flex:0 0 auto">Open</button>
     </div>
+    <p class="note" id="portalFallback" style="display:none;margin:8px 0 0">Having trouble? <a id="portalLoginLink" href="#" rel="noopener" style="color:var(--pink)">Sign in to Stripe with your email instead</a>. Stripe emails you a code.</p>
 
     <div class="label">Hosts</div>
     <p class="note" style="margin:0 0 10px">People who can run games on the night. Add a mobile and tick which venues they can host. They sign in at <b style="color:var(--text)">venueplay.com.au/app</b> with a text code, no app to install.</p>
@@ -261,6 +319,18 @@
       </div>
     </div>
     </div><!-- /tp-billing -->
+
+    <!-- Nights. The morning after a night the app showed the game menu and nothing else: nobody
+         paying the bill could see whether anyone turned up. -->
+    <div class="tabpanel" id="tp-nights">
+    <div class="label">Your nights</div>
+    <p class="note" style="margin:0 0 10px">How your recent nights went. "Came back" counts the phones we had seen on an earlier night at this venue, so it is a fair guess at regulars, not an exact headcount.</p>
+    <div id="ntPickWrap" class="screenpick" style="display:none">
+      <label class="flabel" for="ntVenue">Nights for</label>
+      <select id="ntVenue"></select>
+    </div>
+    <div id="nights"><p class="note">Loading your nights…</p></div>
+    </div><!-- /tp-nights -->
 
     <div class="tabpanel" id="tp-settings">
     <div class="label">Player data &amp; name display</div>
@@ -307,6 +377,26 @@
       <p class="snote" id="rfTally">No prizes recorded yet.</p>
     </div>
 
+    <!-- Every draw and raffle result, read back. It was all recorded and none of it was shown, so
+         "who won the members draw on 12 August, and how much" could only be answered by someone
+         reading the database. -->
+    <div class="scard">
+      <div class="scardhead">Draws and raffles: who won what</div>
+      <p class="snote">Every raffle and members draw result for this venue. Keep it for your records.</p>
+      <div class="btnrow">
+        <label class="flabel" for="dlMonths" style="margin:0 6px 0 0;align-self:center">Show</label>
+        <select id="dlMonths" style="max-width:190px">
+          <option value="1">The last month</option>
+          <option value="3" selected>The last 3 months</option>
+          <option value="6">The last 6 months</option>
+          <option value="12">The last 12 months</option>
+        </select>
+        <button class="addbtn" id="dlCsv" type="button">Download as CSV</button>
+      </div>
+      <p class="snote" id="dlTotal" style="margin-top:10px"></p>
+      <div id="drawLog"><p class="snote">Loading…</p></div>
+    </div>
+
     <div class="label">Members draws</div>
     <p class="note" style="margin:0 0 10px">Set your members draw once and it runs every week. The live jackpot and the next draw show on your TV automatically.</p>
     <div id="mdPickWrap" class="screenpick" style="display:none">
@@ -315,7 +405,7 @@
     </div>
     <div class="scard">
       <div class="scardhead" id="mdHead">Your members draws</div>
-      <div class="mdf" id="mdPickWrap" style="margin-bottom:14px">
+      <div class="mdf" id="mdDrawWrap" style="margin-bottom:14px">
         <label class="flabel" for="mdPick">Which draw</label>
         <select id="mdPick"></select>
       </div>
@@ -340,6 +430,7 @@
     <div class="scard">
       <div class="scardhead">Your members list</div>
       <p class="snote" id="mdCount">No members yet.</p>
+      <p class="snote">This is personal information your venue holds about your members. Keep it to a member number and a name, and take someone off when they ask.</p>
       <p class="snote">Paste your members below, one per line as <b style="color:var(--text)">number, name</b> (e.g. <span class="mono">142, Jane Smith</span>). We add any new numbers to your members list.</p>
       <textarea id="md-import" rows="6" placeholder="142, Jane Smith
 143, Sam Taylor" style="width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;border-radius:12px;padding:11px 12px;font-size:14px;font-family:'Manrope',sans-serif;resize:vertical"></textarea>
@@ -398,7 +489,7 @@
     </div>
     </div><!-- /tp-screen -->
 
-    <p class="msg" id="msg"></p>
+    <p class="msg" id="msg" role="status" aria-live="polite" title="Tap to dismiss"></p>
   </div>
 </div>
 
@@ -425,7 +516,9 @@
     }).catch(function(){ return { error: "Something went wrong. Please check your connection and try again." }; });
   }
   function money(n){ return "$" + (n).toFixed(2); }
-  function showMsg(t, ok){ var m=$("msg"); m.textContent=t; m.className = "msg " + (ok?"ok":"err"); if(ok) setTimeout(function(){ if(m.textContent===t){m.textContent="";m.className="msg";} }, 3500); }
+  function showMsg(t, ok){ var m=$("msg"); m.textContent=t; m.className = "msg " + (ok?"ok":"err"); if(ok) setTimeout(function(){ if(m.textContent===t){m.textContent="";m.className="msg";} }, 4500); }
+  // An error stays up until it is read, so give it a way off the screen.
+  (function(){ var m=$("msg"); if(m) m.addEventListener("click", function(){ m.textContent=""; m.className="msg"; }); })();
 
   function render(d){
     rate = d.rate || 3.00;
@@ -438,6 +531,15 @@
       if (cnote) cnote.innerHTML = "You are holding <b>" + d.credit + "</b> in credit from players you released. " +
         "It comes off your next renewal automatically, so there is nothing to claim.";
     } else if (ct){ ct.style.display="none"; if(cnote) cnote.textContent=""; }
+    /* Plan tile. The page showed what you pay but never what you are ON, so an owner could not
+       check their plan or their rate without emailing us. Founding venues in particular are
+       paying a rate we promised to hold, and they should be able to see it. */
+    var _pl=$("s-plan"), _ps=$("s-plan-sub");
+    if(_pl){
+      _pl.textContent = d.comp ? "On us" : (d.plan === "annual" ? "Yearly" : "Monthly");
+      if(_ps) _ps.textContent = d.comp ? "nothing to pay"
+        : (money(rate) + " per player" + (d.tier === "standard" ? "" : " · founding rate"));
+    }
     $("s-players").textContent = d.total_players;
     $("s-total").textContent = d.comp ? "On us" : d.monthly_total;
     /* NEXT MONTH. Reductions and cancellations only take effect at the next renewal, so "this month"
@@ -468,9 +570,10 @@
         : (d.plan === "annual"
             ? ("Extra players are charged for the rest of your year at " + money(rate) +
                " per player per month, so the amount depends on how long is left. "
-               + "We will show you the exact figure before anything is charged.")
-            : ("Extra players are charged a full month at " + money(rate) +
-               " per player from the day you add them, and the totals above update straight away."));
+               + "We show you the exact figure first, and it goes on your next bill.")
+            : ("Extra players cost a full month at " + money(rate) +
+               " per player from the day you add them. They are available straight away and the "
+               + "amount goes on your next bill."));
       if (pending.length){
         note = "The totals above are your current cover. A scheduled change (a player reduction or a venue you cancelled) takes effect at your next renewal" +
                (d.next_charge ? " on " + d.next_charge : "") + ", and the figures update then. Adding players or a venue applies straight away.";
@@ -483,7 +586,24 @@
     $("s-next").textContent = d.comp ? "Nothing to pay"
       : d.next_charge ? (d.next_charge + (d.next_charge_amount ? "  ·  " + d.next_charge_amount : ""))
       : d.has_subscription === false ? "When you add your card"
-      : "at launch";
+      : "After your first payment";
+    /* PAST DUE. Stripe says past_due or unpaid the moment a charge fails, and until now this page
+       carried on showing a normal next payment as though nothing had happened. Name the date and
+       the amount if we have them, and put the fix one tap away. */
+    var pd=$("pastDue"), pdt=$("pastDueText"), pdp=$("pastDuePay");
+    if(pd){
+      if(d.past_due){
+        var f=d.failed_payment || {};
+        pdt.textContent = "Your payment" + (f.date ? " on " + f.date : "") +
+          (f.amount ? " of " + f.amount : "") + " did not go through. Update your card and we will try it again. " +
+          "Your games keep running for now; after a couple of failed attempts the venue is paused.";
+        if(pdp){
+          if(f.pay_url){ pdp.href = f.pay_url; pdp.style.display = ""; }
+          else { pdp.style.display = "none"; }
+        }
+        pd.style.display = "";
+      } else { pd.style.display = "none"; }
+    }
     // Card tile removed: we do not hold the card's last 4 digits, so it only ever said "on file".
     // The card is viewed and updated through the Stripe portal under "Invoices & card" below.
     $("reminders").checked = d.payment_reminders !== false;
@@ -565,10 +685,14 @@
             save.disabled = false; save.textContent = "Save";
             if (q && q.error) { showMsg(q.error); return; }
             var cents = (q && q.charge_cents) || 0;
+            /* "charged now" was never true: the Worker adds a Stripe invoice item, which is
+               picked up by the NEXT invoice, and the success message a minute later said exactly
+               that. Two sentences about the owner's money that contradicted each other. */
             var words = cents > 0
               ? ("Adding " + (n - v.players) + " player" + ((n - v.players) === 1 ? "" : "s") +
-                 " will be charged " + money(cents / 100) +
-                 (q.plan === "annual" ? " now, covering the rest of your year." : " now.") +
+                 " adds " + money(cents / 100) + " to your next bill" +
+                 (q.plan === "annual" ? ", pro rata to your renewal." : ".") +
+                 "\nThe extra players are available straight away." +
                  "\n\nGo ahead?")
               : ("Change " + v.players + " players to " + n + "?");
             if (!confirm(words)) return;
@@ -683,10 +807,39 @@
     setSec("Advertising", p.advertising!==false);
     // Owner-only sections, hidden last so any overlap ends hidden.
     var firstCard=$("content").querySelector(".card"); if(firstCard) firstCard.style.display="none"; // billing summary
+    var _pd=$("pastDue"); if(_pd) _pd.style.display="none";   // a failed payment is the owner's to fix
     setSec("Your venues", false);
     setSec("Payment reminders", false);
     setSec("Player data & name display", false);
+    /* Invoices & card was left showing. The Open button lands in the OWNER's Stripe portal, where
+       every invoice is readable and the card can be changed, so a manager with every toggle off
+       could still get there. The Worker refuses it now too; this is the door, that is the lock. */
+    setSec("Invoices & card", false);
     var mgr=$("managersSection"); if(mgr) mgr.style.display="none";
+    /* A manager who lands on Billing sees an empty tab: the plan card, venues, reminders and
+       invoices are all gone. Send them to the first tab that has something on it for them, and
+       say what this page is for THEM. */
+    var openTab = p.advertising!==false ? "screen"
+                : p.draws_raffles!==false ? "draws"
+                : p.add_hosts!==false ? "billing"
+                : p.players_optin!==false ? "settings" : "billing";
+    // First render only: a refresh after a save must not yank them off the tab they are working on.
+    if(!gateSections._tabbed){
+      gateSections._tabbed = true;
+      var tb=document.querySelector('.tabs button[data-tab="'+openTab+'"]');
+      if(tb) tb.click();
+    }
+    var lede=$("lede");
+    if(lede){
+      var canDo=[];
+      if(p.advertising!==false) canDo.push("your screen");
+      if(p.draws_raffles!==false) canDo.push("draws and raffles");
+      if(p.add_hosts!==false) canDo.push("hosts");
+      if(p.players_optin!==false) canDo.push("player opt-ins");
+      lede.textContent = canDo.length
+        ? ("Set up " + canDo.join(", ").replace(/, ([^,]*)$/, " and $1") + " for your venues. Billing and player data stay with the account owner.")
+        : "Your account owner has not switched anything on for you yet. Ask them if you need access to the screen, draws or hosts.";
+    }
   }
 
   function load(){
@@ -756,14 +909,30 @@
   // billing worker deployed. Fallback: Stripe's hosted login link (venue enters their email), which
   // works even before the worker redeploy. So this is live either way.
   var PORTAL_LOGIN_LINK = "https://billing.stripe.com/p/login/cNi5kwdyD6Mq79f7537Zu00";
+  /* On anything other than a URL this used to redirect straight to Stripe's shared email-login
+     page, so a Worker outage, a venue with no card yet, or a plain "no permission" all ended with
+     the owner being asked for an email and a code and never being told why. Say what happened,
+     and leave the login link as a labelled fallback they can choose. */
   var _pb = $("portalBtn");
-  if (_pb) _pb.addEventListener("click", function(){
+  function openPortal(){
+    if (!_pb) return;
     _pb.disabled = true; _pb.textContent = "Opening…";
     api("/account/portal", {}).then(function(r){
       if (r && r.url){ window.location.href = r.url; return; }   // seamless: signed straight into this venue's portal
-      window.location.href = PORTAL_LOGIN_LINK;                  // fallback: hosted login (enter email)
-    }).catch(function(){ window.location.href = PORTAL_LOGIN_LINK; });
-  });
+      _pb.disabled = false; _pb.textContent = "Open";
+      showMsg((r && r.error) ? r.error : "We could not open your billing page just now. Please try again in a moment.");
+      var fb = $("portalFallback"); if (fb) fb.style.display = "";
+    }).catch(function(){
+      _pb.disabled = false; _pb.textContent = "Open";
+      showMsg("We could not open your billing page just now. Please check your connection and try again.");
+      var fb = $("portalFallback"); if (fb) fb.style.display = "";
+    });
+  }
+  if (_pb) _pb.addEventListener("click", openPortal);
+  // The failed-payment notice opens the same portal, so "Update your card" is one tap from the
+  // top of the page instead of a scroll down to a button called Open.
+  (function(){ var pb=$("pastDueBtn"); if(pb) pb.addEventListener("click", openPortal); })();
+  (function(){ var fl=$("portalLoginLink"); if(fl) fl.href = PORTAL_LOGIN_LINK; })();
 
   // ---- Hosts ----
   var acctVenues = [];
@@ -771,6 +940,11 @@
     return api("/account/hosts", {}).then(function(d){
       if (d.error){ showMsg("Hosts: " + d.error); return; }   // leave the panel quiet if the endpoint is unavailable
       acctVenues = d.venues || [];
+      /* is_owner and can_manage_hosts only arrive once the billing Worker is redeployed. Until
+         then, fall back to the old behaviour (draw the buttons) rather than hiding them from the
+         owner as well: the Worker is still the lock either way. */
+      hostsIsOwner = (d.is_owner === undefined) ? true : (d.is_owner === true);
+      hostsCanManage = d.can_manage_hosts !== false;
       renderHosts(d.hosts || [], acctVenues);
       buildHostVenuePicker(acctVenues);
     });
@@ -806,6 +980,14 @@
     });
     return panel;
   }
+  /* One row per login. It used to show a name and a venue list and nothing else, so an owner with
+     two Sams could not tell them apart, and managers were listed in here with no label at all and
+     could be removed by mistake. Now each row says what the person IS and the last three digits of
+     the mobile we text their sign-in code to.
+     The buttons also used to be shown to everyone and then refused by the Worker ("Only the
+     account owner can do that"), so a manager was invited to press something that could never
+     work. They are drawn only for whoever may actually use them. */
+  var hostsCanManage = false, hostsIsOwner = false;
   function renderHosts(hosts, venues){
     var vmap = {}; venues.forEach(function(v){ vmap[v.id] = v.name; });
     var wrap = $("hosts"); wrap.innerHTML = "";
@@ -814,10 +996,17 @@
       var names = (h.venue_ids || []).map(function(id){ return vmap[id]; }).filter(Boolean);
       var scope = (venues.length && names.length >= venues.length) ? "All venues"
                 : (names.length ? names.join(", ") : "No venues");
+      var roleWord = h.is_owner ? "Owner" : (h.role === "manager" ? "Manager" : "Host");
+      var sub = roleWord + " · " + scope + (h.mobile_last3 ? " · mobile ending " + h.mobile_last3 : "");
+      // A full-access login (the owner's, or one HQ set up) is owner-only, and even the owner
+      // cannot delete it from here, so do not draw buttons that will only ever refuse.
+      var locked = h.is_owner || h.full_access;
+      var mayTouch = !locked && (hostsIsOwner || (hostsCanManage && h.role === "host"));
       var row = document.createElement("div"); row.className = "hostrow";
-      row.innerHTML = '<div class="hn"><b>' + esc(h.label || "Host") + '</b><small>' + esc(scope) + '</small></div>' +
-        (h.is_owner ? '<span class="own">Owner</span>' : '<button class="edv">Edit venues</button><button class="rm">Remove</button>');
-      if (!h.is_owner){
+      row.innerHTML = '<div class="hn"><b>' + esc(h.label || roleWord) + '</b><small>' + esc(sub) + '</small></div>' +
+        (locked ? '<span class="own">' + esc(roleWord) + '</span>'
+                : (mayTouch ? '<button class="edv">Edit venues</button><button class="rm">Remove</button>' : ''));
+      if (mayTouch){
         var ed = venueEditor(h, venues, loadHosts);
         row.appendChild(ed);
         row.querySelector(".edv").addEventListener("click", function(){ ed.style.display = (ed.style.display === "none" ? "block" : "none"); });
@@ -825,10 +1014,13 @@
       var rm = row.querySelector(".rm");
       if (rm){
         rm.addEventListener("click", function(){
+          // Remove used to fire on one click and take the person off EVERY venue. One slip and a
+          // host is gone from the whole account on a Friday night.
+          if (!confirm("Remove " + (h.label || "this person") + " from " + (venues.length > 1 ? "every venue on this account" : "this venue") + "?\n\nThey lose their sign-in straight away. You can add them again anytime.")) return;
           rm.disabled = true; rm.textContent = "Removing…";
           api("/account/host-remove", { auth_user_id: h.auth_user_id, all_venues: true }).then(function(r){
             if (r.error){ showMsg(r.error); rm.disabled = false; rm.textContent = "Remove"; return; }
-            showMsg("Host removed.", true); loadHosts();
+            showMsg((h.label || "That person") + " has been removed.", true); loadHosts();
           });
         });
       }
@@ -949,7 +1141,7 @@
         screenLogoUrl=r.url;
         api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:screenLogoUrl }).then(function(s){
           if(s.error){ showMsg(s.error); return; }
-          renderLogo(); pushToScreen(); showMsg("Logo saved. It shows on your TV within a few seconds.");
+          renderLogo(); pushToScreen(); showMsg("Logo saved. It shows on your TV within a few seconds.", true);
         });
       });
     };
@@ -958,7 +1150,7 @@
   function removeLogo(){
     if(!screenCurrent) return;
     screenLogoUrl=""; renderLogo();
-    api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:"" }).then(function(s){ if(s.error){ showMsg(s.error); return; } pushToScreen(); showMsg("Logo removed. Your TV updates in a few seconds."); });
+    api("/account/screen-save",{ venue_id:screenCurrent.id, logo_url:"" }).then(function(s){ if(s.error){ showMsg(s.error); return; } pushToScreen(); showMsg("Logo removed. Your TV updates in a few seconds.", true); });
   }
   (function(){
     var lf=document.getElementById("logoFile"), lr=document.getElementById("logoRemove");
@@ -1138,7 +1330,11 @@
      jackpots, different nights. The admin only ever loaded the first and saved over it, so the
      second could not exist. Pick one here, or start a new one. */
   function renderDrawPicker(){
-    var sel=$("mdPick"), wrap=$("mdPickWrap");
+    /* mdDrawWrap, NOT mdPickWrap. Both boxes carried id="mdPickWrap" and this line grabbed the
+       first one in the page, which is the VENUE picker: so a single-venue owner with one draw saw
+       a venue dropdown appear with nothing to choose, a group owner whose first venue had no draw
+       lost the venue selector, and the "Which draw" box was never hidden. */
+    var sel=$("mdPick"), wrap=$("mdDrawWrap");
     if(!sel) return;
     sel.innerHTML="";
     mdDraws.forEach(function(d){
@@ -1243,30 +1439,61 @@
     });
   }
 
+  /* Split one pasted line into columns and take the quote marks off.
+     `0142,"Smith, John"` is one number and one name, so a quoted field keeps its comma; anything
+     not inside quotes splits on a comma or a tab as before. */
+  function unquoteCols(line){
+    var cols = [], cur = "", inQ = false;
+    for (var i = 0; i < line.length; i++){
+      var ch = line.charAt(i);
+      if (ch === '"'){
+        if (inQ && line.charAt(i+1) === '"'){ cur += '"'; i++; }   // "" inside a quoted field is one quote
+        else inQ = !inQ;
+      } else if (!inQ && (ch === "," || ch === "\t")){ cols.push(cur); cur = ""; }
+      else cur += ch;
+    }
+    cols.push(cur);
+    for (var j = 0; j < cols.length; j++) cols[j] = cols[j].trim();
+    return cols;
+  }
   function importMembers(){
     if (!mdCurrent){ showMsg("Pick a venue first."); return; }
     var raw = $("md-import").value.trim();
     if (!raw){ showMsg("Paste your members first."); return; }
-    var members = [];
+    var members = [], skipped = [];
     raw.split(/\r?\n/).forEach(function(line){
       line = line.trim(); if (!line) return;
-      // Columns split on comma or tab. The first column must be the member number, so a header
-      // row ("Member No,First Name,Surname") or stray line is skipped. Whatever follows - a
-      // 2-column "First Last" OR a 3-column "First","Last" - is joined into one name; the server
-      // splits it back into first/last. So both venue export shapes just work.
-      var cols = line.split(/[,\t]/); for (var i=0;i<cols.length;i++) cols[i]=cols[i].trim();
-      if (!/^\d+$/.test(cols[0])) return;
+      /* Columns split on comma or tab. The first column must be the member number, so a header
+         row ("Member No,First Name,Surname") or stray line is skipped. Whatever follows - a
+         2-column "First Last" OR a 3-column "First","Last" - is joined into one name; the server
+         splits it back into first/last. So both venue export shapes just work.
+         QUOTES: Excel and most club systems quote a field that contains a comma, and some quote
+         every field. `"0142","Smith","John"` failed the digits test and was thrown away without a
+         word, and `0142,"Smith, John"` came through with the quote marks still on it and put them
+         on the TV. Strip a matched pair of quotes off every column first. */
+      var cols = unquoteCols(line);
+      if (!/^\d+$/.test(cols[0])){ if (skipped.length < 5) skipped.push(line.slice(0,60)); return; }
       var nm = cols.slice(1).filter(function(c){ return c; }).join(" ").slice(0,120);
       members.push({ number: parseInt(cols[0],10), name: nm });
     });
-    if (!members.length){ showMsg("Could not read any members. Use 'number, name' on each line."); return; }
+    if (!members.length){ showMsg("Could not read any members. Use 'number, name' on each line, for example: 142, Jane Smith"); return; }
     var payload = mdDraw ? { draw_id: mdDraw.id, members: members } : { venue_id: mdCurrent, members: members };
     var btn=$("mdImport"); btn.disabled=true; btn.textContent="Adding…";
     gameApi("/host/members/import", payload).then(function(r){
       btn.disabled=false; btn.textContent="Add to members list";
       if (r.error){ showMsg(r.error); return; }
       $("md-import").value = "";
-      showMsg((r.added!=null?r.added:members.length) + " added to your members list.", true);
+      /* Say what happened to every line, not just the good ones. The Worker skips numbers that
+         are already on the list without a word, and lines we could not read were vanishing
+         silently, so "42 added" from a 60-line paste looked like it had worked. */
+      var added = (r.added != null ? r.added : members.length);
+      var words = added + " added to your members list.";
+      var already = (r.skipped_existing != null) ? r.skipped_existing
+                  : ((r.added != null && members.length > r.added) ? (members.length - r.added) : 0);
+      if (already > 0) words += " " + already + " " + (already === 1 ? "was" : "were") + " already on it.";
+      if (skipped.length) words += " " + skipped.length + (skipped.length === 5 ? "+" : "") +
+        " line" + (skipped.length === 1 ? "" : "s") + " we could not read (each line needs to start with the member number): " + skipped.join(" / ");
+      showMsg(words, true);
       loadMembersDrawFor(mdCurrent);
     });
   }
@@ -1287,18 +1514,50 @@
     managers.forEach(function(m){
       var names = (m.venue_ids||[]).map(function(id){ return vmap[id]; }).filter(Boolean);
       var scope = (names.length >= venues.length) ? "All venues" : (names.join(", ") || "No venues");
-      var p = m.permissions || {}, on = [];
-      if (p.advertising !== false) on.push("Advertising");
-      if (p.draws_raffles !== false) on.push("Draws & raffles");
-      if (p.players_optin !== false) on.push("Players");
-      if (p.add_hosts !== false) on.push("Add hosts");
+      var p = m.permissions || {};
       var row = document.createElement("div"); row.className = "venue"; row.style.flexWrap = "wrap";
-      row.innerHTML = '<div class="nm"><b>' + esc(m.label||"Manager") + '</b><small>' + esc(scope) + ' &middot; ' + esc(on.join(", ")||"no permissions") + '</small></div>' +
+      row.innerHTML = '<div class="nm"><b>' + esc(m.label||"Manager") + '</b><small>' + esc(scope) + '</small></div>' +
         '<button class="edv" type="button">Edit venues</button>' +
         '<button class="canxlink" data-rmmgr="' + esc(m.auth_user_id) + '">Remove</button>';
       var med = venueEditor(m, venues, loadManagers);
       row.appendChild(med);
       row.querySelector(".edv").addEventListener("click", function(){ med.style.display = (med.style.display === "none" ? "block" : "none"); });
+      /* The four toggles could only ever be set at the moment a manager was added. To turn one
+         off you removed the manager and added them again, which also re-sent their welcome text.
+         They live on the row now and save the moment you tick one. */
+      var permBox = document.createElement("div");
+      permBox.style.cssText = "flex-basis:100%;width:100%;margin-top:10px;border-top:1px solid var(--line);padding-top:10px";
+      // A manager row with no permissions object is a full-access login (the venue's own, as HQ
+      // sets it up). Its access is not ours to switch off from here, so say so instead of showing
+      // four ticks that would be refused.
+      if (!m.permissions){
+        permBox.innerHTML = '<p class="note" style="margin:0">This login has full access to the account. Email hello@venueplay.com.au if it needs to be changed.</p>';
+        row.appendChild(permBox); box.appendChild(row); return;
+      }
+      var permLbl = document.createElement("div");
+      permLbl.className = "flabel"; permLbl.textContent = "What " + (m.label || "this manager") + " can do";
+      var checks = document.createElement("div"); checks.className = "hostvenues";
+      [["advertising","Advertising"],["draws_raffles","Draws & raffles"],
+       ["players_optin","Players & opt-in export"],["add_hosts","Add hosts"]].forEach(function(pair){
+        var l = document.createElement("label"); l.className = "hostchk";
+        l.innerHTML = '<input type="checkbox" class="mgr-edit-p" value="' + esc(pair[0]) + '"' +
+          (p[pair[0]] !== false ? " checked" : "") + '><span>' + esc(pair[1]) + '</span>';
+        checks.appendChild(l);
+      });
+      permBox.appendChild(permLbl); permBox.appendChild(checks);
+      row.appendChild(permBox);
+      checks.addEventListener("change", function(){
+        var next = {};
+        checks.querySelectorAll(".mgr-edit-p").forEach(function(c){ next[c.value] = c.checked; });
+        var boxes = checks.querySelectorAll(".mgr-edit-p");
+        boxes.forEach(function(c){ c.disabled = true; });
+        api("/account/manager-perms", { auth_user_id: m.auth_user_id, permissions: next }).then(function(r){
+          boxes.forEach(function(c){ c.disabled = false; });
+          if (r.error){ showMsg(r.error); loadManagers(); return; }   // put the ticks back as they really are
+          showMsg("Saved. " + (m.label || "This manager") + " will see the change next time they open the app.", true);
+          m.permissions = r.permissions || next;
+        });
+      });
       box.appendChild(row);
     });
     box.querySelectorAll("[data-rmmgr]").forEach(function(btn){
@@ -1380,6 +1639,7 @@
       $("rf-label").value = r.label || ""; $("rf-day").value = r.day || ""; $("rf-time").value = r.time || "";
     });
     loadRafflePrizes(venueId);
+    loadDrawLog(venueId);
     // Prizes-given tally: sum any *_cents field on the venue's rows (defensive about the view's shape).
     VP.getClient().from("v_vp_prizes_given").select("*").eq("venue_id", venueId).then(function(r){
       var rows = (r && r.data) || [], cents = 0;
@@ -1446,8 +1706,68 @@
       loadRafflePrizes(rfCurrent);
     });
   }
+  /* ---- Draws and raffles log ----
+     Every result is written down on the night (ticket or member number, prize, outcome, time) and
+     none of it was ever read back, so a venue asked "who won on 12 August" had to ask us. This is
+     that list, plus a CSV for the venue's own records. */
+  var dlRows = [], dlVenueName = "";
+  function dlWhen(iso){
+    if (!iso) return "";
+    var d = new Date(iso); if (isNaN(d.getTime())) return "";
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var h = d.getHours(), ap = h >= 12 ? "pm" : "am", h12 = h % 12; if (!h12) h12 = 12;
+    var mins = String(d.getMinutes()); if (mins.length < 2) mins = "0" + mins;
+    return d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear() + ", " + h12 + ":" + mins + ap;
+  }
+  function renderDrawLog(r){
+    var box = $("drawLog"), tot = $("dlTotal");
+    dlRows = (r && r.rows) || [];
+    dlVenueName = (r && r.venue && r.venue.name) || "";
+    if (tot) tot.textContent = dlRows.length
+      ? (dlRows.length + " result" + (dlRows.length === 1 ? "" : "s") + (r.cash && r.cash !== "$0.00" ? ", " + r.cash + " in cash prizes" : ""))
+      : "";
+    if (!dlRows.length){
+      box.innerHTML = '<p class="snote">Nothing drawn in this period yet. Every raffle and members draw you run shows up here.</p>';
+      return;
+    }
+    var html = '<div class="logwrap"><table class="logtable"><thead><tr>' +
+      '<th>When</th><th>What</th><th>Number</th><th>Winner</th><th>Prize</th><th>Outcome</th>' +
+      '</tr></thead><tbody>';
+    dlRows.forEach(function(row){
+      html += '<tr><td>' + esc(dlWhen(row.at)) + '</td><td>' + esc(row.name || "") + '</td>' +
+        '<td><b>' + esc(row.number || "-") + '</b></td><td>' + esc(row.winner || "-") + '</td>' +
+        '<td>' + esc(row.prize || "-") + '</td><td>' + esc(row.outcome || "") + '</td></tr>';
+    });
+    box.innerHTML = html + '</tbody></table></div>';
+  }
+  function loadDrawLog(venueId){
+    if (!venueId) return;
+    var months = parseInt(($("dlMonths") && $("dlMonths").value) || "3", 10) || 3;
+    $("drawLog").innerHTML = '<p class="snote">Loading…</p>';
+    return api("/account/draw-log", { venue_id: venueId, months: months }).then(function(r){
+      if (r.error){ $("drawLog").innerHTML = '<p class="snote">' + esc(r.error) + '</p>'; $("dlTotal").textContent = ""; return; }
+      renderDrawLog(r);
+    });
+  }
+  function downloadDrawLog(){
+    if (!dlRows.length){ showMsg("There is nothing to download yet."); return; }
+    function cell(s){ return '"' + String(s == null ? "" : s).replace(/"/g, '""') + '"'; }
+    var lines = ["When,What,Number,Winner,Prize,Outcome"];
+    dlRows.forEach(function(r){
+      lines.push([dlWhen(r.at), r.name, r.number, r.winner, r.prize, r.outcome].map(cell).join(","));
+    });
+    var blob = new Blob([lines.join("\r\n")], { type: "text/csv" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "draws-" + (dlVenueName || "venue").toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".csv";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); }, 500);
+    showMsg("Downloaded. Check your Downloads folder.", true);
+  }
   function initRaffles(){
     $("rfSave").addEventListener("click", saveRaffleRoutine);
+    $("dlMonths").addEventListener("change", function(){ loadDrawLog(rfCurrent); });
+    $("dlCsv").addEventListener("click", downloadDrawLog);
     $("rfClear").addEventListener("click", clearRaffleRoutine);
     $("rfAddPrize").addEventListener("click", addRafflePrize);
     $("rfPrizes").addEventListener("click", function(e){ var b=e.target.closest(".rfx"); if (b) removeRafflePrize(b.getAttribute("data-id")); });
@@ -1485,8 +1805,9 @@
       var reader = new FileReader();
       reader.onload = function(){
         var lines = String(reader.result||"").split(/\r?\n/);
-        // Drop a header row (a first line that does not start with a number).
-        if (lines.length && !/^\s*\d/.test(lines[0])) lines.shift();
+        // Drop a header row (a first line that does not start with a member number). The quote
+        // has to be allowed for, or a file that quotes every field loses its first real member.
+        if (lines.length && !/^\s*"?\s*\d/.test(lines[0])) lines.shift();
         var cur = $("md-import").value.trim();
         $("md-import").value = (cur ? cur + "\n" : "") + lines.join("\n").trim();
         showMsg("CSV loaded. Check it looks right, then Add to members list.", true);
@@ -1508,6 +1829,65 @@
     });
   }
 
+  // ---- Nights: how the last few nights went, per venue ----
+  var ntVenues = [], ntCurrent = null;
+  var FORMAT_WORDS = { bingo:"Bingo", trivia:"Trivia", musical:"Musical bingo", raffle:"Raffle", members_draw:"Members draw", members:"Members draw" };
+  function formatWords(list){
+    var out = (list||[]).map(function(f){ return FORMAT_WORDS[f] || (String(f||"").charAt(0).toUpperCase() + String(f||"").slice(1)); });
+    return out.length ? out.join(" + ") : "";
+  }
+  function nightDate(iso){
+    if (!iso) return "";
+    var d = new Date(iso); if (isNaN(d.getTime())) return "";
+    var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    return days[d.getDay()] + " " + d.getDate() + " " + months[d.getMonth()];
+  }
+  function renderNights(nights){
+    var box = $("nights"); box.innerHTML = "";
+    var real = (nights||[]).filter(function(n){ return !n.abandoned; });
+    if (!real.length){
+      box.innerHTML = '<div class="card"><b style="display:block;font-size:16px;color:#fff;margin-bottom:6px">No nights yet</b>' +
+        '<span class="muted" style="font-size:13.5px">Once you run your first game here, every night shows up on this page: who came, what you played and what you gave away.</span></div>';
+      return;
+    }
+    real.forEach(function(n){
+      var row = document.createElement("div"); row.className = "night";
+      var what = formatWords(n.formats) || "Nothing recorded";
+      var bits = [];
+      bits.push('<div class="nfig"><b>' + (n.players||0) + '</b><span>player' + ((n.players===1)?"":"s") + '</span></div>');
+      if (n.came_back_known) bits.push('<div class="nfig"><b>' + (n.came_back||0) + '</b><span>came back</span></div>');
+      bits.push('<div class="nfig"><b>' + (n.games||0) + '</b><span>game' + ((n.games===1)?"":"s") + '</span></div>');
+      if (n.prize_cents) bits.push('<div class="nfig"><b>$' + (n.prize_cents/100).toFixed(2) + '</b><span>given away</span></div>');
+      row.innerHTML = '<div class="nhead"><b>' + esc(nightDate(n.at) || "A night") + '</b><small>' + esc(what) +
+        (n.status === "open" ? ' &middot; still open' : '') + '</small></div>' +
+        '<div class="nfigs">' + bits.join("") + '</div>';
+      box.appendChild(row);
+    });
+  }
+  function loadNightsFor(venueId){
+    ntCurrent = venueId;
+    $("nights").innerHTML = '<p class="note">Loading your nights…</p>';
+    return api("/account/nights", { venue_id: venueId, limit: 12 }).then(function(r){
+      if (r.error){ $("nights").innerHTML = '<p class="note">' + esc(r.error) + '</p>'; return; }
+      renderNights(r.nights || []);
+    });
+  }
+  function initNights(){
+    return api("/account/summary", {}).then(function(d){
+      ntVenues = (d && d.venues) || [];
+      if (!ntVenues.length){ $("nights").innerHTML = '<p class="note">No venues on this account yet.</p>'; return; }
+      var pick = $("ntPickWrap"), sel = $("ntVenue");
+      if (ntVenues.length > 1){
+        sel.innerHTML = "";
+        ntVenues.forEach(function(v){ var o=document.createElement("option"); o.value=v.id; o.textContent=v.name; sel.appendChild(o); });
+        pick.style.display = "";
+        sel.onchange = function(){ loadNightsFor(sel.value); };
+      } else { pick.style.display = "none"; }
+      loadNightsFor(ntVenues[0].id);
+    });
+  }
+
   // Require sign-in, then load.
   /* Role-gate the page. requireAuth has supported opts.roles all along and it was never used
      anywhere in the app; index.html only HIDES the Account link from a host. So a host who typed
@@ -1524,6 +1904,7 @@
     initRaffles();
     initMembersDraws();
     initManagers();
+    initNights();
     $("optinExport").addEventListener("click", exportOptins);
   }).catch(function(){ load(); });
 })();

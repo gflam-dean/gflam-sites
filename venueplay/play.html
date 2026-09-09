@@ -65,7 +65,7 @@
   .cardhead .pn{font-weight:800;color:#fff;font-size:16px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
   .cardpat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:5px 12px;border-radius:20px;white-space:nowrap}
   .card9{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
-  .card9 .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(11px,3.3vw,18px);color:var(--text);background:var(--ink-3);border:1px solid var(--line);border-radius:8px;cursor:pointer;user-select:none;transition:.12s}
+  .card9 .cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(13px,3.8vw,20px);color:var(--text);background:var(--ink-3);border:1px solid var(--line);border-radius:8px;cursor:pointer;user-select:none;transition:.12s}
   .card9 .cc.blank{background:transparent;border-color:transparent;cursor:default;box-shadow:none}
   .card9 .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
   .card9 .cc.on{outline:2px solid var(--win);outline-offset:-2px}
@@ -73,11 +73,24 @@
   #cardStack{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .card9{width:calc(100% * var(--cz,1));min-width:0}
   .cardctl{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-  .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px}
+  .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px;min-height:44px}
   .czbtn:active{background:var(--pink);color:#fff;border-color:transparent}
   .czbtn.fs{font-size:13px;min-width:0}
   .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint)}
-  .pmsg{font-size:13px;color:var(--muted);text-align:center;margin:16px 0;min-height:38px;line-height:1.4}
+  .pmsg{font-size:14px;color:var(--muted);text-align:center;margin:16px 0;min-height:40px;line-height:1.45}
+  /* A stage win (a line, two lines) while the game plays on. Pinned above the tickets so the
+     next ball cannot wipe it: this is the player's proof for the host until the game ends. */
+  .stagewin{border-radius:14px;padding:14px 16px;margin-bottom:14px;text-align:center;line-height:1.4;
+    background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.45)}
+  .stagewin b{display:block;font-family:'Anton',sans-serif;font-size:24px;letter-spacing:.02em;color:var(--win);text-transform:uppercase;margin-bottom:4px}
+  .stagewin span{display:block;font-size:14px;color:var(--text)}
+  .stagewin small{display:block;font-size:12.5px;color:var(--muted);margin-top:6px}
+  .stagewin em{font-style:normal;font-weight:800;color:var(--gold)}
+  body.light .stagewin em{color:var(--pink-deep)}
+  .stagewin.others{background:var(--ink-3);border-color:var(--line)}
+  .stagewin.others b{font-size:16px;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;text-transform:none;letter-spacing:0}
+  body.light .stagewin{background:rgba(13,150,90,.10);border-color:rgba(13,150,90,.45)}
+  body.light .stagewin b{color:#0b7a4b}
   .pmsg.no{color:var(--roll)}
   .pmsg.wait{color:var(--gold)}
   .bingoBtn{background:var(--pink);color:#fff;box-shadow:0 8px 24px rgba(255,31,142,.4);font-size:22px;text-transform:uppercase;letter-spacing:.06em;padding:20px}
@@ -107,9 +120,9 @@
      ticket that popped forward covered its neighbours so marks landed on the wrong card.
      What was actually wanted: three cards a screen at a readable size, and when a number is
      called, the tab holding it comes to you. */
-  #cardStack.lay-pages{overflow-x:hidden}
+  #cardStack.lay-pages{overflow-x:auto}
   .pagetabs{display:flex;gap:7px;margin-bottom:10px}
-  .pagetab{flex:1;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);
+  .pagetab{flex:1;min-height:44px;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--ink-3);
     color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:12.5px;
     letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:.15s;position:relative}
   .pagetab.on{background:var(--ink-2);color:var(--text);border-color:rgba(255,255,255,.22)}
@@ -122,19 +135,20 @@
     background:var(--gold);box-shadow:0 0 7px var(--gold)}
   .lay-pages .stackwrap{display:flex;flex-direction:column;gap:12px}
   .lay-pages .ticket{margin-bottom:0}
-  .lay-pages .card9{width:100%}
+  .lay-pages .card9{width:calc(100% * var(--cz,1))}
+  .lay-pages .card9 .cc{font-size:clamp(15px,4vw,20px)}
   /* ---- LAYOUT: all six, columns aligned (menu option "Columns lined up") ----
      Tickets flush with no gutter, so the nine columns run as unbroken bands down all six the way
      a paper strip reads. A number called lights its column top to bottom, so you scan one band. */
-  #cardStack.lay-align{overflow-x:hidden}
+  #cardStack.lay-align{overflow-x:auto}
   .lay-align .stackwrap{display:flex;flex-direction:column;gap:0}
   .lay-align .ticket{margin-bottom:0}
   .lay-align .ticket + .ticket{border-top:1px solid var(--line-2);padding-top:3px;margin-top:3px}
   .lay-align .ticket .tklabel{display:none}
-  .lay-align .card9{width:100%;gap:2px}
+  .lay-align .card9{width:calc(100% * var(--cz,1));gap:2px}
   /* The band is the whole point of this layout, and six tickets are taller than a phone, so it
      sticks: it used to scroll away exactly when you reached the tickets you had not checked. */
-  .colband{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(9,1fr);gap:2px;
+  .colband{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(9,1fr);gap:2px;width:calc(100% * var(--cz,1));
     padding:5px 0 6px;margin-bottom:2px;background:var(--ink)}
   .colband i{height:4px;border-radius:2px;background:var(--ink-3);transition:background .2s ease}
   .colband i.lit{background:var(--gold);box-shadow:0 0 10px rgba(255,194,75,.55)}
@@ -156,7 +170,12 @@
 
   .lastcalled{text-align:center;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
   .lastcalled b{color:#fff;font-size:18px}
-  .lcnum{font-family:'Anton',sans-serif;color:var(--gold);font-size:46px;line-height:1;letter-spacing:.01em}
+  .lcrow{display:flex;align-items:flex-end;justify-content:center;gap:14px}
+  .lcnum{font-family:'Anton',sans-serif;color:var(--gold);font-size:52px;line-height:1;letter-spacing:.01em}
+  /* The two numbers before it, small and grey, for whoever is back from the bar. */
+  .lcprev{font-family:'Anton',sans-serif;color:var(--faint);font-size:24px;line-height:1.1;padding-bottom:3px}
+  .lcprev + .lcprev{font-size:30px;color:var(--muted)}
+  body.light .lcnum{color:var(--pink-deep)}
   .lcsub{display:block;font-size:12px;color:var(--faint);margin-top:4px;text-transform:uppercase;letter-spacing:.1em}
   /* menu (top-right of the bar): Easy mode + Leave game */
   /* The called number lives in the sticky header, hard left, so a player never has to scroll
@@ -281,6 +300,7 @@
     <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line</span></div>
     <div class="lastcalled" id="lastCalled">No numbers called yet</div>
     <div class="tension hidden" id="tension"></div>
+    <div class="stagewin hidden" id="stageWin"></div>
     <div class="cardctl">
       <span class="czlbl">Size</span>
       <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller numbers">&#8722;</button>
@@ -306,7 +326,7 @@
   <div class="view center hidden biglose" id="vLost">
     <div style="font-size:44px">&#127882;</div>
     <div class="pbig">Nice game!</div>
-    <div class="psub">Good luck next round.</div>
+    <div class="psub" id="lostSub">Good luck next round.</div>
     <div class="pnote">Sit tight, the host may start another round.</div>
   </div>
 </div>
@@ -392,7 +412,10 @@
     cards:[], numCards:1, defaultCards:1, pickedCount:false, wonCardNo:0,
     pattern:"one", prize:"the prize", called:[], active:false, paidMode:"", assist:false, allowEarly:false,
     claimPending:false, won:false, ended:false, capture:null,
-    shared:false, sharedWith:[], layout:"stack", page:0, turnedFor:0, dealSeq:0, builtKey:"", venueSlug:""
+    shared:false, sharedWith:[], layout:"stack", page:0, turnedFor:0, dealSeq:0, builtKey:"", venueSlug:"",
+    stageWins:[],          // lines this phone has won while the game plays on: {pattern,prize,cardNo,shared,sharedWith}
+    stageNote:"",          // someone else won a stage: one line, kept until the next stage or game
+    lostBy:""              // who won the final pattern, for the "Nice game" screen
   };
 
   // ---- pid persistence (keep the cosmetic identity across reconnects) ----
@@ -424,6 +447,12 @@
   function saveWin(){ try{ localStorage.setItem(winKey(), JSON.stringify({ cardNo:P.wonCardNo, prize:P.prize, shared:!!P.shared, sharedWith:P.sharedWith||[], ts:Date.now() })); }catch(e){} }
   function loadWin(room){ try{ var raw=localStorage.getItem(winKey(room)); if(!raw) return null; var w=JSON.parse(raw); if(!w || (Date.now()-(w.ts||0))>2*60*60*1000){ clearWin(room); return null; } return w; }catch(e){ return null; } }
   function clearWin(room){ try{ localStorage.removeItem(winKey(room)); }catch(e){} }
+  /* A stage win (a line while the game plays on to the house) is remembered the same way, so a
+     phone that reloads or sleeps mid-game still carries its proof. Cleared with the final win. */
+  function stageKey(room){ return "vp-stagewin-"+(room||P.room||""); }
+  function saveStage(){ try{ localStorage.setItem(stageKey(), JSON.stringify({ wins:P.stageWins||[], note:P.stageNote||"", ts:Date.now() })); }catch(e){} }
+  function loadStage(room){ try{ var raw=localStorage.getItem(stageKey(room)); if(!raw) return null; var w=JSON.parse(raw); if(!w || (Date.now()-(w.ts||0))>2*60*60*1000){ clearStage(room); return null; } return w; }catch(e){ return null; } }
+  function clearStage(room){ P.stageWins=[]; P.stageNote=""; try{ localStorage.removeItem(stageKey(room)); }catch(e){} }
   // the player token IS the metered server identity: persist it so a reload reuses
   // the same vp_players row (via localStorage) instead of minting a new metered one.
 
@@ -565,7 +594,10 @@
       }
       show("vWon"); askHowItWent("vWon"); return;
     }
-    if(P.ended){ show("vLost"); askHowItWent("vLost"); return; }
+    if(P.ended){
+      var ls=$("lostSub"); if(ls) ls.innerHTML = P.lostBy ? P.lostBy : "Good luck next round.";
+      show("vLost"); askHowItWent("vLost"); return;
+    }
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
     if(P.active && P.cards.length){ renderCards(); show("vCard"); return; }
@@ -577,7 +609,9 @@
     if(wn){
       wn.innerHTML = (P.paidMode && P.active && !P.cards.length)
         ? "Tickets are on sale at the bar tonight. Grab one and the staff will put it straight on your phone."
-        : "Waiting for the host to start the game. Your card will appear here.";
+        : (P.stageWins.length
+          ? "You won <b>"+esc(PATTERN_NAMES[P.stageWins[P.stageWins.length-1].pattern]||"a line")+"</b> last game (card #"+esc(String(P.stageWins[P.stageWins.length-1].cardNo||""))+"). See the host to collect. Your next ticket will appear here."
+          : "Waiting for the host to start the game. Your card will appear here.");
     }
     show("vWait");
   }
@@ -633,7 +667,7 @@
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
     var last=P.called.length ? P.called[P.called.length-1] : 0;
-    $("lastCalled").innerHTML = last ? ('<span class="lcnum">'+last+'</span><span class="lcsub">'+P.called.length+' of 90 called</span>') : "No numbers called yet";
+    $("lastCalled").innerHTML = lastCalledHtml();
     var set=calledSet();
     var stack=$("cardStack"); stack.innerHTML="";
     P.builtKey=structureKey();
@@ -710,7 +744,7 @@
     var curCol = (lay==="align" && last) ? colOfNum(last) : -1;
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
-    $("lastCalled").innerHTML = last ? ('<span class="lcnum">'+last+'</span><span class="lcsub">'+P.called.length+' of 90 called</span>') : "No numbers called yet";
+    $("lastCalled").innerHTML = lastCalledHtml();
     setHeaderBall(last);
     var stack=$("cardStack");
     pageForCalled(last);         // decide the page BEFORE painting, so it all lands in one pass
@@ -752,8 +786,42 @@
     }
     markCalledTab(last);
     updateTension(set);
+    renderStageWin();
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your ticket&hellip;","wait"); }
-    else { $("bingoBtn").disabled=false; setMsg("Mark off your numbers as they are called. Hit BINGO when your ticket completes the pattern.",""); }
+    else { $("bingoBtn").disabled=false; setMsg(idleMsg(),""); }
+  }
+  /* The resting message under the tickets. It used to be one fixed sentence, and it was also
+     where a stage win was announced, so the very next ball wiped the win off the screen. The
+     win now has its own pinned banner (renderStageWin); this line only says what is being
+     played for. */
+  function idleMsg(){
+    var pn=PATTERN_NAMES[P.pattern]||"the pattern";
+    if(P.stageWins.length) return "Keep marking your numbers. You are now playing for <b>"+esc(pn)+"</b>.";
+    return "Mark off your numbers as they are called. Hit BINGO when your ticket completes <b>"+esc(pn)+"</b>.";
+  }
+  function nameList(a){ return a.length<2 ? (a[0]||"A player") : a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
+  function renderStageWin(){
+    var box=$("stageWin"); if(!box) return;
+    if(P.stageWins.length){
+      var w=P.stageWins[P.stageWins.length-1], pn=PATTERN_NAMES[w.pattern]||"a prize";
+      var h="<b>You won "+esc(pn)+"!</b>";
+      h+="<span>See the host to collect"+(w.prize && w.prize!=="the prize" ? " <em>"+esc(w.prize)+"</em>" : "")+". Card #"+esc(String(w.cardNo||""))+"."+(w.shared && w.sharedWith && w.sharedWith.length ? " A tie, so it is shared with "+esc(nameList(w.sharedWith))+"." : "")+"</span>";
+      if(P.stageWins.length>1){ var earlier=P.stageWins.slice(0,-1).map(function(x){ return PATTERN_NAMES[x.pattern]||x.pattern; }); h+="<small>Also won tonight: "+esc(earlier.join(", "))+".</small>"; }
+      h+="<small>Keep playing for "+esc(PATTERN_NAMES[P.pattern]||"the next prize")+" on the same tickets.</small>";
+      box.innerHTML=h; box.className="stagewin";
+    } else if(P.stageNote){
+      box.innerHTML="<b>"+P.stageNote+"</b><span>Now playing for "+esc(PATTERN_NAMES[P.pattern]||"the next prize")+". Same tickets, keep marking.</span>";
+      box.className="stagewin others";
+    } else { box.className="stagewin hidden"; box.innerHTML=""; }
+  }
+  /* Last three numbers, newest biggest, so a player back from the bar can catch up without
+     looking for the TV. Older numbers sit to the left, small and grey. */
+  function lastCalledHtml(){
+    var n=P.called.length; if(!n) return "No numbers called yet";
+    var h='<span class="lcrow">';
+    for(var i=Math.max(0,n-3);i<n-1;i++) h+='<span class="lcprev">'+P.called[i]+'</span>';
+    h+='<span class="lcnum">'+P.called[n-1]+'</span></span><span class="lcsub">'+n+' of 90 called</span>';
+    return h;
   }
   function setHeaderBall(n){
     var box=$("hdrBall"); if(!box) return;
@@ -821,9 +889,13 @@
   // follow that, not the stored preference: hiding zoom because of a setting that is not in
   // effect stranded a player at 220% zoom with no way to zoom back out.
   function effectiveLayout(){ return (P.cards.length>1) ? P.layout : "stack"; }
+  /* Size and full screen used to be hidden in every layout but the stacked one, so a player
+     holding a strip in pages or columns had no way to make the numbers bigger, and in a dim
+     pub that is exactly who needs it. Every layout now widens with --cz and pans sideways,
+     so the control is always there. */
   function syncCardCtl(){
     var ctl=document.querySelector(".cardctl");
-    if(ctl) ctl.style.display = (effectiveLayout()==="stack") ? "" : "none";
+    if(ctl) ctl.style.display = "";
   }
   /* remember=false is us choosing for them (a big hand), and it must NOT be written down as a
      preference: do that and the player has "chosen" a layout they never picked, and every later
@@ -868,6 +940,7 @@
   }
   var _celebrated=false;
   function celebrate(){ if(_celebrated) return; _celebrated=true; try{ if(navigator.vibrate) navigator.vibrate([0,90,60,90,60,150]); }catch(e){} playFanfare(); confettiBurst(); }
+  function celebrateStage(){ try{ if(navigator.vibrate) navigator.vibrate([0,90,60,90,60,150]); }catch(e){} playFanfare(); confettiBurst(); }
 
   // ---- actions ----
   // Ask the Worker which extra fields this venue collects, and render them on the join screen.
@@ -960,16 +1033,51 @@
     fetch(VP_GAME_API+"/play/live?code="+encodeURIComponent(code))
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(d){
-        if(!d || !d.live || !d.join_code) return;
+        // Not live yet (a regular scanning the table talker before the lobby opens): forget that
+        // we tried, so the join code arriving on the first state message can carry the name in.
+        if(!d || !d.live || !d.join_code){ _namePushed=""; return; }
         return playerPost("/join", { code:d.join_code, name:P.name, pid:deviceId() })
           .then(function(j){
             if(j && j.token){
               P.token=j.token;                                  // the patch mints a fresh token
+              _joinedFor=d.join_code;
               try{ localStorage.setItem("vp-token-"+code, j.token); }catch(e){}
             }
           });
       })
       .catch(function(){ _namePushed=""; });                    // let a later attempt retry
+  }
+  /* JOIN THE NIGHT THE HOST IS ACTUALLY RUNNING. The token this phone holds was minted against
+     one server session. When the host ends a game and opens a new lobby that is a NEW session
+     with a new join code, and nobody already in the room was ever joined to it, so game two
+     onward counted only newcomers. The join code rides on every state message, so whenever one
+     names a code this phone has not joined, join it. Same pid every time: the Worker matches on
+     it and patches one row, so this never seats a second player. Best effort, one call in
+     flight at a time, and a Worker that does not answer changes nothing on screen. */
+  var _joinedFor="", _joinBusy=false;
+  function joinServerSession(joinCode){
+    if(!joinCode || _joinBusy || !P.room) return;
+    if(_joinedFor===joinCode && P.token) return;
+    _joinBusy=true;
+    /* Every phone in the room gets this same message on the same tick. Sixty of them calling
+       at once is sixty requests in one second, and the database sits behind a per-second
+       ceiling, so they are spread over a few seconds instead. Nobody is waiting on it: the
+       game itself runs over the broadcast link. */
+    setTimeout(function(){ joinServerSessionNow(joinCode); }, Math.floor(Math.random()*4000));
+  }
+  function joinServerSessionNow(joinCode){
+    var room=P.room;
+    if(!room){ _joinBusy=false; return; }
+    playerPost("/join", { code:joinCode, name:(P.name||loadName(room)||""), pid:deviceId() })
+      .then(function(j){
+        if(j && j.token){
+          P.token=j.token; _joinedFor=joinCode; _namePushed=P.name;
+          try{ localStorage.setItem("vp-token-"+room, j.token); }catch(e){}
+          if(P.capture) saveCapture();   // details that went out unvouched can be vouched for now
+        }
+      })
+      .catch(function(){})
+      .then(function(){ _joinBusy=false; });
   }
   // Best-effort: store this player's details for the venue's opt-in list. This is
   // separate from the game; if the endpoint isn't deployed yet it's simply ignored.
@@ -1058,6 +1166,7 @@
       // out was a reload that nothing on screen suggested.
       P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0;
       P.shared=false; P.sharedWith=[]; _celebrated=false; clearWin(P.room);   // fresh deal = new round: drop last round's saved win
+      clearStage(P.room); P.lostBy="";
       /* Carry marks across by card number. A paid player buying a second sheet mid-round gets a
          fresh cards message, and rebuilding every ticket with an empty daub set wiped the marks
          they had made on the tickets they were ALREADY holding. Only genuinely new tickets start
@@ -1078,6 +1187,7 @@
       if(typeof m.prize==="string") P.prize=m.prize;
       if(typeof m.paidMode==="string") P.paidMode=m.paidMode;
       P.called=cleanCalled(m.called); P.active=!!m.active;
+      if(m.join_code && P.joined) joinServerSession(m.join_code);   // a new night, or a phone that arrived before the lobby opened
       autoDaub(); if(!P.won && !P.ended) route();
     }
     else if(m.t==="started"){
@@ -1086,7 +1196,7 @@
       // fresh round: the host deals new tickets (t:"cards") just before this. Reset the
       // round but keep whatever tickets we're holding.
       P.called=[]; P.active=true; P.won=false; P.ended=false; P.claimPending=false; P.wonCardNo=0; _celebrated=false; clearWin(P.room);   // new round starting
-      P.shared=false; P.sharedWith=[];
+      P.shared=false; P.sharedWith=[]; clearStage(P.room); P.lostBy="";
       for(var i=0;i<P.cards.length;i++) P.cards[i].daubs={};
       clearDaubs();   // a new game starts on a clean ticket
       P.turnedFor=0;   // new round: the first ball must still turn the page
@@ -1122,19 +1232,31 @@
       var others=ws.filter(function(w){ return w.pid!==P.pid; }).map(function(w){ return w.name; }).filter(Boolean);
       function list(a){ return a.length<2 ? (a[0]||"A player") : a.slice(0,-1).join(", ")+" and "+a[a.length-1]; }
       P.shared=ws.length>1; P.sharedWith=others;
+      // The prize for THIS stage rides on the message (a host built after 9 Sep 2026 sends it).
+      // An older host sends none, so the game prize stands in, exactly as before.
+      var stagePrize = (typeof m.prize==="string" && m.prize) ? m.prize : P.prize;
+      var pn=PATTERN_NAMES[m.pattern]||"a prize";
       if(m.cont){
         // a stage was won; the game plays on for the next prize with the same tickets
         if(m.next) P.pattern=m.next;
+        if(typeof m.nextPrize==="string" && m.nextPrize) P.prize=m.nextPrize;
         P.wonCardNo=0;
-        if(P.cards.length){ renderCards(); show("vCard"); }
-        var pn=PATTERN_NAMES[m.pattern]||"a prize";
-        var head = me
-          ? ("You won "+pn+"!"+(others.length ? " Shared with "+esc(list(others))+"." : ""))
-          : (esc(list(names))+" won "+pn+".");
-        setMsg(head+" Now playing for "+(PATTERN_NAMES[P.pattern]||"the next prize")+".", me?"wait":"");
+        if(me){
+          P.stageWins.push({ pattern:m.pattern, prize:stagePrize, cardNo:me.cardNo||0, shared:ws.length>1, sharedWith:others });
+          P.stageNote="";
+          celebrateStage();
+        } else {
+          P.stageNote=esc(list(names))+" won "+esc(pn)+".";
+        }
+        saveStage();
+        if(P.cards.length){ renderCards(); show("vCard"); } else { renderStageWin(); }
       } else {
-        if(me){ P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; saveWin(); route(); celebrate(); }
-        else { P.ended=true; route(); }
+        if(me){ P.prize=stagePrize; P.won=true; P.wonCardNo=me.cardNo||P.wonCardNo; saveWin(); route(); celebrate(); }
+        else {
+          var first=ws.filter(function(w){ return w.pid!==P.pid; })[0]||ws[0];
+          P.lostBy=esc(list(names))+" won "+esc(pn)+(first && first.cardNo ? " on card #"+esc(String(first.cardNo)) : "")+".";
+          P.ended=true; route();
+        }
       }
     }
     else if(m.t==="idle"){
@@ -1160,6 +1282,8 @@
     // message (cards / started) clears it below, so it never lingers into the next game.
     var _w=loadWin(room);
     if(_w && P.joined){ P.won=true; P.wonCardNo=_w.cardNo||0; if(_w.prize) P.prize=_w.prize; P.shared=!!_w.shared; P.sharedWith=_w.sharedWith||[]; route(); }
+    var _sw=loadStage(room);
+    if(_sw && P.joined){ P.stageWins=Array.isArray(_sw.wins)?_sw.wins:[]; P.stageNote=_sw.note||""; }
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
     // forged messages in enforce mode. No key / enforce off / script absent -> renders as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
@@ -1251,7 +1375,7 @@
         return playerPost("/join", { code: d.join_code, name: loadName(code) || P.name || "", pid: deviceId() })
           .then(function(j){
             if(j && j.token){
-              P.token = j.token;
+              P.token = j.token; _joinedFor = d.join_code;
               try{ localStorage.setItem("vp-token-"+code, j.token); }catch(e){}
               // A capture may already have gone unverified while we were asking. Send it again now
               // that it can be vouched for; the Worker keeps the newer row.

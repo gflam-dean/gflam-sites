@@ -58,11 +58,12 @@
   /* card view */
   .cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
   .cardhead .pn{font-weight:800;color:#fff;font-size:16px;font-family:'Hanken Grotesk',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
-  .cardpat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:5px 12px;border-radius:20px;white-space:nowrap}
+  .cardpat{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--pink);background:rgba(255,31,142,.12);padding:7px 13px;border-radius:20px;white-space:nowrap}
   .card5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:calc(100% * var(--cz,1));min-width:0}
   #cardWrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .cardctl{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-  .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px}
+  /* 44px minimum. These are hit one-handed, in the dark, by people whose eyes are on the card. */
+  .czbtn{background:var(--ink-3);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px 13px;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1;cursor:pointer;min-width:46px;min-height:44px}
   .czbtn:active{background:var(--pink);color:#fff;border-color:transparent}
   .czbtn.fs{font-size:13px;min-width:0}
   .czlbl{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
@@ -89,19 +90,64 @@
   .cc.daub{background:var(--pink);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(255,31,142,.3)}
   /* played songs show via the green daub only - no outline (per Dean) */
   .cc.free.daub{background:linear-gradient(135deg,var(--pink),var(--pink-deep));box-shadow:none}
+  /* MARKED BUT NOT PLAYED. The BINGO button is judged against the songs the HOST has played,
+     so a player who tapped a square by mistake saw a full line and was told "not yet", which
+     reads as broken. These are the squares that are in the way, outlined only while the
+     message is up so the card is not decorated the rest of the night. */
+  .cc.early{border-color:var(--roll);border-width:2px;box-shadow:0 0 0 2px rgba(245,165,36,.22)}
+  /* Easy mode only: the square we just marked for you gives a short pulse, so a player who is
+     letting the phone do the work can still see their card moving. */
+  .cc.justdone{animation:justdone 1.1s ease-in-out 3}
+  @keyframes justdone{0%,100%{box-shadow:0 4px 12px rgba(255,31,142,.3)}50%{box-shadow:0 0 0 4px rgba(255,255,255,.55)}}
   .pmsg{font-size:13px;color:var(--muted);text-align:center;margin:16px 0;min-height:38px;line-height:1.4}
   .pmsg.no{color:var(--roll)}
   .pmsg.wait{color:var(--gold)}
   .bingoBtn{background:var(--gold);color:#1a1000;box-shadow:0 8px 24px rgba(255,194,75,.4);font-size:22px;text-transform:uppercase;letter-spacing:.06em;padding:20px}
   .bingoBtn:active{filter:brightness(.95)}
 
-  .lastcalled{text-align:center;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
+  /* THE PRIZE STRIP. What you are playing for, above the card, big enough to read at arm's
+     length in a dim room. It used to appear only on the win screen, so a player found out
+     what they had won after they had won it, and on a progressive night the pattern changed
+     mid-game with nothing but an 11px pill to say so. */
+  .prizestrip{display:block;width:100%;text-align:center;margin:0 0 12px;padding:11px 14px;border-radius:12px;
+    background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);color:var(--gold);
+    font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;line-height:1.3}
+  .prizestrip b{color:#fff;font-weight:800}
+  .prizestrip.flash{animation:prizeflash 1.2s ease-in-out 3}
+  @keyframes prizeflash{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 4px rgba(255,194,75,.3)}}
+  body.light .prizestrip{color:#8a6100}
+  body.light .prizestrip b{color:#191420}
+  /* 44px minimum: this is a button now, it opens the list of songs played so far. */
+  .lastcalled{display:block;width:100%;min-height:44px;text-align:center;margin-bottom:14px;padding:11px 12px;
+    background:none;border:1px solid var(--line-2);border-radius:12px;cursor:pointer;
+    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
   .lastcalled b{color:#fff;font-size:15px}
+  .lastcalled .tap{display:block;font-family:'Manrope',sans-serif;font-size:11.5px;color:var(--faint);margin-top:3px}
+  /* The catch-up list. Someone back from the bar cannot see which songs went by, so they miss
+     squares or ask the table. Newest first, and one button marks every one that is on the card. */
+  .sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.66);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+  .sheet{width:100%;max-width:460px;max-height:82vh;display:flex;flex-direction:column;background:var(--ink-2);
+    border:1px solid var(--line);border-bottom:none;border-radius:16px 16px 0 0;padding:16px 16px 22px}
+  .sheet h3{margin:0;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;color:#fff}
+  .sheet .sh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px}
+  .sheet .shsub{font-size:12.5px;color:var(--muted);margin:0 0 12px;line-height:1.45}
+  .sheetlist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+  .srow{display:flex;align-items:center;gap:10px;min-height:44px;padding:9px 4px;border-bottom:1px solid var(--line-2);font-size:14.5px;color:var(--text)}
+  .srow:last-child{border-bottom:none}
+  .srow .sn{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--faint);flex:none;min-width:26px}
+  .srow .st{flex:1;line-height:1.3}
+  .srow .sy{flex:none;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--win)}
+  .srow.mine .st{color:#fff;font-weight:700}
+  .sheetempty{padding:22px 4px;text-align:center;color:var(--faint);font-size:13.5px;line-height:1.5}
+  .sheet .btn{margin-top:12px}
+  .sheet .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .closex{width:44px;height:44px;flex:none;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:12px;font-size:19px;line-height:1;cursor:pointer}
+  body.light .sheet h3, body.light .srow.mine .st{color:#191420}
 
   /* menu (top-right of the bar): Easy mode + Light mode + Leave game */
-  .menubtn{position:absolute;top:12px;right:14px;width:38px;height:38px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
+  .menubtn{position:absolute;top:12px;right:14px;width:44px;height:44px;border:1px solid var(--line);background:var(--ink-3);color:var(--text);border-radius:10px;font-size:17px;line-height:1;cursor:pointer}
   .menupanel{position:absolute;top:56px;right:12px;background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:6px;min-width:216px;z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.75)}
-  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
+  .menuitem{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:12px 14px;background:none;border:none;color:var(--text);font-family:'Manrope',sans-serif;font-size:14.5px;text-align:left;cursor:pointer;border-radius:8px}
   .menuitem:hover{background:var(--ink-3)}
   .menuitem span{display:flex;flex-direction:column;gap:2px}
   .menuitem small{color:var(--faint);font-size:11.5px}
@@ -149,7 +195,7 @@
   <div class="view center hidden" id="vNoRoom">
     <div class="pbig">Enter the<br>game code</div>
     <div class="psub">Scan the QR on the big screen, or type the 6-character code shown there.</div>
-    <div class="field"><input id="roomIn" class="code" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+    <div class="field"><input id="roomIn" class="code" maxlength="6" placeholder="ACD234" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
     <div class="cerr" id="roomErr"></div>
     <div class="field"><button class="btn pink" id="roomBtn">Continue</button></div>
   </div>
@@ -176,7 +222,8 @@
   <!-- CARD -->
   <div class="view hidden" id="vCard">
     <div class="cardhead"><span class="pn" id="cardName">Player</span><span class="cardpat" id="cardPat">One line across</span></div>
-    <div class="lastcalled" id="lastCalled">No songs played yet</div>
+    <div class="prizestrip" id="prizeStrip">Playing for <b>the prize</b></div>
+    <button type="button" class="lastcalled" id="lastCalled">No songs played yet</button>
     <div class="cardctl">
       <span class="czlbl">Size</span>
       <button type="button" id="zoomOut" class="czbtn" aria-label="Smaller">&#8722;</button>
@@ -192,7 +239,7 @@
   <div class="view center hidden wonwrap" id="vWon">
     <div class="wonemoji" style="font-size:52px">&#127881;</div>
     <div class="pbig" style="color:var(--win)">YOU WON!</div>
-    <div class="psub">Show your card to the host to claim</div>
+    <div class="psub" id="wonSub">Show your card to the host to claim</div>
     <div class="prizebox" id="wonPrize">the prize</div>
     <div class="pnote">Card <b id="wonCard" style="color:var(--muted)">#000</b></div>
   </div>
@@ -203,6 +250,17 @@
     <div class="pbig" id="lostName">Someone</div>
     <div class="psub">took this one. Nice game!</div>
     <div class="pnote">Sit tight, the host may start another round.</div>
+  </div>
+</div>
+
+<!-- CATCH UP: every song played so far, newest first -->
+<div class="sheetbg hidden" id="playedSheet">
+  <div class="sheet">
+    <div class="sh"><h3 id="sheetTitle">Songs played</h3><button type="button" class="closex" id="sheetClose" aria-label="Close">&times;</button></div>
+    <p class="shsub">Newest first. The ones on your card are in white.</p>
+    <div class="sheetlist" id="sheetList"></div>
+    <button type="button" class="btn pink" id="markMissed">Mark every one on my card</button>
+    <button type="button" class="btn ghost" id="sheetDone">Close</button>
   </div>
 </div>
 
@@ -348,7 +406,12 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     /* The end screens are where a punter will actually answer something: the game
        is over and there is nothing to do until the host starts another. One tap,
        asked once per game, and it never blocks the screen if the Worker is away. */
-    if(P.won){ $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo; show("vWon"); askHowItWent("vWon"); return; }
+    if(P.won){
+      $("wonPrize").textContent=P.prize; $("wonCard").textContent="#"+P.cardNo;
+      // Two people got there on the same song: say so, so nobody is surprised at the host.
+      $("wonSub").textContent = P.split ? "You share this one. Show your card to the host to claim." : "Show your card to the host to claim";
+      show("vWon"); askHowItWent("vWon"); return;
+    }
     if(P.ended){ show("vLost"); askHowItWent("vLost"); return; }
     if(!P.room){ show("vNoRoom"); return; }
     if(!P.joined){ show("vJoin"); return; }
@@ -359,7 +422,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // ---- card render ----
   function autoDaub(){
     if(!P.cells || !P.assist) return; var set=playedSet();   // Easy mode only: off by default, player marks by ear
-    for(var i=0;i<25;i++){ if(i!==12 && isCovered(set,i)) P.daubs[i]=true; }
+    // The squares we mark FOR them get a short pulse, so a player letting the phone do the
+    // work can still see their card move when their song comes up.
+    for(var i=0;i<25;i++){ if(i!==12 && isCovered(set,i)){ if(!P.daubs[i]) _justDone.push(i); P.daubs[i]=true; } }
   }
   var cz=1;   // card zoom (older players): scales the card width AND the fit-to-cell font cap together
   function fitCells(){
@@ -386,11 +451,63 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }catch(e){}
   }
 
+  /* THE PRIZE, ABOVE THE CARD. A player used to find out what they were playing for on the
+     screen that told them they had won it. On a progressive night the pattern changes mid-game
+     as well, so both live here and the strip flashes when the host carries the game on. */
+  function prizeText(){
+    var pat=PATTERN_NAMES[P.pattern]||P.pattern||"One line across";
+    var pz=(P.prize||"").trim();
+    if(!pz || pz.toLowerCase()==="the prize") return esc(pat)+" wins this round";
+    return esc(pat)+" for <b>"+esc(pz)+"</b>";
+  }
+  function renderPrizeStrip(){ var el=$("prizeStrip"); if(el) el.innerHTML=prizeText(); }
+  function flashPrizeStrip(){
+    var el=$("prizeStrip"); if(!el) return;
+    renderPrizeStrip();
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+  }
+
+  /* THE CATCH-UP LIST. Someone back from the bar cannot see which songs went by. Newest first,
+     the ones on their own card picked out, and one button to mark them. Marking is cosmetic
+     either way: the Worker judges a claim against the songs the HOST played, so this can only
+     save a player from missing a square they had already earned. */
+  var _showEarly=false, _justDone=[];
+  function myCardTitles(){
+    var m={}; if(!P.cells) return m;
+    for(var i=0;i<25;i++){ if(i===12) continue; var t=cellTitle(i); if(t) m[t]=i; }
+    return m;
+  }
+  function renderPlayedSheet(){
+    var list=$("sheetList"); if(!list) return;
+    var mine=myCardTitles(), n=P.played.length, html="";
+    $("sheetTitle").textContent = n ? (n===1 ? "1 song played" : n+" songs played") : "Songs played";
+    for(var i=n-1;i>=0;i--){
+      var t=P.played[i], on=Object.prototype.hasOwnProperty.call(mine,t);
+      html+='<div class="srow'+(on?' mine':'')+'"><span class="sn">'+(i+1)+'.</span><span class="st">'+esc(t)+'</span>'+
+            (on?'<span class="sy">On your card</span>':'')+'</div>';
+    }
+    list.innerHTML = html || '<div class="sheetempty">Nothing has played yet. The songs appear here as the host plays them, newest first.</div>';
+    var mm=$("markMissed"); if(mm) mm.disabled = !n || !P.cells;
+  }
+  function openPlayedSheet(){ renderPlayedSheet(); $("playedSheet").classList.remove("hidden"); }
+  function closePlayedSheet(){ $("playedSheet").classList.add("hidden"); }
+  function markMissed(){
+    if(!P.cells) return;
+    var set=playedSet();
+    for(var i=0;i<25;i++){ if(i!==12 && isCovered(set,i)) P.daubs[i]=true; }
+    closePlayedSheet();
+    renderCard();
+    setMsg("Caught up. Every song that has played is marked on your card.","");
+  }
+
   function renderCard(){
     $("cardName").textContent=P.name;
     $("cardPat").textContent=PATTERN_NAMES[P.pattern]||P.pattern;
+    renderPrizeStrip();
     // we never name the song - the player recognises it by ear and taps it on their card (or turns on Easy mode)
-    $("lastCalled").innerHTML = P.played.length ? ("<b>"+P.played.length+"</b> played &middot; listen and tap it on your card") : "No songs played yet";
+    $("lastCalled").innerHTML = P.played.length
+      ? ("<b>"+P.played.length+"</b> played &middot; listen and tap it on your card<span class=\"tap\">Tap to see every song played</span>")
+      : "No songs played yet<span class=\"tap\">The first song is coming up</span>";
     var set=playedSet();
     var wrap=$("cardGrid");
 
@@ -426,13 +543,20 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     for(var j=0;j<25;j++){
       if(j===12) continue;
       var el=wrap.children[j]; if(!el) continue;
-      var t=titles[j];
       var wantDaub=!!P.daubs[j];
-      var wantOn=!!(P.assist && t && set[t]);   // no song hint on the card unless Easy mode is on
+      /* Marked, but the host has not played it. Only drawn while _showEarly is on, which is
+         the few seconds after a BINGO that could not be a BINGO. The old line here read
+         set[t] on the wrong level of the played set, so it was always false and there was no
+         CSS behind it either: it drew nothing, ever. */
+      var wantEarly=!!(_showEarly && wantDaub && !isCovered(set,j));
       if(el.classList.contains("daub")!==wantDaub) el.classList.toggle("daub", wantDaub);
-      if(el.classList.contains("on")!==wantOn) el.classList.toggle("on", wantOn);
+      if(el.classList.contains("early")!==wantEarly) el.classList.toggle("early", wantEarly);
     }
     if(fresh) fitCells();
+    while(_justDone.length){
+      var jd=wrap.children[_justDone.pop()];
+      if(jd && !jd.classList.contains("free")){ jd.classList.remove("justdone"); void jd.offsetWidth; jd.classList.add("justdone"); }
+    }
     if(P.claimPending){ $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait"); }
     else { $("bingoBtn").disabled=false; setMsg("Tap a title when you hear it. Hit BINGO when you have the pattern.",""); }
   }
@@ -577,10 +701,37 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       $("joinErr").textContent=(e && e.message) ? e.message : "Could not join, check the code and try again.";
     }).then(function(){ btn.disabled=false; btn.textContent="Join"; route(); });
   }
+  /* WHY "NOT YET" IS NOT A BUG. The pattern is checked against the songs the HOST has played,
+     not the squares the player has tapped, so a stray tap gives them a full line on the card
+     and a refusal on the button. That reads as broken and they call the host over. Say which
+     squares are in the way and outline them for ten seconds. */
+  var _earlyTimer=null;
+  function earlyMarked(){
+    if(!P.cells) return [];
+    var set=playedSet(), out=[];
+    for(var i=0;i<25;i++){ if(i!==12 && P.daubs[i] && !isCovered(set,i)) out.push(i); }
+    return out;
+  }
+  function sayNotYet(){
+    var early=earlyMarked();
+    _showEarly=early.length>0;
+    // renderCard FIRST: it writes its own message at the end, so a message set before it is wiped.
+    if(P.cells) renderCard();
+    if(early.length){
+      setMsg("You have marked "+early.length+" song"+(early.length===1?"":"s")+" that "+(early.length===1?"has":"have")+" not played yet. They are outlined in orange, tap one to unmark it. Keep listening!","no");
+      if(_earlyTimer) clearTimeout(_earlyTimer);
+      _earlyTimer=setTimeout(function(){
+        _showEarly=false;
+        if(P.active && P.cells && !P.won && !P.ended) renderCard();
+      }, 10000);
+    } else {
+      setMsg("Not yet, keep listening. The songs for that pattern have not all been played.","no");
+    }
+  }
   function pressBingo(){
     if(!P.active || !P.cells || P.claimPending || P.won || !P.gameId) return;
     // Quick local gate to avoid a needless server call; the Worker is the authority.
-    if(!checkPattern()){ setMsg("Not yet, keep listening. That pattern is not complete on your card yet.","no"); return; }
+    if(!checkPattern()){ sayNotYet(); return; }
     P.claimPending=true; $("bingoBtn").disabled=true; setMsg("BINGO sent. The host is checking your card&hellip;","wait");
     playerPost("/player/claim",{ game_id:P.gameId }).then(function(r){
       if(r && r.auto_verdict==="valid"){
@@ -589,7 +740,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         send({ t:"claim", claim_id:r.claim_id, pid:P.pid, name:P.name, cardNo:(r.card_no||P.cardNo), cells:P.cells });
       } else {
         P.claimPending=false; $("bingoBtn").disabled=false;
-        setMsg("Not yet, keep listening. The songs for that pattern have not all been played.","no");
+        sayNotYet();
       }
     }).catch(function(e){
       P.claimPending=false; $("bingoBtn").disabled=false;
@@ -629,16 +780,26 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       P.played=m.played||P.played; if(m.played_ids) P.playedIds=m.played_ids; P.active=true;
       autoDaub();
       if(P.joined && !P.won && !P.ended){ if(P.cells){ renderCard(); show("vCard"); } else { fetchCard(); } }
+      // keep the catch-up list current if it happens to be open when a song lands
+      if(!$("playedSheet").classList.contains("hidden")) renderPlayedSheet();
     }
     else if(m.t==="claim_pending"){
       // another player (or me) claimed; nothing to change locally unless it is my pending
     }
     else if(m.t==="resume"){
-      if(P.claimPending){ P.claimPending=false; $("bingoBtn").disabled=false; setMsg("The host said not yet. Keep playing!","no"); }
+      /* ONLY THE PHONE THE HOST ACTUALLY WAVED OFF. This used to fire on every phone with a
+         claim waiting, so a second player who hit BINGO on the same song was told "not yet" by
+         a host who had never seen their card. A host still on the old build sends no pid, and
+         then the old behaviour is the safe one. */
+      if(m.pid && m.pid!==P.pid) return;
+      if(P.claimPending){ P.claimPending=false; $("bingoBtn").disabled=false; setMsg("The host checked your card and it is not a winner yet. Keep playing!","no"); }
     }
     else if(m.t==="winner"){
       P.claimPending=false;
-      if(m.pid===P.pid){ P.won=true; route(); celebrate(); }
+      // pids carries a split (two people on the same song); pid alone is an older host.
+      var mine=(m.pid===P.pid) || (m.pids && m.pids.indexOf && m.pids.indexOf(P.pid)>=0);
+      closePlayedSheet();
+      if(mine){ P.won=true; P.split=!!m.split; P.winNames=(m.names||[]).slice(); route(); celebrate(); }
       else { P.ended=true; $("lostName").textContent=(m.name||"Someone")+" won"; route(); }
     }
     else if(m.t==="carryon"){   // progressive round: same card, new pattern + prize, everyone plays on
@@ -646,9 +807,10 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(typeof m.prize==="string") P.prize=m.prize;
       if(m.played) P.played=m.played;
       if(m.played_ids) P.playedIds=m.played_ids;
-      P.won=false; P.ended=false; P.claimPending=false; P.active=true;
+      P.won=false; P.ended=false; P.claimPending=false; P.active=true; P.split=false;
       autoDaub();
-      if(P.joined && P.cells){ renderCard(); show("vCard"); }
+      closePlayedSheet();
+      if(P.joined && P.cells){ renderCard(); show("vCard"); flashPrizeStrip(); }
       else if(P.joined){ fetchCard(); }
       else { route(); }
     }
@@ -720,9 +882,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   $("cardGrid").addEventListener("click", function(e){
     var cell=e.target.closest(".cc"); if(!cell || cell.classList.contains("free")) return;
     var i=cell.getAttribute("data-i"); if(i===null) return; i=parseInt(i,10);
-    if(P.daubs[i]){ delete P.daubs[i]; cell.classList.remove("daub"); }
+    if(P.daubs[i]){ delete P.daubs[i]; cell.classList.remove("daub"); cell.classList.remove("early"); }
     else { P.daubs[i]=true; cell.classList.add("daub"); }
   });
+  // ---- the catch-up list (tap the "N played" line) ----
+  var _lc=$("lastCalled"); if(_lc) _lc.addEventListener("click", openPlayedSheet);
+  var _sc=$("sheetClose"); if(_sc) _sc.addEventListener("click", closePlayedSheet);
+  var _sd=$("sheetDone"); if(_sd) _sd.addEventListener("click", closePlayedSheet);
+  var _mm=$("markMissed"); if(_mm) _mm.addEventListener("click", markMissed);
+  var _sb=$("playedSheet"); if(_sb) _sb.addEventListener("click", function(e){ if(e.target===_sb) closePlayedSheet(); });
   // ---- easy mode (auto-mark played songs): off by default, so normally the player marks by ear ----
   function loadAssist(){ try{ return localStorage.getItem("vp-assist")==="1"; }catch(e){ return false; } }
   function setAssist(on){ P.assist=!!on; try{ localStorage.setItem("vp-assist", on?"1":"0"); }catch(e){} if(on) autoDaub(); if(P.cells) renderCard(); }

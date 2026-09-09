@@ -49,7 +49,7 @@
   select:focus,input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,31,142,.15)}
   select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 17px,calc(100% - 13px) 17px;background-size:5px 5px;background-repeat:no-repeat}
 
-  .btn{border:none;border-radius:10px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
+  .btn{border:none;border-radius:10px;min-height:44px;padding:11px 15px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s;letter-spacing:.01em}
   .btn.pink{background:var(--pink);color:#fff;box-shadow:0 8px 20px rgba(255,31,142,.3)}
   .btn.pink:hover{background:var(--pink-deep)}
   .btn.ghost{background:var(--ink-3);color:var(--text);border:1px solid var(--line)}
@@ -68,7 +68,7 @@
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:600}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .seg{display:flex;gap:5px;background:var(--ink-3);padding:4px;border-radius:11px;border:1px solid var(--line-2)}
-  .seg button{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:.15s}
+  .seg button{flex:1;min-height:44px;padding:8px 4px;border:none;background:transparent;color:var(--muted);border-radius:8px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:.15s}
   .seg button.on{background:var(--pink);color:#fff}
 
   .stat{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
@@ -89,9 +89,18 @@
   .qmeta .live{margin-left:auto;display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
   .qmeta .live b{color:#fff}
   .qmeta .live .cd{color:var(--gold)}
-  .qtext-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#fff;line-height:1.25;margin-bottom:11px}
-  .opt{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line-2);border-radius:10px;margin-bottom:7px;font-size:13px;background:var(--ink-2)}
-  .opt .ol{font-family:'Anton',sans-serif;font-size:15px;width:20px;text-align:center;color:var(--muted)}
+  .qtext-h{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:20px;color:#fff;line-height:1.25;margin-bottom:11px}
+  /* Picture round: the host reads the picture out to the room, so it has to be on the card. */
+  .qimg-h{display:block;max-width:100%;max-height:240px;border-radius:10px;border:1px solid var(--line-2);background:#000;margin:0 auto 12px;object-fit:contain}
+  .qimg-h.thumb{max-height:110px;margin:8px 0 0;border-color:rgba(255,194,75,.35)}
+  .opt .cnt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:var(--muted);min-width:34px;text-align:right}
+  .opt.correct .cnt{color:var(--win)}
+  .opt .bar{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.05);border-radius:10px;pointer-events:none}
+  .opt.correct .bar{background:rgba(53,208,127,.10)}
+  .opt.split{position:relative;overflow:hidden}
+  .opt.split>*:not(.bar){position:relative}
+  .opt{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line-2);border-radius:10px;margin-bottom:7px;font-size:15px;background:var(--ink-2)}
+  .opt .ol{font-family:'Anton',sans-serif;font-size:17px;width:22px;text-align:center;color:var(--muted)}
   .opt .otx{flex:1;color:var(--text)}
   .opt.correct{border-color:rgba(53,208,127,.5);background:rgba(53,208,127,.10)}
   .opt.correct .otx{color:var(--win);font-weight:700}
@@ -101,8 +110,9 @@
   .since{font-size:12px;color:var(--faint);margin:0 0 14px}
   .since b{color:var(--muted)}
 
-  .board-h{margin:6px 0 0}
-  .brow-h{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:7px 10px;border-top:1px solid var(--line-2);font-size:13px}
+  .board-h{margin:6px 0 0;max-height:min(60vh,520px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .board-h .allof{font-size:11.5px;color:var(--faint);padding:8px 10px 2px}
+  .brow-h{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-top:1px solid var(--line-2);font-size:14px}
   .brow-h .rk{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--muted)}
   .brow-h .nm{color:#fff;font-weight:600}
   .brow-h .sc{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold)}
@@ -206,6 +216,12 @@
             <label>Speed bonus (faster answers score more, up to +50%)</label>
             <div class="seg" id="cfgSpeed"><button data-v="on" class="on">On</button><button data-v="off">Off</button></div>
           </div>
+          <div class="field">
+            <label>Answer buttons on phones</label>
+            <div class="seg" id="cfgColour"><button data-v="on" class="on">Four colours</button><button data-v="off">Plain</button></div>
+            <div class="note" style="margin-top:4px">Four colours is faster to pick in a noisy room and matches the TV. Plain shows grey buttons.</div>
+          </div>
+          <div id="weekBanner" style="display:none;margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5"></div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note" style="text-align:center;margin-top:10px">Shows the join screen on the TV and gets the room ready. Then call the first question.</p>
@@ -346,7 +362,8 @@
     venueId:null, pairCode:"", sessionId:"", joinCode:"", gameId:"",
     status:"setup",                 // setup | ready | question | reveal | ended
     setId:"", questionCount:0, qtotal:0,
-    timePerQ:30, base:100, count:10, speedBonus:true, colour:false,
+    timePerQ:30, base:100, count:10, speedBonus:true, colour:true,
+    setTitle:"",                    // the night's name, shown on the TV lobby instead of a fixed "Trivia Night"
     current:null,                   // {qseq, qi, qtotal, text, options, correctIndex, endsAt, secs}
     board:[],                       // latest leaderboard rows [{name,points}] from /host/reveal
     players:{}, order:[],           // cosmetic roster (pid -> {name}) from phone broadcasts
@@ -371,7 +388,18 @@
   // Errors go to the banner under the header, NOT to the 11.5px status pill. A host mid-service
   // never sees that pill, so a failed Start used to look like a button that simply did nothing.
   // The pill keeps showing connection state so the two are not fighting over one element.
+  /* The Worker's once-a-week message carries an ISO date (2026-09-14). Nobody in a pub reads
+     that; say "Monday 14 September" instead. Any other message passes through untouched. */
+  var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function friendlyDay(iso){
+    var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||""); if(!m) return iso;
+    var d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+    return DAYS[d.getUTCDay()]+" "+d.getUTCDate()+" "+MONTHS[d.getUTCMonth()];
+  }
+  function friendlyMsg(msg){ return String(msg||"").replace(/\b(\d{4}-\d{2}-\d{2})\b/g, function(_,iso){ return friendlyDay(iso); }); }
   function hostError(msg){
+    msg=friendlyMsg(msg);
     var t=$("hostErrText"), b=$("hostErrBar");
     if(!t||!b){ $("statusText").textContent=msg||"Something went wrong"; return; }
     t.textContent=msg||"Something went wrong";
@@ -435,13 +463,13 @@
         }
         if(q && (phase==="asking"||phase==="locked")){
           var endsAt=Date.parse(q.ends_at)||0;
-          G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0 };
+          G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:-1, endsAt:endsAt, secs:0, imageUrl:q.image_url||"" };
           G.status="question"; G.answeredQseq=q.qseq; G.answeredPids={};
-          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour });
+          send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal, text:G.current.text, options:G.current.options, endsAt:endsAt, secs:remainingSecs(), colour:G.colour, imageUrl:G.current.imageUrl });
           if(remainingSecs()>0){ G.tick=setInterval(function(){ updateLive(); if(remainingSecs()<=0){ clearTick(); send({ t:"lock" }); } }, 500); }
           else { send({ t:"lock" }); }
         } else if(q && phase==="revealed"){
-          G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:(q.correct_index!=null?q.correct_index:-1), endsAt:0, secs:0 };
+          G.current={ qseq:q.qseq, qi:q.qi||q.qseq, qtotal:G.qtotal, text:q.text||"", options:Array.isArray(q.options)?q.options:[], correctIndex:(q.correct_index!=null?q.correct_index:-1), endsAt:0, secs:0, imageUrl:q.image_url||"" };
           G.status="reveal"; G.board=[];
           rebuildBoard();
         } else {
@@ -491,8 +519,8 @@
       /* An empty question set was only caught AFTER the lobby went public: the TV was already
          showing the join QR and the room had scanned in before the Worker's 409 came back. Stop it
          at the button instead, and say why. */
-      $("startBtn").textContent = noQs ? "No questions in this night" : (lobby ? "Start round" : "Open lobby");
-      $("startBtn").disabled = noQs;
+      $("startBtn").textContent = noQs ? "No questions in this night" : (G.weekHold ? "Trivia ran this week" : (lobby ? "Start round" : "Open lobby"));
+      $("startBtn").disabled = noQs || !!G.weekHold;
       var cl=$("cancelLobbyBtn"); if(cl) cl.style.display = lobby ? "" : "none";
     }
     renderPlayers();
@@ -510,11 +538,26 @@
     var box=$("hostBoard");
     if(!G.board.length){ box.innerHTML='<div class="pempty">Scores appear once the round is under way.</div>'; return; }
     box.innerHTML="";
-    for(var i=0;i<Math.min(8,G.board.length);i++){
+    /* Every team, not the top 8: with 15 tables the ones in 9th to 15th only ever saw their own
+       phone. The panel scrolls (see .board-h). Equal points share a rank ("=3") so two teams on
+       850 are not split by database order. */
+    var ranks=sharedRanks(G.board);
+    for(var i=0;i<G.board.length;i++){
       var row=el("div","brow-h"+(i===0?" top1":""));
-      row.innerHTML='<span class="rk">'+(i+1)+'</span><span class="nm">'+esc(G.board[i].name)+'</span><span class="sc">'+G.board[i].points+'</span>';
+      row.innerHTML='<span class="rk">'+ranks[i]+'</span><span class="nm">'+esc(G.board[i].name)+'</span><span class="sc">'+G.board[i].points+'</span>';
       box.appendChild(row);
     }
+    if(G.board.length>8) box.appendChild(el("div","allof","All "+G.board.length+" teams. Scroll for the rest."));
+  }
+  // [10,10,8] -> ["=1","=1","3"]. Rows arrive sorted by points from the Worker.
+  function sharedRanks(rows){
+    var out=[], rank=1;
+    for(var i=0;i<rows.length;i++){
+      if(i>0 && rows[i].points!==rows[i-1].points) rank=i+1;
+      var tied=(i>0 && rows[i].points===rows[i-1].points) || (i+1<rows.length && rows[i+1].points===rows[i].points);
+      out.push((tied?"=":"")+rank);
+    }
+    return out;
   }
 
   /* What is coming, for the host's eyes only. They read the question aloud, and until now they
@@ -532,7 +575,7 @@
     d.innerHTML='<div class="nuh">Coming up, for you to start reading</div>'+
       '<div class="nut">'+esc(G.nextUp.text)+'</div>'+
       (opts?'<div class="nuopts">'+opts+'</div>':'')+
-      (G.nextUp.image_url?'<div class="nuh" style="margin-top:6px">Picture question</div>':'');
+      (G.nextUp.image_url?'<div class="nuh" style="margin-top:6px">Picture question</div><img class="qimg-h thumb" alt="" src="'+esc(G.nextUp.image_url)+'" onerror="this.style.display=\'none\'">':'');
     return d;
   }
   function renderRun(){
@@ -541,7 +584,7 @@
     if(G.status==="ready"){
       var rd=el("div","qwrap");
       rd.innerHTML='<div class="qmeta"><span class="qn">Round armed</span></div>'+
-        '<div class="qtext-h">'+G.questionCount+' questions loaded</div>'+
+        '<div class="qtext-h">'+(G.setTitle?esc(G.setTitle)+': ':'')+G.questionCount+' questions loaded</div>'+
         '<div class="since" style="margin:0">Players are joining on their phones. Show the first question when the room is ready.</div>';
       body.appendChild(rd);
       var nb=el("button","btn pink big","First question"); nb.addEventListener("click", nextQuestion); body.appendChild(nb);
@@ -554,6 +597,9 @@
       var w=el("div","qwrap");
       w.innerHTML='<div class="qmeta"><span class="qn">Question '+(q.qi||q.qseq)+' of '+(G.qtotal||"?")+'</span>'+
         '<span class="live"><span id="hAnsWrap" style="font-weight:700"><b id="hAns">'+answeredCount()+'</b>/<span id="hTot">'+playerCount()+'</span> in</span><span class="cd" id="hCd">'+remainingSecs()+'s</span></span></div>'+
+        /* Picture round: the same image the TV shows, so the host can describe it. A broken
+           link hides itself and the question carries on as a plain text one. */
+        (q.imageUrl?'<img class="qimg-h" alt="" src="'+esc(q.imageUrl)+'" onerror="this.style.display=\'none\'">':'')+
         '<div class="qtext-h">'+esc(q.text)+'</div>';
       for(var i=0;i<q.options.length;i++){
         var correct=(i===q.correctIndex);
@@ -563,6 +609,8 @@
       }
       body.appendChild(w);
       var rv=el("button","btn win big","Reveal answer"); rv.addEventListener("click", reveal); body.appendChild(rv);
+      var at=el("button","btn ghost","+10 seconds"); at.id="addTimeBtn"; at.style.width="100%"; at.style.marginTop="8px";
+      at.addEventListener("click", function(){ addTime(10); }); body.appendChild(at);
       var nu=nextUpPanel(); if(nu) body.appendChild(nu);
       body.appendChild(endBtn("End round"));
       return;
@@ -572,8 +620,19 @@
       var q2=G.current;
       var rw=el("div","qwrap");
       rw.innerHTML='<div class="qmeta"><span class="qn">Question '+(q2.qi||q2.qseq)+' of '+(G.qtotal||"?")+' &middot; revealed</span></div>'+
-        '<div class="qtext-h">'+esc(q2.text)+'</div>'+
-        '<div class="opt correct" style="margin-top:8px"><span class="ol">'+LETTERS[q2.correctIndex]+'</span><span class="otx">'+esc(q2.options[q2.correctIndex])+'</span><span class="ck">&#10003; correct</span></div>';
+        (q2.imageUrl?'<img class="qimg-h" alt="" src="'+esc(q2.imageUrl)+'" onerror="this.style.display=\'none\'">':'')+
+        '<div class="qtext-h">'+esc(q2.text)+'</div>';
+      /* How the room split. The TV draws these bars; until now the host had to look over their
+         shoulder to banter about it. */
+      var sp=Array.isArray(G.split)?G.split:[], spTot=0;
+      for(var si=0;si<sp.length;si++) spTot+=(+sp[si]||0);
+      for(var oi=0;oi<q2.options.length;oi++){
+        var isC=(oi===q2.correctIndex), n=(+sp[oi]||0), pct=spTot?Math.round(n*100/spTot):0;
+        var od=el("div","opt split"+(isC?" correct":""));
+        od.innerHTML='<span class="bar" style="width:'+pct+'%"></span><span class="ol">'+LETTERS[oi]+'</span><span class="otx">'+esc(q2.options[oi])+'</span>'+(isC?'<span class="ck">&#10003; correct</span>':'')+'<span class="cnt" title="How many picked this">'+n+'</span>';
+        rw.appendChild(od);
+      }
+      rw.appendChild(el("div","since",'<b>'+spTot+'</b> answered'+(spTot?' &middot; '+(sp[q2.correctIndex]||0)+' got it right':'')));
       body.appendChild(rw);
       // On the last question turn the button into "Reveal leaderboard" (which shows the podium);
       // the podium never appears mid-round now.
@@ -603,7 +662,36 @@
       var again=el("button","btn pink big","Start a new round"); again.addEventListener("click", function(){ endRound(); }); body.appendChild(again);
     }
   }
-  function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", function(){ endRound(); }); return b; }
+  /* Confirm on EVERY End round. Two of the three sat directly under Reveal answer with no
+     confirm, so one fat finger in a dark pub ended the night for the room mid-question. */
+  function endBtn(label){ var b=el("button","btn ghost",label||"End round"); b.style.width="100%"; b.style.marginTop="10px"; b.addEventListener("click", function(){
+    if(!confirm("End the whole quiz now?\n\nThis finishes the round for the room. It cannot be undone.")) return;
+    endRound();
+  }); return b; }
+
+  /* MORE TIME, ASKED OF THE SERVER. The Worker owns the deadline and throws away a late
+     answer, so a clock the console stretched on its own would promise the room ten more
+     seconds and then bin what they tapped. This moves the real deadline first and only then
+     tells the phones and the TV. If the route is not deployed yet the host is told plainly
+     and the question carries on with the time it had. */
+  function addTime(secs){
+    if(G.status!=="question" || !G.gameId || !G.current) return;
+    var b=$("addTimeBtn");
+    if(remainingSecs()<=0){ hostError("That question is out of time. Reveal the answer and carry on."); return; }
+    if(b){ b.disabled=true; b.textContent="Adding\u2026"; }
+    function done(){ if(b){ b.disabled=false; b.textContent="+10 seconds"; } }
+    apiPost("/host/question/add-time",{ game_id:G.gameId, seconds:secs }).then(function(r){
+      var ends=Date.parse(r&&r.ends_at)||0;
+      if(!ends) throw new Error("The server did not send back a new finish time.");
+      G.current.endsAt=ends;
+      bcast({ t:"time", qseq:G.current.qseq, endsAt:ends, secs:remainingSecs() });
+      updateLive(); done();
+    }).catch(function(e){
+      done();
+      if(e && e.status===404) hostError("Extra time is not switched on at the server yet. This question keeps the time it started with.");
+      else hostError((e&&e.message)||"Could not add time.");
+    });
+  }
 
   function updateLive(){
     var e=$("hAns"), c=$("hCd"), t=$("hTot"), w=$("hAnsWrap");
@@ -621,6 +709,8 @@
     G.base=Math.max(0, parseInt($("cfgBase").value,10)||0);
     G.count=Math.max(1, Math.min(100, parseInt($("cfgCount").value,10)||10));
     G.setId=$("setSel").value||"";
+    var so=$("setSel").options[$("setSel").selectedIndex];
+    G.setTitle=(so && so.getAttribute("data-title"))||"";
   }
   function openSession(){
     if(!G.venueId){ return Promise.reject(new Error("no venue linked to this login")); }
@@ -644,8 +734,9 @@
   function openLobby(){
     if(G.busy) return;
     G.busy=true; var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Opening..."; }
+    readSettings();
     openSession().then(function(){
-      bcast({ t:"mode", mode:"trivia" });   // TV shows the trivia join screen
+      bcast({ t:"mode", mode:"trivia", title:G.setTitle });   // TV shows the trivia join screen, named after the night
       G.status="lobby";
       gsend({ t:"rollcall" });               // new round: pull the still-connected players back onto the roster
       bcast({ t:"players", count:playerCount() });
@@ -666,7 +757,7 @@
     G.busy=true;
     var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Starting..."; }
     openSession().then(function(){
-      bcast({ t:"mode", mode:"trivia" });
+      bcast({ t:"mode", mode:"trivia", title:G.setTitle });
       return apiPost("/host/game",{
         session_id:G.sessionId, format:"trivia", question_set_id:G.setId,
         time_limit_s:G.timePerQ, base_points:G.base, speed_bonus:G.speedBonus, colour:G.colour,
@@ -676,7 +767,7 @@
       G.gameId=r.game_id; G.questionCount=r.question_count; G.qtotal=r.question_count;
       G.status="ready"; G.board=[]; G.current=null;
       saveTrivia();
-      bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour });
+      bcast({ t:"started", game_id:G.gameId, question_count:r.question_count, colour:G.colour, title:G.setTitle });
       bcast({ t:"players", count:playerCount() });
       renderConsole();
     }).catch(function(e){ hostError(e.message); }).then(function(){
@@ -691,7 +782,7 @@
         correctIndex:r.correct_index, endsAt:Date.parse(r.ends_at), secs:r.secs, imageUrl:r.image_url||"" };
       G.nextUp = r.next_preview || null;   // host-only: what to start reading before tapping Next
       G.qtotal=r.qtotal||G.qtotal;
-      G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq;
+      G.status="question"; G.answeredPids={}; G.answeredQseq=r.qseq; G.split=[];
       saveTrivia();
       // PUBLIC broadcast: text + options + optional picture, NEVER correct_index.
       bcast({ t:"question", game_id:G.gameId, qseq:r.qseq, qi:r.qi, qtotal:r.qtotal,
@@ -716,7 +807,7 @@
   function reveal(){
     if(G.busy || G.status!=="question" || !G.gameId) return; G.busy=true; clearTick();
     apiPost("/host/reveal",{ game_id:G.gameId }).then(function(r){
-      G.status="reveal"; G.board=r.leaderboard||[];
+      G.status="reveal"; G.board=r.leaderboard||[]; G.split=r.split||[];
       saveTrivia();
       if(G.current) G.current.correctIndex=r.correct_index;
       // Safe to send correct_index now, the reveal has happened.
@@ -778,7 +869,7 @@
         // A freshly (re)loaded screen: re-hand the session + replay the running state.
         send({ t:"host_here" });
         if(G.sessionId && G.joinCode) send({ t:"session", session_id:G.sessionId, join_code:G.joinCode });
-        if(G.status!=="setup"){ send({ t:"mode", mode:"trivia" }); send({ t:"players", count:playerCount() }); }
+        if(G.status!=="setup"){ send({ t:"mode", mode:"trivia", title:G.setTitle }); send({ t:"players", count:playerCount() }); }
         /* REPLAY WHAT IS ACTUALLY ON. trivia/screen.html never calls the game Worker, so a
            freshly loaded screen has no way to learn the state on its own: it sat on the join QR
            through a live question until the host tapped Next. The screen reloads more often than
@@ -792,7 +883,7 @@
           if(remainingSecs()<=0) send({ t:"lock" });
         } else if(G.status==="reveal" && G.current){
           send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
-                 options:G.current.options, split:[], leaderboard:G.board });
+                 options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
           if(G.board.length) send({ t:"leaderboard", title:"Leaderboard", rows:G.board });
         } else if(G.status==="ended" && G.board.length){
           send({ t:"podium", top:G.board.slice(0,3), rows:G.board });
@@ -852,11 +943,14 @@
         rows.forEach(function(s){ if(s.owner_venue_id===G.venueId) mine.push(s); else lib.push(s); });
         function opt(s){ var o=document.createElement("option"); o.value=s.id;
           o.textContent=(s.title||"Untitled set")+(s.question_count!=null?(" ("+s.question_count+")"):"");
-          o.setAttribute("data-count", s.question_count!=null?s.question_count:0); return o; }
+          o.setAttribute("data-count", s.question_count!=null?s.question_count:0);
+          o.setAttribute("data-title", s.title||"Trivia Night"); return o; }
         sel.innerHTML="";
         if(!rows.length){ var o0=document.createElement("option"); o0.value=""; o0.textContent="No question sets found"; sel.appendChild(o0); G.questionCount=0; $("setupQs").textContent="0"; return; }
         if(mine.length){ var g1=document.createElement("optgroup"); g1.label="Your sets"; mine.forEach(function(s){ g1.appendChild(opt(s)); }); sel.appendChild(g1); }
         if(lib.length){ var g2=document.createElement("optgroup"); g2.label="VenuePlay Trivia Library"; lib.forEach(function(s){ g2.appendChild(opt(s)); }); sel.appendChild(g2); }
+        // "Run it now" in the builder lands here with ?set=<id>: pick that night without a hunt.
+        var want=setFromUrl(); if(want){ for(var k=0;k<sel.options.length;k++){ if(sel.options[k].value===want){ sel.selectedIndex=k; break; } } }
         syncSetCount();
       }, function(){ sel.innerHTML='<option value="">Could not load question sets</option>'; });
   }
@@ -864,6 +958,7 @@
     var sel=$("setSel"), opt=sel.options[sel.selectedIndex];
     var c=opt?parseInt(opt.getAttribute("data-count"),10):0;
     G.setId=sel.value||""; G.questionCount=(c>=0?c:0);
+    G.setTitle=(opt && opt.getAttribute("data-title"))||"";
     $("setupQs").textContent=G.questionCount;
     // Default the round to the WHOLE set so a host's questions all play (was stuck at 10). They can lower it.
     if($("cfgCount") && G.questionCount>0){ $("cfgCount").value=Math.min(100, G.questionCount); }
@@ -904,8 +999,29 @@
     document.querySelectorAll("#cfgColour button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on");
   }); });
 
+  /* ONCE-A-WEEK, SAID UP FRONT. The Worker refuses a second trivia night inside 7 days, but it
+     only said so at Start, after the QR was on the TV and the room had scanned in. The venue row
+     already carries last_trivia_at (migration 13), so mirror the Worker's rule here and say it
+     before the lobby opens. The Worker stays the referee: this only warns and parks the button,
+     and "Open anyway" hands the decision back to it (an 8 hour resume grace lives there too). */
+  function weeklyPreCheck(v){
+    var bn=$("weekBanner"); if(!bn || !v || !v.last_trivia_at) return;
+    if(G.status!=="setup") return;                     // a recovered live quiz is never blocked
+    var last=new Date(v.last_trivia_at).getTime(); if(isNaN(last)) return;
+    var elapsed=Date.now()-last, WEEK=7*24*3600*1000, GRACE=8*3600*1000;
+    if(elapsed<GRACE || elapsed>=WEEK) return;
+    var nextIso=new Date(last+WEEK+10*3600*1000).toISOString().slice(0,10);
+    bn.innerHTML='Trivia has already run at this venue this week. Your next trivia night is available from <b>'+friendlyDay(nextIso)+'</b>. '+
+      '<button type="button" id="weekAnyway" style="background:none;border:1px solid rgba(245,165,36,.5);border-radius:7px;color:#F5A524;font-weight:700;font-size:12px;padding:4px 10px;margin-left:6px;cursor:pointer;min-height:32px">Open anyway</button>';
+    bn.style.display="";
+    var sb=$("startBtn"); if(sb){ sb.disabled=true; sb.textContent="Trivia ran this week"; }
+    G.weekHold=true;
+    $("weekAnyway").addEventListener("click", function(){ G.weekHold=false; bn.style.display="none"; renderConsole(); });
+  }
+
   // ---- boot: resolve the host login, then let them pair + run ----
   function showSignIn(msg){ if(msg) $("signinSub").textContent=msg; $("signinView").classList.remove("hidden"); $("connectView").classList.add("hidden"); if($("runHelp")) $("runHelp").classList.add("hidden"); }
+  function setFromUrl(){ var m=/[?&]set=([^&]+)/.exec(window.location.search); if(!m) return ""; var v=decodeURIComponent(m[1]); return /^[0-9a-f-]{36}$/i.test(v)?v:""; }
   function tvFromUrl(){ var m=/[?&]tv=([^&]+)/.exec(window.location.search); if(!m) return ""; var c=decodeURIComponent(m[1]).toUpperCase().replace(/[^ACDEFGHJKMNPQRSTUVWXYZ2345679]/g,"").slice(0,6); return CODE_RE.test(c)?c:""; }
 
   $("statusText").textContent="Checking sign in";
@@ -922,7 +1038,10 @@
         if(s.trivia_base_points!=null){ G.base=s.trivia_base_points; var bp=$("cfgBase"); if(bp) bp.value=s.trivia_base_points; }
         if(s.trivia_speed_bonus!=null){ G.speedBonus=!!s.trivia_speed_bonus;
           var seg=$("cfgSpeed"); if(seg){ Array.prototype.forEach.call(seg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.speedBonus); }); } }
+        if(s.trivia_colour!=null){ G.colour=!!s.trivia_colour;
+          var cseg=$("cfgColour"); if(cseg){ Array.prototype.forEach.call(cseg.children, function(bt){ bt.classList.toggle("on", (bt.getAttribute("data-v")==="on")===G.colour); }); } }
       }).catch(function(){}); }
+      weeklyPreCheck(ctx.venue);
       // Tell vp-session when a quiz is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open
       // so signing back in restores it instead of burning the once-a-week trivia slot.
@@ -957,7 +1076,7 @@
      quiz is left alone: closing the tab mid-question must not wipe it off the screen. */
   function reassertToTv(){
     if(G.status==="setup") return;
-    send({ t:"mode", mode:"trivia" });
+    send({ t:"mode", mode:"trivia", title:G.setTitle });
     send({ t:"players", count:playerCount() });
     if(G.status==="question" && G.current){
       send({ t:"question", game_id:G.gameId, qseq:G.current.qseq, qi:G.current.qi, qtotal:G.qtotal,
@@ -966,7 +1085,7 @@
       if(remainingSecs()<=0) send({ t:"lock" });
     } else if(G.status==="reveal" && G.current){
       send({ t:"reveal", qseq:G.current.qseq, correctIndex:G.current.correctIndex,
-             options:G.current.options, split:[], leaderboard:G.board });
+             options:G.current.options, split:(G.split||[]), leaderboard:G.board, imageUrl:(G.current.imageUrl||"") });
     } else if(G.status==="ended" && G.board.length){
       send({ t:"podium", top:G.board.slice(0,3), rows:G.board });
     }

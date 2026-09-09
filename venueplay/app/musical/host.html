@@ -99,12 +99,40 @@
   .songrow .st{font-weight:700;color:#fff;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .songrow .sa{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .songrow .sy{opacity:.65;font-variant-numeric:tabular-nums}
-  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:6px 13px;border-radius:20px;cursor:pointer;user-select:none;border:1px solid transparent;transition:.15s;min-width:96px;justify-content:center}
+  /* 44px tall: the host taps these one-handed on a bar tablet, often mid-sentence on the mic. */
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:22px;cursor:pointer;user-select:none;border:1px solid transparent;transition:.15s;min-width:108px;min-height:44px;justify-content:center;flex:none}
   .pill.play{background:rgba(255,31,142,.12);color:var(--pink);border-color:rgba(255,31,142,.28)}
   .pill.on{background:rgba(53,208,127,.14);color:var(--win);border-color:rgba(53,208,127,.28)}
   .pill:hover{filter:brightness(1.15)}
 
   .resolve{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .resolve .btn{min-height:48px}
+  /* Every live control is at least 44px tall so a thumb finds it without looking. */
+  #liveBlock .btn{min-height:44px}
+  /* Claims: the one moment the host must not miss. The newest card pulses three times and the
+     header says how many are waiting, so two people shouting BINGO at once both get seen. */
+  .claimnote{font-size:13px;color:var(--gold);background:rgba(255,194,75,.1);border:1px solid rgba(255,194,75,.3);border-radius:10px;padding:10px 12px;margin-top:8px;line-height:1.45}
+  .claimcard .resolve .btn{min-height:52px;font-size:15px}
+  .claimcard.fresh{animation:claimpulse 1.1s ease-in-out 3}
+  @keyframes claimpulse{0%,100%{border-color:var(--line);box-shadow:none}50%{border-color:var(--win);box-shadow:0 0 0 4px rgba(53,208,127,.22)}}
+  .claimsub .when{color:var(--muted)}
+  /* Played so far: newest first, numbered, so a "that one never played" is settled in a glance. */
+  .playedstrip{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch}
+  .playedstrip:empty{display:none}
+  .playedstrip .pn{flex:none;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:8px 12px;min-height:40px;white-space:nowrap}
+  .playedstrip .pn b{font-family:'JetBrains Mono',monospace;color:var(--pink);font-size:12px}
+  .playedstrip .pn.now{border-color:rgba(255,194,75,.4);color:var(--gold)}
+  .playedempty{font-size:12.5px;color:var(--faint);padding:6px 2px 10px}
+  /* The wall code, in the console header, so the host can answer "what's the code?" without
+     turning round to the TV. */
+  .codehdr{display:inline-flex;align-items:baseline;gap:8px;margin-left:auto;text-transform:none;letter-spacing:0}
+  .codehdr .cd{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;color:var(--gold);letter-spacing:.14em}
+  .codehdr small{font-size:11px;color:var(--faint);font-weight:600}
+  .liveopts{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:10px;font-size:13px;color:var(--muted)}
+  .liveopts label{display:inline-flex;align-items:center;gap:8px;cursor:pointer;min-height:44px}
+  .liveopts input[type=checkbox]{width:20px;height:20px;accent-color:var(--pink);flex:none}
+  .liveopts select{width:auto;min-height:44px;padding:8px 34px 8px 12px;font-size:13px}
+  .fieldnote{display:block;font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.45}
 
   .players{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
   .pchip{font-size:12.5px;font-weight:600;color:var(--text);background:var(--ink-3);border:1px solid var(--line-2);border-radius:20px;padding:5px 12px}
@@ -148,7 +176,8 @@
   .clipfill{height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--pink-deep));transition:width .25s linear}
   .cliptime{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);margin-top:5px}
   .audioctl{display:grid;grid-template-columns:auto 1fr;gap:8px;margin-top:12px}
-  .audioctl .btn{margin:0}
+  .audioctl .btn{margin:0;min-height:52px;font-size:15px}
+  .audioctl .btn.wide{grid-column:1 / -1;min-height:44px;font-size:13.5px}
   .flagnote{margin-top:7px;font-size:12.5px;color:var(--muted);line-height:1.45}
   .flagnote b{color:var(--text)}
   #flagSongBtn.done{border-color:rgba(255,194,75,.5);color:var(--gold)}
@@ -208,7 +237,7 @@
     <div class="connect">
       <div class="big">Connect to the room</div>
       <div class="sub">Enter the 6-character code shown on the venue TV.</div>
-      <input id="codeIn" class="codein" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <input id="codeIn" class="codein" maxlength="6" placeholder="ACD234" autocomplete="off" autocapitalize="characters" spellcheck="false">
       <div class="cerr" id="codeErr"></div>
       <button class="btn pink big" id="connectBtn" style="margin-top:6px">Connect</button>
       <p class="note" style="margin-top:14px">The TV opens the room. Play each song in the venue, mark it here, and the players mark the title by ear. Players join by scanning the QR on the screen.</p>
@@ -217,7 +246,7 @@
 
   <!-- CONSOLE -->
   <div id="consoleView" class="hidden">
-    <div class="lbl">Host console<span id="roomCode" style="display:none"></span></div>
+    <div class="lbl" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">Host console<span class="codehdr" id="roomCodeWrap" style="display:none"><span class="cd" id="roomCode"></span><small id="roomCodeNote">Same code as the posters</small></span></div>
     <div id="overBanner" style="display:none;margin:0 0 14px;padding:12px 16px;background:rgba(245,165,36,.14);border:1px solid rgba(245,165,36,.5);border-radius:12px;color:#F5A524;font-weight:600;font-size:14px"></div>
     <div class="console">
 
@@ -257,6 +286,22 @@
             <label>Prize</label>
             <input type="text" id="prizeInput" placeholder="e.g. $50 bar tab">
           </div>
+          <div class="field">
+            <label for="revealSel">Reveal the song on the TV</label>
+            <select id="revealSel">
+              <option value="instant">Straight away</option>
+              <option value="15">After 15 seconds</option>
+              <option value="end" selected>When the clip ends</option>
+              <option value="never">Never, I call it</option>
+            </select>
+            <small class="fieldnote">Until then the TV shows a big question mark, so the room has to know the song rather than read it off the wall. You can always tap Reveal on TV now.</small>
+          </div>
+          <div class="field">
+            <label class="optin" for="autoChk" style="display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;min-height:44px">
+              <input type="checkbox" id="autoChk" style="width:18px;height:18px;flex:none;accent-color:var(--pink)">
+              <span>Auto play<small style="display:block;color:var(--faint);font-size:11.5px">The next song starts 8 seconds after the clip ends. It waits while a claim is on screen, and a song with no clip waits for you.</small></span>
+            </label>
+          </div>
           <div class="stat">
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
@@ -276,8 +321,8 @@
             <div class="nowrow">
               <div class="nowart blank" id="nowArt">&#9834;</div>
               <div class="nowinfo">
-                <div class="nt" id="hostNow">Tap Play next to start</div>
-                <div class="na" id="hostNowArtist">The clip plays on the TV</div>
+                <div class="nt" id="hostNow">Tap Play song to start</div>
+                <div class="na" id="hostNowArtist">The clip plays through the TV</div>
               </div>
             </div>
             <div class="clipbar"><div class="clipfill" id="clipFill"></div></div>
@@ -285,6 +330,18 @@
             <div class="audioctl">
               <button class="btn ghost" id="playPauseBtn" disabled>Pause</button>
               <button class="btn pink" id="playNextBtn">Play song</button>
+              <button class="btn ghost wide" id="revealBtn" disabled>Reveal on TV now</button>
+            </div>
+            <div class="liveopts">
+              <label for="autoChkLive"><input type="checkbox" id="autoChkLive"> Auto play the next song</label>
+              <label for="revealSelLive">TV reveals
+                <select id="revealSelLive">
+                  <option value="instant">straight away</option>
+                  <option value="15">after 15 seconds</option>
+                  <option value="end">when the clip ends</option>
+                  <option value="never">only when I tap Reveal</option>
+                </select>
+              </label>
             </div>
             <div class="volrow" style="margin-top:10px">
               <label for="volRange" style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
@@ -294,7 +351,7 @@
               <div style="font-size:11px;color:var(--faint);margin-top:2px">Above 100% the screen amplifies the clip past what the device alone can do. Turn the TV or amp up first, then use this for the last bit.</div>
             </div>
             <button class="btn ghost" id="monitorBtn" style="width:100%;margin-top:8px;font-size:13px">&#128263; Sound is on the TV &middot; tap to also hear it here</button>
-            <div class="clipwarn hidden" id="clipWarn">No preview clip for this one. Play it yourself through the PA, then tap Mark called.</div>
+            <div class="clipwarn hidden" id="clipWarn">No clip for this one. Play it yourself through your sound system. It is already marked as called, and the TV reveals it when you tap Reveal on TV now.</div>
             <button class="btn ghost" id="flagSongBtn" style="width:100%;margin-top:8px;font-size:13px" disabled>&#9873; This song did not work</button>
             <div class="flagnote hidden" id="flagNote"></div>
             <div class="spotrow">
@@ -310,8 +367,12 @@
           </div>
           <div class="prizeline2" id="prizeLine2">Playing for <b>the prize</b></div>
 
-          <div class="lbl">Claim queue</div>
+          <div class="lbl" id="claimHead">Claims</div>
           <div id="claimQueue"></div>
+
+          <div class="lbl" style="margin-top:18px">Played so far</div>
+          <div class="playedstrip" id="playedStrip"></div>
+          <div class="playedempty" id="playedEmpty">Nothing played yet. The songs appear here newest first as you play them.</div>
 
           <div class="lbl" style="margin-top:18px"><span id="playedCount">0 of 28 songs played</span></div>
           <div class="songscroll" id="songList"></div>
@@ -330,7 +391,7 @@
         </div>
         <div class="panel">
           <div class="lbl">How it runs</div>
-          <p class="note" style="line-height:1.6">Play a track through the venue's own sound system. When it starts, hit <b style="color:var(--pink)">Mark played</b> next to that title. The TV reveals the title and artist, and players mark the matching square on their card. First to complete the pattern hits BINGO and lands in your claim queue to confirm.</p>
+          <p class="note" style="line-height:1.6">Tap <b style="color:var(--pink)">Play</b>. The clip plays through the TV and players mark the matching square by ear. If a song has no clip, play it yourself through your sound system and tap <b style="color:var(--pink)">Call it</b>. First to complete the pattern hits BINGO and lands in your claims list; you confirm it, and the winner shows their card to you.</p>
         </div>
       </div>
 
@@ -603,7 +664,15 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // playing one of them marked every namesake on every card in the room.
     played:{}, playedOrder:[], hostNow:null, nowSong:null,
     players:{}, order:[],  // cosmetic roster: pid -> {name}
-    claim:null, won:false, busy:false,
+    /* claims is the list, in the order the Worker stamped them (arrival order when the Worker
+       gives no clock). claim is always the head of that list, kept for the replay paths that
+       only need to know whether anything is waiting. A second BINGO on the same song used to
+       be dropped on the floor here and its owner told "not yet" by a host who never saw it. */
+    claims:[], claim:null, won:false, busy:false,
+    revealMode:"end",     // when the TV shows the title: instant | 15 | end | never
+    revealed:false,       // has the current song been revealed on the TV (as far as this console knows)
+    autoPlay:false,       // next song 8 seconds after the clip ends
+    startedAt:0, peak:0, prizesWon:[],   // the night's record, posted to /report at the end
     hostMonitor:false,    // false = the venue sound comes from the TV screen and THIS device stays quiet
     tvLastSeen:0          // when a screen last announced itself; 0 means never
   };
@@ -628,6 +697,16 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function playedArray(){ return G.playedOrder.map(function(p){ return p.title; }); }
   function playedIdArray(){ return G.playedOrder.map(function(p){ return p.song_id||""; }); }
   function playerCount(){ return G.order.length; }
+  var _claimSeq=0;
+  function clearClaims(){ G.claims=[]; G.claim=null; }
+  function sortClaims(){
+    // The Worker's clock first, when it gives one; arrival order otherwise. Never mix the two
+    // for the same pair, so a phone with a clock is not jumped by one without.
+    G.claims.sort(function(a,b){ if(a.at && b.at && a.at!==b.at) return a.at-b.at; return a.seq-b.seq; });
+    G.claim=G.claims.length?G.claims[0]:null;
+  }
+  function claimClock(ms){ try{ var d=new Date(ms); return d.toLocaleTimeString([], { hour:"numeric", minute:"2-digit", second:"2-digit" }); }catch(e){ return ""; } }
+  function claimPendingMsg(){ return { t:"claim_pending", name:(G.claim?G.claim.name:"Player"), count:G.claims.length }; }
   // max_players FIRST. included_players is null on a self-serve account, so reading it alone
   // made the cap 0, which reads as "no cap", and musical bingo never charged a busy night.
   function playerCap(){
@@ -721,7 +800,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         G.nowSong=_last ? (G.byId[_last.song_id]||G.byTitle[normTitle(_last.title)]||findSong(_last.title)) : null;
         G.hostNow=G.nowSong;
         G.queue=shuffledQueue(); G.qIdx=-1;   // peekNextInQueue skips already-played titles, so a fresh shuffle is fine
-        G.won=false; G.claim=null; G.status="running";
+        G.won=false; clearClaims(); G.status="running";
         if(G.joinCode) openGameChannel(G.joinCode);   // re-subscribe the players' channel
         VP_HOLD.release($("playNextBtn")); $("playNextBtn").disabled=false; syncPlayBtn();
         $("statusText").textContent="Recovered your live game";
@@ -812,7 +891,93 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   audio.addEventListener("loadedmetadata", updateClipUI);
   audio.addEventListener("play", function(){ setPlayPause(true); });
   audio.addEventListener("pause", function(){ if(!audio.ended) setPlayPause(false); });
-  audio.addEventListener("ended", function(){ setPlayPause(false); $("clipFill").style.width="100%"; });
+  audio.addEventListener("ended", function(){
+    setPlayPause(false); $("clipFill").style.width="100%";
+    if(G.revealMode==="end"){ G.revealed=true; syncRevealBtn(); }   // the TV reveals itself on its own clip's end
+    maybeAutoNext();
+  });
+
+  /* AUTO PLAY. Sixty taps a night is sixty chances to let the gap drift while the host is on
+     the mic or checking a card. Off by default, saved per device. The timer is cancelled by a
+     claim, a pause, End game, New game and any manual tap, and it never fires for a song with
+     no clip because nothing ended. */
+  var AUTO_GAP_SECONDS=8, _autoTimer=null;
+  function cancelAuto(){
+    if(_autoTimer){ clearInterval(_autoTimer); _autoTimer=null; var b=$("playNextBtn"); if(b && !VP_HOLD.busy(b)){ b.disabled=false; syncPlayBtn(); } }
+  }
+  function maybeAutoNext(){
+    cancelAuto();
+    if(!G.autoPlay || G.status!=="running" || G.claims.length || G.won) return;
+    if(!G.nowSong || !G.nowSong.previewUrl) return;
+    if(!$("carryModal").classList.contains("hidden")) return;
+    if(!peekNextInQueue()) return;
+    var left=AUTO_GAP_SECONDS, b=$("playNextBtn");
+    function tick(){
+      var bb=$("playNextBtn");
+      if(left<=0){
+        if(bb && VP_HOLD.busy(bb)) return;   // a short clip: the hold has not let go yet, so wait for it
+        cancelAuto(); if(G.autoPlay && G.status==="running" && !G.claims.length) playNext(); return;
+      }
+      if(bb){ bb.disabled=false; bb.textContent="Auto: next song in "+left+"s (tap to go now)"; }
+      left--;
+    }
+    tick();
+    _autoTimer=setInterval(tick, 1000);
+  }
+  function syncAutoUI(){
+    var a=$("autoChk"), b=$("autoChkLive");
+    if(a) a.checked=G.autoPlay; if(b) b.checked=G.autoPlay;
+    if(!G.autoPlay) cancelAuto();
+  }
+  function setAutoPlay(on){
+    G.autoPlay=!!on; try{ localStorage.setItem("vpMusicAuto", G.autoPlay?"1":"0"); }catch(e){}
+    syncAutoUI();
+    // Switched on after the clip already ended: start the countdown now rather than waiting a song.
+    if(G.autoPlay && audio.src && audio.ended) maybeAutoNext();
+  }
+
+  /* REVEAL. The TV used to show the title 850ms after the song started, so the room read the
+     answer off the wall instead of knowing it. The host picks when the TV reveals; the mode
+     travels with every "played" broadcast and the TV holds a question mark until then. */
+  var REVEAL_MODES={ instant:1, "15":1, end:1, never:1 };
+  function syncRevealUI(){
+    var a=$("revealSel"), b=$("revealSelLive");
+    if(a) a.value=G.revealMode; if(b) b.value=G.revealMode;
+    syncRevealBtn();
+  }
+  function setRevealMode(v){
+    if(!REVEAL_MODES[v]) v="end";
+    G.revealMode=v; try{ localStorage.setItem("vpMusicReveal", v); }catch(e){}
+    syncRevealUI();
+  }
+  var _revealTimer=null;
+  function syncRevealBtn(){
+    var b=$("revealBtn"); if(!b) return;
+    var on=(G.status==="running" && !!G.nowSong);
+    b.disabled=!on || G.revealed;
+    b.textContent = !on ? "Reveal on TV now" : (G.revealed ? "Revealed on the TV" : (G.revealMode==="never" ? "Reveal on TV now (you call it)" : "Reveal on TV now"));
+  }
+  function revealNow(){
+    if(!G.nowSong || G.status!=="running" || G.revealed) return;
+    G.revealed=true;
+    bcast({ t:"reveal", title:G.nowSong.title, artist:G.nowSong.artist||"" });
+    syncRevealBtn();
+  }
+  function armRevealMirror(song){
+    // This console's own picture of whether the TV has revealed yet. The TV decides on its own
+    // clock; this only drives the Reveal button's label, so a second of drift does not matter.
+    if(_revealTimer){ clearTimeout(_revealTimer); _revealTimer=null; }
+    G.revealed=false;
+    if(G.revealMode==="instant") G.revealed=true;
+    else if(G.revealMode==="15") _revealTimer=setTimeout(function(){ G.revealed=true; syncRevealBtn(); }, 15000);
+    else if(G.revealMode==="end" && !(song && song.previewUrl)) _revealTimer=setTimeout(function(){ G.revealed=true; syncRevealBtn(); }, 32000);
+    syncRevealBtn();
+  }
+  function playedMsg(song, replay){
+    return { t:"played", replay:!!replay, title:song.title, artist:song.artist, previewUrl:song.previewUrl||"", artworkUrl:song.artworkUrl||"",
+             played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub,
+             reveal:(replay && G.revealed) ? "instant" : G.revealMode };
+  }
 
   function peekNextInQueue(){
     for(var i=G.qIdx+1;i<G.queue.length;i++){ var s=G.songs[G.queue[i]]; if(s && !G.played[songKey(s)]) return s; }
@@ -838,7 +1003,9 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(G.gameId && song.song_id){
       apiPost("/host/play",{ game_id:G.gameId, song_id:song.song_id }).catch(function(e){ hostError(e.message); });
     }
-    bcast({ t:"played", title:song.title, artist:song.artist, previewUrl:song.previewUrl||"", artworkUrl:song.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub });
+    cancelAuto();
+    armRevealMirror(song);
+    bcast(playedMsg(song, false));
     var warn=$("clipWarn");
     if(song.previewUrl){
       warn.classList.add("hidden");
@@ -880,6 +1047,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   function playNext(){
     var b=$("playNextBtn");
     if(VP_HOLD.busy(b)) return;
+    cancelAuto();
     for(var i=G.qIdx+1;i<G.queue.length;i++){
       var s=G.songs[G.queue[i]];
       if(s && !G.played[songKey(s)]){
@@ -897,10 +1065,23 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     $("playNextBtn").disabled=true; $("playNextBtn").textContent="All songs played";
   }
   function togglePlayPause(){ if(!audio.src) return;
-    if(audio.paused){ var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); bcast({ t:"clipctl", action:"play" }); }
-    else { audio.pause(); bcast({ t:"clipctl", action:"pause" }); }
+    if(audio.paused){ cancelAuto(); if(audio.ended) return; var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); bcast({ t:"clipctl", action:"play" }); }
+    else { cancelAuto(); audio.pause(); bcast({ t:"clipctl", action:"pause" }); }
   }
-  function stopAudio(){ try{ audio.pause(); }catch(e){} try{ audio.removeAttribute("src"); audio.load(); }catch(e){} resetClipUI(); $("playPauseBtn").disabled=true; $("playPauseBtn").textContent="Pause"; }
+  /* A claim pauses the room. The TV already stopped its clip on claim_pending; this device
+     kept running, so the Pause button read "Pause" while the room heard nothing and the first
+     tap on it did the opposite of what the host meant. Stop here too, and start both again. */
+  function pauseForClaim(){
+    cancelAuto();
+    if(audio.src && !audio.paused && !audio.ended){ try{ audio.pause(); }catch(e){} G._pausedForClaim=true; }
+  }
+  function resumeAfterClaim(){
+    if(G.status!=="running" || G.claims.length) return;
+    if(G._pausedForClaim && audio.src && audio.paused && !audio.ended){ var pr=audio.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+    G._pausedForClaim=false;
+    if(audio.src && audio.ended) maybeAutoNext();
+  }
+  function stopAudio(){ cancelAuto(); try{ audio.pause(); }catch(e){} try{ audio.removeAttribute("src"); audio.load(); }catch(e){} resetClipUI(); $("playPauseBtn").disabled=true; $("playPauseBtn").textContent="Pause"; }
 
   // ---- Spotify affordance (for venues who prefer full tracks off their own subscription) ----
   function spotifyLinks(){
@@ -946,6 +1127,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       else _ob.style.display="none";
     }
     $("setupCode").textContent=roomCode();
+    syncRoomCode();
     $("playerCount").textContent=playerCount();
     if(!live){
       $("startBtn").textContent = lobby ? "Start game" : "Open lobby";
@@ -973,10 +1155,11 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(song.artworkUrl){ art.className="nowart"; art.innerHTML=""; art.style.backgroundImage="url('"+song.artworkUrl+"')"; art.style.backgroundSize="cover"; art.style.backgroundPosition="center"; }
       else { art.className="nowart blank"; art.style.backgroundImage=""; art.innerHTML="&#9834;"; }
     } else {
-      $("hostNow").textContent="Tap Play next to start";
-      $("hostNowArtist").textContent="The clip plays through this device";
+      $("hostNow").textContent="Tap Play song to start";
+      $("hostNowArtist").textContent = soundIsOnlyHere() ? "No TV connected, so the clip plays through this device" : "The clip plays through the TV";
       art.className="nowart blank"; art.style.backgroundImage=""; art.innerHTML="&#9834;";
     }
+    syncRevealBtn();
   }
   function renderLive(){
     renderNow();
@@ -985,17 +1168,30 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     $("livePlayers").textContent=playerCount();
     $("playedCount").textContent=G.playedOrder.length+" of "+G.songs.length+" songs played";
     $("prizeLine2").innerHTML="Playing for <b>"+esc(G.prize)+"</b>";
+    renderPlayedStrip();
     renderSongList();
     renderClaimQueue();
+  }
+  // Newest first and numbered, so "that one never played" is answered without scanning sixty pills.
+  function renderPlayedStrip(){
+    var strip=$("playedStrip"), empty=$("playedEmpty"); if(!strip) return;
+    var n=G.playedOrder.length, html="";
+    for(var i=n-1;i>=0;i--){
+      var pth=G.playedOrder[i];
+      html+='<span class="pn'+(i===n-1?' now':'')+'"><b>'+(i+1)+'.</b> '+esc(pth.title||"")+'</span>';
+    }
+    strip.innerHTML=html;
+    if(empty) empty.style.display = n ? "none" : "";
   }
   function renderSongList(){
     var box=$("songList"); box.innerHTML="";
     var songs=curSongs();
+    if(!songs.length){ box.innerHTML='<div class="pempty">No songs yet. Start the game and tonight\'s set appears here.</div>'; return; }
     for(var i=0;i<songs.length;i++){
       var s=songs[i], done=!!G.played[songKey(s)], now=(G.hostNow===s.title);
       var row=document.createElement("div"); row.className="songrow"+(done?" done":"");
       var pillCls=now?"playing":(done?"on":"play");
-      var pillTxt=s.previewUrl ? (now?"Playing":(done?"Played &#10003;":"Play")) : (done?"Called &#10003;":"Mark called");
+      var pillTxt=s.previewUrl ? (now?"Playing":(done?"Played &#10003;":"Play")) : (now?"Called":(done?"Called &#10003;":"Call it"));
       // The year, next to the artist. A host building a night can see at a glance
       // whether a pack is landing where they meant it to, which is the whole
       // reason the years were fetched.
@@ -1026,17 +1222,31 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       container.appendChild(cell);
     }
   }
-  function renderClaimQueue(){
-    var q=$("claimQueue");
-    if(!G.claim){ q.innerHTML='<div class="claimempty">No claims yet. When a player hits BINGO and the pattern checks out against the songs played, it lands here to confirm.</div>'; return; }
-    var c=G.claim;
-    q.innerHTML='<div class="claimcard"><div class="top"><span class="cn">'+esc(c.name)+'</span>'+
-      '<span class="vbadge valid">Valid</span></div>'+
-      '<div class="mini5" id="claimCard"></div>'+
-      '<div class="claimsub">'+PATTERN_NAMES[G.pattern]+' &middot; verified against '+G.playedOrder.length+' songs played &middot; card #'+c.cardNo+'</div>'+
-      '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm">Confirm winner</button>'+
-      '<button class="btn roll" data-act="reject">Play on</button></div></div>';
-    renderClaimCard($("claimCard"), c.cells);
+  function renderClaimQueue(fresh){
+    var q=$("claimQueue"), head=$("claimHead");
+    var n=G.claims.length;
+    if(!n){
+      if(head) head.textContent="Claims";
+      q.innerHTML='<div class="claimempty">No claims yet. When a player hits BINGO and the pattern checks out against the songs played, it lands here for you to confirm.</div>';
+      return;
+    }
+    if(head) head.textContent = (n===1) ? "1 claim on this song" : (n+" claims on this song");
+    var html="";
+    if(n>1) html+='<div class="claimnote">'+n+' players hit BINGO on the same song. They are listed in the order they got in. Confirm one of them, or confirm all '+n+' and split the prize.</div>';
+    for(var i=0;i<n;i++){
+      var c=G.claims[i];
+      html+='<div class="claimcard'+((fresh && i===n-1)?' fresh':'')+'"><div class="top"><span class="cn">'+(n>1?((i+1)+'. '):'')+esc(c.name)+'</span>'+
+        '<span class="vbadge valid">Valid</span></div>'+
+        '<div class="mini5" id="claimCard'+i+'"></div>'+
+        '<div class="claimsub">'+PATTERN_NAMES[G.pattern]+' &middot; checked against '+G.playedOrder.length+' songs played &middot; card #'+esc(String(c.cardNo))+
+        (c.at ? ' &middot; <span class="when">in at '+esc(claimClock(c.at))+'</span>' : '')+'</div>'+
+        '<div class="resolve" style="margin-top:12px"><button class="btn win" data-act="confirm" data-idx="'+i+'">'+(n>1?('Confirm just '+esc(c.name)):'Confirm winner')+'</button>'+
+        '<button class="btn roll" data-act="reject" data-idx="'+i+'">'+(n>1?'Not this one':'Not a winner, play on')+'</button></div></div>';
+    }
+    if(n>1) html+='<button class="btn win full" data-act="confirmall" style="margin-top:10px;min-height:52px;font-size:15px">Confirm all '+n+' and split the prize</button>';
+    q.innerHTML=html;
+    for(var j=0;j<n;j++) renderClaimCard($("claimCard"+j), G.claims[j].cells);
+    if(fresh){ try{ q.scrollIntoView({ behavior:"smooth", block:"nearest" }); }catch(e){} }
   }
 
   // ---- game flow (every real write goes through the Worker) ----
@@ -1142,7 +1352,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
           if(gs.song_id) G.byId[gs.song_id]=gs;
           if(!G.byTitle[normTitle(gs.title)]) G.byTitle[normTitle(gs.title)]=gs; }
       G.queue=shuffledQueue(); G.qIdx=-1;
-      G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null; G.won=false; G.claim=null;
+      G.played={}; G.playedOrder=[]; G.hostNow=null; G.nowSong=null; G.won=false; clearClaims();
+      G.startedAt=Date.now(); G.peak=playerCount(); G.prizesWon=[]; G._reportedGid=""; G.revealed=false;
       G.status="running";
       saveMusic();
       stopAudio();
@@ -1157,9 +1368,13 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   }
   function endGame(){
     if(G.busy) return;
+    /* Same guard as New game. One stray tap here used to clear the songs, close every card and
+       send the TV back to the ads mid-round, in front of the room. */
+    if(!confirm("End this game?\n\nThe TV goes back to your ads and everyone's card is closed.")) return;
     clearMusic();
     var gid=G.gameId;
-    G.status="setup"; G.claim=null; G.won=false; G.nowSong=null; G.hostNow=null; G.gameId="";
+    postMusicReport(gid);
+    G.status="setup"; clearClaims(); G.won=false; G.nowSong=null; G.hostNow=null; G.gameId="";
     stopAudio();
     bcast({ t:"idle" });   // screen returns to the join/lobby state
     sendState();
@@ -1213,31 +1428,87 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
   // Progressive prizes: after a win we can carry the SAME cards on to the next pattern with a new
   // prize (one line -> two lines -> full house). A full house is the end, so no carry-on from there.
   function nextPat(cur){ return cur==="one"?"two":cur==="two"?"full":""; }
-  function hostConfirm(){
-    if(!G.claim || G.busy) return;
-    var c=G.claim; G.busy=true;
+  function joinNames(list){
+    if(list.length<=1) return list[0]||"Player";
+    return list.slice(0,-1).join(", ")+" and "+list[list.length-1];
+  }
+  // After the Worker has confirmed: tell the room, record it for the night's report, and either
+  // offer the next pattern or let the celebration finish before releasing the room.
+  function afterWin(winners){
+    var names=winners.map(function(w){ return w.name||"Player"; });
+    var pids=winners.map(function(w){ return w.pid; });
+    var cards=winners.map(function(w){ return String(w.cardNo||"000"); });
+    var np=nextPat(G.pattern);
+    G.prizesWon.push({ pattern:PATTERN_NAMES[G.pattern]||G.pattern, prize:G.prize, winner_name:joinNames(names), card_no:cards.join(", "), shared:winners.length>1, songs:G.playedOrder.length });
+    // celebrate on the TV + phones. pid/name/cardNo stay for older phones; pids/names carry a split.
+    bcast({ t:"winner", pid:pids[0], name:joinNames(names), cardNo:cards.join(", "), pids:pids, names:names, cardNos:cards, split:(winners.length>1) });
+    if(np){
+      G._nextPat=np;
+      $("carryTitle").innerHTML="&#127881; "+esc(joinNames(names))+" won!";
+      $("carryBody").innerHTML=(winners.length>1?"They split <b>":"They took <b>")+esc(G.prize)+"</b> on "+esc(PATTERN_NAMES[G.pattern]||G.pattern)+". Keep the same cards going for <b>"+esc(PATTERN_NAMES[np]||np)+"</b> with a new prize, or end the game.";
+      $("carryPrize").value="";
+      $("carryModal").classList.remove("hidden");
+      stopAudio();   // pause the music between rounds
+    } else {
+      /* The game is over, but DO NOT end it in this tick: endGameNow() broadcasts idle, which
+         the screen handles by clearing the winner and returning to the lobby. Called here it
+         wiped the winner card milliseconds after it appeared. Wait for the screen's own
+         celebration (celebrate(9000)) to finish, then release the room. */
+      setTimeout(endGameNow, 9000);
+    }
+  }
+  function hostConfirm(idx){
+    if(!G.claims.length || G.busy) return;
+    var c=G.claims[idx]||G.claims[0]; G.busy=true;
+    var others=G.claims.filter(function(x){ return x!==c; });
     var np=nextPat(G.pattern);
     // continue:true keeps the game running on the server when there's a next round to play
     apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"confirm", continue:(np?true:false) }).then(function(){
-      G.claim=null;
-      bcast({ t:"winner", pid:c.pid, name:c.name, cardNo:c.cardNo });   // celebrate on the TV + phones
-      if(np){
-        G._nextPat=np;
-        $("carryTitle").innerHTML="&#127881; "+esc(c.name||"Player")+" won!";
-        $("carryBody").innerHTML="They took <b>"+esc(G.prize)+"</b> on "+esc(PATTERN_NAMES[G.pattern]||G.pattern)+". Keep the same cards going for <b>"+esc(PATTERN_NAMES[np]||np)+"</b> with a new prize, or end the game.";
-        $("carryPrize").value="";
-        $("carryModal").classList.remove("hidden");
-        stopAudio();   // pause the music between rounds
-      } else {
-        /* The game is over, but DO NOT end it in this tick: endGameNow() broadcasts idle, which
-           the screen handles by clearing the winner and returning to the lobby. Called here it
-           wiped the winner card milliseconds after it appeared. Wait for the screen's own
-           celebration (celebrate(9000)) to finish, then release the room. */
-        setTimeout(endGameNow, 9000);
-      }
+      clearClaims();
+      // Whoever else was waiting on this song was not first. Close their claims on the Worker
+      // (best effort) so nothing is left pending; the winner broadcast tells their phones.
+      others.forEach(function(o){ apiPost("/host/claim/resolve",{ claim_id:o.claimId, decision:"reject" }).catch(function(){}); });
+      afterWin([c]);
+      renderClaimQueue();
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
+  // Two or more valid claims on the same song: confirm every one and split the prize. Each
+  // confirm is its own Worker call; the game itself only finishes once (the Worker patches
+  // status where it is still running, so the second confirm changes nothing there).
+  function hostConfirmAll(){
+    if(G.claims.length<2 || G.busy) return;
+    var list=G.claims.slice(); G.busy=true;
+    var np=nextPat(G.pattern);
+    var chain=Promise.resolve();
+    list.forEach(function(c){
+      chain=chain.then(function(){ return apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"confirm", continue:(np?true:false) }); });
+    });
+    chain.then(function(){
+      clearClaims();
+      afterWin(list);
+      renderClaimQueue();
+    }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
+  }
+  /* THE NIGHT'S RECORD. Bingo files a report row per game; musical never did, so an owner could
+     not see how many played, how many songs it took, who won or what went out. Posted ONCE at
+     the end with ended_at set (an open report would make the Worker close other running games
+     for this venue, which is bingo's job, not ours). Best effort: a report that cannot be sent
+     never blocks the night. */
+  function postMusicReport(gid){
+    try{
+      if(!gid || G._reportedGid===gid || !G.startedAt) return;
+      G._reportedGid=gid;
+      var code=(G.slug && window.VP && VP.venueCode) ? VP.venueCode(G.slug) : "";
+      if(!code) return;
+      var players=Math.max(G.peak||0, playerCount());
+      var body={ code:code, format:"musical", players:players, tickets:players,
+                 prizes:(G.prizesWon||[]).slice(0,20), songs_played:G.playedOrder.length,
+                 started_at:new Date(G.startedAt).toISOString(), ended_at:new Date().toISOString() };
+      apiPost("/report", body).catch(function(){});
+    }catch(e){}
+  }
   function endGameNow(){
+    postMusicReport(G.gameId);
     G.won=true; G.status="setup"; clearMusic(); stopAudio();
     $("carryModal").classList.add("hidden");
     /* Tell the room. endGame() broadcasts idle and resends state; this path did neither, so on a
@@ -1254,19 +1525,25 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(!G._nextPat || G.busy) return;
     var np=G._nextPat, newPrize=($("carryPrize").value||"").trim()||G.prize; G.busy=true;
     apiPost("/host/game/pattern",{ game_id:G.gameId, pattern:np, prize:newPrize }).then(function(){
-      G.pattern=np; G.prize=newPrize; G.status="running"; G.won=false; G.claim=null;
+      G.pattern=np; G.prize=newPrize; G.status="running"; G.won=false; clearClaims();
       $("carryModal").classList.add("hidden");
       bcast({ t:"carryon", pattern:G.pattern, prize:G.prize, played:playedArray() });   // phones + TV resume on the new pattern/prize
       saveMusic();
       renderConsole();   // back to live; tap Play next to keep the songs going
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
-  function hostReject(){
-    if(!G.claim || G.busy) return;
-    var c=G.claim; G.busy=true;
+  function hostReject(idx){
+    if(!G.claims.length || G.busy) return;
+    var c=G.claims[idx]||G.claims[0]; G.busy=true;
     apiPost("/host/claim/resolve",{ claim_id:c.claimId, decision:"reject" }).then(function(){
-      G.claim=null;
-      bcast({ t:"resume" });
+      G.claims=G.claims.filter(function(x){ return x!==c; });
+      G.claim=G.claims.length?G.claims[0]:null;
+      // pid: only THAT phone is told "not yet". Every waiting phone used to get it, so the
+      // second claimant was waved off by a host who had never seen their card.
+      // more: the TV stays on the claim panel while anyone else is still waiting.
+      bcast({ t:"resume", pid:c.pid, more:G.claims.length });
+      if(G.claims.length) bcast(claimPendingMsg());
+      else resumeAfterClaim();
       renderClaimQueue();
     }).catch(function(e){ hostError(e.message); }).then(function(){ G.busy=false; });
   }
@@ -1293,8 +1570,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(G.status==="lobby" || G.status==="running"){
         send({ t:"mode", mode:"musical" });
         sendState();
-        if(G.status==="running" && G.nowSong){ send({ t:"played", replay:true, title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub }); }
-        if(G.status==="running" && G.claim) send({ t:"claim_pending", name:G.claim.name });
+        if(G.status==="running" && G.nowSong){ send(playedMsg(G.nowSong, true)); }
+        if(G.status==="running" && G.claim) send(claimPendingMsg());
       }
     }
   }
@@ -1315,6 +1592,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(!G.players[m.pid]){ G.players[m.pid]={ name:(m.name||"Player") }; G.order.push(m.pid); }
       else { G.players[m.pid].name=(m.name||G.players[m.pid].name); }
       sendPlayers();
+      if(playerCount()>G.peak) G.peak=playerCount();
       if(G.status==="running") sendState();   // nudge a late joiner's phone to fetch its card
       renderJoinCounts();                    // NOT renderConsole: see above
 
@@ -1323,10 +1601,16 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       // A phone only broadcasts a claim the Worker already judged VALID (it carries the
       // claim_id from /player/claim). The host confirms/rejects that claim_id via the Worker,
       // which re-checks ownership + venue before it writes.
-      if(G.status!=="running" || G.won || G.claim || !m.claim_id) return;
-      G.claim={ claimId:m.claim_id, pid:m.pid, name:(m.name||"Player"), cardNo:(m.cardNo||"000"), cells:(m.cells||[]) };
-      bcast({ t:"claim_pending", name:G.claim.name });
-      renderClaimQueue();
+      if(G.status!=="running" || G.won || !m.claim_id) return;
+      for(var ci=0;ci<G.claims.length;ci++){
+        if(G.claims[ci].claimId===m.claim_id || (m.pid && G.claims[ci].pid===m.pid)) return;   // the same phone, again
+      }
+      var at=0; if(m.claimed_at){ at=Date.parse(m.claimed_at); if(isNaN(at)) at=0; }
+      G.claims.push({ claimId:m.claim_id, pid:m.pid, name:(m.name||"Player"), cardNo:(m.cardNo||"000"), cells:(m.cells||[]), at:at, seq:(++_claimSeq) });
+      sortClaims();
+      pauseForClaim();
+      bcast(claimPendingMsg());
+      renderClaimQueue(true);
     }
   }
 
@@ -1349,8 +1633,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
         if(G.status==="running"){
           send({ t:"mode", mode:"musical" });
           sendState();
-          if(G.nowSong){ send({ t:"played", replay:true, title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub }); }
-          if(G.claim) send({ t:"claim_pending", name:G.claim.name });
+          if(G.nowSong){ send(playedMsg(G.nowSong, true)); }
+          if(G.claim) send(claimPendingMsg());
         } else { sendState(); }
       } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
         $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
@@ -1359,8 +1643,18 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     $("signinView").classList.add("hidden");
     $("connectView").classList.add("hidden");
     $("consoleView").classList.remove("hidden");
-    $("roomCode").textContent=code;
+    syncRoomCode();
     renderConsole();
+  }
+  /* The code the ROOM types, in the console header. This used to print the pairing code, which
+     is a different code that lands a punter on a channel with no game on it. */
+  function syncRoomCode(){
+    var w=$("roomCodeWrap"), c=$("roomCode"), n=$("roomCodeNote"); if(!w||!c) return;
+    var rc=roomCode();
+    if(!rc || rc==="------"){ w.style.display="none"; return; }
+    c.textContent=rc;
+    if(n) n.textContent = (G.slug && window.VP && VP.venueCode) ? "Same code as the posters" : "Players type this code";
+    w.style.display="";
   }
 
   // ---- playlist select ----
@@ -1421,6 +1715,17 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     });
   })();
   if($("plSearch")) $("plSearch").addEventListener("input", function(){ renderPlCards(this.value); });
+  (function bindReveal(){
+    var v="end"; try{ v=localStorage.getItem("vpMusicReveal")||"end"; }catch(e){}
+    G.revealMode=REVEAL_MODES[v]?v:"end"; syncRevealUI();
+    ["revealSel","revealSelLive"].forEach(function(id){ var s=$(id); if(s) s.addEventListener("change", function(){ setRevealMode(s.value); }); });
+    var rb=$("revealBtn"); if(rb) rb.addEventListener("click", revealNow);
+  })();
+  (function bindAuto(){
+    var v="0"; try{ v=localStorage.getItem("vpMusicAuto")||"0"; }catch(e){}
+    G.autoPlay=(v==="1"); syncAutoUI();
+    ["autoChk","autoChkLive"].forEach(function(id){ var c=$(id); if(c) c.addEventListener("change", function(){ setAutoPlay(c.checked); }); });
+  })();
   // auto-daub is a per-player choice (Easy mode on the phone), not a host setting
   /* Musical bingo is bingo to every regulator, but the line they draw is paid entry, not prize
      size. While this venue is free-entry only there is nothing to warn about, so no popup. It
@@ -1442,8 +1747,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     if(Date.now() - lastGameTouch > STALE_GAME_MS) return;
     send({ t:"mode", mode:"musical" });
     sendState();
-    if(G.status==="running" && G.nowSong){ send({ t:"played", replay:true, title:G.nowSong.title, artist:G.nowSong.artist, previewUrl:G.nowSong.previewUrl||"", artworkUrl:G.nowSong.artworkUrl||"", played:playedArray(), played_ids:playedIdArray(), autoDaub:G.autoDaub }); }
-    if(G.status==="running" && G.claim){ send({ t:"claim_pending", name:G.claim.name }); }
+    if(G.status==="running" && G.nowSong){ send(playedMsg(G.nowSong, true)); }
+    if(G.status==="running" && G.claim){ send(claimPendingMsg()); }
   }
   /* PUT THE GAME BACK ON THE WALL WHEN WE RETURN.
      Every console tells the TV t:"to_ads" on pagehide and not one of them had a
@@ -1520,11 +1825,25 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     // first one and could never be reached: the exact identity bug this was meant to remove.
     var _pi=parseInt(pill.getAttribute("data-i"),10);
     var _ps=(!isNaN(_pi) && curSongs()[_pi]) ? curSongs()[_pi] : findSong(pill.getAttribute("data-title"));
+    if(!_ps || G.status!=="running") return;
+    if(G.nowSong && songKey(_ps)===songKey(G.nowSong)) return;   // already the song on air
+    /* THE SAME HOLD AS THE BIG BUTTON. Two quick taps down the list marked both songs played
+       and told the Worker so, while the room heard only the second: a card could then be
+       certified on a song nobody heard. Inside the hold the host is asked, not ignored. */
+    var _hb=$("playNextBtn");
+    if(VP_HOLD.busy(_hb) && G.nowSong && !confirm("Stop \""+G.nowSong.title+"\" and play \""+_ps.title+"\" instead?")) return;
+    cancelAuto();
     playSong(_ps);
+    VP_HOLD.hold(_hb, _ps.previewUrl ? SONG_HOLD_SECONDS : NO_CLIP_HOLD_SECONDS,
+      function(left){ return "Next song in "+left+"s"; },
+      function(){ var bb=$("playNextBtn"); if(bb && bb.textContent!=="All songs played") syncPlayBtn(); });
   });
   $("claimQueue").addEventListener("click", function(e){
     var b=e.target.closest("button[data-act]"); if(!b) return;
-    if(b.getAttribute("data-act")==="confirm") hostConfirm(); else hostReject();
+    var act=b.getAttribute("data-act"), idx=parseInt(b.getAttribute("data-idx")||"0",10)||0;
+    if(act==="confirm") hostConfirm(idx);
+    else if(act==="confirmall") hostConfirmAll();
+    else hostReject(idx);
   });
   $("carryGo").addEventListener("click", carryOn);
   $("carryEnd").addEventListener("click", endGameNow);
@@ -1560,7 +1879,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       // Tell vp-session when a game is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open
       // so signing back in restores it instead of burning the once-a-week musical slot.
-      if(VP.setGameActive) VP.setGameActive(function(){ return G.status==="running" || G.status==="lobby" || !!G.claim; });
+      if(VP.setGameActive) VP.setGameActive(function(){ return G.status==="running" || G.status==="lobby" || G.claims.length>0; });
       VP.enforceShift();   // the 4h forced sign-out is a compliance control: it has to apply here too, not only on /app
       if(VP.suspensionBanner) VP.suspensionBanner(ctx);
       $("statusText").textContent="Signed in";

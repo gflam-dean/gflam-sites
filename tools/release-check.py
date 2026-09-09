@@ -1257,6 +1257,33 @@ def local_checks(which):
                    'build that is not the one running. Run tools/stamp-workers.py.'
                    % (digest, got or 'nothing'))
 
+    """THE ROOM SERVER COPY IN THE GAME WORKER IS THE ROOM SERVER.
+
+    A Cloudflare Worker is one file, so the Durable Object class lives twice: in
+    venueplay-room.js, where its test can reach it, and inside venueplay-game.js,
+    where it actually runs. That is the exact shape of nearly every real fault in
+    this codebase (esc, drawQR, tvSend): one copy fixed, the other left standing.
+    So the two are compared here byte for byte, ignoring the named-export line
+    that only the test needs. Fix venueplay-room.js, run its test, re-copy."""
+    room = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-room.js')
+    game = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-game.js')
+    if os.path.isfile(room) and os.path.isfile(game):
+        rsrc = io.open(room, encoding='utf-8').read()
+        gsrc = io.open(game, encoding='utf-8').read()
+        want = re.sub(r'\nexport \{[^}]*\};\s*$', '\n', rsrc).strip()
+        i = gsrc.find('export class VenueRoom')
+        copy = gsrc[gsrc.rfind('/* ', 0, i):].strip() if i > 0 else ''
+        # the banner above the copy is the game Worker's own, so compare from the
+        # first line of the room file that is code, not comment
+        start = want.find('const ROOM_MAX_MSG_CHARS')
+        cstart = copy.find('const ROOM_MAX_MSG_CHARS')
+        ok('the room server in the game Worker matches venueplay-room.js',
+           i > 0 and start >= 0 and cstart >= 0 and copy[cstart:] == want[start:],
+           'wired' if i > 0 else 'not wired into the game Worker yet',
+           why='the class runs from venueplay-game.js and is tested from '
+               'venueplay-room.js, so a fix made in one and not the other is a fix '
+               'that did not happen. Re-copy the file under the ROOM SERVER banner.')
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):

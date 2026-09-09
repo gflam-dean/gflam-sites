@@ -74,6 +74,7 @@
   .pans.dim{opacity:.4}
   .pstatus{text-align:center;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--muted);margin-top:18px}
   .pstatus.locked{color:var(--win)}
+  .pstatus.warn{color:var(--roll)}
 
   /* result */
   .presult{text-align:center}
@@ -84,6 +85,9 @@
   .presult .pts{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:30px;color:var(--gold);margin:14px 0 4px}
   .presult .tot{font-size:14px;color:var(--text)}
   .presult .tot b{color:#fff}
+  .presult .ca{margin:12px auto 0;max-width:340px;background:rgba(53,208,127,.10);border:1px solid rgba(53,208,127,.35);border-radius:12px;padding:10px 14px;font-size:14.5px;color:var(--text);line-height:1.35}
+  .presult .ca b{color:var(--win)}
+  .presult .ca .cl{font-family:'Anton',sans-serif;font-size:18px;color:var(--win);margin-right:6px}
   .presult .rank{margin-top:14px;display:inline-block;background:rgba(255,31,142,.12);border:1px solid rgba(255,31,142,.3);color:var(--pink);border-radius:20px;padding:7px 16px;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px}
 
   .scorebox{margin-top:18px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--gold);font-size:22px}
@@ -158,7 +162,7 @@
   <!-- QUESTION -->
   <div class="view hidden" id="vQ">
     <div class="pq-count" id="pqCount">Question</div>
-    <img id="pqImg" alt="" class="hidden" style="max-width:100%;max-height:38vh;object-fit:contain;border-radius:12px;margin:8px auto 0;display:block">
+    <img id="pqImg" alt="" class="hidden" style="max-width:100%;max-height:38vh;object-fit:contain;border-radius:12px;margin:8px auto 0;display:block;background:#000" onerror="this.classList.add('hidden')">
     <div class="pq-text" id="pqText">Question</div>
     <div class="pq-cd" id="pqCd">Answer in 20s</div>
     <div class="panswers" id="pAnswers"></div>
@@ -171,9 +175,10 @@
       <div class="rem" id="pResEmoji">&#127881;</div>
       <div class="rtag" id="pResTag">Correct!</div>
       <div class="pts" id="pResPts">+130</div>
+      <div class="ca hidden" id="pResCa"></div>
       <div class="tot">Total <b id="pResTot">130</b> points</div>
-      <div><span class="rank" id="pResRank">Rank 3 of 11</span></div>
-      <div class="psub" style="margin-top:16px">Next question coming up on the big screen</div>
+      <div><span class="rank hidden" id="pResRank">3rd of 11</span></div>
+      <div class="psub" style="margin-top:16px" id="pResNext">This stays up until the next question starts</div>
     </div>
   </div>
 
@@ -258,7 +263,7 @@
   var P={
     room:"", pid:"", name:"", joined:false,
     token:"", sessionId:"", gameId:"",
-    colour:true, total:0, rank:0,
+    colour:true, total:0, rank:0, playersCount:0,
     q:null, choice:null, locked:false,
     lastPts:0, cdTimer:null, ended:false
   };
@@ -270,7 +275,7 @@
   function loadPid(room){ try{ return localStorage.getItem("vp-tpid-"+room) || sessionStorage.getItem("vp-tpid-"+room) || ""; }catch(e){ return ""; } }
   function savePid(room,pid){ try{ localStorage.setItem("vp-tpid-"+room, pid); }catch(e){} }
   function loadName(room){ try{ return localStorage.getItem("vp-tname-"+room) || sessionStorage.getItem("vp-tname-"+room) || ""; }catch(e){ return ""; } }
-  function saveName(room,nm){ try{ sessionStorage.setItem("vp-tname-"+room, nm); }catch(e){} }
+  function saveName(room,nm){ try{ localStorage.setItem("vp-tname-"+room, nm); }catch(e){} }   // localStorage: sessionStorage died with the backgrounded tab and the punter had to retype their team name mid-question
   // the player token IS the metered server identity: persist it so a reload reuses the
   // same vp_players row instead of minting a new metered one.
   function loadToken(room){ try{ return localStorage.getItem("vp-ttoken-"+room)||""; }catch(e){ return ""; } }
@@ -282,13 +287,15 @@
   var VIEWS=["vNoRoom","vJoin","vWait","vQ","vRes","vFinal"];
   function show(which){ for(var i=0;i<VIEWS.length;i++){ $(VIEWS[i]).classList.toggle("hidden", VIEWS[i]!==which); } }
 
+  // "3rd of 11". Never "Rank 0": with no rank yet it returns "" and the caller hides the line.
+  function rankText(){ if(!(P.rank>0)) return ""; return ordinal(P.rank)+(P.playersCount>0?(" of "+P.playersCount):""); }
   function showWait(msg){
     show("vWait");
     $("waitName").textContent=P.name;
     if(msg) $("waitMsg").textContent=msg;
-    if(P.total>0){
+    if(P.total>0 || P.rank>0){
       $("waitScore").classList.remove("hidden"); $("waitScore").textContent=P.total+" points";
-      $("waitRank").classList.remove("hidden"); $("waitRank").textContent="Rank "+P.rank;
+      var rt=rankText(); $("waitRank").classList.toggle("hidden", !rt); $("waitRank").textContent=rt;
     } else { $("waitScore").classList.add("hidden"); $("waitRank").classList.add("hidden"); }
   }
 
@@ -327,24 +334,61 @@
     P.cdTimer=setInterval(tickCd, 300); tickCd();
   }
 
+  function paintPicked(i){
+    var btns=document.querySelectorAll("#pAnswers .pans");
+    for(var k=0;k<btns.length;k++){
+      var bi=parseInt(btns[k].getAttribute("data-i"),10);
+      btns[k].classList.toggle("picked", bi===i); btns[k].classList.toggle("dim", bi!==i);
+      btns[k].disabled=true;
+    }
+  }
+  function unpick(){
+    var btns=document.querySelectorAll("#pAnswers .pans");
+    for(var k=0;k<btns.length;k++){ btns[k].classList.remove("picked"); btns[k].classList.remove("dim"); btns[k].disabled=false; }
+  }
   function answer(i){
     if(!P.q || P.locked) return;
     if(P.q.endsAt-Date.now()<=0){ lockOut(); return; }
     P.choice=i; P.locked=true;
-    // Cosmetic broadcast for the TV "answered" ticker; the real, scored answer goes to
-    // the Worker, which decides first-answer-final and rejects anything after the deadline.
-    send({ t:"answer", pid:P.pid, qseq:P.q.qseq, choice:i });
-    if(P.gameId){
-      playerPost("/player/answer",{ game_id:P.gameId, answer_index:i, qseq:P.q.qseq }).catch(function(){ /* deadline/duplicate: the Worker is the authority, UI stays locked */ });
-    }
-    var btns=document.querySelectorAll("#pAnswers .pans");
-    for(var k=0;k<btns.length;k++){
-      var bi=parseInt(btns[k].getAttribute("data-i"),10);
-      if(bi===i) btns[k].classList.add("picked"); else btns[k].classList.add("dim");
-      btns[k].disabled=true;
-    }
-    $("pStatus").className="pstatus locked"; $("pStatus").textContent="Answer in! Good luck.";
+    paintPicked(i);
+    $("pStatus").className="pstatus"; $("pStatus").textContent="Sending your answer";
     $("pqCd").textContent="Answer locked in";
+    /* "Answer in!" is only said once the Worker has actually taken the answer. It used to show
+       regardless, so a dropped wifi packet or a deadline missed by a second told the player they
+       were in, then the result screen said "No answer" and the table decided the game was rigged. */
+    var qseq=P.q.qseq;
+    function sayIn(){ $("pStatus").className="pstatus locked"; $("pStatus").textContent="Answer in! Good luck."; $("pqCd").textContent="Answer locked in"; }
+    function sayLate(){ $("pStatus").className="pstatus warn"; $("pStatus").textContent="Too late, next one!"; $("pqCd").textContent="Time's up"; }
+    function sayRetry(){
+      if(!P.q || P.q.qseq!==qseq) return;
+      if(P.q.endsAt-Date.now()<=0){ P.choice=null; sayLate(); return; }
+      P.locked=false; P.choice=null; unpick();
+      $("pStatus").className="pstatus warn"; $("pStatus").textContent="Didn't get through. Tap your answer again.";
+      tickCd();
+    }
+    if(!P.gameId){ send({ t:"answer", pid:P.pid, qseq:qseq, choice:i }); sayIn(); return; }
+    playerPost("/player/answer",{ game_id:P.gameId, answer_index:i, qseq:qseq }).then(function(r){
+      if(!P.q || P.q.qseq!==qseq) return;
+      // Cosmetic broadcast for the TV "answered" ticker, sent only once the real answer landed.
+      send({ t:"answer", pid:P.pid, qseq:qseq, choice:i });
+      if(r && r.recorded===false){ $("pStatus").className="pstatus locked"; $("pStatus").textContent="Your first answer stands."; return; }
+      sayIn();
+    }).catch(function(e){
+      var st=(e && e.status)||0, msg=(e && e.message)||"";
+      if(st===401 || st===403){   // token gone or the player was removed: tapping again cannot help
+        P.choice=null;
+        $("pStatus").className="pstatus warn"; $("pStatus").textContent=msg||"Your phone lost its place. Reload this page.";
+        return;
+      }
+      if(st===409){
+        if(P.q && P.q.qseq!==qseq) return;
+        P.choice=null;
+        if(/time|question/i.test(msg)) sayLate();   // deadline passed, or the room moved on
+        else { $("pStatus").className="pstatus warn"; $("pStatus").textContent=msg||"That did not go through."; }
+        return;
+      }
+      sayRetry();   // wifi drop, rate limit, server hiccup: let them tap again while time remains
+    });
   }
   function lockOut(){
     if(P.q && !P.locked){
@@ -369,7 +413,11 @@
       $("pResPts").textContent = ((pts>0)?"+":"")+(pts||0);
       $("pResPts").style.color = correct ? "var(--gold)" : "var(--faint)";
       $("pResTot").textContent = P.total;
-      $("pResRank").textContent = "Rank "+P.rank;
+      var rt=rankText(); $("pResRank").classList.toggle("hidden", !rt); $("pResRank").textContent=rt;
+      /* Which one was right. A player who got it wrong learnt nothing before this; the reveal
+         broadcast carries the options and the index, so say it: "B  Canberra". */
+      var ca=$("pResCa"), opts=Array.isArray(m.options)?m.options:(P.q?P.q.options:[]);
+      if(ca){ if(ci>=0 && opts && opts[ci]!=null){ ca.innerHTML='<span class="cl">'+LETTERS[ci]+'</span>'+(correct?'':'<b>Correct answer:</b> ')+esc(opts[ci]); ca.classList.remove("hidden"); } else ca.classList.add("hidden"); }
     }
     // Optimistic paint from the broadcast, then correct it with the Worker's numbers.
     paint(answered && P.choice===ci, 0);
@@ -377,6 +425,7 @@
       playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
         if(typeof r.total==="number") P.total=r.total;
         if(typeof r.rank==="number") P.rank=r.rank;
+        if(typeof r.players_count==="number") P.playersCount=r.players_count;
         /* ONLY trust the server's "last answer" if we actually answered THIS question.
            /player/score returns the player's most recent answer in the whole game, not the one
            being revealed, so a player who sat a question out was congratulated with the result of
@@ -435,7 +484,7 @@
     } else {
       $("finalEmoji").innerHTML="&#127881;";
       $("finalBig").textContent="That's a wrap"; $("finalSub").textContent="Thanks for playing tonight";
-      $("finalRank").textContent = r ? ("You finished "+ordinal(r)) : ""; if(wrap) wrap.classList.remove("winner");
+      $("finalRank").textContent = r ? ("You finished "+ordinal(r)+(P.playersCount>0?(" of "+P.playersCount):"")) : ""; if(wrap) wrap.classList.remove("winner");
     }
     askHowItWent();
   }
@@ -460,6 +509,7 @@
       playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
         if(typeof r.total==="number") P.total=r.total;
         if(typeof r.rank==="number") P.rank=r.rank;
+        if(typeof r.players_count==="number") P.playersCount=r.players_count;
         finish();
       }).catch(finish);
     } else { finish(); }
@@ -482,13 +532,25 @@
     else if(m.t==="started"){
       if(m.game_id) P.gameId=m.game_id;
       if(typeof m.colour==="boolean") P.colour=m.colour;
-      P.q=null; P.ended=false; P.total=0; P.rank=0;
+      P.q=null; P.ended=false; P.total=0; P.rank=0; P.playersCount=0;
       if(P.joined) showWait("The quiz is starting. Your questions will pop up here.");
     }
     else if(m.t==="question"){
       if(!P.joined) return;
       P.ended=false;
       renderQuestion(m);
+    }
+    else if(m.t==="time"){
+      /* The host gave the room more time. The Worker moved the real deadline first, so the
+         clock here can follow it. Anyone already locked out is let back in while time remains. */
+      if(!P.q || m.qseq!==P.q.qseq) return;
+      var ends=Number(m.endsAt)||0; if(!ends || ends<=P.q.endsAt) return;
+      P.q.endsAt=ends;
+      if(!P.locked && !P.choice){
+        unpick();
+        $("pStatus").className="pstatus"; $("pStatus").textContent="The host added more time. Tap your answer.";
+        tickCd(); if(!P.cdTimer) P.cdTimer=setInterval(tickCd,300);
+      } else tickCd();
     }
     else if(m.t==="lock"){
       stopCd(); lockOut();
@@ -498,9 +560,10 @@
       showResult(m);
     }
     else if(m.t==="leaderboard"){
-      if(!P.joined || P.ended) return;
-      if(m.title && m.title.indexOf("Final")===0) return;           // final scores handled by the podium message
-      showWait("Next question coming up. Watch the big screen.");
+      /* Leave the result screen up. This used to swap to "Next question coming up" 5 seconds after
+         the reveal, so anyone who glanced at the bar missed whether they got it right. The result
+         now stays until the next question, the podium or idle arrives. */
+      return;
     }
     else if(m.t==="podium"){
       if(!P.joined) return;
@@ -520,8 +583,26 @@
     if(g && g.format==="trivia" && g.game_id){
       P.gameId=g.game_id;
       if(typeof g.colour==="boolean") P.colour=g.colour;
-      if(g.question && g.phase==="asking"){ P.pendingQ=g.question; }
+      /* A phone that slept through a question comes back into whatever is on: the open question
+         (asking), the same question with the buttons locked (locked), or its own score while the
+         room is between questions. Before, only "asking" was handled and the rest saw "You're in". */
+      if(g.question && (g.phase==="asking" || g.phase==="locked")){ P.pendingQ=g.question; P.pendingLocked=(g.phase==="locked"); }
+      else if(g.phase==="revealed" || g.phase==="idle" || !g.question){ P.pendingScore=true; }
     }
+  }
+  function pullScore(msg){
+    if(!P.gameId) return;
+    playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
+      if(typeof r.total==="number") P.total=r.total;
+      if(typeof r.rank==="number") P.rank=r.rank;
+      if(typeof r.players_count==="number") P.playersCount=r.players_count;
+      if(P.joined && !P.q && !P.ended) showWait(msg||"Next question coming up. Watch the big screen.");
+    }).catch(function(){});
+  }
+  function applyPending(){
+    if(!P.joined) return;
+    if(P.pendingQ){ var q=P.pendingQ, lk=P.pendingLocked; P.pendingQ=null; P.pendingLocked=false; renderQuestion(q); if(lk){ stopCd(); lockOut(); } return; }
+    if(P.pendingScore){ P.pendingScore=false; pullScore("You're back in. Next question coming up on the big screen."); }
   }
   // Rebuild any in-progress game from the Worker's public snapshot (late join / reload).
   function rebuildFromSnapshot(){
@@ -530,7 +611,7 @@
       .then(function(res){ return res.json(); })
       .then(function(s){
         applySnap(s);
-        if(P.joined && P.pendingQ){ var q=P.pendingQ; P.pendingQ=null; renderQuestion(q); }
+        applyPending();
       }).catch(function(){});
   }
   // Register with the Worker (mints/reuses a vp_players row + a device token). The
@@ -601,7 +682,7 @@
     ensureJoined().then(function(){
       P.joined=true; saveName(P.room, P.name);
       send({ t:"join", pid:P.pid, name:P.name });   // cosmetic roster on the host + TV
-      if(P.pendingQ){ var q=P.pendingQ; P.pendingQ=null; renderQuestion(q); }
+      if(P.pendingQ || P.pendingScore){ applyPending(); }
       else showWait("Watch the big screen. Your questions will pop up here.");
     }).catch(function(e){
       $("joinErr").textContent=(e && e.message) ? e.message : "Could not join, check the code and try again.";

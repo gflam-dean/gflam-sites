@@ -75,7 +75,7 @@
 
 <div class="wrap">
   <div class="authbig">Onboard a venue</div>
-  <div class="authsub">Creates the venue, its default settings and one TV screen. The venue slug becomes the TV web address screen.venueplay.com.au/&lt;slug&gt;.</div>
+  <div class="authsub">Creates the venue, its default settings and one TV screen. The venue slug becomes the TV web address venueplay.com.au/tv?&lt;slug&gt;, which is what every email and text we send actually uses.</div>
 
   <div id="formWrap">
     <div class="card">
@@ -86,8 +86,13 @@
       </div>
       <div class="field">
         <label>Slug (TV web address key)</label>
-        <input type="text" id="vslug" class="mono" placeholder="example-tavern">
-        <div class="note">Lowercase, hyphens, no spaces. Must be unique. Auto-filled from the name, edit if needed.</div>
+        <input type="text" id="vslug" class="mono" placeholder="example-tavern-4224">
+        <div class="note">Lowercase, hyphens, no spaces. Must be unique. Auto-filled from the name and postcode, edit if needed. There are around 100 Royal Hotels in Australia, so the postcode goes on the end the same way it does when a venue signs up itself.</div>
+      </div>
+      <div class="field">
+        <label>Postcode</label>
+        <input type="text" id="vpostcode" class="mono" inputmode="numeric" maxlength="4" placeholder="4224">
+        <div class="note">Used to keep the slug unique. Four digits.</div>
       </div>
       <div class="field">
         <label>Timezone</label>
@@ -134,14 +139,20 @@
 
     <div class="card">
       <div class="lbl">First manager (optional)</div>
-      <div class="note" style="margin-bottom:14px">A manager needs a Supabase Auth user, which can only be created with admin/service-role access (Authentication &rarr; Users in Supabase, or a future service-role endpoint). Create the user there, tick Auto Confirm, then paste their User UID here to link them as this venue's manager. You can also skip this and add staff later.</div>
+      <div class="note" style="margin-bottom:14px">Enter their mobile and we set up their login the same way the venue would: they sign in at venueplay.com.au/app with a text code, no app to install. Leave it blank to add staff later from Your account.</div>
       <div class="field">
-        <label>Manager Auth User UID</label>
-        <input type="text" id="mgruid" class="mono" placeholder="e.g. 11111111-2222-3333-4444-555555555555">
+        <label>Manager name</label>
+        <input type="text" id="mgrname" placeholder="Jane Smith">
       </div>
       <div class="field">
-        <label>Manager display name</label>
-        <input type="text" id="mgrname" placeholder="Jane (Manager)">
+        <label>Manager mobile</label>
+        <input type="tel" id="mgrmobile" placeholder="0400 000 000">
+        <div class="note">Australian mobile. They get advertising, draws and raffles, player opt-ins and add-hosts; billing and the player-data rules stay with the account owner.</div>
+      </div>
+      <div class="field">
+        <label>Or link an existing login by Auth User UID (advanced)</label>
+        <input type="text" id="mgruid" class="mono" placeholder="only if you already created their Supabase Auth user">
+        <div class="note">Use this for an operator-group venue, where there is no venue billing account for the mobile route to bill against.</div>
       </div>
     </div>
 
@@ -194,10 +205,20 @@
     });
   }
 
-  // slug auto-fill (only until the admin edits the slug field themselves)
+  /* Slug auto-fill (only until the admin edits the slug field themselves). The postcode goes on
+     the end, the same as a self-serve sign-up: about 7% of venue names in Australia are shared, so
+     a slug built from the name alone collides with a real venue sooner or later, and a slug is the
+     TV address AND the seed for the join code. */
   var slugTouched=false;
+  function autoSlug(){
+    if(slugTouched) return;
+    var pc=(($("vpostcode").value||"").replace(/\D/g,"")).slice(0,4);
+    var base=slugify($("vname").value);
+    $("vslug").value = base ? (pc ? base+"-"+pc : base) : "";
+  }
   $("vslug").addEventListener("input", function(){ slugTouched=true; });
-  $("vname").addEventListener("input", function(){ if(!slugTouched) $("vslug").value=slugify(this.value); });
+  $("vname").addEventListener("input", autoSlug);
+  $("vpostcode").addEventListener("input", autoSlug);
 
   $("billSeg").addEventListener("click", function(e){
     var o=e.target.closest(".opt"); if(!o) return;
@@ -206,6 +227,28 @@
     $("groupFields").classList.toggle("hidden", bill!=="group");
     $("foundingFields").classList.toggle("hidden", bill!=="founding");
   });
+
+  /* Add the first manager through the billing Worker, which is the same route the Your account
+     page uses: it creates the Auth login from the mobile, texts them their sign-in link, and
+     writes the permissions object. X-VP-Venue is how an HQ admin tells the Worker which account
+     they are acting on (View as). */
+  var VP_WORKER="https://venueplay-api.dean-tindale.workers.dev";
+  function addManagerByMobile(venueId, label, mobile){
+    return client.auth.getSession().then(function(r){
+      var tok=(r&&r.data&&r.data.session&&r.data.session.access_token)||null;
+      return fetch(VP_WORKER+"/account/manager-add", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+tok, "X-VP-Venue":venueId },
+        body:JSON.stringify({ label:label, mobile:mobile, venue_ids:[venueId],
+          permissions:{ advertising:true, draws_raffles:true, players_optin:true, add_hosts:true } })
+      }).then(function(res){ return res.json(); });
+    }).then(function(j){
+      if(j && j.error) return { ok:false, error:{ message:j.error } };
+      return { ok:true, texted:true };
+    }).catch(function(){
+      return { ok:false, error:{ message:"We could not reach the billing service. The venue was created; add the manager from Your account." } };
+    });
+  }
 
   $("createBtn").addEventListener("click", function(){
     $("err").textContent="";
@@ -230,6 +273,8 @@
 
     var mgrUid=($("mgruid").value||"").trim();
     var mgrName=($("mgrname").value||"").trim();
+    var mgrMobile=($("mgrmobile").value||"").trim();
+    if(mgrMobile && !mgrName){ $("err").textContent="Enter the manager's name as well as their mobile."; return; }
 
     var btn=this; btn.disabled=true; btn.textContent="Creating...";
 
@@ -240,11 +285,21 @@
       // 2. default settings, 3. a default screen (best-effort, sequential)
       return client.from("vp_venue_settings").insert({ venue_id:v.id }).then(function(sr){
         return client.from("vp_screens").insert({ venue_id:v.id, name:"Main TV" }).then(function(scr){
-          // 4. optional first manager
+          /* 4. optional first manager.
+             By mobile is the normal way: the billing Worker creates the login and, crucially,
+             writes a PERMISSIONS OBJECT. A manager row with no permissions object reads as FULL
+             ACCESS to the billing Worker, so every manager this form used to create could open
+             the owner's Stripe portal and cancel venues.
+             The UID path is kept for operator-group venues, which have no billing account for the
+             Worker route to act on, and it now writes the permissions object itself. */
           var mgrDone=Promise.resolve({ skipped:true });
-          if(mgrUid){
+          var DEFAULT_PERMS={ advertising:true, draws_raffles:true, players_optin:true, add_hosts:true };
+          if(mgrMobile){
+            mgrDone=addManagerByMobile(v.id, mgrName, mgrMobile);
+          } else if(mgrUid){
             mgrDone=client.from("vp_venue_staff").insert({
-              venue_id:v.id, auth_user_id:mgrUid, role:"manager", display_name:(mgrName||"Manager")
+              venue_id:v.id, auth_user_id:mgrUid, role:"manager", display_name:(mgrName||"Manager"),
+              permissions:DEFAULT_PERMS
             }).then(function(mr){ return { ok:!mr.error, error:mr.error }; });
           }
           return mgrDone.then(function(mgr){
@@ -267,12 +322,12 @@
     $("doneWrap").classList.remove("hidden");
     $("dName").textContent=v.name;
     $("dSlug").textContent=v.slug;
-    $("dTv").textContent="screen.venueplay.com.au/"+v.slug;
+    $("dTv").textContent="venueplay.com.au/tv?"+v.slug;
     $("dScreen").textContent=(extra.screen&&!extra.screen.error)?"Default screen created: Main TV":"Screen row not created (add one later).";
     $("dSettings").textContent=(extra.settings&&!extra.settings.error)?"Default settings created.":"Settings row not created (open Settings to create it).";
-    if(extra.manager&&extra.manager.skipped){ $("dManager").textContent="No manager linked yet. Add one from Admin / Supabase when their Auth user exists."; }
-    else if(extra.manager&&extra.manager.ok){ $("dManager").textContent="First manager linked."; }
-    else { $("dManager").innerHTML='<span style="color:var(--roll)">Manager NOT linked: '+(extra.manager&&extra.manager.error&&extra.manager.error.message?extra.manager.error.message:"check the UID")+'. The venue itself was created fine.</span>'; }
+    if(extra.manager&&extra.manager.skipped){ $("dManager").textContent="No manager yet. Add one from Your account (View as this venue) whenever you are ready."; }
+    else if(extra.manager&&extra.manager.ok){ $("dManager").textContent=extra.manager.texted?"First manager added. We have texted them their sign-in link and the TV address.":"First manager linked."; }
+    else { $("dManager").innerHTML='<span style="color:var(--roll)">Manager NOT added: '+(extra.manager&&extra.manager.error&&extra.manager.error.message?extra.manager.error.message:"check the mobile")+'. The venue itself was created fine, so add the manager from Your account.</span>'; }
     $("settingsLink").href="settings.html?venue="+encodeURIComponent(v.id);
   }
 })();

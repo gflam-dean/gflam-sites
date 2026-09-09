@@ -70,8 +70,8 @@
  *                                          member_number?, outcome}             new_jackpot_cents, increment_cents}
  *                                         claim -> write vp_member_draw_results 'claimed' + RESET current_jackpot_cents
  *                                         to starting_amount_cents; rollover -> write 'jackpot_rolled' + GROW jackpot by
- *                                         increment_cents. (Result row is written here, not at draw: outcome is NOT NULL
- *                                         with no 'pending' value.)
+ *                                         increment_cents. (The draw opens the row as 'drawn'; this UPDATES it, so
+ *                                         one draw is one row. See the schema note above handleMembersDraw.)
  *   POST  /host/members/settings host*   {draw_id?|venue_id, name?,        -> {draw}
  *                                          starting_amount_cents?, increment_cents?, current_jackpot_cents?,
  *                                          time_to_claim_seconds?, draw_length_seconds?, draw_day?, draw_time?, roster_id?}
@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '9 Sep 2026, 00:21 · 870a8665';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '9 Sep 2026, 17:08 · aea4f311';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -208,6 +208,11 @@ export default {
       if (method === 'GET'  && path === '/feedback/tally')     return await handleFeedbackTally(request, env, json);
       if (method === 'POST' && path === '/report')             return await handleReport(request, env, json);
       if (method === 'GET'  && path === '/venue')              return await handleVenueLookup(request, env, json);
+      /* The room server (see ROOM-SERVER.md). Both answer 503 without the ROOM
+         binding, and every page falls back to Supabase Realtime on a 503, so a
+         Worker deployed without the binding behaves exactly as it did before. */
+      if (method === 'GET'  && path === '/room/ws')            return await handleRoomSocket(request, env, json);
+      if (method === 'GET'  && path === '/room/presence')      return await handleRoomPresence(request, env, json);
       if (method === 'GET'  && path === '/venues/like')        return await handleVenueLike(request, env, json);
       if (method === 'POST' && path === '/venue/code/refresh')  return await handleVenueCodeRefresh(request, env, json);
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
@@ -227,6 +232,9 @@ export default {
       if (method === 'POST' && path === '/host/trivia/set/delete')         return await handleTriviaSetDelete(request, env, json);
       if (method === 'GET'  && path === '/host/trivia/set/questions')      return await handleTriviaSetQuestions(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/add')      return await handleTriviaAdd(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/questions/update')   return await handleTriviaUpdate(request, env, json);
+      if (method === 'POST' && path === '/host/trivia/image-upload')       return await handleTriviaImageUpload(request, env, json);
+      if (method === 'POST' && path === '/host/question/add-time')         return await handleHostAddTime(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/from-library') return await handleTriviaFromLibrary(request, env, json);
       if (method === 'POST' && path === '/host/trivia/questions/search')       return await handleTriviaSearch(request, env, json);
       if (method === 'POST' && path === '/admin/trivia/submissions')           return await handleAdminSubmissions(request, env, json);
@@ -535,6 +543,7 @@ try {
     missing,
     rateLimiter: 'memory',   // per isolate since 8 Sep 2026; no store on the request path
     joinDedupCache: rl,
+    room: !!env.ROOM,        // the room server binding: a boolean, never a value
     broadcast_signing: signing,
     venue_code_clashes: clashes.length,
     venue_code_clash_detail: clashes.length ? clashes.slice(0, 5) : undefined,
@@ -1659,8 +1668,19 @@ async function handleScreenCommand(request, env, json, body) {
                 all: !!(body && body.all), auth_user: admin.auth },
     }, false);
   } catch (e) { /* audit is best effort */ }
+  /* Same as the reload route: the column is still the truth for a screen that is
+     not in a room, and the room, when it is on, carries it there in a second.
+     Only for a command meant to happen NOW; a scheduled one has to wait for its
+     time, and the poll is what knows the time has come. */
+  let heard = 0;
+  if (!(at > new Date().toISOString())) {
+    for (const v of venues) {
+      if (!v || !v.slug) continue;
+      try { heard += await roomPublish(env, 'vp-' + fnvVenueCode(v.slug), { type: 'command', command: cmd, at: at }); } catch (e) {}
+    }
+  }
   return json({ ok: true, command: cmd, at: at, venues: done, failed: failed,
-                scheduled: at > new Date().toISOString(),
+                scheduled: at > new Date().toISOString(), heard: heard,
                 note: 'screens act within 30 seconds of that time' });
 }
 
@@ -1706,7 +1726,15 @@ async function handleScreenReload(request, env, json, body) {
                 auth_user: admin.auth },
     }, false);
   } catch (e) { /* audit is best effort */ }
-  return json({ ok: true, at: at, note: 'screens reload within 30 seconds' });
+  /* The column above is what a TV's 30 second poll reads, and it stays the truth:
+     a screen that is not in a room still reloads exactly as before. If the room
+     server is on, the same instruction also goes straight down the socket, so the
+     screen acts in about a second instead of within thirty. roomPublish never
+     throws and answers 0 when there is no binding. */
+  let heard = 0;
+  try { heard = await roomPublish(env, 'vp-' + fnvVenueCode(slug), { type: 'reload', at: at }); } catch (e) { heard = 0; }
+  return json({ ok: true, at: at, heard: heard,
+                note: heard ? 'screens reload now' : 'screens reload within 30 seconds' });
 }
 
 /* What is on at this venue right now?  (anon)
@@ -2844,11 +2872,16 @@ async function handleDrawResolve(request, env, json) {
  * may change the draw/jackpot SETTINGS numbers (/host/members/settings) -- that gate
  * is enforced on the write path below, not just in the UI.
  *
- * SCHEMA NOTE (flagged, not faked): vp_member_draw_results.outcome is NOT NULL and
- * checks in ('claimed','jackpot_rolled'). There is no 'pending' value to write when
- * the winner is first drawn, so the DRAW does not insert a result row; the durable
- * row is written at RESOLVE once the outcome (claim or rollover) is known. The draw
- * only stamps last_drawn_date and returns the winner for the host + TV.
+ * SCHEMA NOTE: vp_member_draw_results.outcome is NOT NULL. It used to check
+ * in ('claimed','jackpot_rolled') only, with no value meaning "drawn but not yet
+ * resolved", so a draw whose reply was lost on bad wifi left NOTHING behind: the
+ * date said drawn tonight and no row said who. Migration 74 adds 'drawn'. The DRAW
+ * now writes that row and RESOLVE updates it to claimed or jackpot_rolled, so one
+ * draw is one row. Both sides are forgiving: without the migration the insert is
+ * refused, is caught, and the draw behaves exactly as it did before.
+ * An 'drawn' row is UNRESOLVED. Any list or total must filter it out or label it;
+ * v_vp_prizes_given already totals only 'claimed' rows, so money figures are safe.
+ * The timestamp column here is drawn_at. There is NO created_at.
  */
 
 /* ------------------------------ POST /host/members/draw ------------------------------
@@ -2892,6 +2925,33 @@ async function handleMembersDraw(request, env, json) {
     }
   }
 
+  /* PICK UP TONIGHT'S DRAW. last_drawn_date is stamped below, at DRAW time, so a reply lost on
+     bad wifi used to leave the host with "Drawn tonight" and no winner anywhere. The console can
+     now draw again; this is what makes that safe, by handing back the SAME member rather than
+     picking a second one. Only an unresolved 'drawn' row from the last 30 minutes counts.
+     drawn_at, NOT created_at: this table has no created_at, and PostgREST rejects the whole
+     select when a name is unknown, which is how the reset jackpot once reached a TV. */
+  let pending = [];
+  try {
+    pending = await sbGet(env, 'vp_member_draw_results',
+      'draw_id=eq.' + enc(drawId) + '&outcome=eq.drawn&select=id,member_id,member_number,winner_name,amount_cents,drawn_at' +
+      '&order=drawn_at.desc&limit=1');
+  } catch (e) { pending = []; }
+  if (pending.length && pending[0].drawn_at && (Date.now() - new Date(pending[0].drawn_at).getTime()) < 30 * 60 * 1000) {
+    const p = pending[0];
+    return json({
+      draw_id: drawId, draw_name: draw.name,
+      member_id: p.member_id, member_number: p.member_number,
+      first_name: null, last_name: null,
+      winner_name: p.winner_name,
+      jackpot_cents: p.amount_cents != null ? p.amount_cents : (draw.current_jackpot_cents != null ? draw.current_jackpot_cents : 0),
+      time_to_claim_seconds: draw.time_to_claim_seconds != null ? draw.time_to_claim_seconds : null,
+      draw_length_seconds: draw.draw_length_seconds != null ? draw.draw_length_seconds : null,
+      valid_count: null,
+      pending: true,
+    });
+  }
+
   const members = await validMembers(env, draw);
   if (!members.length) return json({ error: 'No valid members to draw from' }, 409);
 
@@ -2911,6 +2971,18 @@ async function handleMembersDraw(request, env, json) {
   } catch (e) {
     await sbPatch(env, 'vp_member_draws', 'id=eq.' + enc(drawId), { last_drawn_date: today });
   }
+
+  /* The durable record now starts HERE, not at resolve. A draw that was picked and then lost on
+     bad wifi left nothing behind at all, so the morning after nobody could say who was drawn.
+     Resolve UPDATES this row to claimed or jackpot_rolled. Forgiven if the migration that allows
+     'drawn' has not been run yet, so a Worker deployed early still draws exactly as before. */
+  try {
+    await sbInsert(env, 'vp_member_draw_results', {
+      draw_id: drawId, outcome: 'drawn',
+      amount_cents: draw.current_jackpot_cents != null ? draw.current_jackpot_cents : 0,
+      member_id: winner.id, member_number: winner.member_number, winner_name: winnerName,
+    }, false);
+  } catch (e) { /* the constraint has not been widened yet: the draw still runs */ }
 
   return json({
     draw_id: drawId, draw_name: draw.name,
@@ -3024,7 +3096,20 @@ async function handleMembersResolve(request, env, json) {
   if (memberId) resultRow.member_id = memberId;
   if (memberNumber != null) resultRow.member_number = memberNumber;
   if (winnerName) resultRow.winner_name = winnerName;
-  await sbInsert(env, 'vp_member_draw_results', resultRow, false);
+  /* Finish the row the DRAW opened, so one draw is one row. Falls back to an insert when there
+     is no open row (an older Worker drew it, or the migration widening the outcome check has not
+     been run yet), which is exactly the old behaviour. drawn_at, not created_at: this table has
+     no created_at column. */
+  let closed = 0;
+  try {
+    const open = await sbGet(env, 'vp_member_draw_results',
+      'draw_id=eq.' + enc(drawId) + '&outcome=eq.drawn&select=id&order=drawn_at.desc&limit=1');
+    if (open.length) {
+      await sbPatch(env, 'vp_member_draw_results', 'id=eq.' + enc(open[0].id), resultRow);
+      closed = 1;
+    }
+  } catch (e) { closed = 0; }
+  if (!closed) await sbInsert(env, 'vp_member_draw_results', resultRow, false);
 
   // Jackpot maths, computed server-side from the stored numbers.
   let newJackpot;
@@ -3638,6 +3723,108 @@ async function handleTriviaAdd(request, env, json) {              // write your 
     if (subs.length) await sbInsert(env, 'vp_question_submissions', subs, false);
   } catch (e) { /* non-fatal: the review queue is best-effort */ }
   return json({ ok: true, added: rows.length });
+}
+
+/* --- POST /host/trivia/questions/update : fix a typo instead of deleting and retyping. ---
+   body { question_id, question, options[4], correct_index, category, difficulty, image_url },
+   Authorization: host JWT. Staff-gated through the question's own set, exactly like remove.
+   The builder falls back to add-then-remove when this route is missing, which works but moves
+   the question to the end of the night and mints a new id. */
+async function handleTriviaUpdate(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);             // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const qid = String(b.question_id || '').trim();
+  assertUuid(qid, 'question_id');
+  const qrows = await sbGet(env, 'vp_questions', 'id=eq.' + enc(qid) + '&select=id,set_id');
+  if (!qrows.length) return json({ error: 'Question not found' }, 404);
+  await triviaSetForVenue(env, qrows[0].set_id, authUserId);        // ENFORCED: staff at the set's venue
+  const clean = sanitizeQuestion(b);
+  if (!clean) return json({ error: 'Fill the question, all four answers, and tick the correct one.' }, 400);
+  if (clean.image_url && !/^https:\/\//i.test(clean.image_url)) {
+    return json({ error: 'The picture link needs to start with https://' }, 400);
+  }
+  await sbPatch(env, 'vp_questions', 'id=eq.' + enc(qid), clean);
+  return json({ ok: true });
+}
+
+/* --- POST /host/trivia/image-upload : the picture round. ---
+   body { set_id, data:"data:image/webp;base64,..." }, Authorization: host JWT. Staff-gated
+   through the set's venue. The builder shrinks the photo on the device first, so what arrives
+   here is a small web copy, never the 4MB original. The returned URL goes in image_url on the
+   question, which already flows to the TV and every phone.
+
+   webp or jpeg only and 300KB, because that is what the builder sends and because a picture
+   that has to load on forty phones at once over pub wifi has to be small. The bucket is public
+   (a phone reads it with no key) and every path is under the venue's own id. */
+function gB64ToBytes(b64) {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+async function gEnsureBucket(env, id) {
+  try {
+    await fetch(env.SUPABASE_URL + '/storage/v1/bucket', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, name: id, public: true, file_size_limit: 524288, allowed_mime_types: ['image/webp', 'image/jpeg'] }),
+    });
+  } catch (_) { /* already there: the POST 400s and the upload below still works */ }
+}
+async function handleTriviaImageUpload(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);             // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const set = await triviaSetForVenue(env, b.set_id, authUserId);   // ENFORCED: staff at the set's venue
+  const m = String(b.data || '').match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) return json({ error: 'That did not look like a picture.' }, 400);
+  const contentType = m[1].toLowerCase();
+  if (!/^image\/(webp|jpeg)$/.test(contentType)) return json({ error: 'Pictures are saved as WEBP or JPG.' }, 400);
+  const bytes = gB64ToBytes(m[2]);
+  if (bytes.length > 300 * 1024) return json({ error: 'That picture is too big. Keep it under 300KB.' }, 400);
+  await gEnsureBucket(env, 'trivia-images');
+  const ext = contentType === 'image/webp' ? 'webp' : 'jpg';
+  // Venue-scoped path. The question id is not known yet (the host picks the photo before the
+  // question is saved), so the file gets a random name inside the venue's own folder.
+  const path = 'trivia/' + set.owner_venue_id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 10) + '.' + ext;
+  const up = await fetch(env.SUPABASE_URL + '/storage/v1/object/trivia-images/' + path, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + env.SUPABASE_SERVICE_KEY, 'apikey': env.SUPABASE_SERVICE_KEY, 'Content-Type': contentType, 'x-upsert': 'true' },
+    body: bytes,
+  });
+  if (!up.ok) { const t = await up.text(); return json({ error: 'The picture did not save. ' + t.slice(0, 160) }, 500); }
+  return json({ ok: true, url: env.SUPABASE_URL + '/storage/v1/object/public/trivia-images/' + path });
+}
+
+/* --- POST /host/question/add-time : give the room a few more seconds. ---
+   body { game_id, seconds }, Authorization: host JWT. Moves the REAL deadline, because the
+   Worker is what throws away a late answer: a console that stretched only its own clock would
+   promise the room ten more seconds and then bin what they tapped. Capped at 60 seconds a tap
+   and only while a question is actually open. */
+async function handleHostAddTime(request, env, json) {
+  const authUserId = await verifyHostJwt(request, env);             // ENFORCED: valid host JWT
+  const b = await readJson(request);
+  const gameId = String(b.game_id || '').trim();
+  if (!gameId) return json({ error: 'Missing game_id' }, 400);
+  assertUuid(gameId, 'game_id');
+  const seconds = Math.max(1, Math.min(60, parseInt(b.seconds, 10) || 10));
+  const [games, tg] = await Promise.all([
+    sbGet(env, 'vp_games', 'id=eq.' + enc(gameId) + '&select=id,session_id,status,format'),
+    sbGet(env, 'vp_trivia_games', 'game_id=eq.' + enc(gameId) + '&select=current_seq,phase,question_ends_at'),
+  ]);
+  if (!games.length) return json({ error: 'Game not found' }, 404);
+  const game = games[0];
+  if (game.format !== 'trivia') return json({ error: 'Not a trivia game' }, 400);
+  if (game.status !== 'running') return json({ error: 'This game is not running' }, 409);
+  if (!tg.length || tg[0].phase !== 'asking') return json({ error: 'No question is open' }, 409);
+  const session = await getSession(env, game.session_id);
+  await requireStaff(env, authUserId, session.venue_id);            // ENFORCED: staff at the game's venue
+  const was = Date.parse(tg[0].question_ends_at) || Date.now();
+  const endsAt = new Date(Math.max(was, Date.now()) + seconds * 1000).toISOString();
+  const moved = await sbPatchReturning(env, 'vp_trivia_games',
+    'game_id=eq.' + enc(gameId) + '&current_seq=eq.' + tg[0].current_seq + '&phase=eq.asking',
+    { question_ends_at: endsAt });
+  if (!moved || !moved.length) return json({ error: 'That question has already moved on.' }, 409);
+  return json({ ok: true, ends_at: endsAt, seconds });
 }
 
 // --- Review queue admin (used by the weekly fact-check run). Gated by env.ADMIN_KEY. ---
@@ -4596,9 +4783,16 @@ async function handlePlayerScore(request, env, json) {
   // Whole leaderboard for this game, so we can derive both this player's total and rank.
   const board = await sbGet(env, 'v_vp_trivia_leaderboard',
     'game_id=eq.' + enc(gameId) + '&select=player_id,points&order=points.desc&limit=1000');
+  // Equal points share a place, so the phone agrees with the wall. Ranking by list position
+  // told two teams on 850 they were 3rd and 4th, decided by database order.
   let total = 0, rank = board.length ? board.length : 1, found = false;
   for (let i = 0; i < board.length; i++) {
-    if (board[i].player_id === player.id) { total = board[i].points || 0; rank = i + 1; found = true; break; }
+    if (board[i].player_id === player.id) {
+      total = board[i].points || 0;
+      rank = i + 1;
+      for (let j = i - 1; j >= 0 && (board[j].points || 0) === total; j--) rank = j + 1;
+      found = true; break;
+    }
   }
   if (!found) { total = 0; rank = board.length + 1; }
 
@@ -5919,6 +6113,10 @@ async function getPublicSnapshot(env, sessionId) {
         /* Baked at start; a reloading host restores its spin from here, not from the venue template,
            so a spin changed mid-night survives the reload the same way the range and prize do. */
         spin_seconds: cfg.spin_seconds != null ? cfg.spin_seconds : null,
+        /* The gaps are baked onto the game at start. Without them a reloading console shows an
+           empty "tickets that did not sell" box beside a game that HAS gaps, so the count is
+           wrong and the host cannot tell what is still in the barrel. */
+        excluded_ranges: (cfg && Array.isArray(cfg.excluded_ranges)) ? cfg.excluded_ranges : null,
         time_to_present: r.time_to_claim_seconds != null ? r.time_to_claim_seconds : null,
         jackpot_on: !!r.jackpot_on,
         jackpot_amount_cents: r.jackpot_amount_cents != null ? r.jackpot_amount_cents : null,
@@ -6738,3 +6936,173 @@ function dbError(op, target, detail) {
  *   - checkPattern covers one_line, two_lines, full_house. Custom jsonb masks later.
  *   - profanity filter is a minimal wordlist; extend before launch.
  * ===================================================================== */
+
+/* ============================================================================
+ * ROOM SERVER (copied from venueplay-room.js, kept identical by the gate)
+ *
+ * A Worker is ONE file, so the Durable Object class lives here as well as in its
+ * own file, where its test can reach it. release-check.py fails if the two ever
+ * differ, the same rule esc(), cryptoInt() and tvSend() already live under.
+ * Edit venueplay-room.js, run its test, then re-copy. Never edit this copy alone.
+ *
+ * Everything below is inert without the ROOM binding: no binding, no change.
+ * ========================================================================== */
+/* THE ROOM SERVER (Durable Object). See ROOM-SERVER.md in this folder.
+ *
+ * WRITTEN OVERNIGHT 9 SEP 2026, NOT RUN, NOT DEPLOYED, NOT WIRED INTO THE GAME WORKER.
+ * Run venueplay-room.test.js before believing any of it.
+ *
+ * One room per channel name. The pages already meet on a Supabase Realtime channel called
+ * "vp-<code>" (the TV, the host's tablet, every phone). A room is that channel, held by
+ * Cloudflare instead: every screen keeps one WebSocket to it, and whatever one of them sends
+ * the room hands to everyone else in the room (never back to the sender, matching Supabase's
+ * broadcast {self:false}). The game Worker can also drop a message into a room over HTTP
+ * (/publish) for HQ reloads and commands.
+ *
+ * A room never invents a message. Hosts sign what they send (vp-sign.js) and every screen
+ * verifies, so a message arriving by the room is checked exactly as one arriving by Supabase.
+ *
+ * WebSocket hibernation: an idle room costs nothing. All per-socket state lives in the
+ * socket's attachment, so nothing is lost when Cloudflare puts the room to sleep.
+ */
+
+const ROOM_MAX_MSG_CHARS = 16 * 1024;        // a game message is a few hundred characters
+const ROOM_MAX_PER_SEC   = 20;               // per socket; the excess is dropped, the socket kept
+const ROOM_ROLES         = ['tv', 'host', 'phone', 'hq'];
+const ROOM_NAME_RE       = /^[A-Za-z0-9-]{3,90}$/;   // the channel name the page already uses, e.g. vp-3A7TES
+
+function roomJson(obj, status) {
+  return new Response(JSON.stringify(obj), { status: status || 200, headers: { 'Content-Type': 'application/json' } });
+}
+
+export class VenueRoom {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const path = url.pathname.replace(/\/+$/, '');
+    if (path === '/ws') return this.connect(request, url);
+    if (path === '/publish' && request.method === 'POST') return this.publish(request);
+    if (path === '/presence') return roomJson(this.presence());
+    return roomJson({ error: 'no such room route' }, 404);
+  }
+
+  // A screen joins the room. role is only a tag for presence counts; it grants nothing.
+  connect(request, url) {
+    if (request.headers.get('Upgrade') !== 'websocket') return roomJson({ error: 'expected a websocket' }, 426);
+    const role = String(url.searchParams.get('role') || 'phone');
+    if (ROOM_ROLES.indexOf(role) < 0) return roomJson({ error: 'bad role' }, 400);
+    const pair = new WebSocketPair();
+    const client = pair[0], server = pair[1];
+    this.state.acceptWebSocket(server, [role]);
+    server.serializeAttachment({ role: role, since: Date.now(), win: 0, n: 0 });
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  // Something in the room spoke: hand it to everyone else in the room.
+  webSocketMessage(ws, message) {
+    if (typeof message !== 'string') return;                 // binary is not a game message
+    if (message.length > ROOM_MAX_MSG_CHARS) return;
+    const a = ws.deserializeAttachment() || { role: 'phone', since: 0, win: 0, n: 0 };
+    const win = Math.floor(Date.now() / 1000);
+    if (a.win !== win) { a.win = win; a.n = 0; }
+    a.n += 1;
+    ws.serializeAttachment(a);
+    if (a.n > ROOM_MAX_PER_SEC) return;                      // a flood is dropped; the socket stays up
+    let obj;
+    try { obj = JSON.parse(message); } catch (e) { return; }
+    if (!obj || typeof obj !== 'object' || typeof obj.type !== 'string') return;
+    this.relay(JSON.stringify(obj), ws);
+  }
+
+  webSocketClose(ws, code, reason) {
+    try { ws.close(code, reason); } catch (e) {}
+  }
+
+  webSocketError(ws) {
+    try { ws.close(1011, 'error'); } catch (e) {}
+  }
+
+  // The game Worker (HQ reload, a command) drops a message in. Everyone hears it.
+  async publish(request) {
+    let body;
+    try { body = await request.json(); } catch (e) { return roomJson({ error: 'bad json' }, 400); }
+    const payload = body && body.payload;
+    if (!payload || typeof payload !== 'object' || typeof payload.type !== 'string') return roomJson({ error: 'payload needs a type' }, 400);
+    const str = JSON.stringify(payload);
+    if (str.length > ROOM_MAX_MSG_CHARS) return roomJson({ error: 'too big' }, 413);
+    return roomJson({ ok: true, delivered: this.relay(str, null) });
+  }
+
+  // Counts by role only. Never a name, a token or an address.
+  presence() {
+    const out = { total: 0 };
+    for (let i = 0; i < ROOM_ROLES.length; i++) {
+      const n = this.state.getWebSockets(ROOM_ROLES[i]).length;
+      out[ROOM_ROLES[i]] = n;
+      out.total += n;
+    }
+    return out;
+  }
+
+  // Send to every socket but `except`. A dead socket is skipped, not fatal.
+  relay(str, except) {
+    const all = this.state.getWebSockets();
+    let n = 0;
+    for (let i = 0; i < all.length; i++) {
+      if (all[i] === except) continue;
+      try { all[i].send(str); n += 1; } catch (e) {}
+    }
+    return n;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * The game Worker's side. These three go into venueplay-game.js next to /venue
+ * (see ROOM-SERVER.md, "Wiring"). Every one of them is a no-op without env.ROOM.
+ * ------------------------------------------------------------------------- */
+
+function roomStub(env, name) {
+  return env.ROOM.get(env.ROOM.idFromName(name));
+}
+
+// GET /room/ws?room=vp-XXXXXX&role=tv|host|phone|hq  (a WebSocket upgrade)
+async function handleRoomSocket(request, env, json) {
+  if (!env.ROOM) return json({ error: 'room server not enabled' }, 503);
+  const url = new URL(request.url);
+  const name = String(url.searchParams.get('room') || '').trim();
+  if (!ROOM_NAME_RE.test(name)) return json({ error: 'bad room' }, 400);
+  const role = String(url.searchParams.get('role') || 'phone');
+  if (ROOM_ROLES.indexOf(role) < 0) return json({ error: 'bad role' }, 400);
+  if (request.headers.get('Upgrade') !== 'websocket') return json({ error: 'expected a websocket' }, 426);
+  return roomStub(env, name).fetch(new Request('https://room/ws?role=' + encodeURIComponent(role), request));
+}
+
+// GET /room/presence?room=vp-XXXXXX  -> {total, tv, host, phone, hq}
+async function handleRoomPresence(request, env, json) {
+  if (!env.ROOM) return json({ error: 'room server not enabled' }, 503);
+  const url = new URL(request.url);
+  const name = String(url.searchParams.get('room') || '').trim();
+  if (!ROOM_NAME_RE.test(name)) return json({ error: 'bad room' }, 400);
+  const res = await roomStub(env, name).fetch('https://room/presence');
+  return json(await res.json());
+}
+
+// Drop a message into a room from the Worker. Returns how many screens heard it.
+// Never throws: no binding, a bad name or a room error all mean 0 and life goes on.
+async function roomPublish(env, name, payload) {
+  if (!env.ROOM || !ROOM_NAME_RE.test(String(name || ''))) return 0;
+  try {
+    const res = await roomStub(env, name).fetch('https://room/publish', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payload: payload }),
+    });
+    const d = await res.json();
+    return (d && d.delivered) || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
