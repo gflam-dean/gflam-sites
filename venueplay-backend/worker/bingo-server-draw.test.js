@@ -30,7 +30,7 @@ var CONSOLE = find('venueplay/app/index.html');
 var SESS = find('venueplay/app/vp-session.js');
 var MIG = find('venueplay-backend/supabase/venueplay-70-bingo-server-draw.sql');
 
-var EXPECT = 47, ran = 0, bad = 0;
+var EXPECT = 48, ran = 0, bad = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 function lift(n) {
   var i = W.indexOf('async function ' + n + '('); if (i < 0) i = W.indexOf('function ' + n + '(');
@@ -97,10 +97,27 @@ async function sbRpc(env, fn, args) {
 var seed = 987654321 >>> 0;
 function mix(){ seed = (seed + 0x9E3779B9) >>> 0; var z = seed; z = Math.imul(z ^ (z >>> 16), 0x21F0AAAD) >>> 0; z = Math.imul(z ^ (z >>> 15), 0x735A2D97) >>> 0; return (z ^ (z >>> 15)) >>> 0; }
 globalThis.crypto = { getRandomValues: function (b) { for (var i = 0; i < b.length; i++) b[i] = mix(); return b; } };
+/* Migration 76 asks vp_bingo_ball first and falls back to the many-trip path this suite
+   scripts a database for. Here PostgREST always answers 404, the "not run yet" case, so
+   everything below still runs the path it was written for. The one-trip path, and the two
+   agreeing answer for answer, is one-trip-draws.test.js. */
+var RPC_URLS = [];
+function sbHeaders() { return {}; }
+function dbError(kind, fn, detail) { return new Error('db ' + kind + ' ' + fn + ': ' + detail); }
+var console = { log: function () {}, warn: function () {} };
+function fetch(url, opts) {
+  RPC_URLS.push(url);
+  return Promise.resolve({ status: 404, ok: false,
+    json: function () { return Promise.resolve(null); }, text: function () { return Promise.resolve(''); } });
+}
 eval(lift('shuffle1to90'));
 eval(lift('randInt'));
 eval(lift('handleBingoDrawStart'));
+eval('var HOST_DRAW_STATUS = ' + /const HOST_DRAW_STATUS = (\{[\s\S]*?\n\});/.exec(W)[1] + ';');
+eval('var hostDrawRpcMissing = false;');
+eval(lift('hostDrawRpc'));
 eval(lift('handleBingoBall'));
+eval(lift('handleBingoBallManyTrips'));
 eval(lift('handleBingoFallback'));
 var HOLD = /const BINGO_SERVER_HOLD_MS = (\d+)/.exec(W);
 ok('the server hold exists and is shorter than the 5s the console holds for', !!HOLD && +HOLD[1] > 0 && +HOLD[1] < 5000,
@@ -131,6 +148,8 @@ var DRAW;
   ok('it is the first number of the stored order', b1.body.number === row.draw_order[0]);
   ok('staff was checked against the DRAW\'s venue, not a venue the caller named', STAFF_CALLS[0] === VENUE);
   ok('the ball is on the record with the time', DB.vp_bingo_draw_balls.length === 1 && DB.vp_bingo_draw_balls[0].source === 'server' && !!DB.vp_bingo_draw_balls[0].drawn_at);
+  ok('the one-trip function was asked first, and its absence fell back to this path (migration 76)',
+     RPC_URLS.length === 1 && /vp_bingo_ball$/.test(RPC_URLS[0]) && b1.status === 200, RPC_URLS.join(' '));
 
   var b2 = await handleBingoBall({}, {}, json);
   ok('a second request inside the hold is refused with 429', b2.status === 429, 'got ' + b2.status);

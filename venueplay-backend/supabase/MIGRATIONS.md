@@ -64,6 +64,7 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 71 | one-trip-answer | applied on SYDNEY (8 Sep). applied on LIVE 9 Sep (functions and indexes seen in the live database). The Worker falls back to the old path where the function is missing, so order is safe |
 | 72 | one-trip-screen-poll | applied on SYDNEY (8 Sep). applied on LIVE 9 Sep (functions and indexes seen in the live database). Same fallback |
 | 73 | one-trip-host-trivia | applied on SYDNEY only (9 Sep). Not on live. The Worker falls back to the many-trip path where the functions are missing, so order is safe |
+| 76 | one-trip-host-draws | NOT RUN anywhere (written 10 Sep). The bingo ball and the members draw in one call each. It REQUIRES 73 first (it calls vp_host_staff) and refuses to install without it. Same fallback: the Worker takes the many-trip path where the functions are missing, so the order of migration and paste is safe |
 
 Verified against the live database on 5 Sep 2026, not from memory: vp_captures
 .player_id and .source exist, vp_venues.overage_streak_day exists,

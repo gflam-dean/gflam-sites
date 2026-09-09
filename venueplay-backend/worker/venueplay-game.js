@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '10 Sep 2026, 08:32 · 3d77fa79';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Sep 2026, 09:21 · 57d50ed2';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2897,8 +2897,59 @@ async function handleDrawResolve(request, env, json) {
  * winning member number + name. NOT metered: writes only last_drawn_date, no vp_players.
  */
 async function handleMembersDraw(request, env, json) {
-  const authUserId = await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
-  const b = await readJson(request);
+  /* ONE TRIP, NOT EIGHT (migration 76; see the note above handleBingoBall).
+     The pick still happens with THIS Worker's CSPRNG. Eight uint32 values are minted here
+     with crypto.getRandomValues and handed to the function, which applies the same
+     rejection rule randInt applies (discard anything at or above floor(2 ** 32 / n) * n,
+     then take it modulo n), so the distribution is identical and the entropy never comes
+     from the database. Eight is far more than enough: a single value is rejected with
+     probability under n / 2 ** 32. If they were all rejected the function says so and we
+     draw the old way. */
+  const rand = [];
+  const buf = new Uint32Array(8);
+  crypto.getRandomValues(buf);
+  for (let i = 0; i < buf.length; i++) rand.push(buf[i]);
+  const r = await hostDrawRpc(request, env, json, 'vp_members_draw', {
+    p_rand: rand, p_hold_default: 4, p_hold_lo: 2, p_hold_hi: 30,
+  });
+  if (r.reply) return r.reply;
+  if (r.pre) return handleMembersDrawManyTrips(request, env, json, r.pre);
+  const d = r.rpc;
+  if (d.status === 'hold') {
+    return json({ error: 'The draw is still on the screen. You can draw again in ' + d.wait_seconds + ' seconds.' }, 429);
+  }
+  if (d.status === 'pending') {
+    return json({
+      draw_id: r.drawId, draw_name: d.draw_name,
+      member_id: d.member_id, member_number: d.member_number,
+      first_name: null, last_name: null,
+      winner_name: d.winner_name,
+      jackpot_cents: d.jackpot_cents != null ? d.jackpot_cents : 0,
+      time_to_claim_seconds: d.time_to_claim_seconds != null ? d.time_to_claim_seconds : null,
+      draw_length_seconds: d.draw_length_seconds != null ? d.draw_length_seconds : null,
+      valid_count: null,
+      pending: true,
+    });
+  }
+  // The name the room sees is formatted HERE, by the same formatMemberName the old path
+  // used, from the same three inputs. The function formats the copy it writes down.
+  return json({
+    draw_id: r.drawId, draw_name: d.draw_name,
+    member_id: d.member_id, member_number: d.member_number,
+    first_name: d.first_name, last_name: d.last_name,
+    winner_name: formatMemberName(d.first_name, d.last_name, d.name_display),
+    jackpot_cents: d.jackpot_cents != null ? d.jackpot_cents : 0,
+    time_to_claim_seconds: d.time_to_claim_seconds != null ? d.time_to_claim_seconds : null,
+    draw_length_seconds: d.draw_length_seconds != null ? d.draw_length_seconds : null,
+    valid_count: d.valid_count,
+  });
+}
+
+// The pre-76 path, kept only as the fallback above. `pre` carries the verified host and the
+// body already read (a request body can only be read once).
+async function handleMembersDrawManyTrips(request, env, json, pre) {
+  const authUserId = pre ? pre.authUserId : await verifyHostJwt(request, env);           // ENFORCED: valid host JWT
+  const b = pre ? pre.b : await readJson(request);
   const drawId = String(b.draw_id || '').trim();
   if (!drawId) return json({ error: 'Missing draw_id' }, 400);
   assertUuid(drawId, 'draw_id');
@@ -4554,9 +4605,81 @@ async function handleBingoDrawStart(request, env, json) {
   return json({ draw_id: row.id });
 }
 
-async function handleBingoBall(request, env, json) {
-  const authUserId = await verifyHostJwt(request, env);
+/* The host's Call a ball and Draw a member in ONE database trip each (migration 76).
+ * Measured from Dean's machine on 10 Sep 2026, three samples each: a Cloudflare-only call
+ * (room presence) answers in 0.09 s and a single Supabase read through this Worker takes
+ * 0.84 s, because the live database is in Singapore and the Worker runs at an Australian
+ * edge. Calling a ball made six of those reads one after another (the draw row, the staff
+ * row, the venue, its group, the last ball, then the draw itself), so the host waited two
+ * to three seconds while the room, which gets the ball over the Cloudflare room in a tenth
+ * of a second, watched the host's finger. The members draw made eight to ten.
+ *
+ * vp_bingo_ball and vp_members_draw make the same checks in the same order, including the
+ * staff check in full, and return a status word plus the same fields; the table below maps
+ * the word to the exact reply the many-trip path gave. The randomness has not moved: bingo
+ * still hands out the order vp_bingo_next_ball wrote at game start, and the members draw
+ * still picks with random values minted HERE by crypto.getRandomValues under the same
+ * rejection rule randInt uses.
+ *
+ * If the functions are not there yet (migration 76 not run) PostgREST answers 404 and we
+ * fall back to the old path, so the paste order cannot break a night. */
+const HOST_DRAW_STATUS = {
+  no_draw:       [404, 'Draw not found'],
+  not_staff:     [403, 'Not authorised: you are not staff at this venue'],
+  venue_missing: [403, 'Venue not available'],
+  venue_paused:  [403, 'Games are paused here tonight. Have a word with the staff.'],
+  finished:      [409, 'This game is finished'],
+  local_mode:    [409, 'This game is being called from the tablet'],
+  all_drawn:     [409, 'All 90 balls have been drawn'],
+  no_members:    [409, 'No valid members to draw from'],
+};
+let hostDrawRpcMissing = false;   // per isolate: once PostgREST says the functions are not there, stop asking
+// Common front half of both host draw routes: verify the host, read the body, ask the function.
+// Returns { rpc: <parsed jsonb> } on success, { pre } when the function is missing (fall back),
+// or { reply } when the status word maps to an error reply.
+async function hostDrawRpc(request, env, json, fn, extra) {
+  const authUserId = await verifyHostJwt(request, env);          // ENFORCED: valid host JWT
   const b = await readJson(request);
+  const drawId = String(b.draw_id || '').trim();
+  if (!drawId) return { reply: json({ error: 'Missing draw_id' }, 400) };
+  assertUuid(drawId, 'draw_id');
+  const pre = { authUserId, b, drawId };
+  if (hostDrawRpcMissing) return { pre, drawId };
+  const args = Object.assign({ p_draw_id: drawId, p_auth_user_id: authUserId }, extra || {});
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+    method: 'POST', headers: sbHeaders(env), body: JSON.stringify(args),
+  });
+  if (res.status === 404) {   // function not deployed yet: old path, and remember for this isolate
+    hostDrawRpcMissing = true;
+    console.warn(fn + ' missing (migration 76 not run); answering the slow way');
+    return { pre, drawId };
+  }
+  if (!res.ok) throw dbError('rpc', fn, await res.text());
+  const rpc = await res.json();
+  const status = rpc && rpc.status;
+  if (status === 'ok' || status === 'hold' || status === 'pending') return { rpc, drawId };
+  if (status === 'retry') return { pre, drawId };   // every random value was rejected: draw the old way
+  const reply = HOST_DRAW_STATUS[status];
+  if (!reply) throw dbError('rpc', fn, 'unexpected status ' + status);
+  return { reply: json({ error: reply[1] }, reply[0]) };
+}
+
+async function handleBingoBall(request, env, json) {
+  const r = await hostDrawRpc(request, env, json, 'vp_bingo_ball', { p_hold_ms: BINGO_SERVER_HOLD_MS });
+  if (r.reply) return r.reply;
+  if (r.pre) return handleBingoBallManyTrips(request, env, json, r.pre);
+  const d = r.rpc;
+  if (d.status === 'hold') {
+    return json({ error: 'The last ball is still going up. You can call again in ' + d.wait_seconds + ' seconds.' }, 429);
+  }
+  return json({ number: d.number, index: d.index });
+}
+
+// The pre-76 path, kept only as the fallback above. `pre` carries the verified host and the
+// body already read (a request body can only be read once).
+async function handleBingoBallManyTrips(request, env, json, pre) {
+  const authUserId = pre ? pre.authUserId : await verifyHostJwt(request, env);
+  const b = pre ? pre.b : await readJson(request);
   const drawId = String(b.draw_id || '').trim();
   if (!drawId) return json({ error: 'Missing draw_id' }, 400);
   assertUuid(drawId, 'draw_id');
@@ -6712,7 +6835,8 @@ async function sbDelete(env, table, filter) {
  * FUNCTION and never about a venue. Cached for five minutes, because /health is public
  * and this is three round trips.
  */
-const ONE_TRIP_FNS = ['vp_player_answer', 'vp_screen_poll', 'vp_host_staff', 'vp_host_question', 'vp_host_reveal'];
+const ONE_TRIP_FNS = ['vp_player_answer', 'vp_screen_poll', 'vp_host_staff', 'vp_host_question', 'vp_host_reveal',
+                      'vp_bingo_ball', 'vp_members_draw'];
 let _otAt = 0, _otSeen = null;
 async function oneTripPresent(env) {
   const now = Date.now();

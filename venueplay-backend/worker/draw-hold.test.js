@@ -25,8 +25,9 @@ var BINGO = find('venueplay/app/index.html');
 var MUSICAL = find('venueplay/app/musical/host.html');
 var RAFFLE = find('venueplay/app/raffle/host.html');
 var MIG = find('venueplay-backend/supabase/venueplay-69-members-draw-hold.sql');
+var MIG76 = find('venueplay-backend/supabase/venueplay-76-one-trip-host-draws.sql');
 
-var EXPECT = 39, ran = 0, bad = 0;
+var EXPECT = 41, ran = 0, bad = 0;
 function ok(n, c, extra) { ran++; if (c) print('  ok   ' + n); else { bad++; print('  FAIL ' + n + (extra ? '   ' + extra : '')); } }
 function lift(n) {
   var i = W.indexOf('async function ' + n + '('); if (i < 0) i = W.indexOf('function ' + n + '(');
@@ -82,7 +83,10 @@ ok('the raffle console sends its spin', /spin_seconds:G\.drawLength/.test(RAFFLE
 ok('the console offers 3 to 8 seconds, which is what the Worker clamps to', /var opts=\[3,4,5,6,8\]/.test(RAFFLE));
 
 print('\n== the members draw finally has one ==');
-var members = body('handleMembersDraw');
+/* Migration 76 moved the members draw to one database trip, and the slow path it falls back
+   to is the same code under a longer name. The hold lives in BOTH now, so both are checked:
+   here for the fallback, and just below for the one-trip function that answers first. */
+var members = body('handleMembersDrawManyTrips');
 ok('sized by the draw\'s own spin', /drawHoldMs\(draw\.draw_length_seconds, 4, 2, 30\)/.test(members));
 ok('reads last_drawn_at in its own try, so a missing column skips the guard rather than the draw',
    /try \{[\s\S]*?select=last_drawn_at[\s\S]*?\} catch \(e\) \{ lastAt = null; \}/.test(members));
@@ -91,6 +95,11 @@ ok('the stamp is written before the winner is returned', members.indexOf('last_d
 ok('and falls back to the date-only stamp if the column is missing',
    /catch \(e\) \{\n\s*await sbPatch\(env, 'vp_member_draws', 'id=eq\.' \+ enc\(drawId\), \{ last_drawn_date: today \}\);/.test(members));
 ok('migration 69 adds the column', /alter table vp_member_draws\s+add column if not exists last_drawn_at timestamptz/.test(MIG));
+ok('the one-trip function holds by the same rule: the spin clamped, plus two seconds',
+   /v_spin := greatest\(p_hold_lo, least\(p_hold_hi, v_spin\)\);/.test(MIG76) &&
+   /v_hold := \(v_spin \+ 2\) \* 1000;/.test(MIG76));
+ok('and the Worker hands it the same numbers drawHoldMs uses',
+   /p_hold_default: 4, p_hold_lo: 2, p_hold_hi: 30/.test(body('handleMembersDraw')));
 
 print('\n== the page-side hold, run for real ==');
 var now = 1000000, timers = {}, nextId = 1, doc = {};
