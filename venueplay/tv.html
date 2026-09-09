@@ -1726,6 +1726,11 @@
         el.style.cssText="position:fixed;top:20px;left:22px;max-height:64px;max-width:220px;z-index:60;pointer-events:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.55))";
         document.body.appendChild(el); }
       el.src=url; el.style.display="block";
+      /* A logo says which venue this is better than a caption does, so the small name
+         under the VenuePlay mark comes off once a logo is up. Without a logo the name
+         stays, because a TV pointed at the wrong venue is otherwise only noticeable by
+         its sound. One or the other, never both. */
+      var nt=document.getElementById("venueNameTag"); if(nt) nt.style.display="none";
     }
     /* The venue's NAME in plain text, so anyone glancing at a screen can see WHICH venue it is
        showing (a TV pointed at the wrong venue is otherwise only noticeable by its sound).
@@ -1754,7 +1759,9 @@
         var corner=document.getElementById("tvCorner");
         (corner||document.getElementById("tv")||document.body).appendChild(el);
       }
-      el.textContent=nm; el.style.display="block";
+      var lg=document.getElementById("venueLogo");
+      var logoUp = !!(lg && lg.style.display !== "none" && lg.getAttribute("src"));
+      el.textContent=nm; el.style.display = logoUp ? "none" : "block";   // the logo wins
       var la=document.getElementById("lobbyAt"), lan=document.getElementById("lobbyAtName");
       if(la && lan){ lan.textContent=nm; la.style.display=""; }
     }
