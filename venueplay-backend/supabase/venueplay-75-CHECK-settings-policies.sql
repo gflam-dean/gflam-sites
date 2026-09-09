@@ -1,57 +1,60 @@
--- venueplay-75-CHECK-settings-policies.sql
--- READ ONLY. This changes NOTHING. Run it and paste the output back before anyone
--- writes a policy, because a wrong policy on this table locks a venue out of its own
--- settings, and that is worse than the gap it would close.
+-- venueplay-75-CHECK-settings-policies.sql   READ ONLY. Changes nothing.
+--
+-- ONE query on purpose. The Supabase SQL editor shows only the LAST result set, so
+-- four separate statements looked like they had only answered the fourth. Everything
+-- below comes back as one table with a "part" column saying which question each row
+-- answers. Run it and paste the whole thing back.
 --
 -- WHY: settings.html hides the owner-only cards from a manager (name display, and what
--- players are asked for, which is the opt-in and privacy half). But the page does not
+-- players are asked for, which is the opt-in and privacy half). But that page does not
 -- save through the Worker. VP.saveSettings in venueplay/app/vp-session.js upserts
--- vp_venue_settings straight from the browser with the signed-in user's own token, so
--- the only thing actually deciding whether a manager may write those columns is the
+-- vp_venue_settings straight from the browser with the signed-in person's own token, so
+-- the only thing really deciding whether a manager may write those columns is the
 -- row-level policy on the table. Hiding a card is a door. The policy is the bolt.
 --
--- ALREADY CHECKED, read only, 9 Sep 2026: a signed-out request to vp_venue_settings and
--- to vp_venue_staff both answer 200 with an empty list, so row level security IS on and it
--- IS filtering. A stranger sees nothing. What cannot be seen from outside the database is
--- the part that matters here: whether a signed-in MANAGER is allowed to write the
--- owner-only columns. That is what these four queries answer.
---
--- Paste the results back and the policy can be written against what is really
--- there rather than against a guess.
+-- ALREADY CHECKED from outside, 9 Sep 2026: a signed-out request to vp_venue_settings
+-- and to vp_venue_staff both answer 200 with an empty list, so row level security IS on
+-- and IS filtering, and a stranger sees nothing. What cannot be seen from out there is
+-- whether a signed-in MANAGER may write the owner-only columns. That is what this asks.
 
--- 1. Is row level security even on for this table?
-select relname   as table_name,
-       relrowsecurity  as rls_enabled,
-       relforcerowsecurity as rls_forced
+select '1. is RLS on'   as part,
+       relname          as name,
+       relrowsecurity::text  as detail_a,
+       relforcerowsecurity::text as detail_b,
+       null             as detail_c
 from pg_class
-where oid = 'public.vp_venue_settings'::regclass;
+where oid in ('public.vp_venue_settings'::regclass, 'public.vp_venue_staff'::regclass)
 
--- 2. What policies exist on it today, and what do they actually say?
-select polname                                   as policy_name,
+union all
+
+select '2. policies on vp_venue_settings',
+       polname,
        case polcmd when 'r' then 'select' when 'a' then 'insert'
-                   when 'w' then 'update' when 'd' then 'delete'
-                   else 'all' end                as applies_to,
-       pg_get_expr(polqual, polrelid)            as using_clause,
-       pg_get_expr(polwithcheck, polrelid)       as with_check_clause
+                   when 'w' then 'update' when 'd' then 'delete' else 'all' end,
+       coalesce(pg_get_expr(polqual, polrelid), '(no using clause)'),
+       coalesce(pg_get_expr(polwithcheck, polrelid), '(no with check clause)')
 from pg_policy
 where polrelid = 'public.vp_venue_settings'::regclass
-order by polname;
 
--- 3. Which roles hold table grants on it? (a grant to anon or authenticated with no
---    policy behind it is the whole problem in one line)
-select grantee, string_agg(privilege_type, ', ' order by privilege_type) as privileges
+union all
+
+select '3. who holds grants on vp_venue_settings',
+       grantee,
+       string_agg(privilege_type, ', ' order by privilege_type),
+       null, null
 from information_schema.role_table_grants
 where table_schema = 'public' and table_name = 'vp_venue_settings'
 group by grantee
-order by grantee;
 
--- 4. For context, the same three questions about the staff table the page trusts to
---    tell it who is a manager.
-select polname as staff_policy,
+union all
+
+select '4. policies on vp_venue_staff',
+       polname,
        case polcmd when 'r' then 'select' when 'a' then 'insert'
-                   when 'w' then 'update' when 'd' then 'delete'
-                   else 'all' end as applies_to,
-       pg_get_expr(polqual, polrelid) as using_clause
+                   when 'w' then 'update' when 'd' then 'delete' else 'all' end,
+       coalesce(pg_get_expr(polqual, polrelid), '(no using clause)'),
+       coalesce(pg_get_expr(polwithcheck, polrelid), '(no with check clause)')
 from pg_policy
 where polrelid = 'public.vp_venue_staff'::regclass
-order by polname;
+
+order by 1, 2;
