@@ -42,6 +42,7 @@
     ready: false,
     seenNonces: [], seenSet: {},
     chain: Promise.resolve(),     // serialises host signing so message order is preserved
+    keyTried: null,               // the key fetch, so the first send does not race it
     recvChain: Promise.resolve(), // serialises receiver verify+deliver so enforce can't reorder messages
     _keyPoll: null                // interval handle: retry the public-key fetch until it is minted
   };
@@ -170,6 +171,14 @@
     initHost: function (apiBase, slug, getToken) {
       S.apiBase = apiBase; S.slug = slug;
       if (!subtleOk() || !slug) return Promise.resolve();
+      /* Remember this attempt so signSend can WAIT for it. See the note on keyTried. */
+      var p = VPSign._initHost(apiBase, slug, getToken);
+      S.keyTried = p.catch(function () {});
+      return p;
+    },
+    _initHost: function (apiBase, slug, getToken) {
+      S.apiBase = apiBase; S.slug = slug;
+      if (!subtleOk() || !slug) return Promise.resolve();
       var token = null;
       return Promise.resolve(getToken ? getToken() : null).then(function (t) {
         token = t;
@@ -212,10 +221,23 @@
     },
 
     // Sign obj (order-preserving) then hand the result to rawSend(payload).
+    /* SIGN, BUT WAIT FOR THE KEY FIRST.
+       sign() falls back to sending UNSIGNED when the private key has not arrived yet, and
+       a console fetches that key asynchronously as it starts up. Over Supabase Realtime the
+       subscribe handshake was slow enough to hide the race. The room server connects in
+       about 20 milliseconds, so on 10 Sep 2026 the console's opening burst (host_here,
+       mode, state, cards, players) went out unsigned, and The Mini Bar is the one venue
+       with enforcement ON, so its TV dropped every one of them and the wall sat on the ads
+       with a game running. Reloading fixed it, which is the signature of a race.
+       So the first send waits for the key attempt to settle. If there is no key, or the
+       fetch fails, this resolves and everything behaves exactly as before. */
     signSend: function (obj, rawSend) {
-      S.chain = S.chain.then(function () { return VPSign.sign(obj); }).then(function (signed) {
-        try { rawSend(signed); } catch (e) { }
-      });
+      S.chain = S.chain
+        .then(function () { return S.keyTried || null; })
+        .then(function () { return VPSign.sign(obj); })
+        .then(function (signed) {
+          try { rawSend(signed); } catch (e) { }
+        });
       return S.chain;
     },
 
