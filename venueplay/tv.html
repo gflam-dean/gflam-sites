@@ -410,6 +410,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
 <script src="/app/vp-qr.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-room.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script>
 (function(){
@@ -1386,6 +1387,10 @@
      fine and answers nothing. After a couple of minutes of trying, reload the page: that
      re-requests the library from scratch, which is what actually fixes a bad fetch. */
   var _rtTries=0;
+  /* ?room=1 turns the room server on for THIS screen only. Off by default until it
+     has run a real night at The Mini Bar. See venueplay-backend/worker/ROOM-SERVER.md. */
+  var _useRoom=false, _roomTried=false, _room=null;
+  try{ _useRoom=/[?&]room=1\b/.test(location.search); }catch(e){ _useRoom=false; }
   function connectRealtime(){
     if(typeof supabase==="undefined" || !supabase.createClient){
       $("statusText").textContent="Reconnecting";
@@ -1406,6 +1411,29 @@
       setTimeout(connectRealtime, 3000); return;   // library not here yet, keep trying
     }
     _rtTries=0;
+    /* THE ROOM SERVER, opt in only (?room=1). One WebSocket to the venue's room on
+       Cloudflare instead of a Supabase Realtime channel, so a message from the host
+       lands in about 20 milliseconds and the TV stops polling every 30 seconds.
+       Everything below stays exactly as it is: if the Worker says the room is not
+       enabled, or the socket will not open, onUnavailable runs this same function
+       again with the flag off and the TV connects to Supabase as it always has.
+       The messages are identical objects and vpGate still checks every signature,
+       so a screen cannot tell which road a message came down. */
+    if(_useRoom && window.VPRoom && !_roomTried){
+      _roomTried=true;
+      try{
+        _room=VPRoom.connect(VP_GAME_API, "vp-"+CODE, "tv", function(payload){ vpGate(payload, onMsg); }, {
+          onUnavailable: function(){ _useRoom=false; _room=null; setTimeout(connectRealtime, 0); },
+          onState: function(st){
+            if(st==="open"){ tvSubscribed=true; $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+              try{ _room.send({ t:"tv_here", hello:true }); }catch(e){}   // tvSend() only speaks down the Supabase channel, and it is one of the three kept byte-identical
+            }
+            else { tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+          }
+        });
+        return;
+      }catch(err){ _useRoom=false; _room=null; }
+    }
     try{
       client=supabase.createClient(SUPA_URL, SUPA_ANON);
       ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
