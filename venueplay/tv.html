@@ -1135,12 +1135,12 @@
   }
   // Big-ball reveal: pop the new number up large in the centre, hold, then shrink it away
   // toward the board (which updates behind it). Only during a live bingo game.
-  var revealT1=null, revealT2=null, ballInFlight=false;
+  var revealT1=null, revealT2=null, ballInFlight=false, inFlightNum=0;
   /* The handover. The number that was resting fades out just as the travelling one lands on top
      of it, so the new ball visibly takes the old one's place instead of the old one vanishing
      the instant it was called. */
   function landBall(n){
-    ballInFlight=false;
+    ballInFlight=false; inFlightNum=0;
     var el=document.querySelector("#tvRun .cbnum");
     if(!el){ return; }
     el.style.transition="opacity .18s ease";
@@ -1154,7 +1154,26 @@
   function revealBall(n){
     n=parseInt(n,10); if(!n || tvMode!=="bingo") return;
     var el=$("ballReveal"), b=$("brBall"); if(!el||!b) return;
-    ballInFlight=true;
+    /* A BALL THAT ARRIVES WHILE ONE IS STILL FLYING.
+       The whole reveal takes 2.1 seconds: 1.3 to pop and hold, then 0.8 to glide onto the
+       resting ball. That was comfortably shorter than a ball took to arrive, so two never
+       overlapped. Migration 76 cut calling a ball from six database round trips to one and
+       Dean's next tap now lands inside the animation, which abandoned the first reveal
+       mid-flight: its landBall() never ran, so the resting ball kept an OLDER number and the
+       new ball glided down on top of it. Dean, watching it: "the old number kinda flashes
+       over the new".
+       So finish the one in flight INSTANTLY before starting the next. No animation, because
+       there is no time for one and the room is looking at the new number, not the old. */
+    if(ballInFlight && inFlightNum && inFlightNum !== n){
+      if(revealT1) clearTimeout(revealT1);
+      if(revealT2) clearTimeout(revealT2);
+      var restNum=document.querySelector("#tvRun .cbnum");
+      if(restNum){ restNum.style.transition="none"; restNum.textContent=inFlightNum; restNum.style.opacity="1"; }
+      el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity="";
+      ballInFlight=false;
+      renderRun();
+    }
+    ballInFlight=true; inFlightNum=n;
     b.textContent=n; el.classList.remove("hidden");
     b.style.transition="none"; b.style.transform=""; b.style.opacity="";
     b.style.animation="none"; void b.offsetWidth;   // restart the animation
