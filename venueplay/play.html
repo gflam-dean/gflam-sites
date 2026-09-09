@@ -333,6 +333,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-room.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
 <script>
@@ -391,8 +392,17 @@
   }
   var client=supabase.createClient(SUPA_URL, SUPA_ANON);
   var ch=null, subscribed=false, sendQueue=[];
-  function send(obj){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); } else { sendQueue.push(obj); } }
-  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  /* ?room=1 puts THIS phone on the room server instead of Supabase Realtime. Off by
+     default. See venueplay-backend/worker/ROOM-SERVER.md. */
+  var _useRoom=false, _roomTried=false, _room=null;
+  try{ _useRoom=/[?&]room=1\b/.test(location.search); }catch(e){ _useRoom=false; }
+  function wireOut(obj){
+    if(_room){ try{ _room.send(obj); return true; }catch(e){ return false; } }
+    if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); return true; }
+    return false;
+  }
+  function send(obj){ if(!wireOut(obj)) sendQueue.push(obj); }
+  function flushQueue(){ while(sendQueue.length && (ch || _room)){ if(!wireOut(sendQueue[0])) break; sendQueue.shift(); } }
 
   // Connection light: it goes green ONLY once a live host actually answers on this
   // channel, so it can never say "Connected" while nobody is running the game.
@@ -1287,6 +1297,32 @@
     // Verify host broadcasts (migrations 38/49): fetch the venue PUBLIC key by the room code and drop
     // forged messages in enforce mode. No key / enforce off / script absent -> renders as before.
     if(window.VPSign){ VPSign.initReceiver(VP_GAME_API, { code: room }); }
+    /* THE ROOM SERVER, opt in only (?room=1). One WebSocket to the venue's room on
+       Cloudflare instead of a Supabase Realtime channel. Everything below stays as it
+       is: if the Worker says the room is not enabled, or the socket will not open, the
+       page connects to Supabase exactly as it always has. The messages are the same
+       objects and VPSign still checks every signature, so the game cannot tell which
+       road a ball arrived down.
+       A room only works if EVERYONE is in it: a phone in a room hears nothing from a
+       host that is not. That is why this is off unless the link says so. */
+    if(_useRoom && window.VPRoom && !_roomTried){
+      _roomTried=true;
+      try{
+        _room=VPRoom.connect(VP_GAME_API, "vp-"+room, "phone", function(payload){
+          if(window.VPSign){ VPSign.gate(payload, onMsg); } else { onMsg(payload); }
+        }, {
+          onUnavailable: function(){ _useRoom=false; _room=null; connect(room); },
+          onState: function(st){
+            if(st==="open"){
+              subscribed=true; flushQueue();
+              if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); setConn("waiting"); }
+              else { setConn("ready"); }
+            } else { subscribed=false; setConn("reconnecting"); }
+          }
+        });
+        return;
+      }catch(err){ _useRoom=false; _room=null; }
+    }
     ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(function(status){

@@ -483,6 +483,7 @@
 <script src="vp-session.js"></script>
 <script src="vp-gaming.js"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
 <script>
 (function(){
@@ -508,11 +509,25 @@
   // so role resolution and gameplay broadcast run on a single client.
   if(window.VP){ VP.useClient(client); }
   var ch=null, subscribed=false, sendQueue=[];
-  function rawSend(p){ if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); } }
+  /* ?room=1 puts THIS console on the room server instead of Supabase Realtime. Off by
+     default, and a room only works if everyone is in it: a host in a room is talking to
+     an empty room unless the TV and the phones are in it too. See ROOM-SERVER.md. */
+  var _useRoom=false, _roomTried=false, _room=null;
+  try{ _useRoom=/[?&]room=1\b/.test(location.search); }catch(e){ _useRoom=false; }
+  function rawSend(p){
+    if(_room){ try{ _room.send(p); return; }catch(e){} }
+    if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:p }); } else { sendQueue.push(p); }
+  }
   // Sign every host broadcast (migrations 38/49) so a screen in enforce mode drops any forged copy.
   // signSend is order-preserving and degrades to an unsigned send if the key is not loaded yet.
   function send(obj){ if(window.VPSign){ VPSign.signSend(obj, rawSend); } else { rawSend(obj); } }
-  function flushQueue(){ while(sendQueue.length && ch){ ch.send({ type:"broadcast", event:"msg", payload:sendQueue.shift() }); } }
+  function flushQueue(){
+    while(sendQueue.length && (ch || _room)){
+      var p=sendQueue.shift();
+      if(_room){ try{ _room.send(p); continue; }catch(e){} }
+      if(ch) ch.send({ type:"broadcast", event:"msg", payload:p }); else { sendQueue.unshift(p); break; }
+    }
+  }
   // The host's Supabase access token, for the staff-gated private-key fetch.
   function vpHostToken(){ return (window.VP && VP.getClient ? VP.getClient().auth.getSession() : Promise.resolve(null)).then(function(r){ return (r&&r.data&&r.data.session&&r.data.session.access_token)||""; }).catch(function(){ return ""; }); }
 
@@ -2317,6 +2332,29 @@
     // if this screen has a saved RUNNING game (host reloaded mid game), bring it back
     // before we subscribe, so the draw, called set, roster and cards all survive.
     restoreGame(code);
+    if(_useRoom && window.VPRoom && !_roomTried){
+      _roomTried=true;
+      try{
+        _room=VPRoom.connect(VP_GAME_API, "vp-"+code, "host", function(payload){ onMsg(payload); }, {
+          onUnavailable: function(){ _useRoom=false; _room=null; connect(code); },
+          onState: function(st){
+            if(st==="open"){
+              subscribed=true;
+              send({ t:"host_here" });
+              flushQueue();
+              $("statusDot").classList.add("on"); $("statusText").textContent="Ready";
+              $("pairedChip").innerHTML="&middot; ready";
+              reassertToTv();
+              send({ t:"rollcall" });
+            } else {
+              subscribed=false;
+              $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting";
+            }
+          }
+        });
+        return;
+      }catch(err){ _useRoom=false; _room=null; }
+    }
     ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
