@@ -1320,10 +1320,10 @@
             } else { subscribed=false; setConn("reconnecting"); }
           }
         });
-        return;
       }catch(err){ _useRoom=false; _room=null; }
     }
-    ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
+    if(!_room){
+        ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
@@ -1335,6 +1335,7 @@
         setConn("reconnecting");
       }
     });
+    }
     if(!P.joined) loadJoinInfo();   // show any extra fields this venue collects
     renderPicker();                 // ticket-count buttons (default to the host's number)
     route();

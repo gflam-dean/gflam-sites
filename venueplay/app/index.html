@@ -2352,10 +2352,10 @@
             }
           }
         });
-        return;
       }catch(err){ _useRoom=false; _room=null; }
     }
-    ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
+    if(!_room){
+        ch=client.channel("vp-"+code, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ onMsg(e.payload); });
     ch.subscribe(function(status){
       if(status==="SUBSCRIBED"){
@@ -2384,6 +2384,7 @@
         $("pairedChip").innerHTML="&middot; reconnecting";
       }
     });
+    }
     go("vConsole");
     /* The chip on the console home screen shows the code a PERSON uses: the
        venue's own join code, the same one the wall shows in a lobby and the same
