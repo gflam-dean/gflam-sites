@@ -218,7 +218,15 @@ def main():
         want_paid = not acct.get('bill_by_invoice')
         verdict.append(('invoice %s' % ('paid now (card)' if want_paid else 'issued (bill by invoice)'), bool(inv) and (inv.get('paid') is True if want_paid else inv.get('status') == 'open')))
         verdict.append(('no item left pending', not new_items))
-        verdict.append(('streak advanced to %d' % ((before_d['venue']['overage_streak'] or 0) + 1), after_d['venue']['overage_streak'] == (before_d['venue']['overage_streak'] or 0) + 1))
+        # The streak counts NIGHTS (2am Brisbane rollover), not sessions, so three games in one
+        # evening cannot move a plan up. A second run on the same night must leave it alone.
+        import datetime as _dt
+        tonight = (_dt.datetime.utcnow() + _dt.timedelta(hours=8)).strftime('%Y-%m-%d')
+        if before_d['venue']['overage_streak_day'] == tonight and (before_d['venue']['overage_streak'] or 0) > 0:
+            verdict.append(('streak unchanged at %d (already counted tonight, %s)' % (before_d['venue']['overage_streak'], tonight),
+                            after_d['venue']['overage_streak'] == before_d['venue']['overage_streak']))
+        else:
+            verdict.append(('streak advanced to %d' % ((before_d['venue']['overage_streak'] or 0) + 1), after_d['venue']['overage_streak'] == (before_d['venue']['overage_streak'] or 0) + 1))
         verdict.append(('no failure audit row', not any(x['action'] in ('overage_charge_failed', 'overage_left_pending_until_renewal') for x in new_audit)))
         ev = db('vp_stripe_events?select=event_id,event_type,claimed_at,completed_at&order=claimed_at.desc&limit=8')
         import calendar

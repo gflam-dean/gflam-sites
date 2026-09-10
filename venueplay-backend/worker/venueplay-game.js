@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 06:50 · 1abcecd9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 06:55 · edce091e';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -5643,6 +5643,20 @@ async function subscriptionInterval(env, acct) {
   } catch (e) { return null; }
 }
 
+/* The payment method a standalone invoice should charge: the subscription's card first
+   (where Checkout puts it), then the customer's own default. A string id or null. */
+async function subscriptionPaymentMethod(env, acct) {
+  const idOf = (x) => (typeof x === 'string' ? x : (x && x.id) || null);
+  if (acct.stripe_subscription_id) {
+    const sub = await stripeGet(env, 'subscriptions/' + enc(acct.stripe_subscription_id));
+    const pm = sub && !sub.error && (idOf(sub.default_payment_method) || idOf(sub.default_source));
+    if (pm) return pm;
+  }
+  const cus = await stripeGet(env, 'customers/' + enc(acct.stripe_customer_id));
+  if (!cus || cus.error) return null;
+  return idOf(cus.invoice_settings && cus.invoice_settings.default_payment_method) || idOf(cus.default_source) || null;
+}
+
 async function collectNow(env, acct, idemKey, why) {
   if (!acct || !acct.stripe_customer_id) return { ok: false, reason: 'no_customer' };
 
@@ -5671,6 +5685,15 @@ async function collectNow(env, acct, idemKey, why) {
     }
   } else {
     body.collection_method = 'charge_automatically';
+    /* THE CARD IS ON THE SUBSCRIPTION, NOT THE CUSTOMER. Checkout attaches the card to the
+       subscription as its default_payment_method and leaves the customer's own default empty,
+       and a standalone invoice only looks at the customer. The third live Jess night (11 Sep
+       2026, 9FGBRAJG-0009) was raised and finalised and then refused with "There is no
+       default_payment_method set on this Customer or Invoice". So the subscription's card is
+       named on the invoice itself. If there is none to find, the invoice is still raised and
+       the caller records it unpaid; nothing here guesses a card. */
+    const pm = await subscriptionPaymentMethod(env, acct);
+    if (pm) body.default_payment_method = pm;
   }
   const inv = await stripePost(env, 'invoices', body, idemKey ? ('inv_' + idemKey) : null);
   if (!inv || inv.error) {

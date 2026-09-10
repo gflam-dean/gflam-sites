@@ -41,7 +41,7 @@ function lift(src, name) {
 var GAME = find("venueplay-backend/worker/venueplay-game.js");
 var NAMES = ["chargeNightOverage", "applyOverageCharge", "playerIdsWhoPlayed", "countPlayersWhoPlayed",
              "countPlayers", "overageCeiling", "brisbaneNightKey", "venueInFreeMonth", "collectNow",
-             "stripeGet", "stripePost", "recordOverageCrash"];
+             "stripeGet", "stripePost", "recordOverageCrash", "subscriptionPaymentMethod"];
 var missing = NAMES.filter(function (n) { return !lift(GAME, n); });
 pass("every function in the charge path came out of the shipped Worker", missing.length === 0, missing.join(", "));
 if (missing.length) { print("\n1 OF 1 CHECKS FAILED"); throw new Error("nothing to test"); }
@@ -82,6 +82,7 @@ function fetch(url, opts) {
   if (opts && opts.body) opts.body.split("&").forEach(function (kv) { var p = kv.split("="); body[decodeURIComponent(p[0])] = decodeURIComponent((p[1] || "").replace(/\+/g, " ")); });
   var reply;
   if (method === "GET" && /^subscriptions\//.test(path)) reply = world.sub;
+  else if (method === "GET" && /^customers\//.test(path)) reply = world.customer || { id: "cus_JESS", invoice_settings: { default_payment_method: null }, default_source: null };
   else if (method === "POST" && path === "invoiceitems") {
     posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] });
     /* Stripe refuses a parameter it does not know, and the whole item with it. This is the
@@ -125,7 +126,9 @@ function night(o) {
     if (!o.nobodyPlayed) cards.push({ game_id: GAMEID, player_id: "p" + i });
   }
   return {
-    sub: o.sub || { id: "sub_1", status: "active", customer: "cus_JESS", metadata: { tier: "founding" }, items: { data: [{ id: "si_1", quantity: 1 }] } },
+    sub: o.sub || { id: "sub_1", status: "active", customer: "cus_JESS", metadata: { tier: "founding" }, items: { data: [{ id: "si_1", quantity: 1 }] },
+                    default_payment_method: o.subCard === undefined ? "pm_JESS_CARD" : o.subCard },
+    customer: o.customer,
     tables: {
       vp_venues: [{ id: VENUE, name: "The Jolly Jess", founding_id: FOUNDING, max_players: 1, pending_players: null,
                     overage_streak: o.streak || 0, overage_streak_peaks: o.peaks || [], overage_streak_day: o.streakDay || null,
@@ -189,6 +192,9 @@ scenario("an active founding venue, one over a cap of one, host approved", funct
     if (inv.length) {
       pass("the invoice sweeps in the pending item", inv[0].body.pending_invoice_items_behavior === "include");
       pass("and charges the card", inv[0].body.collection_method === "charge_automatically", inv[0].body.collection_method);
+      /* Checkout puts the card on the subscription; the customer's own default is empty; a
+         standalone invoice looks only at the customer. Live night three was refused for this. */
+      pass("the subscription's card is named on the invoice (the customer has no default)", inv[0].body.default_payment_method === "pm_JESS_CARD", "default_payment_method=" + inv[0].body.default_payment_method);
       pass("keyed too", inv[0].idem === "inv_overage_" + SESSION, inv[0].idem);
       /* Stripe leaves a new invoice as a DRAFT and gets to it about an hour later. The first
          live night that got this far sat as a $2.00 draft with nothing taken. */
@@ -293,6 +299,22 @@ scenario("the item lands but the invoice cannot be raised", function () {
   });
 });
 
+scenario("the card is on the customer, not the subscription", function () {
+  reset(night({ subCard: null, customer: { id: "cus_JESS", invoice_settings: { default_payment_method: "pm_CUSTOMER_CARD" } } }));
+  return run(mkSession(), "customer card").then(function () {
+    var inv = invoice()[0] && invoice()[0].body;
+    pass("the customer's default is used instead", !!inv && inv.default_payment_method === "pm_CUSTOMER_CARD", inv && inv.default_payment_method);
+    pass("and paid", step("pay").length === 1);
+  });
+});
+scenario("no card anywhere", function () {
+  var w = night({ subCard: null }); w.payReply = { error: { message: "There is no `default_payment_method` set on this Customer or Invoice." } }; reset(w);
+  return run(mkSession(), "no card").then(function () {
+    var inv = invoice()[0] && invoice()[0].body;
+    pass("no card is guessed onto the invoice", !!inv && inv.default_payment_method === undefined, inv && inv.default_payment_method);
+    pass("the invoice is still raised and recorded unpaid, with Stripe's reason", inserts.filter(function (i) { return i.row.action === "overage_invoice_unpaid" && /default_payment_method/.test(i.row.detail.reason); }).length === 1);
+  });
+});
 scenario("the card declines when the invoice is paid", function () {
   var w = night(); w.payReply = { error: { message: "Your card was declined." } }; reset(w);
   return run(mkSession(), "declined card").then(function () {
