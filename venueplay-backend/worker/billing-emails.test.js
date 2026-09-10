@@ -95,9 +95,11 @@ pass("a 1:30am finish is still that Saturday night", au(sat1am) === "12/09/2026"
      "the 2am rollover, so a late finish is not billed as the next day");
 pass("and it is NOT dated from when the sweep ran", au(sat9pm) !== au(sweep3am),
      "the 3am sweep would have labelled Saturday's game " + au(sweep3am));
-pass("the code dates the line from the SESSION, not from now",
-     /Date\.parse\(session\.opened_at \|\| session\.started_at/.test(GAME),
-     "otherwise every swept night carries the following day");
+/* There used to be a regex here demanding `Date.parse(session.opened_at || session.started_at`
+   in the game Worker. That text WAS the live bug: it sat inside applyOverageCharge, which has no
+   `session`, and threw on every active venue. The regex was green the whole time. The date now
+   comes from o.openedAt and overage-charge.test.js RUNS the charge for a Saturday night swept
+   on Sunday and reads the date off the Stripe request. Behaviour there, not text here. */
 pass("the billing Worker also uses Brisbane, not UTC",
      /Date\.now\(\) \+ 36000000/.test(BILL));
 

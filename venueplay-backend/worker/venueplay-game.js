@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:59 · f5be42a3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 06:36 · 8e546baf';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -417,7 +417,8 @@ async function sweepStaleSessions(env, staleHours, atLocal3am) {
         { status: 'finished', ended_at: new Date().toISOString() });
       try { await emitEvent(env, session, 'session.closed', {}, 'system'); } catch (e2) {}
       if (ranANight) {
-        try { await chargeNightOverage(env, session); } catch (e2) { /* billing never blocks close */ }
+        try { await chargeNightOverage(env, session); }
+        catch (e2) { await recordOverageCrash(env, session, e2, 'sweep'); }   // billing never blocks close
       } else {
         console.log('[sweep] closed ' + session.id + ' with status "' + session.status +
                     '" and did NOT bill it: nothing in this product writes that status, ' +
@@ -5550,9 +5551,10 @@ async function handleSessionClose(request, env, json) {
   await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(sessionId),
     { status: 'finished', ended_at: new Date().toISOString() });
   await emitEvent(env, session, 'session.closed', {}, actorRef(staff));
-  // Busy-night overage: if this night's metered headcount beat the plan cap, add the
-  // extra players to the next Stripe invoice. Wrapped so a billing hiccup never blocks close.
-  try { await chargeNightOverage(env, session); } catch (e) { /* billing never blocks session close */ }
+  // Busy-night overage: if this night's metered headcount beat the plan cap, bill the
+  // extra players now. Wrapped so a billing hiccup never blocks close, but never silently.
+  try { await chargeNightOverage(env, session); }
+  catch (e) { await recordOverageCrash(env, session, e, 'host_close'); }
   return json({ session_id: sessionId, status: 'finished' });
 }
 
@@ -6107,7 +6109,18 @@ async function applyOverageCharge(env, o) {
      night. Feeding it the SESSION's own opening time means the date on the bill is the
      night the streak counted and the night the room was actually full. Then day/month/
      year, which is what a pub's bookkeeper reads. */
-  const nightMs = Date.parse(session.opened_at || session.started_at || '') || Date.now();
+  /* FROM o.openedAt, NOT FROM A `session` THIS FUNCTION DOES NOT HAVE.
+
+     The first version of this line read session.opened_at. applyOverageCharge takes (env, o)
+     and has no session in scope, so that was a ReferenceError on every ACTIVE subscription,
+     thrown after the trialing check and before the Stripe call, and swallowed whole by the
+     "billing never blocks close" catch in both callers. The live test on 11 Sep 2026 opened a
+     night at The Jolly Jess with one player over the cap, the host approved it, the round was
+     played and the night closed cleanly, and Stripe never heard a word: no item, no invoice,
+     no audit row, streak still 0. A trialing venue tested a minute earlier had passed, because
+     it returned before reaching the line. See overage-charge.test.js, which now RUNS this
+     function to the Stripe call, and the crash audit rows both callers write. */
+  const nightMs = Date.parse(o.openedAt || '') || Date.now();
   const when = brisbaneNightKey(nightMs).split('-').reverse().join('/');
   /* ANNUAL IS BILLED NOW, MONTHLY RIDES THE NEXT INVOICE.
      A pending invoiceitem needs an invoice to land on. Monthly gets one within the
@@ -6225,6 +6238,29 @@ async function applyOverageCharge(env, o) {
 
 /* The server-backed formats: trivia, musical bingo, raffles. A session exists and every player
    minted a row, so the count is the Worker's own and the host's approval is on the session. */
+/* A CRASH IN THE CHARGE PATH IS A BILLING EVENT, NOT A LOG LINE.
+
+   Both callers wrap chargeNightOverage so a Stripe hiccup can never stop a night from
+   closing. That is right. What was wrong is that the catch was EMPTY, so a bug that threw
+   on every active venue (a ReferenceError, 11 Sep 2026) looked identical to a quiet night:
+   session closed, nothing owed, nothing anywhere. This writes the row the failed-Stripe
+   branch already writes, so check-billing-truth.py and the HQ audit list can see it, and
+   the night can be billed by hand. The audit insert is itself best effort. */
+async function recordOverageCrash(env, session, err, where) {
+  // message AND stack: some runtimes put the message in the stack, some do not.
+  const msg = (String((err && err.message) || err) + ((err && err.stack) ? '\n' + err.stack : '')).slice(0, 500);
+  console.log('[overage] CRASHED for session ' + (session && session.id) + ' (' + where + '): ' + msg);
+  try {
+    await sbInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: 'system',
+      action: 'overage_charge_crashed',
+      target: (session && session.venue_id) || null,
+      detail: { source: 'overage_' + (session && session.id), where: where, error: msg,
+                plan_cap: (session && session.plan_cap_at_start) || null },
+    }, false);
+  } catch (e) { /* never let the audit mask the close */ }
+}
+
 async function chargeNightOverage(env, session) {
   if (!env.STRIPE_SECRET_KEY) return;
   const cap = Number(session.plan_cap_at_start || 0);
@@ -6253,6 +6289,8 @@ async function chargeNightOverage(env, session) {
     venueId: session.venue_id, peak: peak, cap: cap,
     idemKey: 'overage_' + session.id,
     approved: !!session.overage_approved,
+    // The night the room was full, for the date on the bill. See applyOverageCharge.
+    openedAt: session.opened_at || session.started_at || null,
   });
 }
 
