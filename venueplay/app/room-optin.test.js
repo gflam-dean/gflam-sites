@@ -20,7 +20,7 @@ var TV = find('venueplay/tv.html');
 var CONSOLE = find('venueplay/app/index.html');
 var PLAY = find('venueplay/play.html');
 var CLIENT = find('venueplay/app/vp-room.js');
-var EXPECT = 36;
+var EXPECT = 41;
 var ran = 0, bad = 0;
 function ok(n, c, extra) {
   ran++;
@@ -32,11 +32,23 @@ ok('the TV loads vp-room.js', /<script src="\/app\/vp-room\.js">/.test(TV));
 ok('the console loads vp-room.js', /<script src="\/app\/vp-room\.js">/.test(CONSOLE));
 ok('the phone loads vp-room.js', /<script src="\/app\/vp-room\.js">/.test(PLAY));
 
-print('== and none of them joins one unless the link asks ==');
+print('== and all three ask the SAME thing which road to take ==');
+/* This used to be the same twenty lines of flag reading copied into all three pages, and
+   the worst fault this feature has had was exactly that: a console on one road with a TV
+   on the other, which is a host talking into an empty room and looks identical to a
+   working night. One function decides now. room-fallback.test.js RUNS it. */
 [['TV', TV], ['console', CONSOLE], ['phone', PLAY]].forEach(function (p) {
-  ok(p[0] + ' only opts in on ?roomserver=1', /roomserver=\(\[01\]\)/.test(p[1]),
-     'a page that joins a room by default would go silent against a Worker with no binding');
+  ok(p[0] + ' asks VPRoom.wanted()', /VPRoom\.wanted\(\)/.test(p[1]),
+     'a page deciding for itself is how one screen ends up on a different road from the others');
+  ok(p[0] + ' does not read the flag itself any more', !/sessionStorage\.getItem\("vpRoomServer"\)/.test(p[1]),
+     'two copies of this decision is the fault it caused');
 });
+ok('and the one that decides is vp-room.js', /function wanted\s*\(/.test(CLIENT));
+ok('which honours ?roomserver=1 and 0', /roomserver=\(\[01\]\)/.test(CLIENT));
+ok('and remembers it, because the HQ redirect drops the query string',
+   /sessionStorage\.setItem\("vpRoomServer"/.test(CLIENT));
+ok('and has ONE constant deciding the default for the whole product',
+   /var DEFAULT_ON = (true|false);/.test(CLIENT));
 
 /* THE FLAG IS NOT CALLED room. ?room= ALREADY MEANS THE GAME ROOM CODE on the player
    page (?room=UZRHJU), so ?room=1 read as a game code of "1", failed the code test, and
@@ -54,17 +66,24 @@ print('== the switch survives a redirect, and says so out loud ==');
    HQ admin bounces through hq.html, which drops the query string, so the console came
    back on the OLD transport looking perfectly healthy. A setting that lives only in the
    address bar is one redirect away from being lost in silence. */
+/* THE TWO ROADS MUST READ THE SAME. Each page used to name its road in the status line,
+   because every fault here was invisible and a page saying Connected while talking to
+   nobody is the whole problem. But a venue's WALL saying "Connected \u00b7 room server" is
+   the venue being able to tell, and not being able to tell is the promise. So the road is
+   recorded where we can see it and a punter cannot. */
 [['TV', TV], ['console', CONSOLE], ['phone', PLAY]].forEach(function (p) {
-  ok(p[0] + ' remembers the switch across a navigation', /sessionStorage\.setItem\("vpRoomServer"/.test(p[1]),
-     'the query string does not survive the HQ redirect');
-  ok(p[0] + ' can be turned back off with roomserver=0', /roomserver=\(\[01\]\)/.test(p[1]));
+  /* Match the ASSIGNMENT, not the words. A first version searched the whole file for
+     "room server" and went red on this feature's own explanatory comment, which is a
+     check failing on prose rather than on behaviour. */
+  ok(p[0] + ' does not name its road on screen',
+     !/textContent\s*=\s*"[^"]*room server/.test(p[1]),
+     'a wall that reads differently on the two roads is a venue that can tell');
+  ok(p[0] + ' still records which road, for us', /data-vp-transport/.test(p[1]),
+     'this is what tells a deaf screen from a working one');
 });
-/* And every one of these faults was invisible: a page said Connected while talking to
-   nobody. Each page now names the road it is on, so three screens can be compared at a
-   glance instead of by reading a presence endpoint. */
-ok('the console says it is on the room server', /Ready \\u00b7 room server/.test(CONSOLE));
-ok('the TV says it is on the room server', /Connected \\u00b7 room server/.test(TV));
-ok('the phone says it is on the room server', /room server/.test(PLAY));
+ok('the TV records BOTH roads, not just the new one',
+   (TV.match(/data-vp-transport/g) || []).length >= 2,
+   'recording only the room server tells you nothing when the fallback is the thing that broke');
 
 print('== a room that is not there must send the page back to Supabase ==');
 ok('the client treats 503 as not enabled', /r\.status === 503/.test(CLIENT));

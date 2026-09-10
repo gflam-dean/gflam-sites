@@ -404,12 +404,12 @@
      been one half of a venue on one road and the other half on the other, which is why
      the switch now survives a redirect and why the page says out loud which road it is
      on (see the status line). */
+  /* ONE ANSWER, IN ONE PLACE. This decision used to be copied into all three pages, and a
+     road the console takes but the TV does not is a host talking into an empty room. It
+     lives in vp-room.js now, so all three pages cannot disagree and the whole product
+     changes road by one constant there. */
   var _useRoom=false, _roomTried=false, _room=null;
-  try{
-    var _rq=/[?&]roomserver=([01])/.exec(location.search);
-    if(_rq){ _useRoom = _rq[1]==="1"; try{ sessionStorage.setItem("vpRoomServer", _rq[1]); }catch(e){} }
-    else { try{ _useRoom = sessionStorage.getItem("vpRoomServer")==="1"; }catch(e){ _useRoom=false; } }
-  }catch(e){ _useRoom=false; }
+  try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
   function wireOut(obj){
     if(_room){ try{ _room.send(obj); return true; }catch(e){ return false; } }
     if(subscribed && ch){ ch.send({ type:"broadcast", event:"msg", payload:obj }); return true; }
@@ -1333,7 +1333,7 @@
               else { setConn("ready"); }
               // say it out loud: a phone in a room and a host that is not is the one
               // failure this feature keeps producing, and it looks identical to working.
-              try{ $("statusText").textContent = $("statusText").textContent + " \u00b7 room server"; }catch(e){}
+              try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[VenuePlay] transport: "+"room");}catch(e){}
             } else { subscribed=false; setConn("reconnecting"); }
           }
         });
