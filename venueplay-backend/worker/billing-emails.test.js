@@ -99,17 +99,16 @@ Promise.resolve().then(function(){}).then(function(){}).then(function(){}).then(
 });
 
 /* EXTRAS THAT THE CARD WOULD NOT PAY FOR. Dean, 11 Sep 2026: try once, tell them, and a small
-   amount rides the next subscription invoice; over 10% of the monthly bill stays open to be
+   amount (up to $30) rides the next subscription invoice; over $30 stays open to be
    chased now. Runs the real vpaMoveExtrasToMonthly against a fake Stripe and a fake database. */
 eval(lift(BILL,"vpaIsExtrasInvoice"));
-eval(lift(BILL,"vpaMonthlyBillCents"));
 eval(lift(BILL,"vpaMoveExtrasToMonthly"));
 eval(lift(BILL,"vpaPaymentFailedNextStep"));
 eval(lift(BILL,"vpaFmtDate"));
 eval(lift(BILL,"vpaFirePaymentFailedEmail"));
-var share = /const VPA_EXTRAS_MOVE_MAX_SHARE = ([0-9.]+);/.exec(BILL);
-var VPA_EXTRAS_MOVE_MAX_SHARE = share ? Number(share[1]) : NaN;
-pass("the 10% line is one named number", VPA_EXTRAS_MOVE_MAX_SHARE === 0.10, String(VPA_EXTRAS_MOVE_MAX_SHARE));
+var limit = /const VPA_EXTRAS_MOVE_MAX_CENTS = ([0-9]+);/.exec(BILL);
+var VPA_EXTRAS_MOVE_MAX_CENTS = limit ? Number(limit[1]) : NaN;
+pass("the line is $30, one named number (Dean, 11 Sep 2026)", VPA_EXTRAS_MOVE_MAX_CENTS === 3000, String(VPA_EXTRAS_MOVE_MAX_CENTS));
 
 pass("an invoice we raised by hand is an extras invoice", vpaIsExtrasInvoice({ billing_reason: "manual" }) === true);
 pass("a renewal is not", vpaIsExtrasInvoice({ billing_reason: "subscription_cycle" }) === false);
@@ -120,12 +119,6 @@ var monthlySub = { status: "active", current_period_end: 1790812800, items: { da
   { quantity: 1, price: { unit_amount: 5000, recurring: { interval: "month", interval_count: 1 } } } ] } };
 var annualSub = { status: "active", current_period_end: 1790812800, items: { data: [
   { quantity: 1, price: { unit_amount: 60000, recurring: { interval: "year", interval_count: 1 } } } ] } };
-var twoLineSub = { status: "active", items: { data: [
-  { quantity: 1, price: { unit_amount: 1000, recurring: { interval: "month" } } },
-  { quantity: 4, price: { unit_amount: 250, recurring: { interval: "month" } } } ] } };
-pass("a $50 monthly plan is $50 a month", vpaMonthlyBillCents(monthlySub) === 5000);
-pass("a $600 annual plan is $50 a month", vpaMonthlyBillCents(annualSub) === 5000);
-pass("plan plus 4 players adds up", vpaMonthlyBillCents(twoLineSub) === 2000, String(vpaMonthlyBillCents(twoLineSub)));
 
 var stripe = { posts: [], gets: [], deletes: [], sub: monthlySub, freshStatus: "open", voidAnswer: null, itemAnswer: null, acct: { id: "acct-1", stripe_subscription_id: "sub_JESS" } };
 var audits = [];
@@ -151,7 +144,7 @@ var jessExtras = { id: "in_JESS1", customer: "cus_JESS", currency: "aud", amount
 function extrasChecks() {
   reset();
   return vpaMoveExtrasToMonthly({}, jessExtras).then(function (r) {
-    pass("$2.00 against a $50 plan MOVES onto the monthly bill", r.moved === true, JSON.stringify(r));
+    pass("$2.00 of extras MOVES onto the monthly bill", r.moved === true, JSON.stringify(r));
     var item = stripe.posts[0], voided = stripe.posts[1];
     pass("the line is re-added as a pending item on the SUBSCRIPTION, same words, same money", !!item && item.path === "invoiceitems"
       && item.body.customer === "cus_JESS" && item.body.subscription === "sub_JESS" && item.body.quantity === 1
@@ -161,18 +154,22 @@ function extrasChecks() {
     pass("THEN the failed invoice is voided, keyed too", !!voided && voided.path === "invoices/in_JESS1/void" && voided.idem === "void_in_JESS1" && stripe.posts.length === 2);
     pass("the venue is told the date it will come out", r.next === "1 October 2026", String(r.next));
     var a = audits.filter(function (x) { return x.row.action === "extras_moved_to_monthly"; })[0];
-    pass("HQ can see it happened", !!a && a.row.detail.invoice === "in_JESS1" && a.row.detail.amount_cents === 200 && a.row.detail.monthly_cents === 5000, JSON.stringify(a));
+    pass("HQ can see it happened", !!a && a.row.detail.invoice === "in_JESS1" && a.row.detail.amount_cents === 200 && a.row.detail.limit_cents === 3000, JSON.stringify(a));
     pass("nothing was deleted on the happy path", stripe.deletes.length === 0);
 
-    reset({ sub: { status: "active", current_period_end: 1790812800, items: { data: [{ quantity: 1, price: { unit_amount: 1000, recurring: { interval: "month" } } }] } } });
-    return vpaMoveExtrasToMonthly({}, jessExtras);
+    reset();
+    return vpaMoveExtrasToMonthly({}, Object.assign({}, jessExtras, { amount_due: 3200, lines: { data: [{ amount: 3200, quantity: 16, description: "Big Night - Extra Player - 12/09/2026" }] } }));
   }).then(function (r) {
-    pass("$2.00 against a $10 plan is over 10% and STAYS OPEN to be chased now", r.moved === false && /over 10%/.test(r.why), JSON.stringify(r));
+    pass("$32.00 of extras is over the $30 line and STAYS OPEN to be chased now", r.moved === false && /over the \$30 line/.test(r.why), JSON.stringify(r));
     pass("nothing was created or voided when it stays open", stripe.posts.length === 0 && stripe.deletes.length === 0, stripe.posts.length + " posts");
+    reset();
+    return vpaMoveExtrasToMonthly({}, Object.assign({}, jessExtras, { amount_due: 3000, lines: { data: [{ amount: 3000, quantity: 15, description: "Big Night - Extra Player - 12/09/2026" }] } }));
+  }).then(function (r) {
+    pass("$30.00 exactly still moves, 15 players at $2.00 each", r.moved === true && stripe.posts[0].body.quantity === 15 && stripe.posts[0].body.unit_amount_decimal === "200", JSON.stringify(r) + JSON.stringify(stripe.posts[0]));
     reset({ sub: annualSub });
     return vpaMoveExtrasToMonthly({}, jessExtras);
   }).then(function (r) {
-    pass("an annual venue is judged on the monthly equivalent, $2 of $50 moves", r.moved === true, JSON.stringify(r));
+    pass("an annual venue's extras move the same way", r.moved === true, JSON.stringify(r));
     reset({ freshStatus: "void" });
     return vpaMoveExtrasToMonthly({}, jessExtras);
   }).then(function (r) {
@@ -199,7 +196,7 @@ function extrasChecks() {
     pass("moved: says it will come out on the next subscription payment, with the date", /next subscription payment on 1 October 2026/.test(movedHtml) && /Nothing to do/.test(movedHtml));
     pass("moved: NO pay-now button (that invoice is void, its link is dead)", !/Pay now/.test(movedHtml) && !/pay\.example/.test(movedHtml));
     pass("moved: never threatens to pause games", !/pause/.test(movedHtml));
-    var openHtml = vpaPaymentFailedNextStep({ moved: false, why: "over 10%" }, "https://pay.example/x", "https://venueplay.com.au/app/billing.html");
+    var openHtml = vpaPaymentFailedNextStep({ moved: false, why: "over the $30 line" }, "https://pay.example/x", "https://venueplay.com.au/app/billing.html");
     pass("stayed open: pay-now button, we will try again, and no talk of games pausing", /Pay now/.test(openHtml) && /try the card again/.test(openHtml) && !/pause/.test(openHtml));
     var subHtml = vpaPaymentFailedNextStep(undefined, "https://pay.example/x", "https://venueplay.com.au/app/billing.html");
     pass("subscription: the pause warning and the button stay exactly as they were", /games will pause/.test(subHtml) && /Pay now/.test(subHtml));
@@ -215,7 +212,7 @@ function extrasChecks() {
     return vpaFirePaymentFailedEmail(envR, extrasInv, { moved: true, next: "1 October 2026" }).then(function () {
       var h = sent[0] && sent[0].body.html;
       pass("REAL email, extras moved: names the $2.00 line, says next subscription payment on 1 October 2026, no button", !!h && /\$2\.00 for The Jolly Jess - Extra Player - 11\/09\/2026/.test(h) && /next subscription payment on 1 October 2026/.test(h) && !/Pay now/.test(h) && !/pause/.test(h), h ? h.slice(0, 400) : "no email");
-      return vpaFirePaymentFailedEmail(envR, extrasInv, { moved: false, why: "over 10%" });
+      return vpaFirePaymentFailedEmail(envR, extrasInv, { moved: false, why: "over the $30 line" });
     }).then(function () {
       var h = sent[1] && sent[1].body.html;
       pass("REAL email, extras kept open: pay-now to Stripe's page, no pause threat", !!h && /Pay now/.test(h) && /pay\.example\/x/.test(h) && !/pause/.test(h));

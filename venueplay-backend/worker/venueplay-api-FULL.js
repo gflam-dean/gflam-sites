@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 08:41 · 3a77faeb';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 09:19 · 6c6955bd';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3863,27 +3863,14 @@ function vpaIsExtrasInvoice(invoice) {
 }
 
 /* Dean, 11 Sep 2026: "try once at least and notify them... it will come out on your next
-   subscription invoice. Obviously if its more than 10% of their monthly bill we want that asap."
-   So: the card has had its one try (that is the failed attempt that brought us here). If what is
-   owed is 10% or less of the monthly bill, the invoice is voided and its lines are re-added as
-   pending items on the subscription, so they ride the next subscription invoice and the venue
-   hears about it once. Over 10%, or when we cannot work out the monthly bill, the invoice stays
-   OPEN for Stripe's retries and the pay-now button, because that money should not wait a month.
-   Returns { moved, next, already, why }. Never throws. */
-function vpaMonthlyBillCents(sub) {
-  let cents = 0;
-  const items = (sub && sub.items && sub.items.data) || [];
-  for (const it of items) {
-    const price = it.price || {};
-    const each = Number(price.unit_amount != null ? price.unit_amount : price.unit_amount_decimal) || 0;
-    const qty = Number(it.quantity) || 1;
-    const rec = price.recurring || {};
-    const per = rec.interval === 'year' ? 12 : rec.interval === 'week' ? (1 / 4) : rec.interval === 'day' ? (1 / 30) : 1;
-    cents += (each * qty) / (per * (Number(rec.interval_count) || 1));
-  }
-  return Math.round(cents);
-}
-const VPA_EXTRAS_MOVE_MAX_SHARE = 0.10;
+   subscription invoice", then "let's just make the limit thirty dollars before we keep trying, and
+   then that way we only try once, and then we just pick it up on the next invoice."
+   So: the card has had its one try (that is the failed attempt that brought us here). Up to $30
+   owed, the invoice is voided and its lines are re-added as pending items on the subscription, so
+   they ride the next subscription invoice and the venue hears about it once. Over $30 the invoice
+   stays OPEN for Stripe's retries and the pay-now button, because that money should not wait a
+   month. Returns { moved, next, already, why }. Never throws. */
+const VPA_EXTRAS_MOVE_MAX_CENTS = 3000;
 async function vpaMoveExtrasToMonthly(env, inv) {
   const no = (why) => ({ moved: false, why: why });
   try {
@@ -3899,9 +3886,7 @@ async function vpaMoveExtrasToMonthly(env, inv) {
     if (!acct || !acct.stripe_subscription_id) return no('no subscription');
     const sub = await vpbStripeGet(env, 'subscriptions/' + encodeURIComponent(acct.stripe_subscription_id));
     if (!sub || sub.error || !/^(active|trialing|past_due)$/.test(String(sub.status))) return no('subscription not running');
-    const monthly = vpaMonthlyBillCents(sub);
-    if (monthly <= 0) return no('monthly bill unknown');
-    if (owed > monthly * VPA_EXTRAS_MOVE_MAX_SHARE) return no('over 10% of monthly (' + owed + ' of ' + monthly + ')');
+    if (owed > VPA_EXTRAS_MOVE_MAX_CENTS) return no('over the $' + (VPA_EXTRAS_MOVE_MAX_CENTS / 100) + ' line (' + owed + ' cents), stays open to be chased now');
     // Re-add the lines as pending items ON THE SUBSCRIPTION, so they can only land on its next
     // invoice. Keyed on the failed invoice so a repeat cannot double them.
     let lines = ((inv.lines && inv.lines.data) || []).filter((l) => Number(l.amount) > 0);
@@ -3939,7 +3924,7 @@ async function vpaMoveExtrasToMonthly(env, inv) {
       actor_admin: null, actor_label: 'stripe',
       action: 'extras_moved_to_monthly',
       target: 'account:' + acct.id,
-      detail: { invoice: inv.id, amount_cents: owed, monthly_cents: monthly, items: made, next: next, customer: inv.customer },
+      detail: { invoice: inv.id, amount_cents: owed, limit_cents: VPA_EXTRAS_MOVE_MAX_CENTS, items: made, next: next, customer: inv.customer },
     }, false).catch(() => {});
     return { moved: true, next: next, amount_cents: owed, items: made };
   } catch (e) {
