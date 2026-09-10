@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '10 Sep 2026, 09:21 · 57d50ed2';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Sep 2026, 10:27 · 674e0ac4';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -7213,7 +7213,18 @@ function dbError(op, target, detail) {
  */
 
 const ROOM_MAX_MSG_CHARS = 16 * 1024;        // a game message is a few hundred characters
-const ROOM_MAX_PER_SEC   = 20;               // per socket; the excess is dropped, the socket kept
+/* PER SOCKET, PER SECOND, AND THE HOST IS NOT A PHONE.
+   One cap of 20 was written for the shape of a flood: a phone hammering the room. It is
+   the wrong shape for a HOST. A bingo console answers every phone's rollcall with that
+   phone's own cards, so a forty player room is forty messages out of one socket in a
+   moment, and it is the console doing exactly what it is supposed to do. Measured on
+   staging 10 Sep 2026: the host sent 40, the TV heard 20, and NOTHING said so. Half a
+   room would have sat there with no card and no screen able to tell anyone why.
+   So the host and the TV, which are the venue's own equipment and whose messages are
+   signed, get room to do their job. Phones stay capped, because a phone is the thing an
+   outsider can point at us. */
+const ROOM_MAX_PER_SEC   = 20;               // a phone, or anything unrecognised
+const ROOM_MAX_PER_SEC_HOST = 240;           // a host or a TV: a rollcall answers every phone at once
 const ROOM_ROLES         = ['tv', 'host', 'phone', 'hq'];
 const ROOM_NAME_RE       = /^[A-Za-z0-9-]{3,90}$/;   // the channel name the page already uses, e.g. vp-3A7TES
 
@@ -7257,7 +7268,8 @@ export class VenueRoom {
     if (a.win !== win) { a.win = win; a.n = 0; }
     a.n += 1;
     ws.serializeAttachment(a);
-    if (a.n > ROOM_MAX_PER_SEC) return;                      // a flood is dropped; the socket stays up
+    const cap = (a.role === 'host' || a.role === 'tv') ? ROOM_MAX_PER_SEC_HOST : ROOM_MAX_PER_SEC;
+    if (a.n > cap) return;                                   // a flood is dropped; the socket stays up
     let obj;
     try { obj = JSON.parse(message); } catch (e) { return; }
     /* A GAME MESSAGE IS {t: "ball"}, NOT {type: "ball"}.

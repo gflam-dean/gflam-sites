@@ -1277,12 +1277,17 @@ def local_checks(which):
         rsrc = io.open(room, encoding='utf-8').read()
         gsrc = io.open(game, encoding='utf-8').read()
         want = re.sub(r'\nexport \{[^}]*\};\s*$', '\n', rsrc).strip()
+        # FIND THE COPY BY ITS FIRST LINE OF CODE, not by the last comment before the
+        # class. This used to walk back to the nearest '/* ' and call that the start,
+        # which held only while no comment sat between ROOM_MAX_MSG_CHARS and the class.
+        # On 10 Sep one did (a note about the host rate cap), the slice began in the
+        # wrong place, and the check reported the two copies as different when they were
+        # identical. A check that a comment can break is a check somebody will weaken.
         i = gsrc.find('export class VenueRoom')
-        copy = gsrc[gsrc.rfind('/* ', 0, i):].strip() if i > 0 else ''
-        # the banner above the copy is the game Worker's own, so compare from the
-        # first line of the room file that is code, not comment
         start = want.find('const ROOM_MAX_MSG_CHARS')
-        cstart = copy.find('const ROOM_MAX_MSG_CHARS')
+        cstart = gsrc.find('const ROOM_MAX_MSG_CHARS')
+        copy = gsrc[cstart:].strip() if cstart >= 0 else ''
+        cstart = 0 if cstart >= 0 else -1
         ok('the room server in the game Worker matches venueplay-room.js',
            i > 0 and start >= 0 and cstart >= 0 and copy[cstart:] == want[start:],
            'wired' if i > 0 else 'not wired into the game Worker yet',

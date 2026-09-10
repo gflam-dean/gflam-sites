@@ -77,7 +77,7 @@ def main():
         s['artist'] = got['artist']
         s['previewUrl'] = got['previewUrl']
         s['artworkUrl'] = got['artworkUrl']
-        s['year'] = got['year']
+        s['year'] = fx.get('correct_year') or got['year']
         if fx.get('retitle'):
             s['title'] = got['title']
         swapped.append((fx['id'], old, (s['artist'], s['year'], s['title']), where))

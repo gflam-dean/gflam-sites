@@ -20,7 +20,7 @@ function find(rel) {
   throw new Error('cannot open ' + rel);
 }
 var src = find('venueplay-backend/worker/venueplay-room.js');
-var EXPECT = 23;
+var EXPECT = 25;
 var bad = 0, ran = 0;
 function ok(n, c, extra) {
   ran++;
@@ -107,6 +107,22 @@ join('tv').then(function (r) { tv = r.webSocket.of; ok('the TV is accepted with 
      'the room dropped {t:...} and every game message uses it');
   ok('both phones heard that one too', p1.got.length === 2 && p2.got.length === 2);
   ok('and the host still does not hear its own', host.got.length === hBefore);
+
+  /* A HOST ANSWERING A WHOLE ROOM IS NOT A FLOOD.
+     The cap was one number, 20 a second, written for a phone hammering the room. A bingo
+     console answers every phone's rollcall with that phone's own cards, so a 40 player
+     room is 40 messages out of the host socket in a moment. Measured on staging on
+     10 Sep 2026 with the single cap: the host sent 40 and the TV heard 20, silently.
+     Half a room with no card and no screen able to say why. */
+  print('\n== a host answering forty phones at once ==');
+  var beforeBurst = tv.got.length;
+  for (var q = 0; q < 40; q++) room.webSocketMessage(host, JSON.stringify({ t: 'cards', pid: 'p' + q }));
+  ok('all forty card messages reach the TV', tv.got.length === beforeBurst + 40,
+     'heard ' + (tv.got.length - beforeBurst) + ' of 40: a rollcall in a busy room is not a flood');
+  var beforePhone = tv.got.length;
+  for (var z = 0; z < 40; z++) room.webSocketMessage(p1, JSON.stringify({ t: 'join', n: z }));
+  ok('a PHONE sending forty is still capped', (tv.got.length - beforePhone) <= 20,
+     'a phone is the one thing an outsider can point at us');
 
   print('\n== junk goes nowhere ==');
   var before = tv.got.length;
