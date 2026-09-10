@@ -481,6 +481,10 @@ MUTATIONS = [
      'the room server is fixed in one of its two copies and not the other'),
     # ---- 10 Sep: the room server, the one-trip draws, and the morning that
     # produced them. Every one of these was broken by hand and watched go red.
+    ('tv-screen.test.js', 'venueplay/tv.html',
+     'out.style.zIndex = "1";\n      into.style.zIndex = "2";',
+     'into.style.zIndex = "2";',
+     'the slide leaving paints over the slide arriving on the wrap, which is what Dean saw on the wall'),
     ('settings-owner-only.test.js', 'venueplay/app/settings.html',
      'card.style.display = "none";', 'card.style.opacity = ".62";',
      'a manager can see what the venue collects about its players again'),

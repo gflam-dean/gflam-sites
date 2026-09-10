@@ -141,8 +141,19 @@ function roomStub(env, name) {
 }
 
 // GET /room/ws?room=vp-XXXXXX&role=tv|host|phone|hq  (a WebSocket upgrade)
+/* THE GLOBAL OFF SWITCH.
+   Set the Worker variable ROOM_OFF to 1 in the Cloudflare dashboard and every venue in
+   the country is back on Supabase Realtime within seconds, with no deploy, no push and
+   nothing for a venue to do. It works by answering the same 503 that a Worker with no
+   room binding answers, which is the fallback every page has been using and testing all
+   along, rather than a second escape route that has never carried a night.
+   Dean, 10 Sep 2026: "yes a global switch is good hopefully never have to use it." */
+function roomOff(env) {
+  const v = String(env.ROOM_OFF == null ? '' : env.ROOM_OFF).trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes' || v === 'on';
+}
 async function handleRoomSocket(request, env, json) {
-  if (!env.ROOM) return json({ error: 'room server not enabled' }, 503);
+  if (!env.ROOM || roomOff(env)) return json({ error: 'room server not enabled' }, 503);
   const url = new URL(request.url);
   const name = String(url.searchParams.get('room') || '').trim();
   if (!ROOM_NAME_RE.test(name)) return json({ error: 'bad room' }, 400);
@@ -154,7 +165,7 @@ async function handleRoomSocket(request, env, json) {
 
 // GET /room/presence?room=vp-XXXXXX  -> {total, tv, host, phone, hq}
 async function handleRoomPresence(request, env, json) {
-  if (!env.ROOM) return json({ error: 'room server not enabled' }, 503);
+  if (!env.ROOM || roomOff(env)) return json({ error: 'room server not enabled' }, 503);
   const url = new URL(request.url);
   const name = String(url.searchParams.get('room') || '').trim();
   if (!ROOM_NAME_RE.test(name)) return json({ error: 'bad room' }, 400);
@@ -165,7 +176,7 @@ async function handleRoomPresence(request, env, json) {
 // Drop a message into a room from the Worker. Returns how many screens heard it.
 // Never throws: no binding, a bad name or a room error all mean 0 and life goes on.
 async function roomPublish(env, name, payload) {
-  if (!env.ROOM || !ROOM_NAME_RE.test(String(name || ''))) return 0;
+  if (!env.ROOM || roomOff(env) || !ROOM_NAME_RE.test(String(name || ''))) return 0;
   try {
     const res = await roomStub(env, name).fetch('https://room/publish', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payload: payload }),
@@ -177,4 +188,4 @@ async function roomPublish(env, name, payload) {
   }
 }
 
-export { handleRoomSocket, handleRoomPresence, roomPublish, ROOM_NAME_RE, ROOM_ROLES, ROOM_MAX_PER_SEC, ROOM_MAX_MSG_CHARS };
+export { handleRoomSocket, handleRoomPresence, roomPublish, roomOff, ROOM_NAME_RE, ROOM_ROLES, ROOM_MAX_PER_SEC, ROOM_MAX_MSG_CHARS };

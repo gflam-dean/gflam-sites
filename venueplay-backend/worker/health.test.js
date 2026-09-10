@@ -43,6 +43,11 @@ function fetch(url, init) {
 }
 function json(o, status) { return { _json: o, status: status || 200 }; }
 eval(lift('sbCount'));
+/* /health now reports whether the room server is actually serving, which means asking the
+   global off switch. Lifted rather than stubbed, so this suite fails if the switch stops
+   being consulted: a health check that says the room is on while it is off would send
+   somebody looking in the wrong place on the one night it matters. */
+eval(lift('roomOff'));
 eval(lift('handleHealth'));
 
 var ENV = { SUPABASE_URL: 'https://db', SUPABASE_SERVICE_KEY: 'k', SUPABASE_JWT_SECRET: 's', IP_HASH_SALT: 'x', RL: {} };

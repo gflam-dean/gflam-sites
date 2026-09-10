@@ -210,3 +210,29 @@ this reaches a venue until Dean deploys and the page opts in.
    LIVE Worker and stops politely at a 503 when the binding is not there).
 4. Then, and only then, add `vp-room.js` to tv.html behind `?roomserver=1` and test
    on The Mini Bar.
+
+## The global off switch
+
+One variable, no deploy, no push, nothing for a venue to do.
+
+**To put every venue in the country back on Supabase Realtime:** in the Cloudflare
+dashboard, open the `venueplay-game` Worker, Settings, Variables, and set
+
+    ROOM_OFF = 1
+
+It takes effect on the next request, within seconds. Remove it or set it to 0 to
+turn the room server back on.
+
+It works by answering the same `503 room server not enabled` that a Worker with no
+room binding answers. That is deliberate: it is the fallback every page has been
+using and exercising since the first day, rather than a second escape route that
+has never carried a night. A page seeing that 503 reconnects to Supabase and the
+game carries on, and nobody in the room sees anything.
+
+`/health` tells you which way it is set:
+
+    "room": true            the room server is serving
+    "room": false           it is not, either no binding or the switch is on
+    "room_off": true        the switch is on (absent when it is not)
+
+Dean, 10 Sep 2026: "yes a global switch is good hopefully never have to use it."

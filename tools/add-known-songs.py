@@ -29,6 +29,10 @@
      Triple M Ozzest 100     88 - 0.3 x rank     listener voted Australian rock
      Hottest 100, one year   88 - 0.9 x rank     number one for a year scores 87,
                                                  twentieth scores 70
+     hand picked             80                  the ARIA Hall of Fame and the pub
+                                                 singalong are not lists of songs,
+                                                 so they were tested by hand. See
+                                                 venueplay/data/song-handpicked-2026-09-10.json
 
    Best of whichever apply, +6 when two independent lists rate it, and +20 for a
    triple j placing but only in Aussie, Alternative and Rock, exactly as
@@ -57,6 +61,7 @@ D = os.path.join(ROOT, 'venueplay', 'data')
 LIB = os.path.join(D, 'musical-library.json')
 AUSSIE = os.path.join(D, 'song-aussie-artists.json')
 OUT = os.path.join(D, 'song-known-2026-09-10.json')
+HANDPICKED = os.path.join(D, 'song-handpicked-2026-09-10.json')
 WIKI_CACHE = os.environ.get('VP_WIKI_CACHE') or os.path.join(
     os.path.expanduser('~'), '.venueplay-wiki-cache')
 LISTS = os.path.join(WIKI_CACHE, 'parsed-lists.json')
@@ -66,7 +71,9 @@ _spec = importlib.util.spec_from_file_location(
 itunes = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(itunes)
 
-DECADE = {1950: '60s', 1960: '60s', 1970: '70s', 1980: '80s', 1990: '90s',
+# There is no 50s pack, and the gate fails if a decade pack holds a song from
+# outside its decade, so a 1956 record joins its genre packs and no decade pack.
+DECADE = {1960: '60s', 1970: '70s', 1980: '80s', 1990: '90s',
           2000: '2000s', 2010: '2010s', 2020: '2020s'}
 TRIPLE_J_PACKS = ('Aussie', 'Alternative', 'Rock')
 
@@ -111,6 +118,20 @@ def evidence():
                 e['h100'].append([int(name[5:]), rank])
             elif name.startswith('yearend-'):
                 e['year_end'].append([int(name[8:]), rank])
+    # Two of the sources on the brief, the ARIA Hall of Fame and the pub
+    # singalong, are not lists of songs and cannot be scraped. They were tested
+    # by hand instead and what survived that test lives in the hand picked file.
+    # A hand picked song scores 80, which puts it level with a year-end top ten
+    # finish: high enough to sit near the front of the new tail, not so high that
+    # a judgement call outranks a whole year of Australian sales.
+    if os.path.exists(HANDPICKED):
+        for h in load(HANDPICKED)['songs']:
+            key = (itunes.norm_title(h['title']), itunes.norm_artist(h['artist']))
+            e = ev.setdefault(key, {'title': h['title'], 'artist': h['artist'],
+                                    'h100': [], 'decade': None, 'apra': None,
+                                    'ozzest': None, 'year_end': []})
+            e['handpicked'] = h['why']
+
     for e in ev.values():
         e['h100'].sort()
         e['year_end'].sort()
@@ -132,8 +153,28 @@ def sources(e):
     return n
 
 
+EXCLUDED_ACTS = ('rolfharris', 'garyglitter')
+EXCLUDED_SONGS = (('ascottishsoldier', 'andystewart'),
+                  ('myboomerangwontcomeback', 'charliedrake'),
+                  ('advanceaustraliafair', ''))
+
+
+def excluded(t, a):
+    """Kept out on judgement, not on evidence. The reasons are written down in
+       venueplay/data/song-handpicked-2026-09-10.json under "excluded" so they
+       can be argued with rather than quietly applied."""
+    if a in EXCLUDED_ACTS:
+        return True
+    for xt, xa in EXCLUDED_SONGS:
+        if t == xt and (not xa or a == xa):
+            return True
+    return False
+
+
 def clears_bar(e):
     """Would a room sing it. See the note at the top of the file."""
+    if e.get('handpicked'):
+        return True
     if e.get('decade') or e.get('apra') or e.get('ozzest'):
         return True
     ye = e.get('best_year_end')
@@ -166,6 +207,8 @@ def score(e, pack):
         parts.append(88 - 0.3 * e['ozzest'])
     if e.get('best_h100'):
         parts.append(88 - 0.9 * e['best_h100'])
+    if e.get('handpicked'):
+        parts.append(80)
     s = max(parts) if parts else 0
     if sources(e) >= 2:
         s += 6
@@ -216,7 +259,7 @@ def genre_packs(genre, year, artist_norm, aussie, best_year_end, e):
     # time lists, and old enough to have been played to death since.
     if year < 2000 and ((best_year_end and best_year_end <= 10)
                         or (e.get('ozzest') and e['ozzest'] <= 50)
-                        or e.get('apra')):
+                        or e.get('apra') or e.get('handpicked')):
         out.append('Pub Classics')
     return out
 
@@ -247,7 +290,7 @@ def main(argv):
 
     cands = []
     for (t, a), e in ev.items():
-        if held(t, a):
+        if held(t, a) or excluded(t, a):
             continue
         if not clears_bar(e):
             continue
@@ -287,6 +330,14 @@ def main(argv):
             continue
         have_ids.add(got['id'])
         by_artist[itunes.norm_artist(got['artist'])].add(itunes.norm_title(got['title']))
+        # The store's release date is the date of the album it served up, which
+        # for an old single is usually a much later compilation. Deep Purple's
+        # Black Night comes back as 2004. The year the song CHARTED is the real
+        # one, and it is the number the decade packs are built on.
+        chart_years = [y for y, _ in e.get('year_end', [])] + \
+                      [y for y, _ in e.get('h100', [])]
+        if chart_years:
+            got['year'] = min(chart_years)
         got['_ev'] = e
         resolved.append(got)
 

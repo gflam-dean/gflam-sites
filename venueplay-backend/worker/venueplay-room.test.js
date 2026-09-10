@@ -20,7 +20,7 @@ function find(rel) {
   throw new Error('cannot open ' + rel);
 }
 var src = find('venueplay-backend/worker/venueplay-room.js');
-var EXPECT = 25;
+var EXPECT = 29;
 var bad = 0, ran = 0;
 function ok(n, c, extra) {
   ran++;
@@ -170,6 +170,31 @@ join('tv').then(function (r) { tv = r.webSocket.of; ok('the TV is accepted with 
 }).then(function (rs) {
   ok('socket and presence answer 503 "not enabled", publish answers 0, nothing throws',
      rs[0].s === 503 && rs[1].s === 503 && rs[2] === 0);
+
+  /* THE GLOBAL OFF SWITCH. One variable in the Cloudflare dashboard puts every venue in
+     the country back on Supabase within seconds, no deploy and nothing for a venue to do.
+     It answers the SAME 503 a Worker with no binding answers, so it rides the fallback
+     every page has been exercising all along instead of a second escape route that has
+     never carried a night. */
+  ok('roomOff reads the switch and nothing else', roomOff({ ROOM_OFF: '1' }) === true
+     && roomOff({ ROOM_OFF: 'true' }) === true && roomOff({ ROOM_OFF: 'on' }) === true
+     && roomOff({ ROOM_OFF: '0' }) === false && roomOff({ ROOM_OFF: '' }) === false
+     && roomOff({}) === false);
+  var offRs = [];
+  function jsonOff(o, st) { offRs.push(st); return { o: o, s: st }; }
+  var liveNs = { idFromName: function (n) { return 'id:' + n; }, get: function () { return { fetch: function () { return Promise.resolve(new Response(JSON.stringify({ ok: true, delivered: 3 }))); } }; } };
+  var offEnv = { ROOM: liveNs, ROOM_OFF: '1' };
+  return Promise.all([
+    handleRoomSocket(new Request('https://w/room/ws?room=vp-3A7TES&role=tv', { headers: { Upgrade: 'websocket' } }), offEnv, jsonOff),
+    handleRoomPresence(new Request('https://w/room/presence?room=vp-3A7TES'), offEnv, jsonOff),
+    roomPublish(offEnv, 'vp-3A7TES', { type: 'reload' }),
+  ]).then(function (off) {
+    ok('the switch closes the socket route even with a binding present', off[0].s === 503);
+    ok('and presence, with the same answer a missing binding gives', off[1].s === 503);
+    ok('and the Worker stops publishing into rooms', off[2] === 0,
+       'a reload pushed into a room nobody is listening to is a reload that did not happen');
+  });
+}).then(function () {
   var replies2 = [];
   function json2(o, s) { replies2.push(s); return { s: s }; }
   var fakeNs = { idFromName: function (n) { return 'id:' + n; }, get: function () { return { fetch: function () { return Promise.resolve(new Response(JSON.stringify({ ok: true, delivered: 2 }))); } }; } };

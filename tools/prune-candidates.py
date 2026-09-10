@@ -35,6 +35,20 @@
    The list is ordered by pack and by position, so the worst offenders in a
    pack's tail read first.
 
+   THERE IS NO "SAFEST TO CUT" RANKING AND THAT IS DELIBERATE. One was built: no
+   list names the act, the library holds fewer than three songs by them, and the
+   song sits past position 150 in every pack. Twenty six songs cleared all three,
+   and they were Louie Louie, Proud Mary, Green Onions, Tennessee Whiskey,
+   Wellerman, Maniac and Beggin'. The ranking was wrong about every one of them,
+   so it came out. Nothing here is going to tell you which cut is safe. Reading
+   the list is the job.
+
+   READ THIS BEFORE CUTTING ANYTHING. Sexual Healing by Marvin Gaye is on this
+   list. So is Ace of Spades by Motorhead and Ring of Fire by Johnny Cash. None
+   of the three ever finished inside an Australian year-end top 25 and none has
+   ever been forgotten. The list finds songs with no paperwork, and a song with
+   no paperwork is not the same thing as a song nobody knows.
+
    Run from the repo root:  python3 tools/prune-candidates.py
 """
 import collections
@@ -54,7 +68,9 @@ WIKI_CACHE = os.environ.get('VP_WIKI_CACHE') or os.path.join(
     os.path.expanduser('~'), '.venueplay-wiki-cache')
 LISTS = os.path.join(WIKI_CACHE, 'parsed-lists.json')
 # The 4,381 chart placings the 9 September run parsed out of 88 Wikipedia pages.
-ENTRIES = os.environ.get('VP_CHART_ENTRIES') or ''
+# They lived in a scratch folder, which meant the evidence behind 805 songs was
+# one cleanup away from being gone, so they are kept beside the library now.
+ENTRIES = os.path.join(D, 'song-chart-placings-2026-09-09.json')
 
 _spec = importlib.util.spec_from_file_location(
     'itunes_au', os.path.join(ROOT, 'tools', 'itunes-au.py'))
@@ -190,6 +206,12 @@ def main():
         'evidence_checked': dict(counts),
         'songs_in_a_pack': sum(pack_size.values()),
         'candidates': len(out),
+        'read_this_first': ('Sexual Healing by Marvin Gaye is on this list, and so '
+                            'are Ace of Spades by Motorhead and Ring of Fire by '
+                            'Johnny Cash. None of them ever finished inside an '
+                            'Australian year-end top 25 and none of them has ever '
+                            'been forgotten. A song with no paperwork is not the '
+                            'same thing as a song nobody knows.'),
         'per_pack': dict((k, {'pack_holds': pack_size[k], 'no_evidence': per_pack.get(k, 0)})
                          for k in pack_size),
         'list': out})
