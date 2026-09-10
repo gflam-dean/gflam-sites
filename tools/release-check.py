@@ -1719,11 +1719,6 @@ def public_key_cannot_reach_data():
            why='HTTP %s: the write was not refused' % status)
 
 
-# Venues to watch for a session nobody closed. Add a slug here when a venue goes
-# live. Read-only: it asks the same public endpoint a phone asks.
-WATCH_VENUES = ['the-average-joe']
-
-
 def venue_code(slug):
     """The same hash the site uses to turn a slug into a channel code."""
     t = ''.join(c for c in slug.lower() if c.isalnum())
@@ -1867,43 +1862,43 @@ def no_session_left_open():
     /session/close only ever runs in the browser, so a host who shuts the tablet
     without signing out leaves the session open. Every later night's players then
     append to that SAME session, and when it finally closes one invoice bills
-    every player who ever joined it. The Worker has a nightly sweep for exactly
-    this, but it does nothing at all unless a Cron Trigger is configured in the
-    Cloudflare dashboard.
+    every player who ever played across all of them. It has happened once
+    already: session 9206e83c sat open for 23 days across two separate nights.
 
-    So: check. A session reading live with no game running, in the small hours, is
-    one nobody closed.
+    THIS CHECK USED TO ASK THE WORKER ABOUT ONE VENUE, and it was wrong twice
+    over. It asked the public /play/live endpoint about a hand-maintained list of
+    slugs that held ONE name while seventeen venues were active, and it printed
+    "has no session left open" for every answer that was not "live with no game",
+    which includes every case it could not judge. On 10 Sep 2026 it said
+    the-average-joe had no session left open while that venue held a session
+    opened on 26 August, never ended, with 4 billable players and 3 over the plan
+    cap. Both statements were true at once: the session read not-live because it
+    was CANCELLED, and cancelled is not ended.
+
+    ended_at is a column, so ask the database, and ask about every venue. That is
+    what check-stale-sessions.py does, and it is a separate tool because it needs
+    the service credentials this one deliberately does not carry.
     """
-    import datetime
     head('No venue has a session nobody closed')
-    hour = datetime.datetime.now().hour
-    # Between four and ten in the morning nobody is running a bingo night, so a
-    # session reading live then was left open. At other hours it might be real,
-    # and calling a live night "stale" would be worse than saying nothing.
-    quiet = 4 <= hour < 10
-    for slug in WATCH_VENUES:
-        status, body, _ = get(VP_GAME + '/play/live?code=' + venue_code(slug))
-        try:
-            d = json.loads(body)
-        except Exception:
-            ok('%s reachable' % slug, False, why='no JSON back')
-            continue
-        if not d.get('exists'):
-            ok('%s is a known venue' % slug, False, why='the Worker does not know that slug')
-            continue
-        live, fmt = d.get('live'), (d.get('format') or '')
-        if live and not fmt and quiet:
-            ok('%s has no session left open' % slug, False,
-               why='a session reads LIVE at %02d:00 with no game running. Nobody closed it. '
-                   'Set a Cron Trigger on the game Worker (0 17 * * * is 3am Brisbane) '
-                   'so the nightly sweep runs.' % hour)
-        elif live and not fmt:
-            note('%s: cannot judge right now' % slug,
-                 'a session is live with no game running, but at %02d:00 that may be a '
-                 'real lobby. Run this again between 4am and 10am for an answer.' % hour)
-        else:
-            ok('%s has no session left open' % slug, True,
-               'live=%s game=%s' % (live, fmt or 'none'))
+    tool = os.path.join(ROOT, 'venueplay-backend', 'tools', 'check-stale-sessions.py')
+    env_file = os.path.join(os.path.expanduser('~'), '.gflam-migrate.env')
+    if not os.path.exists(tool):
+        ok('the stale session check exists', False,
+           why='venueplay-backend/tools/check-stale-sessions.py is missing')
+        return
+    if not os.path.exists(env_file):
+        note('sessions: NOT CHECKED',
+             'no ~/.gflam-migrate.env on this machine, so the database was never asked. '
+             'This is deliberately not a pass: run check-stale-sessions.py where the '
+             'credentials are.')
+        return
+    r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=180)
+    out = (r.stdout or '') + (r.stderr or '')
+    last = [l for l in out.splitlines() if l.strip()]
+    tail = last[-1].strip() if last else 'no output'
+    ok('no unclosed session can be billed, at any venue', r.returncode == 0,
+       detail=tail,
+       why='run venueplay-backend/tools/check-stale-sessions.py for which venue and which session')
 
 
 def admin_routes_refuse():
