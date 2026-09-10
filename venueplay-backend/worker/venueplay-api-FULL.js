@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:39 · 5bf54ceb';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:59 · ce1ea657';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3524,8 +3524,9 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
       + '<img src="' + logo + '" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
-      + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Payment received. Thank you.</p>'
-      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Here is your VenuePlay invoice' + (number ? ' ' + vpaEsc(number) : '') + '.</p>'
+      + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Thanks for running your nights with VenuePlay.</p>'
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">Your payment has gone through. Here is your invoice'
+      + (number ? ' ' + vpaEsc(number) : '') + ', and exactly what it is for.</p>'
       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
       +   '<p style="margin:0;font-size:13px;color:#6a6a75">Amount paid</p>'
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
@@ -3541,7 +3542,9 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + (ov.nights > 0 ? '<p style="font-size:13px;color:#6a6a75;margin:0 0 18px">Running over most weeks? A bigger plan usually works out cheaper than the per-night rate - adjust it anytime on your billing page.</p>' : '')
       + (btn ? '<a href="' + btn + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">View invoice</a>' : '')
       + (pdf ? ' <a href="' + pdf + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:9.5px 22px;border-radius:8px">Download PDF</a>' : '')
-      + '<p style="font-size:12.5px;color:#9a9aa4;margin:26px 0 0">Questions about your bill? Reply to this email or contact hello@venueplay.com.au</p>'
+      + '<p style="font-size:13.5px;color:#12101a;margin:26px 0 0">We know a quiet Tuesday is worth as much as a packed Saturday, '
+      + 'so thank you for backing us early. If there is anything you want the games to do that they do not, tell us.</p>'
+      + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact hello@venueplay.com.au</p>'
       + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
       + '</div>';
     await fetch('https://api.resend.com/emails', {
