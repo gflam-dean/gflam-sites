@@ -40,7 +40,7 @@ broadcasts on no real venue's channel: VenuePlay has a live client.
         database as production, so play on it with a throwaway venue slug.
 """
 import hashlib
-import io, json, os, re, subprocess, sys, urllib.error, urllib.request
+import atexit, io, json, os, re, shutil, subprocess, sys, tempfile, urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -254,10 +254,33 @@ def js_blocks(path):
     return out
 
 
+# A PRIVATE SCRATCH FILE PER RUN, NOT A FIXED NAME IN /tmp.
+#
+# This handed JavaScript to jsc through /tmp/_rc.js, a fixed path, and every
+# script in the repo went through the same one. Two of these running at once
+# overwrite each other between the write and the read: run A writes vic.html's
+# script, run B replaces it with wa.html's, and run A reports a syntax error
+# against vic.html quoting code that is not in it. That is exactly what it did on
+# 10 Sep 2026, naming four innocent state pages and blaming a fragment reading
+# "Cloudflare", while the same files parsed perfectly on the next run.
+#
+# Two runs at once is not exotic. prove-checks.py RUNS this tool, over and over,
+# and the release notes tell you to run prove-checks before a release that
+# matters, so anybody doing that alongside the gate gets nonsense.
+#
+# AND THE FAILURE IS NOT ALWAYS NOISY, WHICH IS THE REAL PROBLEM. Reverse the
+# order and run A writes a BROKEN script, run B overwrites it with a valid one,
+# and run A reads the valid one and says OK. A gate that can pass code that does
+# not parse is the one thing this whole tool exists to prevent.
+_SCRATCH = tempfile.mkdtemp(prefix='release-check-')
+atexit.register(lambda: shutil.rmtree(_SCRATCH, ignore_errors=True))
+
+
 def parses(js):
-    io.open('/tmp/_rc.js', 'w', encoding='utf-8').write(js)
+    f = os.path.join(_SCRATCH, 'parse.js')
+    io.open(f, 'w', encoding='utf-8').write(js)
     r = subprocess.run([JSC, '-e',
-        'try{ new Function(readFile("/tmp/_rc.js")); print("OK"); }catch(e){ print("ERR "+e); }'],
+        'try{ new Function(readFile(%s)); print("OK"); }catch(e){ print("ERR "+e); }' % json.dumps(f)],
         capture_output=True, text=True)
     return ('OK' in r.stdout), r.stdout.strip()
 
@@ -410,10 +433,11 @@ def local_checks(which):
             continue
         src = io.open(f, encoding='utf-8').read()
         src = unexport(src)
-        io.open('/tmp/_rc_load.js', 'w', encoding='utf-8').write(src)
+        lf = os.path.join(_SCRATCH, 'load.js')          # per run, see the note on parses()
+        io.open(lf, 'w', encoding='utf-8').write(src)
         r = subprocess.run([JSC, '-e',
-            'try{ (new Function(readFile("/tmp/_rc_load.js")))(); print("OK"); }'
-            'catch(e){ print("ERR "+e); }'], capture_output=True, text=True)
+            'try{ (new Function(readFile(%s)))(); print("OK"); }'
+            'catch(e){ print("ERR "+e); }' % json.dumps(lf)], capture_output=True, text=True)
         if 'OK' not in r.stdout:
             worker_bad.append('%s: %s' % (b, r.stdout.strip()[:90]))
     ok('every Worker actually loads, not just parses', not worker_bad,
@@ -1901,6 +1925,35 @@ def no_session_left_open():
        why='run venueplay-backend/tools/check-stale-sessions.py for which venue and which session')
 
 
+def nobody_paid_and_got_nothing():
+    """PartyPlay is delivered by ONE email. A failed send is a log line nobody reads.
+
+    The webhook catches a failed sendLicenceEmail on purpose, and that is right: an
+    email that will not send must not undo a payment or make Stripe retry a webhook
+    that already granted the licence. But it means the row stays 'paid', the buyer
+    has no code and no host key, and nothing inside the business knows. The first
+    anyone hears is somebody asking where their party went, if they bother.
+    """
+    head('Nobody paid for a party and got nothing')
+    tool = os.path.join(ROOT, 'partyplay-backend', 'tools', 'check-paid-not-delivered.py')
+    env_file = os.path.join(os.path.expanduser('~'), '.gflam-migrate.env')
+    if not os.path.exists(tool):
+        ok('the undelivered-party check exists', False,
+           why='partyplay-backend/tools/check-paid-not-delivered.py is missing')
+        return
+    if not os.path.exists(env_file):
+        note('undelivered parties: NOT CHECKED',
+             'no ~/.gflam-migrate.env on this machine, so the database was never asked. '
+             'Deliberately not a pass.')
+        return
+    r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=180)
+    out = (r.stdout or '') + (r.stderr or '')
+    last = [l for l in out.splitlines() if l.strip()]
+    tail = last[-1].strip() if last else 'no output'
+    ok('every paid party was sent its code', r.returncode == 0, detail=tail,
+       why='run partyplay-backend/tools/check-paid-not-delivered.py for who, and resend with /licence/resend')
+
+
 def admin_routes_refuse():
     head('Admin and money routes must refuse a stranger')
     for path, method in [('/admin/stats', 'GET'), ('/admin/whoami', 'GET'),
@@ -2130,6 +2183,7 @@ def main():
             pages_live('PartyPlay', PP, PP_PAGES)
             every_page_is_reachable('PartyPlay', PP, 'partyplay')
             worker_health('PartyPlay', PP_API)
+            nobody_paid_and_got_nothing()
             cors_checks('PartyPlay', PP_API, '/join',
                         ['https://partyplay.com.au', 'https://www.partyplay.com.au'],
                         bad_origin='https://partyplay.pages.dev')   # NOT ours, see allowedOrigin
