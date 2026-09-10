@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:26 · 526e3003';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:33 · 889f52fb';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6122,13 +6122,26 @@ async function applyOverageCharge(env, o) {
      same $6 riding the monthly invoice costs almost nothing extra. Dean's call, made
      knowingly: a venue that can verify a charge on the night is worth more than the fee. */
   const billNow = true;
+  /* QUANTITY x UNIT PRICE, AND THE DATE OF THE NIGHT IT WAS FOR.
+
+     This used to be one lump `amount` with everything crammed into the description:
+     "Big night extra players - The Jolly Jess - 2026-09-10 - 3 over 1 at $2.00". A
+     bookkeeper reading the invoice got a single figure and a sentence to parse.
+
+     Dean, 11 Sep 2026: "it should say Not Jess - 1 Extra Player - <DATE> then the QTY
+     changes. I guess all I want is transparency."
+
+     So Stripe is given the quantity and the unit price and does what it is good at:
+     the invoice shows 3 x $2.00 against a line naming the venue and the night. The
+     arithmetic is exact, not a rounding of a lump: amountCents was already
+     overage x rateDollars x 100, so the unit divides evenly by construction. */
   const item = {
     customer: acct.stripe_customer_id,
     currency: 'aud',
-    amount: amountCents,
-    description: 'Big night extra players - ' + (venue.name || 'venue') + ' - ' + when +
-                 ' - ' + overage + ' over ' + cap + ' at $' + rateDollars.toFixed(2) +
-                 (halfPrice ? ' (third big night in a row)' : ''),
+    quantity: overage,
+    unit_amount: Math.round(rateDollars * 100),
+    description: (venue.name || 'Venue') + ' - Extra Player - ' + when +
+                 (halfPrice ? ' (third big night in a row, half price, plan moves up)' : ''),
   };
   if (!billNow) item.subscription = acct.stripe_subscription_id;
   const res = await stripePost(env, 'invoiceitems', item, o.idemKey);

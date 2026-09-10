@@ -48,5 +48,37 @@ pass("a $0 trial invoice gets no tax block at all",
 pass("an invoice with no lines does not render an empty table",
      vpaInvoiceLinesHtml({ lines: { data: [] } }) === "");
 
+
+print("\nTRANSPARENCY ABOUT THE AUTOMATIC UPGRADE");
+eval(lift(BILL,"vpaUpliftNoticeHtml"));
+
+var upgraded = { amount_paid: 900, lines: { data: [
+  { description: "The Jolly Jess - Extra Player - 2026-10-04 (third big night in a row, half price, plan moves up)", amount: 300 },
+  { description: "1 Player \u00d7 Founding Membership (Monthly)", amount: 250 }
+]}};
+var notice = vpaUpliftNoticeHtml(upgraded);
+pass("an invoice that upgraded the plan says so", notice.indexOf("plan has moved up") !== -1);
+pass("it explains WHY that night was half price", notice.toLowerCase().indexOf("half price") !== -1);
+pass("it says the rate per player has not changed", notice.indexOf("rate per player has not changed") !== -1);
+pass("and that it starts from the next invoice", notice.indexOf("next invoice") !== -1);
+
+var ordinary = { amount_paid: 600, lines: { data: [
+  { description: "The Jolly Jess - Extra Player - 2026-09-27", amount: 600 }
+]}};
+pass("an ordinary big night does NOT claim the plan moved", vpaUpliftNoticeHtml(ordinary) === "",
+     "a venue told its plan changed when it did not is worse than saying nothing");
+pass("a plain subscription invoice says nothing about upgrades",
+     vpaUpliftNoticeHtml({ lines: { data: [{ description: "1 Player x Founding Membership", amount: 250 }] } }) === "");
+
+print("\nTHE NEW INVOICE LINE FORMAT");
+var GAME = find("venueplay-backend/worker/venueplay-game.js");
+pass("the big night line is quantity x unit price, not one lump",
+     /quantity: overage,/.test(GAME) && /unit_amount: Math\.round\(rateDollars \* 100\)/.test(GAME),
+     "so the invoice shows 3 x $2.00 rather than a single figure");
+pass("and it names the venue and the night",
+     /description: \(venue\.name \|\| 'Venue'\) \+ ' - Extra Player - ' \+ when/.test(GAME));
+pass("the plan-change line does the same in the billing Worker",
+     /quantity: n, unit_amount: Math\.round\(rate \* 100\)/.test(BILL));
+
 print("");
 print(bad?(bad+" OF "+ran+" FAILED"):("ALL "+ran+" CHECKS PASSED"));

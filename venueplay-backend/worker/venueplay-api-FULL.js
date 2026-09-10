@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:31 · fc8e05c5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:34 · 51729e07';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3391,6 +3391,64 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
    is why it says so here. */
 const VP_ABN = '35 679 383 049';   // also on venueplay/terms.html; keep them the same
 
+/* TELL THEM BEFORE IT HAPPENS, AND TELL THEM WHEN IT HAS.
+
+   A venue's plan moves up automatically on the third big night in a row, and until now
+   the only place that was ever said was the console, on the night, in a modal somebody
+   taps through. The bill that follows never mentioned it, and neither did the reminder.
+   A venue could find out its monthly cost had permanently changed by comparing two
+   invoices.
+
+   Dean, 11 Sep 2026: "In these emails it should also warn of a upgrade and if we have
+   upgraded. I guess all I want is transparency."
+
+   Two notices, and they are deliberately different. The WARNING is a heads-up that one
+   more big night moves the plan, which is the moment a venue can still choose to raise
+   its own cap instead. The NOTICE is after the fact and explains what changed and why
+   the third night was half price. */
+function vpaUpliftNoticeHtml(invoice) {
+  const lines = (invoice && invoice.lines && invoice.lines.data) || [];
+  const hit = lines.filter(function (l) {
+    return /plan moves up/i.test(String((l && l.description) || ''));
+  })[0];
+  if (!hit) return '';
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+       + 'style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px">'
+       + '<tr><td style="padding:16px 18px">'
+       + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#12101a">Your plan has moved up</p>'
+       + '<p style="margin:0;font-size:13px;color:#6a6a75">That was your third big night in a row, so those '
+       + 'extra players were charged at half price and your plan has moved up to cover the crowd you are '
+       + 'actually getting. It takes effect from your next invoice, and your rate per player has not changed. '
+       + 'You can adjust it any time on your billing page.</p>'
+       + '</td></tr></table>';
+}
+
+/* Venues on this account that are two big nights into a run. One more and the plan
+   moves. Never throws: a reminder that cannot read the streak is still worth sending. */
+async function vpaUpliftWarningHtml(env, customerId) {
+  try {
+    if (!customerId) return '';
+    const accts = await vpaSelect(env, 'venueplay_founding',
+      'stripe_customer_id=eq.' + encodeURIComponent(customerId) + '&select=id&limit=1');
+    const fid = accts && accts[0] && accts[0].id;
+    if (!fid) return '';
+    const vs = await vpaSelect(env, 'vp_venues',
+      'founding_id=eq.' + encodeURIComponent(fid) + '&select=name,overage_streak&status=eq.active');
+    const close = (vs || []).filter(function (v) { return Number(v.overage_streak || 0) >= 2; });
+    if (!close.length) return '';
+    const names = close.map(function (v) { return vpaEsc(v.name || 'your venue'); }).join(', ');
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+         + 'style="background:#fffaf0;border:1px solid #f3e2bd;border-radius:12px;margin-bottom:22px">'
+         + '<tr><td style="padding:16px 18px">'
+         + '<p style="margin:0 0 6px;font-size:14px;font-weight:700;color:#12101a">Heads-up: one more big night and the plan moves up</p>'
+         + '<p style="margin:0;font-size:13px;color:#6a6a75">' + names + ' has gone over the plan two nights running. '
+         + 'A third in a row is charged at half price and then the plan moves up permanently to cover that crowd. '
+         + 'If you would rather set the number yourself, raise it on your billing page before the next night. '
+         + 'A night back inside the plan clears the run.</p>'
+         + '</td></tr></table>';
+  } catch (e) { return ''; }
+}
+
 function vpaTaxSummaryHtml(invoice) {
   const total = Number((invoice && (invoice.amount_paid || invoice.amount_due)) || 0);
   if (!(total > 0)) return '';
@@ -3476,6 +3534,9 @@ async function vpaFireInvoiceEmail(env, invoice) {
             : '')
       + '</td></tr></table>'
       + vpaInvoiceLinesHtml(invoice)
+      + vpaUpliftNoticeHtml(invoice)
+      + (await vpaUpliftWarningHtml(env, customer))
+      + vpaUpliftNoticeHtml(invoice)
       + vpaTaxSummaryHtml(invoice)
       + (ov.nights > 0 ? '<p style="font-size:13px;color:#6a6a75;margin:0 0 18px">Running over most weeks? A bigger plan usually works out cheaper than the per-night rate - adjust it anytime on your billing page.</p>' : '')
       + (btn ? '<a href="' + btn + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">View invoice</a>' : '')
@@ -4322,9 +4383,14 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
       const cents = Math.round(rate * 100) * n;
       if (!(cents > 0)) return null;
       if (dryRun) return { kind: 'quote', cents: cents };
+      /* QUANTITY x UNIT PRICE, AND THE DATE. Same reason as the big-night line in the
+         game Worker: a bookkeeper should see 3 x $2.50 against a named venue and a date,
+         not one lump with the count buried in a sentence. `cents` was already
+         round(rate x 100) x n, so the unit divides evenly and the total is unchanged. */
       const mRes = await vpbStripePost(env, 'invoiceitems', {
-        customer: customer, amount: cents, currency: 'aud',
-        description: who + n + ' extra ' + (n === 1 ? 'player' : 'players') + ', full month',
+        customer: customer, currency: 'aud',
+        quantity: n, unit_amount: Math.round(rate * 100),
+        description: (label || 'Venue') + ' - Extra Player - ' + new Date().toISOString().slice(0, 10),
       }, idemTag ? ('padd:' + idemTag) : null);
       // vpbStripePost never throws, so an unchecked call reported a Stripe refusal to the venue,
       // and to the audit trail, as money successfully charged.
