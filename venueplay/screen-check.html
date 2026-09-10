@@ -112,10 +112,29 @@
 
        It reads only what is PAINTED, never body.innerText: that banner sits in the DOM of
        every healthy screen too, waiting, and matching it there would fail every venue. */
+    /* A WALL STUCK ON THE SETUP CARD IS NOT A WORKING SCREEN EITHER.
+
+       Tugun Bowls Club passed every check in this file on 10 Sep while its television
+       showed "THIS SCREEN IS SET", counted down 45 seconds, redirected to the same link
+       and started again. It had done that since July and had never shown a night. Every
+       assertion here was TRUE: a page loaded, words were on the wall, it said connected,
+       a slide was lit. None of them asked whether the wall was showing the venue's night
+       or the instructions for setting one up.
+
+       A screen showing setup is fine for the minute somebody is setting it up, which is
+       why this watches the whole window rather than glancing: what matters is whether it
+       is STILL there at the end. */
+    var SETUP = /this screen is set|write this down|which venue is this|start now/i;
+    var setupSeen = null;
+
     var APOLOGY = /not linked to an account|no such venue|cannot find|couldn.t find|sign up at/i;
     var apology = null;
     var watcher = setInterval(function () {
-      try { var m = APOLOGY.exec(visibleText(d).join(' ~ ')); if (m && !apology) apology = m[0]; } catch (e) {}
+      try {
+        var t = visibleText(d).join(' ~ ');
+        var m = APOLOGY.exec(t); if (m && !apology) apology = m[0];
+        var g = SETUP.exec(t); setupSeen = g ? g[0] : null;      // only the LATEST matters
+      } catch (e) {}
     }, 500);
 
     var status = d.getElementById('statusText');
@@ -177,6 +196,10 @@
     }
     clearInterval(watcher);
     try { var m2 = APOLOGY.exec(visibleText(d).join(' ~ ')); if (m2 && !apology) apology = m2[0]; } catch (e) {}
+    pass(!setupSeen, 'the wall is showing a night, not the setup card',
+         'after ' + Math.round(WATCH_MS / 1000) + ' seconds it is STILL showing setup ("' + (setupSeen || '') +
+         '"). A screen that loops the setup card never shows the venue anything.');
+
     pass(!apology, 'the screen is linked to a venue, and stayed that way while we watched',
          'the wall showed an error rather than a night: "' + (apology || '') + '"');
 
