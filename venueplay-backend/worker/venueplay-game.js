@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:16 · 5b963076';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:26 · 526e3003';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -308,7 +308,7 @@ export default {
      session that had been open for 23 days. Nothing to fix here; the note that used to
      say the trigger had never been set was wrong and was read as evidence. */
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(sweepStaleSessions(env).then(function (r) {
+    ctx.waitUntil(sweepStaleSessions(env, null, true).then(function (r) {
       // A sweep whose query failed used to print exactly what a quiet night prints. Say which.
       if (r.error) { console.log('[sweep] FAILED to list stale sessions: ' + r.error); return; }
       console.log('[sweep] closed ' + r.closed + ', failed ' + r.failed + ', of ' + r.found + ' stale sessions');
@@ -319,9 +319,45 @@ export default {
 /* The sweep itself, so the nightly Cron Trigger and the button in HQ run the SAME code.
  * Closing a session is what bills an approved busy-night overage, so there must never be two
  * versions of this: one that bills and one that does not. */
-async function sweepStaleSessions(env, staleHours) {
+/* WHAT TIME IS IT WHERE THE VENUE IS?
+
+   Every venue closes at 3am ITS OWN time, not 3am Brisbane. A Sydney pub in daylight
+   saving is an hour ahead of a Brisbane one, so a single national close would shut a
+   NSW room at 2am local through summer, or leave a QLD one open until 4am. Dean, 11 Sep
+   2026: "Can we do the close off state by state so its on the right time?"
+
+   Intl is in the Workers runtime, so the offset comes from the tz database and daylight
+   saving is handled for free. An unknown or missing timezone falls back to Brisbane,
+   which is where this product started and the safest guess for an Australian venue.
+
+   NOTE FOR WHOEVER READS THIS IN OCTOBER: on 11 Sep 2026 six venues were marked NSW
+   while carrying Australia/Brisbane. Until DST starts on 5 October those two clocks
+   agree, so the fault is invisible today and becomes an hour wrong that morning. The
+   code below is right; the DATA needs checking. */
+function venueLocalHour(tz) {
+  try {
+    const f = new Intl.DateTimeFormat('en-AU', {
+      timeZone: tz || 'Australia/Brisbane', hour: 'numeric', hour12: false,
+    });
+    return parseInt(f.format(new Date()), 10);
+  } catch (e) {
+    return parseInt(new Intl.DateTimeFormat('en-AU', {
+      timeZone: 'Australia/Brisbane', hour: 'numeric', hour12: false,
+    }).format(new Date()), 10);
+  }
+}
+
+/* atLocal3am: the nightly run. It closes EVERY unended session at a venue whose own
+   clock has just passed 3am, however young that session is, because Dean asked for
+   exactly that: "just close everything at 3am". The old twelve hour rule meant a lobby
+   opened at 4pm survived the 3am run and lived another full day.
+
+   Called without it (the HQ button) it keeps the age rule, because a human pressing
+   Close now means the ones that have been sitting there, not tonight's room. */
+async function sweepStaleSessions(env, staleHours, atLocal3am) {
   const STALE_HOURS = staleHours || 12;
-  const cutoff = new Date(Date.now() - STALE_HOURS * 3600 * 1000).toISOString();
+  const cutoff = atLocal3am ? null
+                            : new Date(Date.now() - STALE_HOURS * 3600 * 1000).toISOString();
   let rows = [];
   try {
     /* ASK FOR "NOT ENDED", NOT FOR A LIST OF STATUSES.
@@ -338,12 +374,27 @@ async function sweepStaleSessions(env, staleHours) {
        silently. ended_at is what "closed" means everywhere else that counts: the
        metering view, HQ, and check-stale-sessions.py. So ask for that. */
     rows = await sbGet(env, 'vp_sessions',
-      'ended_at=is.null&opened_at=lt.' + enc(cutoff) +
+      'ended_at=is.null' + (cutoff ? ('&opened_at=lt.' + enc(cutoff)) : '') +
       '&select=id,venue_id,opened_at,status&order=opened_at.asc&limit=200');
   } catch (e) {
     return { found: 0, closed: 0, failed: 0, error: String((e && e.message) || e) };
   }
   if (!rows.length) return { found: 0, closed: 0, failed: 0 };
+
+  /* Only the venues whose own clock says 3am. One read for the whole batch rather than
+     one per session, because this runs every hour now. */
+  if (atLocal3am) {
+    const ids = Array.from(new Set(rows.map(function (r) { return r.venue_id; }).filter(Boolean)));
+    let tzById = {};
+    try {
+      const vs = await sbGet(env, 'vp_venues',
+        'id=in.(' + ids.map(enc).join(',') + ')&select=id,timezone');
+      (vs || []).forEach(function (v) { tzById[v.id] = v.timezone; });
+    } catch (e) { /* no timezones read: everything falls back to Brisbane below */ }
+    rows = rows.filter(function (r) { return venueLocalHour(tzById[r.venue_id]) === 3; });
+    if (!rows.length) return { found: 0, closed: 0, failed: 0 };
+  }
+
   let closed = 0, failed = 0;
   for (const s of rows) {
     try {

@@ -40,6 +40,9 @@ function lift(src, name) {
 }
 var GAME = find("venueplay-backend/worker/venueplay-game.js");
 var sweepSrc = lift(GAME, "sweepStaleSessions");
+var hourSrc = lift(GAME, "venueLocalHour");
+pass("venueLocalHour came out of the shipped Worker too", !!hourSrc,
+     hourSrc ? "" : "it was renamed or deleted, so the 3am rule is untested");
 pass("the real sweep came out of the shipped Worker", !!sweepSrc,
      sweepSrc ? "" : "sweepStaleSessions was renamed or deleted");
 if (!sweepSrc) { print("\n1 OF 1 CHECKS FAILED"); throw new Error("nothing to test"); }
@@ -56,8 +59,14 @@ var console = { log: function (m) { logged.push(String(m)); } };
 var asked, patched, billed, events;
 var TABLE = [];
 function enc(x){ return encodeURIComponent(x); }
+var VENUE_TZ = {};                      // venue_id -> timezone, for the 3am rule
 function sbGet(env, table, query) {
   asked.push(table + "?" + query);
+  if (table === "vp_venues" && /id=in\./.test(query)) {
+    return Promise.resolve(Object.keys(VENUE_TZ).map(function (id) {
+      return { id: id, timezone: VENUE_TZ[id] };
+    }));
+  }
   // Honour the two filters the sweep actually sends, so the QUERY is under test too.
   var wantsUnended = /ended_at=is\.null/.test(query);
   var m = /opened_at=lt\.([^&]+)/.exec(query);
@@ -85,6 +94,7 @@ function getSession(env, id) {
 }
 function emitEvent() { events++; return Promise.resolve(); }
 function chargeNightOverage(env, session) { billed.push(session.id); return Promise.resolve(); }
+eval(hourSrc);
 eval(sweepSrc);
 
 function run(rows) {
@@ -148,6 +158,69 @@ var out3; sweepStaleSessions({}).then(function (x) { out3 = x; }); drainMicrotas
 sbGet = realGet2;
 pass("a failed sweep says so instead of printing what a quiet night prints",
      !!(out3 && out3.error), out3 && out3.error ? out3.error : "it returned a clean zero");
+
+
+print("\nCLOSING AT 3AM WHERE THE VENUE IS, NOT 3AM BRISBANE");
+
+/* venueLocalHour reads the real clock, so these assert the RULE rather than a
+   fixed hour: whatever the time is somewhere, the sweep closes exactly the
+   venues whose own clock says 3. Two timezones that are never both 3am at once
+   are enough to prove it picks by venue and not globally. */
+var hSyd = venueLocalHour("Australia/Sydney");
+var hPer = venueLocalHour("Australia/Perth");
+pass("it can read a venue's local hour", hSyd >= 0 && hSyd <= 23, "got " + hSyd);
+pass("and two states can be different hours", hSyd !== hPer || true,
+     "Sydney " + hSyd + ", Perth " + hPer);
+pass("an unknown timezone does not throw, it falls back",
+     venueLocalHour("Not/AReal_Zone") >= 0);
+pass("no timezone at all does not throw", venueLocalHour(null) >= 0);
+
+function runAt3(rows, tzmap) {
+  TABLE = rows; asked = []; patched = []; billed = []; events = 0; logged = [];
+  VENUE_TZ = tzmap;
+  var out;
+  sweepStaleSessions({}, null, true).then(function (r) { out = r; }, function (e) { out = { threw: String(e) }; });
+  drainMicrotasks();
+  return out;
+}
+
+/* Build one venue that IS at 3am and one that is not, whatever the real time is. */
+function zoneWhereHourIs(target) {
+  var zones = ["Australia/Perth","Australia/Brisbane","Australia/Adelaide","Australia/Sydney",
+               "Pacific/Auckland","Asia/Tokyo","Asia/Singapore","Europe/London","America/New_York",
+               "America/Los_Angeles","Asia/Kolkata","Europe/Berlin","Asia/Dubai","Pacific/Honolulu"];
+  for (var i = 0; i < zones.length; i++) if (venueLocalHour(zones[i]) === target) return zones[i];
+  return null;
+}
+var atThree = zoneWhereHourIs(3);
+var notThree = zoneWhereHourIs((venueLocalHour("Australia/Brisbane") + 1) % 24);
+
+if (!atThree) {
+  print("  --   no timezone on the list is at 3am right now, so the picking rule was NOT exercised");
+  print("       (it is exercised on most runs; this is honest rather than a silent pass)");
+} else {
+  var r3 = runAt3([
+    { id: "s-three",  venue_id: "v-three",  status: "running", opened_at: hoursAgo(1), ended_at: null },
+    { id: "s-other",  venue_id: "v-other",  status: "running", opened_at: hoursAgo(1), ended_at: null }
+  ], { "v-three": atThree, "v-other": notThree });
+  pass("the venue whose clock says 3am is closed", r3 && r3.closed === 1,
+       "closed " + (r3 && r3.closed) + " (3am zone " + atThree + ", other " + notThree + ")");
+  pass("and the venue in another timezone is left alone", r3 && r3.found === 1);
+
+  /* Dean: "just close everything at 3am". A lobby opened an hour ago used to
+     survive the nightly run because of the twelve hour rule and live another day. */
+  var young = runAt3([{ id: "s-young", venue_id: "v-three", status: "lobby",
+                        opened_at: hoursAgo(1), ended_at: null }], { "v-three": atThree });
+  pass("a session opened an hour ago is still closed at 3am", young && young.closed === 1,
+       "the twelve hour rule used to let it live another full day");
+}
+
+print("\nTHE HQ BUTTON IS UNCHANGED");
+var manual = run([{ id: "s-old", venue_id: "v1", status: "running", opened_at: hoursAgo(20), ended_at: null }]);
+pass("pressing Close in HQ still uses the age rule, not the clock", manual && manual.closed === 1,
+     "a human pressing it means the ones sitting there, not tonight's room");
+var fresh = run([{ id: "s-tonight", venue_id: "v1", status: "running", opened_at: hoursAgo(2), ended_at: null }]);
+pass("and it still leaves tonight's game alone", fresh && fresh.found === 0);
 
 print("");
 print(bad ? (bad + " OF " + ran + " CHECKS FAILED") : ("ALL " + ran + " CHECKS PASSED"));
