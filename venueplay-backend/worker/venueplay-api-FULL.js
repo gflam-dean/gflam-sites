@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:59 · ce1ea657';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:59 · 61c8e585';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3409,7 +3409,7 @@ const VP_ABN = '35 679 383 049';   // also on venueplay/terms.html; keep them th
 function vpaUpliftNoticeHtml(invoice) {
   const lines = (invoice && invoice.lines && invoice.lines.data) || [];
   const hit = lines.filter(function (l) {
-    return /plan moves up/i.test(String((l && l.description) || ''));
+    return /plan move[sd] up/i.test(String((l && l.description) || ''));   // moves/moved, so a reworded marker still matches
   })[0];
   if (!hit) return '';
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '

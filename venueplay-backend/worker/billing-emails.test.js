@@ -54,7 +54,7 @@ print("\nTRANSPARENCY ABOUT THE AUTOMATIC UPGRADE");
 eval(lift(BILL,"vpaUpliftNoticeHtml"));
 
 var upgraded = { amount_paid: 900, lines: { data: [
-  { description: "The Jolly Jess - Extra Player - 2026-10-04 (third big night in a row, half price, plan moves up)", amount: 300 },
+  { description: "The Jolly Jess - Extra Player - 04/10/2026 (3rd big night, plan moved up)", amount: 300 },
   { description: "1 Player \u00d7 Founding Membership (Monthly)", amount: 250 }
 ]}};
 var notice = vpaUpliftNoticeHtml(upgraded);

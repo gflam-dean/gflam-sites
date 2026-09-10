@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:39 · 9d0c48e0';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:59 · f5be42a3';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6155,7 +6155,11 @@ async function applyOverageCharge(env, o) {
     quantity: overage,
     unit_amount: Math.round(rateDollars * 100),
     description: (venue.name || 'Venue') + ' - Extra Player - ' + when +
-                 (halfPrice ? ' (third big night in a row, half price, plan moves up)' : ''),
+                 /* SHORT, because this is a line on Stripe's own invoice page and a long
+                    parenthetical wraps badly beside the amount. The email explains it
+                    properly; this only has to be recognisable. Kept in step with the
+                    matcher in vpaUpliftNoticeHtml, which looks for "plan moved up". */
+                 (halfPrice ? ' (3rd big night, plan moved up)' : ''),
   };
   if (!billNow) item.subscription = acct.stripe_subscription_id;
   const res = await stripePost(env, 'invoiceitems', item, o.idemKey);
