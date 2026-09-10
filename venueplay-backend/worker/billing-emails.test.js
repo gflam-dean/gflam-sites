@@ -73,12 +73,14 @@ pass("a plain subscription invoice says nothing about upgrades",
 
 print("\nTHE NEW INVOICE LINE FORMAT");
 pass("the big night line is quantity x unit price, not one lump",
-     /quantity: overage,/.test(GAME) && /unit_amount: Math\.round\(rateDollars \* 100\)/.test(GAME),
+     /quantity: overage,/.test(GAME) && /unit_amount_decimal: String\(Math\.round\(rateDollars \* 100\)\)/.test(GAME),
      "so the invoice shows 3 x $2.00 rather than a single figure");
 pass("and it names the venue and the night",
      /description: \(venue\.name \|\| 'Venue'\) \+ ' - Extra Player - ' \+ when/.test(GAME));
 pass("the plan-change line does the same in the billing Worker",
-     /quantity: n, unit_amount: Math\.round\(rate \* 100\)/.test(BILL));
+     /quantity: n, unit_amount_decimal: String\(Math\.round\(rate \* 100\)\)/.test(BILL));
+pass("neither Worker sends a top-level unit_amount (Stripe has none on an invoice item and refused the first live charge)",
+     !/unit_amount: /.test(GAME.replace(/\/\*[\s\S]*?\*\//g, "")) && !/unit_amount: /.test(BILL.replace(/\/\*[\s\S]*?\*\//g, "")));
 
 
 print("\nTHE DATE ON THE LINE IS THE NIGHT THEY PLAYED, IN AUSTRALIAN ORDER");

@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 06:36 · 8e546baf';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 06:43 · 0787c992';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6166,7 +6166,12 @@ async function applyOverageCharge(env, o) {
     customer: acct.stripe_customer_id,
     currency: 'aud',
     quantity: overage,
-    unit_amount: Math.round(rateDollars * 100),
+    /* unit_amount_decimal, NOT unit_amount. Stripe's invoice item has no top-level unit_amount
+       (a Price does, which is where the name came from). On 11 Sep 2026 the first real overage
+       night to reach Stripe was refused with "Received unknown parameter: unit_amount" and the
+       venue was not billed. The fake Stripe in overage-charge.test.js now refuses any parameter
+       the real one does not document. */
+    unit_amount_decimal: String(Math.round(rateDollars * 100)),
     description: (venue.name || 'Venue') + ' - Extra Player - ' + when +
                  /* SHORT, because this is a line on Stripe's own invoice page and a long
                     parenthetical wraps badly beside the amount. The email explains it

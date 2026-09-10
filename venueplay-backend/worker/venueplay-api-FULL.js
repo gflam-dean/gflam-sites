@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:59 · 61c8e585';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 06:45 · 93a9162d';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4389,10 +4389,13 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
       /* QUANTITY x UNIT PRICE, AND THE DATE. Same reason as the big-night line in the
          game Worker: a bookkeeper should see 3 x $2.50 against a named venue and a date,
          not one lump with the count buried in a sentence. `cents` was already
-         round(rate x 100) x n, so the unit divides evenly and the total is unchanged. */
+         round(rate x 100) x n, so the unit divides evenly and the total is unchanged.
+         unit_amount_decimal, NOT unit_amount: an invoice item has no top-level unit_amount and
+         Stripe refuses the whole item ("Received unknown parameter"). Found live on 11 Sep 2026
+         in the game Worker's twin of this line; the first real overage night was not billed. */
       const mRes = await vpbStripePost(env, 'invoiceitems', {
         customer: customer, currency: 'aud',
-        quantity: n, unit_amount: Math.round(rate * 100),
+        quantity: n, unit_amount_decimal: String(Math.round(rate * 100)),
         /* Australian order, and Brisbane rather than UTC: a change made after 10pm here
            is already tomorrow in UTC, and the venue would be looking at a date it did
            nothing on. Same +10h shift vpaFmtDate uses. */

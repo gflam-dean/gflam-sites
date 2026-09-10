@@ -82,7 +82,20 @@ function fetch(url, opts) {
   if (opts && opts.body) opts.body.split("&").forEach(function (kv) { var p = kv.split("="); body[decodeURIComponent(p[0])] = decodeURIComponent((p[1] || "").replace(/\+/g, " ")); });
   var reply;
   if (method === "GET" && /^subscriptions\//.test(path)) reply = world.sub;
-  else if (method === "POST" && path === "invoiceitems") { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.itemReply || { id: "ii_test", object: "invoiceitem" }; }
+  else if (method === "POST" && path === "invoiceitems") {
+    posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] });
+    /* Stripe refuses a parameter it does not know, and the whole item with it. This is the
+       documented list for POST /v1/invoiceitems (docs.stripe.com/api/invoiceitems/create, read
+       11 Sep 2026). `unit_amount` is NOT on it, and that is exactly what the first live overage
+       night sent. */
+    var known = ["amount", "currency", "customer", "customer_account", "description", "discountable", "discounts", "invoice",
+                 "metadata", "period", "price_data", "pricing", "quantity", "quantity_decimal", "subscription",
+                 "tax_behavior", "tax_code", "tax_rates", "unit_amount_decimal"];
+    var unknown = Object.keys(body).filter(function (k) { return known.indexOf(k.replace(/\[.*$/, "")) === -1; });
+    if (unknown.length) reply = { error: { message: "Received unknown parameter: " + unknown[0] } };
+    else if (body.unit_amount_decimal !== undefined && body.quantity === undefined && body.quantity_decimal === undefined) reply = { error: { message: "unit_amount_decimal needs a quantity" } };
+    else reply = world.itemReply || { id: "ii_test", object: "invoiceitem" };
+  }
   else if (method === "POST" && path === "invoices") { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.invoiceReply || { id: "in_test", amount_due: 200 }; }
   else reply = { error: { message: "unexpected call " + method + " " + path } };
   return Promise.resolve({ ok: !reply.error, status: reply.error ? 400 : 200, json: function () { return Promise.resolve(reply); } });
@@ -160,7 +173,8 @@ scenario("an active founding venue, one over a cap of one, host approved", funct
     var b = it[0].body;
     pass("for the right customer", b.customer === "cus_JESS", b.customer);
     pass("quantity 1", b.quantity === "1", "quantity=" + b.quantity);
-    pass("unit $2.00", b.unit_amount === "200", "unit_amount=" + b.unit_amount);
+    pass("unit $2.00 as unit_amount_decimal (the parameter Stripe documents)", b.unit_amount_decimal === "200", "unit_amount_decimal=" + b.unit_amount_decimal);
+    pass("no top-level unit_amount (Stripe refuses it; it did, live, on 11 Sep 2026)", b.unit_amount === undefined, "unit_amount=" + b.unit_amount);
     pass("no lump `amount` field", b.amount === undefined, "amount=" + b.amount);
     pass("described as \"The Jolly Jess - Extra Player - 11/09/2026\"", b.description === "The Jolly Jess - Extra Player - 11/09/2026", JSON.stringify(b.description));
     pass("not attached to the subscription (it must get its own invoice)", b.subscription === undefined, "subscription=" + b.subscription);
@@ -185,7 +199,7 @@ scenario("three over the cap", function () {
   reset(night({ players: 4 }));
   return run(mkSession({ approvedCount: 4 }), "3 over").then(function () {
     var b = item()[0] && item()[0].body;
-    pass("quantity 3 x $2.00", !!b && b.quantity === "3" && b.unit_amount === "200", JSON.stringify(b));
+    pass("quantity 3 x $2.00", !!b && b.quantity === "3" && b.unit_amount_decimal === "200", JSON.stringify(b));
   });
 });
 
@@ -231,7 +245,7 @@ scenario("third consecutive big night", function () {
   return run(mkSession({ approvedCount: 3 }), "third").then(function () {
     var b = item()[0] && item()[0].body;
     pass("the plan was moved up", world.uplifts === 1, world.uplifts + " uplifts");
-    pass("charged 2 x $1.00", !!b && b.quantity === "2" && b.unit_amount === "100", JSON.stringify(b));
+    pass("charged 2 x $1.00", !!b && b.quantity === "2" && b.unit_amount_decimal === "100", JSON.stringify(b));
     pass("the line says so", !!b && /plan moved up/.test(b.description), b && b.description);
     var vp = venuePatch();
     pass("streak reset after the uplift", vp.length === 1 && vp[0].body.overage_streak === 0, vp.length ? JSON.stringify(vp[0].body) : "");
@@ -241,7 +255,7 @@ scenario("third big night but the uplift did not happen", function () {
   reset(night({ players: 3, streak: 2, peaks: [3, 2], streakDay: "2026-09-09", upliftResult: null }));
   return run(mkSession({ approvedCount: 3 }), "third, no uplift").then(function () {
     var b = item()[0] && item()[0].body;
-    pass("charged the full $2.00, not the discount", !!b && b.unit_amount === "200", JSON.stringify(b));
+    pass("charged the full $2.00, not the discount", !!b && b.unit_amount_decimal === "200", JSON.stringify(b));
     var vp = venuePatch();
     pass("streak kept, not reset", vp.length === 1 && vp[0].body.overage_streak === 3, vp.length ? JSON.stringify(vp[0].body) : "");
   });
