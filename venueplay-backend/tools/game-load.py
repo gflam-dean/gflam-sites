@@ -29,7 +29,7 @@ players live in the same process, so the phones know which question is open.
 
 Run:  python3 game-load.py --target https://venueplay-game-sydney.<acct>.workers.dev --minutes 3
 """
-import os, sys, re, json, time, random, argparse, threading, heapq, subprocess, ssl, http.client, collections, urllib.request, urllib.error, multiprocessing as mp
+import os, sys, re, json, time, random, argparse, asyncio, hashlib, threading, heapq, subprocess, ssl, http.client, collections, urllib.request, urllib.error, multiprocessing as mp
 from pathlib import Path
 
 WORK = Path.home() / '.gflam-migrate'
@@ -68,12 +68,81 @@ def host_login(e, email):
         sys.exit('host sign-in failed (HTTP %d): %s' % (x.code, x.read()[:200].decode(errors='replace')))
     return d['access_token'], int(d.get('expires_in', 3600))
 
+
+# ------------------------------------------------------------------ answers over the room
+try:
+    import websockets
+except ImportError:
+    websockets = None
+
+
+class RoomPhones:
+    """PHASE 2: the phones answer over the venue's room instead of writing to the database.
+
+    Thirty phones answering every twenty five seconds was thirty database writes a question,
+    which is what took fifteen trivia rooms past what the gateway will serve. With --answers
+    room each phone holds one WebSocket to the room named after its game and sends its answer
+    there; the room writes it to its own disk and answers straight back, and the host's Reveal
+    puts the whole room in with one insert.
+
+    One asyncio loop per worker process owns every socket that process's phones need. The
+    game threads call answer() and block on the acknowledgement, so the number this records
+    is what the punter's thumb actually waited for, measured the same way as the HTTP one.
+    """
+    def __init__(self, host):
+        self.host = host
+        self.loop = asyncio.new_event_loop()
+        self.socks, self.waits, self.n = {}, {}, 0
+        threading.Thread(target=self._run, daemon=True).start()
+
+    def _run(self):
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_forever()
+
+    async def _reader(self, key, ws):
+        try:
+            async for raw in ws:
+                try: m = json.loads(raw)
+                except Exception: continue
+                fut = self.waits.pop(m.get('id'), None)
+                if fut is not None and not fut.done(): fut.set_result(m.get('t'))
+        except Exception:
+            pass
+        finally:
+            if self.socks.get(key) is ws: self.socks.pop(key, None)
+
+    async def _sock(self, key, game):
+        ws = self.socks.get(key)
+        if ws is not None: return ws
+        ws = await websockets.connect('wss://%s/room/ws?room=vpa-%s&role=phone' % (self.host, game),
+                                      open_timeout=20, ping_interval=30, close_timeout=5)
+        self.socks[key] = ws
+        asyncio.ensure_future(self._reader(key, ws))
+        return ws
+
+    async def _answer(self, key, game, qseq, idx, h):
+        ws = await self._sock(key, game)
+        self.n += 1
+        mid = 'x%d' % self.n
+        fut = self.loop.create_future()
+        self.waits[mid] = fut
+        await ws.send(json.dumps({'t': 'ans', 'g': game, 'q': qseq, 'i': idx, 'h': h, 'id': mid}))
+        try:
+            return await asyncio.wait_for(fut, 8)
+        finally:
+            self.waits.pop(mid, None)
+
+    def answer(self, key, game, qseq, idx, h):
+        return asyncio.run_coroutine_threadsafe(self._answer(key, game, qseq, idx, h), self.loop).result(timeout=15)
+
+
 # ------------------------------------------------------------------ worker process
 def worker(idx, target, tvs, rooms, cfg, stop_at, shared, out):
     """tvs: list of codes. rooms: manifest rooms (this process owns their host AND their
     players). Each thread owns a slice and runs a little schedule off a heap."""
     host = re.match(r'https?://([^/]+)', target).group(1)
     lat = collections.defaultdict(list); status = collections.Counter(); errors = collections.Counter()
+    phones = RoomPhones(host) if cfg.get('answers') == 'room' else None
     lock = threading.Lock()
     random.seed(idx * 7919)
     start = time.time()
@@ -137,7 +206,10 @@ def worker(idx, target, tvs, rooms, cfg, stop_at, shared, out):
         while heap and time.time() < stop_at:
             when, kind, payload = heap[0]
             if when > time.time():
-                time.sleep(min(0.25, when - time.time())); continue
+                # max(0, ...): under load the schedule falls behind and this went negative,
+                # which is a ValueError that kills the whole thread and quietly takes its
+                # phones out of the test. It happened in the 10 Sep before-run.
+                time.sleep(max(0.0, min(0.25, when - time.time()))); continue
             heapq.heappop(heap)
             if kind == 'tv':
                 req('tv poll', 'GET', '/venue?code=' + payload)
@@ -149,21 +221,58 @@ def worker(idx, target, tvs, rooms, cfg, stop_at, shared, out):
                 if st['qseq'] == last:
                     # the host has not asked the next one yet; look again shortly
                     heapq.heappush(heap, (time.time() + 1.0, 'answer', payload)); continue
-                req('answer', 'POST', '/player/answer', {'game_id': room['game_id'], 'answer_index': random.randint(0, 1), 'qseq': st['qseq']},
-                    {'X-Player-Token': token})
+                idx = random.randint(0, 1)
+                if phones is None:
+                    req('answer', 'POST', '/player/answer', {'game_id': room['game_id'], 'answer_index': idx, 'qseq': st['qseq']},
+                        {'X-Player-Token': token})
+                else:
+                    # The room knows a phone by the sha256 of its player token, which is exactly
+                    # what the Worker looks a phone up by. The token itself never goes over the wire.
+                    t0 = time.time()
+                    try:
+                        got = phones.answer((room['game_id'], token), room['game_id'], st['qseq'], idx,
+                                            hashlib.sha256(token.encode()).hexdigest())
+                    except Exception as ex:
+                        got = 'no reply'
+                        with lock: errors['answer over the room: ' + str(ex)[:60]] += 1
+                    ms = (time.time() - t0) * 1000
+                    if got in ('ans_ok', 'ans_dup'):
+                        with lock:
+                            lat['answer'].append(ms)
+                            status[('answer', 'recorded' if got == 'ans_ok' else 'already')] += 1
+                        with shared['sent'].get_lock():
+                            shared['sent'].value += 1
+                            if ms > 1000: shared['slow'].value += 1
+                    else:
+                        # EXACTLY WHAT THE PHONE DOES (trivia/play.html, sendAnswer): the room is
+                        # not the judge of a late or refused answer, so ask the Worker, which
+                        # answers precisely as it did before there was a room. Without this the
+                        # test would quietly drop those answers and flatter itself.
+                        with lock: status[('answer', 'room said ' + str(got) + ', asked the Worker')] += 1
+                        if os.environ.get('VP_DEBUG_ANS'):
+                            print('  DEBUG %7.1fs room said %s for %s qseq %s' % (time.time() - start, got, room['game_id'][:8], st['qseq']), flush=True)
+                        req('answer', 'POST', '/player/answer',
+                            {'game_id': room['game_id'], 'answer_index': idx, 'qseq': st['qseq']},
+                            {'X-Player-Token': token})
                 heapq.heappush(heap, (st['asked_at'] + cfg['round'] + random.uniform(1, cfg['round'] - 8), 'answer', (token, room, st['qseq'])))
             elif kind == 'card':
                 token, room = payload
                 req('player card', 'GET', '/player/card', None, {'X-Player-Token': token})
             elif kind == 'reveal':
                 room = payload
-                req('host reveal', 'POST', '/host/reveal', {'game_id': room['game_id']}, auth())
+                _c, _d = req('host reveal', 'POST', '/host/reveal', {'game_id': room['game_id']}, auth())
+                if os.environ.get('VP_DEBUG_ANS'):
+                    with slock: _sq = state[room['game_id']]['qseq']
+                    print('  DEBUG %7.1fs reveal %s -> %s revealed qseq %s (driver thinks %s)'
+                          % (time.time() - start, room['game_id'][:8], _c, (_d or {}).get('qseq'), _sq), flush=True)
                 with slock: asked = state[room['game_id']]['asked_at']
                 heapq.heappush(heap, (asked + cfg['round'], 'question', room))
             elif kind == 'question':
                 room = payload
                 code, d = req('host question', 'POST', '/host/question', {'game_id': room['game_id']}, auth())
                 t = time.time()
+                if os.environ.get('VP_DEBUG_ANS'):
+                    print('  DEBUG %7.1fs question %s -> %s qseq %s' % (time.time() - start, room['game_id'][:8], code, (d or {}).get('qseq') or (d or {}).get('done')), flush=True)
                 with slock:
                     s = state[room['game_id']]
                     if code == 200 and isinstance(d, dict) and d.get('qseq'):
@@ -240,6 +349,8 @@ def main():
     ap.add_argument('--minutes', type=float, default=3)
     ap.add_argument('--venues', type=int, help='use only the first N seeded venues (default all)')
     ap.add_argument('--rooms', type=int, help='use only the first N mid-game rooms (default all in the chosen venues)')
+    ap.add_argument('--room-offset', type=int, default=0,
+                    help='skip the first N rooms, so a repeat run can use venues the last one did not touch')
     ap.add_argument('--formats', default='trivia,musical_bingo,bingo90,raffle', help='which room formats to drive')
     ap.add_argument('--processes', type=int, default=6)
     ap.add_argument('--round-seconds', type=int, default=25, help='trivia: how often each host asks the next question')
@@ -247,8 +358,16 @@ def main():
     ap.add_argument('--ball-seconds', type=int, default=9, help='bingo: how often each host calls a ball')
     ap.add_argument('--raffle-seconds', type=int, default=60, help='raffle: how often each host draws')
     ap.add_argument('--poll-seconds', type=int, default=30)
+    ap.add_argument('--answers', choices=['http', 'room'], default='http',
+                    help="how trivia phones answer: 'http' writes one row each (the old road), "
+                         "'room' hands the answer to the room and the host's Reveal writes them in one go")
     ap.add_argument('--no-tv', action='store_true'); ap.add_argument('--no-players', action='store_true'); ap.add_argument('--no-hosts', action='store_true')
     a = ap.parse_args()
+    if a.answers == 'room':
+        try:
+            import websockets    # noqa: F401
+        except ImportError:
+            sys.exit('--answers room needs the websockets package (python3 -m pip install websockets)')
     host = a.target.split('//')[-1].split('/')[0]
     if host in PROD: sys.exit('REFUSED: %s is production. This test writes. Point it at the staging Worker.' % host)
     e = env(); url = e['NEW_DB_URL']
@@ -258,6 +377,7 @@ def main():
     slugs = {v['slug'] for v in venues}
     fmts = set(a.formats.split(','))
     rooms = [p for p in man['playing'] if p['slug'] in slugs and p['format'] in fmts]
+    if a.room_offset: rooms = rooms[a.room_offset:]
     if a.rooms: rooms = rooms[:a.rooms]
     tvs = [] if a.no_tv else [v['code'] for v in venues]
     by_fmt = collections.Counter(r['format'] for r in rooms)
@@ -281,7 +401,7 @@ def main():
     shared = {'jwt': mp.Array('c', 4096), 'sent': mp.Value('i', 0), 'slow': mp.Value('i', 0)}
     shared['jwt'].value = jwt.encode()
     cfg = {'round': a.round_seconds, 'song': a.song_seconds, 'ball': a.ball_seconds, 'raffle': a.raffle_seconds, 'poll': a.poll_seconds,
-           'songs': man['songs'], 'no_players': a.no_players, 'no_hosts': a.no_hosts}
+           'songs': man['songs'], 'no_players': a.no_players, 'no_hosts': a.no_hosts, 'answers': a.answers}
     out = mp.Queue()
     stop_at = time.time() + a.minutes * 60
     procs = []

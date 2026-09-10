@@ -195,6 +195,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/app/vp-sign.js"></script>
+<script src="/app/vp-room.js"></script>
 <script src="/app/vp-follow.js"></script>
 <script src="/app/vp-feedback.js"></script>
 <script src="/app/vp-celebrate.js"></script>
@@ -236,6 +237,95 @@
   function readApi(res){ return res.json().catch(function(){ return {}; }).then(function(d){ if(!res.ok){ var e=new Error((d&&d.error)||("Request failed ("+res.status+")")); e.status=res.status; throw e; } return d; }); }
   function playerPost(path, body){ var h={ "Content-Type":"application/json" }; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ method:"POST", headers:h, body:JSON.stringify(body||{}) }).then(readApi); }
   function playerGet(path){ var h={}; if(P.token) h["X-Player-Token"]=P.token; return fetch(VP_GAME_API+path,{ headers:h }).then(readApi); }
+
+  /* THE ANSWER GOES TO THE ROOM, NOT STRAIGHT TO THE DATABASE.
+     Every tap used to be its own write, and thirty phones answering every twenty five seconds
+     is what took fifteen trivia venues past what the database will serve: the TVs went from
+     an 89 ms check-in to a 19 second one, in the one format Queensland is open to today. So
+     the phone hands its answer to the venue's room on Cloudflare, the room writes it to its
+     own disk and says so, and the host's Reveal puts the whole room in with one write.
+     NOTHING HERE DECIDES ANYTHING. The room does not know whether an answer is right, or
+     even whether it was in time. It stamps the moment it arrived and holds it; the Worker
+     reads the deadline out of the database at Reveal and throws away anything after it,
+     exactly as it does now.
+     AND IT IS ONLY EVER A SHORTCUT. No room, an old browser with no crypto, a socket that
+     has not opened, or no answer back inside a second and a half, and this posts to the
+     Worker exactly as this page always has, so the row that lands is the same row. */
+  var ANS_ACK_MS = 1500;
+  var AR = { room:null, hash:"", gameId:"", waiting:{}, n:0, off:false, asking:false };
+
+  // The room knows a phone by the sha256 of its player token, which is what the Worker looks
+  // a phone up by too. The token itself never goes over the socket.
+  function ansHash(){
+    if(AR.hash || !P.token) return;
+    if(!window.crypto || !crypto.subtle || !crypto.subtle.digest || !window.TextEncoder) return;
+    try{
+      crypto.subtle.digest("SHA-256", new TextEncoder().encode(P.token)).then(function(buf){
+        var b=new Uint8Array(buf), h="";
+        for(var i=0;i<b.length;i++){ h += (b[i]<16?"0":"") + b[i].toString(16); }
+        AR.hash=h;
+      }).catch(function(){});
+    }catch(e){}
+  }
+
+  /* One place that learns which game is on, because the answers room is named after it. */
+  function useGame(id){
+    if(!id) return;
+    P.gameId=id;
+    ansRoom();
+  }
+
+  /* ASK THE WORKER FIRST, AND BELIEVE IT.
+     The site deploys itself from a push; a Worker is deployed by hand, separately. So this
+     page WILL be live against the older Worker for a while, and that one's room knows how to
+     pass a message on but not how to hold an answer or hand it over. A phone that posted its
+     answer in there would be told nothing, and the punter would lose the question. So the
+     phone asks the room whether it can hold answers, and uses the old road unless it says
+     yes. One request per phone per game, to the Worker, not the database. */
+  function ansRoom(){
+    if(AR.off || AR.asking || !window.VPRoom || !P.gameId || !P.token) return;
+    ansHash();
+    if(AR.room && AR.gameId===P.gameId) return;
+    if(AR.room){ try{ AR.room.close(); }catch(e){} AR.room=null; }
+    var game=P.gameId;
+    AR.asking=true;
+    fetch(VP_GAME_API+"/room/presence?room="+encodeURIComponent("vpa-"+game))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; })
+      .then(function(d){
+        AR.asking=false;
+        if(!d || d.answers!==true){ AR.off=true; return; }   // no room server, or one too old to hold answers
+        if(AR.room || P.gameId!==game) return;
+        AR.gameId=game;
+        AR.room = VPRoom.connect(VP_GAME_API, "vpa-"+game, "phone", function(m){
+          if(!m || typeof m.t!=="string" || !m.id) return;
+          var w=AR.waiting[m.id];
+          if(w){ delete AR.waiting[m.id]; w(m.t); }
+        }, { onUnavailable: function(){ AR.off=true; AR.room=null; } });
+      });
+  }
+
+  /* Answers the way playerPost("/player/answer") does, so the caller cannot tell which road
+     the answer took and neither can the punter. */
+  function sendAnswer(gameId, i, qseq, endsAt){
+    function post(){ return playerPost("/player/answer",{ game_id:gameId, answer_index:i, qseq:qseq }); }
+    if(AR.off || !AR.room || AR.gameId!==gameId || !AR.hash || AR.room.state()!=="open") return post();
+    var id="a"+(++AR.n);
+    return new Promise(function(resolve){
+      var done=false;
+      var timer=setTimeout(function(){ if(done) return; done=true; delete AR.waiting[id]; resolve(""); }, ANS_ACK_MS);
+      AR.waiting[id]=function(t){ if(done) return; done=true; clearTimeout(timer); resolve(t); };
+      // e is the deadline this phone was given, so a late tap hears "Too late" from the room
+      // at the same moment it hears it from the Worker today. The Worker still has the say.
+      AR.room.send({ t:"ans", g:gameId, q:qseq, i:i, h:AR.hash, id:id, e:(endsAt||0) });
+    }).then(function(t){
+      if(t==="ans_ok")  return { ok:true, recorded:true };
+      if(t==="ans_dup") return { ok:true, recorded:false, reason:"already_answered" };
+      /* ans_late, ans_no, or nothing came back. The room is not the judge of any of that:
+         ask the Worker, which answers exactly as it did before there was a room. */
+      return post();
+    });
+  }
 
   /* On patchy pub wifi the Realtime library from the CDN is sometimes not there yet when this
      runs. Everything below depends on it, so the script threw here and the punter was left with a
@@ -315,7 +405,7 @@
     var endsAt = (typeof m.endsAt==="number") ? m.endsAt : (m.ends_at ? Date.parse(m.ends_at) : (Date.now()+ (m.secs||20)*1000));
     P.q={ qseq:m.qseq, options:m.options||[], endsAt:endsAt };
     P.choice=null; P.locked=false;
-    if(m.game_id) P.gameId=m.game_id;
+    useGame(m.game_id);
     if(typeof m.colour==="boolean") P.colour=m.colour;
     show("vQ");
     $("pqCount").textContent = (m.qi && m.qtotal) ? ("Question "+m.qi+" of "+m.qtotal) : "Question";
@@ -367,7 +457,7 @@
       tickCd();
     }
     if(!P.gameId){ send({ t:"answer", pid:P.pid, qseq:qseq, choice:i }); sayIn(); return; }
-    playerPost("/player/answer",{ game_id:P.gameId, answer_index:i, qseq:qseq }).then(function(r){
+    sendAnswer(P.gameId, i, qseq, P.q.endsAt).then(function(r){
       if(!P.q || P.q.qseq!==qseq) return;
       // Cosmetic broadcast for the TV "answered" ticker, sent only once the real answer landed.
       send({ t:"answer", pid:P.pid, qseq:qseq, choice:i });
@@ -526,11 +616,11 @@
     if(m.t==="mode"){ return; }
     if(m.t==="state"){
       if(typeof m.colour==="boolean") P.colour=m.colour;
-      if(m.game_id) P.gameId=m.game_id;
+      useGame(m.game_id);
       if(m.phase==="lobby"){ P.q=null; P.ended=false; if(P.joined){ showWait("Watch the big screen. Your questions will pop up here."); } }
     }
     else if(m.t==="started"){
-      if(m.game_id) P.gameId=m.game_id;
+      useGame(m.game_id);
       if(typeof m.colour==="boolean") P.colour=m.colour;
       P.q=null; P.ended=false; P.total=0; P.rank=0; P.playersCount=0;
       if(P.joined) showWait("The quiz is starting. Your questions will pop up here.");
@@ -581,7 +671,7 @@
     if(P.sessionId) saveSess(P.room, P.sessionId);
     var g=s.game;
     if(g && g.format==="trivia" && g.game_id){
-      P.gameId=g.game_id;
+      useGame(g.game_id);
       if(typeof g.colour==="boolean") P.colour=g.colour;
       /* A phone that slept through a question comes back into whatever is on: the open question
          (asking), the same question with the buttons locked (locked), or its own score while the

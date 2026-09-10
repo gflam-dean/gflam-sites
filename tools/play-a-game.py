@@ -50,7 +50,7 @@ raffle/host.html:880.
 WHAT IT DOES NOT DO. It cannot sign, so it cannot prove the enforce path; that needs a
 browser with a host login. It does not touch the database. It REFUSES a live Worker.
 """
-import asyncio, contextlib, json, secrets, sys, time, urllib.request, urllib.error
+import asyncio, contextlib, hashlib, json, secrets, sys, time, urllib.request, urllib.error, uuid
 
 LIVE = {'venueplay-game', 'venueplay-api', 'partyplay-api', 'touring-api', 'venueplay-sms', 'drag-bingo-music'}
 
@@ -373,6 +373,93 @@ async def play(fmt):
                f'sent {msg}, TV got {heard_tv}, phone got {heard_ph}')
             await asyncio.sleep(PACE)
         print(f'         (slowest message host to room to screen: {slowest * 1000:.0f} ms)')
+
+        if fmt == 'trivia':
+            """PHASE 2: THE PHONES' ANSWERS ARE HELD BY THE ROOM, NOT WRITTEN ONE BY ONE.
+
+            Thirty phones answering every twenty five seconds was thirty database writes a
+            question, and that is what took fifteen trivia venues past what the database
+            will serve (the TVs went from an 89 ms check-in to a 19 second one). Now the
+            phone hands its answer to a room named after the game and the host's Reveal
+            writes the lot in one go.
+
+            What this can prove from outside, and does: the room takes an answer and says
+            so, it never lets another phone or the screen see what somebody picked, a
+            second answer from the same phone cannot change the first, junk is refused,
+            and an answer survives the phone's socket dying, which is the only evidence
+            from out here that it went to disk rather than to a variable.
+
+            What it CANNOT prove from outside, on purpose: the handover itself. There is
+            no public route that hands a room's answers over or closes a question, because
+            those are the night's result and nothing on the internet gets to ask for them.
+            That half is proved by venueplay-room.test.js against the class, and by
+            game-load.py, which plays real games with a real host and counts the rows.
+            """
+            game = str(uuid.uuid4())
+            aroom = 'vpa-' + game
+            h1 = hashlib.sha256(b'phone-one-token').hexdigest()
+            h2 = hashlib.sha256(b'phone-two-token').hexdigest()
+            print('\n== 3b. the answers room holds a question ==')
+            print(f'answers room    {aroom}')
+            st, d = presence(aroom)
+            ok('a game nobody has answered yet has an empty room', st == 200 and d.get('total') == 0, f'{st} {d}')
+            ph1 = await conn(aroom, 'phone')
+            ph2 = await conn(aroom, 'phone')
+            watch = await conn(aroom, 'tv')
+            await asyncio.sleep(0.4)
+
+            t0 = time.time()
+            await ph1.send(json.dumps({'t': 'ans', 'g': game, 'q': 1, 'i': 2, 'h': h1, 'id': 'a1'}))
+            got = await recv(ph1)
+            took = (time.time() - t0) * 1000
+            ok('the phone is told its answer is in', got is not None and got.get('t') == 'ans_ok' and got.get('id') == 'a1' and got.get('q') == 1, repr(got))
+            print(f'         (phone to room and back: {took:.0f} ms)')
+            leak_tv, leak_ph = await silent(watch), await silent(ph2)
+            ok('and nobody else in the room learns what it picked',
+               leak_tv is None and leak_ph is None, f'screen got {leak_tv}, other phone got {leak_ph}')
+
+            await ph1.send(json.dumps({'t': 'ans', 'g': game, 'q': 1, 'i': 3, 'h': h1, 'id': 'a2'}))
+            got = await recv(ph1)
+            ok('the same phone answering again is told its first answer stands',
+               got is not None and got.get('t') == 'ans_dup', repr(got))
+
+            await ph2.send(json.dumps({'t': 'ans', 'g': game, 'q': 1, 'i': 0, 'h': h2, 'id': 'b1'}))
+            got = await recv(ph2)
+            ok('a second phone is held under its own name', got is not None and got.get('t') == 'ans_ok', repr(got))
+
+            await ph2.send(json.dumps({'t': 'ans', 'g': game, 'q': 1, 'i': 0, 'h': h1, 'id': 'b2'}))
+            got = await recv(ph2)
+            ok('one phone may not answer as another', got is not None and got.get('t') == 'ans_no', repr(got))
+
+            await ph1.send(json.dumps({'t': 'ans', 'g': game, 'q': 1, 'i': 99, 'h': h1, 'id': 'a3'}))
+            got = await recv(ph1)
+            ok('an option nobody could have tapped is refused', got is not None and got.get('t') == 'ans_no', repr(got))
+            await ph1.send(json.dumps({'t': 'ans', 'g': 'not-a-game', 'q': 1, 'i': 1, 'h': h1, 'id': 'a4'}))
+            got = await recv(ph1)
+            ok('a made-up game id is refused', got is not None and got.get('t') == 'ans_no', repr(got))
+
+            await ph1.send(json.dumps({'t': 'join', 'pid': 'p1', 'tok': 'a-token-shaped-thing'}))
+            leak_tv = await silent(watch)
+            ok('a message carrying a token reaches nobody', leak_tv is None, repr(leak_tv))
+
+            # THE ONE THAT MATTERS: the answer is on disk, not in a variable. Kill the socket
+            # that gave it, come back as a new one, and the room still knows the answer stands.
+            await ph1.close()
+            await asyncio.sleep(0.5)
+            back = await conn(aroom, 'phone')
+            await asyncio.sleep(0.3)
+            await back.send(json.dumps({'t': 'ans', 'g': game, 'q': 1, 'i': 3, 'h': h1, 'id': 'c1'}))
+            got = await recv(back)
+            ok('an answer outlives the phone that gave it, so it was written down',
+               got is not None and got.get('t') == 'ans_dup', repr(got))
+
+            await back.send(json.dumps({'t': 'ans', 'g': game, 'q': 2, 'i': 1, 'h': h1, 'id': 'c2'}))
+            got = await recv(back)
+            ok('and the next question is a clean sheet', got is not None and got.get('t') == 'ans_ok', repr(got))
+            await ph2.close(); await back.close(); await watch.close()
+            await asyncio.sleep(0.3)
+            await drain(tv); await drain(phone)
+            if two: await drain(host_tv); await drain(host_play)
 
         print('\n== 4. a phone that turns up mid game can speak, and the host hears it ==')
         late = await conn(play_room, 'phone')
