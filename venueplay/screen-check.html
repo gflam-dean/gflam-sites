@@ -93,6 +93,21 @@
     pass(txt.length > 2, 'something is on the wall',
          'the screen rendered nothing a person could read. This is the black screen.');
 
+    /* IT IS SHOWING A VENUE, NOT AN APOLOGY.
+
+       This check passed ALL NINE for ?venue=no-such-pub-anywhere, on a screen reading
+       "NOT LINKED TO AN ACCOUNT" in letters a foot high. Every assertion was true: a page
+       had loaded, words were on the wall, it said Connected, a slide was lit. None of them
+       asked the only question that matters, which is whether the wall is showing this
+       venue's night or an error message.
+
+       That is not hypothetical. A venue TV has read exactly this after an owner pressed
+       Change code, and this file would have said the screen was fine. */
+    var wallText = visibleText(d).join(' ~ ');
+    var apology = /not linked to an account|no such venue|cannot find|couldn.t find|sign up at/i.exec(wallText);
+    pass(!apology, 'the screen is linked to a venue',
+         'the wall is showing an error, not a night: "' + (apology ? apology[0] : '') + '"');
+
     var status = d.getElementById('statusText');
     pass(!!status && /connected/i.test(status.textContent), 'it says it is connected',
          'the status line reads "' + (status ? status.textContent : 'nothing') + '" after six seconds');
