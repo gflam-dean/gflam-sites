@@ -131,6 +131,9 @@ def evidence():
                                     'h100': [], 'decade': None, 'apra': None,
                                     'ozzest': None, 'year_end': []})
             e['handpicked'] = h['why']
+            e['handpicked_score'] = h.get('score', 80)
+            if h.get('year'):
+                e['handpicked_year'] = h['year']
 
     for e in ev.values():
         e['h100'].sort()
@@ -208,7 +211,7 @@ def score(e, pack):
     if e.get('best_h100'):
         parts.append(88 - 0.9 * e['best_h100'])
     if e.get('handpicked'):
-        parts.append(80)
+        parts.append(e.get('handpicked_score', 80))
     s = max(parts) if parts else 0
     if sources(e) >= 2:
         s += 6
@@ -257,9 +260,18 @@ def genre_packs(genre, year, artist_norm, aussie, best_year_end, e):
     # Pub Classics is what a host reaches for when the room is mixed and older.
     # A top ten finish for a WHOLE year, or a place on the two Australian all
     # time lists, and old enough to have been played to death since.
-    if year < 2000 and ((best_year_end and best_year_end <= 10)
+    #
+    # The floor of 1963 is new and it exists because the 1956 to 1969 year-end
+    # charts are new. The hand picked pack does hold nineteen songs from the
+    # 1950s, and every one of them is rock and roll: Tutti Frutti, Long Tall
+    # Sally, Bye Bye Love. The year-end charts of those same years are Bing
+    # Crosby, Perry Como, Mitch Miller and Doris Day, and a bar will not sing
+    # Just Walking in the Rain. They still go in the 60s pack and their genre
+    # packs, at the back, where the weighting keeps them rare.
+    if 1963 <= year < 2000 and ((best_year_end and best_year_end <= 10)
                         or (e.get('ozzest') and e['ozzest'] <= 50)
-                        or e.get('apra') or e.get('handpicked')):
+                        or e.get('apra')
+                        or e.get('handpicked_score', 0) >= 80):
         out.append('Pub Classics')
     return out
 
@@ -315,7 +327,8 @@ def main(argv):
             noclip.append(e)
             continue
         if RUDE.search(got['title']) or VERSION.search(got['title']):
-            rude.append(e)
+            rude.append(dict(e, store_title='%s, %s'
+                             % (got['title'], got['artist'])))
             continue
         g = (got.get('_genre') or '').lower()
         if 'christmas' in g or 'holiday' in g or 'christmas' in got['title'].lower() \
@@ -338,6 +351,8 @@ def main(argv):
                       [y for y, _ in e.get('h100', [])]
         if chart_years:
             got['year'] = min(chart_years)
+        if e.get('handpicked_year'):
+            got['year'] = e['handpicked_year']
         got['_ev'] = e
         resolved.append(got)
 
@@ -385,9 +400,16 @@ def main(argv):
             'dropped_already_held_under_another_name':
                 [{'title': e['title'], 'artist': e['artist']} for e in dupe],
             'dropped_rude_title_or_wrong_take':
-                [{'title': e['title'], 'artist': e['artist']} for e in rude]}
+                [{'title': e['title'], 'artist': e['artist'],
+                  'the_only_recording_the_store_offered': e.get('store_title')}
+                 for e in rude]}
     save(OUT, plan)
 
+    # The resolve step takes about an hour, and another session edits this file.
+    # Re-read it now so an hour old copy cannot quietly undo somebody else's work:
+    # on 10 September the five songs Dean asked to be put back went in during a
+    # run exactly like this one.
+    lib = load(LIB)
     before = dict((p['name'], len(p['songIds'])) for p in lib['playlists'])
     by_id = dict((s['id'], s) for s in lib['songs'])
     added = 0

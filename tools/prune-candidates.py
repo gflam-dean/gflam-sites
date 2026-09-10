@@ -14,9 +14,10 @@
      - it placed on a countdown: any triple j Hottest 100 from 1993 to 2025, the
        Hottest 100 of the 2010s, the four triple j all time countdowns, the APRA
        Top 30 Australian songs, or Triple M's Ozzest 100
-     - it is one of the 256 songs hand picked into Pub Classics on 8 September.
-       Those were chosen as pub singalongs by ear, not by chart, and a chart is
-       exactly what a pub singalong does not need
+     - it is one of the 256 songs hand picked into Pub Classics on 8 September,
+       or one of the songs hand picked on 10 September. Both sets were chosen as
+       pub singalongs by ear, not by chart, and a chart is exactly what a pub
+       singalong does not need
 
    THE EVIDENCE BAR HERE IS MUCH WIDER THAN THE BAR FOR ADDING A SONG. A Hottest
    100 placing at 87 is not enough to earn a place in a pack, but it is plenty to
@@ -62,6 +63,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D = os.path.join(ROOT, 'venueplay', 'data')
 LIB = os.path.join(D, 'musical-library.json')
 CURATION = os.path.join(D, 'song-curation-2026-09-08.json')
+HANDPICKED = os.path.join(D, 'song-handpicked-2026-09-10.json')
+KNOWN = os.path.join(D, 'song-known-2026-09-10.json')
 STRENGTH = os.path.join(D, 'song-charts-strength-2026-09-09.json')
 OUT = os.path.join(D, 'song-unknown-candidates-2026-09-10.json')
 WIKI_CACHE = os.environ.get('VP_WIKI_CACHE') or os.path.join(
@@ -130,7 +133,14 @@ def build_evidence():
                 add(title, artist, why)
                 counts['Hottest 100 countdowns, APRA, Ozzest, 1956 to 1969 charts'] += 1
 
-    strength = load(STRENGTH)['songs']
+    strength = set(load(STRENGTH)['songs'])
+    # The 494 songs added on 10 September were each put in for a named placing on
+    # a named list, so their evidence is the plan file. Matching them again on
+    # title and artist misses the ones the store credits to four acts at once:
+    # Lady Marmalade comes back as Christina Aguilera, P!nk, Lil' Kim & Mya.
+    if os.path.exists(KNOWN):
+        for s_ in load(KNOWN)['new_songs']:
+            strength.add(s_['id'])
     return ev, by_artist, counts, strength
 
 
@@ -138,6 +148,11 @@ def main():
     lib = load(LIB)
     ev, ev_by_artist, counts, strength = build_evidence()
     pub = set(load(CURATION)['packs'].get('Pub Classics', []))
+    if os.path.exists(HANDPICKED):
+        hand = set((itunes.norm_title(h['title']), itunes.norm_artist(h['artist']))
+                   for h in load(HANDPICKED)['songs'])
+    else:
+        hand = set()
     by_id = dict((s['id'], s) for s in lib['songs'])
 
     # Which acts are known here at all, so the reason can say whether the act is
@@ -159,7 +174,7 @@ def main():
         if sid in pub:
             continue           # hand picked into Pub Classics on 8 September
         t, a = itunes.norm_title(s['title']), itunes.norm_artist(s['artist'])
-        if (t, a) in ev:
+        if (t, a) in ev or (t, a) in hand:
             continue
         hit = None
         for h in ev_by_artist.get(a, ()):
