@@ -1151,6 +1151,20 @@
       renderRun();                    // the two previous balls on the left move along now, not before
     }, 180);
   }
+  /* STOP A REVEAL DEAD, wherever the screen is going next.
+     #ballReveal sits at z-index 15, above the ads at 1, and none of the mode switches
+     cleared its timers or hid it. So a game that ended, or a screen sent to the ads, in
+     the two seconds a ball spends in the air left a bingo ball painted over the venue's
+     advertising, and the timer then fired into a screen that had moved on. */
+  function stopReveal(){
+    if(revealT1) clearTimeout(revealT1);
+    if(revealT2) clearTimeout(revealT2);
+    revealT1=revealT2=null;
+    ballInFlight=false; inFlightNum=0;
+    var el=document.getElementById("ballReveal"), b=document.getElementById("brBall");
+    if(el) el.classList.add("hidden");
+    if(b){ b.style.transition="none"; b.style.transform=""; b.style.opacity=""; b.style.animation="none"; }
+  }
   function revealBall(n){
     n=parseInt(n,10); if(!n || tvMode!=="bingo") return;
     var el=$("ballReveal"), b=$("brBall"); if(!el||!b) return;
@@ -1170,8 +1184,13 @@
       var restNum=document.querySelector("#tvRun .cbnum");
       if(restNum){ restNum.style.transition="none"; restNum.textContent=inFlightNum; restNum.style.opacity="1"; }
       el.classList.add("hidden"); b.style.transition="none"; b.style.transform=""; b.style.opacity="";
-      ballInFlight=false;
-      renderRun();
+      /* NO renderRun() HERE, and this is subtle enough to be worth the words.
+         renderRun() with ballInFlight false writes the LAST CALLED number into the resting
+         ball, and by now that is the ball still in the air, so it undid the line above and
+         showed the room the number before it had flown. The screen-level suite caught it;
+         the regex suite I wrote for this an hour earlier did not, because the fault is in
+         what the two lines do TOGETHER. The strip and the count catch up when this ball
+         lands. */
     }
     ballInFlight=true; inFlightNum=n;
     b.textContent=n; el.classList.remove("hidden");
@@ -1355,7 +1374,7 @@
     var cur=f.getAttribute("src"); if(cur && cur!=="about:blank"){ try{ f.src="about:blank"; }catch(e){} }
   }
   function enterEmbed(game){
-    ballInFlight=false;
+    stopReveal();   // a ball in the air must not paint over wherever the screen goes next
     tvMode="embed"; stopAds(); stopCelebrate(); cancelHolding();
     hideBingoLayers();
     $("tvCorner").style.display="";
@@ -1428,7 +1447,7 @@
      interrupted, far shorter than the 90 minute host-silence timeout. */
   var STUCK_MS=3*60*1000;
   function enterAds(){
-    ballInFlight=false;
+    stopReveal();   // a ball in the air must not paint over wherever the screen goes next
     tvMode="ads"; stopCelebrate(); cancelHolding(); cancelEmbedWatch(); hideGameFrame();
     hideBingoLayers();
     $("tvCorner").style.display="none";   // venue's own advertising: no VenuePlay logo over it
@@ -1451,7 +1470,7 @@
     }
   }
   function enterBingo(){
-    ballInFlight=false;
+    stopReveal();   // a ball in the air must not paint over wherever the screen goes next
     tvMode="bingo"; lastBingoAt=Date.now(); stopAds(); cancelHolding(); hideGameFrame();
     $("tvCorner").style.display="";
     $("adsRoot").classList.add("hidden");
@@ -1495,7 +1514,7 @@
   var EMBED_LOAD_MS=25000, embedT=null, embedLoaded=false;
   function cancelEmbedWatch(){ if(embedT){ clearTimeout(embedT); embedT=null; } }
   function enterHolding(mode){
-    ballInFlight=false;
+    stopReveal();   // a ball in the air must not paint over wherever the screen goes next
     tvMode="holding"; stopAds(); stopCelebrate(); hideGameFrame();
     hideBingoLayers();
     $("adsRoot").classList.add("hidden");

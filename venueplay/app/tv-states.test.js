@@ -61,11 +61,24 @@ function showBingoLayer(){} function gameLabel(m){ return String(m||""); }
    ads and goes back for everything else). Stubbed here; tv-logo.test.js is the suite
    that checks what it actually does. */
 function applyVenueLogo(){}
+/* A mode switch now stops any ball still in the air, so it cannot paint over wherever
+   the wall goes next (#ballReveal sits at z-index 15, above the ads). Counted here so a
+   switch that forgets to call it is visible; what stopReveal actually DOES to the screen
+   is covered by tv-screen.test.js, which runs the real one. */
+var revealsStopped = 0;
+function stopReveal(){ revealsStopped++; }
 var adsStarted = 0;
 function startAds(){ adsStarted++; }
 function setTimeout_(fn, ms){ timers.push({fn:fn, ms:ms}); return timers.length; }
 var setTimeout = setTimeout_;
 eval(fnAds); eval(fnHold); eval(fnFrozen);
+
+print("== a ball in the air does not follow the wall to the next state ==");
+revealsStopped = 0; enterAds();
+ok("going to the ads stops a reveal", revealsStopped === 1,
+   "a bingo ball left mid-flight paints over the venue's advertising");
+revealsStopped = 0; enterHolding("bingo");
+ok("going to the holding card stops a reveal", revealsStopped === 1);
 
 print("== the wall never goes black ==");
 adBuilt = true; adsStarted = 0;
@@ -74,7 +87,8 @@ ok("entering ads forces the slides to be rebuilt", adBuilt === false,
    "adBuilt stayed true: the ads would not come back after a game and the wall goes black");
 ok("entering ads actually starts them", adsStarted === 1);
 ok("entering ads sets the mode to ads", tvMode === "ads");
-ok("a ball in flight is cleared on the way in", ballInFlight === false);
+ok("a ball in flight is cleared on the way in", revealsStopped >= 1,
+   "clearing the flag now lives inside stopReveal(), so the switch must call it");
 
 print("== a hold screen always has a way back ==");
 timers = []; holdT = null;
