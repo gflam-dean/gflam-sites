@@ -1610,7 +1610,13 @@
       ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, onMsg); });
       ch.subscribe(function(status){
         if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; try{document.documentElement.setAttribute("data-vp-transport","supabase");console.log("[VenuePlay] transport: "+"supabase");}catch(e){} }
-        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+        /* CLOSED TOO. Supabase reports three failure states and this listed two, so a
+           channel that simply CLOSED left tvSubscribed true: the screen kept announcing
+           itself into a dead channel and kept the green dot up while hearing nothing. A
+           deaf screen that says Connected is the hardest fault on this page to see, and
+           it is the one the watchdog exists to catch minutes later. Found by widening the
+           gate check that had only ever looked at host consoles, never at this page. */
+        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
       });
     }catch(err){ $("statusText").textContent="Reconnecting"; setTimeout(connectRealtime, 3000); }
   }

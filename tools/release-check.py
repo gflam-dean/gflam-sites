@@ -703,21 +703,48 @@ def local_checks(which):
 
     Reading the code will not catch this: the drop branch LOOKS handled because it
     updates the status text. The flag is the part that matters."""
+    # THE PHONE AND THE SCREEN ARE ON THIS LIST NOW, and they were the whole point.
+    #
+    # This scanned five HOST consoles. play.html was not among them, and that is
+    # exactly where the bug was found on 10 Sep: the phone did not handle CLOSED at
+    # all and never cleared its flag, so it wrote every answer into a dead channel
+    # while showing Connected. This check was green throughout. The docstring above
+    # even says "musical had the same gap on its PLAYERS' channel" and the players'
+    # page was never opened.
+    #
+    # A hand-maintained list of files to check is the same shape of fault as a
+    # hand-maintained list of venues to watch, found earlier the same day.
     consoles = [os.path.join(ROOT, 'venueplay', 'app', x) for x in
                 ('index.html', 'musical/host.html', 'trivia/host.html',
-                 'raffle/host.html', 'members/host.html')]
+                 'raffle/host.html', 'members/host.html')] + \
+               [os.path.join(ROOT, 'venueplay', x) for x in ('play.html', 'tv.html')]
     deaf = []
     cbs = 0
     for f in consoles:
         if not os.path.exists(f):
             deaf.append('%s is missing' % short(f)); continue
         body = io.open(f, encoding='utf-8').read()
-        for m in re.finditer(r'\.subscribe\(function\(status\)\s*\{', body):
+        # AND A NAMED HANDLER COUNTS. This only matched .subscribe(function(status){,
+        # so the moment play.html's callback was pulled out and given a name - which is
+        # what made it testable at all - this check would have stopped seeing it and
+        # gone quietly green. A checker that only recognises one spelling punishes the
+        # refactor that makes code testable.
+        for m in re.finditer(r'\.subscribe\(\s*(function\s*\(\s*status\s*\)\s*\{|([A-Za-z_$][\w$]*)\s*\))', body):
             cbs += 1
-            win = body[m.start(): m.start() + 2600]
+            named = m.group(2)
+            if named:
+                d = re.search(r'function\s+' + re.escape(named) + r'\s*\(', body)
+                if not d:
+                    deaf.append('%s: subscribe(%s) but %s is not defined here' % (short(f), named, named)); continue
+                win = body[d.start(): d.start() + 2600]
+            else:
+                win = body[m.start(): m.start() + 2600]
+            win = _no_comments(win)          # prose is not evidence; see _no_comments
             drops = re.findall(r'CHANNEL_ERROR|TIMED_OUT|CLOSED', win)
             if not drops:
                 deaf.append('%s: a subscribe with no drop branch' % short(f)); continue
+            if 'CLOSED' not in drops:
+                deaf.append('%s: the drop branch does not handle CLOSED' % short(f)); continue
             after = win[win.index(drops[0]):][:900]
             if not re.search(r'(subscribed|gsub|tvSubscribed)\s*=\s*false', after):
                 deaf.append('%s: drop branch never clears the flag' % short(f))
@@ -1755,6 +1782,35 @@ def venue_code(slug):
         x = (x * 1103515245 + 12345) & 0xffffffff
         out += A[x % len(A)]
     return out
+
+
+def _no_comments(js):
+    """Strip // and /* */ so a check reads CODE, not the prose explaining it.
+
+    Without this, the comment written above the tv.html fix - which naturally says the
+    word CLOSED several times - satisfied the search for CLOSED, and putting the bug
+    back left this check GREEN. A checker that reads its own documentation as evidence
+    proves nothing. The same fault was fixed in check-defs.py the same evening, where
+    the words "time(s)" in a sentence were read as a call to a function called time.
+    """
+    out, i, n, q = [], 0, len(js), None
+    while i < n:
+        c = js[i]
+        if q:
+            out.append(c)
+            if c == '\\' and i + 1 < n: out.append(js[i+1]); i += 2; continue
+            if c == q: q = None
+            i += 1; continue
+        if c in ('"', "'", '`'): q = c; out.append(c); i += 1; continue
+        if c == '/' and i + 1 < n and js[i+1] == '/':
+            while i < n and js[i] != '\n': i += 1
+            continue
+        if c == '/' and i + 1 < n and js[i+1] == '*':
+            i += 2
+            while i + 1 < n and not (js[i] == '*' and js[i+1] == '/'): i += 1
+            i += 2; continue
+        out.append(c); i += 1
+    return ''.join(out)
 
 
 def each_worker_is_the_right_worker():
