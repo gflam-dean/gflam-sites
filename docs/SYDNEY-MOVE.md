@@ -70,12 +70,44 @@ if anything is wrong, the Workers point back at it and the night carries on.
 
 Rotate the Singapore key about a week later, once nothing has needed it.
 
-## The one thing that would hurt
+## The whole thing was rehearsed on 10 Sep 2026, and it failed the first time
 
-The load-test seed venues (5,000 `load-` rows and 1,000 mid-game rooms) are on
-Sydney from 8 Sep. `refresh` empties the data, so they go, but VERIFY before
-believing it: a live venue list with 5,000 fake pubs in it would reach HQ, the
-"trusted by" marquee and every count we quote.
+Every step was run against Sydney, in order, and it ended in **ALL MATCH**: 73 tables,
+19 views, 25 functions, 106 policies, 5 triggers, 143 indexes, 15 auth users, 15 auth
+identities, 94 storage objects, and 92 tables/views compared with **0 differing row
+counts**. Then `tools/play-a-game.py` played all five formats against the refreshed data:
+146 checks, no failures.
+
+**IT FAILED THE FIRST TIME, at `refresh`, and that is the point of rehearsing.** The error:
+
+    ERROR: duplicate key value violates unique constraint "identities_pkey"
+    STOP: auth.identities refresh failed
+
+The tool deleted `auth.users` only, and left `auth.identities` to the ON DELETE CASCADE.
+That cascade never fires here, because the same command sets
+`session_replication_role = replica`, which switches foreign key triggers OFF, which is the
+whole reason it is there for the data load. So the old identities survived and the COPY
+collided with them. The identities step was a literal `select 1` no-op.
+
+On the morning that would have stopped the move with **the public data already replaced and
+auth half loaded**, which is the worst place to be interrupted. Fixed: both tables are now
+deleted explicitly.
+
+## What this means for the day
+
+The Sydney data was stale before the rehearsal, and would have been on Saturday too: 19
+venues against live's 22, and **10 signing keys against live's 17, with 1 venue enforcing
+instead of 17**. Cutting over on that would have silently undone a day's security work.
+`refresh` is what fixes it, and it now demonstrably works. Sydney currently mirrors live
+exactly, including all 17 keys and all 17 venues enforcing.
+
+**Re-run `dump` and `refresh` ON THE DAY regardless.** Anything written to live between the
+copy and the cut-over is lost, and today's copy will be days old by Saturday.
+
+## The load-test seed venues are gone
+
+The 5,000 `load-` rows are OFF Sydney as of 10 Sep. It holds 19 venues, which is the real
+number. `refresh` would have emptied them anyway, but there is now nothing to verify.
 
 ## The plan we are actually on (corrected 10 Sep 2026)
 

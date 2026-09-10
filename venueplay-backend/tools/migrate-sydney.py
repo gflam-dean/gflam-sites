@@ -377,7 +377,17 @@ def step_refresh(env, dry=False):
         collist = ', '.join(f'"{c}"' for c in cols)
         rc, out = run([PG + '/psql', new, '-X', '-q', '-v', 'ON_ERROR_STOP=1', '--single-transaction',
                        '-c', 'set session_replication_role = replica',
-                       '-c', f'delete from auth.{tbl}' if tbl == 'users' else 'select 1',
+                       # DELETE BOTH, EXPLICITLY. This used to delete auth.users only and
+                       # leave identities to the ON DELETE CASCADE. That cascade never fires
+                       # here: the line above sets session_replication_role = replica, which
+                       # switches foreign key triggers OFF, which is the whole point of it for
+                       # the data load. So the old identities survived, the COPY hit
+                       # "duplicate key value violates unique constraint identities_pkey", and
+                       # the refresh stopped with the public data already replaced and auth
+                       # half done. Found by rehearsing the move on 10 Sep 2026 rather than on
+                       # the morning. Order does not matter with the triggers off, and users is
+                       # reloaded before identities is touched either way.
+                       '-c', f'delete from auth.{tbl}',
                        '-c', f"\\copy auth.{tbl} ({collist}) from '{WORK}/auth-{tbl}.tsv'"])
         if rc: die(f'auth.{tbl} refresh failed')
     print(f"  auth users in: {db_object_counts(new)['auth users']}")
