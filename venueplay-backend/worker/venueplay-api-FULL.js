@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 08:01 · 2d1c5965';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 08:41 · 3a77faeb';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -538,6 +538,16 @@ async function handleWebhook(request, env, cors) {
   // A declined card: tell them, suspend nothing. Stripe keeps retrying for about a fortnight.
   if (event.type === 'invoice.payment_failed') {
     const inv = event.data.object || {};
+    /* AN EXTRAS INVOICE IS NOT THE SUBSCRIPTION. The game Worker raises a standalone invoice on
+       the night for extra players ($2 a head). If that card try fails, a small one moves onto the
+       next subscription invoice and a big one stays open for Stripe to chase; either way it never
+       counts toward pausing the venue's games. Only the subscription itself does that. Before
+       11 Sep 2026 two declined $2.00 test invoices would have paused a paid-up venue. */
+    if (vpaIsExtrasInvoice(inv)) {
+      const moved = await vpaMoveExtrasToMonthly(env, inv);
+      if (!moved.already) await vpaFirePaymentFailedEmail(env, inv, moved);
+      return new Response('ok', { status: 200, headers: cors });
+    }
     await vpaFirePaymentFailedEmail(env, inv);
     // Stop the games only once the grace window is used up. attempt_count is Stripe's own count
     // of tries on THIS invoice, so this tracks the retry schedule instead of guessing at dates.
@@ -3804,12 +3814,149 @@ async function vpaClearCreditOnEnd(env, customerId, eventId) {
   } catch (_) { /* never throw out of a webhook */ }
 }
 
-/* A failed attempt is not an overdue invoice. Tell them and change nothing. */
-async function vpaFirePaymentFailedEmail(env, invoice) {
+/* THE BANK'S ACTUAL ANSWER, in plain words. The email used to say "Nine times out of ten it
+   is an expired card" whatever had happened; on 11 Sep 2026 a venue read that twice when the
+   bank had said insufficient funds, and once when the fault was ours (no card on the invoice).
+   Stripe's decline_code is the truth, so it is looked up and said. Anything unrecognised falls
+   back to the honest generic line. Returns { line, ours } where ours=true means the venue's
+   card was never the problem and the email must not blame it. */
+function vpaDeclineReason(code, message) {
+  const c = String(code || '').toLowerCase();
+  const m = String(message || '');
+  const say = (line) => ({ line: line, ours: false });
+  if (/insufficient_funds/.test(c)) return say('The bank said there were not enough funds available on the card.');
+  if (/expired_card/.test(c)) return say('The card has expired.');
+  if (/incorrect_cvc|invalid_cvc|incorrect_number|invalid_number|invalid_expiry/.test(c)) return say('The card details on file did not match what the bank has.');
+  if (/lost_card|stolen_card|pickup_card|restricted_card|card_not_supported|currency_not_supported/.test(c)) return say('The bank would not accept this card. It may need a different one.');
+  if (/authentication_required/.test(c)) return say('Your bank wants you to confirm this payment yourself.');
+  if (/processing_error|try_again_later|issuer_not_available|reenter_transaction/.test(c)) return say('The bank had a processing problem. It may simply work next time.');
+  if (/do_not_honor|generic_decline|call_issuer|card_declined|transaction_not_allowed|not_permitted|security_violation|service_not_allowed|revocation/.test(c)) return say('The bank declined it without giving a reason. Your bank can tell you why.');
+  if (/default_payment_method|no payment method|payment method/i.test(m) || /resource_missing|missing/.test(c)) {
+    return { line: 'We could not find a card to charge on your account. That is on our side to sort out, not yours.', ours: true };
+  }
+  return say('Nine times out of ten it is an expired card.');
+}
+
+/* The decline behind a failed invoice. A recent invoice lists its payments; an older shape
+   carries payment_intent directly. Either way the PaymentIntent's last_payment_error has the
+   bank's code. Never throws; null when there is nothing to read. */
+async function vpaLookupDecline(env, invoice) {
+  try {
+    let pi = typeof invoice.payment_intent === 'string' ? invoice.payment_intent : (invoice.payment_intent && invoice.payment_intent.id);
+    if (!pi && invoice.payments && invoice.payments.data && invoice.payments.data.length) {
+      const last = invoice.payments.data[invoice.payments.data.length - 1];
+      const pay = last && last.payment;
+      pi = pay && (typeof pay.payment_intent === 'string' ? pay.payment_intent : (pay.payment_intent && pay.payment_intent.id));
+    }
+    if (!pi) return null;
+    const intent = await vpbStripeGet(env, 'payment_intents/' + encodeURIComponent(pi));
+    const err = intent && !intent.error && intent.last_payment_error;
+    if (!err) return null;
+    return { code: err.decline_code || err.code || null, message: err.message || null };
+  } catch (_) { return null; }
+}
+
+/* A subscription invoice says so in billing_reason (subscription_create, subscription_cycle,
+   subscription_update...). Anything else is one of ours raised by hand: extra players. */
+function vpaIsExtrasInvoice(invoice) {
+  return !!invoice && !/^subscription/.test(String(invoice.billing_reason || ''));
+}
+
+/* Dean, 11 Sep 2026: "try once at least and notify them... it will come out on your next
+   subscription invoice. Obviously if its more than 10% of their monthly bill we want that asap."
+   So: the card has had its one try (that is the failed attempt that brought us here). If what is
+   owed is 10% or less of the monthly bill, the invoice is voided and its lines are re-added as
+   pending items on the subscription, so they ride the next subscription invoice and the venue
+   hears about it once. Over 10%, or when we cannot work out the monthly bill, the invoice stays
+   OPEN for Stripe's retries and the pay-now button, because that money should not wait a month.
+   Returns { moved, next, already, why }. Never throws. */
+function vpaMonthlyBillCents(sub) {
+  let cents = 0;
+  const items = (sub && sub.items && sub.items.data) || [];
+  for (const it of items) {
+    const price = it.price || {};
+    const each = Number(price.unit_amount != null ? price.unit_amount : price.unit_amount_decimal) || 0;
+    const qty = Number(it.quantity) || 1;
+    const rec = price.recurring || {};
+    const per = rec.interval === 'year' ? 12 : rec.interval === 'week' ? (1 / 4) : rec.interval === 'day' ? (1 / 30) : 1;
+    cents += (each * qty) / (per * (Number(rec.interval_count) || 1));
+  }
+  return Math.round(cents);
+}
+const VPA_EXTRAS_MOVE_MAX_SHARE = 0.10;
+async function vpaMoveExtrasToMonthly(env, inv) {
+  const no = (why) => ({ moved: false, why: why });
+  try {
+    const owed = Number(inv && inv.amount_due) || 0;
+    if (!inv || !inv.id || !inv.customer || owed <= 0) return no('nothing owed');
+    // The same event delivered twice, or a retry on an invoice we already moved: read Stripe's
+    // current status, not the copy in the event, and do nothing the second time.
+    const fresh = await vpbStripeGet(env, 'invoices/' + encodeURIComponent(inv.id));
+    if (fresh && !fresh.error && fresh.status !== 'open') return { moved: false, already: true, why: 'invoice is ' + fresh.status };
+    const accts = await vpaSelect(env, 'venueplay_founding',
+      'stripe_customer_id=eq.' + encodeURIComponent(inv.customer) + '&select=id,stripe_subscription_id&limit=1');
+    const acct = accts && accts[0];
+    if (!acct || !acct.stripe_subscription_id) return no('no subscription');
+    const sub = await vpbStripeGet(env, 'subscriptions/' + encodeURIComponent(acct.stripe_subscription_id));
+    if (!sub || sub.error || !/^(active|trialing|past_due)$/.test(String(sub.status))) return no('subscription not running');
+    const monthly = vpaMonthlyBillCents(sub);
+    if (monthly <= 0) return no('monthly bill unknown');
+    if (owed > monthly * VPA_EXTRAS_MOVE_MAX_SHARE) return no('over 10% of monthly (' + owed + ' of ' + monthly + ')');
+    // Re-add the lines as pending items ON THE SUBSCRIPTION, so they can only land on its next
+    // invoice. Keyed on the failed invoice so a repeat cannot double them.
+    let lines = ((inv.lines && inv.lines.data) || []).filter((l) => Number(l.amount) > 0);
+    if (!lines.length) lines = [{ amount: owed, quantity: 1, description: 'Extra players' }];
+    const made = [];
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      const qty = Math.max(1, Number(l.quantity) || 1);
+      const item = await vpbStripePost(env, 'invoiceitems', {
+        customer: inv.customer,
+        subscription: acct.stripe_subscription_id,
+        currency: inv.currency || 'aud',
+        quantity: qty,
+        unit_amount_decimal: String(Math.round(Number(l.amount) / qty)),
+        description: String(l.description || 'Extra players').replace(/[<>&]/g, '').slice(0, 200),
+      }, 'roll_' + inv.id + '_' + i);
+      if (!item || item.error || !item.id) {
+        for (const id of made) await vpbStripeDelete(env, 'invoiceitems/' + encodeURIComponent(id)).catch(() => {});
+        return no('could not re-add line ' + i + ': ' + ((item && item.error && item.error.message) || 'no reply'));
+      }
+      made.push(item.id);
+    }
+    // Only now is the failed invoice voided. If the void fails the items come straight back off,
+    // so the venue is never holding both the open invoice and the pending items.
+    const gone = await vpbStripePost(env, 'invoices/' + encodeURIComponent(inv.id) + '/void', {}, 'void_' + inv.id);
+    if (!gone || gone.error || gone.status !== 'void') {
+      const msg = (gone && gone.error && gone.error.message) || 'no reply';
+      if (!/already void/i.test(msg)) {
+        for (const id of made) await vpbStripeDelete(env, 'invoiceitems/' + encodeURIComponent(id)).catch(() => {});
+        return no('could not void: ' + msg);
+      }
+    }
+    const next = sub.current_period_end ? vpaFmtDate(sub.current_period_end) : null;
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: 'stripe',
+      action: 'extras_moved_to_monthly',
+      target: 'account:' + acct.id,
+      detail: { invoice: inv.id, amount_cents: owed, monthly_cents: monthly, items: made, next: next, customer: inv.customer },
+    }, false).catch(() => {});
+    return { moved: true, next: next, amount_cents: owed, items: made };
+  } catch (e) {
+    return no('crashed: ' + String((e && e.message) || e));
+  }
+}
+
+/* A failed attempt is not an overdue invoice. Tell them and change nothing.
+   moved: the answer from vpaMoveExtrasToMonthly when this is an extras invoice; absent for a
+   subscription invoice. It changes what the venue is told to do, and whether there is a button. */
+async function vpaFirePaymentFailedEmail(env, invoice, moved) {
   try {
     if (!env.RESEND_API_KEY || !invoice) return;
     const email = invoice.customer_email;
     if (!email) return;
+    const decline = await vpaLookupDecline(env, invoice);
+    const why = vpaDeclineReason(decline && decline.code, decline && decline.message);
     const amount = '$' + (Number(invoice.amount_due || 0) / 100).toFixed(2);
     /* SAY WHAT THE CHARGE WAS FOR. This read "for your VenuePlay subscription" on every failed
        invoice, and on 11 Sep 2026 a venue got it twice for $2.00 extra-player invoices while its
@@ -3831,11 +3978,9 @@ async function vpaFirePaymentFailedEmail(env, invoice) {
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
       + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
-      + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Your card did not go through.</p>'
-      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + ' and it was declined. Nine times out of ten it is an expired card.</p>'
-      + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">Nothing has changed at your venue and your games are running as normal. We will try again over the next few days. If it keeps failing your games will pause until it is sorted, so it is worth a minute now.</p>'
-      + '<a href="' + payNow + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Pay now with a new card</a>'
-      + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">No sign in needed, it takes a minute. You can also do it from <a href="' + billing + '" style="color:#FF1F8E">your account page</a>.</p>'
+      + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + (why.ours ? 'A payment did not go through.' : 'Your card did not go through.') + '</p>'
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + (why.ours ? '. ' : ' and it was declined. ') + why.line + '</p>'
+      + vpaPaymentFailedNextStep(moved, payNow, billing)
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact hello@venueplay.com.au</p>'
       + '</div>';
     await fetch('https://api.resend.com/emails', {
@@ -3850,6 +3995,25 @@ async function vpaFirePaymentFailedEmail(env, invoice) {
       }),
     });
   } catch (_) { /* best-effort */ }
+}
+
+/* The middle of the declined-card email: what happens next, and whether there is anything to do.
+   Three cases. A subscription invoice: Stripe retries and the games pause if it keeps failing, so
+   there is a pay-now button. Extras that MOVED onto the monthly bill: nothing to do, no button (the
+   invoice is void, its pay link is dead). Extras that stayed open: Stripe retries, pay-now button,
+   and no talk of games pausing because extras never pause anything. */
+function vpaPaymentFailedNextStep(moved, payNow, billing) {
+  const p = (t) => '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">' + t + '</p>';
+  const btn = '<a href="' + payNow + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Pay now with a new card</a>'
+    + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">No sign in needed, it takes a minute. You can also do it from <a href="' + billing + '" style="color:#FF1F8E">your account page</a>.</p>';
+  if (moved && moved.moved) {
+    return p('Nothing to do. It will come out with your next subscription payment' + (moved.next ? ' on ' + vpaEsc(moved.next) : '') + ' instead, and your games are running as normal.')
+      + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">If the card itself needs updating you can do that any time from <a href="' + billing + '" style="color:#FF1F8E">your account page</a>.</p>';
+  }
+  if (moved) {
+    return p('Nothing has changed at your venue and your games are running as normal. We will try the card again over the next few days, or you can settle it now.') + btn;
+  }
+  return p('Nothing has changed at your venue and your games are running as normal. We will try again over the next few days. If it keeps failing your games will pause until it is sorted, so it is worth a minute now.') + btn;
 }
 
 function vpaEsc(s) {
