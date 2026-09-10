@@ -96,7 +96,10 @@ function fetch(url, opts) {
     else if (body.unit_amount_decimal !== undefined && body.quantity === undefined && body.quantity_decimal === undefined) reply = { error: { message: "unit_amount_decimal needs a quantity" } };
     else reply = world.itemReply || { id: "ii_test", object: "invoiceitem" };
   }
-  else if (method === "POST" && path === "invoices") { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.invoiceReply || { id: "in_test", amount_due: 200 }; }
+  else if (method === "POST" && path === "invoices") { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.invoiceReply || { id: "in_test", amount_due: 200, status: "draft" }; }
+  else if (method === "POST" && /^invoices\/in_test\/finalize$/.test(path)) { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.finalizeReply || { id: "in_test", status: "open" }; }
+  else if (method === "POST" && /^invoices\/in_test\/pay$/.test(path)) { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.payReply || { id: "in_test", status: "paid" }; }
+  else if (method === "POST" && /^invoices\/in_test\/send$/.test(path)) { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.sendReply || { id: "in_test", status: "open" }; }
   else reply = { error: { message: "unexpected call " + method + " " + path } };
   return Promise.resolve({ ok: !reply.error, status: reply.error ? 400 : 200, json: function () { return Promise.resolve(reply); } });
 }
@@ -158,6 +161,8 @@ function run(sess, label) {
 }
 function item() { return posts.filter(function (p) { return p.path === "invoiceitems"; }); }
 function invoice() { return posts.filter(function (p) { return p.path === "invoices"; }); }
+function step(name) { return posts.filter(function (p) { return p.path === "invoices/in_test/" + name; }); }
+function afterInvoice() { var i = posts.map(function (p) { return p.path; }).indexOf("invoices"); return posts.slice(i + 1).map(function (p) { return p.path.replace("invoices/in_test/", ""); }); }
 function venuePatch() { return patches.filter(function (p) { return p.table === "vp_venues"; }); }
 
 var steps = [];
@@ -185,6 +190,13 @@ scenario("an active founding venue, one over a cap of one, host approved", funct
       pass("the invoice sweeps in the pending item", inv[0].body.pending_invoice_items_behavior === "include");
       pass("and charges the card", inv[0].body.collection_method === "charge_automatically", inv[0].body.collection_method);
       pass("keyed too", inv[0].idem === "inv_overage_" + SESSION, inv[0].idem);
+      /* Stripe leaves a new invoice as a DRAFT and gets to it about an hour later. The first
+         live night that got this far sat as a $2.00 draft with nothing taken. */
+      pass("the invoice is finalised and PAID on the night, in that order, and nothing else",
+           JSON.stringify(afterInvoice()) === JSON.stringify(["finalize", "pay"]), JSON.stringify(afterInvoice()));
+      pass("both steps keyed on the session", !!(step("finalize")[0] && step("finalize")[0].idem === "fin_overage_" + SESSION &&
+           step("pay")[0] && step("pay")[0].idem === "pay_overage_" + SESSION));
+      pass("and it said PAID in the log", logged.some(function (l) { return /PAID: invoice in_test 2\.00 AUD, 1 x 2\.00/.test(l); }), logged.join(" | "));
     }
     var vp = venuePatch();
     pass("the streak advanced to 1 with tonight's peak", vp.length === 1 && vp[0].body.overage_streak === 1 && String(vp[0].body.overage_streak_peaks) === "2",
@@ -281,6 +293,25 @@ scenario("the item lands but the invoice cannot be raised", function () {
   });
 });
 
+scenario("the card declines when the invoice is paid", function () {
+  var w = night(); w.payReply = { error: { message: "Your card was declined." } }; reset(w);
+  return run(mkSession(), "declined card").then(function () {
+    var a = inserts.filter(function (i) { return i.row.action === "overage_invoice_unpaid"; });
+    pass("an overage_invoice_unpaid audit row names the invoice and the reason", a.length === 1 && a[0].row.detail.invoice === "in_test" && /declined/.test(a[0].row.detail.reason),
+         a.length ? JSON.stringify(a[0].row.detail) : "no row");
+    pass("the streak still advanced: the money is owed and on the books", venuePatch().length === 1 && venuePatch()[0].body.overage_streak === 1);
+    pass("not reported as a failed charge", inserts.filter(function (i) { return /failed|pending/.test(i.row.action); }).length === 0);
+  });
+});
+scenario("the invoice is raised but cannot be finalised", function () {
+  var w = night(); w.finalizeReply = { error: { message: "This invoice is already finalized." } }; reset(w);
+  return run(mkSession(), "finalize fails").then(function () {
+    pass("no pay attempt on an invoice that did not finalise", step("pay").length === 0);
+    pass("recorded as unpaid so somebody looks", inserts.filter(function (i) { return i.row.action === "overage_invoice_unpaid" && i.row.detail.status === "draft"; }).length === 1);
+    pass("the streak still advanced", venuePatch().length === 1 && venuePatch()[0].body.overage_streak === 1);
+  });
+});
+
 /* 8. GROUPS THAT PAY BY INVOICE. */
 scenario("an account that pays by invoice, 30 day terms, PO reference", function () {
   reset(night({ byInvoice: true, terms: 30, ref: "PO-4471" }));
@@ -289,6 +320,8 @@ scenario("an account that pays by invoice, 30 day terms, PO reference", function
     pass("invoice is sent, not charged", !!inv && inv.collection_method === "send_invoice", inv && inv.collection_method);
     pass("30 days to pay", !!inv && inv.days_until_due === "30", inv && inv.days_until_due);
     pass("the PO reference is on it", !!inv && inv["custom_fields[0][value]"] === "PO-4471");
+    pass("finalised and SENT, never charged to a card", JSON.stringify(afterInvoice()) === JSON.stringify(["finalize", "send"]), JSON.stringify(afterInvoice()));
+    pass("an open invoice with terms is not reported as an unpaid card", inserts.filter(function (i) { return i.row.action === "overage_invoice_unpaid"; }).length === 0);
   });
 });
 

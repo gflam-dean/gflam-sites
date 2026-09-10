@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 06:43 · 0787c992';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 06:50 · 1abcecd9';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -5682,7 +5682,34 @@ async function collectNow(env, acct, idemKey, why) {
                 ' - the item stays pending until renewal');
     return { ok: false, reason: (inv && inv.error && inv.error.message) || 'unknown' };
   }
-  return { ok: true, invoice: inv.id, cents: inv.amount_due };
+  /* NOW MEANS NOW. Creating an invoice with auto_advance leaves it a DRAFT that Stripe
+     finalises and charges on its own clock, about an hour later. The first real overage
+     night to get this far (The Jolly Jess, 11 Sep 2026, in_1UEEss5JnH4tsSwMStIksM0D) sat
+     as a $2.00 draft: right line, right date, nothing taken, no receipt. The point of
+     collecting on the night is that the venue can match the charge to the night, so
+     finalise it here and, for a card account, pay it here. A group billed by invoice gets
+     the invoice sent instead, and its terms start now rather than in an hour.
+
+     A declined card is reported as exactly that (ok, unpaid, the invoice stays OPEN and
+     Stripe's own retries take it from there). It is not a failure of the night's billing,
+     the money is owed and on the books, so the streak still advances. */
+  const fin = await stripePost(env, 'invoices/' + enc(inv.id) + '/finalize', { auto_advance: true },
+                               idemKey ? ('fin_' + idemKey) : null);
+  if (!fin || fin.error) {
+    console.log('[billing] invoice ' + inv.id + ' raised but could not be finalised: ' +
+                ((fin && fin.error && fin.error.message) || 'unknown') + ' - Stripe will auto-advance it');
+    return { ok: true, invoice: inv.id, cents: inv.amount_due, status: 'draft' };
+  }
+  if (fin.status === 'paid') return { ok: true, invoice: inv.id, cents: inv.amount_due, status: 'paid' };
+  const step = byInvoice ? 'send' : 'pay';
+  const done = await stripePost(env, 'invoices/' + enc(inv.id) + '/' + step, {},
+                                idemKey ? (step + '_' + idemKey) : null);
+  if (!done || done.error) {
+    console.log('[billing] invoice ' + inv.id + ' finalised but ' + step + ' failed: ' +
+                ((done && done.error && done.error.message) || 'unknown') + ' - it is OPEN and Stripe will retry');
+    return { ok: true, invoice: inv.id, cents: inv.amount_due, status: 'open', problem: (done && done.error && done.error.message) || 'unknown' };
+  }
+  return { ok: true, invoice: inv.id, cents: inv.amount_due, status: done.status || (byInvoice ? 'open' : 'paid') };
 }
 
 async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
@@ -6225,6 +6252,26 @@ async function applyOverageCharge(env, o) {
                     amount_cents: amountCents, reason: got.reason },
         }, false);
       } catch (e) { /* audit is best effort */ }
+    } else if (got.status !== 'paid') {
+      /* Raised, finalised, and the card said no (or a group's invoice went out with
+         terms). The money is owed and on the books, so this is not a billing failure,
+         but a card that keeps declining is something HQ has to know about. */
+      console.log('[overage] ' + o.idemKey + ' invoice ' + got.invoice + ' is ' + got.status +
+                  (got.problem ? ' (' + got.problem + ')' : ''));
+      if (!acct.bill_by_invoice) {
+        try {
+          await sbInsert(env, 'vp_admin_audit', {
+            actor_admin: null, actor_label: 'system',
+            action: 'overage_invoice_unpaid',
+            target: venue.id,
+            detail: { source: o.idemKey, venue_name: venue.name || null, invoice: got.invoice,
+                      amount_cents: amountCents, status: got.status, reason: got.problem || null },
+          }, false);
+        } catch (e) { /* audit is best effort */ }
+      }
+    } else {
+      console.log('[overage] ' + o.idemKey + ' PAID: invoice ' + got.invoice + ' ' +
+                  (amountCents / 100).toFixed(2) + ' AUD, ' + overage + ' x ' + rateDollars.toFixed(2));
     }
   }
 
