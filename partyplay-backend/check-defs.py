@@ -36,6 +36,34 @@ BUILTIN = set("""if for while switch catch function return typeof new delete voi
  fbq
  PPConfig PPLicence PPTicket PPQuiz PPPhoto PPVideo VPSign VPGaming VPFollow VPScreenRouter""".split())
 
+def blank_quoted(js):
+    """Blank the INSIDE of 'single' and "double" quoted strings, keep the quotes.
+
+    The rule below ("a real call has no space before the bracket") removes almost
+    every false positive, and then prose with no space slips through anyway. It
+    read the words time(s) inside an ordinary sentence in a string and reported
+    that the file calls a function called time and never defines it. A gate that
+    fails on prose is a gate people learn to argue with.
+
+    BACKTICKS ARE LEFT ALONE ON PURPOSE. A template literal can contain ${foo()},
+    which is a real call, and blanking it would lose a real detection. Trading a
+    false alarm for a blind spot is not a fix.
+    """
+    out, i, n, quote = [], 0, len(js), None
+    while i < n:
+        c = js[i]
+        if quote:
+            if c == "\\" and i + 1 < n:
+                out.append('  '); i += 2; continue
+            if c == quote:
+                out.append(c); quote = None; i += 1; continue
+            out.append('\n' if c == '\n' else ' '); i += 1; continue
+        if c in ("'", '"'):
+            quote = c; out.append(c); i += 1; continue
+        out.append(c); i += 1
+    return ''.join(out)
+
+
 def strip_comments(src):
     """Remove // and /* */ while knowing what is a string and what is not.
 
@@ -204,7 +232,7 @@ for f in [t for t in targets if os.path.isfile(t)]:
     # A real call has no space before the bracket. Prose does: "the host brought (or
     # picked)". That one rule removes almost every false positive without needing
     # to parse strings, which is the thing that went wrong last time.
-    called = set(re.findall(r"(?<![.\w$])([a-z_$][\w$]*)\(", js))
+    called = set(re.findall(r"(?<![.\w$])([a-z_$][\w$]*)\(", blank_quoted(js)))
     missing = sorted(called - defined - BUILTIN - CSS)
     if missing:
         print("  FAIL %-16s calls but never defines: %s" % (f, ", ".join(missing)))

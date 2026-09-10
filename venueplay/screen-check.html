@@ -1,0 +1,148 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>VenuePlay screen check</title>
+<style>
+  :root{ color-scheme:dark; }
+  body{ margin:0; background:#0d0f13; color:#e8eaf0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  header{ padding:18px 20px 10px; }
+  h1{ margin:0 0 4px; font-size:19px; }
+  .sub{ color:#98a0b0; font-size:13px; max-width:70ch; }
+  #out{ padding:6px 20px 30px; }
+  .row{ padding:7px 0; border-bottom:1px solid #1c2029; display:flex; gap:12px; align-items:flex-start; }
+  .tag{ flex:0 0 62px; font-weight:700; font-size:12px; letter-spacing:.06em; padding-top:2px; }
+  .ok .tag{ color:#4ade80; } .bad .tag{ color:#f87171; } .info .tag{ color:#94a3b8; }
+  .why{ color:#8b94a6; font-size:13px; }
+  #verdict{ margin:18px 20px; padding:14px 16px; border-radius:10px; font-weight:600; }
+  #verdict.pass{ background:#14311f; color:#86efac; } #verdict.fail{ background:#3a1618; color:#fca5a5; }
+  #stage{ width:960px; height:540px; border:0; transform:scale(.36); transform-origin:top left; }
+  .frame{ width:346px; height:195px; overflow:hidden; border:1px solid #222834; border-radius:8px; margin:0 20px; }
+  button{ font:inherit; background:#1e2531; color:#e8eaf0; border:1px solid #2c3444; border-radius:8px; padding:8px 14px; cursor:pointer; }
+</style>
+
+<header>
+  <h1>Screen check</h1>
+  <div class="sub">
+    Opens the venue screen in a frame and asserts what is actually PAINTED. Everything else in
+    this repo reads source text or runs a function lifted out of a file; nothing else renders a
+    page. Open it on the device you actually care about, including the Fire Stick behind the bar.
+    <br><br>
+    Add <b>?venue=slug</b> to check a particular venue. It only ever READS the screen.
+  </div>
+</header>
+<div class="frame"><iframe id="stage" title="the venue screen under test"></iframe></div>
+<div id="verdict">running…</div>
+<div id="out"></div>
+<p style="padding:0 20px 40px"><button onclick="location.reload()">Run it again</button></p>
+
+<script>
+(function () {
+  "use strict";
+  var VENUE = (/[?&]venue=([A-Za-z0-9-]+)/.exec(location.search) || [])[1] || 'wellshot-hotel';
+  var out = document.getElementById('out'), stage = document.getElementById('stage');
+  var bad = 0, ran = 0;
+
+  function line(kind, text, why) {
+    var d = document.createElement('div');
+    d.className = 'row ' + kind;
+    d.innerHTML = '<div class="tag">' + (kind === 'ok' ? 'ok' : kind === 'bad' ? 'FAIL' : '--') +
+      '</div><div><div>' + text + '</div>' + (why ? '<div class="why">' + why + '</div>' : '') + '</div>';
+    out.appendChild(d);
+  }
+  function pass(cond, text, why) { ran++; if (!cond) bad++; line(cond ? 'ok' : 'bad', text, cond ? '' : why); }
+  function note(text, why) { line('info', text, why); }
+  var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+
+  /* Only what a person in the room could see: on screen, not display:none, not transparent.
+     A slide that is in the DOM and invisible is not on the wall. */
+  function doc() { return stage.contentDocument; }
+  function painted(d) {
+    return Array.prototype.slice.call(d.querySelectorAll('.ad, [class*="slide"]')).filter(function (a) {
+      return a.offsetParent !== null && +d.defaultView.getComputedStyle(a).opacity > 0.5;
+    });
+  }
+  function slideSig(d) {
+    return painted(d).map(function (a) { return (a.style.backgroundImage || '').slice(-40); }).join('|');
+  }
+  function visibleText(d) {
+    return Array.prototype.slice.call(d.querySelectorAll('*')).filter(function (e) {
+      if (e.children.length) return false;
+      var s = d.defaultView.getComputedStyle(e);
+      if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false;
+      return e.offsetParent !== null && (e.innerText || '').trim().length > 1;
+    }).map(function (e) { return e.innerText.trim(); });
+  }
+
+  async function run() {
+    note('venue under test', VENUE + '   (add ?venue=slug to change it)');
+
+    var errors = [];
+    stage.src = '/tv?venue=' + encodeURIComponent(VENUE);
+    await new Promise(function (r) { stage.onload = r; setTimeout(r, 15000); });
+    try { stage.contentWindow.addEventListener('error', function (e) { errors.push(String(e.message || e)); }); } catch (e) {}
+
+    var d = null;
+    try { d = doc(); } catch (e) {}
+    pass(!!d, 'the screen loads at all', 'the frame has no document: the page did not load');
+    if (!d) return finish();
+
+    // Give it the time a real screen gets before anyone looks at it.
+    await wait(6000);
+
+    var txt = visibleText(d).join(' | ');
+    pass(txt.length > 2, 'something is on the wall',
+         'the screen rendered nothing a person could read. This is the black screen.');
+
+    var status = d.getElementById('statusText');
+    pass(!!status && /connected/i.test(status.textContent), 'it says it is connected',
+         'the status line reads "' + (status ? status.textContent : 'nothing') + '" after six seconds');
+
+    var transport = d.documentElement.getAttribute('data-vp-transport');
+    pass(!!transport, 'it records which road it took', 'no data-vp-transport, so a deaf screen looks identical to a working one');
+    note('the road it took', transport || '(none)');
+
+    /* ONE CODE ON THE WALL. A screen showing its pairing code AND a game join code is
+       item 8 of the live-only list: two codes on the wall and the room types the wrong one. */
+    var codes = visibleText(d).filter(function (t) { return /^[ACDEFGHJKMNPQRSTUVWXYZ2345679]{6}$/.test(t.trim()); });
+    pass(codes.length <= 1, 'at most one six character code is on the wall',
+         'the wall is showing ' + codes.length + ' codes: ' + codes.join(', '));
+
+    var slides = d.querySelectorAll('.ad, [class*="slide"]').length;
+    note('slides in the page', String(slides));
+    pass(painted(d).length >= 1, 'a slide is actually lit',
+         slides + ' slides exist but none is painted, which is a black wall with content behind it');
+
+    /* THE WAKE. tv.html rebuilds its ads when the tab comes back to the front. That handler
+       used to flash the wall through an empty container and drop the loop to slide one, and
+       Dean saw it on a real screen. Nothing has ever tested it. */
+    var before = slideSig(d), emptied = 0;
+    var hostEl = (painted(d)[0] && painted(d)[0].parentElement) || d.body;
+    var obs = new (d.defaultView.MutationObserver || MutationObserver)(function () {
+      if (hostEl.querySelectorAll('.ad,[class*="slide"]').length === 0) emptied++;
+    });
+    obs.observe(hostEl, { childList: true, subtree: true });
+    try {
+      Object.defineProperty(d, 'hidden', { configurable: true, get: function () { return false; } });
+      Object.defineProperty(d, 'visibilityState', { configurable: true, get: function () { return 'visible'; } });
+      d.dispatchEvent(new d.defaultView.Event('visibilitychange'));
+    } catch (e) { note('could not simulate the wake', String(e)); }
+    await wait(1500);
+    obs.disconnect();
+    pass(emptied === 0, 'waking the screen does not flash the wall',
+         'the slide container was emptied ' + emptied + ' time(s), which is the flash');
+    pass(slideSig(d) === before, 'waking does not jump back to the first slide',
+         'the lit slide changed when the screen woke, so the loop restarted');
+
+    pass(errors.length === 0, 'the screen threw no errors while we watched', errors.slice(0, 2).join(' / '));
+    finish();
+  }
+
+  function finish() {
+    var v = document.getElementById('verdict');
+    v.className = bad ? 'fail' : 'pass';
+    v.textContent = bad ? (bad + ' of ' + ran + ' checks FAILED') : ('all ' + ran + ' checks passed');
+  }
+
+  run().catch(function (e) { note('the check itself broke', String(e)); finish(); });
+})();
+</script>
