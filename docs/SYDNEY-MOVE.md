@@ -76,3 +76,27 @@ The load-test seed venues (5,000 `load-` rows and 1,000 mid-game rooms) are on
 Sydney from 8 Sep. `refresh` empties the data, so they go, but VERIFY before
 believing it: a live venue list with 5,000 fake pubs in it would reach HQ, the
 "trusted by" marquee and every count we quote.
+
+## The plan we are actually on (corrected 10 Sep 2026)
+
+Dean: "im not on pro". Both projects are on the FREE tier, not Pro. Two notes in
+this repo said otherwise and were wrong; this is the corrected record.
+
+That changes the ceiling, and not because of the database. **Realtime connections
+are capped at 200 on free.** Every TV, host tablet and phone holds one, so a venue
+with forty players is forty-two connections. That is about FOUR VENUES PLAYING AT
+ONCE, whatever the database does.
+
+    free                    ~4 venues at once   ceiling is Realtime connections
+    Pro, about US$25/mo     500 connections     ~10 to 12, ceiling becomes the database
+    Pro plus Small compute  about twice that
+    Pro plus the room server  connections stop mattering: the phones are on Cloudflare
+
+It also explains the load test numbers. What collapsed at fifteen trivia rooms was
+free-tier shared compute, not a paid Micro. Roughly 20 database calls a second
+sustained, where a paid Postgres of any size would do far more.
+
+DECIDED, 10 Sep 2026: buy nothing yet. Let the room server's phase 2 land and be
+measured first, because it removes the exact limit the free tier imposes hardest.
+Go to Pro before selling into Queensland, because four concurrent venues is not a
+business and no engineering gets around a connection cap.
