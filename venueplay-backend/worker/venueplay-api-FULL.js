@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '9 Sep 2026, 17:08 · ab821ee7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Sep 2026, 16:53 · d0b63875';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -499,7 +499,7 @@ async function handleWebhook(request, env, cors) {
     // non-payment meant one late invoice landing on that customer switched the whole account
     // back on with no subscription behind it, playing free, with their credit already wiped.
     await vpaSuspendForNonpayment(env, cust, 'ended');
-    await vpaClearCreditOnEnd(env, cust);   // the subscription is over, so the credit is too
+    await vpaClearCreditOnEnd(env, cust, event.id);   // the subscription is over, so the credit is too
   }
   /* A CHARGEBACK. Stripe's dispute setting is what stops the games (cancel immediately, which
      arrives here as customer.subscription.deleted). This handler does not touch money or status:
@@ -1374,11 +1374,22 @@ async function vpaHandleDiscount(request, env, json) {
           const nm = (already.coupon && (already.coupon.name || already.coupon.id)) || 'an existing discount';
           return json({ error: 'This account already has a discount on its subscription (' + nm + '). Applying another would replace it and change what they are contracted to pay. Remove the existing one first, or use a dollar credit instead.' }, 409);
         }
+        /* KEYED. Two racing requests, or a client retry, each created their OWN coupon and
+           each attached it in turn. The subscription holds one discount slot, so the second
+           attach replaces the first and the venue's bill is right, which is exactly why this
+           never surfaced: what is left behind is an ORPHANED coupon in Stripe and, if both
+           requests get that far, two discount rows in HQ for one discount. The 'already has a
+           discount' guard above cannot catch it either, because both requests read the
+           subscription BEFORE either has attached anything.
+           The key is what the discount IS, plus the day, so a genuine second identical
+           discount granted next month still goes through. */
+        const coupDay = new Date().toISOString().slice(0, 10);
         const coupon = await vpbStripePost(env, 'coupons', Object.assign({
           percent_off: value,
           duration: months ? 'repeating' : 'forever',
           name: 'VenuePlay: ' + (target.name || 'venue') + ' ' + value + '% off',
-        }, months ? { duration_in_months: months } : {}));
+        }, months ? { duration_in_months: months } : {}),
+        'coup:' + targetType + ':' + targetId + ':' + value + ':' + (months || 0) + ':' + coupDay);
         if (!coupon || coupon.error || !coupon.id) {
           return json({ error: 'Stripe would not create that discount: ' + ((coupon && coupon.error && coupon.error.message) || 'unknown error') }, 502);
         }
@@ -1456,8 +1467,15 @@ async function vpaHandleDiscount(request, env, json) {
     }
     if (stripeTxnId && target.customer) {
       const back = Math.round(value * 100);
+      /* KEYED ON THE CREDIT IT IS UNDOING. The credit above is keyed, so a retried request
+         does NOT create a second credit: Stripe hands back the first one. But this rollback
+         had no key, so the retry would reverse the SAME single credit a second time, and
+         each reversal is a POSITIVE balance, which Stripe reads as money owed. Two
+         reversals of one $200 credit leaves the venue $200 in the hole on their next
+         invoice, for a discount they were promised. One reversal per credit, ever. */
       await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions',
-        { amount: back, currency: 'aud', description: 'VenuePlay discount reversed (could not be recorded)' }).catch(() => {});
+        { amount: back, currency: 'aud', description: 'VenuePlay discount reversed (could not be recorded)' },
+        'discrb:' + stripeTxnId).catch(() => {});
     }
     return json({ error: 'Could not record that discount, so it has been undone in Stripe and nothing was charged. Please try again. (' + String((e && e.message) || e).slice(0, 160) + ')' }, 500);
   }
@@ -1539,9 +1557,20 @@ async function vpaHandleDiscountRemove(request, env, json) {
           if (cents > outstanding) cents = outstanding;
         } catch (e) { cents = 0; }   // cannot read the balance: take nothing rather than overcharge
         if (cents > 0) {
+          /* KEYED ON THE ROW'S OWN CREDIT. The clamp above ("only take back what is still
+             sitting there") protects a SECOND removal made later, because by then the
+             balance has moved. It does nothing about two happening at once: an owner and an
+             HQ admin on View as, or one impatient double click, both read the same balance
+             before either has posted, both compute the full amount, and both post it. The
+             venue is billed twice for one reversal. A key on the credit being reversed makes
+             the second one a no-op that returns the first one's result.
+             A different prefix from the rollback above on purpose: the two can never run for
+             the same credit (a rolled-back discount was never recorded, so there is no row to
+             remove), and sharing a key with different amounts would make Stripe refuse a
+             legitimate reversal outright. */
           const back = await vpbStripePost(env, 'customers/' + encodeURIComponent(target.customer) + '/balance_transactions', {
             amount: cents, currency: 'aud', description: 'VenuePlay discount reversed',
-          });
+          }, 'discrev:' + row.stripe_txn_id);
           if (back && back.error) {
             return json({ error: 'Could not take that credit back off their account: ' + (back.error.message || 'unknown error') + '. The discount has been left in place.' }, 502);
           }
@@ -3535,16 +3564,23 @@ async function vpaReactivateOnPayment(env, customerId) {
    Zeroing it here makes the system match the words. Deliberately NOT done on past_due: they have
    not ended anything yet, they have a card that needs updating, and their credit must survive
    that. Only a genuinely finished subscription clears it. */
-async function vpaClearCreditOnEnd(env, customerId) {
+async function vpaClearCreditOnEnd(env, customerId, eventId) {
   try {
     if (!customerId || !env.STRIPE_SECRET_KEY) return;
     const cust = await vpbStripeGet(env, 'customers/' + encodeURIComponent(customerId));
     const bal = cust && typeof cust.balance === 'number' ? cust.balance : 0;
     if (bal >= 0) return;                       // nothing owing to them
+    /* KEYED ON THE STRIPE EVENT. Stripe RETRIES a webhook it does not get a clean answer
+       to, and can deliver the same event more than once. A retry that arrives after the
+       first one finished is already harmless, because the read above finds a zero balance
+       and returns. A retry that arrives WHILE the first is still running is not: both read
+       -$400, both post +$400, and the customer ends up $400 in the hole rather than at
+       zero, so their next invoice is $400 over their normal rate. The event id is the same
+       on every delivery of the same event, which is exactly the guarantee needed here. */
     await vpbStripePost(env, 'customers/' + encodeURIComponent(customerId) + '/balance_transactions', {
       amount: -bal, currency: 'aud',
       description: 'Credit closed with the subscription (VenuePlay terms: credit does not carry beyond the subscription)',
-    });
+    }, 'credend:' + (eventId || (customerId + ':' + (-bal))));
     await vpaInsert(env, 'vp_admin_audit', {
       action: 'credit_cleared_on_subscription_end',
       target: 'customer:' + customerId,
