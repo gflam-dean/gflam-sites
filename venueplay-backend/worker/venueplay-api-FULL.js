@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '10 Sep 2026, 16:56 · 0e4d4af3';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Sep 2026, 23:31 · 34b3cd84';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4071,6 +4071,29 @@ async function vpbAccountSummary(request, env, json) {
       cancelling: !!v.cancel_at_period_end,
     };
   });
+  /* THE DISCOUNT WAS ON THE SUBSCRIPTION ALL ALONG AND THIS NEVER READ IT.
+
+     A venue with a coupon was shown players x rate, the full price, on the one screen it
+     trusts. Stripe charged the discounted amount correctly, because the coupon lives on the
+     subscription; the page simply did not know. Wellshot Hotel has 33.3% off as the first
+     venue to sign up and its billing page read $50.00 against a real charge nearer $33.35,
+     and five venues on 100% discounts were shown a full price bill they will never pay.
+
+     Nothing extra is fetched: vpbSubItem already expands discounts, because the REMOVAL
+     path needs the coupon id. The number was sitting there.
+
+     Found by Dean looking at a venue's screen, not by any check in this repo. */
+  const disc = (info && info.sub && ((info.sub.discounts && info.sub.discounts.length && info.sub.discounts[0])
+                                     || info.sub.discount)) || null;
+  const coupon = (disc && disc.coupon) || null;
+  const pctOff = coupon && typeof coupon.percent_off === 'number' ? coupon.percent_off : null;
+  const amtOff = coupon && typeof coupon.amount_off === 'number' ? coupon.amount_off : null;   // cents
+  function afterDiscount(dollars) {
+    if (pctOff != null) return Math.max(0, dollars * (1 - pctOff / 100));
+    if (amtOff != null) return Math.max(0, dollars - amtOff / 100);
+    return dollars;
+  }
+
   const totalPlayers = venues.reduce((n, v) => n + v.players, 0);
   // What Stripe will actually bill next: the scheduled reduction where one is pending, else
   // capacity. On annual plans the renewal charge is the yearly figure, not the monthly one.
@@ -4128,10 +4151,21 @@ async function vpbAccountSummary(request, env, json) {
     rate: rate,
     venues: venues,
     total_players: totalPlayers,
-    monthly_total: '$' + (totalPlayers * rate).toFixed(2),
+    /* BOTH figures are what the venue will actually pay. The full price is sent alongside so
+       the page can show the saving rather than silently quoting a smaller number. */
+    monthly_total: '$' + afterDiscount(totalPlayers * rate).toFixed(2),
+    monthly_total_before_discount: '$' + (totalPlayers * rate).toFixed(2),
+    discount: coupon ? {
+      percent_off: pctOff,
+      amount_off_cents: amtOff,
+      name: coupon.name || null,
+      label: pctOff != null ? (String(pctOff).replace(/\.0$/, '') + '% off')
+                            : ('$' + ((amtOff || 0) / 100).toFixed(2) + ' off'),
+    } : null,
     billing_period: annual ? 'year' : 'month',
     next_charge: info && info.periodEnd ? vpaFmtDate(info.periodEnd) : null,
-    next_charge_amount: '$' + chargeAmount.toFixed(2),
+    next_charge_amount: '$' + afterDiscount(chargeAmount).toFixed(2),
+    next_charge_before_discount: '$' + chargeAmount.toFixed(2),
     card_last4: (info && info.last4) || null,
     card_brand: (info && info.brand) || null,
     credit_cents: creditCents,
