@@ -57,64 +57,74 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # that check was actually written for.
 MUTATIONS = [
     # ---- 10 Sep: money, the nightly sweep, and the road a game message takes ----
+    # THE LABEL IS THE SUITE'S FILE NAME, not the check inside it. The gate prints a
+    # failing suite as "FAIL stripe-idempotency.test.js ...", and gate() looks for the
+    # label in that line, so an inner check name never matches and the mutation is
+    # reported BLIND while the check it broke was working perfectly. Written the wrong
+    # way round first, and caught only because the run listed these suites as NOT YET
+    # PROVEN while their mutations were sitting right here.
     # Every one of these was broken by hand and watched go red as it was written.
     # Written down so nobody has to take that on trust, and so an edit that quietly
     # guts one is caught.
-    ('every money call carries an idempotency key',
+    ('stripe-idempotency.test.js',
      'venueplay-backend/worker/venueplay-api-FULL.js',
      "}, idemTag ? ('prel:' + idemTag) : null);",
      "});",
      'two tabs on the billing page both post the release credit and the venue is paid twice'),
 
-    ('no key is built from the clock or a random value',
+    ('stripe-idempotency.test.js',
      'venueplay-backend/worker/venueplay-api-FULL.js',
      "'credend:' + (eventId || (customerId + ':' + (-bal)))",
      "'credend:' + Date.now()",
      'a key that is new on every attempt deduplicates nothing, so a retried webhook clears the credit twice'),
 
-    ('an event already finished is waved through',
+    ('webhook-ledger.test.js',
      'venueplay-backend/worker/venueplay-api-FULL.js',
      "    if (row.completed_at) return 'skip';             // a real duplicate",
      "    if (false) return 'skip';             // a real duplicate",
      'Stripe redelivers an event and every branch of the webhook runs a second time'),
 
-    ('an event whose first attempt DIED is taken over, not stranded',
+    ('webhook-ledger.test.js',
      'venueplay-backend/worker/venueplay-api-FULL.js',
      "    if (!(age > VPA_EVENT_STALE_MS)) return 'skip';  // another delivery is mid-flight right now",
      "    return 'skip';  // another delivery is mid-flight right now",
      'a webhook whose first attempt was killed is never handled, so a venue pays and stays switched off'),
 
-    ('a session with no end time is found whatever its status reads',
+    ('sweep-sessions.test.js',
      'venueplay-backend/worker/venueplay-game.js',
      "      'ended_at=is.null&opened_at=lt.' + enc(cutoff) +",
      "      'status=in.(lobby,running,paused)&opened_at=lt.' + enc(cutoff) +",
      'the nightly sweep goes back to asking by status, and a cancelled session sits open for ever holding billable players'),
 
-    ('closing it does NOT invent an invoice',
+    ('sweep-sessions.test.js',
      'venueplay-backend/worker/venueplay-game.js',
      "      const ranANight = (session.status === 'lobby' || session.status === 'running' || session.status === 'paused');",
      "      const ranANight = true;",
      'the sweep bills a venue for a session whose status nothing in the product even writes'),
 
-    ('but by 6.2s it has handed the night to Supabase',
+    ('room-fallback.test.js',
      'venueplay/app/vp-room.js',
      "      if (now - st.downSince >= budget) { unavailable(st.everOpen ? \"lost\" : \"no answer\"); return; }",
      "",
      'the room dies mid-question and the page says Reconnecting all night with the balls piling up in a queue'),
 
-    ('but silence is treated as failure, and the page goes to Supabase',
+    ('room-fallback.test.js',
      'venueplay/app/vp-room.js',
      "      var handshake = setTimeout(function () {",
      "      var handshake = 0; var _unused = (function () {",
      'a socket that hangs on a captive portal arms no budget at all and the page waits for ever'),
 
-    ('it never reconnects after handing over',
-     'venueplay/app/vp-room.js',
-     # Enough context to be unique: the same two lines open close() as well, and a
-     # mutation that matches twice is reported as "no longer applies" and tests nothing.
-     "      st.closed = true;\n      clearTimeout(st.timer);\n      if (st.ws) { try { st.ws.close(1000, \"handing over\"); } catch (e) {} st.ws = null; }",
-     "      clearTimeout(st.timer);",
-     'the room comes back after the page moved to Supabase and every ball is called down both roads'),
+    # NOT A MUTATION, ON PURPOSE. There was one here for the close-on-handover in
+    # unavailable(), and prove-checks called it BLIND, correctly. Every path that
+    # reaches unavailable() has ALREADY closed its socket: a lost socket arrives via
+    # onclose, and a hung one is closed by the handshake timer before it retries. So
+    # the close in unavailable() is defensive code that today is unreachable, and no
+    # test can watch it work.
+    #
+    # The line stays, because it is cheap and it is right the day somebody adds a
+    # fourth way to give up. The mutation goes, because a permanent BLIND entry
+    # trains people to read BLIND as normal, and BLIND is the one word in this
+    # tool's output that must always mean something is wrong.
 
     # ---- 5 Sep: the screen-reachability work ---------------------------------
     # Each of these was broken by hand and watched go red as it was written. Written
@@ -556,7 +566,7 @@ MUTATIONS = [
      "a console's first messages go out before its key loads, and an enforcing venue's TV bins them"),
     # The flag reading moved OUT of the three pages and into vp-room.js on 10 Sep, so
     # this searched a file that no longer mentions it. Same fault, at its new address.
-    ('which honours ?roomserver=1 and 0', 'venueplay/app/vp-room.js',
+    ('room-optin.test.js', 'venueplay/app/vp-room.js',
      'roomserver=([01])', 'room=([01])',
      "the room flag collides with the player page's own game-code parameter and the phone shows No room"),
     ('tv-ads-rebuild.test.js', 'venueplay/tv.html',
