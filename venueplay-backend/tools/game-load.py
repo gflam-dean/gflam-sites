@@ -148,7 +148,32 @@ def worker(idx, target, tvs, rooms, cfg, stop_at, shared, out):
     start = time.time()
     songs = cfg['songs']
     # per-room state shared between the host thread and the player threads of this process
-    state = {r['game_id']: {'qseq': 1, 'asked_at': start, 'draw_id': None, 'song_i': idx, 'balls': 0, 'done': False} for r in rooms}
+    # STAGGER THE ROOMS, or the number you measure is one this product never sees.
+
+    # Every room used to start its first question at the SAME INSTANT, so every room
+    # reached its first reveal at the same instant too, and a reveal is the expensive
+    # one: it scores a whole room and writes the answers. Measured 10 Sep 2026, and it
+    # is unmistakable once you look at WHEN the slow requests happened rather than how
+    # many there were:
+
+    # 60 rooms   0 slow for the first 10s, then 517 in a burst at 24-29s, then 9 more
+    # in the next 95 seconds
+    # 36 rooms   0 slow for the first 16s, then 174 in a burst at 28-34s, then NONE
+
+    # The round is 25 seconds. The burst is the first round boundary, arriving for every
+    # room at once. That one burst was the whole of the "1% tail of about ten seconds"
+    # that looked like the database running out of headroom, and steady state was clean
+    # the whole time. Real venues do not start together: they open when they open and
+    # drift apart within a question.
+
+    # So each room now starts somewhere inside its first round. --in-step brings back the
+    # old behaviour deliberately, because a thundering herd IS worth measuring; it just
+    # must not be mistaken for the ordinary case.
+    state = {}
+    for r in rooms:
+        offset = 0 if cfg.get('in_step') else random.uniform(0, cfg['round'])
+        state[r['game_id']] = {'qseq': 1, 'asked_at': start + offset, 'draw_id': None,
+                               'song_i': idx, 'balls': 0, 'done': False}
     slock = threading.Lock()
 
     def run_thread(my_tvs, my_players, my_hosts):
@@ -354,6 +379,8 @@ def main():
     ap.add_argument('--formats', default='trivia,musical_bingo,bingo90,raffle', help='which room formats to drive')
     ap.add_argument('--processes', type=int, default=6)
     ap.add_argument('--round-seconds', type=int, default=25, help='trivia: how often each host asks the next question')
+    ap.add_argument('--in-step', action='store_true',
+                    help='start every room at the same instant. Real venues do not, and the burst when they all\n                          reveal together was mistaken for the database running out of headroom. Use it to measure\n                          a thundering herd ON PURPOSE, never to measure an ordinary night.')
     ap.add_argument('--song-seconds', type=int, default=40, help='musical bingo: how often each host plays the next song')
     ap.add_argument('--ball-seconds', type=int, default=9, help='bingo: how often each host calls a ball')
     ap.add_argument('--raffle-seconds', type=int, default=60, help='raffle: how often each host draws')
@@ -400,7 +427,7 @@ def main():
     before = counts(url)
     shared = {'jwt': mp.Array('c', 4096), 'sent': mp.Value('i', 0), 'slow': mp.Value('i', 0)}
     shared['jwt'].value = jwt.encode()
-    cfg = {'round': a.round_seconds, 'song': a.song_seconds, 'ball': a.ball_seconds, 'raffle': a.raffle_seconds, 'poll': a.poll_seconds,
+    cfg = {'round': a.round_seconds, 'song': a.song_seconds, 'ball': a.ball_seconds, 'raffle': a.raffle_seconds, 'poll': a.poll_seconds, 'in_step': a.in_step,
            'songs': man['songs'], 'no_players': a.no_players, 'no_hosts': a.no_hosts, 'answers': a.answers}
     out = mp.Queue()
     stop_at = time.time() + a.minutes * 60
