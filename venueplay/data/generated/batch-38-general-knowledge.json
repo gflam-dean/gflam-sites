@@ -1,0 +1,8282 @@
+[
+ {
+  "question": "What is a group of bees called?",
+  "options": [
+   "A pack",
+   "A swarm",
+   "A flock",
+   "A pride"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the largest ocean on Earth?",
+  "options": [
+   "The Pacific",
+   "The Indian",
+   "The Atlantic",
+   "The Southern"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a doctor use an otoscope to look into?",
+  "options": [
+   "The nose only",
+   "The eye",
+   "The ear",
+   "The throat only"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which surgeon performed the first human heart transplant?",
+  "options": [
+   "Michael DeBakey",
+   "Norman Shumway",
+   "Christiaan Barnard",
+   "Denton Cooley"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Scrabble, which two letters are worth ten points?",
+  "options": [
+   "Y and W",
+   "Q and Z",
+   "K and V",
+   "X and J"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the shape of an Australian speed limit sign?",
+  "options": [
+   "A square",
+   "A triangle",
+   "A diamond",
+   "A circle with a red ring"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many separate movable vertebrae are there in the adult human spine, above the sacrum?",
+  "options": [
+   "24",
+   "18",
+   "41",
+   "33"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Roman numerals, what number is X?",
+  "options": [
+   "100",
+   "50",
+   "10",
+   "5"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many yards are in a mile?",
+  "options": [
+   "1760",
+   "1000",
+   "5280",
+   "880"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which car maker's badge is a leaping big cat?",
+  "options": [
+   "Cougar",
+   "Lynx",
+   "Jaguar",
+   "Peugeot"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the French phrase deja vu mean?",
+  "options": [
+   "Already seen",
+   "Farewell",
+   "Good taste",
+   "The end"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the small rubber hammer used to test reflexes?",
+  "options": [
+   "A tendon hammer",
+   "A mallet",
+   "A gavel",
+   "A ball peen hammer"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Antibiotics are used to treat infections caused by what?",
+  "options": [
+   "Bacteria",
+   "Fungi only",
+   "Allergies",
+   "Viruses"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a cooper make?",
+  "options": [
+   "Candles",
+   "Barrels",
+   "Hats",
+   "Horseshoes"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which meal is a combination of breakfast and lunch?",
+  "options": [
+   "Elevenses",
+   "Brunch",
+   "Supper",
+   "Linner"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal's name means river horse in Greek?",
+  "options": [
+   "The rhinoceros",
+   "The tapir",
+   "The manatee",
+   "The hippopotamus"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour light means go at a traffic signal?",
+  "options": [
+   "White",
+   "Green",
+   "Amber",
+   "Red"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which colour sits between yellow and blue in a rainbow?",
+  "options": [
+   "Orange",
+   "Violet",
+   "Indigo",
+   "Green"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the medical term for long sightedness?",
+  "options": [
+   "Myopia",
+   "Hyperopia",
+   "Conjunctivitis",
+   "Astigmatism"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does vice versa mean?",
+  "options": [
+   "Face to face",
+   "In short",
+   "The other way round",
+   "At the same time"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the world's largest island?",
+  "options": [
+   "Greenland",
+   "Madagascar",
+   "New Guinea",
+   "Borneo"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many seconds are in an hour?",
+  "options": [
+   "3600",
+   "600",
+   "1800",
+   "360"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a solid white line down the middle of a road mean?",
+  "options": [
+   "Parking is allowed",
+   "The road is one way",
+   "A bus lane starts",
+   "Do not cross to overtake"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which country is Machu Picchu?",
+  "options": [
+   "Chile",
+   "Peru",
+   "Mexico",
+   "Bolivia"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which coffee chain uses a green mermaid style figure in its logo?",
+  "options": [
+   "The Coffee Club",
+   "Starbucks",
+   "Gloria Jean's",
+   "Costa"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Diamond is made from which single element?",
+  "options": [
+   "Silicon",
+   "Carbon",
+   "Quartz",
+   "Calcium"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Marmalade is traditionally made from which type of fruit?",
+  "options": [
+   "Stone fruit",
+   "Citrus fruit",
+   "Berries",
+   "Apples"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the room in a house where clothes are washed?",
+  "options": [
+   "The scullery",
+   "The laundry",
+   "The vestibule",
+   "The pantry"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of starlings flying together called?",
+  "options": [
+   "A muster",
+   "A murder",
+   "A murmuration",
+   "A mutter"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the largest artery in the human body?",
+  "options": [
+   "The aorta",
+   "The femoral artery",
+   "The jugular",
+   "The vena cava"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the chemical symbol for tin?",
+  "options": [
+   "St",
+   "Tn",
+   "Sn",
+   "Ti"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the currency of Sweden?",
+  "options": [
+   "The guilder",
+   "The euro",
+   "The krona",
+   "The mark"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the process called when a gas turns back into a liquid?",
+  "options": [
+   "Melting",
+   "Condensation",
+   "Freezing",
+   "Evaporation"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal has the longest recorded lifespan on land?",
+  "options": [
+   "The crocodile",
+   "The parrot",
+   "The tortoise",
+   "The elephant"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What part of a door do you turn to open it?",
+  "options": [
+   "The jamb",
+   "The hinge",
+   "The lintel",
+   "The handle"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Great Wall was built in which country?",
+  "options": [
+   "Japan",
+   "China",
+   "Korea",
+   "Mongolia"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What instrument measures humidity?",
+  "options": [
+   "A barometer",
+   "A thermometer",
+   "A hygrometer",
+   "A manometer"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was the first woman to fly solo across the Atlantic Ocean?",
+  "options": [
+   "Amy Johnson",
+   "Nancy Bird Walton",
+   "Amelia Earhart",
+   "Jean Batten"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which word is the best known example of a long English word typed entirely on the top row of a keyboard?",
+  "options": [
+   "Typewriter",
+   "Keyboard",
+   "Portrait",
+   "Notebook"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In medicine, the term pulmonary refers to which organs?",
+  "options": [
+   "The eyes",
+   "The lungs",
+   "The kidneys",
+   "The bones"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the common name for the trachea?",
+  "options": [
+   "The windpipe",
+   "The voice box",
+   "The gullet",
+   "The gut"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the common name for the patella?",
+  "options": [
+   "The collarbone",
+   "The shoulder blade",
+   "The kneecap",
+   "The hip bone"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Roman numerals, what number is IV?",
+  "options": [
+   "9",
+   "6",
+   "14",
+   "4"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the plural of the word crisis?",
+  "options": [
+   "Crisas",
+   "Crisises",
+   "Crises",
+   "Crisi"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The distress call mayday comes from which French phrase?",
+  "options": [
+   "Ma journee, meaning my day",
+   "Mais oui, meaning but yes",
+   "M'aidez, meaning help me",
+   "Mai jour, meaning May day"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In medicine, the term renal refers to which organs?",
+  "options": [
+   "The lungs",
+   "The kidneys",
+   "The liver",
+   "The heart"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many eyelids does a human have in total, counting both eyes?",
+  "options": [
+   "Four",
+   "One",
+   "None",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the first element on the periodic table?",
+  "options": [
+   "Hydrogen",
+   "Helium",
+   "Oxygen",
+   "Lithium"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a word with the same meaning as another called?",
+  "options": [
+   "A verb",
+   "An antonym",
+   "A synonym",
+   "An adverb"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest species of big cat?",
+  "options": [
+   "The leopard",
+   "The lion",
+   "The jaguar",
+   "The tiger"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Roughly how many bones is a baby born with?",
+  "options": [
+   "About 150",
+   "About 300",
+   "About 500",
+   "About 700"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which car maker's badge is a three pointed star?",
+  "options": [
+   "BMW",
+   "Subaru",
+   "Mercedes Benz",
+   "Volvo"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two mammals lay eggs?",
+  "options": [
+   "The koala and the wombat",
+   "The platypus and the echidna",
+   "The dugong and the seal",
+   "The bat and the possum"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the middle light on a standard set of traffic lights?",
+  "options": [
+   "Amber",
+   "Red",
+   "Blue",
+   "Green"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two Australian coins were withdrawn from circulation in the early 1990s?",
+  "options": [
+   "The one dollar and two dollar",
+   "The one cent and two cent",
+   "The twenty cent and fifty cent",
+   "The five cent and ten cent"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the hardest substance in the human body?",
+  "options": [
+   "Cartilage",
+   "Bone",
+   "Tooth enamel",
+   "Fingernail"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many kidneys does a healthy person have?",
+  "options": [
+   "Three",
+   "One",
+   "Two",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A paediatrician specialises in treating whom?",
+  "options": [
+   "Athletes",
+   "Children",
+   "Pregnant women",
+   "The elderly"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which vitamin is best known for helping blood to clot?",
+  "options": [
+   "Vitamin B6",
+   "Vitamin C",
+   "Vitamin A",
+   "Vitamin K"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do the letters L and P on Australian car plates indicate?",
+  "options": [
+   "Local and permanent registration",
+   "Long and public vehicles",
+   "Light and private vehicles",
+   "Learner and provisional drivers"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A raisin is a dried version of which fruit?",
+  "options": [
+   "A grape",
+   "A cherry",
+   "A plum",
+   "A berry"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Roughly what percentage of the adult human body is water?",
+  "options": [
+   "About 20 per cent",
+   "About 40 per cent",
+   "About 90 per cent",
+   "About 60 per cent"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal produces mohair?",
+  "options": [
+   "The angora goat",
+   "The camel",
+   "The llama",
+   "The sheep"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does CSIRO stand for?",
+  "options": [
+   "Commonwealth Standards and Innovation Review Office",
+   "Central Science and Industry Research Office",
+   "Commonwealth Scientific and Industrial Research Organisation",
+   "Canberra Science Institute Research Organisation"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pigment gives human skin and hair its colour?",
+  "options": [
+   "Haemoglobin",
+   "Melanin",
+   "Carotene",
+   "Chlorophyll"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does AM stand for in telling the time?",
+  "options": [
+   "At morning",
+   "Ahead of midday",
+   "After midnight",
+   "Ante meridiem"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which bird is the fastest runner on land?",
+  "options": [
+   "The cassowary",
+   "The ostrich",
+   "The roadrunner",
+   "The emu"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a male cat called?",
+  "options": [
+   "A buck",
+   "A drake",
+   "A tom",
+   "A jack"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many minutes are in an hour?",
+  "options": [
+   "60",
+   "24",
+   "100",
+   "30"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a blacksmith's anvil usually made of?",
+  "options": [
+   "Steel",
+   "Timber",
+   "Stone",
+   "Ceramic"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of locusts called?",
+  "options": [
+   "A pod",
+   "A pack",
+   "A plague",
+   "A pride"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a tachometer measure in a car?",
+  "options": [
+   "Tyre pressure",
+   "Oil pressure",
+   "Speed",
+   "Engine revolutions per minute"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which organ stores urine before it leaves the body?",
+  "options": [
+   "The pancreas",
+   "The kidney",
+   "The bladder",
+   "The liver"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many zeros are in one billion in the modern usage?",
+  "options": [
+   "Eight",
+   "Six",
+   "Twelve",
+   "Nine"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In eight ball pool, which ball must be potted last?",
+  "options": [
+   "The yellow one",
+   "The striped fifteen",
+   "The black eight",
+   "The white cue ball"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the winning position in chess?",
+  "options": [
+   "Stalemate",
+   "Checkmate",
+   "Endgame",
+   "Gambit"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does VIP stand for?",
+  "options": [
+   "Very informed people",
+   "Very important person",
+   "Verified identity pass",
+   "Valued in public"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does GMT stand for?",
+  "options": [
+   "Global Meridian Time",
+   "General Measured Time",
+   "Greenwich Mean Time",
+   "Greenwich Marine Time"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which city is the Kremlin?",
+  "options": [
+   "Kyiv",
+   "Warsaw",
+   "St Petersburg",
+   "Moscow"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the purpose of an electrical fuse or circuit breaker?",
+  "options": [
+   "To cut the power if too much current flows",
+   "To store electricity",
+   "To smooth the voltage",
+   "To earth the appliance"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The word alphabet comes from the first two letters of which alphabet?",
+  "options": [
+   "Latin",
+   "Arabic",
+   "Hebrew",
+   "Greek"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the pale crescent at the base of a fingernail called?",
+  "options": [
+   "The cuticle",
+   "The eponychium",
+   "The lunula",
+   "The matrix"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many teeth does a typical adult human have?",
+  "options": [
+   "36",
+   "32",
+   "24",
+   "28"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many humps does a Bactrian camel have?",
+  "options": [
+   "Three",
+   "Two",
+   "None",
+   "One"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the most abundant gas in the Earth's atmosphere?",
+  "options": [
+   "Argon",
+   "Carbon dioxide",
+   "Oxygen",
+   "Nitrogen"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape is the Australian fifty cent coin?",
+  "options": [
+   "Round",
+   "Eight sided",
+   "Twelve sided",
+   "Square"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many years are in a decade?",
+  "options": [
+   "10",
+   "100",
+   "20",
+   "1000"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the card game Uno, what colour is not used?",
+  "options": [
+   "Red",
+   "Purple",
+   "Blue",
+   "Yellow"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which specialist fits braces to straighten teeth?",
+  "options": [
+   "A cardiologist",
+   "A podiatrist",
+   "An optician",
+   "An orthodontist"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company uses the slogan I'm lovin' it?",
+  "options": [
+   "McDonald's",
+   "KFC",
+   "Subway",
+   "Burger King"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which number sits directly opposite 20 on a dartboard?",
+  "options": [
+   "5",
+   "19",
+   "3",
+   "1"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sauce is traditionally made from egg yolk and oil?",
+  "options": [
+   "Ketchup",
+   "Mayonnaise",
+   "Mustard",
+   "Vinaigrette"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which year did Australia change to decimal currency?",
+  "options": [
+   "1945",
+   "1966",
+   "1970",
+   "1956"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the right hand side of a ship called when facing forward?",
+  "options": [
+   "Starboard",
+   "Port",
+   "Bow",
+   "Aft"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Mixing blue and yellow paint gives which colour?",
+  "options": [
+   "Grey",
+   "Orange",
+   "Purple",
+   "Green"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which acid gives vinegar its sour taste?",
+  "options": [
+   "Citric acid",
+   "Sulfuric acid",
+   "Acetic acid",
+   "Lactic acid"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many zeros are in one million?",
+  "options": [
+   "Six",
+   "Nine",
+   "Seven",
+   "Five"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is bigger, a kilobyte or a megabyte?",
+  "options": [
+   "A kilobyte",
+   "They are the same",
+   "A megabyte",
+   "It depends"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On what date is Valentine's Day?",
+  "options": [
+   "24 February",
+   "14 March",
+   "14 February",
+   "1 February"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does GP stand for in medicine?",
+  "options": [
+   "Group practice",
+   "General public doctor",
+   "General practitioner",
+   "Government physician"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What instrument measures air pressure?",
+  "options": [
+   "A speedometer",
+   "A barometer",
+   "A thermometer",
+   "An anemometer"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do all the numbers on a roulette wheel add up to?",
+  "options": [
+   "600",
+   "555",
+   "666",
+   "777"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the meal eaten in the middle of the day?",
+  "options": [
+   "Tea time",
+   "Supper",
+   "Lunch",
+   "Brunch"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which gas do red blood cells mainly carry around the body?",
+  "options": [
+   "Oxygen",
+   "Hydrogen",
+   "Nitrogen",
+   "Helium"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a stethoscope let a doctor do?",
+  "options": [
+   "Test reflexes",
+   "Measure blood pressure",
+   "Listen to the heart and lungs",
+   "Look in the ear"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which coloured wire is the earth in modern Australian wiring?",
+  "options": [
+   "Black",
+   "Green and yellow",
+   "Brown",
+   "Blue"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which month gets the extra day in a leap year?",
+  "options": [
+   "December",
+   "February",
+   "June",
+   "January"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour flag is waved to start most motor races?",
+  "options": [
+   "Blue",
+   "Red",
+   "White",
+   "Green"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the chemical symbol for silver?",
+  "options": [
+   "Si",
+   "Sr",
+   "Sv",
+   "Ag"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The airline name Qantas came from an abbreviation of what?",
+  "options": [
+   "Queensland Australian National Travel Air Service",
+   "Queensland and Northern Territory Air Ships",
+   "Quality Australian National Transport Air Service",
+   "Queensland and Northern Territory Aerial Services"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many chromosomes are in a typical human body cell?",
+  "options": [
+   "46",
+   "24",
+   "48",
+   "23"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a car's odometer measure?",
+  "options": [
+   "The engine temperature",
+   "The total distance travelled",
+   "The current speed",
+   "The fuel level"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of fish called?",
+  "options": [
+   "A flock",
+   "A herd",
+   "A pack",
+   "A school"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A surface that reflects all visible light appears which colour?",
+  "options": [
+   "White",
+   "Black",
+   "Red",
+   "Green"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a fire blanket used for?",
+  "options": [
+   "Carrying an injured person",
+   "Wrapping burns",
+   "Blocking smoke under a door",
+   "Smothering a small fire"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does PM stand for in telling the time?",
+  "options": [
+   "Post meridiem",
+   "Prior to midnight",
+   "Past midnight",
+   "Past morning"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a maitre d' look after in a restaurant?",
+  "options": [
+   "The accounts",
+   "The kitchen",
+   "The dining room and guests",
+   "The cellar"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Venison is the meat of which animal?",
+  "options": [
+   "Elk only",
+   "Boar",
+   "Rabbit",
+   "Deer"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many days are in a standard year?",
+  "options": [
+   "360",
+   "366",
+   "364",
+   "365"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wheels does a typical car have?",
+  "options": [
+   "Three",
+   "Four",
+   "Two",
+   "Six"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a right angled triangle, what is the longest side called?",
+  "options": [
+   "The opposite",
+   "The base",
+   "The adjacent",
+   "The hypotenuse"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "At what temperature in degrees Fahrenheit does water freeze?",
+  "options": [
+   "0",
+   "32",
+   "100",
+   "212"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour are the express post boxes used by Australia Post?",
+  "options": [
+   "Yellow",
+   "Green",
+   "Black",
+   "Purple"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the chemical symbol for lead?",
+  "options": [
+   "Le",
+   "Pb",
+   "Ld",
+   "Pl"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the abbreviation et al mean?",
+  "options": [
+   "And after",
+   "And others",
+   "And elsewhere",
+   "And so on"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Are dolphins fish or mammals?",
+  "options": [
+   "Fish",
+   "Mammals",
+   "Amphibians",
+   "Reptiles"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two animals appear on the Australian coat of arms?",
+  "options": [
+   "The kangaroo and the koala",
+   "The emu and the kookaburra",
+   "The kangaroo and the emu",
+   "The wombat and the platypus"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a word with the opposite meaning to another called?",
+  "options": [
+   "A synonym",
+   "A homonym",
+   "An antonym",
+   "A pronoun"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which blood type is known as the universal donor?",
+  "options": [
+   "AB positive",
+   "A positive",
+   "B negative",
+   "O negative"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is the classic Vegemite jar label?",
+  "options": [
+   "Black and orange",
+   "Green and gold",
+   "Yellow and red",
+   "Blue and white"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Latin term ad hoc mean?",
+  "options": [
+   "Before the fact",
+   "For this purpose, arranged as needed",
+   "Word for word",
+   "Without payment"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a phrase like deafening silence, which contradicts itself, called?",
+  "options": [
+   "A pun",
+   "An oxymoron",
+   "A cliche",
+   "A paradox"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which currency is used in France, Germany, Italy and Spain?",
+  "options": [
+   "The lira",
+   "The euro",
+   "The franc",
+   "The mark"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which colour jersey is worn by the leader of the Tour de France?",
+  "options": [
+   "Pink",
+   "White",
+   "Yellow",
+   "Green"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sense do you use to detect flavours?",
+  "options": [
+   "Taste",
+   "Sight",
+   "Touch",
+   "Hearing"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which travels faster, light or sound?",
+  "options": [
+   "Light",
+   "It depends on colour",
+   "They are equal",
+   "Sound"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In most homes, which tap is the hot one by convention?",
+  "options": [
+   "The left",
+   "The lower one",
+   "The right",
+   "The centre"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Roughly what percentage of the Earth's atmosphere is oxygen?",
+  "options": [
+   "21 per cent",
+   "10 per cent",
+   "78 per cent",
+   "50 per cent"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which bone structure protects the human brain?",
+  "options": [
+   "The spine",
+   "The pelvis",
+   "The ribcage",
+   "The skull"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The larynx is better known as what?",
+  "options": [
+   "The eardrum",
+   "The windpipe",
+   "The kneecap",
+   "The voice box"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the punctuation mark made of three dots?",
+  "options": [
+   "An ellipsis",
+   "A semicolon",
+   "A caret",
+   "A colon"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the liquid part of blood called?",
+  "options": [
+   "Plasma",
+   "Serum starch",
+   "Lymphocyte",
+   "Marrow"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many days are in September?",
+  "options": [
+   "29",
+   "28",
+   "30",
+   "31"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many hemispheres does the human brain have?",
+  "options": [
+   "Two",
+   "Six",
+   "Four",
+   "One"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which waterfall is the highest uninterrupted waterfall in the world?",
+  "options": [
+   "Angel Falls",
+   "Niagara Falls",
+   "Victoria Falls",
+   "Iguazu Falls"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "On the pH scale, which number is neutral?",
+  "options": [
+   "14",
+   "10",
+   "7",
+   "0"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the currency of South Korea?",
+  "options": [
+   "The rupiah",
+   "The won",
+   "The yuan",
+   "The yen"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a male swan called?",
+  "options": [
+   "A tom",
+   "A gander",
+   "A cob",
+   "A drake"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which city is the Eiffel Tower?",
+  "options": [
+   "Rome",
+   "Brussels",
+   "Vienna",
+   "Paris"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What scale is used to measure the strength of a hurricane?",
+  "options": [
+   "The Beaufort scale",
+   "The Saffir Simpson scale",
+   "The Mohs scale",
+   "The Richter scale"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does MRI stand for?",
+  "options": [
+   "Multiple range inspection",
+   "Molecular reading instrument",
+   "Medical radiation imaging",
+   "Magnetic resonance imaging"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the # symbol usually called in Australia?",
+  "options": [
+   "The number cross",
+   "The pound",
+   "The grid",
+   "The hash"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a smoke alarm do?",
+  "options": [
+   "Warns you of smoke or fire",
+   "Calls the fire brigade automatically",
+   "Puts out fires",
+   "Measures room temperature"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What must cyclists wear by law in Australia?",
+  "options": [
+   "A reflective vest at all times",
+   "Gloves",
+   "A helmet",
+   "Knee pads"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sea creature has no brain, bones or heart and is mostly water?",
+  "options": [
+   "The sea urchin",
+   "The jellyfish",
+   "The squid",
+   "The starfish"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is half of 50?",
+  "options": [
+   "30",
+   "20",
+   "15",
+   "25"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional tool of a blacksmith, along with an anvil?",
+  "options": [
+   "A saw",
+   "A chisel and mallet",
+   "A hammer",
+   "A plane"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does SPF measure on a bottle of sunscreen?",
+  "options": [
+   "Protection from the sun",
+   "The scent strength",
+   "The water content",
+   "The pump flow"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A shape with four equal sides and four right angles is called what?",
+  "options": [
+   "A rhombus",
+   "A rectangle",
+   "A trapezium",
+   "A square"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many presidents' faces are carved into Mount Rushmore?",
+  "options": [
+   "Five",
+   "Four",
+   "Three",
+   "Six"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour do you get by mixing black and white?",
+  "options": [
+   "Grey",
+   "Silver",
+   "Beige",
+   "Brown"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ten pin bowling, how many pins are in the back row?",
+  "options": [
+   "Four",
+   "Three",
+   "Five",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many chambers does the human heart have?",
+  "options": [
+   "Two",
+   "Four",
+   "Six",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is one of the five Olympic ring colours?",
+  "options": [
+   "Black",
+   "Purple",
+   "Orange",
+   "Pink"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which bird is the symbol of peace?",
+  "options": [
+   "The stork",
+   "The dove",
+   "The eagle",
+   "The swan"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In snooker, which colour ball is worth the most?",
+  "options": [
+   "Brown",
+   "Pink",
+   "Blue",
+   "Black"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wheels does a tricycle have?",
+  "options": [
+   "Two",
+   "Four",
+   "Six",
+   "Three"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which currency uses a symbol that looks like a Y with two lines through it?",
+  "options": [
+   "The Indian rupee",
+   "The Japanese yen",
+   "The Thai baht",
+   "The Israeli shekel"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Botanically speaking, is a tomato a fruit or a vegetable?",
+  "options": [
+   "A herb",
+   "A vegetable",
+   "A grain",
+   "A fruit"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Why do you see lightning before you hear thunder?",
+  "options": [
+   "Light travels faster than sound",
+   "Lightning is closer",
+   "Thunder happens later",
+   "Sound bends around clouds"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In blackjack, what total are you trying to reach without going over?",
+  "options": [
+   "25",
+   "31",
+   "20",
+   "21"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour light means stop at a traffic signal?",
+  "options": [
+   "Green",
+   "Blue",
+   "Red",
+   "Amber"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the small target ball in the French game of petanque?",
+  "options": [
+   "The cochonnet",
+   "The jack rabbit",
+   "The pique",
+   "The pallino"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name for the person who flies an aeroplane?",
+  "options": [
+   "The pilot",
+   "The purser",
+   "The navigator only",
+   "The steward"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many degrees does a clock's minute hand travel in one hour?",
+  "options": [
+   "90",
+   "180",
+   "360",
+   "60"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many compartments does a cow's stomach have?",
+  "options": [
+   "One",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A prune is a dried version of which fruit?",
+  "options": [
+   "A grape",
+   "A plum",
+   "A fig",
+   "An apricot"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many numbers are on a European roulette wheel, counting the zero?",
+  "options": [
+   "36",
+   "35",
+   "38",
+   "37"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Tofu is made from which bean?",
+  "options": [
+   "The soybean",
+   "The mung bean",
+   "The broad bean",
+   "The kidney bean"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If it is half past six, where does the minute hand point?",
+  "options": [
+   "At the twelve",
+   "At the six",
+   "At the nine",
+   "At the three"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is a standard Australian post box?",
+  "options": [
+   "Blue",
+   "Yellow",
+   "Green",
+   "Red"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is a standard tennis ball at professional tournaments?",
+  "options": [
+   "Yellow",
+   "Green",
+   "Orange",
+   "White"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What instrument measures temperature?",
+  "options": [
+   "A barometer",
+   "A thermometer",
+   "A hygrometer",
+   "An anemometer"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australia, what does a red and yellow flag on a beach mean?",
+  "options": [
+   "Dogs are allowed",
+   "Sharks have been sighted",
+   "The beach is closed",
+   "Swim between the flags"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fabric comes from the cocoon of an insect?",
+  "options": [
+   "Denim",
+   "Hessian",
+   "Linen",
+   "Silk"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is rust chemically?",
+  "options": [
+   "Copper oxide",
+   "Iron sulphate",
+   "Iron oxide",
+   "Carbon dust"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many basic tastes does the human tongue detect?",
+  "options": [
+   "Three",
+   "Five",
+   "Seven",
+   "Four"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many items are in a dozen?",
+  "options": [
+   "20",
+   "12",
+   "10",
+   "13"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian airline is known as the flying kangaroo?",
+  "options": [
+   "Virgin Australia",
+   "Rex",
+   "Jetstar",
+   "Qantas"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sport is played at Wimbledon?",
+  "options": [
+   "Rowing",
+   "Golf",
+   "Cricket",
+   "Tennis"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which board game features Colonel Mustard and Professor Plum?",
+  "options": [
+   "Monopoly",
+   "Risk",
+   "Cluedo",
+   "Scrabble"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which vitamin does the body make when skin is exposed to sunlight?",
+  "options": [
+   "Vitamin B12",
+   "Vitamin C",
+   "Vitamin K",
+   "Vitamin D"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A white flag traditionally signals what?",
+  "options": [
+   "Victory",
+   "A start",
+   "Surrender",
+   "A draw"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The olfactory system deals with which sense?",
+  "options": [
+   "Sight",
+   "Hearing",
+   "Touch",
+   "Smell"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game Battleship, how many ships does each player traditionally place?",
+  "options": [
+   "Six",
+   "Four",
+   "Five",
+   "Three"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which chess piece can jump over other pieces?",
+  "options": [
+   "The rook",
+   "The bishop",
+   "The knight",
+   "The queen"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a female fox called?",
+  "options": [
+   "A sow",
+   "A vixen",
+   "A jill",
+   "A doe"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of a person's two lungs is the smaller one?",
+  "options": [
+   "The right",
+   "They are identical",
+   "The left",
+   "The lower one"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many vowels are in the English alphabet?",
+  "options": [
+   "Four",
+   "Six",
+   "Seven",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the process called when a liquid turns into a gas?",
+  "options": [
+   "Precipitation",
+   "Condensation",
+   "Sublimation",
+   "Evaporation"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Goosebumps are caused by tiny muscles attached to what?",
+  "options": [
+   "Sweat glands",
+   "Nerves",
+   "Bones",
+   "Hairs"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a male goose called?",
+  "options": [
+   "A drake",
+   "A cockerel",
+   "A cob",
+   "A gander"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the art of bell ringing called?",
+  "options": [
+   "Chandlery",
+   "Coopery",
+   "Campanology",
+   "Cartography"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which organ in the body produces the most heat at rest?",
+  "options": [
+   "The heart",
+   "The liver",
+   "The kidney",
+   "The skin"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the groove between the nose and the upper lip called?",
+  "options": [
+   "The vermilion",
+   "The glabella",
+   "The philtrum",
+   "The frenulum"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does ATM stand for?",
+  "options": [
+   "Automatic teller machine",
+   "Any time money",
+   "Account transfer machine",
+   "All time money"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wheels does a standard bicycle have?",
+  "options": [
+   "Four",
+   "One",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the phonetic alphabet used by pilots, which word stands for the letter Z?",
+  "options": [
+   "Zulu",
+   "Zebra",
+   "Zeus",
+   "Zero"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does ETA stand for?",
+  "options": [
+   "Exact time agreed",
+   "Expected travel allowance",
+   "Estimated time of arrival",
+   "Estimated time away"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country is the Taj Mahal?",
+  "options": [
+   "India",
+   "Iran",
+   "Pakistan",
+   "Turkey"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a female peacock called?",
+  "options": [
+   "A peahen",
+   "A hen bird",
+   "A peacockess",
+   "A peafowl chick"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the term per annum mean?",
+  "options": [
+   "Per hundred",
+   "Per year",
+   "Per person",
+   "Per month"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the three primary colours in painting?",
+  "options": [
+   "Orange, green and purple",
+   "Red, green and blue",
+   "Red, yellow and blue",
+   "Black, white and grey"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the emergency telephone number in Australia?",
+  "options": [
+   "112",
+   "911",
+   "000",
+   "999"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the smallest value coin still made in Australia?",
+  "options": [
+   "Five cents",
+   "Two cents",
+   "Ten cents",
+   "One cent"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a female pig called?",
+  "options": [
+   "A boar",
+   "A gilt only",
+   "A sow",
+   "A doe"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the left hand side of a ship called when facing forward?",
+  "options": [
+   "Starboard",
+   "Stern",
+   "Port",
+   "Bow"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of crows called?",
+  "options": [
+   "A gaggle",
+   "A muster",
+   "A parliament",
+   "A murder"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which slogan belongs to Nike?",
+  "options": [
+   "Because you're worth it",
+   "Just do it",
+   "Think different",
+   "I'm lovin' it"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did the Wright brothers make their first powered flight?",
+  "options": [
+   "1920",
+   "1893",
+   "1913",
+   "1903"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which architect designed the Sydney Opera House?",
+  "options": [
+   "Frank Lloyd Wright",
+   "Jorn Utzon",
+   "Walter Burley Griffin",
+   "Harry Seidler"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a glazier work with?",
+  "options": [
+   "Glass",
+   "Cakes",
+   "Paint",
+   "Ice"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A score is how many?",
+  "options": [
+   "100",
+   "12",
+   "10",
+   "20"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many rings are on the Olympic flag?",
+  "options": [
+   "Six",
+   "Five",
+   "Four",
+   "Seven"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many hours are in a day?",
+  "options": [
+   "12",
+   "20",
+   "24",
+   "60"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is generally regarded as the slowest moving mammal?",
+  "options": [
+   "The koala",
+   "The sloth",
+   "The manatee",
+   "The giant anteater"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country's flag is a white cross on a red square?",
+  "options": [
+   "Norway",
+   "Switzerland",
+   "Greece",
+   "Denmark"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which season comes after winter?",
+  "options": [
+   "Spring",
+   "Autumn",
+   "Summer",
+   "The wet"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Bile is produced by the liver and stored in which organ?",
+  "options": [
+   "The spleen",
+   "The gallbladder",
+   "The appendix",
+   "The bladder"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Roman numerals, what number is D?",
+  "options": [
+   "500",
+   "1000",
+   "100",
+   "50"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fabric is traditionally used to make blue jeans?",
+  "options": [
+   "Flannel",
+   "Denim",
+   "Corduroy",
+   "Tweed"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the FM in FM radio stand for?",
+  "options": [
+   "Fine music",
+   "Full modulation",
+   "Frequency modulation",
+   "Fast megahertz"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does radar originally stand for?",
+  "options": [
+   "Rapid data reading",
+   "Radio detection and ranging",
+   "Radio direction and rescue",
+   "Range detection and reading"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the fear of dogs called?",
+  "options": [
+   "Ailurophobia",
+   "Zoophobia",
+   "Cynophobia",
+   "Ophidiophobia"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does ASAP stand for?",
+  "options": [
+   "As short as practical",
+   "As simple as possible",
+   "At any speed available",
+   "As soon as possible"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which group of animals do frogs and toads belong to?",
+  "options": [
+   "Mammals",
+   "Reptiles",
+   "Fish",
+   "Amphibians"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which part of the brain mainly controls balance and coordination?",
+  "options": [
+   "The medulla",
+   "The pituitary gland",
+   "The cerebrum",
+   "The cerebellum"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the pirate flag with a skull and crossbones called?",
+  "options": [
+   "The Skull Standard",
+   "The Crossbones",
+   "The Jolly Roger",
+   "The Black Peter"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does scuba stand for?",
+  "options": [
+   "Safe controlled underwater breathing air",
+   "Sealed cabin under breathing apparatus",
+   "Self contained underwater breathing apparatus",
+   "Sub current underwater buoyancy aid"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many faces does a standard dice have?",
+  "options": [
+   "Eight",
+   "Six",
+   "Twelve",
+   "Four"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many legs does a crab have in total, including its claws?",
+  "options": [
+   "Six",
+   "Ten",
+   "Eight",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of maps and map making called?",
+  "options": [
+   "Vexillology",
+   "Geography",
+   "Cartography",
+   "Topology"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which part of the tooth is visible above the gum?",
+  "options": [
+   "The nerve",
+   "The root",
+   "The crown",
+   "The pulp"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which letter of the alphabet appears least often in written English?",
+  "options": [
+   "J",
+   "X",
+   "Q",
+   "Z"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which acid helps break down food in the human stomach?",
+  "options": [
+   "Nitric acid",
+   "Hydrochloric acid",
+   "Citric acid",
+   "Sulfuric acid"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a word that reads the same forwards and backwards called?",
+  "options": [
+   "An anagram",
+   "A palindrome",
+   "An acronym",
+   "A homonym"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the largest species of penguin?",
+  "options": [
+   "The gentoo penguin",
+   "The emperor penguin",
+   "The little penguin",
+   "The king penguin"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plural of the word cactus most often given as?",
+  "options": [
+   "Cactae",
+   "Cacti",
+   "Cactuses only",
+   "Cactus"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the term al fresco mean when dining?",
+  "options": [
+   "Outdoors",
+   "Family style",
+   "Standing up",
+   "At a set price"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which city would you find the Brandenburg Gate?",
+  "options": [
+   "Prague",
+   "Vienna",
+   "Munich",
+   "Berlin"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which day of the week is named after the Norse god Thor?",
+  "options": [
+   "Thursday",
+   "Tuesday",
+   "Wednesday",
+   "Friday"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for a violent rotating column of air over land?",
+  "options": [
+   "A blizzard",
+   "A cyclone",
+   "A monsoon",
+   "A tornado"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do you call the person who fixes leaking taps and pipes?",
+  "options": [
+   "A plasterer",
+   "A carpenter",
+   "An electrician",
+   "A plumber"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many sides does a dodecagon have?",
+  "options": [
+   "Fourteen",
+   "Ten",
+   "Twelve",
+   "Twenty"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the bullseye worth on a dartboard?",
+  "options": [
+   "100",
+   "60",
+   "50",
+   "25"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language is the origin of most English words ending in tion?",
+  "options": [
+   "German",
+   "Greek",
+   "Latin",
+   "Norse"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What symbol is used for the word and in shorthand writing?",
+  "options": [
+   "The caret",
+   "The ampersand",
+   "The tilde",
+   "The asterisk"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Glass is mainly made by melting which raw material?",
+  "options": [
+   "Limestone chips",
+   "Chalk",
+   "Sand",
+   "Clay"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many months of the year have 31 days?",
+  "options": [
+   "Five",
+   "Six",
+   "Seven",
+   "Eight"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which zodiac sign is represented by an archer?",
+  "options": [
+   "Aquarius",
+   "Sagittarius",
+   "Aries",
+   "Leo"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Hypertension is the medical term for what?",
+  "options": [
+   "A high temperature",
+   "Low blood pressure",
+   "A fast pulse",
+   "High blood pressure"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A haiku poem has how many syllables in total?",
+  "options": [
+   "12",
+   "14",
+   "17",
+   "20"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the chemical symbol for potassium?",
+  "options": [
+   "P",
+   "K",
+   "Po",
+   "Pt"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many suits are in a standard deck of cards?",
+  "options": [
+   "Six",
+   "Four",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the study of word origins called?",
+  "options": [
+   "Entomology",
+   "Etymology",
+   "Philology only",
+   "Lexicography"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the highest score possible with three darts?",
+  "options": [
+   "170",
+   "200",
+   "180",
+   "150"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What book would you use to look up the meaning of a word?",
+  "options": [
+   "A directory",
+   "A dictionary",
+   "An atlas",
+   "A thesaurus"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the maximum score in a game of ten pin bowling?",
+  "options": [
+   "400",
+   "300",
+   "200",
+   "250"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which vegetable is about 95 per cent water?",
+  "options": [
+   "Pumpkin",
+   "Potato",
+   "Cucumber",
+   "Carrot"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the phonetic alphabet used by pilots, which word stands for the letter R?",
+  "options": [
+   "Robert",
+   "Romeo",
+   "River",
+   "Radio"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In an Australian car, what does the handbrake do?",
+  "options": [
+   "Cuts the engine",
+   "Holds the car still when parked",
+   "Locks the steering",
+   "Slows the car in an emergency only"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A cross shaped screwdriver tip is known as what?",
+  "options": [
+   "Hex",
+   "Phillips head",
+   "Torx",
+   "Flat head"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Feta cheese is traditionally from which country?",
+  "options": [
+   "Spain",
+   "Greece",
+   "Italy",
+   "France"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which museum is the Mona Lisa displayed?",
+  "options": [
+   "The Prado in Madrid",
+   "The Louvre in Paris",
+   "The Uffizi in Florence",
+   "The National Gallery in London"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two poles of a magnet attract each other?",
+  "options": [
+   "North and south",
+   "Neither",
+   "South and south",
+   "North and north"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which appliance would you use to dry clothes indoors?",
+  "options": [
+   "A vacuum",
+   "A dishwasher",
+   "A clothes dryer",
+   "A microwave"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which car maker's badge is a prancing horse?",
+  "options": [
+   "Ferrari",
+   "Lamborghini",
+   "Porsche",
+   "Mustang"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the word laser originally stand for?",
+  "options": [
+   "Long angle secondary emission ray",
+   "Light amplification by stimulated emission of radiation",
+   "Light and sound electronic reflector",
+   "Linear amplified single energy ray"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which branch of medicine deals with the heart?",
+  "options": [
+   "Cardiology",
+   "Oncology",
+   "Dermatology",
+   "Neurology"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Roman numerals, what number is IX?",
+  "options": [
+   "9",
+   "19",
+   "4",
+   "11"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does BYO mean on an Australian restaurant sign?",
+  "options": [
+   "Buy your own",
+   "Book your own",
+   "Bring your order",
+   "Bring your own"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many legs does a spider have?",
+  "options": [
+   "Eight",
+   "Six",
+   "Four",
+   "Ten"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On what date is Australia Day?",
+  "options": [
+   "26 December",
+   "25 April",
+   "1 January",
+   "26 January"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How often does a leap year normally occur?",
+  "options": [
+   "Every two years",
+   "Every ten years",
+   "Every five years",
+   "Every four years"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the deepest known point in the world's oceans?",
+  "options": [
+   "The Java Trench",
+   "The Puerto Rico Trench",
+   "The Mariana Trench",
+   "The Tonga Trench"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the currency of the United Kingdom?",
+  "options": [
+   "The pound sterling",
+   "The krone",
+   "The guilder",
+   "The euro"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the first person to run a mile in under four minutes?",
+  "options": [
+   "Herb Elliott",
+   "Emil Zatopek",
+   "Roger Bannister",
+   "Sebastian Coe"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does a podiatrist treat?",
+  "options": [
+   "Hearts",
+   "Hands",
+   "Eyes",
+   "Feet"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the job of a sommelier?",
+  "options": [
+   "Preparing desserts",
+   "Carving meat",
+   "Managing a kitchen",
+   "Advising on and serving wine"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Baking soda is another name for what?",
+  "options": [
+   "Calcium carbonate",
+   "Potassium nitrate",
+   "Sodium chloride",
+   "Sodium bicarbonate"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many strings does a standard guitar have?",
+  "options": [
+   "Six",
+   "Four",
+   "Eight",
+   "Twelve"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many pairs of ribs does a typical adult have?",
+  "options": [
+   "10",
+   "12",
+   "16",
+   "14"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which canal links the Atlantic and Pacific Oceans?",
+  "options": [
+   "The Panama Canal",
+   "The Grand Canal",
+   "The Erie Canal",
+   "The Suez Canal"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At what temperature in degrees Celsius does water boil at sea level?",
+  "options": [
+   "100",
+   "80",
+   "90",
+   "212"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Braille is a system of raised dots read by whom?",
+  "options": [
+   "People who are deaf",
+   "People who are blind or have low vision",
+   "Divers",
+   "Air traffic controllers"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour are Australian road works and detour signs?",
+  "options": [
+   "Orange",
+   "Blue",
+   "Purple",
+   "Green"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Do arteries carry blood towards the heart or away from it?",
+  "options": [
+   "Towards the heart",
+   "Away from the heart",
+   "Both at once",
+   "Neither"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fear of confined spaces called?",
+  "options": [
+   "Xenophobia",
+   "Claustrophobia",
+   "Agoraphobia",
+   "Nyctophobia"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country's flag features a maple leaf?",
+  "options": [
+   "Norway",
+   "Lebanon",
+   "Canada",
+   "Ireland"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which blood cells are the body's main defence against infection?",
+  "options": [
+   "Platelets",
+   "White blood cells",
+   "Red blood cells",
+   "Nerve cells"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand's logo is a bitten piece of fruit?",
+  "options": [
+   "Apple",
+   "Blackberry",
+   "Orange",
+   "Mango"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which part of the body has a unique pattern used for identification?",
+  "options": [
+   "The fingertips",
+   "The knees",
+   "The heels",
+   "The elbows"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the chemical symbol for copper?",
+  "options": [
+   "Cp",
+   "Cu",
+   "Cr",
+   "Co"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is waved to signal the end of a motor race?",
+  "options": [
+   "A green flag",
+   "A red flag",
+   "A chequered flag",
+   "A blue flag"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the first President of the United States?",
+  "options": [
+   "George Washington",
+   "Abraham Lincoln",
+   "Thomas Jefferson",
+   "John Adams"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fear of the number 13 called?",
+  "options": [
+   "Tetraphobia",
+   "Numerophobia",
+   "Triskaidekaphobia",
+   "Decaphobia"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does PDF stand for in computing?",
+  "options": [
+   "Printed document file",
+   "Portable document format",
+   "Personal display format",
+   "Public data file"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the highest possible break in a standard frame of snooker with no fouls?",
+  "options": [
+   "155",
+   "180",
+   "140",
+   "147"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which bone in the human body is not connected to any other bone?",
+  "options": [
+   "The stapes",
+   "The tailbone",
+   "The hyoid, in the throat",
+   "The kneecap"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which car maker's badge is a charging bull?",
+  "options": [
+   "Alfa Romeo",
+   "Bugatti",
+   "Ferrari",
+   "Lamborghini"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the clear front layer of the eye?",
+  "options": [
+   "The cornea",
+   "The iris",
+   "The sclera",
+   "The retina"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In cricket, what is the term for a batter dismissed without scoring?",
+  "options": [
+   "A blob",
+   "A blank",
+   "A nought out",
+   "A duck"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does ANZAC stand for?",
+  "options": [
+   "Anzac National Association Corps",
+   "Australian and New Zealand Army Corps",
+   "Australian National Zone Army Command",
+   "Allied New Zealand Australian Coalition"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does UFO stand for?",
+  "options": [
+   "Upper flight observation",
+   "Universal flight orbiter",
+   "Unidentified flying object",
+   "Unknown foreign object"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest living bird?",
+  "options": [
+   "The ostrich",
+   "The condor",
+   "The albatross",
+   "The emu"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the top of a house called?",
+  "options": [
+   "The sill",
+   "The roof",
+   "The eaves",
+   "The gable"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which type of muscle is found only in the heart?",
+  "options": [
+   "Cardiac muscle",
+   "Skeletal muscle",
+   "Elastic muscle",
+   "Smooth muscle"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the writing core of a modern pencil actually made from?",
+  "options": [
+   "Carbon fibre",
+   "Charcoal",
+   "Graphite",
+   "Lead"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the tool called that measures tyre pressure?",
+  "options": [
+   "A pressure gauge",
+   "A torque wrench",
+   "A dipstick",
+   "A caliper brake"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Michelin Man mascot is properly named what?",
+  "options": [
+   "Monsieur Pneu",
+   "Bibendum",
+   "Rondo",
+   "Blanc"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many balls are used in a traditional British style bingo game?",
+  "options": [
+   "80",
+   "75",
+   "100",
+   "90"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Basmati rice is most associated with which part of the world?",
+  "options": [
+   "Mexico",
+   "The Indian subcontinent",
+   "Italy",
+   "Japan"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "A shark's skeleton is made of what?",
+  "options": [
+   "Bone",
+   "Enamel",
+   "Cartilage",
+   "Keratin"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a milliner make?",
+  "options": [
+   "Hats",
+   "Shoes",
+   "Candles",
+   "Barrels"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the traditional gift for a 40th wedding anniversary?",
+  "options": [
+   "Ruby",
+   "Gold",
+   "Pearl",
+   "Sapphire"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many keys are on a full sized piano?",
+  "options": [
+   "61",
+   "100",
+   "88",
+   "76"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Roman numerals, what number is C?",
+  "options": [
+   "50",
+   "500",
+   "1000",
+   "100"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which month is named after the Roman emperor Augustus?",
+  "options": [
+   "August",
+   "March",
+   "July",
+   "October"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rhinoplasty is cosmetic surgery on which part of the body?",
+  "options": [
+   "The eyelids",
+   "The ears",
+   "The chin",
+   "The nose"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the emergency telephone number in the United States?",
+  "options": [
+   "112",
+   "911",
+   "000",
+   "999"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the chemical formula for water?",
+  "options": [
+   "H2O",
+   "CO2",
+   "HO2",
+   "H2O2"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these countries drives on the right?",
+  "options": [
+   "Japan",
+   "South Africa",
+   "France",
+   "New Zealand"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for the imaginary line at zero degrees latitude?",
+  "options": [
+   "The horizon",
+   "The prime meridian",
+   "The tropic of Capricorn",
+   "The equator"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of owls called?",
+  "options": [
+   "A congress",
+   "A senate",
+   "A parliament",
+   "A council"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which coffee is espresso with hot water added?",
+  "options": [
+   "A mocha",
+   "A latte",
+   "A flat white",
+   "A long black"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Roughly how many flowers must bees visit to make one kilogram of honey?",
+  "options": [
+   "About two million",
+   "About two thousand",
+   "About twenty thousand",
+   "About two hundred"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the coloured part of the eye called?",
+  "options": [
+   "The pupil",
+   "The retina",
+   "The iris",
+   "The cornea"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the smallest bone in the human body?",
+  "options": [
+   "The stapes",
+   "The hyoid",
+   "The distal phalanx of the little toe",
+   "The pisiform in the wrist"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these is a good insulator of electricity?",
+  "options": [
+   "Copper",
+   "Aluminium",
+   "Steel",
+   "Rubber"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many players are on the field for one side in a soccer match?",
+  "options": [
+   "9",
+   "11",
+   "12",
+   "10"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the phonetic alphabet used by pilots, which word stands for the letter W?",
+  "options": [
+   "William",
+   "Winter",
+   "Whiskey",
+   "Wing"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Bacon comes from which animal?",
+  "options": [
+   "A cow",
+   "A goat",
+   "A sheep",
+   "A pig"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the imaginary line at zero degrees longitude?",
+  "options": [
+   "The equator",
+   "The date line",
+   "The tropic of Cancer",
+   "The prime meridian"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the QR in QR code stand for?",
+  "options": [
+   "Quality register",
+   "Quick record",
+   "Quick response",
+   "Quadrant reader"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the dark opening at the centre of the eye called?",
+  "options": [
+   "The iris",
+   "The cornea",
+   "The pupil",
+   "The lens"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does USB stand for?",
+  "options": [
+   "United system board",
+   "Universal storage box",
+   "User system bridge",
+   "Universal serial bus"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do you call a person who works with wood?",
+  "options": [
+   "A carpenter",
+   "A plumber",
+   "A glazier",
+   "A tiler"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the tallest living animal?",
+  "options": [
+   "The ostrich",
+   "The camel",
+   "The giraffe",
+   "The elephant"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which piece of clothing is measured in collar size?",
+  "options": [
+   "A shirt",
+   "Socks",
+   "A tie",
+   "A belt"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Ides of March fall on which date?",
+  "options": [
+   "13 March",
+   "1 March",
+   "31 March",
+   "15 March"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the only letter that does not appear in any American state name?",
+  "options": [
+   "J",
+   "X",
+   "Q",
+   "Z"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the chemical symbol for mercury?",
+  "options": [
+   "Me",
+   "Hy",
+   "Hg",
+   "Mr"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name for three wickets taken in three balls in cricket?",
+  "options": [
+   "A triple",
+   "A treble strike",
+   "A hat trick",
+   "A trifecta"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the largest organ of the human body?",
+  "options": [
+   "The skin",
+   "The liver",
+   "The heart",
+   "The lungs"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "An optometrist tests which part of the body?",
+  "options": [
+   "The feet",
+   "The teeth",
+   "The ears",
+   "The eyes"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which zodiac sign is represented by a crab?",
+  "options": [
+   "Capricorn",
+   "Cancer",
+   "Pisces",
+   "Aquarius"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which direction does the Sun rise?",
+  "options": [
+   "The west",
+   "The north",
+   "The south",
+   "The east"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which day of the week is named after the Norse god Odin, or Woden?",
+  "options": [
+   "Wednesday",
+   "Tuesday",
+   "Thursday",
+   "Friday"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fastest land animal?",
+  "options": [
+   "The lion",
+   "The cheetah",
+   "The pronghorn",
+   "The greyhound"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which chess piece is the most powerful?",
+  "options": [
+   "The bishop",
+   "The rook",
+   "The queen",
+   "The king"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many coloured faces does a Rubik's Cube have?",
+  "options": [
+   "Four",
+   "Eight",
+   "Twelve",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does etc. stand for?",
+  "options": [
+   "Et alia",
+   "Exempli causa",
+   "Extra cetera",
+   "Et cetera"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The angles inside a triangle always add up to how many degrees?",
+  "options": [
+   "270",
+   "180",
+   "360",
+   "90"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which protein in red blood cells carries oxygen?",
+  "options": [
+   "Haemoglobin",
+   "Keratin",
+   "Insulin",
+   "Collagen"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A compass needle points towards which direction?",
+  "options": [
+   "North",
+   "South",
+   "West",
+   "East"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Wasabi is usually served with which food?",
+  "options": [
+   "Pizza",
+   "Porridge",
+   "Roast beef",
+   "Sushi"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many squares are on a standard chess board?",
+  "options": [
+   "64",
+   "100",
+   "49",
+   "81"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which city were the first modern Olympic Games held in 1896?",
+  "options": [
+   "Rome",
+   "Paris",
+   "London",
+   "Athens"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sportswear brand is known for three stripes?",
+  "options": [
+   "New Balance",
+   "Adidas",
+   "Nike",
+   "Asics"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the www in a web address stand for?",
+  "options": [
+   "World web writing",
+   "World wide web",
+   "Web wire world",
+   "Wide world watch"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a skirting board?",
+  "options": [
+   "A strip of timber where the wall meets the floor",
+   "A garden edge",
+   "A roof gutter",
+   "A ceiling trim"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Mutton is the meat of which animal?",
+  "options": [
+   "Sheep",
+   "Deer",
+   "Goat",
+   "Cow"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these countries does not use the euro?",
+  "options": [
+   "Ireland",
+   "Austria",
+   "Portugal",
+   "Switzerland"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a cravat?",
+  "options": [
+   "A short jacket",
+   "A type of hat",
+   "A pair of cufflinks",
+   "A neck scarf worn in place of a tie"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Mixing red and yellow paint gives which colour?",
+  "options": [
+   "Purple",
+   "Orange",
+   "Brown",
+   "Green"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tool would you use to hammer in a nail?",
+  "options": [
+   "A file",
+   "A chisel",
+   "A saw",
+   "A hammer"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many ribs does a typical adult human have?",
+  "options": [
+   "20",
+   "26",
+   "24",
+   "18"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the currency of South Africa?",
+  "options": [
+   "The kwacha",
+   "The rand",
+   "The cedi",
+   "The shilling"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does a farrier do?",
+  "options": [
+   "Shoes horses",
+   "Bakes bread",
+   "Repairs clocks",
+   "Cuts glass"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which kitchen appliance is used to boil water quickly?",
+  "options": [
+   "The microwave",
+   "The blender",
+   "The toaster",
+   "The kettle"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A liquid with a pH below 7 is described as what?",
+  "options": [
+   "Alkaline",
+   "Inert",
+   "Acidic",
+   "Neutral"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The recycling symbol is made up of how many arrows?",
+  "options": [
+   "Five",
+   "Two",
+   "Three",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sense organ contains the cochlea?",
+  "options": [
+   "The tongue",
+   "The eye",
+   "The nose",
+   "The ear"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fabric is made from the fibres of the flax plant?",
+  "options": [
+   "Silk",
+   "Linen",
+   "Cotton",
+   "Wool"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which blood type is known as the universal recipient?",
+  "options": [
+   "A negative",
+   "O negative",
+   "AB positive",
+   "B positive"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does a cobbler repair?",
+  "options": [
+   "Shoes",
+   "Watches",
+   "Hats",
+   "Barrels"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What should you do first if someone's clothes catch fire?",
+  "options": [
+   "Fan the flames out",
+   "Get them to stop, drop and roll",
+   "Pour cold water on their face",
+   "Run for help"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the abbreviation e.g. mean?",
+  "options": [
+   "That is",
+   "And so on",
+   "For example",
+   "In other words"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of whales called?",
+  "options": [
+   "A shoal",
+   "A pod",
+   "A herd",
+   "A gaggle"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the most expensive spice in the world by weight?",
+  "options": [
+   "Cinnamon",
+   "Cardamom",
+   "Saffron",
+   "Vanilla"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the P in PIN stand for?",
+  "options": [
+   "Protected",
+   "Payment",
+   "Personal",
+   "Private"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the two hands on a clock face called?",
+  "options": [
+   "The hour hand and the minute hand",
+   "The east hand and the west hand",
+   "The upper hand and the lower hand",
+   "The long hand and the fat hand"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australia, which season includes Christmas?",
+  "options": [
+   "Summer",
+   "Autumn",
+   "Spring",
+   "Winter"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At what temperature in degrees Celsius does water freeze?",
+  "options": [
+   "32",
+   "100",
+   "0",
+   "10"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call an angle of more than 180 degrees?",
+  "options": [
+   "Obtuse",
+   "Reflex",
+   "Acute",
+   "Oblique"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many players are on the field for one team in rugby league?",
+  "options": [
+   "18",
+   "13",
+   "11",
+   "15"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are Australia's national sporting colours?",
+  "options": [
+   "Blue and gold",
+   "Black and white",
+   "Red and white",
+   "Green and gold"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In grammar, a word that describes a noun is called what?",
+  "options": [
+   "A verb",
+   "A conjunction",
+   "An adjective",
+   "An adverb"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which zodiac sign is represented by twins?",
+  "options": [
+   "Libra",
+   "Pisces",
+   "Gemini",
+   "Aries"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sea animal is known for its eight arms and ink defence?",
+  "options": [
+   "The octopus",
+   "The seahorse",
+   "The stingray",
+   "The eel"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How long is a marathon, to the nearest kilometre?",
+  "options": [
+   "42",
+   "45",
+   "40",
+   "38"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the strongest muscle in the human body by weight?",
+  "options": [
+   "The tongue",
+   "The biceps",
+   "The calf muscle",
+   "The masseter, the jaw muscle"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "On what date is Halloween?",
+  "options": [
+   "31 September",
+   "31 October",
+   "1 November",
+   "30 October"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is in charge of a ship?",
+  "options": [
+   "The bosun",
+   "The pilot",
+   "The captain",
+   "The purser"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many colours are traditionally listed in a rainbow?",
+  "options": [
+   "Nine",
+   "Six",
+   "Seven",
+   "Five"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many arms does an octopus have?",
+  "options": [
+   "Six",
+   "Twelve",
+   "Eight",
+   "Ten"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is usually named the fastest fish in the sea?",
+  "options": [
+   "The sailfish",
+   "The tuna",
+   "The great white shark",
+   "The barracuda"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal is a symbol of wisdom in western culture?",
+  "options": [
+   "The elephant",
+   "The fox",
+   "The owl",
+   "The crow"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fear of germs called?",
+  "options": [
+   "Hydrophobia",
+   "Mysophobia",
+   "Nyctophobia",
+   "Xenophobia"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the metal band that holds the eraser on a pencil called?",
+  "options": [
+   "A ferrule",
+   "An aglet",
+   "A collar",
+   "A crimp"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many balls are bowled in a standard cricket over?",
+  "options": [
+   "Eight",
+   "Six",
+   "Four",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does DNA stand for?",
+  "options": [
+   "Deoxyribose nitrate acid",
+   "Deoxyribonucleic acid",
+   "Dense nucleic amino",
+   "Dual nuclear acid"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many faces does a cube have?",
+  "options": [
+   "Twelve",
+   "Eight",
+   "Six",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which colour is at the outer edge of a rainbow?",
+  "options": [
+   "Violet",
+   "Red",
+   "Blue",
+   "Green"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A comparison using the word like or as is called what?",
+  "options": [
+   "A metaphor",
+   "An allegory",
+   "A simile",
+   "An idiom"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What colour is the emergency stop button on most machinery?",
+  "options": [
+   "Green",
+   "Yellow",
+   "Blue",
+   "Red"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which car maker's badge is four linked rings?",
+  "options": [
+   "BMW",
+   "Mazda",
+   "Volkswagen",
+   "Audi"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a chandler traditionally make or sell?",
+  "options": [
+   "Chairs",
+   "Cheese",
+   "Chains",
+   "Candles"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which hormone controls the level of sugar in the blood?",
+  "options": [
+   "Oestrogen",
+   "Adrenaline",
+   "Testosterone",
+   "Insulin"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a baby kangaroo called?",
+  "options": [
+   "A pup",
+   "A joey",
+   "A kit",
+   "A cub"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the currency of Japan?",
+  "options": [
+   "The won",
+   "The yuan",
+   "The rupee",
+   "The yen"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many corners does a cube have?",
+  "options": [
+   "Twelve",
+   "Four",
+   "Eight",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which animal is the male the one that carries the eggs?",
+  "options": [
+   "The turtle",
+   "The penguin",
+   "The seahorse",
+   "The clownfish"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many seasons are there in a year?",
+  "options": [
+   "Six",
+   "Two",
+   "Four",
+   "Three"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of ants called?",
+  "options": [
+   "A flock",
+   "A pride",
+   "A colony",
+   "A pod"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of the weather called?",
+  "options": [
+   "Climatology only",
+   "Meteorology",
+   "Geology",
+   "Astronomy"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a male duck called?",
+  "options": [
+   "A cob",
+   "A gander",
+   "A drake",
+   "A tom"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which blood cells help the blood to clot?",
+  "options": [
+   "Stem cells",
+   "Plasma cells",
+   "Red blood cells",
+   "Platelets"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many holes are on a standard golf course?",
+  "options": [
+   "21",
+   "9",
+   "18",
+   "12"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape is a standard stop sign?",
+  "options": [
+   "An octagon",
+   "A circle",
+   "A triangle",
+   "A square"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In tennis, what word is used for a score of zero?",
+  "options": [
+   "Nil",
+   "Blank",
+   "Duck",
+   "Love"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Why does ice float on water?",
+  "options": [
+   "Water pushes it up magnetically",
+   "Ice contains air pockets only",
+   "Ice is warmer",
+   "Ice is less dense than water"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which household appliance is used to press creases out of clothes?",
+  "options": [
+   "An iron",
+   "A blender",
+   "A toaster",
+   "A kettle"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the purpose of guttering on a house?",
+  "options": [
+   "To keep birds out",
+   "To support the roof",
+   "To carry rainwater off the roof",
+   "To insulate the eaves"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Adrenaline is produced by glands that sit on top of which organs?",
+  "options": [
+   "The kidneys",
+   "The lungs",
+   "The liver",
+   "The heart"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the @ symbol commonly called in English?",
+  "options": [
+   "The loop",
+   "The spiral",
+   "The at sign",
+   "The curl"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A googol is the number one followed by how many zeros?",
+  "options": [
+   "1000",
+   "50",
+   "10",
+   "100"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a baby frog called?",
+  "options": [
+   "A tadpole",
+   "A nymph",
+   "A froglet only",
+   "A larvae"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest animal that has ever lived?",
+  "options": [
+   "The blue whale",
+   "The African elephant",
+   "The dinosaur Argentinosaurus",
+   "The sperm whale"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the chemical symbol for gold?",
+  "options": [
+   "Go",
+   "Ag",
+   "Gd",
+   "Au"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which nerve is actually being knocked when you hit your funny bone?",
+  "options": [
+   "The vagus nerve",
+   "The sciatic nerve",
+   "The optic nerve",
+   "The ulnar nerve"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a baby goat called?",
+  "options": [
+   "A lamb",
+   "A calf",
+   "A kid",
+   "A foal"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand is famous for a red and white flowing script logo?",
+  "options": [
+   "Solo",
+   "Fanta",
+   "Coca Cola",
+   "Pepsi"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which part of an atom carries a positive charge?",
+  "options": [
+   "The neutron",
+   "The shell",
+   "The electron",
+   "The proton"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The common cold is caused by what kind of germ?",
+  "options": [
+   "A bacterium",
+   "A virus",
+   "A fungus",
+   "A parasite"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of sheep called?",
+  "options": [
+   "A herd",
+   "A flock",
+   "A pod",
+   "A pack"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Roman numerals, what number is M?",
+  "options": [
+   "100",
+   "500",
+   "1000",
+   "10000"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the collective term for animals that have a backbone?",
+  "options": [
+   "Mammals",
+   "Invertebrates",
+   "Vertebrates",
+   "Amphibians"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which part of the body is mainly responsible for balance?",
+  "options": [
+   "The liver",
+   "The kneecap",
+   "The inner ear",
+   "The spleen"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which city is the Colosseum?",
+  "options": [
+   "Naples",
+   "Rome",
+   "Istanbul",
+   "Athens"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which colour of belt is the highest rank in most martial arts?",
+  "options": [
+   "Red",
+   "Brown",
+   "White",
+   "Black"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the only national flag that is not a rectangle or square?",
+  "options": [
+   "Bhutan",
+   "Nepal",
+   "Sri Lanka",
+   "Qatar"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In tennis, what is the term for a score of forty all?",
+  "options": [
+   "Set point",
+   "Advantage",
+   "Deuce",
+   "Love"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which day of the week is named after the Roman god of war, by way of the Norse god Tiw?",
+  "options": [
+   "Tuesday",
+   "Monday",
+   "Thursday",
+   "Saturday"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a barista?",
+  "options": [
+   "A pastry chef",
+   "A wine waiter",
+   "Someone who tends a bar",
+   "Someone who makes coffee"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the horizontal ledge at the bottom of a window called?",
+  "options": [
+   "The mullion",
+   "The lintel",
+   "The jamb",
+   "The sill"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal is said to have nine lives?",
+  "options": [
+   "The dog",
+   "The cat",
+   "The rat",
+   "The fox"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many humps does a dromedary camel have?",
+  "options": [
+   "Four",
+   "Three",
+   "One",
+   "Two"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest muscle in the human body?",
+  "options": [
+   "The calf muscle",
+   "The heart",
+   "The biceps",
+   "The gluteus maximus"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Parmesan cheese comes from which country?",
+  "options": [
+   "Italy",
+   "Greece",
+   "Switzerland",
+   "France"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the chemical symbol for oxygen?",
+  "options": [
+   "Ox",
+   "O",
+   "Og",
+   "O2"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The radius and ulna are the two bones of which part of the body?",
+  "options": [
+   "The neck",
+   "The hand",
+   "The forearm",
+   "The lower leg"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the longest bone in the human body?",
+  "options": [
+   "The spine",
+   "The humerus",
+   "The femur",
+   "The tibia"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional gift for a 50th wedding anniversary?",
+  "options": [
+   "Gold",
+   "Diamond",
+   "Ruby",
+   "Silver"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the largest hot desert in the world?",
+  "options": [
+   "The Kalahari",
+   "The Gobi",
+   "The Sahara",
+   "The Simpson"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the only even prime number?",
+  "options": [
+   "2",
+   "1",
+   "4",
+   "0"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which gland is often called the master gland of the body?",
+  "options": [
+   "The adrenal gland",
+   "The pancreas",
+   "The pituitary gland",
+   "The thyroid gland"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which American city is the Golden Gate Bridge?",
+  "options": [
+   "Los Angeles",
+   "Seattle",
+   "New York",
+   "San Francisco"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the white of the eye called?",
+  "options": [
+   "The cornea",
+   "The lens",
+   "The retina",
+   "The sclera"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mineral is the hardest on the Mohs scale?",
+  "options": [
+   "Quartz",
+   "Corundum",
+   "Diamond",
+   "Topaz"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the common name for the scapula?",
+  "options": [
+   "The elbow",
+   "The shoulder blade",
+   "The hip bone",
+   "The breastbone"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Peanuts belong to which family of plants?",
+  "options": [
+   "Tree nuts",
+   "Legumes",
+   "Berries",
+   "Grasses"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "On what date is St Patrick's Day?",
+  "options": [
+   "17 March",
+   "23 April",
+   "1 March",
+   "17 April"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the largest country in the world by land area?",
+  "options": [
+   "Russia",
+   "The United States",
+   "Canada",
+   "China"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fear of peanut butter sticking to the roof of your mouth called?",
+  "options": [
+   "Peanutophobia",
+   "Glossophobia",
+   "Arachibutyrophobia",
+   "Butyrophobia"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the fear of needles or injections called?",
+  "options": [
+   "Hemophobia",
+   "Algophobia",
+   "Trypanophobia",
+   "Toxophobia"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Christ the Redeemer statue overlooks which city?",
+  "options": [
+   "Lima",
+   "Rio de Janeiro",
+   "Santiago",
+   "Buenos Aires"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which birthstone is linked with the month of September?",
+  "options": [
+   "Ruby",
+   "Opal",
+   "Emerald",
+   "Sapphire"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian sun safety slogan begins with the word slip?",
+  "options": [
+   "Slip, slop, slap",
+   "Slip, slide, stop",
+   "Slip, stop, sit",
+   "Slap, slop, slip"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the French phrase c'est la vie mean?",
+  "options": [
+   "That's the way",
+   "Such is war",
+   "That's life",
+   "That's love"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which birthstone is linked with the month of July?",
+  "options": [
+   "Sapphire",
+   "Topaz",
+   "Diamond",
+   "Ruby"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In medicine, the term hepatic refers to which organ?",
+  "options": [
+   "The stomach",
+   "The heart",
+   "The liver",
+   "The lung"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a cornice in a house?",
+  "options": [
+   "The roof ridge",
+   "The moulding where the wall meets the ceiling",
+   "The window frame",
+   "The front step"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is stored in a camel's hump?",
+  "options": [
+   "Fat",
+   "Salt",
+   "Air",
+   "Water"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mineral is the softest on the Mohs scale?",
+  "options": [
+   "Talc",
+   "Calcite",
+   "Gypsum",
+   "Chalk"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which appliance keeps food cold?",
+  "options": [
+   "The toaster",
+   "The kettle",
+   "The oven",
+   "The refrigerator"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the medical name for the shin bone?",
+  "options": [
+   "The radius",
+   "The fibula",
+   "The tibia",
+   "The femur"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which part of an atom carries a negative charge?",
+  "options": [
+   "The neutron",
+   "The proton",
+   "The electron",
+   "The nucleus"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the repetition of the same starting sound in a phrase called?",
+  "options": [
+   "Metaphor",
+   "Alliteration",
+   "Rhyme",
+   "Assonance"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who is credited with inventing the telephone?",
+  "options": [
+   "Alexander Graham Bell",
+   "Samuel Morse",
+   "Thomas Edison",
+   "Guglielmo Marconi"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Big Ben is properly the name of what?",
+  "options": [
+   "The palace",
+   "The clock tower",
+   "The clock face",
+   "The great bell"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many players are in a netball team on court?",
+  "options": [
+   "Five",
+   "Nine",
+   "Seven",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Human hair and fingernails are mostly made of which protein?",
+  "options": [
+   "Insulin",
+   "Collagen",
+   "Keratin",
+   "Albumin"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the chemical formula for carbon dioxide?",
+  "options": [
+   "CO",
+   "C2O",
+   "CO2",
+   "CD2"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the head chef in a professional kitchen?",
+  "options": [
+   "The maitre d",
+   "The commis chef",
+   "The sous chef",
+   "The chef de cuisine"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tube carries food from the throat to the stomach?",
+  "options": [
+   "The oesophagus",
+   "The colon",
+   "The urethra",
+   "The trachea"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does an electrician's multimeter measure?",
+  "options": [
+   "Sound level",
+   "Voltage, current and resistance",
+   "Light output",
+   "Air pressure"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fear of open or public places called?",
+  "options": [
+   "Claustrophobia",
+   "Acrophobia",
+   "Agoraphobia",
+   "Mysophobia"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "A lack of vitamin D in children can cause which bone disease?",
+  "options": [
+   "Anaemia",
+   "Rickets",
+   "Scurvy",
+   "Gout"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a speedometer measure?",
+  "options": [
+   "Engine revolutions",
+   "Fuel use",
+   "Speed",
+   "Distance"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the currency of Russia?",
+  "options": [
+   "The rouble",
+   "The koruna",
+   "The lev",
+   "The zloty"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is a standard stop sign?",
+  "options": [
+   "Yellow",
+   "Green",
+   "Red",
+   "Blue"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does PS at the end of a letter stand for?",
+  "options": [
+   "Personal statement",
+   "Please see",
+   "Postscript",
+   "Post sent"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A knot is a unit of what?",
+  "options": [
+   "Volume",
+   "Speed",
+   "Weight",
+   "Depth"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the medical term for short sightedness?",
+  "options": [
+   "Hyperopia",
+   "Myopia",
+   "Cataract",
+   "Glaucoma"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many notes are in a musical octave, counting both ends?",
+  "options": [
+   "Five",
+   "Eight",
+   "Twelve",
+   "Seven"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Anaemia is usually caused by a shortage of what in the blood?",
+  "options": [
+   "Iron",
+   "Sodium",
+   "Calcium",
+   "Vitamin C"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Roman numerals, what number is L?",
+  "options": [
+   "15",
+   "50",
+   "100",
+   "500"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a male horse used for breeding called?",
+  "options": [
+   "A gelding",
+   "A mare",
+   "A colt",
+   "A stallion"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a meal eaten outdoors from a basket?",
+  "options": [
+   "A banquet",
+   "A degustation",
+   "A buffet",
+   "A picnic"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "When rolling two dice, which total comes up most often?",
+  "options": [
+   "Two",
+   "Seven",
+   "Eight",
+   "Six"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Melbourne Cup is run on which day?",
+  "options": [
+   "The first Saturday in November",
+   "The first Tuesday in November",
+   "The second Monday in November",
+   "The last Tuesday in October"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What shape are the two main pins on an Australian power plug?",
+  "options": [
+   "Square",
+   "Flat and parallel",
+   "Flat and angled in a V",
+   "Round and parallel"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for the tall stand a speaker reads notes from?",
+  "options": [
+   "A lectern",
+   "A plinth",
+   "A pew",
+   "A trestle"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the abbreviation RSVP ask you to do?",
+  "options": [
+   "Dress formally",
+   "Arrive early",
+   "Bring a gift",
+   "Reply"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the main ingredient of guacamole?",
+  "options": [
+   "Avocado",
+   "Pea",
+   "Cucumber",
+   "Broad bean"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does DIY stand for?",
+  "options": [
+   "Design it yourself",
+   "Deliver it yourself",
+   "Draw it yourself",
+   "Do it yourself"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which birthstone is linked with the month of April?",
+  "options": [
+   "Amethyst",
+   "Ruby",
+   "Diamond",
+   "Garnet"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the currency of Mexico?",
+  "options": [
+   "The peso",
+   "The real",
+   "The bolivar",
+   "The sol"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour band marks a carbon dioxide fire extinguisher in Australia?",
+  "options": [
+   "Black",
+   "White",
+   "Red",
+   "Blue"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Marzipan is made mainly from which nut?",
+  "options": [
+   "Almonds",
+   "Cashews",
+   "Walnuts",
+   "Hazelnuts"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional gift for a 30th wedding anniversary?",
+  "options": [
+   "Silver",
+   "Ruby",
+   "Coral",
+   "Pearl"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What do you call an angle between 90 and 180 degrees?",
+  "options": [
+   "Reflex",
+   "Obtuse",
+   "Acute",
+   "Straight"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the only continent with no native snakes?",
+  "options": [
+   "South America",
+   "Antarctica",
+   "Europe",
+   "Australia"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which organ produces insulin?",
+  "options": [
+   "The liver",
+   "The pancreas",
+   "The spleen",
+   "The thyroid"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which retailer's logo is a red bullseye?",
+  "options": [
+   "Big W",
+   "Kmart",
+   "Myer",
+   "Target"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tradesperson lays bricks and blocks?",
+  "options": [
+   "A boilermaker",
+   "A bricklayer",
+   "A roofer",
+   "A concreter"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Stonehenge is in which country?",
+  "options": [
+   "England",
+   "Scotland",
+   "Wales",
+   "Ireland"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many points is a goal worth in Australian rules football?",
+  "options": [
+   "Four",
+   "Five",
+   "One",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the chemical symbol for sodium?",
+  "options": [
+   "Nm",
+   "So",
+   "Sd",
+   "Na"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What three things does a fire need, often called the fire triangle?",
+  "options": [
+   "Heat, smoke and wind",
+   "Fuel, water and air",
+   "Heat, fuel and oxygen",
+   "Smoke, spark and wood"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What metal is a second place Olympic medal made of?",
+  "options": [
+   "Silver",
+   "Gold",
+   "Platinum",
+   "Bronze"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird reaches the fastest speed of any animal, in a dive?",
+  "options": [
+   "The albatross",
+   "The swift",
+   "The peregrine falcon",
+   "The golden eagle"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the back of a ship called?",
+  "options": [
+   "The bow",
+   "The stern",
+   "The mast",
+   "The hull"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Latin phrase carpe diem mean?",
+  "options": [
+   "Seize the day",
+   "Buyer beware",
+   "Always faithful",
+   "By the way"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A mocha coffee contains which extra ingredient?",
+  "options": [
+   "Vanilla bean",
+   "Caramel",
+   "Honey",
+   "Chocolate"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a baby horse called?",
+  "options": [
+   "A kid",
+   "A foal",
+   "A lamb",
+   "A calf"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the dot over a lower case i or j called?",
+  "options": [
+   "A dotlet",
+   "A tittle",
+   "A pip",
+   "A cap"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which part of the body does an audiologist test?",
+  "options": [
+   "Balance only",
+   "Hearing",
+   "Reflexes",
+   "Eyesight"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the common name for the compound sodium chloride?",
+  "options": [
+   "Chalk",
+   "Vinegar",
+   "Baking soda",
+   "Table salt"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which insect is the most likely carrier of malaria?",
+  "options": [
+   "The sandfly",
+   "The tick",
+   "The tsetse fly",
+   "The mosquito"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest internal organ in the human body?",
+  "options": [
+   "The stomach",
+   "The pancreas",
+   "The liver",
+   "The heart"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is bigger, a gigabyte or a terabyte?",
+  "options": [
+   "A gigabyte",
+   "They are equal",
+   "Neither",
+   "A terabyte"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The saying righty tighty, lefty loosey describes how to do what?",
+  "options": [
+   "Tie a knot",
+   "Turn a screw or bolt",
+   "Set a table",
+   "Read a map"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for the plastic or metal tip on the end of a shoelace?",
+  "options": [
+   "A ferrule",
+   "A tag",
+   "A grommet",
+   "An aglet"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Hiccups are caused by a sudden spasm of which muscle?",
+  "options": [
+   "The calf",
+   "The diaphragm",
+   "The heart",
+   "The tongue"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the common name for the clavicle?",
+  "options": [
+   "The kneecap",
+   "The collarbone",
+   "The jawbone",
+   "The shin bone"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What instrument records earthquakes?",
+  "options": [
+   "A seismograph",
+   "A chronograph",
+   "A telegraph",
+   "A barograph"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of rocks and the Earth called?",
+  "options": [
+   "Meteorology",
+   "Seismology",
+   "Geology",
+   "Geography"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many bones are in the adult human skeleton?",
+  "options": [
+   "186",
+   "226",
+   "306",
+   "206"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the chemical symbol for carbon?",
+  "options": [
+   "C",
+   "Ca",
+   "Cb",
+   "Cr"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who discovered penicillin?",
+  "options": [
+   "Louis Pasteur",
+   "Joseph Lister",
+   "Alexander Fleming",
+   "Edward Jenner"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Achilles tendon connects the heel to which muscles?",
+  "options": [
+   "The calf muscles",
+   "The shoulder muscles",
+   "The stomach muscles",
+   "The thigh muscles"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal is famous for changing colour to blend in?",
+  "options": [
+   "The chameleon",
+   "The iguana",
+   "The newt",
+   "The gecko"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At an Australian roundabout, who has right of way?",
+  "options": [
+   "Vehicles already on the roundabout",
+   "The largest vehicle",
+   "Whoever indicates first",
+   "Vehicles entering from the left"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of geese on the ground called?",
+  "options": [
+   "A pride",
+   "A gaggle",
+   "A pod",
+   "A murder"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the currency of Poland?",
+  "options": [
+   "The koruna",
+   "The lev",
+   "The forint",
+   "The zloty"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does CPR stand for in first aid?",
+  "options": [
+   "Cardiac pressure relief",
+   "Complete patient recovery",
+   "Cardiopulmonary resuscitation",
+   "Critical pulse restart"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the currency of India?",
+  "options": [
+   "The rupee",
+   "The taka",
+   "The rial",
+   "The dinar"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A severe lack of vitamin C causes which disease?",
+  "options": [
+   "Rickets",
+   "Scurvy",
+   "Gout",
+   "Beriberi"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a shoe with no laces that slips on?",
+  "options": [
+   "A brogue",
+   "A sandal wedge",
+   "A loafer",
+   "A boot"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country are the Great Pyramids of Giza?",
+  "options": [
+   "Mexico",
+   "Egypt",
+   "Iraq",
+   "Sudan"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape is the DNA molecule usually described as?",
+  "options": [
+   "A flat ribbon",
+   "A double helix",
+   "A cube",
+   "A pyramid"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the proper name for the infinity symbol shape?",
+  "options": [
+   "The mobius",
+   "The vesica",
+   "The lemniscate",
+   "The torus"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which word describes a sentence that uses every letter of the alphabet?",
+  "options": [
+   "A palindrome",
+   "An anagram",
+   "A pangram",
+   "A lipogram"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the outer ring around the bullseye worth on a dartboard?",
+  "options": [
+   "20",
+   "25",
+   "50",
+   "10"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What instrument measures wind speed?",
+  "options": [
+   "A hygrometer",
+   "An anemometer",
+   "A barometer",
+   "A seismograph"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which group of animals do snakes and lizards belong to?",
+  "options": [
+   "Reptiles",
+   "Mammals",
+   "Amphibians",
+   "Marsupials"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is seven multiplied by eight?",
+  "options": [
+   "56",
+   "54",
+   "64",
+   "48"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the common name for the mandible?",
+  "options": [
+   "The lower jaw",
+   "The skull",
+   "The upper arm",
+   "The ribcage"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the currency of Thailand?",
+  "options": [
+   "The dong",
+   "The baht",
+   "The kyat",
+   "The ringgit"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which sport would you perform a slam dunk?",
+  "options": [
+   "Basketball",
+   "Volleyball",
+   "Netball",
+   "Handball"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the main ingredient of hummus?",
+  "options": [
+   "Lentils",
+   "Peanuts",
+   "Chickpeas",
+   "Broad beans"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country was the first to issue a full series of polymer banknotes?",
+  "options": [
+   "Canada",
+   "Australia",
+   "New Zealand",
+   "Britain"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the longest river in South America?",
+  "options": [
+   "The Parana",
+   "The Magdalena",
+   "The Orinoco",
+   "The Amazon"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many legs does an insect have?",
+  "options": [
+   "Four",
+   "Eight",
+   "Ten",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for a nerve cell?",
+  "options": [
+   "A villus",
+   "A platelet",
+   "A nephron",
+   "A neuron"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal is famous for its black and white stripes?",
+  "options": [
+   "The skunk",
+   "The zebra",
+   "The badger",
+   "The tapir"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is one of the five basic tastes?",
+  "options": [
+   "Metallic",
+   "Spicy",
+   "Minty",
+   "Umami"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the emergency telephone number in the United Kingdom?",
+  "options": [
+   "999",
+   "112",
+   "000",
+   "911"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do you top up in a car when the windscreen is dirty?",
+  "options": [
+   "Engine oil",
+   "Washer fluid",
+   "Brake fluid",
+   "Coolant"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What book would you use to find words with similar meanings?",
+  "options": [
+   "An encyclopedia",
+   "An atlas",
+   "A dictionary",
+   "A thesaurus"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the smallest country in the world?",
+  "options": [
+   "Vatican City",
+   "Monaco",
+   "Liechtenstein",
+   "San Marino"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the common name for the sternum?",
+  "options": [
+   "The backbone",
+   "The breastbone",
+   "The heel bone",
+   "The collarbone"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the medical name for the backbone?",
+  "options": [
+   "The cranium",
+   "The vertebral column",
+   "The pelvis",
+   "The sternum"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which zodiac sign is represented by a pair of scales?",
+  "options": [
+   "Virgo",
+   "Gemini",
+   "Pisces",
+   "Libra"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Latin phrase bona fide mean?",
+  "options": [
+   "Good health",
+   "Well done",
+   "Good luck",
+   "In good faith"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In lawn bowls, what is the small white target ball called?",
+  "options": [
+   "The kitty ball",
+   "The pip",
+   "The pin",
+   "The jack"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal appears on the logo of the World Wide Fund for Nature?",
+  "options": [
+   "The elephant",
+   "The polar bear",
+   "The giant panda",
+   "The tiger"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which bird can fly backwards?",
+  "options": [
+   "The kingfisher",
+   "The swift",
+   "The sparrow",
+   "The hummingbird"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who were the first two men confirmed to reach the summit of Mount Everest?",
+  "options": [
+   "Chris Bonington and Doug Scott",
+   "George Mallory and Andrew Irvine",
+   "Edmund Hillary and Tenzing Norgay",
+   "Reinhold Messner and Peter Habeler"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many letters are used to name the musical notes?",
+  "options": [
+   "Eight",
+   "Seven",
+   "Twelve",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The pelvis is the bone structure at which part of the body?",
+  "options": [
+   "The hips",
+   "The skull",
+   "The chest",
+   "The shoulders"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the smallest blood vessels in the body called?",
+  "options": [
+   "Veins",
+   "Arteries",
+   "Ventricles",
+   "Capillaries"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fear of heights called?",
+  "options": [
+   "Acrophobia",
+   "Hydrophobia",
+   "Agoraphobia",
+   "Arachnophobia"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who painted the Mona Lisa?",
+  "options": [
+   "Vincent van Gogh",
+   "Leonardo da Vinci",
+   "Michelangelo",
+   "Raphael"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Morse code, what is sent as three dots, three dashes, three dots?",
+  "options": [
+   "SOS",
+   "SMS",
+   "OSO",
+   "EAT"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many points is a try worth in rugby union?",
+  "options": [
+   "Five",
+   "Six",
+   "Four",
+   "Three"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a male sheep called?",
+  "options": [
+   "A wether lamb",
+   "A buck",
+   "A ram",
+   "A ewe"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On a standard dice, what do two opposite faces always add up to?",
+  "options": [
+   "Six",
+   "Five",
+   "Seven",
+   "Eight"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the longest river in Africa?",
+  "options": [
+   "The Niger",
+   "The Congo",
+   "The Nile",
+   "The Zambezi"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Acropolis and the Parthenon are in which city?",
+  "options": [
+   "Cairo",
+   "Istanbul",
+   "Athens",
+   "Rome"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many signs are in the western zodiac?",
+  "options": [
+   "24",
+   "13",
+   "12",
+   "10"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of cattle called?",
+  "options": [
+   "A flock",
+   "A school",
+   "A swarm",
+   "A herd"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many sides does a decagon have?",
+  "options": [
+   "Eight",
+   "Ten",
+   "Nine",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many stars are on the Australian national flag?",
+  "options": [
+   "Five",
+   "Four",
+   "Seven",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the only mammal capable of true sustained flight?",
+  "options": [
+   "The sugar glider",
+   "The colugo",
+   "The flying squirrel",
+   "The bat"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the universal hand signal for choking?",
+  "options": [
+   "A flat palm on the chest",
+   "A raised fist",
+   "Both arms crossed overhead",
+   "Hands clutched at the throat"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Pasteurisation of milk is named after which scientist?",
+  "options": [
+   "Louis Pasteur",
+   "Robert Koch",
+   "Joseph Lister",
+   "Marie Curie"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the medical name for the eardrum?",
+  "options": [
+   "The tympanic membrane",
+   "The auricle",
+   "The stapes",
+   "The cochlea"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do giant pandas almost entirely eat?",
+  "options": [
+   "Eucalyptus leaves",
+   "Fish",
+   "Grass seed",
+   "Bamboo"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the formal name for the hash symbol?",
+  "options": [
+   "The obelisk",
+   "The pilcrow",
+   "The interpunct",
+   "The octothorpe"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "On what date is Christmas Day?",
+  "options": [
+   "24 December",
+   "1 January",
+   "26 December",
+   "25 December"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a baby swan called?",
+  "options": [
+   "A cygnet",
+   "A poult",
+   "A gosling",
+   "A duckling"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 10 per cent of 200?",
+  "options": [
+   "30",
+   "10",
+   "20",
+   "2"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country is the Leaning Tower of Pisa?",
+  "options": [
+   "Italy",
+   "Spain",
+   "France",
+   "Greece"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a baby goose called?",
+  "options": [
+   "A squab",
+   "A gosling",
+   "A chick",
+   "A cygnet"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many teeth are in a full set of children's baby teeth?",
+  "options": [
+   "24",
+   "20",
+   "16",
+   "32"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does FAQ stand for?",
+  "options": [
+   "Fast and quick queries",
+   "Formal application questions",
+   "Frequently asked questions",
+   "Full answer query"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many numbered sections are on a standard dartboard?",
+  "options": [
+   "24",
+   "21",
+   "20",
+   "18"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the body lose through sweating that must be replaced?",
+  "options": [
+   "Protein and fat",
+   "Water and salt",
+   "Iron and calcium",
+   "Oxygen"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many weeks are in a year, to the nearest whole week?",
+  "options": [
+   "48",
+   "54",
+   "50",
+   "52"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many players are in a basketball team on court?",
+  "options": [
+   "Six",
+   "Seven",
+   "Five",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In first aid, what is the recovery position used for?",
+  "options": [
+   "Treating a broken leg",
+   "Keeping an unconscious but breathing person's airway clear",
+   "Stopping bleeding",
+   "Restarting the heart"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On what date is Anzac Day?",
+  "options": [
+   "26 January",
+   "11 November",
+   "25 April",
+   "1 April"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was Australia's first female Prime Minister?",
+  "options": [
+   "Quentin Bryce",
+   "Penny Wong",
+   "Bronwyn Bishop",
+   "Julia Gillard"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tool would you use to cut wood?",
+  "options": [
+   "A saw",
+   "A spanner",
+   "A hammer",
+   "A trowel"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Mixing red and blue paint gives which colour?",
+  "options": [
+   "Orange",
+   "Purple",
+   "Green",
+   "Yellow"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which muscle sits below the lungs and helps you breathe?",
+  "options": [
+   "The pectoral",
+   "The trapezius",
+   "The diaphragm",
+   "The abdominal wall"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a spanner used for?",
+  "options": [
+   "Drilling holes",
+   "Smoothing plaster",
+   "Cutting timber",
+   "Turning nuts and bolts"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On what date is April Fools' Day?",
+  "options": [
+   "31 March",
+   "1 April",
+   "1 May",
+   "2 April"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many minutes are in a quarter of an hour?",
+  "options": [
+   "15",
+   "10",
+   "20",
+   "30"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a marquee at an outdoor event?",
+  "options": [
+   "A sign board",
+   "A serving counter",
+   "A large tent",
+   "A stage"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a thermostat do?",
+  "options": [
+   "Times an appliance",
+   "Filters air",
+   "Switches heating or cooling on and off to hold a temperature",
+   "Measures humidity"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Pure gold is described as how many carats?",
+  "options": [
+   "24",
+   "22",
+   "9",
+   "18"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many players are on the field for one team in rugby union?",
+  "options": [
+   "11",
+   "15",
+   "18",
+   "13"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the abbreviation i.e. mean?",
+  "options": [
+   "And others",
+   "For example",
+   "That is",
+   "In every case"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country's flag is a plain red circle on a white background?",
+  "options": [
+   "Japan",
+   "South Korea",
+   "China",
+   "Bangladesh"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fast food chain uses golden arches as its logo?",
+  "options": [
+   "KFC",
+   "Red Rooster",
+   "Hungry Jack's",
+   "McDonald's"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the AM in AM radio stand for?",
+  "options": [
+   "Auto modulation",
+   "Amplitude modulation",
+   "Ambient mode",
+   "Advanced music"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What instrument is used to measure blood pressure?",
+  "options": [
+   "An otoscope",
+   "A stethoscope",
+   "A thermometer",
+   "A sphygmomanometer"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a group of puppies born together called?",
+  "options": [
+   "A litter",
+   "A clutch",
+   "A brood",
+   "A gaggle"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the currency symbol for the British pound?",
+  "options": [
+   "A crossed L",
+   "A crossed Y",
+   "A crossed S",
+   "A crossed E"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The word root 'cardio', from the Greek, refers to which organ?",
+  "options": [
+   "The heart",
+   "The brain",
+   "The kidneys",
+   "The lungs"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which ingredient makes bread dough rise?",
+  "options": [
+   "Butter",
+   "Milk",
+   "Salt",
+   "Yeast"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call an angle of less than 90 degrees?",
+  "options": [
+   "Reflex",
+   "Obtuse",
+   "Acute",
+   "Right"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australia, what is a tropical revolving storm called?",
+  "options": [
+   "A cyclone",
+   "A typhoon",
+   "A tornado",
+   "A hurricane"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What comes after a million in the standard counting scale?",
+  "options": [
+   "A zillion",
+   "A quadrillion",
+   "A billion",
+   "A trillion"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many strings does a violin have?",
+  "options": [
+   "Four",
+   "Five",
+   "Three",
+   "Six"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the chemical symbol for iron?",
+  "options": [
+   "Io",
+   "Fe",
+   "In",
+   "Ir"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A black box flight recorder is actually painted which colour?",
+  "options": [
+   "Black",
+   "Silver",
+   "Orange",
+   "White"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which room of a house is a pantry usually part of?",
+  "options": [
+   "The kitchen",
+   "The bedroom",
+   "The bathroom",
+   "The garage"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you call a person who cuts and styles hair?",
+  "options": [
+   "A haberdasher",
+   "A milliner",
+   "A cobbler",
+   "A hairdresser"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the three common states of matter?",
+  "options": [
+   "Solid, liquid and gas",
+   "Metal, wood and stone",
+   "Acid, base and salt",
+   "Hot, cold and warm"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The thyroid gland is found in which part of the body?",
+  "options": [
+   "The neck",
+   "The abdomen",
+   "The chest wall",
+   "The thigh"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does LED stand for?",
+  "options": [
+   "Linear emission dot",
+   "Low energy display",
+   "Light emitting diode",
+   "Light electronic device"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which side of the road do Australians drive on?",
+  "options": [
+   "The centre",
+   "Either",
+   "The left",
+   "The right"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is normal human body temperature, in degrees Celsius?",
+  "options": [
+   "About 42",
+   "About 27",
+   "About 37",
+   "About 32"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which direction do the hands of a clock turn?",
+  "options": [
+   "It varies by country",
+   "Clockwise",
+   "Both ways",
+   "Anticlockwise"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many kangaroos appear on the Australian one dollar coin?",
+  "options": [
+   "One",
+   "Three",
+   "Seven",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many jokers usually come with a new deck of cards?",
+  "options": [
+   "One",
+   "Two",
+   "Four",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the most expensive property on a standard British Monopoly board?",
+  "options": [
+   "Bond Street",
+   "Old Kent Road",
+   "Mayfair",
+   "Park Lane"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does RSL stand for in Australia?",
+  "options": [
+   "Recreation and Social League",
+   "Returned and Services League",
+   "Royal Society of Leisure",
+   "Regional Sporting League"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sportswear brand uses a tick shaped swoosh?",
+  "options": [
+   "Adidas",
+   "Nike",
+   "Puma",
+   "Reebok"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many players are needed for a game of singles tennis?",
+  "options": [
+   "Three",
+   "Four",
+   "Six",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many senses are traditionally listed for humans?",
+  "options": [
+   "Six",
+   "Four",
+   "Seven",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many lungs does a person have?",
+  "options": [
+   "One",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the largest living land animal?",
+  "options": [
+   "The white rhinoceros",
+   "The African elephant",
+   "The hippopotamus",
+   "The giraffe"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which canal links the Mediterranean Sea to the Red Sea?",
+  "options": [
+   "The Suez Canal",
+   "The Corinth Canal",
+   "The Panama Canal",
+   "The Kiel Canal"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many tiles are in a standard double six set of dominoes?",
+  "options": [
+   "28",
+   "32",
+   "24",
+   "36"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A dermatologist treats problems with what?",
+  "options": [
+   "The eyes",
+   "The skin",
+   "The bones",
+   "The heart"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour are the stars of the Southern Cross on the New Zealand flag?",
+  "options": [
+   "Red",
+   "White",
+   "Gold",
+   "Blue"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the chemical symbol for hydrogen?",
+  "options": [
+   "H",
+   "Hd",
+   "Hg",
+   "Hy"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which zodiac sign is represented by a lion?",
+  "options": [
+   "Leo",
+   "Aries",
+   "Scorpio",
+   "Taurus"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the front of a ship called?",
+  "options": [
+   "The keel",
+   "The helm",
+   "The bow",
+   "The stern"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which side of the car does the driver sit in Australia?",
+  "options": [
+   "The right",
+   "The centre",
+   "The left",
+   "Either side"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In motor racing, what does a yellow flag mean?",
+  "options": [
+   "Caution, slow down",
+   "The race has finished",
+   "You are being lapped",
+   "The race has started"
+  ],
+  "correctIndex": 0,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal produces cashmere?",
+  "options": [
+   "The rabbit",
+   "The sheep",
+   "The alpaca",
+   "The goat"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language has the most native speakers in the world?",
+  "options": [
+   "Hindi",
+   "Spanish",
+   "English",
+   "Mandarin Chinese"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 26 December known as in Australia?",
+  "options": [
+   "St Stephen's Eve",
+   "Christmas Eve",
+   "New Year's Eve",
+   "Boxing Day"
+  ],
+  "correctIndex": 3,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is longer, the small intestine or the large intestine?",
+  "options": [
+   "They are the same",
+   "The large intestine",
+   "The small intestine",
+   "Neither, they are the same organ"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In grammar, a doing word is called what?",
+  "options": [
+   "An adjective",
+   "A verb",
+   "A noun",
+   "A preposition"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Veal is the meat of which animal?",
+  "options": [
+   "A lamb",
+   "A piglet",
+   "A calf",
+   "A young deer"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fear of spiders called?",
+  "options": [
+   "Agoraphobia",
+   "Arachnophobia",
+   "Ailurophobia",
+   "Acrophobia"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many hearts does an octopus have?",
+  "options": [
+   "One",
+   "Three",
+   "Two",
+   "Eight"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a plasterer do?",
+  "options": [
+   "Lays bricks",
+   "Fits windows",
+   "Finishes walls and ceilings with a smooth surface",
+   "Installs wiring"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the tonsils part of?",
+  "options": [
+   "The nervous system",
+   "The immune system",
+   "The digestive system",
+   "The skeleton"
+  ],
+  "correctIndex": 1,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the currency of Vietnam?",
+  "options": [
+   "The kip",
+   "The baht",
+   "The dong",
+   "The riel"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many points is a try worth in rugby league?",
+  "options": [
+   "Six",
+   "Three",
+   "Four",
+   "Five"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which letter is the most commonly used in written English?",
+  "options": [
+   "T",
+   "S",
+   "E",
+   "A"
+  ],
+  "correctIndex": 2,
+  "category": "General Knowledge",
+  "difficulty": "medium"
+ }
+]

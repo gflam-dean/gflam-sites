@@ -1,0 +1,926 @@
+[
+ {
+  "question": "Which gas do plants absorb for photosynthesis?",
+  "options": [
+   "Carbon dioxide",
+   "Hydrogen",
+   "Oxygen",
+   "Nitrogen"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which gas do plants release during photosynthesis?",
+  "options": [
+   "Oxygen",
+   "Nitrogen",
+   "Carbon dioxide",
+   "Methane"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What pigment makes plants green?",
+  "options": [
+   "Carotene",
+   "Melanin",
+   "Haemoglobin",
+   "Chlorophyll"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape is a DNA molecule?",
+  "options": [
+   "A double helix",
+   "A flat ribbon",
+   "A cube lattice",
+   "A single spiral"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many chromosomes does a typical human cell contain?",
+  "options": [
+   "44",
+   "46",
+   "48",
+   "23"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which blood type is known as the universal donor for red cells?",
+  "options": [
+   "A positive",
+   "B negative",
+   "AB positive",
+   "O negative"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which organ is the largest in the human body?",
+  "options": [
+   "The liver",
+   "The skin",
+   "The brain",
+   "The lungs"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the largest internal organ?",
+  "options": [
+   "The liver",
+   "The pancreas",
+   "The stomach",
+   "The heart"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many bones are in an adult human body?",
+  "options": [
+   "206",
+   "250",
+   "150",
+   "300"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which part of the body produces insulin?",
+  "options": [
+   "The thyroid",
+   "The spleen",
+   "The pancreas",
+   "The liver"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many lungs does a human have?",
+  "options": [
+   "Four",
+   "One",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the normal human body temperature in degrees Celsius, approximately?",
+  "options": [
+   "39",
+   "41",
+   "35",
+   "37"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which vitamin does the body make from sunlight?",
+  "options": [
+   "Vitamin A",
+   "Vitamin K",
+   "Vitamin D",
+   "Vitamin C"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sense is processed by the olfactory system?",
+  "options": [
+   "Smell",
+   "Taste",
+   "Hearing",
+   "Touch"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the speed of light in a vacuum, roughly?",
+  "options": [
+   "300,000 metres per second",
+   "300,000 kilometres per second",
+   "30,000 kilometres per second",
+   "3 million kilometres per second"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ship did Charles Darwin sail on?",
+  "options": [
+   "HMS Beagle",
+   "HMS Victory",
+   "HMS Endeavour",
+   "HMS Challenger"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which islands were key to Darwin's finch observations?",
+  "options": [
+   "The Galapagos",
+   "The Canaries",
+   "The Seychelles",
+   "The Azores"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is considered the father of genetics for his work with pea plants?",
+  "options": [
+   "Robert Hooke",
+   "Charles Darwin",
+   "Gregor Mendel",
+   "Louis Pasteur"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which scientist developed the first vaccine, against smallpox?",
+  "options": [
+   "Edward Jenner",
+   "Louis Pasteur",
+   "Jonas Salk",
+   "Robert Koch"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which process kills bacteria in milk by heating it?",
+  "options": [
+   "Homogenisation",
+   "Sterilisation by radiation",
+   "Pasteurisation",
+   "Fermentation"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which scientist won Nobel Prizes in two different sciences?",
+  "options": [
+   "Marie Curie",
+   "Albert Einstein",
+   "Linus Pauling",
+   "Niels Bohr"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which elements did Marie Curie discover?",
+  "options": [
+   "Polonium and radium",
+   "Radon and francium",
+   "Uranium and thorium",
+   "Neon and argon"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the atomic number of hydrogen?",
+  "options": [
+   "0",
+   "2",
+   "3",
+   "1"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the hardest natural substance?",
+  "options": [
+   "Diamond",
+   "Quartz",
+   "Steel",
+   "Titanium"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which scale measures mineral hardness?",
+  "options": [
+   "The Beaufort scale",
+   "The Mohs scale",
+   "The Kelvin scale",
+   "The Richter scale"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which scale measures earthquake magnitude?",
+  "options": [
+   "The Mohs scale",
+   "The Richter scale",
+   "The Scoville scale",
+   "The Beaufort scale"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which scale measures wind force at sea?",
+  "options": [
+   "The Beaufort scale",
+   "The Saffir-Simpson scale",
+   "The Fujita scale",
+   "The Richter scale"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is molten rock called while still underground?",
+  "options": [
+   "Lava",
+   "Basalt",
+   "Pumice",
+   "Magma"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the three main types of rock?",
+  "options": [
+   "Volcanic, coastal and desert",
+   "Igneous, sedimentary and metamorphic",
+   "Hard, soft and porous",
+   "Crystal, mineral and fossil"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which rock forms from cooled lava and can float on water?",
+  "options": [
+   "Slate",
+   "Marble",
+   "Pumice",
+   "Granite"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the outermost layer of the Earth called?",
+  "options": [
+   "The mantle",
+   "The core",
+   "The lithosphere only",
+   "The crust"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which layer of the Earth is liquid iron and nickel?",
+  "options": [
+   "The mantle",
+   "The outer core",
+   "The crust",
+   "The inner core"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the theory that Earth's crust is broken into moving plates?",
+  "options": [
+   "Crust dynamics",
+   "Plate tectonics",
+   "Seismic drift",
+   "Continental erosion"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the supercontinent that existed about 300 million years ago called?",
+  "options": [
+   "Pangaea",
+   "Rodinia",
+   "Gondwana only",
+   "Laurasia only"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which era are the dinosaurs most associated with?",
+  "options": [
+   "The Cenozoic",
+   "The Mesozoic",
+   "The Palaeozoic",
+   "The Precambrian"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Roughly how long ago did non-avian dinosaurs become extinct?",
+  "options": [
+   "66 million years",
+   "10 million years",
+   "250 million years",
+   "1 million years"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which dinosaur had three horns on its head?",
+  "options": [
+   "Iguanodon",
+   "Ankylosaurus",
+   "Triceratops",
+   "Stegosaurus"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which modern animals are considered the closest living relatives of dinosaurs?",
+  "options": [
+   "Crocodiles",
+   "Birds",
+   "Turtles",
+   "Lizards"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the tallest land animal?",
+  "options": [
+   "The giraffe",
+   "The camel",
+   "The elephant",
+   "The moose"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the largest fish species?",
+  "options": [
+   "The basking shark",
+   "The great white shark",
+   "The manta ray",
+   "The whale shark"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is an octopus' blood?",
+  "options": [
+   "Clear",
+   "Green",
+   "Blue",
+   "Red"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mammal is capable of true sustained flight?",
+  "options": [
+   "The colugo",
+   "The flying squirrel",
+   "The bat",
+   "The sugar glider"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird cannot fly but is the fastest running bird?",
+  "options": [
+   "The kiwi",
+   "The emu",
+   "The ostrich",
+   "The penguin"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fastest bird in a dive?",
+  "options": [
+   "The golden eagle",
+   "The albatross",
+   "The peregrine falcon",
+   "The swift"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal has the longest migration of any bird?",
+  "options": [
+   "The swallow",
+   "The Arctic tern",
+   "The albatross",
+   "The godwit"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How long is an elephant's gestation period, roughly?",
+  "options": [
+   "9 months",
+   "12 months",
+   "22 months",
+   "36 months"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal never stops growing teeth, requiring constant gnawing?",
+  "options": [
+   "Cats",
+   "Horses",
+   "Dogs",
+   "Rodents"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sea creature can regenerate lost arms?",
+  "options": [
+   "The seahorse",
+   "The jellyfish",
+   "The clam",
+   "The starfish"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many arms does a typical starfish have?",
+  "options": [
+   "Four",
+   "Eight",
+   "Six",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do a camel's humps store?",
+  "options": [
+   "Salt",
+   "Water",
+   "Fat",
+   "Air"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal produces the most milk commercially worldwide?",
+  "options": [
+   "The buffalo",
+   "The goat",
+   "The sheep",
+   "The cow"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the process by which caterpillars become butterflies called?",
+  "options": [
+   "Metamorphosis",
+   "Photosynthesis",
+   "Osmosis",
+   "Mitosis"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the stage between caterpillar and butterfly called?",
+  "options": [
+   "Larva",
+   "Egg sac",
+   "Nymph",
+   "Pupa or chrysalis"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do bees produce besides honey?",
+  "options": [
+   "Amber",
+   "Silk",
+   "Resinite",
+   "Beeswax"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the dance bees use to communicate food locations called?",
+  "options": [
+   "The pollen shuffle",
+   "The buzz walk",
+   "The waggle dance",
+   "The circle hop"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the tallest tree species in the world?",
+  "options": [
+   "The coast redwood",
+   "The mountain ash",
+   "The kauri",
+   "The Douglas fir"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian tree species is the tallest flowering plant in the world?",
+  "options": [
+   "The karri",
+   "The jarrah",
+   "The mountain ash",
+   "The river red gum"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the rings inside a tree trunk used to determine?",
+  "options": [
+   "Its species",
+   "Its age",
+   "Its water content",
+   "Its height"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which process describes water changing from liquid to gas?",
+  "options": [
+   "Evaporation",
+   "Precipitation",
+   "Sublimation",
+   "Condensation"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is it called when a gas turns directly into a solid?",
+  "options": [
+   "Sublimation",
+   "Condensation",
+   "Deposition",
+   "Fusion"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which type of cloud is tall, dark and brings thunderstorms?",
+  "options": [
+   "Cirrus",
+   "Stratus",
+   "Cumulonimbus",
+   "Altocumulus"
+  ],
+  "correctIndex": 2,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What causes thunder?",
+  "options": [
+   "Clouds colliding",
+   "Rain hitting the ground",
+   "Wind shear",
+   "Rapidly expanding air heated by lightning"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a rotating column of air touching the ground?",
+  "options": [
+   "A tornado",
+   "A cyclone",
+   "A jet stream",
+   "A monsoon"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a tropical cyclone called in the Atlantic?",
+  "options": [
+   "A typhoon",
+   "A hurricane",
+   "A monsoon",
+   "A willy-willy"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a tropical cyclone called in the northwest Pacific?",
+  "options": [
+   "A typhoon",
+   "A cyclone",
+   "A tempest",
+   "A hurricane"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the greenhouse effect?",
+  "options": [
+   "Gases trapping heat in the atmosphere",
+   "Sunlight reflecting off ice",
+   "Plants warming the soil",
+   "Ocean currents cooling the air"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which gas is the main driver of human-caused climate change?",
+  "options": [
+   "Oxygen",
+   "Carbon dioxide",
+   "Nitrogen",
+   "Helium"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the layer that protects Earth from ultraviolet radiation?",
+  "options": [
+   "The ozone layer",
+   "The ionosphere",
+   "The magnetosphere",
+   "The troposphere"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is renewable energy generated by moving air called?",
+  "options": [
+   "Geothermal power",
+   "Wind power",
+   "Hydro power",
+   "Solar power"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a solar panel convert sunlight into?",
+  "options": [
+   "Sound",
+   "Heat only",
+   "Chemical fuel",
+   "Electricity"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the unit of electric current?",
+  "options": [
+   "The watt",
+   "The ampere",
+   "The joule",
+   "The volt"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the unit of power?",
+  "options": [
+   "The pascal",
+   "The watt",
+   "The joule",
+   "The newton"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the unit of force?",
+  "options": [
+   "The watt",
+   "The pascal",
+   "The joule",
+   "The newton"
+  ],
+  "correctIndex": 3,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which law states that for every action there is an equal and opposite reaction?",
+  "options": [
+   "Ohm's law",
+   "Newton's third law",
+   "Boyle's law",
+   "Newton's first law"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What pH value is neutral?",
+  "options": [
+   "0",
+   "7",
+   "14",
+   "1"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which particle in an atom carries a negative charge?",
+  "options": [
+   "The proton",
+   "The electron",
+   "The positron",
+   "The neutron"
+  ],
+  "correctIndex": 1,
+  "category": "Science & Nature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which particle has no electric charge?",
+  "options": [
+   "The neutron",
+   "The ion",
+   "The electron",
+   "The proton"
+  ],
+  "correctIndex": 0,
+  "category": "Science & Nature",
+  "difficulty": "medium"
+ }
+]

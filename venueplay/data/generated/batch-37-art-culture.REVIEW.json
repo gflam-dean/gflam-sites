@@ -1,0 +1,171 @@
+[
+  {
+    "index": 62,
+    "question": "What is a painting of the sea called?",
+    "problem": "self-answering",
+    "detail": "The answer 'a seascape' simply repeats the word 'sea' from the question.",
+    "fix": {
+      "question": "What is the proper term for a painting of a ship or the sea, especially in the Dutch tradition?",
+      "options": [
+        "A marine",
+        "A vanitas",
+        "A capriccio",
+        "A veduta"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 85,
+    "question": "Which Russian-born painter is regarded as a pioneer of purely abstract painting?",
+    "problem": "two-answers",
+    "detail": "Kazimir Malevich is a Russian-born painter equally regarded as a pioneer of purely abstract painting (Suprematism, Black Square), so the marked distractor is fully defensible. The stem gives nothing that separates them.",
+    "fix": {
+      "question": "Which Russian-born painter wrote 'Concerning the Spiritual in Art' and is usually credited with the first purely abstract paintings around 1910?",
+      "options": [
+        "Wassily Kandinsky",
+        "Marc Chagall",
+        "Alexander Rodchenko",
+        "Natalia Goncharova"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 335,
+    "question": "What is a series of steps set into a hillside or terraced garden most likely to be called?",
+    "problem": "self-answering",
+    "detail": "'A flight of steps' is just the plain English description of what the stem already described, and none of the other options is a set of steps at all. There is nothing to know.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 377,
+    "question": "Which Agatha Christie play has run continuously in London's West End since 1952?",
+    "problem": "dates",
+    "detail": "The Mousetrap has NOT run continuously since 1952. It was dark from 16 March 2020 to 17 May 2021 because of COVID. Someone in the room will know this and the word 'continuously' makes the question wrong.",
+    "fix": {
+      "question": "Which Agatha Christie play has been the West End's longest-running show since it opened in 1952?",
+      "options": [
+        "The Mousetrap",
+        "And Then There Were None",
+        "Black Coffee",
+        "Witness for the Prosecution"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 497,
+    "question": "How many paintings make up Sidney Nolan's first Ned Kelly series?",
+    "problem": "wrong-answer",
+    "detail": "Nolan's first Ned Kelly series is 27 paintings. 26 is the number the National Gallery of Australia holds (25 given by Sunday Reed in 1977 plus one bought in 1972), not the size of the series.",
+    "fix": {
+      "question": "How many paintings make up Sidney Nolan's first Ned Kelly series?",
+      "options": [
+        "27",
+        "40",
+        "12",
+        "8"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 553,
+    "question": "Australia's live performance awards are named after which dancer, actor and choreographer?",
+    "problem": "dates",
+    "detail": "The Helpmann Awards were last presented in 2019 and have not been held since; the 2020 and 2021 events were cancelled and nothing has replaced them. The present tense 'are named' states as current something that has been dormant for years.",
+    "fix": {
+      "question": "Australia's live performance awards, last presented in 2019, were named after which dancer, actor and choreographer?",
+      "options": [
+        "Robert Helpmann",
+        "Garth Welch",
+        "Ninette de Valois",
+        "Peggy van Praagh"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 586,
+    "question": "Which eighteenth century English cabinet maker's name is still used for a style of chair?",
+    "problem": "two-answers",
+    "detail": "Thomas Sheraton is also an eighteenth century English cabinet maker whose name is still used for a style of chair, exactly as the stem describes. Tacking 'only' onto his name does not make him wrong.",
+    "fix": {
+      "question": "Which eighteenth century English cabinet maker published 'The Gentleman and Cabinet-Maker's Director' and gave his name to a style of chair?",
+      "options": [
+        "Thomas Chippendale",
+        "Robert Adam",
+        "Josiah Wedgwood",
+        "William Kent"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 605,
+    "question": "Which museum in Cairo is most famous for the treasures of Tutankhamun?",
+    "problem": "dates",
+    "detail": "Out of date. The entire Tutankhamun collection, including the gold mask, was moved out of the Egyptian Museum in Tahrir Square to the Grand Egyptian Museum at Giza, which opened on 1 November 2025. The marked answer is now wrong.",
+    "fix": {
+      "question": "Which museum, opened at Giza in 2025, now displays the complete treasures of Tutankhamun?",
+      "options": [
+        "The Grand Egyptian Museum",
+        "The Egyptian Museum in Tahrir Square",
+        "The Luxor Museum",
+        "The Coptic Museum"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 645,
+    "question": "What is the traditional Persian and Turkish knotted floor covering, often with a central medallion, called?",
+    "problem": "self-answering",
+    "detail": "The answer 'a carpet or rug' is just the everyday word for the object the stem has already described. No knowledge is being tested and the correct option is the only one that is a floor covering.",
+    "fix": {
+      "question": "Which Iranian city gives its name to a famous style of Persian carpet with a dense central medallion?",
+      "options": [
+        "Tabriz",
+        "Shiraz only",
+        "Isfahan",
+        "Kashan"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 660,
+    "question": "Which West African tradition produced the famous cast bronze plaques of the Kingdom of Benin?",
+    "problem": "self-answering",
+    "detail": "'The Kingdom of Benin' is in the stem and 'Benin bronze casting' is the answer.",
+    "fix": {
+      "question": "The famous cast bronze plaques known as the Benin Bronzes came from a kingdom in which modern country?",
+      "options": [
+        "Nigeria",
+        "Ghana",
+        "Mali",
+        "Benin"
+      ],
+      "correctIndex": 0,
+      "category": "Art & Culture",
+      "difficulty": "medium"
+    }
+  }
+]

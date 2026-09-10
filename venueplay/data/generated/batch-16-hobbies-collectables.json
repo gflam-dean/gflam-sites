@@ -1,0 +1,1322 @@
+[
+ {
+  "question": "In chess, which piece moves in an L shape?",
+  "options": [
+   "The knight",
+   "The queen",
+   "The king",
+   "The bishop"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many pieces does each player start with in chess?",
+  "options": [
+   "12",
+   "16",
+   "20",
+   "8"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a chess position where a player cannot move but is not in check?",
+  "options": [
+   "Checkmate",
+   "Stalemate",
+   "Zugzwang",
+   "En passant"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the special chess move involving the king and rook called?",
+  "options": [
+   "Fianchetto",
+   "En passant",
+   "Promotion",
+   "Castling"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which chess piece is the most valuable in standard point counting?",
+  "options": [
+   "The queen",
+   "The bishop",
+   "The rook",
+   "The king"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In draughts, also called checkers, how does a piece become a king?",
+  "options": [
+   "By surviving ten turns",
+   "By reaching the far row",
+   "By returning home",
+   "By capturing three pieces"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many dominoes are in a standard double-six set?",
+  "options": [
+   "28",
+   "32",
+   "24",
+   "36"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Monopoly, what happens when you land on Go?",
+  "options": [
+   "You lose a turn",
+   "Nothing special beyond collecting when passing",
+   "You go to jail",
+   "You get a free property"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many properties are in a standard Monopoly board's full set of streets and stations combined?",
+  "options": [
+   "28",
+   "40",
+   "36",
+   "22"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Monopoly, what colour are the two most expensive properties in the classic London edition?",
+  "options": [
+   "Green",
+   "Dark blue",
+   "Yellow",
+   "Purple"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which board game involves guessing the murderer, weapon and room?",
+  "options": [
+   "Cluedo",
+   "Risk",
+   "Battleship",
+   "Scrabble"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Cluedo, which character is associated with the colour green?",
+  "options": [
+   "Miss Scarlett",
+   "Colonel Mustard",
+   "Reverend Green",
+   "Professor Plum"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which board game is about world domination with armies and dice battles?",
+  "options": [
+   "Othello",
+   "Trivial Pursuit",
+   "Risk",
+   "Cluedo"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Scrabble, how many tiles does a player hold on their rack?",
+  "options": [
+   "Seven",
+   "Five",
+   "Nine",
+   "Six"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What bonus do you get in Scrabble for using all seven tiles in one turn?",
+  "options": [
+   "50 points",
+   "100 points",
+   "Double your score",
+   "25 points"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game uses coloured wedges called 'cheeses' as scoring tokens?",
+  "options": [
+   "Trivial Pursuit",
+   "Cranium",
+   "Balderdash",
+   "Pictionary"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game Battleship, how many squares does the largest ship occupy in the classic set?",
+  "options": [
+   "Five",
+   "Six",
+   "Four",
+   "Three"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tile-based game from China uses suits of bamboo, characters and circles?",
+  "options": [
+   "Pai gow",
+   "Go",
+   "Mahjong",
+   "Shogi"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The board game Go originated in which country?",
+  "options": [
+   "India",
+   "China",
+   "Korea",
+   "Japan"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many squares are on a standard Go board's grid, at 19 by 19 intersections?",
+  "options": [
+   "361 intersections",
+   "400 intersections",
+   "324 intersections",
+   "289 intersections"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the card game bridge, how many cards are dealt to each player?",
+  "options": [
+   "10",
+   "12",
+   "15",
+   "13"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In poker, which hand beats a flush?",
+  "options": [
+   "A full house",
+   "A straight",
+   "Three of a kind",
+   "Two pair"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the highest possible hand in standard poker?",
+  "options": [
+   "Royal flush",
+   "Straight flush",
+   "Full house",
+   "Four of a kind"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In poker, how many cards make a 'flush'?",
+  "options": [
+   "Three matching cards",
+   "Five of the same suit",
+   "Four of the same suit",
+   "Five in sequence"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many cards are in each suit of a standard deck?",
+  "options": [
+   "12",
+   "14",
+   "10",
+   "13"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which card is traditionally known as the 'suicide king'?",
+  "options": [
+   "The king of clubs",
+   "The king of diamonds",
+   "The king of spades",
+   "The king of hearts"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which suit is traditionally ranked highest in bridge bidding?",
+  "options": [
+   "Diamonds",
+   "Clubs",
+   "Spades",
+   "Hearts"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game of darts, what is the maximum score with three darts?",
+  "options": [
+   "180",
+   "120",
+   "150",
+   "200"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In darts, what is the score for hitting the bullseye's inner ring?",
+  "options": [
+   "50",
+   "100",
+   "25",
+   "20"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A standard game of darts usually starts from which number?",
+  "options": [
+   "301 only",
+   "501",
+   "1001",
+   "101"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In darts, which number sits directly opposite 20 on the board?",
+  "options": [
+   "1",
+   "3",
+   "5",
+   "18"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many balls are on the table at the start of a game of pool, including the cue ball?",
+  "options": [
+   "16",
+   "17",
+   "15",
+   "14"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In pool, what colour is the 8 ball?",
+  "options": [
+   "Blue",
+   "Black",
+   "Red",
+   "Purple"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In snooker, what is the highest possible break in a standard frame?",
+  "options": [
+   "180",
+   "100",
+   "155",
+   "147"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many red balls are used at the start of a snooker frame?",
+  "options": [
+   "10",
+   "20",
+   "15",
+   "12"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the hobby of collecting stamps called?",
+  "options": [
+   "Numismatics",
+   "Vexillology",
+   "Philately",
+   "Deltiology"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the hobby of collecting coins called?",
+  "options": [
+   "Numismatics",
+   "Cartophily",
+   "Philately",
+   "Notaphily"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study and collecting of flags called?",
+  "options": [
+   "Vexillology",
+   "Philately",
+   "Cartography",
+   "Heraldry"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the hobby of collecting postcards called?",
+  "options": [
+   "Notaphily",
+   "Deltiology",
+   "Philately",
+   "Scripophily"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country issued the first adhesive postage stamp, the Penny Black?",
+  "options": [
+   "France",
+   "The United States",
+   "Switzerland",
+   "The United Kingdom"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who appears on the Penny Black stamp?",
+  "options": [
+   "Queen Victoria",
+   "King George III",
+   "The Duke of Wellington",
+   "Britannia"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'first day cover' in stamp collecting?",
+  "options": [
+   "A duplicate stamp sheet",
+   "A stamp with a printing error",
+   "A stamp album's opening page",
+   "An envelope postmarked on a stamp's first day of issue"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In knitting, what are the two basic stitches?",
+  "options": [
+   "Loop and cast",
+   "Chain and slip",
+   "Knit and purl",
+   "Hem and tack"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which craft uses a single hook to make loops of yarn?",
+  "options": [
+   "Weaving",
+   "Knitting",
+   "Crochet",
+   "Macrame"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the craft of tying decorative knots into wall hangings called?",
+  "options": [
+   "Decoupage",
+   "Macrame",
+   "Origami",
+   "Quilling"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Japanese art of paper folding called?",
+  "options": [
+   "Ikebana",
+   "Origami",
+   "Shodo",
+   "Kirigami only"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Japanese art of flower arranging called?",
+  "options": [
+   "Kintsugi",
+   "Ikebana",
+   "Origami",
+   "Bonsai"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the art of growing miniature trees in pots called?",
+  "options": [
+   "Espalier",
+   "Ikebana",
+   "Topiary",
+   "Bonsai"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Japanese craft of repairing pottery with gold called?",
+  "options": [
+   "Kintsugi",
+   "Kirigami",
+   "Sashiko",
+   "Raku"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is topiary?",
+  "options": [
+   "Clipping shrubs into shapes",
+   "Growing plants in water",
+   "Drying flowers",
+   "Grafting fruit trees"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which garden plant is known for needing very little water and storing it in fleshy leaves?",
+  "options": [
+   "Succulents",
+   "Ferns",
+   "Hydrangeas",
+   "Watercress"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is compost primarily used for in gardening?",
+  "options": [
+   "Enriching soil",
+   "Repelling insects",
+   "Killing weeds",
+   "Setting concrete"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the gardening term 'deadheading' mean?",
+  "options": [
+   "Removing spent flowers",
+   "Digging out roots",
+   "Killing off pests",
+   "Pruning in winter"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'perennial' plant?",
+  "options": [
+   "One that lives a single season",
+   "One that lives more than two years",
+   "One that never flowers",
+   "One that grows only in shade"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In photography, what does the aperture control?",
+  "options": [
+   "How long the sensor records",
+   "The image file size",
+   "How much light enters the lens",
+   "The colour balance"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In photography, what does a fast shutter speed do?",
+  "options": [
+   "Brightens shadows",
+   "Widens the view",
+   "Blurs motion",
+   "Freezes motion"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does ISO measure on a camera?",
+  "options": [
+   "Lens length",
+   "Zoom range",
+   "Battery life",
+   "Sensitivity to light"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'wide angle' lens best suited to?",
+  "options": [
+   "Distant wildlife",
+   "Extreme close-ups",
+   "Landscapes and interiors",
+   "Night sky only"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In photography, what is the 'rule of thirds'?",
+  "options": [
+   "A colour mixing rule",
+   "A composition guide dividing the frame into nine parts",
+   "A rule for lens cleaning",
+   "A rule about exposure timing"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a model railway gauge 'OO' commonly used in?",
+  "options": [
+   "Russia",
+   "Brazil",
+   "Britain",
+   "Japan"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are Airfix products best known as?",
+  "options": [
+   "Board games",
+   "Watercolour paints",
+   "Fishing reels",
+   "Plastic scale model kits"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand is famous for die-cast toy cars sold in small blue boxes since 1968?",
+  "options": [
+   "Corgi",
+   "Hot Wheels",
+   "Matchbox",
+   "Dinky"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Danish company makes interlocking plastic building bricks?",
+  "options": [
+   "Mega Bloks",
+   "Playmobil",
+   "LEGO",
+   "K'nex"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the name LEGO come from?",
+  "options": [
+   "A Greek word for brick",
+   "Danish words meaning 'play well'",
+   "A Latin word for build",
+   "The founder's initials"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which collectable card game features creatures, lands and mana?",
+  "options": [
+   "Pokemon TCG",
+   "Magic: The Gathering",
+   "Hearthstone",
+   "Yu-Gi-Oh!"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fishing method uses an artificial lure made of feathers and thread?",
+  "options": [
+   "Trolling",
+   "Fly fishing",
+   "Netting",
+   "Spearfishing"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In fishing, what is a 'bag limit'?",
+  "options": [
+   "The maximum number of fish you may keep",
+   "The weight of the rod",
+   "The size of your tackle box",
+   "A knot used for hooks"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the most common name for the sport of shooting arrows at a target?",
+  "options": [
+   "Quiverbowls",
+   "Marksmanship",
+   "Archery",
+   "Fletching"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In archery, what is the person who makes arrows called?",
+  "options": [
+   "A quiverer",
+   "A bowyer",
+   "A nocker",
+   "A fletcher"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the hobby of exploring caves called?",
+  "options": [
+   "Caving or spelunking",
+   "Abseiling",
+   "Potholing only",
+   "Trekking"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which hobby involves finding hidden containers using GPS coordinates?",
+  "options": [
+   "Metal detecting",
+   "Letterboxing only",
+   "Geocaching",
+   "Orienteering"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the hobby of detecting and identifying bird species called?",
+  "options": [
+   "Birdwatching or birding",
+   "Ornithography",
+   "Aviculture",
+   "Twitching only"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'twitcher' in birdwatching slang?",
+  "options": [
+   "A type of binoculars",
+   "A beginner birder",
+   "A bird that shakes its tail",
+   "Someone who travels to see a rare bird"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the practice of keeping bees called?",
+  "options": [
+   "Horticulture",
+   "Aquaculture",
+   "Apiculture",
+   "Viticulture"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the cultivation of grapevines called?",
+  "options": [
+   "Apiculture",
+   "Silviculture",
+   "Viticulture",
+   "Floriculture"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is home beer making commonly called?",
+  "options": [
+   "Fermenting only",
+   "Distilling",
+   "Malting",
+   "Homebrewing"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which craft involves burning designs into wood?",
+  "options": [
+   "Marquetry",
+   "Etching",
+   "Whittling",
+   "Pyrography"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is 'whittling'?",
+  "options": [
+   "Weaving cane",
+   "Sanding metal",
+   "Polishing stone",
+   "Carving wood with a knife"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the craft of decorating surfaces with cut paper and varnish called?",
+  "options": [
+   "Quilling",
+   "Marquetry",
+   "Decoupage",
+   "Gilding"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is quilling?",
+  "options": [
+   "Rolling strips of paper into shapes",
+   "Sewing feathers onto cloth",
+   "Sharpening pens",
+   "Cutting glass"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which craft joins fabric pieces into a padded blanket?",
+  "options": [
+   "Felting",
+   "Tatting",
+   "Quilting",
+   "Embroidery"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'scrapbooking'?",
+  "options": [
+   "Recycling metal scraps",
+   "Collecting newspaper clippings only",
+   "Making decorated albums of photos and mementos",
+   "A form of bookbinding for repairs"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which hobby involves flying small radio-controlled aircraft?",
+  "options": [
+   "Paragliding",
+   "RC flying",
+   "Kitesurfing",
+   "Gliding"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the hobby of building and racing miniature slot cars?",
+  "options": [
+   "Drag modelling",
+   "Karting",
+   "Scaletrix flying",
+   "Slot racing"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which vinyl record speed is standard for a 12-inch album?",
+  "options": [
+   "78 rpm",
+   "45 rpm",
+   "16 rpm",
+   "33 and a third rpm"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which record speed is standard for a 7-inch single?",
+  "options": [
+   "33 rpm",
+   "78 rpm",
+   "45 rpm",
+   "60 rpm"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a record's 'B-side'?",
+  "options": [
+   "The flip side of a single",
+   "The run-out groove",
+   "The centre label",
+   "The outer sleeve"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'metal detecting' most commonly used to find by hobbyists?",
+  "options": [
+   "Coins and relics",
+   "Gas pipes only",
+   "Underground water",
+   "Fossils"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'genealogy' the study of?",
+  "options": [
+   "Handwriting",
+   "Rocks",
+   "Fossils",
+   "Family history"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a crossword clue marked 'anag.' asking you to do?",
+  "options": [
+   "Find a hidden word",
+   "Rearrange letters",
+   "Read backwards",
+   "Use a homophone"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which puzzle involves finding words hidden in a grid of letters?",
+  "options": [
+   "A rebus",
+   "A cryptic crossword",
+   "A word search",
+   "A cryptogram"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a jigsaw puzzle piece with no straight edges called?",
+  "options": [
+   "An edge piece",
+   "An interior piece",
+   "A corner piece",
+   "A blank"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional first step most people take with a jigsaw puzzle?",
+  "options": [
+   "Finding the edge pieces",
+   "Starting in the centre",
+   "Turning them face down",
+   "Sorting by size"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which game involves knocking down ten pins with a heavy ball?",
+  "options": [
+   "Croquet",
+   "Boules",
+   "Lawn bowls",
+   "Ten-pin bowling"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what is the small target ball called?",
+  "options": [
+   "The pin",
+   "The kitty only",
+   "The mark",
+   "The jack"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In ten-pin bowling, what is three strikes in a row called?",
+  "options": [
+   "A turkey",
+   "A triple",
+   "A hammer",
+   "A hat-trick"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the maximum score in a game of ten-pin bowling?",
+  "options": [
+   "200",
+   "400",
+   "250",
+   "300"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which garden game involves throwing horseshoes at a stake?",
+  "options": [
+   "Quoits only",
+   "Cornhole",
+   "Horseshoes",
+   "Boules"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the pub game of pool in Australia, what is 'sinking the black early' usually called?",
+  "options": [
+   "A rebreak",
+   "A bonus",
+   "A push shot",
+   "A loss"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which dice game involves scoring categories like full house and large straight?",
+  "options": [
+   "Bunco",
+   "Backgammon",
+   "Yahtzee",
+   "Craps"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many dice are rolled in a turn of Yahtzee?",
+  "options": [
+   "Two",
+   "Three",
+   "Six",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In backgammon, how many points or triangles are on the board?",
+  "options": [
+   "16",
+   "30",
+   "24",
+   "20"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the collectable hobby of gathering beer coasters and mats called?",
+  "options": [
+   "Notaphily",
+   "Tegestology",
+   "Philumeny",
+   "Cartophily"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the collecting of matchbox labels called?",
+  "options": [
+   "Philumeny",
+   "Scripophily",
+   "Deltiology",
+   "Tegestology"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is 'upcycling'?",
+  "options": [
+   "Recycling glass into bottles",
+   "Turning old items into something better",
+   "Repairing bicycles",
+   "Selling second-hand goods"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which hobby is known as 'the sport of kings' when it involves racing pigeons?",
+  "options": [
+   "Coursing",
+   "Ferreting",
+   "Pigeon racing",
+   "Falconry"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the hobby of training birds of prey to hunt called?",
+  "options": [
+   "Hawking gliding",
+   "Aviculture",
+   "Falconry",
+   "Ornithology"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gardening, what does 'mulch' do?",
+  "options": [
+   "Kills the soil bacteria",
+   "Retains moisture and suppresses weeds",
+   "Attracts snails deliberately",
+   "Raises soil temperature only"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which craft hobby uses a wheel and kiln?",
+  "options": [
+   "Candle making",
+   "Woodturning",
+   "Glassblowing",
+   "Pottery"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for the firing of clay in a kiln at high heat?",
+  "options": [
+   "Slipping",
+   "Wedging",
+   "Firing",
+   "Glazing"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ }
+]

@@ -1,0 +1,1058 @@
+[
+ {
+  "question": "Which Jane Austen novel features Emma Woodhouse?",
+  "options": [
+   "Emma",
+   "Persuasion",
+   "Northanger Abbey",
+   "Mansfield Park"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Bronte sister wrote 'Wuthering Heights'?",
+  "options": [
+   "Charlotte",
+   "Maria",
+   "Anne",
+   "Emily"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Sherlock Holmes' loyal companion?",
+  "options": [
+   "Mycroft",
+   "Inspector Lestrade",
+   "Mrs Hudson",
+   "Dr Watson"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At which London address does Sherlock Holmes live?",
+  "options": [
+   "10 Downing Street",
+   "4 Privet Drive",
+   "62 West Wallaby Street",
+   "221B Baker Street"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which author created the Belgian detective Hercule Poirot?",
+  "options": [
+   "Dorothy L. Sayers",
+   "Ngaio Marsh",
+   "P.D. James",
+   "Agatha Christie"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Agatha Christie character is an elderly amateur sleuth in St Mary Mead?",
+  "options": [
+   "Tuppence Beresford",
+   "Lady Frances",
+   "Miss Marple",
+   "Ariadne Oliver"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Agatha Christie novel is set on a train?",
+  "options": [
+   "The ABC Murders",
+   "Murder on the Orient Express",
+   "Crooked House",
+   "Death on the Nile"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote '1984'?",
+  "options": [
+   "H.G. Wells",
+   "George Orwell",
+   "Ray Bradbury",
+   "Aldous Huxley"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In '1984', what is the name of the all-seeing leader?",
+  "options": [
+   "Big Brother",
+   "O'Brien",
+   "The Chairman",
+   "The Controller"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Orwell novella features farm animals overthrowing the farmer?",
+  "options": [
+   "Burmese Days",
+   "Coming Up for Air",
+   "Animal Farm",
+   "Down and Out"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Fahrenheit 451', what is the job of the firemen?",
+  "options": [
+   "Guarding libraries",
+   "Burning books",
+   "Putting out fires",
+   "Printing newspapers"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the lawyer father in 'To Kill a Mockingbird'?",
+  "options": [
+   "Boo Radley",
+   "Tom Robinson",
+   "Atticus Finch",
+   "Jem Ewell"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who narrates 'The Great Gatsby'?",
+  "options": [
+   "Tom Buchanan",
+   "Jay Gatsby",
+   "Nick Carraway",
+   "Daisy Buchanan"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hemingway novel features an old fisherman and a marlin?",
+  "options": [
+   "The Sun Also Rises",
+   "For Whom the Bell Tolls",
+   "The Old Man and the Sea",
+   "A Farewell to Arms"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote 'Of Mice and Men'?",
+  "options": [
+   "John Steinbeck",
+   "Sinclair Lewis",
+   "Ernest Hemingway",
+   "Jack London"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the whaling ship's captain in 'Moby-Dick'?",
+  "options": [
+   "Ahab",
+   "Starbuck",
+   "Queequeg",
+   "Ishmael"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote 'A Christmas Carol'?",
+  "options": [
+   "Anthony Trollope",
+   "Wilkie Collins",
+   "Charles Dickens",
+   "Thomas Hardy"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many ghosts visit Scrooge in 'A Christmas Carol', not counting Marley?",
+  "options": [
+   "One",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dickens novel features the orphan Pip?",
+  "options": [
+   "Bleak House",
+   "David Copperfield",
+   "Great Expectations",
+   "Oliver Twist"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dickens novel opens 'It was the best of times, it was the worst of times'?",
+  "options": [
+   "Nicholas Nickleby",
+   "Little Dorrit",
+   "A Tale of Two Cities",
+   "Hard Times"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Frankenstein', what is the name of the scientist?",
+  "options": [
+   "Henry Clerval",
+   "Ernest",
+   "Victor",
+   "Igor"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote 'Dracula'?",
+  "options": [
+   "H.P. Lovecraft",
+   "Bram Stoker",
+   "Sheridan Le Fanu",
+   "Mary Shelley"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which country's Transylvania region is Count Dracula's castle set?",
+  "options": [
+   "Serbia",
+   "Hungary",
+   "Romania",
+   "Bulgaria"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote 'The Strange Case of Dr Jekyll and Mr Hyde'?",
+  "options": [
+   "Robert Louis Stevenson",
+   "Oscar Wilde",
+   "Arthur Conan Doyle",
+   "H.G. Wells"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Robert Louis Stevenson novel features Long John Silver?",
+  "options": [
+   "The Black Arrow",
+   "Treasure Island",
+   "Catriona",
+   "Kidnapped"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which H.G. Wells novel features Martians invading England?",
+  "options": [
+   "The Time Machine",
+   "The War of the Worlds",
+   "The Island of Doctor Moreau",
+   "The Invisible Man"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the hobbit who carries the One Ring to Mordor?",
+  "options": [
+   "Frodo Baggins",
+   "Bilbo Baggins",
+   "Peregrin Took",
+   "Samwise Gamgee"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the wizard Gandalf's colour at the start of 'The Lord of the Rings'?",
+  "options": [
+   "Brown",
+   "Blue",
+   "Grey",
+   "White"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tolkien book precedes 'The Lord of the Rings'?",
+  "options": [
+   "The Hobbit",
+   "The Silmarillion",
+   "The Children of Hurin",
+   "Unfinished Tales"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote 'The Chronicles of Narnia'?",
+  "options": [
+   "J.R.R. Tolkien",
+   "Roald Dahl",
+   "C.S. Lewis",
+   "Philip Pullman"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What piece of furniture leads to Narnia?",
+  "options": [
+   "A wardrobe",
+   "A grandfather clock",
+   "A bookcase",
+   "A mirror"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the lion in 'The Chronicles of Narnia'?",
+  "options": [
+   "Simba",
+   "Rafiki",
+   "Elsa",
+   "Aslan"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote the 'Harry Potter' series?",
+  "options": [
+   "J.K. Rowling",
+   "Rick Riordan",
+   "Eoin Colfer",
+   "Philip Pullman"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many Harry Potter novels are there in the main series?",
+  "options": [
+   "Five",
+   "Eight",
+   "Seven",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Harry Potter's owl?",
+  "options": [
+   "Pigwidgeon",
+   "Hedwig",
+   "Errol",
+   "Crookshanks"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sport is played on broomsticks in Harry Potter?",
+  "options": [
+   "Quidditch",
+   "Quaffleball",
+   "Broomball",
+   "Snitchers"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which platform at King's Cross leads to the Hogwarts Express?",
+  "options": [
+   "Nine and three quarters",
+   "Thirteen",
+   "Eleven",
+   "Seven and a half"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the chocolate factory owner in Roald Dahl's book?",
+  "options": [
+   "Danny Bucket",
+   "Willy Wonka",
+   "Mr Fox",
+   "Augustus Gloop"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roald Dahl book features a girl with telekinetic powers?",
+  "options": [
+   "James and the Giant Peach",
+   "Matilda",
+   "The BFG",
+   "The Twits"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does BFG stand for in Roald Dahl's book title?",
+  "options": [
+   "Big Friendly Giant",
+   "Big Fierce Giant",
+   "Brave Fighting Giant",
+   "Big Funny Grump"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which author created Peter Rabbit?",
+  "options": [
+   "Beatrix Potter",
+   "Enid Blyton",
+   "A.A. Milne",
+   "Kenneth Grahame"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who created Winnie-the-Pooh?",
+  "options": [
+   "Lewis Carroll",
+   "Kenneth Grahame",
+   "A.A. Milne",
+   "Beatrix Potter"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the gloomy donkey in Winnie-the-Pooh?",
+  "options": [
+   "Eeyore",
+   "Tigger",
+   "Piglet",
+   "Roo"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which novel features Mr Toad, Ratty, Mole and Badger?",
+  "options": [
+   "Animal Farm",
+   "Watership Down",
+   "The Wind in the Willows",
+   "Fantastic Mr Fox"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which grinning cat appears in 'Alice in Wonderland'?",
+  "options": [
+   "The Siamese Cat",
+   "Mr Mistoffelees",
+   "The Cheshire Cat",
+   "The Manx Cat"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the fairy in 'Peter Pan'?",
+  "options": [
+   "Wendy",
+   "Tiger Lily",
+   "Tinker Bell",
+   "Nana"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which author wrote 'The Wonderful Wizard of Oz'?",
+  "options": [
+   "C.S. Lewis",
+   "L. Frank Baum",
+   "Lewis Carroll",
+   "E.B. White"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian novelist wrote 'Cloudstreet'?",
+  "options": [
+   "David Malouf",
+   "Peter Carey",
+   "Tim Winton",
+   "Thomas Keneally"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote 'Schindler's Ark', filmed as 'Schindler's List'?",
+  "options": [
+   "Morris West",
+   "Thomas Keneally",
+   "Colleen McCullough",
+   "Peter Carey"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian novel by Colleen McCullough follows the Cleary family?",
+  "options": [
+   "A Fortunate Life",
+   "The Thorn Birds",
+   "Picnic at Hanging Rock",
+   "My Brilliant Career"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian author wrote 'The Narrow Road to the Deep North'?",
+  "options": [
+   "Christos Tsiolkas",
+   "Richard Flanagan",
+   "Tim Winton",
+   "Peter Carey"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which classic Australian novel by Joan Lindsay is set on Valentine's Day 1900?",
+  "options": [
+   "Seven Little Australians",
+   "Picnic at Hanging Rock",
+   "For the Term of His Natural Life",
+   "The Getting of Wisdom"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian poem by Banjo Paterson tells of a horseman chasing a colt?",
+  "options": [
+   "My Country",
+   "The Man from Snowy River",
+   "The Sentimental Bloke",
+   "Clancy of the Overflow"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote the Australian poem beginning 'I love a sunburnt country'?",
+  "options": [
+   "Dorothea Mackellar",
+   "Judith Wright",
+   "Henry Lawson",
+   "Banjo Paterson"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian writer is best known for short stories like 'The Drover's Wife'?",
+  "options": [
+   "Banjo Paterson",
+   "Henry Lawson",
+   "Steele Rudd",
+   "Miles Franklin"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Miles Franklin Award recognises writing about what?",
+  "options": [
+   "Children's fiction",
+   "British history",
+   "Australian life",
+   "Science writing"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian children's book features a possum made invisible?",
+  "options": [
+   "Snugglepot and Cuddlepie",
+   "Wombat Stew",
+   "Diary of a Wombat",
+   "Possum Magic"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote 'The Magic Pudding'?",
+  "options": [
+   "Ethel Turner",
+   "Dorothy Wall",
+   "Norman Lindsay",
+   "May Gibbs"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian author created the Gumnut Babies?",
+  "options": [
+   "Norman Lindsay",
+   "May Gibbs",
+   "Dorothy Wall",
+   "Mem Fox"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote the novel 'The Da Vinci Code'?",
+  "options": [
+   "Dan Brown",
+   "Michael Crichton",
+   "John Grisham",
+   "James Patterson"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which author wrote 'The Girl with the Dragon Tattoo'?",
+  "options": [
+   "Camilla Lackberg",
+   "Henning Mankell",
+   "Stieg Larsson",
+   "Jo Nesbo"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Stephen King novel features a St Bernard dog?",
+  "options": [
+   "Carrie",
+   "Cujo",
+   "Christine",
+   "Misery"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote 'The Hunger Games'?",
+  "options": [
+   "Veronica Roth",
+   "Cassandra Clare",
+   "Stephenie Meyer",
+   "Suzanne Collins"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Hunger Games', what is the heroine's name?",
+  "options": [
+   "Bella Swan",
+   "Tris Prior",
+   "Hermione Granger",
+   "Katniss Everdeen"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote the 'Twilight' vampire series?",
+  "options": [
+   "Charlaine Harris",
+   "Anne Rice",
+   "Stephenie Meyer",
+   "L.J. Smith"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote 'A Game of Thrones'?",
+  "options": [
+   "George R.R. Martin",
+   "Robert Jordan",
+   "Brandon Sanderson",
+   "Patrick Rothfuss"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the overall series title of the 'Game of Thrones' novels?",
+  "options": [
+   "The Wheel of Time",
+   "The Sword of Truth",
+   "A Song of Ice and Fire",
+   "The Iron Throne"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who created Discworld?",
+  "options": [
+   "Douglas Adams",
+   "Robert Rankin",
+   "Neil Gaiman",
+   "Terry Pratchett"
+  ],
+  "correctIndex": 3,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which science fiction author wrote 'I, Robot'?",
+  "options": [
+   "Arthur C. Clarke",
+   "Philip K. Dick",
+   "Isaac Asimov",
+   "Robert Heinlein"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many laws of robotics did Isaac Asimov set out?",
+  "options": [
+   "Seven",
+   "Four",
+   "Three",
+   "Two"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel by Frank Herbert is set on the desert planet Arrakis?",
+  "options": [
+   "Dune",
+   "Ringworld",
+   "Foundation",
+   "Hyperion"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which novel by Gabriel Garcia Marquez follows the Buendia family?",
+  "options": [
+   "Love in the Time of Cholera",
+   "One Hundred Years of Solitude",
+   "Chronicle of a Death Foretold",
+   "The Autumn of the Patriarch"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Russian author wrote 'War and Peace'?",
+  "options": [
+   "Fyodor Dostoevsky",
+   "Anton Chekhov",
+   "Leo Tolstoy",
+   "Ivan Turgenev"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote 'Crime and Punishment'?",
+  "options": [
+   "Fyodor Dostoevsky",
+   "Leo Tolstoy",
+   "Maxim Gorky",
+   "Nikolai Gogol"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tolstoy novel is named after a woman who falls for Count Vronsky?",
+  "options": [
+   "Anna Karenina",
+   "Madame Bovary",
+   "Middlemarch",
+   "Effi Briest"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many plays are generally attributed to William Shakespeare?",
+  "options": [
+   "About 38",
+   "About 12",
+   "About 100",
+   "About 60"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Shakespeare play features the line 'To be, or not to be'?",
+  "options": [
+   "Macbeth",
+   "Hamlet",
+   "King Lear",
+   "Othello"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Shakespeare play features three witches?",
+  "options": [
+   "Twelfth Night",
+   "The Tempest",
+   "Macbeth",
+   "Julius Caesar"
+  ],
+  "correctIndex": 2,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which Italian city is 'Romeo and Juliet' set?",
+  "options": [
+   "Milan",
+   "Verona",
+   "Venice",
+   "Florence"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many lines are in a standard sonnet?",
+  "options": [
+   "14",
+   "12",
+   "10",
+   "16"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which poet wrote 'The Road Not Taken'?",
+  "options": [
+   "Robert Frost",
+   "T.S. Eliot",
+   "Walt Whitman",
+   "Emily Dickinson"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which literary prize is awarded annually for the best novel written in English and published in the UK?",
+  "options": [
+   "The Booker Prize",
+   "The Hugo Award",
+   "The Pulitzer Prize",
+   "The Costa Medal"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which award is given for the best science fiction or fantasy novel, voted by fans?",
+  "options": [
+   "The Hugo Award",
+   "The Nebula only",
+   "The Booker Prize",
+   "The Orange Prize"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a book's opening section explaining its background usually called?",
+  "options": [
+   "The preface",
+   "The index",
+   "The epilogue",
+   "The appendix"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a person's life story written by someone else?",
+  "options": [
+   "A monograph",
+   "A biography",
+   "An autobiography",
+   "A memoir"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of a made-up name used by an author?",
+  "options": [
+   "A pseudonym",
+   "An alias tag",
+   "A byline",
+   "A nom de guerre"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Under what pen name did Samuel Clemens write?",
+  "options": [
+   "George Eliot",
+   "Mark Twain",
+   "O. Henry",
+   "Lewis Carroll"
+  ],
+  "correctIndex": 1,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Mark Twain character floats down the Mississippi with Jim?",
+  "options": [
+   "Huckleberry Finn",
+   "Injun Joe",
+   "Becky Thatcher",
+   "Tom Sawyer"
+  ],
+  "correctIndex": 0,
+  "category": "Books & Literature",
+  "difficulty": "medium"
+ }
+]

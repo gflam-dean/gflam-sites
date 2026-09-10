@@ -1,0 +1,326 @@
+[
+  {
+    "index": 128,
+    "question": "What do you get when you divide any number by itself?",
+    "problem": "ambiguous",
+    "detail": "The stem says 'any number', which includes zero, and 0 divided by 0 is undefined rather than one. The file itself asks about dividing by zero at index 129, so a pedant in the room has been primed to object.",
+    "fix": {
+      "question": "What do you get when you divide any number except zero by itself?",
+      "options": [
+        "Zero",
+        "Infinity",
+        "The number",
+        "One"
+      ],
+      "correctIndex": 3,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 333,
+    "question": "What unit of temperature starts at absolute zero?",
+    "problem": "two-answers",
+    "detail": "Rankine, offered as a distractor, is a temperature scale whose zero point is also absolute zero. Both Kelvin and Rankine are correct answers to the question as written.",
+    "fix": {
+      "question": "Which temperature unit is the SI base unit and starts at absolute zero?",
+      "options": [
+        "Celsius",
+        "Fahrenheit",
+        "Reaumur",
+        "Kelvin"
+      ],
+      "correctIndex": 3,
+      "category": "Maths & Puzzles",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 496,
+    "question": "Riddle: what has teeth but cannot bite?",
+    "problem": "two-answers",
+    "detail": "A saw blade also has teeth and cannot bite, so it is a defensible answer alongside a comb.",
+    "fix": {
+      "question": "Riddle: what has teeth but cannot bite?",
+      "options": [
+        "A comb",
+        "A trap",
+        "A shark",
+        "A crocodile"
+      ],
+      "correctIndex": 0,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 497,
+    "question": "Riddle: what runs all day but never walks?",
+    "problem": "two-answers",
+    "detail": "A clock runs and never walks, and a road 'runs' through a town without walking. Two of the three distractors are standard answers to this exact riddle.",
+    "fix": {
+      "question": "Riddle: what runs all day but never walks, and has a mouth but never talks?",
+      "options": [
+        "A road",
+        "A horse",
+        "A clock",
+        "A river"
+      ],
+      "correctIndex": 3,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 499,
+    "question": "Riddle: what can you catch but never throw?",
+    "problem": "two-answers",
+    "detail": "You catch a wave and you never throw one, so 'a wave' is defensible alongside 'a cold'.",
+    "fix": {
+      "question": "Riddle: what can you catch but never throw?",
+      "options": [
+        "A frisbee",
+        "A fish",
+        "A cold",
+        "A ball"
+      ],
+      "correctIndex": 2,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 503,
+    "question": "Riddle: what has a thumb and four fingers but is not alive?",
+    "problem": "two-answers",
+    "detail": "A handprint has a thumb and four fingers and is not alive, so it answers the riddle as literally as a glove does.",
+    "fix": {
+      "question": "Riddle: what has a thumb and four fingers but is not alive?",
+      "options": [
+        "A rake",
+        "A puppet",
+        "A glove",
+        "A statue"
+      ],
+      "correctIndex": 2,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 504,
+    "question": "Riddle: what has legs but cannot walk?",
+    "problem": "two-answers",
+    "detail": "A stepladder has legs and cannot walk, so 'a ladder' is arguably as correct as 'a table'.",
+    "fix": {
+      "question": "Riddle: what has legs but cannot walk?",
+      "options": [
+        "A snake",
+        "A river",
+        "A table",
+        "A fish"
+      ],
+      "correctIndex": 2,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 505,
+    "question": "Riddle: what has a head and a tail but no body?",
+    "problem": "two-answers",
+    "detail": "A comet has a head and a tail and no body, in the ordinary astronomical description, so the distractor is a genuine second answer.",
+    "fix": {
+      "question": "Riddle: what has a head and a tail but no body?",
+      "options": [
+        "A queue",
+        "A coin",
+        "A kite",
+        "A snake"
+      ],
+      "correctIndex": 1,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 506,
+    "question": "Riddle: what building has the most stories?",
+    "problem": "two-answers",
+    "detail": "A skyscraper literally has the most storeys, so the distractor beats the intended pun on 'stories' for anyone taking the question at face value. Guaranteed argument.",
+    "fix": {
+      "question": "Riddle: what building has the most stories to tell?",
+      "options": [
+        "A museum",
+        "A hotel",
+        "A library",
+        "A bus shelter"
+      ],
+      "correctIndex": 2,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 516,
+    "question": "Riddle: what has a tongue but cannot talk?",
+    "problem": "two-answers",
+    "detail": "A snake has a tongue and cannot talk, which is literally true, and a bell's clapper is also called its tongue. Three of the four options are defensible.",
+    "fix": {
+      "question": "Riddle: what has a tongue but no mouth, and is worn on your foot?",
+      "options": [
+        "A sock",
+        "A sandal",
+        "A slipper",
+        "A shoe"
+      ],
+      "correctIndex": 3,
+      "category": "Maths & Puzzles",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 520,
+    "question": "Riddle: what has a ring but no finger?",
+    "problem": "two-answers",
+    "detail": "Every option works: a bell tower rings, a tree has rings, a boxing match has a ring, none of them have fingers. The question has no single answer.",
+    "fix": {
+      "question": "Riddle: what has a ring but no finger, and you answer it when it rings?",
+      "options": [
+        "A doorbell",
+        "A tree",
+        "A boxing match",
+        "A telephone"
+      ],
+      "correctIndex": 3,
+      "category": "Maths & Puzzles",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 522,
+    "question": "Riddle: what has ears but cannot hear?",
+    "problem": "two-answers",
+    "detail": "The idiom 'walls have ears' makes 'a wall' a defensible answer, and cup handles are also called ears in pottery.",
+    "fix": {
+      "question": "Riddle: which vegetable has ears but cannot hear?",
+      "options": [
+        "A carrot",
+        "Corn",
+        "A potato",
+        "A pumpkin"
+      ],
+      "correctIndex": 1,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 530,
+    "question": "Two people play five games of chess and each wins the same number, with no draws. How is that possible?",
+    "problem": "ambiguous",
+    "detail": "The marked answer and the distractor 'They played five games each' express the same insight, that the two people were not playing one another. Two options are defensible.",
+    "fix": {
+      "question": "Two people play five games of chess and each wins the same number, with no draws. How is that possible?",
+      "options": [
+        "The games were never finished",
+        "They cheated",
+        "They were not playing each other",
+        "A game was replayed"
+      ],
+      "correctIndex": 2,
+      "category": "Maths & Puzzles",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 542,
+    "question": "The four colour theorem says how many colours are enough to colour any flat map so no neighbours match?",
+    "problem": "self-answering",
+    "detail": "The stem names the 'four colour theorem' and then asks how many colours are enough. The answer is in the question.",
+    "fix": {
+      "question": "The famous map colouring theorem proved in 1976 says how many colours are enough to colour any flat map so no two neighbours match?",
+      "options": [
+        "Three",
+        "Four",
+        "Five",
+        "Six"
+      ],
+      "correctIndex": 1,
+      "category": "Maths & Puzzles",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 547,
+    "question": "The paradox of the heap asks at what point removing grains stops something being what?",
+    "problem": "self-answering",
+    "detail": "The stem calls it 'the paradox of the heap' and the answer is 'a heap'. Tagged hard, where it tests nothing.",
+    "fix": {
+      "question": "The sorites paradox asks at what point removing grains stops something being what?",
+      "options": [
+        "A measurement",
+        "A shape",
+        "A heap",
+        "A number"
+      ],
+      "correctIndex": 2,
+      "category": "Maths & Puzzles",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 553,
+    "question": "In the fox, chicken and grain puzzle, what must never be left alone together?",
+    "problem": "ambiguous",
+    "detail": "The stem implies one pair, but in the puzzle the chicken and the grain must also never be left alone together. Only one of those pairs appears in the options, so the room will correct the host.",
+    "fix": {
+      "question": "In the fox, chicken and grain puzzle, which pair can safely be left alone together?",
+      "options": [
+        "The fox and the chicken",
+        "The fox and the grain",
+        "The chicken and the grain",
+        "No pair at all"
+      ],
+      "correctIndex": 1,
+      "category": "Maths & Puzzles",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 562,
+    "question": "How many squares are on a standard chessboard?",
+    "problem": "ambiguous",
+    "detail": "'How many squares are on a chessboard' is a famous puzzle whose answer is 204 when squares of every size are counted. In a puzzle round this reading is the more likely one, and 204 is not offered.",
+    "fix": {
+      "question": "How many individual small squares make up a standard chessboard grid?",
+      "options": [
+        "81",
+        "64",
+        "49",
+        "36"
+      ],
+      "correctIndex": 1,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 681,
+    "question": "What is the mathematical term for a number multiplied by itself three times?",
+    "problem": "ambiguous",
+    "detail": "Read literally, 'multiplied by itself three times' is n x n x n x n, the fourth power. Cubing is multiplying a number by itself twice.",
+    "fix": {
+      "question": "What is the mathematical term for a number raised to the power of three, as in 3 times 3 times 3?",
+      "options": [
+        "Cubed",
+        "Rooted",
+        "Squared",
+        "Doubled"
+      ],
+      "correctIndex": 0,
+      "category": "Maths & Puzzles",
+      "difficulty": "easy"
+    }
+  }
+]

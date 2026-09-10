@@ -1,0 +1,347 @@
+[
+  {
+    "index": 13,
+    "question": "Which format of lawn bowls has three players in each team?",
+    "problem": "self-answering",
+    "detail": "'Triples' literally means three, so the name of the format gives the answer away to anyone who has never played.",
+    "fix": {
+      "question": "In lawn bowls, which format has three players in each team?",
+      "options": [
+        "Fours",
+        "Pairs",
+        "Triples",
+        "Singles"
+      ],
+      "correctIndex": 2,
+      "category": "Hobbies & Collectables",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 14,
+    "question": "How many players are in a lawn bowls pairs team?",
+    "problem": "self-answering",
+    "detail": "'Pairs' means two; the stem contains the answer.",
+    "fix": {
+      "question": "In lawn bowls, how many players are in each team in the format called pairs?",
+      "options": [
+        "Two",
+        "Three",
+        "Four",
+        "One"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 30,
+    "question": "What is the small wooden target ball in petanque called?",
+    "problem": "two-answers",
+    "detail": "'Bouchon' is a genuine and widely used French name for the target ball in petanque (as is 'le but'), so the distractor 'The bouchon rouge' is close enough to start an argument with anyone who has played in France.",
+    "fix": {
+      "question": "In petanque, what is the small wooden target ball called?",
+      "options": [
+        "The cochonnet",
+        "The boulon",
+        "The petit rond",
+        "The marquer"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 105,
+    "question": "In snooker, which coloured ball is worth the fewest points?",
+    "problem": "ambiguous",
+    "detail": "In snooker a red is worth 1 point, fewer than the yellow's 2. The question is only correct if the player knows 'coloured ball' is jargon that excludes the reds, which most pub players do not.",
+    "fix": {
+      "question": "In snooker, which of the six colours is worth the fewest points?",
+      "options": [
+        "Yellow",
+        "Brown",
+        "Green",
+        "Blue"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 110,
+    "question": "What is the standard playing size of a full-size snooker table?",
+    "problem": "precision",
+    "detail": "12 feet by 6 feet is the nominal table size, not the playing size. The playing area inside the cushions of a full-size table is 11 feet 8.5 inches by 5 feet 10 inches, and a club snooker player will say so.",
+    "fix": {
+      "question": "What is the nominal size of a full-size snooker table?",
+      "options": [
+        "12 feet by 6 feet",
+        "14 feet by 7 feet",
+        "9 feet by 4 feet",
+        "10 feet by 5 feet"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 192,
+    "question": "In carpet bowls and lawn bowls alike, what does the umpire use to check whether a bowl is in the ditch?",
+    "problem": "ambiguous",
+    "detail": "The question has no real answer. An umpire does not use a special device to see whether a bowl is in the ditch, and 'their eyes and a measure' is not a term or a rule. It also mashes carpet bowls and lawn bowls together for no reason.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 275,
+    "question": "In the card game Uno, what must you call out when you have one card left?",
+    "problem": "self-answering",
+    "detail": "The name of the game is in the stem and is also the answer.",
+    "fix": {
+      "question": "In which card game must a player call out the game's own name when down to one card?",
+      "options": [
+        "Uno",
+        "Rummy",
+        "Canasta",
+        "Skip-Bo"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 285,
+    "question": "In poker, what is a run of five cards of different suits called?",
+    "problem": "ambiguous",
+    "detail": "A straight cannot be 'five cards of different suits' - there are only four suits. The defining feature is that the cards are in sequence and not all of one suit.",
+    "fix": {
+      "question": "In poker, what is a run of five cards in sequence, but not all of the same suit, called?",
+      "options": [
+        "A straight",
+        "A flush",
+        "A full house",
+        "Three of a kind"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 308,
+    "question": "Which card game involves building melds of seven cards called canastas?",
+    "problem": "self-answering",
+    "detail": "The word 'canastas' appears in the stem and the answer is Canasta.",
+    "fix": {
+      "question": "Which card game is played with two decks and involves building melds of seven matching cards?",
+      "options": [
+        "Canasta",
+        "Whist",
+        "Cribbage",
+        "Piquet"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 336,
+    "question": "What sort of lure is used to catch squid?",
+    "problem": "self-answering",
+    "detail": "The answer 'a squid jig' just repeats the word squid from the stem.",
+    "fix": {
+      "question": "What is the barbed, prawn-shaped lure used to catch squid called?",
+      "options": [
+        "A jig",
+        "A popper",
+        "A spinnerbait",
+        "A sinker rig"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 362,
+    "question": "Which Australian native shrub is commonly called bottlebrush?",
+    "problem": "two-answers",
+    "detail": "Callistemon species were formally transferred into the genus Melaleuca in 2006 and many Australian nurseries and gardeners now label bottlebrushes as Melaleuca. Both listed options are defensible.",
+    "fix": {
+      "question": "Which Australian native shrub genus has flower spikes that gave it the common name bottlebrush?",
+      "options": [
+        "Callistemon",
+        "Grevillea",
+        "Banksia",
+        "Acacia"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 419,
+    "question": "What sort of fishing is done through a hole cut in a frozen lake?",
+    "problem": "self-answering",
+    "detail": "'Through a hole cut in a frozen lake' gives 'ice fishing' away entirely.",
+    "fix": {
+      "question": "Which country's Lapland region is a major destination for anglers fishing through holes drilled in frozen lakes?",
+      "options": [
+        "Finland",
+        "Portugal",
+        "Greece",
+        "Spain"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 566,
+    "question": "How is the word 'oche' pronounced?",
+    "problem": "unsuitable",
+    "detail": "This is a pronunciation question, so the host has to say the word 'oche' out loud to ask it, which either gives the answer away or reveals the host's own guess. It cannot be read aloud fairly.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 576,
+    "question": "In the Australian game of two-up, how many coins are usually tossed?",
+    "problem": "self-answering",
+    "detail": "The game is called two-up, so 'two coins' is in the name.",
+    "fix": {
+      "question": "In the Australian game of two-up, what are the coins traditionally made of in a proper set?",
+      "options": [
+        "Pennies",
+        "Fifty cent pieces",
+        "Silver dollars",
+        "Brass tokens"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 626,
+    "question": "What is the collecting of banknotes called?",
+    "problem": "two-answers",
+    "detail": "Banknote collecting is a recognised branch of numismatics in the broad sense, so a collector can argue for the distractor. Tacking the word 'only' onto it does not remove the argument.",
+    "fix": {
+      "question": "What is the specific term for the collecting of banknotes?",
+      "options": [
+        "Notaphily",
+        "Deltiology",
+        "Philately",
+        "Cartophily"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 641,
+    "question": "What is the sport of racing homing pigeons more properly called?",
+    "problem": "self-answering",
+    "detail": "'The sport of racing homing pigeons' is answered by 'pigeon racing', which is the stem repeated back.",
+    "fix": {
+      "question": "In pigeon racing, what is the building where a fancier keeps and trains the birds called?",
+      "options": [
+        "A loft",
+        "A mews",
+        "A hutch",
+        "A run"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 649,
+    "question": "What is the hobby of collecting keyrings, badges and pins from places you visit part of?",
+    "problem": "ambiguous",
+    "detail": "The question does not actually ask anything. 'What is the hobby of collecting keyrings and badges part of?' has no single defined answer, and 'souvenir collecting' is just a restatement.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 650,
+    "question": "In lawn bowls, what is a bowl deliberately placed short of the head to block an opponent called?",
+    "problem": "two-answers",
+    "detail": "'Guard' is the term most bowlers actually use for a bowl placed short to block; 'blocker' and 'guard' are both standard. Adding 'only' to the distractor does not stop a bowls club arguing.",
+    "fix": {
+      "question": "In lawn bowls, what is the name for a bowl deliberately left short of the head to block an opponent's line?",
+      "options": [
+        "A blocker",
+        "A toucher",
+        "A wick",
+        "A driver"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 656,
+    "question": "In lawn bowls, which player of a four bowls third?",
+    "problem": "self-answering",
+    "detail": "The position is named after the order they bowl in, so the answer is contained in the question.",
+    "fix": {
+      "question": "In a game of fours in lawn bowls, which player delivers immediately before the skip?",
+      "options": [
+        "The third",
+        "The lead",
+        "The second",
+        "The marker"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 673,
+    "question": "Why should two male Siamese fighting fish never be kept in the same tank?",
+    "problem": "self-answering",
+    "detail": "They are called fighting fish, so 'they will fight' is given away by the name.",
+    "fix": {
+      "question": "Male Siamese fighting fish cannot be kept together, but what does the male build at the water surface for the eggs?",
+      "options": [
+        "A bubble nest",
+        "A sand pit",
+        "A weed tunnel",
+        "A gravel mound"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 698,
+    "question": "In camping, what does a hiker mean by a 'day pack'?",
+    "problem": "self-answering",
+    "detail": "'Day pack' is defined by the words in its own name; the answer restates the stem.",
+    "fix": {
+      "question": "In bushwalking, roughly how many litres is a typical day pack?",
+      "options": [
+        "About 20 to 30 litres",
+        "About 5 litres",
+        "About 70 litres",
+        "About 100 litres"
+      ],
+      "correctIndex": 0,
+      "category": "Hobbies & Collectables",
+      "difficulty": "medium"
+    }
+  }
+]

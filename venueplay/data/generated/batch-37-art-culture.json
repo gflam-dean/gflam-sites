@@ -1,0 +1,8018 @@
+[
+ {
+  "question": "By what Italian name is the Mona Lisa also known?",
+  "options": [
+   "La Fornarina",
+   "La Bella Donna",
+   "La Primavera",
+   "La Gioconda"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Leonardo da Vinci drawing shows a man with outstretched arms inside a circle and a square?",
+  "options": [
+   "Vitruvian Man",
+   "The Ideal Figure",
+   "The Golden Man",
+   "Study of Proportion"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which famous ceiling panel shows two hands almost touching, finger to finger?",
+  "options": [
+   "The Flood",
+   "The Creation of Adam",
+   "The Last Judgement",
+   "The Fall of Man"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Michelangelo sculpture shows Mary holding the body of Christ?",
+  "options": [
+   "The Madonna of Bruges",
+   "The Lamentation",
+   "The Pieta",
+   "The Deposition"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which building does Michelangelo's Pieta stand?",
+  "options": [
+   "St Peter's Basilica in Rome",
+   "Florence Cathedral",
+   "The Pantheon",
+   "Milan Cathedral"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Raphael fresco in the Vatican shows Plato and Aristotle among the great thinkers?",
+  "options": [
+   "The Disputation",
+   "The School of Athens",
+   "The Parnassus",
+   "The Council of Gods"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Botticelli painting shows a garden scene with Venus, Flora and the Three Graces?",
+  "options": [
+   "Venus and Mars",
+   "The Allegory of Spring Festival",
+   "The Garden of Love",
+   "Primavera"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Florence gallery do Botticelli's Birth of Venus and Primavera hang?",
+  "options": [
+   "The Bargello",
+   "The Accademia",
+   "The Pitti Palace",
+   "The Uffizi"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian painter is famous for dramatic lighting and the painting 'The Calling of Saint Matthew'?",
+  "options": [
+   "Tintoretto",
+   "Caravaggio",
+   "Titian",
+   "Giorgione"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Flemish painter created 'The Arnolfini Portrait', showing a couple and a convex mirror?",
+  "options": [
+   "Jan van Eyck",
+   "Robert Campin",
+   "Rogier van der Weyden",
+   "Hans Memling"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artist painted the strange three-panel work 'The Garden of Earthly Delights'?",
+  "options": [
+   "Lucas Cranach",
+   "Matthias Grunewald",
+   "Hieronymus Bosch",
+   "Pieter Bruegel"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Netherlandish painter is known for crowded peasant scenes such as 'The Hunters in the Snow'?",
+  "options": [
+   "Pieter Bruegel the Elder",
+   "Jan Steen",
+   "Frans Hals",
+   "Jan van Eyck"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German artist made the famous drawing known as 'Praying Hands'?",
+  "options": [
+   "Caspar David Friedrich",
+   "Albrecht Durer",
+   "Lucas Cranach",
+   "Hans Holbein"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dutch painter produced dozens of self-portraits across his lifetime and painted 'The Night Watch'?",
+  "options": [
+   "Rembrandt",
+   "Frans Hals",
+   "Vermeer",
+   "Jan Steen"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which Amsterdam museum does Rembrandt's 'The Night Watch' hang?",
+  "options": [
+   "The Mauritshuis",
+   "The Stedelijk",
+   "The Van Gogh Museum",
+   "The Rijksmuseum"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Dutch artist painted 'Girl with a Pearl Earring'?",
+  "options": [
+   "Rembrandt",
+   "Frans Hals",
+   "Pieter de Hooch",
+   "Johannes Vermeer"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Vermeer painted quiet domestic scenes in which Dutch city, also the subject of one of his views?",
+  "options": [
+   "Utrecht",
+   "Delft",
+   "Haarlem",
+   "Leiden"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which painting by Frans Hals shows a smiling man with an upturned moustache?",
+  "options": [
+   "The Jester",
+   "The Merry Drinker",
+   "The Laughing Cavalier",
+   "The Gypsy Girl"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Spanish painter created 'Las Meninas', showing a young princess and the artist himself?",
+  "options": [
+   "Diego Velazquez",
+   "El Greco",
+   "Francisco Goya",
+   "Bartolome Murillo"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Madrid museum does 'Las Meninas' hang?",
+  "options": [
+   "The Reina Sofia",
+   "The Prado",
+   "The Thyssen",
+   "The Royal Palace"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish artist painted 'The Third of May 1808', showing a firing squad?",
+  "options": [
+   "Francisco Goya",
+   "Diego Velazquez",
+   "El Greco",
+   "Joaquin Sorolla"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which painter, born in Crete, worked in Toledo and painted elongated figures?",
+  "options": [
+   "Ribera",
+   "Zurbaran",
+   "El Greco",
+   "Velazquez"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Flemish Baroque painter gave his name to a word describing full-figured women?",
+  "options": [
+   "Frans Snyders",
+   "Anthony van Dyck",
+   "Jacob Jordaens",
+   "Peter Paul Rubens"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which painter was court painter to King Charles the First of England?",
+  "options": [
+   "Joshua Reynolds",
+   "Anthony van Dyck",
+   "Thomas Gainsborough",
+   "William Hogarth"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which artist painted the famous portraits of King Henry the Eighth?",
+  "options": [
+   "Albrecht Durer",
+   "Hans Holbein the Younger",
+   "Jan van Eyck",
+   "Titian"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Holbein's painting 'The Ambassadors' famously hides what stretched across the bottom?",
+  "options": [
+   "A skull",
+   "A crown",
+   "A sword",
+   "A serpent"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which English painter created 'The Blue Boy'?",
+  "options": [
+   "William Hogarth",
+   "Thomas Gainsborough",
+   "Joshua Reynolds",
+   "George Romney"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which English painter is famous for 'The Hay Wain', showing a cart in a river?",
+  "options": [
+   "John Constable",
+   "Thomas Gainsborough",
+   "Samuel Palmer",
+   "J M W Turner"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which English painter of light and storms gives his name to Britain's best known contemporary art prize?",
+  "options": [
+   "J M W Turner",
+   "John Constable",
+   "William Blake",
+   "Joshua Reynolds"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Turner painting shows an old warship being towed away by a steam tug?",
+  "options": [
+   "Snow Storm",
+   "The Slave Ship",
+   "The Fighting Temeraire",
+   "Rain, Steam and Speed"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which English artist told moral stories in picture series such as 'A Rake's Progress'?",
+  "options": [
+   "George Stubbs",
+   "William Hogarth",
+   "John Constable",
+   "Thomas Gainsborough"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was the first president of Britain's Royal Academy of Arts?",
+  "options": [
+   "Benjamin West",
+   "William Hogarth",
+   "Thomas Gainsborough",
+   "Joshua Reynolds"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which English painter was best known for his paintings of horses, including 'Whistlejacket'?",
+  "options": [
+   "Edwin Landseer",
+   "Alfred Munnings",
+   "George Stubbs",
+   "John Constable"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Victorian painting shows Ophelia floating in a stream surrounded by flowers?",
+  "options": [
+   "Rossetti's Beata Beatrix",
+   "Hunt's Awakening Conscience",
+   "Waterhouse's Lady of Shalott",
+   "Millais's Ophelia"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the group of Victorian artists who wanted to return to the style before Raphael called?",
+  "options": [
+   "The Nazarenes",
+   "The Academy Rebels",
+   "The Pre-Raphaelite Brotherhood",
+   "The Aesthetic Circle"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The painting popularly known as 'Whistler's Mother' has what formal title?",
+  "options": [
+   "Arrangement in Grey and Black",
+   "Portrait of a Lady Seated",
+   "Nocturne in Grey",
+   "Study in Monochrome"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who painted 'American Gothic'?",
+  "options": [
+   "Edward Hopper",
+   "Andrew Wyeth",
+   "Thomas Hart Benton",
+   "Grant Wood"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which painting shows three customers at a late-night city diner seen through a large window?",
+  "options": [
+   "Nighthawks",
+   "American Gothic",
+   "The Automat",
+   "Chop Suey"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who painted 'Nighthawks'?",
+  "options": [
+   "Grant Wood",
+   "Edward Hopper",
+   "Georgia O'Keeffe",
+   "Norman Rockwell"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American artist is famous for huge close-up paintings of flowers and New Mexico landscapes?",
+  "options": [
+   "Mary Cassatt",
+   "Lee Krasner",
+   "Helen Frankenthaler",
+   "Georgia O'Keeffe"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American painting shows a woman lying in a field looking up at a distant farmhouse?",
+  "options": [
+   "Prairie Light",
+   "American Gothic",
+   "Christina's World",
+   "The Wanderer"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which American illustrator painted decades of covers for the Saturday Evening Post?",
+  "options": [
+   "Norman Rockwell",
+   "Grant Wood",
+   "Edward Hopper",
+   "Maxfield Parrish"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French painter created 'The Death of Marat', showing a man dead in his bath?",
+  "options": [
+   "Eugene Delacroix",
+   "Jean-Auguste Ingres",
+   "Theodore Gericault",
+   "Jacques-Louis David"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who painted 'Liberty Leading the People'?",
+  "options": [
+   "Gustave Courbet",
+   "Jacques-Louis David",
+   "Theodore Gericault",
+   "Eugene Delacroix"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which huge French painting shows shipwreck survivors crowded on a makeshift raft?",
+  "options": [
+   "The Storm at Sea",
+   "The Last Voyage",
+   "The Wreck of the Hope",
+   "The Raft of the Medusa"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French painter showed peasants bending to collect leftover grain in 'The Gleaners'?",
+  "options": [
+   "Honore Daumier",
+   "Gustave Courbet",
+   "Camille Corot",
+   "Jean-Francois Millet"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which painter shocked Paris with 'Le Dejeuner sur l'herbe' and 'Olympia'?",
+  "options": [
+   "Edouard Manet",
+   "Gustave Courbet",
+   "Claude Monet",
+   "Edgar Degas"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German Romantic painting shows a man on a rocky peak looking out over mist?",
+  "options": [
+   "The Traveller",
+   "Wanderer above the Sea of Fog",
+   "The Monk by the Sea",
+   "Alpine Morning"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese artist created 'The Great Wave off Kanagawa'?",
+  "options": [
+   "Sharaku",
+   "Utamaro",
+   "Hokusai",
+   "Hiroshige"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Japanese tradition of woodblock prints of everyday life and actors called?",
+  "options": [
+   "Sumi-e",
+   "Ukiyo-e",
+   "Yamato-e",
+   "Nihonga"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Bayeux Tapestry records which invasion?",
+  "options": [
+   "The Viking raids on Ireland",
+   "The Roman invasion of Britain",
+   "The Norman conquest of England",
+   "The Crusades"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Bayeux Tapestry is not actually a tapestry. What technique was used to make it?",
+  "options": [
+   "Applique",
+   "Printing",
+   "Weaving",
+   "Embroidery"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which prehistoric French cave is famous for its painted bulls and horses?",
+  "options": [
+   "Lascaux",
+   "Knossos",
+   "Pompeii",
+   "Petra"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which lavishly decorated medieval manuscript is kept at Trinity College in Dublin?",
+  "options": [
+   "The Codex Vaticanus",
+   "The Book of Kells",
+   "The Lindisfarne Gospels",
+   "The Domesday Book"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are hand-painted decorations and gold leaf in medieval manuscripts called?",
+  "options": [
+   "Illumination",
+   "Rubrication only",
+   "Miniaturism",
+   "Gilding scripts"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Venetian painter of the Renaissance is known simply as Titian?",
+  "options": [
+   "Jacopo Robusti",
+   "Giorgio Barbarelli",
+   "Tiziano Vecellio",
+   "Paolo Caliari"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Italian painter decorated the Scrovegni Chapel in Padua and helped end the flat medieval style?",
+  "options": [
+   "Duccio",
+   "Masaccio",
+   "Giotto",
+   "Cimabue"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a painting of the countryside called?",
+  "options": [
+   "A landscape",
+   "A genre scene",
+   "A still life",
+   "A portrait"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the proper term for a painting of a ship or the sea, especially in the Dutch tradition?",
+  "options": [
+   "A marine",
+   "A vanitas",
+   "A capriccio",
+   "A veduta"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a painting showing scenes of ordinary daily life called?",
+  "options": [
+   "A vanitas",
+   "An allegory",
+   "A history painting",
+   "A genre painting"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a still life containing skulls and hourglasses as reminders of death called?",
+  "options": [
+   "A tenebrae",
+   "A requiem piece",
+   "A memento",
+   "A vanitas"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Impressionist painter is best known for 'Luncheon of the Boating Party'?",
+  "options": [
+   "Pierre-Auguste Renoir",
+   "Claude Monet",
+   "Edgar Degas",
+   "Camille Pissarro"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Impressionist painted the same haystacks and cathedral front over and over in different light?",
+  "options": [
+   "Claude Monet",
+   "Alfred Sisley",
+   "Auguste Renoir",
+   "Camille Pissarro"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Paris museum are Monet's huge curved water lily panels displayed?",
+  "options": [
+   "The Pompidou Centre",
+   "The Louvre",
+   "The Petit Palais",
+   "The Orangerie"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Paris museum, housed in a former railway station, holds the great Impressionist collection?",
+  "options": [
+   "The Louvre",
+   "The Grand Palais",
+   "The Pompidou Centre",
+   "The Musee d'Orsay"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American-born Impressionist painted tender scenes of mothers and children in Paris?",
+  "options": [
+   "Mary Cassatt",
+   "Georgia O'Keeffe",
+   "Rosa Bonheur",
+   "Berthe Morisot"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which French painter is known for saying he wanted to make Impressionism something solid, and painted Mont Sainte-Victoire many times?",
+  "options": [
+   "Paul Gauguin",
+   "Camille Pissarro",
+   "Georges Seurat",
+   "Paul Cezanne"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artist painted 'A Sunday Afternoon on the Island of La Grande Jatte'?",
+  "options": [
+   "Paul Signac",
+   "Paul Cezanne",
+   "Claude Monet",
+   "Georges Seurat"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French artist made famous posters of the Moulin Rouge dance hall?",
+  "options": [
+   "Pierre Bonnard",
+   "Henri de Toulouse-Lautrec",
+   "Alphonse Mucha",
+   "Edgar Degas"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Vincent van Gogh series shows a vase of yellow flowers?",
+  "options": [
+   "Sunflowers",
+   "Almond Blossom",
+   "Irises",
+   "Poppies"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which part of his own body did Vincent van Gogh famously cut?",
+  "options": [
+   "His nose",
+   "His hand",
+   "His lip",
+   "His ear"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the name of the brother who supported Vincent van Gogh throughout his career?",
+  "options": [
+   "Theo",
+   "Anton",
+   "Cornelis",
+   "Pieter"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which van Gogh painting shows a simple room with a bed, two chairs and a window?",
+  "options": [
+   "The Night Cafe",
+   "The Yellow House",
+   "The Potato Eaters",
+   "The Bedroom in Arles"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which southern French town did van Gogh paint the Yellow House and many of his best known works?",
+  "options": [
+   "Arles",
+   "Nice",
+   "Aix",
+   "Avignon"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which movement did Henri Matisse lead, whose name means 'wild beasts'?",
+  "options": [
+   "Fauvism",
+   "Dadaism",
+   "Cubism",
+   "Futurism"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Late in life, unable to paint easily, Matisse worked mainly in which medium?",
+  "options": [
+   "Bronze casting",
+   "Etching",
+   "Fresco",
+   "Cut paper collage"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Picasso's period when he painted almost everything in shades of one colour after a friend's death?",
+  "options": [
+   "The Grey Period",
+   "The Black Period",
+   "The Blue Period",
+   "The Green Period"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French artist worked alongside Picasso to develop Cubism?",
+  "options": [
+   "Fernand Leger",
+   "Robert Delaunay",
+   "Juan Gris",
+   "Georges Braque"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Belgian surrealist painted a man in a bowler hat with a green apple in front of his face?",
+  "options": [
+   "Rene Magritte",
+   "Paul Delvaux",
+   "Max Ernst",
+   "Salvador Dali"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Magritte painted a pipe with the words 'this is not a pipe'. What is that work called?",
+  "options": [
+   "The Empire of Light",
+   "The False Mirror",
+   "The Treachery of Images",
+   "The Human Condition"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Russian-born painter wrote 'Concerning the Spiritual in Art' and is usually credited with the first purely abstract paintings around 1910?",
+  "options": [
+   "Wassily Kandinsky",
+   "Marc Chagall",
+   "Alexander Rodchenko",
+   "Natalia Goncharova"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Russian artist painted a plain black square as a radical statement in 1915?",
+  "options": [
+   "Naum Gabo",
+   "Kazimir Malevich",
+   "Wassily Kandinsky",
+   "El Lissitzky"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which artist is known for dreamlike paintings with floating figures, fiddlers and Russian villages?",
+  "options": [
+   "Joan Miro",
+   "Amedeo Modigliani",
+   "Paul Klee",
+   "Marc Chagall"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian artist is known for portraits with very long necks and blank almond eyes?",
+  "options": [
+   "Amedeo Modigliani",
+   "Giorgio de Chirico",
+   "Giorgio Morandi",
+   "Umberto Boccioni"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which self-taught French painter is famous for imaginary jungle scenes with tigers and lush leaves?",
+  "options": [
+   "Henri Rousseau",
+   "Andre Derain",
+   "Maurice Utrillo",
+   "Paul Gauguin"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Dutch artist made prints of impossible staircases and endlessly repeating patterns?",
+  "options": [
+   "M C Escher",
+   "Piet Mondrian",
+   "Karel Appel",
+   "Jan Toorop"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American artist is known for huge blocks of glowing colour that fill the canvas?",
+  "options": [
+   "Jackson Pollock",
+   "Willem de Kooning",
+   "Mark Rothko",
+   "Franz Kline"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British artist painted 'A Bigger Splash', showing a swimming pool in California?",
+  "options": [
+   "Francis Bacon",
+   "Howard Hodgkin",
+   "Lucian Freud",
+   "David Hockney"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British painter, a grandson of Sigmund Freud, was known for unflinching nude portraits?",
+  "options": [
+   "Francis Bacon",
+   "Frank Auerbach",
+   "Lucian Freud",
+   "Leon Kossoff"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Irish-born painter created distorted screaming figures, including studies after a Velazquez pope?",
+  "options": [
+   "Francis Bacon",
+   "Jack Yeats",
+   "Sean Scully",
+   "Lucian Freud"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British artist made a name preserving a shark in a tank of formaldehyde?",
+  "options": [
+   "Damien Hirst",
+   "Antony Gormley",
+   "Tracey Emin",
+   "Anish Kapoor"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British artist exhibited her own unmade bed as an artwork?",
+  "options": [
+   "Sarah Lucas",
+   "Rachel Whiteread",
+   "Tracey Emin",
+   "Gillian Wearing"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which artist created bright, energetic figures and barking dogs in a graffiti-inspired style in 1980s New York?",
+  "options": [
+   "Roy Lichtenstein",
+   "Jean-Michel Basquiat",
+   "Kenny Scharf",
+   "Keith Haring"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Japanese artist is famous for polka dots and mirrored infinity rooms?",
+  "options": [
+   "Hiroshi Sugimoto",
+   "Yoko Ono",
+   "Yayoi Kusama",
+   "Takashi Murakami"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Chinese artist and activist filled a gallery floor with millions of porcelain sunflower seeds?",
+  "options": [
+   "Cai Guo-Qiang",
+   "Zhang Xiaogang",
+   "Ai Weiwei",
+   "Xu Bing"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artist is known for shiny balloon animals made in stainless steel?",
+  "options": [
+   "Jeff Koons",
+   "Takashi Murakami",
+   "Anish Kapoor",
+   "Damien Hirst"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artists became famous for wrapping buildings and landscapes in fabric?",
+  "options": [
+   "The Chapman Brothers",
+   "Christo and Jeanne-Claude",
+   "Marina and Ulay",
+   "Gilbert and George"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British artist is known for optical patterns that seem to move on the canvas?",
+  "options": [
+   "Elisabeth Frink",
+   "Barbara Hepworth",
+   "Paula Rego",
+   "Bridget Riley"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the art movement of shimmering geometric patterns that trick the eye called?",
+  "options": [
+   "Land art",
+   "Pop art",
+   "Colour field",
+   "Op art"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which movement, founded in Italy in 1909, celebrated speed, machines and modern life?",
+  "options": [
+   "Futurism",
+   "Suprematism",
+   "Vorticism",
+   "Cubism"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which movement began in Zurich during the First World War and made deliberately absurd anti-art?",
+  "options": [
+   "Symbolism",
+   "Surrealism",
+   "Expressionism",
+   "Dada"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French artist turned everyday objects into art and called them 'readymades'?",
+  "options": [
+   "Man Ray",
+   "Jean Arp",
+   "Francis Picabia",
+   "Marcel Duchamp"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish surrealist painted playful shapes, stars and bright blobs in works such as 'The Harlequin's Carnival'?",
+  "options": [
+   "Joan Miro",
+   "Salvador Dali",
+   "Antoni Tapies",
+   "Juan Gris"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Mexican artist painted huge political murals and was married to Frida Kahlo?",
+  "options": [
+   "Rufino Tamayo",
+   "David Siqueiros",
+   "Jose Orozco",
+   "Diego Rivera"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which movement in early twentieth century Germany used harsh colours and distorted forms to show inner feeling?",
+  "options": [
+   "Impressionism",
+   "Realism",
+   "Neoclassicism",
+   "Expressionism"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a painting or sculpture that shows no recognisable subject called?",
+  "options": [
+   "Abstract",
+   "Naturalistic",
+   "Figurative",
+   "Representational"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'avant-garde' describe in the arts?",
+  "options": [
+   "Work sold only at auction",
+   "Work that is experimental and ahead of its time",
+   "Work copied from older masters",
+   "Work made for the royal court"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which famous ancient Greek statue in the Louvre is missing both arms?",
+  "options": [
+   "The Venus de Milo",
+   "The Discobolus",
+   "The Winged Victory",
+   "The Charioteer"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which headless winged statue stands at the top of a staircase in the Louvre?",
+  "options": [
+   "The Angel of Athens",
+   "The Venus de Milo",
+   "The Nike of Delos",
+   "The Winged Victory of Samothrace"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient sculpture shows an athlete about to throw a discus?",
+  "options": [
+   "The Laocoon",
+   "The Doryphoros",
+   "The Kritios Boy",
+   "The Discobolus"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient marble group shows a priest and his sons attacked by sea serpents?",
+  "options": [
+   "The Laocoon",
+   "The Farnese Bull",
+   "The Belvedere Torso",
+   "The Dying Gaul"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Renaissance sculptor created a bronze David wearing a hat and boots?",
+  "options": [
+   "Ghiberti",
+   "Michelangelo",
+   "Verrocchio",
+   "Donatello"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Italian Baroque sculptor carved 'Apollo and Daphne' and designed the colonnade at St Peter's Square?",
+  "options": [
+   "Francesco Borromini",
+   "Benvenuto Cellini",
+   "Gian Lorenzo Bernini",
+   "Antonio Canova"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Rodin's 'The Thinker' was originally designed as part of which larger work?",
+  "options": [
+   "The Burghers of Calais",
+   "The Monument to Balzac",
+   "The Age of Bronze",
+   "The Gates of Hell"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Swiss sculptor is famous for extremely thin, elongated standing and walking figures?",
+  "options": [
+   "Alberto Giacometti",
+   "Henry Moore",
+   "Jean Tinguely",
+   "Constantin Brancusi"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British sculptor is best known for large, smooth reclining figures with holes through them?",
+  "options": [
+   "Henry Moore",
+   "Anish Kapoor",
+   "Eduardo Paolozzi",
+   "Antony Gormley"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British sculptor, based in Cornwall, made pierced abstract forms often strung with wire?",
+  "options": [
+   "Rachel Whiteread",
+   "Bridget Riley",
+   "Barbara Hepworth",
+   "Elisabeth Frink"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which American artist invented the hanging, balanced sculptures known as mobiles?",
+  "options": [
+   "Alexander Calder",
+   "David Smith",
+   "Richard Serra",
+   "Donald Judd"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British sculptor created the Angel of the North?",
+  "options": [
+   "Henry Moore",
+   "Damien Hirst",
+   "Anish Kapoor",
+   "Antony Gormley"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mirrored bean-shaped sculpture is a landmark in Chicago's Millennium Park?",
+  "options": [
+   "Cloud Gate",
+   "Silver Arc",
+   "Sky Mirror",
+   "The Bean Field"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Near which Chinese city was the Terracotta Army discovered?",
+  "options": [
+   "Chengdu",
+   "Xian",
+   "Beijing",
+   "Shanghai"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the giant carved stone heads on Easter Island called?",
+  "options": [
+   "Tiki",
+   "Menhirs",
+   "Totems",
+   "Moai"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country gave the Statue of Liberty to the United States?",
+  "options": [
+   "Britain",
+   "France",
+   "Italy",
+   "Spain"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Why is the Statue of Liberty green?",
+  "options": [
+   "It is made of jade stone",
+   "It was painted green",
+   "Algae grows on the surface",
+   "Its copper skin has weathered"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many presidents' faces are carved into Mount Rushmore?",
+  "options": [
+   "Five",
+   "Three",
+   "Four",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which small bronze statue sits on a rock in the harbour at Copenhagen?",
+  "options": [
+   "The Sea Maiden",
+   "The Water Nymph",
+   "The Little Mermaid",
+   "The Fisher Girl"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which famous small fountain statue in Brussels shows a boy relieving himself?",
+  "options": [
+   "Jongen van Brussel",
+   "Manneken Pis",
+   "Le Petit Garcon",
+   "Fontaine du Roi"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which giant statue with outstretched arms overlooks Rio de Janeiro?",
+  "options": [
+   "Christ the Redeemer",
+   "The Saviour of Rio",
+   "The Angel of Brazil",
+   "Our Lady of the Bay"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the ancient technique of casting bronze using a wax model that is melted away called?",
+  "options": [
+   "Cold casting",
+   "Slip casting",
+   "Sand casting",
+   "Lost wax casting"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the wire or metal skeleton inside a clay sculpture called?",
+  "options": [
+   "A scaffold rod",
+   "An armature",
+   "A former",
+   "A frame lock"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a small trial version made by a sculptor before the full-size work called?",
+  "options": [
+   "A cartoon",
+   "A pattern",
+   "A maquette",
+   "A study cast"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the base a sculpture stands on called?",
+  "options": [
+   "A dado",
+   "A lintel",
+   "A frieze",
+   "A plinth"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a sculpture that is carved so it still projects from a flat background called?",
+  "options": [
+   "A frieze mount",
+   "A relief",
+   "A bust",
+   "A cast panel"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a sculpture of just a person's head, shoulders and chest called?",
+  "options": [
+   "A herm",
+   "A statuette",
+   "A bust",
+   "A torso"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the classical sculptural pose with the weight resting on one leg called?",
+  "options": [
+   "Contrapposto",
+   "Sfumato",
+   "Chiaroscuro",
+   "Foreshortening"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which white marble, quarried in Italy, has been prized by sculptors since ancient times?",
+  "options": [
+   "Carrara",
+   "Travertine",
+   "Alabaster",
+   "Portland"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two metals are mixed to make bronze?",
+  "options": [
+   "Iron and carbon",
+   "Copper and tin",
+   "Lead and silver",
+   "Copper and zinc"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Tate Modern in London is housed in a converted what?",
+  "options": [
+   "Flour mill",
+   "Power station",
+   "Railway station",
+   "Warehouse dock"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which London museum is devoted to design and the decorative arts?",
+  "options": [
+   "The Wallace Collection",
+   "The Design Council",
+   "The Victoria and Albert Museum",
+   "The Science Museum"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sculptures taken from the Parthenon are held in the British Museum?",
+  "options": [
+   "The Elgin Marbles",
+   "The Athena Reliefs",
+   "The Delphi Friezes",
+   "The Acropolis Stones"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Russian museum in St Petersburg occupies the former Winter Palace?",
+  "options": [
+   "The Tretyakov",
+   "The Hermitage",
+   "The Pushkin",
+   "The Russian Museum"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which New York museum does Picasso's 'Les Demoiselles d'Avignon' hang?",
+  "options": [
+   "The Metropolitan Museum",
+   "The Frick Collection",
+   "The Museum of Modern Art",
+   "The Whitney"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the New York museum usually shortened to 'the Met'?",
+  "options": [
+   "The Manhattan Museum",
+   "The Metropolitan Museum of Art",
+   "The Metropolitan Design Centre",
+   "The Museum of Modern Art"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Florence gallery holds Michelangelo's David?",
+  "options": [
+   "The Uffizi",
+   "The Bargello",
+   "The Accademia",
+   "The Palazzo Vecchio"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Sistine Chapel is part of which museum complex?",
+  "options": [
+   "The Borghese Gallery",
+   "The Capitoline Museums",
+   "The National Roman Museum",
+   "The Vatican Museums"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Amsterdam museum is devoted to a single Dutch painter and his letters?",
+  "options": [
+   "The Rembrandt House",
+   "The Stedelijk Museum",
+   "The Rijksmuseum",
+   "The Van Gogh Museum"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which Dutch museum does 'Girl with a Pearl Earring' hang?",
+  "options": [
+   "The Van Gogh Museum",
+   "The Rijksmuseum",
+   "The Mauritshuis in The Hague",
+   "The Frans Hals Museum"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Paris museum is dedicated entirely to the sculptor Auguste Rodin?",
+  "options": [
+   "The Petit Palais",
+   "The Musee Bourdelle",
+   "The Musee Rodin",
+   "The Musee Maillol"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the person who selects and organises works for an exhibition?",
+  "options": [
+   "The registrar",
+   "The curator",
+   "The dealer",
+   "The conservator"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the specialist who cleans and repairs damaged artworks?",
+  "options": [
+   "An appraiser",
+   "A conservator",
+   "A gallerist",
+   "A curator"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an exhibition covering an artist's whole career called?",
+  "options": [
+   "A retrospective",
+   "A survey sale",
+   "A vernissage",
+   "A salon"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a large international art exhibition held every two years called?",
+  "options": [
+   "A biennale",
+   "An expo",
+   "A triennale",
+   "A salon"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian city hosts the world's oldest and best known art biennale?",
+  "options": [
+   "Venice",
+   "Rome",
+   "Milan",
+   "Florence"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the nineteenth century Paris exhibition for works rejected by the official jury called?",
+  "options": [
+   "The Salon des Refuses",
+   "The Petit Salon",
+   "The Salon Libre",
+   "The Salon d'Automne"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a painting made using pigment mixed with egg yolk called?",
+  "options": [
+   "Fresco secco",
+   "Encaustic",
+   "Gouache",
+   "Tempera"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is opaque watercolour paint called?",
+  "options": [
+   "Gouache",
+   "Ink wash",
+   "Tempera",
+   "Acrylic"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which painting medium is made from pigment mixed with hot wax?",
+  "options": [
+   "Gouache",
+   "Encaustic",
+   "Tempera",
+   "Casein"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which fast-drying, water-based paint became popular with artists from the 1950s?",
+  "options": [
+   "Encaustic",
+   "Acrylic",
+   "Oil",
+   "Tempera"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the white primer coat brushed onto a canvas before painting called?",
+  "options": [
+   "Gesso",
+   "Ground ink",
+   "Varnish",
+   "Sizing wax"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is thickly applied paint that stands up off the surface called?",
+  "options": [
+   "Impasto",
+   "Sgraffito",
+   "Scumbling",
+   "Glazing"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Leonardo da Vinci's technique of soft, smoky transitions between tones called?",
+  "options": [
+   "Sfumato",
+   "Grisaille",
+   "Chiaroscuro",
+   "Impasto"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the technique of drawing an object shortened to suggest depth called?",
+  "options": [
+   "Blocking in",
+   "Rendering",
+   "Cross hatching",
+   "Foreshortening"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a drawing using perspective, what is the point where parallel lines appear to meet called?",
+  "options": [
+   "The horizon mark",
+   "The vanishing point",
+   "The centre line",
+   "The focal point"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is painting designed to trick the eye into seeing something real called?",
+  "options": [
+   "Chiaroscuro",
+   "Trompe l'oeil",
+   "Pastiche",
+   "Grisaille"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a full-size preparatory drawing for a painting or tapestry called?",
+  "options": [
+   "A pounce",
+   "A cartoon",
+   "A sketchbook study",
+   "A maquette"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a painting made entirely in shades of grey called?",
+  "options": [
+   "A grisaille",
+   "A camaieu wash",
+   "A tonalist",
+   "A monotype"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the three secondary colours in traditional paint mixing?",
+  "options": [
+   "Pink, teal and gold",
+   "Brown, grey and cream",
+   "Red, yellow and blue",
+   "Orange, green and purple"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On the colour wheel, which colour sits opposite red?",
+  "options": [
+   "Orange",
+   "Green",
+   "Blue",
+   "Purple"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On the colour wheel, which colour sits opposite blue?",
+  "options": [
+   "Red",
+   "Purple",
+   "Orange",
+   "Green"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On the colour wheel, which colour sits opposite yellow?",
+  "options": [
+   "Blue",
+   "Orange",
+   "Purple",
+   "Green"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are colours that sit opposite each other on the colour wheel called?",
+  "options": [
+   "Complementary colours",
+   "Analogous colours",
+   "Tertiary colours",
+   "Neutral colours"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are colours that sit next to each other on the colour wheel called?",
+  "options": [
+   "Primary colours",
+   "Split colours",
+   "Complementary colours",
+   "Analogous colours"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In colour terms, what do you get when you add white to a colour?",
+  "options": [
+   "A hue",
+   "A shade",
+   "A tint",
+   "A tone"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In colour terms, what do you get when you add black to a colour?",
+  "options": [
+   "A tint",
+   "A hue",
+   "A wash",
+   "A shade"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the word 'hue' mean in colour theory?",
+  "options": [
+   "How warm it feels",
+   "The pure colour itself",
+   "How bright it is",
+   "How light or dark it is"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'saturation' describe about a colour?",
+  "options": [
+   "How warm or cool it is",
+   "How glossy it is",
+   "How light or dark it is",
+   "How intense or dull it is"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is usually described as a warm colour?",
+  "options": [
+   "Blue",
+   "Green",
+   "Violet",
+   "Orange"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is usually described as a cool colour?",
+  "options": [
+   "Blue",
+   "Yellow",
+   "Orange",
+   "Red"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which scientist first split white light with a prism and set out the colour circle?",
+  "options": [
+   "Isaac Newton",
+   "Michael Faraday",
+   "Robert Hooke",
+   "Johann Goethe"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a picture described as 'monochrome' use?",
+  "options": [
+   "Shades of a single colour",
+   "Every colour of the rainbow",
+   "Black outlines only",
+   "Only primary colours"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which precious blue stone was ground to make the costly pigment ultramarine?",
+  "options": [
+   "Turquoise",
+   "Azurite",
+   "Lapis lazuli",
+   "Sapphire"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which natural earth pigment gives a reddish-brown colour named after an Italian city?",
+  "options": [
+   "Vermilion",
+   "Sienna",
+   "Umber",
+   "Ochre"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which printing process involves cutting away the parts of a wooden block that will stay white?",
+  "options": [
+   "Aquatint",
+   "Lithography",
+   "Etching",
+   "Woodcut"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which printing process uses acid to bite lines into a metal plate?",
+  "options": [
+   "Lithography",
+   "Screenprinting",
+   "Etching",
+   "Woodcut"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which printing process relies on grease and water repelling each other on a flat stone?",
+  "options": [
+   "Etching",
+   "Linocut",
+   "Engraving",
+   "Lithography"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which printing process pushes ink through a fine mesh stencil?",
+  "options": [
+   "Drypoint",
+   "Etching",
+   "Screenprinting",
+   "Lithography"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a print marked '12 slash 50', what does the 50 mean?",
+  "options": [
+   "The price in guineas",
+   "The number of colours used",
+   "The year it was made",
+   "The total number of prints in the edition"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an artwork made of two hinged or joined panels called?",
+  "options": [
+   "A predella",
+   "A diptych",
+   "A triptych",
+   "A polyptych"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient Roman city's wall paintings and mosaics were preserved under volcanic ash?",
+  "options": [
+   "Ravenna",
+   "Pompeii",
+   "Carthage",
+   "Ostia"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the empty space around and between the subjects of a picture called?",
+  "options": [
+   "Blank field",
+   "Dead ground",
+   "Negative space",
+   "Void tone"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the part of a picture closest to the viewer called?",
+  "options": [
+   "The foreground",
+   "The horizon",
+   "The background",
+   "The middle distance"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'portrait orientation' mean for a canvas or page?",
+  "options": [
+   "Circular",
+   "Perfectly square",
+   "Wider than it is tall",
+   "Taller than it is wide"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the proportion often called the golden ratio roughly equal to?",
+  "options": [
+   "1 to 1.2",
+   "1 to 2.5",
+   "1 to 3",
+   "1 to 1.6"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a class where artists draw from a live nude model called?",
+  "options": [
+   "Atelier casting",
+   "Life drawing",
+   "Figure printing",
+   "Plein air"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the French term for painting outdoors, directly from the subject?",
+  "options": [
+   "Sur le motif seul",
+   "Nature morte",
+   "En plein air",
+   "Alla prima"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the technique of finishing an oil painting in one sitting, while the paint is still wet, called?",
+  "options": [
+   "Glazing",
+   "Underpainting",
+   "Scumbling",
+   "Alla prima"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the sacred painted panel of a saint in the Orthodox tradition called?",
+  "options": [
+   "An icon",
+   "A reliquary",
+   "A retable",
+   "A votive"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of the symbols and subjects used in art called?",
+  "options": [
+   "Etymology",
+   "Iconography",
+   "Palaeography",
+   "Cartography"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a deliberately fake artwork passed off as the work of a famous artist called?",
+  "options": [
+   "A replica",
+   "A pastiche",
+   "A reproduction",
+   "A forgery"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a work made in the style of another artist, openly and without deception, called?",
+  "options": [
+   "A knock-off",
+   "A forgery",
+   "A pastiche",
+   "A copy fraud"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the raised wooden frame that a canvas is stretched over called?",
+  "options": [
+   "A mount",
+   "A stretcher",
+   "A palette",
+   "An easel"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the flat board an artist mixes paint on called?",
+  "options": [
+   "A muller",
+   "A palette",
+   "A board rest",
+   "A stretcher"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the stand that holds a canvas upright while an artist paints called?",
+  "options": [
+   "A plinth",
+   "A frame horse",
+   "A tressle",
+   "An easel"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the flexible blade used to spread or scrape paint called?",
+  "options": [
+   "A scraper hook",
+   "A palette knife",
+   "A spatula rod",
+   "A burnisher"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the card border placed between a picture and its frame called?",
+  "options": [
+   "A fillet block",
+   "A mount",
+   "A liner rail",
+   "A backing sheet"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which drawing material is made from burnt wood?",
+  "options": [
+   "Conte",
+   "Graphite",
+   "Pastel",
+   "Charcoal"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which material is the 'lead' in an ordinary pencil actually made from?",
+  "options": [
+   "Chalk",
+   "Lead",
+   "Charcoal",
+   "Graphite"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On a pencil, what does a higher number before the letter B mean?",
+  "options": [
+   "A softer, darker line",
+   "A harder, lighter line",
+   "A thicker barrel",
+   "A longer pencil"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is spray applied over a charcoal or pastel drawing to stop it smudging called?",
+  "options": [
+   "Medium wash",
+   "Fixative",
+   "Varnish",
+   "Sealer gum"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the clear protective layer brushed over a finished oil painting called?",
+  "options": [
+   "Varnish",
+   "Gesso",
+   "Fixative",
+   "Size"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a sculpture assembled from found objects and junk usually called?",
+  "options": [
+   "An assemblage",
+   "A montage",
+   "A construction print",
+   "A tableau"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an artwork built to fill and transform a whole room or space called?",
+  "options": [
+   "A tableau vivant",
+   "A mural",
+   "A diorama",
+   "An installation"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a live artwork in which the artist's own actions are the work called?",
+  "options": [
+   "Performance art",
+   "Land art",
+   "Video art",
+   "Kinetic art"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is art made by shaping the landscape itself called?",
+  "options": [
+   "Land art",
+   "Public art",
+   "Environmental design",
+   "Site sculpture"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is art in which the idea matters more than the finished object called?",
+  "options": [
+   "Abstract art",
+   "Conceptual art",
+   "Outsider art",
+   "Kinetic art"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is art made by people outside the mainstream art world, often self-taught, called?",
+  "options": [
+   "Outsider art",
+   "Fringe art",
+   "Naive academy",
+   "Folk revival"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many classical orders of Greek columns are usually listed?",
+  "options": [
+   "Five",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classical column order is the plainest, with no decoration at the top?",
+  "options": [
+   "Doric",
+   "Corinthian",
+   "Ionic",
+   "Composite"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classical column order has scroll shapes at the top?",
+  "options": [
+   "Doric",
+   "Tuscan",
+   "Corinthian",
+   "Ionic"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classical column order is decorated with carved acanthus leaves?",
+  "options": [
+   "Tuscan",
+   "Doric",
+   "Corinthian",
+   "Ionic"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which goddess was the Parthenon in Athens built for?",
+  "options": [
+   "Artemis",
+   "Hera",
+   "Athena",
+   "Aphrodite"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which rocky hill does the Parthenon stand?",
+  "options": [
+   "The Areopagus",
+   "The Acropolis",
+   "The Agora",
+   "Mount Lycabettus"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the decorated horizontal band running around the top of a classical temple called?",
+  "options": [
+   "A plinth",
+   "A soffit",
+   "A frieze",
+   "A dado"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the triangular gable above the columns on a classical building called?",
+  "options": [
+   "A pediment",
+   "A capital",
+   "A lintel",
+   "A cornice"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the decorated top of a column called?",
+  "options": [
+   "The base",
+   "The capital",
+   "The abacus block",
+   "The shaft"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a row of columns supporting a roof called?",
+  "options": [
+   "A gallery",
+   "A cloister",
+   "A colonnade",
+   "A cornice"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a covered porch with columns at the entrance of a building called?",
+  "options": [
+   "A narthex",
+   "A pergola",
+   "A portico",
+   "A loggia only"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roman amphitheatre is the largest ever built and still stands in Rome?",
+  "options": [
+   "The Colosseum",
+   "The Baths of Caracalla",
+   "The Theatre of Marcellus",
+   "The Circus Maximus"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roman temple has a huge concrete dome with a round hole in the top?",
+  "options": [
+   "The Basilica of Maxentius",
+   "The Colosseum",
+   "The Forum",
+   "The Pantheon"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the circular opening at the top of a dome called?",
+  "options": [
+   "A lantern",
+   "A lunette",
+   "A cupola",
+   "An oculus"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the wedge-shaped stone at the very top of an arch called?",
+  "options": [
+   "The keystone",
+   "The voussoir base",
+   "The springer",
+   "The abutment"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the horizontal beam across the top of a door or window called?",
+  "options": [
+   "A mullion",
+   "A sill",
+   "A lintel",
+   "A jamb"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did the Romans build to carry water long distances into their cities?",
+  "options": [
+   "Culverts",
+   "Cisterns",
+   "Viaducts",
+   "Aqueducts"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which architectural style, before Gothic, is known for thick walls and rounded arches?",
+  "options": [
+   "Rococo",
+   "Baroque",
+   "Romanesque",
+   "Neoclassical"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cathedral on an island in the Seine in Paris is a landmark of Gothic architecture?",
+  "options": [
+   "Saint-Sulpice",
+   "Sacre-Coeur",
+   "Sainte-Chapelle",
+   "Notre-Dame"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the large circular stained glass window on a Gothic cathedral called?",
+  "options": [
+   "A rose window",
+   "A lancet",
+   "A wheel light",
+   "A clerestory"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the long central aisle of a church, where the congregation sits, called?",
+  "options": [
+   "The transept",
+   "The nave",
+   "The chancel",
+   "The apse"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the arms that cross the nave to give a church its cross shape called?",
+  "options": [
+   "The naves",
+   "The aisles",
+   "The transepts",
+   "The apses"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the semicircular end of a church behind the altar called?",
+  "options": [
+   "The narthex",
+   "The crypt",
+   "The porch",
+   "The apse"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the raised platform a preacher speaks from in a church called?",
+  "options": [
+   "The pulpit",
+   "The chancel",
+   "The lectern",
+   "The transept"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a covered walkway around a courtyard in a monastery called?",
+  "options": [
+   "A colonnade",
+   "A cloister",
+   "A refectory",
+   "A vestibule"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a tall pointed structure on top of a church tower called?",
+  "options": [
+   "A turret",
+   "A cupola",
+   "A finial",
+   "A spire"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a small dome on top of a roof or larger dome called?",
+  "options": [
+   "An oculus",
+   "A cupola",
+   "A lantern spire",
+   "A tholos"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who designed the great dome on Florence Cathedral?",
+  "options": [
+   "Giorgio Vasari",
+   "Donato Bramante",
+   "Leon Battista Alberti",
+   "Filippo Brunelleschi"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian architect gave his name to a style of symmetrical villas with classical porches?",
+  "options": [
+   "Carlo Maderno",
+   "Andrea del Sarto",
+   "Giacomo della Porta",
+   "Andrea Palladio"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which lavish French palace has a famous Hall of Mirrors?",
+  "options": [
+   "Fontainebleau",
+   "Chambord",
+   "Versailles",
+   "The Louvre"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which highly ornate, light and playful eighteenth century style followed the Baroque?",
+  "options": [
+   "Neoclassical",
+   "Gothic Revival",
+   "Mannerist",
+   "Rococo"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which architectural style is named after four British kings and covers much of the eighteenth century?",
+  "options": [
+   "Regency",
+   "Edwardian",
+   "Georgian",
+   "Victorian"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which flowing, nature-inspired style around 1900 used whiplash curves and floral ironwork?",
+  "options": [
+   "Bauhaus",
+   "Brutalism",
+   "Art Deco",
+   "Art Nouveau"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Scottish architect and designer is closely linked with the Glasgow School of Art?",
+  "options": [
+   "Basil Spence",
+   "Charles Rennie Mackintosh",
+   "Alexander Thomson",
+   "Robert Adam"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which New York skyscraper has a shining stainless steel crown of arches and triangular windows?",
+  "options": [
+   "The Chrysler Building",
+   "The Woolworth Building",
+   "The Empire State Building",
+   "Rockefeller Center"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which New York skyscraper was completed in 1931 and stood as the world's tallest for decades?",
+  "options": [
+   "The Empire State Building",
+   "The Chrysler Building",
+   "One World Trade Center",
+   "The Flatiron Building"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which New York building is famous for its narrow triangular shape?",
+  "options": [
+   "The Woolworth Building",
+   "The Flatiron Building",
+   "The Seagram Building",
+   "The Chrysler Building"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Swiss-French architect said that a house is a machine for living in?",
+  "options": [
+   "Alvar Aalto",
+   "Walter Gropius",
+   "Le Corbusier",
+   "Mies van der Rohe"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which architect is famous for the phrase 'less is more'?",
+  "options": [
+   "Louis Sullivan",
+   "Le Corbusier",
+   "Frank Lloyd Wright",
+   "Mies van der Rohe"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American architect designed Fallingwater, a house built over a waterfall?",
+  "options": [
+   "Richard Neutra",
+   "Philip Johnson",
+   "Frank Lloyd Wright",
+   "Louis Kahn"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which architect founded the Bauhaus school in Germany?",
+  "options": [
+   "Walter Gropius",
+   "Peter Behrens",
+   "Mies van der Rohe",
+   "Le Corbusier"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Paris arts centre is famous for having its pipes and escalators on the outside?",
+  "options": [
+   "The Grand Palais",
+   "La Villette",
+   "The Pompidou Centre",
+   "The Musee d'Orsay"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which London skyscraper is nicknamed the Gherkin?",
+  "options": [
+   "The Cheesegrater",
+   "30 St Mary Axe",
+   "Tower 42",
+   "The Shard"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British architect designed the Gherkin and the glass dome of the Reichstag?",
+  "options": [
+   "Richard Rogers",
+   "Norman Foster",
+   "David Chipperfield",
+   "Zaha Hadid"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Iraqi-British architect was known for sweeping curved buildings and was the first woman to win the Pritzker Prize?",
+  "options": [
+   "Kazuyo Sejima",
+   "Denise Scott Brown",
+   "Odile Decq",
+   "Zaha Hadid"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which prize is awarded each year for the best new building in Britain?",
+  "options": [
+   "The Wren Medal",
+   "The Pritzker Prize",
+   "The Stirling Prize",
+   "The Turner Prize"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which Indian city does the Taj Mahal stand?",
+  "options": [
+   "Lucknow",
+   "Agra",
+   "Delhi",
+   "Jaipur"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which vast domed building in Istanbul was built as a cathedral and later became a mosque?",
+  "options": [
+   "The Suleymaniye",
+   "Hagia Sophia",
+   "The Blue Mosque",
+   "Topkapi Palace"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the slender tower of a mosque, used to call the faithful to prayer, called?",
+  "options": [
+   "A pylon",
+   "A campanile",
+   "A stupa",
+   "A minaret"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Moorish palace and fortress overlooks the Spanish city of Granada?",
+  "options": [
+   "El Escorial",
+   "The Alcazar of Toledo",
+   "The Mezquita",
+   "The Alhambra"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which vast temple complex is the largest religious monument in the world, in Cambodia?",
+  "options": [
+   "Bagan",
+   "Borobudur",
+   "Prambanan",
+   "Angkor Wat"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a tiered tower with upturned eaves, common in East Asian temples, called?",
+  "options": [
+   "A minaret",
+   "A torii",
+   "A stupa",
+   "A pagoda"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the stepped pyramid temple tower of ancient Mesopotamia called?",
+  "options": [
+   "A ziggurat",
+   "A pylon",
+   "A mastaba",
+   "A stupa"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which ancient city in Jordan has buildings carved directly into rose-coloured rock?",
+  "options": [
+   "Jerash",
+   "Palmyra",
+   "Baalbek",
+   "Petra"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Italian bell tower began leaning during construction because of soft ground?",
+  "options": [
+   "Giotto's Campanile",
+   "The Torre del Mangia",
+   "The Campanile of Venice",
+   "The Tower of Pisa"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "For which event was the Eiffel Tower built?",
+  "options": [
+   "The 1889 World's Fair",
+   "The 1900 Olympics",
+   "The coronation of Napoleon the Third",
+   "The Paris Peace Conference"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Eiffel Tower made of?",
+  "options": [
+   "Wrought iron",
+   "Reinforced concrete",
+   "Cast aluminium",
+   "Steel and glass"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Moscow cathedral is famous for its brightly coloured onion domes?",
+  "options": [
+   "St Basil's",
+   "St Isaac's",
+   "The Dormition Cathedral",
+   "Christ the Saviour"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the correct name of the London tower that houses the bell known as Big Ben?",
+  "options": [
+   "The Elizabeth Tower",
+   "The Westminster Spire",
+   "The Clock House",
+   "The Victoria Tower"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which architect designed St Paul's Cathedral in London after the Great Fire?",
+  "options": [
+   "John Nash",
+   "Inigo Jones",
+   "Christopher Wren",
+   "Nicholas Hawksmoor"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which glass skyscraper beside London Bridge station is shaped like a spike?",
+  "options": [
+   "The Walkie Talkie",
+   "The Gherkin",
+   "The Shard",
+   "Tower 42"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Dubai skyscraper opened in 2010 as the world's tallest building?",
+  "options": [
+   "The Petronas Towers",
+   "Taipei 101",
+   "The Burj Al Arab",
+   "The Burj Khalifa"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a projecting stone gutter carved as a grotesque figure on a Gothic building called?",
+  "options": [
+   "A gargoyle",
+   "A finial",
+   "A corbel head",
+   "A boss"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a decorative carved ornament at the top of a spire or gable called?",
+  "options": [
+   "A finial",
+   "A gargoyle",
+   "A quoin",
+   "A crocket base"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a beam or floor that projects out with no support underneath called?",
+  "options": [
+   "A truss",
+   "A cantilever",
+   "A purlin",
+   "A joist"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a curved ceiling made of masonry called?",
+  "options": [
+   "A gable",
+   "A coffer",
+   "A soffit",
+   "A vault"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a simple tunnel-shaped vault called?",
+  "options": [
+   "A groin vault",
+   "A barrel vault",
+   "A ribbed vault",
+   "A fan vault"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the front face of a building called?",
+  "options": [
+   "The facade",
+   "The parapet",
+   "The elevation plan",
+   "The soffit"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the triangular upper part of a wall under a pitched roof called?",
+  "options": [
+   "A gable",
+   "A cornice",
+   "A dormer",
+   "A parapet"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a window that sticks out from a sloping roof called?",
+  "options": [
+   "A dormer",
+   "An oriel",
+   "A transom",
+   "A clerestory"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a round building or room, often with a dome, called?",
+  "options": [
+   "A pavilion",
+   "A basilica",
+   "A rotunda",
+   "A belvedere"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a low wall along the edge of a roof or balcony called?",
+  "options": [
+   "A pilaster",
+   "A pediment",
+   "A plinth",
+   "A parapet"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a flat column attached to a wall for decoration called?",
+  "options": [
+   "A pillar bracket",
+   "A buttress",
+   "A pilaster",
+   "A console"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the open central court of a Roman house called?",
+  "options": [
+   "The triclinium",
+   "The vestibule",
+   "The peristyle roof",
+   "The atrium"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a stone or brick support built against a wall to strengthen it called?",
+  "options": [
+   "A buttress",
+   "A corbel",
+   "A cornice",
+   "A pilaster"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the exposed timber frames filled with white plaster on old English houses called?",
+  "options": [
+   "Wattle boarding",
+   "Clapboard",
+   "Half-timbering",
+   "Weatherboard"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a roof made from bundled straw or reeds called?",
+  "options": [
+   "A shingle roof",
+   "A turf roof",
+   "A shake roof",
+   "A thatched roof"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the overhanging edge of a roof called?",
+  "options": [
+   "The valley",
+   "The eaves",
+   "The verge cap",
+   "The ridge"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the highest horizontal line of a pitched roof called?",
+  "options": [
+   "The gable",
+   "The ridge",
+   "The hip",
+   "The eaves"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the vertical bar dividing a window into sections called?",
+  "options": [
+   "A sash",
+   "A transom",
+   "A mullion",
+   "A jamb"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a window that slides up and down called?",
+  "options": [
+   "A casement window",
+   "A pivot window",
+   "A louvre window",
+   "A sash window"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a window hinged at the side so it swings open called?",
+  "options": [
+   "A casement window",
+   "A sash window",
+   "A fanlight",
+   "A hopper window"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plan of a building drawn as if seen from directly above called?",
+  "options": [
+   "A perspective",
+   "An elevation",
+   "A section",
+   "A floor plan"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a drawing showing a building as if sliced through called?",
+  "options": [
+   "A rendering",
+   "A section",
+   "An elevation",
+   "A plan"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a drawing showing the flat face of one side of a building called?",
+  "options": [
+   "A section",
+   "A plan",
+   "An elevation",
+   "A perspective"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the strengthened concrete containing steel bars called?",
+  "options": [
+   "Aerated concrete",
+   "Cement board",
+   "Precast render",
+   "Reinforced concrete"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Brutalism takes its name from a French phrase meaning what?",
+  "options": [
+   "Heavy mass",
+   "Bare stone",
+   "Brutal form",
+   "Raw concrete"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which architectural style deliberately mixed historic details with modern forms and colour from the 1970s?",
+  "options": [
+   "Constructivism",
+   "Functionalism",
+   "Postmodernism",
+   "Modernism"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which style of building uses exposed steel, glass and services as its main visual language?",
+  "options": [
+   "Beaux-Arts",
+   "Prairie style",
+   "International Gothic",
+   "High-tech architecture"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish city is home to the wave-fronted Guggenheim museum clad in titanium?",
+  "options": [
+   "Bilbao",
+   "Seville",
+   "Valencia",
+   "Barcelona"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which prehistoric stone circle stands on Salisbury Plain in England?",
+  "options": [
+   "Avebury Ring",
+   "Stonehenge",
+   "Newgrange",
+   "Callanish"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian pyramid is the largest of the three at Giza?",
+  "options": [
+   "The Step Pyramid",
+   "The Pyramid of Menkaure",
+   "The Great Pyramid of Khufu",
+   "The Pyramid of Khafre"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the huge stone figure with a lion's body and a human head near the Giza pyramids called?",
+  "options": [
+   "The Anubis",
+   "The Sphinx",
+   "The Guardian",
+   "The Colossus"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Inca city sits high on a ridge in the Peruvian Andes?",
+  "options": [
+   "Machu Picchu",
+   "Cusco",
+   "Chan Chan",
+   "Tiwanaku"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which stepped Mayan pyramid in Mexico is known as El Castillo?",
+  "options": [
+   "Chichen Itza",
+   "Palenque",
+   "Tulum",
+   "Teotihuacan"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which enormous palace complex in Beijing was home to Chinese emperors?",
+  "options": [
+   "The Potala",
+   "The Summer Palace",
+   "The Temple of Heaven",
+   "The Forbidden City"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional Japanese wooden gateway at the entrance to a shrine called?",
+  "options": [
+   "A shoji",
+   "A tokonoma",
+   "A torii",
+   "A pagoda gate"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the sliding paper screens used as walls in traditional Japanese houses called?",
+  "options": [
+   "Engawa",
+   "Shoji",
+   "Fusuma frames",
+   "Tatami"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the woven straw mats that cover the floor of a traditional Japanese room called?",
+  "options": [
+   "Shoji",
+   "Zabuton",
+   "Kotatsu",
+   "Tatami"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of bridge is the Golden Gate Bridge?",
+  "options": [
+   "An arch bridge",
+   "A suspension bridge",
+   "A cantilever bridge",
+   "A cable-stayed bridge"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which London bridge has two towers and a road deck that lifts to let ships through?",
+  "options": [
+   "Tower Bridge",
+   "Blackfriars Bridge",
+   "Waterloo Bridge",
+   "London Bridge"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a garden building designed purely for decoration, often looking like a ruin, called?",
+  "options": [
+   "A pavilion",
+   "A grotto",
+   "A gazebo",
+   "A folly"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the design of gardens, parks and outdoor spaces as a profession called?",
+  "options": [
+   "Landscape architecture",
+   "Site drafting",
+   "Urban forestry",
+   "Civil design"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the planning and design of whole towns and cities called?",
+  "options": [
+   "Land surveying",
+   "Urban design",
+   "Civic drafting",
+   "Estate management"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a building style described as 'vernacular'?",
+  "options": [
+   "Made entirely of glass",
+   "Built in the local traditional way with local materials",
+   "Designed by a famous architect",
+   "Copied from classical Rome"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which style of building revived medieval church forms in nineteenth century Britain?",
+  "options": [
+   "Gothic Revival",
+   "Greek Revival",
+   "Queen Anne",
+   "Palladian"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which glass and iron building housed the Great Exhibition of 1851 in London?",
+  "options": [
+   "The Palm House",
+   "The Great Conservatory",
+   "The Crystal Palace",
+   "The Royal Albert Hall"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a covered passage lined with shops or arches called?",
+  "options": [
+   "An arcade",
+   "A portico",
+   "A loggia",
+   "A cloister"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the reconstructed London theatre most closely associated with Shakespeare called?",
+  "options": [
+   "The Globe",
+   "The Curtain",
+   "The Swan",
+   "The Rose"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape was Shakespeare's original Globe Theatre, often called a 'wooden O'?",
+  "options": [
+   "Square",
+   "Rectangular",
+   "Triangular",
+   "Roughly circular"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Why do actors avoid saying the name Macbeth inside a theatre?",
+  "options": [
+   "It is considered rude",
+   "It is copyrighted",
+   "It is thought to bring bad luck",
+   "It confuses the crew"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do performers traditionally say instead of good luck?",
+  "options": [
+   "Take a bow",
+   "Bring the house down",
+   "Break a leg",
+   "Curtain up"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In theatre, what does 'upstage' mean?",
+  "options": [
+   "The wings on the left",
+   "The area under the stage",
+   "Towards the audience",
+   "Towards the back of the stage"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In theatre, what are the areas at the sides of the stage, out of the audience's view, called?",
+  "options": [
+   "The flies",
+   "The pit",
+   "The apron",
+   "The wings"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the part of the stage that juts out in front of the curtain called?",
+  "options": [
+   "The apron",
+   "The proscenium",
+   "The wings",
+   "The rake"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the arch that frames a traditional stage called?",
+  "options": [
+   "The portal beam",
+   "The proscenium",
+   "The lintel",
+   "The pediment"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the space above a stage where scenery is hoisted out of sight called?",
+  "options": [
+   "The grid room",
+   "The fly tower",
+   "The cyclorama",
+   "The loft store"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the room where actors relax when they are off stage called?",
+  "options": [
+   "The green room",
+   "The rest box",
+   "The blue room",
+   "The wing room"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the performer who learns a part in case the main actor cannot appear called?",
+  "options": [
+   "An understudy",
+   "A stand-in",
+   "A double",
+   "A swing dancer only"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is an afternoon performance called?",
+  "options": [
+   "A vespers",
+   "A twilight show",
+   "A matinee",
+   "A daybill"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In theatre, what is the imaginary barrier between the actors and the audience called?",
+  "options": [
+   "The fourth wall",
+   "The front line",
+   "The proscenium screen",
+   "The stage veil"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the process of deciding where actors move on stage called?",
+  "options": [
+   "Setting lines",
+   "Blocking",
+   "Staging plots",
+   "Marking up"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the ground floor seating area of a traditional theatre called in Britain and Australia?",
+  "options": [
+   "The gods",
+   "The circle",
+   "The stalls",
+   "The pit boxes"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the cheapest seats, high up at the back of a theatre, nicknamed?",
+  "options": [
+   "The loft",
+   "The clouds",
+   "The eyrie",
+   "The gods"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a speech in which a character speaks their thoughts alone on stage called?",
+  "options": [
+   "A prologue",
+   "An aside",
+   "A monologue chorus",
+   "A soliloquy"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a short remark made to the audience that other characters supposedly cannot hear called?",
+  "options": [
+   "An interlude",
+   "An epilogue",
+   "A soliloquy",
+   "An aside"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ancient Greek theatre, what was the group who commented on the action called?",
+  "options": [
+   "The players",
+   "The chorus",
+   "The mimes",
+   "The company"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which ancient Greek playwright is best known for comedies such as 'Lysistrata'?",
+  "options": [
+   "Sophocles",
+   "Euripides",
+   "Aeschylus",
+   "Aristophanes"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek tragedy tells of a king who unknowingly kills his father and marries his mother?",
+  "options": [
+   "Medea",
+   "The Oresteia",
+   "Oedipus Rex",
+   "Antigone"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The two masks that symbolise theatre represent which two forms?",
+  "options": [
+   "Opera and ballet",
+   "Comedy and tragedy",
+   "Farce and satire",
+   "Drama and mime"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In commedia dell'arte, which character wears a costume of coloured diamond shapes?",
+  "options": [
+   "Il Dottore",
+   "Pantalone",
+   "Pierrot",
+   "Harlequin"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sad white-faced clown character comes from French pantomime?",
+  "options": [
+   "Harlequin",
+   "Scaramouche",
+   "Punchinello",
+   "Pierrot"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In British pantomime, what is the comic older woman played by a man called?",
+  "options": [
+   "The matron",
+   "The dame",
+   "The duchess",
+   "The nanny"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the pantomime audience traditionally shout when the villain creeps up?",
+  "options": [
+   "Watch your back",
+   "He's behind you",
+   "Look out there",
+   "Turn around now"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Japanese theatre form uses elaborate make-up, stylised movement and all-male casts?",
+  "options": [
+   "Kyogen",
+   "Noh",
+   "Bunraku",
+   "Kabuki"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Japanese theatre form uses carved masks and very slow, restrained performance?",
+  "options": [
+   "Rakugo",
+   "Kabuki",
+   "Noh",
+   "Bunraku"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese theatre form uses large puppets worked by visible handlers?",
+  "options": [
+   "Kagura",
+   "Bunraku",
+   "Noh",
+   "Kabuki"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Russian director developed the acting approach that led to 'the method'?",
+  "options": [
+   "Sergei Diaghilev",
+   "Vsevolod Meyerhold",
+   "Anton Chekhov",
+   "Konstantin Stanislavski"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German playwright argued that audiences should stay aware they are watching a play?",
+  "options": [
+   "Georg Buchner",
+   "Frank Wedekind",
+   "Bertolt Brecht",
+   "Friedrich Schiller"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Irish writer wrote the play 'Waiting for Godot'?",
+  "options": [
+   "Brian Friel",
+   "Samuel Beckett",
+   "J M Synge",
+   "Sean O'Casey"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Arthur Miller play centres on the salesman Willy Loman?",
+  "options": [
+   "A View from the Bridge",
+   "Death of a Salesman",
+   "The Crucible",
+   "All My Sons"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Arthur Miller play uses the Salem witch trials as its subject?",
+  "options": [
+   "The Price",
+   "Incident at Vichy",
+   "The Crucible",
+   "Death of a Salesman"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Tennessee Williams play features Blanche DuBois and Stanley Kowalski?",
+  "options": [
+   "A Streetcar Named Desire",
+   "The Glass Menagerie",
+   "Cat on a Hot Tin Roof",
+   "Sweet Bird of Youth"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Oscar Wilde comedy features a character called Lady Bracknell and a handbag?",
+  "options": [
+   "Lady Windermere's Fan",
+   "The Importance of Being Earnest",
+   "An Ideal Husband",
+   "A Woman of No Importance"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Norwegian playwright wrote 'A Doll's House' and 'Hedda Gabler'?",
+  "options": [
+   "Knut Hamsun",
+   "August Strindberg",
+   "Bjornstjerne Bjornson",
+   "Henrik Ibsen"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Russian playwright wrote 'The Cherry Orchard' and 'Three Sisters'?",
+  "options": [
+   "Maxim Gorky",
+   "Nikolai Gogol",
+   "Anton Chekhov",
+   "Ivan Turgenev"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Agatha Christie play has been the West End's longest-running show since it opened in 1952?",
+  "options": [
+   "The Mousetrap",
+   "And Then There Were None",
+   "Black Coffee",
+   "Witness for the Prosecution"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which awards are the highest honour for Broadway theatre?",
+  "options": [
+   "The Obie Awards",
+   "The Drama Desk Awards only",
+   "The Olivier Awards",
+   "The Tony Awards"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which awards are the highest honour for London theatre?",
+  "options": [
+   "The Evening Standard Awards only",
+   "The Olivier Awards",
+   "The Tony Awards",
+   "The Critics' Circle Awards"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British actor gives his name to London's main theatre awards?",
+  "options": [
+   "Ralph Richardson",
+   "Laurence Olivier",
+   "John Gielgud",
+   "Alec Guinness"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Andrew Lloyd Webber musical is based on a book of poems by T S Eliot?",
+  "options": [
+   "Evita",
+   "Starlight Express",
+   "Cats",
+   "Aspects of Love"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Andrew Lloyd Webber musical features a masked man living beneath an opera house?",
+  "options": [
+   "Whistle Down the Wind",
+   "Cats",
+   "The Phantom of the Opera",
+   "Sunset Boulevard"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Lloyd Webber musical tells the story of Eva Peron?",
+  "options": [
+   "Evita",
+   "Jesus Christ Superstar",
+   "Cats",
+   "Aspects of Love"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which musical is based on a novel by Victor Hugo about the June Rebellion in Paris?",
+  "options": [
+   "Les Miserables",
+   "Miss Saigon",
+   "Notre Dame",
+   "The Scarlet Pimpernel"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which musical about an American founding father was written by Lin-Manuel Miranda?",
+  "options": [
+   "Bandstand",
+   "Hamilton",
+   "1776",
+   "In the Heights"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Rodgers and Hammerstein musical is set among the Von Trapp family in Austria?",
+  "options": [
+   "Carousel",
+   "The Sound of Music",
+   "Oklahoma",
+   "South Pacific"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Rodgers and Hammerstein musical is set in the American West and opens with a song about a beautiful morning?",
+  "options": [
+   "The King and I",
+   "State Fair",
+   "Oklahoma",
+   "Carousel"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who composed the music for 'West Side Story'?",
+  "options": [
+   "Leonard Bernstein",
+   "Jerome Robbins",
+   "Stephen Sondheim",
+   "Richard Rodgers"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which composer and lyricist wrote 'Sweeney Todd' and 'Into the Woods'?",
+  "options": [
+   "Andrew Lloyd Webber",
+   "Frank Loesser",
+   "Stephen Sondheim",
+   "Cole Porter"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musical is set in a Berlin nightclub in the 1930s?",
+  "options": [
+   "Cabaret",
+   "Chicago",
+   "Kiss Me Kate",
+   "Gypsy"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney stage musical uses masks and giant puppets to bring African animals to life?",
+  "options": [
+   "Aladdin",
+   "Frozen",
+   "The Jungle Book",
+   "The Lion King"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which musical tells the story of the witches of Oz before Dorothy arrives?",
+  "options": [
+   "Wicked",
+   "Into the Woods",
+   "The Wiz",
+   "Pippin"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which language is nearly all classical ballet terminology in?",
+  "options": [
+   "Russian",
+   "Latin",
+   "Italian",
+   "French"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many basic positions of the feet are taught in classical ballet?",
+  "options": [
+   "Three",
+   "Four",
+   "Six",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In ballet, what is a bending of the knees called?",
+  "options": [
+   "A releve",
+   "A plie",
+   "A jete",
+   "A port de bras"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ballet, what is a full turn on one foot called?",
+  "options": [
+   "A pirouette",
+   "A plie",
+   "An arabesque",
+   "A chasse"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ballet, what is the pose standing on one leg with the other stretched behind called?",
+  "options": [
+   "A pirouette",
+   "A plie",
+   "An arabesque",
+   "A pas de chat"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ballet, what is a big leap from one foot to the other called?",
+  "options": [
+   "A releve",
+   "A grand jete",
+   "A fouette",
+   "A grand plie"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In ballet, what is a dance for two called?",
+  "options": [
+   "A coda double",
+   "A pas de deux",
+   "A pas seul",
+   "A divertissement"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the horizontal rail dancers hold for warm-up exercises called?",
+  "options": [
+   "The rack",
+   "The barre",
+   "The bar rail",
+   "The rung"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the group of dancers who perform together behind the principals called?",
+  "options": [
+   "The chorus corps",
+   "The company row",
+   "The ensemble line",
+   "The corps de ballet"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the stiff skirt worn by a ballerina called?",
+  "options": [
+   "A tutu",
+   "A pannier",
+   "A leotard",
+   "A pointe skirt"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the leading female dancer of a ballet company called?",
+  "options": [
+   "The premiere femme",
+   "The lead corps",
+   "The maitresse",
+   "The prima ballerina"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Tchaikovsky ballet features a Christmas party, a mouse king and a sugar plum fairy?",
+  "options": [
+   "Giselle",
+   "The Sleeping Beauty",
+   "Swan Lake",
+   "The Nutcracker"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Tchaikovsky ballet features Princess Aurora and a wicked fairy called Carabosse?",
+  "options": [
+   "The Nutcracker",
+   "Swan Lake",
+   "The Sleeping Beauty",
+   "Cinderella"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Stravinsky ballet caused an uproar at its Paris premiere in 1913?",
+  "options": [
+   "Apollo",
+   "The Firebird",
+   "Petrushka",
+   "The Rite of Spring"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which impresario founded the Ballets Russes?",
+  "options": [
+   "Leonide Massine",
+   "Marius Petipa",
+   "Michel Fokine",
+   "Sergei Diaghilev"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Russian dancer of the Ballets Russes became famous for his extraordinary leaps?",
+  "options": [
+   "Rudolf Nureyev",
+   "Vaslav Nijinsky",
+   "Serge Lifar",
+   "Mikhail Baryshnikov"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Russian ballerina has a meringue dessert named in her honour?",
+  "options": [
+   "Galina Ulanova",
+   "Maya Plisetskaya",
+   "Tamara Karsavina",
+   "Anna Pavlova"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Russian dancer famously defected to the West in 1961 and later partnered Margot Fonteyn?",
+  "options": [
+   "Alexander Godunov",
+   "Rudolf Nureyev",
+   "Vaslav Nijinsky",
+   "George Balanchine"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Moscow company is one of the world's most famous ballet companies?",
+  "options": [
+   "The Bolshoi",
+   "The Stanislavsky",
+   "The Kremlin Ballet",
+   "The Mariinsky"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which London opera house is the Royal Ballet based?",
+  "options": [
+   "Sadler's Wells",
+   "The London Coliseum",
+   "The Royal Opera House, Covent Garden",
+   "The Barbican"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the reinforced toe of a ballet shoe called?",
+  "options": [
+   "The box",
+   "The tip shell",
+   "The crown",
+   "The block cap"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In opera, what is a solo song for one singer called?",
+  "options": [
+   "An overture",
+   "A chorus",
+   "A recitative",
+   "An aria"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In opera, what is the sung speech that carries the story between songs called?",
+  "options": [
+   "Cavatina",
+   "Aria",
+   "Coda",
+   "Recitative"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the written text of an opera called?",
+  "options": [
+   "The libretto",
+   "The book of hours",
+   "The scenario",
+   "The score sheet"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the orchestral piece played before the curtain rises called?",
+  "options": [
+   "The prelude chorus",
+   "The interlude",
+   "The finale",
+   "The overture"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the highest female singing voice called?",
+  "options": [
+   "Contralto",
+   "Alto",
+   "Soprano",
+   "Mezzo-soprano"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the lowest male singing voice called?",
+  "options": [
+   "Tenor",
+   "Bass",
+   "Countertenor",
+   "Baritone"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which male voice sits between tenor and bass?",
+  "options": [
+   "Baritone",
+   "Treble",
+   "Countertenor",
+   "Alto"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which female voice sits between soprano and contralto?",
+  "options": [
+   "Countertenor",
+   "Baritone",
+   "Treble",
+   "Mezzo-soprano"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Verdi opera is set in ancient Egypt and features a triumphal march?",
+  "options": [
+   "Rigoletto",
+   "Nabucco",
+   "La Traviata",
+   "Aida"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Verdi opera centres on the courtesan Violetta?",
+  "options": [
+   "Aida",
+   "Falstaff",
+   "Otello",
+   "La Traviata"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Puccini opera is set among poor artists in a Paris garret?",
+  "options": [
+   "Manon Lescaut",
+   "Turandot",
+   "La Boheme",
+   "Tosca"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The famous aria 'Nessun Dorma' comes from which opera?",
+  "options": [
+   "Madama Butterfly",
+   "Turandot",
+   "Tosca",
+   "La Boheme"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Puccini opera is set in Japan and features Cio-Cio-San?",
+  "options": [
+   "La Rondine",
+   "Madama Butterfly",
+   "Tosca",
+   "Turandot"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Bizet opera features a fiery cigarette factory worker in Seville?",
+  "options": [
+   "La Boheme",
+   "Carmen",
+   "The Pearl Fishers",
+   "Manon"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mozart opera features the Queen of the Night and her famous high aria?",
+  "options": [
+   "The Marriage of Figaro",
+   "Don Giovanni",
+   "Cosi fan tutte",
+   "The Magic Flute"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Rossini opera features the barber Figaro in Seville?",
+  "options": [
+   "William Tell",
+   "The Barber of Seville",
+   "The Italian Girl in Algiers",
+   "La Cenerentola"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which composer wrote the four-opera cycle known as the Ring?",
+  "options": [
+   "Giuseppe Verdi",
+   "Richard Wagner",
+   "Gustav Mahler",
+   "Richard Strauss"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The 'Ride of the Valkyries' comes from which Wagner opera?",
+  "options": [
+   "Parsifal",
+   "Die Walkure",
+   "Tannhauser",
+   "Lohengrin"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which German town holds a festival devoted to Wagner's operas in a theatre he designed?",
+  "options": [
+   "Weimar",
+   "Salzburg",
+   "Leipzig",
+   "Bayreuth"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Milan opera house is one of the most famous in the world?",
+  "options": [
+   "San Carlo",
+   "La Scala",
+   "La Fenice",
+   "Teatro Regio"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which three singers performed together as 'The Three Tenors'?",
+  "options": [
+   "Domingo, Carreras and Alagna",
+   "Pavarotti, Bocelli and Domingo",
+   "Bocelli, Carreras and Villazon",
+   "Pavarotti, Domingo and Carreras"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian soprano became world famous in the late nineteenth century and had a dessert named after her?",
+  "options": [
+   "Dame Joan Sutherland",
+   "Yvonne Kenny",
+   "Marjorie Lawrence",
+   "Dame Nellie Melba"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian soprano was nicknamed 'La Stupenda'?",
+  "options": [
+   "Dame Nellie Melba",
+   "Rita Hunter",
+   "Dame Joan Sutherland",
+   "June Bronhill"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ballroom dance is in three-four time and is associated with Vienna?",
+  "options": [
+   "The quickstep",
+   "The foxtrot",
+   "The tango",
+   "The waltz"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Latin dance takes its name from a Cuban rhythm and uses a triple step?",
+  "options": [
+   "The paso doble",
+   "The cha-cha",
+   "The quickstep",
+   "The foxtrot"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ballroom dance is styled on a Spanish bullfight?",
+  "options": [
+   "The jive",
+   "The samba",
+   "The paso doble",
+   "The rumba"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fast, lively dance came out of swing and rock and roll?",
+  "options": [
+   "The jive",
+   "The foxtrot",
+   "The rumba",
+   "The waltz"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Brazilian dance is the heartbeat of Rio's carnival?",
+  "options": [
+   "The samba",
+   "The merengue",
+   "The salsa",
+   "The tango"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which style of dance do performers make rhythm with metal plates on their shoes?",
+  "options": [
+   "Tap",
+   "Ballet",
+   "Jazz dance",
+   "Contemporary"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which stage show made Irish step dancing a worldwide phenomenon in the 1990s?",
+  "options": [
+   "The Chieftains Show",
+   "Lord of the Rings",
+   "Riverdance",
+   "Celtic Fire"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which traditional English folk dance involves bells, sticks and handkerchiefs?",
+  "options": [
+   "Clog dancing",
+   "Maypole reeling",
+   "Country square",
+   "Morris dancing"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Brazilian art form combines dance, acrobatics and martial arts?",
+  "options": [
+   "Capoeira",
+   "Frevo",
+   "Maculele",
+   "Samba de roda"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Hawaiian dance tells a story with the movement of the hands and hips?",
+  "options": [
+   "The siva",
+   "The haka",
+   "The hula",
+   "The tinikling"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which classical Indian dance form comes from Tamil Nadu?",
+  "options": [
+   "Kathak",
+   "Manipuri",
+   "Bharatanatyam",
+   "Odissi"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the American theatre district that gives its name to the industry called?",
+  "options": [
+   "The Bowery",
+   "Broadway",
+   "Times Square",
+   "Midtown"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is London's commercial theatre district called?",
+  "options": [
+   "The Strand Quarter",
+   "The West End",
+   "Soho Lane",
+   "Theatreland Row"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Scottish city hosts the world's largest arts festival each August?",
+  "options": [
+   "Inverness",
+   "Glasgow",
+   "Edinburgh",
+   "Aberdeen"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Danish architect designed the Sydney Opera House?",
+  "options": [
+   "Eero Saarinen",
+   "Alvar Aalto",
+   "Jorn Utzon",
+   "Arne Jacobsen"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year did the Sydney Opera House officially open?",
+  "options": [
+   "1959",
+   "1980",
+   "1973",
+   "1965"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who officially opened the Sydney Opera House?",
+  "options": [
+   "Gough Whitlam",
+   "Robert Menzies",
+   "The Governor of New South Wales",
+   "Queen Elizabeth the Second"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which harbour headland does the Sydney Opera House stand?",
+  "options": [
+   "Dawes Point",
+   "Kirribilli Point",
+   "Mrs Macquarie's Point",
+   "Bennelong Point"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What happened to the Sydney Opera House's architect before the building was finished?",
+  "options": [
+   "He was sacked for fraud",
+   "He resigned and left Australia",
+   "He died on site",
+   "He redesigned the roof twice"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year was the Sydney Opera House added to the World Heritage list?",
+  "options": [
+   "2007",
+   "1995",
+   "1988",
+   "2015"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country made the glazed tiles that cover the Sydney Opera House roof?",
+  "options": [
+   "Australia",
+   "Sweden",
+   "Italy",
+   "Japan"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Sydney Opera House venue was renamed in 2012 after an Australian soprano?",
+  "options": [
+   "The Concert Hall",
+   "The Joan Sutherland Theatre",
+   "The Utzon Room",
+   "The Playhouse"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many years did it take to build the Sydney Harbour Bridge, from 1923 to its opening?",
+  "options": [
+   "Fifteen",
+   "Twenty",
+   "Four",
+   "Nine"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Sydney Harbour Bridge popularly nicknamed?",
+  "options": [
+   "The Iron Lady",
+   "The Steel Rainbow",
+   "The Big Arch",
+   "The Coathanger"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of bridge is the Sydney Harbour Bridge?",
+  "options": [
+   "A steel arch bridge",
+   "A suspension bridge",
+   "A cable-stayed bridge",
+   "A truss girder bridge"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who famously slashed the ribbon with a sword at the Sydney Harbour Bridge opening?",
+  "options": [
+   "John Bradfield",
+   "Percy Allan",
+   "Francis de Groot",
+   "Jack Lang"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which engineer is most closely associated with planning the Sydney Harbour Bridge?",
+  "options": [
+   "William Hudson",
+   "John Bradfield",
+   "Ralph Freeman",
+   "Charles Rennie"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which architect worked with Walter Burley Griffin on the winning Canberra drawings and was his wife?",
+  "options": [
+   "Edith Walling",
+   "Marion Mahony Griffin",
+   "Ellis Rowan",
+   "Florence Taylor"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which year did the new Parliament House in Canberra open?",
+  "options": [
+   "1988",
+   "1967",
+   "1978",
+   "1996"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the most striking feature of the new Parliament House in Canberra?",
+  "options": [
+   "It is made entirely of glass",
+   "It is built into the hill with grass over the roof",
+   "It floats on a lake",
+   "It has no windows"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Canberra's Old Parliament House now used as?",
+  "options": [
+   "The High Court",
+   "A hotel",
+   "A university campus",
+   "The Museum of Australian Democracy"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Melbourne building, opened in 1880, is on the World Heritage list?",
+  "options": [
+   "The Royal Exhibition Building",
+   "The Shrine of Remembrance",
+   "Flinders Street Station",
+   "The State Library"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian building hosted the opening of the first federal Parliament in 1901?",
+  "options": [
+   "Government House in Melbourne",
+   "Old Parliament House in Canberra",
+   "The Royal Exhibition Building in Melbourne",
+   "Parliament House in Sydney"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Under which Melbourne landmark do people traditionally arrange to meet?",
+  "options": [
+   "Federation Square screen",
+   "The clocks at Flinders Street Station",
+   "The Arts Centre spire",
+   "The Shrine steps"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional Queensland house raised on stumps with wide verandas called?",
+  "options": [
+   "A colonial box",
+   "A verandah villa",
+   "A Queenslander",
+   "A homestead cottage"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Why were traditional Queenslanders built up on stumps?",
+  "options": [
+   "To match British designs",
+   "To make room for stables",
+   "For air flow and to cope with flooding and termites",
+   "To hold rainwater tanks"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the decorative cast iron on the verandas of old Australian terrace houses called?",
+  "options": [
+   "Iron lace",
+   "Fretwork iron",
+   "Filigree rail",
+   "Lattice trim"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian architectural style, popular from about 1890 to 1915, takes its name from the birth of the nation?",
+  "options": [
+   "Federation",
+   "Interwar Moderne",
+   "Colonial Georgian",
+   "Victorian Italianate"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which low, wide house style with a broad front porch became popular in 1920s Australian suburbs?",
+  "options": [
+   "The Spanish mission terrace",
+   "The Georgian cottage",
+   "The California bungalow",
+   "The Federation villa"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which phrase, drawn from Aboriginal wisdom, is used to describe Glenn Murcutt's approach to building?",
+  "options": [
+   "Build for the sun",
+   "Touch this earth lightly",
+   "Shelter and shade",
+   "Follow the water"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Austrian-born architect brought modernism to Sydney and designed Australia Square?",
+  "options": [
+   "Robin Boyd",
+   "Harry Seidler",
+   "Roy Grounds",
+   "Glenn Murcutt"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian architect and critic wrote the book 'The Australian Ugliness'?",
+  "options": [
+   "Walter Burley Griffin",
+   "Harry Seidler",
+   "Robin Boyd",
+   "Glenn Murcutt"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Melbourne public space, opened in 2002, is known for its angular sandstone and zinc panels?",
+  "options": [
+   "Docklands Park",
+   "Federation Square",
+   "Southbank Plaza",
+   "Birrarung Marr"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which humble building material has become a signature of Australian design, from woolsheds to modern houses?",
+  "options": [
+   "Sandstone block",
+   "Rammed earth",
+   "Corrugated iron",
+   "Terracotta tile"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Gold Coast tower was for a time the tallest residential building in the world?",
+  "options": [
+   "Jewel Tower",
+   "Circle on Cavill",
+   "Q1",
+   "Soul"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Melbourne memorial, modelled on an ancient tomb, has a shaft of light fall on its stone each Remembrance Day?",
+  "options": [
+   "The Australian War Memorial",
+   "The Anzac Memorial",
+   "The Shrine of Remembrance",
+   "The Cenotaph"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Sydney and Melbourne amusement parks are entered through a giant smiling face?",
+  "options": [
+   "Luna Park",
+   "Wonderland",
+   "Magic Mountain",
+   "Dreamworld"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which four painters are most often named as the core of the Heidelberg School?",
+  "options": [
+   "Preston, Cossington Smith, Proctor and Black",
+   "Nolan, Boyd, Tucker and Perceval",
+   "Drysdale, Dobell, Brack and Williams",
+   "Roberts, Streeton, McCubbin and Conder"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Many works in the 9 by 5 Impression Exhibition were painted on what?",
+  "options": [
+   "Sheets of tin",
+   "Roof shingles",
+   "Cigar box lids",
+   "Fence palings"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Tom Roberts painting shows a bushranger holding up a coach in the scrub?",
+  "options": [
+   "A Break Away",
+   "Bailed Up",
+   "Coming South",
+   "The Golden Fleece"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tom Roberts work is known as 'The Big Picture' and records the opening of the first federal Parliament?",
+  "options": [
+   "The Nation Assembled",
+   "The Opening of the First Parliament of the Commonwealth",
+   "The First Sitting",
+   "Federation Day"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Frederick McCubbin work is a three-panel painting telling the story of a settler family?",
+  "options": [
+   "On the Wallaby Track",
+   "Down on His Luck",
+   "The Lost Child",
+   "The Pioneer"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which McCubbin painting shows a swagman sitting despondently by his campfire?",
+  "options": [
+   "Bush Idyll",
+   "The Pioneer",
+   "Winter Evening",
+   "Down on His Luck"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian painter is celebrated for shimmering blue and gold landscapes such as 'Golden Summer, Eaglemont'?",
+  "options": [
+   "Charles Conder",
+   "Frederick McCubbin",
+   "Arthur Streeton",
+   "Walter Withers"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many paintings make up Sidney Nolan's first Ned Kelly series?",
+  "options": [
+   "27",
+   "40",
+   "12",
+   "8"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "At which Melbourne property, home of John and Sunday Reed, did Sidney Nolan paint his Ned Kelly series?",
+  "options": [
+   "Como House",
+   "Werribee Park",
+   "Rippon Lea",
+   "Heide"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian artist painted 'The Drover's Wife' and stark, sun-baked outback scenes?",
+  "options": [
+   "Sidney Nolan",
+   "John Olsen",
+   "Russell Drysdale",
+   "Arthur Boyd"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who painted 'Collins St, 5 pm'?",
+  "options": [
+   "Russell Drysdale",
+   "Fred Williams",
+   "Clifton Pugh",
+   "John Brack"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist is known for the 'Bride' series and gave his Shoalhaven property Bundanon to the nation?",
+  "options": [
+   "Lloyd Rees",
+   "Brett Whiteley",
+   "Sidney Nolan",
+   "Arthur Boyd"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Sydney suburb is Brett Whiteley's studio preserved as a museum?",
+  "options": [
+   "Balmain",
+   "Newtown",
+   "Surry Hills",
+   "Paddington"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist is best known for bold prints and paintings of native flowers such as banksias and waratahs?",
+  "options": [
+   "Nora Heysen",
+   "Thea Proctor",
+   "Margaret Preston",
+   "Grace Cossington Smith"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist painted 'The Sock Knitter' and a famous series on the Sydney Harbour Bridge under construction?",
+  "options": [
+   "Dorrit Black",
+   "Margaret Preston",
+   "Grace Cossington Smith",
+   "Clarice Beckett"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist and writer created 'The Magic Pudding'?",
+  "options": [
+   "May Gibbs",
+   "Dorothy Wall",
+   "Norman Lindsay",
+   "Hal Gye"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which South Australian artist is famous for his paintings of majestic river red gums around Hahndorf?",
+  "options": [
+   "Hans Heysen",
+   "Ivor Hele",
+   "Horace Trenerry",
+   "Jeffrey Smart"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian painter is known for crisp, unsettling pictures of freeways, road signs and lone figures?",
+  "options": [
+   "John Brack",
+   "Fred Williams",
+   "Jeffrey Smart",
+   "Lloyd Rees"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist is famous for aerial-style paintings of Lake Eyre and 'Sydney Sun'?",
+  "options": [
+   "Clifton Pugh",
+   "John Olsen",
+   "Fred Williams",
+   "Arthur Boyd"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Broken Hill artist became a household name through a television advertisement involving a carpet?",
+  "options": [
+   "Pro Hart",
+   "Jeffrey Smart",
+   "Reg Mombassa",
+   "Ken Done"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Sydney artist became famous for bright, simple designs of the harbour on T-shirts and prints?",
+  "options": [
+   "Pro Hart",
+   "Michael Leunig",
+   "Ken Done",
+   "Reg Mombassa"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which artist created the surreal Australian imagery used by the surf label Mambo?",
+  "options": [
+   "Reg Mombassa",
+   "Martin Sharp",
+   "Pro Hart",
+   "Ken Done"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian cartoonist is known for gentle drawings of a man and a duck?",
+  "options": [
+   "Michael Leunig",
+   "Bruce Petty",
+   "Ron Tandberg",
+   "Bill Leak"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year was the Archibald Prize first awarded?",
+  "options": [
+   "1945",
+   "1901",
+   "1921",
+   "1888"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which gallery runs the Archibald Prize?",
+  "options": [
+   "The Queensland Art Gallery",
+   "The National Gallery of Victoria",
+   "The Art Gallery of New South Wales",
+   "The National Gallery of Australia"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who judges the Archibald Prize?",
+  "options": [
+   "The trustees of the gallery",
+   "A panel of past winners",
+   "An overseas jury",
+   "A public vote"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Archibald-related award is chosen by the staff who unpack the entries?",
+  "options": [
+   "The People's Choice",
+   "The Trustees' Medal",
+   "The Salon des Refuses",
+   "The Packing Room Prize"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artist's 1943 Archibald win ended up being challenged in court?",
+  "options": [
+   "Russell Drysdale",
+   "Sidney Nolan",
+   "William Dobell",
+   "John Passmore"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian prize, awarded alongside the Archibald, is for landscape painting or figure sculpture?",
+  "options": [
+   "The Blake Prize",
+   "The Wynne Prize",
+   "The Sulman Prize",
+   "The Moran Prize"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Aboriginal artist from Hermannsburg became famous for watercolours of the Central Australian ranges?",
+  "options": [
+   "Rover Thomas",
+   "Clifford Possum Tjapaltjarri",
+   "Albert Namatjira",
+   "Emily Kame Kngwarreye"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Northern Territory community is regarded as the birthplace of the Western Desert dot painting movement?",
+  "options": [
+   "Maningrida",
+   "Hermannsburg",
+   "Papunya",
+   "Yuendumu"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which decade did the Papunya painting movement begin?",
+  "options": [
+   "The 1970s",
+   "The 1950s",
+   "The 1990s",
+   "The 1930s"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which schoolteacher encouraged the first Papunya artists to paint their designs on board?",
+  "options": [
+   "Geoffrey Bardon",
+   "Ronald Berndt",
+   "Charles Mountford",
+   "Baldwin Spencer"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Anmatyerre artist from Utopia began painting in her late seventies and became one of Australia's great abstract painters?",
+  "options": [
+   "Gloria Petyarre",
+   "Minnie Pwerle",
+   "Kathleen Petyarre",
+   "Emily Kame Kngwarreye"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Western Desert artist painted the huge map-like work 'Warlugulong'?",
+  "options": [
+   "Johnny Warangkula",
+   "Turkey Tolson",
+   "Clifford Possum Tjapaltjarri",
+   "Rover Thomas"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which East Kimberley artist is known for spare paintings made with natural ochres?",
+  "options": [
+   "Albert Namatjira",
+   "Ginger Riley",
+   "Rover Thomas",
+   "Emily Kame Kngwarreye"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which style of Aboriginal painting shows the bones and organs of animals inside their outlines?",
+  "options": [
+   "Dot painting",
+   "Cross-hatching only",
+   "Wandjina style",
+   "X-ray art"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which large-eyed, mouthless ancestral figures appear in Kimberley rock art?",
+  "options": [
+   "Quinkans",
+   "Mimi spirits",
+   "Wandjina",
+   "Bunyips"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Kakadu site is famous for its rock art galleries and lookout?",
+  "options": [
+   "Ubirr",
+   "Kata Tjuta",
+   "Katherine Gorge",
+   "Uluru"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the fine parallel line technique used in Arnhem Land bark painting called?",
+  "options": [
+   "Dotting",
+   "Stippling",
+   "Scoring",
+   "Cross-hatching, or rarrk"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What surface is used for traditional Arnhem Land bark paintings?",
+  "options": [
+   "Canvas",
+   "Stretched hide",
+   "Stringybark",
+   "Paperbark scrolls"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1963 documents combined bark paintings with typed text and were sent to the federal Parliament?",
+  "options": [
+   "The Barunga statement",
+   "The Uluru canvas",
+   "The Papunya boards",
+   "The Yirrkala bark petitions"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who designed the Aboriginal flag?",
+  "options": [
+   "Harold Thomas",
+   "Albert Namatjira",
+   "Bernard Namok",
+   "Charles Perkins"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On the Aboriginal flag, what does the yellow circle represent?",
+  "options": [
+   "A waterhole",
+   "The sun",
+   "A campfire",
+   "The moon"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On the Aboriginal flag, what does the red half represent?",
+  "options": [
+   "The earth and ochre",
+   "Blood spilt",
+   "The desert heat",
+   "The sunset"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which headdress appears at the centre of the Torres Strait Islander flag?",
+  "options": [
+   "A woven crown",
+   "A lap-lap",
+   "A shell band",
+   "A dhari"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the striking water feature at the entrance of the National Gallery of Victoria on St Kilda Road?",
+  "options": [
+   "The mirror moat",
+   "The waterwall",
+   "The reflecting pool",
+   "The rain curtain"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who created the famous stained glass ceiling in the Great Hall of the National Gallery of Victoria?",
+  "options": [
+   "John Olsen",
+   "Leonard French",
+   "Fred Williams",
+   "Roy Grounds"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which artist painted 'Blue Poles'?",
+  "options": [
+   "Jackson Pollock",
+   "Mark Rothko",
+   "Robert Motherwell",
+   "Willem de Kooning"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which city is the Museum of Old and New Art, known as MONA?",
+  "options": [
+   "Darwin",
+   "Adelaide",
+   "Hobart",
+   "Perth"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which gambler and collector founded MONA in Tasmania?",
+  "options": [
+   "John Kaldor",
+   "Kerry Stokes",
+   "David Walsh",
+   "James Mollison"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which Brisbane riverbank do the Queensland Art Gallery and the Gallery of Modern Art stand?",
+  "options": [
+   "New Farm",
+   "South Bank",
+   "Hamilton",
+   "Kangaroo Point"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two Sydney beaches does Sculpture by the Sea run between?",
+  "options": [
+   "Manly and Shelly",
+   "Coogee and Clovelly",
+   "Bondi and Tamarama",
+   "Bronte and Bondi"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Canberra gallery is devoted to portraits of notable Australians?",
+  "options": [
+   "The National Portrait Gallery",
+   "Questacon",
+   "The Australian War Memorial",
+   "The National Gallery of Australia"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year was the Australian Ballet founded?",
+  "options": [
+   "1975",
+   "1962",
+   "1948",
+   "1930"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian dance company is the country's leading Indigenous contemporary dance theatre?",
+  "options": [
+   "Bangarra",
+   "Australian Dance Theatre",
+   "Chunky Move",
+   "Sydney Dance Company"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Australia's live performance awards, last presented in 2019, were named after which dancer, actor and choreographer?",
+  "options": [
+   "Robert Helpmann",
+   "Garth Welch",
+   "Ninette de Valois",
+   "Peggy van Praagh"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian big thing stands beside the highway at Coffs Harbour?",
+  "options": [
+   "The Big Pineapple",
+   "The Big Banana",
+   "The Big Prawn",
+   "The Big Merino"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which New South Wales town does the Big Merino stand?",
+  "options": [
+   "Dubbo",
+   "Wagga Wagga",
+   "Bathurst",
+   "Goulburn"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which roadside statue commemorates a bush ballad character five miles from Gundagai?",
+  "options": [
+   "The Shearer",
+   "The Swagman",
+   "The Drover",
+   "The Dog on the Tuckerbox"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian comic strip character, created by Jimmy Bancks, is a red-headed larrikin boy?",
+  "options": [
+   "Ginger Meggs",
+   "Bluey the Kid",
+   "Dagwood",
+   "Snake Gully Sam"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian painter is known for spare, dotted landscapes of the You Yangs and gum saplings?",
+  "options": [
+   "John Olsen",
+   "Sali Herman",
+   "Lloyd Rees",
+   "Fred Williams"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the traditional cloaks worn in south-eastern Australia, decorated with incised designs, made from?",
+  "options": [
+   "Woven grass",
+   "Kangaroo hide",
+   "Bark cloth",
+   "Possum skins"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian city's arts centre is topped by a tall lattice spire beside the Yarra?",
+  "options": [
+   "Sydney",
+   "Melbourne",
+   "Brisbane",
+   "Perth"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a typeface without small finishing strokes on the letters called?",
+  "options": [
+   "Blackletter",
+   "Script",
+   "Slab serif",
+   "Sans serif"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In typography, what is the adjustment of space between two individual letters called?",
+  "options": [
+   "Kerning",
+   "Tracking blocks",
+   "Justifying",
+   "Leading"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In typography, what is the space between lines of text called?",
+  "options": [
+   "Kerning",
+   "Margin",
+   "Indent",
+   "Leading"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which country was the typeface Helvetica designed?",
+  "options": [
+   "The Netherlands",
+   "Germany",
+   "Switzerland",
+   "Britain"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which typeface was originally commissioned by a London newspaper?",
+  "options": [
+   "Helvetica",
+   "Garamond",
+   "Futura",
+   "Times New Roman"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the difference between a typeface and a font?",
+  "options": [
+   "A typeface is the design, a font is one size and weight of it",
+   "A typeface is only used in print",
+   "A font is handwritten",
+   "There is none"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German is credited with introducing movable type printing to Europe?",
+  "options": [
+   "Aldus Manutius",
+   "Albrecht Durer",
+   "Martin Luther",
+   "Johannes Gutenberg"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the symbol shaped like a decorated 'and' called?",
+  "options": [
+   "An asterisk",
+   "An interrobang",
+   "An octothorpe",
+   "An ampersand"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which designer created the famous diagrammatic map of the London Underground?",
+  "options": [
+   "Edward Johnston",
+   "Frank Pick",
+   "Harry Beck",
+   "Abram Games"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was revolutionary about the London Underground map when it appeared in 1933?",
+  "options": [
+   "It was printed in colour",
+   "It showed street level detail",
+   "It used photographs",
+   "It ignored real distances and used straight lines and angles"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which system is used worldwide to match exact colours in printing and design?",
+  "options": [
+   "Pantone",
+   "Chromaline",
+   "Dulux",
+   "Munsell only"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which four ink colours are used in standard full-colour printing?",
+  "options": [
+   "Orange, purple, green and grey",
+   "Red, yellow, blue and white",
+   "Red, green, blue and black",
+   "Cyan, magenta, yellow and black"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which three colours of light are combined to make colours on a screen?",
+  "options": [
+   "Red, green and blue",
+   "Red, yellow and blue",
+   "Orange, green and violet",
+   "Cyan, magenta and yellow"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The peace symbol was originally designed in 1958 for which cause?",
+  "options": [
+   "The Vietnam protests",
+   "The civil rights movement",
+   "The environment",
+   "Nuclear disarmament"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The recycling symbol is based on which mathematical shape?",
+  "options": [
+   "A Mobius loop",
+   "A Penrose triangle",
+   "A Klein bottle",
+   "A Venn diagram"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many rings make up the Olympic symbol?",
+  "options": [
+   "Six",
+   "Three",
+   "Four",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is one of the five colours of the Olympic rings?",
+  "options": [
+   "Orange",
+   "Purple",
+   "Green",
+   "Brown"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which raised-dot writing system for the blind is named after its French inventor?",
+  "options": [
+   "Morse",
+   "Ogham",
+   "Braille",
+   "Semaphore"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which English designer and writer led the Arts and Crafts movement with his patterned wallpapers?",
+  "options": [
+   "Walter Crane",
+   "Charles Voysey",
+   "John Ruskin",
+   "William Morris"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the Arts and Crafts movement mainly reacting against?",
+  "options": [
+   "Abstract painting",
+   "Religious art",
+   "Mass production by machine",
+   "Photography"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American designer gave his name to richly coloured leaded glass lamps?",
+  "options": [
+   "Louis Comfort Tiffany",
+   "Charles Eames",
+   "Gustav Stickley",
+   "Frank Lloyd Wright"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Russian jeweller made the famous jewelled eggs for the tsars?",
+  "options": [
+   "Peter Carl Faberge",
+   "Nicholas Bolin",
+   "Ivan Khlebnikov",
+   "Pavel Ovchinnikov"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Chinese dynasty gives its name to prized blue and white porcelain?",
+  "options": [
+   "Qin",
+   "Han",
+   "Tang",
+   "Ming"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Dutch city gives its name to blue and white tin-glazed pottery?",
+  "options": [
+   "Gouda",
+   "Delft",
+   "Leiden",
+   "Utrecht"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which famous blue and white china design shows a bridge, a boat and two birds?",
+  "options": [
+   "The pagoda plate",
+   "The willow pattern",
+   "The blue garden",
+   "The chinoiserie set"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which eighteenth century English cabinet maker published 'The Gentleman and Cabinet-Maker's Director' and gave his name to a style of chair?",
+  "options": [
+   "Thomas Chippendale",
+   "Robert Adam",
+   "Josiah Wedgwood",
+   "William Kent"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which husband and wife design team created a famous moulded plywood lounge chair and ottoman?",
+  "options": [
+   "Arne and Jonna Jacobsen",
+   "Hans and Marie Wegner",
+   "Charles and Ray Eames",
+   "Ludwig and Lilly Mies"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which architect designed the leather and steel Barcelona chair?",
+  "options": [
+   "Le Corbusier",
+   "Eero Saarinen",
+   "Mies van der Rohe",
+   "Marcel Breuer"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which British desk lamp, held in place by springs, has been in production since the 1930s?",
+  "options": [
+   "The Kaiser Idell",
+   "The Tizio",
+   "The Bestlite",
+   "The Anglepoise"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which teardrop-shaped fabric pattern is named after a Scottish town?",
+  "options": [
+   "Argyle",
+   "Herringbone",
+   "Tartan",
+   "Paisley"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the checked woollen cloth associated with Scottish clans called?",
+  "options": [
+   "Damask",
+   "Tartan",
+   "Paisley",
+   "Tweed"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which European design style is known for pale timber, clean lines and warm minimalism?",
+  "options": [
+   "Baroque",
+   "Scandinavian",
+   "Rococo",
+   "Beaux-Arts"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the European decorative fashion for Chinese-inspired motifs called?",
+  "options": [
+   "Rococo revival",
+   "Japonisme",
+   "Chinoiserie",
+   "Orientalism only"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Austrian painter, a leader of the Vienna Secession, painted 'Portrait of Adele Bloch-Bauer'?",
+  "options": [
+   "Gustav Klimt",
+   "Oskar Kokoschka",
+   "Egon Schiele",
+   "Koloman Moser"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Austrian artist, a protege of Klimt, made raw, angular figure drawings?",
+  "options": [
+   "Oskar Kokoschka",
+   "Egon Schiele",
+   "Alfred Kubin",
+   "Richard Gerstl"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian Baroque painter, a woman, created a powerful 'Judith Slaying Holofernes'?",
+  "options": [
+   "Elisabetta Sirani",
+   "Artemisia Gentileschi",
+   "Sofonisba Anguissola",
+   "Lavinia Fontana"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French painter was best known for portraits of Marie Antoinette?",
+  "options": [
+   "Berthe Morisot",
+   "Elisabeth Vigee Le Brun",
+   "Marie Laurencin",
+   "Rosa Bonheur"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which French artist painted 'The Horse Fair' and wore trousers by police permit to sketch livestock?",
+  "options": [
+   "Mary Cassatt",
+   "Rosa Bonheur",
+   "Suzanne Valadon",
+   "Berthe Morisot"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which French-American artist created the giant spider sculpture called 'Maman'?",
+  "options": [
+   "Niki de Saint Phalle",
+   "Louise Bourgeois",
+   "Germaine Richier",
+   "Sophie Calle"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American photographer is famous for black and white images of Yosemite and the American West?",
+  "options": [
+   "Walker Evans",
+   "Ansel Adams",
+   "Dorothea Lange",
+   "Edward Weston"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French photographer wrote about capturing 'the decisive moment'?",
+  "options": [
+   "Henri Cartier-Bresson",
+   "Robert Capa",
+   "Brassai",
+   "Robert Doisneau"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which famous Depression-era photograph shows a worried mother with her children?",
+  "options": [
+   "Breadline",
+   "Dust Bowl Family",
+   "Okie Camp",
+   "Migrant Mother"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American artist is known for photographs of herself dressed as different film-style characters?",
+  "options": [
+   "Annie Leibovitz",
+   "Nan Goldin",
+   "Cindy Sherman",
+   "Diane Arbus"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In 1911 the Mona Lisa made headlines around the world because of what?",
+  "options": [
+   "It was slashed with a knife",
+   "It was sold to America",
+   "It was found to be a fake",
+   "It was stolen from the Louvre"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which museum, opened at Giza in 2025, now displays the complete treasures of Tutankhamun?",
+  "options": [
+   "The Grand Egyptian Museum",
+   "The Egyptian Museum in Tahrir Square",
+   "The Luxor Museum",
+   "The Coptic Museum"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the burial mask of Tutankhamun mainly made from?",
+  "options": [
+   "Bronze",
+   "Painted plaster",
+   "Silver",
+   "Gold"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which group of museums and research centres in Washington is often called 'the nation's attic'?",
+  "options": [
+   "The Smithsonian",
+   "The National Trust",
+   "The Library of Congress",
+   "The Corcoran"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Berlin island in the River Spree is home to a cluster of great museums?",
+  "options": [
+   "Spree Island",
+   "Museum Island",
+   "Alexander Island",
+   "Peacock Island"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the oldest museum in Australia, founded in Sydney in 1827?",
+  "options": [
+   "The Powerhouse Museum",
+   "The Australian Museum",
+   "Melbourne Museum",
+   "The National Museum of Australia"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Indian festival is known as the festival of lights?",
+  "options": [
+   "Holi",
+   "Diwali",
+   "Navratri",
+   "Onam"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At which Indian festival do people throw brightly coloured powder over each other?",
+  "options": [
+   "Baisakhi",
+   "Diwali",
+   "Holi",
+   "Pongal"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Thai new year festival is famous for its water fights?",
+  "options": [
+   "Bun Bang Fai",
+   "Songkran",
+   "Loy Krathong",
+   "Wan Ok Phansa"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian city holds a winter carnival famous for ornate masks?",
+  "options": [
+   "Venice",
+   "Turin",
+   "Florence",
+   "Naples"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American city is best known for its Mardi Gras parades and beads?",
+  "options": [
+   "New Orleans",
+   "Mobile",
+   "Charleston",
+   "Miami"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which London street festival is Europe's biggest celebration of Caribbean culture?",
+  "options": [
+   "Camden Carnival",
+   "Brixton Fest",
+   "Hackney Weekender",
+   "Notting Hill Carnival"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional Welsh festival of music and poetry called?",
+  "options": [
+   "A mod",
+   "A ceilidh",
+   "An eisteddfod",
+   "A feis"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "At Scottish Highland Games, what is thrown in the event called the caber toss?",
+  "options": [
+   "A large wooden pole",
+   "A sheaf of straw",
+   "A stone ball",
+   "An iron hammer"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which top prize is awarded at the Cannes Film Festival?",
+  "options": [
+   "The Palme d'Or",
+   "The Silver Shell",
+   "The Golden Lion",
+   "The Golden Bear"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which top prize is awarded at the Venice Film Festival?",
+  "options": [
+   "The Palme d'Or",
+   "The Golden Bear",
+   "The Crystal Globe",
+   "The Golden Lion"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which top prize is awarded at the Berlin Film Festival?",
+  "options": [
+   "The Golden Bear",
+   "The Golden Lion",
+   "The Golden Globe",
+   "The Palme d'Or"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which London concert hall is the Last Night of the Proms held?",
+  "options": [
+   "The Royal Festival Hall",
+   "The Royal Albert Hall",
+   "The Barbican",
+   "Wigmore Hall"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Austrian city holds a famous summer festival in the birthplace of Mozart?",
+  "options": [
+   "Graz",
+   "Vienna",
+   "Salzburg",
+   "Innsbruck"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Queensland festival brings tens of thousands of folk music fans together over the new year?",
+  "options": [
+   "Woodford Folk Festival",
+   "Splendour in the Grass",
+   "Bluesfest",
+   "Gympie Muster"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which New South Wales town hosts Australia's biggest country music festival each January?",
+  "options": [
+   "Mudgee",
+   "Parkes",
+   "Tamworth",
+   "Gunnedah"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Hobart winter festival is known for its bonfires, red lights and nude swim?",
+  "options": [
+   "Winterfest",
+   "Mona Foma",
+   "Southern Lights",
+   "Dark Mofo"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which world music festival is held each year in Adelaide's Botanic Park?",
+  "options": [
+   "Laneway",
+   "WOMADelaide",
+   "Big Day Out",
+   "Groovin the Moo"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which annual Sydney parade celebrating the LGBTQ community takes over Oxford Street?",
+  "options": [
+   "Rainbow Fest",
+   "The Sydney Gay and Lesbian Mardi Gras",
+   "Pride Walk Sydney",
+   "Vivid Parade"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which New South Wales town holds a festival celebrating Elvis Presley each January?",
+  "options": [
+   "Cowra",
+   "Parkes",
+   "Dubbo",
+   "Orange"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which movement in painting sought to record fleeting effects of light and was named after a Monet title?",
+  "options": [
+   "Romanticism",
+   "Symbolism",
+   "Realism",
+   "Impressionism"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which movement came after Impressionism and includes Cezanne, Gauguin and van Gogh?",
+  "options": [
+   "Naturalism",
+   "Neo-classicism",
+   "Art Nouveau",
+   "Post-Impressionism"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which nineteenth century movement insisted on painting ordinary working people without idealising them?",
+  "options": [
+   "Romanticism",
+   "Realism",
+   "Academicism",
+   "Symbolism"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which movement valued emotion, wild nature and the sublime over classical order?",
+  "options": [
+   "Realism",
+   "Romanticism",
+   "Neoclassicism",
+   "Rationalism"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which movement used dreams, chance and the unconscious as its subject?",
+  "options": [
+   "Vorticism",
+   "Surrealism",
+   "Cubism",
+   "Futurism"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French writer wrote the manifesto that launched Surrealism?",
+  "options": [
+   "Guillaume Apollinaire",
+   "Paul Eluard",
+   "Andre Breton",
+   "Tristan Tzara"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which art movement stripped work back to the barest geometric forms and repeated units?",
+  "options": [
+   "Art Nouveau",
+   "Baroque revival",
+   "Expressionism",
+   "Minimalism"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which movement based its imagery on advertising, comics and consumer goods?",
+  "options": [
+   "Arte povera",
+   "Op art",
+   "Land art",
+   "Pop art"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which decade did Pop art first take off in Britain and America?",
+  "options": [
+   "The 1900s",
+   "The 1920s",
+   "The 1950s and 1960s",
+   "The 1980s"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American movement of the 1940s and 1950s made large, gestural abstract canvases?",
+  "options": [
+   "Abstract Expressionism",
+   "Regionalism",
+   "Photorealism",
+   "Precisionism"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which art style paints from photographs so accurately the result can look like one?",
+  "options": [
+   "Photorealism",
+   "Fauvism",
+   "Tonalism",
+   "Impressionism"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Melbourne laneway is world famous for its constantly changing street art?",
+  "options": [
+   "Degraves Street",
+   "Centre Place",
+   "Block Arcade",
+   "Hosier Lane"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a large painting or drawing made directly on a wall called?",
+  "options": [
+   "A canvas roll",
+   "A mural",
+   "A fresco secco only",
+   "A panel"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which style of decoration uses flowing plant shapes and interlaced patterns in Islamic art?",
+  "options": [
+   "Trompe l'oeil",
+   "Rococo",
+   "Baroque",
+   "Arabesque"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which art form is most highly regarded in the Islamic tradition, often used to write verses of the Quran?",
+  "options": [
+   "Bronze casting",
+   "Calligraphy",
+   "Landscape painting",
+   "Portraiture"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Iranian city gives its name to a famous style of Persian carpet with a dense central medallion?",
+  "options": [
+   "Tabriz",
+   "Shiraz only",
+   "Isfahan",
+   "Kashan"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which famous set of medieval tapestries shows a mythical horned beast with a maiden?",
+  "options": [
+   "The Hunt of the Boar",
+   "The Devonshire Hunts",
+   "The Lady and the Unicorn",
+   "The Apocalypse Cycle"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a small painting worn or carried, usually of a person's face, called?",
+  "options": [
+   "A cameo panel",
+   "A miniature",
+   "A predella",
+   "A tondo"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a carved shell or stone brooch with a raised profile head called?",
+  "options": [
+   "A torc",
+   "A signet",
+   "A cameo",
+   "A locket"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a circular painting called?",
+  "options": [
+   "A tondo",
+   "A medallion piece",
+   "A cyclorama",
+   "A rondel print"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is fine coloured glass fused onto metal, used in jewellery and badges, called?",
+  "options": [
+   "Glaze",
+   "Lacquer",
+   "Enamel",
+   "Resin"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Chinese and Japanese art of applying many layers of tree sap to wood called?",
+  "options": [
+   "Cloisonne",
+   "Marquetry",
+   "Lacquerwork",
+   "Enamelling"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Japanese ceremony centred on the preparation and serving of green tea called?",
+  "options": [
+   "Kabuki",
+   "Kado",
+   "The tea ceremony, or chanoyu",
+   "Shodo"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Japanese art of beautiful writing with a brush called?",
+  "options": [
+   "Shodo",
+   "Origami",
+   "Sumi-e",
+   "Ikebana"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Japanese aesthetic that finds beauty in imperfection and age called?",
+  "options": [
+   "Iki",
+   "Wabi-sabi",
+   "Kawaii",
+   "Mono no shibui"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which style of Chinese painting uses black ink and a brush to suggest mountains and mist?",
+  "options": [
+   "Batik",
+   "Gongbi enamel",
+   "Ink wash painting",
+   "Cloisonne"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the flat carved stamp used to sign East Asian paintings in red ink called?",
+  "options": [
+   "A cartouche",
+   "A colophon",
+   "A monogram",
+   "A seal or chop"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the carved wooden poles raised by First Nations peoples of the Pacific north-west of North America called?",
+  "options": [
+   "Menhirs",
+   "Totem poles",
+   "Obelisks",
+   "Steles"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The famous cast bronze plaques known as the Benin Bronzes came from a kingdom in which modern country?",
+  "options": [
+   "Nigeria",
+   "Ghana",
+   "Mali",
+   "Benin"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which colourful hand-woven Ghanaian cloth is worn as a symbol of status?",
+  "options": [
+   "Shweshwe",
+   "Kente",
+   "Bogolan",
+   "Adire"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Mexican art form uses brightly painted skeleton figures for the Day of the Dead?",
+  "options": [
+   "Talavera",
+   "Calaveras",
+   "Alebrijes",
+   "Papel picado"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Maori art form covers meeting houses and canoes with spiralling carved patterns?",
+  "options": [
+   "Tattooing only",
+   "Tapa printing",
+   "Tivaevae quilting",
+   "Whakairo carving"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Pacific island cloth is made by beating the inner bark of trees and then decorating it?",
+  "options": [
+   "Ikat",
+   "Kente",
+   "Tapa",
+   "Kilim"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the practice of ordering, cataloguing and caring for a museum's objects called?",
+  "options": [
+   "Provenance research only",
+   "Archaeology",
+   "Collection management",
+   "Appraisal"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the label beside an artwork giving the title, artist and date usually called?",
+  "options": [
+   "A plate note",
+   "A tag card",
+   "A caption board",
+   "A wall label"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "When a gallery says a work is 'on loan', what does that mean?",
+  "options": [
+   "It is for sale",
+   "It has been sold",
+   "It is borrowed from another owner for a period",
+   "It is a copy"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the opening night party for a new exhibition often called?",
+  "options": [
+   "A hanging",
+   "A gala sale",
+   "A private view",
+   "A salon night"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does it mean when a museum piece is described as 'in the round'?",
+  "options": [
+   "It is circular",
+   "It can be viewed from all sides",
+   "It is displayed in a rotunda",
+   "It rotates on a turntable"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of buildings, objects and remains of past societies called?",
+  "options": [
+   "Philology",
+   "Archaeology",
+   "Anthropology",
+   "Palaeontology"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the raised platform or case used to display a single object in a museum called?",
+  "options": [
+   "A plinth or vitrine",
+   "A dais rail",
+   "A trestle",
+   "A rostrum stand"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Why are many museum galleries kept dimly lit?",
+  "options": [
+   "It keeps visitors quiet",
+   "Light damages fragile works on paper and textiles",
+   "It creates atmosphere only",
+   "It saves money"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to say a painting is 'oil on canvas'?",
+  "options": [
+   "Canvas soaked in oil",
+   "A print made with oil ink",
+   "Oil paint applied to stretched fabric",
+   "Oil poured over a board"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which surface did painters most often use before canvas became standard?",
+  "options": [
+   "Paper sheets",
+   "Wooden panels",
+   "Copper plates",
+   "Slate"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the tiny cubes of glass or stone used to build a mosaic called?",
+  "options": [
+   "Mosaicles",
+   "Tessellates",
+   "Tesserae",
+   "Cubelets"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Italian city is famous for its glittering Byzantine mosaics?",
+  "options": [
+   "Bologna",
+   "Ravenna",
+   "Milan",
+   "Genoa"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the small scenes painted along the base of an altarpiece called?",
+  "options": [
+   "The lunette",
+   "The frieze",
+   "The predella",
+   "The pediment"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the halo painted around a saint's head also called?",
+  "options": [
+   "A mandala",
+   "A corona",
+   "A nimbus",
+   "A vesica"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which artist's 'Ghent Altarpiece' is one of the most stolen artworks in history?",
+  "options": [
+   "Hugo van der Goes",
+   "Rogier van der Weyden",
+   "Jan van Eyck",
+   "Hans Memling"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian artist wrote 'Lives of the Artists', the first great history of Renaissance art?",
+  "options": [
+   "Cennino Cennini",
+   "Giorgio Vasari",
+   "Benvenuto Cellini",
+   "Leon Battista Alberti"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which family of Florentine bankers were the great patrons of Renaissance artists?",
+  "options": [
+   "The Borgia",
+   "The Medici",
+   "The Sforza",
+   "The Gonzaga"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pope commissioned Michelangelo to paint the Sistine Chapel ceiling?",
+  "options": [
+   "Paul the Third",
+   "Clement the Seventh",
+   "Leo the Tenth",
+   "Julius the Second"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the huge painting Michelangelo later added to the altar wall of the Sistine Chapel called?",
+  "options": [
+   "The Creation",
+   "The Resurrection",
+   "The Last Judgement",
+   "The Deluge"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pair of gilded bronze doors in Florence did Michelangelo reportedly call 'the Gates of Paradise'?",
+  "options": [
+   "Brunelleschi's chapel doors",
+   "Pisano's south doors",
+   "Donatello's cathedral doors",
+   "Ghiberti's baptistery doors"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Renaissance term for an artist skilled in many fields, like Leonardo?",
+  "options": [
+   "A polymathic guildsman",
+   "A universal painter",
+   "A maestro di tutti",
+   "A Renaissance man"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did apprentices in a Renaissance workshop usually do first?",
+  "options": [
+   "Sign the finished work",
+   "Sell the paintings",
+   "Grind pigments and prepare panels",
+   "Paint the main figures"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the artist's workshop or studio in the French tradition called?",
+  "options": [
+   "A cabinet",
+   "A galerie",
+   "An atelier",
+   "A pavillon"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the person or organisation that pays for an artwork to be made called?",
+  "options": [
+   "A dealer",
+   "A curator",
+   "A broker",
+   "A patron"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a work of art specially ordered from an artist called?",
+  "options": [
+   "An acquisition",
+   "A speculation",
+   "A consignment",
+   "A commission"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for the shop or business that represents artists and sells their work?",
+  "options": [
+   "An auction room",
+   "A commercial gallery",
+   "A public gallery",
+   "A museum store"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a set of works by one artist shown together called?",
+  "options": [
+   "A group show",
+   "A salon hang",
+   "A solo exhibition",
+   "A biennale"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for hanging paintings closely together, floor to ceiling, as in nineteenth century salons?",
+  "options": [
+   "A salon hang",
+   "A cluster mount",
+   "A line hang",
+   "A grid hang"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the practice of listing every known work by an artist called?",
+  "options": [
+   "An inventory sale",
+   "A registry",
+   "A provenance index",
+   "A catalogue raisonne"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a rough, quick drawing made to work out an idea called?",
+  "options": [
+   "A sketch",
+   "A cartoon",
+   "A print",
+   "A study cast"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a drawing made with parallel lines to build up shadow called?",
+  "options": [
+   "Stippling",
+   "Hatching",
+   "Scumbling",
+   "Blending"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is shading built up with small dots called?",
+  "options": [
+   "Feathering",
+   "Stippling",
+   "Glazing",
+   "Hatching"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sticky liquid that holds pigment together in paint called?",
+  "options": [
+   "The solvent",
+   "The filler",
+   "The binder",
+   "The pigment base"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is turpentine used for in oil painting?",
+  "options": [
+   "Thinning the paint and cleaning brushes",
+   "Adding gloss",
+   "Sealing the canvas",
+   "Making the paint dry harder"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ }
+]

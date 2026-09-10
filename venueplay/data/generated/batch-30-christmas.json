@@ -1,0 +1,1370 @@
+[
+ {
+  "question": "How many reindeer pull Santa's sleigh in the classic poem, not counting Rudolph?",
+  "options": [
+   "Eight",
+   "Six",
+   "Twelve",
+   "Nine"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which reindeer has a red nose?",
+  "options": [
+   "Dasher",
+   "Rudolph",
+   "Blitzen",
+   "Comet"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the names of the first two reindeer listed in 'The Night Before Christmas'?",
+  "options": [
+   "Comet and Cupid",
+   "Prancer and Vixen",
+   "Donner and Blitzen",
+   "Dasher and Dancer"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which country did the Christmas tree tradition largely originate?",
+  "options": [
+   "Sweden",
+   "Italy",
+   "England",
+   "Germany"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British monarch's family popularised the Christmas tree in Britain?",
+  "options": [
+   "Queen Elizabeth I's",
+   "Queen Victoria's",
+   "Queen Anne's",
+   "King George I's"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for the traditional Christmas plant with red and green leaves?",
+  "options": [
+   "Poinsettia",
+   "Hydrangea",
+   "Begonia",
+   "Azalea"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Under which plant is it traditional to kiss at Christmas?",
+  "options": [
+   "Ivy",
+   "Mistletoe",
+   "Holly",
+   "Pine"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christmas carol begins 'Silent night, holy night'?",
+  "options": [
+   "The First Noel",
+   "Silent Night",
+   "O Holy Night",
+   "Away in a Manger"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Twelve Days of Christmas', what is given on the fifth day?",
+  "options": [
+   "Five calling birds",
+   "Five gold rings",
+   "Five swans",
+   "Five french hens"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many lords a-leaping are in 'The Twelve Days of Christmas'?",
+  "options": [
+   "Twelve",
+   "Ten",
+   "Eleven",
+   "Nine"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is given on the first day of Christmas in the song?",
+  "options": [
+   "Two turtle doves",
+   "A partridge in a pear tree",
+   "Three french hens",
+   "A golden ring"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christmas song is the best-selling single of all time?",
+  "options": [
+   "All I Want for Christmas Is You",
+   "White Christmas",
+   "Silent Night",
+   "Jingle Bells"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who originally recorded 'White Christmas'?",
+  "options": [
+   "Nat King Cole",
+   "Dean Martin",
+   "Bing Crosby",
+   "Frank Sinatra"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which singer released 'All I Want for Christmas Is You' in 1994?",
+  "options": [
+   "Celine Dion",
+   "Mariah Carey",
+   "Whitney Houston",
+   "Toni Braxton"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which band released 'Last Christmas' in 1984?",
+  "options": [
+   "Bananarama",
+   "Duran Duran",
+   "Culture Club",
+   "Wham!"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christmas song was famously recorded by The Pogues with Kirsty MacColl?",
+  "options": [
+   "Driving Home for Christmas",
+   "Merry Christmas Everyone",
+   "Stop the Cavalry",
+   "Fairytale of New York"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas song mentions 'chestnuts roasting on an open fire'?",
+  "options": [
+   "Winter Wonderland",
+   "The Christmas Song",
+   "Let It Snow",
+   "Sleigh Ride"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian Christmas song mentions six white boomers?",
+  "options": [
+   "Six White Boomers",
+   "Aussie Jingle Bells",
+   "Santa Never Made It Into Darwin",
+   "Christmas Down Under"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian entertainer recorded 'Six White Boomers'?",
+  "options": [
+   "Slim Dusty",
+   "John Williamson",
+   "Smoky Dawson",
+   "Rolf Harris"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Australian version of 'Jingle Bells', what is the sleigh replaced by?",
+  "options": [
+   "A surfboard",
+   "A tractor",
+   "A tinny",
+   "A rusty Holden ute"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian carol event is held annually by candlelight?",
+  "options": [
+   "Carols in the Domain is one of several",
+   "Silent Night Sessions",
+   "Carols by Candlelight",
+   "The Christmas Concert"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Melbourne venue traditionally hosts Carols by Candlelight?",
+  "options": [
+   "Federation Square",
+   "The Sidney Myer Music Bowl",
+   "Rod Laver Arena",
+   "The MCG"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which yacht race starts on Boxing Day in Australia?",
+  "options": [
+   "The Brisbane to Gladstone",
+   "The Sydney to Hobart",
+   "The Fremantle Cup",
+   "The Melbourne to Osaka"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sporting fixture traditionally starts in Melbourne on Boxing Day?",
+  "options": [
+   "The Grand Final",
+   "The Melbourne Cup",
+   "The Australian Open",
+   "The Boxing Day Test"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the day after Christmas called in Australia and Britain?",
+  "options": [
+   "Boxing Day",
+   "Second Christmas",
+   "Saint Stephen's Day is the Irish name",
+   "Gift Day"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christmas film features a boy left home alone in Chicago?",
+  "options": [
+   "Home Alone",
+   "Elf",
+   "Jingle All the Way",
+   "The Santa Clause"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor plays the boy in 'Home Alone'?",
+  "options": [
+   "Jonathan Lipnicki",
+   "Haley Joel Osment",
+   "Macaulay Culkin",
+   "Elijah Wood"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christmas film stars Will Ferrell as a human raised by elves?",
+  "options": [
+   "Elf",
+   "Fred Claus",
+   "The Santa Clause",
+   "Bad Santa"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1946 Christmas film features George Bailey and an angel named Clarence?",
+  "options": [
+   "Miracle on 34th Street",
+   "It's a Wonderful Life",
+   "Holiday Inn",
+   "White Christmas"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas film features a Grinch stealing Christmas from Whoville?",
+  "options": [
+   "Klaus",
+   "The Polar Express",
+   "Arthur Christmas",
+   "How the Grinch Stole Christmas"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who wrote the original 'How the Grinch Stole Christmas!' book?",
+  "options": [
+   "Maurice Sendak",
+   "Shel Silverstein",
+   "Dr Seuss",
+   "Roald Dahl"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tim Burton film blends Halloween and Christmas?",
+  "options": [
+   "Corpse Bride",
+   "The Nightmare Before Christmas",
+   "Frankenweenie",
+   "Beetlejuice"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas film is often debated as an action movie set at a party?",
+  "options": [
+   "Die Hard",
+   "Gremlins",
+   "Batman Returns",
+   "Lethal Weapon"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'A Christmas Carol', what is the name of Scrooge's dead business partner?",
+  "options": [
+   "Fezziwig",
+   "Bob Cratchit",
+   "Jacob Marley",
+   "Tiny Tim"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Bob Cratchit's ill son?",
+  "options": [
+   "Little Nell",
+   "Young Pip",
+   "Tiny Tim",
+   "Wee Davey"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What word does Scrooge use to dismiss Christmas?",
+  "options": [
+   "Balderdash",
+   "Humbug",
+   "Poppycock",
+   "Nonsense"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour was Santa's suit most commonly depicted as before modern advertising standardised it?",
+  "options": [
+   "Always white",
+   "Always blue",
+   "Always red",
+   "Various colours including green"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which soft drink company ran famous Santa advertising from the 1930s?",
+  "options": [
+   "Fanta",
+   "Coca-Cola",
+   "Pepsi",
+   "Schweppes"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which historical figure is Santa Claus based on?",
+  "options": [
+   "Saint Christopher",
+   "Saint Nicholas",
+   "Saint Stephen",
+   "Saint Anthony"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which modern country was Saint Nicholas a bishop?",
+  "options": [
+   "Turkey",
+   "Greece",
+   "Italy",
+   "Spain"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is Santa Claus called in France?",
+  "options": [
+   "Papa Natale",
+   "Pere Noel",
+   "Weihnachtsmann",
+   "Sinterklaas"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Santa called in the Netherlands?",
+  "options": [
+   "Julenisse",
+   "Pere Noel",
+   "Babbo Natale",
+   "Sinterklaas"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country is home to the official Santa Claus Village in Rovaniemi?",
+  "options": [
+   "Finland",
+   "Iceland",
+   "Norway",
+   "Sweden"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are traditionally left out for Santa in Australia?",
+  "options": [
+   "Fruit and nuts",
+   "Soup and bread",
+   "Beer and biscuits or milk and cookies",
+   "Tea and toast"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is left out for the reindeer in many households?",
+  "options": [
+   "Apples",
+   "Sugar cubes",
+   "Carrots",
+   "Hay"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a traditional British Christmas dessert made with dried fruit and steamed?",
+  "options": [
+   "Yule log cake",
+   "Trifle",
+   "Pavlova",
+   "Christmas pudding"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is traditionally hidden inside a Christmas pudding for luck?",
+  "options": [
+   "A ring",
+   "A key",
+   "A bean",
+   "A coin"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas treat is a rolled sponge cake decorated to look like wood?",
+  "options": [
+   "The gingerbread house",
+   "The panettone",
+   "The Yule log",
+   "The stollen"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian Christmas bread contains candied fruit and is dome shaped?",
+  "options": [
+   "Ciabatta",
+   "Panettone",
+   "Focaccia",
+   "Biscotti"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German Christmas bread is dusted with icing sugar and contains marzipan?",
+  "options": [
+   "Lebkuchen",
+   "Pretzel",
+   "Stollen",
+   "Pumpernickel"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which meat is the most traditional centrepiece of a British Christmas dinner today?",
+  "options": [
+   "Beef",
+   "Goose",
+   "Turkey",
+   "Pork"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cold seafood is a common centrepiece of an Australian Christmas lunch?",
+  "options": [
+   "Smoked salmon only",
+   "Oysters",
+   "Lobster tail only",
+   "Prawns"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian Christmas dessert is topped with cream and fresh fruit on meringue?",
+  "options": [
+   "Custard tart",
+   "Pavlova",
+   "Lamington",
+   "Trifle"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the small paper item inside a Christmas cracker that makes you laugh?",
+  "options": [
+   "A riddle card",
+   "A joke",
+   "A poem",
+   "A puzzle"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What headwear commonly comes out of a Christmas cracker?",
+  "options": [
+   "A Santa hat",
+   "A paper crown",
+   "A tinsel band",
+   "A party mask"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country invented the Christmas cracker?",
+  "options": [
+   "Denmark",
+   "England",
+   "France",
+   "Germany"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Advent calendar counting down to?",
+  "options": [
+   "Boxing Day",
+   "New Year",
+   "Epiphany",
+   "Christmas Day"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many days are in Advent's traditional calendar count?",
+  "options": [
+   "24",
+   "12",
+   "25",
+   "31"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which three gifts did the wise men bring?",
+  "options": [
+   "Gold, silver and bronze",
+   "Wheat, wool and wine",
+   "Bread, wine and oil",
+   "Gold, frankincense and myrrh"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wise men are traditionally depicted in nativity scenes?",
+  "options": [
+   "Four",
+   "Three",
+   "Two",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What guided the wise men to Bethlehem?",
+  "options": [
+   "A star",
+   "An angel's voice",
+   "A comet trail",
+   "A dream map"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Where was Jesus laid after his birth according to the nativity story?",
+  "options": [
+   "A basket",
+   "A cot",
+   "A manger",
+   "A cradle"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which date is Christmas Eve?",
+  "options": [
+   "24 December",
+   "26 December",
+   "23 December",
+   "25 December"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian denomination commonly celebrates Christmas on 7 January?",
+  "options": [
+   "Orthodox churches using the Julian calendar",
+   "Lutheran churches",
+   "Baptist churches",
+   "Anglican churches"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the twelfth night after Christmas known as?",
+  "options": [
+   "Epiphany",
+   "Candlemas",
+   "Advent",
+   "Lent"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas decoration is a circular arrangement hung on doors?",
+  "options": [
+   "A garland",
+   "A bauble",
+   "A swag",
+   "A wreath"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is traditionally placed at the top of a Christmas tree?",
+  "options": [
+   "A candle",
+   "A ribbon",
+   "A bell",
+   "A star or angel"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the shiny hanging balls on a Christmas tree called?",
+  "options": [
+   "Bells",
+   "Buttons",
+   "Beads",
+   "Baubles"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which shiny strands are draped over Christmas trees?",
+  "options": [
+   "Thread",
+   "Ribbon",
+   "Tinsel",
+   "Streamers"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a Secret Santa?",
+  "options": [
+   "A gift exchange where givers are anonymous",
+   "A charity appeal",
+   "A midnight delivery service",
+   "A Christmas Eve party game"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the game called where wrapped gifts are stolen and swapped?",
+  "options": [
+   "Bad Santa or White Elephant",
+   "Musical parcels",
+   "Present roulette",
+   "Gift bingo"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas character in Alpine folklore punishes naughty children?",
+  "options": [
+   "Belsnickel is a different figure",
+   "La Befana",
+   "Jack Frost",
+   "Krampus"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Italian tradition, which figure delivers gifts on the eve of Epiphany?",
+  "options": [
+   "Krampus",
+   "Sinterklaas",
+   "Ded Moroz",
+   "La Befana"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Russian figure is the equivalent of Father Christmas?",
+  "options": [
+   "Baba Yaga",
+   "Snegurochka is his granddaughter",
+   "Koleda",
+   "Ded Moroz"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country popularised the tradition of eating fried chicken at Christmas?",
+  "options": [
+   "China",
+   "Japan",
+   "Korea",
+   "Thailand"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas song title asks about a snowman being built?",
+  "options": [
+   "Winter Wonderland",
+   "Frosty the Snowman",
+   "Do You Want to Build a Snowman",
+   "Walking in the Air"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated Christmas special features a boy flying with a snowman?",
+  "options": [
+   "The Snowman",
+   "The Polar Express",
+   "Frosty the Snowman",
+   "Olive the Other Reindeer"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which song plays during the famous flight scene in 'The Snowman'?",
+  "options": [
+   "Walking in the Air",
+   "In the Bleak Midwinter",
+   "Silent Night",
+   "O Holy Night"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Christmas film features a train journey to the North Pole?",
+  "options": [
+   "Arthur Christmas",
+   "The Polar Express",
+   "The Christmas Chronicles",
+   "Klaus"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which colour combination is most associated with Christmas?",
+  "options": [
+   "Purple and gold",
+   "Red and green",
+   "Blue and silver",
+   "Pink and white"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the small helpers in Santa's workshop called?",
+  "options": [
+   "Gnomes",
+   "Elves",
+   "Imps",
+   "Sprites"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the list Santa checks twice?",
+  "options": [
+   "The chimney register",
+   "The gift ledger",
+   "The naughty and nice list",
+   "The delivery roster"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How does Santa traditionally enter a house?",
+  "options": [
+   "Through the front door",
+   "Through a window",
+   "Down the chimney",
+   "Via the roof hatch"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which item is hung by the fireplace for Santa to fill?",
+  "options": [
+   "A stocking",
+   "A boot",
+   "A basket",
+   "A sack"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is traditionally given to naughty children in their stocking?",
+  "options": [
+   "Coal",
+   "Onions",
+   "Stones",
+   "Nothing at all"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spice-heavy hot drink is popular at European Christmas markets?",
+  "options": [
+   "Mulled wine",
+   "Lemonade",
+   "Iced tea",
+   "Cold brew"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is eggnog traditionally made with?",
+  "options": [
+   "Beer and eggs",
+   "Eggs, milk, sugar and spirits",
+   "Whisky and honey only",
+   "Wine and cream"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country is famous for its Christmas markets in cities like Nuremberg?",
+  "options": [
+   "Austria hosts them too but Nuremberg is German",
+   "Belgium",
+   "Germany",
+   "Poland"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas ballet features a Sugar Plum Fairy?",
+  "options": [
+   "Coppelia",
+   "The Nutcracker",
+   "Giselle",
+   "Swan Lake"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which composer wrote 'The Nutcracker'?",
+  "options": [
+   "Rimsky-Korsakov",
+   "Stravinsky",
+   "Tchaikovsky",
+   "Prokofiev"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas plant has red berries and prickly green leaves?",
+  "options": [
+   "Mistletoe",
+   "Yew",
+   "Ivy",
+   "Holly"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christmas carol includes the line 'Fa la la la la'?",
+  "options": [
+   "Deck the Halls",
+   "Ding Dong Merrily",
+   "Hark the Herald",
+   "Joy to the World"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which carol begins 'God rest ye merry, gentlemen'?",
+  "options": [
+   "God Rest Ye Merry Gentlemen",
+   "Good King Wenceslas",
+   "We Three Kings",
+   "O Come All Ye Faithful"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which carol tells of a king looking out on the Feast of Stephen?",
+  "options": [
+   "Once in Royal David's City",
+   "Good King Wenceslas",
+   "We Three Kings",
+   "The First Noel"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas song mentions 'dashing through the snow'?",
+  "options": [
+   "Frosty the Snowman",
+   "Sleigh Ride",
+   "Jingle Bells",
+   "Winter Wonderland"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christmas number one is by Band Aid and asks about Africa?",
+  "options": [
+   "Feed the World",
+   "We Are the World",
+   "Do They Know It's Christmas?",
+   "Another Day in Paradise"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Elton John Christmas song wishes 'a wonderful Christmastime' rival?",
+  "options": [
+   "Wonderful Christmastime",
+   "Happy Xmas War Is Over",
+   "Step Into Christmas",
+   "Merry Xmas Everybody"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Slade song shouts 'It's Chriiiistmaaas'?",
+  "options": [
+   "Coz I Luv You",
+   "Cum On Feel the Noize",
+   "Mama Weer All Crazee Now",
+   "Merry Xmas Everybody"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Paul McCartney Christmas song has 'simply having a wonderful' feeling?",
+  "options": [
+   "Wonderful Christmastime",
+   "Mull of Kintyre",
+   "Pipes of Peace",
+   "Live and Let Die"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which John Lennon Christmas song asks 'so this is Christmas'?",
+  "options": [
+   "Instant Karma",
+   "Happy Xmas (War Is Over)",
+   "Give Peace a Chance",
+   "Imagine"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas food is a small pastry filled with dried fruit?",
+  "options": [
+   "A custard tart",
+   "A jam tart",
+   "An eccles cake",
+   "A mince pie"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the meat in a modern mince pie?",
+  "options": [
+   "Beef",
+   "Lamb",
+   "There is none, it is fruit",
+   "Pork"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which vegetable is a divisive Christmas dinner staple in Britain?",
+  "options": [
+   "Cauliflower",
+   "Brussels sprouts",
+   "Parsnip",
+   "Broccoli"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sausage-wrapped item appears on British Christmas plates?",
+  "options": [
+   "Sausage rolls",
+   "Toad in the hole",
+   "Pigs in blankets",
+   "Scotch eggs"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which day do many Australians hit the shops for post-Christmas bargains?",
+  "options": [
+   "Boxing Day",
+   "Christmas Eve",
+   "Australia Day",
+   "New Year's Day"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which television address is traditionally broadcast on Christmas Day in Commonwealth countries?",
+  "options": [
+   "The Governor-General's address",
+   "The monarch's Christmas message",
+   "The Prime Minister's speech",
+   "The Archbishop's homily"
+  ],
+  "correctIndex": 1,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas ornament tradition involves hiding a glass pickle on the tree?",
+  "options": [
+   "An Italian custom",
+   "A Scottish custom",
+   "A German-American custom",
+   "A Danish custom"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which festive shape is a striped red and white sweet?",
+  "options": [
+   "The gingerbread man",
+   "The sugar mouse",
+   "The candy cane",
+   "The humbug"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional shape of a gingerbread Christmas building?",
+  "options": [
+   "A barn",
+   "A church",
+   "A castle",
+   "A house"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many points does a traditional Christmas star decoration usually have?",
+  "options": [
+   "Eight",
+   "Four",
+   "Five",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas song by Michael Buble is a modern crooner staple?",
+  "options": [
+   "Blue Christmas",
+   "Rockin' Around the Christmas Tree",
+   "Jingle Bell Rock",
+   "It's Beginning to Look a Lot Like Christmas"
+  ],
+  "correctIndex": 3,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Elvis Presley Christmas song is about being sad without you?",
+  "options": [
+   "Here Comes Santa Claus",
+   "Santa Bring My Baby Back",
+   "Blue Christmas",
+   "Silver Bells"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas song by Brenda Lee is about a Christmas tree?",
+  "options": [
+   "Rockin' Around the Christmas Tree",
+   "Under the Tree",
+   "Christmas Tree Farm",
+   "O Christmas Tree"
+  ],
+  "correctIndex": 0,
+  "category": "Christmas",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christmas song is about a red-nosed reindeer being laughed at?",
+  "options": [
+   "Here Comes Santa Claus",
+   "Santa Claus Is Comin' to Town",
+   "Rudolph the Red-Nosed Reindeer",
+   "Frosty the Snowman"
+  ],
+  "correctIndex": 2,
+  "category": "Christmas",
+  "difficulty": "easy"
+ }
+]

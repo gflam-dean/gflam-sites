@@ -1,0 +1,1370 @@
+[
+ {
+  "question": "What do we call a word that reads the same forwards and backwards, like 'racecar'?",
+  "options": [
+   "Homonym",
+   "Palindrome",
+   "Anagram",
+   "Boomerang word"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "An 'anagram' is made by doing what to a word?",
+  "options": [
+   "Rearranging its letters",
+   "Translating it to Latin",
+   "Removing its vowels",
+   "Shouting it backwards"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the only letter that does not appear in any US state name?",
+  "options": [
+   "X",
+   "Q",
+   "Z",
+   "J"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A word that sounds the same as another but has a different meaning, like 'bare' and 'bear', is called a what?",
+  "options": [
+   "Echo word",
+   "Homophone",
+   "Synonym",
+   "Metaphor"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'cactus' most often given in dictionaries?",
+  "options": [
+   "Cactuses only",
+   "Cactim",
+   "Cacti",
+   "Cactopodes"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the abbreviation 'etc.' stand for in full?",
+  "options": [
+   "End the chat",
+   "Extra to come",
+   "Et cetera",
+   "Et cetorum"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A 'thesaurus' is a book of what?",
+  "options": [
+   "Synonyms",
+   "Maps",
+   "Dinosaurs",
+   "Recipes"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the study of the origin of words called?",
+  "options": [
+   "Entomology",
+   "Wordology",
+   "Etymology",
+   "Ecology"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which punctuation mark is used to show possession, as in 'the dog's bowl'?",
+  "options": [
+   "Colon",
+   "Exclamation mark",
+   "Apostrophe",
+   "Comma"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of words with a hidden figurative meaning, like 'kick the bucket', called?",
+  "options": [
+   "A sneaky sentence",
+   "An idiom",
+   "A pronoun",
+   "A simile"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a simile?",
+  "options": [
+   "Hello there",
+   "As busy as a bee",
+   "Time is money",
+   "She sells seashells"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The repetition of the same starting sound, as in 'Peter Piper picked', is called what?",
+  "options": [
+   "Assonance",
+   "Alliteration",
+   "Onomatopoeia",
+   "Stuttering"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Words like 'bang', 'sizzle' and 'splash' that imitate sounds are examples of what?",
+  "options": [
+   "Loud words",
+   "Alliteration",
+   "Onomatopoeia",
+   "Hyperbole"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language is written in the Cyrillic alphabet?",
+  "options": [
+   "Portuguese",
+   "Greek",
+   "Russian",
+   "Turkish"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'Guten Tag' means good day in which language?",
+  "options": [
+   "Polish",
+   "Dutch",
+   "German",
+   "Danish"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'RSVP' on an invitation come from?",
+  "options": [
+   "An English shipping code",
+   "A Latin legal term",
+   "A Roman toast",
+   "A French phrase asking for a reply"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Latin phrase 'et al.' mean?",
+  "options": [
+   "All at once",
+   "And so on",
+   "For example",
+   "And others"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "'Vice versa' means what?",
+  "options": [
+   "Beyond doubt",
+   "Under pressure",
+   "At the same time",
+   "The other way around"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A word opposite in meaning to another is called what?",
+  "options": [
+   "A synonym",
+   "An acronym",
+   "A backwards word",
+   "An antonym"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'NASA' and 'SCUBA' are examples of what type of word?",
+  "options": [
+   "Acronyms",
+   "Contractions",
+   "Palindromes",
+   "Portmanteaus"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A word made by blending two others, like 'brunch', is called what?",
+  "options": [
+   "A double word",
+   "A homograph",
+   "An acronym",
+   "A portmanteau"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which word class describes an action, like 'run' or 'think'?",
+  "options": [
+   "Verb",
+   "Noun",
+   "Adjective",
+   "Adverb"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which word class describes a person, place or thing?",
+  "options": [
+   "Noun",
+   "Conjunction",
+   "Preposition",
+   "Verb"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Words like 'quickly' and 'softly' that describe how something is done are what?",
+  "options": [
+   "Adverbs",
+   "Pronouns",
+   "Adjectives",
+   "Articles"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many letters are in the Hawaiian alphabet?",
+  "options": [
+   "8",
+   "13",
+   "26",
+   "21"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language gave English the word 'kindergarten'?",
+  "options": [
+   "French",
+   "Greek",
+   "Dutch",
+   "German"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language contributed the English word 'tsunami'?",
+  "options": [
+   "Tahitian",
+   "Korean",
+   "Japanese",
+   "Mandarin"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'Shampoo' entered English from a word in which language family region?",
+  "options": [
+   "Norway",
+   "Hindi/Urdu of India",
+   "Peru",
+   "Ancient Egypt"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the shortest complete sentence in English commonly cited?",
+  "options": [
+   "Go.",
+   "I am.",
+   "It is.",
+   "Yes"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A sentence using every letter of the alphabet is called what?",
+  "options": [
+   "A palindrome",
+   "An alphabet soup",
+   "A lipogram",
+   "A pangram"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "'The quick brown fox jumps over the lazy dog' is famous as what?",
+  "options": [
+   "A pangram",
+   "A limerick",
+   "A palindrome",
+   "A tongue twister"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two letters are worth 10 points each in English-language Scrabble?",
+  "options": [
+   "X and J",
+   "K and V",
+   "W and Y",
+   "Q and Z"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In English, which letter is used most frequently?",
+  "options": [
+   "E",
+   "T",
+   "S",
+   "A"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a word spelled the same as another but pronounced differently, like 'lead' the metal and 'lead' the verb?",
+  "options": [
+   "Twin word",
+   "Antonym",
+   "Homograph",
+   "Homophone"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "A five-line humorous poem with an AABBA rhyme scheme is called what?",
+  "options": [
+   "A limerick",
+   "A haiku",
+   "A ballad",
+   "A sonnet"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A Japanese haiku traditionally has how many syllables in total?",
+  "options": [
+   "20",
+   "17",
+   "14",
+   "31"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the prefix 'bi-' mean, as in bicycle?",
+  "options": [
+   "Fast",
+   "Two",
+   "Three",
+   "Round"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the prefix 'tele-' mean, as in telephone and television?",
+  "options": [
+   "Quick",
+   "Sound",
+   "Picture",
+   "Far off"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The prefix 'aqua-' relates to what?",
+  "options": [
+   "Sleep",
+   "Air",
+   "Water",
+   "Fire"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the suffix '-phobia' indicate?",
+  "options": [
+   "A love",
+   "A study",
+   "A disease",
+   "A fear"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'Arachnophobia' is the fear of what?",
+  "options": [
+   "Spiders",
+   "Words",
+   "Water",
+   "Heights"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'claustrophobia' the fear of?",
+  "options": [
+   "Open spaces",
+   "Enclosed spaces",
+   "Crowds",
+   "Clowns"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fear of open or crowded public spaces called?",
+  "options": [
+   "Xenophobia",
+   "Agoraphobia",
+   "Acrophobia",
+   "Hydrophobia"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "'Acrophobia' is the fear of what?",
+  "options": [
+   "Acronyms",
+   "Heights",
+   "Sharp objects",
+   "The dark"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country has the most official languages, at 11 recognised in its constitution plus later additions?",
+  "options": [
+   "Belgium",
+   "India",
+   "Switzerland",
+   "South Africa"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Esperanto is best described as what?",
+  "options": [
+   "A form of sign language",
+   "A constructed international language",
+   "An ancient Roman dialect",
+   "A Spanish accent"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which alphabet is used to write Hebrew?",
+  "options": [
+   "The Runic alphabet",
+   "The Cyrillic alphabet",
+   "The Hebrew alphabet",
+   "The Latin alphabet"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which direction is Arabic script written?",
+  "options": [
+   "In a spiral",
+   "Top to bottom only",
+   "Left to right",
+   "Right to left"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Braille designed for?",
+  "options": [
+   "Reading underwater",
+   "Reading by touch",
+   "Reading in code",
+   "Speed reading"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Morse code, three dots followed by three dashes and three dots signals what?",
+  "options": [
+   "OK",
+   "Land ahoy",
+   "SOS",
+   "HELP"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What letter does 'Delta' stand for in the NATO phonetic alphabet?",
+  "options": [
+   "L",
+   "D",
+   "T",
+   "G"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the NATO phonetic alphabet, which word represents the letter W?",
+  "options": [
+   "Wombat",
+   "Winter",
+   "Waltz",
+   "Whiskey"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "'Foxtrot' represents which letter in the NATO phonetic alphabet?",
+  "options": [
+   "V",
+   "T",
+   "F",
+   "X"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "A 'lexicographer' is someone who does what?",
+  "options": [
+   "Writes laws",
+   "Compiles dictionaries",
+   "Reads palms",
+   "Studies rocks"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which dictionary is the historical dictionary of the English language published in Britain?",
+  "options": [
+   "The King's Lexicon",
+   "The Britannica Wordbook",
+   "The Cambridge Codex",
+   "The Oxford English Dictionary"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'neologism'?",
+  "options": [
+   "A silent letter",
+   "An old-fashioned word",
+   "A newly coined word",
+   "A misspelled word"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Deliberate exaggeration for effect, like 'I've told you a million times', is called what?",
+  "options": [
+   "Sarcasm",
+   "Metaphor",
+   "Irony",
+   "Hyperbole"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Giving human qualities to objects, like 'the wind whispered', is called what?",
+  "options": [
+   "Alliteration",
+   "Personification",
+   "Allegory",
+   "Impersonation"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is an 'oxymoron'?",
+  "options": [
+   "A phrase joining contradictory terms",
+   "A repeated word",
+   "A very long word",
+   "A rude word"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these is an oxymoron?",
+  "options": [
+   "Rise and shine",
+   "Cold as ice",
+   "Deafening silence",
+   "Once upon a time"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A 'euphemism' is used to do what?",
+  "options": [
+   "Insult someone directly",
+   "Soften an unpleasant idea",
+   "Rhyme two lines",
+   "Ask a question"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'tautology'?",
+  "options": [
+   "A silent letter",
+   "A grammatical error",
+   "A foreign phrase",
+   "Saying the same thing twice in different words"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "'Loquacious' describes someone who is what?",
+  "options": [
+   "Very talkative",
+   "Very rich",
+   "Very lazy",
+   "Very tall"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'gregarious' mean?",
+  "options": [
+   "Angry and rude",
+   "Sociable and fond of company",
+   "Slow moving",
+   "Careful with money"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If something is 'ubiquitous', it is what?",
+  "options": [
+   "Extremely rare",
+   "Slightly damp",
+   "Found everywhere",
+   "Very heavy"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'ephemeral' mean?",
+  "options": [
+   "Made of stone",
+   "Impossible to see",
+   "Deeply religious",
+   "Lasting a very short time"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Someone described as 'meticulous' is what?",
+  "options": [
+   "Physically strong",
+   "Easily bored",
+   "Extremely careful about detail",
+   "Very forgetful"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'benevolent' mean?",
+  "options": [
+   "Lucky",
+   "Silent and still",
+   "Kind and well meaning",
+   "Cruel and violent"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A 'philanthropist' is someone who does what?",
+  "options": [
+   "Studies stars",
+   "Fears people",
+   "Collects stamps",
+   "Gives generously to good causes"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the word 'plethora' mean?",
+  "options": [
+   "A small taste",
+   "A large excess",
+   "A steep drop",
+   "A loud noise"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If a story is 'apocryphal', it is what?",
+  "options": [
+   "Widely told but probably untrue",
+   "Written in verse",
+   "Officially certified",
+   "Set in the future"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is 'serendipity'?",
+  "options": [
+   "A long argument",
+   "A happy accident or lucky discovery",
+   "A fear of ships",
+   "A type of poem"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "'Onerous' means what?",
+  "options": [
+   "Sweet tasting",
+   "Burdensome and difficult",
+   "Simple and light",
+   "Only one"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'candid' mean?",
+  "options": [
+   "Hidden away",
+   "Brightly coloured",
+   "Sugary",
+   "Honest and straightforward"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "An 'aficionado' is what?",
+  "options": [
+   "An enthusiastic expert or fan",
+   "A hired guard",
+   "A young apprentice",
+   "A Spanish dance"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the meaning of the word 'quintessential'?",
+  "options": [
+   "Made of five parts only",
+   "Very old-fashioned",
+   "Difficult to pronounce",
+   "The most perfect example of something"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "If two things are 'juxtaposed', what has happened?",
+  "options": [
+   "They are placed side by side for contrast",
+   "They are translated",
+   "They are melted together",
+   "They are hidden"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does 'verbose' mean?",
+  "options": [
+   "Speaking very quietly",
+   "Using more words than needed",
+   "Perfectly punctuated",
+   "Written in verse"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A 'malapropism' is what?",
+  "options": [
+   "A deliberate insult",
+   "Using a similar-sounding wrong word by mistake",
+   "A very long sentence",
+   "A French loan word"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the plural of 'octopus' most commonly recommended by dictionaries?",
+  "options": [
+   "Octopussies",
+   "Octopodes only",
+   "Octopi only",
+   "Octopuses"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plural of 'goose'?",
+  "options": [
+   "Geeses",
+   "Geese",
+   "Goosen",
+   "Gooses"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the plural of 'mouse' when talking about the animal?",
+  "options": [
+   "Meese",
+   "Mousen",
+   "Mouses",
+   "Mice"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spelling is standard Australian English?",
+  "options": [
+   "Color",
+   "Colore",
+   "Colour",
+   "Colur"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australian English, which spelling is standard?",
+  "options": [
+   "Organice",
+   "Organize",
+   "Organise",
+   "Organyse"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'contraction' in English, such as 'can't'?",
+  "options": [
+   "A word borrowed from Latin",
+   "A word said quickly",
+   "A word with a silent letter",
+   "Two words shortened with an apostrophe"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these words has a silent letter?",
+  "options": [
+   "Knight",
+   "Rapid",
+   "Cricket",
+   "Table"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'I before E except after C' is an example of what?",
+  "options": [
+   "A rhyming scheme",
+   "A punctuation mark",
+   "A spelling rule of thumb",
+   "A grammar law"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a name that has become a general word, like 'hoover' for vacuum cleaner?",
+  "options": [
+   "A genericised trademark",
+   "A homonym",
+   "A nickname",
+   "A pseudonym"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What punctuation mark joins two independent clauses without a conjunction?",
+  "options": [
+   "Semicolon",
+   "Comma",
+   "Hyphen",
+   "Question mark"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the punctuation mark '&'?",
+  "options": [
+   "Ampersand",
+   "Octothorpe",
+   "Tilde",
+   "Asterisk"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the symbol '#' formally called?",
+  "options": [
+   "Caret",
+   "Pilcrow",
+   "Octothorpe",
+   "Ampersand"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the wavy mark '~' called?",
+  "options": [
+   "Tilde",
+   "Umlaut",
+   "Cedilla",
+   "Wiggle"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The two dots over a vowel in German, as in 'über', are called what?",
+  "options": [
+   "A cedilla",
+   "A colon",
+   "An umlaut",
+   "An accent grave"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the paragraph symbol '¶' called?",
+  "options": [
+   "Pica",
+   "Squiggle",
+   "Pilcrow",
+   "Paraph"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which English word famously has three consecutive double letters?",
+  "options": [
+   "Bookkeeper",
+   "Success",
+   "Committee",
+   "Address"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many letters are in the longest word in most standard English dictionaries, 'pneumonoultramicroscopicsilicovolcanoconiosis'?",
+  "options": [
+   "45",
+   "101",
+   "28",
+   "62"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "hard"
+ },
+ {
+  "question": "'Bibliophile' describes a lover of what?",
+  "options": [
+   "Beer",
+   "Books",
+   "Bicycles",
+   "Birds"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the word 'polyglot' describe?",
+  "options": [
+   "A stomach illness",
+   "A group of parrots",
+   "A person who speaks many languages",
+   "A many-sided shape"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which language is the ancestor of French, Spanish, Italian, Portuguese and Romanian?",
+  "options": [
+   "Latin",
+   "Gaelic",
+   "Greek",
+   "Sanskrit"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Languages descended from Latin are known as what?",
+  "options": [
+   "Nordic languages",
+   "Germanic languages",
+   "Romance languages",
+   "Slavic languages"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "English is classified as which type of language?",
+  "options": [
+   "Slavic",
+   "Romance",
+   "Celtic",
+   "Germanic"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Approximately how many languages are spoken in the world today?",
+  "options": [
+   "About 700",
+   "About 200",
+   "About 70,000",
+   "About 7,000"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a language no longer spoken by any community, such as Latin in daily use?",
+  "options": [
+   "A lost language",
+   "A dead language",
+   "A retired language",
+   "A silent language"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'Kia ora' is a greeting in which language?",
+  "options": [
+   "Maori",
+   "Samoan",
+   "Fijian",
+   "Tongan"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the Japanese word 'arigato' mean?",
+  "options": [
+   "Thank you",
+   "Goodbye",
+   "Please",
+   "Sorry"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Spanish, what does 'gracias' mean?",
+  "options": [
+   "Excuse me",
+   "Good night",
+   "Welcome",
+   "Thank you"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Italian word 'ciao' mean?",
+  "options": [
+   "Please",
+   "Delicious",
+   "Hello or goodbye",
+   "Careful"
+  ],
+  "correctIndex": 2,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'Schadenfreude', borrowed from German, means what?",
+  "options": [
+   "Pleasure at another's misfortune",
+   "Love of order",
+   "A hearty meal",
+   "Fear of the dark"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The French phrase 'déjà vu' literally means what?",
+  "options": [
+   "Never again",
+   "See you later",
+   "Very good",
+   "Already seen"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the phrase 'bona fide' mean?",
+  "options": [
+   "Very expensive",
+   "Extremely fast",
+   "Written down",
+   "Genuine or in good faith"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "'Status quo' refers to what?",
+  "options": [
+   "A sudden change",
+   "The existing state of affairs",
+   "A legal ruling",
+   "A rock band contract"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'per se' mean?",
+  "options": [
+   "Per person",
+   "In itself",
+   "Every second",
+   "By hand"
+  ],
+  "correctIndex": 1,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the meaning of 'ad hoc'?",
+  "options": [
+   "Created for a particular purpose",
+   "Forever ongoing",
+   "Free of charge",
+   "Advertised widely"
+  ],
+  "correctIndex": 0,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'quid pro quo' mean?",
+  "options": [
+   "Quiet please",
+   "Question and answer",
+   "Money up front",
+   "Something given in return for something else"
+  ],
+  "correctIndex": 3,
+  "category": "Language & Words",
+  "difficulty": "medium"
+ }
+]

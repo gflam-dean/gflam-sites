@@ -1,0 +1,506 @@
+[
+  {
+    "index": 13,
+    "question": "Which Nintendo console used small cube-shaped discs and a purple box?",
+    "problem": "ambiguous",
+    "detail": "The GameCube's discs were small round 8cm discs, not cube-shaped. As written the stem describes a disc shape that never existed, which invites an argument about which console is meant.",
+    "fix": {
+      "question": "Which Nintendo console was a purple cube that played small 8 centimetre discs?",
+      "options": [
+        "Nintendo 64",
+        "Virtual Boy",
+        "GameCube",
+        "Wii"
+      ],
+      "correctIndex": 2,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 15,
+    "question": "In the game Super Monkey Ball, what is the monkey inside?",
+    "problem": "self-answering",
+    "detail": "The stem says 'Super Monkey Ball' and asks what the monkey is inside. Tagged hard, but the title answers it.",
+    "fix": {
+      "question": "In Super Monkey Ball, how does the player move the monkey?",
+      "options": [
+        "By tilting the whole stage",
+        "By pressing a jump button",
+        "By steering with a wheel",
+        "By tapping the screen"
+      ],
+      "correctIndex": 0,
+      "category": "Video Games",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 22,
+    "question": "Which Ubisoft series features a wall-running prince and the ability to rewind time?",
+    "problem": "self-answering",
+    "detail": "The stem says 'a wall-running prince', so Prince of Persia is given away.",
+    "fix": {
+      "question": "Which Ubisoft series features a wall-running hero and a dagger that rewinds time?",
+      "options": [
+        "Beyond Good and Evil",
+        "Assassin's Creed",
+        "Rayman",
+        "Prince of Persia"
+      ],
+      "correctIndex": 3,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 26,
+    "question": "What is Microsoft's online gaming service for Xbox called?",
+    "problem": "dates",
+    "detail": "Microsoft retired the Xbox Live branding for the online service in 2021 (it is now the Xbox network) and folded Xbox Live Gold into Game Pass Core in 2023. The answer is already historical and will read as wrong to younger players.",
+    "fix": {
+      "question": "What was Microsoft's online service for the original Xbox and the Xbox 360 called?",
+      "options": [
+        "Xbox Live",
+        "Battle Net",
+        "PlayStation Plus",
+        "Nintendo Online"
+      ],
+      "correctIndex": 0,
+      "category": "Video Games",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 30,
+    "question": "Which movie franchise is the video game series 'Batman: Arkham Asylum' based on?",
+    "problem": "ambiguous",
+    "detail": "The stem asks which MOVIE franchise the game is based on, but the marked answer is a comics property, and the Arkham games are not based on any film. A player who takes 'movie franchise' literally has no correct option.",
+    "fix": {
+      "question": "The Batman: Arkham video games are based on characters from which comics publisher?",
+      "options": [
+        "Image",
+        "Dark Horse",
+        "DC",
+        "Marvel"
+      ],
+      "correctIndex": 2,
+      "category": "Video Games",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 47,
+    "question": "In Mario games, what is the name of the black cannonball-shaped enemy with arms and eyes?",
+    "problem": "wrong-answer",
+    "detail": "A black CANNONBALL-shaped enemy with arms and eyes is the Bob-omb, which is offered as the first distractor. Bullet Bill is bullet-shaped and is fired FROM a cannon. Index 484 in the same file already describes Bob-omb as 'the walking bomb with a wind-up key', so the room will have both readings.",
+    "fix": {
+      "question": "In Mario games, what is the name of the black bullet-shaped enemy fired out of a cannon?",
+      "options": [
+        "Bob-omb",
+        "Bullet Bill",
+        "Chain Chomp",
+        "Thwomp"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 69,
+    "question": "What kind of creature does Yoshi swallow enemies with?",
+    "problem": "ambiguous",
+    "detail": "The stem asks 'what kind of creature' but every option is a body part. The question as read aloud makes no sense.",
+    "fix": {
+      "question": "What does Yoshi use to swallow enemies?",
+      "options": [
+        "His tail",
+        "His claws",
+        "His wings",
+        "His long tongue"
+      ],
+      "correctIndex": 3,
+      "category": "Video Games",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 182,
+    "question": "What shape is the ringworld that gives Halo its name?",
+    "problem": "self-answering",
+    "detail": "The stem calls it a ringworld and the answer is 'a ring'.",
+    "fix": {
+      "question": "The Halo rings were built as weapons against which parasite?",
+      "options": [
+        "The Flood",
+        "The Locust",
+        "The Zerg",
+        "The Combine"
+      ],
+      "correctIndex": 0,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 204,
+    "question": "Which stealth game series stars a raccoon thief called Sly?",
+    "problem": "self-answering",
+    "detail": "The stem says the thief is 'called Sly', so the answer Sly Cooper is given away. This is tagged hard, where it tests nothing.",
+    "fix": {
+      "question": "Which PlayStation stealth series stars a thieving raccoon and his gang of Murray and Bentley?",
+      "options": [
+        "Sly Cooper",
+        "Jak and Daxter",
+        "Infamous",
+        "Ratchet and Clank"
+      ],
+      "correctIndex": 0,
+      "category": "Video Games",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 205,
+    "question": "Which video game series lets players build and manage a zoo?",
+    "problem": "self-answering",
+    "detail": "The stem says 'build and manage a zoo', so Zoo Tycoon is read straight back.",
+    "fix": {
+      "question": "Which management series has players building animal enclosures and keeping visitors happy, sharing its publisher with RollerCoaster Tycoon?",
+      "options": [
+        "Planet Coaster",
+        "Zoo Tycoon",
+        "Jurassic World Evolution",
+        "Wildlife Park"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 228,
+    "question": "Which platform series stars a bear and a bird called Banjo and Kazooie?",
+    "problem": "self-answering",
+    "detail": "The stem names Banjo and Kazooie, so the answer Banjo-Kazooie is simply read back.",
+    "fix": {
+      "question": "Which 1998 Rare platformer starred a bear who carries a bird in his backpack?",
+      "options": [
+        "Donkey Kong Country",
+        "Banjo-Kazooie",
+        "Yooka-Laylee",
+        "Conker"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 230,
+    "question": "Which educational game had players travelling the Oregon Trail by wagon in the 1800s?",
+    "problem": "self-answering",
+    "detail": "The stem names the Oregon Trail, so the answer The Oregon Trail is given away.",
+    "fix": {
+      "question": "Which 1970s educational game had players leading a wagon party west, dying of dysentery along the way?",
+      "options": [
+        "Pioneer",
+        "Carmen Sandiego",
+        "The Oregon Trail",
+        "SimFrontier"
+      ],
+      "correctIndex": 2,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 249,
+    "question": "Which Australian-made game stars a Tasmanian tiger who throws a boomerang?",
+    "problem": "self-answering",
+    "detail": "The stem says 'a Tasmanian tiger', so the answer Ty the Tasmanian Tiger is given away.",
+    "fix": {
+      "question": "Which Australian-made platform series stars a marsupial who fights with boomerangs?",
+      "options": [
+        "Bushwhacker",
+        "Bunyip",
+        "Roo Rampage",
+        "Ty the Tasmanian Tiger"
+      ],
+      "correctIndex": 3,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 259,
+    "question": "Which game series has players controlling teams of worms firing bazookas at each other?",
+    "problem": "self-answering",
+    "detail": "The stem says 'teams of worms', so the answer Worms is given away.",
+    "fix": {
+      "question": "Which turn-based artillery series has squads of invertebrates firing bazookas and exploding sheep at each other?",
+      "options": [
+        "Worms",
+        "Cannon Fodder",
+        "Scorched Earth",
+        "Lemmings"
+      ],
+      "correctIndex": 0,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 263,
+    "question": "What does FIFA stand for in the football game's title?",
+    "problem": "ambiguous",
+    "detail": "The stem asks what FIFA STANDS FOR, but the marked answer is a description of the organisation, not an expansion of the letters, which are Federation Internationale de Football Association. Two of the distractors are actual letter expansions, so the question contradicts itself. The series was also renamed EA Sports FC in 2023.",
+    "fix": {
+      "question": "The FIFA games took their name from which organisation?",
+      "options": [
+        "A European broadcaster",
+        "The governing body of world football",
+        "A boot manufacturer",
+        "A players' union"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 349,
+    "question": "Which golf video game series carried Tiger Woods' name for many years?",
+    "problem": "unsure",
+    "detail": "The series that carried Tiger Woods' name was titled Tiger Woods PGA Tour; 'EA Sports PGA Tour' is what the same series is called now that his name has gone. It is the only defensible option here, but the phrasing invites a correction from anyone who knows the old title.",
+    "fix": {
+      "question": "Which publisher's PGA Tour golf series carried Tiger Woods' name from 1999 to 2013?",
+      "options": [
+        "Sony",
+        "EA Sports",
+        "Take-Two",
+        "Konami"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 400,
+    "question": "Which colourful mobile game has players popping bubbles of matching colours?",
+    "problem": "two-answers",
+    "detail": "Zuma is also a game about shooting and popping matching coloured balls, and 'Bubble Shooter' is a generic name shared by dozens of clones rather than one identifiable mobile game.",
+    "fix": {
+      "question": "Which mobile puzzle game has players firing coloured balls up a winding track before they reach the hole?",
+      "options": [
+        "Bejeweled",
+        "Zuma",
+        "Candy Crush",
+        "Peggle"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 454,
+    "question": "Which two-player arcade game features a knight, a barbarian and a wizard collecting food and gold, made by Atari in 1985?",
+    "problem": "ambiguous",
+    "detail": "Gauntlet was a FOUR-player arcade game, not two-player, and its characters are a Warrior, a Valkyrie, a Wizard and an Elf, with no knight or barbarian. The 'two-player, barbarian' description points squarely at the distractor Golden Axe, which really is a two-player game with a barbarian.",
+    "fix": {
+      "question": "Which four-player Atari arcade game of 1985 had a warrior, a valkyrie, a wizard and an elf collecting food and treasure in dungeons?",
+      "options": [
+        "Golden Axe",
+        "Gauntlet",
+        "Dungeon Master",
+        "Wizard of Wor"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 481,
+    "question": "Which puzzle game has players moving numbered tiles to reach the number 2048?",
+    "problem": "self-answering",
+    "detail": "The stem states the target number 2048 and the answer is 2048.",
+    "fix": {
+      "question": "Which 2014 puzzle game has players sliding numbered tiles that double when they meet?",
+      "options": [
+        "Sudoku",
+        "Numberle",
+        "2048",
+        "Threes"
+      ],
+      "correctIndex": 2,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 490,
+    "question": "Which platform game series stars a character called Rayman?",
+    "problem": "self-answering",
+    "detail": "The stem says the character is 'called Rayman' and the answer is Rayman.",
+    "fix": {
+      "question": "Which platform series stars a limbless hero with floating hands and feet, created by Ubisoft?",
+      "options": [
+        "Rayman",
+        "Croc",
+        "Jak and Daxter",
+        "Klonoa"
+      ],
+      "correctIndex": 0,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 493,
+    "question": "Which game series is about managing and coaching a football club without playing matches directly?",
+    "problem": "self-answering",
+    "detail": "The stem says 'managing and coaching a football club', so Football Manager is read straight back.",
+    "fix": {
+      "question": "Which long-running Sports Interactive series has players running a football club from the dugout, without controlling the players directly?",
+      "options": [
+        "Rocket League",
+        "Football Manager",
+        "FIFA",
+        "Pro Evolution Soccer"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 545,
+    "question": "Which children's educational game series stars a rabbit who teaches reading?",
+    "problem": "self-answering",
+    "detail": "'A rabbit who teaches reading' gives away Reader Rabbit outright, and this is tagged hard.",
+    "fix": {
+      "question": "Which children's educational software series, launched in 1984, taught early reading skills?",
+      "options": [
+        "Zoombinis",
+        "Blue's Clues",
+        "Reader Rabbit",
+        "Jump Start"
+      ],
+      "correctIndex": 2,
+      "category": "Video Games",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 549,
+    "question": "What was the name of Sony's original PlayStation controller with two analogue sticks?",
+    "problem": "ambiguous",
+    "detail": "Sony's first PlayStation controller with two analogue sticks was the Dual Analog Controller of April 1997; the DualShock followed later that year and added vibration. As worded, the strictly correct answer is not among the options.",
+    "fix": {
+      "question": "Which Sony controller added two analogue sticks and vibration to the original PlayStation?",
+      "options": [
+        "Analog Pad",
+        "DualShock",
+        "Sixaxis",
+        "DualSense"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 578,
+    "question": "Which arcade racing game has you sitting in a moving cabinet shaped like a rally car, made by Sega and set in Daytona?",
+    "problem": "ambiguous",
+    "detail": "The stem says 'shaped like a rally car' while offering Sega Rally as the first option. Daytona USA's cabinet is a NASCAR-style stock car, not a rally car, so the description points at the distractor and the location points at the answer.",
+    "fix": {
+      "question": "Which 1993 Sega arcade racer was named after an American stock car speedway and linked up to eight cabinets together?",
+      "options": [
+        "Sega Rally",
+        "OutRun",
+        "Daytona USA",
+        "Virtua Racing"
+      ],
+      "correctIndex": 2,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 662,
+    "question": "Which platform series stars a bandicoot spinning through crates on Australian-inspired islands?",
+    "problem": "self-answering",
+    "detail": "The stem says 'a bandicoot', so Crash Bandicoot is given away.",
+    "fix": {
+      "question": "Which platform series stars an orange marsupial who spins through crates on Australian-inspired islands?",
+      "options": [
+        "Ty the Tasmanian Tiger",
+        "Crash Bandicoot",
+        "Jak and Daxter",
+        "Spyro"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 669,
+    "question": "Which console generation introduced the Nintendo Entertainment System to Australia?",
+    "problem": "ambiguous",
+    "detail": "The stem asks which console GENERATION, but all four options are decades. A generation and a decade are not the same thing, so the question does not match its own options.",
+    "fix": {
+      "question": "In which decade was the Nintendo Entertainment System released in Australia?",
+      "options": [
+        "1980s",
+        "1970s",
+        "2000s",
+        "1990s"
+      ],
+      "correctIndex": 0,
+      "category": "Video Games",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 687,
+    "question": "Which mobile game features a jumping character called Doodle the Doodler climbing endless platforms?",
+    "problem": "self-answering",
+    "detail": "The stem names 'Doodle the Doodler', so Doodle Jump is given away. The character is actually called The Doodler, not Doodle the Doodler.",
+    "fix": {
+      "question": "Which 2009 mobile game has players tilting a phone to bounce a four-legged creature up endless platforms?",
+      "options": [
+        "Bounce",
+        "Sky Hop",
+        "Jetpack Joyride",
+        "Doodle Jump"
+      ],
+      "correctIndex": 3,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 697,
+    "question": "Which item in Portal follows you around and is described as a companion?",
+    "problem": "self-answering",
+    "detail": "The stem says the item 'is described as a companion', so The Companion Cube is read straight back.",
+    "fix": {
+      "question": "Which cube-shaped item in Portal does GLaDOS ask you to look after, then incinerate?",
+      "options": [
+        "The Radio",
+        "The Companion Cube",
+        "The Turret",
+        "The Cake"
+      ],
+      "correctIndex": 1,
+      "category": "Video Games",
+      "difficulty": "medium"
+    }
+  }
+]

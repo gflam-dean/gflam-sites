@@ -1,0 +1,2156 @@
+[
+ {
+  "file": "batch-30-christmas",
+  "index": 11,
+  "answer": "White Christmas",
+  "spoiled_by_index": 12
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 17,
+  "answer": "Six White Boomers",
+  "spoiled_by_index": 18
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 20,
+  "answer": "Carols by Candlelight",
+  "spoiled_by_index": 21
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 24,
+  "answer": "Boxing Day",
+  "spoiled_by_index": 22
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 25,
+  "answer": "Home Alone",
+  "spoiled_by_index": 26
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 29,
+  "answer": "How the Grinch Stole Christmas",
+  "spoiled_by_index": 30
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 38,
+  "answer": "Saint Nicholas",
+  "spoiled_by_index": 39
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 45,
+  "answer": "Christmas pudding",
+  "spoiled_by_index": 46
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 56,
+  "answer": "Christmas Day",
+  "spoiled_by_index": 105
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 76,
+  "answer": "The Snowman",
+  "spoiled_by_index": 77
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 79,
+  "answer": "Red and green",
+  "spoiled_by_index": 5
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 88,
+  "answer": "The Nutcracker",
+  "spoiled_by_index": 89
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 94,
+  "answer": "Jingle Bells",
+  "spoiled_by_index": 19
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 98,
+  "answer": "Wonderful Christmastime",
+  "spoiled_by_index": 96
+ },
+ {
+  "file": "batch-30-christmas",
+  "index": 104,
+  "answer": "Boxing Day",
+  "spoiled_by_index": 22
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 67,
+  "answer": "Three quarters",
+  "spoiled_by_index": 60
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 68,
+  "answer": "One quarter",
+  "spoiled_by_index": 59
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 148,
+  "answer": "One hundred",
+  "spoiled_by_index": 146
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 156,
+  "answer": "One quarter",
+  "spoiled_by_index": 59
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 168,
+  "answer": "One hundred",
+  "spoiled_by_index": 146
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 183,
+  "answer": "An even number",
+  "spoiled_by_index": 127
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 184,
+  "answer": "An odd number",
+  "spoiled_by_index": 127
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 241,
+  "answer": "Twelve sided",
+  "spoiled_by_index": 205
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 290,
+  "answer": "Three quarters",
+  "spoiled_by_index": 60
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 300,
+  "answer": "One hundred",
+  "spoiled_by_index": 146
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 308,
+  "answer": "One kilogram",
+  "spoiled_by_index": 320
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 359,
+  "answer": "One hundred",
+  "spoiled_by_index": 146
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 373,
+  "answer": "One hundred",
+  "spoiled_by_index": 146
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 412,
+  "answer": "The difference",
+  "spoiled_by_index": 490
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 460,
+  "answer": "Venn diagram",
+  "spoiled_by_index": 461
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 468,
+  "answer": "An even chance",
+  "spoiled_by_index": 448
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 474,
+  "answer": "One hundred",
+  "spoiled_by_index": 146
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 483,
+  "answer": "An even number",
+  "spoiled_by_index": 127
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 610,
+  "answer": "Ada Lovelace",
+  "spoiled_by_index": 611
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 618,
+  "answer": "The Fields Medal",
+  "spoiled_by_index": 619
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 624,
+  "answer": "Prime numbers",
+  "spoiled_by_index": 105
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 638,
+  "answer": "Robert Recorde",
+  "spoiled_by_index": 639
+ },
+ {
+  "file": "batch-30-maths-puzzles",
+  "index": 674,
+  "answer": "A doughnut",
+  "spoiled_by_index": 271
+ },
+ {
+  "file": "batch-31-language-words",
+  "index": 407,
+  "answer": "The object",
+  "spoiled_by_index": 487
+ },
+ {
+  "file": "batch-31-language-words",
+  "index": 434,
+  "answer": "An apostrophe",
+  "spoiled_by_index": 488
+ },
+ {
+  "file": "batch-31-language-words",
+  "index": 436,
+  "answer": "Upper case",
+  "spoiled_by_index": 437
+ },
+ {
+  "file": "batch-31-language-words",
+  "index": 610,
+  "answer": "Julius Caesar",
+  "spoiled_by_index": 235
+ },
+ {
+  "file": "batch-31-pub-culture",
+  "index": 32,
+  "answer": "The spinner",
+  "spoiled_by_index": 34
+ },
+ {
+  "file": "batch-31-pub-culture",
+  "index": 37,
+  "answer": "New South Wales",
+  "spoiled_by_index": 1
+ },
+ {
+  "file": "batch-32-cars-motoring",
+  "index": 21,
+  "answer": "Aston Martin",
+  "spoiled_by_index": 22
+ },
+ {
+  "file": "batch-32-cars-motoring",
+  "index": 31,
+  "answer": "The Model T",
+  "spoiled_by_index": 32
+ },
+ {
+  "file": "batch-32-cars-motoring",
+  "index": 63,
+  "answer": "Daniel Ricciardo",
+  "spoiled_by_index": 64
+ },
+ {
+  "file": "batch-32-cars-motoring",
+  "index": 98,
+  "answer": "Four wheel drive",
+  "spoiled_by_index": 97
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 100,
+  "answer": "Street Fighter",
+  "spoiled_by_index": 79
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 109,
+  "answer": "Donkey Kong",
+  "spoiled_by_index": 167
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 128,
+  "answer": "Resident Evil",
+  "spoiled_by_index": 73
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 135,
+  "answer": "Crash Bandicoot",
+  "spoiled_by_index": 9
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 146,
+  "answer": "Epic Games",
+  "spoiled_by_index": 3
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 164,
+  "answer": "Grand Theft Auto",
+  "spoiled_by_index": 4
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 178,
+  "answer": "Nintendo 64",
+  "spoiled_by_index": 119
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 180,
+  "answer": "Five Nights at Freddy's",
+  "spoiled_by_index": 54
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 206,
+  "answer": "Donkey Kong Country",
+  "spoiled_by_index": 167
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 213,
+  "answer": "Nintendo DS",
+  "spoiled_by_index": 1
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 229,
+  "answer": "Role Playing Game",
+  "spoiled_by_index": 160
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 230,
+  "answer": "The Oregon Trail",
+  "spoiled_by_index": 110
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 234,
+  "answer": "Cyberpunk 2077",
+  "spoiled_by_index": 253
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 239,
+  "answer": "Super Nintendo",
+  "spoiled_by_index": 206
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 249,
+  "answer": "Ty the Tasmanian Tiger",
+  "spoiled_by_index": 319
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 271,
+  "answer": "Clash of Clans",
+  "spoiled_by_index": 67
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 278,
+  "answer": "Assassin's Creed",
+  "spoiled_by_index": 593
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 285,
+  "answer": "Riot Games",
+  "spoiled_by_index": 260
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 305,
+  "answer": "Square Enix",
+  "spoiled_by_index": 378
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 311,
+  "answer": "Mega Drive",
+  "spoiled_by_index": 80
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 314,
+  "answer": "Call of Duty",
+  "spoiled_by_index": 358
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 329,
+  "answer": "Assassin's Creed",
+  "spoiled_by_index": 593
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 333,
+  "answer": "Clash of Clans",
+  "spoiled_by_index": 67
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 345,
+  "answer": "Gran Turismo",
+  "spoiled_by_index": 60
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 347,
+  "answer": "Mario Tennis",
+  "spoiled_by_index": 594
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 354,
+  "answer": "Princess Peach",
+  "spoiled_by_index": 123
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 371,
+  "answer": "Donkey Kong",
+  "spoiled_by_index": 167
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 372,
+  "answer": "Mortal Kombat",
+  "spoiled_by_index": 24
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 373,
+  "answer": "Chaos Emeralds",
+  "spoiled_by_index": 488
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 376,
+  "answer": "Just Dance",
+  "spoiled_by_index": 45
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 382,
+  "answer": "Pokemon Go",
+  "spoiled_by_index": 568
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 389,
+  "answer": "Final Fantasy",
+  "spoiled_by_index": 107
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 402,
+  "answer": "Mario Kart",
+  "spoiled_by_index": 44
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 422,
+  "answer": "Fruit Ninja",
+  "spoiled_by_index": 492
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 430,
+  "answer": "World of Warcraft",
+  "spoiled_by_index": 241
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 446,
+  "answer": "Blue shell",
+  "spoiled_by_index": 402
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 485,
+  "answer": "Virtual Reality",
+  "spoiled_by_index": 2
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 488,
+  "answer": "Super Sonic",
+  "spoiled_by_index": 68
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 493,
+  "answer": "Football Manager",
+  "spoiled_by_index": 331
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 515,
+  "answer": "Mushroom Kingdom",
+  "spoiled_by_index": 525
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 552,
+  "answer": "Los Santos",
+  "spoiled_by_index": 4
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 591,
+  "answer": "A puzzle game",
+  "spoiled_by_index": 142
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 601,
+  "answer": "Stardew Valley",
+  "spoiled_by_index": 506
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 608,
+  "answer": "Tony Hawk's Pro Skater",
+  "spoiled_by_index": 328
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 616,
+  "answer": "Guitar Hero",
+  "spoiled_by_index": 597
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 628,
+  "answer": "The Legend of Zelda",
+  "spoiled_by_index": 116
+ },
+ {
+  "file": "batch-32-video-games",
+  "index": 662,
+  "answer": "Crash Bandicoot",
+  "spoiled_by_index": 9
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 15,
+  "answer": "Avatar: The Last Airbender",
+  "spoiled_by_index": 3
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 22,
+  "answer": "Wonder Woman",
+  "spoiled_by_index": 34
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 26,
+  "answer": "Thomas the Tank Engine",
+  "spoiled_by_index": 104
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 27,
+  "answer": "The Flintstones",
+  "spoiled_by_index": 85
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 42,
+  "answer": "Ned Flanders",
+  "spoiled_by_index": 110
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 46,
+  "answer": "Winnie the Pooh",
+  "spoiled_by_index": 126
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 50,
+  "answer": "Spirited Away",
+  "spoiled_by_index": 149
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 56,
+  "answer": "Yabba dabba doo",
+  "spoiled_by_index": 147
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 63,
+  "answer": "Despicable Me",
+  "spoiled_by_index": 103
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 64,
+  "answer": "Donald Duck",
+  "spoiled_by_index": 47
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 67,
+  "answer": "The Lion King",
+  "spoiled_by_index": 17
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 85,
+  "answer": "The future",
+  "spoiled_by_index": 367
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 89,
+  "answer": "The Smurfs",
+  "spoiled_by_index": 31
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 112,
+  "answer": "Fullmetal Alchemist",
+  "spoiled_by_index": 509
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 136,
+  "answer": "American Dad",
+  "spoiled_by_index": 229
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 143,
+  "answer": "Jessie and James",
+  "spoiled_by_index": 217
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 147,
+  "answer": "Fred Flintstone",
+  "spoiled_by_index": 56
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 155,
+  "answer": "Attack on Titan",
+  "spoiled_by_index": 666
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 159,
+  "answer": "The Scooby-Doo gang",
+  "spoiled_by_index": 675
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 170,
+  "answer": "Captain Hook",
+  "spoiled_by_index": 290
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 173,
+  "answer": "An elephant",
+  "spoiled_by_index": 397
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 176,
+  "answer": "The Grinch",
+  "spoiled_by_index": 416
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 201,
+  "answer": "Their heads",
+  "spoiled_by_index": 88
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 232,
+  "answer": "Mickey Mouse",
+  "spoiled_by_index": 84
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 241,
+  "answer": "Road Runner",
+  "spoiled_by_index": 310
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 247,
+  "answer": "Desperate Dan",
+  "spoiled_by_index": 616
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 259,
+  "answer": "Road Runner",
+  "spoiled_by_index": 310
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 265,
+  "answer": "Adventure Time",
+  "spoiled_by_index": 178
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 285,
+  "answer": "The Pink Panther",
+  "spoiled_by_index": 318
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 287,
+  "answer": "Bugs Bunny",
+  "spoiled_by_index": 29
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 289,
+  "answer": "Matt Groening",
+  "spoiled_by_index": 331
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 292,
+  "answer": "Doctor Strange",
+  "spoiled_by_index": 366
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 294,
+  "answer": "Happy Feet",
+  "spoiled_by_index": 431
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 306,
+  "answer": "The Smurfs",
+  "spoiled_by_index": 31
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 310,
+  "answer": "Wile E. Coyote",
+  "spoiled_by_index": 449
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 315,
+  "answer": "Batman: The Animated Series",
+  "spoiled_by_index": 251
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 331,
+  "answer": "The Simpsons",
+  "spoiled_by_index": 44
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 345,
+  "answer": "Sailor Moon",
+  "spoiled_by_index": 615
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 356,
+  "answer": "Homer Simpson",
+  "spoiled_by_index": 262
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 363,
+  "answer": "Guardians of the Galaxy",
+  "spoiled_by_index": 274
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 372,
+  "answer": "The Smurfs",
+  "spoiled_by_index": 31
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 375,
+  "answer": "Wallace and Gromit",
+  "spoiled_by_index": 182
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 390,
+  "answer": "SpongeBob SquarePants",
+  "spoiled_by_index": 446
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 420,
+  "answer": "Studio Ghibli",
+  "spoiled_by_index": 50
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 429,
+  "answer": "Mickey Mouse",
+  "spoiled_by_index": 84
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 432,
+  "answer": "Studio Ghibli",
+  "spoiled_by_index": 50
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 437,
+  "answer": "My Neighbour Totoro",
+  "spoiled_by_index": 194
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 453,
+  "answer": "The Krusty Krab",
+  "spoiled_by_index": 107
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 454,
+  "answer": "Blinky Bill",
+  "spoiled_by_index": 321
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 460,
+  "answer": "Dragon Ball",
+  "spoiled_by_index": 119
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 461,
+  "answer": "Mickey Mouse",
+  "spoiled_by_index": 84
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 472,
+  "answer": "My Hero Academia",
+  "spoiled_by_index": 311
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 473,
+  "answer": "Tony Stark",
+  "spoiled_by_index": 636
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 484,
+  "answer": "Fullmetal Alchemist",
+  "spoiled_by_index": 509
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 490,
+  "answer": "The Flintstones",
+  "spoiled_by_index": 85
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 524,
+  "answer": "SpongeBob SquarePants",
+  "spoiled_by_index": 446
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 533,
+  "answer": "Moe's Tavern",
+  "spoiled_by_index": 94
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 534,
+  "answer": "Bruce Banner",
+  "spoiled_by_index": 261
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 552,
+  "answer": "Lilo and Stitch",
+  "spoiled_by_index": 434
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 559,
+  "answer": "The Jetsons",
+  "spoiled_by_index": 48
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 570,
+  "answer": "Family Guy",
+  "spoiled_by_index": 134
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 581,
+  "answer": "Captain America",
+  "spoiled_by_index": 255
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 593,
+  "answer": "Dora the Explorer",
+  "spoiled_by_index": 73
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 599,
+  "answer": "The Nightmare Before Christmas",
+  "spoiled_by_index": 101
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 600,
+  "answer": "The Snowman",
+  "spoiled_by_index": 448
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 613,
+  "answer": "The Powerpuff Girls",
+  "spoiled_by_index": 52
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 618,
+  "answer": "Hello Kitty",
+  "spoiled_by_index": 545
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 627,
+  "answer": "The Incredibles",
+  "spoiled_by_index": 412
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 637,
+  "answer": "Peter Parker",
+  "spoiled_by_index": 33
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 645,
+  "answer": "Dexter's Laboratory",
+  "spoiled_by_index": 652
+ },
+ {
+  "file": "batch-33-anime-comics-cartoons",
+  "index": 697,
+  "answer": "The Little Mermaid",
+  "spoiled_by_index": 68
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 5,
+  "answer": "J.K. Rowling",
+  "spoiled_by_index": 477
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 56,
+  "answer": "The Triwizard Tournament",
+  "spoiled_by_index": 57
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 74,
+  "answer": "Roald Dahl",
+  "spoiled_by_index": 75
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 75,
+  "answer": "Willy Wonka",
+  "spoiled_by_index": 76
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 101,
+  "answer": "A Tale of Two Cities",
+  "spoiled_by_index": 102
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 103,
+  "answer": "Oliver Twist",
+  "spoiled_by_index": 104
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 119,
+  "answer": "Pride and Prejudice",
+  "spoiled_by_index": 120
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 132,
+  "answer": "Mr Rochester",
+  "spoiled_by_index": 133
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 139,
+  "answer": "Mary Shelley",
+  "spoiled_by_index": 140
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 142,
+  "answer": "Bram Stoker",
+  "spoiled_by_index": 144
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 146,
+  "answer": "Robert Louis Stevenson",
+  "spoiled_by_index": 150
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 147,
+  "answer": "Long John Silver",
+  "spoiled_by_index": 149
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 152,
+  "answer": "Lewis Carroll",
+  "spoiled_by_index": 153
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 157,
+  "answer": "Through the Looking-Glass",
+  "spoiled_by_index": 158
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 172,
+  "answer": "Jules Verne",
+  "spoiled_by_index": 174
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 173,
+  "answer": "The Nautilus",
+  "spoiled_by_index": 174
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 175,
+  "answer": "Phileas Fogg",
+  "spoiled_by_index": 176
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 177,
+  "answer": "H.G. Wells",
+  "spoiled_by_index": 179
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 180,
+  "answer": "Alexandre Dumas",
+  "spoiled_by_index": 183
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 184,
+  "answer": "Victor Hugo",
+  "spoiled_by_index": 187
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 185,
+  "answer": "Jean Valjean",
+  "spoiled_by_index": 186
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 188,
+  "answer": "Leo Tolstoy",
+  "spoiled_by_index": 189
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 193,
+  "answer": "Thomas Hardy",
+  "spoiled_by_index": 194
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 204,
+  "answer": "Tim Winton",
+  "spoiled_by_index": 205
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 212,
+  "answer": "Banjo Paterson",
+  "spoiled_by_index": 214
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 213,
+  "answer": "Banjo Paterson",
+  "spoiled_by_index": 214
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 218,
+  "answer": "Henry Lawson",
+  "spoiled_by_index": 219
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 225,
+  "answer": "Norman Lindsay",
+  "spoiled_by_index": 226
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 234,
+  "answer": "Colin Thiele",
+  "spoiled_by_index": 237
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 238,
+  "answer": "My Country",
+  "spoiled_by_index": 239
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 240,
+  "answer": "Seven Little Australians",
+  "spoiled_by_index": 241
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 247,
+  "answer": "Patrick White",
+  "spoiled_by_index": 248
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 250,
+  "answer": "Peter Carey",
+  "spoiled_by_index": 251
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 255,
+  "answer": "Bryce Courtenay",
+  "spoiled_by_index": 288
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 257,
+  "answer": "John Marsden",
+  "spoiled_by_index": 256
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 258,
+  "answer": "Andy Griffiths",
+  "spoiled_by_index": 259
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 271,
+  "answer": "Picnic at Hanging Rock",
+  "spoiled_by_index": 272
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 292,
+  "answer": "Andy Griffiths",
+  "spoiled_by_index": 259
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 337,
+  "answer": "The Tempest",
+  "spoiled_by_index": 338
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 348,
+  "answer": "A Midsummer Night's Dream",
+  "spoiled_by_index": 334
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 353,
+  "answer": "Nineteen Eighty-Four",
+  "spoiled_by_index": 369
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 354,
+  "answer": "The Hobbit",
+  "spoiled_by_index": 399
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 357,
+  "answer": "A Christmas Carol",
+  "spoiled_by_index": 106
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 359,
+  "answer": "Fahrenheit 451",
+  "spoiled_by_index": 373
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 360,
+  "answer": "The Great Gatsby",
+  "spoiled_by_index": 587
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 362,
+  "answer": "A Tale of Two Cities",
+  "spoiled_by_index": 102
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 363,
+  "answer": "Gone with the Wind",
+  "spoiled_by_index": 642
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 364,
+  "answer": "Nineteen Eighty-Four",
+  "spoiled_by_index": 369
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 365,
+  "answer": "Animal Farm",
+  "spoiled_by_index": 366
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 377,
+  "answer": "The Hunger Games",
+  "spoiled_by_index": 378
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 388,
+  "answer": "Stephen King",
+  "spoiled_by_index": 390
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 443,
+  "answer": "Agatha Christie",
+  "spoiled_by_index": 446
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 462,
+  "answer": "Ian Fleming",
+  "spoiled_by_index": 464
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 488,
+  "answer": "The Hitchhiker's Guide to the Galaxy",
+  "spoiled_by_index": 489
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 494,
+  "answer": "Philip Pullman",
+  "spoiled_by_index": 495
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 498,
+  "answer": "The Cat in the Hat",
+  "spoiled_by_index": 499
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 516,
+  "answer": "Beatrix Potter",
+  "spoiled_by_index": 518
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 520,
+  "answer": "The Very Hungry Caterpillar",
+  "spoiled_by_index": 521
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 524,
+  "answer": "Julia Donaldson",
+  "spoiled_by_index": 525
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 527,
+  "answer": "Where the Wild Things Are",
+  "spoiled_by_index": 528
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 544,
+  "answer": "Black Beauty",
+  "spoiled_by_index": 545
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 554,
+  "answer": "Enid Blyton",
+  "spoiled_by_index": 556
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 560,
+  "answer": "Rudyard Kipling",
+  "spoiled_by_index": 607
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 565,
+  "answer": "A Series of Unfortunate Events",
+  "spoiled_by_index": 566
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 572,
+  "answer": "The Little Prince",
+  "spoiled_by_index": 573
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 575,
+  "answer": "Lord of the Flies",
+  "spoiled_by_index": 576
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 592,
+  "answer": "Don Quixote",
+  "spoiled_by_index": 593
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 594,
+  "answer": "Life of Pi",
+  "spoiled_by_index": 595
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 604,
+  "answer": "The Rime of the Ancient Mariner",
+  "spoiled_by_index": 603
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 641,
+  "answer": "Gone with the Wind",
+  "spoiled_by_index": 642
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 664,
+  "answer": "The Booker Prize",
+  "spoiled_by_index": 250
+ },
+ {
+  "file": "batch-34-books-literature",
+  "index": 665,
+  "answer": "The Pulitzer Prize",
+  "spoiled_by_index": 298
+ },
+ {
+  "file": "batch-34-kids-family",
+  "index": 24,
+  "answer": "Hansel and Gretel",
+  "spoiled_by_index": 25
+ },
+ {
+  "file": "batch-34-kids-family",
+  "index": 28,
+  "answer": "Little Red Riding Hood",
+  "spoiled_by_index": 29
+ },
+ {
+  "file": "batch-34-kids-family",
+  "index": 44,
+  "answer": "The Wiggles",
+  "spoiled_by_index": 45
+ },
+ {
+  "file": "batch-34-kids-family",
+  "index": 49,
+  "answer": "Bananas in Pyjamas",
+  "spoiled_by_index": 50
+ },
+ {
+  "file": "batch-34-kids-family",
+  "index": 90,
+  "answer": "Despicable Me",
+  "spoiled_by_index": 91
+ },
+ {
+  "file": "batch-34-kids-family",
+  "index": 95,
+  "answer": "Harry Potter",
+  "spoiled_by_index": 96
+ },
+ {
+  "file": "batch-34-kids-family",
+  "index": 117,
+  "answer": "Dora the Explorer",
+  "spoiled_by_index": 118
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 64,
+  "answer": "The Minotaur",
+  "spoiled_by_index": 65
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 87,
+  "answer": "The Sirens",
+  "spoiled_by_index": 88
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 102,
+  "answer": "The Sphinx",
+  "spoiled_by_index": 103
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 108,
+  "answer": "The Chimera",
+  "spoiled_by_index": 109
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 143,
+  "answer": "Romulus and Remus",
+  "spoiled_by_index": 144
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 248,
+  "answer": "Ash Wednesday",
+  "spoiled_by_index": 643
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 257,
+  "answer": "Vatican City",
+  "spoiled_by_index": 259
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 302,
+  "answer": "A synagogue",
+  "spoiled_by_index": 335
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 316,
+  "answer": "Rosh Hashanah",
+  "spoiled_by_index": 317
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 318,
+  "answer": "Yom Kippur",
+  "spoiled_by_index": 319
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 337,
+  "answer": "Judaism, Christianity and Islam",
+  "spoiled_by_index": 670
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 375,
+  "answer": "A gurdwara",
+  "spoiled_by_index": 377
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 414,
+  "answer": "The Ramayana",
+  "spoiled_by_index": 415
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 416,
+  "answer": "The Bhagavad Gita",
+  "spoiled_by_index": 417
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 419,
+  "answer": "The Ganges",
+  "spoiled_by_index": 420
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 465,
+  "answer": "The Druids",
+  "spoiled_by_index": 466
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 491,
+  "answer": "A monastery",
+  "spoiled_by_index": 493
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 518,
+  "answer": "Pandora's box",
+  "spoiled_by_index": 96
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 527,
+  "answer": "The Titans",
+  "spoiled_by_index": 544
+ },
+ {
+  "file": "batch-35-mythology-religion",
+  "index": 644,
+  "answer": "Shrove Tuesday",
+  "spoiled_by_index": 645
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 80,
+  "answer": "Phil Taylor",
+  "spoiled_by_index": 81
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 82,
+  "answer": "Eric Bristow",
+  "spoiled_by_index": 564
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 112,
+  "answer": "The Crucible",
+  "spoiled_by_index": 186
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 142,
+  "answer": "The head pin",
+  "spoiled_by_index": 146
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 190,
+  "answer": "The baulk line",
+  "spoiled_by_index": 191
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 283,
+  "answer": "A full house",
+  "spoiled_by_index": 297
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 284,
+  "answer": "A straight",
+  "spoiled_by_index": 282
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 285,
+  "answer": "A straight",
+  "spoiled_by_index": 282
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 306,
+  "answer": "Five hundred",
+  "spoiled_by_index": 307
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 441,
+  "answer": "New South Wales",
+  "spoiled_by_index": 360
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 515,
+  "answer": "Cross stitch",
+  "spoiled_by_index": 517
+ },
+ {
+  "file": "batch-36-hobbies-collectables",
+  "index": 560,
+  "answer": "The double",
+  "spoiled_by_index": 99
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 2,
+  "answer": "The Sistine Chapel",
+  "spoiled_by_index": 153
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 37,
+  "answer": "American Gothic",
+  "spoiled_by_index": 38
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 45,
+  "answer": "Liberty Leading the People",
+  "spoiled_by_index": 46
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 51,
+  "answer": "The Great Wave off Kanagawa",
+  "spoiled_by_index": 52
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 81,
+  "answer": "Les Demoiselles d'Avignon",
+  "spoiled_by_index": 150
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 118,
+  "answer": "Auguste Rodin",
+  "spoiled_by_index": 156
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 124,
+  "answer": "The Angel of the North",
+  "spoiled_by_index": 125
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 127,
+  "answer": "The Terracotta Army",
+  "spoiled_by_index": 128
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 145,
+  "answer": "The National Gallery",
+  "spoiled_by_index": 541
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 270,
+  "answer": "The Pritzker Prize",
+  "spoiled_by_index": 269
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 272,
+  "answer": "The Taj Mahal",
+  "spoiled_by_index": 273
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 326,
+  "answer": "The Golden Gate Bridge",
+  "spoiled_by_index": 327
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 351,
+  "answer": "The curtain call",
+  "spoiled_by_index": 343
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 360,
+  "answer": "Commedia dell'arte",
+  "spoiled_by_index": 361
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 388,
+  "answer": "West Side Story",
+  "spoiled_by_index": 389
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 408,
+  "answer": "Romeo and Juliet",
+  "spoiled_by_index": 388
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 466,
+  "answer": "Walter Burley Griffin",
+  "spoiled_by_index": 467
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 479,
+  "answer": "Glenn Murcutt",
+  "spoiled_by_index": 480
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 488,
+  "answer": "The Heidelberg School",
+  "spoiled_by_index": 489
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 490,
+  "answer": "The 9 by 5 Impression Exhibition",
+  "spoiled_by_index": 491
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 498,
+  "answer": "The National Gallery of Australia",
+  "spoiled_by_index": 543
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 501,
+  "answer": "Collins St, 5 pm",
+  "spoiled_by_index": 502
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 504,
+  "answer": "Brett Whiteley",
+  "spoiled_by_index": 505
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 530,
+  "answer": "Arnhem Land",
+  "spoiled_by_index": 533
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 540,
+  "answer": "The National Gallery of Victoria",
+  "spoiled_by_index": 541
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 543,
+  "answer": "Blue Poles",
+  "spoiled_by_index": 544
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 548,
+  "answer": "Sculpture by the Sea",
+  "spoiled_by_index": 549
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 640,
+  "answer": "Street art",
+  "spoiled_by_index": 641
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 646,
+  "answer": "A tapestry",
+  "spoiled_by_index": 55
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 651,
+  "answer": "Stained glass",
+  "spoiled_by_index": 244
+ },
+ {
+  "file": "batch-37-art-culture",
+  "index": 677,
+  "answer": "An altarpiece",
+  "spoiled_by_index": 678
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 34,
+  "answer": "The Wright brothers",
+  "spoiled_by_index": 224
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 54,
+  "answer": "The Mohs scale",
+  "spoiled_by_index": 476
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 110,
+  "answer": "A hurricane",
+  "spoiled_by_index": 153
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 113,
+  "answer": "Carbon dioxide",
+  "spoiled_by_index": 500
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 163,
+  "answer": "Red and white",
+  "spoiled_by_index": 448
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 418,
+  "answer": "St Patrick",
+  "spoiled_by_index": 479
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 470,
+  "answer": "Mount Everest",
+  "spoiled_by_index": 599
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 548,
+  "answer": "The large intestine",
+  "spoiled_by_index": 690
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 561,
+  "answer": "The appendix",
+  "spoiled_by_index": 548
+ },
+ {
+  "file": "batch-38-general-knowledge",
+  "index": 680,
+  "answer": "In the ear",
+  "spoiled_by_index": 56
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 4,
+  "answer": "The International Space Station",
+  "spoiled_by_index": 619
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 36,
+  "answer": "A red giant",
+  "spoiled_by_index": 679
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 37,
+  "answer": "The Milky Way",
+  "spoiled_by_index": 12
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 49,
+  "answer": "The zenith",
+  "spoiled_by_index": 266
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 126,
+  "answer": "The solar wind",
+  "spoiled_by_index": 432
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 146,
+  "answer": "An asterism",
+  "spoiled_by_index": 529
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 153,
+  "answer": "Carl Sagan",
+  "spoiled_by_index": 589
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 185,
+  "answer": "A spacesuit",
+  "spoiled_by_index": 655
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 214,
+  "answer": "Halley's Comet",
+  "spoiled_by_index": 477
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 220,
+  "answer": "Ursa Major",
+  "spoiled_by_index": 610
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 224,
+  "answer": "A constellation",
+  "spoiled_by_index": 524
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 239,
+  "answer": "Edwin Hubble",
+  "spoiled_by_index": 142
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 248,
+  "answer": "Canis Major",
+  "spoiled_by_index": 230
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 251,
+  "answer": "The Magellanic Clouds",
+  "spoiled_by_index": 160
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 273,
+  "answer": "New South Wales",
+  "spoiled_by_index": 696
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 284,
+  "answer": "Robert Goddard",
+  "spoiled_by_index": 686
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 334,
+  "answer": "A new moon",
+  "spoiled_by_index": 585
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 337,
+  "answer": "Neil Armstrong",
+  "spoiled_by_index": 95
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 353,
+  "answer": "The Milky Way",
+  "spoiled_by_index": 12
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 370,
+  "answer": "Gravitational waves",
+  "spoiled_by_index": 356
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 381,
+  "answer": "Dark matter",
+  "spoiled_by_index": 511
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 387,
+  "answer": "A dwarf planet",
+  "spoiled_by_index": 605
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 396,
+  "answer": "The Soviet Union",
+  "spoiled_by_index": 79
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 424,
+  "answer": "The cosmic microwave background",
+  "spoiled_by_index": 382
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 428,
+  "answer": "The solar system",
+  "spoiled_by_index": 18
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 449,
+  "answer": "Yuri Gagarin",
+  "spoiled_by_index": 440
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 473,
+  "answer": "The universe",
+  "spoiled_by_index": 33
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 475,
+  "answer": "A full moon",
+  "spoiled_by_index": 561
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 486,
+  "answer": "The main sequence",
+  "spoiled_by_index": 128
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 505,
+  "answer": "The nucleus",
+  "spoiled_by_index": 612
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 516,
+  "answer": "A heat shield",
+  "spoiled_by_index": 206
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 556,
+  "answer": "Buzz Aldrin",
+  "spoiled_by_index": 687
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 572,
+  "answer": "The Southern Cross",
+  "spoiled_by_index": 264
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 578,
+  "answer": "Alpha Centauri",
+  "spoiled_by_index": 594
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 628,
+  "answer": "A white dwarf",
+  "spoiled_by_index": 68
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 630,
+  "answer": "The Saturn V",
+  "spoiled_by_index": 109
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 634,
+  "answer": "Stephen Hawking",
+  "spoiled_by_index": 234
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 637,
+  "answer": "The Pleiades",
+  "spoiled_by_index": 40
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 667,
+  "answer": "A spacewalk",
+  "spoiled_by_index": 631
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 682,
+  "answer": "Proxima Centauri",
+  "spoiled_by_index": 458
+ },
+ {
+  "file": "batch-39-space-astronomy",
+  "index": 692,
+  "answer": "The solar wind",
+  "spoiled_by_index": 432
+ }
+]

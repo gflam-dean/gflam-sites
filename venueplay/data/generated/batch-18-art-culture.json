@@ -1,0 +1,1298 @@
+[
+ {
+  "question": "In which Paris museum does the Mona Lisa hang?",
+  "options": [
+   "The Pompidou Centre",
+   "The Musee d'Orsay",
+   "Versailles",
+   "The Louvre"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which van Gogh painting shows a swirling night sky over a village?",
+  "options": [
+   "The Starry Night",
+   "Irises",
+   "Sunflowers",
+   "The Potato Eaters"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Spanish artist co-founded Cubism?",
+  "options": [
+   "Salvador Dali",
+   "Joan Miro",
+   "Pablo Picasso",
+   "Francisco Goya"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Picasso painting depicts the bombing of a Basque town?",
+  "options": [
+   "Les Demoiselles d'Avignon",
+   "Guernica",
+   "The Old Guitarist",
+   "The Weeping Woman"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which surrealist painted melting clocks in 'The Persistence of Memory'?",
+  "options": [
+   "Max Ernst",
+   "Salvador Dali",
+   "Giorgio de Chirico",
+   "Rene Magritte"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artist painted 'The Scream'?",
+  "options": [
+   "Egon Schiele",
+   "Edvard Munch",
+   "Gustav Klimt",
+   "James Ensor"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artist is famous for gold-leafed paintings including 'The Kiss'?",
+  "options": [
+   "Gustav Klimt",
+   "Egon Schiele",
+   "Amedeo Modigliani",
+   "Marc Chagall"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French painter is known for water lilies and a garden at Giverny?",
+  "options": [
+   "Auguste Renoir",
+   "Paul Cezanne",
+   "Edgar Degas",
+   "Claude Monet"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which art movement takes its name from a Monet painting called 'Impression, Sunrise'?",
+  "options": [
+   "Expressionism",
+   "Pointillism",
+   "Fauvism",
+   "Impressionism"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which painter is known for ballet dancers?",
+  "options": [
+   "Henri Rousseau",
+   "Paul Gauguin",
+   "Edgar Degas",
+   "Claude Monet"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artist moved to Tahiti and painted Polynesian life?",
+  "options": [
+   "Paul Gauguin",
+   "Vincent van Gogh",
+   "Paul Signac",
+   "Henri Matisse"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pop artist made silkscreens of Campbell's soup cans?",
+  "options": [
+   "Jasper Johns",
+   "Andy Warhol",
+   "Roy Lichtenstein",
+   "Robert Rauschenberg"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which artist painted comic-strip style works with Ben-Day dots?",
+  "options": [
+   "Jean-Michel Basquiat",
+   "Keith Haring",
+   "Andy Warhol",
+   "Roy Lichtenstein"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anonymous British street artist is known for stencilled satire?",
+  "options": [
+   "Banksy",
+   "Blek le Rat",
+   "Invader",
+   "Shepard Fairey"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mexican painter is known for self-portraits and bold eyebrows?",
+  "options": [
+   "Leonora Carrington",
+   "Diego Rivera",
+   "Frida Kahlo",
+   "Remedios Varo"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American artist dripped and poured paint onto canvases on the floor?",
+  "options": [
+   "Jackson Pollock",
+   "Mark Rothko",
+   "Barnett Newman",
+   "Willem de Kooning"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sculptor created 'The Thinker'?",
+  "options": [
+   "Henry Moore",
+   "Auguste Rodin",
+   "Alberto Giacometti",
+   "Constantin Brancusi"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Michelangelo sculpture shows a young man before battle, made from marble?",
+  "options": [
+   "David",
+   "Moses",
+   "The Dying Slave",
+   "The Pieta"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Italian city is Michelangelo's David displayed?",
+  "options": [
+   "Milan",
+   "Rome",
+   "Florence",
+   "Venice"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Rembrandt painting is also known as 'The Militia Company of District II'?",
+  "options": [
+   "The Jewish Bride",
+   "The Storm on the Sea",
+   "The Night Watch",
+   "The Anatomy Lesson"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which primary colours are used in traditional paint mixing?",
+  "options": [
+   "Black, white and grey",
+   "Red, yellow and blue",
+   "Cyan, magenta and yellow",
+   "Red, green and blue"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do you get when you mix blue and yellow paint?",
+  "options": [
+   "Orange",
+   "Purple",
+   "Green",
+   "Brown"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour do you get mixing red and blue paint?",
+  "options": [
+   "Grey",
+   "Orange",
+   "Green",
+   "Purple"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a painting done on wet plaster called?",
+  "options": [
+   "A gouache",
+   "A mural only",
+   "A fresco",
+   "A tempera"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a self-portrait?",
+  "options": [
+   "A picture of a landscape",
+   "A picture drawn from memory",
+   "A picture of a crowd",
+   "A picture an artist makes of themselves"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'still life' painting of?",
+  "options": [
+   "Inanimate objects like fruit and flowers",
+   "People at rest",
+   "Empty landscapes",
+   "Sleeping animals"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Italian city is considered the birthplace of the Renaissance?",
+  "options": [
+   "Naples",
+   "Turin",
+   "Florence",
+   "Rome"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which family were the great art patrons of Renaissance Florence?",
+  "options": [
+   "The Este",
+   "The Borgia",
+   "The Sforza",
+   "The Medici"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which painting technique uses tiny dots of colour?",
+  "options": [
+   "Chiaroscuro",
+   "Impasto",
+   "Pointillism",
+   "Sfumato"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'chiaroscuro' describe in painting?",
+  "options": [
+   "Thick applied paint",
+   "Strong contrast between light and dark",
+   "Blended colour edges",
+   "Flat blocks of colour"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which art movement featured Marcel Duchamp and a urinal titled 'Fountain'?",
+  "options": [
+   "Futurism",
+   "Bauhaus",
+   "Dada",
+   "Vorticism"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which German school of design ran from 1919 and shaped modern architecture?",
+  "options": [
+   "The Bauhaus",
+   "The Werkbund",
+   "The Vienna Secession",
+   "De Stijl"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Dutch artist painted grids of red, yellow and blue rectangles?",
+  "options": [
+   "Theo van Doesburg",
+   "Kazimir Malevich",
+   "Wassily Kandinsky",
+   "Piet Mondrian"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist is famous for the Ned Kelly series with a black helmet?",
+  "options": [
+   "Brett Whiteley",
+   "Sidney Nolan",
+   "Albert Namatjira",
+   "Arthur Boyd"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Aboriginal watercolour artist painted Central Australian landscapes?",
+  "options": [
+   "Clifford Possum",
+   "Albert Namatjira",
+   "Emily Kame Kngwarreye",
+   "Rover Thomas"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian prize is awarded annually for portraiture?",
+  "options": [
+   "The Wynne Prize",
+   "The Sulman Prize",
+   "The Blake Prize",
+   "The Archibald Prize"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist known for Sydney Harbour paintings died in 1992?",
+  "options": [
+   "Fred Williams",
+   "Brett Whiteley",
+   "Russell Drysdale",
+   "John Olsen"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian painter created 'Shearing the Rams'?",
+  "options": [
+   "Frederick McCubbin",
+   "Tom Roberts",
+   "Arthur Streeton",
+   "Charles Conder"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the Australian art movement of the 1880s that painted en plein air near Melbourne?",
+  "options": [
+   "The Sydney Nine",
+   "The Antipodeans",
+   "The Angry Penguins",
+   "The Heidelberg School"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Sydney Opera House roof most often compared to?",
+  "options": [
+   "Shells of a turtle",
+   "Waves",
+   "Sails",
+   "Palm leaves"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which architect designed the Guggenheim Museum in Bilbao?",
+  "options": [
+   "Zaha Hadid",
+   "Frank Gehry",
+   "I.M. Pei",
+   "Norman Foster"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which architect designed the glass pyramid at the Louvre?",
+  "options": [
+   "Jean Nouvel",
+   "Renzo Piano",
+   "I.M. Pei",
+   "Le Corbusier"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What style of architecture features pointed arches, flying buttresses and gargoyles?",
+  "options": [
+   "Art Deco",
+   "Romanesque",
+   "Baroque",
+   "Gothic"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which decorative style of the 1920s and 30s features bold geometric shapes?",
+  "options": [
+   "Art Nouveau",
+   "Brutalism",
+   "Art Deco",
+   "Rococo"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which architectural style is known for raw exposed concrete?",
+  "options": [
+   "Brutalism",
+   "Tudor",
+   "Art Nouveau",
+   "Palladian"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish architect designed the Sagrada Familia in Barcelona?",
+  "options": [
+   "Ricardo Bofill",
+   "Antoni Gaudi",
+   "Santiago Calatrava",
+   "Rafael Moneo"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the tall ancient Egyptian stone pillar with a pyramid top called?",
+  "options": [
+   "A stele",
+   "A pylon",
+   "An obelisk",
+   "A minaret"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the traditional Japanese garment with wide sleeves called?",
+  "options": [
+   "Kimono",
+   "Sari",
+   "Cheongsam",
+   "Hanbok"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which traditional garment is draped and worn widely in India?",
+  "options": [
+   "The poncho",
+   "The kaftan",
+   "The sari",
+   "The kimono"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a kilt traditionally associated with?",
+  "options": [
+   "Scotland",
+   "Wales",
+   "Brittany",
+   "Ireland"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fashion designer created the 'little black dress' as a staple in the 1920s?",
+  "options": [
+   "Elsa Schiaparelli",
+   "Yves Saint Laurent",
+   "Coco Chanel",
+   "Christian Dior"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which designer launched the 'New Look' silhouette in 1947?",
+  "options": [
+   "Coco Chanel",
+   "Hubert de Givenchy",
+   "Christian Dior",
+   "Cristobal Balenciaga"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which British designer was famous for punk fashion and tartan?",
+  "options": [
+   "Alexander McQueen",
+   "Vivienne Westwood",
+   "Mary Quant",
+   "Stella McCartney"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which designer is credited with popularising the miniskirt in 1960s London?",
+  "options": [
+   "Mary Quant",
+   "Vivienne Westwood",
+   "Barbara Hulanicki",
+   "Twiggy"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian fashion house uses a Medusa head logo?",
+  "options": [
+   "Gucci",
+   "Versace",
+   "Prada",
+   "Fendi"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which luxury brand uses interlocking Cs as its logo?",
+  "options": [
+   "Chanel",
+   "Celine",
+   "Chloe",
+   "Cartier"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fashion capital hosts a famous week of shows in September and February alongside Paris and Milan?",
+  "options": [
+   "Madrid",
+   "Berlin",
+   "Tokyo",
+   "New York"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which annual festival held in Nevada's Black Rock Desert ends with burning a wooden figure?",
+  "options": [
+   "Lollapalooza",
+   "Burning Man",
+   "Coachella",
+   "Bonnaroo"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which festival in Rio de Janeiro features samba schools and elaborate floats?",
+  "options": [
+   "Mardi Gras of Sydney",
+   "Carnival",
+   "Diwali",
+   "Oktoberfest"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which German city is the original Oktoberfest held?",
+  "options": [
+   "Munich",
+   "Hamburg",
+   "Berlin",
+   "Cologne"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Spanish festival involves throwing tomatoes?",
+  "options": [
+   "Las Fallas",
+   "Semana Santa",
+   "La Tomatina",
+   "Running of the Bulls"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Spanish city is the running of the bulls held each July?",
+  "options": [
+   "Valencia",
+   "Bilbao",
+   "Seville",
+   "Pamplona"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Irish celebration falls on 17 March?",
+  "options": [
+   "St Patrick's Day",
+   "Samhain",
+   "St Brigid's Day",
+   "Bloomsday"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mexican holiday honours deceased relatives with sugar skulls and marigolds?",
+  "options": [
+   "Semana Santa",
+   "Las Posadas",
+   "Day of the Dead",
+   "Cinco de Mayo"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which festival marks the Chinese New Year with dragon dances and red envelopes?",
+  "options": [
+   "Qingming",
+   "Double Ninth",
+   "Mid-Autumn Festival",
+   "Spring Festival"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Scottish celebration on 25 January honours a poet with haggis and whisky?",
+  "options": [
+   "Burns Night",
+   "Beltane",
+   "Hogmanay",
+   "St Andrew's Day"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Hogmanay?",
+  "options": [
+   "A Welsh harvest feast",
+   "A Cornish midsummer fire",
+   "An Irish spring dance",
+   "Scottish New Year celebrations"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian arts festival is the largest of its kind in the southern hemisphere, held in Adelaide?",
+  "options": [
+   "The Adelaide Fringe",
+   "Dark Mofo",
+   "Vivid Sydney",
+   "Womadelaide"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Tasmanian museum is known by the initials MONA?",
+  "options": [
+   "Modern Art of the North",
+   "Museum of Native Australian Art",
+   "Museum of Nature and Art",
+   "Museum of Old and New Art"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Sydney event lights buildings with projections each winter?",
+  "options": [
+   "Enlighten",
+   "Vivid Sydney",
+   "Lumina",
+   "White Night"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'gallery opening' commonly called in the art world?",
+  "options": [
+   "A vignette",
+   "A varnish sale",
+   "A salon rouge",
+   "A vernissage"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which company logo is a bitten piece of fruit?",
+  "options": [
+   "Orange",
+   "Apple",
+   "Mango",
+   "Blackberry"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sportswear brand uses a 'swoosh'?",
+  "options": [
+   "Adidas",
+   "Nike",
+   "Reebok",
+   "Puma"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which car brand uses four interlocking rings?",
+  "options": [
+   "Volkswagen",
+   "Audi",
+   "BMW",
+   "Mercedes-Benz"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which luxury car brand uses a prancing horse badge?",
+  "options": [
+   "Maserati",
+   "Lamborghini",
+   "Ferrari",
+   "Porsche"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand uses a mermaid-like siren in its logo?",
+  "options": [
+   "Costa",
+   "Dunkin'",
+   "Starbucks",
+   "Gloria Jean's"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fast food chain uses golden arches?",
+  "options": [
+   "Hungry Jack's",
+   "KFC",
+   "McDonald's",
+   "Burger King"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is McDonald's called in Australia in common slang?",
+  "options": [
+   "Big M",
+   "Macca's",
+   "Mickey D's",
+   "Golden's"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian brand's slogan was 'the fresh food people'?",
+  "options": [
+   "Aldi",
+   "Woolworths",
+   "Coles",
+   "IGA"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian airline is nicknamed the Flying Kangaroo?",
+  "options": [
+   "Rex",
+   "Jetstar",
+   "Virgin Australia",
+   "Qantas"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which iconic Australian spread comes in a yellow-lidded jar?",
+  "options": [
+   "Marmite",
+   "Vegemite",
+   "Peanut butter",
+   "Promite"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which colour is most associated with mourning in most Western cultures?",
+  "options": [
+   "Red",
+   "White",
+   "Black",
+   "Purple"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In many East Asian cultures, which colour is traditionally worn for mourning?",
+  "options": [
+   "White",
+   "Black",
+   "Green",
+   "Red"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the traditional gift for a 25th wedding anniversary?",
+  "options": [
+   "Gold",
+   "Silver",
+   "Ruby",
+   "Pearl"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which anniversary is marked with gold?",
+  "options": [
+   "60th",
+   "40th",
+   "25th",
+   "50th"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which anniversary is traditionally marked with diamonds?",
+  "options": [
+   "30th",
+   "60th",
+   "50th",
+   "70th"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the art of beautiful handwriting called?",
+  "options": [
+   "Graphology",
+   "Typography",
+   "Calligraphy",
+   "Lithography"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the design and arrangement of printed letters called?",
+  "options": [
+   "Typography",
+   "Etching",
+   "Serigraphy",
+   "Calligraphy"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a typeface with small decorative strokes at letter ends called?",
+  "options": [
+   "Monospace",
+   "Serif",
+   "Script",
+   "Sans serif"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which font is famously criticised for overuse in casual documents?",
+  "options": [
+   "Futura",
+   "Comic Sans",
+   "Helvetica",
+   "Garamond"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which museum in London houses the Rosetta Stone?",
+  "options": [
+   "The British Museum",
+   "The V&A",
+   "The National Gallery",
+   "The Tate Modern"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Rosetta Stone was key to deciphering what?",
+  "options": [
+   "Linear B",
+   "Mayan glyphs",
+   "Egyptian hieroglyphs",
+   "Cuneiform"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish museum houses Picasso's 'Guernica'?",
+  "options": [
+   "The Thyssen",
+   "The Reina Sofia",
+   "The Guggenheim Bilbao",
+   "The Prado"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which New York museum has a distinctive spiral ramp designed by Frank Lloyd Wright?",
+  "options": [
+   "The MoMA",
+   "The Met",
+   "The Guggenheim",
+   "The Whitney"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a work of art made by fixing pieces of paper and other materials to a surface?",
+  "options": [
+   "Frottage",
+   "Montage",
+   "Collage",
+   "Assemblage only"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a mosaic made from?",
+  "options": [
+   "Woven wool",
+   "Wet plaster",
+   "Small pieces of tile, glass or stone",
+   "Carved wood"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the ancient Greek theatre mask tradition associated with, in terms of two emotions?",
+  "options": [
+   "Joy and anger",
+   "Comedy and tragedy",
+   "Love and war",
+   "Life and death"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which classical dance form uses pointe shoes?",
+  "options": [
+   "Contemporary",
+   "Ballet",
+   "Tap",
+   "Flamenco"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Russian composer wrote the ballet 'Swan Lake'?",
+  "options": [
+   "Prokofiev",
+   "Rachmaninoff",
+   "Stravinsky",
+   "Tchaikovsky"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish dance style features hand clapping, guitar and stamping?",
+  "options": [
+   "Tango",
+   "Samba",
+   "Salsa",
+   "Flamenco"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which dance originated in the working-class districts of Buenos Aires?",
+  "options": [
+   "The rumba",
+   "The tango",
+   "The samba",
+   "The mambo"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'origami' most commonly made from?",
+  "options": [
+   "Clay",
+   "Fabric",
+   "Paper",
+   "Metal foil"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which colour is created by mixing red and white paint?",
+  "options": [
+   "Maroon",
+   "Lilac",
+   "Orange",
+   "Pink"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'triptych'?",
+  "options": [
+   "An artwork in three panels",
+   "A sculpture on a base",
+   "A painting on wood only",
+   "A three-colour print"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for the value of light and dark in a picture?",
+  "options": [
+   "Texture",
+   "Saturation",
+   "Hue",
+   "Tone"
+  ],
+  "correctIndex": 3,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'mural'?",
+  "options": [
+   "A framed portrait",
+   "A painting applied directly to a wall",
+   "A ceiling mosaic",
+   "A small sketch"
+  ],
+  "correctIndex": 1,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Renaissance artist painted 'The Birth of Venus'?",
+  "options": [
+   "Sandro Botticelli",
+   "Giotto",
+   "Raphael",
+   "Titian"
+  ],
+  "correctIndex": 0,
+  "category": "Art & Culture",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which artist created 'The Last Supper' mural in Milan?",
+  "options": [
+   "Tintoretto",
+   "Michelangelo",
+   "Leonardo da Vinci",
+   "Raphael"
+  ],
+  "correctIndex": 2,
+  "category": "Art & Culture",
+  "difficulty": "easy"
+ }
+]

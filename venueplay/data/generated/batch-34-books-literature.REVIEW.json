@@ -1,0 +1,326 @@
+[
+  {
+    "index": 130,
+    "question": "In which century did Jane Austen's novels first appear?",
+    "problem": "ambiguous",
+    "detail": "'First appear' is read two ways. Austen's novels were published from 1811 (nineteenth century) but written from the 1790s, and the eighteenth century is offered as an option, so both are arguable.",
+    "fix": {
+      "question": "In which century were Jane Austen's novels first published?",
+      "options": [
+        "The nineteenth century",
+        "The seventeenth century",
+        "The twentieth century",
+        "The eighteenth century"
+      ],
+      "correctIndex": 0,
+      "category": "Books & Literature",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 222,
+    "question": "Which Australian author created Snugglepot and Cuddlepie?",
+    "problem": "self-answering",
+    "detail": "Index 224 in the same pack begins 'May Gibbs' Snugglepot and Cuddlepie', which states the answer to this question. Whichever is asked second is free.",
+    "fix": {
+      "question": "Which Australian author and illustrator drew the Banksia Men?",
+      "options": [
+        "Ethel Turner",
+        "Norman Lindsay",
+        "May Gibbs",
+        "Dorothy Wall"
+      ],
+      "correctIndex": 2,
+      "category": "Books & Literature",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 225,
+    "question": "Who wrote and illustrated The Magic Pudding?",
+    "problem": "self-answering",
+    "detail": "Index 226 in the same pack says 'Norman Lindsay's The Magic Pudding', which gives this answer away. One of the pair needs rewording.",
+    "fix": {
+      "question": "Which Australian artist, better known for his paintings and etchings, wrote a famous 1918 children's book?",
+      "options": [
+        "Norman Lindsay",
+        "Ethel Pedley",
+        "May Gibbs",
+        "Dorothy Wall"
+      ],
+      "correctIndex": 0,
+      "category": "Books & Literature",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 234,
+    "question": "Who wrote the Australian children's classic Storm Boy?",
+    "problem": "self-answering",
+    "detail": "Index 237 begins 'Which Colin Thiele novel' and lists Storm Boy as an option, so it states the answer to this question outright.",
+    "fix": {
+      "question": "Which South Australian author wrote Blue Fin and February Dragon?",
+      "options": [
+        "Ivan Southall",
+        "Colin Thiele",
+        "Nan Chauncy",
+        "Patricia Wrightson"
+      ],
+      "correctIndex": 1,
+      "category": "Books & Literature",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 262,
+    "question": "Which Australian picture book asks 'Who sank the boat?'",
+    "problem": "self-answering",
+    "detail": "The question quotes the title and the answer is the title. Nothing is being tested.",
+    "fix": {
+      "question": "Which Pamela Allen picture book has animals climbing into a rowing boat one by one?",
+      "options": [
+        "Mr Archimedes' Bath",
+        "Who Sank the Boat?",
+        "The Waterhole",
+        "Wombat Stew"
+      ],
+      "correctIndex": 1,
+      "category": "Books & Literature",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 287,
+    "question": "Which Australian children's book is about making a stew from a wombat?",
+    "problem": "self-answering",
+    "detail": "The stem describes a stew made from a wombat and the answer is 'Wombat Stew'. The host would be reading the answer out.",
+    "fix": {
+      "question": "In the Australian children's classic Wombat Stew, which animal is trying to cook the wombat?",
+      "options": [
+        "A dingo",
+        "A goanna",
+        "A koala",
+        "An emu"
+      ],
+      "correctIndex": 0,
+      "category": "Books & Literature",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 290,
+    "question": "Which novel by Kenneth Cook, set in an outback town, was filmed as Wake in Fright?",
+    "problem": "self-answering",
+    "detail": "The stem contains the film title and the answer is the identical book title.",
+    "fix": {
+      "question": "Which Kenneth Cook novel follows a schoolteacher trapped in the outback town of Bundanyabba?",
+      "options": [
+        "The Chant of Jimmie Blacksmith",
+        "The Shiralee",
+        "Wake in Fright",
+        "Walkabout"
+      ],
+      "correctIndex": 2,
+      "category": "Books & Literature",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 393,
+    "question": "Which Stephen King story was filmed as The Shawshank Redemption?",
+    "problem": "self-answering",
+    "detail": "The correct option contains the words 'Shawshank Redemption', which are in the question. No knowledge of King is needed.",
+    "fix": {
+      "question": "In which Stephen King collection was the novella behind The Shawshank Redemption published?",
+      "options": [
+        "Night Shift",
+        "Different Seasons",
+        "Skeleton Crew",
+        "Four Past Midnight"
+      ],
+      "correctIndex": 1,
+      "category": "Books & Literature",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 447,
+    "question": "Which Agatha Christie novel is set aboard a famous train?",
+    "problem": "two-answers",
+    "detail": "The Mystery of the Blue Train, also an option, is set aboard Le Train Bleu, a genuinely famous train, and The 4.50 from Paddington is also a train novel. 'A famous train' does not pick out one answer.",
+    "fix": {
+      "question": "In which Agatha Christie novel is a passenger stabbed on a train stranded in a snowdrift?",
+      "options": [
+        "Murder on the Orient Express",
+        "The 4.50 from Paddington",
+        "The Mystery of the Blue Train",
+        "Death on the Nile"
+      ],
+      "correctIndex": 0,
+      "category": "Books & Literature",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 466,
+    "question": "Which le Carre novel is titled after a children's counting rhyme about a tinker and a tailor?",
+    "problem": "self-answering",
+    "detail": "The stem says 'a tinker and a tailor' and the answer is Tinker Tailor Soldier Spy.",
+    "fix": {
+      "question": "Which le Carre novel has George Smiley hunting a Soviet mole inside the Circus?",
+      "options": [
+        "The Honourable Schoolboy",
+        "The Spy Who Came in from the Cold",
+        "Tinker Tailor Soldier Spy",
+        "Smiley's People"
+      ],
+      "correctIndex": 2,
+      "category": "Books & Literature",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 519,
+    "question": "What kind of animal is Beatrix Potter's Jemima Puddle-Duck?",
+    "problem": "self-answering",
+    "detail": "The character is called Jemima Puddle-Duck and the answer is 'A duck'.",
+    "fix": {
+      "question": "In Beatrix Potter's tale, which animal tricks Jemima Puddle-Duck into leaving the farm?",
+      "options": [
+        "A badger",
+        "A fox",
+        "A stoat",
+        "A rat"
+      ],
+      "correctIndex": 1,
+      "category": "Books & Literature",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 553,
+    "question": "Which London station gives Paddington Bear his name?",
+    "problem": "self-answering",
+    "detail": "The bear is called Paddington and the answer is Paddington station. The question answers itself.",
+    "fix": {
+      "question": "At which London station is Paddington Bear found by the Brown family?",
+      "options": [
+        "Victoria",
+        "Euston",
+        "Paddington",
+        "Waterloo"
+      ],
+      "correctIndex": 2,
+      "category": "Books & Literature",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 575,
+    "question": "Which classic novel features a group of British schoolboys stranded on an island?",
+    "problem": "two-answers",
+    "detail": "The Coral Island, offered as an option, is also a classic novel about British schoolboys stranded on an island. Golding wrote Lord of the Flies as a direct reply to it, so both fit the stem exactly.",
+    "fix": {
+      "question": "Which classic novel features stranded schoolboys who hunt a beast and worship a pig's head on a stick?",
+      "options": [
+        "Lord of the Flies",
+        "Treasure Island",
+        "Robinson Crusoe",
+        "Coral Island"
+      ],
+      "correctIndex": 0,
+      "category": "Books & Literature",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 652,
+    "question": "Which Robert Bloch novel gave Alfred Hitchcock the story for Psycho?",
+    "problem": "self-answering",
+    "detail": "The question names Psycho and the answer is Psycho.",
+    "fix": {
+      "question": "Which real-life murderer partly inspired Robert Bloch's novel Psycho?",
+      "options": [
+        "Ed Gein",
+        "Albert Fish",
+        "Charles Starkweather",
+        "Richard Speck"
+      ],
+      "correctIndex": 0,
+      "category": "Books & Literature",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 654,
+    "question": "Which book is the best-selling book of all time?",
+    "problem": "dates",
+    "detail": "'Best-selling of all time' is an unauditable estimate rather than a fact, and putting scripture in a sales contest against the Quran is needlessly awkward to read aloud in a pub.",
+    "fix": {
+      "question": "Which book does Guinness World Records list as the most widely printed in history?",
+      "options": [
+        "Don Quixote",
+        "The Quran",
+        "The Bible",
+        "A Tale of Two Cities"
+      ],
+      "correctIndex": 2,
+      "category": "Books & Literature",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 657,
+    "question": "Which city was Anne Frank hiding in when she wrote her diary?",
+    "problem": "self-answering",
+    "detail": "Index 656 in the same pack describes 'a diary written in hiding in Amsterdam', which states this answer. Asked in the same round it is a free point.",
+    "fix": {
+      "question": "In which building did Anne Frank's family hide, now a museum?",
+      "options": [
+        "The Rijksmuseum",
+        "The Secret Annexe",
+        "The Beguinage",
+        "The Westerkerk"
+      ],
+      "correctIndex": 1,
+      "category": "Books & Literature",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 664,
+    "question": "Which literary prize is the most famous award for a novel written in English in Britain?",
+    "problem": "ambiguous",
+    "detail": "'Most famous award' is a matter of opinion, and the option list mixes a British novel prize with an American prize and an international one, which muddies what is being asked.",
+    "fix": {
+      "question": "Which annual prize is awarded to the best novel published in the United Kingdom?",
+      "options": [
+        "The Costa Prize",
+        "The Pulitzer Prize",
+        "The Nobel Prize",
+        "The Booker Prize"
+      ],
+      "correctIndex": 3,
+      "category": "Books & Literature",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 696,
+    "question": "Which Victor Hugo character rings the bells of Notre-Dame?",
+    "problem": "self-answering",
+    "detail": "Index 187 in the same pack says 'the bell-ringer Quasimodo', which is exactly what this question asks for.",
+    "fix": {
+      "question": "Which archdeacon is Quasimodo's master in The Hunchback of Notre-Dame?",
+      "options": [
+        "Quasimodo",
+        "Gringoire",
+        "Phoebus",
+        "Frollo"
+      ],
+      "correctIndex": 3,
+      "category": "Books & Literature",
+      "difficulty": "easy"
+    }
+  }
+]

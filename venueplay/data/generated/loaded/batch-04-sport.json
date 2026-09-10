@@ -1,0 +1,2402 @@
+[
+  {
+    "question": "Which AFL club plays its home games at the MCG and is nicknamed the Demons?",
+    "options": [
+      "Melbourne",
+      "Collingwood",
+      "Richmond",
+      "Carlton"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the AFL premiership trophy handed to the winning captain on Grand Final day?",
+    "options": [
+      "The Premiership Cup",
+      "The Norm Smith Medal",
+      "The Brownlow Medal",
+      "The Coleman Medal"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Brownlow Medal in the AFL is awarded to the player judged to be the what?",
+    "options": [
+      "Best and fairest of the season",
+      "Leading goalkicker",
+      "Best on Grand Final day",
+      "Rising star of the year"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many points is a goal worth in Australian Rules football?",
+    "options": [
+      "6",
+      "5",
+      "4",
+      "1"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many points is a behind worth in Australian Rules football?",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "6"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which West Australian AFL club is nicknamed the Eagles?",
+    "options": [
+      "West Coast",
+      "Fremantle",
+      "Perth",
+      "Subiaco"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which AFL club is traditionally known as the Magpies?",
+    "options": [
+      "Collingwood",
+      "Essendon",
+      "Hawthorn",
+      "Geelong"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The AFL medal awarded to the best player in the Grand Final is named after which coach?",
+    "options": [
+      "Norm Smith",
+      "Jock McHale",
+      "Ron Barassi",
+      "Leigh Matthews"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which AFL club is based at Kardinia Park (GMHBA Stadium) in Victoria?",
+    "options": [
+      "Geelong",
+      "Hawthorn",
+      "North Melbourne",
+      "St Kilda"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Coleman Medal in the AFL is awarded each season to the leading what?",
+    "options": [
+      "Goalkicker",
+      "Ruckman",
+      "Tackler",
+      "Rebound defender"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which AFL club shares Sydney with the Swans and is nicknamed the Giants?",
+    "options": [
+      "Greater Western Sydney",
+      "Western Bulldogs",
+      "Gold Coast",
+      "Port Adelaide"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which two South Australian clubs contest AFL matches in Adelaide?",
+    "options": [
+      "Adelaide and Port Adelaide",
+      "Adelaide and Norwood",
+      "Port Adelaide and Glenelg",
+      "Adelaide and Sturt"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Legendary AFL player Leigh Matthews is most associated with which club?",
+    "options": [
+      "Hawthorn",
+      "Collingwood",
+      "Essendon",
+      "Fitzroy"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which AFL club won three consecutive premierships in 2001, 2002 and 2003?",
+    "options": [
+      "Brisbane Lions",
+      "Essendon",
+      "Geelong",
+      "Hawthorn"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Gary Ablett Senior and Gary Ablett Junior are both famous players of which sport?",
+    "options": [
+      "Australian Rules football",
+      "Rugby league",
+      "Cricket",
+      "Soccer"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Tasmanian city will be home to the AFL's 19th licensed club?",
+    "options": [
+      "Hobart",
+      "Launceston",
+      "Devonport",
+      "Burnie"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The AFL's annual pre-season best young player award is called the what?",
+    "options": [
+      "Rising Star",
+      "Future Star",
+      "Young Gun",
+      "Rookie Cup"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which AFL club won the 2023 premiership, defeating Brisbane in the Grand Final?",
+    "options": [
+      "Collingwood",
+      "Geelong",
+      "Melbourne",
+      "Sydney"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which club won the AFL premiership in 2022?",
+    "options": [
+      "Geelong",
+      "Sydney",
+      "Melbourne",
+      "Western Bulldogs"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which AFL club is nicknamed the Tigers and is based at Punt Road, Richmond?",
+    "options": [
+      "Richmond",
+      "Carlton",
+      "Hawthorn",
+      "Melbourne"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Dustin Martin famously won three of which award, all in Grand Finals he played?",
+    "options": [
+      "Norm Smith Medal",
+      "Brownlow Medal",
+      "Coleman Medal",
+      "Rising Star"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which AFL club relocated from Fitzroy and merged to become part of the Brisbane Lions in 1996?",
+    "options": [
+      "Fitzroy Lions",
+      "South Melbourne",
+      "University",
+      "Footscray"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The famous 'Barassi Line' in Australian football roughly divides the country between which two football codes?",
+    "options": [
+      "Australian Rules and rugby league",
+      "Soccer and rugby union",
+      "Cricket and AFL",
+      "Rugby league and rugby union"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Carlton champion is immortalised by the commentary call 'Jesaulenko, you beauty!' for a spectacular mark in the 1970 VFL Grand Final?",
+    "options": [
+      "Alex Jesaulenko",
+      "Peter Hudson",
+      "Tony Lockett",
+      "Jason Dunstall"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Tony Lockett holds the record for the most career goals in VFL/AFL history, playing for St Kilda and which other club?",
+    "options": [
+      "Sydney Swans",
+      "Fitzroy",
+      "Hawthorn",
+      "Collingwood"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which AFL club is nicknamed the Power?",
+    "options": [
+      "Port Adelaide",
+      "Adelaide",
+      "Gold Coast",
+      "Fremantle"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Western Bulldogs ended a long premiership drought by winning the AFL flag in which year?",
+    "options": [
+      "2016",
+      "2010",
+      "2020",
+      "2006"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which AFL club is nicknamed the Suns?",
+    "options": [
+      "Gold Coast",
+      "Sydney",
+      "West Coast",
+      "Adelaide"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which AFL club is nicknamed the Saints?",
+    "options": [
+      "St Kilda",
+      "North Melbourne",
+      "Melbourne",
+      "Essendon"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "North Melbourne AFL club is also known by which animal nickname?",
+    "options": [
+      "Kangaroos",
+      "Roosters",
+      "Dockers",
+      "Blues"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which AFL club is nicknamed the Blues?",
+    "options": [
+      "Carlton",
+      "Essendon",
+      "Fremantle",
+      "Geelong"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Fremantle's AFL team carries which nickname?",
+    "options": [
+      "Dockers",
+      "Eagles",
+      "Power",
+      "Suns"
+    ],
+    "correctIndex": 0,
+    "category": "AFL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In the NRL, how many points is a try worth?",
+    "options": [
+      "4",
+      "5",
+      "6",
+      "3"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The annual State of Origin series is contested between New South Wales and which other state?",
+    "options": [
+      "Queensland",
+      "Victoria",
+      "Western Australia",
+      "South Australia"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Broncos?",
+    "options": [
+      "Brisbane",
+      "Canberra",
+      "Melbourne",
+      "Sydney"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Queensland NRL club plays out of Townsville and is nicknamed the Cowboys?",
+    "options": [
+      "North Queensland",
+      "Brisbane",
+      "Gold Coast",
+      "Redcliffe"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Storm?",
+    "options": [
+      "Melbourne",
+      "Sydney",
+      "Newcastle",
+      "Canberra"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many points is a field goal (drop goal) worth in rugby league?",
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many tackles does an attacking team get before it must hand over the ball in rugby league?",
+    "options": [
+      "6",
+      "4",
+      "5",
+      "7"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Rabbitohs?",
+    "options": [
+      "South Sydney",
+      "Sydney Roosters",
+      "Cronulla",
+      "Manly"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Dally M Medal in the NRL is awarded to the season's best what?",
+    "options": [
+      "Player",
+      "Coach",
+      "Referee",
+      "Rookie"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Sea Eagles?",
+    "options": [
+      "Manly-Warringah",
+      "Cronulla-Sutherland",
+      "St George Illawarra",
+      "Wests Tigers"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Eels?",
+    "options": [
+      "Parramatta",
+      "Penrith",
+      "Canterbury",
+      "Newcastle"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which NRL club, based in western Sydney, is nicknamed the Panthers?",
+    "options": [
+      "Penrith",
+      "Parramatta",
+      "Canterbury",
+      "Wests"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Penrith won consecutive NRL premierships across which run of years in the 2020s?",
+    "options": [
+      "2021, 2022, 2023, 2024",
+      "2018, 2019, 2020",
+      "2020, 2021, 2022",
+      "2019, 2020, 2021, 2022"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Winfield Cup was the historic trophy of which competition, the forerunner to the NRL?",
+    "options": [
+      "The New South Wales Rugby League premiership",
+      "The Super League",
+      "State of Origin",
+      "The Rugby League World Cup"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which player, nicknamed 'The King', is a Queensland State of Origin icon and captained the Broncos and Maroons?",
+    "options": [
+      "Wally Lewis",
+      "Darren Lockyer",
+      "Allan Langer",
+      "Mal Meninga"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Roosters?",
+    "options": [
+      "Sydney",
+      "South Sydney",
+      "Canberra",
+      "Cronulla"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Raiders and is based in the national capital?",
+    "options": [
+      "Canberra",
+      "Canterbury",
+      "Cronulla",
+      "Newcastle"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Sharks?",
+    "options": [
+      "Cronulla-Sutherland",
+      "Manly",
+      "Wests Tigers",
+      "Gold Coast"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which New Zealand-based club competes in the NRL?",
+    "options": [
+      "New Zealand Warriors",
+      "Auckland Blues",
+      "Wellington Hurricanes",
+      "Canterbury Crusaders"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Bulldogs?",
+    "options": [
+      "Canterbury-Bankstown",
+      "North Queensland",
+      "Newcastle",
+      "Melbourne"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Knights and is based in a New South Wales coal city?",
+    "options": [
+      "Newcastle",
+      "Wollongong",
+      "Gosford",
+      "Maitland"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which NRL club is formed from a joint venture and is nicknamed the Dragons?",
+    "options": [
+      "St George Illawarra",
+      "Wests Tigers",
+      "Gold Coast",
+      "Canterbury"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which NRL club is nicknamed the Titans?",
+    "options": [
+      "Gold Coast",
+      "Sunshine Coast",
+      "Central Coast",
+      "Newcastle"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which team joined the NRL in 2023 as the competition's 17th club, based north of Brisbane?",
+    "options": [
+      "Dolphins",
+      "Bears",
+      "Jets",
+      "Bombers"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Queensland great Mal Meninga is most associated with coaching which representative team?",
+    "options": [
+      "Queensland Maroons",
+      "New South Wales Blues",
+      "New Zealand",
+      "Australia only"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Melbourne Storm halfback Cameron Munster and captain Cameron Smith helped the club to titles; Smith retired as the record holder for most what?",
+    "options": [
+      "NRL career games",
+      "Career tries",
+      "Field goals",
+      "Coaching wins"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The Australian national rugby league team is known by which nickname?",
+    "options": [
+      "Kangaroos",
+      "Wallabies",
+      "Kookaburras",
+      "Socceroos"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The New Zealand national rugby league team is nicknamed the what?",
+    "options": [
+      "Kiwis",
+      "All Blacks",
+      "Warriors",
+      "Silver Ferns"
+    ],
+    "correctIndex": 0,
+    "category": "NRL",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In cricket, how many players are on each team on the field?",
+    "options": [
+      "11",
+      "10",
+      "12",
+      "9"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many balls are bowled in a standard over in cricket?",
+    "options": [
+      "6",
+      "5",
+      "8",
+      "4"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Ashes is a Test cricket rivalry between Australia and which country?",
+    "options": [
+      "England",
+      "India",
+      "South Africa",
+      "New Zealand"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian batsman had a Test batting average of 99.94, the highest in history?",
+    "options": [
+      "Don Bradman",
+      "Steve Waugh",
+      "Ricky Ponting",
+      "Allan Border"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the term for a batsman being dismissed for zero runs in cricket?",
+    "options": [
+      "A duck",
+      "A blob",
+      "A quack",
+      "A love"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many runs are scored when the ball is hit over the boundary rope without bouncing?",
+    "options": [
+      "6",
+      "4",
+      "5",
+      "3"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many runs are scored when the ball reaches the boundary after bouncing?",
+    "options": [
+      "4",
+      "6",
+      "2",
+      "3"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is it called when a bowler takes three wickets with three consecutive balls?",
+    "options": [
+      "A hat-trick",
+      "A treble",
+      "A triple play",
+      "A hattie"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian leg-spinner took 708 Test wickets and is one of the greatest bowlers of all time?",
+    "options": [
+      "Shane Warne",
+      "Glenn McGrath",
+      "Dennis Lillee",
+      "Nathan Lyon"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Australian men's Test and ODI cricket team wear caps of which colour, giving rise to the nickname 'Baggy Green'?",
+    "options": [
+      "Green",
+      "Gold",
+      "Navy",
+      "Maroon"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many wickets must a bowling side take to bowl out the opposition in an innings?",
+    "options": [
+      "10",
+      "11",
+      "9",
+      "12"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In Twenty20 cricket, how many overs does each team face in its innings?",
+    "options": [
+      "20",
+      "50",
+      "10",
+      "25"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Australia's domestic men's Twenty20 competition is called what?",
+    "options": [
+      "Big Bash League",
+      "Sheffield Shield",
+      "Marsh Cup",
+      "Super Smash"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Sheffield Shield is Australia's premier domestic competition in which format?",
+    "options": [
+      "First-class (multi-day) cricket",
+      "Twenty20",
+      "One-day",
+      "Indoor cricket"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian fast bowler took 563 Test wickets and formed a famous partnership with Shane Warne?",
+    "options": [
+      "Glenn McGrath",
+      "Brett Lee",
+      "Jason Gillespie",
+      "Mitchell Johnson"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian captain lifted the 2015 Cricket World Cup, won on home soil at the MCG?",
+    "options": [
+      "Michael Clarke",
+      "Ricky Ponting",
+      "Steve Smith",
+      "George Bailey"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Australia won the men's ODI Cricket World Cup in 2023, beating India in the final held in which country?",
+    "options": [
+      "India",
+      "Australia",
+      "England",
+      "South Africa"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Ricky Ponting captained Australia to World Cup victories in which two consecutive tournaments?",
+    "options": [
+      "2003 and 2007",
+      "1999 and 2003",
+      "2007 and 2011",
+      "1996 and 1999"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian all-rounder and wicketkeeper captained the men's Test side and is known for aggressive batting, nicknamed relating to his surname 'Gilly'?",
+    "options": [
+      "Adam Gilchrist",
+      "Brad Haddin",
+      "Ian Healy",
+      "Rod Marsh"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "hard"
+  },
+  {
+    "question": "By what nickname was Australia's women's cricket team formerly known before reverting to simply the Australian women's team?",
+    "options": [
+      "Southern Stars",
+      "Diamonds",
+      "Opals",
+      "Hockeyroos"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Meg Lanning captained Australia's women's cricket team to multiple World Cups; she is a specialist in which discipline?",
+    "options": [
+      "Batting",
+      "Fast bowling",
+      "Wicketkeeping",
+      "Leg-spin"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Ellyse Perry has represented Australia at World Cups in both cricket and which other sport?",
+    "options": [
+      "Football (soccer)",
+      "Netball",
+      "Hockey",
+      "Rugby sevens"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the maximum number of runs a batter can typically score off a single legal delivery without overthrows?",
+    "options": [
+      "6",
+      "4",
+      "8",
+      "10"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In cricket, the two sets of three wooden stumps are topped by two small pieces of wood called what?",
+    "options": [
+      "Bails",
+      "Pegs",
+      "Caps",
+      "Chips"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which venue is known as the traditional home of the Boxing Day Test in Australia?",
+    "options": [
+      "Melbourne Cricket Ground",
+      "Sydney Cricket Ground",
+      "The Gabba",
+      "Adelaide Oval"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Brisbane cricket ground has historically hosted the first Test of the Australian summer?",
+    "options": [
+      "The Gabba",
+      "The WACA",
+      "Bellerive Oval",
+      "Manuka Oval"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Steve Smith and David Warner were suspended after a ball-tampering scandal during a 2018 Test in which country?",
+    "options": [
+      "South Africa",
+      "India",
+      "England",
+      "New Zealand"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian spinner became the country's most successful off-spin bowler in Tests, nicknamed the 'GOAT' by teammates?",
+    "options": [
+      "Nathan Lyon",
+      "Steve O'Keefe",
+      "Ashton Agar",
+      "Jon Holland"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Dennis Lillee and which wicketkeeper formed a famous dismissal combination 'caught Marsh, bowled Lillee' for Australia?",
+    "options": [
+      "Rod Marsh",
+      "Ian Healy",
+      "Wally Grout",
+      "Adam Gilchrist"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The urn contested in the Ashes is said to contain the ashes of a burnt what?",
+    "options": [
+      "Cricket bail",
+      "Cricket ball",
+      "Cricket bat",
+      "Wicket"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many days is a standard men's Test match scheduled to last (maximum)?",
+    "options": [
+      "5",
+      "3",
+      "4",
+      "6"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In a One Day International, how many overs does each team's innings last?",
+    "options": [
+      "50",
+      "20",
+      "40",
+      "60"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Allan Border captained Australia and later had a domestic award named after him; what is the Allan Border Medal awarded for?",
+    "options": [
+      "Australia's best men's international cricketer of the year",
+      "Best domestic batter",
+      "Best young player",
+      "Best bowler"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian batter scored a famous 334 against England, a total later also reached by Mark Taylor who declared to preserve the shared record with him?",
+    "options": [
+      "Don Bradman",
+      "Bill Ponsford",
+      "Neil Harvey",
+      "Bob Simpson"
+    ],
+    "correctIndex": 0,
+    "category": "Cricket",
+    "difficulty": "hard"
+  },
+  {
+    "question": "How many Grand Slam singles tournaments are held in tennis each year?",
+    "options": [
+      "4",
+      "3",
+      "5",
+      "2"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Australian Open tennis Grand Slam is held in which city?",
+    "options": [
+      "Melbourne",
+      "Sydney",
+      "Brisbane",
+      "Perth"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Wimbledon, the oldest tennis Grand Slam, is played in which country?",
+    "options": [
+      "England",
+      "France",
+      "United States",
+      "Australia"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The French Open is played on which court surface?",
+    "options": [
+      "Clay",
+      "Grass",
+      "Hard court",
+      "Carpet"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In tennis scoring, what term is used for a score of zero?",
+    "options": [
+      "Love",
+      "Nil",
+      "Duck",
+      "Blank"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian tennis great won 24 Grand Slam singles titles, a record for many decades?",
+    "options": [
+      "Margaret Court",
+      "Evonne Goolagong",
+      "Rod Laver",
+      "Ken Rosewall"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian is the only player to win the calendar-year Grand Slam in men's singles twice, and has a Melbourne arena named after him?",
+    "options": [
+      "Rod Laver",
+      "Ken Rosewall",
+      "John Newcombe",
+      "Roy Emerson"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The main show court at the Australian Open is named after which Australian tennis legend?",
+    "options": [
+      "Rod Laver",
+      "Margaret Court",
+      "Ken Rosewall",
+      "John Cain"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which surface is the Australian Open played on?",
+    "options": [
+      "Hard court",
+      "Grass",
+      "Clay",
+      "Carpet"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Ash Barty, who retired as world number one, won the Australian Open women's singles title in which year?",
+    "options": [
+      "2022",
+      "2019",
+      "2021",
+      "2020"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Ash Barty also won which Grand Slam on grass in 2021?",
+    "options": [
+      "Wimbledon",
+      "US Open",
+      "French Open",
+      "Australian Open"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many points does a player need to win a standard game (assuming no deuce), counted as 15, 30, 40 and then?",
+    "options": [
+      "Game",
+      "45",
+      "50",
+      "Set"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What is the term in tennis when the score in a game reaches 40-40?",
+    "options": [
+      "Deuce",
+      "Break",
+      "Ace",
+      "Advantage"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "easy"
+  },
+  {
+    "question": "A serve that the receiver cannot touch, winning the point outright, is called what?",
+    "options": [
+      "An ace",
+      "A fault",
+      "A let",
+      "A smash"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Indigenous Australian tennis player won Wimbledon and the Australian Open and is celebrated as a trailblazer?",
+    "options": [
+      "Evonne Goolagong Cawley",
+      "Margaret Court",
+      "Ash Barty",
+      "Wendy Turnbull"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The US Open tennis championships are held in which city?",
+    "options": [
+      "New York",
+      "Los Angeles",
+      "Miami",
+      "Chicago"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian man reached the Wimbledon men's singles final in 2022, known for his big serve and fiery character?",
+    "options": [
+      "Nick Kyrgios",
+      "Alex de Minaur",
+      "Thanasi Kokkinakis",
+      "Jordan Thompson"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The team competition in men's tennis where nations compete is called the what?",
+    "options": [
+      "Davis Cup",
+      "Ryder Cup",
+      "Fed Cup",
+      "World Cup"
+    ],
+    "correctIndex": 0,
+    "category": "Tennis",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How often are the modern Summer Olympic Games held?",
+    "options": [
+      "Every four years",
+      "Every two years",
+      "Every three years",
+      "Every five years"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Sydney Olympic Games were held in which year?",
+    "options": [
+      "2000",
+      "1996",
+      "2004",
+      "1988"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian city will host the 2032 Summer Olympic Games?",
+    "options": [
+      "Brisbane",
+      "Sydney",
+      "Melbourne",
+      "Perth"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian athlete lit the Olympic cauldron at the Sydney 2000 opening ceremony?",
+    "options": [
+      "Cathy Freeman",
+      "Ian Thorpe",
+      "Susie O'Neill",
+      "Dawn Fraser"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian athlete won the 400m and famously carried both the Australian and Aboriginal flags at Sydney 2000?",
+    "options": [
+      "Cathy Freeman",
+      "Nova Peris",
+      "Sally Pearson",
+      "Jana Pittman"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many rings are on the Olympic flag?",
+    "options": [
+      "5",
+      "4",
+      "6",
+      "3"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Olympic motto 'Citius, Altius, Fortius' translates to faster, higher and what?",
+    "options": [
+      "Stronger",
+      "Braver",
+      "Further",
+      "Better"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian swimmer, nicknamed the 'Thorpedo', won multiple Olympic gold medals?",
+    "options": [
+      "Ian Thorpe",
+      "Grant Hackett",
+      "Kieren Perkins",
+      "Michael Klim"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "In which city were the 2024 Summer Olympic Games held?",
+    "options": [
+      "Paris",
+      "Tokyo",
+      "Los Angeles",
+      "London"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The 2020 Summer Olympics, delayed to 2021 by the pandemic, were held in which city?",
+    "options": [
+      "Tokyo",
+      "Rio de Janeiro",
+      "Beijing",
+      "Paris"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Australia's Melbourne hosted the Summer Olympics in which year, the first in the Southern Hemisphere?",
+    "options": [
+      "1956",
+      "1960",
+      "1948",
+      "1964"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian hurdler won 100m hurdles gold at the 2012 London Olympics?",
+    "options": [
+      "Sally Pearson",
+      "Jana Pittman",
+      "Michelle Jenneke",
+      "Cathy Freeman"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Emma McKeon became Australia's most decorated Olympian competing in which sport?",
+    "options": [
+      "Swimming",
+      "Athletics",
+      "Cycling",
+      "Rowing"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which sprinting event is often billed as crowning the 'fastest man/woman in the world' at the Olympics?",
+    "options": [
+      "100 metres",
+      "200 metres",
+      "400 metres",
+      "Marathon"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Australia's women's national basketball team, Olympic medallists, are known by which nickname?",
+    "options": [
+      "Opals",
+      "Diamonds",
+      "Matildas",
+      "Hockeyroos"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia's women's field hockey team, multiple Olympic gold medallists, are nicknamed the what?",
+    "options": [
+      "Hockeyroos",
+      "Kookaburras",
+      "Opals",
+      "Diamonds"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia's men's field hockey team are known by which bird nickname?",
+    "options": [
+      "Kookaburras",
+      "Magpies",
+      "Emus",
+      "Galahs"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which event added to the Olympics for 2020/2024, popular for its street style, saw teenage Australian Arisa Trew and others compete?",
+    "options": [
+      "Skateboarding",
+      "Surfing",
+      "Sport climbing",
+      "Breaking"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The Winter Olympics feature which of these sports?",
+    "options": [
+      "Ice hockey",
+      "Field hockey",
+      "Water polo",
+      "Beach volleyball"
+    ],
+    "correctIndex": 0,
+    "category": "Olympics",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Melbourne Cup horse race is run annually on the first Tuesday of which month?",
+    "options": [
+      "November",
+      "October",
+      "December",
+      "September"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Melbourne Cup is famously known as 'the race that stops a' what?",
+    "options": [
+      "Nation",
+      "City",
+      "State",
+      "World"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "easy"
+  },
+  {
+    "question": "At which Melbourne racecourse is the Melbourne Cup run?",
+    "options": [
+      "Flemington",
+      "Caulfield",
+      "Moonee Valley",
+      "Randwick"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which legendary racehorse of the Great Depression era is a beloved Australian and New Zealand icon?",
+    "options": [
+      "Phar Lap",
+      "Makybe Diva",
+      "Winx",
+      "Black Caviar"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which mare won the Melbourne Cup a record three consecutive times, in 2003, 2004 and 2005?",
+    "options": [
+      "Makybe Diva",
+      "Winx",
+      "Black Caviar",
+      "Sunline"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which champion Australian mare retired unbeaten after 33 consecutive wins, including four Cox Plates?",
+    "options": [
+      "Winx",
+      "Black Caviar",
+      "Makybe Diva",
+      "Sunline"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which unbeaten Australian sprinting mare won all 25 of her career starts?",
+    "options": [
+      "Black Caviar",
+      "Winx",
+      "Makybe Diva",
+      "Sunline"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What is the standard distance of the Melbourne Cup?",
+    "options": [
+      "3,200 metres",
+      "2,000 metres",
+      "1,600 metres",
+      "2,400 metres"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which jockey rode Makybe Diva to her third consecutive Melbourne Cup win in 2005?",
+    "options": [
+      "Glen Boss",
+      "Damien Oliver",
+      "Roy Higgins",
+      "Kerrin McEvoy"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The person who rides the horse in a race is called the what?",
+    "options": [
+      "Jockey",
+      "Trainer",
+      "Handler",
+      "Steward"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Cox Plate, one of Australia's premier weight-for-age races, is run at which Melbourne track?",
+    "options": [
+      "Moonee Valley",
+      "Flemington",
+      "Caulfield",
+      "Sandown"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "hard"
+  },
+  {
+    "question": "In 2015 Michelle Payne became the first woman to do what in the Melbourne Cup?",
+    "options": [
+      "Ride the winning horse",
+      "Train the winner",
+      "Own the winner",
+      "Call the race"
+    ],
+    "correctIndex": 0,
+    "category": "Horse Racing",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Bathurst 1000 is a famous Australian motorsport race for which category of vehicles?",
+    "options": [
+      "Touring cars (Supercars)",
+      "Formula One",
+      "MotoGP motorcycles",
+      "Rally cars"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Bathurst 1000 is held at which circuit?",
+    "options": [
+      "Mount Panorama",
+      "Albert Park",
+      "Phillip Island",
+      "Adelaide Street Circuit"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian driver, nicknamed 'The King of the Mountain', won Bathurst a record seven times?",
+    "options": [
+      "Peter Brock",
+      "Craig Lowndes",
+      "Dick Johnson",
+      "Mark Skaife"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian won the Formula One World Championship in 1980?",
+    "options": [
+      "Alan Jones",
+      "Jack Brabham",
+      "Mark Webber",
+      "Daniel Ricciardo"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which three-time Formula One World Champion from Australia also built his own championship-winning car?",
+    "options": [
+      "Jack Brabham",
+      "Alan Jones",
+      "Mark Webber",
+      "Daniel Ricciardo"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian driver, known for his 'shoey' celebration, won multiple Formula One Grands Prix in the 2010s?",
+    "options": [
+      "Daniel Ricciardo",
+      "Mark Webber",
+      "Alan Jones",
+      "Oscar Piastri"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which young Australian driver made his Formula One debut with McLaren in 2023?",
+    "options": [
+      "Oscar Piastri",
+      "Daniel Ricciardo",
+      "Jack Doohan",
+      "Mark Webber"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Australian Formula One Grand Prix is currently held at which Melbourne circuit?",
+    "options": [
+      "Albert Park",
+      "Mount Panorama",
+      "Sandown",
+      "Calder Park"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many wheels does a standard Formula One car have?",
+    "options": [
+      "4",
+      "3",
+      "6",
+      "2"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "MotoGP is the premier world championship class of which type of racing?",
+    "options": [
+      "Motorcycle",
+      "Rally",
+      "Powerboat",
+      "Karting"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian won the MotoGP premier-class world championship in 2007 and again in 2011?",
+    "options": [
+      "Casey Stoner",
+      "Wayne Gardner",
+      "Mick Doohan",
+      "Troy Bayliss"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian motorcyclist won five consecutive 500cc world championships in the 1990s?",
+    "options": [
+      "Mick Doohan",
+      "Casey Stoner",
+      "Wayne Gardner",
+      "Troy Corser"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "The Phillip Island circuit, which hosts the Australian MotoGP, is located in which state?",
+    "options": [
+      "Victoria",
+      "New South Wales",
+      "Queensland",
+      "South Australia"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What colour flag in motor racing signals the end of a race?",
+    "options": [
+      "Chequered",
+      "Red",
+      "Yellow",
+      "Green"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The famous Peter Brock drove which Australian car brand to many of his Bathurst wins?",
+    "options": [
+      "Holden",
+      "Ford",
+      "Toyota",
+      "Nissan"
+    ],
+    "correctIndex": 0,
+    "category": "Motorsport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia's men's national football (soccer) team is known by which nickname?",
+    "options": [
+      "Socceroos",
+      "Wallabies",
+      "Kangaroos",
+      "Kookaburras"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Australia's women's national football (soccer) team is known by which nickname?",
+    "options": [
+      "Matildas",
+      "Diamonds",
+      "Opals",
+      "Ferns"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many players are on the field per team in a football (soccer) match?",
+    "options": [
+      "11",
+      "10",
+      "9",
+      "13"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Australia co-hosted the FIFA Women's World Cup in 2023 alongside which country?",
+    "options": [
+      "New Zealand",
+      "England",
+      "United States",
+      "Japan"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Matildas striker is Australia's all-time leading goalscorer and captained the side at the 2023 Women's World Cup?",
+    "options": [
+      "Sam Kerr",
+      "Ellie Carpenter",
+      "Caitlin Foord",
+      "Steph Catley"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Matildas reached which stage of the 2023 home Women's World Cup, their best-ever result?",
+    "options": [
+      "Semi-finals",
+      "Final",
+      "Quarter-finals",
+      "Round of 16"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia's national men's top-flight club football competition is called the what?",
+    "options": [
+      "A-League",
+      "J-League",
+      "Super League",
+      "Premier League"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The men's FIFA World Cup is held how often?",
+    "options": [
+      "Every four years",
+      "Every two years",
+      "Every three years",
+      "Every year"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Australia's men's football team qualified for the knockout round at the 2022 World Cup held in which country?",
+    "options": [
+      "Qatar",
+      "Russia",
+      "Brazil",
+      "South Africa"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which former Socceroo, a prolific striker, played for clubs including Everton and Millwall and is Australia's men's all-time top scorer?",
+    "options": [
+      "Tim Cahill",
+      "Harry Kewell",
+      "Mark Viduka",
+      "Mark Schwarzer"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia moved from the Oceania football confederation to which confederation in 2006 to gain tougher qualifying competition?",
+    "options": [
+      "Asian Football Confederation",
+      "UEFA",
+      "CONMEBOL",
+      "CONCACAF"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the term for when a single player scores three goals in one football match?",
+    "options": [
+      "Hat-trick",
+      "Treble",
+      "Triple",
+      "Trifecta"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Sam Kerr is well known for which goal celebration?",
+    "options": [
+      "A backflip",
+      "A cartwheel",
+      "A knee slide only",
+      "A somersault dive"
+    ],
+    "correctIndex": 0,
+    "category": "Soccer",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia's national rugby union team is known by which nickname?",
+    "options": [
+      "Wallabies",
+      "Kangaroos",
+      "Socceroos",
+      "Kookaburras"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "easy"
+  },
+  {
+    "question": "How many points is a try worth in rugby union?",
+    "options": [
+      "5",
+      "4",
+      "6",
+      "3"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many players are on the field per team in rugby union?",
+    "options": [
+      "15",
+      "13",
+      "11",
+      "17"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "easy"
+  },
+  {
+    "question": "New Zealand's national rugby union team is famous for performing which pre-match challenge?",
+    "options": [
+      "The haka",
+      "The war cry",
+      "The chant",
+      "The huddle"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "easy"
+  },
+  {
+    "question": "The Bledisloe Cup is contested in rugby union between Australia and which nation?",
+    "options": [
+      "New Zealand",
+      "South Africa",
+      "England",
+      "Fiji"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia won the Rugby World Cup in 1991 and which other year?",
+    "options": [
+      "1999",
+      "1995",
+      "2003",
+      "1987"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "hard"
+  },
+  {
+    "question": "New Zealand's national rugby union side is known by which name?",
+    "options": [
+      "All Blacks",
+      "Springboks",
+      "Wallabies",
+      "Pumas"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "easy"
+  },
+  {
+    "question": "South Africa's national rugby union team is nicknamed the what?",
+    "options": [
+      "Springboks",
+      "All Blacks",
+      "Pumas",
+      "Lions"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In rugby union, kicking the ball between the posts above the crossbar after a try is called a what?",
+    "options": [
+      "Conversion",
+      "Penalty",
+      "Drop goal",
+      "Field goal"
+    ],
+    "correctIndex": 0,
+    "category": "Rugby Union",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In golf, a score of one under par on a single hole is called a what?",
+    "options": [
+      "Birdie",
+      "Eagle",
+      "Bogey",
+      "Par"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian golfer famously won the Masters at Augusta in 2013?",
+    "options": [
+      "Adam Scott",
+      "Greg Norman",
+      "Jason Day",
+      "Cameron Smith"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australian golfer Greg Norman was nicknamed the what?",
+    "options": [
+      "Great White Shark",
+      "Golden Bear",
+      "Big Cat",
+      "Iceman"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Cameron Smith, the Australian golfer, won which major championship, 'The Open', in 2022?",
+    "options": [
+      "The Open Championship (British Open)",
+      "The Masters",
+      "The US Open",
+      "The PGA Championship"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "In basketball, how many points is a standard shot made from beyond the arc worth?",
+    "options": [
+      "3",
+      "2",
+      "1",
+      "4"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia's national men's basketball team is known by which nickname?",
+    "options": [
+      "Boomers",
+      "Opals",
+      "Diamonds",
+      "Kangaroos"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Australia's men's basketball team won its first Olympic medal, a bronze, at which Games?",
+    "options": [
+      "Tokyo 2020",
+      "Rio 2016",
+      "London 2012",
+      "Sydney 2000"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Netball's Australian national team is known by which nickname?",
+    "options": [
+      "Diamonds",
+      "Opals",
+      "Ferns",
+      "Roses"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "How many players are on the court per team in netball?",
+    "options": [
+      "7",
+      "5",
+      "6",
+      "9"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Ironman and lifesaving competitions in Australia are most associated with which environment?",
+    "options": [
+      "The surf beach",
+      "Indoor pools",
+      "Rivers",
+      "Lakes"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian world champion surfer, nicknamed for his aggressive style, won multiple world titles including in the 2010s?",
+    "options": [
+      "Mick Fanning",
+      "Layne Beachley",
+      "Stephanie Gilmore",
+      "Joel Parkinson"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian woman has won a record number of world surfing titles, standing among the greatest of all time?",
+    "options": [
+      "Stephanie Gilmore",
+      "Layne Beachley",
+      "Sally Fitzgibbons",
+      "Tyler Wright"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian boxer had a famous long-running rivalry with Anthony Mundine, including bouts in 2006 and 2017?",
+    "options": [
+      "Danny Green",
+      "Kostya Tszyu",
+      "Jeff Fenech",
+      "Jeff Horn"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which Australian boxer beat Manny Pacquiao in a 2017 world title fight in Brisbane?",
+    "options": [
+      "Jeff Horn",
+      "Danny Green",
+      "Anthony Mundine",
+      "Michael Zerafa"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "In swimming, which stroke is generally the fastest and used in freestyle events?",
+    "options": [
+      "Front crawl",
+      "Breaststroke",
+      "Backstroke",
+      "Butterfly"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which Australian distance swimmer won gold in the 1500m freestyle at both the 1992 and 1996 Olympics?",
+    "options": [
+      "Kieren Perkins",
+      "Grant Hackett",
+      "Ian Thorpe",
+      "Michael Klim"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "hard"
+  },
+  {
+    "question": "In darts, what is the highest score possible with three darts on a standard board?",
+    "options": [
+      "180",
+      "150",
+      "200",
+      "120"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "In snooker, which ball is worth the most points?",
+    "options": [
+      "Black",
+      "Pink",
+      "Blue",
+      "Red"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "medium"
+  },
+  {
+    "question": "The Tour de France is a major event in which sport?",
+    "options": [
+      "Cycling",
+      "Running",
+      "Motor racing",
+      "Rowing"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Which Australian became the first from his country to win the Tour de France, in 2011?",
+    "options": [
+      "Cadel Evans",
+      "Robbie McEwen",
+      "Michael Rogers",
+      "Richie Porte"
+    ],
+    "correctIndex": 0,
+    "category": "World Sport",
+    "difficulty": "hard"
+  }
+]

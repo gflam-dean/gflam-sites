@@ -1,0 +1,8090 @@
+[
+ {
+  "question": "Who is the king of the gods in Greek mythology?",
+  "options": [
+   "Poseidon",
+   "Cronus",
+   "Apollo",
+   "Zeus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which weapon is Zeus famous for hurling?",
+  "options": [
+   "A thunderbolt",
+   "A trident",
+   "A bow",
+   "A hammer"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which mountain do the Greek gods live?",
+  "options": [
+   "Mount Ida",
+   "Mount Parnassus",
+   "Mount Olympus",
+   "Mount Etna"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Greek goddess of love and beauty?",
+  "options": [
+   "Artemis",
+   "Athena",
+   "Aphrodite",
+   "Hera"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek god carries a trident and rules the sea?",
+  "options": [
+   "Zeus",
+   "Hades",
+   "Triton",
+   "Poseidon"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who rules the underworld in Greek mythology?",
+  "options": [
+   "Ares",
+   "Poseidon",
+   "Hermes",
+   "Hades"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Greek goddess of wisdom?",
+  "options": [
+   "Hestia",
+   "Demeter",
+   "Athena",
+   "Hera"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird is the symbol of the goddess Athena?",
+  "options": [
+   "The eagle",
+   "The owl",
+   "The dove",
+   "The peacock"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek city is named after the goddess Athena?",
+  "options": [
+   "Athens",
+   "Corinth",
+   "Sparta",
+   "Thebes"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek god is the god of war?",
+  "options": [
+   "Hermes",
+   "Apollo",
+   "Hephaestus",
+   "Ares"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the messenger of the Greek gods?",
+  "options": [
+   "Eros",
+   "Iris",
+   "Hermes",
+   "Apollo"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Hermes wear on his feet in Greek art?",
+  "options": [
+   "Golden slippers",
+   "Winged sandals",
+   "Iron boots",
+   "Bronze greaves"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the Greek goddess of the hunt?",
+  "options": [
+   "Athena",
+   "Aphrodite",
+   "Persephone",
+   "Artemis"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek god is the twin brother of Artemis?",
+  "options": [
+   "Ares",
+   "Apollo",
+   "Dionysus",
+   "Hermes"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek god is associated with music, poetry and prophecy?",
+  "options": [
+   "Pan",
+   "Apollo",
+   "Hermes",
+   "Dionysus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which musical instrument is Apollo usually shown holding?",
+  "options": [
+   "A flute",
+   "A harp",
+   "A drum",
+   "A lyre"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Greek god of wine and revelry?",
+  "options": [
+   "Apollo",
+   "Dionysus",
+   "Hermes",
+   "Pan"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the wife of Zeus and queen of the Greek gods?",
+  "options": [
+   "Hera",
+   "Demeter",
+   "Rhea",
+   "Hestia"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek goddess is the goddess of the harvest?",
+  "options": [
+   "Hestia",
+   "Demeter",
+   "Hera",
+   "Artemis"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek god is the blacksmith of the gods?",
+  "options": [
+   "Ares",
+   "Hephaestus",
+   "Prometheus",
+   "Hermes"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Greek goddess of the hearth and home?",
+  "options": [
+   "Hera",
+   "Demeter",
+   "Gaia",
+   "Hestia"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many Olympian gods are traditionally counted in Greek mythology?",
+  "options": [
+   "Nine",
+   "Fourteen",
+   "Twelve",
+   "Ten"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Greek god of love, often shown as a winged boy with a bow?",
+  "options": [
+   "Eros",
+   "Apollo",
+   "Hermes",
+   "Hypnos"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek goddess personifies victory and lends her name to a sportswear brand?",
+  "options": [
+   "Iris",
+   "Nike",
+   "Tyche",
+   "Hebe"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek goddess is associated with the rainbow?",
+  "options": [
+   "Selene",
+   "Nike",
+   "Iris",
+   "Eos"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the Greek god of sleep?",
+  "options": [
+   "Morpheus",
+   "Thanatos",
+   "Nyx",
+   "Hypnos"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek god of shepherds has the legs and horns of a goat?",
+  "options": [
+   "Pan",
+   "Dionysus",
+   "Hermes",
+   "Silenus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which instrument is named after the Greek god Pan?",
+  "options": [
+   "The tambourine",
+   "The lyre",
+   "Panpipes",
+   "The cymbal"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek goddess is associated with witchcraft and crossroads?",
+  "options": [
+   "Eris",
+   "Hecate",
+   "Nyx",
+   "Nemesis"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek goddess punishes arrogance and gives us a word for a downfall?",
+  "options": [
+   "Tyche",
+   "Hecate",
+   "Nemesis",
+   "Eris"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek figure is the god of medicine and healing?",
+  "options": [
+   "Chiron",
+   "Hygieia",
+   "Apollo",
+   "Asclepius"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the food of the Greek gods called?",
+  "options": [
+   "Manna",
+   "Ambrosia",
+   "Elixir",
+   "Nectar"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the drink of the Greek gods called?",
+  "options": [
+   "Nectar",
+   "Mead",
+   "Soma",
+   "Ambrosia"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How was Aphrodite said to have been born?",
+  "options": [
+   "From a flower",
+   "From sea foam",
+   "From a golden egg",
+   "From Zeus's head"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "According to myth, which goddess sprang fully grown from the head of Zeus?",
+  "options": [
+   "Artemis",
+   "Hera",
+   "Athena",
+   "Aphrodite"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Titan was condemned to hold up the sky?",
+  "options": [
+   "Cronus",
+   "Atlas",
+   "Hyperion",
+   "Prometheus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Titan stole fire and gave it to humankind?",
+  "options": [
+   "Prometheus",
+   "Epimetheus",
+   "Cronus",
+   "Atlas"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was Prometheus's punishment for giving fire to humans?",
+  "options": [
+   "He was struck blind",
+   "An eagle ate his liver each day",
+   "He was chained under the sea",
+   "He was turned to stone"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Titan was the father of Zeus?",
+  "options": [
+   "Cronus",
+   "Atlas",
+   "Uranus",
+   "Oceanus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Greek myth, who is the primordial goddess of the Earth?",
+  "options": [
+   "Rhea",
+   "Demeter",
+   "Gaia",
+   "Hestia"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many Muses are there in Greek mythology?",
+  "options": [
+   "Seven",
+   "Nine",
+   "Three",
+   "Twelve"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many Fates are there in Greek mythology?",
+  "options": [
+   "Two",
+   "Four",
+   "Nine",
+   "Three"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the river that souls cross to reach the Greek underworld?",
+  "options": [
+   "The Nile",
+   "The Lethe",
+   "The Styx",
+   "The Rubicon"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who ferries the dead across the river Styx?",
+  "options": [
+   "Hermes",
+   "Cerberus",
+   "Thanatos",
+   "Charon"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was placed in a dead person's mouth to pay the ferryman in Greek custom?",
+  "options": [
+   "A coin",
+   "A ring",
+   "A pearl",
+   "A seed"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of creature is Cerberus?",
+  "options": [
+   "A giant serpent",
+   "A three-headed dog",
+   "A winged horse",
+   "A two-headed lion"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Cerberus guard?",
+  "options": [
+   "The Labyrinth",
+   "The entrance to the underworld",
+   "The gates of Olympus",
+   "The Golden Fleece"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the paradise for heroes in the Greek afterlife?",
+  "options": [
+   "Elysium",
+   "Asphodel",
+   "Tartarus",
+   "Erebus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the deepest pit of punishment in the Greek underworld called?",
+  "options": [
+   "Hades",
+   "Limbo",
+   "Tartarus",
+   "Elysium"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the wife of Hades and queen of the underworld?",
+  "options": [
+   "Hera",
+   "Demeter",
+   "Persephone",
+   "Hecate"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fruit did Persephone eat that bound her to the underworld?",
+  "options": [
+   "A fig",
+   "A grape",
+   "A pomegranate",
+   "An apple"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the myth of Persephone explain?",
+  "options": [
+   "The tides",
+   "The phases of the moon",
+   "The changing of the seasons",
+   "The rising of the sun"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was Persephone's mother?",
+  "options": [
+   "Rhea",
+   "Demeter",
+   "Gaia",
+   "Hera"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which hero killed the Gorgon Medusa?",
+  "options": [
+   "Theseus",
+   "Perseus",
+   "Jason",
+   "Heracles"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What grew on Medusa's head instead of hair?",
+  "options": [
+   "Snakes",
+   "Flames",
+   "Thorns",
+   "Feathers"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What happened to anyone who looked directly at Medusa?",
+  "options": [
+   "They fell asleep",
+   "They turned to stone",
+   "They turned to dust",
+   "They went blind"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did Perseus use to see Medusa safely?",
+  "options": [
+   "A pane of glass",
+   "A blindfold",
+   "A polished shield",
+   "A pool of water"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which winged horse sprang from Medusa's blood?",
+  "options": [
+   "Bucephalus",
+   "Chiron",
+   "Pegasus",
+   "Sleipnir"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which princess did Perseus rescue from a sea monster?",
+  "options": [
+   "Helen",
+   "Cassandra",
+   "Ariadne",
+   "Andromeda"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many labours did Heracles have to perform?",
+  "options": [
+   "Twelve",
+   "Ten",
+   "Seven",
+   "Nine"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek hero Heracles?",
+  "options": [
+   "Hercules",
+   "Aeneas",
+   "Achilles",
+   "Ulysses"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which many-headed monster grew two heads for every one cut off?",
+  "options": [
+   "The Chimera",
+   "The Sphinx",
+   "The Hydra",
+   "The Gorgon"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which lion with an impenetrable hide was the first labour of Heracles?",
+  "options": [
+   "The Nemean Lion",
+   "The Cretan Lion",
+   "The Lion of Arcadia",
+   "The Lion of Thebes"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which labour of Heracles involved cleaning filthy stables in a single day?",
+  "options": [
+   "The Augean Stables",
+   "The Stables of Diomedes",
+   "The Cretan Stables",
+   "The Stymphalian Stables"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which hero killed the Minotaur?",
+  "options": [
+   "Jason",
+   "Theseus",
+   "Perseus",
+   "Odysseus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which Greek island was the Labyrinth said to be?",
+  "options": [
+   "Naxos",
+   "Crete",
+   "Delos",
+   "Rhodes"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which king kept the Minotaur in the Labyrinth?",
+  "options": [
+   "Aegeus",
+   "Priam",
+   "Minos",
+   "Agamemnon"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did Ariadne give Theseus to help him escape the Labyrinth?",
+  "options": [
+   "A map",
+   "A lantern",
+   "A ball of thread",
+   "A magic sword"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who designed the Labyrinth in Greek myth?",
+  "options": [
+   "Hephaestus",
+   "Daedalus",
+   "Theseus",
+   "Icarus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What were the wings of Icarus held together with?",
+  "options": [
+   "Wax",
+   "Rope",
+   "Silver wire",
+   "Glue"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Why did Icarus fall from the sky?",
+  "options": [
+   "He flew too close to the sea",
+   "He was struck by lightning",
+   "He was shot by an arrow",
+   "He flew too close to the sun"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which hero led the Argonauts in search of the Golden Fleece?",
+  "options": [
+   "Theseus",
+   "Jason",
+   "Perseus",
+   "Orpheus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the name of Jason's ship?",
+  "options": [
+   "The Odyssey",
+   "The Pequod",
+   "The Argo",
+   "The Nautilus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sorceress helped Jason win the Golden Fleece?",
+  "options": [
+   "Circe",
+   "Calypso",
+   "Cassandra",
+   "Medea"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which hero's only weak point was his heel?",
+  "options": [
+   "Ajax",
+   "Achilles",
+   "Hector",
+   "Odysseus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tendon in the human body is named after a Greek hero?",
+  "options": [
+   "The Ajax tendon",
+   "The Achilles tendon",
+   "The Atlas tendon",
+   "The Hector tendon"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wooden animal did the Greeks use to get inside Troy?",
+  "options": [
+   "A ram",
+   "A bull",
+   "An elephant",
+   "A horse"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Whose face was said to have launched a thousand ships?",
+  "options": [
+   "Clytemnestra",
+   "Andromache",
+   "Cassandra",
+   "Helen of Troy"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Trojan prince ran off with Helen and began the Trojan War?",
+  "options": [
+   "Paris",
+   "Priam",
+   "Hector",
+   "Aeneas"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the greatest Trojan warrior, killed by Achilles?",
+  "options": [
+   "Aeneas",
+   "Hector",
+   "Priam",
+   "Paris"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek poet is credited with the Iliad and the Odyssey?",
+  "options": [
+   "Hesiod",
+   "Homer",
+   "Sophocles",
+   "Virgil"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which hero's ten-year journey home is told in the Odyssey?",
+  "options": [
+   "Menelaus",
+   "Odysseus",
+   "Agamemnon",
+   "Achilles"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for Odysseus?",
+  "options": [
+   "Hercules",
+   "Romulus",
+   "Ulysses",
+   "Aeneas"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which island kingdom was Odysseus trying to return to?",
+  "options": [
+   "Delos",
+   "Ithaca",
+   "Sparta",
+   "Crete"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the one-eyed giant blinded by Odysseus?",
+  "options": [
+   "Antaeus",
+   "Argus",
+   "Talos",
+   "Polyphemus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are one-eyed giants called in Greek mythology?",
+  "options": [
+   "Gorgons",
+   "Cyclopes",
+   "Satyrs",
+   "Titans"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How did Odysseus stop his crew hearing the Sirens?",
+  "options": [
+   "He plugged their ears with wax",
+   "He sailed at night",
+   "He drugged them",
+   "He blindfolded them"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sorceress turned Odysseus's men into pigs?",
+  "options": [
+   "Circe",
+   "Medea",
+   "Hecate",
+   "Calypso"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two sea hazards did Odysseus have to steer between in a narrow strait?",
+  "options": [
+   "Scylla and Charybdis",
+   "Triton and Nereus",
+   "Argo and Ithaca",
+   "Sirens and Harpies"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was the faithful wife waiting for Odysseus in Ithaca?",
+  "options": [
+   "Helen",
+   "Circe",
+   "Penelope",
+   "Calypso"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Whose touch turned everything to gold?",
+  "options": [
+   "King Croesus",
+   "King Midas",
+   "King Priam",
+   "King Minos"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which youth fell in love with his own reflection?",
+  "options": [
+   "Adonis",
+   "Narcissus",
+   "Hyacinth",
+   "Ganymede"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which nymph could only repeat the words of others?",
+  "options": [
+   "Daphne",
+   "Thetis",
+   "Calypso",
+   "Echo"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was released when Pandora opened the container she was told not to open?",
+  "options": [
+   "An army of monsters",
+   "The winds",
+   "All the troubles of the world",
+   "A great flood"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the one thing left inside Pandora's box?",
+  "options": [
+   "Fire",
+   "Hope",
+   "Wisdom",
+   "Love"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which man was condemned to roll a boulder uphill for eternity?",
+  "options": [
+   "Ixion",
+   "Tantalus",
+   "Prometheus",
+   "Sisyphus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which figure stood in water he could never drink, giving us the word 'tantalise'?",
+  "options": [
+   "Tantalus",
+   "Narcissus",
+   "Sisyphus",
+   "Midas"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which weaver was turned into a spider by Athena?",
+  "options": [
+   "Andromeda",
+   "Arachne",
+   "Antigone",
+   "Ariadne"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which musician went into the underworld to bring back his wife Eurydice?",
+  "options": [
+   "Apollo",
+   "Pan",
+   "Amphion",
+   "Orpheus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What mistake did Orpheus make on the way out of the underworld?",
+  "options": [
+   "He dropped his lyre",
+   "He looked back at Eurydice",
+   "He spoke to Hades",
+   "He ate the food of the dead"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the answer to the Sphinx's riddle about a creature that walks on four legs, then two, then three?",
+  "options": [
+   "A human being",
+   "A bird",
+   "A tortoise",
+   "A horse"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which hero answered the Sphinx's riddle?",
+  "options": [
+   "Perseus",
+   "Theseus",
+   "Cadmus",
+   "Oedipus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of creature is a centaur?",
+  "options": [
+   "Half man, half goat",
+   "Half man, half horse",
+   "Half man, half bull",
+   "Half man, half bird"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wise centaur taught many Greek heroes?",
+  "options": [
+   "Eurytion",
+   "Chiron",
+   "Pholus",
+   "Nessus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of creature is a satyr in Greek mythology?",
+  "options": [
+   "Part man, part fish",
+   "Part man, part goat",
+   "Part man, part snake",
+   "Part man, part lion"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which hero rode Pegasus to defeat the Chimera?",
+  "options": [
+   "Jason",
+   "Theseus",
+   "Bellerophon",
+   "Perseus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mythical bird is reborn from its own ashes?",
+  "options": [
+   "The phoenix",
+   "The griffin",
+   "The harpy",
+   "The roc"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mythical creature has the head and wings of an eagle and the body of a lion?",
+  "options": [
+   "The griffin",
+   "The manticore",
+   "The chimera",
+   "The sphinx"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which winged creatures with women's faces snatched food in Greek myth?",
+  "options": [
+   "Muses",
+   "Harpies",
+   "Furies",
+   "Sirens"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which avenging spirits pursued wrongdoers in Greek myth?",
+  "options": [
+   "The Graces",
+   "The Muses",
+   "The Nymphs",
+   "The Furies"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tribe of warrior women appears in Greek mythology?",
+  "options": [
+   "The Valkyries",
+   "The Amazons",
+   "The Sibyls",
+   "The Maenads"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Trojan princess was cursed to speak true prophecies that nobody believed?",
+  "options": [
+   "Helen",
+   "Andromache",
+   "Cassandra",
+   "Polyxena"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Judgement of Paris, which three goddesses competed for the golden apple?",
+  "options": [
+   "Athena, Artemis and Aphrodite",
+   "Aphrodite, Demeter and Hestia",
+   "Hera, Artemis and Athena",
+   "Hera, Athena and Aphrodite"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was written on the golden apple in the Judgement of Paris?",
+  "options": [
+   "To the wisest",
+   "To the swiftest",
+   "To the fairest",
+   "To the strongest"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek goddess of discord threw the golden apple among the gods?",
+  "options": [
+   "Nyx",
+   "Eris",
+   "Hecate",
+   "Nemesis"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient Greek site was famous for its oracle?",
+  "options": [
+   "Corinth",
+   "Olympia",
+   "Marathon",
+   "Delphi"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which god was the Oracle of Delphi dedicated to?",
+  "options": [
+   "Hermes",
+   "Zeus",
+   "Apollo",
+   "Athena"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tree did Athena give to Athens to win a contest with Poseidon?",
+  "options": [
+   "The fig tree",
+   "The oak tree",
+   "The olive tree",
+   "The laurel tree"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which temple on the Acropolis was dedicated to Athena?",
+  "options": [
+   "The Parthenon",
+   "The Colosseum",
+   "The Pantheon",
+   "The Erechtheion"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird is sacred to the goddess Hera?",
+  "options": [
+   "The eagle",
+   "The owl",
+   "The swan",
+   "The peacock"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which bird is the symbol of Zeus?",
+  "options": [
+   "The crow",
+   "The peacock",
+   "The eagle",
+   "The owl"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which ancient Greek games were held in honour of Zeus?",
+  "options": [
+   "The Nemean Games",
+   "The Olympic Games",
+   "The Isthmian Games",
+   "The Pythian Games"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which nymph turned into a laurel tree to escape Apollo?",
+  "options": [
+   "Callisto",
+   "Echo",
+   "Daphne",
+   "Io"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which giant bronze man guarded the island of Crete in Greek myth?",
+  "options": [
+   "Talos",
+   "Tityos",
+   "Antaeus",
+   "Argus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which many-eyed giant was set to guard Io by Hera?",
+  "options": [
+   "Talos",
+   "Geryon",
+   "Polyphemus",
+   "Argus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Roman name for the Greek god Zeus?",
+  "options": [
+   "Saturn",
+   "Jupiter",
+   "Neptune",
+   "Mars"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek goddess Aphrodite?",
+  "options": [
+   "Juno",
+   "Venus",
+   "Diana",
+   "Minerva"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek god Poseidon?",
+  "options": [
+   "Neptune",
+   "Pluto",
+   "Mercury",
+   "Vulcan"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek god Ares?",
+  "options": [
+   "Apollo",
+   "Mercury",
+   "Vulcan",
+   "Mars"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek goddess Athena?",
+  "options": [
+   "Vesta",
+   "Minerva",
+   "Juno",
+   "Ceres"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek goddess Artemis?",
+  "options": [
+   "Flora",
+   "Juno",
+   "Diana",
+   "Venus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek god Hermes?",
+  "options": [
+   "Mercury",
+   "Vulcan",
+   "Mars",
+   "Janus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek god Hades?",
+  "options": [
+   "Neptune",
+   "Janus",
+   "Saturn",
+   "Pluto"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek goddess Hera?",
+  "options": [
+   "Minerva",
+   "Ceres",
+   "Vesta",
+   "Juno"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek god Hephaestus?",
+  "options": [
+   "Vulcan",
+   "Mercury",
+   "Saturn",
+   "Mars"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek god Dionysus?",
+  "options": [
+   "Silvanus",
+   "Bacchus",
+   "Neptune",
+   "Faunus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Roman name for the Greek goddess Demeter?",
+  "options": [
+   "Flora",
+   "Ceres",
+   "Pomona",
+   "Vesta"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Roman name for the Greek god Cronus?",
+  "options": [
+   "Janus",
+   "Saturn",
+   "Uranus",
+   "Jupiter"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman god of love is shown as a winged boy with a bow?",
+  "options": [
+   "Bacchus",
+   "Janus",
+   "Cupid",
+   "Mercury"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal is said to have raised Romulus and Remus?",
+  "options": [
+   "A bear",
+   "A goat",
+   "A lioness",
+   "A she-wolf"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which god was said to be the father of Romulus and Remus?",
+  "options": [
+   "Saturn",
+   "Jupiter",
+   "Neptune",
+   "Mars"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman god has two faces, looking to the past and the future?",
+  "options": [
+   "Janus",
+   "Mercury",
+   "Saturn",
+   "Vulcan"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which month is named after the two-faced Roman god of beginnings?",
+  "options": [
+   "June",
+   "January",
+   "May",
+   "March"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which month is named after the Roman god of war?",
+  "options": [
+   "April",
+   "March",
+   "August",
+   "May"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which month takes its name from the Roman goddess Juno?",
+  "options": [
+   "January",
+   "June",
+   "May",
+   "July"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman priestesses tended the sacred flame of Vesta?",
+  "options": [
+   "The Sibyls",
+   "The Augurs",
+   "The Flamines",
+   "The Vestal Virgins"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman poet wrote the Aeneid?",
+  "options": [
+   "Virgil",
+   "Horace",
+   "Ovid",
+   "Livy"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Trojan hero is the central figure of the Aeneid?",
+  "options": [
+   "Paris",
+   "Aeneas",
+   "Hector",
+   "Priam"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roman poet wrote the Metamorphoses, a collection of myths?",
+  "options": [
+   "Ovid",
+   "Juvenal",
+   "Catullus",
+   "Virgil"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman midwinter festival involved feasting and gift giving?",
+  "options": [
+   "Parentalia",
+   "Saturnalia",
+   "Floralia",
+   "Lupercalia"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman goddess personified luck and fortune?",
+  "options": [
+   "Victoria",
+   "Concordia",
+   "Fortuna",
+   "Salus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman temple, still standing in Rome, was dedicated to all the gods?",
+  "options": [
+   "The Pantheon",
+   "The Parthenon",
+   "The Colosseum",
+   "The Forum"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet in our solar system is named after the Roman king of the gods?",
+  "options": [
+   "Saturn",
+   "Mars",
+   "Jupiter",
+   "Venus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet is named after the Roman goddess of love?",
+  "options": [
+   "Mars",
+   "Venus",
+   "Mercury",
+   "Neptune"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet is named after the Roman messenger god?",
+  "options": [
+   "Mercury",
+   "Venus",
+   "Jupiter",
+   "Mars"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet is named after the Roman god of the sea?",
+  "options": [
+   "Pluto",
+   "Neptune",
+   "Saturn",
+   "Uranus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the chief god in Norse mythology?",
+  "options": [
+   "Odin",
+   "Freyr",
+   "Thor",
+   "Loki"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Norse god wields a hammer and controls thunder?",
+  "options": [
+   "Baldr",
+   "Odin",
+   "Tyr",
+   "Thor"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Thor's hammer?",
+  "options": [
+   "Gram",
+   "Skofnung",
+   "Mjolnir",
+   "Gungnir"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Norse god is the trickster of the gods?",
+  "options": [
+   "Heimdall",
+   "Njord",
+   "Loki",
+   "Tyr"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many eyes does Odin have?",
+  "options": [
+   "Three",
+   "One",
+   "None",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What did Odin give up in exchange for wisdom?",
+  "options": [
+   "His youth",
+   "One of his hands",
+   "His hearing",
+   "One of his eyes"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two birds sit on Odin's shoulders?",
+  "options": [
+   "Eagles",
+   "Ravens",
+   "Owls",
+   "Falcons"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the names of Odin's two ravens?",
+  "options": [
+   "Hugi and Logi",
+   "Sköll and Hati",
+   "Huginn and Muninn",
+   "Geri and Freki"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many legs does Odin's horse Sleipnir have?",
+  "options": [
+   "Ten",
+   "Six",
+   "Four",
+   "Eight"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the great hall where slain warriors feast in Norse myth?",
+  "options": [
+   "Folkvangr",
+   "Bifrost",
+   "Valhalla",
+   "Asgard"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which female figures choose who dies in battle in Norse myth?",
+  "options": [
+   "The Fates",
+   "The Disir",
+   "The Norns",
+   "The Valkyries"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the home of the Norse gods called?",
+  "options": [
+   "Jotunheim",
+   "Vanaheim",
+   "Midgard",
+   "Asgard"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the world of humans called in Norse mythology?",
+  "options": [
+   "Asgard",
+   "Midgard",
+   "Niflheim",
+   "Alfheim"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the rainbow bridge to Asgard called?",
+  "options": [
+   "Valgrind",
+   "Gjallarbru",
+   "Yggdrasil",
+   "Bifrost"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the giant world tree of Norse mythology called?",
+  "options": [
+   "Yggdrasil",
+   "Laerad",
+   "Glasir",
+   "Bifrost"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many worlds or realms are there in Norse mythology?",
+  "options": [
+   "Twelve",
+   "Nine",
+   "Seven",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the great battle at the end of the world in Norse myth?",
+  "options": [
+   "Fimbulwinter",
+   "Valhalla",
+   "Armageddon",
+   "Ragnarok"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of creature is Fenrir in Norse mythology?",
+  "options": [
+   "A giant boar",
+   "A giant serpent",
+   "A giant eagle",
+   "A giant wolf"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Norse god lost his hand to the wolf Fenrir?",
+  "options": [
+   "Thor",
+   "Tyr",
+   "Baldr",
+   "Heimdall"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Norse myth, what is the Midgard Serpent said to be big enough to do?",
+  "options": [
+   "Block the rainbow bridge",
+   "Swallow the sun",
+   "Encircle the world and bite its own tail",
+   "Coil around the world tree"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Norse goddess is associated with love, beauty and a chariot pulled by cats?",
+  "options": [
+   "Sif",
+   "Frigg",
+   "Idun",
+   "Freyja"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Norse god was killed by a dart of mistletoe?",
+  "options": [
+   "Heimdall",
+   "Bragi",
+   "Baldr",
+   "Tyr"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Norse god guards the rainbow bridge Bifrost?",
+  "options": [
+   "Bragi",
+   "Heimdall",
+   "Ullr",
+   "Tyr"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which day of the week is named after the Norse god Thor?",
+  "options": [
+   "Friday",
+   "Wednesday",
+   "Thursday",
+   "Tuesday"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which day of the week takes its name from Odin, also called Woden?",
+  "options": [
+   "Wednesday",
+   "Thursday",
+   "Monday",
+   "Tuesday"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which day of the week is named after the Norse god Tyr?",
+  "options": [
+   "Thursday",
+   "Wednesday",
+   "Sunday",
+   "Tuesday"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the two main collections of Norse myths called?",
+  "options": [
+   "The Sagas of Kings",
+   "The Skalds",
+   "The Runes",
+   "The Eddas"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Icelandic writer compiled the Prose Edda?",
+  "options": [
+   "Saxo Grammaticus",
+   "Egill Skallagrimsson",
+   "Ari the Wise",
+   "Snorri Sturluson"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What pulls Thor's chariot across the sky?",
+  "options": [
+   "Horses",
+   "Goats",
+   "Ravens",
+   "Wolves"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the two families of Norse gods called?",
+  "options": [
+   "The Asa and the Dvergar",
+   "The Vanir and the Norns",
+   "The Aesir and the Vanir",
+   "The Jotnar and the Alfar"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the giants of Norse mythology called?",
+  "options": [
+   "Vanir",
+   "Jotnar",
+   "Alfar",
+   "Dvergar"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Odin's spear?",
+  "options": [
+   "Mjolnir",
+   "Laevateinn",
+   "Gram",
+   "Gungnir"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Norse goddess is the wife of Odin?",
+  "options": [
+   "Sif",
+   "Freyja",
+   "Frigg",
+   "Idun"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Norse goddess is the wife of Thor?",
+  "options": [
+   "Sif",
+   "Freyja",
+   "Skadi",
+   "Frigg"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which alphabet was used by the Norse and carved on stones?",
+  "options": [
+   "Hieroglyphs",
+   "Cuneiform",
+   "Runes",
+   "Ogham"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Norse ruler of the dead gives her name to a realm of the underworld?",
+  "options": [
+   "Hel",
+   "Ran",
+   "Frigg",
+   "Skadi"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Norse god often travels with Loki in the myths as his companion?",
+  "options": [
+   "Njord",
+   "Heimdall",
+   "Thor",
+   "Tyr"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Norse drink of the gods, brewed with honey?",
+  "options": [
+   "Cider",
+   "Ale",
+   "Nectar",
+   "Mead"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Norse goddess keeps the apples that give the gods their youth?",
+  "options": [
+   "Idun",
+   "Gefjon",
+   "Freyja",
+   "Sif"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Norse god is the father of the wolf Fenrir?",
+  "options": [
+   "Loki",
+   "Thor",
+   "Odin",
+   "Tyr"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the sun god of ancient Egypt?",
+  "options": [
+   "Set",
+   "Ptah",
+   "Osiris",
+   "Ra"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian god has the head of a jackal?",
+  "options": [
+   "Sobek",
+   "Thoth",
+   "Horus",
+   "Anubis"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian god was associated with mummification and the dead?",
+  "options": [
+   "Bastet",
+   "Khnum",
+   "Anubis",
+   "Hathor"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian god has the head of a falcon and is a god of the sky?",
+  "options": [
+   "Anubis",
+   "Set",
+   "Thoth",
+   "Horus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian god rules the afterlife and is often shown with green skin?",
+  "options": [
+   "Amun",
+   "Ptah",
+   "Osiris",
+   "Ra"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian goddess is the wife of Osiris and a goddess of magic?",
+  "options": [
+   "Sekhmet",
+   "Isis",
+   "Bastet",
+   "Nephthys"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian god murdered Osiris in the myth?",
+  "options": [
+   "Anubis",
+   "Thoth",
+   "Horus",
+   "Set"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian god of chaos is associated with the desert and storms?",
+  "options": [
+   "Osiris",
+   "Geb",
+   "Ptah",
+   "Set"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian god has the head of an ibis and is the god of writing?",
+  "options": [
+   "Anubis",
+   "Thoth",
+   "Khonsu",
+   "Horus"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal is the Egyptian goddess Bastet associated with?",
+  "options": [
+   "The cow",
+   "The lioness",
+   "The cat",
+   "The crocodile"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian god has the head of a crocodile?",
+  "options": [
+   "Khnum",
+   "Apep",
+   "Sobek",
+   "Anubis"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Egyptian goddess is often shown with cow horns and a sun disc?",
+  "options": [
+   "Maat",
+   "Hathor",
+   "Nut",
+   "Isis"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Egyptian goddess represents truth and justice?",
+  "options": [
+   "Nut",
+   "Maat",
+   "Isis",
+   "Hathor"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Egyptian belief, what was the heart weighed against after death?",
+  "options": [
+   "A scarab",
+   "A feather",
+   "A grain of sand",
+   "A gold coin"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian symbol shaped like a cross with a loop means life?",
+  "options": [
+   "The ankh",
+   "The was sceptre",
+   "The djed",
+   "The scarab"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian protective symbol was painted on boats and worn as an amulet against harm?",
+  "options": [
+   "The Eye of Thoth",
+   "The Eye of Osiris",
+   "The Eye of Horus",
+   "The Eye of Anubis"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which beetle was a sacred Egyptian symbol of rebirth?",
+  "options": [
+   "The stag beetle",
+   "The scarab",
+   "The firefly",
+   "The weevil"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the ancient Egyptian collection of funeral spells commonly called?",
+  "options": [
+   "The Book of Ra",
+   "The Book of the Dead",
+   "The Papyrus of Life",
+   "The Pyramid Scrolls"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian goddess is a lioness and a goddess of war?",
+  "options": [
+   "Nut",
+   "Hathor",
+   "Sekhmet",
+   "Bastet"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Egyptian goddess was believed to arch over the earth as the sky?",
+  "options": [
+   "Tefnut",
+   "Isis",
+   "Nut",
+   "Maat"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Egyptian god was the great god of Thebes, later joined with Ra?",
+  "options": [
+   "Shu",
+   "Geb",
+   "Ptah",
+   "Amun"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What were the jars called that held a mummy's organs?",
+  "options": [
+   "Canopic jars",
+   "Urns",
+   "Reliquaries",
+   "Amphorae"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which organ was left inside the body during Egyptian mummification?",
+  "options": [
+   "The liver",
+   "The heart",
+   "The lungs",
+   "The brain"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How was the pharaoh regarded in ancient Egyptian religion?",
+  "options": [
+   "As a living god",
+   "As a high priest only",
+   "As a chosen elder",
+   "As a servant of the priests"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which great stone figure at Giza has a lion's body and a human head?",
+  "options": [
+   "The Colossus",
+   "The Obelisk of Ra",
+   "The Great Sphinx",
+   "The Statue of Horus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the ancient Egyptian underworld called?",
+  "options": [
+   "The Aaru",
+   "The Duat",
+   "The Nun",
+   "The Amenti"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Egyptian pharaoh tried to replace the old gods with worship of the sun disc Aten?",
+  "options": [
+   "Khufu",
+   "Tutankhamun",
+   "Ramesses II",
+   "Akhenaten"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which writing system did Egyptian priests use for sacred inscriptions?",
+  "options": [
+   "Runes",
+   "Linear B",
+   "Hieroglyphs",
+   "Cuneiform"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian creature devoured the hearts of the unworthy dead?",
+  "options": [
+   "Serqet",
+   "Apep",
+   "Bennu",
+   "Ammit"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which river was central to ancient Egyptian religion and life?",
+  "options": [
+   "The Tigris",
+   "The Jordan",
+   "The Euphrates",
+   "The Nile"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which central figure is Christianity named after and founded on?",
+  "options": [
+   "John the Baptist",
+   "Saint Peter",
+   "Jesus of Nazareth",
+   "Saint Paul"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which town do the Gospels say Jesus was born?",
+  "options": [
+   "Nazareth",
+   "Bethlehem",
+   "Jerusalem",
+   "Capernaum"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which town was Jesus brought up according to the Gospels?",
+  "options": [
+   "Jericho",
+   "Bethany",
+   "Bethlehem",
+   "Nazareth"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the two main parts of the Christian Bible called?",
+  "options": [
+   "The Psalms and the Epistles",
+   "The Old Testament and the New Testament",
+   "The Torah and the Gospels",
+   "The Law and the Prophets"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the first book of the Bible?",
+  "options": [
+   "Job",
+   "Genesis",
+   "Exodus",
+   "Matthew"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the last book of the Christian Bible?",
+  "options": [
+   "Jude",
+   "Acts",
+   "Malachi",
+   "Revelation"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many Gospels are there in the New Testament?",
+  "options": [
+   "Twelve",
+   "Four",
+   "Six",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which four books are the Gospels of the New Testament?",
+  "options": [
+   "Matthew, John, Peter and James",
+   "Mark, Luke, John and Acts",
+   "Matthew, Mark, Peter and Paul",
+   "Matthew, Mark, Luke and John"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many apostles did Jesus choose according to the Gospels?",
+  "options": [
+   "Ten",
+   "Fourteen",
+   "Twelve",
+   "Seven"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which apostle is said to have betrayed Jesus?",
+  "options": [
+   "Simon Peter",
+   "Andrew",
+   "Judas Iscariot",
+   "Thomas"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many times did Peter deny Jesus according to the Gospels?",
+  "options": [
+   "Three",
+   "Once",
+   "Two",
+   "Seven"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which apostle is known as 'doubting' for wanting proof of the resurrection?",
+  "options": [
+   "Philip",
+   "Thomas",
+   "James",
+   "Bartholomew"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who baptised Jesus in the River Jordan according to the Gospels?",
+  "options": [
+   "John the Baptist",
+   "Peter",
+   "Andrew",
+   "Paul"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian festival celebrates the birth of Jesus?",
+  "options": [
+   "Epiphany",
+   "Easter",
+   "Pentecost",
+   "Christmas"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian festival celebrates the resurrection of Jesus?",
+  "options": [
+   "Christmas",
+   "Advent",
+   "Easter",
+   "Lent"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which day do Christians remember the crucifixion of Jesus?",
+  "options": [
+   "Good Friday",
+   "Easter Sunday",
+   "Ash Wednesday",
+   "Palm Sunday"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many days does the Christian season of Lent traditionally last?",
+  "options": [
+   "Thirty",
+   "Fifty",
+   "Twelve",
+   "Forty"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian season leads up to Christmas?",
+  "options": [
+   "Advent",
+   "Epiphany",
+   "Pentecost",
+   "Lent"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Sunday before Easter recalls Jesus entering Jerusalem to cheering crowds?",
+  "options": [
+   "Advent Sunday",
+   "Low Sunday",
+   "Trinity Sunday",
+   "Palm Sunday"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which meal shared by Jesus and his apostles is remembered on Maundy Thursday?",
+  "options": [
+   "The Wedding at Cana",
+   "The Passover Lamb",
+   "The Feeding of the Five Thousand",
+   "The Last Supper"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What three gifts did the wise men bring in the Christmas story?",
+  "options": [
+   "Gold, frankincense and myrrh",
+   "Gold, silver and myrrh",
+   "Gold, incense and oil",
+   "Silver, frankincense and spices"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian doctrine describes God as Father, Son and Holy Spirit?",
+  "options": [
+   "The Atonement",
+   "The Trinity",
+   "The Communion of Saints",
+   "The Incarnation"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which prayer taught by Jesus begins 'Our Father'?",
+  "options": [
+   "The Lord's Prayer",
+   "The Nicene Creed",
+   "The Apostles' Creed",
+   "The Hail Mary"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which symbol is the central emblem of Christianity?",
+  "options": [
+   "The cross",
+   "The star",
+   "The crescent",
+   "The wheel"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the head of the Roman Catholic Church?",
+  "options": [
+   "The Pope",
+   "The Cardinal Dean",
+   "The Patriarch of Constantinople",
+   "The Archbishop of Canterbury"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which apostle is regarded by Catholics as the first Pope?",
+  "options": [
+   "Peter",
+   "John",
+   "Paul",
+   "James"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which basilica in Vatican City is one of the largest churches in the world?",
+  "options": [
+   "Westminster Abbey",
+   "St Peter's Basilica",
+   "St Paul's Cathedral",
+   "Notre-Dame"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the senior bishop of the Church of England?",
+  "options": [
+   "The Archbishop of York",
+   "The Dean of Westminster",
+   "The Archbishop of Canterbury",
+   "The Bishop of London"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which monk began the Protestant Reformation by publishing ninety-five theses?",
+  "options": [
+   "John Knox",
+   "Martin Luther",
+   "John Calvin",
+   "Huldrych Zwingli"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which English king broke with Rome and led to the Church of England?",
+  "options": [
+   "Edward VI",
+   "Henry VIII",
+   "James I",
+   "Henry VII"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the three main branches of Christianity?",
+  "options": [
+   "Protestant, Methodist and Quaker",
+   "Orthodox, Lutheran and Coptic",
+   "Catholic, Anglican and Baptist",
+   "Catholic, Orthodox and Protestant"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian ceremony welcomes a person into the church with water?",
+  "options": [
+   "Ordination",
+   "Baptism",
+   "Confirmation",
+   "Confession"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Christian service of sharing bread and wine usually called?",
+  "options": [
+   "Communion",
+   "Confession",
+   "Benediction",
+   "Baptism"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian organisation with a brass band tradition was founded by William Booth?",
+  "options": [
+   "The Salvation Army",
+   "The Boys' Brigade",
+   "The Quakers",
+   "The YMCA"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which preacher founded Methodism?",
+  "options": [
+   "George Fox",
+   "John Wesley",
+   "John Knox",
+   "William Tyndale"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christian group is formally called the Religious Society of Friends?",
+  "options": [
+   "The Shakers",
+   "The Mennonites",
+   "The Amish",
+   "The Quakers"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which English translation of the Bible was published in 1611?",
+  "options": [
+   "The Douay-Rheims Bible",
+   "The Geneva Bible",
+   "The Vulgate",
+   "The King James Version"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which psalm begins 'The Lord is my shepherd'?",
+  "options": [
+   "Psalm 23",
+   "Psalm 1",
+   "Psalm 100",
+   "Psalm 51"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the patron saint of Ireland?",
+  "options": [
+   "Saint Patrick",
+   "Saint David",
+   "Saint George",
+   "Saint Andrew"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the patron saint of Scotland?",
+  "options": [
+   "Saint Patrick",
+   "Saint George",
+   "Saint Andrew",
+   "Saint Columba"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the patron saint of England?",
+  "options": [
+   "Saint George",
+   "Saint Alban",
+   "Saint Edmund",
+   "Saint Andrew"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the patron saint of Wales?",
+  "options": [
+   "Saint Non",
+   "Saint David",
+   "Saint Illtud",
+   "Saint Winifred"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which saint is the basis for the figure of Santa Claus?",
+  "options": [
+   "Saint Stephen",
+   "Saint Christopher",
+   "Saint Nicholas",
+   "Saint Martin"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which string of beads do Catholics use to count prayers?",
+  "options": [
+   "The kombologi",
+   "The misbaha",
+   "The rosary",
+   "The mala"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian festival marks the coming of the Holy Spirit to the apostles?",
+  "options": [
+   "Pentecost",
+   "Epiphany",
+   "Candlemas",
+   "Ascension"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christian feast on 6 January remembers the visit of the wise men?",
+  "options": [
+   "Epiphany",
+   "Michaelmas",
+   "Lammas",
+   "Candlemas"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Old Testament figure built an ark to survive a great flood?",
+  "options": [
+   "Abraham",
+   "Moses",
+   "Job",
+   "Noah"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird did Noah send out that returned with an olive leaf?",
+  "options": [
+   "A sparrow",
+   "An eagle",
+   "A raven",
+   "A dove"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which garden do Adam and Eve live in at the start of Genesis?",
+  "options": [
+   "The Garden of Gethsemane",
+   "The Garden of Paradise",
+   "The Garden of Eden",
+   "The Hanging Gardens"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which creature tempts Eve in the Book of Genesis?",
+  "options": [
+   "A goat",
+   "A raven",
+   "A lion",
+   "A serpent"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two sons of Adam and Eve are involved in the first murder in Genesis?",
+  "options": [
+   "Jacob and Esau",
+   "Isaac and Ishmael",
+   "Seth and Enoch",
+   "Cain and Abel"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which mountain is Moses said to have received the Ten Commandments?",
+  "options": [
+   "Mount Nebo",
+   "Mount Sinai",
+   "Mount Carmel",
+   "Mount Ararat"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many commandments were given to Moses?",
+  "options": [
+   "Ten",
+   "Five",
+   "Seven",
+   "Twelve"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sea is said to have parted so the Israelites could escape Egypt?",
+  "options": [
+   "The Mediterranean",
+   "The Sea of Galilee",
+   "The Dead Sea",
+   "The Red Sea"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which shepherd boy killed the giant Goliath with a sling?",
+  "options": [
+   "Saul",
+   "David",
+   "Samson",
+   "Gideon"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which biblical strongman lost his strength when his hair was cut?",
+  "options": [
+   "Goliath",
+   "Gideon",
+   "David",
+   "Samson"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who cut Samson's hair in the Bible story?",
+  "options": [
+   "Delilah",
+   "Jezebel",
+   "Bathsheba",
+   "Rahab"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which prophet was swallowed by a great fish in the Bible?",
+  "options": [
+   "Isaiah",
+   "Amos",
+   "Jonah",
+   "Elijah"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which biblical figure survived a night in a den of lions?",
+  "options": [
+   "Ezekiel",
+   "Joseph",
+   "Samuel",
+   "Daniel"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which biblical figure was given a coat of many colours by his father?",
+  "options": [
+   "Benjamin",
+   "Judah",
+   "Daniel",
+   "Joseph"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tower in Genesis is linked to the scattering of languages?",
+  "options": [
+   "The Tower of Jericho",
+   "The Tower of David",
+   "The Tower of Siloam",
+   "The Tower of Babel"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which king of Israel was famous for his wisdom and built the first Temple?",
+  "options": [
+   "Solomon",
+   "Saul",
+   "Hezekiah",
+   "David"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which city did Jesus's crucifixion take place according to the Gospels?",
+  "options": [
+   "Jerusalem",
+   "Nazareth",
+   "Damascus",
+   "Bethlehem"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which garden is where Jesus prayed before his arrest?",
+  "options": [
+   "Siloam",
+   "Eden",
+   "Bethany",
+   "Gethsemane"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roman governor is said to have sentenced Jesus?",
+  "options": [
+   "Quirinius",
+   "Pontius Pilate",
+   "Caiaphas",
+   "Herod Antipas"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which parable tells of a traveller helped by a stranger after others walked past?",
+  "options": [
+   "The Prodigal Son",
+   "The Talents",
+   "The Good Samaritan",
+   "The Sower"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which parable tells of a son who returns home after wasting his inheritance?",
+  "options": [
+   "The Prodigal Son",
+   "The Rich Fool",
+   "The Lost Sheep",
+   "The Good Samaritan"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which miracle describes Jesus feeding a huge crowd with loaves and fish?",
+  "options": [
+   "The Wedding at Cana",
+   "The Calming of the Storm",
+   "The Feeding of the Five Thousand",
+   "The Raising of Lazarus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At which wedding is Jesus said to have turned water into wine?",
+  "options": [
+   "Bethany",
+   "Capernaum",
+   "Cana",
+   "Nain"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a Jewish religious teacher and leader called?",
+  "options": [
+   "An imam",
+   "A rabbi",
+   "A priest",
+   "A guru"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the first section of the Hebrew Bible, the five books of Moses, called?",
+  "options": [
+   "The Talmud",
+   "The Torah",
+   "The Zohar",
+   "The Mishnah"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is one of the five books of the Torah?",
+  "options": [
+   "Psalms",
+   "Genesis",
+   "Joshua",
+   "Isaiah"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Jewish Sabbath begins at sunset on which day?",
+  "options": [
+   "Sunday",
+   "Monday",
+   "Friday",
+   "Saturday"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Jewish Sabbath called in Hebrew?",
+  "options": [
+   "Shabbat",
+   "Simchat",
+   "Seder",
+   "Sukkot"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which six-pointed star is a symbol of Judaism?",
+  "options": [
+   "The Star of Bethlehem",
+   "The Star of Zion",
+   "The Star of Solomon",
+   "The Star of David"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the branched candelabrum that is an ancient symbol of Judaism called?",
+  "options": [
+   "A chalice",
+   "A thurible",
+   "A menorah",
+   "A censer"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Jewish festival remembers the exodus from Egypt?",
+  "options": [
+   "Passover",
+   "Sukkot",
+   "Hanukkah",
+   "Purim"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the ceremonial meal at the start of Passover called?",
+  "options": [
+   "The Seder",
+   "The Kiddush",
+   "The Oneg",
+   "The Havdalah"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unleavened bread is eaten during Passover?",
+  "options": [
+   "Pita",
+   "Challah",
+   "Matzah",
+   "Naan"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Jewish festival is known as the Festival of Lights?",
+  "options": [
+   "Passover",
+   "Shavuot",
+   "Purim",
+   "Hanukkah"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many nights does Hanukkah last?",
+  "options": [
+   "Eight",
+   "Seven",
+   "Nine",
+   "Six"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spinning top is played with at Hanukkah?",
+  "options": [
+   "A top hat",
+   "A dreidel",
+   "A gragger",
+   "A teetotum"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ram's horn is blown at Rosh Hashanah?",
+  "options": [
+   "The kudu",
+   "The lur",
+   "The shofar",
+   "The carnyx"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do observant Jews traditionally do on Yom Kippur?",
+  "options": [
+   "Fast for the day",
+   "Feast all day",
+   "Plant a tree",
+   "Travel to Jerusalem"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Jewish festival involves building a temporary hut or booth?",
+  "options": [
+   "Shavuot",
+   "Sukkot",
+   "Hanukkah",
+   "Purim"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Jewish festival celebrates the story of Queen Esther?",
+  "options": [
+   "Shavuot",
+   "Purim",
+   "Passover",
+   "Sukkot"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the ceremony marking a Jewish boy reaching religious adulthood called?",
+  "options": [
+   "A bat mitzvah",
+   "A bar mitzvah",
+   "A brit milah",
+   "A kiddush"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the equivalent coming of age ceremony for a Jewish girl called?",
+  "options": [
+   "A bar mitzvah",
+   "A simcha",
+   "A bat mitzvah",
+   "A seder"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "At what age does a Jewish boy traditionally have his bar mitzvah?",
+  "options": [
+   "Twelve",
+   "Sixteen",
+   "Eighteen",
+   "Thirteen"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What word describes food prepared according to Jewish dietary law?",
+  "options": [
+   "Halal",
+   "Kosher",
+   "Vegan",
+   "Sattvic"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which meat is not kosher under Jewish dietary law?",
+  "options": [
+   "Lamb",
+   "Beef",
+   "Pork",
+   "Chicken"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two food groups are kept separate under kosher law?",
+  "options": [
+   "Bread and wine",
+   "Fish and vegetables",
+   "Meat and dairy",
+   "Fruit and grain"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the small skullcap worn by many Jewish men called?",
+  "options": [
+   "A turban",
+   "A mitre",
+   "A kippah",
+   "A fez"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the small case containing scripture fixed to Jewish doorposts called?",
+  "options": [
+   "A mezuzah",
+   "A shofar",
+   "A tefillin",
+   "A tallit"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the prayer shawl worn by Jewish worshippers called?",
+  "options": [
+   "A kippah",
+   "A mezuzah",
+   "A tallit",
+   "A menorah"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which wall in Jerusalem is a major site of Jewish prayer?",
+  "options": [
+   "The Damascus Wall",
+   "The Wailing Gate",
+   "The Temple Arch",
+   "The Western Wall"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which patriarch is regarded as the founding father of Judaism?",
+  "options": [
+   "David",
+   "Abraham",
+   "Moses",
+   "Isaac"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which language is the Torah traditionally written?",
+  "options": [
+   "Latin",
+   "Hebrew",
+   "Greek",
+   "Aramaic"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the large body of Jewish law and commentary called?",
+  "options": [
+   "The Torah",
+   "The Tanakh",
+   "The Midrash",
+   "The Talmud"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the cabinet in a synagogue holding the Torah scrolls called?",
+  "options": [
+   "The Tabernacle",
+   "The Bimah",
+   "The Ark",
+   "The Vestry"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which chest is said in the Bible to have held the tablets of the commandments?",
+  "options": [
+   "Noah's Ark",
+   "The Tabernacle Chest",
+   "The Ark of the Covenant",
+   "The Chest of Solomon"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Islamic place of worship called?",
+  "options": [
+   "A temple",
+   "A mosque",
+   "A gurdwara",
+   "A synagogue"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the holy book of Islam called?",
+  "options": [
+   "The Torah",
+   "The Vedas",
+   "The Quran",
+   "The Tripitaka"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which language was the Quran revealed?",
+  "options": [
+   "Aramaic",
+   "Arabic",
+   "Hebrew",
+   "Persian"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the prophet of Islam?",
+  "options": [
+   "Abraham",
+   "Muhammad",
+   "Jesus",
+   "Moses"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which city was the Prophet Muhammad born?",
+  "options": [
+   "Medina",
+   "Jerusalem",
+   "Mecca",
+   "Damascus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many pillars of Islam are there?",
+  "options": [
+   "Four",
+   "Six",
+   "Five",
+   "Seven"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many times a day do observant Muslims pray?",
+  "options": [
+   "Five",
+   "Three",
+   "Twice",
+   "Seven"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which month of the Islamic calendar is the month of fasting?",
+  "options": [
+   "Shawwal",
+   "Rajab",
+   "Ramadan",
+   "Muharram"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "During Ramadan, between which times do Muslims fast?",
+  "options": [
+   "Noon and midnight",
+   "Sunrise and midnight",
+   "Midnight and noon",
+   "Dawn and sunset"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which festival marks the end of Ramadan?",
+  "options": [
+   "Mawlid",
+   "Eid al-Fitr",
+   "Ashura",
+   "Eid al-Adha"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Islamic pilgrimage to Mecca called?",
+  "options": [
+   "The Hijra",
+   "The Zakat",
+   "The Umrah",
+   "The Hajj"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the cube-shaped building at the centre of the Great Mosque in Mecca called?",
+  "options": [
+   "The Dome of the Rock",
+   "The Kaaba",
+   "The Minbar",
+   "The Mihrab"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which direction do Muslims face when praying?",
+  "options": [
+   "Towards Medina",
+   "Towards Mecca",
+   "Towards the east",
+   "Towards Jerusalem"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Arabic word for the direction of prayer?",
+  "options": [
+   "Mihrab",
+   "Minbar",
+   "Qibla",
+   "Sujud"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the tower of a mosque, used to call people to prayer, called?",
+  "options": [
+   "A campanile",
+   "A steeple",
+   "A minaret",
+   "A pagoda"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the person who leads prayers in a mosque called?",
+  "options": [
+   "A guru",
+   "A vicar",
+   "A rabbi",
+   "An imam"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pillar of Islam is the giving of alms to those in need?",
+  "options": [
+   "Zakat",
+   "Salah",
+   "Shahada",
+   "Sawm"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pillar of Islam is the declaration of faith?",
+  "options": [
+   "Hajj",
+   "Sawm",
+   "Zakat",
+   "Shahada"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which day of the week is the main day of congregational prayer in Islam?",
+  "options": [
+   "Friday",
+   "Saturday",
+   "Thursday",
+   "Sunday"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What word describes food that is permitted under Islamic law?",
+  "options": [
+   "Kosher",
+   "Sattvic",
+   "Halal",
+   "Haram"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Arabic word for God used by Muslims?",
+  "options": [
+   "Yahweh",
+   "Rabbi",
+   "Allah",
+   "Ahura"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the two main branches of Islam?",
+  "options": [
+   "Sunni and Sufi",
+   "Sufi and Ismaili",
+   "Shia and Salafi",
+   "Sunni and Shia"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which city is Islam's second holiest, and home to the Prophet's Mosque?",
+  "options": [
+   "Medina",
+   "Baghdad",
+   "Jerusalem",
+   "Damascus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which golden-domed shrine in Jerusalem is an important Islamic landmark?",
+  "options": [
+   "The Blue Mosque",
+   "The Kaaba",
+   "The Dome of the Rock",
+   "Hagia Sophia"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which angel is said in Islam to have delivered the Quran to Muhammad?",
+  "options": [
+   "Jibril",
+   "Mikail",
+   "Israfil",
+   "Azrail"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Islamic calendar based on?",
+  "options": [
+   "The stars",
+   "The cycles of the sun",
+   "The seasons",
+   "The cycles of the moon"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Islamic calendar counts from which event?",
+  "options": [
+   "The building of the Kaaba",
+   "The migration from Mecca to Medina",
+   "The first revelation",
+   "The birth of Muhammad"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a chapter of the Quran called?",
+  "options": [
+   "A psalm",
+   "A surah",
+   "A sutra",
+   "A parashah"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Islamic festival is known as the Festival of Sacrifice?",
+  "options": [
+   "Laylat al-Qadr",
+   "Eid al-Adha",
+   "Eid al-Fitr",
+   "Ashura"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the mystical tradition within Islam associated with whirling dervishes?",
+  "options": [
+   "Wahhabism",
+   "Sufism",
+   "Salafism",
+   "Ismailism"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which symbol of a crescent moon and star is widely associated with Islam?",
+  "options": [
+   "The tree and root",
+   "The crescent and star",
+   "The wheel and spoke",
+   "The lamp and flame"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which decorative art form of beautiful handwriting is prominent in mosques?",
+  "options": [
+   "Mosaic portraiture",
+   "Stained glass figures",
+   "Calligraphy",
+   "Fresco"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which drink is forbidden to observant Muslims?",
+  "options": [
+   "Alcohol",
+   "Milk",
+   "Coffee",
+   "Tea"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the raised pulpit in a mosque, used for the sermon, called?",
+  "options": [
+   "The apse",
+   "The bimah",
+   "The lectern",
+   "The minbar"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the niche in a mosque wall showing the direction of Mecca called?",
+  "options": [
+   "The maqsurah",
+   "The minaret",
+   "The minbar",
+   "The mihrab"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the founder of Sikhism?",
+  "options": [
+   "Guru Nanak",
+   "Guru Arjan",
+   "Guru Angad",
+   "Guru Gobind Singh"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many human Gurus does Sikhism recognise?",
+  "options": [
+   "Twelve",
+   "Ten",
+   "Seven",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Sikh holy scripture called?",
+  "options": [
+   "The Tripitaka",
+   "The Adi Purana",
+   "The Guru Granth Sahib",
+   "The Bhagavad Gita"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the free community kitchen at a gurdwara called?",
+  "options": [
+   "Kirtan",
+   "Langar",
+   "Prasad",
+   "Seva"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Indian region did Sikhism begin?",
+  "options": [
+   "Kerala",
+   "Punjab",
+   "Gujarat",
+   "Bengal"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Sikh temple in Amritsar is known in English as the Golden Temple?",
+  "options": [
+   "Hazur Sahib",
+   "Akal Takht",
+   "Anandpur Sahib",
+   "Harmandir Sahib"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of the Five Ks of Sikhism is a steel bracelet?",
+  "options": [
+   "The kangha",
+   "The kesh",
+   "The kara",
+   "The kirpan"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of the Five Ks refers to uncut hair?",
+  "options": [
+   "Kara",
+   "Kachera",
+   "Kangha",
+   "Kesh"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which surname is traditionally taken by Sikh men?",
+  "options": [
+   "Kaur",
+   "Sharma",
+   "Patel",
+   "Singh"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which surname is traditionally taken by Sikh women?",
+  "options": [
+   "Singh",
+   "Kaur",
+   "Devi",
+   "Bibi"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the head covering worn by many Sikh men called?",
+  "options": [
+   "A fez",
+   "A turban",
+   "A kippah",
+   "A mitre"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spring festival is one of the most important in the Sikh calendar?",
+  "options": [
+   "Navratri",
+   "Holi",
+   "Diwali",
+   "Vaisakhi"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which double-edged sword emblem is the symbol of Sikhism?",
+  "options": [
+   "The Chakkar",
+   "The Trishul",
+   "The Kirpan",
+   "The Khanda"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these world faiths is the oldest?",
+  "options": [
+   "Sikhism",
+   "Judaism",
+   "Christianity",
+   "Islam"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which religion is currently the largest in the world by number of followers?",
+  "options": [
+   "Buddhism",
+   "Christianity",
+   "Islam",
+   "Hinduism"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the word for belief in a single god?",
+  "options": [
+   "Pantheism",
+   "Monotheism",
+   "Animism",
+   "Polytheism"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the word for belief in many gods?",
+  "options": [
+   "Deism",
+   "Monotheism",
+   "Polytheism",
+   "Atheism"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a person who does not believe in any god?",
+  "options": [
+   "A deist",
+   "An atheist",
+   "A pantheist",
+   "An agnostic"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for someone who holds that the existence of God cannot be known?",
+  "options": [
+   "An agnostic",
+   "An atheist",
+   "A heretic",
+   "A theist"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the general word for a journey made to a holy place?",
+  "options": [
+   "A pilgrimage",
+   "A crusade",
+   "A vigil",
+   "A procession"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French town is a major Catholic pilgrimage site known for its spring water?",
+  "options": [
+   "Lourdes",
+   "Reims",
+   "Avignon",
+   "Chartres"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spanish city is the destination of the Camino pilgrimage route?",
+  "options": [
+   "Seville",
+   "Salamanca",
+   "Toledo",
+   "Santiago de Compostela"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian town is associated with Saint Francis?",
+  "options": [
+   "Siena",
+   "Loreto",
+   "Assisi",
+   "Padua"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Saint Francis of Assisi is the patron saint of what?",
+  "options": [
+   "Travellers",
+   "Lost causes",
+   "Musicians",
+   "Animals and the environment"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which saint is the patron saint of travellers?",
+  "options": [
+   "Saint Cecilia",
+   "Saint Christopher",
+   "Saint Anthony",
+   "Saint Jude"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which saint is traditionally invoked to find lost things?",
+  "options": [
+   "Saint Blaise",
+   "Saint Jude",
+   "Saint Anthony",
+   "Saint Christopher"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the title given to a person recognised by the Catholic Church as holy after death?",
+  "options": [
+   "Saint",
+   "Cardinal",
+   "Bishop",
+   "Deacon"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the process of officially declaring someone a saint called?",
+  "options": [
+   "Canonisation",
+   "Consecration",
+   "Coronation",
+   "Confirmation"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hindu god has the head of an elephant?",
+  "options": [
+   "Ganesha",
+   "Hanuman",
+   "Shiva",
+   "Vishnu"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Ganesha is widely worshipped as the remover of what?",
+  "options": [
+   "Debt",
+   "Obstacles",
+   "Storms",
+   "Illness"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which three gods make up the Hindu Trimurti?",
+  "options": [
+   "Vishnu, Ganesha and Shiva",
+   "Brahma, Vishnu and Shiva",
+   "Shiva, Rama and Krishna",
+   "Brahma, Indra and Agni"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Hindu Trimurti, which god is the creator?",
+  "options": [
+   "Shiva",
+   "Brahma",
+   "Indra",
+   "Vishnu"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Hindu Trimurti, which god is the preserver?",
+  "options": [
+   "Ganesha",
+   "Vishnu",
+   "Shiva",
+   "Brahma"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Hindu Trimurti, which god is the destroyer?",
+  "options": [
+   "Shiva",
+   "Brahma",
+   "Krishna",
+   "Vishnu"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hindu god is depicted as a monkey and is devoted to Rama?",
+  "options": [
+   "Ganesha",
+   "Garuda",
+   "Nandi",
+   "Hanuman"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hindu goddess is associated with wealth and good fortune?",
+  "options": [
+   "Durga",
+   "Kali",
+   "Saraswati",
+   "Lakshmi"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hindu goddess is associated with learning, music and the arts?",
+  "options": [
+   "Parvati",
+   "Saraswati",
+   "Lakshmi",
+   "Durga"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hindu goddess rides a tiger or lion and is worshipped at Navratri?",
+  "options": [
+   "Durga",
+   "Lakshmi",
+   "Sita",
+   "Saraswati"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hindu festival is known as the Festival of Lights?",
+  "options": [
+   "Navratri",
+   "Diwali",
+   "Holi",
+   "Onam"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Hindu festival is celebrated by throwing coloured powders?",
+  "options": [
+   "Pongal",
+   "Raksha Bandhan",
+   "Holi",
+   "Diwali"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which demon king abducts Sita in the Ramayana?",
+  "options": [
+   "Mahishasura",
+   "Ravana",
+   "Hiranyaksha",
+   "Kumbhakarna"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which long Indian epic contains the Bhagavad Gita?",
+  "options": [
+   "The Puranas",
+   "The Mahabharata",
+   "The Ramayana",
+   "The Vedas"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the oldest sacred texts of Hinduism called?",
+  "options": [
+   "The Sutras",
+   "The Vedas",
+   "The Agamas",
+   "The Puranas"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Indian city on the Ganges is one of Hinduism's holiest?",
+  "options": [
+   "Chennai",
+   "Jaipur",
+   "Varanasi",
+   "Mumbai"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sacred syllable and symbol is chanted in Hindu prayer?",
+  "options": [
+   "Ave",
+   "Amen",
+   "Om",
+   "Shalom"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal is regarded as sacred in Hinduism?",
+  "options": [
+   "The cow",
+   "The camel",
+   "The horse",
+   "The goat"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a Hindu temple usually called?",
+  "options": [
+   "A vihara",
+   "A mandir",
+   "A gurdwara",
+   "A masjid"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hindu concept holds that actions have consequences in this life and the next?",
+  "options": [
+   "Dharma",
+   "Moksha",
+   "Maya",
+   "Karma"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Hindu term for the cycle of death and rebirth?",
+  "options": [
+   "Nirvana",
+   "Dharma",
+   "Samsara",
+   "Puja"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Hinduism, what is release from the cycle of rebirth called?",
+  "options": [
+   "Moksha",
+   "Karma",
+   "Samsara",
+   "Yoga"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hindu god is often shown with blue skin playing a flute?",
+  "options": [
+   "Indra",
+   "Brahma",
+   "Shiva",
+   "Krishna"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which bull is the mount of the Hindu god Shiva?",
+  "options": [
+   "Garuda",
+   "Vahana",
+   "Nandi",
+   "Airavata"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Hindu act of worship, often with offerings and lamps, called?",
+  "options": [
+   "Seva",
+   "Puja",
+   "Yajna",
+   "Bhajan"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Hindu god of thunder and rain is a chief god in the Vedas?",
+  "options": [
+   "Surya",
+   "Indra",
+   "Agni",
+   "Varuna"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Hindu god is the god of fire in the Vedas?",
+  "options": [
+   "Surya",
+   "Soma",
+   "Agni",
+   "Vayu"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What was the birth name of the Buddha?",
+  "options": [
+   "Bodhidharma",
+   "Nagarjuna",
+   "Ashoka Maurya",
+   "Siddhartha Gautama"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the title 'Buddha' mean?",
+  "options": [
+   "The teacher",
+   "The holy one",
+   "The chosen one",
+   "The awakened one"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Under which kind of tree is the Buddha said to have reached enlightenment?",
+  "options": [
+   "A bodhi tree",
+   "A mango tree",
+   "A sal tree",
+   "A banyan tree"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which modern country was the Buddha born?",
+  "options": [
+   "Nepal",
+   "China",
+   "Sri Lanka",
+   "India"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many Noble Truths are there in Buddhism?",
+  "options": [
+   "Four",
+   "Five",
+   "Three",
+   "Eight"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many steps are there on the Buddhist Noble Path?",
+  "options": [
+   "Ten",
+   "Four",
+   "Six",
+   "Eight"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the state of release from suffering in Buddhism called?",
+  "options": [
+   "Karma",
+   "Samsara",
+   "Dukkha",
+   "Nirvana"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wheel with eight spokes is a symbol of Buddhism?",
+  "options": [
+   "The Dharma wheel",
+   "The sun wheel",
+   "The chakra of Vishnu",
+   "The wheel of fortune"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which flower is a common symbol of purity in Buddhism?",
+  "options": [
+   "The chrysanthemum",
+   "The rose",
+   "The lily",
+   "The lotus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the community of Buddhist monks and nuns called?",
+  "options": [
+   "The Sangha",
+   "The Sutra",
+   "The Dharma",
+   "The Vihara"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What colour are the robes traditionally worn by Theravada Buddhist monks?",
+  "options": [
+   "Saffron orange",
+   "White",
+   "Blue",
+   "Black"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Buddhist festival celebrates the birth, enlightenment and death of the Buddha?",
+  "options": [
+   "Obon",
+   "Vesak",
+   "Songkran",
+   "Losar"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which title is held by the spiritual leader of Tibetan Buddhism?",
+  "options": [
+   "The Abbot General",
+   "The Grand Mufti",
+   "The Patriarch",
+   "The Dalai Lama"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the two main branches of Buddhism?",
+  "options": [
+   "Sunni and Shia",
+   "Northern and Southern",
+   "Zen and Tantra",
+   "Theravada and Mahayana"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese school of Buddhism emphasises seated meditation?",
+  "options": [
+   "Nichiren",
+   "Shingon",
+   "Pure Land",
+   "Zen"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the domed Buddhist structure that often holds relics called?",
+  "options": [
+   "A stupa",
+   "A pagoda gate",
+   "A minaret",
+   "A ziggurat"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which practice of quiet mental focus is central to Buddhism?",
+  "options": [
+   "Meditation",
+   "Pilgrim walking",
+   "Chanting alone",
+   "Fasting"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional religion of Japan, alongside Buddhism?",
+  "options": [
+   "Jainism",
+   "Taoism",
+   "Shinto",
+   "Confucianism"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the gateway at the entrance to a Shinto shrine called?",
+  "options": [
+   "A torii",
+   "A pagoda",
+   "A pylon",
+   "A stupa"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the spirits or gods of Shinto called?",
+  "options": [
+   "Yokai",
+   "Kannushi",
+   "Oni",
+   "Kami"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Shinto sun goddess is regarded as an ancestor of the Japanese imperial family?",
+  "options": [
+   "Izanami",
+   "Amaterasu",
+   "Tsukuyomi",
+   "Inari"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Chinese philosophy is founded on the teachings of Laozi?",
+  "options": [
+   "Taoism",
+   "Legalism",
+   "Mohism",
+   "Confucianism"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which short Chinese text is the central scripture of Taoism?",
+  "options": [
+   "The Book of Songs",
+   "The Tao Te Ching",
+   "The Analects",
+   "The Art of War"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which black and white symbol represents balance in Chinese thought?",
+  "options": [
+   "The endless knot",
+   "The five elements",
+   "The bagua alone",
+   "Yin and yang"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Chinese teacher's sayings are collected in the Analects?",
+  "options": [
+   "Confucius",
+   "Zhuangzi",
+   "Laozi",
+   "Mencius"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Chinese classic novel features the Monkey King on a journey to fetch scriptures?",
+  "options": [
+   "Romance of the Three Kingdoms",
+   "Journey to the West",
+   "Dream of the Red Chamber",
+   "Water Margin"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mythical creature is a symbol of good fortune and power in Chinese tradition?",
+  "options": [
+   "The centaur",
+   "The dragon",
+   "The griffin",
+   "The minotaur"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who founded the religion of Zoroastrianism?",
+  "options": [
+   "Zoroaster",
+   "Mani",
+   "Darius",
+   "Cyrus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the supreme god in Zoroastrianism?",
+  "options": [
+   "Angra Mainyu",
+   "Mithra",
+   "Ahura Mazda",
+   "Anahita"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which element is kept burning in Zoroastrian temples as a symbol of purity?",
+  "options": [
+   "Fire",
+   "Earth",
+   "Air",
+   "Water"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Indian religion teaches strict non-violence towards all living things and was shaped by Mahavira?",
+  "options": [
+   "Shinto",
+   "Jainism",
+   "Sikhism",
+   "Buddhism"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the principle of non-violence in Indian religions called?",
+  "options": [
+   "Karma",
+   "Ahimsa",
+   "Satya",
+   "Dharma"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which lotus-shaped temple in Delhi belongs to the Bahai Faith?",
+  "options": [
+   "The Lotus Temple",
+   "The Birla Mandir",
+   "The Jama Masjid",
+   "The Akshardham Temple"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which tree was regarded as especially sacred by the Druids?",
+  "options": [
+   "The birch",
+   "The elm",
+   "The oak",
+   "The willow"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Irish mythological hero is famous for his battle frenzy and the tale of the Cattle Raid of Cooley?",
+  "options": [
+   "Cu Chulainn",
+   "Bran",
+   "Fionn mac Cumhaill",
+   "Oisin"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Irish folklore, what is a banshee said to do?",
+  "options": [
+   "Guard buried treasure",
+   "Wail to foretell a death",
+   "Steal children's shoes",
+   "Grant three wishes"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Irish folklore, what is a leprechaun usually said to be?",
+  "options": [
+   "A giant of the hills",
+   "A messenger of the dead",
+   "A sea spirit",
+   "A shoemaker who hides gold"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Aztec god is known as the feathered serpent?",
+  "options": [
+   "Huitzilopochtli",
+   "Tezcatlipoca",
+   "Quetzalcoatl",
+   "Tlaloc"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Inca god was the sun god, worshipped at Cusco?",
+  "options": [
+   "Inti",
+   "Pachamama",
+   "Viracocha",
+   "Illapa"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which ancient Mesopotamian poem tells of a king who searches for eternal life?",
+  "options": [
+   "The Book of the Dead",
+   "The Enuma Elish",
+   "The Epic of Gilgamesh",
+   "The Code of Hammurabi"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Mesopotamian goddess of love and war was worshipped in Babylon?",
+  "options": [
+   "Ishtar",
+   "Astarte of Egypt",
+   "Hathor",
+   "Isis"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Babylonian god was the chief god of the city of Babylon?",
+  "options": [
+   "Anu",
+   "Marduk",
+   "Enlil",
+   "Nergal"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the widely used English term for the Aboriginal Australian body of creation stories and law?",
+  "options": [
+   "Ragnarok",
+   "The Dreaming",
+   "Samsara",
+   "The Eddas"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which creator figure appears in the traditions of many Aboriginal Australian nations and is linked with water and rivers?",
+  "options": [
+   "Quetzalcoatl",
+   "Amaterasu",
+   "The Rainbow Serpent",
+   "Ahura Mazda"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which large rock formation in central Australia is a sacred site for the Anangu people?",
+  "options": [
+   "Uluru",
+   "Mount Kosciuszko",
+   "The Bungle Bungles",
+   "Wilpena Pound"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Maori figure is famous in Polynesian tradition for fishing up islands and slowing the sun?",
+  "options": [
+   "Tane",
+   "Maui",
+   "Tangaroa",
+   "Rongo"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hawaiian goddess is associated with volcanoes and fire?",
+  "options": [
+   "Namaka",
+   "Pele",
+   "Hina",
+   "Laka"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the word for a short story told to teach a moral lesson, often using animals?",
+  "options": [
+   "A myth",
+   "A saga",
+   "A fable",
+   "A legend"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek storyteller is credited with a famous collection of fables?",
+  "options": [
+   "Pindar",
+   "Aesop",
+   "Hesiod",
+   "Homer"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the study of religious belief and the nature of God called?",
+  "options": [
+   "Cosmology",
+   "Theology",
+   "Philology",
+   "Mythology"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the word for formally setting a building or object apart for sacred use?",
+  "options": [
+   "Desecration",
+   "Restoration",
+   "Consecration",
+   "Secularisation"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the word for a person who leaves their religion?",
+  "options": [
+   "A pilgrim",
+   "A novice",
+   "A convert",
+   "An apostate"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a formal religious ceremony or set of actions called?",
+  "options": [
+   "A canon",
+   "A tenet",
+   "A creed",
+   "A rite"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a statement of religious belief, such as the Apostles' one, called?",
+  "options": [
+   "A rite",
+   "A creed",
+   "A homily",
+   "A psalm"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the word for a talk given by a priest or minister during a service?",
+  "options": [
+   "A liturgy",
+   "A canticle",
+   "A creed",
+   "A sermon"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a religious song of praise usually called?",
+  "options": [
+   "A ballad",
+   "A sonnet",
+   "A hymn",
+   "An anthem of state"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a community of nuns called?",
+  "options": [
+   "A vestry",
+   "A manse",
+   "A rectory",
+   "A convent"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the head of a monastery called?",
+  "options": [
+   "A dean",
+   "A canon",
+   "A curate",
+   "An abbot"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the area a bishop is responsible for called?",
+  "options": [
+   "A diocese",
+   "A see town",
+   "A parish",
+   "A province"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which senior Catholic clergy elect a new Pope?",
+  "options": [
+   "The cardinals",
+   "The archbishops",
+   "The bishops",
+   "The abbots"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour smoke signals that a new Pope has been elected?",
+  "options": [
+   "Grey",
+   "White",
+   "Black",
+   "Blue"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the meeting of cardinals to elect a Pope called?",
+  "options": [
+   "A synod",
+   "A consistory",
+   "A conclave",
+   "A council"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which chapel in the Vatican is where the papal election takes place?",
+  "options": [
+   "The Lady Chapel",
+   "The Sistine Chapel",
+   "The Pauline Chapel",
+   "The Chapel of Saint Peter"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ceiling did Michelangelo paint, showing scenes from Genesis?",
+  "options": [
+   "The Duomo of Florence",
+   "The Pantheon dome",
+   "The Vatican Library",
+   "The Sistine Chapel ceiling"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which faith observes its holy day from Friday sunset to Saturday nightfall?",
+  "options": [
+   "Hinduism",
+   "Islam",
+   "Catholicism",
+   "Judaism"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roman goddess of grain gives us the word 'cereal'?",
+  "options": [
+   "Flora",
+   "Vesta",
+   "Pomona",
+   "Ceres"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman god of fire gives us the word 'volcano'?",
+  "options": [
+   "Vulcan",
+   "Mars",
+   "Jupiter",
+   "Pluto"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek goddesses of the arts give us the word 'museum'?",
+  "options": [
+   "The Fates",
+   "The Graces",
+   "The Nymphs",
+   "The Muses"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek god's name gives us the word 'panic'?",
+  "options": [
+   "Deimos",
+   "Ares",
+   "Phobos",
+   "Pan"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek Titan was condemned to hold up the sky, and lends his name to a book of maps?",
+  "options": [
+   "Hyperion",
+   "Cronus",
+   "Oceanus",
+   "Atlas"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek Titan of the sea gives us the word 'ocean'?",
+  "options": [
+   "Poseidon",
+   "Nereus",
+   "Oceanus",
+   "Proteus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek god of dreams gives his name to the drug morphine?",
+  "options": [
+   "Hypnos",
+   "Morpheus",
+   "Somnus",
+   "Oneiros"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek goddess of health gives us the word 'hygiene'?",
+  "options": [
+   "Iaso",
+   "Aceso",
+   "Hygieia",
+   "Panacea"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Roman god gives us the adjective 'martial', meaning warlike?",
+  "options": [
+   "Jupiter",
+   "Mars",
+   "Mercury",
+   "Saturn"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman god gives us the word 'jovial', meaning cheerful?",
+  "options": [
+   "Janus",
+   "Mercury",
+   "Bacchus",
+   "Jupiter"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Roman god gives us the word 'mercurial', meaning quick to change?",
+  "options": [
+   "Mercury",
+   "Vulcan",
+   "Mars",
+   "Neptune"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek youth's name gives us the word for excessive self-love?",
+  "options": [
+   "Icarus",
+   "Narcissus",
+   "Endymion",
+   "Adonis"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek hero's name is used for a long, difficult journey?",
+  "options": [
+   "Perseus",
+   "Achilles",
+   "Jason",
+   "Odysseus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek hero's name describes a task of enormous strength?",
+  "options": [
+   "Heracles",
+   "Ajax",
+   "Theseus",
+   "Hector"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek river of forgetfulness gives us the word 'lethargy'?",
+  "options": [
+   "The Cocytus",
+   "The Styx",
+   "The Lethe",
+   "The Acheron"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "A gift that hides a hidden danger is named after which mythological object?",
+  "options": [
+   "The Argo",
+   "The Gorgon's head",
+   "The Trojan horse",
+   "The Golden Fleece"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which king's name describes someone who makes money from everything they touch?",
+  "options": [
+   "Priam",
+   "Croesus",
+   "Minos",
+   "Midas"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek river is crossed by the dead and gives us the phrase 'Stygian gloom'?",
+  "options": [
+   "The Styx",
+   "The Lethe",
+   "The Eridanos",
+   "The Phlegethon"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mythical maiden's name is used for the coloured part of the human eye?",
+  "options": [
+   "Aurora",
+   "Selene",
+   "Iris",
+   "Thalia"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman goddess of the dawn gives her name to the northern lights, the aurora?",
+  "options": [
+   "Vesta",
+   "Luna",
+   "Diana",
+   "Aurora"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman moon goddess gives us the word 'lunar'?",
+  "options": [
+   "Diana",
+   "Vesta",
+   "Nox",
+   "Luna"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek race of women gives its name to the world's largest river by volume?",
+  "options": [
+   "The Nereids",
+   "The Maenads",
+   "The Amazons",
+   "The Sirens"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mythological figure gives her name to the continent of Europe?",
+  "options": [
+   "Asia",
+   "Rhodia",
+   "Libya",
+   "Europa"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek Titan gives his name to the largest moon of Saturn?",
+  "options": [
+   "Prometheus",
+   "Atlas",
+   "Titan",
+   "Cronus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek god gave his name to the American programme that landed people on the Moon?",
+  "options": [
+   "Hermes",
+   "Apollo",
+   "Zeus",
+   "Ares"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek horn of plenty is a symbol of abundance?",
+  "options": [
+   "The caduceus",
+   "The aegis",
+   "The cornucopia",
+   "The thyrsus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which winged staff with two snakes is carried by Hermes?",
+  "options": [
+   "The trident",
+   "The caduceus",
+   "The thyrsus",
+   "The lyre"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which single serpent staff is the symbol of the god of medicine and is used in health logos?",
+  "options": [
+   "The rod of Asclepius",
+   "The ankh",
+   "The trident",
+   "The caduceus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which shield or breastplate is associated with Zeus and Athena?",
+  "options": [
+   "The hoplon",
+   "The pelta",
+   "The aegis",
+   "The scutum"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek god drove the chariot of the sun across the sky?",
+  "options": [
+   "Boreas",
+   "Selene",
+   "Eos",
+   "Helios"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which young man crashed the sun chariot after begging to drive it?",
+  "options": [
+   "Ganymede",
+   "Phaethon",
+   "Icarus",
+   "Hyacinth"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek goddess was the personification of the moon?",
+  "options": [
+   "Selene",
+   "Eos",
+   "Nyx",
+   "Hemera"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek god was the north wind?",
+  "options": [
+   "Eurus",
+   "Notus",
+   "Boreas",
+   "Zephyrus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek god was the gentle west wind?",
+  "options": [
+   "Boreas",
+   "Aeolus",
+   "Zephyrus",
+   "Notus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek figure kept the winds in a bag given to Odysseus?",
+  "options": [
+   "Triton",
+   "Boreas",
+   "Aeolus",
+   "Nereus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cupbearer of the gods was carried to Olympus by an eagle?",
+  "options": [
+   "Hebe",
+   "Iris",
+   "Eros",
+   "Ganymede"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which garden held the golden apples guarded by nymphs in Greek myth?",
+  "options": [
+   "The Garden of Alcinous",
+   "The Elysian Garden",
+   "The Garden of Eden",
+   "The Garden of the Hesperides"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sculptor fell in love with the statue he carved in Greek myth?",
+  "options": [
+   "Daedalus",
+   "Prometheus",
+   "Pygmalion",
+   "Hephaestus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which huntress in Greek myth would only marry a man who could beat her in a race?",
+  "options": [
+   "Antigone",
+   "Atalanta",
+   "Andromeda",
+   "Artemis"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What was the war between the Olympian gods and the Titans called?",
+  "options": [
+   "The Trojan War",
+   "The Gigantomachy",
+   "The Theogony",
+   "The Titanomachy"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek writer wrote the Theogony, describing the birth of the gods?",
+  "options": [
+   "Herodotus",
+   "Homer",
+   "Hesiod",
+   "Aeschylus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which mythical creature has the upper body of a woman and the tail of a fish?",
+  "options": [
+   "A gorgon",
+   "A mermaid",
+   "A harpy",
+   "A centaur"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mythical horse has a single horn on its forehead?",
+  "options": [
+   "The kelpie",
+   "The hippogriff",
+   "The unicorn",
+   "Pegasus"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which creature in European legend is said to turn into a wolf at the full moon?",
+  "options": [
+   "A vampire",
+   "A goblin",
+   "A werewolf",
+   "A troll"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which serpent king is said to kill with a single glance in European legend?",
+  "options": [
+   "The basilisk",
+   "The wyvern",
+   "The drake",
+   "The salamander"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two-legged winged dragon appears often in heraldry?",
+  "options": [
+   "The griffin",
+   "The manticore",
+   "The wyvern",
+   "The basilisk"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Scottish water spirit is said to appear as a horse and drown riders?",
+  "options": [
+   "The brownie",
+   "The kelpie",
+   "The banshee",
+   "The selkie"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Scandinavian folklore creature is said to live under bridges?",
+  "options": [
+   "The troll",
+   "The dwarf",
+   "The elf",
+   "The gnome"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which clay figure of Jewish folklore is brought to life to protect a community?",
+  "options": [
+   "The dybbuk",
+   "The lilith",
+   "The seraph",
+   "The golem"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which creature in Arabian folklore grants wishes and is bound to a lamp in stories?",
+  "options": [
+   "A roc",
+   "A genie",
+   "A ghoul",
+   "A peri"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Arabic word for a supernatural being gives us the English word 'genie'?",
+  "options": [
+   "Sila",
+   "Marid",
+   "Ifrit",
+   "Jinn"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which giant bird of Middle Eastern legend could carry off an elephant?",
+  "options": [
+   "The roc",
+   "The phoenix",
+   "The simurgh",
+   "The garuda"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which bird-like being is the mount of the Hindu god Vishnu?",
+  "options": [
+   "Jatayu",
+   "Garuda",
+   "Kinnara",
+   "Hamsa"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which legendary sunken island was described by the Greek philosopher Plato?",
+  "options": [
+   "Lemuria",
+   "Thule",
+   "Atlantis",
+   "Avalon"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "To which legendary island is King Arthur carried after his last battle?",
+  "options": [
+   "Tir na nOg",
+   "Avalon",
+   "Atlantis",
+   "Lyonesse"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of King Arthur's sword?",
+  "options": [
+   "Joyeuse",
+   "Durendal",
+   "Excalibur",
+   "Gram"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wizard advises King Arthur in the legends?",
+  "options": [
+   "Merlin",
+   "Galahad",
+   "Mordred",
+   "Bedivere"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the sacred cup sought by King Arthur's knights?",
+  "options": [
+   "The Chalice of Avalon",
+   "The Holy Grail",
+   "The Ark",
+   "The Cauldron of Dagda"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the shape of the table used by King Arthur's knights?",
+  "options": [
+   "Oval",
+   "Long and rectangular",
+   "Round",
+   "Square"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian serpent was the enemy of the sun god Ra?",
+  "options": [
+   "Wadjet",
+   "Apep",
+   "Mehen",
+   "Ammit"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Egyptian bird of rebirth is thought to lie behind the Greek phoenix?",
+  "options": [
+   "The Ibis",
+   "The Ba bird",
+   "The Horus falcon",
+   "The Bennu"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Egyptian belief, what happened to the sun god each night?",
+  "options": [
+   "He turned into a star",
+   "He slept in a temple",
+   "He sailed through the underworld",
+   "He hid in the Nile"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Egyptian tombs were built as royal burial places at Giza?",
+  "options": [
+   "The mastabas of the poor",
+   "The pyramids",
+   "The ziggurats",
+   "The catacombs"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which stone allowed scholars to finally read Egyptian hieroglyphs?",
+  "options": [
+   "The Narmer Palette",
+   "The Stone of Scone",
+   "The Rosetta Stone",
+   "The Palermo Stone"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tall four-sided stone pillar was raised at Egyptian temples?",
+  "options": [
+   "A pylon",
+   "A column",
+   "A stele",
+   "An obelisk"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal was mummified in huge numbers in ancient Egypt as an offering?",
+  "options": [
+   "The dog",
+   "The cat",
+   "The sheep",
+   "The horse"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Egyptian goddess was the sister of Isis and mourned Osiris with her?",
+  "options": [
+   "Nephthys",
+   "Bastet",
+   "Sekhmet",
+   "Tefnut"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Egyptian god was the earth, lying beneath the sky goddess?",
+  "options": [
+   "Shu",
+   "Atum",
+   "Geb",
+   "Nun"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Egyptian creator god was worshipped as the patron of craftsmen at Memphis?",
+  "options": [
+   "Amun",
+   "Ptah",
+   "Thoth",
+   "Ra"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek nymph kept Odysseus on her island for seven years?",
+  "options": [
+   "Nausicaa",
+   "Circe",
+   "Thetis",
+   "Calypso"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek monster was the largest and most fearsome, battled by Zeus?",
+  "options": [
+   "Typhon",
+   "The Hydra",
+   "Cerberus",
+   "The Sphinx"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which three sisters in Greek myth had snakes for hair?",
+  "options": [
+   "The Sirens",
+   "The Gorgons",
+   "The Furies",
+   "The Graeae"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek sisters shared a single eye between them?",
+  "options": [
+   "The Gorgons",
+   "The Fates",
+   "The Graeae",
+   "The Muses"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which labour of Heracles required him to fetch the guard dog of the underworld?",
+  "options": [
+   "The Nemean Lion",
+   "The Golden Hind",
+   "The capture of Cerberus",
+   "The Cretan Bull"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which labour of Heracles required him to steal the golden apples?",
+  "options": [
+   "The apples of the Hesperides",
+   "The apples of Idun",
+   "The apples of Eden",
+   "The apples of Discord"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which king set Heracles his famous labours?",
+  "options": [
+   "Eurystheus",
+   "Augeas",
+   "Minos",
+   "Priam"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek king sacrificed at Aulis and led the army against Troy?",
+  "options": [
+   "Agamemnon",
+   "Nestor",
+   "Menelaus",
+   "Odysseus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Whose wife was Helen before she left for Troy?",
+  "options": [
+   "Ajax",
+   "Achilles",
+   "Menelaus",
+   "Agamemnon"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was the king of Troy during the Trojan War?",
+  "options": [
+   "Paris",
+   "Priam",
+   "Hector",
+   "Aeneas"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek warrior was Achilles' closest companion, whose death drove him back to battle?",
+  "options": [
+   "Diomedes",
+   "Patroclus",
+   "Ajax",
+   "Nestor"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Trojan priest warned about the wooden horse and was killed by serpents?",
+  "options": [
+   "Tiresias",
+   "Laocoon",
+   "Calchas",
+   "Chryses"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which blind prophet appears in the myths of Thebes and in the Odyssey?",
+  "options": [
+   "Tiresias",
+   "Amphiaraus",
+   "Melampus",
+   "Calchas"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek city was ruled by Oedipus?",
+  "options": [
+   "Sparta",
+   "Corinth",
+   "Thebes",
+   "Athens"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which daughter of Oedipus defies the king to bury her brother in a famous Greek tragedy?",
+  "options": [
+   "Ismene",
+   "Antigone",
+   "Iphigenia",
+   "Electra"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek playwright wrote Oedipus Rex and Antigone?",
+  "options": [
+   "Sophocles",
+   "Euripides",
+   "Aristophanes",
+   "Aeschylus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek goddess of youth served nectar to the gods?",
+  "options": [
+   "Iris",
+   "Nike",
+   "Hebe",
+   "Eos"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek being was the goddess of night?",
+  "options": [
+   "Nyx",
+   "Chaos",
+   "Erebus",
+   "Hemera"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What did the Greeks call the formless void at the beginning of everything?",
+  "options": [
+   "Nyx",
+   "Chaos",
+   "Erebus",
+   "Aether"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mortal woman was made to perform impossible tasks by Aphrodite before marrying Eros?",
+  "options": [
+   "Penelope",
+   "Psyche",
+   "Pandora",
+   "Persephone"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek hero founded Thebes after sowing dragon's teeth?",
+  "options": [
+   "Theseus",
+   "Jason",
+   "Perseus",
+   "Cadmus"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sea god in Greek myth blew a conch shell to calm the waves?",
+  "options": [
+   "Triton",
+   "Proteus",
+   "Nereus",
+   "Glaucus"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which archangel is said to have told Mary she would bear a son?",
+  "options": [
+   "Uriel",
+   "Raphael",
+   "Michael",
+   "Gabriel"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which archangel is usually shown defeating a dragon or Satan?",
+  "options": [
+   "Raphael",
+   "Uriel",
+   "Michael",
+   "Gabriel"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the highest rank of angel in traditional Christian orders?",
+  "options": [
+   "Thrones",
+   "Powers",
+   "Cherubim",
+   "Seraphim"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many deadly sins are there in Christian tradition?",
+  "options": [
+   "Seven",
+   "Twelve",
+   "Five",
+   "Ten"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is one of the seven deadly sins?",
+  "options": [
+   "Dishonesty",
+   "Gluttony",
+   "Cowardice",
+   "Cruelty"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which deadly sin means excessive laziness?",
+  "options": [
+   "Greed",
+   "Envy",
+   "Wrath",
+   "Sloth"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which deadly sin means uncontrolled anger?",
+  "options": [
+   "Pride",
+   "Wrath",
+   "Sloth",
+   "Envy"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many Horsemen of the Apocalypse are described in Revelation?",
+  "options": [
+   "Twelve",
+   "Three",
+   "Seven",
+   "Four"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these is one of the Four Horsemen of the Apocalypse?",
+  "options": [
+   "Plague of locusts",
+   "Flood",
+   "Famine",
+   "Fire"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which number is called the number of the beast in the Book of Revelation?",
+  "options": [
+   "666",
+   "999",
+   "777",
+   "333"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which word from Revelation is used for a final catastrophic battle?",
+  "options": [
+   "Apostasy",
+   "Anathema",
+   "Armageddon",
+   "Advent"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many plagues were sent upon Egypt in the Book of Exodus?",
+  "options": [
+   "Ten",
+   "Seven",
+   "Three",
+   "Twelve"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many tribes of Israel are described in the Hebrew Bible?",
+  "options": [
+   "Seven",
+   "Fourteen",
+   "Ten",
+   "Twelve"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sermon of Jesus contains the Beatitudes?",
+  "options": [
+   "The Farewell Discourse",
+   "The Sermon on the Mount",
+   "The Sermon at Nazareth",
+   "The Olivet Discourse"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the shortest verse in most English Bibles?",
+  "options": [
+   "Pray without ceasing",
+   "Rejoice always",
+   "God is love",
+   "Jesus wept"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which book of the Bible is a collection of songs and prayers?",
+  "options": [
+   "Psalms",
+   "Numbers",
+   "Judges",
+   "Proverbs"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which biblical figure endured great suffering yet kept his faith, in a book named after him?",
+  "options": [
+   "Joel",
+   "Job",
+   "Joshua",
+   "Jonah"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which road was Saul converted, going on to become the apostle Paul?",
+  "options": [
+   "The road to Emmaus",
+   "The road to Damascus",
+   "The road to Jericho",
+   "The road to Galilee"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the mother of Jesus in the Gospels?",
+  "options": [
+   "Anna",
+   "Elizabeth",
+   "Mary",
+   "Martha"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Jesus's earthly father in the Gospels?",
+  "options": [
+   "Joseph",
+   "Zechariah",
+   "Simeon",
+   "Jacob"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Catholic teaching, the Immaculate Conception refers to the conception of whom?",
+  "options": [
+   "Joseph",
+   "Jesus",
+   "Mary",
+   "John the Baptist"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the event called when the angel tells Mary she will have a child?",
+  "options": [
+   "The Annunciation",
+   "The Assumption",
+   "The Ascension",
+   "The Visitation"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many Stations of the Cross are traditionally observed?",
+  "options": [
+   "Ten",
+   "Seven",
+   "Twelve",
+   "Fourteen"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What was placed on Jesus's head at the crucifixion according to the Gospels?",
+  "options": [
+   "A laurel wreath",
+   "A veil",
+   "A crown of thorns",
+   "A gold band"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cloth kept in an Italian city is claimed by some to be Jesus's burial shroud?",
+  "options": [
+   "The Shroud of Turin",
+   "The Cloth of Edessa",
+   "The Veil of Veronica",
+   "The Sudarium of Oviedo"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient manuscripts were found in caves near the Dead Sea from 1947?",
+  "options": [
+   "The Cairo Genizah",
+   "The Nag Hammadi Codices",
+   "The Gutenberg Fragments",
+   "The Dead Sea Scrolls"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which book was the first major work printed with movable type in Europe?",
+  "options": [
+   "The Vulgate",
+   "The Book of Kells",
+   "The Domesday Book",
+   "The Gutenberg Bible"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What makes a cathedral different from an ordinary church?",
+  "options": [
+   "It is always older",
+   "It contains the seat of a bishop",
+   "It must have two towers",
+   "It is always Catholic"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the main body of a church, where the congregation sits, called?",
+  "options": [
+   "The chancel",
+   "The transept",
+   "The nave",
+   "The apse"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the raised platform a preacher speaks from called?",
+  "options": [
+   "The font",
+   "The pulpit",
+   "The altar",
+   "The pew"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the basin holding water for baptisms called?",
+  "options": [
+   "The chalice",
+   "The stoup",
+   "The paten",
+   "The font"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the tall pointed structure on top of a church tower called?",
+  "options": [
+   "A buttress",
+   "A finial",
+   "A spire",
+   "A gargoyle"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the underground chamber beneath a church called?",
+  "options": [
+   "The chancel",
+   "The cloister",
+   "The crypt",
+   "The vestry"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the covered walkway around a monastery courtyard called?",
+  "options": [
+   "A chantry",
+   "A narthex",
+   "A nave",
+   "A cloister"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the tall pointed hat worn by a bishop called?",
+  "options": [
+   "A biretta",
+   "A cowl",
+   "A zucchetto",
+   "A mitre"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Paris cathedral was badly damaged by fire in 2019?",
+  "options": [
+   "Saint-Sulpice",
+   "Sainte-Chapelle",
+   "Notre-Dame",
+   "Sacre-Coeur"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which London cathedral has a famous dome designed by Christopher Wren?",
+  "options": [
+   "Southwark Cathedral",
+   "St Paul's Cathedral",
+   "Westminster Cathedral",
+   "Westminster Abbey"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which London church are British monarchs crowned?",
+  "options": [
+   "Canterbury Cathedral",
+   "The Chapel Royal",
+   "Westminster Abbey",
+   "St Paul's Cathedral"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Istanbul building was built as a great Christian church and later became a mosque?",
+  "options": [
+   "Topkapi Palace",
+   "Hagia Sophia",
+   "The Suleymaniye",
+   "The Blue Mosque"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unfinished Barcelona basilica was designed by Antoni Gaudi?",
+  "options": [
+   "Barcelona Cathedral",
+   "The Sagrada Familia",
+   "The Monastery of Montserrat",
+   "Santa Maria del Mar"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brightly coloured cathedral with onion domes stands in Moscow's Red Square?",
+  "options": [
+   "Christ the Saviour",
+   "St Basil's Cathedral",
+   "St Isaac's Cathedral",
+   "The Dormition Cathedral"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which English cathedral is the mother church of the Anglican Communion?",
+  "options": [
+   "Durham Cathedral",
+   "Canterbury Cathedral",
+   "Winchester Cathedral",
+   "York Minster"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christian tradition is known for its painted religious images called icons?",
+  "options": [
+   "Anabaptism",
+   "Methodism",
+   "Quakerism",
+   "Eastern Orthodoxy"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient Christian church is based mainly in Egypt?",
+  "options": [
+   "The Assyrian Church",
+   "The Coptic Church",
+   "The Armenian Church",
+   "The Maronite Church"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which guard, wearing a striped uniform, protects the Pope?",
+  "options": [
+   "The Vatican Gendarmerie",
+   "The Papal Lancers",
+   "The Swiss Guard",
+   "The Noble Guard"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the ashes used on Ash Wednesday traditionally made from?",
+  "options": [
+   "Burnt incense",
+   "Burnt olive wood",
+   "Burnt palm crosses",
+   "Burnt wheat"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which food is traditionally eaten on Shrove Tuesday?",
+  "options": [
+   "Simnel cake",
+   "Fish",
+   "Pancakes",
+   "Hot cross buns"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spiced bun with a cross on top is eaten at Easter?",
+  "options": [
+   "The Chelsea bun",
+   "The Bath bun",
+   "The Sally Lunn",
+   "The hot cross bun"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which week leading up to Easter is called Holy Week?",
+  "options": [
+   "The week of Pentecost",
+   "The first week of Lent",
+   "The week after Easter",
+   "The week beginning with Palm Sunday"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the name Halloween come from?",
+  "options": [
+   "All Holy Night",
+   "The Hallow Feast",
+   "Hallowed Evening Rite",
+   "All Hallows' Eve"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christian feast day falls on 1 November?",
+  "options": [
+   "Candlemas",
+   "All Souls' Day",
+   "All Saints' Day",
+   "Michaelmas"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which country is the Day of the Dead a major festival?",
+  "options": [
+   "Peru",
+   "Spain",
+   "Mexico",
+   "Brazil"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian feast day falls on 29 September and is named after an archangel?",
+  "options": [
+   "Lammas",
+   "Martinmas",
+   "Candlemas",
+   "Michaelmas"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which day marks the end of the twelve days of Christmas?",
+  "options": [
+   "Twelfth Night",
+   "Candlemas",
+   "Boxing Day",
+   "New Year's Day"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which church founder published the Book of Mormon?",
+  "options": [
+   "Brigham Young",
+   "Ellen White",
+   "Joseph Smith",
+   "Charles Taze Russell"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American city is the headquarters of the Church of Jesus Christ of Latter-day Saints?",
+  "options": [
+   "Boise",
+   "Salt Lake City",
+   "Denver",
+   "Nauvoo"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which magazine is best known as a publication of Jehovah's Witnesses?",
+  "options": [
+   "The Sentinel",
+   "The Watchtower",
+   "The Beacon",
+   "The Herald"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American state is home to the largest Amish communities?",
+  "options": [
+   "Vermont",
+   "Pennsylvania",
+   "Maine",
+   "Oregon"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Ethiopian emperor is a central figure in the Rastafari movement?",
+  "options": [
+   "Yohannes IV",
+   "Menelik II",
+   "Haile Selassie",
+   "Tewodros II"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which Caribbean country did the Rastafari movement begin?",
+  "options": [
+   "Jamaica",
+   "Trinidad",
+   "Cuba",
+   "Barbados"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The religion Vodou developed in which Caribbean country?",
+  "options": [
+   "Cuba",
+   "Jamaica",
+   "Haiti",
+   "Trinidad"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which prehistoric stone circle in England is aligned with the midsummer sunrise?",
+  "options": [
+   "Callanish",
+   "Avebury",
+   "The Rollrights",
+   "Stonehenge"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the summer solstice mark?",
+  "options": [
+   "The first day of autumn",
+   "The shortest day of the year",
+   "The middle of spring",
+   "The longest day of the year"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which midwinter festival of northern Europe gives us the word 'yuletide'?",
+  "options": [
+   "Beltane",
+   "Samhain",
+   "Imbolc",
+   "Yule"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Celtic festival on 31 October is considered a forerunner of Halloween?",
+  "options": [
+   "Lughnasadh",
+   "Imbolc",
+   "Samhain",
+   "Beltane"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Celtic festival marks the start of summer on 1 May?",
+  "options": [
+   "Imbolc",
+   "Lughnasadh",
+   "Beltane",
+   "Samhain"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the moral principle 'treat others as you would like to be treated' usually called?",
+  "options": [
+   "The First Commandment",
+   "The Golden Rule",
+   "The Great Law",
+   "The Silver Rule"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which religion is the second largest in the world by number of followers?",
+  "options": [
+   "Islam",
+   "Buddhism",
+   "Hinduism",
+   "Judaism"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these religions teaches belief in reincarnation?",
+  "options": [
+   "Judaism",
+   "Islam",
+   "Hinduism",
+   "Christianity"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country has the largest Muslim population in the world?",
+  "options": [
+   "Egypt",
+   "Indonesia",
+   "Saudi Arabia",
+   "Pakistan"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country has the largest Hindu population in the world?",
+  "options": [
+   "India",
+   "Bangladesh",
+   "Indonesia",
+   "Nepal"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which city is holy to Judaism, Christianity and Islam?",
+  "options": [
+   "Jerusalem",
+   "Athens",
+   "Istanbul",
+   "Cairo"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christian order of monks is known for making beer and cheese in Europe?",
+  "options": [
+   "The Jesuits",
+   "The Dominicans",
+   "The Trappists",
+   "The Franciscans"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the vows commonly taken by Catholic monks and nuns?",
+  "options": [
+   "Poverty, chastity and obedience",
+   "Charity, faith and hope",
+   "Study, service and silence",
+   "Silence, fasting and prayer"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the book containing the prayers and readings for the Catholic Mass called?",
+  "options": [
+   "The missal",
+   "The breviary",
+   "The psalter",
+   "The antiphonal"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which language was the Roman Catholic Mass traditionally said in before the 1960s?",
+  "options": [
+   "Latin",
+   "Hebrew",
+   "Aramaic",
+   "Greek"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christian denomination was formed in Australia in 1977 by a union of three churches?",
+  "options": [
+   "The Anglican Church",
+   "The Baptist Union",
+   "The Presbyterian Church",
+   "The Uniting Church"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Christian practice of confessing sins to a priest called?",
+  "options": [
+   "Confirmation",
+   "Consecration",
+   "Communion",
+   "Confession"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the ceremony called when a person becomes a priest?",
+  "options": [
+   "Ordination",
+   "Investiture",
+   "Consecration of the elements",
+   "Confirmation"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the word for a person sent to spread a religion in another country?",
+  "options": [
+   "A pastor",
+   "A missionary",
+   "A deacon",
+   "A pilgrim"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a religious belief that opposes established doctrine called?",
+  "options": [
+   "Orthodoxy",
+   "Doctrine",
+   "Liturgy",
+   "Heresy"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the word for a small religious image or object believed to bring protection?",
+  "options": [
+   "A censer",
+   "A relic",
+   "An icon",
+   "An amulet"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for the bodily remains or belongings of a saint kept for veneration?",
+  "options": [
+   "Icons",
+   "Relics",
+   "Offerings",
+   "Amulets"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the container used to burn incense in a church service called?",
+  "options": [
+   "A chalice",
+   "A ciborium",
+   "A censer",
+   "A cruet"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the cup used to hold the wine at communion called?",
+  "options": [
+   "A paten",
+   "A censer",
+   "A chalice",
+   "A font"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Christian season of preparation includes a calendar with daily doors?",
+  "options": [
+   "Lent",
+   "Eastertide",
+   "Epiphany",
+   "Advent"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which type of Christmas song has religious origins and is sung door to door?",
+  "options": [
+   "The madrigal",
+   "The anthem",
+   "The carol",
+   "The chant"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which scene of figures in a stable is set up at Christmas?",
+  "options": [
+   "The passion",
+   "The nativity",
+   "The pieta",
+   "The annunciation"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roman goddess of the hearth was served by priestesses who kept a sacred flame?",
+  "options": [
+   "Vesta",
+   "Juno",
+   "Ceres",
+   "Minerva"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Roman household spirits protected the family and the larder?",
+  "options": [
+   "The Manes and Lemures",
+   "The Genii and Numina",
+   "The Lares and Penates",
+   "The Fauns and Silvani"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What was the Roman practice of reading the will of the gods in the flight of birds called?",
+  "options": [
+   "Astrology",
+   "Augury",
+   "Haruspicy",
+   "Necromancy"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Persian god became popular in a mystery cult among Roman soldiers?",
+  "options": [
+   "Mithras",
+   "Ahura Mazda",
+   "Anahita",
+   "Serapis"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which title, meaning chief priest, was held by Roman emperors and is now used by the Pope?",
+  "options": [
+   "Pontifex Maximus",
+   "Imperator",
+   "Augustus",
+   "Flamen Dialis"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Egyptian goddess was worshipped widely across the Roman Empire?",
+  "options": [
+   "Bastet",
+   "Sekhmet",
+   "Nut",
+   "Isis"
+  ],
+  "correctIndex": 3,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek god was worshipped in secret rites known as the mysteries at Eleusis?",
+  "options": [
+   "Hephaestus",
+   "Demeter",
+   "Ares",
+   "Hermes"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese Buddhist festival honours the spirits of ancestors?",
+  "options": [
+   "Setsubun",
+   "Shichi-Go-San",
+   "Obon",
+   "Tanabata"
+  ],
+  "correctIndex": 2,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Hindu festival celebrates the birth of the elephant-headed god?",
+  "options": [
+   "Maha Shivaratri",
+   "Ganesh Chaturthi",
+   "Krishna Janmashtami",
+   "Raksha Bandhan"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The wheel on the flag of India is based on a symbol from which tradition?",
+  "options": [
+   "Buddhism",
+   "Islam",
+   "Zoroastrianism",
+   "Christianity"
+  ],
+  "correctIndex": 0,
+  "category": "Mythology & Religion",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the word for the body of belief officially taught by a religion?",
+  "options": [
+   "Vestment",
+   "Doctrine",
+   "Liturgy",
+   "Sacrament"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the word for an offering made to a god, often of an animal?",
+  "options": [
+   "A vigil",
+   "A sacrifice",
+   "A psalm",
+   "A sermon"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which word describes a place believed to be the dwelling of a god or a holy relic?",
+  "options": [
+   "A lectern",
+   "A shrine",
+   "A cloister",
+   "A pew"
+  ],
+  "correctIndex": 1,
+  "category": "Mythology & Religion",
+  "difficulty": "easy"
+ }
+]

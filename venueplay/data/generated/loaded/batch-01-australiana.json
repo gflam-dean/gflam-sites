@@ -1,0 +1,2402 @@
+[
+{
+"question": "What is the capital city of Australia?",
+"options": [
+"Sydney",
+"Melbourne",
+"Canberra",
+"Brisbane"
+],
+"correctIndex": 2,
+"category": "Australian capitals",
+"difficulty": "easy"
+},
+{
+"question": "Which animal features alongside the emu on Australia's coat of arms?",
+"options": [
+"Kangaroo",
+"Koala",
+"Wombat",
+"Dingo"
+],
+"correctIndex": 0,
+"category": "Australian symbols",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the large sandstone rock formation in the Northern Territory also known as Ayers Rock?",
+"options": [
+"Kata Tjuta",
+"Uluru",
+"The Olgas",
+"Wave Rock"
+],
+"correctIndex": 1,
+"category": "Australian landmarks",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian state is home to the Great Barrier Reef?",
+"options": [
+"New South Wales",
+"Western Australia",
+"Queensland",
+"Victoria"
+],
+"correctIndex": 2,
+"category": "Australian geography",
+"difficulty": "easy"
+},
+{
+"question": "What do Australians commonly call a barbecue?",
+"options": [
+"A grill-up",
+"A barbie",
+"A cookout",
+"A sizzle"
+],
+"correctIndex": 1,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of Australia's national airline?",
+"options": [
+"Virgin Australia",
+"Jetstar",
+"Qantas",
+"Rex"
+],
+"correctIndex": 2,
+"category": "Australian icons",
+"difficulty": "easy"
+},
+{
+"question": "A baby kangaroo is known as what?",
+"options": [
+"A cub",
+"A kit",
+"A joey",
+"A pup"
+],
+"correctIndex": 2,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "Which yeast-based spread is a famous Australian breakfast staple?",
+"options": [
+"Marmite",
+"Vegemite",
+"Promite",
+"Nutella"
+],
+"correctIndex": 1,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "The Sydney Harbour Bridge is affectionately nicknamed what?",
+"options": [
+"The Coathanger",
+"The Big Arch",
+"The Iron Lady",
+"The Bridge of Sighs"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "easy"
+},
+{
+"question": "Which is Australia's largest state by land area?",
+"options": [
+"Queensland",
+"New South Wales",
+"Western Australia",
+"South Australia"
+],
+"correctIndex": 2,
+"category": "Australian geography",
+"difficulty": "easy"
+},
+{
+"question": "What is Australia's official currency?",
+"options": [
+"Australian pound",
+"Australian dollar",
+"New Zealand dollar",
+"Australian franc"
+],
+"correctIndex": 1,
+"category": "Australian economy",
+"difficulty": "easy"
+},
+{
+"question": "Which strait separates Tasmania from mainland Australia?",
+"options": [
+"Torres Strait",
+"Cook Strait",
+"Bass Strait",
+"Investigator Strait"
+],
+"correctIndex": 2,
+"category": "Australian geography",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian marsupial is famous for sleeping around 20 hours a day and eating eucalyptus leaves?",
+"options": [
+"Wombat",
+"Koala",
+"Possum",
+"Bilby"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the largest city in Australia by population?",
+"options": [
+"Melbourne",
+"Brisbane",
+"Perth",
+"Sydney"
+],
+"correctIndex": 3,
+"category": "Australian cities",
+"difficulty": "easy"
+},
+{
+"question": "Which flightless bird is the largest native to Australia?",
+"options": [
+"Cassowary",
+"Emu",
+"Brolga",
+"Bustard"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "The famous Australian dish 'snags' refers to what?",
+"options": [
+"Sausages",
+"Prawns",
+"Meat pies",
+"Chips"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the sail-shaped performing arts venue on Sydney Harbour?",
+"options": [
+"Sydney Opera House",
+"Arts Centre",
+"Sydney Theatre",
+"The Concert Hall"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian state has Adelaide as its capital?",
+"options": [
+"Victoria",
+"Tasmania",
+"South Australia",
+"Western Australia"
+],
+"correctIndex": 2,
+"category": "Australian capitals",
+"difficulty": "easy"
+},
+{
+"question": "What is the primary ingredient of a traditional Aussie 'pav' dessert base?",
+"options": [
+"Sponge cake",
+"Meringue",
+"Pastry",
+"Ice cream"
+],
+"correctIndex": 1,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the traditional throwing tool used by Aboriginal Australians that can return to the thrower?",
+"options": [
+"Woomera",
+"Nulla-nulla",
+"Boomerang",
+"Coolamon"
+],
+"correctIndex": 2,
+"category": "Indigenous Australia",
+"difficulty": "easy"
+},
+{
+"question": "In Australian slang, what is a 'servo'?",
+"options": [
+"A service station",
+"A servant",
+"A soldier",
+"A supermarket"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "Which horse race is famously known as 'the race that stops a nation'?",
+"options": [
+"The Golden Slipper",
+"The Cox Plate",
+"The Melbourne Cup",
+"The Caulfield Cup"
+],
+"correctIndex": 2,
+"category": "Australian sport",
+"difficulty": "easy"
+},
+{
+"question": "What is the capital of the state of Victoria?",
+"options": [
+"Geelong",
+"Ballarat",
+"Bendigo",
+"Melbourne"
+],
+"correctIndex": 3,
+"category": "Australian capitals",
+"difficulty": "easy"
+},
+{
+"question": "What sweet, chocolate-and-coconut coated sponge cake is a classic Australian treat?",
+"options": [
+"Lamington",
+"Anzac biscuit",
+"Fairy bread",
+"Neenish tart"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "Which state or territory is Australia's capital city Canberra located in?",
+"options": [
+"New South Wales",
+"Victoria",
+"Australian Capital Territory",
+"Queensland"
+],
+"correctIndex": 2,
+"category": "Australian geography",
+"difficulty": "easy"
+},
+{
+"question": "Which explorer is credited with charting the east coast of Australia in 1770?",
+"options": [
+"Matthew Flinders",
+"Abel Tasman",
+"James Cook",
+"William Dampier"
+],
+"correctIndex": 2,
+"category": "Australian history",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the fleet of ships that brought the first British convicts to Australia in 1788?",
+"options": [
+"The First Fleet",
+"The Convict Armada",
+"The Botany Squadron",
+"The King's Fleet"
+],
+"correctIndex": 0,
+"category": "Australian history",
+"difficulty": "easy"
+},
+{
+"question": "What smiling marsupial found on Rottnest Island is famous for 'quokka selfies'?",
+"options": [
+"Pademelon",
+"Quokka",
+"Potoroo",
+"Antechinus"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "In Aussie slang, what does 'arvo' mean?",
+"options": [
+"Morning",
+"Afternoon",
+"Evening",
+"Midday"
+],
+"correctIndex": 1,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "What is the capital city of Western Australia?",
+"options": [
+"Fremantle",
+"Perth",
+"Bunbury",
+"Geraldton"
+],
+"correctIndex": 1,
+"category": "Australian capitals",
+"difficulty": "easy"
+},
+{
+"question": "Which biscuit, associated with soldiers, is traditionally made from oats, golden syrup and coconut?",
+"options": [
+"Monte Carlo",
+"Anzac biscuit",
+"Iced VoVo",
+"Scotch finger"
+],
+"correctIndex": 1,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the wild dog native to Australia?",
+"options": [
+"Dingo",
+"Coyote",
+"Jackal",
+"Thylacine"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian actor played Wolverine in the X-Men film series?",
+"options": [
+"Chris Hemsworth",
+"Hugh Jackman",
+"Eric Bana",
+"Guy Pearce"
+],
+"correctIndex": 1,
+"category": "Famous Australians",
+"difficulty": "easy"
+},
+{
+"question": "What is the capital of Queensland?",
+"options": [
+"Gold Coast",
+"Cairns",
+"Brisbane",
+"Townsville"
+],
+"correctIndex": 2,
+"category": "Australian capitals",
+"difficulty": "easy"
+},
+{
+"question": "What does the Aussie slang term 'chuck a sickie' mean?",
+"options": [
+"Take a day off work pretending to be ill",
+"Vomit",
+"Throw something away",
+"Feel unwell but keep working"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian singer is known for hits like 'Locomotion' and 'Can't Get You Out of My Head'?",
+"options": [
+"Delta Goodrem",
+"Kylie Minogue",
+"Olivia Newton-John",
+"Tina Arena"
+],
+"correctIndex": 1,
+"category": "Australian music",
+"difficulty": "easy"
+},
+{
+"question": "What was the name of the notorious 19th-century Australian bushranger who wore homemade armour?",
+"options": [
+"Ben Hall",
+"Captain Thunderbolt",
+"Ned Kelly",
+"Dan Morgan"
+],
+"correctIndex": 2,
+"category": "Australian history",
+"difficulty": "easy"
+},
+{
+"question": "What is the capital of Tasmania?",
+"options": [
+"Launceston",
+"Devonport",
+"Hobart",
+"Burnie"
+],
+"correctIndex": 2,
+"category": "Australian capitals",
+"difficulty": "easy"
+},
+{
+"question": "In Australia, what is 'footy' most commonly used to describe in Victoria?",
+"options": [
+"Soccer",
+"Australian Rules Football",
+"Rugby league",
+"Gridiron"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "easy"
+},
+{
+"question": "Which spiny egg-laying mammal, like the platypus, is a monotreme native to Australia?",
+"options": [
+"Echidna",
+"Numbat",
+"Quoll",
+"Bandicoot"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "In cricket, what is the name of the trophy contested between Australia and England?",
+"options": [
+"The Border-Gavaskar Trophy",
+"The Ashes",
+"The Frank Worrell Trophy",
+"The Trans-Tasman Trophy"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian marsupial is known as a Tasmanian native, famous for its ferocious feeding and screech?",
+"options": [
+"Tasmanian tiger",
+"Tasmanian devil",
+"Quoll",
+"Pademelon"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the traditional Aboriginal wind instrument made from a hollow branch?",
+"options": [
+"Bullroarer",
+"Didgeridoo",
+"Clapsticks",
+"Gum leaf"
+],
+"correctIndex": 1,
+"category": "Indigenous Australia",
+"difficulty": "easy"
+},
+{
+"question": "What is the Aussie slang term for a very hot day of extreme heat?",
+"options": [
+"A scorcher",
+"A sizzler",
+"A cooker",
+"A roaster"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the coastal road along Victoria's south-west coast famous for the Twelve Apostles?",
+"options": [
+"Grand Pacific Drive",
+"Great Ocean Road",
+"Great Alpine Road",
+"Nullarbor Highway"
+],
+"correctIndex": 1,
+"category": "Australian landmarks",
+"difficulty": "easy"
+},
+{
+"question": "Which of these is the name of Australia's national men's soccer team?",
+"options": [
+"The Wallabies",
+"The Kangaroos",
+"The Socceroos",
+"The Boomers"
+],
+"correctIndex": 2,
+"category": "Australian sport",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of Australia's national men's rugby union team?",
+"options": [
+"The Wallabies",
+"The Kangaroos",
+"The All Blacks",
+"The Springboks"
+],
+"correctIndex": 0,
+"category": "Australian sport",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the famous red desert soil and dust region across central Australia?",
+"options": [
+"The Red Centre",
+"The Dead Heart",
+"The Big Red",
+"The Outback"
+],
+"correctIndex": 0,
+"category": "Australian geography",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the northernmost capital city of Australia?",
+"options": [
+"Cairns",
+"Darwin",
+"Broome",
+"Townsville"
+],
+"correctIndex": 1,
+"category": "Australian capitals",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian mammal has a bill like a duck, a tail like a beaver and webbed feet?",
+"options": [
+"Echidna",
+"Platypus",
+"Water rat",
+"Bandicoot"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "What Aussie term refers to flip-flop sandals?",
+"options": [
+"Slaps",
+"Thongs",
+"Jandals",
+"Pluggers"
+],
+"correctIndex": 1,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the famous cricket ground in Melbourne, often abbreviated as the 'G'?",
+"options": [
+"Adelaide Oval",
+"Melbourne Cricket Ground",
+"Sydney Cricket Ground",
+"The Gabba"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "easy"
+},
+{
+"question": "What does the slang phrase 'fair dinkum' express?",
+"options": [
+"Genuine or true",
+"Angry",
+"Tired",
+"Confused"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian prawn-like party food is a classic at a summer barbecue?",
+"options": [
+"Prawns on the barbie",
+"Yabbies",
+"Bugs",
+"Marron"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian actor starred as Maximus in the film 'Gladiator' (2000)?",
+"options": [
+"Hugh Jackman",
+"Russell Crowe",
+"Guy Pearce",
+"Sam Worthington"
+],
+"correctIndex": 1,
+"category": "Famous Australians",
+"difficulty": "easy"
+},
+{
+"question": "Which colourful Australian parrot is famous for its rainbow plumage and is common in eastern suburbs?",
+"options": [
+"Galah",
+"Rainbow lorikeet",
+"Sulphur-crested cockatoo",
+"Rosella"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the fictional soap opera set on Ramsay Street, a long-running Australian TV show?",
+"options": [
+"Home and Away",
+"Neighbours",
+"A Country Practice",
+"The Sullivans"
+],
+"correctIndex": 1,
+"category": "Australian TV",
+"difficulty": "easy"
+},
+{
+"question": "What is the name for a wild horse in Australia?",
+"options": [
+"Mustang",
+"Brumby",
+"Stock horse",
+"Waler"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "What is the traditional white bread and hundreds-and-thousands treat served at Aussie kids' parties?",
+"options": [
+"Fairy bread",
+"Party pies",
+"Cheerios",
+"Honey joys"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "Which of these is a genuine Australian slang term for a mosquito?",
+"options": [
+"Mozzie",
+"Skeeter",
+"Buzzer",
+"Nipper"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "What is the common name for the bird whose laughing call is often heard at dawn in the Australian bush?",
+"options": [
+"Magpie",
+"Kookaburra",
+"Currawong",
+"Butcherbird"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "What does the Aussie slang 'esky' refer to?",
+"options": [
+"A portable cooler box",
+"A picnic rug",
+"A camping stove",
+"A beach umbrella"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the traditional Australian bush song often considered the unofficial national anthem?",
+"options": [
+"Advance Australia Fair",
+"Waltzing Matilda",
+"I Still Call Australia Home",
+"Home Among the Gum Trees"
+],
+"correctIndex": 1,
+"category": "Australian culture",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian mountain range runs along the eastern side of the continent?",
+"options": [
+"MacDonnell Ranges",
+"Great Dividing Range",
+"Flinders Ranges",
+"Hamersley Range"
+],
+"correctIndex": 1,
+"category": "Australian geography",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the popular Australian rules football competition's premier league?",
+"options": [
+"NRL",
+"AFL",
+"A-League",
+"Super Rugby"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "easy"
+},
+{
+"question": "What is the name for the traditional meat-filled pastry that is a beloved Australian takeaway?",
+"options": [
+"Sausage roll",
+"Meat pie",
+"Pasty",
+"Party pie"
+],
+"correctIndex": 1,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the chocolate biscuit brand famous for the 'Slam' where you bite corners and sip a hot drink through it?",
+"options": [
+"Tim Tam",
+"Mint Slice",
+"Kingston",
+"Tiny Teddy"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian actor voiced and portrayed the Joker, winning a posthumous Oscar in 2009?",
+"options": [
+"Heath Ledger",
+"Guy Pearce",
+"Joel Edgerton",
+"Ben Mendelsohn"
+],
+"correctIndex": 0,
+"category": "Famous Australians",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of Australia's national anthem?",
+"options": [
+"God Save the Queen",
+"Advance Australia Fair",
+"Waltzing Matilda",
+"Australians All"
+],
+"correctIndex": 1,
+"category": "Australian symbols",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the giant crocodile species that is the largest living reptile, found in northern Australia?",
+"options": [
+"Freshwater crocodile",
+"Saltwater crocodile",
+"Estuarine goanna",
+"Nile crocodile"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian actor played the title role in the 'Thor' Marvel films?",
+"options": [
+"Liam Hemsworth",
+"Chris Hemsworth",
+"Sam Worthington",
+"Luke Hemsworth"
+],
+"correctIndex": 1,
+"category": "Famous Australians",
+"difficulty": "easy"
+},
+{
+"question": "What is the term for a friendly greeting in Australia often shortened to 'g'day'?",
+"options": [
+"Good day",
+"Good going",
+"Greetings",
+"Grand day"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "easy"
+},
+{
+"question": "What is Australia's first female Prime Minister's name?",
+"options": [
+"Julie Bishop",
+"Julia Gillard",
+"Penny Wong",
+"Tanya Plibersek"
+],
+"correctIndex": 1,
+"category": "Australian history",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the popular chicken salt-topped hot chips found at Australian takeaway shops?",
+"options": [
+"Chicken salt chips",
+"Potato scallops",
+"Dim sims",
+"Chiko rolls"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "easy"
+},
+{
+"question": "Which iconic Australian children's music group wears coloured skivvies and sings songs like 'Hot Potato'?",
+"options": [
+"The Wiggles",
+"Hi-5",
+"Play School",
+"The Fairies"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the Great Ocean Road's famous limestone stacks rising from the sea?",
+"options": [
+"The Twelve Apostles",
+"The Pinnacles",
+"The Remarkables",
+"London Bridge"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the world-famous cricket batsman, considered the greatest, who had a Test average of 99.94?",
+"options": [
+"Steve Waugh",
+"Don Bradman",
+"Ricky Ponting",
+"Allan Border"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian TV soap opera is set in the coastal town of Summer Bay?",
+"options": [
+"Neighbours",
+"Home and Away",
+"SeaChange",
+"Packed to the Rafters"
+],
+"correctIndex": 1,
+"category": "Australian TV",
+"difficulty": "easy"
+},
+{
+"question": "What is the name of the deep blue mountain range west of Sydney, known for its eucalyptus haze?",
+"options": [
+"Blue Mountains",
+"Snowy Mountains",
+"Grampians",
+"Dandenong Ranges"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "easy"
+},
+{
+"question": "Which three sandstone rock formations in the Blue Mountains are a famous tourist sight?",
+"options": [
+"The Three Sisters",
+"The Pinnacles",
+"The Olgas",
+"The Breadknife"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "easy"
+},
+{
+"question": "Which desert-dwelling reptile is Australia's largest lizard?",
+"options": [
+"Blue-tongue skink",
+"Perentie",
+"Frilled-neck lizard",
+"Thorny devil"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "Which two colours make up the flag of the Torres Strait Islander people along with white and black?",
+"options": [
+"Green and blue",
+"Red and orange",
+"Yellow and purple",
+"Blue and green"
+],
+"correctIndex": 0,
+"category": "Indigenous Australia",
+"difficulty": "medium"
+},
+{
+"question": "What is Australia's longest river?",
+"options": [
+"Darling River",
+"Murray River",
+"Murrumbidgee River",
+"Cooper Creek"
+],
+"correctIndex": 1,
+"category": "Australian rivers",
+"difficulty": "medium"
+},
+{
+"question": "Which venomous Australian creature is considered one of the most dangerous, found around Sydney?",
+"options": [
+"Redback spider",
+"Funnel-web spider",
+"Huntsman spider",
+"Wolf spider"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian city is known as the 'City of Churches'?",
+"options": [
+"Hobart",
+"Adelaide",
+"Perth",
+"Ballarat"
+],
+"correctIndex": 1,
+"category": "Australian cities",
+"difficulty": "medium"
+},
+{
+"question": "Which iconic Australian rock band released the album 'Back in Black' in 1980?",
+"options": [
+"INXS",
+"AC/DC",
+"Cold Chisel",
+"Midnight Oil"
+],
+"correctIndex": 1,
+"category": "Australian music",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the small, rabbit-eared marsupial that is a symbol of Australian conservation at Easter?",
+"options": [
+"Bettong",
+"Bilby",
+"Quokka",
+"Numbat"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "Which mountain is the highest peak on the Australian mainland?",
+"options": [
+"Mount Bogong",
+"Mount Kosciuszko",
+"Mount Feathertop",
+"Cradle Mountain"
+],
+"correctIndex": 1,
+"category": "Australian geography",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the annual Aussie surf lifesaving carnival tradition on beaches each summer?",
+"options": [
+"Nippers",
+"Groms",
+"Cadets",
+"Diggers"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "medium"
+},
+{
+"question": "Which body of water lies between Australia and New Zealand?",
+"options": [
+"Coral Sea",
+"Tasman Sea",
+"Timor Sea",
+"Arafura Sea"
+],
+"correctIndex": 1,
+"category": "Australian geography",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian marsupial produces cube-shaped droppings?",
+"options": [
+"Koala",
+"Wombat",
+"Kangaroo",
+"Wallaby"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "Which gold rush town in Victoria was the site of the 1854 Eureka Stockade rebellion?",
+"options": [
+"Bendigo",
+"Ballarat",
+"Castlemaine",
+"Beechworth"
+],
+"correctIndex": 1,
+"category": "Australian history",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the venomous marine creature, a type of jellyfish, feared in northern Australian waters?",
+"options": [
+"Box jellyfish",
+"Blue bottle",
+"Portuguese man o' war",
+"Moon jellyfish"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "Which fruit-flavoured Australian children's ice block became a beloved summer icon?",
+"options": [
+"Zooper Dooper",
+"Icy Pole",
+"Paddle Pop",
+"Golden Gaytime"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian tennis player, an Indigenous woman, won multiple Grand Slam singles titles in the 1970s and 80s?",
+"options": [
+"Margaret Court",
+"Evonne Goolagong Cawley",
+"Wendy Turnbull",
+"Dianne Fromholtz"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the large monolith near Uluru, also called The Olgas?",
+"options": [
+"Kings Canyon",
+"Kata Tjuta",
+"Devils Marbles",
+"Mount Conner"
+],
+"correctIndex": 1,
+"category": "Australian landmarks",
+"difficulty": "medium"
+},
+{
+"question": "Which Aussie slang word means a genuine, honest and reliable person?",
+"options": [
+"Bogan",
+"Larrikin",
+"Dinkum",
+"Battler"
+],
+"correctIndex": 2,
+"category": "Australian slang",
+"difficulty": "medium"
+},
+{
+"question": "Which iconic red rock formation in Western Australia resembles a breaking ocean wave?",
+"options": [
+"Wave Rock",
+"Bungle Bungles",
+"Nambung",
+"Pinnacles"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the fizzy lemon soft drink brand that is a long-standing Australian favourite?",
+"options": [
+"Passiona",
+"Lemonade",
+"Solo",
+"Fanta"
+],
+"correctIndex": 2,
+"category": "Australian food",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian band recorded the 1982 hit 'Down Under'?",
+"options": [
+"Men at Work",
+"Icehouse",
+"The Church",
+"Split Enz"
+],
+"correctIndex": 0,
+"category": "Australian music",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the deepest and largest natural harbour that Sydney is built around?",
+"options": [
+"Port Jackson",
+"Botany Bay",
+"Broken Bay",
+"Pittwater"
+],
+"correctIndex": 0,
+"category": "Australian geography",
+"difficulty": "medium"
+},
+{
+"question": "What was the name of the extinct striped marsupial predator once found in Tasmania?",
+"options": [
+"Thylacine",
+"Marsupial lion",
+"Diprotodon",
+"Megalania"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "In which year did Australia become a federated Commonwealth?",
+"options": [
+"1788",
+"1851",
+"1901",
+"1931"
+],
+"correctIndex": 2,
+"category": "Australian history",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian golfer, nicknamed 'The Great White Shark', was world number one in the 1980s and 90s?",
+"options": [
+"Adam Scott",
+"Greg Norman",
+"Peter Thomson",
+"Karrie Webb"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian actress won an Academy Award for her role in 'The Hours' (2002)?",
+"options": [
+"Cate Blanchett",
+"Nicole Kidman",
+"Naomi Watts",
+"Toni Collette"
+],
+"correctIndex": 1,
+"category": "Famous Australians",
+"difficulty": "medium"
+},
+{
+"question": "What sea creature, deadly and blue-ringed, is a small octopus found in Australian waters?",
+"options": [
+"Blue-ringed octopus",
+"Cone snail",
+"Stonefish",
+"Sea wasp"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the large inland salt lake in South Australia that rarely fills with water?",
+"options": [
+"Lake Eyre",
+"Lake Torrens",
+"Lake Gairdner",
+"Lake Frome"
+],
+"correctIndex": 0,
+"category": "Australian geography",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the chocolate-coated caramel and biscuit bar with the slogan 'a party in your mouth'?",
+"options": [
+"Cherry Ripe",
+"Violet Crumble",
+"Golden Gaytime",
+"Curly Wurly"
+],
+"correctIndex": 2,
+"category": "Australian food",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian racehorse won 37 of its 51 starts and became a legend during the Great Depression?",
+"options": [
+"Phar Lap",
+"Makybe Diva",
+"Winx",
+"Kingston Town"
+],
+"correctIndex": 0,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "Which explorer pair died in 1861 attempting to cross Australia from south to north?",
+"options": [
+"Burke and Wills",
+"Sturt and Mitchell",
+"Leichhardt and Kennedy",
+"Hume and Hovell"
+],
+"correctIndex": 0,
+"category": "Australian history",
+"difficulty": "medium"
+},
+{
+"question": "What is the popular nickname for the Australian national basketball men's team?",
+"options": [
+"The Opals",
+"The Boomers",
+"The Kangaroos",
+"The Diamonds"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian river system is the country's most important for agriculture, spanning several states?",
+"options": [
+"Fitzroy Basin",
+"Murray-Darling Basin",
+"Lake Eyre Basin",
+"Ord River Scheme"
+],
+"correctIndex": 1,
+"category": "Australian rivers",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the annual arts and comedy festival held in Adelaide each autumn?",
+"options": [
+"Adelaide Fringe",
+"Vivid",
+"Dark Mofo",
+"Splendour"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "medium"
+},
+{
+"question": "What is the term for a large open expanse of treeless plain crossed by Australia's longest straight railway?",
+"options": [
+"The Nullarbor",
+"The Barkly",
+"The Hay Plain",
+"The Simpson"
+],
+"correctIndex": 0,
+"category": "Australian geography",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the Australian outback town famous for its opal mining and underground homes?",
+"options": [
+"Broken Hill",
+"Coober Pedy",
+"Kalgoorlie",
+"Lightning Ridge"
+],
+"correctIndex": 1,
+"category": "Australian geography",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian state is shaped roughly like a heart and is an island?",
+"options": [
+"Kangaroo Island",
+"Tasmania",
+"Fraser Island",
+"Flinders Island"
+],
+"correctIndex": 1,
+"category": "Australian geography",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the famous large sand island off Queensland, the world's largest sand island?",
+"options": [
+"Stradbroke Island",
+"K'gari (Fraser Island)",
+"Moreton Island",
+"Bribie Island"
+],
+"correctIndex": 1,
+"category": "Australian landmarks",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian gemstone accounts for the majority of the world's supply and is the national gemstone?",
+"options": [
+"Sapphire",
+"Opal",
+"Diamond",
+"Pearl"
+],
+"correctIndex": 1,
+"category": "Australian icons",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the large flightless bird of far north Queensland with a distinctive blue neck and casque?",
+"options": [
+"Emu",
+"Cassowary",
+"Brolga",
+"Bustard"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the well-known Australian wine region in South Australia famous for Shiraz?",
+"options": [
+"Hunter Valley",
+"Barossa Valley",
+"Margaret River",
+"Yarra Valley"
+],
+"correctIndex": 1,
+"category": "Australian food",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian PM famously disappeared while swimming in the sea in 1967?",
+"options": [
+"Robert Menzies",
+"Harold Holt",
+"John Gorton",
+"Gough Whitlam"
+],
+"correctIndex": 1,
+"category": "Australian history",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the annual light festival held in Sydney each winter?",
+"options": [
+"Vivid Sydney",
+"White Night",
+"Enlighten",
+"Dark Mofo"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian singer-songwriter is known as the 'Voice of a generation' with hits like 'To Her Door' and 'How to Make Gravy'?",
+"options": [
+"Paul Kelly",
+"Nick Cave",
+"Daniel Johns",
+"Bernard Fanning"
+],
+"correctIndex": 0,
+"category": "Australian music",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian state or territory contains Kakadu National Park?",
+"options": [
+"Queensland",
+"Western Australia",
+"Northern Territory",
+"South Australia"
+],
+"correctIndex": 2,
+"category": "Australian landmarks",
+"difficulty": "medium"
+},
+{
+"question": "Which racehorse, ridden by a female, won three consecutive Melbourne Cups in 2003, 2004 and 2005?",
+"options": [
+"Winx",
+"Makybe Diva",
+"Sunline",
+"Black Caviar"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "In 'Waltzing Matilda', what is a 'swagman' carrying when he is spotted?",
+"options": [
+"A jumbuck (sheep)",
+"A billy of tea",
+"A tucker bag",
+"A rifle"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian actress starred in 'Muriel's Wedding' and 'The Sixth Sense'?",
+"options": [
+"Rachel Griffiths",
+"Toni Collette",
+"Judy Davis",
+"Miranda Otto"
+],
+"correctIndex": 1,
+"category": "Famous Australians",
+"difficulty": "medium"
+},
+{
+"question": "What is the term for a small freshwater crayfish found in Australian creeks and dams?",
+"options": [
+"Yabby",
+"Marron",
+"Bug",
+"Slipper"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian was crowned world number one and won Wimbledon in 2002, known for his powerful serve?",
+"options": [
+"Pat Rafter",
+"Lleyton Hewitt",
+"Mark Philippoussis",
+"Pat Cash"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "Which pink and grey cockatoo is common across Australia and whose name is also slang for a fool?",
+"options": [
+"Corella",
+"Galah",
+"Rosella",
+"Budgie"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian band, fronted by Michael Hutchence, had global hits in the 1980s including 'Need You Tonight'?",
+"options": [
+"INXS",
+"Crowded House",
+"Midnight Oil",
+"Cold Chisel"
+],
+"correctIndex": 0,
+"category": "Australian music",
+"difficulty": "medium"
+},
+{
+"question": "Which national park in the Northern Territory contains Uluru?",
+"options": [
+"Kakadu",
+"Uluru-Kata Tjuta National Park",
+"Litchfield",
+"Watarrka"
+],
+"correctIndex": 1,
+"category": "Australian landmarks",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the fish, a prized eating and sport fish, whose name comes from an Aboriginal word meaning 'large-scaled river fish'?",
+"options": [
+"Barramundi",
+"Murray cod",
+"Flathead",
+"Snapper"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the wide, shallow bay south of Sydney where Captain Cook first landed in 1770?",
+"options": [
+"Botany Bay",
+"Jervis Bay",
+"Port Phillip Bay",
+"Moreton Bay"
+],
+"correctIndex": 0,
+"category": "Australian history",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian singer released the 1981 hit 'Physical' and starred in 'Grease'?",
+"options": [
+"Olivia Newton-John",
+"Helen Reddy",
+"Renee Geyer",
+"Little Pattie"
+],
+"correctIndex": 0,
+"category": "Australian music",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the tropical cyclone that devastated Darwin on Christmas Day 1974?",
+"options": [
+"Cyclone Tracy",
+"Cyclone Yasi",
+"Cyclone Larry",
+"Cyclone Debbie"
+],
+"correctIndex": 0,
+"category": "Australian history",
+"difficulty": "medium"
+},
+{
+"question": "Which snake, found in Australia, is considered the most venomous land snake in the world?",
+"options": [
+"Eastern brown snake",
+"Inland taipan",
+"Tiger snake",
+"Death adder"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian comedy character, created by Barry Humphries, is a flamboyant Melbourne housewife?",
+"options": [
+"Sir Les Patterson",
+"Dame Edna Everage",
+"Norman Gunston",
+"Kath Day-Knight"
+],
+"correctIndex": 1,
+"category": "Famous Australians",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the bright yellow native wattle that is Australia's national floral emblem?",
+"options": [
+"Waratah",
+"Golden wattle",
+"Kangaroo paw",
+"Sturt's desert pea"
+],
+"correctIndex": 1,
+"category": "Australian symbols",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian tennis great won a record 24 Grand Slam singles titles?",
+"options": [
+"Evonne Goolagong",
+"Margaret Court",
+"Ashleigh Barty",
+"Samantha Stosur"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "What is the traditional name for a cup of tea boiled in a tin can over a campfire?",
+"options": [
+"Billy tea",
+"Bush brew",
+"Swagman's cup",
+"Camp tea"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian tennis player won the 2022 Australian Open women's singles before retiring at world number one?",
+"options": [
+"Samantha Stosur",
+"Ashleigh Barty",
+"Daria Saville",
+"Ajla Tomljanovic"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "Which sea creature, with a venomous barb, caused the death of naturalist Steve Irwin in 2006?",
+"options": [
+"Stingray",
+"Box jellyfish",
+"Stonefish",
+"Sea snake"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the sweet, chewy honeycomb bar coated in chocolate, an Aussie confectionery classic?",
+"options": [
+"Violet Crumble",
+"Cherry Ripe",
+"Picnic",
+"Crunchie is British, this one is"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian region is renowned for its red wine, particularly Shiraz, in the Hunter Valley's home state?",
+"options": [
+"Victoria",
+"New South Wales",
+"South Australia",
+"Western Australia"
+],
+"correctIndex": 1,
+"category": "Australian food",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the flat, treeless plain the Indian Pacific train crosses between WA and SA?",
+"options": [
+"The Nullarbor Plain",
+"The Hay Plain",
+"The Barkly Tableland",
+"The Riverina"
+],
+"correctIndex": 0,
+"category": "Australian geography",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian band released the environmental anthem 'Beds Are Burning' in 1987?",
+"options": [
+"Midnight Oil",
+"Hunters & Collectors",
+"The Angels",
+"Hoodoo Gurus"
+],
+"correctIndex": 0,
+"category": "Australian music",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian PM delivered the National Apology to the Stolen Generations in 2008?",
+"options": [
+"John Howard",
+"Kevin Rudd",
+"Julia Gillard",
+"Tony Abbott"
+],
+"correctIndex": 1,
+"category": "Australian history",
+"difficulty": "medium"
+},
+{
+"question": "Which large Australian bird of prey is the country's largest, with a wedge-shaped tail?",
+"options": [
+"Wedge-tailed eagle",
+"Whistling kite",
+"Brown falcon",
+"Sea eagle"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the fried savoury snack, a deep-fried tube of vegetables and meat, invented in Australia?",
+"options": [
+"Chiko Roll",
+"Spring roll",
+"Dim sim",
+"Potato cake"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the reef fish and popular restaurant fish with striking colours found on the Great Barrier Reef?",
+"options": [
+"Coral trout",
+"Barramundi",
+"John dory",
+"Flathead"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the famous racehorse, an undefeated champion mare that won 33 straight races and retired in 2019?",
+"options": [
+"Black Caviar",
+"Winx",
+"Makybe Diva",
+"Sunline"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the venomous fish that lies camouflaged on the seabed in northern Australia?",
+"options": [
+"Stonefish",
+"Lionfish",
+"Scorpionfish",
+"Pufferfish"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the famous surf break in Victoria that hosts a major professional surfing competition?",
+"options": [
+"Bells Beach",
+"Snapper Rocks",
+"Margaret River",
+"Cactus"
+],
+"correctIndex": 0,
+"category": "Australian sport",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian actress won an Oscar for 'Blue Jasmine' and played Galadriel in 'The Lord of the Rings'?",
+"options": [
+"Nicole Kidman",
+"Cate Blanchett",
+"Naomi Watts",
+"Rose Byrne"
+],
+"correctIndex": 1,
+"category": "Famous Australians",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian region is famous as a tropical rainforest, one of the oldest in the world, in far north Queensland?",
+"options": [
+"Daintree",
+"Blue Mountains",
+"Grampians",
+"Otways"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian actor and comedian starred in 'The Castle' as Darryl Kerrigan?",
+"options": [
+"Eric Bana",
+"Michael Caton",
+"Paul Hogan",
+"Shane Jacobson"
+],
+"correctIndex": 1,
+"category": "Australian film",
+"difficulty": "medium"
+},
+{
+"question": "What is the Aussie slang term for a swimming costume, particularly in Queensland?",
+"options": [
+"Togs",
+"Bathers",
+"Cossie",
+"Speedos"
+],
+"correctIndex": 0,
+"category": "Australian slang",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the annual country music festival held in Tamworth, New South Wales?",
+"options": [
+"Tamworth Country Music Festival",
+"Deni Ute Muster",
+"Gympie Muster",
+"CMC Rocks"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of the famous Sydney beach and suburb reached by ferry, known for its surf and the slogan 'seven miles from Sydney'?",
+"options": [
+"Manly",
+"Cronulla",
+"Coogee",
+"Palm Beach"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "medium"
+},
+{
+"question": "What is the name of Australia's national women's cricket team?",
+"options": [
+"The Southern Stars",
+"The Diamonds",
+"The Matildas",
+"The Opals"
+],
+"correctIndex": 0,
+"category": "Australian sport",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the famous Australian outback cattle station region and cattle route in the north?",
+"options": [
+"The Overland",
+"The Outback Trail",
+"The Long Paddock",
+"The Birdsville Track"
+],
+"correctIndex": 3,
+"category": "Australian geography",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian swimmer won gold in the 1500m freestyle at the 2016 Rio Olympics and is nicknamed 'Horton'?",
+"options": [
+"Ian Thorpe",
+"Mack Horton",
+"Kyle Chalmers",
+"Grant Hackett"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "hard"
+},
+{
+"question": "Which sweet biscuit consists of two shortbread biscuits with jam and cream, topped with pink icing?",
+"options": [
+"Iced VoVo",
+"Monte Carlo",
+"Kingston",
+"Wagon Wheel"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the giant reef fish, a huge grouper, common on the Great Barrier Reef?",
+"options": [
+"Barramundi",
+"Potato cod",
+"Coral trout",
+"Maori wrasse"
+],
+"correctIndex": 1,
+"category": "Australian wildlife",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the iconic Australian ute-driving, working-class festival held in Deniliquin?",
+"options": [
+"Ute Muster",
+"Big Day Out",
+"Tamworth",
+"Splendour"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "hard"
+},
+{
+"question": "What creature appears on the reverse of the Australian ten-cent coin?",
+"options": [
+"Lyrebird",
+"Echidna",
+"Platypus",
+"Kangaroo"
+],
+"correctIndex": 0,
+"category": "Australian symbols",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the sweet passionfruit-flavoured soft drink that is a nostalgic Aussie brand?",
+"options": [
+"Passiona",
+"Solo",
+"Lift",
+"Kirks"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian golfer won the 2013 Masters, becoming the first Australian to do so?",
+"options": [
+"Jason Day",
+"Adam Scott",
+"Greg Norman",
+"Marc Leishman"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the famous surf beach and area on Queensland's Gold Coast known for its point break?",
+"options": [
+"Snapper Rocks",
+"Bells Beach",
+"Margaret River",
+"Byron Bay"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the deep gorge and canyon system in central Australia near Alice Springs?",
+"options": [
+"Kings Canyon",
+"Katherine Gorge",
+"Windjana Gorge",
+"Karijini"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian city is nicknamed 'Steel City' for its historic steelworks?",
+"options": [
+"Newcastle",
+"Wollongong",
+"Geelong",
+"Whyalla"
+],
+"correctIndex": 0,
+"category": "Australian cities",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the giant granite boulders in the Northern Territory known to Aboriginal people as Karlu Karlu?",
+"options": [
+"Devils Marbles",
+"The Pinnacles",
+"Wave Rock",
+"Remarkable Rocks"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian state is known as the 'Garden State' and features the slogan on some number plates?",
+"options": [
+"Tasmania",
+"Victoria",
+"South Australia",
+"Queensland"
+],
+"correctIndex": 1,
+"category": "Australian geography",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the famous ocean pool and coastal walk between Bondi and this southern Sydney beach?",
+"options": [
+"Coogee",
+"Manly",
+"Cronulla",
+"Maroubra"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian mountain range in the Northern Territory contains Standley Chasm and Simpsons Gap?",
+"options": [
+"Flinders Ranges",
+"MacDonnell Ranges",
+"Hamersley Range",
+"Grampians"
+],
+"correctIndex": 1,
+"category": "Australian geography",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian brand of canvas water bag was traditionally hung on car bumpers to keep water cool?",
+"options": [
+"Waterbag",
+"Canvas Coolgardie",
+"The Coolgardie safe",
+"A car water bag"
+],
+"correctIndex": 3,
+"category": "Australian culture",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the plant with brilliant red flowers that is South Australia's floral emblem?",
+"options": [
+"Sturt's desert pea",
+"Waratah",
+"Kangaroo paw",
+"Cooktown orchid"
+],
+"correctIndex": 0,
+"category": "Australian symbols",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the small nocturnal marsupial, a termite-eating striped animal that is WA's mammal emblem?",
+"options": [
+"Numbat",
+"Bilby",
+"Quoll",
+"Bettong"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian surfer won multiple world championships and is nicknamed for his home town Cronulla?",
+"options": [
+"Mick Fanning",
+"Mark Occhilupo",
+"Layne Beachley",
+"Tom Carroll"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian native flower, red and green, is the floral emblem of Western Australia?",
+"options": [
+"Kangaroo paw",
+"Waratah",
+"Golden wattle",
+"Sturt's desert pea"
+],
+"correctIndex": 0,
+"category": "Australian symbols",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian mammal, a small carnivorous marsupial, has a spotted coat and comes in several species like the eastern and spotted-tail?",
+"options": [
+"Quoll",
+"Antechinus",
+"Dunnart",
+"Phascogale"
+],
+"correctIndex": 0,
+"category": "Australian wildlife",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the tall eucalyptus tree, one of the tallest flowering plants on Earth, found in Victoria and Tasmania?",
+"options": [
+"Mountain ash",
+"River red gum",
+"Ghost gum",
+"Snow gum"
+],
+"correctIndex": 0,
+"category": "Australian plants",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian racehorse jockey rode Makybe Diva to Melbourne Cup victories?",
+"options": [
+"Damien Oliver",
+"Glen Boss",
+"Kerrin McEvoy",
+"Hugh Bowman"
+],
+"correctIndex": 1,
+"category": "Australian sport",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the Aboriginal word and Sydney park district meaning 'meeting place', also a stadium precinct?",
+"options": [
+"Parramatta",
+"Woolloomooloo",
+"Homebush",
+"Barangaroo"
+],
+"correctIndex": 3,
+"category": "Indigenous Australia",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian dessert wine region and its famous fortified wines come from this Victorian town?",
+"options": [
+"Rutherglen",
+"Mildura",
+"Echuca",
+"Shepparton"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the Aussie native shrub whose flowers are used to make a lemon-scented tea and flavouring?",
+"options": [
+"Lemon myrtle",
+"Wattleseed",
+"Bush tomato",
+"Finger lime"
+],
+"correctIndex": 0,
+"category": "Australian plants",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian citrus fruit, native to Queensland rainforests, contains caviar-like beads inside?",
+"options": [
+"Finger lime",
+"Bush lemon",
+"Desert lime",
+"Kakadu plum"
+],
+"correctIndex": 0,
+"category": "Australian plants",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the wide bay and city region in Queensland known for whale watching and the gateway to Fraser Island?",
+"options": [
+"Hervey Bay",
+"Bundaberg",
+"Gladstone",
+"Airlie Beach"
+],
+"correctIndex": 0,
+"category": "Australian geography",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian comedian and actor was known for characters on 'Kath & Kim' and won hearts as 'Sharon'?",
+"options": [
+"Magda Szubanski",
+"Gina Riley",
+"Jane Turner",
+"Glenn Robbins"
+],
+"correctIndex": 0,
+"category": "Famous Australians",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian tennis player of the 1960s won all four Grand Slam singles titles in a calendar year twice?",
+"options": [
+"Rod Laver",
+"Roy Emerson",
+"Ken Rosewall",
+"John Newcombe"
+],
+"correctIndex": 0,
+"category": "Australian sport",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian native pine produces large edible cones and nuts, sacred to Aboriginal peoples of southeast Queensland?",
+"options": [
+"Bunya pine",
+"Norfolk pine",
+"Hoop pine",
+"Wollemi pine"
+],
+"correctIndex": 0,
+"category": "Australian plants",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the ancient tree species 'rediscovered' in 1994 in a NSW gorge, once thought extinct?",
+"options": [
+"Wollemi pine",
+"Huon pine",
+"King Billy pine",
+"Bunya pine"
+],
+"correctIndex": 0,
+"category": "Australian plants",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the crescent-shaped beach in Tasmania's Freycinet National Park, famed for its pink granite?",
+"options": [
+"Wineglass Bay",
+"Wharton Beach",
+"Bay of Fires",
+"Boat Harbour"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian actor and heart-throb rose to fame in 'Neighbours' before an international film career including 'The Piano'?",
+"options": [
+"Guy Pearce",
+"Jason Donovan",
+"Craig McLachlan",
+"Kylie Minogue's co-star"
+],
+"correctIndex": 0,
+"category": "Famous Australians",
+"difficulty": "hard"
+},
+{
+"question": "Which Australian poet penned the famous line 'I love a sunburnt country' in the poem 'My Country'?",
+"options": [
+"Dorothea Mackellar",
+"Banjo Paterson",
+"Henry Lawson",
+"Judith Wright"
+],
+"correctIndex": 0,
+"category": "Australian culture",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the tropical northern Australian season locals call the humid build-up before the monsoon rains?",
+"options": [
+"The Wet",
+"The Build-up",
+"The Green",
+"The Big Wet"
+],
+"correctIndex": 1,
+"category": "Australian culture",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the traditional woven wooden dish used by Aboriginal people to carry food, water and babies?",
+"options": [
+"Coolamon",
+"Woomera",
+"Nulla-nulla",
+"Bilby"
+],
+"correctIndex": 0,
+"category": "Indigenous Australia",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the South Australian dish of a meat pie floating in pea soup?",
+"options": [
+"Pie floater",
+"Pea pie",
+"Floater pie",
+"Pie in the pond"
+],
+"correctIndex": 0,
+"category": "Australian food",
+"difficulty": "hard"
+},
+{
+"question": "What is the name of the famous multi-day walk in Tasmania through alpine wilderness between Cradle Mountain and Lake St Clair?",
+"options": [
+"Overland Track",
+"Larapinta Trail",
+"Bibbulmun Track",
+"Great Ocean Walk"
+],
+"correctIndex": 0,
+"category": "Australian landmarks",
+"difficulty": "hard"
+}
+]

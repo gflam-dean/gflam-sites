@@ -1,0 +1,2402 @@
+[
+{
+"question": "Basmati and jasmine are types of which staple food?",
+"options": [
+"Rice",
+"Corn",
+"Barley",
+"Wheat"
+],
+"correctIndex": 0,
+"category": "Cooking",
+"difficulty": "easy"
+},
+{
+"question": "Which meat is traditionally used in an Australian meat pie?",
+"options": [
+"Lamb",
+"Pork",
+"Beef",
+"Chicken"
+],
+"correctIndex": 2,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "Which coffee style adds chocolate to espresso and steamed milk?",
+"options": [
+"Americano",
+"Affogato",
+"Latte",
+"Mocha"
+],
+"correctIndex": 3,
+"category": "Coffee",
+"difficulty": "easy"
+},
+{
+"question": "In Scrabble, which single tile is worth the most points at 10?",
+"options": [
+"Q and Z",
+"K and W",
+"X and J",
+"V and Y"
+],
+"correctIndex": 0,
+"category": "Board Games",
+"difficulty": "hard"
+},
+{
+"question": "A frittata is an Italian dish based primarily on which ingredient?",
+"options": [
+"Bread",
+"Potatoes",
+"Rice",
+"Eggs"
+],
+"correctIndex": 3,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "Which grain is most commonly malted to make beer?",
+"options": [
+"Oats",
+"Barley",
+"Millet",
+"Rye"
+],
+"correctIndex": 1,
+"category": "Beer",
+"difficulty": "medium"
+},
+{
+"question": "Port is a fortified wine that traditionally comes from which country?",
+"options": [
+"Portugal",
+"Spain",
+"Italy",
+"France"
+],
+"correctIndex": 0,
+"category": "Wine",
+"difficulty": "medium"
+},
+{
+"question": "How many players can play a standard game of Chinese Checkers on the star-shaped board?",
+"options": [
+"Up to 8",
+"Up to 2",
+"Up to 6",
+"Up to 4"
+],
+"correctIndex": 2,
+"category": "Board Games",
+"difficulty": "hard"
+},
+{
+"question": "Which botanical gives gin its signature flavour?",
+"options": [
+"Lavender",
+"Rosemary",
+"Fennel",
+"Juniper"
+],
+"correctIndex": 3,
+"category": "Spirits",
+"difficulty": "medium"
+},
+{
+"question": "Which iconic Australian spread is made from leftover brewer's yeast extract?",
+"options": [
+"Promite",
+"Nutella",
+"Vegemite",
+"Marmite"
+],
+"correctIndex": 2,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "A Screwdriver is simply vodka mixed with which juice?",
+"options": [
+"Orange",
+"Tomato",
+"Lime",
+"Cranberry"
+],
+"correctIndex": 0,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Kimchi, a fermented vegetable dish, comes from which country's cuisine?",
+"options": [
+"Vietnam",
+"Japan",
+"Korea",
+"China"
+],
+"correctIndex": 2,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "Which blue cheese from France is aged in the caves of a village of the same name?",
+"options": [
+"Stilton",
+"Roquefort",
+"Gorgonzola",
+"Danish Blue"
+],
+"correctIndex": 1,
+"category": "Food Facts",
+"difficulty": "hard"
+},
+{
+"question": "A wine described as having 'legs' refers to what running down the glass?",
+"options": [
+"Sediment",
+"Bubbles",
+"Droplets of wine",
+"Cork particles"
+],
+"correctIndex": 2,
+"category": "Wine",
+"difficulty": "medium"
+},
+{
+"question": "Astronomy as a hobby typically involves observing the sky with what?",
+"options": [
+"A telescope",
+"A microscope",
+"A periscope",
+"A stethoscope"
+],
+"correctIndex": 0,
+"category": "Hobbies",
+"difficulty": "easy"
+},
+{
+"question": "Which spirit is made by distilling fermented agave?",
+"options": [
+"Whisky",
+"Brandy",
+"Rum",
+"Tequila"
+],
+"correctIndex": 3,
+"category": "Spirits",
+"difficulty": "medium"
+},
+{
+"question": "A Cosmopolitan is typically made with vodka, triple sec, lime and which juice?",
+"options": [
+"Grape",
+"Grapefruit",
+"Cranberry",
+"Apple"
+],
+"correctIndex": 2,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "What is the frothy top on a poured beer commonly called?",
+"options": [
+"Head",
+"Cap",
+"Crown",
+"Lid"
+],
+"correctIndex": 0,
+"category": "Beer",
+"difficulty": "easy"
+},
+{
+"question": "What leavening agent makes bread dough rise?",
+"options": [
+"Baking soda only",
+"Yeast",
+"Salt",
+"Sugar"
+],
+"correctIndex": 1,
+"category": "Cooking",
+"difficulty": "easy"
+},
+{
+"question": "The collecting of coins and currency is known as what?",
+"options": [
+"Philately",
+"Tegestology",
+"Vexillology",
+"Numismatics"
+],
+"correctIndex": 3,
+"category": "Collecting",
+"difficulty": "hard"
+},
+{
+"question": "A 'Chiko Roll' is an Australian snack loosely inspired by which Asian food?",
+"options": [
+"Samosa",
+"Sushi",
+"Spring roll",
+"Dumpling"
+],
+"correctIndex": 2,
+"category": "Australian Food",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian wine region shares its name with a valley in New South Wales known for Semillon?",
+"options": [
+"Clare Valley",
+"Eden Valley",
+"King Valley",
+"Hunter Valley"
+],
+"correctIndex": 3,
+"category": "Australian Wine",
+"difficulty": "medium"
+},
+{
+"question": "The mascot of Bundaberg Rum is which animal?",
+"options": [
+"Koala",
+"Kangaroo",
+"Emu",
+"Polar bear"
+],
+"correctIndex": 3,
+"category": "Australian Drink",
+"difficulty": "medium"
+},
+{
+"question": "The rich sauce mole, which can include chocolate and chilli, is a classic dish of which country?",
+"options": [
+"Mexico",
+"Spain",
+"Cuba",
+"Peru"
+],
+"correctIndex": 0,
+"category": "World Cuisine",
+"difficulty": "hard"
+},
+{
+"question": "What is the term for the winning move in chess that traps the king?",
+"options": [
+"Stalemate",
+"Checkmate",
+"En passant",
+"Castling"
+],
+"correctIndex": 1,
+"category": "Board Games",
+"difficulty": "easy"
+},
+{
+"question": "Which cocktail traditionally contains vodka, coffee liqueur and cream?",
+"options": [
+"Manhattan",
+"Sidecar",
+"White Russian",
+"Negroni"
+],
+"correctIndex": 2,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "Which herb is essential to a traditional Italian Caprese salad?",
+"options": [
+"Coriander",
+"Chives",
+"Dill",
+"Basil"
+],
+"correctIndex": 3,
+"category": "Cooking",
+"difficulty": "easy"
+},
+{
+"question": "The Japanese art of paper folding is called what?",
+"options": [
+"Kintsugi",
+"Ikebana",
+"Origami",
+"Kirigami"
+],
+"correctIndex": 2,
+"category": "Crafts",
+"difficulty": "easy"
+},
+{
+"question": "A Mimosa is a mix of sparkling wine and which juice?",
+"options": [
+"Pineapple",
+"Tomato",
+"Orange",
+"Apple"
+],
+"correctIndex": 2,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Which garden pest is a slimy, shell-less relative of the snail?",
+"options": [
+"Aphid",
+"Slug",
+"Weevil",
+"Caterpillar"
+],
+"correctIndex": 1,
+"category": "Gardening",
+"difficulty": "easy"
+},
+{
+"question": "Which spirit is the base of a classic Margarita?",
+"options": [
+"Whisky",
+"Brandy",
+"Tequila",
+"Gin"
+],
+"correctIndex": 2,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Which staple crop can be white, brown, jasmine, basmati or arborio?",
+"options": [
+"Oats",
+"Barley",
+"Wheat",
+"Rice"
+],
+"correctIndex": 3,
+"category": "Food Facts",
+"difficulty": "easy"
+},
+{
+"question": "Tabasco sauce is made from vinegar, salt and which peppers?",
+"options": [
+"Bird's eye chillies",
+"Habaneros",
+"Tabasco chillies",
+"Jalapenos"
+],
+"correctIndex": 2,
+"category": "Food Facts",
+"difficulty": "hard"
+},
+{
+"question": "The 'Tim Tam Slam' involves using the biscuit as a straw for which drink?",
+"options": [
+"Soft drink",
+"Hot coffee or tea",
+"Beer",
+"Cold milk"
+],
+"correctIndex": 1,
+"category": "Australian Food",
+"difficulty": "medium"
+},
+{
+"question": "Ceviche is a dish of raw seafood 'cooked' in the acidity of what?",
+"options": [
+"Vinegar",
+"Soy sauce",
+"Citrus juice",
+"Wine"
+],
+"correctIndex": 2,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "The two most commonly grown coffee species are Robusta and which other?",
+"options": [
+"Bourbon",
+"Liberica",
+"Arabica",
+"Excelsa"
+],
+"correctIndex": 2,
+"category": "Coffee",
+"difficulty": "medium"
+},
+{
+"question": "A standard deck of playing cards contains how many cards, excluding jokers?",
+"options": [
+"48",
+"54",
+"52",
+"60"
+],
+"correctIndex": 2,
+"category": "Card Games",
+"difficulty": "easy"
+},
+{
+"question": "In Australia, what is the common name for a small glass of beer served in a schooner's smaller cousin?",
+"options": [
+"Keg",
+"Pint",
+"Jug",
+"Pot"
+],
+"correctIndex": 3,
+"category": "Australian Beer",
+"difficulty": "medium"
+},
+{
+"question": "What is the term for a person who is an expert wine steward in a restaurant?",
+"options": [
+"Barista",
+"Sommelier",
+"Cicerone",
+"Vintner"
+],
+"correctIndex": 1,
+"category": "Wine",
+"difficulty": "medium"
+},
+{
+"question": "Which French dish is a stew of vegetables including eggplant, zucchini and tomato?",
+"options": [
+"Bouillabaisse",
+"Ratatouille",
+"Coq au vin",
+"Cassoulet"
+],
+"correctIndex": 1,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "A Bloody Mary cocktail is made with vodka and what juice?",
+"options": [
+"Tomato",
+"Cranberry",
+"Pineapple",
+"Orange"
+],
+"correctIndex": 0,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Which cocktail is traditionally garnished with a stick of celery?",
+"options": [
+"Bloody Mary",
+"Cosmopolitan",
+"Margarita",
+"Martini"
+],
+"correctIndex": 0,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Sous vide cooking involves sealing food in a bag and cooking it in what?",
+"options": [
+"Steam",
+"An oven",
+"Hot oil",
+"Precisely heated water"
+],
+"correctIndex": 3,
+"category": "Cooking",
+"difficulty": "hard"
+},
+{
+"question": "Pho is a fragrant noodle soup from which country?",
+"options": [
+"Thailand",
+"China",
+"Vietnam",
+"Cambodia"
+],
+"correctIndex": 2,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "The heat of chillies is measured on which scale?",
+"options": [
+"Mohs",
+"Scoville",
+"Celsius",
+"Richter"
+],
+"correctIndex": 1,
+"category": "Food Facts",
+"difficulty": "medium"
+},
+{
+"question": "Which country is the traditional home of Scotch whisky?",
+"options": [
+"Ireland",
+"Japan",
+"Scotland",
+"Canada"
+],
+"correctIndex": 2,
+"category": "Spirits",
+"difficulty": "easy"
+},
+{
+"question": "Honey is produced by bees from what?",
+"options": [
+"Fruit juice",
+"Flower nectar",
+"Pollen",
+"Tree sap"
+],
+"correctIndex": 1,
+"category": "Food Facts",
+"difficulty": "easy"
+},
+{
+"question": "The Yarra Valley wine region lies just outside which Australian capital city?",
+"options": [
+"Perth",
+"Sydney",
+"Adelaide",
+"Melbourne"
+],
+"correctIndex": 3,
+"category": "Australian Wine",
+"difficulty": "medium"
+},
+{
+"question": "Barramundi, popular on Australian menus, is a type of what?",
+"options": [
+"Crab",
+"Shellfish",
+"Fish",
+"Squid"
+],
+"correctIndex": 2,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "The lamington is an Australian cake coated in chocolate and rolled in what?",
+"options": [
+"Crushed nuts",
+"Desiccated coconut",
+"Icing sugar",
+"Sprinkles"
+],
+"correctIndex": 1,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "A 'flat white' coffee, popularised in Australia and New Zealand, is espresso with what?",
+"options": [
+"Steamed milk with a thin layer of microfoam",
+"Cold milk",
+"Hot water",
+"Whipped cream"
+],
+"correctIndex": 0,
+"category": "Coffee",
+"difficulty": "medium"
+},
+{
+"question": "The Negroni is made from gin, Campari and which other ingredient?",
+"options": [
+"Sweet vermouth",
+"Lime juice",
+"Triple sec",
+"Soda water"
+],
+"correctIndex": 0,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "Which grape variety is most associated with Champagne alongside Pinot Noir and Pinot Meunier?",
+"options": [
+"Shiraz",
+"Merlot",
+"Riesling",
+"Chardonnay"
+],
+"correctIndex": 3,
+"category": "Wine",
+"difficulty": "medium"
+},
+{
+"question": "Which spirit is the base of a Caipirinha, Brazil's national cocktail?",
+"options": [
+"Mezcal",
+"Cachaca",
+"Pisco",
+"Grappa"
+],
+"correctIndex": 1,
+"category": "Cocktails",
+"difficulty": "hard"
+},
+{
+"question": "What is the main ingredient of Vegemite?",
+"options": [
+"Malt syrup",
+"Yeast extract",
+"Soy paste",
+"Beef extract"
+],
+"correctIndex": 1,
+"category": "Australian Food",
+"difficulty": "medium"
+},
+{
+"question": "What is the term for the French phrase meaning to have all ingredients prepped and ready before cooking?",
+"options": [
+"Bain-marie",
+"Al dente",
+"Mise en place",
+"Sous vide"
+],
+"correctIndex": 2,
+"category": "Cooking",
+"difficulty": "hard"
+},
+{
+"question": "'Al dente' pasta is cooked so that it is still what?",
+"options": [
+"Firm to the bite",
+"Crunchy raw",
+"Very soft",
+"Mushy"
+],
+"correctIndex": 0,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "Amaretto liqueur has a flavour most similar to which nut?",
+"options": [
+"Walnut",
+"Cashew",
+"Almond",
+"Pistachio"
+],
+"correctIndex": 2,
+"category": "Spirits",
+"difficulty": "medium"
+},
+{
+"question": "An affogato is a dessert of ice cream 'drowned' in what?",
+"options": [
+"Caramel",
+"Liqueur",
+"Chocolate sauce",
+"Espresso"
+],
+"correctIndex": 3,
+"category": "Coffee",
+"difficulty": "medium"
+},
+{
+"question": "The craft of decorating objects by gluing on paper cut-outs and coating with varnish is called what?",
+"options": [
+"Origami",
+"Embossing",
+"Marbling",
+"Decoupage"
+],
+"correctIndex": 3,
+"category": "Crafts",
+"difficulty": "hard"
+},
+{
+"question": "In Euchre, popular in Australia, which card is typically the highest trump?",
+"options": [
+"The Ace",
+"The Joker",
+"The King",
+"The Jack of the trump suit"
+],
+"correctIndex": 3,
+"category": "Card Games",
+"difficulty": "hard"
+},
+{
+"question": "In the game of Snakes and Ladders, landing on a snake's head sends you where?",
+"options": [
+"Down the board",
+"Ahead one space",
+"Up the board",
+"Back to start"
+],
+"correctIndex": 0,
+"category": "Board Games",
+"difficulty": "easy"
+},
+{
+"question": "The children's card game where you shout the game's name when you have one card left is called what?",
+"options": [
+"Uno",
+"Old Maid",
+"Snap",
+"Go Fish"
+],
+"correctIndex": 0,
+"category": "Card Games",
+"difficulty": "easy"
+},
+{
+"question": "Hummus is a Middle Eastern dip made mainly from which legume?",
+"options": [
+"Kidney beans",
+"Lentils",
+"Black beans",
+"Chickpeas"
+],
+"correctIndex": 3,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian wine region is world famous for Shiraz and sits northeast of Adelaide?",
+"options": [
+"Yarra Valley",
+"Hunter Valley",
+"Barossa Valley",
+"Margaret River"
+],
+"correctIndex": 2,
+"category": "Australian Wine",
+"difficulty": "medium"
+},
+{
+"question": "A 'schooner' of beer in most of Australia is roughly what volume?",
+"options": [
+"285 mL",
+"200 mL",
+"570 mL",
+"425 mL"
+],
+"correctIndex": 3,
+"category": "Australian Beer",
+"difficulty": "hard"
+},
+{
+"question": "Which process turns kitchen and garden waste into a nutrient-rich soil improver?",
+"options": [
+"Grafting",
+"Fermenting",
+"Mulching",
+"Composting"
+],
+"correctIndex": 3,
+"category": "Gardening",
+"difficulty": "easy"
+},
+{
+"question": "Which coffee drink is a single or double shot of espresso with a small amount of foamed milk, meaning 'stained' in Italian?",
+"options": [
+"Macchiato",
+"Ristretto",
+"Mocha",
+"Latte"
+],
+"correctIndex": 0,
+"category": "Coffee",
+"difficulty": "medium"
+},
+{
+"question": "The Margaret River wine region is located in which Australian state?",
+"options": [
+"Western Australia",
+"Victoria",
+"Queensland",
+"Tasmania"
+],
+"correctIndex": 0,
+"category": "Australian Wine",
+"difficulty": "medium"
+},
+{
+"question": "Which Australian fast food dish combines chips, gravy and often cheese, sometimes called a 'HSP' when with kebab meat?",
+"options": [
+"Halal Snack Pack",
+"Nachos",
+"Loaded fries",
+"Poutine"
+],
+"correctIndex": 0,
+"category": "Australian Food",
+"difficulty": "medium"
+},
+{
+"question": "Wasabi is a pungent condiment usually served with which cuisine?",
+"options": [
+"Japanese",
+"Mexican",
+"Indian",
+"Thai"
+],
+"correctIndex": 0,
+"category": "Food Facts",
+"difficulty": "easy"
+},
+{
+"question": "The macadamia nut is native to which country?",
+"options": [
+"Indonesia",
+"Australia",
+"Hawaii",
+"Brazil"
+],
+"correctIndex": 1,
+"category": "Australian Food",
+"difficulty": "medium"
+},
+{
+"question": "Paella is a rice dish that originated in which country?",
+"options": [
+"Italy",
+"Greece",
+"Portugal",
+"Spain"
+],
+"correctIndex": 3,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "Which Indian bread is a leavened flatbread traditionally baked in a tandoor oven?",
+"options": [
+"Chapati",
+"Roti",
+"Naan",
+"Papadum"
+],
+"correctIndex": 2,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "In chess, which piece can only move diagonally?",
+"options": [
+"Pawn",
+"Rook",
+"Knight",
+"Bishop"
+],
+"correctIndex": 3,
+"category": "Board Games",
+"difficulty": "easy"
+},
+{
+"question": "A Margarita is traditionally served with what around the rim of the glass?",
+"options": [
+"Salt",
+"Cinnamon",
+"Cocoa",
+"Sugar"
+],
+"correctIndex": 0,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "What gives a Blue Lagoon or Blue Hawaiian its distinctive blue colour?",
+"options": [
+"Blue curacao",
+"Food dye tablets",
+"Blue Gatorade",
+"Blueberry juice"
+],
+"correctIndex": 0,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "What does the acronym IPA stand for in beer?",
+"options": [
+"Irish Pale Ale",
+"Italian Premium Ale",
+"India Pale Ale",
+"Imported Pilsner Ale"
+],
+"correctIndex": 2,
+"category": "Beer",
+"difficulty": "medium"
+},
+{
+"question": "Which spice, derived from a crocus flower, is the world's most expensive by weight?",
+"options": [
+"Cardamom",
+"Saffron",
+"Vanilla",
+"Cloves"
+],
+"correctIndex": 1,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "Which cocktail shares its name with a James Bond preference: shaken, not stirred?",
+"options": [
+"Martini",
+"Mojito",
+"Bellini",
+"Sidecar"
+],
+"correctIndex": 0,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Which kitchen tool is used to separate egg whites from yolks quickly by hand or device?",
+"options": [
+"Egg separator",
+"Grater",
+"Sieve",
+"Whisk"
+],
+"correctIndex": 0,
+"category": "Cooking",
+"difficulty": "easy"
+},
+{
+"question": "Backgammon is played on a board with 24 narrow triangles called what?",
+"options": [
+"Lanes",
+"Points",
+"Pips",
+"Slots"
+],
+"correctIndex": 1,
+"category": "Board Games",
+"difficulty": "hard"
+},
+{
+"question": "In Blackjack, what total are players aiming to reach without exceeding?",
+"options": [
+"18",
+"20",
+"25",
+"21"
+],
+"correctIndex": 3,
+"category": "Card Games",
+"difficulty": "easy"
+},
+{
+"question": "Which hobby is the collecting of beer-related coasters or mats?",
+"options": [
+"Tegestology",
+"Philately",
+"Numismatics",
+"Deltiology"
+],
+"correctIndex": 0,
+"category": "Collecting",
+"difficulty": "hard"
+},
+{
+"question": "The Manhattan cocktail combines whiskey, sweet vermouth and a dash of what?",
+"options": [
+"Lime cordial",
+"Grenadine",
+"Soda",
+"Bitters"
+],
+"correctIndex": 3,
+"category": "Cocktails",
+"difficulty": "hard"
+},
+{
+"question": "A tomato is botanically classified as which of these?",
+"options": [
+"A tuber",
+"A legume",
+"A fruit",
+"A vegetable"
+],
+"correctIndex": 2,
+"category": "Food Facts",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian beer brand uses the slogan association with a bitter and a famous red label?",
+"options": [
+"Stella Artois",
+"Victoria Bitter",
+"Corona",
+"Asahi"
+],
+"correctIndex": 1,
+"category": "Australian Beer",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian rum brand is famously produced in Bundaberg, Queensland?",
+"options": [
+"Beenleigh",
+"Bundaberg Rum",
+"Inner Circle",
+"Mount Gay"
+],
+"correctIndex": 1,
+"category": "Australian Drink",
+"difficulty": "easy"
+},
+{
+"question": "Which Italian liqueur is flavoured with liquorice-like anise and turns cloudy with water?",
+"options": [
+"Limoncello",
+"Amaretto",
+"Sambuca",
+"Frangelico"
+],
+"correctIndex": 2,
+"category": "Spirits",
+"difficulty": "medium"
+},
+{
+"question": "Which of these is one of the four suits in a standard deck?",
+"options": [
+"Clubs",
+"Shields",
+"Stars",
+"Cups"
+],
+"correctIndex": 0,
+"category": "Card Games",
+"difficulty": "easy"
+},
+{
+"question": "Rose wine gets its pink colour from brief contact with what?",
+"options": [
+"Rose petals",
+"Grape skins",
+"Beetroot",
+"Cranberries"
+],
+"correctIndex": 1,
+"category": "Wine",
+"difficulty": "medium"
+},
+{
+"question": "Which iconic dark Irish stout is famous worldwide?",
+"options": [
+"Peroni",
+"Heineken",
+"Corona",
+"Guinness"
+],
+"correctIndex": 3,
+"category": "Beer",
+"difficulty": "easy"
+},
+{
+"question": "Pad Thai is a stir-fried noodle dish from which country?",
+"options": [
+"Thailand",
+"Indonesia",
+"Malaysia",
+"Vietnam"
+],
+"correctIndex": 0,
+"category": "World Cuisine",
+"difficulty": "easy"
+},
+{
+"question": "What is the main ingredient in traditional guacamole?",
+"options": [
+"Peas",
+"Avocado",
+"Broad beans",
+"Zucchini"
+],
+"correctIndex": 1,
+"category": "World Cuisine",
+"difficulty": "easy"
+},
+{
+"question": "'Fairy bread', a party staple, is bread and butter covered in what?",
+"options": [
+"Chocolate chips",
+"Hundreds and thousands",
+"Icing sugar",
+"Sprinkled coconut"
+],
+"correctIndex": 1,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "Which vitamin-rich green is the main ingredient in a Caesar salad's leaves?",
+"options": [
+"Cos (romaine) lettuce",
+"Iceberg lettuce",
+"Rocket",
+"Spinach"
+],
+"correctIndex": 0,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "A Tim Tam is a chocolate biscuit made by which Australian company?",
+"options": [
+"Arnott's",
+"Nestle",
+"Cadbury",
+"Bega"
+],
+"correctIndex": 0,
+"category": "Australian Food",
+"difficulty": "medium"
+},
+{
+"question": "Sushi is a dish that originated in which country?",
+"options": [
+"China",
+"Japan",
+"Korea",
+"Thailand"
+],
+"correctIndex": 1,
+"category": "World Cuisine",
+"difficulty": "easy"
+},
+{
+"question": "Which nut is not a true nut but a seed, and grows on the outside of its fruit?",
+"options": [
+"Hazelnut",
+"Cashew",
+"Chestnut",
+"Acorn"
+],
+"correctIndex": 1,
+"category": "Food Facts",
+"difficulty": "hard"
+},
+{
+"question": "What spirit is the main ingredient in a Mojito?",
+"options": [
+"Gin",
+"Rum",
+"Tequila",
+"Vodka"
+],
+"correctIndex": 1,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Bourbon whiskey must be made primarily from which grain?",
+"options": [
+"Wheat",
+"Rye",
+"Corn",
+"Barley"
+],
+"correctIndex": 2,
+"category": "Spirits",
+"difficulty": "hard"
+},
+{
+"question": "Embroidery is the craft of decorating fabric using what?",
+"options": [
+"Paint",
+"Glue and beads only",
+"Needle and thread",
+"Ink stamps"
+],
+"correctIndex": 2,
+"category": "Crafts",
+"difficulty": "easy"
+},
+{
+"question": "Which vegetable is the main ingredient in the dish coleslaw?",
+"options": [
+"Kale",
+"Cabbage",
+"Lettuce",
+"Spinach"
+],
+"correctIndex": 1,
+"category": "Food Facts",
+"difficulty": "easy"
+},
+{
+"question": "Which Australian biscuit was linked to soldiers in World War I and is made with oats and golden syrup?",
+"options": [
+"Tim Tam",
+"Monte Carlo",
+"Iced VoVo",
+"Anzac biscuit"
+],
+"correctIndex": 3,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "Which cocktail is made with gin and tonic water?",
+"options": [
+"Screwdriver",
+"Daiquiri",
+"Cosmopolitan",
+"Gin and Tonic"
+],
+"correctIndex": 3,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Which spice gives traditional paella and many rice dishes their yellow colour?",
+"options": [
+"Cumin",
+"Saffron",
+"Turmeric",
+"Paprika"
+],
+"correctIndex": 1,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "A Daiquiri is made with rum, sugar and which fruit juice?",
+"options": [
+"Passionfruit",
+"Lime",
+"Mango",
+"Orange"
+],
+"correctIndex": 1,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "In the card game Snap, players shout 'Snap!' when two cards do what?",
+"options": [
+"Match",
+"Are the same suit",
+"Add to ten",
+"Are both aces"
+],
+"correctIndex": 0,
+"category": "Card Games",
+"difficulty": "easy"
+},
+{
+"question": "A Golden Gaytime is an Australian ice cream covered in chocolate and what?",
+"options": [
+"Sprinkles",
+"Nuts",
+"Biscuit crumbs",
+"Coconut"
+],
+"correctIndex": 2,
+"category": "Australian Food",
+"difficulty": "medium"
+},
+{
+"question": "Which pottery tool spins to help shape clay into pots and bowls?",
+"options": [
+"Loom",
+"Lathe",
+"Kiln",
+"Potter's wheel"
+],
+"correctIndex": 3,
+"category": "Crafts",
+"difficulty": "easy"
+},
+{
+"question": "Rum is a spirit distilled primarily from sugarcane or which by-product?",
+"options": [
+"Corn",
+"Molasses",
+"Potato",
+"Wheat"
+],
+"correctIndex": 1,
+"category": "Spirits",
+"difficulty": "medium"
+},
+{
+"question": "Which classic cocktail is made from cognac, orange liqueur and lemon juice?",
+"options": [
+"Gimlet",
+"Aviation",
+"French 75",
+"Sidecar"
+],
+"correctIndex": 3,
+"category": "Cocktails",
+"difficulty": "hard"
+},
+{
+"question": "Which fruit is technically a berry: banana, apple, cherry or peach?",
+"options": [
+"Banana",
+"Peach",
+"Apple",
+"Cherry"
+],
+"correctIndex": 0,
+"category": "Food Facts",
+"difficulty": "hard"
+},
+{
+"question": "Which country is the origin of the dish moussaka?",
+"options": [
+"Egypt",
+"Greece",
+"Turkey",
+"Lebanon"
+],
+"correctIndex": 1,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "Which grape is used to make classic French Chablis?",
+"options": [
+"Pinot Gris",
+"Sauvignon Blanc",
+"Chardonnay",
+"Riesling"
+],
+"correctIndex": 2,
+"category": "Wine",
+"difficulty": "hard"
+},
+{
+"question": "Which cooking method involves cooking food slowly in liquid just below boiling point?",
+"options": [
+"Frying",
+"Roasting",
+"Simmering",
+"Grilling"
+],
+"correctIndex": 2,
+"category": "Cooking",
+"difficulty": "easy"
+},
+{
+"question": "A stout is a type of beer known for its dark colour and flavours of what?",
+"options": [
+"Honey",
+"Roasted malt",
+"Ginger",
+"Citrus"
+],
+"correctIndex": 1,
+"category": "Beer",
+"difficulty": "easy"
+},
+{
+"question": "In Blackjack, an Ace can be counted as 1 or what other value?",
+"options": [
+"1 only",
+"11",
+"15",
+"10"
+],
+"correctIndex": 1,
+"category": "Card Games",
+"difficulty": "easy"
+},
+{
+"question": "What term describes a sparkling wine that is very dry?",
+"options": [
+"Brut",
+"Sweet",
+"Demi-sec",
+"Doux"
+],
+"correctIndex": 0,
+"category": "Wine",
+"difficulty": "hard"
+},
+{
+"question": "Carbonara is a pasta sauce traditionally made with egg, cheese, pepper and what cured meat?",
+"options": [
+"Prawns",
+"Beef mince",
+"Guanciale or pancetta",
+"Chicken"
+],
+"correctIndex": 2,
+"category": "World Cuisine",
+"difficulty": "hard"
+},
+{
+"question": "A cappuccino is traditionally made of espresso, steamed milk and what on top?",
+"options": [
+"Cinnamon only",
+"Foamed milk",
+"Whipped cream",
+"Chocolate shavings only"
+],
+"correctIndex": 1,
+"category": "Coffee",
+"difficulty": "easy"
+},
+{
+"question": "Which fruit has varieties including Granny Smith, Pink Lady and Fuji?",
+"options": [
+"Pear",
+"Peach",
+"Plum",
+"Apple"
+],
+"correctIndex": 3,
+"category": "Food Facts",
+"difficulty": "easy"
+},
+{
+"question": "In the game Cluedo, what type of event must players solve?",
+"options": [
+"A kidnapping",
+"A murder",
+"A theft",
+"A robbery"
+],
+"correctIndex": 1,
+"category": "Board Games",
+"difficulty": "easy"
+},
+{
+"question": "Which hobby involves observing and identifying birds in the wild?",
+"options": [
+"Birdwatching",
+"Beekeeping",
+"Butterfly farming",
+"Falconry"
+],
+"correctIndex": 0,
+"category": "Hobbies",
+"difficulty": "easy"
+},
+{
+"question": "How many suits are there in a standard deck of playing cards?",
+"options": [
+"3",
+"4",
+"2",
+"5"
+],
+"correctIndex": 1,
+"category": "Card Games",
+"difficulty": "easy"
+},
+{
+"question": "Which cut of beef is used for a classic T-bone steak, named for its bone shape?",
+"options": [
+"From the short loin",
+"From the rump",
+"From the shin",
+"From the shoulder"
+],
+"correctIndex": 0,
+"category": "Cooking",
+"difficulty": "hard"
+},
+{
+"question": "A person who collects and studies antique or rare books practises what?",
+"options": [
+"Philately",
+"Oology",
+"Bibliophily",
+"Numismatics"
+],
+"correctIndex": 2,
+"category": "Collecting",
+"difficulty": "hard"
+},
+{
+"question": "Cognac is a type of what, produced in a specific region of France?",
+"options": [
+"Brandy",
+"Whisky",
+"Gin",
+"Vodka"
+],
+"correctIndex": 0,
+"category": "Spirits",
+"difficulty": "medium"
+},
+{
+"question": "Which sweet Italian sparkling wine is made from the Moscato grape?",
+"options": [
+"Moscato d'Asti",
+"Chianti",
+"Lambrusco",
+"Barolo"
+],
+"correctIndex": 0,
+"category": "Wine",
+"difficulty": "hard"
+},
+{
+"question": "Vodka is traditionally distilled from grain or which vegetable?",
+"options": [
+"Turnip",
+"Potato",
+"Beetroot",
+"Carrot"
+],
+"correctIndex": 1,
+"category": "Spirits",
+"difficulty": "easy"
+},
+{
+"question": "A red wine grape known as Syrah in France is commonly called what in Australia?",
+"options": [
+"Grenache",
+"Tempranillo",
+"Shiraz",
+"Malbec"
+],
+"correctIndex": 2,
+"category": "Wine",
+"difficulty": "easy"
+},
+{
+"question": "Which Japanese dish consists of battered and deep-fried seafood or vegetables?",
+"options": [
+"Ramen",
+"Miso",
+"Teriyaki",
+"Tempura"
+],
+"correctIndex": 3,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "The Maillard reaction gives seared meat and toast their brown colour and flavour by reacting sugars with what?",
+"options": [
+"Fat",
+"Water",
+"Salt",
+"Amino acids"
+],
+"correctIndex": 3,
+"category": "Cooking",
+"difficulty": "hard"
+},
+{
+"question": "The Pink Lady apple variety was originally developed in which country?",
+"options": [
+"United States",
+"Japan",
+"New Zealand",
+"Australia"
+],
+"correctIndex": 3,
+"category": "Australian Food",
+"difficulty": "hard"
+},
+{
+"question": "Limoncello is an Italian liqueur made from which fruit?",
+"options": [
+"Grapefruit",
+"Orange",
+"Lime",
+"Lemon"
+],
+"correctIndex": 3,
+"category": "Spirits",
+"difficulty": "easy"
+},
+{
+"question": "Which cocktail is traditionally served in a copper mug?",
+"options": [
+"Mai Tai",
+"Old Fashioned",
+"Mimosa",
+"Moscow Mule"
+],
+"correctIndex": 3,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "Which cheese has holes, or 'eyes', and is associated with Switzerland?",
+"options": [
+"Camembert",
+"Gouda",
+"Emmental",
+"Brie"
+],
+"correctIndex": 2,
+"category": "Food Facts",
+"difficulty": "medium"
+},
+{
+"question": "Which sweet, spiced Australian bush ingredient comes from the wattle?",
+"options": [
+"Saltbush",
+"Pepperberry",
+"Lemon myrtle",
+"Wattleseed"
+],
+"correctIndex": 3,
+"category": "Australian Food",
+"difficulty": "hard"
+},
+{
+"question": "Which cheese is traditionally used on a Margherita pizza?",
+"options": [
+"Parmesan",
+"Mozzarella",
+"Cheddar",
+"Feta"
+],
+"correctIndex": 1,
+"category": "World Cuisine",
+"difficulty": "easy"
+},
+{
+"question": "Which cocktail is made with tequila, orange liqueur and orange juice, and named for a sunrise effect?",
+"options": [
+"Sea Breeze",
+"Harvey Wallbanger",
+"Tequila Sunrise",
+"Blue Lagoon"
+],
+"correctIndex": 2,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "Baileys is a cream liqueur that originated in which country?",
+"options": [
+"Ireland",
+"France",
+"Scotland",
+"England"
+],
+"correctIndex": 0,
+"category": "Spirits",
+"difficulty": "medium"
+},
+{
+"question": "Which Tasmanian beer brand is named after a cascade or waterfall?",
+"options": [
+"Cascade",
+"Emu",
+"Coopers",
+"Boag's"
+],
+"correctIndex": 0,
+"category": "Australian Beer",
+"difficulty": "medium"
+},
+{
+"question": "Which fortified wine shares its name with a Spanish region and is often served dry or sweet?",
+"options": [
+"Marsala",
+"Madeira",
+"Sherry",
+"Vermouth"
+],
+"correctIndex": 2,
+"category": "Wine",
+"difficulty": "medium"
+},
+{
+"question": "Which board game challenges players to make words on a grid using lettered tiles?",
+"options": [
+"Cluedo",
+"Boggle",
+"Scrabble",
+"Ludo"
+],
+"correctIndex": 2,
+"category": "Board Games",
+"difficulty": "easy"
+},
+{
+"question": "Tzatziki, a Greek dip, is made from yoghurt, garlic and which vegetable?",
+"options": [
+"Tomato",
+"Capsicum",
+"Cucumber",
+"Eggplant"
+],
+"correctIndex": 2,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "Bundaberg is also famous for a non-alcoholic brewed drink of which flavour?",
+"options": [
+"Cola",
+"Root beer",
+"Ginger beer",
+"Lemonade"
+],
+"correctIndex": 2,
+"category": "Australian Drink",
+"difficulty": "easy"
+},
+{
+"question": "Tannins in red wine mostly come from grape skins, seeds and what?",
+"options": [
+"Water",
+"Added sugar",
+"Yeast",
+"Oak barrels"
+],
+"correctIndex": 3,
+"category": "Wine",
+"difficulty": "hard"
+},
+{
+"question": "Cinnamon is harvested from what part of a tree?",
+"options": [
+"Fruit",
+"Bark",
+"Root",
+"Leaf"
+],
+"correctIndex": 1,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "A pale lager brand from Mexico, often served with a lime wedge, is called what?",
+"options": [
+"Corona",
+"Tsingtao",
+"Guinness",
+"Kirin"
+],
+"correctIndex": 0,
+"category": "Beer",
+"difficulty": "easy"
+},
+{
+"question": "What is the main ingredient used to brew beer that gives it bitterness and aroma?",
+"options": [
+"Wheat bran",
+"Hops",
+"Rice",
+"Corn"
+],
+"correctIndex": 1,
+"category": "Beer",
+"difficulty": "medium"
+},
+{
+"question": "A roux, used to thicken sauces, is made from fat and what?",
+"options": [
+"Cornflour",
+"Egg",
+"Flour",
+"Sugar"
+],
+"correctIndex": 2,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "An Americano is espresso diluted with what?",
+"options": [
+"Cream",
+"Steamed milk",
+"Hot water",
+"Cold milk"
+],
+"correctIndex": 2,
+"category": "Coffee",
+"difficulty": "easy"
+},
+{
+"question": "Prosciutto is a thinly sliced cured what?",
+"options": [
+"Salmon",
+"Ham",
+"Beef",
+"Duck"
+],
+"correctIndex": 1,
+"category": "Food Facts",
+"difficulty": "medium"
+},
+{
+"question": "Which herb is traditionally used to garnish a Mojito?",
+"options": [
+"Parsley",
+"Coriander",
+"Basil",
+"Mint"
+],
+"correctIndex": 3,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Which pasta shape's name translates to 'little tongues' and is long and flat?",
+"options": [
+"Rigatoni",
+"Fusilli",
+"Penne",
+"Linguine"
+],
+"correctIndex": 3,
+"category": "World Cuisine",
+"difficulty": "hard"
+},
+{
+"question": "A Bellini is a cocktail of Prosecco and which fruit puree?",
+"options": [
+"Strawberry",
+"Apricot",
+"Raspberry",
+"Peach"
+],
+"correctIndex": 3,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "Which compound in chillies is responsible for their heat?",
+"options": [
+"Capsaicin",
+"Caffeine",
+"Tannin",
+"Menthol"
+],
+"correctIndex": 0,
+"category": "Food Facts",
+"difficulty": "hard"
+},
+{
+"question": "What is the practice of covering soil with material like bark or straw to retain moisture called?",
+"options": [
+"Composting",
+"Weeding",
+"Pruning",
+"Mulching"
+],
+"correctIndex": 3,
+"category": "Gardening",
+"difficulty": "easy"
+},
+{
+"question": "What is tofu made from?",
+"options": [
+"Rice",
+"Soybeans",
+"Wheat",
+"Almonds"
+],
+"correctIndex": 1,
+"category": "Cooking",
+"difficulty": "easy"
+},
+{
+"question": "An Espresso Martini contains vodka, coffee liqueur and what else?",
+"options": [
+"Chocolate syrup",
+"Cola",
+"Cream",
+"Fresh espresso"
+],
+"correctIndex": 3,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "What is the highest single card in most standard card games?",
+"options": [
+"King",
+"Joker",
+"Queen",
+"Ace"
+],
+"correctIndex": 3,
+"category": "Card Games",
+"difficulty": "easy"
+},
+{
+"question": "Cheddar cheese originally comes from which country?",
+"options": [
+"Switzerland",
+"France",
+"Netherlands",
+"England"
+],
+"correctIndex": 3,
+"category": "Food Facts",
+"difficulty": "medium"
+},
+{
+"question": "A Pina Colada blends rum, pineapple and what other key ingredient?",
+"options": [
+"Condensed milk",
+"Almond milk",
+"Coconut cream",
+"Yoghurt"
+],
+"correctIndex": 2,
+"category": "Cocktails",
+"difficulty": "easy"
+},
+{
+"question": "Falafel is typically made from ground chickpeas or which other legume?",
+"options": [
+"Peas",
+"Soybeans",
+"Lentils",
+"Fava beans"
+],
+"correctIndex": 3,
+"category": "World Cuisine",
+"difficulty": "hard"
+},
+{
+"question": "Feta cheese is traditionally made from the milk of which animals?",
+"options": [
+"Cow only",
+"Buffalo",
+"Camel",
+"Sheep and goat"
+],
+"correctIndex": 3,
+"category": "Food Facts",
+"difficulty": "medium"
+},
+{
+"question": "Which of these is a traditional leavening in sourdough bread?",
+"options": [
+"Wild yeast starter",
+"Self-raising flour",
+"Baking powder",
+"Cream of tartar"
+],
+"correctIndex": 0,
+"category": "Food Facts",
+"difficulty": "medium"
+},
+{
+"question": "Grafting joins the tissues of two plants so they do what?",
+"options": [
+"Grow as one",
+"Change colour",
+"Cross-pollinate",
+"Produce seeds faster"
+],
+"correctIndex": 0,
+"category": "Gardening",
+"difficulty": "hard"
+},
+{
+"question": "The process of turning grain sugars into alcohol using yeast is called what?",
+"options": [
+"Distillation",
+"Pasteurisation",
+"Carbonation",
+"Fermentation"
+],
+"correctIndex": 3,
+"category": "Brewing",
+"difficulty": "medium"
+},
+{
+"question": "Which of these is one of the five French 'mother sauces'?",
+"options": [
+"Aioli",
+"Bechamel",
+"Pesto",
+"Salsa"
+],
+"correctIndex": 1,
+"category": "Cooking",
+"difficulty": "hard"
+},
+{
+"question": "Caramelisation is the browning of what as it is heated?",
+"options": [
+"Sugar",
+"Protein",
+"Fat",
+"Water"
+],
+"correctIndex": 0,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "Which process do green plants use to make food from sunlight?",
+"options": [
+"Pollination",
+"Respiration",
+"Photosynthesis",
+"Germination"
+],
+"correctIndex": 2,
+"category": "Gardening",
+"difficulty": "easy"
+},
+{
+"question": "A 'sausage sizzle' outside a hardware store famously features sausages served how?",
+"options": [
+"On a slice of bread",
+"On a skewer",
+"In a bun roll",
+"In a wrap"
+],
+"correctIndex": 0,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "Which white grape is famous for the crisp wines of New Zealand's Marlborough region?",
+"options": [
+"Semillon",
+"Sauvignon Blanc",
+"Viognier",
+"Chardonnay"
+],
+"correctIndex": 1,
+"category": "Wine",
+"difficulty": "medium"
+},
+{
+"question": "Which nut is a key ingredient in traditional Italian pesto?",
+"options": [
+"Almonds",
+"Pine nuts",
+"Cashews",
+"Walnuts"
+],
+"correctIndex": 1,
+"category": "World Cuisine",
+"difficulty": "medium"
+},
+{
+"question": "The Aperol Spritz is made with Aperol, soda and which sparkling wine?",
+"options": [
+"Cava",
+"Moscato",
+"Prosecco",
+"Champagne"
+],
+"correctIndex": 2,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "The pavlova is traditionally topped with cream and what?",
+"options": [
+"Chocolate sauce",
+"Ice cream",
+"Caramel",
+"Fresh fruit"
+],
+"correctIndex": 3,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "How many squares are on a standard chessboard?",
+"options": [
+"64",
+"100",
+"72",
+"81"
+],
+"correctIndex": 0,
+"category": "Board Games",
+"difficulty": "easy"
+},
+{
+"question": "Which fruit-flavoured Australian frozen treat brand shares its name with a bright Paddle Pop lion mascot?",
+"options": [
+"Golden Gaytime",
+"Bubble O'Bill",
+"Splice",
+"Paddle Pop"
+],
+"correctIndex": 3,
+"category": "Australian Food",
+"difficulty": "medium"
+},
+{
+"question": "Coopers is a well-known family brewery based in which Australian city?",
+"options": [
+"Adelaide",
+"Perth",
+"Hobart",
+"Brisbane"
+],
+"correctIndex": 0,
+"category": "Australian Beer",
+"difficulty": "hard"
+},
+{
+"question": "Which Italian dish is a thin flatbread base topped with sauce, cheese and toppings?",
+"options": [
+"Focaccia",
+"Pizza",
+"Calzone",
+"Risotto"
+],
+"correctIndex": 1,
+"category": "World Cuisine",
+"difficulty": "easy"
+},
+{
+"question": "Which board game involves buying properties, houses and hotels, and passing 'Go'?",
+"options": [
+"Monopoly",
+"Cluedo",
+"Scrabble",
+"Risk"
+],
+"correctIndex": 0,
+"category": "Board Games",
+"difficulty": "easy"
+},
+{
+"question": "Which country is the world's largest producer of coffee?",
+"options": [
+"Vietnam",
+"Colombia",
+"Ethiopia",
+"Brazil"
+],
+"correctIndex": 3,
+"category": "Coffee",
+"difficulty": "medium"
+},
+{
+"question": "What does it mean to 'fold' ingredients in baking?",
+"options": [
+"Knead firmly",
+"Beat vigorously",
+"Chill and rest",
+"Gently combine to keep air in"
+],
+"correctIndex": 3,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "A pavlova is a meringue dessert claimed by Australia and which other country?",
+"options": [
+"South Africa",
+"France",
+"England",
+"New Zealand"
+],
+"correctIndex": 3,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "Which card game involves melds of runs and sets, and shares its name with a Latin dance? (rhymes with samba)",
+"options": [
+"Bridge",
+"Euchre",
+"Rummy",
+"Canasta"
+],
+"correctIndex": 3,
+"category": "Card Games",
+"difficulty": "hard"
+},
+{
+"question": "Beekeeping is the practice of keeping bees mainly to produce what?",
+"options": [
+"Honey",
+"Silk",
+"Pollen tablets",
+"Wax candles only"
+],
+"correctIndex": 0,
+"category": "Hobbies",
+"difficulty": "easy"
+},
+{
+"question": "Which fungus is prized in cooking and hunted by trained pigs or dogs?",
+"options": [
+"Truffle",
+"Shiitake",
+"Button mushroom",
+"Portobello"
+],
+"correctIndex": 0,
+"category": "Food Facts",
+"difficulty": "medium"
+},
+{
+"question": "Knitting is traditionally done using how many needles for basic flat work?",
+"options": [
+"Four",
+"One",
+"Two",
+"Three"
+],
+"correctIndex": 2,
+"category": "Crafts",
+"difficulty": "easy"
+},
+{
+"question": "What colour is a traditional Riesling wine usually?",
+"options": [
+"Pink",
+"Red",
+"White",
+"Orange"
+],
+"correctIndex": 2,
+"category": "Wine",
+"difficulty": "easy"
+},
+{
+"question": "Balsamic vinegar traditionally originates from which region of Italy?",
+"options": [
+"Modena",
+"Tuscany",
+"Sicily",
+"Naples"
+],
+"correctIndex": 0,
+"category": "Food Facts",
+"difficulty": "hard"
+},
+{
+"question": "What style of beer is typically pale, crisp and originated in the Czech town of Plzen?",
+"options": [
+"Amber ale",
+"Pilsner",
+"Stout",
+"Porter"
+],
+"correctIndex": 1,
+"category": "Beer",
+"difficulty": "medium"
+},
+{
+"question": "What are the two flavours in a classic Australian Iced VoVo biscuit topping?",
+"options": [
+"Lemon and lime",
+"Pink fondant and coconut",
+"Strawberry and cream",
+"Chocolate and vanilla"
+],
+"correctIndex": 1,
+"category": "Australian Food",
+"difficulty": "hard"
+},
+{
+"question": "What is the main spirit in a Long Island Iced Tea, alongside gin, rum, tequila and triple sec?",
+"options": [
+"Brandy",
+"Sake",
+"Vodka",
+"Whisky"
+],
+"correctIndex": 2,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "XXXX is a beer brand strongly associated with which Australian state?",
+"options": [
+"Tasmania",
+"Western Australia",
+"South Australia",
+"Queensland"
+],
+"correctIndex": 3,
+"category": "Australian Beer",
+"difficulty": "medium"
+},
+{
+"question": "What sauce is the classic accompaniment to an Aussie meat pie?",
+"options": [
+"Barbecue sauce",
+"Gravy",
+"Tomato sauce",
+"Mustard"
+],
+"correctIndex": 2,
+"category": "Australian Food",
+"difficulty": "easy"
+},
+{
+"question": "Which native Australian fruit, small and green, is prized as a 'bush lime'?",
+"options": [
+"Davidson plum",
+"Finger lime",
+"Riberry",
+"Quandong"
+],
+"correctIndex": 1,
+"category": "Australian Food",
+"difficulty": "hard"
+},
+{
+"question": "The Old Fashioned is traditionally built around which spirit?",
+"options": [
+"Rum",
+"Vodka",
+"Gin",
+"Whiskey"
+],
+"correctIndex": 3,
+"category": "Cocktails",
+"difficulty": "medium"
+},
+{
+"question": "Which plant nutrient, abbreviated N in fertilisers, promotes leafy green growth?",
+"options": [
+"Calcium",
+"Nitrogen",
+"Phosphorus",
+"Potassium"
+],
+"correctIndex": 1,
+"category": "Gardening",
+"difficulty": "hard"
+},
+{
+"question": "To 'blanch' vegetables, you briefly cook them in boiling water then plunge them into what?",
+"options": [
+"Milk",
+"Hot oil",
+"Ice water",
+"Vinegar"
+],
+"correctIndex": 2,
+"category": "Cooking",
+"difficulty": "medium"
+},
+{
+"question": "Paprika is a spice made by grinding dried what?",
+"options": [
+"Beetroot",
+"Chilli seeds",
+"Capsicum peppers",
+"Tomatoes"
+],
+"correctIndex": 2,
+"category": "Cooking",
+"difficulty": "medium"
+}
+]

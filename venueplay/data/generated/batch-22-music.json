@@ -1,0 +1,1262 @@
+[
+ {
+  "question": "Which band released the album 'Abbey Road'?",
+  "options": [
+   "The Who",
+   "The Rolling Stones",
+   "The Kinks",
+   "The Beatles"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many members were in The Beatles?",
+  "options": [
+   "Three",
+   "Five",
+   "Four",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Beatle was known as the quiet one?",
+  "options": [
+   "George Harrison",
+   "Ringo Starr",
+   "John Lennon",
+   "Paul McCartney"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which English city did The Beatles form?",
+  "options": [
+   "Liverpool",
+   "Birmingham",
+   "London",
+   "Manchester"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Beatles song begins 'Yesterday, all my troubles seemed so far away'?",
+  "options": [
+   "In My Life",
+   "Let It Be",
+   "Yesterday",
+   "Hey Jude"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which band's frontman was Freddie Mercury?",
+  "options": [
+   "Slade",
+   "Queen",
+   "The Who",
+   "Deep Purple"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Queen song features an operatic middle section?",
+  "options": [
+   "Radio Ga Ga",
+   "Somebody to Love",
+   "We Will Rock You",
+   "Bohemian Rhapsody"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Queen song is a stadium staple with stomp-stomp-clap?",
+  "options": [
+   "Flash",
+   "Under Pressure",
+   "Killer Queen",
+   "We Will Rock You"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian rock band recorded 'Highway to Hell'?",
+  "options": [
+   "Rose Tattoo",
+   "AC/DC",
+   "The Angels",
+   "Cold Chisel"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does AC/DC guitarist Angus Young famously wear on stage?",
+  "options": [
+   "A police uniform",
+   "A tuxedo",
+   "A cape",
+   "A schoolboy uniform"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which AC/DC album is one of the best-selling albums of all time?",
+  "options": [
+   "Let There Be Rock",
+   "Powerage",
+   "Back in Black",
+   "Highway to Hell"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian band sang 'Khe Sanh'?",
+  "options": [
+   "Midnight Oil",
+   "Cold Chisel",
+   "Hunters & Collectors",
+   "The Angels"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the lead singer of Cold Chisel?",
+  "options": [
+   "Ian Moss",
+   "Don Walker",
+   "Doc Neeson",
+   "Jimmy Barnes"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian band sang 'Beds Are Burning'?",
+  "options": [
+   "Icehouse",
+   "Men at Work",
+   "Midnight Oil",
+   "INXS"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the frontman of Midnight Oil who later became a federal MP?",
+  "options": [
+   "Peter Garrett",
+   "Bones Hillman",
+   "Jim Moginie",
+   "Rob Hirst"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian band had a global hit with 'Down Under'?",
+  "options": [
+   "Little River Band",
+   "INXS",
+   "Men at Work",
+   "Air Supply"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian band's frontman was Michael Hutchence?",
+  "options": [
+   "Noiseworks",
+   "INXS",
+   "Divinyls",
+   "Hoodoo Gurus"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which INXS song asks 'What you need'?",
+  "options": [
+   "Devil Inside",
+   "New Sensation",
+   "Need You Tonight",
+   "Never Tear Us Apart"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian singer had a hit with 'The Horses'?",
+  "options": [
+   "Richard Clapton",
+   "Daryl Braithwaite",
+   "Jimmy Barnes",
+   "John Farnham"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which John Farnham song is an Australian anthem from 1986?",
+  "options": [
+   "Age of Reason",
+   "Burn for You",
+   "Playing to Win",
+   "You're the Voice"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian singer released 'Locomotion' in 1987?",
+  "options": [
+   "Tina Arena",
+   "Kylie Minogue",
+   "Wendy Matthews",
+   "Dannii Minogue"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian band sang 'Great Southern Land'?",
+  "options": [
+   "Icehouse",
+   "Goanna",
+   "Australian Crawl",
+   "Mondo Rock"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian band sang 'Solid Rock'?",
+  "options": [
+   "Warumpi Band",
+   "Goanna",
+   "Midnight Oil",
+   "Yothu Yindi"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Aboriginal band had a hit with 'Treaty' in 1991?",
+  "options": [
+   "Coloured Stone",
+   "Warumpi Band",
+   "No Fixed Address",
+   "Yothu Yindi"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian band sang 'Throw Your Arms Around Me'?",
+  "options": [
+   "The Triffids",
+   "Crowded House",
+   "The Church",
+   "Hunters & Collectors"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which band sang 'Don't Dream It's Over'?",
+  "options": [
+   "Icehouse",
+   "Split Enz",
+   "The Church",
+   "Crowded House"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which New Zealand-Australian band was fronted by brothers Tim and Neil Finn?",
+  "options": [
+   "Split Enz",
+   "The Mutton Birds",
+   "Crowded House only",
+   "Dragon"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian rock band released 'Tomorrow' in 1994 while still in school?",
+  "options": [
+   "You Am I",
+   "Grinspoon",
+   "Powderfinger",
+   "Silverchair"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Brisbane band sang 'My Happiness'?",
+  "options": [
+   "Powderfinger",
+   "Silverchair",
+   "Regurgitator",
+   "Custard"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian artist recorded 'Somebody That I Used to Know' with Kimbra?",
+  "options": [
+   "Vance Joy",
+   "Gotye",
+   "Chet Faker",
+   "Matt Corby"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian singer had a worldwide hit with 'Dance Monkey'?",
+  "options": [
+   "Meg Mac",
+   "Tones and I",
+   "Vera Blue",
+   "Amy Shark"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian hip hop group is from Adelaide and released 'The Nosebleed Section'?",
+  "options": [
+   "The Herd",
+   "Thundamentals",
+   "Bliss n Eso",
+   "Hilltop Hoods"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the Australian music industry awards called?",
+  "options": [
+   "The AIRs",
+   "The Logies",
+   "The ARIA Awards",
+   "The APRAs"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Australian youth radio station that runs the Hottest 100?",
+  "options": [
+   "Triple M",
+   "2Day FM",
+   "Triple J",
+   "Nova"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which day is the Triple J Hottest 100 traditionally counted down?",
+  "options": [
+   "Anzac Day",
+   "New Year's Day",
+   "Boxing Day",
+   "Australia Day weekend in January"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US singer is known as the King of Rock and Roll?",
+  "options": [
+   "Elvis Presley",
+   "Little Richard",
+   "Chuck Berry",
+   "Buddy Holly"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Where was Elvis Presley's Memphis home?",
+  "options": [
+   "Paisley Park",
+   "Neverland",
+   "Graceland",
+   "Sun Studio"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which singer is known as the King of Pop?",
+  "options": [
+   "Justin Timberlake",
+   "Prince",
+   "Michael Jackson",
+   "Elvis Presley"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which dance move is Michael Jackson most associated with?",
+  "options": [
+   "The worm",
+   "The robot",
+   "The floss",
+   "The moonwalk"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Aretha Franklin song spells out a demand?",
+  "options": [
+   "Chain of Fools",
+   "Natural Woman",
+   "Respect",
+   "Think"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which record label was founded in Detroit and launched the Supremes and Temptations?",
+  "options": [
+   "Stax",
+   "Motown",
+   "Atlantic",
+   "Chess"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which city is the home of Motown Records?",
+  "options": [
+   "Chicago",
+   "New Orleans",
+   "Memphis",
+   "Detroit"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US city is regarded as the birthplace of jazz?",
+  "options": [
+   "Chicago",
+   "New York",
+   "Kansas City",
+   "New Orleans"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which trumpeter sang 'What a Wonderful World'?",
+  "options": [
+   "Miles Davis",
+   "Dizzy Gillespie",
+   "Chet Baker",
+   "Louis Armstrong"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which US city is famous for country music and the Grand Ole Opry?",
+  "options": [
+   "Nashville",
+   "Denver",
+   "Austin",
+   "Memphis"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country singer is known as the Man in Black?",
+  "options": [
+   "Johnny Cash",
+   "Merle Haggard",
+   "Waylon Jennings",
+   "Willie Nelson"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Dolly Parton song was covered by Whitney Houston in 1992?",
+  "options": [
+   "Jolene",
+   "Coat of Many Colors",
+   "9 to 5",
+   "I Will Always Love You"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian country music festival is held each January in Tamworth?",
+  "options": [
+   "The Gympie Muster",
+   "The Tamworth Country Music Festival",
+   "CMC Rocks",
+   "Deni Ute Muster"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which awards are given at Tamworth for Australian country music?",
+  "options": [
+   "The Golden Guitars",
+   "The Silver Spurs",
+   "The Bush Awards",
+   "The Boot Awards"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian country legend recorded 'A Pub with No Beer'?",
+  "options": [
+   "Slim Dusty",
+   "Buddy Williams",
+   "Chad Morgan",
+   "Smoky Dawson"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which band released 'Stairway to Heaven'?",
+  "options": [
+   "Led Zeppelin",
+   "Black Sabbath",
+   "Pink Floyd",
+   "Deep Purple"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which band released 'The Dark Side of the Moon'?",
+  "options": [
+   "Genesis",
+   "Pink Floyd",
+   "The Who",
+   "Yes"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which band is fronted by Mick Jagger?",
+  "options": [
+   "The Rolling Stones",
+   "The Kinks",
+   "The Who",
+   "The Faces"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Rolling Stones song opens with 'I can't get no'?",
+  "options": [
+   "Start Me Up",
+   "Gimme Shelter",
+   "(I Can't Get No) Satisfaction",
+   "Paint It Black"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which band recorded 'Hotel California'?",
+  "options": [
+   "Eagles",
+   "America",
+   "Fleetwood Mac",
+   "Chicago"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Fleetwood Mac album from 1977 is one of the best-selling of all time?",
+  "options": [
+   "Mirage",
+   "Tango in the Night",
+   "Rumours",
+   "Tusk"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which band sang 'Sweet Child O' Mine'?",
+  "options": [
+   "Poison",
+   "Def Leppard",
+   "Guns N' Roses",
+   "Bon Jovi"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Nirvana song opens with a famous four-chord riff and 'Load up on guns'?",
+  "options": [
+   "In Bloom",
+   "Lithium",
+   "Smells Like Teen Spirit",
+   "Come as You Are"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which city is the birthplace of the grunge scene?",
+  "options": [
+   "Detroit",
+   "Seattle",
+   "Portland",
+   "San Francisco"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which band did Dave Grohl form after Nirvana?",
+  "options": [
+   "Queens of the Stone Age",
+   "Foo Fighters",
+   "Them Crooked Vultures",
+   "Audioslave"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which band released 'Wonderwall'?",
+  "options": [
+   "Blur",
+   "Oasis",
+   "Pulp",
+   "The Verve"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two brothers led Oasis?",
+  "options": [
+   "Tim and Neil Finn",
+   "Liam and Noel Gallagher",
+   "Chris and Rich Robinson",
+   "Ray and Dave Davies"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Britpop band was Oasis' famous 1990s rival?",
+  "options": [
+   "Supergrass",
+   "Suede",
+   "Pulp",
+   "Blur"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the stage name of U2's guitarist?",
+  "options": [
+   "The Edge",
+   "Sting",
+   "Slash",
+   "Ace"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which singer is known as the Boss?",
+  "options": [
+   "John Mellencamp",
+   "Bruce Springsteen",
+   "Bob Seger",
+   "Tom Petty"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which artist wrote 'Blowin' in the Wind'?",
+  "options": [
+   "Pete Seeger",
+   "Bob Dylan",
+   "Joan Baez",
+   "Woody Guthrie"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which music festival was held on a New York farm in August 1969?",
+  "options": [
+   "Woodstock",
+   "Monterey Pop",
+   "Isle of Wight",
+   "Altamont"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1985 charity concert was held in London and Philadelphia?",
+  "options": [
+   "Band Aid",
+   "Farm Aid",
+   "Live 8",
+   "Live Aid"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which charity single asked 'Do They Know It's Christmas?'",
+  "options": [
+   "Band Aid",
+   "Live Aid Choir",
+   "USA for Africa",
+   "Comic Relief"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which song did USA for Africa release in 1985?",
+  "options": [
+   "Feed the World",
+   "Hands Across America",
+   "One Voice",
+   "We Are the World"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musical is built around ABBA songs?",
+  "options": [
+   "Rock of Ages",
+   "We Will Rock You",
+   "Mamma Mia!",
+   "Jersey Boys"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which musical features the song 'Memory' and a tribe of cats?",
+  "options": [
+   "Cats",
+   "Evita",
+   "Starlight Express",
+   "Chess"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which composer wrote 'The Phantom of the Opera' musical?",
+  "options": [
+   "Andrew Lloyd Webber",
+   "Stephen Sondheim",
+   "Claude-Michel Schonberg",
+   "Tim Rice"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musical about an American founding father uses hip hop?",
+  "options": [
+   "Hamilton",
+   "Rent",
+   "Wicked",
+   "In the Heights"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many strings does a standard bass guitar usually have?",
+  "options": [
+   "Five",
+   "Six",
+   "Three",
+   "Four"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many keys are on a standard full-size piano?",
+  "options": [
+   "76",
+   "100",
+   "61",
+   "88"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many black keys are in one octave on a piano?",
+  "options": [
+   "Seven",
+   "Five",
+   "Six",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many lines are in a musical stave?",
+  "options": [
+   "Three",
+   "Six",
+   "Five",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the musical term 'forte' mean?",
+  "options": [
+   "Fast",
+   "Soft",
+   "Slow",
+   "Loud"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'piano' mean as a musical instruction?",
+  "options": [
+   "Quickly",
+   "Softly",
+   "Loudly",
+   "Smoothly"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'allegro' indicate in music?",
+  "options": [
+   "A fast tempo",
+   "A loud volume",
+   "A slow tempo",
+   "A repeated section"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many notes are in a standard major scale, counting the octave?",
+  "options": [
+   "Eight",
+   "Twelve",
+   "Seven",
+   "Five"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which instrument family does the violin belong to?",
+  "options": [
+   "Strings",
+   "Woodwind",
+   "Brass",
+   "Percussion"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which instrument family does the trumpet belong to?",
+  "options": [
+   "Woodwind",
+   "Percussion",
+   "Strings",
+   "Brass"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which instrument is played with a bow and is the largest commonly used in an orchestra section, sitting between the player's knees?",
+  "options": [
+   "The viola",
+   "The double bass",
+   "The violin",
+   "The cello"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who conducts an orchestra using a small stick?",
+  "options": [
+   "The conductor",
+   "The first violin",
+   "The concertmaster",
+   "The composer"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which composer wrote the Fifth Symphony with its famous four-note opening?",
+  "options": [
+   "Mozart",
+   "Bach",
+   "Beethoven",
+   "Brahms"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which composer wrote 'The Four Seasons'?",
+  "options": [
+   "Purcell",
+   "Vivaldi",
+   "Handel",
+   "Haydn"
+  ],
+  "correctIndex": 1,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which composer became deaf later in life?",
+  "options": [
+   "Liszt",
+   "Chopin",
+   "Beethoven",
+   "Mozart"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Austrian composer wrote 'The Magic Flute'?",
+  "options": [
+   "Mahler",
+   "Schubert",
+   "Mozart",
+   "Strauss"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musical work is famous for the 'Hallelujah' chorus?",
+  "options": [
+   "Mozart's Requiem",
+   "Verdi's Requiem",
+   "Bach's Mass in B Minor",
+   "Handel's Messiah"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which rapper released 'The Marshall Mathers LP'?",
+  "options": [
+   "Eminem",
+   "Jay-Z",
+   "Dr. Dre",
+   "50 Cent"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which genre originated in Jamaica and is associated with Bob Marley?",
+  "options": [
+   "Calypso",
+   "Soca",
+   "Zouk",
+   "Reggae"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the name of Bob Marley's backing band?",
+  "options": [
+   "The Upsetters",
+   "The Skatalites",
+   "The Wailers",
+   "The Maytals"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Korean genre exploded globally with acts like BTS?",
+  "options": [
+   "K-pop",
+   "C-pop",
+   "Hallyu rock",
+   "J-pop"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 2012 Korean song became a global viral hit with a horse-riding dance?",
+  "options": [
+   "Nobody",
+   "Gentleman",
+   "Dynamite",
+   "Gangnam Style"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which singer released the albums '21' and '25'?",
+  "options": [
+   "Adele",
+   "Duffy",
+   "Amy Winehouse",
+   "Emeli Sande"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which artist released the album '1989' and re-recorded her back catalogue?",
+  "options": [
+   "Miley Cyrus",
+   "Selena Gomez",
+   "Katy Perry",
+   "Taylor Swift"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British singer released the album 'Divide' with the hit 'Shape of You'?",
+  "options": [
+   "George Ezra",
+   "Sam Smith",
+   "Ed Sheeran",
+   "James Arthur"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which streaming service is known for its Wrapped year in review?",
+  "options": [
+   "Spotify",
+   "Tidal",
+   "Deezer",
+   "Apple Music"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'a cappella' mean?",
+  "options": [
+   "Singing very loudly",
+   "Singing in Italian",
+   "Singing without instruments",
+   "Singing in a round"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'riff' in popular music?",
+  "options": [
+   "A short repeated musical phrase",
+   "A key change",
+   "A crowd chant",
+   "A drum solo"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the 'bridge' of a song?",
+  "options": [
+   "The opening bars",
+   "The fade out",
+   "The final chorus",
+   "A contrasting section between verses or choruses"
+  ],
+  "correctIndex": 3,
+  "category": "Music",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'BPM' stand for in music?",
+  "options": [
+   "Bridge point marker",
+   "Bars per measure",
+   "Beats per minute",
+   "Bass per mix"
+  ],
+  "correctIndex": 2,
+  "category": "Music",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which award is the music industry's biggest annual American honour?",
+  "options": [
+   "The Grammy",
+   "The Brit",
+   "The Juno",
+   "The Mercury"
+  ],
+  "correctIndex": 0,
+  "category": "Music",
+  "difficulty": "easy"
+ }
+]

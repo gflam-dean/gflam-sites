@@ -1,0 +1,7394 @@
+[
+ {
+  "question": "What is Superman famous for being able to do?",
+  "options": [
+   "Read minds",
+   "Breathe underwater only",
+   "Fly",
+   "Turn invisible"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which DC hero wears red and yellow, stretches like rubber and is known as the Pliable Paladin?",
+  "options": [
+   "Elongated Man",
+   "Mister Fantastic",
+   "Plastic Man",
+   "Ant-Man"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What sort of animal is Piglet?",
+  "options": [
+   "A lamb",
+   "A rabbit",
+   "A pig",
+   "A mouse"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Avatar: The Last Airbender, what is the young Avatar's name?",
+  "options": [
+   "Zuko",
+   "Sokka",
+   "Korra",
+   "Aang"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Inside Out, which emotion is yellow?",
+  "options": [
+   "Fear",
+   "Anger",
+   "Joy",
+   "Sadness"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Ninja Turtle wears an orange mask?",
+  "options": [
+   "Michelangelo",
+   "Leonardo",
+   "Raphael",
+   "Donatello"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who acts as Pinocchio's conscience?",
+  "options": [
+   "Figaro",
+   "Geppetto",
+   "Timothy Mouse",
+   "Jiminy Cricket"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Scooby-Doo character wears glasses and always loses them?",
+  "options": [
+   "Fred",
+   "Shaggy",
+   "Velma",
+   "Daphne"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Popeye's burly rival?",
+  "options": [
+   "Bluto",
+   "Swee'Pea",
+   "Wimpy",
+   "Poopdeck Pappy"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Pokemon anime, what does Ash want to become?",
+  "options": [
+   "A Professor",
+   "A Gym Leader",
+   "A Nurse",
+   "A Pokemon Master"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is Bart Simpson's hair?",
+  "options": [
+   "Black",
+   "Brown",
+   "Red",
+   "Yellow"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which comic strip features a huge, badly behaved great dane?",
+  "options": [
+   "Odie",
+   "Marmaduke",
+   "Fred Basset",
+   "Snoopy"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Inside Out, which emotion is blue?",
+  "options": [
+   "Anger",
+   "Sadness",
+   "Disgust",
+   "Joy"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Paddington keep in his hat?",
+  "options": [
+   "A whistle",
+   "A key",
+   "A marmalade sandwich",
+   "A map"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are Marvel and DC best known for producing?",
+  "options": [
+   "Sweets",
+   "Cars",
+   "Trainers",
+   "Comic books"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Peppa Pig, what is the name of Peppa's little brother?",
+  "options": [
+   "Pedro",
+   "Danny",
+   "George",
+   "Richard"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In The Lion King, what is the meerkat called?",
+  "options": [
+   "Pumbaa",
+   "Timon",
+   "Zazu",
+   "Rafiki"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Kung Fu Panda, what is the panda's name?",
+  "options": [
+   "Po",
+   "Oogway",
+   "Shifu",
+   "Tai Lung"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic series by Neil Gaiman follows Dream of the Endless?",
+  "options": [
+   "Preacher",
+   "The Sandman",
+   "Swamp Thing",
+   "Hellblazer"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What material does Luffy's body behave like in One Piece?",
+  "options": [
+   "Rubber",
+   "Ice",
+   "Sand",
+   "Steel"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who created the Garfield comic strip?",
+  "options": [
+   "Charles Schulz",
+   "Scott Adams",
+   "Jim Davis",
+   "Bill Watterson"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Roughly how many frames per second does smooth traditional animation usually run at?",
+  "options": [
+   "Ten",
+   "Twenty-four",
+   "Five",
+   "Sixty"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Disney cartoon featured Baloo as a cargo pilot?",
+  "options": [
+   "DuckTales",
+   "Goof Troop",
+   "The Jungle Cubs",
+   "TaleSpin"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Gotham police commissioner works with Batman?",
+  "options": [
+   "James Gordon",
+   "Renee Montoya",
+   "Sarah Essen",
+   "Harvey Bullock"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Looney Tunes character is a small yellow canary?",
+  "options": [
+   "Tweety",
+   "Woodstock",
+   "Chirpy",
+   "Sunny"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What vegetable is Bugs Bunny always chewing?",
+  "options": [
+   "A parsnip",
+   "A carrot",
+   "A potato",
+   "Celery"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Cinderella, what does she leave behind at the ball?",
+  "options": [
+   "A glass slipper",
+   "A glove",
+   "A necklace",
+   "A ribbon"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Smurfs' wizard enemy?",
+  "options": [
+   "Grimm",
+   "Gargamel",
+   "Azrael",
+   "Merlin"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which song does Baloo teach Mowgli in The Jungle Book?",
+  "options": [
+   "The Bare Necessities",
+   "I Wanna Be Like You",
+   "Trust in Me",
+   "Colonel Hathi's March"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who raised Peter Parker after his parents died?",
+  "options": [
+   "His grandparents",
+   "The Fantastic Four",
+   "Aunt May and Uncle Ben",
+   "Nick Fury"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which island is Wonder Woman's homeland?",
+  "options": [
+   "Genosha",
+   "Atlantis",
+   "Themyscira",
+   "Krypton"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which toy line of colourful ponies became a long-running cartoon series?",
+  "options": [
+   "Rainbow Brite",
+   "Strawberry Shortcake",
+   "Care Bears",
+   "My Little Pony"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British cartoon features furry creatures who tidy up litter on Wimbledon Common?",
+  "options": [
+   "Bagpuss",
+   "The Wombles",
+   "The Clangers",
+   "Trumpton"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which wealthy Disney duck swims in a vault full of coins?",
+  "options": [
+   "Ludwig Von Drake",
+   "Donald Duck",
+   "Gladstone Gander",
+   "Scrooge McDuck"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of creature bit Peter Parker and gave him his powers?",
+  "options": [
+   "A wasp",
+   "A snake",
+   "A spider",
+   "A bat"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which stop-motion film features a girl who finds a door to a parallel world with button-eyed parents?",
+  "options": [
+   "Coraline",
+   "The Boxtrolls",
+   "ParaNorman",
+   "Kubo"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Disney film features a wooden cowboy doll named Woody?",
+  "options": [
+   "Coco",
+   "Up",
+   "Toy Story",
+   "Cars"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In One Piece, what gives characters their strange powers?",
+  "options": [
+   "Quirks",
+   "Chakra",
+   "Magic scrolls",
+   "Devil Fruits"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated series follows a propane salesman named Hank Hill in Texas?",
+  "options": [
+   "American Dad",
+   "King of the Hill",
+   "Bob's Burgers",
+   "Beavis and Butt-Head"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the annual Halloween episodes of The Simpsons?",
+  "options": [
+   "Treehouse of Horror",
+   "Fright Night",
+   "Simpsons Scare",
+   "Spooky Springfield"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Velma say when she has worked something out?",
+  "options": [
+   "Jinkies",
+   "Crikey",
+   "Jeepers",
+   "Zoinks"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many nephews does Donald Duck have?",
+  "options": [
+   "Five",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the Jetsons' dog?",
+  "options": [
+   "Astro",
+   "Elroy",
+   "Rosie",
+   "Orbitty"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Futurama, what species is Doctor Zoidberg?",
+  "options": [
+   "A lobster-like alien",
+   "A human",
+   "A robot",
+   "A cyclops"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which song from Frozen became a worldwide hit?",
+  "options": [
+   "For the First Time in Forever",
+   "Let It Go",
+   "Do You Want to Build a Snowman",
+   "Into the Unknown"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What ingredient did Professor Utonium accidentally add when creating the Powerpuff Girls?",
+  "options": [
+   "Sugar syrup",
+   "Chemical X",
+   "Chemical Z",
+   "Nuclear waste"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Bluey?",
+  "options": [
+   "A cat",
+   "A koala",
+   "A kangaroo",
+   "A dog"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian cartoonist is known for whimsical drawings featuring ducks and curly-haired figures?",
+  "options": [
+   "Ken Maynard",
+   "Jimmy Bancks",
+   "Michael Leunig",
+   "Paul Zanetti"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which anime film by Makoto Shinkai involves two teenagers swapping bodies?",
+  "options": [
+   "Weathering With You",
+   "Your Name",
+   "5 Centimetres Per Second",
+   "Suzume"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the boy in The Simpsons?",
+  "options": [
+   "Ralph",
+   "Nelson",
+   "Bart",
+   "Milhouse"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Homer's regular barfly friend who often falls asleep at the bar?",
+  "options": [
+   "Lenny Leonard",
+   "Carl Carlson",
+   "Barney Gumble",
+   "Moe Szyslak"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of animal is Nemo in Finding Nemo?",
+  "options": [
+   "A fish",
+   "A dolphin",
+   "A crab",
+   "A turtle"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Transformers, who leads the Autobots?",
+  "options": [
+   "Megatron",
+   "Optimus Prime",
+   "Bumblebee",
+   "Starscream"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of animal is Bugs Bunny?",
+  "options": [
+   "A rabbit",
+   "A squirrel",
+   "A fox",
+   "A mouse"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Rugrats, what is the name of the baby with a blue shirt and a screwdriver?",
+  "options": [
+   "Dil",
+   "Phil",
+   "Tommy Pickles",
+   "Chuckie"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which SpongeBob character is a squirrel who lives in an air dome underwater?",
+  "options": [
+   "Sandy Cheeks",
+   "Karen",
+   "Pearl",
+   "Mrs Puff"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon superhero mouse flew to the rescue singing 'Here I come to save the day'?",
+  "options": [
+   "Underdog",
+   "Danger Mouse",
+   "Speedy Gonzales",
+   "Mighty Mouse"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Little Mermaid, what is the sea witch called?",
+  "options": [
+   "Yzma",
+   "Maleficent",
+   "Cruella",
+   "Ursula"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How does Spider-Man travel between buildings?",
+  "options": [
+   "By swinging on webs",
+   "By flying",
+   "By teleporting",
+   "By jetpack"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which composer wrote the famous Pink Panther theme?",
+  "options": [
+   "Henry Mancini",
+   "Quincy Jones",
+   "Elmer Bernstein",
+   "John Williams"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which comic book publisher created Spider-Man, Iron Man and the Hulk?",
+  "options": [
+   "DC",
+   "Image",
+   "Marvel",
+   "Dark Horse"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Clark Kent's reporter colleague and love interest?",
+  "options": [
+   "Jimmy Olsen",
+   "Cat Grant",
+   "Lana Lang",
+   "Lois Lane"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Dora the Explorer, who is the fox who tries to steal things?",
+  "options": [
+   "Swiper",
+   "Boots",
+   "Tico",
+   "Benny"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What job does Clark Kent do when he is not being Superman?",
+  "options": [
+   "Teacher",
+   "Reporter",
+   "Police officer",
+   "Doctor"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which author and illustrator created The Cat in the Hat?",
+  "options": [
+   "Eric Carle",
+   "Maurice Sendak",
+   "Dr Seuss",
+   "Roald Dahl"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Thor's mischievous adopted brother?",
+  "options": [
+   "Balder",
+   "Heimdall",
+   "Loki",
+   "Odin"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon ghost lives with his uncles the Ghostly Trio?",
+  "options": [
+   "Boo",
+   "Casper",
+   "Slimer",
+   "Spooky"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the masked ruler of Latveria and enemy of the Fantastic Four?",
+  "options": [
+   "Magneto",
+   "Red Skull",
+   "Kingpin",
+   "Doctor Doom"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What sort of animal is Peppa Pig?",
+  "options": [
+   "A sheep",
+   "A cow",
+   "A dog",
+   "A pig"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Looney Tunes character is a French skunk who mistakes a cat for a fellow skunk?",
+  "options": [
+   "Pepe Le Pew",
+   "Stinky",
+   "Flower",
+   "Sylvester"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Bluey mostly spend her episodes doing?",
+  "options": [
+   "Going to school",
+   "Playing imaginative games",
+   "Racing cars",
+   "Solving crimes"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Cars, what kind of vehicle is Mater?",
+  "options": [
+   "A police car",
+   "A fire engine",
+   "A tow truck",
+   "A bus"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who created South Park?",
+  "options": [
+   "Matt Groening",
+   "Mike Judge",
+   "Seth MacFarlane",
+   "Trey Parker and Matt Stone"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Disney dog is Mickey Mouse's pet and does not speak?",
+  "options": [
+   "Pluto",
+   "Goofy",
+   "Max",
+   "Bolt"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Batman's real name?",
+  "options": [
+   "Bruce Wayne",
+   "Dick Grayson",
+   "Oliver Queen",
+   "Clark Kent"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which anime follows a boy who wants to become Hokage of his ninja village?",
+  "options": [
+   "Bleach",
+   "Fairy Tail",
+   "Naruto",
+   "One Piece"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Alice in Wonderland, which character is always shouting 'Off with their heads'?",
+  "options": [
+   "The Dormouse",
+   "The Mad Hatter",
+   "The Queen of Hearts",
+   "The White Rabbit"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Japanese card and anime franchise features a boy named Yugi and his Millennium Puzzle?",
+  "options": [
+   "Yu-Gi-Oh",
+   "Digimon",
+   "Duel Masters",
+   "Beyblade"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Marvel writer and editor co-created many heroes and had cameos in the films?",
+  "options": [
+   "Stan Lee",
+   "Bob Kane",
+   "Jack Kirby",
+   "Frank Miller"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Marvel character can shrink to the size of an insect?",
+  "options": [
+   "Falcon",
+   "Hawkeye",
+   "Ant-Man",
+   "Vision"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Batman's dog in the comics?",
+  "options": [
+   "Bruno",
+   "Krypto",
+   "Ace the Bat-Hound",
+   "Rex"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Simpsons character was voiced by Hank Azaria and runs Moe's Tavern?",
+  "options": [
+   "Moe Szyslak",
+   "Lenny",
+   "Carl",
+   "Barney"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Simba in The Lion King?",
+  "options": [
+   "A tiger",
+   "A leopard",
+   "A lion",
+   "A cheetah"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated show is set in a burger restaurant run by Bob Belcher?",
+  "options": [
+   "King of the Hill",
+   "F is for Family",
+   "American Dad",
+   "Bob's Burgers"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What metal coats Wolverine's skeleton and claws?",
+  "options": [
+   "Uru",
+   "Adamantium",
+   "Vibranium",
+   "Titanium"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Aladdin, what is the name of the monkey?",
+  "options": [
+   "Jafar",
+   "Iago",
+   "Rajah",
+   "Abu"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic strip features a husband called Dagwood who makes enormous sandwiches?",
+  "options": [
+   "Hi and Lois",
+   "Family Circus",
+   "Blondie",
+   "Cathy"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Marvel character is a raccoon with a fondness for big weapons?",
+  "options": [
+   "Cosmo",
+   "Rocket",
+   "Howard the Duck",
+   "Groot"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Nightmare Before Christmas, what is Jack Skellington the king of?",
+  "options": [
+   "Halloween Town",
+   "Easter Town",
+   "Spooky Hollow",
+   "Christmas Town"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is Marge Simpson's hair?",
+  "options": [
+   "Green",
+   "Blue",
+   "Red",
+   "Purple"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of vehicle is Thomas the Tank Engine?",
+  "options": [
+   "A boat",
+   "A tractor",
+   "A train",
+   "A bus"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Flintstones' pet dinosaur?",
+  "options": [
+   "Dino",
+   "Barney",
+   "Rex",
+   "Hoppy"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon character wears a sailor suit and has huge forearms?",
+  "options": [
+   "Barnacle Bill",
+   "Sinbad",
+   "Popeye",
+   "Donald Duck"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the famous burger sold at the Krusty Krab?",
+  "options": [
+   "The Bottom Burger",
+   "The Krabby Patty",
+   "The Sea Stack",
+   "The Chum Burger"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Wonder Woman's Amazon name?",
+  "options": [
+   "Hippolyta",
+   "Diana",
+   "Artemis",
+   "Donna"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated series follows a boy with a magical gem in his belly?",
+  "options": [
+   "Adventure Time",
+   "Steven Universe",
+   "Amphibia",
+   "Infinity Train"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Simpsons character teaches at Springfield Elementary and is Ned Flanders' second wife in later seasons?",
+  "options": [
+   "Maude Flanders",
+   "Agnes Skinner",
+   "Edna Krabappel",
+   "Miss Hoover"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which fictional African nation is Black Panther the king of?",
+  "options": [
+   "Zamunda",
+   "Genosha",
+   "Latveria",
+   "Wakanda"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who created the Muppets?",
+  "options": [
+   "Jim Henson",
+   "Chuck Jones",
+   "Ray Harryhausen",
+   "Walt Disney"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Studio Ghibli film features a young witch who starts a delivery service?",
+  "options": [
+   "Kiki's Delivery Service",
+   "Ponyo",
+   "Arrietty",
+   "Whisper of the Heart"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Japanese cartoon character is a small yellow creature with a red-and-white ball associated with it?",
+  "options": [
+   "Kirby",
+   "Chi",
+   "Pikachu",
+   "Jibanyan"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What treat is used to persuade Scooby-Doo to do something scary?",
+  "options": [
+   "Sausages",
+   "Bones",
+   "Scooby Snacks",
+   "Doughnuts"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Bart Simpson's teacher?",
+  "options": [
+   "Miss Cantwell",
+   "Mrs Krabappel",
+   "Mrs Skinner",
+   "Miss Hoover"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Phineas and Ferb, who is the boys' older sister who tries to tell on them?",
+  "options": [
+   "Stacy",
+   "Vanessa",
+   "Candace",
+   "Isabella"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Dragon Ball Z villain has multiple transformations and destroys Planet Vegeta?",
+  "options": [
+   "Beerus",
+   "Cell",
+   "Frieza",
+   "Majin Buu"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of the Simpsons' baby daughter?",
+  "options": [
+   "Sherri",
+   "Maggie",
+   "Terri",
+   "Lisa"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which blue Sesame Street character is obsessed with biscuits?",
+  "options": [
+   "Cookie Monster",
+   "Zoe",
+   "Herry",
+   "Grover"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which meal is Garfield most famous for eating?",
+  "options": [
+   "Fish and chips",
+   "Lasagne",
+   "Roast chicken",
+   "Pizza"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated series follows twins Dipper and Mabel spending summer in a mysterious town?",
+  "options": [
+   "The Owl House",
+   "Over the Garden Wall",
+   "Amphibia",
+   "Gravity Falls"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Simpsons character is a clown who hosts a children's television show?",
+  "options": [
+   "Krusty",
+   "Sideshow Bob",
+   "Gabbo",
+   "Rainier Wolfcastle"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Pixar film Inside Out, where do the emotions live?",
+  "options": [
+   "In a factory",
+   "Inside a girl's mind",
+   "In a school",
+   "On an island"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which gloomy donkey is a friend of Winnie the Pooh?",
+  "options": [
+   "Tigger",
+   "Owl",
+   "Piglet",
+   "Eeyore"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Monsters Inc, what is the name of the one-eyed green monster?",
+  "options": [
+   "Sulley",
+   "Randall",
+   "Mike Wazowski",
+   "Roz"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Tigger famous for doing?",
+  "options": [
+   "Digging",
+   "Sleeping",
+   "Swimming",
+   "Bouncing"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian cartoon about a dog family became a worldwide hit for the ABC?",
+  "options": [
+   "Bluey",
+   "The Magic Pudding",
+   "Blinky Bill",
+   "Dot and the Kangaroo"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Peanuts character plays a toy piano?",
+  "options": [
+   "Linus",
+   "Marcie",
+   "Schroeder",
+   "Charlie Brown"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which Australian city is Bluey set?",
+  "options": [
+   "Sydney",
+   "Melbourne",
+   "Brisbane",
+   "Perth"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Marvel character is a wisecracking mercenary in a red suit who breaks the fourth wall?",
+  "options": [
+   "Punisher",
+   "Daredevil",
+   "Deadpool",
+   "Blade"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What pattern do Dalmatians have?",
+  "options": [
+   "Spots",
+   "Stripes",
+   "Patches of tartan",
+   "Swirls"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the surname of the family in Family Guy?",
+  "options": [
+   "Simpson",
+   "Smith",
+   "Griffin",
+   "Belcher"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which X-Man has retractable claws and a healing factor?",
+  "options": [
+   "Wolverine",
+   "Cyclops",
+   "Colossus",
+   "Beast"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Snow White dwarf never speaks?",
+  "options": [
+   "Sleepy",
+   "Bashful",
+   "Dopey",
+   "Doc"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Ninja Turtle wears a blue mask and leads the team?",
+  "options": [
+   "Raphael",
+   "Leonardo",
+   "Donatello",
+   "Michelangelo"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour are the Smurfs?",
+  "options": [
+   "Blue",
+   "Green",
+   "Yellow",
+   "Red"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Dr Seuss book and film features a creature who speaks for the trees?",
+  "options": [
+   "Green Eggs and Ham",
+   "The Sneetches",
+   "The Lorax",
+   "Horton Hears a Who"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon featured a special forces team fighting an enemy organisation called Cobra?",
+  "options": [
+   "Thundercats",
+   "Centurions",
+   "G.I. Joe",
+   "M.A.S.K."
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Transformers, who leads the Decepticons?",
+  "options": [
+   "Megatron",
+   "Shockwave",
+   "Soundwave",
+   "Optimus Prime"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Obelix's small white dog in the English Asterix books?",
+  "options": [
+   "Gnasher",
+   "Snowy",
+   "Bounder",
+   "Dogmatix"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which X-Man can control the weather?",
+  "options": [
+   "Mystique",
+   "Rogue",
+   "Storm",
+   "Jean Grey"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Bluey, what is the name of Bluey's dad?",
+  "options": [
+   "Frisky",
+   "Stripe",
+   "Rad",
+   "Bandit"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Pixar film Up, what lifts Carl's house into the sky?",
+  "options": [
+   "A tornado",
+   "A crane",
+   "Rockets",
+   "Balloons"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Spirited Away, what is the name of the girl who works in the bathhouse?",
+  "options": [
+   "San",
+   "Sophie",
+   "Chihiro",
+   "Satsuki"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two teenage cartoon characters created by Mike Judge sat on a couch mocking music videos?",
+  "options": [
+   "Pinky and the Brain",
+   "Beavis and Butt-Head",
+   "Wallace and Gromit",
+   "Ren and Stimpy"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which channel did The Simpsons first air in the United States?",
+  "options": [
+   "NBC",
+   "ABC",
+   "CBS",
+   "Fox"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon studio produced Looney Tunes?",
+  "options": [
+   "Disney",
+   "Warner Bros",
+   "MGM",
+   "Universal"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Asterix books, who brews the drink that gives the villagers their strength?",
+  "options": [
+   "The bard",
+   "The chief",
+   "The druid",
+   "The blacksmith"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In BoJack Horseman, what animal is BoJack?",
+  "options": [
+   "A dog",
+   "A deer",
+   "A horse",
+   "A cat"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian claymation film won an Academy Award for Best Animated Short in 2004?",
+  "options": [
+   "Harvie Krumpet",
+   "Sculpture",
+   "Mary and Max",
+   "The Mysterious Geographic Explorations of Jasper Morello"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Disney character was created before Mickey Mouse and is a lucky rabbit?",
+  "options": [
+   "Thumper",
+   "Oswald the Lucky Rabbit",
+   "Br'er Rabbit",
+   "Roger Rabbit"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian cartoonist is famous for the comic strip Ginger Meggs?",
+  "options": [
+   "Bill Leak",
+   "Jimmy Bancks",
+   "Stan Cross",
+   "Michael Leunig"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which city is the Pixar film Ratatouille set?",
+  "options": [
+   "Paris",
+   "New York",
+   "Lyon",
+   "Rome"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Simpsons episode song is about a monorail?",
+  "options": [
+   "The Monorail Song",
+   "The Springfield Anthem",
+   "See My Vest",
+   "Duff Beer Blues"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cartoon character says 'Th-th-th-that's all folks'?",
+  "options": [
+   "Porky Pig",
+   "Daffy Duck",
+   "Elmer Fudd",
+   "Bugs Bunny"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1977 Australian animated film mixed cartoon characters with live-action bush photography?",
+  "options": [
+   "The Magic Pudding",
+   "Dot and the Kangaroo",
+   "Blinky Bill",
+   "Ferngully"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does Shaggy say when he is frightened?",
+  "options": [
+   "Jeepers",
+   "Zoinks",
+   "Yikes",
+   "Jinkies"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country produces anime?",
+  "options": [
+   "China",
+   "South Korea",
+   "Japan",
+   "Thailand"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Peanuts, which of Lucy's brothers carries a security blanket?",
+  "options": [
+   "Franklin",
+   "Linus",
+   "Schroeder",
+   "Rerun"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic and film character is a wall-crawling hero also known as your friendly neighbourhood hero?",
+  "options": [
+   "Batman",
+   "Daredevil",
+   "Nightwing",
+   "Spider-Man"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated film features a giant metal robot who befriends a boy in 1950s America?",
+  "options": [
+   "Astro Boy",
+   "The Iron Giant",
+   "Big Hero 6",
+   "Robots"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Aladdin, what is the name of the villain's parrot?",
+  "options": [
+   "Abu",
+   "Zazu",
+   "Iago",
+   "Polly"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the only phrase Groot usually says?",
+  "options": [
+   "Groot is here",
+   "Hello Groot",
+   "We are Groot",
+   "I am Groot"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features a girl who disguises herself as a soldier in China?",
+  "options": [
+   "Mulan",
+   "Brave",
+   "Raya",
+   "Pocahontas"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Tweety say when he spots the cat?",
+  "options": [
+   "Look out below",
+   "Here comes trouble",
+   "I tawt I taw a puddy tat",
+   "Not again"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which DC team is made up of villains forced to work for the government?",
+  "options": [
+   "The Doom Patrol",
+   "The Legion",
+   "The Suicide Squad",
+   "The Justice League"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic series by Robert Kirkman follows survivors of a zombie apocalypse?",
+  "options": [
+   "Invincible",
+   "Saga",
+   "Y The Last Man",
+   "The Walking Dead"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Adventure Time, what is the name of the human boy?",
+  "options": [
+   "Finn",
+   "Marceline",
+   "Simon",
+   "Jake"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for the bubble containing a comic character's speech?",
+  "options": [
+   "A caption",
+   "A tag",
+   "A cloud",
+   "A speech balloon"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British children's series features a saggy old cloth cat?",
+  "options": [
+   "The Clangers",
+   "Bagpuss",
+   "Noggin the Nog",
+   "Ivor the Engine"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which DC hero is the king of Atlantis?",
+  "options": [
+   "Triton",
+   "Aquaman",
+   "Poseidon",
+   "Namor"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Wallace's favourite food in Wallace and Gromit?",
+  "options": [
+   "Cheese",
+   "Chocolate",
+   "Fish and chips",
+   "Biscuits"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which empire are the Gauls resisting in the Asterix comics?",
+  "options": [
+   "The Greek Empire",
+   "The Persian Empire",
+   "The Roman Empire",
+   "The Egyptian Empire"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which mirror does the wicked queen speak to in Snow White?",
+  "options": [
+   "A pool of water",
+   "A cracked mirror",
+   "A hand mirror",
+   "The magic mirror on the wall"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Pokemon world, what is a Poke Ball designed to do?",
+  "options": [
+   "Train a Pokemon",
+   "Heal a Pokemon",
+   "Store a Pokemon",
+   "Feed a Pokemon"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Bart Simpson ride around Springfield on?",
+  "options": [
+   "A motorbike",
+   "A pony",
+   "A scooter",
+   "A skateboard"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of animal is Scooby-Doo?",
+  "options": [
+   "A dog",
+   "A horse",
+   "A cat",
+   "A bear"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Pokemon anime, what is the name of the Gym Leader who travels with Ash and cooks?",
+  "options": [
+   "Misty",
+   "Gary",
+   "Brock",
+   "Tracey"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian children's book by May Gibbs features gumnut babies?",
+  "options": [
+   "Snugglepot and Cuddlepie",
+   "The Magic Pudding",
+   "Blinky Bill",
+   "Possum Magic"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Chinese equivalent of manga called?",
+  "options": [
+   "Webtoon",
+   "Manhwa",
+   "Bande dessinee",
+   "Manhua"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which superhero can breathe underwater and talk to sea creatures?",
+  "options": [
+   "Hawkman",
+   "Batman",
+   "Aquaman",
+   "Green Arrow"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Looney Tunes hunter is forever trying to shoot Bugs Bunny?",
+  "options": [
+   "Yosemite Sam",
+   "Foghorn Leghorn",
+   "Marvin the Martian",
+   "Elmer Fudd"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bear from darkest Peru is famous for marmalade sandwiches?",
+  "options": [
+   "Baloo",
+   "Winnie the Pooh",
+   "Rupert",
+   "Paddington"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In My Neighbour Totoro, what are the two young sisters called?",
+  "options": [
+   "Sophie and Lettie",
+   "Kiki and Ursula",
+   "Chihiro and Rin",
+   "Satsuki and Mei"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Hanna-Barbera cartoon featured a superhero caveman thawed from a block of ice?",
+  "options": [
+   "Captain Caveman",
+   "Bamm-Bamm",
+   "Fred Flintstone",
+   "Grape Ape"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cartoon character is a purple dinosaur who sings about love?",
+  "options": [
+   "Dino",
+   "Grimlock",
+   "Rex",
+   "Barney"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Bluey's dad's job in the series?",
+  "options": [
+   "A pilot",
+   "A teacher",
+   "A vet",
+   "An archaeologist"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which tiny SpongeBob villain runs the Chum Bucket?",
+  "options": [
+   "Squidward",
+   "Plankton",
+   "Mr Krabs",
+   "Man Ray"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actress voices Bart Simpson?",
+  "options": [
+   "Yeardley Smith",
+   "Julie Kavner",
+   "Nancy Cartwright",
+   "Tress MacNeille"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Rugrats, who is the bossy older cousin?",
+  "options": [
+   "Kimi",
+   "Angelica",
+   "Lil",
+   "Susie"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Where on their bodies are the Teletubbies' aerials?",
+  "options": [
+   "Their heads",
+   "Their backs",
+   "Their feet",
+   "Their hands"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which superhero carries a hammer?",
+  "options": [
+   "Thor",
+   "Loki",
+   "Hawkeye",
+   "Hulk"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Futurama, what is the name of the pizza delivery boy frozen for a thousand years?",
+  "options": [
+   "Hermes",
+   "Fry",
+   "Bender",
+   "Zoidberg"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Asterix character is a bard the villagers usually tie up at feasts?",
+  "options": [
+   "Geriatrix",
+   "Unhygienix",
+   "Getafix",
+   "Cacofonix"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Looney Tunes character has a lisp and is a black duck?",
+  "options": [
+   "Donald Duck",
+   "Daffy Duck",
+   "Plucky Duck",
+   "Count Duckula"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which puppet show features Kermit the Frog and Miss Piggy?",
+  "options": [
+   "Sesame Street",
+   "The Muppet Show",
+   "Fraggle Rock",
+   "Rainbow"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which substance weakens Superman?",
+  "options": [
+   "Adamantium",
+   "Kryptonite",
+   "Uranium",
+   "Vibranium"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which large yellow bird is a Sesame Street resident?",
+  "options": [
+   "Big Bird",
+   "Tweety",
+   "Foghorn",
+   "Woodstock"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Superman's bald businessman arch-enemy?",
+  "options": [
+   "The Joker",
+   "Brainiac",
+   "Lex Luthor",
+   "General Zod"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cat is always chasing Tweety in Looney Tunes?",
+  "options": [
+   "Felix",
+   "Sylvester",
+   "Tom",
+   "Top Cat"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which fictional newspaper's office does Lois Lane work?",
+  "options": [
+   "The Gotham Gazette",
+   "The Daily Bugle",
+   "The Central City Citizen",
+   "The Daily Planet"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is Krusty the Clown's vengeful former sidekick in The Simpsons?",
+  "options": [
+   "Sideshow Bob",
+   "Gabbo",
+   "Bumblebee Man",
+   "Sideshow Mel"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Popeye character will gladly pay you Tuesday for a hamburger today?",
+  "options": [
+   "Swee'Pea",
+   "Wimpy",
+   "Bluto",
+   "Popeye"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon starred He-Man's twin sister?",
+  "options": [
+   "Wonder Woman",
+   "Thundercats",
+   "She-Ra: Princess of Power",
+   "Jem"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cartoon featured a hyperactive chihuahua and a dim-witted cat?",
+  "options": [
+   "Two Stupid Dogs",
+   "Cow and Chicken",
+   "CatDog",
+   "Ren and Stimpy"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated film series follows young dinosaurs including Littlefoot?",
+  "options": [
+   "The Good Dinosaur",
+   "We're Back",
+   "Dinosaur",
+   "The Land Before Time"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the talking Pokemon who travels with Jessie and James?",
+  "options": [
+   "Meowth",
+   "Wobbuffet",
+   "Ekans",
+   "Persian"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which superhero is known as the Dark Knight?",
+  "options": [
+   "Batman",
+   "Green Arrow",
+   "Superman",
+   "Moon Knight"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which anime and manga features four turtle brothers named after Renaissance artists?",
+  "options": [
+   "Biker Mice from Mars",
+   "Teenage Mutant Ninja Turtles",
+   "Street Sharks",
+   "Samurai Pizza Cats"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bulldog often protects Jerry from Tom?",
+  "options": [
+   "Droopy",
+   "Hector",
+   "Tyke",
+   "Spike"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which anime film studio is known for Your Name and Weathering With You?",
+  "options": [
+   "Studio Ghibli",
+   "CoMix Wave Films",
+   "Trigger",
+   "Toei"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In The Little Mermaid, what is the mermaid's name?",
+  "options": [
+   "Melody",
+   "Ursula",
+   "Marina",
+   "Ariel"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated Christmas special features a reindeer with a glowing red nose?",
+  "options": [
+   "Rudolph the Red-Nosed Reindeer",
+   "Santa Claus is Comin' to Town",
+   "The Snowman",
+   "Frosty the Snowman"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian children's book by Norman Lindsay features a grumpy talking pudding?",
+  "options": [
+   "The Muddle-Headed Wombat",
+   "Blinky Bill",
+   "The Magic Pudding",
+   "Possum Magic"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which director made Spirited Away and Princess Mononoke?",
+  "options": [
+   "Mamoru Hosoda",
+   "Isao Takahata",
+   "Makoto Shinkai",
+   "Hayao Miyazaki"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon featured two mice, one a genius, plotting to take over the world each night?",
+  "options": [
+   "Danger Mouse",
+   "Biker Mice from Mars",
+   "Mighty Mouse",
+   "Pinky and the Brain"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In American Dad, what kind of creature is Roger?",
+  "options": [
+   "A robot",
+   "A dog",
+   "An alien",
+   "A goldfish"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What breed of dog is Bluey?",
+  "options": [
+   "Corgi",
+   "Border collie",
+   "Blue heeler",
+   "Kelpie"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Alice in Wonderland, which cat can disappear leaving only its grin?",
+  "options": [
+   "The Caterpillar",
+   "The March Hare",
+   "Dinah",
+   "The Cheshire Cat"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Pokemon anime's famous slogan?",
+  "options": [
+   "Train them all",
+   "Be the very best",
+   "Gotta catch 'em all",
+   "Catch and release"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Simpsons' dog?",
+  "options": [
+   "Rex",
+   "Buddy",
+   "Snowball",
+   "Santa's Little Helper"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Snow White, what does the wicked queen use to poison Snow White?",
+  "options": [
+   "A pear",
+   "An apple",
+   "A cherry",
+   "A grape"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Asterix books are set during the rule of which historical figure?",
+  "options": [
+   "Alexander the Great",
+   "Attila the Hun",
+   "Julius Caesar",
+   "Charlemagne"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'Hakuna Matata' mean in The Lion King?",
+  "options": [
+   "Circle of life",
+   "No worries",
+   "Welcome home",
+   "Long live the king"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which animated film does a green ogre travel with a talkative donkey?",
+  "options": [
+   "Tangled",
+   "Shrek",
+   "Hercules",
+   "Brave"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which comic book shop owner in The Simpsons is famous for saying 'Worst episode ever'?",
+  "options": [
+   "Comic Book Guy",
+   "Gil",
+   "Kirk Van Houten",
+   "Disco Stu"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of toy is Buzz Lightyear?",
+  "options": [
+   "A doll's house",
+   "A space ranger action figure",
+   "A train",
+   "A teddy bear"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Popeye eat from a tin?",
+  "options": [
+   "Spinach",
+   "Peaches",
+   "Baked beans",
+   "Tuna"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Scooby-Doo character wears an orange ascot?",
+  "options": [
+   "Fred",
+   "Shaggy",
+   "Velma",
+   "Scrappy"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Simpsons character runs the Kwik-E-Mart?",
+  "options": [
+   "Ned",
+   "Apu",
+   "Krusty",
+   "Moe"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated series about superhero teenagers features Robin, Starfire and Beast Boy?",
+  "options": [
+   "Teen Titans",
+   "Static Shock",
+   "Young Justice",
+   "Justice League Unlimited"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Marvel character is an archer with a bow?",
+  "options": [
+   "Falcon",
+   "Winter Soldier",
+   "War Machine",
+   "Hawkeye"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which sketch show did The Simpsons first appear as short cartoons?",
+  "options": [
+   "The Carol Burnett Show",
+   "The Tracey Ullman Show",
+   "In Living Color",
+   "Saturday Night Live"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the manga category 'shonen' usually target?",
+  "options": [
+   "Adult women",
+   "Young female readers",
+   "Small children only",
+   "Young male readers"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which actor voiced the Genie in the 1992 animated Aladdin?",
+  "options": [
+   "Jim Carrey",
+   "Eddie Murphy",
+   "Steve Martin",
+   "Robin Williams"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor is famous for voicing the Joker in Batman: The Animated Series?",
+  "options": [
+   "Mark Hamill",
+   "Tim Curry",
+   "John DiMaggio",
+   "Kevin Conroy"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which purple Marvel villain collects the Infinity Stones?",
+  "options": [
+   "Loki",
+   "Ultron",
+   "Kang",
+   "Thanos"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In comics, what does 'retcon' mean?",
+  "options": [
+   "Cancelling a series",
+   "Redrawing a cover",
+   "Reprinting an old issue",
+   "Changing established past events in a story"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Looney Tunes character says 'Be vewy vewy quiet, I'm hunting wabbits'?",
+  "options": [
+   "Porky Pig",
+   "Elmer Fudd",
+   "Yosemite Sam",
+   "Daffy Duck"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What fictional metal is Captain America's shield made of in the comics?",
+  "options": [
+   "Kryptonite",
+   "Adamantium",
+   "Vibranium",
+   "Uru"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actress voices Lisa Simpson?",
+  "options": [
+   "Tress MacNeille",
+   "Julie Kavner",
+   "Yeardley Smith",
+   "Nancy Cartwright"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Shrek 2, which sword-fighting cat joins the story?",
+  "options": [
+   "Felix",
+   "Sylvester",
+   "Puss in Boots",
+   "Tom"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney song won an Academy Award from the film The Lion King?",
+  "options": [
+   "Circle of Life",
+   "Can You Feel the Love Tonight",
+   "Be Prepared",
+   "Hakuna Matata"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cartoon featured a moose and a flying squirrel?",
+  "options": [
+   "Chip and Dale",
+   "Rocky and Bullwinkle",
+   "Ren and Stimpy",
+   "Pinky and the Brain"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What happens to Bruce Banner when he gets angry?",
+  "options": [
+   "He turns into the Hulk",
+   "He turns invisible",
+   "He falls asleep",
+   "He shrinks"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor has voiced Homer Simpson since the show began?",
+  "options": [
+   "Harry Shearer",
+   "Nancy Cartwright",
+   "Dan Castellaneta",
+   "Hank Azaria"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which anime and toy franchise features monsters battling inside spinning capsules that pop open?",
+  "options": [
+   "Beyblade",
+   "Digimon",
+   "Yo-kai Watch",
+   "Bakugan"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which national park does Yogi Bear live?",
+  "options": [
+   "Sunnyvale",
+   "Rockrock",
+   "Yellowstone",
+   "Jellystone"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Lion King, what kind of animal is Pumbaa?",
+  "options": [
+   "A warthog",
+   "A hornbill",
+   "A meerkat",
+   "A baboon"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Mr Burns' devoted assistant in The Simpsons?",
+  "options": [
+   "Homer",
+   "Lenny",
+   "Carl",
+   "Smithers"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon features a blue dog family in Australia?",
+  "options": [
+   "The Wiggles",
+   "Blinky Bill",
+   "Dot and the Kangaroo",
+   "Bluey"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of animal is Paddington?",
+  "options": [
+   "A badger",
+   "A dog",
+   "A bear",
+   "A monkey"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Toy Story, what happens to the toys when humans are in the room?",
+  "options": [
+   "They hide in a cupboard",
+   "They shrink",
+   "They talk quietly",
+   "They freeze and act lifeless"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Homer Simpson's catchphrase when something goes wrong?",
+  "options": [
+   "D'oh!",
+   "Yikes!",
+   "Blast!",
+   "Oh boy!"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Peanuts character famously pulls the football away from Charlie Brown?",
+  "options": [
+   "Lucy",
+   "Peppermint Patty",
+   "Marcie",
+   "Sally"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Batman villain controls plants?",
+  "options": [
+   "Harley Quinn",
+   "Talia",
+   "Catwoman",
+   "Poison Ivy"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the tree-like character in Guardians of the Galaxy?",
+  "options": [
+   "Drax",
+   "Gamora",
+   "Groot",
+   "Rocket"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In anime, what does the term 'mecha' refer to?",
+  "options": [
+   "Magical girls",
+   "Giant piloted robots",
+   "Sports stories",
+   "Talking animals"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musician wrote the songs for the 1994 film The Lion King with Tim Rice?",
+  "options": [
+   "Phil Collins",
+   "Sting",
+   "Randy Newman",
+   "Elton John"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Calvin and Hobbes, what does Hobbes look like to everyone except Calvin?",
+  "options": [
+   "A cushion",
+   "A real tiger",
+   "An ordinary stuffed toy",
+   "A dog"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of creature is the Pokemon Charmander in the anime?",
+  "options": [
+   "A mouse",
+   "A turtle",
+   "A bird",
+   "A lizard"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon character rides a magic carpet in a Disney film set in Agrabah?",
+  "options": [
+   "Aladdin",
+   "Ali Baba",
+   "Hercules",
+   "Sinbad"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Demon Slayer, what has happened to the hero's sister Nezuko?",
+  "options": [
+   "She has become a swordsman",
+   "She has lost her memory",
+   "She has become a demon",
+   "She has been kidnapped"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the druid who brews the magic potion in Asterix?",
+  "options": [
+   "Fulliautomatix",
+   "Getafix",
+   "Unhygienix",
+   "Cacofonix"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Where does Doraemon keep his gadgets?",
+  "options": [
+   "In a suitcase",
+   "Under his hat",
+   "In a backpack",
+   "In a pocket on his stomach"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which DC team includes Superman, Batman and Wonder Woman?",
+  "options": [
+   "The Suicide Squad",
+   "The Justice League",
+   "The Teen Titans",
+   "The Avengers"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Garfield's teddy bear?",
+  "options": [
+   "Arlene",
+   "Squeak",
+   "Pooky",
+   "Nermal"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What colour is Pikachu?",
+  "options": [
+   "Green",
+   "Yellow",
+   "Pink",
+   "Orange"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Captain Hook afraid of in Peter Pan?",
+  "options": [
+   "A crocodile",
+   "A shark",
+   "A storm",
+   "A parrot"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which piece of classical music features in the Looney Tunes short 'The Rabbit of Seville'?",
+  "options": [
+   "The Barber of Seville overture",
+   "The Blue Danube",
+   "Carmen",
+   "Ride of the Valkyries"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Marvel character is a Russian spy and expert fighter with red hair?",
+  "options": [
+   "Scarlet Witch",
+   "Gamora",
+   "Elektra",
+   "Black Widow"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which enemy does Snoopy imagine fighting from the top of his kennel?",
+  "options": [
+   "The Red Baron",
+   "The Sea Serpent",
+   "The Black Knight",
+   "The Grey Ghost"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sound does SpongeBob's pet Gary make?",
+  "options": [
+   "Squeak",
+   "Meow",
+   "Woof",
+   "Ribbit"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's animation features four colourful creatures with aerials on their heads?",
+  "options": [
+   "In the Night Garden",
+   "Boohbah",
+   "Teletubbies",
+   "The Tweenies"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Japanese film and anime, what is a 'kaiju'?",
+  "options": [
+   "A giant monster",
+   "A small spirit",
+   "A samurai",
+   "A robot pilot"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Bluey, what are the names of Bluey's two cousins?",
+  "options": [
+   "Honey and Judo",
+   "Muffin and Socks",
+   "Chloe and Mackenzie",
+   "Coco and Snickers"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Itchy and Scratchy, which one is the mouse?",
+  "options": [
+   "Itchy",
+   "Scratchy",
+   "Both",
+   "Neither"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the manga category 'shojo' usually target?",
+  "options": [
+   "Adult men",
+   "Retired readers",
+   "Young male readers",
+   "Young female readers"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cheerful yellow anime and game character says its own name repeatedly?",
+  "options": [
+   "Totoro",
+   "Chi",
+   "Doraemon",
+   "Pikachu"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many spikes does Bart Simpson's hair have in the classic design?",
+  "options": [
+   "Nine",
+   "Twelve",
+   "Three",
+   "Five"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime series features a bounty hunter crew aboard the ship Bebop?",
+  "options": [
+   "Cowboy Bebop",
+   "Trigun",
+   "Outlaw Star",
+   "Black Lagoon"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Batman villain has green hair and a permanent grin?",
+  "options": [
+   "Two-Face",
+   "The Joker",
+   "The Riddler",
+   "The Penguin"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is Shrek?",
+  "options": [
+   "Brown",
+   "Green",
+   "Blue",
+   "Grey"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Batman villain uses fear gas?",
+  "options": [
+   "Scarecrow",
+   "Poison Ivy",
+   "Clayface",
+   "Killer Croc"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Pokemon anime, which travelling companion is a water Pokemon trainer with orange hair?",
+  "options": [
+   "Misty",
+   "May",
+   "Serena",
+   "Dawn"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In My Hero Academia, what are superpowers called?",
+  "options": [
+   "Traits",
+   "Gifts",
+   "Sparks",
+   "Quirks"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which newspaper does Peter Parker sell photographs to?",
+  "options": [
+   "The Gotham Gazette",
+   "The Daily Bugle",
+   "The Daily Planet",
+   "The New York Times"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Beauty and the Beast, what is the enchanted candlestick called?",
+  "options": [
+   "Chip",
+   "Lumiere",
+   "Mrs Potts",
+   "Cogsworth"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Winnie the Pooh love to eat?",
+  "options": [
+   "Honey",
+   "Cheese",
+   "Fish",
+   "Cake"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British studio makes Wallace and Gromit?",
+  "options": [
+   "Cosgrove Hall",
+   "Laika",
+   "Aardman Animations",
+   "Studio Ghibli"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor voiced Batman in Batman: The Animated Series?",
+  "options": [
+   "Michael Keaton",
+   "Will Arnett",
+   "Mark Hamill",
+   "Kevin Conroy"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cartoon character was created for the opening titles of a 1963 Peter Sellers comedy film?",
+  "options": [
+   "Snagglepuss",
+   "Panthro",
+   "Roger Rabbit",
+   "The Pink Panther"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Pluto?",
+  "options": [
+   "A duck",
+   "A dog",
+   "A horse",
+   "A cat"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Studio Ghibli film features a castle that walks on legs?",
+  "options": [
+   "Castle in the Sky",
+   "Howl's Moving Castle",
+   "Princess Mononoke",
+   "The Cat Returns"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Blinky Bill?",
+  "options": [
+   "A possum",
+   "A wombat",
+   "A koala",
+   "A kangaroo"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Yogi Bear's small bow-tied companion?",
+  "options": [
+   "Ranger Smith",
+   "Boo-Boo",
+   "Snagglepuss",
+   "Cindy"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Why can Obelix not drink the magic potion?",
+  "options": [
+   "He fell into the cauldron as a baby",
+   "The druid forbids it",
+   "He is allergic",
+   "He is too old"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which superhero's costume is famously red and gold armour?",
+  "options": [
+   "Thor",
+   "Iron Man",
+   "Hawkeye",
+   "Captain America"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour does Goku's hair turn when he first becomes a Super Saiyan?",
+  "options": [
+   "Red",
+   "Blue",
+   "Silver",
+   "Gold"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Death Note, what is the name of the brilliant detective who hunts Kira?",
+  "options": [
+   "Near",
+   "Matsuda",
+   "L",
+   "Mello"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does Lucy charge for her psychiatric advice booth in Peanuts?",
+  "options": [
+   "Fifty cents",
+   "Five cents",
+   "One dollar",
+   "Ten cents"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Pixar film features a jazz pianist whose soul is separated from his body?",
+  "options": [
+   "Coco",
+   "Inside Out",
+   "Onward",
+   "Soul"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Jerry in Tom and Jerry?",
+  "options": [
+   "A hamster",
+   "A mouse",
+   "A cat",
+   "A rabbit"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'comic strip' usually found in?",
+  "options": [
+   "A newspaper",
+   "A cookbook",
+   "A phone book",
+   "A road atlas"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the pub in Family Guy?",
+  "options": [
+   "The Rusty Anchor",
+   "Moe's Tavern",
+   "The Drunken Clam",
+   "Paddy's Pub"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Big Hero 6, what kind of character is Baymax?",
+  "options": [
+   "A drone",
+   "A superhero suit",
+   "A talking cat",
+   "An inflatable healthcare robot"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which era of comics is generally called the Golden Age?",
+  "options": [
+   "The late 1930s to the 1950s",
+   "The 1970s",
+   "The 2010s",
+   "The 1990s"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Ghibli film is about tiny people living under the floorboards of a house?",
+  "options": [
+   "Arrietty",
+   "Whisper of the Heart",
+   "Ponyo",
+   "The Cat Returns"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which children's book by Maurice Sendak features a boy named Max and monsters?",
+  "options": [
+   "Room on the Broom",
+   "The Gruffalo",
+   "The Tiger Who Came to Tea",
+   "Where the Wild Things Are"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animation studio made Toy Story?",
+  "options": [
+   "Illumination",
+   "Blue Sky",
+   "Pixar",
+   "DreamWorks"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Sesame Street character lives in a rubbish bin?",
+  "options": [
+   "Oscar the Grouch",
+   "Elmo",
+   "Big Bird",
+   "Grover"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which superhero can run extremely fast?",
+  "options": [
+   "Cyborg",
+   "Green Lantern",
+   "The Flash",
+   "Aquaman"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Snoopy's small yellow bird friend?",
+  "options": [
+   "Peppermint",
+   "Chirpy",
+   "Woodstock",
+   "Tweety"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Popeye's occupation?",
+  "options": [
+   "Farmer",
+   "Sailor",
+   "Fisherman",
+   "Boxer"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Frozen, what is the kingdom called?",
+  "options": [
+   "Agrabah",
+   "Arendelle",
+   "Atlantica",
+   "Corona"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Simpsons character is a Scottish school groundskeeper?",
+  "options": [
+   "Fergus",
+   "Hamish",
+   "Willie",
+   "Angus"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon featured a pink dog living with an elderly couple in Nowhere, Kansas?",
+  "options": [
+   "Dexter's Laboratory",
+   "CatDog",
+   "Courage the Cowardly Dog",
+   "Cow and Chicken"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cartoon character's nose grows when he lies?",
+  "options": [
+   "Dumbo",
+   "Aladdin",
+   "Peter Pan",
+   "Pinocchio"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is Thomas the Tank Engine?",
+  "options": [
+   "Yellow",
+   "Red",
+   "Green",
+   "Blue"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British comic strip features a work-shy northern husband whose flat cap covers his eyes?",
+  "options": [
+   "Fred Basset",
+   "Bristow",
+   "The Perishers",
+   "Andy Capp"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How does Pikachu attack in the anime?",
+  "options": [
+   "With water",
+   "With fire",
+   "With electricity",
+   "With ice"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated film series features a green ogre who lives in a swamp?",
+  "options": [
+   "Monsters Inc",
+   "Trolls",
+   "Hotel Transylvania",
+   "Shrek"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is the skin of the characters in The Simpsons?",
+  "options": [
+   "Pink",
+   "Green",
+   "Blue",
+   "Yellow"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British cartoon featured a one-eyed secret agent mouse and his hamster assistant Penfold?",
+  "options": [
+   "Danger Mouse",
+   "Count Duckula",
+   "SuperTed",
+   "Bananaman"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime series features spinning tops battling in an arena?",
+  "options": [
+   "Beyblade",
+   "Bakugan",
+   "Duel Masters",
+   "Medabots"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Scooby-Doo's small, aggressive nephew?",
+  "options": [
+   "Scrappy-Doo",
+   "Dooby",
+   "Yabba-Doo",
+   "Scooby-Dum"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Peter Pan, which island is the story set on?",
+  "options": [
+   "Skull Island",
+   "Treasure Island",
+   "Hook Island",
+   "Neverland"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of toy is Woody in Toy Story?",
+  "options": [
+   "A cowboy doll",
+   "A dinosaur",
+   "A robot",
+   "A racing car"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Mickey Mouse's girlfriend?",
+  "options": [
+   "Clarabelle",
+   "Daisy Duck",
+   "Penny",
+   "Minnie Mouse"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Elsa create with her powers in Frozen?",
+  "options": [
+   "Plants",
+   "Wind",
+   "Ice and snow",
+   "Fire"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Captain America's real name?",
+  "options": [
+   "Tony Stark",
+   "Bucky Barnes",
+   "Sam Wilson",
+   "Steve Rogers"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Looney Tunes character is a spinning, growling Tasmanian devil?",
+  "options": [
+   "Pete",
+   "Gossamer",
+   "Taz",
+   "Marvin"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pixar film features an ant colony hiring circus bugs to fight grasshoppers?",
+  "options": [
+   "Bee Movie",
+   "Turbo",
+   "Antz",
+   "A Bug's Life"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the French and Belgian term for comics?",
+  "options": [
+   "Manga",
+   "Tebeo",
+   "Fumetti",
+   "Bande dessinee"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Simpsons character is the barman at Moe's Tavern?",
+  "options": [
+   "Moe",
+   "Carl",
+   "Lenny",
+   "Barney"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which artist co-created Spider-Man and Doctor Strange with Stan Lee?",
+  "options": [
+   "Jack Kirby",
+   "John Buscema",
+   "Gil Kane",
+   "Steve Ditko"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which black-and-white robot cat from the future helps a boy called Nobita?",
+  "options": [
+   "Astro Boy",
+   "Doraemon",
+   "Jibanyan",
+   "Chi"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Winnie the Pooh?",
+  "options": [
+   "A pig",
+   "A bear",
+   "A donkey",
+   "A tiger"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who usually turns out to be the monster in Scooby-Doo?",
+  "options": [
+   "A person in a costume",
+   "An alien",
+   "A robot",
+   "A real ghost"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which superhero wears an iron suit that lets him fly?",
+  "options": [
+   "Aquaman",
+   "The Flash",
+   "Superman",
+   "Iron Man"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of animal is Tom in Tom and Jerry?",
+  "options": [
+   "A rat",
+   "A mouse",
+   "A cat",
+   "A dog"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1988 film mixed live action with cartoon characters in a story about a framed cartoon rabbit?",
+  "options": [
+   "Who Framed Roger Rabbit",
+   "Mary Poppins",
+   "Cool World",
+   "Space Jam"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Mickey Mouse?",
+  "options": [
+   "A rat",
+   "A squirrel",
+   "A mouse",
+   "A hamster"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Rick and Morty, what is Rick's relationship to Morty?",
+  "options": [
+   "Brother",
+   "Father",
+   "Uncle",
+   "Grandfather"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Peppa Pig's favourite activity?",
+  "options": [
+   "Swimming",
+   "Painting",
+   "Jumping in muddy puddles",
+   "Riding a bike"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Finding Nemo, what kind of fish is Nemo?",
+  "options": [
+   "A blue tang",
+   "A shark",
+   "A pufferfish",
+   "A clownfish"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fictional city does Batman protect?",
+  "options": [
+   "Coast City",
+   "Gotham City",
+   "Central City",
+   "Metropolis"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Marvel character rides a flaming motorcycle and has a burning skull?",
+  "options": [
+   "Moon Knight",
+   "Punisher",
+   "Blade",
+   "Ghost Rider"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Spider-Man villain is a scientist with four mechanical arms?",
+  "options": [
+   "Sandman",
+   "Green Goblin",
+   "Vulture",
+   "Doctor Octopus"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Garfield?",
+  "options": [
+   "A fox",
+   "A cat",
+   "A dog",
+   "A lion"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon series is famous for the phrase 'Cowabunga'?",
+  "options": [
+   "Rugrats",
+   "Recess",
+   "Rocket Power",
+   "Teenage Mutant Ninja Turtles"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Batman villain wears a top hat and carries trick umbrellas?",
+  "options": [
+   "The Penguin",
+   "Two-Face",
+   "The Riddler",
+   "Mad Hatter"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which boy is Winnie the Pooh's human friend?",
+  "options": [
+   "James",
+   "Peter",
+   "Christopher Robin",
+   "Michael"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Looney Tunes character is a fast-running mouse billed as the fastest in all Mexico?",
+  "options": [
+   "Slowpoke Rodriguez",
+   "Mighty Mouse",
+   "Jerry",
+   "Speedy Gonzales"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated character has 'terrible tusks and terrible claws' in a Julia Donaldson story?",
+  "options": [
+   "The Gruffalo",
+   "Stick Man",
+   "The Highway Rat",
+   "The Snail"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic strip by Mort Walker is set at the army base Camp Swampy?",
+  "options": [
+   "Blondie",
+   "Sad Sack",
+   "Beetle Bailey",
+   "Hagar the Horrible"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which superhero is known as the Web-Slinger?",
+  "options": [
+   "Nightcrawler",
+   "Silk",
+   "Spider-Man",
+   "Daredevil"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the signal that calls Batman to duty?",
+  "options": [
+   "The Gotham Light",
+   "The Dark Flare",
+   "The Night Beacon",
+   "The Bat-Signal"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features the song 'A Spoonful of Sugar' alongside animated penguins?",
+  "options": [
+   "Bedknobs and Broomsticks",
+   "Pete's Dragon",
+   "Song of the South",
+   "Mary Poppins"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon featured the catchphrase 'I have the power!'?",
+  "options": [
+   "Bravestarr",
+   "Thundercats",
+   "Voltron",
+   "He-Man and the Masters of the Universe"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How does a Scooby-Doo mystery usually end?",
+  "options": [
+   "The gang runs away",
+   "The police solve it",
+   "The ghost escapes",
+   "The monster is unmasked as a person"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Goku's signature energy attack called?",
+  "options": [
+   "Final Flash",
+   "Spirit Bomb",
+   "Galick Gun",
+   "Kamehameha"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime features digital monsters that live in a digital world?",
+  "options": [
+   "Monster Rancher",
+   "Pokemon",
+   "Digimon",
+   "Bakugan"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dr Seuss character is an elephant who hears a tiny world on a speck of dust?",
+  "options": [
+   "The Lorax",
+   "Yertle",
+   "Horton",
+   "Thidwick"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fictional city does Superman protect?",
+  "options": [
+   "Star City",
+   "Gotham City",
+   "Metropolis",
+   "Central City"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Charlie Brown's dog?",
+  "options": [
+   "Spike",
+   "Rerun",
+   "Woodstock",
+   "Snoopy"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does Batman drive?",
+  "options": [
+   "The Batplane only",
+   "A tractor",
+   "A taxi",
+   "The Batmobile"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "According to SpongeBob's creator Stephen Hillenburg, what kind of creature is Squidward meant to be?",
+  "options": [
+   "An eel",
+   "A squid",
+   "An octopus",
+   "A jellyfish"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In The Jungle Book, what kind of animal is Shere Khan?",
+  "options": [
+   "A panther",
+   "A bear",
+   "A tiger",
+   "A snake"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wishes does the Genie grant Aladdin?",
+  "options": [
+   "Three",
+   "Five",
+   "One",
+   "Ten"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated Disney film features a bell ringer in a Paris cathedral?",
+  "options": [
+   "Tangled",
+   "Atlantis",
+   "The Hunchback of Notre Dame",
+   "Beauty and the Beast"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which colour is the Hulk in the classic comics?",
+  "options": [
+   "Blue",
+   "Green",
+   "Red",
+   "Grey"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Beauty and the Beast, what is the girl called?",
+  "options": [
+   "Jasmine",
+   "Belle",
+   "Ariel",
+   "Aurora"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon film features a boy who never grows up?",
+  "options": [
+   "Bambi",
+   "Dumbo",
+   "Peter Pan",
+   "Pinocchio"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Thing say before he attacks?",
+  "options": [
+   "Avengers assemble",
+   "Up and at them",
+   "Flame on",
+   "It's clobberin' time"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a Japanese term for a devoted fan of anime and manga?",
+  "options": [
+   "Otaku",
+   "Senpai",
+   "Kohai",
+   "Sensei"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic character is a heavily armed vigilante with a skull on his chest?",
+  "options": [
+   "Ghost Rider",
+   "The Punisher",
+   "Blade",
+   "Deadpool"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Pixar film Cars, what is the red race car called?",
+  "options": [
+   "Doc Hudson",
+   "Lightning McQueen",
+   "Sally",
+   "Mater"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In The Incredibles, what is the fashion designer's famous rule about costumes?",
+  "options": [
+   "No masks",
+   "No capes",
+   "No boots",
+   "No red"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime features a boy who can turn into a girl when splashed with cold water?",
+  "options": [
+   "Ranma 1/2",
+   "Maison Ikkoku",
+   "Inuyasha",
+   "Urusei Yatsura"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What creature is sealed inside Naruto?",
+  "options": [
+   "A wolf",
+   "A giant toad",
+   "A nine-tailed fox",
+   "A dragon"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon dog was a mild-mannered janitor by day and a kung fu hero by night?",
+  "options": [
+   "Underdog",
+   "Deputy Dawg",
+   "Hong Kong Phooey",
+   "Courage"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In How the Grinch Stole Christmas, what happens to the Grinch's heart at the end?",
+  "options": [
+   "It turns to stone",
+   "It grows three sizes",
+   "It disappears",
+   "It shrinks"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1980s cartoon featured a rock star with a computer called Synergy?",
+  "options": [
+   "Jem and the Holograms",
+   "Rainbow Brite",
+   "Lady Lovely Locks",
+   "My Little Pony"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Finding Nemo, which Australian city is the dentist's surgery in?",
+  "options": [
+   "Brisbane",
+   "Perth",
+   "Sydney",
+   "Melbourne"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Pinocchio made of?",
+  "options": [
+   "Metal",
+   "Stone",
+   "Clay",
+   "Wood"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Batman villain leaves clues in the form of riddles?",
+  "options": [
+   "Scarecrow",
+   "The Joker",
+   "The Riddler",
+   "Bane"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is Superman's cape?",
+  "options": [
+   "Black",
+   "Blue",
+   "Red",
+   "Yellow"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet was Superman born on?",
+  "options": [
+   "Oa",
+   "Apokolips",
+   "Mars",
+   "Krypton"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Finnish creations are white, round, hippo-like characters from a series of books and cartoons?",
+  "options": [
+   "The Moomins",
+   "The Smurfs",
+   "The Trolls",
+   "The Snorks"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In comics, what is a 'splash page'?",
+  "options": [
+   "The final page",
+   "A colour test page",
+   "A single large image filling a whole page",
+   "An advertisement"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which superhero team is nicknamed Earth's Mightiest Heroes?",
+  "options": [
+   "The Defenders",
+   "The Avengers",
+   "The Justice League",
+   "The X-Men"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Scooby-Doo character wears a purple dress and is often captured?",
+  "options": [
+   "Daphne",
+   "Velma",
+   "Wilma",
+   "Trudy"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Superman's Kryptonian birth name?",
+  "options": [
+   "Zod",
+   "Kon-El",
+   "Jor-El",
+   "Kal-El"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian director made the animated film Happy Feet?",
+  "options": [
+   "Bruce Beresford",
+   "Baz Luhrmann",
+   "Peter Weir",
+   "George Miller"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Finding Nemo, what is the forgetful blue fish called?",
+  "options": [
+   "Gill",
+   "Bruce",
+   "Marlin",
+   "Dory"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Lilo and Stitch, what is Stitch's experiment number?",
+  "options": [
+   "007",
+   "626",
+   "999",
+   "101"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In The Lion King, what kind of bird is Zazu?",
+  "options": [
+   "A hornbill",
+   "A parrot",
+   "An eagle",
+   "A stork"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the names of the Flintstones' next-door neighbours?",
+  "options": [
+   "Fred and Wilma",
+   "Bob and Carol",
+   "George and Jane",
+   "Barney and Betty Rubble"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1988 anime film is set in a rebuilt Neo-Tokyo and features a biker named Kaneda?",
+  "options": [
+   "Perfect Blue",
+   "Akira",
+   "Ninja Scroll",
+   "Ghost in the Shell"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which black alien symbiote bonds with a host to create a Spider-Man villain?",
+  "options": [
+   "Mysterio",
+   "Carnage",
+   "Venom",
+   "Sandman"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated film features zoo animals escaping to Africa, including a lion called Alex?",
+  "options": [
+   "The Wild",
+   "Khumba",
+   "Madagascar",
+   "Zootopia"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pokemon evolves from Charmeleon?",
+  "options": [
+   "Dragonite",
+   "Charmander",
+   "Charizard",
+   "Flareon"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Aladdin, what does rubbing the lamp produce?",
+  "options": [
+   "A parrot",
+   "A genie",
+   "A tiger",
+   "A carpet"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a full-length comic book published as a single volume?",
+  "options": [
+   "A graphic novel",
+   "A folio",
+   "A quarto",
+   "A strip"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of animal is Snoopy?",
+  "options": [
+   "A cat",
+   "A bear",
+   "A rabbit",
+   "A dog"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Batman's first sidekick?",
+  "options": [
+   "Red Hood",
+   "Batgirl",
+   "Robin",
+   "Nightwing"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of fruit is SpongeBob SquarePants' house?",
+  "options": [
+   "A mango",
+   "A coconut",
+   "A pineapple",
+   "A watermelon"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Frozen, what is the name of the snowman?",
+  "options": [
+   "Kristoff",
+   "Marshmallow",
+   "Olaf",
+   "Sven"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Homer's father?",
+  "options": [
+   "Clancy",
+   "Herbert",
+   "Seymour",
+   "Abraham"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic strip features a boy called Charlie Brown?",
+  "options": [
+   "Peanuts",
+   "Calvin and Hobbes",
+   "Dennis the Menace",
+   "Garfield"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Mulan, what is the small dragon called?",
+  "options": [
+   "Mushu",
+   "Khan",
+   "Cri-Kee",
+   "Shan Yu"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon features an ogre, a donkey and a princess?",
+  "options": [
+   "Tangled",
+   "Frozen",
+   "Brave",
+   "Shrek"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Sleeping Beauty, what is the name of the evil fairy?",
+  "options": [
+   "Lady Tremaine",
+   "Maleficent",
+   "Ursula",
+   "Cruella"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Flintstones, which prehistoric town do Fred and Wilma live in?",
+  "options": [
+   "Bedrock",
+   "Granite Falls",
+   "Rockville",
+   "Stone Valley"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the most famous Flash's real name?",
+  "options": [
+   "Hal Jordan",
+   "Jay Garrick",
+   "Barry Allen",
+   "Wally West"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is Donald Duck's girlfriend?",
+  "options": [
+   "Minnie Mouse",
+   "Clarabelle",
+   "Della",
+   "Daisy Duck"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Bart Simpson's best friend?",
+  "options": [
+   "Ralph",
+   "Martin",
+   "Milhouse",
+   "Nelson"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animation studio created The Flintstones, Yogi Bear and Scooby-Doo?",
+  "options": [
+   "Warner Bros",
+   "Hanna-Barbera",
+   "Filmation",
+   "Disney"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Fred and Wilma Flintstone's daughter?",
+  "options": [
+   "Bamm-Bamm",
+   "Betty",
+   "Pebbles",
+   "Dino"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which superhero is known as the Merc with a Mouth?",
+  "options": [
+   "Spider-Man",
+   "Wolverine",
+   "Deadpool",
+   "Blade"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the Disney film Moana, what is the demigod called?",
+  "options": [
+   "Pua",
+   "Maui",
+   "Heihei",
+   "Tamatoa"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How is Fred Flintstone's car powered?",
+  "options": [
+   "By his feet",
+   "By a dinosaur",
+   "By wind",
+   "By steam"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which musician wrote the songs for the Disney film Tarzan?",
+  "options": [
+   "Sting",
+   "Elton John",
+   "Bryan Adams",
+   "Phil Collins"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Aardman film follows hens trying to escape a farm?",
+  "options": [
+   "Chicken Run",
+   "Early Man",
+   "Flushed Away",
+   "Shaun the Sheep"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which X-Men villain can control metal?",
+  "options": [
+   "Juggernaut",
+   "Magneto",
+   "Apocalypse",
+   "Sabretooth"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What noise does the Road Runner make?",
+  "options": [
+   "Beep beep",
+   "Toot toot",
+   "Caw caw",
+   "Cheep cheep"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Batman character began as the Joker's psychiatrist?",
+  "options": [
+   "Poison Ivy",
+   "Harley Quinn",
+   "Batgirl",
+   "Catwoman"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Pixar film Ratatouille, what animal wants to be a chef?",
+  "options": [
+   "A cat",
+   "A rat",
+   "A raccoon",
+   "A mouse"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the real name of the boy who transforms into Shazam?",
+  "options": [
+   "Billy Batson",
+   "Freddy Freeman",
+   "Johnny Chapman",
+   "Danny Marks"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Phineas and Ferb, what kind of animal is Perry?",
+  "options": [
+   "A platypus",
+   "A koala",
+   "A beaver",
+   "An otter"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is the leader of the Smurfs?",
+  "options": [
+   "Grandpa Smurf",
+   "Smurfette",
+   "Brainy Smurf",
+   "Papa Smurf"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features a family in Colombia with magical gifts?",
+  "options": [
+   "Coco",
+   "Luca",
+   "Encanto",
+   "Moana"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Death Note, what happens when a name is written in the notebook?",
+  "options": [
+   "That person becomes rich",
+   "That person forgets everything",
+   "That person disappears",
+   "That person dies"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'cosplay'?",
+  "options": [
+   "Voice acting",
+   "Drawing manga",
+   "Reading manga aloud",
+   "Dressing up as a character from a story"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the Grinch's dog?",
+  "options": [
+   "Max",
+   "Rex",
+   "Whoville",
+   "Bruno"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic book hero's costume is blue and red with a spider on the chest?",
+  "options": [
+   "Spider-Man",
+   "Captain America",
+   "Nightwing",
+   "Superman"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Ninja Turtle wears a red mask and has the worst temper?",
+  "options": [
+   "Donatello",
+   "Michelangelo",
+   "Leonardo",
+   "Raphael"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which animated Spider-Man film introduced Miles Morales to cinema audiences in 2018?",
+  "options": [
+   "Spider-Man: Homecoming",
+   "The Amazing Spider-Man",
+   "Spider-Man: Into the Spider-Verse",
+   "Spider-Man: No Way Home"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who runs the railway in Thomas the Tank Engine?",
+  "options": [
+   "The Station Master",
+   "The Fat Controller",
+   "Driver Bert",
+   "Sir Handel"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Kiki's black cat?",
+  "options": [
+   "Kuro",
+   "Momo",
+   "Luna",
+   "Jiji"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which South Park character wears a green hat with ear flaps?",
+  "options": [
+   "Butters",
+   "Kyle",
+   "Kenny",
+   "Stan"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Jungle Book, what kind of animal is Baloo?",
+  "options": [
+   "A tiger",
+   "A panther",
+   "A bear",
+   "An orangutan"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which comic did Superman first appear in 1938?",
+  "options": [
+   "Amazing Fantasy",
+   "Detective Comics",
+   "Action Comics",
+   "All Star Comics"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which animated film is set in a city where animals live together, starring a rabbit police officer?",
+  "options": [
+   "The Secret Life of Pets",
+   "Sing",
+   "Zootopia",
+   "Madagascar"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Looney Tunes character is a small Martian in a Roman-style helmet?",
+  "options": [
+   "Gossamer",
+   "K-9",
+   "Duck Dodgers",
+   "Marvin the Martian"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Simpsons character was a hopeless lawyer voiced by Phil Hartman?",
+  "options": [
+   "Gil Gunderson",
+   "Troy McClure",
+   "Lionel Hutz",
+   "Kent Brockman"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Sesame Street character shares a flat with Bert?",
+  "options": [
+   "Elmo",
+   "Ernie",
+   "Grover",
+   "Herry"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which fictional town do The Simpsons live?",
+  "options": [
+   "Bedrock",
+   "Quahog",
+   "Shelbyville",
+   "Springfield"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 101 Dalmatians, what is the villain's name?",
+  "options": [
+   "Madame Medusa",
+   "Maleficent",
+   "Ursula",
+   "Cruella de Vil"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these does Batman rely on instead of superpowers?",
+  "options": [
+   "Telepathy",
+   "Super strength",
+   "Training and gadgets",
+   "Flight"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Japanese word for animation?",
+  "options": [
+   "Anime",
+   "Mecha",
+   "Kaiju",
+   "Manga"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the talking dog in Family Guy?",
+  "options": [
+   "Chris",
+   "Rupert",
+   "Stewie",
+   "Brian"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is SpongeBob SquarePants' job at the Krusty Krab?",
+  "options": [
+   "Fry cook",
+   "Cashier",
+   "Manager",
+   "Cleaner"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney animated film features an emperor turned into a llama?",
+  "options": [
+   "The Emperor's New Groove",
+   "Atlantis",
+   "Home on the Range",
+   "Brother Bear"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which famous line is associated with Spider-Man's Uncle Ben?",
+  "options": [
+   "Do what is right",
+   "Always look up",
+   "A hero never quits",
+   "With great power comes great responsibility"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of toy is Hobbes in Calvin and Hobbes?",
+  "options": [
+   "A stuffed bear",
+   "A toy robot",
+   "A stuffed tiger",
+   "A rag doll"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Finding Nemo, what is Nemo's father called?",
+  "options": [
+   "Crush",
+   "Nigel",
+   "Marlin",
+   "Gill"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Fullmetal Alchemist, what are the brothers called?",
+  "options": [
+   "Sasuke and Itachi",
+   "Ash and Gary",
+   "Ichigo and Kon",
+   "Edward and Alphonse"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which comic book publisher created Superman, Batman and Wonder Woman?",
+  "options": [
+   "Image",
+   "DC",
+   "Marvel",
+   "Valiant"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Bart Simpson's catchphrase when he is caught?",
+  "options": [
+   "Give me a break",
+   "That's the way",
+   "Eat my shorts",
+   "No worries"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which anime and manga tells the story of a jazz-loving samurai trio searching for a sunflower samurai?",
+  "options": [
+   "Cowboy Bebop",
+   "Samurai Champloo",
+   "Afro Samurai",
+   "Rurouni Kenshin"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Disney film features a boy raised by gorillas in the jungle?",
+  "options": [
+   "George of the Jungle",
+   "Brother Bear",
+   "Tarzan",
+   "The Jungle Book"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon features a boy and his shape-shifting alien watch?",
+  "options": [
+   "Ben 10",
+   "Danny Phantom",
+   "Max Steel",
+   "Generator Rex"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Looney Tunes character is a loud southern rooster?",
+  "options": [
+   "Henery Hawk",
+   "Daffy Duck",
+   "Porky Pig",
+   "Foghorn Leghorn"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon features a giant red dog and his owner Emily Elizabeth?",
+  "options": [
+   "Arthur",
+   "Clifford the Big Red Dog",
+   "Franklin",
+   "Blue's Clues"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comic strip satirises office life and features an engineer with a bent tie?",
+  "options": [
+   "Dilbert",
+   "Pearls Before Swine",
+   "Doonesbury",
+   "Cathy"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon character eats spinach to gain instant strength?",
+  "options": [
+   "Popeye",
+   "Bluto",
+   "Wimpy",
+   "Olive Oyl"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Marvel team includes Iron Man, Captain America, Thor and the Hulk?",
+  "options": [
+   "The X-Men",
+   "The Avengers",
+   "The Fantastic Four",
+   "The Defenders"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which orange cartoon cat loves lasagne?",
+  "options": [
+   "Felix",
+   "Heathcliff",
+   "Garfield",
+   "Top Cat"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British comic features Dennis the Menace and Gnasher?",
+  "options": [
+   "Whizzer and Chips",
+   "The Dandy",
+   "2000 AD",
+   "The Beano"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon family are described as creepy, kooky, mysterious and spooky?",
+  "options": [
+   "The Munsters",
+   "The Simpsons",
+   "The Addams Family",
+   "The Flintstones"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which stuttering Looney Tunes pig closes cartoons with 'That's all folks'?",
+  "options": [
+   "Porky Pig",
+   "Petunia Pig",
+   "Hamton",
+   "Pumbaa"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor voices Woody in the Toy Story films?",
+  "options": [
+   "John Goodman",
+   "Billy Crystal",
+   "Tom Hanks",
+   "Tim Allen"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Peter Pan, what is the fairy called?",
+  "options": [
+   "Silvermist",
+   "Periwinkle",
+   "Wendy",
+   "Tinker Bell"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Tintin's dog?",
+  "options": [
+   "Snowy",
+   "Milo",
+   "Rex",
+   "Bobby"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Disney animated film is set in Ancient Greece and features a hero who is the son of Zeus?",
+  "options": [
+   "Brother Bear",
+   "Tarzan",
+   "Hercules",
+   "Atlantis"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What food are the Ninja Turtles obsessed with?",
+  "options": [
+   "Burgers",
+   "Tacos",
+   "Noodles",
+   "Pizza"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the realm Thor comes from?",
+  "options": [
+   "Krypton",
+   "Wakanda",
+   "Themyscira",
+   "Asgard"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sad-eyed, slow-talking cartoon dog was created by Tex Avery?",
+  "options": [
+   "Pluto",
+   "Droopy",
+   "Goofy",
+   "Snoopy"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Japanese monster first appeared in a 1954 film and inspired many cartoons?",
+  "options": [
+   "Mothra",
+   "Gamera",
+   "Rodan",
+   "Godzilla"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor voices Shrek?",
+  "options": [
+   "Antonio Banderas",
+   "John Lithgow",
+   "Mike Myers",
+   "Eddie Murphy"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the robot maid in The Jetsons?",
+  "options": [
+   "Rosie",
+   "Astro",
+   "Judy",
+   "Jane"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do the letters DC in DC Comics come from?",
+  "options": [
+   "Dynamic Colour",
+   "Detective Comics",
+   "Daily Chronicle",
+   "District Comics"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which secret agency in Marvel comics is led by Nick Fury?",
+  "options": [
+   "A.I.M.",
+   "S.H.I.E.L.D.",
+   "S.W.O.R.D.",
+   "HYDRA"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Gargamel's cat in The Smurfs?",
+  "options": [
+   "Felix",
+   "Azrael",
+   "Sylvester",
+   "Salem"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Demon Slayer, what is the main character's name?",
+  "options": [
+   "Tanjiro",
+   "Giyu",
+   "Zenitsu",
+   "Inosuke"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Black Panther's real name?",
+  "options": [
+   "T'Challa",
+   "M'Baku",
+   "Killmonger",
+   "Shuri"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What kind of animal is the Disney character Bambi?",
+  "options": [
+   "A fawn-coloured dog",
+   "A skunk",
+   "A rabbit",
+   "A deer"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bouncy striped character is a friend of Winnie the Pooh?",
+  "options": [
+   "Roo",
+   "Eeyore",
+   "Tigger",
+   "Rabbit"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon dog speaks with an 'R' at the front of most of his words?",
+  "options": [
+   "Goofy",
+   "Scooby-Doo",
+   "Pluto",
+   "Odie"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company created Hello Kitty?",
+  "options": [
+   "Sanrio",
+   "Bandai",
+   "Nintendo",
+   "Takara Tomy"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon bear wears a hat and tie and steals picnic baskets?",
+  "options": [
+   "Paddington",
+   "Fozzie",
+   "Baloo",
+   "Yogi Bear"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Naruto's ninja village?",
+  "options": [
+   "The Hidden Cloud Village",
+   "The Hidden Sand Village",
+   "The Hidden Mist Village",
+   "The Hidden Leaf Village"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which animated musical film features a Russian princess and the song 'Once Upon a December'?",
+  "options": [
+   "Thumbelina",
+   "Barbie",
+   "Anastasia",
+   "The Swan Princess"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which song plays during Aladdin's magic carpet ride?",
+  "options": [
+   "Arabian Nights",
+   "A Whole New World",
+   "Friend Like Me",
+   "Prince Ali"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the boy raised by wolves in The Jungle Book?",
+  "options": [
+   "Mowgli",
+   "Peter",
+   "Christopher",
+   "Tarzan"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Transformers, what kind of vehicle does Bumblebee usually turn into?",
+  "options": [
+   "A truck",
+   "A jet",
+   "A car",
+   "A helicopter"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Frozen, what is the name of the reindeer?",
+  "options": [
+   "Olaf",
+   "Oaken",
+   "Hans",
+   "Sven"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In How to Train Your Dragon, what is the black dragon called?",
+  "options": [
+   "Meatlug",
+   "Stormfly",
+   "Hookfang",
+   "Toothless"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In anime, what does 'dub' mean?",
+  "options": [
+   "Voices re-recorded in another language",
+   "A double-length episode",
+   "A remixed soundtrack",
+   "A silent version"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime follows a scientist who accidentally invents time travel using a microwave?",
+  "options": [
+   "Erased",
+   "Monster",
+   "Psycho-Pass",
+   "Steins;Gate"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who is Garfield's owner?",
+  "options": [
+   "Liz",
+   "Nermal",
+   "Odie",
+   "Jon Arbuckle"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Popeye's sweetheart?",
+  "options": [
+   "Betty Boop",
+   "Sweet Pea",
+   "Wilma",
+   "Olive Oyl"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Aardman character began as a one-off in a Wallace and Gromit film before getting his own series?",
+  "options": [
+   "Shaun the Sheep",
+   "Feathers McGraw",
+   "Bitzer",
+   "Preston"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who owns the Springfield Nuclear Power Plant in The Simpsons?",
+  "options": [
+   "Krusty",
+   "Mr Burns",
+   "Ned Flanders",
+   "Moe Szyslak"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which classic cartoon cat, one of the earliest cartoon stars, has a magic bag of tricks?",
+  "options": [
+   "Tom",
+   "Sylvester",
+   "Top Cat",
+   "Felix the Cat"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Lion King, what is the name of the young lion cub hero?",
+  "options": [
+   "Mufasa",
+   "Simba",
+   "Scar",
+   "Nala"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Dick Dastardly's sniggering dog?",
+  "options": [
+   "Muttley",
+   "Rufus",
+   "Snuffles",
+   "Precious"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Disney character is a tall, clumsy dog who wears a hat and waistcoat?",
+  "options": [
+   "Horace",
+   "Pluto",
+   "Pete",
+   "Goofy"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many dwarfs are there in Snow White?",
+  "options": [
+   "Eight",
+   "Seven",
+   "Five",
+   "Six"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Pixar film Up, what is the talking dog called?",
+  "options": [
+   "Dug",
+   "Kevin",
+   "Alpha",
+   "Russell"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which studio made Shrek, Kung Fu Panda and How to Train Your Dragon?",
+  "options": [
+   "DreamWorks Animation",
+   "Laika",
+   "Illumination",
+   "Pixar"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which studio is the long-running Japanese animator behind the Dragon Ball and One Piece anime?",
+  "options": [
+   "Sunrise",
+   "Kyoto Animation",
+   "Toei Animation",
+   "Studio Ghibli"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which voice actor was known as the Man of a Thousand Voices for his Looney Tunes work?",
+  "options": [
+   "Mel Blanc",
+   "Don Messick",
+   "Daws Butler",
+   "June Foray"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the Human Torch say when he bursts into flame?",
+  "options": [
+   "Flame on",
+   "Fire away",
+   "Burn bright",
+   "Light me up"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Mr Burns' catchphrase when he is pleased?",
+  "options": [
+   "Marvellous",
+   "Splendid",
+   "Delightful",
+   "Excellent"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the cardboard box machine Calvin uses to change into animals?",
+  "options": [
+   "The Cerebrospinal Sorter",
+   "The Duplicator",
+   "The Time Box",
+   "The Transmogrifier"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Disney elephant can fly using his enormous ears?",
+  "options": [
+   "Bambi",
+   "Dumbo",
+   "Rajah",
+   "Tantor"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian broadcaster first showed Bluey?",
+  "options": [
+   "SBS",
+   "Channel Nine",
+   "Channel Seven",
+   "The ABC"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour is SpongeBob's best friend Patrick?",
+  "options": [
+   "Blue",
+   "Green",
+   "Pink",
+   "Orange"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the surname of Batman's loyal butler Alfred?",
+  "options": [
+   "Peabody",
+   "Prescott",
+   "Pemberton",
+   "Pennyworth"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon featured pastel bears who lived in the clouds?",
+  "options": [
+   "Rainbow Brite",
+   "Care Bears",
+   "Gummi Bears",
+   "My Little Pony"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company makes the Toy Story films?",
+  "options": [
+   "Pixar",
+   "DreamWorks",
+   "Illumination",
+   "Aardman"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Roman leader appears as a character in the Asterix books?",
+  "options": [
+   "Nero",
+   "Hadrian",
+   "Julius Caesar",
+   "Augustus"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Asterix's large best friend who carries menhirs?",
+  "options": [
+   "Cacofonix",
+   "Obelix",
+   "Vitalstatistix",
+   "Getafix"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Rick and Morty, what device does Rick use to travel between dimensions?",
+  "options": [
+   "A teleport pad",
+   "A portal gun",
+   "A wormhole ring",
+   "A time machine"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Bambi's skunk friend?",
+  "options": [
+   "Petal",
+   "Stripe",
+   "Thumper",
+   "Flower"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Where does the Green Lantern get his powers from?",
+  "options": [
+   "A power ring",
+   "A serum",
+   "A magic hammer",
+   "A radioactive bite"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Thor's hammer?",
+  "options": [
+   "Excalibur",
+   "Stormbreaker",
+   "Gungnir",
+   "Mjolnir"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which author created Winnie the Pooh?",
+  "options": [
+   "A. A. Milne",
+   "Roald Dahl",
+   "Beatrix Potter",
+   "Enid Blyton"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Lion King, who is Simba's father?",
+  "options": [
+   "Scar",
+   "Rafiki",
+   "Mufasa",
+   "Zazu"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney cartoon starred a caped duck superhero?",
+  "options": [
+   "Bonkers",
+   "Darkwing Duck",
+   "TaleSpin",
+   "DuckTales"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Shrek, what is the name of the princess?",
+  "options": [
+   "Belle",
+   "Fiona",
+   "Odette",
+   "Aurora"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many Dragon Balls must be gathered to summon the dragon?",
+  "options": [
+   "Three",
+   "Five",
+   "Nine",
+   "Seven"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In The Jungle Book, what kind of animal is Kaa?",
+  "options": [
+   "A wolf",
+   "A vulture",
+   "A panther",
+   "A snake"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the dog in the Garfield comic strip?",
+  "options": [
+   "Odie",
+   "Nermal",
+   "Pooky",
+   "Arlene"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime is about a boy who joins a high school basketball team, made famous in the 1990s?",
+  "options": [
+   "Prince of Tennis",
+   "Slam Dunk",
+   "Haikyuu",
+   "Eyeshield 21"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What colour is the classic form of kryptonite that weakens Superman?",
+  "options": [
+   "Gold",
+   "Blue",
+   "Red",
+   "Green"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Pinocchio, what happens when he tells a lie?",
+  "options": [
+   "His ears grow",
+   "His nose grows",
+   "He shrinks",
+   "He turns green"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who created Tintin?",
+  "options": [
+   "Uderzo",
+   "Peyo",
+   "Goscinny",
+   "Herge"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime features a bald hero who defeats every enemy with a single punch?",
+  "options": [
+   "One Punch Man",
+   "Hunter x Hunter",
+   "Mob Psycho 100",
+   "My Hero Academia"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which anime and manga follows a family where each member is secretly a spy, an assassin and a telepath?",
+  "options": [
+   "Spy x Family",
+   "Chainsaw Man",
+   "Jujutsu Kaisen",
+   "Mob Psycho 100"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the traditional animation technique of drawing over live-action film footage called?",
+  "options": [
+   "Claymation",
+   "Stop motion",
+   "Tweening",
+   "Rotoscoping"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Peanuts special is set at Halloween and features a pumpkin patch?",
+  "options": [
+   "A Boy Named Charlie Brown",
+   "Race for Your Life",
+   "It's the Great Pumpkin, Charlie Brown",
+   "A Charlie Brown Christmas"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which deaf professor appears in the Tintin books?",
+  "options": [
+   "Professor Layton",
+   "Professor Calculus",
+   "Professor Higgins",
+   "Professor Branestawm"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cartoon superhero dog wore a red cape and spoke in rhyme?",
+  "options": [
+   "Bolt",
+   "Krypto",
+   "Hong Kong Phooey",
+   "Underdog"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which city does Judge Dredd enforce the law?",
+  "options": [
+   "Neo-Tokyo",
+   "Gotham City",
+   "New Metropolis",
+   "Mega-City One"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What colour is Batman's costume mostly?",
+  "options": [
+   "White and silver",
+   "Red and blue",
+   "Black and grey",
+   "Green and gold"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1978 animated film about rabbits leaving their warren was based on a Richard Adams novel?",
+  "options": [
+   "The Animals of Farthing Wood",
+   "Fantastic Mr Fox",
+   "Watership Down",
+   "The Plague Dogs"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Simpson child is the school's star saxophone player?",
+  "options": [
+   "Bart",
+   "Maggie",
+   "Marge",
+   "Lisa"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Obelix's job in the Asterix comics?",
+  "options": [
+   "Menhir delivery man",
+   "Bard",
+   "Blacksmith",
+   "Fishmonger"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is Sailor Moon's everyday name?",
+  "options": [
+   "Minako",
+   "Usagi",
+   "Rei",
+   "Ami"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What food is Desperate Dan famous for eating?",
+  "options": [
+   "Steak and kidney pudding",
+   "Fish and chips",
+   "Cow pie",
+   "Roast beef"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who created the Peanuts comic strip?",
+  "options": [
+   "Jim Davis",
+   "Gary Larson",
+   "Charles Schulz",
+   "Bill Watterson"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the real name of the first Robin?",
+  "options": [
+   "Tim Drake",
+   "Dick Grayson",
+   "Damian Wayne",
+   "Jason Todd"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Japanese word for comics?",
+  "options": [
+   "Otaku",
+   "Anime",
+   "Manga",
+   "Kanji"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name for one monthly instalment of a comic, before several are collected into a book?",
+  "options": [
+   "An annual",
+   "An omnibus",
+   "A single issue",
+   "A trade paperback"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which was Walt Disney's first full-length animated feature film?",
+  "options": [
+   "Snow White and the Seven Dwarfs",
+   "Dumbo",
+   "Fantasia",
+   "Pinocchio"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the Ninja Turtles' rat master?",
+  "options": [
+   "Casey",
+   "Splinter",
+   "Krang",
+   "Shredder"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which anime series about virtual reality gaming features a player called Kirito?",
+  "options": [
+   "Sword Art Online",
+   "Log Horizon",
+   "No Game No Life",
+   "Overlord"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many children do Homer and Marge Simpson have?",
+  "options": [
+   "Three",
+   "One",
+   "Two",
+   "Four"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which basketball player starred alongside Looney Tunes characters in the 1996 film Space Jam?",
+  "options": [
+   "LeBron James",
+   "Magic Johnson",
+   "Michael Jordan",
+   "Shaquille O'Neal"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Simpson child is a vegetarian and a Buddhist?",
+  "options": [
+   "Maggie",
+   "Lisa",
+   "Bart",
+   "Marge"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Monsters Inc, what is the little girl called by the monsters?",
+  "options": [
+   "Kitty",
+   "Boo",
+   "Roz",
+   "Celia"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fictional company sells Wile E. Coyote his gadgets?",
+  "options": [
+   "Apex",
+   "Vertex",
+   "Omni",
+   "Acme"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who created Dragon Ball?",
+  "options": [
+   "Osamu Tezuka",
+   "Masashi Kishimoto",
+   "Eiichiro Oda",
+   "Akira Toriyama"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour are Mickey Mouse's shorts traditionally?",
+  "options": [
+   "Black",
+   "Green",
+   "Red",
+   "Blue"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of animal is Bambi's friend Thumper?",
+  "options": [
+   "A rabbit",
+   "A mouse",
+   "A squirrel",
+   "A fox"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which manga and anime character is a boy robot with rocket boots created by Osamu Tezuka?",
+  "options": [
+   "Mazinger Z",
+   "Gigantor",
+   "Astro Boy",
+   "Doraemon"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which long-running anime is about a boy who becomes a Soul Reaper and fights Hollows?",
+  "options": [
+   "Naruto",
+   "One Piece",
+   "Fairy Tail",
+   "Bleach"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Tony Stark's company in the Marvel comics?",
+  "options": [
+   "LexCorp",
+   "Stark Industries",
+   "Oscorp",
+   "Wayne Enterprises"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon aardvark wears glasses and a yellow jumper and stars in his own series?",
+  "options": [
+   "Little Bear",
+   "Timothy",
+   "Arthur",
+   "Franklin"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon featured a lion-headed hero called Lion-O?",
+  "options": [
+   "He-Man",
+   "Silverhawks",
+   "Voltron",
+   "Thundercats"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Alan Moore graphic novel features a masked anarchist in a Guy Fawkes mask?",
+  "options": [
+   "Watchmen",
+   "V for Vendetta",
+   "The Killing Joke",
+   "From Hell"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which song from Encanto became a global chart hit?",
+  "options": [
+   "Surface Pressure",
+   "What Else Can I Do",
+   "We Don't Talk About Bruno",
+   "The Family Madrigal"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Toy Story, what is the name of the boy who owns the toys?",
+  "options": [
+   "Andy",
+   "Sid",
+   "Bonnie",
+   "Woody"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Frozen, which sister has ice powers?",
+  "options": [
+   "Both",
+   "Elsa",
+   "Neither",
+   "Anna"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the Ninja Turtles' armoured arch-enemy?",
+  "options": [
+   "Shredder",
+   "Splinter",
+   "Krang",
+   "Bebop"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pixar film is set during Mexico's Day of the Dead?",
+  "options": [
+   "The Book of Life",
+   "Onward",
+   "Coco",
+   "Encanto"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Finding Nemo, what kind of creature is Crush?",
+  "options": [
+   "A pelican",
+   "A sea turtle",
+   "A stingray",
+   "A shark"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated builder asks 'Can we fix it?'",
+  "options": [
+   "Fireman Sam",
+   "Handy Manny",
+   "Bob the Builder",
+   "Mike the Knight"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Spirited Away, what happens to Chihiro's parents at the start?",
+  "options": [
+   "They disappear",
+   "They fall asleep",
+   "They turn to stone",
+   "They turn into pigs"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British animation features a postman and his black-and-white cat?",
+  "options": [
+   "Postman Pat",
+   "Bob the Builder",
+   "Fireman Sam",
+   "Thomas"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor voices Donkey in Shrek?",
+  "options": [
+   "Chris Rock",
+   "Martin Lawrence",
+   "Eddie Murphy",
+   "Jamie Foxx"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of Dexter's sister in Dexter's Laboratory?",
+  "options": [
+   "DeeDee",
+   "Didi",
+   "Mandy",
+   "Blossom"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the Simpsons' cat?",
+  "options": [
+   "Whiskers",
+   "Fluffy",
+   "Santa's Little Helper",
+   "Snowball"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which song is sung during the flying scene in The Snowman?",
+  "options": [
+   "In the Bleak Midwinter",
+   "Silent Night",
+   "Walking in the Air",
+   "Winter Wonderland"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 101 Dalmatians, what does Cruella de Vil want to make from the puppies?",
+  "options": [
+   "A rug",
+   "A fur coat",
+   "A pair of gloves",
+   "A hat"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which South Park character wears an orange hooded parka that muffles his voice?",
+  "options": [
+   "Kyle",
+   "Stan",
+   "Cartman",
+   "Kenny"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon bird has a loud laugh and a red head?",
+  "options": [
+   "Foghorn Leghorn",
+   "Tweety",
+   "Road Runner",
+   "Woody Woodpecker"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In One Piece, which pirate left the One Piece treasure behind at his execution?",
+  "options": [
+   "Whitebeard",
+   "Gol D. Roger",
+   "Shanks",
+   "Blackbeard"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Toy Story, what is Buzz Lightyear's catchphrase?",
+  "options": [
+   "You've got a friend in me",
+   "To infinity and beyond",
+   "There's a snake in my boot",
+   "Reach for the stars"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which director is credited with many classic Looney Tunes shorts including Duck Amuck?",
+  "options": [
+   "Tex Avery",
+   "Friz Freleng",
+   "Walt Disney",
+   "Chuck Jones"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Cinderella, what turns into a coach?",
+  "options": [
+   "A watermelon",
+   "A barrel",
+   "A pumpkin",
+   "A cabbage"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated film features a rat, a chef and a restaurant critic named Anton Ego?",
+  "options": [
+   "Chef",
+   "Ratatouille",
+   "Cloudy with a Chance of Meatballs",
+   "Ratchet"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's anime features a pink puffball character created for a Nintendo game?",
+  "options": [
+   "Chi",
+   "Kirby",
+   "Pucca",
+   "Bonobono"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which DC hero is known as the Fastest Man Alive?",
+  "options": [
+   "The Flash",
+   "Superman",
+   "Cyborg",
+   "Green Lantern"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Attack on Titan, what is the scouting military branch called?",
+  "options": [
+   "The Military Police",
+   "The Wall Guard",
+   "The Survey Corps",
+   "The Garrison"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which blue shape-shifting mutant can take anyone's appearance?",
+  "options": [
+   "Storm",
+   "Emma Frost",
+   "Mystique",
+   "Rogue"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company publishes the comics featuring Hellboy?",
+  "options": [
+   "IDW",
+   "Dark Horse",
+   "Marvel",
+   "DC"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is Homer Simpson's job at the power plant?",
+  "options": [
+   "Security guard",
+   "Safety inspector",
+   "Engineer",
+   "Manager"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which cartoon featured a boy with a football-shaped head living in a boarding house?",
+  "options": [
+   "Rocket Power",
+   "Doug",
+   "Recess",
+   "Hey Arnold"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Osamu Tezuka is often called the god of what?",
+  "options": [
+   "Music",
+   "Manga",
+   "Cinema",
+   "Sculpture"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which cartoon featured a boy who turns into a superhero after eating a banana?",
+  "options": [
+   "Captain Caveman",
+   "SuperTed",
+   "Bananaman",
+   "Danger Mouse"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Batman's underground base?",
+  "options": [
+   "The Watchtower",
+   "The Hall of Justice",
+   "The Batcave",
+   "The Fortress of Solitude"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the van the Scooby-Doo gang drive?",
+  "options": [
+   "The Spook Bus",
+   "The Clue Cruiser",
+   "The Mystery Machine",
+   "The Ghost Wagon"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the football-headed baby in Family Guy?",
+  "options": [
+   "Chris",
+   "Stewie",
+   "Peter",
+   "Brian"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which artist co-created many Marvel characters with Stan Lee and was known as The King?",
+  "options": [
+   "Jack Kirby",
+   "Neal Adams",
+   "John Romita",
+   "Steve Ditko"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who founded the X-Men?",
+  "options": [
+   "Reed Richards",
+   "Magneto",
+   "Professor Charles Xavier",
+   "Nick Fury"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company owns Mickey Mouse?",
+  "options": [
+   "Universal",
+   "Disney",
+   "Paramount",
+   "Warner Bros"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which city does Spider-Man protect?",
+  "options": [
+   "Metropolis",
+   "Gotham City",
+   "Chicago",
+   "New York"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Belgian comic features a young reporter with a quiff and his white dog?",
+  "options": [
+   "Tintin",
+   "Lucky Luke",
+   "Spirou",
+   "Asterix"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon featured ghost-busting scientists and a green ghost called Slimer?",
+  "options": [
+   "Casper",
+   "The Real Ghostbusters",
+   "Beetlejuice",
+   "Danny Phantom"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Green Lantern's ring famously vulnerable to in early comics?",
+  "options": [
+   "Iron",
+   "Fire",
+   "Water",
+   "The colour yellow"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which anime series follows a boy called Ash and his Pikachu?",
+  "options": [
+   "Beyblade",
+   "Pokemon",
+   "Digimon",
+   "Yu-Gi-Oh"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1940 Disney film set classical music to animation, including dancing hippos?",
+  "options": [
+   "Make Mine Music",
+   "Fantasia",
+   "Pinocchio",
+   "Dumbo"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which direction are traditional Japanese manga books read?",
+  "options": [
+   "Right to left",
+   "Bottom to top",
+   "Left to right",
+   "Top to bottom only"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Disney animated film is set in the Australian outback and features a boy named Cody?",
+  "options": [
+   "Brother Bear",
+   "Home on the Range",
+   "The Rescuers",
+   "The Rescuers Down Under"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which superhero is known as the Man of Steel?",
+  "options": [
+   "Iron Man",
+   "Colossus",
+   "Superman",
+   "Cyborg"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1930s cartoon character is a flapper girl with a big head and a garter?",
+  "options": [
+   "Olive Oyl",
+   "Jessica Rabbit",
+   "Minnie Mouse",
+   "Betty Boop"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Aladdin, what colour is the Genie?",
+  "options": [
+   "Blue",
+   "Purple",
+   "Green",
+   "Red"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cartoon featured a creature that is half cat and half dog joined together?",
+  "options": [
+   "Ren and Stimpy",
+   "Cow and Chicken",
+   "CatDog",
+   "Courage the Cowardly Dog"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British children's animation features a pink pig and her family?",
+  "options": [
+   "Bluey",
+   "Ben and Holly",
+   "Charlie and Lola",
+   "Peppa Pig"
+  ],
+  "correctIndex": 3,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Bluey, what is the name of Bluey's little sister?",
+  "options": [
+   "Socks",
+   "Chloe",
+   "Bingo",
+   "Muffin"
+  ],
+  "correctIndex": 2,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In The Little Mermaid, what kind of creature is Sebastian?",
+  "options": [
+   "A crab",
+   "A seahorse",
+   "A fish",
+   "A turtle"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Toy Story is famous for being the first feature film made entirely with what?",
+  "options": [
+   "Puppets",
+   "Computer animation",
+   "Stop motion",
+   "Watercolour backgrounds"
+  ],
+  "correctIndex": 1,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sea captain is Tintin's best friend?",
+  "options": [
+   "Captain Haddock",
+   "Captain Birdseye",
+   "Captain Cook",
+   "Captain Nemo"
+  ],
+  "correctIndex": 0,
+  "category": "Anime, Comics & Cartoons",
+  "difficulty": "medium"
+ }
+]

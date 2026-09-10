@@ -1,0 +1,2402 @@
+[
+ {
+  "question": "Which fictional street is home to the residents of the Australian soap 'Neighbours'?",
+  "options": [
+   "Summer Bay",
+   "Ramsay Street",
+   "Wisteria Lane",
+   "Erinsborough Way"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "'Home and Away' is set in which fictional coastal town?",
+  "options": [
+   "Summer Bay",
+   "Ramsay Street",
+   "Yabbie Creek",
+   "Port Charles"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who directed the 1994 film 'Pulp Fiction'?",
+  "options": [
+   "Martin Scorsese",
+   "Quentin Tarantino",
+   "Guy Ritchie",
+   "David Fincher"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Lion King', what is the name of Simba's father?",
+  "options": [
+   "Scar",
+   "Mufasa",
+   "Rafiki",
+   "Zazu"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor plays Jack Dawson in the 1997 film 'Titanic'?",
+  "options": [
+   "Brad Pitt",
+   "Matt Damon",
+   "Leonardo DiCaprio",
+   "Ben Affleck"
+  ],
+  "correctIndex": 2,
+  "category": "Actors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What catchphrase is associated with Arnold Schwarzenegger's character in 'The Terminator'?",
+  "options": [
+   "Hasta la vista, baby",
+   "I'll be back",
+   "Come with me if you want to live",
+   "Get to the chopper"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor won an Academy Award for playing the Joker in 'The Dark Knight'?",
+  "options": [
+   "Hugh Jackman",
+   "Heath Ledger",
+   "Guy Pearce",
+   "Sam Worthington"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the coffee house where the friends hang out in 'Friends'?",
+  "options": [
+   "Central Perk",
+   "The Grind",
+   "Java Joe's",
+   "MacLaren's"
+  ],
+  "correctIndex": 0,
+  "category": "Sitcoms",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who directed the science-fiction blockbuster 'Avatar' (2009)?",
+  "options": [
+   "Ridley Scott",
+   "James Cameron",
+   "Peter Jackson",
+   "George Lucas"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Toy Story', what type of toy is Woody?",
+  "options": [
+   "Astronaut",
+   "Cowboy",
+   "Dinosaur",
+   "Soldier"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1986 Australian film starred Paul Hogan as a rugged bushman visiting New York?",
+  "options": [
+   "The Man from Snowy River",
+   "Crocodile Dundee",
+   "Gallipoli",
+   "The Castle"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who played Wolverine in the 'X-Men' film series beginning in 2000?",
+  "options": [
+   "Russell Crowe",
+   "Hugh Jackman",
+   "Eric Bana",
+   "Chris Hemsworth"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor plays Thor in the Marvel Cinematic Universe?",
+  "options": [
+   "Liam Hemsworth",
+   "Chris Hemsworth",
+   "Luke Hemsworth",
+   "Sam Worthington"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the TV series 'Breaking Bad', what is the name of Walter White's drug-dealing alias?",
+  "options": [
+   "Heisenberg",
+   "Gus",
+   "Saul",
+   "Tuco"
+  ],
+  "correctIndex": 0,
+  "category": "TV Drama",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Star Wars', what is the name of Han Solo's ship?",
+  "options": [
+   "The Millennium Falcon",
+   "The Slave I",
+   "X-wing",
+   "TIE Fighter"
+  ],
+  "correctIndex": 0,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the wizarding school Harry Potter attends?",
+  "options": [
+   "Beauxbatons",
+   "Durmstrang",
+   "Hogwarts",
+   "Ilvermorny"
+  ],
+  "correctIndex": 2,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian children's TV group are known for wearing coloured skivvies?",
+  "options": [
+   "Hi-5",
+   "The Wiggles",
+   "Play School",
+   "Bananas in Pyjamas"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On 'Play School', what shape is the round window?",
+  "options": [
+   "Square",
+   "Arched",
+   "Round",
+   "Diamond"
+  ],
+  "correctIndex": 2,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which reality cooking show features contestants competing for the title in an Australian kitchen with judges including Andy Allen?",
+  "options": [
+   "My Kitchen Rules",
+   "MasterChef Australia",
+   "The Great Australian Bake Off",
+   "Ready Steady Cook"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Simpsons', what is the name of Homer's boss at the nuclear power plant?",
+  "options": [
+   "Mr Burns",
+   "Ned Flanders",
+   "Moe Szyslak",
+   "Waylon Smithers"
+  ],
+  "correctIndex": 0,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the surname of the family at the centre of 'The Simpsons'?",
+  "options": [
+   "Griffin",
+   "Simpson",
+   "Belcher",
+   "Smith"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who played Neo in 'The Matrix' (1999)?",
+  "options": [
+   "Keanu Reeves",
+   "Laurence Fishburne",
+   "Hugo Weaving",
+   "Val Kilmer"
+  ],
+  "correctIndex": 0,
+  "category": "Actors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the theme park in the film 'Jurassic Park'?",
+  "options": [
+   "Jurassic World",
+   "Isla Nublar Zoo",
+   "Jurassic Park",
+   "Dino Land"
+  ],
+  "correctIndex": 2,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who directed 'Jurassic Park' (1993)?",
+  "options": [
+   "George Lucas",
+   "Steven Spielberg",
+   "James Cameron",
+   "Robert Zemeckis"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Seinfeld', what is the name of Jerry's neighbour who bursts through the door?",
+  "options": [
+   "Newman",
+   "Kramer",
+   "George",
+   "Puddy"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated film features a clownfish searching the ocean for his son?",
+  "options": [
+   "Shark Tale",
+   "Finding Nemo",
+   "The Little Mermaid",
+   "Ponyo"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the forgetful blue fish in 'Finding Nemo'?",
+  "options": [
+   "Dory",
+   "Marlin",
+   "Bruce",
+   "Bubbles"
+  ],
+  "correctIndex": 0,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who plays regional manager Michael Scott in the US version of 'The Office'?",
+  "options": [
+   "Ricky Gervais",
+   "Steve Carell",
+   "Rainn Wilson",
+   "John Krasinski"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film trilogy is based on novels by J.R.R. Tolkien and directed by Peter Jackson?",
+  "options": [
+   "The Chronicles of Narnia",
+   "The Lord of the Rings",
+   "Harry Potter",
+   "The Hunger Games"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which iconic ring must be destroyed in 'The Lord of the Rings'?",
+  "options": [
+   "The One Ring",
+   "The Ring of Power",
+   "The Master Ring",
+   "The Dark Ring"
+  ],
+  "correctIndex": 0,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Mad Max film released in 2015 was subtitled 'Fury Road'?",
+  "options": [
+   "Mad Max",
+   "Mad Max 2",
+   "Mad Max Beyond Thunderdome",
+   "Mad Max: Fury Road"
+  ],
+  "correctIndex": 3,
+  "category": "Australian Film",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which streaming series features the fictional Hawkins National Laboratory and a girl called Eleven?",
+  "options": [
+   "Dark",
+   "Stranger Things",
+   "The OA",
+   "Wednesday"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Stranger Things', what alternate dimension shares Hawkins' geography?",
+  "options": [
+   "The Underworld",
+   "The Upside Down",
+   "The Void",
+   "The Nether"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the highest-grossing role Robert Downey Jr. is known for in the Marvel films?",
+  "options": [
+   "Captain America",
+   "Iron Man",
+   "Hulk",
+   "Hawkeye"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Marvel character is Tony Stark's alter ego?",
+  "options": [
+   "Iron Man",
+   "Spider-Man",
+   "Doctor Strange",
+   "Ant-Man"
+  ],
+  "correctIndex": 0,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is the Hulk?",
+  "options": [
+   "Blue",
+   "Green",
+   "Red",
+   "Grey"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which superhero is known by the name 'The Caped Crusader'?",
+  "options": [
+   "Superman",
+   "Batman",
+   "Spider-Man",
+   "Flash"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which fictional city does Batman operate?",
+  "options": [
+   "Metropolis",
+   "Gotham City",
+   "Central City",
+   "Star City"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who played the lead in the 1994 film 'Forrest Gump'?",
+  "options": [
+   "Tom Hanks",
+   "Kevin Costner",
+   "Bill Paxton",
+   "Gary Sinise"
+  ],
+  "correctIndex": 0,
+  "category": "Actors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Complete the 'Forrest Gump' quote: 'Life is like a box of...'",
+  "options": [
+   "surprises",
+   "chocolates",
+   "memories",
+   "dreams"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated superhero family features Mr Incredible and Elastigirl?",
+  "options": [
+   "Despicable Me",
+   "The Incredibles",
+   "Megamind",
+   "Big Hero 6"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian film about a pig herding sheep won hearts in 1995?",
+  "options": [
+   "Babe",
+   "Charlotte's Web",
+   "Gordy",
+   "Babe: Pig in the City"
+  ],
+  "correctIndex": 0,
+  "category": "Australian Film",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Lion King', what phrase means 'no worries'?",
+  "options": [
+   "Circle of Life",
+   "Hakuna Matata",
+   "Simba",
+   "Nala"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated musical features the song 'Let It Go'?",
+  "options": [
+   "Tangled",
+   "Frozen",
+   "Moana",
+   "Encanto"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features a young woman voyaging across the Pacific with the demigod Maui?",
+  "options": [
+   "Moana",
+   "Frozen",
+   "Lilo & Stitch",
+   "Encanto"
+  ],
+  "correctIndex": 0,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Game of Thrones', Daenerys Targaryen is often called the Mother of what?",
+  "options": [
+   "Wolves",
+   "Dragons",
+   "Kings",
+   "the North"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which comedian created and starred in the sitcom 'Mr Bean'?",
+  "options": [
+   "Rowan Atkinson",
+   "Ricky Gervais",
+   "Steve Coogan",
+   "Hugh Laurie"
+  ],
+  "correctIndex": 0,
+  "category": "Sitcoms",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film features a great white shark and the tagline that you won't go in the water?",
+  "options": [
+   "Deep Blue Sea",
+   "Jaws",
+   "The Meg",
+   "Open Water"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which phrase does E.T. repeat about going 'home'?",
+  "options": [
+   "E.T. go home",
+   "E.T. phone home",
+   "Take me home",
+   "Home now"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which streaming show follows the British Royal Family across the decades and is called 'The...'?",
+  "options": [
+   "Windsor",
+   "Crown",
+   "Palace",
+   "Monarch"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Crown', which monarch is the central character?",
+  "options": [
+   "Queen Victoria",
+   "Queen Elizabeth II",
+   "King George VI",
+   "Queen Elizabeth I"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated film features a rat named Remy who dreams of becoming a chef?",
+  "options": [
+   "Ratatouille",
+   "Flushed Away",
+   "Bee Movie",
+   "Chicken Run"
+  ],
+  "correctIndex": 0,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which police sitcom is set in the 99th precinct in Brooklyn?",
+  "options": [
+   "Brooklyn Nine-Nine",
+   "The Rookie",
+   "Reno 911",
+   "Police Squad"
+  ],
+  "correctIndex": 0,
+  "category": "Sitcoms",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which superhero film features the Wakandan hero Black Panther?",
+  "options": [
+   "Black Panther",
+   "Aquaman",
+   "Shazam",
+   "Venom"
+  ],
+  "correctIndex": 0,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1980s film features Marty McFly travelling through time in a DeLorean?",
+  "options": [
+   "The Terminator",
+   "Back to the Future",
+   "Bill & Ted's Excellent Adventure",
+   "Flight of the Navigator"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film series features the treasure-hunting archaeologist with a whip and fedora?",
+  "options": [
+   "The Mummy",
+   "Indiana Jones",
+   "National Treasure",
+   "Tomb Raider"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who played Indiana Jones in the original film series?",
+  "options": [
+   "Harrison Ford",
+   "Sean Connery",
+   "Kurt Russell",
+   "Tom Selleck"
+  ],
+  "correctIndex": 0,
+  "category": "Actors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Harrison Ford also played which smuggler in the 'Star Wars' films?",
+  "options": [
+   "Luke Skywalker",
+   "Han Solo",
+   "Lando Calrissian",
+   "Obi-Wan Kenobi"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated TV family lives in Quahog and includes a talking dog named Brian?",
+  "options": [
+   "The Simpsons",
+   "Family Guy",
+   "American Dad",
+   "Bob's Burgers"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which superhero uses a web to swing between skyscrapers?",
+  "options": [
+   "Batman",
+   "Spider-Man",
+   "Daredevil",
+   "Green Arrow"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which dating reality show features a single man handing out roses in its Australian version?",
+  "options": [
+   "Married at First Sight",
+   "The Bachelor Australia",
+   "Farmer Wants a Wife",
+   "Love Island Australia"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian reality show pairs strangers who meet for the first time at the altar?",
+  "options": [
+   "The Bachelor",
+   "Married at First Sight",
+   "Beauty and the Geek",
+   "First Dates"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film franchise features dinosaurs brought back to life via cloning?",
+  "options": [
+   "Godzilla",
+   "Jurassic Park",
+   "King Kong",
+   "Reign of Fire"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which musical film features Hugh Jackman as showman P.T. Barnum?",
+  "options": [
+   "Les Miserables",
+   "The Greatest Showman",
+   "Moulin Rouge!",
+   "Chicago"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian children's animated series follows a family of blue heeler dogs?",
+  "options": [
+   "Bluey",
+   "Bananas in Pyjamas",
+   "Blinky Bill",
+   "Dot and the Kangaroo"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Bluey', what breed of dog is the family?",
+  "options": [
+   "Kelpie",
+   "Blue Heeler",
+   "Border Collie",
+   "Dingo"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film features a group of toys who come to life when humans aren't looking, including Buzz Lightyear?",
+  "options": [
+   "Toy Story",
+   "The Lego Movie",
+   "Small Soldiers",
+   "A Bug's Life"
+  ],
+  "correctIndex": 0,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Buzz Lightyear's catchphrase in 'Toy Story'?",
+  "options": [
+   "To infinity and beyond",
+   "Reach for the stars",
+   "Space is the place",
+   "Up, up and away"
+  ],
+  "correctIndex": 0,
+  "category": "Catchphrases",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film features a boxer named Rocky Balboa training in Philadelphia?",
+  "options": [
+   "Raging Bull",
+   "Rocky",
+   "The Fighter",
+   "Creed"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sitcom features paleontologist Ross, chef Monica, and masseuse Phoebe among six friends in New York?",
+  "options": [
+   "How I Met Your Mother",
+   "Friends",
+   "Will & Grace",
+   "New Girl"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which iconic disaster film sees a luxury liner strike an iceberg in 1912?",
+  "options": [
+   "Poseidon",
+   "Titanic",
+   "The Perfect Storm",
+   "Life of Pi"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which director made both 'Titanic' and 'Avatar'?",
+  "options": [
+   "Steven Spielberg",
+   "James Cameron",
+   "Peter Jackson",
+   "Ron Howard"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which comedy film series features four friends and a wolf pack in Las Vegas gone wrong?",
+  "options": [
+   "Superbad",
+   "The Hangover",
+   "Old School",
+   "Wedding Crashers"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian comedian and actress appeared in 'Pitch Perfect' as Fat Amy?",
+  "options": [
+   "Magda Szubanski",
+   "Rebel Wilson",
+   "Celia Pacquola",
+   "Judith Lucy"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spy franchise features agent 007?",
+  "options": [
+   "Mission: Impossible",
+   "James Bond",
+   "Jason Bourne",
+   "Kingsman"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How does James Bond famously order his martini?",
+  "options": [
+   "Neat",
+   "Shaken, not stirred",
+   "On the rocks",
+   "Stirred, not shaken"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animated film features a snowman named Olaf who loves warm hugs?",
+  "options": [
+   "Frozen",
+   "Rise of the Guardians",
+   "The Snowman",
+   "Klaus"
+  ],
+  "correctIndex": 0,
+  "category": "Animation",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film features an orphan wizard boy receiving a letter by owl on his 11th birthday?",
+  "options": [
+   "The Chronicles of Narnia",
+   "Harry Potter and the Philosopher's Stone",
+   "Percy Jackson",
+   "Fantastic Beasts"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which house at Hogwarts is Harry Potter sorted into?",
+  "options": [
+   "Slytherin",
+   "Gryffindor",
+   "Hufflepuff",
+   "Ravenclaw"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the dark wizard antagonist of the 'Harry Potter' series?",
+  "options": [
+   "Draco Malfoy",
+   "Lord Voldemort",
+   "Severus Snape",
+   "Bellatrix Lestrange"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Kath & Kim', what does Kim insist she is looking for?",
+  "options": [
+   "A hunk of spunk",
+   "An effluent lifestyle",
+   "A nice cardigan",
+   "Some me-time"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the shark in Steven Spielberg's 'Jaws' as nicknamed by the crew?",
+  "options": [
+   "Bruce",
+   "Chum",
+   "Flipper",
+   "Jaws"
+  ],
+  "correctIndex": 0,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which film features the line 'Here's looking at you, kid'?",
+  "options": [
+   "Gone with the Wind",
+   "Casablanca",
+   "Citizen Kane",
+   "The Maltese Falcon"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'The Castle', what does Darryl Kerrigan famously say about serenity?",
+  "options": [
+   "It's the vibe",
+   "How's the serenity",
+   "Tell 'em they're dreamin'",
+   "This is going straight to the pool room"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which phrase from 'The Castle' is used to dismiss a lowball offer?",
+  "options": [
+   "Tell 'em they're dreamin'",
+   "How's the serenity",
+   "It's the vibe",
+   "Straight to the pool room"
+  ],
+  "correctIndex": 0,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the kingdom ruled by Elsa in Disney's 'Frozen'?",
+  "options": [
+   "Corona",
+   "Arendelle",
+   "Agrabah",
+   "DunBroch"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor voices the ogre Shrek in the 'Shrek' films?",
+  "options": [
+   "Eddie Murphy",
+   "Mike Myers",
+   "Antonio Banderas",
+   "John Lithgow"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who directed 'The Godfather' (1972)?",
+  "options": [
+   "Martin Scorsese",
+   "Francis Ford Coppola",
+   "Sidney Lumet",
+   "Roman Polanski"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which catchphrase does Bart Simpson often say?",
+  "options": [
+   "D'oh",
+   "Eat my shorts",
+   "Excellent",
+   "Cowabunga"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Game of Thrones', which House uses the words 'Winter is Coming'?",
+  "options": [
+   "House Lannister",
+   "House Stark",
+   "House Targaryen",
+   "House Baratheon"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actor played Agent Smith in 'The Matrix'?",
+  "options": [
+   "Guy Pearce",
+   "Hugo Weaving",
+   "Geoffrey Rush",
+   "David Wenham"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Aussie soap character was played by Kylie Minogue before her pop career?",
+  "options": [
+   "Scott Robinson",
+   "Charlene Mitchell",
+   "Daphne Clarke",
+   "Jane Harris"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Neighbours', Kylie Minogue and Jason Donovan's characters famously did what?",
+  "options": [
+   "Got divorced",
+   "Got married",
+   "Moved overseas",
+   "Ran a cafe"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actress voices Dory in 'Finding Nemo'?",
+  "options": [
+   "Ellen DeGeneres",
+   "Ellen Pompeo",
+   "Julia Roberts",
+   "Reese Witherspoon"
+  ],
+  "correctIndex": 0,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'The Office' (US), what is the name of the paper company?",
+  "options": [
+   "Wernham Hogg",
+   "Dunder Mifflin",
+   "Sabre",
+   "Vance Refrigeration"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'The Lord of the Rings', what is the name of Frodo's loyal gardener companion?",
+  "options": [
+   "Merry",
+   "Pippin",
+   "Samwise Gamgee",
+   "Bilbo"
+  ],
+  "correctIndex": 2,
+  "category": "Blockbusters",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian director made the 'Mad Max' films?",
+  "options": [
+   "Baz Luhrmann",
+   "George Miller",
+   "Peter Weir",
+   "Bruce Beresford"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who played the title role in the original 1979 'Mad Max'?",
+  "options": [
+   "Mel Gibson",
+   "Tom Hardy",
+   "Sam Neill",
+   "Bryan Brown"
+  ],
+  "correctIndex": 0,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the sitcom 'How I Met Your Mother', what word does Barney Stinson use to mean 'awesome'?",
+  "options": [
+   "Legendary",
+   "Legen-wait-for-it-dary",
+   "Suit up",
+   "Challenge accepted"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor directed and starred as Maximus in 'Gladiator' — wait, who starred as Maximus?",
+  "options": [
+   "Joaquin Phoenix",
+   "Russell Crowe",
+   "Ridley Scott",
+   "Djimon Hounsou"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which New Zealand-born actor won an Oscar for 'Gladiator' (2000)?",
+  "options": [
+   "Sam Neill",
+   "Russell Crowe",
+   "Karl Urban",
+   "Cliff Curtis"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sitcom is set in the fictional bar 'Cheers' in Boston?",
+  "options": [
+   "Frasier",
+   "Cheers",
+   "Taxi",
+   "M*A*S*H"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fictional city is home to Superman?",
+  "options": [
+   "Gotham City",
+   "Metropolis",
+   "Central City",
+   "Coast City"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actress won an Oscar for 'The Hours' (2002)?",
+  "options": [
+   "Cate Blanchett",
+   "Nicole Kidman",
+   "Naomi Watts",
+   "Toni Collette"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Cate Blanchett played which elf queen in 'The Lord of the Rings'?",
+  "options": [
+   "Arwen",
+   "Galadriel",
+   "Eowyn",
+   "Tauriel"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'The Incredibles', what is the superhero name of the son, Dash's, power?",
+  "options": [
+   "Invisibility",
+   "Super speed",
+   "Super strength",
+   "Flight"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian dance film directed by Baz Luhrmann was released in 1992?",
+  "options": [
+   "Moulin Rouge!",
+   "Strictly Ballroom",
+   "Australia",
+   "Romeo + Juliet"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Baz Luhrmann film starred Nicole Kidman and Ewan McGregor in a Parisian cabaret?",
+  "options": [
+   "Strictly Ballroom",
+   "Moulin Rouge!",
+   "The Great Gatsby",
+   "Australia"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who directed the 2013 adaptation of 'The Great Gatsby' starring Leonardo DiCaprio?",
+  "options": [
+   "Baz Luhrmann",
+   "Martin Scorsese",
+   "Sam Mendes",
+   "Ang Lee"
+  ],
+  "correctIndex": 0,
+  "category": "Directors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which spot on the couch does Sheldon insist is his in 'The Big Bang Theory'?",
+  "options": [
+   "The corner cushion",
+   "His spot",
+   "The recliner",
+   "The middle seat"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic Australian film features a group of friends and the phrase 'You're terrible, Muriel'?",
+  "options": [
+   "Muriel's Wedding",
+   "The Adventures of Priscilla",
+   "Strictly Ballroom",
+   "Looking for Alibrandi"
+  ],
+  "correctIndex": 0,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which band's songs feature heavily in 'Muriel's Wedding'?",
+  "options": [
+   "Queen",
+   "ABBA",
+   "The Bee Gees",
+   "Fleetwood Mac"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who voices the demigod Maui in Disney's 'Moana' (2016)?",
+  "options": [
+   "Jason Momoa",
+   "Dwayne Johnson",
+   "Vin Diesel",
+   "John Cena"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which TV series features the Dothraki and dragons named Drogon, Rhaegal and Viserion?",
+  "options": [
+   "The Witcher",
+   "Game of Thrones",
+   "House of the Dragon",
+   "Vikings"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actress played the title role in the 2007 film 'Elizabeth: The Golden Age' and its predecessor?",
+  "options": [
+   "Nicole Kidman",
+   "Cate Blanchett",
+   "Rachel Griffiths",
+   "Judy Davis"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which film features the quote 'Say hello to my little friend'?",
+  "options": [
+   "Goodfellas",
+   "Scarface",
+   "The Godfather",
+   "Casino"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who played Tony Montana in 'Scarface' (1983)?",
+  "options": [
+   "Robert De Niro",
+   "Al Pacino",
+   "Andy Garcia",
+   "Joe Pesci"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sitcom features Del Boy and Rodney running a market-trading business in Peckham?",
+  "options": [
+   "Fawlty Towers",
+   "Only Fools and Horses",
+   "Blackadder",
+   "Porridge"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who played the irritable hotel owner Basil Fawlty?",
+  "options": [
+   "John Cleese",
+   "Rowan Atkinson",
+   "Ronnie Barker",
+   "Michael Palin"
+  ],
+  "correctIndex": 0,
+  "category": "Sitcoms",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the film 'E.T. the Extra-Terrestrial', what sweets does Elliott use to lure E.T.?",
+  "options": [
+   "M&M's",
+   "Reese's Pieces",
+   "Skittles",
+   "Jelly Beans"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1994 film features prisoner Andy Dufresne and Red at Shawshank prison?",
+  "options": [
+   "The Green Mile",
+   "The Shawshank Redemption",
+   "Escape from Alcatraz",
+   "Cool Hand Luke"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Pixar film opens with a touching montage of a couple, Carl and Ellie, over many years?",
+  "options": [
+   "Up",
+   "Inside Out",
+   "Coco",
+   "Wall-E"
+  ],
+  "correctIndex": 0,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Wall-E', what does the little robot Wall-E spend his days doing on Earth?",
+  "options": [
+   "Building rockets",
+   "Compacting rubbish",
+   "Growing plants",
+   "Guarding humans"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mockumentary sitcom is set in Pawnee, Indiana and stars Amy Poehler as Leslie Knope?",
+  "options": [
+   "The Office",
+   "Parks and Recreation",
+   "Brooklyn Nine-Nine",
+   "Superstore"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who plays Detective Jake Peralta in 'Brooklyn Nine-Nine'?",
+  "options": [
+   "Andy Samberg",
+   "Adam Sandler",
+   "Bill Hader",
+   "Jason Sudeikis"
+  ],
+  "correctIndex": 0,
+  "category": "Sitcoms",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian crime drama series is based on the Melbourne gangland killings?",
+  "options": [
+   "Wentworth",
+   "Underbelly",
+   "Blue Heelers",
+   "Water Rats"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who played the title role in 'Black Panther' (2018)?",
+  "options": [
+   "Michael B. Jordan",
+   "Chadwick Boseman",
+   "Denzel Washington",
+   "Idris Elba"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which director is known for 'Inception', 'Interstellar' and 'The Dark Knight' trilogy?",
+  "options": [
+   "Christopher Nolan",
+   "Denis Villeneuve",
+   "Ridley Scott",
+   "David Fincher"
+  ],
+  "correctIndex": 0,
+  "category": "Directors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which spinning object does Cobb use to tell if he is dreaming in 'Inception'?",
+  "options": [
+   "A coin",
+   "A spinning top",
+   "A dice",
+   "A watch"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian music quiz show was hosted by Adam Hills?",
+  "options": [
+   "RocKwiz",
+   "Spicks and Specks",
+   "The Money or the Gun",
+   "Recovery"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'Back to the Future', what speed must the DeLorean reach to time travel?",
+  "options": [
+   "77 mph",
+   "88 mph",
+   "99 mph",
+   "100 mph"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who played the eccentric scientist Doc Brown in 'Back to the Future'?",
+  "options": [
+   "Christopher Lloyd",
+   "Michael J. Fox",
+   "Crispin Glover",
+   "Dennis Hopper"
+  ],
+  "correctIndex": 0,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sitcom follows the antics of the Crawley household and their servants at an English country estate?",
+  "options": [
+   "Downton Abbey",
+   "Upstairs Downstairs",
+   "Bridgerton",
+   "Poldark"
+  ],
+  "correctIndex": 0,
+  "category": "TV Drama",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which comedy film features Will Ferrell as a legendary San Diego news anchor named Ron Burgundy?",
+  "options": [
+   "Talladega Nights",
+   "Anchorman",
+   "Step Brothers",
+   "Blades of Glory"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Complete the 'Anchorman' catchphrase: 'Stay classy, ...'",
+  "options": [
+   "America",
+   "San Diego",
+   "everybody",
+   "folks"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the evil-genius baby in 'Family Guy'?",
+  "options": [
+   "Chris",
+   "Stewie",
+   "Meg",
+   "Peter"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic Australian film is set during the First World War and stars a young Mel Gibson at Gallipoli?",
+  "options": [
+   "Breaker Morant",
+   "Gallipoli",
+   "The Lighthorsemen",
+   "Beneath Hill 60"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor played Spider-Man in the trilogy beginning in 2002?",
+  "options": [
+   "Tobey Maguire",
+   "Andrew Garfield",
+   "Tom Holland",
+   "Nicholas Hammond"
+  ],
+  "correctIndex": 0,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "'With great power comes great responsibility' is advice given to which hero?",
+  "options": [
+   "Batman",
+   "Spider-Man",
+   "Superman",
+   "Iron Man"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which reality series features contestants isolated in the wilderness competing to be the last remaining player in an Australian version hosted by Jonathan LaPaglia?",
+  "options": [
+   "Big Brother",
+   "Survivor Australia",
+   "I'm a Celebrity",
+   "The Amazing Race Australia"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1993 comedy features Bill Murray reliving the same day over and over?",
+  "options": [
+   "Groundhog Day",
+   "Click",
+   "50 First Dates",
+   "The Truman Show"
+  ],
+  "correctIndex": 0,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which film features Jim Carrey as a man whose entire life is secretly a TV show?",
+  "options": [
+   "The Truman Show",
+   "Bruce Almighty",
+   "Liar Liar",
+   "The Mask"
+  ],
+  "correctIndex": 0,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animated series features four boys in a Colorado town and was created by Trey Parker and Matt Stone?",
+  "options": [
+   "Beavis and Butt-Head",
+   "South Park",
+   "King of the Hill",
+   "Futurama"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In 'South Park', which character is repeatedly killed in early episodes?",
+  "options": [
+   "Cartman",
+   "Kenny",
+   "Stan",
+   "Kyle"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mathematician character in 'Jurassic Park' is played by Jeff Goldblum?",
+  "options": [
+   "Dr Alan Grant",
+   "Dr Ian Malcolm",
+   "John Hammond",
+   "Dr Ellie Sattler"
+  ],
+  "correctIndex": 1,
+  "category": "Blockbusters",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Hugh Jackman played which role in the 2012 film 'Les Miserables'?",
+  "options": [
+   "Javert",
+   "Jean Valjean",
+   "Marius",
+   "Thenardier"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who directed 'Taxi Driver' and 'Goodfellas'?",
+  "options": [
+   "Francis Ford Coppola",
+   "Martin Scorsese",
+   "Brian De Palma",
+   "Michael Mann"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which HBO series follows a New Jersey mob boss who sees a therapist?",
+  "options": [
+   "Boardwalk Empire",
+   "The Sopranos",
+   "The Wire",
+   "Peaky Blinders"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British period drama set among Birmingham gangsters stars Cillian Murphy as Thomas Shelby?",
+  "options": [
+   "Peaky Blinders",
+   "Boardwalk Empire",
+   "Gangs of London",
+   "Ripper Street"
+  ],
+  "correctIndex": 0,
+  "category": "TV Drama",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the names of the two young pups in 'Bluey'?",
+  "options": [
+   "Bluey and Bingo",
+   "Bluey and Muffin",
+   "Bingo and Socks",
+   "Bluey and Chilli"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic Australian cartoon koala starred in his own animated series and films?",
+  "options": [
+   "Blinky Bill",
+   "Dot",
+   "Willy Wombat",
+   "Snugglepot"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor voices Woody in the 'Toy Story' films?",
+  "options": [
+   "Tim Allen",
+   "Tom Hanks",
+   "Billy Crystal",
+   "John Ratzenberger"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1980s sci-fi horror film features a xenomorph and the tagline 'In space no one can hear you scream'?",
+  "options": [
+   "Predator",
+   "Alien",
+   "The Thing",
+   "Event Horizon"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who played Ellen Ripley in the 'Alien' films?",
+  "options": [
+   "Linda Hamilton",
+   "Sigourney Weaver",
+   "Jamie Lee Curtis",
+   "Carrie Fisher"
+  ],
+  "correctIndex": 1,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who wrote and starred in the original 'Rocky' (1976)?",
+  "options": [
+   "Sylvester Stallone",
+   "Arnold Schwarzenegger",
+   "Burt Reynolds",
+   "Chuck Norris"
+  ],
+  "correctIndex": 0,
+  "category": "Actors",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian film comedy features a suburban family and the phrase 'This is going straight to the pool room'?",
+  "options": [
+   "Muriel's Wedding",
+   "The Castle",
+   "Kenny",
+   "The Dish"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of Joey's catchphrases in 'Friends' is used as a pick-up line?",
+  "options": [
+   "How you doin'?",
+   "We were on a break",
+   "Smelly Cat",
+   "Could I BE any more...?"
+  ],
+  "correctIndex": 0,
+  "category": "Catchphrases",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which song by Celine Dion is the theme from 'Titanic'?",
+  "options": [
+   "Because You Loved Me",
+   "My Heart Will Go On",
+   "The Power of Love",
+   "It's All Coming Back to Me Now"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fantasy series features Geralt of Rivia, a monster-hunting witcher, played by Henry Cavill?",
+  "options": [
+   "Shadow and Bone",
+   "The Witcher",
+   "The Wheel of Time",
+   "His Dark Materials"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which musical film franchise features an a cappella group called the Barden Bellas?",
+  "options": [
+   "Step Up",
+   "Pitch Perfect",
+   "Bring It On",
+   "High School Musical"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian comedy features the second-generation Greek-Australian character Effie?",
+  "options": [
+   "Wogs Out of Work",
+   "Acropolis Now",
+   "Fat Pizza",
+   "Pizza"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the sitcom 'Friends', what is the name of Ross and Monica's pet from childhood that Ross mentions giving away?",
+  "options": [
+   "Marcel",
+   "Chi-Chi",
+   "Chappy",
+   "LaPooh"
+  ],
+  "correctIndex": 2,
+  "category": "Sitcoms",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which line does Darth Vader say to Luke in 'The Empire Strikes Back'?",
+  "options": [
+   "Luke, I am your father",
+   "No, I am your father",
+   "I am your father",
+   "Search your feelings, Luke"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which long-running Australian medical drama is set at a hospital called Wentworth?",
+  "options": [
+   "All Saints",
+   "The Flying Doctors",
+   "Prisoner",
+   "A Country Practice"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does George call himself when pretending to be a marine biologist in 'Seinfeld'?",
+  "options": [
+   "An architect",
+   "A marine biologist",
+   "An importer-exporter",
+   "A latex salesman"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which 1975 Australian mystery film directed by Peter Weir involves schoolgirls vanishing on a rock?",
+  "options": [
+   "Wake in Fright",
+   "Picnic at Hanging Rock",
+   "Walkabout",
+   "The Last Wave"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In 'Cheers', what is the name of the beer-loving regular whose name everyone shouts on entry?",
+  "options": [
+   "Cliff",
+   "Norm",
+   "Sam",
+   "Woody"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian sketch comedy show gave us characters like the two ronnies-style 'The Comedy Company', including Con the Fruiterer?",
+  "options": [
+   "Fast Forward",
+   "The Comedy Company",
+   "Full Frontal",
+   "The D-Generation"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which villain fashion designer in 'The Incredibles' famously declares 'No capes!'?",
+  "options": [
+   "Syndrome",
+   "Edna Mode",
+   "Bomb Voyage",
+   "The Underminer"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The 1994 Australian film 'The Adventures of Priscilla, Queen of the Desert' follows performers crossing the outback in what vehicle?",
+  "options": [
+   "A campervan",
+   "A bus",
+   "A train",
+   "A convertible"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which actor starred as Forrest's Lieutenant Dan in 'Forrest Gump' and Ken Mattingly in 'Apollo 13'?",
+  "options": [
+   "Gary Sinise",
+   "Ed Harris",
+   "Bill Paxton",
+   "Kevin Bacon"
+  ],
+  "correctIndex": 0,
+  "category": "Actors",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In 'Fawlty Towers', what nationality is the waiter Manuel?",
+  "options": [
+   "Italian",
+   "Spanish",
+   "Portuguese",
+   "Greek"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the name of Mr Bean's small green car?",
+  "options": [
+   "A Mini",
+   "A Reliant Regal",
+   "An Austin Metro",
+   "A Morris Minor"
+  ],
+  "correctIndex": 0,
+  "category": "Sitcoms",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian actor voiced the shark Bruce in 'Finding Nemo' with the line 'Fish are friends, not food'?",
+  "options": [
+   "Barry Humphries",
+   "Bill Hunter",
+   "Eric Bana",
+   "Geoffrey Rush"
+  ],
+  "correctIndex": 2,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who wrote the novella on which 'The Shawshank Redemption' is based?",
+  "options": [
+   "John Grisham",
+   "Stephen King",
+   "Michael Crichton",
+   "Dean Koontz"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sitcom features the Bluth family and was narrated by Ron Howard?",
+  "options": [
+   "Modern Family",
+   "Arrested Development",
+   "Community",
+   "Parks and Recreation"
+  ],
+  "correctIndex": 1,
+  "category": "Sitcoms",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which long-running Australian police drama was set in the fictional town of Mount Thomas?",
+  "options": [
+   "Water Rats",
+   "Blue Heelers",
+   "Stingers",
+   "City Homicide"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian prison drama, remade in 2013 as 'Wentworth', was originally called what in the 1979 series?",
+  "options": [
+   "Prisoner",
+   "Cell Block H",
+   "Inside",
+   "The Slammer"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In 'Inception', what is the term for entering someone's dream to steal ideas?",
+  "options": [
+   "Extraction",
+   "Inception",
+   "Projection",
+   "Limbo"
+  ],
+  "correctIndex": 0,
+  "category": "Blockbusters",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian comedy duo created and starred in 'The Chaser's War on Everything'?",
+  "options": [
+   "Hamish and Andy",
+   "The Chaser team",
+   "Roy and HG",
+   "Merrick and Rosso"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian panel comedy show has been hosted by Tom Gleisner and asks contestants to bluff answers?",
+  "options": [
+   "Have You Been Paying Attention?",
+   "Thank God You're Here",
+   "Spicks and Specks",
+   "Talkin' 'Bout Your Generation"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which 1971 Australian outback thriller is titled 'Wake in...'?",
+  "options": [
+   "Wake in Fright",
+   "Wake in Terror",
+   "Wake in the Dark",
+   "Wake in Dust"
+  ],
+  "correctIndex": 0,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In 'The Truman Show', how does Truman greet his neighbours each morning?",
+  "options": [
+   "Good day to you",
+   "Good morning, and in case I don't see ya, good afternoon, good evening and good night",
+   "Have a nice one",
+   "See you all later"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sci-fi animated show from Matt Groening is set aboard the Planet Express delivery ship?",
+  "options": [
+   "Rick and Morty",
+   "Futurama",
+   "Disenchantment",
+   "American Dad"
+  ],
+  "correctIndex": 1,
+  "category": "Animation",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which iconic film features the line 'You talkin' to me?'",
+  "options": [
+   "Raging Bull",
+   "Taxi Driver",
+   "Goodfellas",
+   "Mean Streets"
+  ],
+  "correctIndex": 1,
+  "category": "Catchphrases",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who played mob boss Tony Soprano?",
+  "options": [
+   "Ray Liotta",
+   "James Gandolfini",
+   "Robert De Niro",
+   "Michael Imperioli"
+  ],
+  "correctIndex": 1,
+  "category": "TV Drama",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The 2000 Australian film 'The Dish' centres on a radio telescope broadcasting which historic event?",
+  "options": [
+   "The first Moon landing",
+   "Halley's Comet",
+   "The Sydney Olympics",
+   "A solar eclipse"
+  ],
+  "correctIndex": 0,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In 'Friends', what is the name of Ross's second wife who he says the wrong name at the altar?",
+  "options": [
+   "Emily",
+   "Rachel",
+   "Julie",
+   "Carol"
+  ],
+  "correctIndex": 0,
+  "category": "Sitcoms",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian actor played the lead in the TV series 'Wolf Creek' and the films, portraying Mick Taylor?",
+  "options": [
+   "John Jarratt",
+   "Bryan Brown",
+   "Jack Thompson",
+   "David Wenham"
+  ],
+  "correctIndex": 0,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian actor played the tattooed Mr Chow in 'The Hangover' films?",
+  "options": [
+   "Ken Jeong",
+   "Bryan Brown",
+   "Rebel Wilson",
+   "Joel Edgerton"
+  ],
+  "correctIndex": 0,
+  "category": "Actors",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian actor briefly played James Bond in 'On Her Majesty's Secret Service' (1969)?",
+  "options": [
+   "Rod Taylor",
+   "George Lazenby",
+   "Bryan Brown",
+   "Jack Thompson"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which sitcom about a Seattle radio psychiatrist is a spin-off of 'Cheers'?",
+  "options": [
+   "Frasier",
+   "Wings",
+   "Becker",
+   "The Bob Newhart Show"
+  ],
+  "correctIndex": 0,
+  "category": "Sitcoms",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian film director helmed the 'Saw' horror franchise's first film with Leigh Whannell?",
+  "options": [
+   "James Wan",
+   "Greg McLean",
+   "Jennifer Kent",
+   "Andrew Dominik"
+  ],
+  "correctIndex": 0,
+  "category": "Directors",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who directed 'The Shining' (1980)?",
+  "options": [
+   "Alfred Hitchcock",
+   "Stanley Kubrick",
+   "Roman Polanski",
+   "William Friedkin"
+  ],
+  "correctIndex": 1,
+  "category": "Directors",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian soap did actor Guy Pearce appear in as Mike Young early in his career?",
+  "options": [
+   "Home and Away",
+   "Neighbours",
+   "E Street",
+   "A Country Practice"
+  ],
+  "correctIndex": 1,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Hemsworth brother appeared in 'Neighbours' before Hollywood, playing Josh Taylor?",
+  "options": [
+   "Chris Hemsworth",
+   "Liam Hemsworth",
+   "Luke Hemsworth",
+   "None of them"
+  ],
+  "correctIndex": 0,
+  "category": "Australian TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian comedy film follows a tow-truck driver and is titled after the 2006 mockumentary about a portable-toilet worker?",
+  "options": [
+   "Kenny",
+   "The Nugget",
+   "Crackerjack",
+   "Gettin' Square"
+  ],
+  "correctIndex": 0,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which director was known for 1980s teen films including 'The Breakfast Club' and 'Ferris Bueller's Day Off'?",
+  "options": [
+   "John Hughes",
+   "Ron Howard",
+   "Rob Reiner",
+   "Cameron Crowe"
+  ],
+  "correctIndex": 0,
+  "category": "Directors",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian film about drag performers won an Oscar for costume design in 1994?",
+  "options": [
+   "Muriel's Wedding",
+   "The Adventures of Priscilla, Queen of the Desert",
+   "Strictly Ballroom",
+   "Head On"
+  ],
+  "correctIndex": 1,
+  "category": "Australian Film",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which iconic Western features Clint Eastwood as 'The Man with No Name'?",
+  "options": [
+   "Unforgiven",
+   "The Good, the Bad and the Ugly",
+   "High Noon",
+   "Django Unchained"
+  ],
+  "correctIndex": 1,
+  "category": "Film Trivia",
+  "difficulty": "hard"
+ }
+]

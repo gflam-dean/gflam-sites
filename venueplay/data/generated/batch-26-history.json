@@ -1,0 +1,1262 @@
+[
+ {
+  "question": "Which event triggered the start of World War I?",
+  "options": [
+   "The invasion of Poland",
+   "The sinking of the Lusitania",
+   "The Zimmermann Telegram",
+   "The assassination of Archduke Franz Ferdinand"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which city was Archduke Franz Ferdinand assassinated?",
+  "options": [
+   "Belgrade",
+   "Sarajevo",
+   "Budapest",
+   "Vienna"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which treaty formally ended World War I?",
+  "options": [
+   "The Treaty of Versailles",
+   "The Treaty of Paris",
+   "The Treaty of Ghent",
+   "The Treaty of Utrecht"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On what date is Armistice Day commemorated?",
+  "options": [
+   "25 April",
+   "11 November",
+   "1 September",
+   "8 May"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country's invasion in 1939 started World War II in Europe?",
+  "options": [
+   "Poland",
+   "Belgium",
+   "France",
+   "Czechoslovakia"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the code name for the D-Day landings?",
+  "options": [
+   "Operation Barbarossa",
+   "Operation Overlord",
+   "Operation Torch",
+   "Operation Market Garden"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which coastline did the D-Day landings take place?",
+  "options": [
+   "Calais",
+   "Dunkirk",
+   "Normandy",
+   "Brittany"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the German invasion of the Soviet Union code-named?",
+  "options": [
+   "Operation Typhoon",
+   "Operation Sea Lion",
+   "Operation Barbarossa",
+   "Operation Citadel"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two Japanese cities were struck by atomic bombs in 1945?",
+  "options": [
+   "Yokohama and Nagoya",
+   "Kyoto and Kobe",
+   "Tokyo and Osaka",
+   "Hiroshima and Nagasaki"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the US President when the Second World War ended?",
+  "options": [
+   "Herbert Hoover",
+   "Dwight Eisenhower",
+   "Harry Truman",
+   "Franklin Roosevelt"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US President led the country through most of the Great Depression and WWII?",
+  "options": [
+   "Calvin Coolidge",
+   "Herbert Hoover",
+   "Franklin D. Roosevelt",
+   "Harry Truman"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What year did the Berlin Wall fall?",
+  "options": [
+   "1985",
+   "1989",
+   "1991",
+   "1979"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two superpowers were the main rivals in the Cold War?",
+  "options": [
+   "The United States and the Soviet Union",
+   "France and Russia",
+   "Britain and Germany",
+   "China and Japan"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year did the Soviet Union dissolve?",
+  "options": [
+   "1985",
+   "1991",
+   "1989",
+   "1993"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which crisis in 1962 brought the world close to nuclear war?",
+  "options": [
+   "The Berlin Airlift",
+   "The Suez Crisis",
+   "The Cuban Missile Crisis",
+   "The Korean War"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which wall divided a German city from 1961 to 1989?",
+  "options": [
+   "The Maginot Line",
+   "Hadrian's Wall",
+   "The Iron Curtain fence",
+   "The Berlin Wall"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which US President was assassinated at a theatre in 1865?",
+  "options": [
+   "Abraham Lincoln",
+   "James Buchanan",
+   "Andrew Johnson",
+   "Ulysses Grant"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US document was adopted on 4 July 1776?",
+  "options": [
+   "The Constitution",
+   "The Bill of Rights",
+   "The Declaration of Independence",
+   "The Articles of Confederation"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which conflict was fought between the northern and southern United States from 1861?",
+  "options": [
+   "The Mexican-American War",
+   "The War of 1812",
+   "The War of Independence",
+   "The American Civil War"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which speech by Abraham Lincoln begins 'Four score and seven years ago'?",
+  "options": [
+   "The House Divided speech",
+   "The Gettysburg Address",
+   "The First Inaugural",
+   "The Emancipation Proclamation"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who delivered the 'I Have a Dream' speech in 1963?",
+  "options": [
+   "Rosa Parks",
+   "Jesse Jackson",
+   "Martin Luther King Jr",
+   "Malcolm X"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which woman refused to give up her bus seat in Montgomery in 1955?",
+  "options": [
+   "Coretta Scott King",
+   "Rosa Parks",
+   "Ruby Bridges",
+   "Ella Baker"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who became South Africa's first Black president in 1994?",
+  "options": [
+   "Nelson Mandela",
+   "Jacob Zuma",
+   "Desmond Tutu",
+   "Thabo Mbeki"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was South Africa's system of racial segregation called?",
+  "options": [
+   "Segregation Act",
+   "Apartheid",
+   "Separatism",
+   "The Colour Bar"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many years did Nelson Mandela spend in prison?",
+  "options": [
+   "35",
+   "18",
+   "27",
+   "10"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Indian leader led non-violent resistance against British rule?",
+  "options": [
+   "Subhas Chandra Bose",
+   "Jawaharlal Nehru",
+   "B.R. Ambedkar",
+   "Mahatma Gandhi"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year did India gain independence?",
+  "options": [
+   "1947",
+   "1962",
+   "1935",
+   "1950"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which empire was ruled by Julius Caesar's successors?",
+  "options": [
+   "The Byzantine Empire only",
+   "The Persian Empire",
+   "The Greek Empire",
+   "The Roman Empire"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which date was Julius Caesar assassinated?",
+  "options": [
+   "The Kalends of May",
+   "The Ides of April",
+   "The Ides of March",
+   "The Nones of June"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which volcano destroyed Pompeii in AD 79?",
+  "options": [
+   "Stromboli",
+   "Vesuvius",
+   "Krakatoa",
+   "Etna"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wall was built across northern England by the Romans?",
+  "options": [
+   "The Great Wall",
+   "Offa's Dyke",
+   "Hadrian's Wall",
+   "The Antonine Wall only"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which battle in 1066 changed the English monarchy?",
+  "options": [
+   "The Battle of Stamford Bridge",
+   "The Battle of Bosworth",
+   "The Battle of Agincourt",
+   "The Battle of Hastings"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who won the Battle of Hastings?",
+  "options": [
+   "Harald Hardrada",
+   "Harold Godwinson",
+   "William the Conqueror",
+   "Edward the Confessor"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which document did King John seal at Runnymede in 1215?",
+  "options": [
+   "The Bill of Rights",
+   "The Petition of Right",
+   "The Magna Carta",
+   "The Domesday Book"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many wives did Henry VIII have?",
+  "options": [
+   "Eight",
+   "Four",
+   "Three",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of Henry VIII's wives was the mother of Elizabeth I?",
+  "options": [
+   "Catherine Parr",
+   "Catherine of Aragon",
+   "Anne Boleyn",
+   "Jane Seymour"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which queen reigned during the defeat of the Spanish Armada in 1588?",
+  "options": [
+   "Victoria",
+   "Mary I",
+   "Anne",
+   "Elizabeth I"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which British monarch reigned for over 63 years in the 19th century?",
+  "options": [
+   "Victoria",
+   "George III",
+   "Elizabeth I",
+   "Anne"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British monarch was the longest-reigning in history?",
+  "options": [
+   "Henry III",
+   "George III",
+   "Victoria",
+   "Elizabeth II"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year did the Great Fire of London occur?",
+  "options": [
+   "1665",
+   "1666",
+   "1600",
+   "1712"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which plague swept Europe in the 14th century, killing tens of millions?",
+  "options": [
+   "The Black Death",
+   "The Spanish Flu",
+   "Smallpox",
+   "Cholera"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French queen is famously misquoted as saying 'Let them eat cake'?",
+  "options": [
+   "Catherine de Medici",
+   "Josephine",
+   "Marie Antoinette",
+   "Eleanor of Aquitaine"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Paris prison was stormed on 14 July 1789?",
+  "options": [
+   "La Sante",
+   "The Bastille",
+   "The Conciergerie",
+   "Fort Vincennes"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French leader was defeated at Waterloo in 1815?",
+  "options": [
+   "Robespierre",
+   "Napoleon Bonaparte",
+   "Charles de Gaulle",
+   "Louis XVI"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "To which island was Napoleon finally exiled?",
+  "options": [
+   "Corsica",
+   "Elba",
+   "Malta",
+   "Saint Helena"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which explorer's expedition first circumnavigated the globe?",
+  "options": [
+   "Christopher Columbus'",
+   "Vasco da Gama's",
+   "Ferdinand Magellan's",
+   "Francis Drake's"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did Christopher Columbus first reach the Americas?",
+  "options": [
+   "1492",
+   "1607",
+   "1450",
+   "1520"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British explorer charted the east coast of Australia in 1770?",
+  "options": [
+   "William Dampier",
+   "James Cook",
+   "Abel Tasman",
+   "Matthew Flinders"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the name of James Cook's ship on his first voyage?",
+  "options": [
+   "HMS Endeavour",
+   "HMS Discovery",
+   "HMS Resolution",
+   "HMS Bounty"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which navigator was the first European to sight Tasmania?",
+  "options": [
+   "Abel Tasman",
+   "Matthew Flinders",
+   "James Cook",
+   "Willem Janszoon"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which explorer circumnavigated Australia and popularised its name?",
+  "options": [
+   "Abel Tasman",
+   "George Bass",
+   "James Cook",
+   "Matthew Flinders"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many ships were in the First Fleet?",
+  "options": [
+   "Fifteen",
+   "Nine",
+   "Six",
+   "Eleven"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Governor of New South Wales was deposed in the Rum Rebellion?",
+  "options": [
+   "William Bligh",
+   "Lachlan Macquarie",
+   "Arthur Phillip",
+   "Philip Gidley King"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ship's crew mutinied against William Bligh in 1789?",
+  "options": [
+   "HMS Sirius",
+   "HMS Beagle",
+   "HMS Bounty",
+   "HMS Endeavour"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two explorers died attempting to cross Australia south to north in 1861?",
+  "options": [
+   "Hume and Hovell",
+   "Sturt and Mitchell",
+   "Burke and Wills",
+   "Blaxland and Lawson"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mountain range did Blaxland, Lawson and Wentworth cross in 1813?",
+  "options": [
+   "The Snowy Mountains",
+   "The Blue Mountains",
+   "The Grampians",
+   "The Flinders Ranges"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did the Commonwealth give most Australian women the right to vote federally?",
+  "options": [
+   "1894",
+   "1920",
+   "1945",
+   "1902"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which referendum in 1967 changed how Aboriginal Australians were counted?",
+  "options": [
+   "The 1901 referendum",
+   "The 1967 referendum",
+   "The 1948 referendum",
+   "The 1975 referendum"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did the Sydney Harbour Bridge open?",
+  "options": [
+   "1940",
+   "1928",
+   "1932",
+   "1925"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did the Sydney Opera House open?",
+  "options": [
+   "1980",
+   "1973",
+   "1965",
+   "1959"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian Prime Minister delivered the 2008 apology to the Stolen Generations?",
+  "options": [
+   "John Howard",
+   "Paul Keating",
+   "Kevin Rudd",
+   "Julia Gillard"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1992 High Court decision recognised native title in Australia?",
+  "options": [
+   "Yorta Yorta",
+   "Bringing Them Home",
+   "Mabo",
+   "Wik"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient wonder still stands today?",
+  "options": [
+   "The Lighthouse of Alexandria",
+   "The Colossus of Rhodes",
+   "The Great Pyramid of Giza",
+   "The Hanging Gardens"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian pharaoh's tomb was discovered largely intact in 1922?",
+  "options": [
+   "Khufu",
+   "Tutankhamun",
+   "Akhenaten",
+   "Ramesses II"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who discovered Tutankhamun's tomb?",
+  "options": [
+   "Howard Carter",
+   "Heinrich Schliemann",
+   "Arthur Evans",
+   "Flinders Petrie"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Egyptian queen was the last active pharaoh?",
+  "options": [
+   "Hatshepsut",
+   "Cleopatra VII",
+   "Ankhesenamun",
+   "Nefertiti"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient civilisation built Machu Picchu?",
+  "options": [
+   "The Inca",
+   "The Aztec",
+   "The Olmec",
+   "The Maya"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which modern country is Machu Picchu?",
+  "options": [
+   "Ecuador",
+   "Peru",
+   "Bolivia",
+   "Mexico"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which civilisation built the city of Tenochtitlan?",
+  "options": [
+   "The Inca",
+   "The Maya",
+   "The Toltec",
+   "The Aztec"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Chinese emperor was buried with the Terracotta Army?",
+  "options": [
+   "Kublai Khan",
+   "Han Wudi",
+   "Qin Shi Huang",
+   "Wu Zetian"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Mongol leader founded the largest contiguous land empire?",
+  "options": [
+   "Kublai Khan",
+   "Attila the Hun",
+   "Timur",
+   "Genghis Khan"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which trade route connected China with the Mediterranean?",
+  "options": [
+   "The Amber Road",
+   "The Incense Route",
+   "The Silk Road",
+   "The Spice Route only"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which period of European history followed the fall of Rome and preceded the Renaissance?",
+  "options": [
+   "The Enlightenment",
+   "The Iron Age",
+   "The Middle Ages",
+   "The Bronze Age"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which invention by Gutenberg transformed Europe in the 1400s?",
+  "options": [
+   "The printing press",
+   "The steam engine",
+   "The telescope",
+   "The compass"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which revolution began in Britain in the late 1700s with factories and steam power?",
+  "options": [
+   "The Industrial Revolution",
+   "The French Revolution",
+   "The Agricultural Revolution",
+   "The Green Revolution"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is credited with improving the steam engine in the 1760s?",
+  "options": [
+   "James Watt",
+   "Richard Arkwright",
+   "George Stephenson",
+   "Thomas Edison"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ship sank on its maiden voyage in April 1912?",
+  "options": [
+   "The Titanic",
+   "The Mauretania",
+   "The Britannic",
+   "The Lusitania"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many people were aboard the Titanic, roughly?",
+  "options": [
+   "About 500",
+   "About 2,200",
+   "About 900",
+   "About 5,000"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which stock market crash began the Great Depression?",
+  "options": [
+   "The 1929 Wall Street crash",
+   "The 1907 panic",
+   "The 1987 crash",
+   "The 2008 crash"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pandemic killed tens of millions from 1918?",
+  "options": [
+   "The Spanish flu",
+   "Cholera",
+   "Polio",
+   "The Black Death"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wall was built by a Chinese dynasty and stretches thousands of kilometres?",
+  "options": [
+   "The Berlin Wall",
+   "The Western Wall",
+   "Hadrian's Wall",
+   "The Great Wall of China"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country was the first to give women the vote nationally in 1893?",
+  "options": [
+   "New Zealand",
+   "Finland",
+   "Australia",
+   "Norway"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which movement campaigned for women's right to vote in Britain?",
+  "options": [
+   "The suffragettes",
+   "The levellers",
+   "The abolitionists",
+   "The chartists"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which conflict was fought in Korea from 1950 to 1953?",
+  "options": [
+   "The Korean War",
+   "The Sino-Japanese War",
+   "The Vietnam War",
+   "The Cold War"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year did the Vietnam War end with the fall of Saigon?",
+  "options": [
+   "1968",
+   "1975",
+   "1972",
+   "1980"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which conflict did Australia commit troops to in 1965 alongside the United States?",
+  "options": [
+   "The Malayan Emergency",
+   "The Korean War",
+   "The Gulf War",
+   "The Vietnam War"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country did Iraq invade in 1990, sparking the Gulf War?",
+  "options": [
+   "Iran",
+   "Saudi Arabia",
+   "Syria",
+   "Kuwait"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which German leader came to power in 1933?",
+  "options": [
+   "Paul von Hindenburg",
+   "Adolf Hitler",
+   "Kaiser Wilhelm II",
+   "Otto von Bismarck"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Soviet leader introduced glasnost and perestroika?",
+  "options": [
+   "Boris Yeltsin",
+   "Nikita Khrushchev",
+   "Leonid Brezhnev",
+   "Mikhail Gorbachev"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Soviet leader ruled from the 1920s until 1953?",
+  "options": [
+   "Nikita Khrushchev",
+   "Joseph Stalin",
+   "Leon Trotsky",
+   "Vladimir Lenin"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which revolution overthrew the Russian Tsar in 1917?",
+  "options": [
+   "The Velvet Revolution",
+   "The Decembrist revolt",
+   "The February Uprising only",
+   "The Russian Revolution"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the last Tsar of Russia?",
+  "options": [
+   "Nicholas II",
+   "Ivan IV",
+   "Peter the Great",
+   "Alexander III"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which empire was known as the Sublime Porte and lasted until 1922?",
+  "options": [
+   "The Persian Empire",
+   "The Austro-Hungarian Empire",
+   "The Mughal Empire",
+   "The Ottoman Empire"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which city was known as Constantinople before 1930?",
+  "options": [
+   "Istanbul",
+   "Thessaloniki",
+   "Athens",
+   "Ankara"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two countries fought the Hundred Years' War?",
+  "options": [
+   "Spain and Portugal",
+   "Austria and Prussia",
+   "Sweden and Denmark",
+   "England and France"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French heroine was burned at the stake in 1431?",
+  "options": [
+   "Joan of Arc",
+   "Eleanor of Aquitaine",
+   "Charlotte Corday",
+   "Marie Antoinette"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which series of religious wars were fought for control of the Holy Land?",
+  "options": [
+   "The Hundred Years' War",
+   "The Crusades",
+   "The Thirty Years' War",
+   "The Reformation wars"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which explorer is credited with reaching the South Pole first, in 1911?",
+  "options": [
+   "Ernest Shackleton",
+   "Robert Falcon Scott",
+   "Roald Amundsen",
+   "Douglas Mawson"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian led an Antarctic expedition and survived a solo trek in 1913?",
+  "options": [
+   "Ernest Shackleton",
+   "John King Davis",
+   "Hubert Wilkins",
+   "Douglas Mawson"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Who were the first to summit Mount Everest in 1953?",
+  "options": [
+   "George Mallory and Andrew Irvine",
+   "Reinhold Messner and Peter Habeler",
+   "Chris Bonington and Doug Scott",
+   "Edmund Hillary and Tenzing Norgay"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country did Edmund Hillary come from?",
+  "options": [
+   "Canada",
+   "Britain",
+   "New Zealand",
+   "Australia"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1969 music festival became a symbol of the counterculture?",
+  "options": [
+   "Live Aid",
+   "Glastonbury",
+   "Woodstock",
+   "Monterey"
+  ],
+  "correctIndex": 2,
+  "category": "History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which US scandal led to Richard Nixon's resignation?",
+  "options": [
+   "Teapot Dome",
+   "Watergate",
+   "Iran-Contra",
+   "Whitewater"
+  ],
+  "correctIndex": 1,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did Nixon resign?",
+  "options": [
+   "1974",
+   "1976",
+   "1972",
+   "1968"
+  ],
+  "correctIndex": 0,
+  "category": "History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which structure was completed in Paris in 1889 for the World's Fair?",
+  "options": [
+   "Notre-Dame",
+   "The Louvre pyramid",
+   "The Arc de Triomphe",
+   "The Eiffel Tower"
+  ],
+  "correctIndex": 3,
+  "category": "History",
+  "difficulty": "easy"
+ }
+]

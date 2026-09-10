@@ -1,0 +1,532 @@
+[
+  {
+    "index": 1,
+    "question": "Which DC comic book hero can stretch his body into any shape and wears red and yellow?",
+    "problem": "two-answers",
+    "detail": "Elongated Man is also a DC hero who stretches his body into any shape, so a player who does not know the costume colours has a defensible second answer.",
+    "fix": {
+      "question": "Which DC hero wears red and yellow, stretches like rubber and is known as the Pliable Paladin?",
+      "options": [
+        "Elongated Man",
+        "Mister Fantastic",
+        "Plastic Man",
+        "Ant-Man"
+      ],
+      "correctIndex": 2,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 6,
+    "question": "Who is the cricket who acts as Pinocchio's conscience?",
+    "problem": "self-answering",
+    "detail": "The stem says 'the cricket' and the answer is Jiminy Cricket. Only one option is even a cricket, so no knowledge is required.",
+    "fix": {
+      "question": "Who acts as Pinocchio's conscience?",
+      "options": [
+        "Figaro",
+        "Geppetto",
+        "Timothy Mouse",
+        "Jiminy Cricket"
+      ],
+      "correctIndex": 3,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 32,
+    "question": "Which song does Baloo sing in The Jungle Book?",
+    "problem": "two-answers",
+    "detail": "Baloo sings a large part of 'I Wanna Be Like You' in the scat duet with King Louie, and that is one of the options, so both are defensible.",
+    "fix": {
+      "question": "Which song does Baloo teach Mowgli in The Jungle Book?",
+      "options": [
+        "The Bare Necessities",
+        "I Wanna Be Like You",
+        "Trust in Me",
+        "Colonel Hathi's March"
+      ],
+      "correctIndex": 0,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 61,
+    "question": "What sort of animal is Bugs Bunny?",
+    "problem": "ambiguous",
+    "detail": "The option 'A hare only' is not a real answer and hints that the writer was unsure. Read aloud it invites an argument about rabbits versus hares.",
+    "fix": {
+      "question": "What sort of animal is Bugs Bunny?",
+      "options": [
+        "A rabbit",
+        "A squirrel",
+        "A fox",
+        "A mouse"
+      ],
+      "correctIndex": 0,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 77,
+    "question": "Which friendly cartoon ghost is described as friendly in his own title?",
+    "problem": "self-answering",
+    "detail": "'Described as friendly in his own title' hands over Casper the Friendly Ghost. There is nothing left to know.",
+    "fix": {
+      "question": "Which cartoon ghost lives with his uncles the Ghostly Trio?",
+      "options": [
+        "Boo",
+        "Casper",
+        "Slimer",
+        "Spooky"
+      ],
+      "correctIndex": 1,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 103,
+    "question": "What are the small yellow creatures in Despicable Me called?",
+    "problem": "ambiguous",
+    "detail": "Functional duplicate of index 63, which asks the same Despicable Me fact from the other direction, and of index 424. Three questions on one fact in one pack.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 166,
+    "question": "In Peanuts, which character is Lucy's younger brother?",
+    "problem": "two-answers",
+    "detail": "Rerun van Pelt is also Lucy's younger brother, and he is offered as an option. Both Linus and Rerun are correct as written.",
+    "fix": {
+      "question": "In Peanuts, which of Lucy's brothers carries a security blanket?",
+      "options": [
+        "Franklin",
+        "Linus",
+        "Schroeder",
+        "Rerun"
+      ],
+      "correctIndex": 1,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 195,
+    "question": "Which cartoon featured a caveman superhero shouting 'Captain Caveman'?",
+    "problem": "self-answering",
+    "detail": "The answer is spoken word for word in the question. The host would be reading the answer out.",
+    "fix": {
+      "question": "Which Hanna-Barbera cartoon featured a superhero caveman thawed from a block of ice?",
+      "options": [
+        "Captain Caveman",
+        "Bamm-Bamm",
+        "Fred Flintstone",
+        "Grape Ape"
+      ],
+      "correctIndex": 0,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 201,
+    "question": "Which colour are the Teletubbies' aerials attached to?",
+    "problem": "ambiguous",
+    "detail": "The stem asks 'which colour' but every option is a body part. The question as written has no answer.",
+    "fix": {
+      "question": "Where on their bodies are the Teletubbies' aerials?",
+      "options": [
+        "Their heads",
+        "Their backs",
+        "Their feet",
+        "Their hands"
+      ],
+      "correctIndex": 0,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 220,
+    "question": "Which bulldog often protects Jerry from Tom?",
+    "problem": "two-answers",
+    "detail": "Tom and Jerry's bulldog was named Butch in several early shorts before settling as Spike, and Butch is offered as an option, so both are defensible.",
+    "fix": {
+      "question": "Which bulldog often protects Jerry from Tom?",
+      "options": [
+        "Droopy",
+        "Hector",
+        "Tyke",
+        "Spike"
+      ],
+      "correctIndex": 3,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 225,
+    "question": "What is a cartoon usually drawn as before it moves?",
+    "problem": "ambiguous",
+    "detail": "'What is a cartoon usually drawn as before it moves' is vague to the point of meaninglessness and the options are not parallel. Nothing is actually being tested.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 226,
+    "question": "What is the name of the mermaid in Disney's The Little Mermaid?",
+    "problem": "ambiguous",
+    "detail": "Functional duplicate of index 222, which asks the identical fact in almost identical words. The same answer would come up twice in one night.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 254,
+    "question": "Which cartoon character is a rabbit who says 'Be vewy vewy quiet'?",
+    "problem": "wrong-answer",
+    "detail": "Elmer Fudd is not a rabbit, he is a human hunter. The stem describes the wrong species and any player who knows the character will object.",
+    "fix": {
+      "question": "Which Looney Tunes character says 'Be vewy vewy quiet, I'm hunting wabbits'?",
+      "options": [
+        "Porky Pig",
+        "Elmer Fudd",
+        "Yosemite Sam",
+        "Daffy Duck"
+      ],
+      "correctIndex": 1,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 281,
+    "question": "What is the name for a comic book character's origin story?",
+    "problem": "self-answering",
+    "detail": "The question uses the phrase 'origin story' and the answer is 'The origin'. It is circular and tests nothing.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 318,
+    "question": "What kind of animal is the Pink Panther?",
+    "problem": "self-answering",
+    "detail": "The character's name is the Pink Panther, so the answer is contained in the question.",
+    "fix": {
+      "question": "Which cartoon character was created for the opening titles of a 1963 Peter Sellers comedy film?",
+      "options": [
+        "Snagglepuss",
+        "Panthro",
+        "Roger Rabbit",
+        "The Pink Panther"
+      ],
+      "correctIndex": 3,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 325,
+    "question": "What colour does Goku's hair turn when he becomes a Super Saiyan?",
+    "problem": "two-answers",
+    "detail": "Super Saiyan Blue and Super Saiyan God (red) are both Super Saiyan forms with those hair colours, and both are offered as options. The stem does not say which transformation.",
+    "fix": {
+      "question": "What colour does Goku's hair turn when he first becomes a Super Saiyan?",
+      "options": [
+        "Red",
+        "Blue",
+        "Silver",
+        "Gold"
+      ],
+      "correctIndex": 3,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 348,
+    "question": "Which comic strip features an office worker with a permanently squashed hat, created in Britain?",
+    "problem": "wrong-answer",
+    "detail": "Andy Capp is famously work-shy and unemployed, not an office worker. Bristow, which is one of the options, is the British comic strip about an office worker, so the stem points at the wrong strip.",
+    "fix": {
+      "question": "Which British comic strip features a work-shy northern husband whose flat cap covers his eyes?",
+      "options": [
+        "Fred Basset",
+        "Bristow",
+        "The Perishers",
+        "Andy Capp"
+      ],
+      "correctIndex": 3,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 388,
+    "question": "Which comic strip features a lazy American soldier who avoids work?",
+    "problem": "two-answers",
+    "detail": "Sad Sack, also offered as an option, is a long-running American comic strip about a hopeless soldier and is a defensible answer to 'lazy American soldier who avoids work'.",
+    "fix": {
+      "question": "Which comic strip by Mort Walker is set at the army base Camp Swampy?",
+      "options": [
+        "Blondie",
+        "Sad Sack",
+        "Beetle Bailey",
+        "Hagar the Horrible"
+      ],
+      "correctIndex": 2,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 401,
+    "question": "What kind of creature is SpongeBob's neighbour Squidward?",
+    "problem": "two-answers",
+    "detail": "Squidward's name says squid and he is drawn with six limbs, so 'A squid' is defensible unless the question makes clear it wants the creator's stated intention. This is a guaranteed argument in a pub.",
+    "fix": {
+      "question": "According to SpongeBob's creator Stephen Hillenburg, what kind of creature is Squidward meant to be?",
+      "options": [
+        "An eel",
+        "A squid",
+        "An octopus",
+        "A jellyfish"
+      ],
+      "correctIndex": 2,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 416,
+    "question": "What sort of plant does the Grinch's heart grow like at the end of the story?",
+    "problem": "ambiguous",
+    "detail": "The stem asks 'what sort of plant' but the answer is 'It grows three sizes'. The question does not make sense as written.",
+    "fix": {
+      "question": "In How the Grinch Stole Christmas, what happens to the Grinch's heart at the end?",
+      "options": [
+        "It turns to stone",
+        "It grows three sizes",
+        "It disappears",
+        "It shrinks"
+      ],
+      "correctIndex": 1,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 424,
+    "question": "Which minions are small, yellow and speak nonsense?",
+    "problem": "self-answering",
+    "detail": "The stem calls them 'minions' and the answer is 'The Minions from Despicable Me'. It also repeats the fact already asked at index 63 and index 103.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 447,
+    "question": "Which Marvel character carries a bow and is voiced as an Avenger with no superpowers?",
+    "problem": "ambiguous",
+    "detail": "Functional duplicate of index 246, which already asks which Marvel character is an archer with a bow. The phrase 'is voiced as an Avenger' is also clumsy to read aloud.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 449,
+    "question": "Does Wile E. Coyote ever catch the Road Runner in the classic cartoons?",
+    "problem": "self-answering",
+    "detail": "Only one option is a sensible answer, the other three are absurd. It is also not strictly true: Wile E. Coyote does catch the Road Runner in the 1980 short 'Soup or Sonic'.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 469,
+    "question": "What is a 'cartoon character' drawn by?",
+    "problem": "self-answering",
+    "detail": "Only one option is a person who draws. No knowledge of cartoons is required.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 477,
+    "question": "What word does Shazam's alter ego say to transform?",
+    "problem": "self-answering",
+    "detail": "The hero's name is Shazam and the magic word is Shazam, so the question answers itself.",
+    "fix": {
+      "question": "What is the real name of the boy who transforms into Shazam?",
+      "options": [
+        "Billy Batson",
+        "Freddy Freeman",
+        "Johnny Chapman",
+        "Danny Marks"
+      ],
+      "correctIndex": 0,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 497,
+    "question": "Which two Sesame Street friends share a flat and are named Bert and who?",
+    "problem": "self-answering",
+    "detail": "'Named Bert and who?' is clumsy to read aloud and the pairing Bert and Ernie is so fixed that the stem gives it away.",
+    "fix": {
+      "question": "Which Sesame Street character shares a flat with Bert?",
+      "options": [
+        "Elmo",
+        "Ernie",
+        "Grover",
+        "Herry"
+      ],
+      "correctIndex": 1,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 500,
+    "question": "Which superpower does Batman have?",
+    "problem": "self-answering",
+    "detail": "Only one option is not a superpower, and it is much longer than the others. The answer is obvious from the shape of the options alone.",
+    "fix": {
+      "question": "Which of these does Batman rely on instead of superpowers?",
+      "options": [
+        "Telepathy",
+        "Super strength",
+        "Training and gadgets",
+        "Flight"
+      ],
+      "correctIndex": 2,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 504,
+    "question": "Which anime and card game features a boy called Yugi and duel monsters?",
+    "problem": "ambiguous",
+    "detail": "Near duplicate of index 90, which asks the same Yu-Gi-Oh fact about a boy named Yugi. One of the two should go.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 560,
+    "question": "Which Aardman character is a silent sheep with his own series?",
+    "problem": "two-answers",
+    "detail": "Timmy, also offered as an option, is a non-speaking lamb who has his own series, Timmy Time. As written both Shaun and Timmy fit.",
+    "fix": {
+      "question": "Which Aardman character began as a one-off in a Wallace and Gromit film before getting his own series?",
+      "options": [
+        "Shaun the Sheep",
+        "Feathers McGraw",
+        "Bitzer",
+        "Preston"
+      ],
+      "correctIndex": 0,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 610,
+    "question": "Which 1982 animated film about rabbits leaving their warren was based on a Richard Adams novel?",
+    "problem": "dates",
+    "detail": "The animated Watership Down was released in 1978, not 1982. The Plague Dogs, also a Richard Adams adaptation, is the 1982 film, so the date points at a different option.",
+    "fix": {
+      "question": "Which 1978 animated film about rabbits leaving their warren was based on a Richard Adams novel?",
+      "options": [
+        "The Animals of Farthing Wood",
+        "Fantastic Mr Fox",
+        "Watership Down",
+        "The Plague Dogs"
+      ],
+      "correctIndex": 2,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "hard"
+    }
+  },
+  {
+    "index": 611,
+    "question": "In Tom and Jerry, what is Tom?",
+    "problem": "ambiguous",
+    "detail": "Functional duplicate of index 371, which asks what sort of animal Tom is in almost the same words.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 621,
+    "question": "Which term describes a comic book published in a series of monthly parts?",
+    "problem": "ambiguous",
+    "detail": "'A comic book published in a series of monthly parts' does not clearly point at 'a single issue', which is one part rather than the series. The wording could equally describe a serial or a run.",
+    "fix": {
+      "question": "What is the name for one monthly instalment of a comic, before several are collected into a book?",
+      "options": [
+        "An annual",
+        "An omnibus",
+        "A single issue",
+        "A trade paperback"
+      ],
+      "correctIndex": 2,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 655,
+    "question": "What colour is the Hulk?",
+    "problem": "ambiguous",
+    "detail": "Functional duplicate of index 405, which asks the Hulk's colour in almost identical words.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 656,
+    "question": "In 101 Dalmatians, what sort of dogs are they?",
+    "problem": "self-answering",
+    "detail": "The film is called 101 Dalmatians and the answer is Dalmatians. Nothing is being tested.",
+    "fix": {
+      "question": "In 101 Dalmatians, what does Cruella de Vil want to make from the puppies?",
+      "options": [
+        "A rug",
+        "A fur coat",
+        "A pair of gloves",
+        "A hat"
+      ],
+      "correctIndex": 1,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "easy"
+    }
+  },
+  {
+    "index": 659,
+    "question": "What is the treasure that gives One Piece its name?",
+    "problem": "self-answering",
+    "detail": "The question says 'the treasure that gives One Piece its name' and the answer is 'The One Piece'.",
+    "fix": {
+      "question": "In One Piece, which pirate left the One Piece treasure behind at his execution?",
+      "options": [
+        "Whitebeard",
+        "Gol D. Roger",
+        "Shanks",
+        "Blackbeard"
+      ],
+      "correctIndex": 1,
+      "category": "Anime, Comics & Cartoons",
+      "difficulty": "medium"
+    }
+  },
+  {
+    "index": 671,
+    "question": "Which country does anime come from?",
+    "problem": "ambiguous",
+    "detail": "Functional duplicate of index 165, which asks which country produces anime.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 679,
+    "question": "Which cartoon features four turtles who fight crime?",
+    "problem": "ambiguous",
+    "detail": "Functional duplicate of index 219, which already asks about the four crime-fighting turtles.",
+    "fix": "DELETE"
+  },
+  {
+    "index": 699,
+    "question": "What is 'manga'?",
+    "problem": "ambiguous",
+    "detail": "Functional duplicate of index 620, which asks for the Japanese word for comics. The two together mean the same fact is asked twice.",
+    "fix": "DELETE"
+  }
+]

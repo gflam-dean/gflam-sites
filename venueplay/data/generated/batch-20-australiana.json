@@ -1,0 +1,1154 @@
+[
+ {
+  "question": "Which Australian state is known as the Sunshine State?",
+  "options": [
+   "South Australia",
+   "New South Wales",
+   "Queensland",
+   "Western Australia"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the nickname of South Australia on its number plates?",
+  "options": [
+   "The Festival State",
+   "The Garden State",
+   "The Sunshine State",
+   "The Premier State"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian state is nicknamed the Garden State?",
+  "options": [
+   "Queensland",
+   "Tasmania",
+   "Western Australia",
+   "Victoria"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian state is the smallest by area?",
+  "options": [
+   "Tasmania",
+   "Victoria",
+   "New South Wales",
+   "South Australia"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Queensland city is the gateway to the Great Barrier Reef in the far north?",
+  "options": [
+   "Rockhampton",
+   "Mackay",
+   "Cairns",
+   "Townsville"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian city hosts the Melbourne Cup?",
+  "options": [
+   "Brisbane",
+   "Sydney",
+   "Melbourne",
+   "Adelaide"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which month is the Melbourne Cup held?",
+  "options": [
+   "September",
+   "November",
+   "December",
+   "October"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What distance is the Melbourne Cup run over?",
+  "options": [
+   "3200 metres",
+   "2400 metres",
+   "1600 metres",
+   "4000 metres"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which legendary racehorse won the 1930 Melbourne Cup and is displayed at Melbourne Museum?",
+  "options": [
+   "Winx",
+   "Kingston Town",
+   "Makybe Diva",
+   "Phar Lap"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mare won three consecutive Melbourne Cups from 2003?",
+  "options": [
+   "Sunline",
+   "Makybe Diva",
+   "Winx",
+   "Black Caviar"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unbeaten Australian sprinter retired in 2013 after 25 straight wins?",
+  "options": [
+   "Black Caviar",
+   "Might and Power",
+   "Sunline",
+   "Winx"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian mare won 33 consecutive races before retiring in 2019?",
+  "options": [
+   "Sunline",
+   "Winx",
+   "Makybe Diva",
+   "Black Caviar"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Australian national anthem called?",
+  "options": [
+   "God Save the King",
+   "I Am Australian",
+   "Advance Australia Fair",
+   "Waltzing Matilda"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which unofficial Australian song tells of a swagman by a billabong?",
+  "options": [
+   "Waltzing Matilda",
+   "Home Among the Gum Trees",
+   "Advance Australia Fair",
+   "The Road to Gundagai"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australian slang, what is a 'jumbuck'?",
+  "options": [
+   "A kangaroo",
+   "A billy can",
+   "A horse",
+   "A sheep"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'bottle-o' in Australia?",
+  "options": [
+   "A rubbish bin",
+   "A bottle shop",
+   "A milk bottle",
+   "A recycling truck"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the Australian phrase 'she'll be right' mean?",
+  "options": [
+   "She will arrive",
+   "It will be fine",
+   "Turn right",
+   "She is correct"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'thongs' in Australian English?",
+  "options": [
+   "Flip-flop sandals",
+   "A rope",
+   "Underwear only",
+   "A type of hat"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'Chrissie' short for in Australian slang?",
+  "options": [
+   "Christmas",
+   "Crisps",
+   "Chrysanthemum",
+   "Christine only"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'esky' used for?",
+  "options": [
+   "Carrying tools",
+   "Storing fishing rods",
+   "Camping shelter",
+   "Keeping drinks cold"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'Barbie' short for in Australian slang?",
+  "options": [
+   "Barbecue",
+   "Barbed wire",
+   "Barbershop",
+   "Barbara only"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australia, what is a 'sanger'?",
+  "options": [
+   "A saucepan",
+   "A sandwich",
+   "A sausage",
+   "A singer"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What Australian food is a sausage wrapped in bread at a hardware store famously called?",
+  "options": [
+   "A bunger",
+   "A hot dog",
+   "A snag roll",
+   "A sausage sizzle"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian dessert combines meringue, cream and fruit?",
+  "options": [
+   "Pavlova",
+   "Trifle",
+   "Sponge cake",
+   "Lamington"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a lamington coated in?",
+  "options": [
+   "Chocolate and coconut",
+   "Cream and berries",
+   "Icing sugar and jam",
+   "Caramel and nuts"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which biscuit is named after a New Zealand and Australian army corps?",
+  "options": [
+   "The Digger biscuit",
+   "The Anzac biscuit",
+   "The Iced VoVo",
+   "The Kingston"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which date is Anzac Day commemorated?",
+  "options": [
+   "11 November",
+   "1 September",
+   "26 January",
+   "25 April"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Anzac Day marks the landing at which peninsula in 1915?",
+  "options": [
+   "Normandy",
+   "Kokoda",
+   "Crete",
+   "Gallipoli"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two-up game is legally played in pubs on Anzac Day?",
+  "options": [
+   "Two-up",
+   "Crown and anchor",
+   "Pitch and toss",
+   "Housie"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In two-up, how many coins are tossed?",
+  "options": [
+   "Four",
+   "Two",
+   "One",
+   "Three"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian track in Papua New Guinea was the site of a famous World War II campaign?",
+  "options": [
+   "The Kokoda Track",
+   "The Burma Road",
+   "The Sandakan Trail",
+   "The Ho Chi Minh Trail"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which date is Australia Day held?",
+  "options": [
+   "25 April",
+   "6 June",
+   "26 January",
+   "1 January"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian animal lays eggs and has a duck-like bill?",
+  "options": [
+   "The platypus",
+   "The bilby",
+   "The wombat",
+   "The echidna"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spiny egg-laying Australian mammal is also called a spiny anteater?",
+  "options": [
+   "The echidna",
+   "The quokka",
+   "The numbat",
+   "The platypus"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which small marsupial on Rottnest Island is famous for looking like it is smiling?",
+  "options": [
+   "The quokka",
+   "The bilby",
+   "The potoroo",
+   "The numbat"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which large flightless Australian bird appears on the coat of arms with a kangaroo?",
+  "options": [
+   "The cassowary",
+   "The emu",
+   "The brolga",
+   "The bustard"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which colourful Australian bird is famous for mimicking sounds including chainsaws?",
+  "options": [
+   "The lyrebird",
+   "The galah",
+   "The bowerbird",
+   "The cockatoo"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian bird builds and decorates a structure to attract a mate?",
+  "options": [
+   "The lyrebird",
+   "The brush turkey",
+   "The bowerbird",
+   "The magpie"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian bird is famous for swooping in spring?",
+  "options": [
+   "The kookaburra",
+   "The rosella",
+   "The ibis",
+   "The magpie"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the white ibis often nicknamed in Australian cities?",
+  "options": [
+   "Bin chicken",
+   "Trash hawk",
+   "Gutter goose",
+   "Bush turkey"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the world's largest living reptile, found in northern Australia?",
+  "options": [
+   "The freshwater crocodile",
+   "The saltwater crocodile",
+   "The goanna",
+   "The perentie"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which deadly Australian spider is most associated with Sydney?",
+  "options": [
+   "The funnel-web",
+   "The huntsman",
+   "The white-tail",
+   "The redback"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian spider has a red stripe on its back?",
+  "options": [
+   "The trapdoor",
+   "The orb weaver",
+   "The funnel-web",
+   "The redback"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tiny but deadly Australian jellyfish causes Irukandji syndrome?",
+  "options": [
+   "The Irukandji",
+   "The sea nettle",
+   "The box jellyfish",
+   "The bluebottle"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the longest river system in Australia?",
+  "options": [
+   "The Murray-Darling",
+   "The Burdekin",
+   "The Ord",
+   "The Fitzroy"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which enormous sandstone monolith sits in the Northern Territory?",
+  "options": [
+   "Kata Tjuta",
+   "Uluru",
+   "Mount Augustus",
+   "The Olgas"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional Aboriginal name for Ayers Rock?",
+  "options": [
+   "Kakadu",
+   "Uluru",
+   "Tjoritja",
+   "Kata Tjuta"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which state is Mount Kosciuszko?",
+  "options": [
+   "Queensland",
+   "Tasmania",
+   "Victoria",
+   "New South Wales"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Queensland island is the world's largest sand island?",
+  "options": [
+   "Stradbroke Island",
+   "K'gari, formerly Fraser Island",
+   "Moreton Island",
+   "Magnetic Island"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian reef is the world's largest coral reef system?",
+  "options": [
+   "Ningaloo Reef",
+   "The Coral Sea Reef",
+   "Rowley Shoals",
+   "The Great Barrier Reef"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Off which state's coast is Ningaloo Reef?",
+  "options": [
+   "Queensland",
+   "South Australia",
+   "Northern Territory",
+   "Western Australia"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Victorian coastal rock formations are known as the Twelve Apostles?",
+  "options": [
+   "Limestone stacks on the Great Ocean Road",
+   "Sea caves at Port Fairy",
+   "Granite domes near Wilsons Prom",
+   "Basalt columns at Cape Schanck"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which famous Australian road hugs the Victorian coast for about 240 kilometres?",
+  "options": [
+   "The Pacific Highway",
+   "The Great Ocean Road",
+   "The Nullarbor Highway",
+   "The Stuart Highway"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which treeless plain stretches across southern Australia?",
+  "options": [
+   "The Barkly",
+   "The Nullarbor",
+   "The Simpson",
+   "The Gibson"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'Nullarbor' mean in Latin roots?",
+  "options": [
+   "No trees",
+   "Endless plain",
+   "South wind",
+   "Great crossing"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which South Australian town is famous for underground opal mining and dugout homes?",
+  "options": [
+   "Broken Hill",
+   "Lightning Ridge",
+   "Coober Pedy",
+   "Kalgoorlie"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which NSW town is famous for black opals?",
+  "options": [
+   "Lightning Ridge",
+   "Coober Pedy",
+   "Bourke",
+   "Broken Hill"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Western Australian goldfields city is known for the Super Pit?",
+  "options": [
+   "Karratha",
+   "Geraldton",
+   "Kalgoorlie",
+   "Esperance"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Victorian city grew rich in the 1850s gold rush and hosts Sovereign Hill?",
+  "options": [
+   "Shepparton",
+   "Geelong",
+   "Ballarat",
+   "Bendigo"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1854 rebellion by Victorian goldminers is remembered with a flag of the Southern Cross?",
+  "options": [
+   "The Castle Hill uprising",
+   "The Kelly siege",
+   "The Eureka Stockade",
+   "The Rum Rebellion"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian bushranger wore homemade armour at Glenrowan?",
+  "options": [
+   "Dan Morgan",
+   "Ned Kelly",
+   "Captain Thunderbolt",
+   "Ben Hall"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What were Ned Kelly's reported last words?",
+  "options": [
+   "It had to end",
+   "Long live the gang",
+   "Such is life",
+   "Tell them I tried"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did Australia federate as a nation?",
+  "options": [
+   "1911",
+   "1901",
+   "1888",
+   "1920"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian Prime Minister disappeared while swimming in 1967?",
+  "options": [
+   "Ben Chifley",
+   "Robert Menzies",
+   "Harold Holt",
+   "John Gorton"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was Australia's longest-serving Prime Minister?",
+  "options": [
+   "Malcolm Fraser",
+   "Bob Hawke",
+   "John Howard",
+   "Robert Menzies"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian Prime Minister was dismissed by the Governor-General in 1975?",
+  "options": [
+   "Gough Whitlam",
+   "William McMahon",
+   "Malcolm Fraser",
+   "John Gorton"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian city was the site of Cyclone Tracy in 1974?",
+  "options": [
+   "Broome",
+   "Darwin",
+   "Townsville",
+   "Cairns"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian city hosted the 2000 Summer Olympics?",
+  "options": [
+   "Melbourne",
+   "Perth",
+   "Brisbane",
+   "Sydney"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian city hosted the 1956 Summer Olympics?",
+  "options": [
+   "Melbourne",
+   "Brisbane",
+   "Sydney",
+   "Adelaide"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian city will host the 2032 Summer Olympics?",
+  "options": [
+   "Melbourne",
+   "Brisbane",
+   "Sydney",
+   "Perth"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian swimmer won five gold medals at the 2000 Sydney Olympics across events?",
+  "options": [
+   "Kieren Perkins",
+   "Grant Hackett",
+   "Ian Thorpe",
+   "Michael Klim"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian sprinter lit the Olympic cauldron in Sydney in 2000?",
+  "options": [
+   "Melinda Gainsford",
+   "Jane Flemming",
+   "Cathy Freeman",
+   "Nova Peris"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian cricketer is regarded as the greatest batsman of all time?",
+  "options": [
+   "Donald Bradman",
+   "Ricky Ponting",
+   "Steve Waugh",
+   "Allan Border"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was Donald Bradman's famous Test batting average?",
+  "options": [
+   "100.00",
+   "89.78",
+   "95.14",
+   "99.94"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the trophy contested between Australia and England in cricket?",
+  "options": [
+   "The Frank Worrell Trophy",
+   "The Border-Gavaskar Trophy",
+   "The Chappell-Hadlee",
+   "The Ashes"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian rules football competition is the top national league?",
+  "options": [
+   "The AFL",
+   "The VFL",
+   "The SANFL",
+   "The NRL"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At which ground is the AFL Grand Final traditionally played?",
+  "options": [
+   "Optus Stadium",
+   "The MCG",
+   "Marvel Stadium",
+   "Adelaide Oval"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many players from each team are on the field in Australian rules football?",
+  "options": [
+   "11",
+   "15",
+   "18",
+   "13"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many players are in a rugby league team on the field?",
+  "options": [
+   "13",
+   "15",
+   "11",
+   "18"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the annual rugby league series between Queensland and New South Wales called?",
+  "options": [
+   "The Ashes of League",
+   "The Origin Shield",
+   "State of Origin",
+   "The Interstate Cup"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour do the Queensland State of Origin team wear?",
+  "options": [
+   "Blue",
+   "Maroon",
+   "Green",
+   "Gold"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the nickname of the Australian men's cricket team's rugby union counterpart?",
+  "options": [
+   "The Socceroos",
+   "The Wallabies",
+   "The Kangaroos",
+   "The Boomers"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the nickname of the Australian men's national soccer team?",
+  "options": [
+   "The Joeys",
+   "The Olyroos",
+   "The Socceroos",
+   "The Matildas"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Australian women's netball team called?",
+  "options": [
+   "The Pearls",
+   "The Diamonds",
+   "The Opals",
+   "The Matildas"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Australian men's basketball team called?",
+  "options": [
+   "The Boomers",
+   "The Kangaroos",
+   "The Bullets",
+   "The Opals"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian tennis tournament is a grand slam held in January?",
+  "options": [
+   "The Hopman Cup",
+   "The Sydney International",
+   "The Brisbane International",
+   "The Australian Open"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian tennis great won 11 grand slam singles titles and has an arena named after her?",
+  "options": [
+   "Margaret Court",
+   "Ashleigh Barty",
+   "Evonne Goolagong",
+   "Sam Stosur"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian tennis player retired as world number one in 2022?",
+  "options": [
+   "Nick Kyrgios",
+   "Ashleigh Barty",
+   "Sam Stosur",
+   "Alicia Molik"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian beer brand uses the slogan referencing 'the amber nectar' overseas?",
+  "options": [
+   "XXXX",
+   "VB",
+   "Foster's",
+   "Tooheys"
+  ],
+  "correctIndex": 2,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Queensland beer brand is known by four Xs?",
+  "options": [
+   "Tooheys",
+   "XXXX",
+   "Coopers",
+   "VB"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which South Australian brewery is famous for its Pale Ale and Sparkling Ale?",
+  "options": [
+   "Coopers",
+   "Cascade",
+   "James Boag",
+   "Little Creatures"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tasmanian brewery is one of Australia's oldest, founded in 1824?",
+  "options": [
+   "Coopers",
+   "Cascade",
+   "Carlton",
+   "Tooheys"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What size beer glass is called a 'schooner' in most of Australia?",
+  "options": [
+   "570 millilitres",
+   "285 millilitres",
+   "200 millilitres",
+   "425 millilitres"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'pot' of beer in Queensland and Victoria?",
+  "options": [
+   "425 millilitres",
+   "570 millilitres",
+   "330 millilitres",
+   "285 millilitres"
+  ],
+  "correctIndex": 3,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Western Australian wine region is known for Cabernet Sauvignon and surfing?",
+  "options": [
+   "Margaret River",
+   "Swan Valley",
+   "Great Southern",
+   "Geographe"
+  ],
+  "correctIndex": 0,
+  "category": "Australiana",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which NSW wine region is Australia's oldest, famous for Semillon?",
+  "options": [
+   "Mudgee",
+   "The Hunter Valley",
+   "Riverina",
+   "Orange"
+  ],
+  "correctIndex": 1,
+  "category": "Australiana",
+  "difficulty": "medium"
+ }
+]

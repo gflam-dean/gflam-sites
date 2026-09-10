@@ -1,0 +1,1190 @@
+[
+ {
+  "question": "Which planet is famous for its bright ring system?",
+  "options": [
+   "Uranus",
+   "Neptune",
+   "Jupiter",
+   "Saturn"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which planet rotates on its side, tipped about 98 degrees?",
+  "options": [
+   "Uranus",
+   "Saturn",
+   "Neptune",
+   "Venus"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many planets are officially in our solar system today?",
+  "options": [
+   "Eight",
+   "Seven",
+   "Nine",
+   "Ten"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Sun mostly made of?",
+  "options": [
+   "Molten rock",
+   "Hydrogen and helium",
+   "Iron and nickel",
+   "Oxygen and carbon"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What type of star is the Sun?",
+  "options": [
+   "A red giant",
+   "A yellow dwarf",
+   "A blue supergiant",
+   "A white dwarf"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which galaxy is the closest large neighbour to the Milky Way?",
+  "options": [
+   "Andromeda",
+   "Pinwheel",
+   "Centaurus A",
+   "Whirlpool"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a light year a measure of?",
+  "options": [
+   "Speed",
+   "Brightness",
+   "Time",
+   "Distance"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the force that keeps planets in orbit?",
+  "options": [
+   "Inertia alone",
+   "Friction",
+   "Gravity",
+   "Magnetism"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the first human in space?",
+  "options": [
+   "Neil Armstrong",
+   "John Glenn",
+   "Yuri Gagarin",
+   "Alan Shepard"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year did humans first land on the Moon?",
+  "options": [
+   "1972",
+   "1969",
+   "1965",
+   "1959"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian tracking station famously relayed the Apollo 11 moonwalk footage?",
+  "options": [
+   "Tidbinbilla only",
+   "Honeysuckle Creek",
+   "Alice Springs",
+   "Woomera"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which NSW radio telescope featured in the film 'The Dish'?",
+  "options": [
+   "Mopra",
+   "Molonglo",
+   "Narrabri",
+   "Parkes"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Apollo mission suffered an oxygen tank explosion and returned safely?",
+  "options": [
+   "Apollo 13",
+   "Apollo 12",
+   "Apollo 9",
+   "Apollo 1"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the first woman in space?",
+  "options": [
+   "Helen Sharman",
+   "Mae Jemison",
+   "Valentina Tereshkova",
+   "Sally Ride"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does NASA stand for?",
+  "options": [
+   "National Aeronautics and Space Administration",
+   "National Astronautics and Satellite Alliance",
+   "North American Space Authority",
+   "National Air and Space Agency"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which agency is the European counterpart to NASA?",
+  "options": [
+   "ESA",
+   "JAXA",
+   "Roscosmos",
+   "CNSA"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the space telescope launched in 1990 and named after an astronomer?",
+  "options": [
+   "Kepler",
+   "Hubble",
+   "Spitzer",
+   "Chandra"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which space telescope, launched in 2021, is Hubble's infrared successor?",
+  "options": [
+   "Kepler",
+   "James Webb",
+   "Gaia",
+   "TESS"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the International Space Station usually abbreviated to?",
+  "options": [
+   "IST",
+   "ISA",
+   "ISS",
+   "SSI"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which private company built the Falcon 9 rocket?",
+  "options": [
+   "Boeing",
+   "Blue Origin",
+   "SpaceX",
+   "Rocket Lab"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company founded by Jeff Bezos builds the New Shepard rocket?",
+  "options": [
+   "Virgin Galactic",
+   "Blue Origin",
+   "Sierra Space",
+   "SpaceX"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the first artificial satellite, launched in 1957?",
+  "options": [
+   "Explorer 1",
+   "Vostok 1",
+   "Sputnik 1",
+   "Luna 1"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country launched Sputnik 1?",
+  "options": [
+   "China",
+   "The Soviet Union",
+   "France",
+   "The United States"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a group of stars forming a pattern in the sky called?",
+  "options": [
+   "A constellation",
+   "A cluster of planets",
+   "A nebula",
+   "A galaxy"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which constellation appears on the Australian flag?",
+  "options": [
+   "The Southern Cross",
+   "The Big Dipper",
+   "Orion",
+   "Cassiopeia"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the formal Latin name of the Southern Cross constellation?",
+  "options": [
+   "Vela",
+   "Crux",
+   "Carina",
+   "Centaurus"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which constellation contains a famous three-star belt?",
+  "options": [
+   "Orion",
+   "Perseus",
+   "Taurus",
+   "Leo"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which star sits almost directly above the North Pole?",
+  "options": [
+   "Arcturus",
+   "Sirius",
+   "Polaris",
+   "Rigel"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the closest star system to our own?",
+  "options": [
+   "Alpha Centauri",
+   "Tau Ceti",
+   "Sirius",
+   "Barnard's Star"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a nebula?",
+  "options": [
+   "A cloud of gas and dust in space",
+   "A dying planet",
+   "A type of comet",
+   "A cluster of moons"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name for a star that suddenly explodes at the end of its life?",
+  "options": [
+   "Magnetar",
+   "Pulsar",
+   "Quasar",
+   "Supernova"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a black hole?",
+  "options": [
+   "A region whose gravity lets nothing escape, not even light",
+   "A dark cloud of dust",
+   "A cooled dead star",
+   "An empty gap between galaxies"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the boundary of a black hole called?",
+  "options": [
+   "The photon wall",
+   "The dark rim",
+   "The singularity edge",
+   "The event horizon"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a rapidly spinning neutron star that emits beams of radiation called?",
+  "options": [
+   "A quasar",
+   "A pulsar",
+   "A blazar",
+   "A magnet star"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the theory describing the origin of the universe about 13.8 billion years ago?",
+  "options": [
+   "The Great Collapse",
+   "Cosmic Drift",
+   "The Big Bang",
+   "The Steady State"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Roughly how old is the universe according to current estimates?",
+  "options": [
+   "About 4.5 billion years",
+   "About 13.8 billion years",
+   "About 100 billion years",
+   "About 1 billion years"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Roughly how old is the Earth?",
+  "options": [
+   "About 4.5 billion years",
+   "About 10 million years",
+   "About 13.8 billion years",
+   "About 500 million years"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the belt of rocky bodies between Mars and Jupiter called?",
+  "options": [
+   "The asteroid belt",
+   "The Trojan Ring",
+   "The Oort Cloud",
+   "The Kuiper Belt"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a meteor called once it lands on Earth's surface?",
+  "options": [
+   "A meteorite",
+   "A meteoroid",
+   "An asteroid",
+   "A comet nucleus"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the streaks of light in the sky commonly called shooting stars actually?",
+  "options": [
+   "Solar flares",
+   "Satellites reflecting sunlight",
+   "Distant exploding stars",
+   "Meteors burning in the atmosphere"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which famous comet returns roughly every 76 years?",
+  "options": [
+   "Hale-Bopp",
+   "Halley's Comet",
+   "Encke",
+   "Shoemaker-Levy"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a comet's glowing tail made of?",
+  "options": [
+   "Gas and dust pushed by the solar wind",
+   "Ice shards only",
+   "Burning fuel",
+   "Molten rock"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet has the most moons currently confirmed, in the region of 90 or more?",
+  "options": [
+   "Jupiter",
+   "Neptune",
+   "Uranus",
+   "Saturn"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which moon of Jupiter is the most volcanically active body in the solar system?",
+  "options": [
+   "Callisto",
+   "Io",
+   "Ganymede",
+   "Europa"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Jupiter moon is thought to hide a liquid ocean under its icy crust?",
+  "options": [
+   "Himalia",
+   "Europa",
+   "Io",
+   "Amalthea"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the names of Mars' two moons?",
+  "options": [
+   "Titan and Rhea",
+   "Io and Europa",
+   "Phobos and Deimos",
+   "Luna and Selene"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the huge storm on Jupiter called?",
+  "options": [
+   "The Eye of Jove",
+   "The Storm Belt",
+   "The Crimson Vortex",
+   "The Great Red Spot"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the tallest volcano in the solar system, found on Mars?",
+  "options": [
+   "Mauna Kea",
+   "Elysium Peak",
+   "Olympus Mons",
+   "Ascraeus Mons"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which NASA rover landed on Mars in 2021 carrying a small helicopter?",
+  "options": [
+   "Perseverance",
+   "Opportunity",
+   "Curiosity",
+   "Spirit"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the name of the small helicopter that flew on Mars?",
+  "options": [
+   "Dragonfly",
+   "Kestrel",
+   "Skyfall",
+   "Ingenuity"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What causes a solar eclipse?",
+  "options": [
+   "The Moon passing between the Sun and Earth",
+   "Clouds blocking the Sun",
+   "Earth passing between the Sun and Moon",
+   "The Sun cooling briefly"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What causes a lunar eclipse?",
+  "options": [
+   "Mars crossing the Moon",
+   "The Moon passing between Earth and the Sun",
+   "Earth passing between the Sun and Moon",
+   "The Moon rotating away"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'blood moon'?",
+  "options": [
+   "A moon at its closest orbit",
+   "A moon seen only at dawn",
+   "A moon that appears twice a month",
+   "A lunar eclipse where the Moon looks reddish"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'supermoon'?",
+  "options": [
+   "A moon that stays up all night",
+   "A full moon near its closest point to Earth",
+   "A moon that appears blue",
+   "Two moons appearing at once"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the northern lights properly called?",
+  "options": [
+   "Aurora Borealis",
+   "Zodiacal light",
+   "Aurora Australis",
+   "Solar Corona"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the southern lights, visible from Tasmania on good nights, called?",
+  "options": [
+   "Antarctic Glow",
+   "Aurora Borealis",
+   "Southern Corona",
+   "Aurora Australis"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What causes auroras?",
+  "options": [
+   "Charged particles from the Sun hitting the atmosphere",
+   "Volcanic gas",
+   "Reflected moonlight",
+   "Airglow from lightning"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which astronomer first used a telescope to observe Jupiter's four largest moons?",
+  "options": [
+   "Galileo Galilei",
+   "Isaac Newton",
+   "Tycho Brahe",
+   "Johannes Kepler"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who proposed that the planets orbit the Sun rather than the Earth?",
+  "options": [
+   "Halley",
+   "Aristotle",
+   "Ptolemy",
+   "Copernicus"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which physicist is best known for the theory of general relativity?",
+  "options": [
+   "Erwin Schrodinger",
+   "Niels Bohr",
+   "Max Planck",
+   "Albert Einstein"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British physicist wrote 'A Brief History of Time'?",
+  "options": [
+   "Stephen Hawking",
+   "Brian Cox",
+   "Paul Dirac",
+   "Roger Penrose"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a planet orbiting a star other than the Sun?",
+  "options": [
+   "A dwarf planet",
+   "An exoplanet",
+   "A protoplanet",
+   "A rogue planet"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the 'Goldilocks zone' around a star?",
+  "options": [
+   "The outer edge of the system",
+   "The region where liquid water could exist",
+   "The belt of asteroids",
+   "The hottest region near the star"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of the mission that first flew past Pluto in 2015?",
+  "options": [
+   "Juno",
+   "Voyager 2",
+   "New Horizons",
+   "Cassini"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which spacecraft, launched in 1977, has travelled into interstellar space?",
+  "options": [
+   "Voyager 1",
+   "Galileo",
+   "Pioneer 4",
+   "Ulysses"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which spacecraft studied Saturn from orbit for 13 years before its 2017 plunge?",
+  "options": [
+   "Cassini",
+   "Magellan",
+   "Juno",
+   "Galileo"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for the point in an orbit closest to the Sun?",
+  "options": [
+   "Apogee",
+   "Aphelion",
+   "Perihelion",
+   "Perigee"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the point in an orbit around Earth that is furthest away called?",
+  "options": [
+   "Apogee",
+   "Aphelion",
+   "Zenith",
+   "Perigee"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does a light sail use to move a spacecraft?",
+  "options": [
+   "Magnetic rails",
+   "Compressed air",
+   "Pressure from sunlight",
+   "Nuclear steam"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is escape velocity from Earth roughly equal to?",
+  "options": [
+   "11 kilometres per second",
+   "1 kilometre per second",
+   "300 kilometres per second",
+   "50 kilometres per second"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Why do astronauts appear weightless on the space station?",
+  "options": [
+   "The station spins to cancel gravity",
+   "Their suits repel gravity",
+   "They are in continuous free fall around Earth",
+   "There is no gravity that far up"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the visible surface layer of the Sun called?",
+  "options": [
+   "The core",
+   "The corona",
+   "The photosphere",
+   "The chromosphere"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Sun's outer atmosphere, visible during a total eclipse, called?",
+  "options": [
+   "The umbra",
+   "The heliopause",
+   "The corona",
+   "The photosphere"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are sunspots?",
+  "options": [
+   "Holes through the Sun",
+   "Cooler, darker patches on the Sun's surface",
+   "Shadows of planets",
+   "Reflections of Mercury"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Roughly how long is the solar activity cycle?",
+  "options": [
+   "11 years",
+   "100 years",
+   "50 years",
+   "1 year"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What proportion of the universe is thought to be ordinary visible matter?",
+  "options": [
+   "About 5 per cent",
+   "About 50 per cent",
+   "About 95 per cent",
+   "About 25 per cent"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the mysterious substance thought to make up most of a galaxy's mass?",
+  "options": [
+   "Dark matter",
+   "Antimatter",
+   "Plasma",
+   "Neutrinos"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is thought to be driving the accelerating expansion of the universe?",
+  "options": [
+   "Cosmic wind",
+   "Gravity waves",
+   "Dark matter",
+   "Dark energy"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which planet takes about 88 Earth days to orbit the Sun?",
+  "options": [
+   "Earth",
+   "Mars",
+   "Venus",
+   "Mercury"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How long does Mars take to orbit the Sun, roughly?",
+  "options": [
+   "About 100 Earth days",
+   "About 12 Earth years",
+   "About 687 Earth days",
+   "About 365 Earth days"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which planet is furthest from the Sun?",
+  "options": [
+   "Neptune",
+   "Saturn",
+   "Pluto",
+   "Uranus"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour does Neptune appear, thanks to methane in its atmosphere?",
+  "options": [
+   "Green",
+   "Red",
+   "Blue",
+   "Yellow"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the main gas in Earth's atmosphere?",
+  "options": [
+   "Oxygen",
+   "Nitrogen",
+   "Carbon dioxide",
+   "Argon"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How long does the Moon take to orbit the Earth, roughly?",
+  "options": [
+   "365 days",
+   "27 days",
+   "7 days",
+   "90 days"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Why do we always see the same side of the Moon?",
+  "options": [
+   "Its far side is invisible to light",
+   "It does not rotate at all",
+   "Earth's shadow hides the other side",
+   "It rotates once per orbit, called tidal locking"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What mainly causes ocean tides on Earth?",
+  "options": [
+   "The Moon's gravity",
+   "Earth's rotation alone",
+   "Wind patterns",
+   "Solar heat"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which was the first animal to orbit the Earth?",
+  "options": [
+   "A monkey named Albert",
+   "Laika the dog",
+   "A mouse",
+   "A chimpanzee"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What was the name of the first US space station, launched in 1973?",
+  "options": [
+   "Mir",
+   "Freedom",
+   "Columbia",
+   "Skylab"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Soviet and later Russian space station operated from 1986 to 2001?",
+  "options": [
+   "Zarya",
+   "Almaz",
+   "Mir",
+   "Salyut 1"
+  ],
+  "correctIndex": 2,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What was the name of the first Space Shuttle to fly into orbit?",
+  "options": [
+   "Discovery",
+   "Columbia",
+   "Challenger",
+   "Enterprise"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In what year did the Space Shuttle programme make its final flight?",
+  "options": [
+   "1999",
+   "2015",
+   "2005",
+   "2011"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the name of NASA's programme aiming to return humans to the Moon?",
+  "options": [
+   "Constellation",
+   "Gateway",
+   "Orion",
+   "Artemis"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian was the first to travel into space, flying on a shuttle mission?",
+  "options": [
+   "Andy Thomas",
+   "Paul Scully-Power",
+   "Katherine Bennell-Pegg",
+   "Philip Chapman"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Adelaide-born astronaut flew several NASA shuttle missions and lived on the ISS?",
+  "options": [
+   "Chris Hadfield",
+   "Paul Scully-Power",
+   "Mark Kelly",
+   "Andy Thomas"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which telescope array is being built partly in Western Australia to study radio waves from space?",
+  "options": [
+   "The Very Large Array",
+   "The Square Kilometre Array",
+   "ALMA",
+   "LOFAR"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What unit is often used for distances within our solar system, equal to the Earth-Sun distance?",
+  "options": [
+   "The nautical mile",
+   "The light year",
+   "The parsec",
+   "The astronomical unit"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Roughly how many stars are estimated to be in the Milky Way?",
+  "options": [
+   "About ten billion trillion",
+   "Hundreds of billions",
+   "About one thousand",
+   "About one million"
+  ],
+  "correctIndex": 1,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What shape is the Milky Way galaxy?",
+  "options": [
+   "A barred spiral",
+   "An irregular blob",
+   "A flat ring",
+   "A perfect sphere"
+  ],
+  "correctIndex": 0,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What lies at the centre of the Milky Way?",
+  "options": [
+   "An empty void",
+   "A giant red star",
+   "A cluster of planets",
+   "A supermassive black hole"
+  ],
+  "correctIndex": 3,
+  "category": "Space & Astronomy",
+  "difficulty": "medium"
+ }
+]

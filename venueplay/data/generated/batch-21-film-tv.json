@@ -1,0 +1,1322 @@
+[
+ {
+  "question": "Which 1975 Spielberg film made people scared of the water?",
+  "options": [
+   "The Abyss",
+   "Duel",
+   "Jurassic Park",
+   "Jaws"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the shark hunter's boat in 'Jaws'?",
+  "options": [
+   "Nautilus",
+   "Marlin",
+   "Pequod",
+   "Orca"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which director made 'E.T. the Extra-Terrestrial' and 'Jurassic Park'?",
+  "options": [
+   "Ridley Scott",
+   "George Lucas",
+   "James Cameron",
+   "Steven Spielberg"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Wizard of Oz', what does Dorothy click together to go home?",
+  "options": [
+   "Her ruby slippers",
+   "Two stones",
+   "Her fingers",
+   "A pair of wands"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film features the song 'Somewhere Over the Rainbow'?",
+  "options": [
+   "The Sound of Music",
+   "The Wizard of Oz",
+   "Mary Poppins",
+   "Singin' in the Rain"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1997 film features Jack and Rose aboard a doomed ship?",
+  "options": [
+   "The Poseidon Adventure",
+   "Titanic",
+   "Pearl Harbor",
+   "Cold Mountain"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who directed 'Titanic' and 'Avatar'?",
+  "options": [
+   "James Cameron",
+   "Peter Jackson",
+   "Michael Bay",
+   "Steven Spielberg"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the blue-skinned people in 'Avatar'?",
+  "options": [
+   "The Aeon",
+   "The Kree",
+   "The Pandorans",
+   "The Na'vi"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which moon is 'Avatar' set?",
+  "options": [
+   "Endor",
+   "Arrakis",
+   "Pandora",
+   "Titan"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which film series features the character Ellen Ripley?",
+  "options": [
+   "Terminator",
+   "Predator",
+   "Alien",
+   "Blade Runner"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor plays the Terminator in the 1984 film?",
+  "options": [
+   "Jean-Claude Van Damme",
+   "Arnold Schwarzenegger",
+   "Dolph Lundgren",
+   "Sylvester Stallone"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which catchphrase is associated with the Terminator?",
+  "options": [
+   "Come with me",
+   "Hasta la vista only",
+   "Get to the chopper",
+   "I'll be back"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1994 film features Forrest Gump running across America?",
+  "options": [
+   "Forrest Gump",
+   "Rain Man",
+   "Cast Away",
+   "Big"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who played Forrest Gump?",
+  "options": [
+   "Bill Murray",
+   "Kevin Costner",
+   "Tom Hanks",
+   "Robin Williams"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Cast Away', what does Tom Hanks' character name his volleyball?",
+  "options": [
+   "Buddy",
+   "Mate",
+   "Spalding",
+   "Wilson"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film features an offer 'he can't refuse'?",
+  "options": [
+   "Scarface",
+   "The Godfather",
+   "Goodfellas",
+   "Casino"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who directed 'The Godfather'?",
+  "options": [
+   "Martin Scorsese",
+   "Brian De Palma",
+   "Francis Ford Coppola",
+   "Sidney Lumet"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor played Michael Corleone?",
+  "options": [
+   "Robert De Niro",
+   "Al Pacino",
+   "Marlon Brando",
+   "James Caan"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Quentin Tarantino film features Vincent Vega and Jules Winnfield?",
+  "options": [
+   "Pulp Fiction",
+   "Reservoir Dogs",
+   "Kill Bill",
+   "Jackie Brown"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which film franchise features Ethan Hunt and the IMF?",
+  "options": [
+   "James Bond",
+   "Mission: Impossible",
+   "Bourne",
+   "Kingsman"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor has played Ethan Hunt since 1996?",
+  "options": [
+   "Tom Cruise",
+   "Brad Pitt",
+   "Matt Damon",
+   "Keanu Reeves"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the first actor to play James Bond in the official film series?",
+  "options": [
+   "Roger Moore",
+   "Sean Connery",
+   "George Lazenby",
+   "David Niven"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actor played James Bond once, in 1969?",
+  "options": [
+   "Errol Flynn",
+   "Peter Finch",
+   "Rod Taylor",
+   "George Lazenby"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which actor played James Bond in 'Casino Royale' in 2006?",
+  "options": [
+   "Clive Owen",
+   "Pierce Brosnan",
+   "Daniel Craig",
+   "Timothy Dalton"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is James Bond's code number?",
+  "options": [
+   "007",
+   "006",
+   "001",
+   "009"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which drink does James Bond order 'shaken, not stirred'?",
+  "options": [
+   "A negroni",
+   "A martini",
+   "A gimlet",
+   "A whisky sour"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1977 film began the original 'Star Wars' trilogy?",
+  "options": [
+   "The Empire Strikes Back",
+   "A New Hope",
+   "Return of the Jedi",
+   "The Phantom Menace"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is Luke Skywalker's father?",
+  "options": [
+   "Darth Vader",
+   "Han Solo",
+   "Emperor Palpatine",
+   "Obi-Wan Kenobi"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Han Solo's ship?",
+  "options": [
+   "Slave I",
+   "The Ghost",
+   "The Millennium Falcon",
+   "The Razor Crest"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What kind of creature is Chewbacca?",
+  "options": [
+   "A Gungan",
+   "An Ewok",
+   "A Wookiee",
+   "A Jawa"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which small green Jedi Master trains Luke on Dagobah?",
+  "options": [
+   "Mace Windu",
+   "Ki-Adi-Mundi",
+   "Qui-Gon Jinn",
+   "Yoda"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which director created the original 'Star Wars'?",
+  "options": [
+   "Ridley Scott",
+   "Steven Spielberg",
+   "Irvin Kershner",
+   "George Lucas"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film series features Indiana Jones?",
+  "options": [
+   "The Mummy",
+   "Tomb Raider",
+   "National Treasure",
+   "Raiders of the Lost Ark and its sequels"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which actor plays Indiana Jones?",
+  "options": [
+   "Kurt Russell",
+   "Sam Neill",
+   "Harrison Ford",
+   "Michael Douglas"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Indiana Jones afraid of?",
+  "options": [
+   "Heights",
+   "Snakes",
+   "Water",
+   "Spiders"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which trilogy features Marty McFly and Doc Brown?",
+  "options": [
+   "Time Bandits",
+   "Back to the Future",
+   "The Time Machine",
+   "Bill and Ted"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What car is used as the time machine in 'Back to the Future'?",
+  "options": [
+   "A DeLorean",
+   "A Pontiac Firebird",
+   "A Cadillac",
+   "A Ford Mustang"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How fast must the DeLorean go to time travel?",
+  "options": [
+   "60 miles per hour",
+   "100 miles per hour",
+   "88 miles per hour",
+   "120 miles per hour"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which film features the Ghostbusters battling a giant marshmallow man?",
+  "options": [
+   "Beetlejuice",
+   "Men in Black",
+   "Poltergeist",
+   "Ghostbusters"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1980 comedy is about a disaster-prone flight and features 'Don't call me Shirley'?",
+  "options": [
+   "The Naked Gun",
+   "Airplane!",
+   "Top Secret",
+   "Police Academy"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1986 film features Maverick and Goose as navy pilots?",
+  "options": [
+   "Top Gun",
+   "Firefox",
+   "Iron Eagle",
+   "Hot Shots"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian film features a crocodile hunter in New York?",
+  "options": [
+   "Crocodile Dundee",
+   "Rabbit-Proof Fence",
+   "The Man from Snowy River",
+   "Muriel's Wedding"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who starred as Mick Dundee?",
+  "options": [
+   "Paul Hogan",
+   "Sam Neill",
+   "Bryan Brown",
+   "Jack Thompson"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian film series stars Mel Gibson as a road warrior?",
+  "options": [
+   "The Road",
+   "Rogue",
+   "Mad Max",
+   "Wolf Creek"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian film features a pig who herds sheep?",
+  "options": [
+   "Red Dog",
+   "Napoleon",
+   "Oddball",
+   "Babe"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian comedy features the Kerrigan family fighting to keep their home?",
+  "options": [
+   "The Castle",
+   "Muriel's Wedding",
+   "The Dish",
+   "Kenny"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'The Castle', what does Darryl Kerrigan say about the serenity?",
+  "options": [
+   "Serenity now",
+   "Give me serenity",
+   "Feel that serenity",
+   "How's the serenity"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian film features drag performers crossing the outback in a bus?",
+  "options": [
+   "Strictly Ballroom",
+   "The Adventures of Priscilla, Queen of the Desert",
+   "Holy Smoke",
+   "Muriel's Wedding"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian director made 'Strictly Ballroom' and 'Moulin Rouge'?",
+  "options": [
+   "Peter Weir",
+   "Baz Luhrmann",
+   "George Miller",
+   "Gillian Armstrong"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actor won an Oscar for 'Shine'?",
+  "options": [
+   "Geoffrey Rush",
+   "Guy Pearce",
+   "Hugh Jackman",
+   "Russell Crowe"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actress won an Oscar for playing Katharine Hepburn in 'The Aviator'?",
+  "options": [
+   "Cate Blanchett",
+   "Toni Collette",
+   "Nicole Kidman",
+   "Naomi Watts"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian actor won a posthumous Oscar for playing the Joker?",
+  "options": [
+   "Ben Mendelsohn",
+   "Chris Hemsworth",
+   "Joel Edgerton",
+   "Heath Ledger"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor plays Wolverine in the X-Men films?",
+  "options": [
+   "Eric Bana",
+   "Simon Baker",
+   "Sam Worthington",
+   "Hugh Jackman"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor plays Thor in the Marvel films?",
+  "options": [
+   "Luke Hemsworth",
+   "Chris Hemsworth",
+   "Travis Fimmel",
+   "Liam Hemsworth"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actress starred in 'I, Tonya' and 'Barbie'?",
+  "options": [
+   "Teresa Palmer",
+   "Rose Byrne",
+   "Margot Robbie",
+   "Isla Fisher"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film won the Best Picture Oscar for 1994, beating 'The Shawshank Redemption'?",
+  "options": [
+   "Forrest Gump",
+   "Quiz Show",
+   "Four Weddings and a Funeral",
+   "Pulp Fiction"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which prison drama is based on a Stephen King novella and stars Tim Robbins?",
+  "options": [
+   "Escape from Alcatraz",
+   "The Green Mile",
+   "The Shawshank Redemption",
+   "Cool Hand Luke"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which film features Hannibal Lecter and Clarice Starling?",
+  "options": [
+   "Red Dragon",
+   "Zodiac",
+   "The Silence of the Lambs",
+   "Se7en"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which 1999 film features Neo and the red pill?",
+  "options": [
+   "Inception",
+   "Dark City",
+   "The Matrix",
+   "eXistenZ"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Christopher Nolan film involves entering people's dreams?",
+  "options": [
+   "Inception",
+   "Interstellar",
+   "Tenet",
+   "Memento"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features a lion cub named Simba?",
+  "options": [
+   "The Lion King",
+   "Tarzan",
+   "Madagascar",
+   "Bambi"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does 'Hakuna Matata' mean in 'The Lion King'?",
+  "options": [
+   "Circle of life",
+   "Welcome home",
+   "No worries",
+   "Long live the king"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pixar film features toys that come alive?",
+  "options": [
+   "Toy Story",
+   "Monsters, Inc.",
+   "A Bug's Life",
+   "Cars"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the cowboy doll in 'Toy Story'?",
+  "options": [
+   "Woody",
+   "Buzz",
+   "Rex",
+   "Slinky"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Buzz Lightyear's catchphrase?",
+  "options": [
+   "Blast off",
+   "To infinity and beyond",
+   "Reach for the sky",
+   "There's a snake in my boot"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Pixar film follows a clownfish searching for his son?",
+  "options": [
+   "Moana",
+   "Finding Nemo",
+   "Luca",
+   "Shark Tale"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In 'Finding Nemo', which forgetful fish helps Marlin?",
+  "options": [
+   "Crush",
+   "Dory",
+   "Bruce",
+   "Nigel"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian city is the setting for the dentist's office in 'Finding Nemo'?",
+  "options": [
+   "Brisbane",
+   "Sydney",
+   "Cairns",
+   "Melbourne"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Disney film features a snow queen named Elsa?",
+  "options": [
+   "Encanto",
+   "Tangled",
+   "Frozen",
+   "Brave"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which song from 'Frozen' won an Academy Award?",
+  "options": [
+   "Love Is an Open Door",
+   "For the First Time in Forever",
+   "Let It Go",
+   "Do You Want to Build a Snowman"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Disney film features a mermaid named Ariel?",
+  "options": [
+   "Pocahontas",
+   "Moana",
+   "The Little Mermaid",
+   "Aladdin"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sitcom is set in a New York coffee house called Central Perk?",
+  "options": [
+   "Seinfeld",
+   "How I Met Your Mother",
+   "Will & Grace",
+   "Friends"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many main characters are in 'Friends'?",
+  "options": [
+   "Five",
+   "Six",
+   "Seven",
+   "Four"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Ross's pet monkey in 'Friends'?",
+  "options": [
+   "Chico",
+   "Bongo",
+   "Mr Heckles",
+   "Marcel"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sitcom was described as 'a show about nothing'?",
+  "options": [
+   "Cheers",
+   "Frasier",
+   "Seinfeld",
+   "Friends"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 'Seinfeld' character is Jerry's eccentric neighbour?",
+  "options": [
+   "George",
+   "Puddy",
+   "Newman",
+   "Kramer"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which TV series features the Iron Throne and Westeros?",
+  "options": [
+   "The Witcher",
+   "Vikings",
+   "Game of Thrones",
+   "The Last Kingdom"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which TV series follows a chemistry teacher turned drug manufacturer?",
+  "options": [
+   "The Wire",
+   "Breaking Bad",
+   "Weeds",
+   "Ozark"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is Walter White's alias in 'Breaking Bad'?",
+  "options": [
+   "Heisenberg",
+   "Gus",
+   "Saul",
+   "Mike"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which spin-off series follows the lawyer Jimmy McGill?",
+  "options": [
+   "El Camino",
+   "Fargo",
+   "Better Call Saul",
+   "Ozark"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Netflix series is set in Hawkins, Indiana with a monster called the Demogorgon?",
+  "options": [
+   "Stranger Things",
+   "Dark",
+   "Locke & Key",
+   "The OA"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which TV drama follows the British royal family across the decades?",
+  "options": [
+   "The Crown",
+   "Downton Abbey",
+   "Victoria",
+   "The Windsors"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian soap opera is set in Ramsay Street?",
+  "options": [
+   "Home and Away",
+   "Sons and Daughters",
+   "Neighbours",
+   "Prisoner"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian soap is set in Summer Bay?",
+  "options": [
+   "Sea Patrol",
+   "Home and Away",
+   "Blue Heelers",
+   "Neighbours"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian singer got her start as Charlene in 'Neighbours'?",
+  "options": [
+   "Delta Goodrem",
+   "Kylie Minogue",
+   "Natalie Imbruglia",
+   "Dannii Minogue"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian actor from 'Neighbours' went on to a huge pop career with 'Too Many Broken Hearts'?",
+  "options": [
+   "Guy Pearce",
+   "Alan Dale",
+   "Craig McLachlan",
+   "Jason Donovan"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian medical drama was set at Wandin Valley?",
+  "options": [
+   "A Country Practice",
+   "All Saints",
+   "The Flying Doctors",
+   "GP"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian police drama was set in Mount Thomas?",
+  "options": [
+   "Stingers",
+   "Rush",
+   "Blue Heelers",
+   "Water Rats"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian comedy series featured Kath and Kim?",
+  "options": [
+   "Fast Forward",
+   "Full Frontal",
+   "The Comedy Company",
+   "Kath & Kim"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian TV series follows the McLeod sisters on a cattle station?",
+  "options": [
+   "McLeod's Daughters",
+   "SeaChange",
+   "Wentworth",
+   "Packed to the Rafters"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian prison drama is a modern reimagining of 'Prisoner'?",
+  "options": [
+   "Underbelly",
+   "Janet King",
+   "Wentworth",
+   "Rake"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian music show hosted by Molly Meldrum ran on the ABC from 1974 to 1987?",
+  "options": [
+   "Rage",
+   "Hey Hey It's Saturday",
+   "Countdown",
+   "Sounds"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the Australian television industry awards called?",
+  "options": [
+   "The ARIAs",
+   "The Logies",
+   "The AACTAs",
+   "The Helpmanns"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which award is the highest honour at the Logies?",
+  "options": [
+   "The Grand Logie",
+   "The Silver Logie",
+   "The Gold Logie",
+   "The Platinum Logie"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which children's show has been running on the ABC since 1966 with windows and toys?",
+  "options": [
+   "Play School",
+   "Round the Twist",
+   "Mr Squiggle",
+   "Bananas in Pyjamas"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian children's show features B1 and B2?",
+  "options": [
+   "Play School",
+   "Hi-5",
+   "The Wiggles",
+   "Bananas in Pyjamas"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour skivvy does Wiggles member Anthony traditionally wear?",
+  "options": [
+   "Purple",
+   "Blue",
+   "Yellow",
+   "Red"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which reality cooking show has Australian home cooks competing for a trophy?",
+  "options": [
+   "Ready Steady Cook",
+   "My Kitchen Rules",
+   "The Great Australian Bake Off",
+   "MasterChef Australia"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which reality series has Australians building and renovating houses against the clock?",
+  "options": [
+   "Selling Houses",
+   "The Block",
+   "Grand Designs",
+   "House Rules"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which singing competition series has coaches in spinning red chairs?",
+  "options": [
+   "The Voice",
+   "X Factor",
+   "Australian Idol",
+   "Popstars"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which award ceremony hands out gold statuettes each year for films?",
+  "options": [
+   "The Emmys",
+   "The Academy Awards",
+   "The BAFTAs",
+   "The Golden Globes"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the nickname of the Academy Award statuette?",
+  "options": [
+   "Oscar",
+   "Golden Boy",
+   "Emmy",
+   "Bafta"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which awards recognise American television excellence?",
+  "options": [
+   "The Tonys",
+   "The Grammys",
+   "The Oscars",
+   "The Emmys"
+  ],
+  "correctIndex": 3,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which awards honour Broadway theatre?",
+  "options": [
+   "The Emmys",
+   "The Tonys",
+   "The Oliviers",
+   "The Obies"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which film festival awards the Palme d'Or?",
+  "options": [
+   "Venice",
+   "Cannes",
+   "Sundance",
+   "Berlin"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which festival awards the Golden Lion?",
+  "options": [
+   "Venice",
+   "Berlin",
+   "Cannes",
+   "Toronto"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does the term 'blockbuster' originally describe?",
+  "options": [
+   "A film that flops",
+   "A huge commercial hit",
+   "A cinema chain",
+   "A short film"
+  ],
+  "correctIndex": 1,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'cameo' in film?",
+  "options": [
+   "A brief appearance by a notable person",
+   "The lead role",
+   "A costume style",
+   "A camera technique"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which director was famous for cameo appearances in his own suspense films?",
+  "options": [
+   "Billy Wilder",
+   "Orson Welles",
+   "Alfred Hitchcock",
+   "John Ford"
+  ],
+  "correctIndex": 2,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Hitchcock film features a shower scene at the Bates Motel?",
+  "options": [
+   "Psycho",
+   "Vertigo",
+   "Rear Window",
+   "The Birds"
+  ],
+  "correctIndex": 0,
+  "category": "Film & TV",
+  "difficulty": "medium"
+ }
+]

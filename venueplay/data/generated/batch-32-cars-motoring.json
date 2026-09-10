@@ -1,0 +1,1370 @@
+[
+ {
+  "question": "Which Australian car was known as 'Australia's own car' when launched in 1948?",
+  "options": [
+   "The Holden 48-215",
+   "The Chrysler Valiant",
+   "The Leyland P76",
+   "The Ford Falcon"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did Holden stop manufacturing cars in Australia?",
+  "options": [
+   "2017",
+   "2020",
+   "2009",
+   "2013"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Holden model became famous as a high-performance sedan badged HSV?",
+  "options": [
+   "The Captiva",
+   "The Barina",
+   "The Commodore",
+   "The Astra"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Ford model was Holden's traditional Australian rival?",
+  "options": [
+   "The Falcon",
+   "The Focus",
+   "The Escort",
+   "The Mondeo"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Ford performance sub-brand built Australian Falcons?",
+  "options": [
+   "SVO",
+   "Ford Racing Australia",
+   "RS Motorsport",
+   "FPV"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian car brand produced the P76, famously mocked for quality?",
+  "options": [
+   "Holden",
+   "Chrysler",
+   "Leyland",
+   "Ford"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which utility body style was pioneered in Australia in the 1930s?",
+  "options": [
+   "The people mover",
+   "The hatchback",
+   "The coupe utility or ute",
+   "The station wagon"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which car brand makes the Corolla?",
+  "options": [
+   "Mazda",
+   "Toyota",
+   "Nissan",
+   "Honda"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which model is the world's best-selling car nameplate of all time?",
+  "options": [
+   "The Toyota Corolla",
+   "The Honda Civic",
+   "The Ford F-Series",
+   "The Volkswagen Golf"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which car brand makes the Hilux?",
+  "options": [
+   "Isuzu",
+   "Nissan",
+   "Toyota",
+   "Mitsubishi"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which German brand makes the Golf?",
+  "options": [
+   "Opel",
+   "Volkswagen",
+   "BMW",
+   "Audi"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does BMW stand for in English?",
+  "options": [
+   "Bayern Machine Works",
+   "Bavarian Motor Works",
+   "British Motor Works",
+   "Berlin Motor Wagen"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which country is the Volvo brand originally from?",
+  "options": [
+   "Denmark",
+   "Germany",
+   "Norway",
+   "Sweden"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand's name means 'I roll' in Latin?",
+  "options": [
+   "Vauxhall",
+   "Volvo",
+   "Audi",
+   "Volkswagen"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does Volkswagen mean in English?",
+  "options": [
+   "Family car",
+   "Fast car",
+   "Iron car",
+   "People's car"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which car is nicknamed the Beetle?",
+  "options": [
+   "The Citroen 2CV",
+   "The Fiat 500",
+   "The Mini",
+   "The Volkswagen Type 1"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British small car was designed by Alec Issigonis in 1959?",
+  "options": [
+   "The Mini",
+   "The Hillman Imp",
+   "The Morris Minor",
+   "The Ford Anglia"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian brand uses a prancing horse logo?",
+  "options": [
+   "Maserati",
+   "Alfa Romeo",
+   "Ferrari",
+   "Lamborghini"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Italian brand uses a raging bull logo?",
+  "options": [
+   "Maserati",
+   "Lamborghini",
+   "Ferrari",
+   "Pagani"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was Lamborghini's founder originally famous for making?",
+  "options": [
+   "Motorcycles",
+   "Aircraft",
+   "Refrigerators",
+   "Tractors"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand uses a trident logo?",
+  "options": [
+   "Maserati",
+   "Bugatti",
+   "Aston Martin",
+   "Alfa Romeo"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which luxury brand uses a winged badge and is associated with James Bond?",
+  "options": [
+   "Aston Martin",
+   "Rolls-Royce",
+   "Jaguar",
+   "Bentley"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Aston Martin model is most associated with James Bond?",
+  "options": [
+   "The Vanquish",
+   "The DB5",
+   "The Vantage",
+   "The DBS"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the figurine on the bonnet of a Rolls-Royce called?",
+  "options": [
+   "The Spirit of Ecstasy",
+   "The Silver Lady only",
+   "The Winged Victory",
+   "The Flying Lady of Crewe"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand uses a three-pointed star?",
+  "options": [
+   "Mercedes-Benz",
+   "Audi",
+   "BMW",
+   "Volvo"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do the four rings of the Audi logo represent?",
+  "options": [
+   "Four founders",
+   "Four merged car companies",
+   "Four engine types",
+   "Four wheels"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which brand makes the 911?",
+  "options": [
+   "Ferrari",
+   "Lotus",
+   "Jaguar",
+   "Porsche"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Where is the engine in a classic Porsche 911?",
+  "options": [
+   "In the middle",
+   "Under the floor",
+   "At the rear",
+   "In the front"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American muscle car is named after a horse?",
+  "options": [
+   "The Chevrolet Camaro",
+   "The Pontiac Firebird",
+   "The Ford Mustang",
+   "The Dodge Charger"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American sports car is nicknamed the Vette?",
+  "options": [
+   "The Dodge Viper",
+   "The Ford Thunderbird",
+   "The Chevrolet Corvette",
+   "The Pontiac GTO"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which car company was founded by Henry Ford?",
+  "options": [
+   "Studebaker",
+   "Ford",
+   "Chrysler",
+   "General Motors"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Ford model was the first mass-produced car on a moving assembly line?",
+  "options": [
+   "The Falcon",
+   "The Model T",
+   "The Model A",
+   "The Thunderbird"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What colour did Henry Ford famously say customers could have the Model T in?",
+  "options": [
+   "Any colour so long as it is black",
+   "Any colour at all",
+   "Red only",
+   "Blue or black"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Tesla model was the company's first mass-market sedan?",
+  "options": [
+   "The Model X",
+   "The Roadster",
+   "The Model 3",
+   "The Model S"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does EV stand for?",
+  "options": [
+   "Electric vehicle",
+   "Economy version",
+   "Extended vehicle",
+   "Engine variant"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a hybrid car combine?",
+  "options": [
+   "Solar and wind",
+   "Diesel and hydrogen",
+   "A petrol engine and an electric motor",
+   "Two petrol engines"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Toyota model popularised hybrid cars worldwide?",
+  "options": [
+   "The Prius",
+   "The RAV4",
+   "The Camry",
+   "The Yaris"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does ABS stand for on a car?",
+  "options": [
+   "Anti-lock braking system",
+   "Automatic brake sensor",
+   "Adaptive balance stability",
+   "Active brake support"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the purpose of a catalytic converter?",
+  "options": [
+   "Reducing harmful exhaust emissions",
+   "Increasing engine power",
+   "Filtering fuel",
+   "Cooling the engine"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a turbocharger do?",
+  "options": [
+   "Charges the battery",
+   "Cools the brakes",
+   "Filters the oil",
+   "Forces more air into the engine"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the acronym SUV stand for?",
+  "options": [
+   "Sport utility vehicle",
+   "Super utility van",
+   "Standard urban vehicle",
+   "Safe universal vehicle"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pedal is on the far right in a manual car?",
+  "options": [
+   "The accelerator",
+   "The brake",
+   "The handbrake",
+   "The clutch"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many pedals does a standard manual car have?",
+  "options": [
+   "One",
+   "Four",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which side of the road do Australians drive?",
+  "options": [
+   "Either side",
+   "The left",
+   "The right",
+   "It varies by state"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country drives on the right and gave the world the autobahn?",
+  "options": [
+   "Japan",
+   "Britain",
+   "Australia",
+   "Germany"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is unusual about parts of the German autobahn?",
+  "options": [
+   "They are toll free only for trucks",
+   "They are one-way only",
+   "Some sections have no speed limit",
+   "They are unpaved"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the default speed limit in most Australian built-up areas?",
+  "options": [
+   "40 kilometres per hour",
+   "50 kilometres per hour",
+   "70 kilometres per hour",
+   "60 kilometres per hour"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the highest posted speed limit in the Northern Territory as of recent years?",
+  "options": [
+   "100 kilometres per hour",
+   "110 kilometres per hour",
+   "130 kilometres per hour",
+   "Unlimited"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a red P plate mean in most Australian states?",
+  "options": [
+   "A first-year provisional driver",
+   "A learner driver",
+   "A professional driver",
+   "A parking permit"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour is an Australian L plate?",
+  "options": [
+   "Green with a white L",
+   "Blue with a white L",
+   "Yellow with a black L",
+   "Red with a white L"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a roundabout designed to do?",
+  "options": [
+   "Separate trucks from cars",
+   "Keep traffic flowing through an intersection",
+   "Slow all traffic to a stop",
+   "Mark a town boundary"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australia, who gives way at a roundabout?",
+  "options": [
+   "The vehicle on the left always",
+   "Whoever arrives first",
+   "Vehicles entering give way to those already on it",
+   "The larger vehicle"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'hook turn' associated with?",
+  "options": [
+   "Brisbane ferries",
+   "Sydney tunnels",
+   "Perth freeways",
+   "Melbourne trams"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a solid white line in the middle of a road mean?",
+  "options": [
+   "Bus lane",
+   "Overtaking allowed",
+   "Do not cross to overtake",
+   "Bicycle lane"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the pit stop crew change of all four tyres called in motorsport?",
+  "options": [
+   "A shakedown",
+   "A tyre change or pit stop",
+   "A formation lap",
+   "A parc ferme"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How long is the Bathurst 1000 in kilometres?",
+  "options": [
+   "1000",
+   "600",
+   "800",
+   "500"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the steep section of Mount Panorama called that drops toward pit straight?",
+  "options": [
+   "Conrod Straight follows it, the drop is Skyline to the Esses",
+   "Griffins Bend",
+   "Hell Corner",
+   "The Chase"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian driver won Bathurst nine times and is nicknamed Peter Perfect?",
+  "options": [
+   "Allan Moffat",
+   "Craig Lowndes",
+   "Peter Brock",
+   "Dick Johnson"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which race is known as the greatest spectacle in racing in the United States?",
+  "options": [
+   "The Indianapolis 500",
+   "The Talladega 500",
+   "The Daytona 500",
+   "The Brickyard 400"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which endurance race is held in France each June?",
+  "options": [
+   "The Monaco Grand Prix",
+   "The 24 Hours of Le Mans",
+   "The Rallye Monte-Carlo",
+   "The Paris-Dakar"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Formula 1 circuit runs through city streets in a principality?",
+  "options": [
+   "Spa",
+   "Monaco",
+   "Monza",
+   "Silverstone"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian circuit hosts the Formula 1 Australian Grand Prix?",
+  "options": [
+   "Mount Panorama",
+   "Phillip Island",
+   "Adelaide street circuit",
+   "Albert Park"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian city hosted the Formula 1 Grand Prix before Melbourne?",
+  "options": [
+   "Brisbane",
+   "Perth",
+   "Sydney",
+   "Adelaide"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian driver won 8 Formula 1 races and drove for Red Bull?",
+  "options": [
+   "Oscar Piastri",
+   "Mark Webber",
+   "Alan Jones",
+   "Daniel Ricciardo"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is Daniel Ricciardo's celebration known as?",
+  "options": [
+   "The helmet toss",
+   "The shoey",
+   "The salute",
+   "The podium leap"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which tyre compound is softest and fastest in Formula 1's usual naming?",
+  "options": [
+   "Hard",
+   "Soft",
+   "Intermediate",
+   "Medium"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is DRS in Formula 1?",
+  "options": [
+   "A digital race scoreboard",
+   "A driver rating system",
+   "A drag reduction system to help overtaking",
+   "A downforce recovery setting"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many cars usually start a modern Formula 1 race?",
+  "options": [
+   "22",
+   "20",
+   "24",
+   "18"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the front row starting position called in motorsport?",
+  "options": [
+   "The lead lane",
+   "The inside line",
+   "Grid one",
+   "Pole position"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which motorcycle brand is known as the Hog?",
+  "options": [
+   "Triumph",
+   "Harley-Davidson",
+   "Honda",
+   "Ducati"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Italian motorcycle brand is famous for red racing bikes?",
+  "options": [
+   "Aprilia",
+   "Ducati",
+   "MV Agusta",
+   "Moto Guzzi"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian rider won five MotoGP world championships?",
+  "options": [
+   "Troy Bayliss",
+   "Casey Stoner",
+   "Mick Doohan",
+   "Wayne Gardner"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian rider won MotoGP titles in 2007 and 2011?",
+  "options": [
+   "Wayne Gardner",
+   "Jack Miller",
+   "Mick Doohan",
+   "Casey Stoner"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 'cc' measure on an engine?",
+  "options": [
+   "Cubic centimetres of displacement",
+   "Cylinder count",
+   "Combustion cycles",
+   "Cooling capacity"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many cylinders does a V8 engine have?",
+  "options": [
+   "Six",
+   "Twelve",
+   "Eight",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a differential do in a car?",
+  "options": [
+   "Lets driven wheels turn at different speeds",
+   "Filters the air",
+   "Charges the battery",
+   "Changes gears"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What fluid is used in a car's cooling system?",
+  "options": [
+   "Coolant",
+   "Transmission fluid",
+   "Engine oil",
+   "Brake fluid"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the oil warning light usually indicate?",
+  "options": [
+   "An open door",
+   "A flat tyre",
+   "Low oil pressure",
+   "Low fuel"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the recommended action if your car overheats?",
+  "options": [
+   "Drive faster to cool it",
+   "Pour cold water on the engine immediately",
+   "Pull over safely and let it cool",
+   "Turn off the fan"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the legal requirement for tyre tread depth in Australia?",
+  "options": [
+   "At least 1.5 millimetres",
+   "At least 5 millimetres",
+   "At least 10 millimetres",
+   "No minimum"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What does a VIN identify?",
+  "options": [
+   "The insurance policy",
+   "A specific vehicle",
+   "The owner",
+   "A vehicle model only"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many digits are in a modern VIN?",
+  "options": [
+   "17",
+   "10",
+   "20",
+   "12"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian state issues number plates with the slogan 'The Sunshine State'?",
+  "options": [
+   "Victoria",
+   "New South Wales",
+   "South Australia",
+   "Queensland"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'roadworthy certificate' used for in Australia?",
+  "options": [
+   "Confirming emissions only",
+   "Confirming a vehicle is safe to sell or register",
+   "Proving ownership",
+   "Insuring the car"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'green slip' insurance in New South Wales?",
+  "options": [
+   "Compulsory third party injury insurance",
+   "Roadside assistance",
+   "Windscreen cover",
+   "Comprehensive insurance"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian motoring club operates in Victoria?",
+  "options": [
+   "RAA",
+   "RACV",
+   "NRMA",
+   "RACQ"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which motoring club operates in New South Wales?",
+  "options": [
+   "RAC",
+   "NRMA",
+   "RACQ",
+   "RACV"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which motoring club operates in Queensland?",
+  "options": [
+   "NRMA",
+   "RACQ",
+   "RAA",
+   "RACV"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a 'road train' in Australia?",
+  "options": [
+   "A convoy of caravans",
+   "A tourist bus",
+   "A passenger rail service",
+   "A truck pulling multiple trailers"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian highway circles the continent?",
+  "options": [
+   "The Great Northern Highway",
+   "The Hume Highway",
+   "Highway 1",
+   "The Stuart Highway"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which highway runs from Darwin to Port Augusta?",
+  "options": [
+   "The Barkly Highway",
+   "The Eyre Highway",
+   "The Bruce Highway",
+   "The Stuart Highway"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which highway crosses the Nullarbor Plain?",
+  "options": [
+   "The Stuart Highway",
+   "The Great Eastern Highway",
+   "The Barrier Highway",
+   "The Eyre Highway"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Queensland highway runs up the coast from Brisbane to Cairns?",
+  "options": [
+   "The Gore Highway",
+   "The Bruce Highway",
+   "The Capricorn Highway",
+   "The Warrego Highway"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which highway links Sydney and Melbourne?",
+  "options": [
+   "The Pacific Highway",
+   "The Newell Highway",
+   "The Hume Highway",
+   "The Princes Highway"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Australian term for a car's boot in American English?",
+  "options": [
+   "The hood",
+   "The fender",
+   "The trunk",
+   "The cabin"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do Americans call a car's bonnet?",
+  "options": [
+   "The lid",
+   "The hood",
+   "The trunk",
+   "The cowl"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'bull bar' fitted to the front of an Australian vehicle for?",
+  "options": [
+   "Holding a spare tyre",
+   "Protecting against animal strikes",
+   "Mounting a caravan",
+   "Improving aerodynamics"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a 'snorkel' on a four wheel drive for?",
+  "options": [
+   "Venting exhaust",
+   "Raising the air intake for water crossings",
+   "Carrying fuel",
+   "Cooling the cabin"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does 4WD stand for?",
+  "options": [
+   "Four wheel drive",
+   "Fourth wheel dynamic",
+   "Four wheel disc",
+   "Front wheel drive"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is 'low range' used for in a four wheel drive?",
+  "options": [
+   "Slow driving with more torque off road",
+   "High speed highway cruising",
+   "Saving fuel in town",
+   "Towing on flat roads only"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Toyota four wheel drive is an outback icon?",
+  "options": [
+   "The Yaris",
+   "The Corolla",
+   "The Camry",
+   "The LandCruiser"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British four wheel drive brand made the Defender?",
+  "options": [
+   "Jaguar",
+   "MG",
+   "Land Rover",
+   "Rover Cars"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which American brand makes the Wrangler?",
+  "options": [
+   "Jeep",
+   "Chevrolet",
+   "Dodge",
+   "Ford"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fuel type most Australian diesel utes use?",
+  "options": [
+   "Unleaded petrol",
+   "Hydrogen",
+   "Diesel",
+   "LPG"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What octane rating is standard unleaded petrol in Australia?",
+  "options": [
+   "98",
+   "87",
+   "91",
+   "95"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does E10 fuel contain?",
+  "options": [
+   "10 per cent additives",
+   "10 per cent water",
+   "10 per cent diesel",
+   "Up to 10 per cent ethanol"
+  ],
+  "correctIndex": 3,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is regenerative braking used for in electric cars?",
+  "options": [
+   "Increasing top speed",
+   "Cooling the brakes",
+   "Recovering energy back to the battery",
+   "Reducing tyre wear only"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is 'range anxiety' for electric car drivers?",
+  "options": [
+   "Concern about resale value",
+   "Fear of fast acceleration",
+   "Worry about running out of charge",
+   "Worry about noise"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which motoring show featured three British presenters and a tame racing driver?",
+  "options": [
+   "Fifth Gear",
+   "Top Gear",
+   "Car SOS",
+   "Wheeler Dealers"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of Top Gear's anonymous test driver?",
+  "options": [
+   "The Ghost",
+   "The Stig",
+   "The Shadow",
+   "The Driver"
+  ],
+  "correctIndex": 1,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which film franchise features street racing and a family of drivers?",
+  "options": [
+   "Rush",
+   "Days of Thunder",
+   "The Fast and the Furious",
+   "Gone in 60 Seconds"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian film features a black Ford Falcon Interceptor?",
+  "options": [
+   "Running on Empty",
+   "Metal Skin",
+   "Mad Max",
+   "The Cars That Ate Paris"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which car is the DeLorean best known from?",
+  "options": [
+   "Back to the Future",
+   "Bullitt",
+   "Knight Rider",
+   "The Italian Job"
+  ],
+  "correctIndex": 0,
+  "category": "Cars & Motoring",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which classic Mini heist film features a gold robbery in Turin?",
+  "options": [
+   "Rififi",
+   "Ocean's Eleven",
+   "The Italian Job",
+   "The Bank Job"
+  ],
+  "correctIndex": 2,
+  "category": "Cars & Motoring",
+  "difficulty": "medium"
+ }
+]

@@ -1,0 +1,2402 @@
+[
+ {
+  "question": "Which ancient wonder still standing today is the Great Pyramid of Giza a part of?",
+  "options": [
+   "The Seven Wonders of the Ancient World",
+   "The Seven Summits",
+   "The Wonders of the Modern World",
+   "The Nine Realms"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient Egypt",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the boy king of Egypt whose intact tomb was discovered in 1922?",
+  "options": [
+   "Ramses II",
+   "Tutankhamun",
+   "Akhenaten",
+   "Thutmose III"
+  ],
+  "correctIndex": 1,
+  "category": "Ancient Egypt",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The ancient Egyptians preserved their dead through what process?",
+  "options": [
+   "Cremation",
+   "Freezing",
+   "Mummification",
+   "Sky burial"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient Egypt",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which river was central to the survival of ancient Egyptian civilisation?",
+  "options": [
+   "The Tigris",
+   "The Euphrates",
+   "The Amazon",
+   "The Nile"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient Egypt",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the ancient Egyptian writing system that used pictures and symbols?",
+  "options": [
+   "Cuneiform",
+   "Hieroglyphics",
+   "Runes",
+   "Sanskrit"
+  ],
+  "correctIndex": 1,
+  "category": "Ancient Egypt",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Egyptian queen was famously linked to both Julius Caesar and Mark Antony?",
+  "options": [
+   "Nefertiti",
+   "Hatshepsut",
+   "Cleopatra",
+   "Isis"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient Egypt",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Great Sphinx of Giza has the body of a lion and the head of a what?",
+  "options": [
+   "Falcon",
+   "Ram",
+   "Bull",
+   "Human"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient Egypt",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which stone, discovered in 1799, was key to deciphering Egyptian hieroglyphics?",
+  "options": [
+   "The Rosetta Stone",
+   "The Blarney Stone",
+   "The Stone of Scone",
+   "The Philosopher's Stone"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient Egypt",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pharaoh tried to introduce worship of a single sun god, Aten?",
+  "options": [
+   "Tutankhamun",
+   "Akhenaten",
+   "Khufu",
+   "Menes"
+  ],
+  "correctIndex": 1,
+  "category": "Ancient Egypt",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Greek mythology, who is the king of the gods and ruler of Mount Olympus?",
+  "options": [
+   "Poseidon",
+   "Hades",
+   "Apollo",
+   "Zeus"
+  ],
+  "correctIndex": 3,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek god is the god of the sea?",
+  "options": [
+   "Poseidon",
+   "Ares",
+   "Hermes",
+   "Dionysus"
+  ],
+  "correctIndex": 0,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Greek myth, who flew too close to the sun on wings of wax and feathers?",
+  "options": [
+   "Perseus",
+   "Icarus",
+   "Theseus",
+   "Jason"
+  ],
+  "correctIndex": 1,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek hero was known for his incredible strength and twelve labours?",
+  "options": [
+   "Achilles",
+   "Odysseus",
+   "Heracles",
+   "Hector"
+  ],
+  "correctIndex": 2,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the weak spot of the Greek warrior Achilles?",
+  "options": [
+   "His hand",
+   "His eye",
+   "His knee",
+   "His heel"
+  ],
+  "correctIndex": 3,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek goddess of love and beauty was known to the Romans as Venus?",
+  "options": [
+   "Aphrodite",
+   "Athena",
+   "Hera",
+   "Artemis"
+  ],
+  "correctIndex": 0,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Minotaur, a creature with the body of a man and the head of a bull, lived in what?",
+  "options": [
+   "A temple",
+   "A labyrinth",
+   "A volcano",
+   "A cave under the sea"
+  ],
+  "correctIndex": 1,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek god ruled the Underworld?",
+  "options": [
+   "Zeus",
+   "Apollo",
+   "Hades",
+   "Cronus"
+  ],
+  "correctIndex": 2,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Greek goddess of wisdom was born from the head of Zeus?",
+  "options": [
+   "Athena",
+   "Demeter",
+   "Hestia",
+   "Persephone"
+  ],
+  "correctIndex": 0,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Medusa was a monster whose gaze could turn people into what?",
+  "options": [
+   "Gold",
+   "Stone",
+   "Ash",
+   "Water"
+  ],
+  "correctIndex": 1,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which hero killed Medusa by looking at her reflection in his shield?",
+  "options": [
+   "Theseus",
+   "Jason",
+   "Perseus",
+   "Bellerophon"
+  ],
+  "correctIndex": 2,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Titan was condemned to hold up the sky for eternity?",
+  "options": [
+   "Atlas",
+   "Prometheus",
+   "Cronus",
+   "Oceanus"
+  ],
+  "correctIndex": 0,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which winged horse features in Greek mythology?",
+  "options": [
+   "Centaur",
+   "Griffin",
+   "Pegasus",
+   "Chimera"
+  ],
+  "correctIndex": 2,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The many-headed serpent slain by Heracles was known as the?",
+  "options": [
+   "Cerberus",
+   "Kraken",
+   "Basilisk",
+   "Hydra"
+  ],
+  "correctIndex": 3,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which three-headed dog guarded the entrance to the Greek Underworld?",
+  "options": [
+   "Cerberus",
+   "Orthrus",
+   "Argos",
+   "Fluffy"
+  ],
+  "correctIndex": 0,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek messenger god wore winged sandals?",
+  "options": [
+   "Apollo",
+   "Ares",
+   "Hermes",
+   "Hephaestus"
+  ],
+  "correctIndex": 2,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Norse mythology, who is the god of thunder wielding the hammer Mjolnir?",
+  "options": [
+   "Loki",
+   "Odin",
+   "Freya",
+   "Thor"
+  ],
+  "correctIndex": 3,
+  "category": "Norse Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Norse god is famous as a trickster?",
+  "options": [
+   "Frigg",
+   "Loki",
+   "Njord",
+   "Vidar"
+  ],
+  "correctIndex": 1,
+  "category": "Norse Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the name of the prophesied end of the world in Norse mythology?",
+  "options": [
+   "Armageddon",
+   "The Rapture",
+   "Gotterdammerung only",
+   "Ragnarok"
+  ],
+  "correctIndex": 3,
+  "category": "Norse Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The great world tree that connects the nine realms in Norse myth is called?",
+  "options": [
+   "Yggdrasil",
+   "Bifrost",
+   "Gungnir",
+   "Sleipnir"
+  ],
+  "correctIndex": 0,
+  "category": "Norse Mythology",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which female warriors in Norse myth chose who would die in battle?",
+  "options": [
+   "The Norns",
+   "The Fates",
+   "The Muses",
+   "The Valkyries"
+  ],
+  "correctIndex": 3,
+  "category": "Norse Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Odin's eight-legged horse in Norse mythology is named?",
+  "options": [
+   "Sleipnir",
+   "Fenrir",
+   "Jormungandr",
+   "Gullfaxi"
+  ],
+  "correctIndex": 0,
+  "category": "Norse Mythology",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which empire was ruled from the city of Rome and led by figures like Julius Caesar?",
+  "options": [
+   "The Ottoman Empire",
+   "The Roman Empire",
+   "The Persian Empire",
+   "The Mongol Empire"
+  ],
+  "correctIndex": 1,
+  "category": "Ancient Rome",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Julius Caesar was famously assassinated on which date, known as the Ides of March?",
+  "options": [
+   "1 January",
+   "1 March",
+   "15 March",
+   "25 December"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient Rome",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What were the large arenas where Roman gladiators fought called, the most famous being in Rome?",
+  "options": [
+   "The Forum",
+   "The Pantheon",
+   "The Circus",
+   "The Colosseum"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient Rome",
+  "difficulty": "easy"
+ },
+ {
+  "question": "According to legend, Rome was founded by twin brothers named Romulus and?",
+  "options": [
+   "Remus",
+   "Brutus",
+   "Cassius",
+   "Marcus"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient Rome",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The famous defensive wall built by the Romans across northern England is named after which emperor?",
+  "options": [
+   "Trajan",
+   "Augustus",
+   "Hadrian",
+   "Constantine"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient Rome",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What did the Romans call the paved public square at the centre of a city?",
+  "options": [
+   "The Agora",
+   "The Piazza",
+   "The Colosseum",
+   "The Forum"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient Rome",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Hannibal famously crossed the Alps to attack Rome using what animals?",
+  "options": [
+   "Horses",
+   "Elephants",
+   "Camels",
+   "Oxen"
+  ],
+  "correctIndex": 1,
+  "category": "Ancient Rome",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient city was destroyed and buried by the eruption of Mount Vesuvius in AD 79?",
+  "options": [
+   "Carthage",
+   "Athens",
+   "Pompeii",
+   "Troy"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient Rome",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Roman numeral 'C' represents which number?",
+  "options": [
+   "50",
+   "500",
+   "1000",
+   "100"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient Rome",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the young Macedonian king who conquered a vast empire before dying at age 32?",
+  "options": [
+   "Alexander the Great",
+   "Julius Caesar",
+   "Cyrus the Great",
+   "Leonidas"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient World",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The ancient civilisation of Mesopotamia developed between which two rivers?",
+  "options": [
+   "The Nile and the Congo",
+   "The Ganges and the Indus",
+   "The Tigris and the Euphrates",
+   "The Yangtze and the Yellow"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient World",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Great Wall was built to defend which country from northern invaders?",
+  "options": [
+   "China",
+   "Japan",
+   "India",
+   "Mongolia"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient World",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The famous army of over 8,000 clay soldiers buried in China is known as the?",
+  "options": [
+   "Clay Legion",
+   "Terracotta Army",
+   "Jade Guard",
+   "Bronze Battalion"
+  ],
+  "correctIndex": 1,
+  "category": "Ancient World",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ancient Greek is often called the 'father of medicine'?",
+  "options": [
+   "Socrates",
+   "Plato",
+   "Hippocrates",
+   "Aristotle"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient World",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Olympic Games originated in which ancient country?",
+  "options": [
+   "Italy",
+   "Egypt",
+   "Turkey",
+   "Greece"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient World",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Aztec civilisation was based in which modern-day country?",
+  "options": [
+   "Peru",
+   "Mexico",
+   "Guatemala",
+   "Colombia"
+  ],
+  "correctIndex": 1,
+  "category": "Ancient World",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Greek philosopher was the teacher of Alexander the Great?",
+  "options": [
+   "Socrates",
+   "Plato",
+   "Aristotle",
+   "Pythagoras"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient World",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Code of Hammurabi, one of the oldest sets of written laws, came from which empire?",
+  "options": [
+   "Egypt",
+   "Greece",
+   "Rome",
+   "Babylon"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient World",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Stonehenge, the prehistoric monument of standing stones, is located in which country?",
+  "options": [
+   "England",
+   "Ireland",
+   "France",
+   "Scotland"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient World",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wives did King Henry VIII of England have?",
+  "options": [
+   "Four",
+   "Five",
+   "Seven",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "British Monarchy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British queen gave her name to an era and reigned for over 60 years in the 1800s?",
+  "options": [
+   "Queen Victoria",
+   "Elizabeth I",
+   "Mary II",
+   "Queen Anne"
+  ],
+  "correctIndex": 0,
+  "category": "British Monarchy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which king signed the Magna Carta in 1215, limiting the power of the English crown?",
+  "options": [
+   "King Henry VIII",
+   "King John",
+   "King Richard I",
+   "King Edward I"
+  ],
+  "correctIndex": 1,
+  "category": "British Monarchy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who became King of the United Kingdom after the death of Queen Elizabeth II in 2022?",
+  "options": [
+   "Prince William",
+   "Prince Harry",
+   "King Charles III",
+   "Prince Philip"
+  ],
+  "correctIndex": 2,
+  "category": "British Monarchy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who led the Norman conquest of England in 1066?",
+  "options": [
+   "William the Conqueror",
+   "Richard the Lionheart",
+   "Alfred the Great",
+   "Canute"
+  ],
+  "correctIndex": 0,
+  "category": "British Monarchy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Queen Elizabeth II was the longest-reigning monarch in British history, ruling for how many years?",
+  "options": [
+   "Around 40 years",
+   "Around 70 years",
+   "Around 90 years",
+   "Around 25 years"
+  ],
+  "correctIndex": 1,
+  "category": "British Monarchy",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two of Henry VIII's wives were executed by beheading?",
+  "options": [
+   "Catherine of Aragon and Jane Seymour",
+   "Anne of Cleves and Catherine Parr",
+   "Anne Boleyn and Catherine Howard",
+   "Jane Seymour and Anne Boleyn"
+  ],
+  "correctIndex": 2,
+  "category": "British Monarchy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "King Richard I of England was better known by what nickname?",
+  "options": [
+   "Richard the Lionheart",
+   "Richard the Bold",
+   "Richard the Great",
+   "Richard the Wise"
+  ],
+  "correctIndex": 0,
+  "category": "British Monarchy",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which English king reportedly ordered the tide to stop coming in, to prove a point about his limits?",
+  "options": [
+   "Alfred",
+   "Canute",
+   "Ethelred",
+   "Harold"
+  ],
+  "correctIndex": 1,
+  "category": "British Monarchy",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which year did World War I begin?",
+  "options": [
+   "1912",
+   "1918",
+   "1914",
+   "1939"
+  ],
+  "correctIndex": 2,
+  "category": "World War I",
+  "difficulty": "easy"
+ },
+ {
+  "question": "World War I is often said to have been triggered by the assassination of which figure?",
+  "options": [
+   "Kaiser Wilhelm",
+   "Archduke Franz Ferdinand",
+   "Tsar Nicholas II",
+   "President Wilson"
+  ],
+  "correctIndex": 1,
+  "category": "World War I",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Gallipoli campaign of 1915 is commemorated in Australia and New Zealand on which day?",
+  "options": [
+   "Australia Day",
+   "Remembrance Day",
+   "Anzac Day",
+   "Labour Day"
+  ],
+  "correctIndex": 2,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Anzac forces at Gallipoli in 1915 landed on the shores of which country?",
+  "options": [
+   "Greece",
+   "France",
+   "Egypt",
+   "Turkey"
+  ],
+  "correctIndex": 3,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the acronym ANZAC stand for?",
+  "options": [
+   "Australian and New Zealand Army Corps",
+   "Australian National Army Corps",
+   "Allied New Zealand Air Command",
+   "Anglo New Zealand Armed Contingent"
+  ],
+  "correctIndex": 0,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which treaty formally ended World War I in 1919?",
+  "options": [
+   "The Treaty of Paris",
+   "The Treaty of Ghent",
+   "The Treaty of Versailles",
+   "The Treaty of Vienna"
+  ],
+  "correctIndex": 2,
+  "category": "World War I",
+  "difficulty": "medium"
+ },
+ {
+  "question": "World War I was originally known by what optimistic name?",
+  "options": [
+   "The Cold War",
+   "The Hundred Years' War",
+   "The Great Game",
+   "The Great War"
+  ],
+  "correctIndex": 3,
+  "category": "World War I",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which leader was in charge of Nazi Germany during World War II?",
+  "options": [
+   "Joseph Stalin",
+   "Adolf Hitler",
+   "Benito Mussolini",
+   "Winston Churchill"
+  ],
+  "correctIndex": 1,
+  "category": "World War II",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which surprise attack in 1941 brought the United States into World War II?",
+  "options": [
+   "The Battle of Midway",
+   "The invasion of Poland",
+   "The bombing of Darwin",
+   "The attack on Pearl Harbor"
+  ],
+  "correctIndex": 3,
+  "category": "World War II",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the British Prime Minister for most of World War II?",
+  "options": [
+   "Winston Churchill",
+   "Neville Chamberlain",
+   "Clement Attlee",
+   "Anthony Eden"
+  ],
+  "correctIndex": 0,
+  "category": "World War II",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Australian city bombed by Japanese aircraft in February 1942 was?",
+  "options": [
+   "Perth",
+   "Darwin",
+   "Brisbane",
+   "Cairns"
+  ],
+  "correctIndex": 1,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did World War II end?",
+  "options": [
+   "1943",
+   "1944",
+   "1945",
+   "1946"
+  ],
+  "correctIndex": 2,
+  "category": "World War II",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two Japanese cities had atomic bombs dropped on them in 1945?",
+  "options": [
+   "Tokyo and Osaka",
+   "Kyoto and Kobe",
+   "Nagoya and Sapporo",
+   "Hiroshima and Nagasaki"
+  ],
+  "correctIndex": 3,
+  "category": "World War II",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Nazi leader Adolf Hitler led which political party?",
+  "options": [
+   "The Nazi Party",
+   "The Fascist Party",
+   "The Communist Party",
+   "The Labour Party"
+  ],
+  "correctIndex": 0,
+  "category": "World War II",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country did Germany invade in September 1939, triggering war with Britain and France?",
+  "options": [
+   "France",
+   "Poland",
+   "Russia",
+   "Belgium"
+  ],
+  "correctIndex": 1,
+  "category": "World War II",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was the fascist dictator of Italy during World War II?",
+  "options": [
+   "Francisco Franco",
+   "Adolf Hitler",
+   "Emperor Hirohito",
+   "Benito Mussolini"
+  ],
+  "correctIndex": 3,
+  "category": "World War II",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The systematic Nazi persecution and murder of six million Jews is known as the?",
+  "options": [
+   "The Purge",
+   "The Holocaust",
+   "The Blitz",
+   "The Terror"
+  ],
+  "correctIndex": 1,
+  "category": "World War II",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian explorer sailed west in 1492 and reached the Americas?",
+  "options": [
+   "Christopher Columbus",
+   "Ferdinand Magellan",
+   "Vasco da Gama",
+   "Amerigo Vespucci"
+  ],
+  "correctIndex": 0,
+  "category": "Exploration",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British explorer charted much of the east coast of Australia in 1770?",
+  "options": [
+   "Matthew Flinders",
+   "Abel Tasman",
+   "Captain James Cook",
+   "William Dampier"
+  ],
+  "correctIndex": 2,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Dutch explorer was the first European to sight Tasmania and New Zealand?",
+  "options": [
+   "Willem Janszoon",
+   "Dirk Hartog",
+   "Vasco da Gama",
+   "Abel Tasman"
+  ],
+  "correctIndex": 3,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which explorer is credited with being the first to lead a circumnavigation of Australia and popularising its name?",
+  "options": [
+   "Matthew Flinders",
+   "James Cook",
+   "Charles Sturt",
+   "John Oxley"
+  ],
+  "correctIndex": 0,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The ill-fated 1860s expedition to cross Australia south to north is known by which two names?",
+  "options": [
+   "Sturt and Stuart",
+   "Burke and Wills",
+   "Lewis and Clark",
+   "Hume and Hovell"
+  ],
+  "correctIndex": 1,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Norwegian explorer was the first to reach the South Pole, in 1911?",
+  "options": [
+   "Robert Falcon Scott",
+   "Ernest Shackleton",
+   "Douglas Mawson",
+   "Roald Amundsen"
+  ],
+  "correctIndex": 3,
+  "category": "Exploration",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian-based explorer led major expeditions to Antarctica in the early 1900s?",
+  "options": [
+   "Douglas Mawson",
+   "Edmund Hillary",
+   "Roald Amundsen",
+   "John Franklin"
+  ],
+  "correctIndex": 0,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Marco Polo was a famous traveller from which Italian city who journeyed to China?",
+  "options": [
+   "Rome",
+   "Florence",
+   "Venice",
+   "Naples"
+  ],
+  "correctIndex": 2,
+  "category": "Exploration",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which fleet of ships first brought British convicts to establish a colony in Australia in 1788?",
+  "options": [
+   "The Grand Armada",
+   "The Golden Fleet",
+   "The Tall Ships",
+   "The First Fleet"
+  ],
+  "correctIndex": 3,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year did the First Fleet arrive at Sydney Cove?",
+  "options": [
+   "1788",
+   "1770",
+   "1801",
+   "1851"
+  ],
+  "correctIndex": 0,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Australian colonies federated into a single nation in which year?",
+  "options": [
+   "1788",
+   "1888",
+   "1901",
+   "1945"
+  ],
+  "correctIndex": 2,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which document, adopted in 1901, established the Commonwealth of Australia?",
+  "options": [
+   "The Bill of Rights",
+   "The Declaration of Independence",
+   "The Magna Carta",
+   "The Australian Constitution"
+  ],
+  "correctIndex": 3,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which famous Australian bushranger wore homemade metal armour in his final shootout?",
+  "options": [
+   "Captain Thunderbolt",
+   "Ned Kelly",
+   "Ben Hall",
+   "Dan Morgan"
+  ],
+  "correctIndex": 1,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The discovery of what in the 1850s sparked a huge population boom in Victoria and NSW?",
+  "options": [
+   "Coal",
+   "Iron",
+   "Gold",
+   "Oil"
+  ],
+  "correctIndex": 2,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the name of the 1808 rebellion that overthrew Governor William Bligh in NSW?",
+  "options": [
+   "The Eureka Rebellion",
+   "The Castle Hill Rising",
+   "The Vinegar Hill Revolt",
+   "The Rum Rebellion"
+  ],
+  "correctIndex": 3,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian city was the site of the 1854 Eureka Stockade?",
+  "options": [
+   "Ballarat",
+   "Bendigo",
+   "Sydney",
+   "Melbourne"
+  ],
+  "correctIndex": 0,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Indigenous peoples of mainland Australia are collectively referred to by which term?",
+  "options": [
+   "Maori",
+   "Aboriginal Australians",
+   "Polynesians",
+   "Inuit"
+  ],
+  "correctIndex": 1,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which 1992 High Court decision recognised native title and overturned the idea of 'terra nullius'?",
+  "options": [
+   "The Wik decision",
+   "The Tampa case",
+   "The Mabo decision",
+   "The Franklin decision"
+  ],
+  "correctIndex": 2,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Australia's national capital, purpose-built as the seat of government, is which city?",
+  "options": [
+   "Sydney",
+   "Melbourne",
+   "Perth",
+   "Canberra"
+  ],
+  "correctIndex": 3,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian Prime Minister disappeared while swimming in the sea in 1967?",
+  "options": [
+   "Harold Holt",
+   "Robert Menzies",
+   "Gough Whitlam",
+   "John Curtin"
+  ],
+  "correctIndex": 0,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian Prime Minister was famously dismissed by the Governor-General in 1975?",
+  "options": [
+   "Malcolm Fraser",
+   "Gough Whitlam",
+   "Bob Hawke",
+   "Paul Keating"
+  ],
+  "correctIndex": 1,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Sydney Harbour Bridge was officially opened in which decade?",
+  "options": [
+   "1910s",
+   "1920s",
+   "1930s",
+   "1950s"
+  ],
+  "correctIndex": 2,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which document adopted in 1776 declared the American colonies independent from Britain?",
+  "options": [
+   "The Declaration of Independence",
+   "The Constitution",
+   "The Bill of Rights",
+   "The Gettysburg Address"
+  ],
+  "correctIndex": 0,
+  "category": "American History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the first President of the United States?",
+  "options": [
+   "Thomas Jefferson",
+   "George Washington",
+   "Abraham Lincoln",
+   "Benjamin Franklin"
+  ],
+  "correctIndex": 1,
+  "category": "American History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The American Civil War of the 1860s was largely fought over the issue of what?",
+  "options": [
+   "Taxation",
+   "Religion",
+   "Slavery",
+   "Land borders"
+  ],
+  "correctIndex": 2,
+  "category": "American History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US President was assassinated in Dallas in 1963?",
+  "options": [
+   "Franklin Roosevelt",
+   "John F. Kennedy",
+   "Abraham Lincoln",
+   "Ronald Reagan"
+  ],
+  "correctIndex": 1,
+  "category": "American History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who led the American civil rights movement and gave the 'I Have a Dream' speech?",
+  "options": [
+   "Malcolm X",
+   "Rosa Parks",
+   "Martin Luther King Jr.",
+   "Nelson Mandela"
+  ],
+  "correctIndex": 2,
+  "category": "American History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Wall Street Crash that began the Great Depression happened in which year?",
+  "options": [
+   "1919",
+   "1925",
+   "1933",
+   "1929"
+  ],
+  "correctIndex": 3,
+  "category": "American History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two superpowers were the main rivals during the Cold War?",
+  "options": [
+   "Britain and France",
+   "The USA and the Soviet Union",
+   "Germany and Japan",
+   "China and India"
+  ],
+  "correctIndex": 1,
+  "category": "20th Century History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French queen was executed during the French Revolution and is linked to the phrase 'let them eat cake'?",
+  "options": [
+   "Catherine de Medici",
+   "Josephine",
+   "Anne of Austria",
+   "Marie Antoinette"
+  ],
+  "correctIndex": 3,
+  "category": "European History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French military leader crowned himself Emperor in 1804?",
+  "options": [
+   "Napoleon Bonaparte",
+   "Louis XVI",
+   "Charles de Gaulle",
+   "Robespierre"
+  ],
+  "correctIndex": 0,
+  "category": "European History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Napoleon was finally defeated in 1815 at which battle?",
+  "options": [
+   "Trafalgar",
+   "Waterloo",
+   "Austerlitz",
+   "Borodino"
+  ],
+  "correctIndex": 1,
+  "category": "European History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which island was Napoleon exiled after his final defeat, where he died?",
+  "options": [
+   "Elba",
+   "Corsica",
+   "Saint Helena",
+   "Sardinia"
+  ],
+  "correctIndex": 2,
+  "category": "European History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The wall that divided a German city from 1961 to 1989 was the?",
+  "options": [
+   "Hadrian's Wall",
+   "The Great Wall",
+   "The Iron Curtain fence",
+   "Berlin Wall"
+  ],
+  "correctIndex": 3,
+  "category": "20th Century History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The 1917 revolution that brought communists to power took place in which country?",
+  "options": [
+   "China",
+   "Russia",
+   "Cuba",
+   "Germany"
+  ],
+  "correctIndex": 1,
+  "category": "20th Century History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who led India's non-violent independence movement against British rule?",
+  "options": [
+   "Jawaharlal Nehru",
+   "Muhammad Ali Jinnah",
+   "Subhas Chandra Bose",
+   "Mahatma Gandhi"
+  ],
+  "correctIndex": 3,
+  "category": "20th Century History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which South African leader was imprisoned for 27 years and later became president?",
+  "options": [
+   "Nelson Mandela",
+   "Desmond Tutu",
+   "F.W. de Klerk",
+   "Steve Biko"
+  ],
+  "correctIndex": 0,
+  "category": "20th Century History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The system of racial segregation in South Africa was known as?",
+  "options": [
+   "Segregation",
+   "Apartheid",
+   "Jim Crow",
+   "The Pass Laws only"
+  ],
+  "correctIndex": 1,
+  "category": "20th Century History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The period of European history marking a rebirth of art and learning is called the?",
+  "options": [
+   "The Enlightenment",
+   "The Reformation",
+   "The Renaissance",
+   "The Industrial Age"
+  ],
+  "correctIndex": 2,
+  "category": "European History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Italian artist painted the Mona Lisa and the Last Supper?",
+  "options": [
+   "Michelangelo",
+   "Raphael",
+   "Donatello",
+   "Leonardo da Vinci"
+  ],
+  "correctIndex": 3,
+  "category": "European History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who painted the ceiling of the Sistine Chapel in Rome?",
+  "options": [
+   "Michelangelo",
+   "Leonardo da Vinci",
+   "Botticelli",
+   "Titian"
+  ],
+  "correctIndex": 0,
+  "category": "European History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Martin Luther is said to have nailed his 95 theses to a church door in which town?",
+  "options": [
+   "Rome",
+   "Geneva",
+   "Wittenberg",
+   "Canterbury"
+  ],
+  "correctIndex": 2,
+  "category": "Religion & History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The invention of the printing press in the 15th century is credited to?",
+  "options": [
+   "Leonardo da Vinci",
+   "Galileo Galilei",
+   "Isaac Newton",
+   "Johannes Gutenberg"
+  ],
+  "correctIndex": 3,
+  "category": "European History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The devastating plague that killed a large part of Europe's population in the 1300s is called the?",
+  "options": [
+   "The Spanish Flu",
+   "The Black Death",
+   "The Great Plague of London",
+   "Cholera"
+  ],
+  "correctIndex": 1,
+  "category": "European History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which French peasant girl led armies during the Hundred Years' War and was later burned at the stake?",
+  "options": [
+   "Marie Curie",
+   "Catherine de Medici",
+   "Joan of Arc",
+   "Eleanor of Aquitaine"
+  ],
+  "correctIndex": 2,
+  "category": "European History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Hundred Years' War was mainly fought between England and which other country?",
+  "options": [
+   "Spain",
+   "Germany",
+   "Italy",
+   "France"
+  ],
+  "correctIndex": 3,
+  "category": "European History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which religion's holy book is the Quran?",
+  "options": [
+   "Islam",
+   "Christianity",
+   "Hinduism",
+   "Buddhism"
+  ],
+  "correctIndex": 0,
+  "category": "Religion Basics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The central figure of Christianity is?",
+  "options": [
+   "Muhammad",
+   "Jesus Christ",
+   "Buddha",
+   "Abraham"
+  ],
+  "correctIndex": 1,
+  "category": "Religion Basics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which religion follows the teachings of Siddhartha Gautama?",
+  "options": [
+   "Hinduism",
+   "Islam",
+   "Buddhism",
+   "Judaism"
+  ],
+  "correctIndex": 2,
+  "category": "Religion Basics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which city is considered holy by Judaism, Christianity and Islam?",
+  "options": [
+   "Jerusalem",
+   "Mecca",
+   "Rome",
+   "Athens"
+  ],
+  "correctIndex": 0,
+  "category": "Religion Basics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Muslims around the world face which city when they pray?",
+  "options": [
+   "Jerusalem",
+   "Mecca",
+   "Medina",
+   "Cairo"
+  ],
+  "correctIndex": 1,
+  "category": "Religion Basics",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many Ten Commandments are there in the Bible, as the name suggests?",
+  "options": [
+   "Seven",
+   "Twelve",
+   "Five",
+   "Ten"
+  ],
+  "correctIndex": 3,
+  "category": "Religion Basics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The founder of Islam, regarded as its final prophet, is?",
+  "options": [
+   "Muhammad",
+   "Moses",
+   "Jesus",
+   "Abraham"
+  ],
+  "correctIndex": 0,
+  "category": "Religion Basics",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which river is considered sacred in Hinduism?",
+  "options": [
+   "The Nile",
+   "The Jordan",
+   "The Ganges",
+   "The Yangtze"
+  ],
+  "correctIndex": 2,
+  "category": "Religion Basics",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which empire, centred on Constantinople, lasted until it was conquered in 1453?",
+  "options": [
+   "The Roman Empire",
+   "The Byzantine Empire",
+   "The Persian Empire",
+   "The Mongol Empire"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The city of Constantinople was renamed to what after its 1453 conquest?",
+  "options": [
+   "Athens",
+   "Baghdad",
+   "Istanbul",
+   "Ankara"
+  ],
+  "correctIndex": 2,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which trade route connected China with the Mediterranean world for centuries?",
+  "options": [
+   "The Spice Route",
+   "The Amber Road",
+   "The Tea Highway",
+   "The Silk Road"
+  ],
+  "correctIndex": 3,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Russian emperors before 1917 held which title?",
+  "options": [
+   "Sultan",
+   "Tsar",
+   "Kaiser",
+   "Khan"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which last Tsar of Russia was overthrown and executed with his family in 1918?",
+  "options": [
+   "Peter the Great",
+   "Ivan the Terrible",
+   "Alexander III",
+   "Nicholas II"
+  ],
+  "correctIndex": 3,
+  "category": "World History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Industrial Revolution first began in which country in the 18th century?",
+  "options": [
+   "Britain",
+   "France",
+   "Germany",
+   "United States"
+  ],
+  "correctIndex": 0,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which invention by James Watt helped power the Industrial Revolution?",
+  "options": [
+   "The telephone",
+   "The improved steam engine",
+   "The light bulb",
+   "The telegraph"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Egyptian sun god, often shown with a falcon head, was named?",
+  "options": [
+   "Osiris",
+   "Ra",
+   "Thoth",
+   "Anubis"
+  ],
+  "correctIndex": 1,
+  "category": "Egyptian Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Egyptian myth, the god Osiris ruled over what?",
+  "options": [
+   "The sky",
+   "The sun",
+   "The Nile floods only",
+   "The afterlife and the dead"
+  ],
+  "correctIndex": 3,
+  "category": "Egyptian Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Egyptian sky god, son of Osiris and Isis, was depicted as a falcon?",
+  "options": [
+   "Anubis",
+   "Horus",
+   "Thoth",
+   "Set"
+  ],
+  "correctIndex": 1,
+  "category": "Egyptian Mythology",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Roman god of war gave his name to a planet and a month?",
+  "options": [
+   "Jupiter",
+   "Mars",
+   "Neptune",
+   "Mercury"
+  ],
+  "correctIndex": 1,
+  "category": "Roman Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Roman two-faced god of doorways and beginnings, whose name gives us January, was?",
+  "options": [
+   "Jupiter",
+   "Mars",
+   "Saturn",
+   "Janus"
+  ],
+  "correctIndex": 3,
+  "category": "Roman Mythology",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Roman goddess of the hunt corresponds to the Greek Artemis?",
+  "options": [
+   "Diana",
+   "Minerva",
+   "Juno",
+   "Ceres"
+  ],
+  "correctIndex": 0,
+  "category": "Roman Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Roman god of the sea, equivalent to Poseidon, was named?",
+  "options": [
+   "Mars",
+   "Neptune",
+   "Mercury",
+   "Vulcan"
+  ],
+  "correctIndex": 1,
+  "category": "Roman Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Cupid, the Roman god of love, is usually shown carrying what?",
+  "options": [
+   "A trident",
+   "A sword",
+   "A bow and arrow",
+   "A hammer"
+  ],
+  "correctIndex": 2,
+  "category": "Roman Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country was divided into North and South, leading to a war in the early 1950s?",
+  "options": [
+   "Korea",
+   "Vietnam",
+   "Germany",
+   "China"
+  ],
+  "correctIndex": 0,
+  "category": "20th Century History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The first human to travel into space, in 1961, was?",
+  "options": [
+   "Neil Armstrong",
+   "Buzz Aldrin",
+   "Yuri Gagarin",
+   "John Glenn"
+  ],
+  "correctIndex": 2,
+  "category": "20th Century History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US space mission first landed humans on the Moon in 1969?",
+  "options": [
+   "Apollo 13",
+   "Apollo 8",
+   "Gemini 4",
+   "Apollo 11"
+  ],
+  "correctIndex": 3,
+  "category": "20th Century History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who was the first person to walk on the Moon?",
+  "options": [
+   "Neil Armstrong",
+   "Buzz Aldrin",
+   "Michael Collins",
+   "Yuri Gagarin"
+  ],
+  "correctIndex": 0,
+  "category": "20th Century History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Great Depression of the 1930s was a worldwide economic collapse triggered by events in which country?",
+  "options": [
+   "Britain",
+   "The United States",
+   "Germany",
+   "France"
+  ],
+  "correctIndex": 1,
+  "category": "20th Century History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The ancient Library of Alexandria was located in which country?",
+  "options": [
+   "Egypt",
+   "Greece",
+   "Italy",
+   "Turkey"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient World",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which African kingdom was famous for the wealth of its ruler Mansa Musa?",
+  "options": [
+   "Zulu",
+   "Mali",
+   "Egypt",
+   "Ethiopia"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Antarctic explorer led the Endurance expedition and famously saved his entire crew?",
+  "options": [
+   "Robert Scott",
+   "Roald Amundsen",
+   "Ernest Shackleton",
+   "Douglas Mawson"
+  ],
+  "correctIndex": 2,
+  "category": "Exploration",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Edmund Hillary, who conquered Everest, came from which country?",
+  "options": [
+   "New Zealand",
+   "Australia",
+   "Britain",
+   "Nepal"
+  ],
+  "correctIndex": 0,
+  "category": "Exploration",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Viking peoples originally came from which region of Europe?",
+  "options": [
+   "The Mediterranean",
+   "Scandinavia",
+   "The Balkans",
+   "Iberia"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wireless communication technology is named after a 10th-century Viking king?",
+  "options": [
+   "Wi-Fi",
+   "GPS",
+   "Radar",
+   "Bluetooth"
+  ],
+  "correctIndex": 3,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Spanish conquistador Hernan Cortes led the conquest of which empire?",
+  "options": [
+   "The Aztec Empire",
+   "The Inca Empire",
+   "The Maya",
+   "The Zulu Kingdom"
+  ],
+  "correctIndex": 0,
+  "category": "World History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which conquistador overthrew the Inca Empire in the 1530s?",
+  "options": [
+   "Hernan Cortes",
+   "Francisco Pizarro",
+   "Vasco Nunez de Balboa",
+   "Hernando de Soto"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which English playwright, born in 1564, wrote Hamlet and Romeo and Juliet?",
+  "options": [
+   "Charles Dickens",
+   "Geoffrey Chaucer",
+   "Christopher Marlowe",
+   "William Shakespeare"
+  ],
+  "correctIndex": 3,
+  "category": "European History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which English scientist formulated the laws of motion and gravity in the 17th century?",
+  "options": [
+   "Galileo Galilei",
+   "Isaac Newton",
+   "Charles Darwin",
+   "Albert Einstein"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The naturalist Charles Darwin developed which famous scientific theory?",
+  "options": [
+   "The theory of relativity",
+   "The theory of gravity",
+   "The theory of evolution by natural selection",
+   "The theory of continental drift"
+  ],
+  "correctIndex": 2,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which ship carried Charles Darwin on his famous voyage to the Galapagos?",
+  "options": [
+   "The Endeavour",
+   "The Endurance",
+   "The Santa Maria",
+   "The Beagle"
+  ],
+  "correctIndex": 3,
+  "category": "World History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Cleopatra was the last active ruler of which dynasty in Egypt?",
+  "options": [
+   "The Ptolemaic dynasty",
+   "The New Kingdom",
+   "The Fatimid dynasty",
+   "The Mamluk dynasty"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient Egypt",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Trojan War, according to legend, was ended by the Greeks using what famous trick?",
+  "options": [
+   "A poisoned feast",
+   "The Trojan Horse",
+   "A tunnel under the walls",
+   "A fake retreat by sea"
+  ],
+  "correctIndex": 1,
+  "category": "Greek Mythology",
+  "difficulty": "easy"
+ },
+ {
+  "question": "According to the Bible, who led the Israelites out of slavery in Egypt?",
+  "options": [
+   "Abraham",
+   "David",
+   "Moses",
+   "Noah"
+  ],
+  "correctIndex": 2,
+  "category": "Religion & History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Bible, who is said to have built an ark to survive a great flood?",
+  "options": [
+   "Moses",
+   "Abraham",
+   "David",
+   "Noah"
+  ],
+  "correctIndex": 3,
+  "category": "Religion & History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which wall separated communist East from West across a European continent, described as an 'iron' one?",
+  "options": [
+   "The Iron Curtain",
+   "The Maginot Line",
+   "The Great Wall",
+   "Hadrian's Wall"
+  ],
+  "correctIndex": 0,
+  "category": "20th Century History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Suez Canal, opened in 1869, connects the Mediterranean Sea to which other sea?",
+  "options": [
+   "The Black Sea",
+   "The Red Sea",
+   "The Caspian Sea",
+   "The Arabian Sea"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which disaster saw a famous 'unsinkable' ocean liner sink in 1912?",
+  "options": [
+   "The Lusitania",
+   "The Britannic",
+   "The Bismarck",
+   "The Titanic"
+  ],
+  "correctIndex": 3,
+  "category": "20th Century History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The Titanic sank after colliding with what in the North Atlantic?",
+  "options": [
+   "An iceberg",
+   "A reef",
+   "Another ship",
+   "A whale"
+  ],
+  "correctIndex": 0,
+  "category": "20th Century History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pandemic killed tens of millions worldwide just after World War I?",
+  "options": [
+   "The Black Death",
+   "The Spanish Flu",
+   "Cholera",
+   "The Plague of Justinian"
+  ],
+  "correctIndex": 1,
+  "category": "20th Century History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Polish-born scientist won Nobel Prizes in both physics and chemistry?",
+  "options": [
+   "Marie Curie",
+   "Rosalind Franklin",
+   "Lise Meitner",
+   "Ada Lovelace"
+  ],
+  "correctIndex": 0,
+  "category": "World History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian racehorse became a national hero during the Great Depression?",
+  "options": [
+   "Makybe Diva",
+   "Phar Lap",
+   "Winx",
+   "Black Caviar"
+  ],
+  "correctIndex": 1,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Australian goldfields attracted large numbers of migrants from which Asian country in the 1850s?",
+  "options": [
+   "Japan",
+   "India",
+   "China",
+   "Vietnam"
+  ],
+  "correctIndex": 2,
+  "category": "Australian History",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The policy restricting non-European immigration to Australia for much of the 20th century was known as the?",
+  "options": [
+   "Assimilation Policy",
+   "Federation Policy",
+   "Ten Pound Scheme",
+   "White Australia Policy"
+  ],
+  "correctIndex": 3,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian state was originally founded as a free colony, not a convict settlement?",
+  "options": [
+   "South Australia",
+   "New South Wales",
+   "Tasmania",
+   "Queensland"
+  ],
+  "correctIndex": 0,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian Prime Minister introduced Medicare and led during the 1980s?",
+  "options": [
+   "Malcolm Fraser",
+   "Gough Whitlam",
+   "John Howard",
+   "Bob Hawke"
+  ],
+  "correctIndex": 3,
+  "category": "Australian History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The first British settlement site in Australia is now part of which modern city?",
+  "options": [
+   "Sydney",
+   "Melbourne",
+   "Hobart",
+   "Adelaide"
+  ],
+  "correctIndex": 0,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country did Australia gain its status as an independent federation from in 1901?",
+  "options": [
+   "France",
+   "Britain",
+   "The Netherlands",
+   "Portugal"
+  ],
+  "correctIndex": 1,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The famous outback rock, a sacred Aboriginal site, is known by which two names?",
+  "options": [
+   "Kata Tjuta",
+   "Uluru or Ayers Rock",
+   "The Olgas",
+   "Mount Conner"
+  ],
+  "correctIndex": 1,
+  "category": "Australian History",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which empire was ruled by Cyrus the Great and later fought the Greeks?",
+  "options": [
+   "The Persian Empire",
+   "The Roman Empire",
+   "The Egyptian Empire",
+   "The Babylonian Empire"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient World",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The modern marathon running distance is inspired by a messenger's run in which ancient country?",
+  "options": [
+   "Rome",
+   "Egypt",
+   "Greece",
+   "Persia"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient World",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The ancient city of Troy, of Trojan War fame, was located in modern-day?",
+  "options": [
+   "Greece",
+   "Italy",
+   "Egypt",
+   "Turkey"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient World",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which ancient people built a network of roads with the saying 'all roads lead to Rome'?",
+  "options": [
+   "The Romans",
+   "The Greeks",
+   "The Egyptians",
+   "The Persians"
+  ],
+  "correctIndex": 0,
+  "category": "Ancient Rome",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Carthaginian general was Rome's great rival during the Punic Wars?",
+  "options": [
+   "Spartacus",
+   "Attila",
+   "Hannibal",
+   "Vercingetorix"
+  ],
+  "correctIndex": 2,
+  "category": "Ancient Rome",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Roman Empire eventually split into a Western and which other half?",
+  "options": [
+   "Northern",
+   "Southern",
+   "Central",
+   "Eastern"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient Rome",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Charlemagne was crowned Emperor in the year 800 by whom?",
+  "options": [
+   "A Roman senate",
+   "The Pope",
+   "A council of kings",
+   "The Byzantine Emperor"
+  ],
+  "correctIndex": 1,
+  "category": "World History",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In Greek mythology, the sun was said to be pulled across the sky by which god in a chariot?",
+  "options": [
+   "Helios",
+   "Zeus",
+   "Hades",
+   "Hermes"
+  ],
+  "correctIndex": 0,
+  "category": "Greek Mythology",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The Greek god of wine and revelry was?",
+  "options": [
+   "Apollo",
+   "Ares",
+   "Dionysus",
+   "Hephaestus"
+  ],
+  "correctIndex": 2,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Greek myth, Theseus navigated the labyrinth using a ball of thread given by whom?",
+  "options": [
+   "Medea",
+   "Helen",
+   "Cassandra",
+   "Ariadne"
+  ],
+  "correctIndex": 3,
+  "category": "Greek Mythology",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Greek god of fire and metalworking was the blacksmith of the gods?",
+  "options": [
+   "Ares",
+   "Hephaestus",
+   "Apollo",
+   "Hermes"
+  ],
+  "correctIndex": 1,
+  "category": "Greek Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Norse mythology, the giant wolf destined to kill Odin at Ragnarok is named?",
+  "options": [
+   "Sleipnir",
+   "Jormungandr",
+   "Fenrir",
+   "Garmr"
+  ],
+  "correctIndex": 2,
+  "category": "Norse Mythology",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which day of the week is named after the Norse god Odin (Woden)?",
+  "options": [
+   "Wednesday",
+   "Tuesday",
+   "Friday",
+   "Thursday"
+  ],
+  "correctIndex": 0,
+  "category": "Norse Mythology",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Friday takes its name from which Norse goddess?",
+  "options": [
+   "Sif",
+   "Frigg or Freya",
+   "Idunn",
+   "Hel"
+  ],
+  "correctIndex": 1,
+  "category": "Norse Mythology",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which US President led the country during World War II until his death in 1945?",
+  "options": [
+   "Harry Truman",
+   "Franklin D. Roosevelt",
+   "Dwight Eisenhower",
+   "Woodrow Wilson"
+  ],
+  "correctIndex": 1,
+  "category": "World War II",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which US President made the decision to drop atomic bombs on Japan in 1945?",
+  "options": [
+   "Franklin Roosevelt",
+   "Dwight Eisenhower",
+   "Harry Truman",
+   "John F. Kennedy"
+  ],
+  "correctIndex": 2,
+  "category": "World War II",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The failed German air campaign to bomb Britain into submission in 1940 was known as the?",
+  "options": [
+   "Battle of Britain",
+   "Operation Barbarossa",
+   "The Blitzkrieg",
+   "Operation Sea Lion"
+  ],
+  "correctIndex": 0,
+  "category": "World War II",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Japanese Emperor during World War II was?",
+  "options": [
+   "Meiji",
+   "Akihito",
+   "Hirohito",
+   "Naruhito"
+  ],
+  "correctIndex": 2,
+  "category": "World War II",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The ancient Greek temple dedicated to Athena on the Acropolis in Athens is the?",
+  "options": [
+   "The Pantheon",
+   "The Parthenon",
+   "The Colosseum",
+   "The Erechtheion only"
+  ],
+  "correctIndex": 1,
+  "category": "Ancient World",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The Hanging Gardens were one of the Seven Wonders, said to be in which ancient city?",
+  "options": [
+   "Rome",
+   "Athens",
+   "Cairo",
+   "Babylon"
+  ],
+  "correctIndex": 3,
+  "category": "Ancient World",
+  "difficulty": "hard"
+ }
+]

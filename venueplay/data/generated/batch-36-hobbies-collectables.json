@@ -1,0 +1,8234 @@
+[
+ {
+  "question": "In lawn bowls, what is another common name for the jack?",
+  "options": [
+   "The pea",
+   "The marble",
+   "The kitty",
+   "The pill"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What makes a lawn bowl curve as it travels down the green?",
+  "options": [
+   "Its bias",
+   "The wind",
+   "The grass grain",
+   "The bowler's spin"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the playing strip of a bowling green called?",
+  "options": [
+   "A lane",
+   "A rink",
+   "A court",
+   "A pitch"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what is the shallow trench around the edge of the green called?",
+  "options": [
+   "The gutter",
+   "The moat",
+   "The drain",
+   "The ditch"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what is one complete round of play in a single direction called?",
+  "options": [
+   "A leg",
+   "A frame",
+   "An over",
+   "An end"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what is the cluster of bowls around the jack called?",
+  "options": [
+   "The pack",
+   "The head",
+   "The nest",
+   "The bunch"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, what is a bowl that touches the jack on its way called?",
+  "options": [
+   "A kisser",
+   "A brusher",
+   "A live bowl",
+   "A toucher"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How is a toucher traditionally marked in lawn bowls?",
+  "options": [
+   "With a coloured peg",
+   "With chalk",
+   "With a sticker",
+   "With a flag"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a lawn bowls team, which player bowls last and directs the side?",
+  "options": [
+   "The skip",
+   "The third",
+   "The lead",
+   "The second"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a lawn bowls team, which player bowls first?",
+  "options": [
+   "The skip",
+   "The lead",
+   "The second",
+   "The third"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a game of fours in lawn bowls, how many bowls does each player deliver in an end?",
+  "options": [
+   "Four",
+   "One",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls singles, how many bowls does each player use in an end?",
+  "options": [
+   "Three",
+   "Six",
+   "Two",
+   "Four"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a game of triples in lawn bowls, how many bowls does each player deliver in an end?",
+  "options": [
+   "Three",
+   "Two",
+   "Four",
+   "One"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, which format has three players in each team?",
+  "options": [
+   "Fours",
+   "Pairs",
+   "Triples",
+   "Singles"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, how many players are in each team in the format called pairs?",
+  "options": [
+   "Two",
+   "Three",
+   "Four",
+   "One"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many players in total are on the rink in a game of fours in lawn bowls?",
+  "options": [
+   "Four",
+   "Eight",
+   "Six",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what is a shot delivered with great force to smash up the head called?",
+  "options": [
+   "A drive",
+   "A draw",
+   "A lob",
+   "A tap"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what is the gentle shot aimed to finish beside the jack called?",
+  "options": [
+   "A drive",
+   "A draw",
+   "A block",
+   "A wick"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what does 'jack high' mean?",
+  "options": [
+   "The jack is in the ditch",
+   "The jack has been lifted",
+   "The bowl has passed the jack",
+   "The bowl has finished level with the jack"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, how many teams can score points in a single end?",
+  "options": [
+   "Neither",
+   "Either or both",
+   "Both",
+   "Only one"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, how many shots does a team score in an end?",
+  "options": [
+   "One, no matter how many bowls are close",
+   "One for each bowl closer to the jack than the opponent's nearest",
+   "Two for the closest bowl",
+   "One for every bowl on the rink"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What piece of equipment settles a close call in lawn bowls?",
+  "options": [
+   "A measure",
+   "A protractor",
+   "A spirit level",
+   "A gauge block"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Early lawn bowls were traditionally turned from which dense timber?",
+  "options": [
+   "Jarrah",
+   "Oak",
+   "Teak",
+   "Lignum vitae"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Bowls are still nicknamed what, after the material they were once made from?",
+  "options": [
+   "Irons",
+   "Woods",
+   "Clays",
+   "Stones"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Under the laws of lawn bowls, what is the minimum distance the jack must be from the mat line?",
+  "options": [
+   "30 metres",
+   "23 metres",
+   "18 metres",
+   "15 metres"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Under the laws of the sport, a bowling green must be square with sides between which two lengths?",
+  "options": [
+   "45 and 55 metres",
+   "20 and 25 metres",
+   "15 and 20 metres",
+   "31 and 40 metres"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the casual Australian version of lawn bowls played without shoes called?",
+  "options": [
+   "Sand bowls",
+   "Social bowls",
+   "Bare bowls",
+   "Barefoot bowls"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what happens if the jack is driven off the side of the rink?",
+  "options": [
+   "The jack is put back on the centre line",
+   "The other team scores one",
+   "The end is dead and replayed",
+   "The bowler loses a bowl"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which English variant of bowls is played on a green that rises in the middle?",
+  "options": [
+   "Carpet bowls",
+   "Flat green bowls",
+   "Short mat bowls",
+   "Crown green bowls"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which French game is played with metal balls thrown towards a small wooden target?",
+  "options": [
+   "Bocce",
+   "Croquet",
+   "Boules anglaises",
+   "Petanque"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In petanque, what is the small wooden target ball called?",
+  "options": [
+   "The cochonnet",
+   "The boulon",
+   "The petit rond",
+   "The marquer"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Italian game is a close cousin of lawn bowls?",
+  "options": [
+   "Boccia bracci",
+   "Bocce",
+   "Palla",
+   "Scopa"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour clothing is traditionally worn for pennant lawn bowls?",
+  "options": [
+   "White",
+   "Navy blue",
+   "Grey",
+   "Green"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what is it called when a bowl glances off another bowl?",
+  "options": [
+   "A nick",
+   "A wick",
+   "A skid",
+   "A cannon"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In lawn bowls, what is it called when your bowl carries the jack to a new position and it stays in bounds?",
+  "options": [
+   "Dragging the head",
+   "Trailing the jack",
+   "Towing the jack",
+   "Running the kitty"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which body is the national governing organisation for the sport in Australia?",
+  "options": [
+   "Lawn Sports Australia",
+   "Greens Australia",
+   "Bowls Australia",
+   "Australian Bowling Board"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Lawn bowls has been a regular sport at which multi-nation games since 1930?",
+  "options": [
+   "The Pan American Games",
+   "The Olympic Games",
+   "The Commonwealth Games",
+   "The Asian Games"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the two directions of delivery in lawn bowls called?",
+  "options": [
+   "Forehand and backhand",
+   "Near and far",
+   "Inside and outside",
+   "Left arm and right arm"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At the start of an end in lawn bowls, where is the jack placed?",
+  "options": [
+   "On the mat",
+   "Against the ditch",
+   "Wherever the skip chooses",
+   "On the centre line of the rink"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a lawn bowl, the smaller of the two engraved rings marks which side?",
+  "options": [
+   "The top",
+   "The bias side",
+   "The running side",
+   "The grip side"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In singles lawn bowls, who centres the jack and marks the touchers?",
+  "options": [
+   "The marker",
+   "The skip",
+   "The umpire",
+   "The lead"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, what is the flat area behind the ditch called?",
+  "options": [
+   "The shoulder",
+   "The apron",
+   "The verge",
+   "The bank"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, a bowl that finishes in the ditch is dead unless it is what?",
+  "options": [
+   "Still moving",
+   "The shot bowl",
+   "A toucher",
+   "Delivered by the skip"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, what does the word 'shot' mean?",
+  "options": [
+   "The bowl nearest the jack",
+   "A completed end",
+   "The winning point",
+   "A drive"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Under the laws of lawn bowls, how long is the mat?",
+  "options": [
+   "1200 millimetres",
+   "900 millimetres",
+   "600 millimetres",
+   "400 millimetres"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What shape is a lawn bowl?",
+  "options": [
+   "Egg shaped",
+   "Flat on the bottom",
+   "A perfect sphere",
+   "Slightly flattened on two sides, not a true sphere"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the term for a foot fault in lawn bowls?",
+  "options": [
+   "Stepping into the ditch",
+   "Delivering with no part of the foot on or above the mat",
+   "Standing in front of the head",
+   "Crossing the centre line"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Where does the skip stand while the rest of the team is bowling?",
+  "options": [
+   "Off the green",
+   "On the mat",
+   "Beside the ditch at the mat end",
+   "At the head end of the rink"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a synthetic bowling green surfaced with?",
+  "options": [
+   "Sand",
+   "Artificial turf",
+   "Rubber matting",
+   "Clay"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what is a 'yard on' shot?",
+  "options": [
+   "A bowl played with enough weight to finish about a yard past the jack",
+   "A drive at full pace",
+   "A bowl aimed a yard wide of the head",
+   "A bowl that lands a yard short"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the indoor form of the game played on a narrow strip of carpet called?",
+  "options": [
+   "Roll bowls",
+   "Mini green",
+   "Short mat bowls",
+   "Table bowls"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, what does a skip use to signal instructions to a team mate?",
+  "options": [
+   "A whistle",
+   "A flag",
+   "Hand signals and pointing at the green",
+   "A scorecard"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In darts, how many darts does a player throw in one turn?",
+  "options": [
+   "Three",
+   "Four",
+   "Five",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the highest number on a standard dartboard?",
+  "options": [
+   "19",
+   "20",
+   "25",
+   "21"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the score for the outer bull ring on a dartboard?",
+  "options": [
+   "15",
+   "10",
+   "25",
+   "50"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which number sits directly opposite the 19 on a dartboard?",
+  "options": [
+   "2",
+   "5",
+   "1",
+   "17"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which two numbers sit either side of the 20 on a dartboard?",
+  "options": [
+   "18 and 12",
+   "3 and 7",
+   "1 and 5",
+   "2 and 4"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two numbers sit either side of the 19 on a dartboard?",
+  "options": [
+   "16 and 8",
+   "6 and 10",
+   "3 and 7",
+   "1 and 5"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the standard starting score in a professional darts leg?",
+  "options": [
+   "501",
+   "401",
+   "601",
+   "301"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a game of 501, how must a player finish?",
+  "options": [
+   "On a treble",
+   "On the bullseye",
+   "On a double",
+   "On any number"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the highest checkout possible with three darts?",
+  "options": [
+   "180",
+   "170",
+   "167",
+   "160"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which three darts make up a 170 checkout?",
+  "options": [
+   "Treble 19, treble 19, bullseye",
+   "Treble 20, treble 18, bullseye",
+   "Treble 20, treble 20, double 25",
+   "Treble 20, treble 20, bullseye"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the line a darts player throws from called?",
+  "options": [
+   "The mark",
+   "The crease",
+   "The toe line",
+   "The oche"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How far is the oche from the face of the dartboard in official play?",
+  "options": [
+   "1.90 metres",
+   "3.00 metres",
+   "2.75 metres",
+   "2.37 metres"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How high above the floor is the centre of the bullseye hung in official play?",
+  "options": [
+   "2.00 metres",
+   "1.50 metres",
+   "1.60 metres",
+   "1.73 metres"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In darts, what is a score of 100 in one turn called?",
+  "options": [
+   "A tonne up",
+   "A hundy",
+   "A ton",
+   "A century"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a maximum three-dart score of 180 often called?",
+  "options": [
+   "A treble ton",
+   "A big ton",
+   "A ton-80",
+   "A max ton"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a perfect leg of 501 thrown in nine darts called?",
+  "options": [
+   "A nine-dart finish",
+   "A clean sheet",
+   "A perfect ton",
+   "A golden leg"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which double is nicknamed 'the madhouse'?",
+  "options": [
+   "Double 1",
+   "Double 3",
+   "Double 5",
+   "Double 2"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is double 20 commonly called?",
+  "options": [
+   "Double top",
+   "Top hat",
+   "Double max",
+   "Big double"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In darts, what happens if a player scores more than the total they had left?",
+  "options": [
+   "The turn is a bust and the score stays the same",
+   "They lose the leg",
+   "They subtract the excess",
+   "They lose one dart"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the four main parts of a dart?",
+  "options": [
+   "Nose, grip, stem and wing",
+   "Head, handle, rod and vane",
+   "Tip, body, tail and fin",
+   "Point, barrel, shaft and flight"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the maximum legal weight of a dart in professional play?",
+  "options": [
+   "50 grams",
+   "75 grams",
+   "100 grams",
+   "30 grams"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What natural fibre are professional bristle dartboards made from?",
+  "options": [
+   "Hemp",
+   "Jute",
+   "Sisal",
+   "Coir"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the wire framework dividing the beds on a dartboard called?",
+  "options": [
+   "The cage",
+   "The web",
+   "The spider",
+   "The grid"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do all the numbers on a dartboard add up to?",
+  "options": [
+   "210",
+   "220",
+   "190",
+   "200"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does a dart in the treble 20 score?",
+  "options": [
+   "40",
+   "20",
+   "80",
+   "60"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which darts game asks you to hit a single, a double and a treble of the same number?",
+  "options": [
+   "Halve it",
+   "Killer",
+   "Cricket",
+   "Shanghai"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which darts game works through the numbers 1 to 20 in order?",
+  "options": [
+   "Cricket",
+   "Around the clock",
+   "Shanghai",
+   "Killer"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which darts game uses only the numbers 15 to 20 and the bull?",
+  "options": [
+   "Shanghai",
+   "Round the board",
+   "Halve it",
+   "Cricket"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many world darts championships did Phil Taylor win in his career?",
+  "options": [
+   "12",
+   "9",
+   "16",
+   "20"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian darts player is known as 'The Wizard'?",
+  "options": [
+   "Damon Heta",
+   "Kyle Anderson",
+   "Corey Cadby",
+   "Simon Whitlock"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dutch darts player is nicknamed 'Barney'?",
+  "options": [
+   "Vincent van der Voort",
+   "Raymond van Barneveld",
+   "Jelle Klaasen",
+   "Michael van Gerwen"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Dutch darts player is nicknamed 'Mighty Mike'?",
+  "options": [
+   "Danny Noppert",
+   "Raymond van Barneveld",
+   "Michael Smith",
+   "Michael van Gerwen"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which London venue has hosted the PDC World Darts Championship since 2008?",
+  "options": [
+   "Wembley Arena",
+   "The O2",
+   "Alexandra Palace",
+   "Lakeside"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What do the initials PDC stand for in darts?",
+  "options": [
+   "Players Darts Council",
+   "Pro Darts Championship",
+   "Professional Darts Corporation",
+   "Premier Darts Circuit"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In professional darts, a set is made up of a number of what?",
+  "options": [
+   "Ends",
+   "Rounds",
+   "Legs",
+   "Frames"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these scores cannot be checked out with three darts?",
+  "options": [
+   "167",
+   "161",
+   "164",
+   "169"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many numbered segments are on a standard dartboard?",
+  "options": [
+   "18",
+   "20",
+   "24",
+   "22"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a dart in the treble 19 score?",
+  "options": [
+   "19",
+   "57",
+   "38",
+   "60"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Three darts in the treble 19 gives what score?",
+  "options": [
+   "180",
+   "153",
+   "167",
+   "171"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In darts, what does it mean to 'check out'?",
+  "options": [
+   "Bust your score",
+   "Finish the leg with the final double",
+   "Throw a maximum",
+   "Start a new leg"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which double do you need to finish from a score of 32?",
+  "options": [
+   "Double 32",
+   "Double 20",
+   "Double 16",
+   "Double 8"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the 170 checkout nicknamed?",
+  "options": [
+   "The golden ton",
+   "The high road",
+   "The full house",
+   "The big fish"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How do darts players usually decide who throws first?",
+  "options": [
+   "Each throws at the bull and the closest starts",
+   "Highest single dart score",
+   "A coin toss",
+   "The home player always starts"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In darts, what is a 'leg'?",
+  "options": [
+   "A best-of-three match",
+   "A tournament group",
+   "A single game played from the starting score down to zero",
+   "A round of three darts"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Does a dart score if it bounces out of the board before it is retrieved?",
+  "options": [
+   "Yes, it scores the segment it hit",
+   "No, it scores nothing",
+   "It may be thrown again",
+   "Yes, but only half"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What two colours are the double and treble beds on a standard dartboard?",
+  "options": [
+   "Blue and yellow",
+   "Orange and purple",
+   "Red and green",
+   "Black and white"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Three darts in the outer bull ring scores what?",
+  "options": [
+   "150",
+   "50",
+   "25",
+   "75"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If a player leaves a score of one after a throw, what has happened?",
+  "options": [
+   "They can finish on the single 1",
+   "A bust, because one cannot be finished on a double",
+   "They win the leg",
+   "They must throw again"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the plastic-tipped version of the game played on an electronic machine called?",
+  "options": [
+   "Micro darts",
+   "Pub darts",
+   "Soft tip darts",
+   "Light darts"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, how many balls in total are on the table at the start of a frame?",
+  "options": [
+   "21",
+   "20",
+   "16",
+   "22"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, which colour ball is worth seven points?",
+  "options": [
+   "Pink",
+   "Brown",
+   "Blue",
+   "Black"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In snooker, which of the six colours is worth the fewest points?",
+  "options": [
+   "Yellow",
+   "Brown",
+   "Green",
+   "Blue"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In snooker, how many points is the blue ball worth?",
+  "options": [
+   "Three",
+   "Four",
+   "Five",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In snooker, how many points is the pink ball worth?",
+  "options": [
+   "Seven",
+   "Five",
+   "Six",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, which ball sits on the centre spot of the table?",
+  "options": [
+   "The pink",
+   "The black",
+   "The brown",
+   "The blue"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, which coloured ball sits at the tip of the triangle of reds?",
+  "options": [
+   "The brown",
+   "The pink",
+   "The black",
+   "The blue"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the nominal size of a full-size snooker table?",
+  "options": [
+   "12 feet by 6 feet",
+   "14 feet by 7 feet",
+   "9 feet by 4 feet",
+   "10 feet by 5 feet"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many pockets does a snooker table have?",
+  "options": [
+   "Two",
+   "Six",
+   "Four",
+   "Eight"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian won the World Snooker Championship in 2010?",
+  "options": [
+   "Warren King",
+   "Neil Robertson",
+   "Eddie Charlton",
+   "Quinten Hann"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, what is a break of 100 points or more called?",
+  "options": [
+   "A century",
+   "A ton up",
+   "A grand slam",
+   "A maximum"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In snooker, what is the minimum number of points awarded to an opponent for a foul?",
+  "options": [
+   "Six",
+   "Four",
+   "Seven",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, what is a player called when the cue ball has no direct path to a legal object ball?",
+  "options": [
+   "Hooked out",
+   "Blocked",
+   "Fouled",
+   "Snookered"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the semi-circle marked in the baulk area of a snooker table called?",
+  "options": [
+   "The bow",
+   "The D",
+   "The half moon",
+   "The arc"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the cloth covering a snooker or billiards table called?",
+  "options": [
+   "Twill",
+   "Baize",
+   "Felt",
+   "Serge"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which piece of equipment helps a snooker player reach a ball far up the table?",
+  "options": [
+   "The prop",
+   "The rest",
+   "The reach",
+   "The bridge post"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the rest with a raised head, used to play over an obstructing ball, called?",
+  "options": [
+   "The swan",
+   "The spider",
+   "The arch",
+   "The tower"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which snooker player is nicknamed 'The Rocket'?",
+  "options": [
+   "John Higgins",
+   "Ronnie O'Sullivan",
+   "Mark Selby",
+   "Judd Trump"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Northern Irish snooker player was nicknamed 'Hurricane'?",
+  "options": [
+   "Joe Swail",
+   "Alex Higgins",
+   "Dennis Taylor",
+   "Mark Allen"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many World Snooker Championships did Stephen Hendry win?",
+  "options": [
+   "Five",
+   "Nine",
+   "Three",
+   "Seven"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a maximum break of 147, how many black balls are potted?",
+  "options": [
+   "16",
+   "15",
+   "17",
+   "14"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In snooker, once all the reds are gone, in what order must the colours be potted?",
+  "options": [
+   "Yellow, brown, green, pink, blue, black",
+   "Brown, yellow, green, blue, pink, black",
+   "Yellow, green, brown, blue, pink, black",
+   "Green, yellow, brown, pink, blue, black"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, what must a player pot straight after potting a red?",
+  "options": [
+   "The black",
+   "A colour of their choice",
+   "The lowest value colour",
+   "The next red"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In English billiards, how many balls are used?",
+  "options": [
+   "Six",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In billiards, what is it called when the cue ball strikes both other balls in one shot?",
+  "options": [
+   "A cannon",
+   "A double",
+   "A plant",
+   "A carom kiss"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In nine-ball pool, which ball must the cue ball strike first on every shot?",
+  "options": [
+   "The nine ball",
+   "Any ball",
+   "The lowest numbered ball on the table",
+   "The ball nearest a pocket"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In American pool, what are the balls numbered nine to fifteen called?",
+  "options": [
+   "Stripes",
+   "Spots",
+   "Solids",
+   "Highs and lows"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In American pool, what are the balls numbered one to seven called?",
+  "options": [
+   "Solids",
+   "Plains",
+   "Stripes",
+   "Bands"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In traditional English pub pool, what are the two groups of object balls coloured?",
+  "options": [
+   "Blacks and whites",
+   "Blues and greens",
+   "Reds and blues",
+   "Reds and yellows"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape is the rack used to set up a game of eight-ball pool?",
+  "options": [
+   "A circle",
+   "A triangle",
+   "A square",
+   "A diamond"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What shape is the rack used to set up a game of nine-ball pool?",
+  "options": [
+   "A triangle",
+   "A hexagon",
+   "A diamond",
+   "A square"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In American pool slang, what is it called when the cue ball goes down a pocket?",
+  "options": [
+   "A dip",
+   "A drop",
+   "A scratch",
+   "A sink"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Why do pool and snooker players chalk the tip of the cue?",
+  "options": [
+   "To stop the tip slipping off the ball",
+   "To mark their shot",
+   "To clean the cue",
+   "To add weight"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many balls are in a full American pool set, including the cue ball?",
+  "options": [
+   "16",
+   "22",
+   "14",
+   "15"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In pool and snooker, what is the raised edge around the table called?",
+  "options": [
+   "The rail guard",
+   "The wall",
+   "The lip",
+   "The cushion"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many frames make up a game in ten-pin bowling?",
+  "options": [
+   "Twelve",
+   "Eight",
+   "Nine",
+   "Ten"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many strikes does it take to bowl a perfect 300 game in ten-pin bowling?",
+  "options": [
+   "Ten",
+   "Eleven",
+   "Twelve",
+   "Fifteen"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ten-pin bowling, what is knocking down all ten pins using two balls called?",
+  "options": [
+   "A strike",
+   "A spare",
+   "A frame",
+   "A split"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the channel running down either side of a ten-pin bowling lane called?",
+  "options": [
+   "The trough",
+   "The gutter",
+   "The alley",
+   "The rail"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ten-pin bowling, what is it called when the standing pins are left with a wide gap between them?",
+  "options": [
+   "A wash",
+   "A break",
+   "A gap",
+   "A split"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which split is widely regarded as the hardest to convert in ten-pin bowling?",
+  "options": [
+   "The 2-8",
+   "The 3-9",
+   "The 4-6",
+   "The 7-10"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How far is it from the foul line to the head pin on a ten-pin bowling lane?",
+  "options": [
+   "75 feet",
+   "60 feet",
+   "100 feet",
+   "40 feet"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many pins are in the back row of a ten-pin bowling set-up?",
+  "options": [
+   "Three",
+   "Four",
+   "Two",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many finger holes does a standard ten-pin bowling ball have?",
+  "options": [
+   "Three",
+   "Four",
+   "Two",
+   "Five"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many squares does each side of a chessboard have?",
+  "options": [
+   "Ten",
+   "Six",
+   "Eight",
+   "Twelve"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many pawns does each player start with in chess?",
+  "options": [
+   "Ten",
+   "Eight",
+   "Six",
+   "Four"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In chess, which colour always moves first?",
+  "options": [
+   "The player who won the last game",
+   "Whoever chooses",
+   "Black",
+   "White"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the special chess capture of a pawn that has just moved two squares called?",
+  "options": [
+   "En prise",
+   "Double take",
+   "Coup de grace",
+   "En passant"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In chess, what happens when a pawn reaches the far end of the board?",
+  "options": [
+   "It is promoted to another piece",
+   "It moves backwards",
+   "It becomes a king",
+   "It is removed"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "When a chess pawn is promoted, which piece is it almost always turned into?",
+  "options": [
+   "A rook",
+   "A knight",
+   "A queen",
+   "A bishop"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which chess piece moves only along diagonals?",
+  "options": [
+   "The knight",
+   "The rook",
+   "The pawn",
+   "The bishop"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which chess piece moves in straight lines along ranks and files?",
+  "options": [
+   "The knight",
+   "The king",
+   "The bishop",
+   "The rook"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the highest title a chess player can be awarded?",
+  "options": [
+   "International Master",
+   "Chess Marshal",
+   "Chess Champion",
+   "Grandmaster"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which organisation governs world chess?",
+  "options": [
+   "FIDE",
+   "FIFA",
+   "WCF",
+   "IOC"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The chess rating system in common use is named after which physicist who devised it?",
+  "options": [
+   "Arpad Elo",
+   "Emanuel Lasker",
+   "Mikhail Botvinnik",
+   "Wilhelm Steinitz"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which IBM computer beat world champion Garry Kasparov in a match in 1997?",
+  "options": [
+   "Deep Thought",
+   "Big Blue",
+   "Watson",
+   "Deep Blue"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fastest possible checkmate in chess, delivered in two moves, called?",
+  "options": [
+   "Scholar's mate",
+   "Smothered mate",
+   "Fool's mate",
+   "Back rank mate"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "When setting up a chessboard, which colour square should sit in the right-hand corner nearest each player?",
+  "options": [
+   "It does not matter",
+   "A red square",
+   "A light square",
+   "A dark square"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the standard chess point count, how many points is a rook worth?",
+  "options": [
+   "Nine",
+   "Three",
+   "Four",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the standard chess point count, how many points is a knight worth?",
+  "options": [
+   "Four",
+   "Five",
+   "Three",
+   "One"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which chess piece can move like both a rook and a bishop?",
+  "options": [
+   "The knight",
+   "The king",
+   "The queen",
+   "The pawn"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In chess, what is a single piece attacking two enemy pieces at once called?",
+  "options": [
+   "A skewer",
+   "A pin",
+   "A battery",
+   "A fork"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In chess, what is it called when a piece cannot move because it would expose its own king to check?",
+  "options": [
+   "A pin",
+   "A block",
+   "A stall",
+   "A fork"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The ancestors of modern chess are generally traced back to which country?",
+  "options": [
+   "Greece",
+   "Egypt",
+   "India",
+   "Russia"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In chess, what is a 'gambit'?",
+  "options": [
+   "A draw offer",
+   "A move that must be announced",
+   "An opening in which material is offered for an advantage",
+   "A checkmate in three moves"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which chess opening for black begins with the move pawn to c5 in reply to e4?",
+  "options": [
+   "The French Defence",
+   "The Sicilian Defence",
+   "The Ruy Lopez",
+   "The Caro-Kann"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How far can a chess king move in one turn?",
+  "options": [
+   "One square, forwards only",
+   "One square in any direction",
+   "Two squares in any direction",
+   "Any distance in a straight line"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On its very first move, a chess pawn may advance how many squares?",
+  "options": [
+   "Up to three",
+   "Any number",
+   "One or two",
+   "Only one"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What device is used to limit thinking time in a competitive chess game?",
+  "options": [
+   "A stopwatch on the wall",
+   "A hooter",
+   "A sand timer per move",
+   "A chess clock"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In chess, what is the German term for being forced to move when every move worsens your position?",
+  "options": [
+   "Blitzkrieg",
+   "Zwischenzug",
+   "Zugzwang",
+   "Endspiel"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many bishops does each player start with in chess?",
+  "options": [
+   "Two",
+   "Three",
+   "One",
+   "Four"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In chess, what does 'checkmate' mean?",
+  "options": [
+   "The king is attacked and cannot escape",
+   "The king is attacked but can move away",
+   "A player has run out of time",
+   "The game is drawn"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which very fast form of chess gives each player only a few minutes for the whole game?",
+  "options": [
+   "Correspondence",
+   "Blitz",
+   "Rapid transit relay",
+   "Classical"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which American won the World Chess Championship in 1972 by beating Boris Spassky?",
+  "options": [
+   "Bobby Fischer",
+   "Sam Reshevsky",
+   "Larry Evans",
+   "Paul Morphy"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In chess notation, what does the letter N stand for?",
+  "options": [
+   "Knight",
+   "No move",
+   "Notation",
+   "King"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Norwegian became world chess champion in 2013?",
+  "options": [
+   "Fabiano Caruana",
+   "Viswanathan Anand",
+   "Simen Agdestein",
+   "Magnus Carlsen"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many rows of pins are set up in ten-pin bowling?",
+  "options": [
+   "Two",
+   "Five",
+   "Three",
+   "Four"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, what is the shot called when a player deliberately leaves the opponent snookered?",
+  "options": [
+   "A stun run",
+   "A safety shot",
+   "A plant",
+   "A screw shot"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, what is the term for spin applied so the cue ball comes backwards after contact?",
+  "options": [
+   "Side",
+   "Follow through",
+   "Top spin",
+   "Screw or backspin"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In snooker, what is it called when one red knocks another red into a pocket?",
+  "options": [
+   "A plant",
+   "A cannon",
+   "A kiss",
+   "A double"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In snooker, what is a shot called when the object ball is potted after bouncing off a cushion?",
+  "options": [
+   "A plant",
+   "A swerve",
+   "A jump",
+   "A double"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Canadian made the first maximum 147 break at the Crucible, in 1983?",
+  "options": [
+   "Kirk Stevens",
+   "Cliff Thorburn",
+   "Bill Werbeniuk",
+   "Alain Robidoux"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the hand position a player forms on the table to guide the cue called?",
+  "options": [
+   "The saddle",
+   "The cradle",
+   "The bridge",
+   "The rest"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the soft leather part at the end of a cue called?",
+  "options": [
+   "The tip",
+   "The butt",
+   "The shaft",
+   "The ferrule"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the metal collar just below a cue tip called?",
+  "options": [
+   "The joint",
+   "The wrap",
+   "The bumper",
+   "The ferrule"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In snooker, which three colours sit on the baulk line at the start of a frame?",
+  "options": [
+   "Yellow, green and brown",
+   "Yellow, blue and pink",
+   "Blue, pink and black",
+   "Green, brown and black"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the game of pool called when only one black ball must be sunk last?",
+  "options": [
+   "Nine-ball",
+   "Straight pool",
+   "Eight-ball",
+   "Bank pool"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ten-pin bowling, what is a strike marked with on the scoresheet?",
+  "options": [
+   "An X",
+   "A circle",
+   "A star",
+   "A slash"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In ten-pin bowling, what symbol marks a spare on the scoresheet?",
+  "options": [
+   "A dot",
+   "A forward slash",
+   "An X",
+   "A dash"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In ten-pin bowling, how many balls does a player normally roll in a frame?",
+  "options": [
+   "One",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In ten-pin bowling, which frame allows a player extra deliveries after a strike?",
+  "options": [
+   "The fifth",
+   "The tenth",
+   "The first",
+   "The ninth"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which lawn game involves hitting balls through hoops with a mallet?",
+  "options": [
+   "Boules",
+   "Quoits",
+   "Croquet",
+   "Skittles"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In croquet, what are the wire arches the balls are hit through called?",
+  "options": [
+   "Gates",
+   "Arches",
+   "Rings",
+   "Hoops"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pub game involves throwing rings over a spike or hook?",
+  "options": [
+   "Bar billiards",
+   "Skittles",
+   "Quoits",
+   "Shove ha'penny"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which old pub game involves sliding coins up a marked board with the palm of the hand?",
+  "options": [
+   "Toad in the hole",
+   "Shove ha'penny",
+   "Skittles",
+   "Bagatelle"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which pub game is essentially a nine-pin ancestor of ten-pin bowling?",
+  "options": [
+   "Bagatelle",
+   "Skittles",
+   "Quoits",
+   "Hoopla"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In table tennis, a game must be won by a margin of at least how many points?",
+  "options": [
+   "One",
+   "Two",
+   "Three",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the strip of net across the middle of a table tennis table held up by?",
+  "options": [
+   "Clamps on each side of the table",
+   "Poles at each end",
+   "A frame above the table",
+   "Magnets in the table"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional colour of a snooker table's cloth?",
+  "options": [
+   "Green",
+   "Blue",
+   "Brown",
+   "Red"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many spaces are there on a standard Monopoly board?",
+  "options": [
+   "44",
+   "32",
+   "36",
+   "40"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many railway stations are on a standard Monopoly board?",
+  "options": [
+   "Four",
+   "Six",
+   "Two",
+   "Three"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many utilities are on a standard Monopoly board?",
+  "options": [
+   "Four",
+   "Three",
+   "One",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two utilities appear on the classic Monopoly board?",
+  "options": [
+   "Electric Company and Telephone Exchange",
+   "Electric Company and Water Works",
+   "Power Station and Reservoir",
+   "Gas Works and Water Works"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Monopoly, what sends a player straight to jail when it happens three times in a row?",
+  "options": [
+   "Passing Go",
+   "Rolling doubles",
+   "Buying a property",
+   "Landing on Free Parking"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Monopoly, how many houses must a property have before a hotel can be built on it?",
+  "options": [
+   "Three",
+   "Five",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many houses are included in a standard Monopoly set?",
+  "options": [
+   "24",
+   "32",
+   "40",
+   "28"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many hotels are included in a standard Monopoly set?",
+  "options": [
+   "12",
+   "8",
+   "10",
+   "16"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the two decks of cards in Monopoly called?",
+  "options": [
+   "Luck and Community Chest",
+   "Chance and Community Chest",
+   "Chance and Fortune",
+   "Chance and Treasury"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which corner square of a Monopoly board is directly opposite Go?",
+  "options": [
+   "Free Parking",
+   "Water Works",
+   "Go to Jail",
+   "Jail"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Monopoly, what does the corner square marked 'Jail' also say?",
+  "options": [
+   "Pay Fine",
+   "Free Parking",
+   "No Entry",
+   "Just Visiting"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many dice are used in a standard game of Monopoly?",
+  "options": [
+   "Four",
+   "Three",
+   "One",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The street names on the original American Monopoly board are taken from which city?",
+  "options": [
+   "Atlantic City",
+   "Philadelphia",
+   "New York",
+   "Chicago"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game is regarded as the direct ancestor of Monopoly, patented by Elizabeth Magie?",
+  "options": [
+   "The Landlord's Game",
+   "Capital City",
+   "Rent Day",
+   "The Property Game"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which company first mass-produced Monopoly in the United States?",
+  "options": [
+   "Mattel",
+   "Milton Bradley",
+   "Parker Brothers",
+   "Waddingtons"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these has been a classic Monopoly playing token?",
+  "options": [
+   "The teapot",
+   "The top hat",
+   "The anchor",
+   "The lantern"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Monopoly, what card lets you leave jail without paying?",
+  "options": [
+   "Free Pass",
+   "Get Out of Jail Free",
+   "Pardon",
+   "Bail Bond"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On the London Monopoly board, which is the cheapest property?",
+  "options": [
+   "Euston Road",
+   "The Angel Islington",
+   "Whitechapel Road",
+   "Old Kent Road"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On the London Monopoly board, which is the most expensive property?",
+  "options": [
+   "Park Lane",
+   "Mayfair",
+   "Oxford Street",
+   "Bond Street"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many tiles are in a standard English Scrabble set?",
+  "options": [
+   "98",
+   "96",
+   "104",
+   "100"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many blank tiles are in a standard Scrabble set?",
+  "options": [
+   "Three",
+   "One",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many points is a blank tile worth in Scrabble?",
+  "options": [
+   "Two",
+   "One",
+   "Five",
+   "Zero"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two letters are worth ten points each in Scrabble?",
+  "options": [
+   "Q and Z",
+   "K and V",
+   "Z and X",
+   "X and J"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many points is the letter J worth in Scrabble?",
+  "options": [
+   "Five",
+   "Eight",
+   "Four",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which letter has the most tiles in a Scrabble set?",
+  "options": [
+   "A",
+   "T",
+   "E",
+   "S"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many squares across is a Scrabble board?",
+  "options": [
+   "13",
+   "15",
+   "11",
+   "17"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Scrabble, what must the first word played always do?",
+  "options": [
+   "Use a blank tile",
+   "Be at least four letters",
+   "Cover the centre star square",
+   "Start in a corner"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Scrabble, what score does the centre star square give the first word?",
+  "options": [
+   "Triple word score",
+   "Double word score",
+   "Double letter score",
+   "No bonus"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a Scrabble board, what bonus square sits in each of the four corners?",
+  "options": [
+   "Triple word score",
+   "Double letter score",
+   "Double word score",
+   "Triple letter score"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which unemployed American architect invented Scrabble?",
+  "options": [
+   "Milton Bradley",
+   "Alfred Butts",
+   "Anthony Pratt",
+   "Charles Darrow"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many suspects are there in a standard game of Cluedo?",
+  "options": [
+   "Five",
+   "Six",
+   "Eight",
+   "Four"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many rooms are on a standard Cluedo board?",
+  "options": [
+   "Six",
+   "Eight",
+   "Nine",
+   "Twelve"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many weapons are in a standard game of Cluedo?",
+  "options": [
+   "Eight",
+   "Five",
+   "Six",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who is the murder victim in the British version of Cluedo?",
+  "options": [
+   "Lord Grey",
+   "Dr Black",
+   "Mr Boddy",
+   "Sir Hugh"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these is a weapon in Cluedo?",
+  "options": [
+   "The poison",
+   "The axe",
+   "The crossbow",
+   "The lead piping"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Cluedo character is named after a shade of purple?",
+  "options": [
+   "Mrs Peacock",
+   "Colonel Mustard",
+   "Professor Plum",
+   "Miss Scarlett"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Cluedo character always takes the first turn?",
+  "options": [
+   "Mrs White",
+   "Miss Scarlett",
+   "Colonel Mustard",
+   "Professor Plum"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many cards are placed in the envelope at the start of Cluedo?",
+  "options": [
+   "Three",
+   "Two",
+   "Six",
+   "Four"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Cluedo, what links certain rooms in opposite corners of the board?",
+  "options": [
+   "Lifts",
+   "Secret passages",
+   "Staircases",
+   "Tunnelled cellars"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many categories are in the classic Genus edition of Trivial Pursuit?",
+  "options": [
+   "Five",
+   "Four",
+   "Six",
+   "Eight"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In classic Trivial Pursuit, which colour is the Geography category?",
+  "options": [
+   "Yellow",
+   "Pink",
+   "Blue",
+   "Green"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In classic Trivial Pursuit, which colour is the Entertainment category?",
+  "options": [
+   "Brown",
+   "Orange",
+   "Pink",
+   "Blue"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In classic Trivial Pursuit, which colour is the Sports and Leisure category?",
+  "options": [
+   "Orange",
+   "Green",
+   "Yellow",
+   "Brown"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Trivial Pursuit was invented in the early 1980s by two men from which country?",
+  "options": [
+   "The United States",
+   "England",
+   "Australia",
+   "Canada"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many territories are on a classic Risk board?",
+  "options": [
+   "42",
+   "40",
+   "48",
+   "36"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many continents are on a classic Risk board?",
+  "options": [
+   "Four",
+   "Seven",
+   "Five",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Risk, how many dice may an attacker roll at most in one battle?",
+  "options": [
+   "Three",
+   "One",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Risk, who wins when the attacking and defending dice are tied?",
+  "options": [
+   "The defender",
+   "Neither",
+   "Both lose a piece",
+   "The attacker"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Risk, which continent is often called the easiest to hold because it has only one land entry point?",
+  "options": [
+   "Australia",
+   "Africa",
+   "South America",
+   "Europe"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which game do players drop counters into a vertical grid and try to line up four?",
+  "options": [
+   "Connect Four",
+   "Mastermind",
+   "Draughts",
+   "Othello"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which board game uses black and white discs that are flipped when trapped between two enemy discs?",
+  "options": [
+   "Draughts",
+   "Go",
+   "Mastermind",
+   "Othello"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which classic children's board game features climbing and sliding on a numbered grid?",
+  "options": [
+   "Trouble",
+   "Sorry",
+   "Snakes and Ladders",
+   "Ludo"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The board game Ludo is based on an older game from which country?",
+  "options": [
+   "China",
+   "Persia",
+   "Egypt",
+   "India"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many checkers does each player have in backgammon?",
+  "options": [
+   "12",
+   "10",
+   "15",
+   "20"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the cube used to raise the stakes in backgammon called?",
+  "options": [
+   "The doubling cube",
+   "The stake die",
+   "The wager block",
+   "The score cube"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which game involves pulling wooden blocks from a tower and stacking them on top?",
+  "options": [
+   "Topple",
+   "Buckaroo",
+   "Jenga",
+   "Kerplunk"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many wooden blocks are in a standard Jenga set?",
+  "options": [
+   "48",
+   "54",
+   "45",
+   "60"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "The name Jenga comes from a Swahili word meaning what?",
+  "options": [
+   "To build",
+   "To play",
+   "To fall",
+   "To balance"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game Operation, what happens if the tweezers touch the metal edge?",
+  "options": [
+   "You win the piece anyway",
+   "A buzzer sounds and the nose lights up",
+   "The patient sits up",
+   "The board resets"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which party game asks players to place hands and feet on coloured circles on a mat?",
+  "options": [
+   "Twister",
+   "Hopscotch",
+   "Tumble",
+   "Splat"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which game do players flip down faces to work out which character their opponent has?",
+  "options": [
+   "Mastermind",
+   "Cluedo",
+   "Guess Who?",
+   "Headbanz"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which game asks players to draw a word so their team can guess it?",
+  "options": [
+   "Articulate",
+   "Boggle",
+   "Pictionary",
+   "Charades"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which word game do players shake lettered dice in a grid and find words?",
+  "options": [
+   "Scrabble",
+   "Bananagrams",
+   "Boggle",
+   "Upwords"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many lettered dice are in a standard Boggle set?",
+  "options": [
+   "16",
+   "20",
+   "12",
+   "25"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which game asks one player to crack a hidden colour code using pegs?",
+  "options": [
+   "Cluedo",
+   "Battleship",
+   "Othello",
+   "Mastermind"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the board game Catan, which of these is one of the five resources?",
+  "options": [
+   "Coal",
+   "Ore",
+   "Gold",
+   "Fish"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Catan, which piece blocks a hex from producing when a seven is rolled?",
+  "options": [
+   "The blockade",
+   "The bandit",
+   "The pirate",
+   "The robber"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game Ticket to Ride, what do players collect and place on the board?",
+  "options": [
+   "Roads",
+   "Aircraft",
+   "Ships",
+   "Train carriages"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the tile-laying game Carcassonne, what are the wooden figures placed on tiles called?",
+  "options": [
+   "Minions",
+   "Pawns",
+   "Meeples",
+   "Settlers"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which card game must a player call out the game's own name when down to one card?",
+  "options": [
+   "Uno",
+   "Rummy",
+   "Canasta",
+   "Skip-Bo"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many cards are in a standard Uno deck?",
+  "options": [
+   "104",
+   "108",
+   "100",
+   "112"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many cards are in a standard deck of playing cards, without jokers?",
+  "options": [
+   "52",
+   "48",
+   "56",
+   "54"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two suits in a deck of cards are red?",
+  "options": [
+   "Hearts and diamonds",
+   "Clubs and spades",
+   "Hearts and clubs",
+   "Diamonds and spades"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many face cards, meaning jacks, queens and kings, are in a standard deck?",
+  "options": [
+   "12",
+   "10",
+   "16",
+   "13"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which card is traditionally the most decorated in a deck of playing cards?",
+  "options": [
+   "The ace of hearts",
+   "The ace of spades",
+   "The king of clubs",
+   "The joker"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a traditional deck, which king is the only one shown without a moustache?",
+  "options": [
+   "The king of clubs",
+   "The king of spades",
+   "The king of hearts",
+   "The king of diamonds"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In poker, which hand beats a straight?",
+  "options": [
+   "A high card",
+   "Two pair",
+   "Three of a kind",
+   "A flush"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In poker, what is a run of five cards in sequence, but not all of the same suit, called?",
+  "options": [
+   "A straight",
+   "A flush",
+   "A full house",
+   "Three of a kind"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Texas Hold'em, how many cards is each player dealt face down?",
+  "options": [
+   "One",
+   "Three",
+   "Two",
+   "Four"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Texas Hold'em, how many community cards are dealt in total?",
+  "options": [
+   "Six",
+   "Four",
+   "Five",
+   "Three"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Texas Hold'em, what are the first three community cards called?",
+  "options": [
+   "The flop",
+   "The board",
+   "The river",
+   "The turn"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Texas Hold'em, what is the fourth community card called?",
+  "options": [
+   "The turn",
+   "The flop",
+   "The river",
+   "The fold"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Texas Hold'em, what is the fifth and final community card called?",
+  "options": [
+   "The finish",
+   "The turn",
+   "The flop",
+   "The river"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In poker, what does it mean to go 'all in'?",
+  "options": [
+   "To leave the table",
+   "To bet every chip you have",
+   "To fold your hand",
+   "To match the last bet"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Texas Hold'em, what are the two forced bets before the cards are dealt called?",
+  "options": [
+   "The openers",
+   "The blinds",
+   "The antes and pots",
+   "The stakes"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In poker, what marks the player who acts as the nominal dealer for a hand?",
+  "options": [
+   "The flag",
+   "The card protector",
+   "The button",
+   "The chip stack"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In poker slang, what is a pair of aces dealt as hole cards nicknamed?",
+  "options": [
+   "Ladies",
+   "Big slick",
+   "Cowboys",
+   "Pocket rockets"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which poker hand is known as the 'dead man's hand'?",
+  "options": [
+   "A full house of nines",
+   "Two pair of kings and jacks",
+   "Four twos",
+   "Two pair of aces and eights"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In poker, what is a straight flush from ten to ace called?",
+  "options": [
+   "A crown straight",
+   "A royal flush",
+   "A high flush",
+   "A grand flush"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In poker, which hand beats a full house?",
+  "options": [
+   "A flush",
+   "A straight",
+   "Four of a kind",
+   "Two pair"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In poker, what does it mean to 'fold'?",
+  "options": [
+   "To ask for new cards",
+   "To reveal your cards",
+   "To double your bet",
+   "To give up your hand and any chips already bet"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In blackjack, what total are players trying to reach without going over?",
+  "options": [
+   "19",
+   "20",
+   "25",
+   "21"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In blackjack, what is an ace with a ten-value card on the first two cards called?",
+  "options": [
+   "A natural blackjack",
+   "A soft hand",
+   "A push",
+   "A double down"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In blackjack, what does the word 'bust' mean?",
+  "options": [
+   "Taking insurance",
+   "Going over 21",
+   "Splitting a pair",
+   "Matching the dealer"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many points are needed to win a standard game of cribbage?",
+  "options": [
+   "61",
+   "100",
+   "150",
+   "121"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is used to keep score in cribbage?",
+  "options": [
+   "A dial counter",
+   "Coloured chips",
+   "A tally on paper",
+   "A pegged board"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many cards are used in a standard game of euchre?",
+  "options": [
+   "52",
+   "32",
+   "40",
+   "24"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In euchre, what is the jack of the trump suit called?",
+  "options": [
+   "The right bower",
+   "The top card",
+   "The maker",
+   "The left bower"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In the card game five hundred, which card is the highest trump?",
+  "options": [
+   "The joker",
+   "The king of trumps",
+   "The ace of trumps",
+   "The jack of hearts"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which card game is played with two decks and involves building melds of seven matching cards?",
+  "options": [
+   "Canasta",
+   "Whist",
+   "Cribbage",
+   "Piquet"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the most common single-player card game, played by building suits up from ace, called?",
+  "options": [
+   "Rummy",
+   "Whist",
+   "Snap",
+   "Solitaire, also known as patience"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which children's card game rewards the first player to spot two matching cards and shout out?",
+  "options": [
+   "Go Fish",
+   "Old Maid",
+   "Rummy",
+   "Snap"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the card game whist, how many cards are dealt to each of the four players?",
+  "options": [
+   "12",
+   "7",
+   "10",
+   "13"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In most trick-taking card games, what is the suit that beats all others called?",
+  "options": [
+   "Trumps",
+   "Ruffs",
+   "Leads",
+   "Honours"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for cutting a deck and interleaving the halves when shuffling?",
+  "options": [
+   "An overhand shuffle",
+   "A wash",
+   "A strip",
+   "A riffle shuffle"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the game Battleship, what does a player call out to take a shot?",
+  "options": [
+   "A grid reference",
+   "A number only",
+   "A ship name",
+   "A colour"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the game Hungry Hungry Hippos, what are the plastic hippos trying to gobble up?",
+  "options": [
+   "Pellets of food",
+   "Small fish",
+   "Marbles",
+   "Coins"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Mouse Trap, what is built up over the course of the game?",
+  "options": [
+   "A maze of walls",
+   "A chain reaction trap",
+   "A tower of cheese",
+   "A racetrack"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the game Kerplunk, what are players trying to avoid dropping?",
+  "options": [
+   "Blocks",
+   "Marbles",
+   "Coins",
+   "Sticks"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the formal name for the sport of fishing with a rod and line?",
+  "options": [
+   "Netting",
+   "Angling",
+   "Seining",
+   "Trawling"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In fishing, what is the general term for rods, reels, hooks and lines?",
+  "options": [
+   "Rigging",
+   "Gear line",
+   "Tackle",
+   "Kit bag"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the small weight used to sink a fishing line called?",
+  "options": [
+   "A bobber",
+   "A leader",
+   "A sinker",
+   "A swivel"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the buoyant marker that sits on the surface and dips when a fish bites called?",
+  "options": [
+   "A gaff",
+   "A float",
+   "A jig",
+   "A sinker"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What small piece of tackle is used to stop a fishing line twisting?",
+  "options": [
+   "A snap ring",
+   "A sinker",
+   "A swivel",
+   "A barb"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the backward-facing point on a fish hook that stops it slipping out called?",
+  "options": [
+   "The barb",
+   "The eye",
+   "The gape",
+   "The shank"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Why do many anglers use barbless hooks?",
+  "options": [
+   "They hold more bait",
+   "They are easier to remove when releasing fish",
+   "They are cheaper",
+   "They cast further"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In fishing, what does 'trolling' mean?",
+  "options": [
+   "Using a hand line only",
+   "Fishing with live bait under a float",
+   "Fishing from rocks at night",
+   "Dragging lures behind a moving boat"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Australian term for the mix of scraps thrown in the water to attract fish?",
+  "options": [
+   "Berley",
+   "Groundmash",
+   "Slurry",
+   "Baitpaste"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is Australia's largest freshwater fish?",
+  "options": [
+   "The Australian bass",
+   "The golden perch",
+   "The Murray cod",
+   "The barramundi"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Barramundi are unusual because most of them do what during their lives?",
+  "options": [
+   "Never leave one river pool",
+   "Spawn only once and die",
+   "Change from male to female",
+   "Live entirely in salt water"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian brand is famous for its sidecast fishing reels used off the beach?",
+  "options": [
+   "Penn",
+   "Shimano",
+   "Alvey",
+   "Daiwa"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the long-handled hook used to lift a large fish into a boat called?",
+  "options": [
+   "A cleat",
+   "A gaff",
+   "A pike",
+   "A grapple"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the short length of stronger line tied between the main line and the hook called?",
+  "options": [
+   "A trace or leader",
+   "A tippet float",
+   "A backing loop",
+   "A dropper weight"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In fishing, what is a 'snag'?",
+  "options": [
+   "A broken rod tip",
+   "A fish that escapes",
+   "A tangled reel",
+   "Submerged timber or structure that catches lines"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which two trout species were introduced to Australian rivers from overseas?",
+  "options": [
+   "Golden trout and blue trout",
+   "Brook trout and Murray trout",
+   "Brown trout and rainbow trout",
+   "Coral trout and rock trout"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the practice of returning a caught fish to the water unharmed called?",
+  "options": [
+   "Tag and drop",
+   "Soft handling",
+   "Catch and release",
+   "Free lining"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the minimum length a fish must be before it can legally be kept called?",
+  "options": [
+   "A quota",
+   "A catch rate",
+   "A size limit",
+   "A bag limit"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the barbed, prawn-shaped lure used to catch squid called?",
+  "options": [
+   "A jig",
+   "A popper",
+   "A spinnerbait",
+   "A sinker rig"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In fly fishing, what is the artificial bait designed to imitate?",
+  "options": [
+   "A small crab",
+   "A weed frond",
+   "A pebble",
+   "An insect"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a common name for the open-faced reel used by most beginner anglers?",
+  "options": [
+   "A spinning reel",
+   "An overhead reel",
+   "A centrepin",
+   "A fly reel"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the adjustable brake on a fishing reel that lets line out under pressure called?",
+  "options": [
+   "The clutch pin",
+   "The drag",
+   "The retrieve",
+   "The spool lock"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which knot is one of the most widely used for tying a hook to a line?",
+  "options": [
+   "The reef knot",
+   "The bowline",
+   "The improved clinch knot",
+   "The sheepshank"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In fishing, what is a large predatory billfish targeted by game anglers off Cairns?",
+  "options": [
+   "Black marlin",
+   "Coral trout",
+   "Mangrove jack",
+   "Barramundi"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gardening, what is a plant that completes its whole life cycle in one year called?",
+  "options": [
+   "An annual",
+   "A perennial",
+   "An evergreen",
+   "A biennial"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In gardening, what is a plant that takes two years to complete its life cycle called?",
+  "options": [
+   "A perennial",
+   "A deciduous",
+   "An annual",
+   "A biennial"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the three main nutrients listed on most fertiliser packets?",
+  "options": [
+   "Calcium, iron and zinc",
+   "Carbon, sulphur and sodium",
+   "Magnesium, boron and copper",
+   "Nitrogen, phosphorus and potassium"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which nutrient is most associated with strong leafy green growth?",
+  "options": [
+   "Potassium",
+   "Phosphorus",
+   "Nitrogen",
+   "Calcium"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is added to garden soil to make it less acidic?",
+  "options": [
+   "Sulphur",
+   "Lime",
+   "Peat",
+   "Coffee grounds"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gardening, what does the pH of soil measure?",
+  "options": [
+   "How acid or alkaline it is",
+   "How much water it holds",
+   "How warm it is",
+   "How many worms live in it"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the hand tool used for pruning small branches and stems called?",
+  "options": [
+   "Secateurs",
+   "A hoe",
+   "A dibber",
+   "A trowel"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the small pointed tool used to poke planting holes for seedlings called?",
+  "options": [
+   "A dibber",
+   "A pricker",
+   "A trowel",
+   "A scarifier"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which garden tool has a flat blade on a long handle and is used to chop weeds at soil level?",
+  "options": [
+   "A hoe",
+   "A fork",
+   "A rake",
+   "A spade"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the practice of growing a fruit tree flat against a wall or wires called?",
+  "options": [
+   "Layering",
+   "Topiary",
+   "Espalier",
+   "Coppicing"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is joining a shoot from one plant onto the rootstock of another called?",
+  "options": [
+   "Budding off",
+   "Layering",
+   "Grafting",
+   "Splicing seed"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the gardening term for growing a new plant from a piece of stem?",
+  "options": [
+   "Hardening off",
+   "Splitting a bulb",
+   "Taking a cutting",
+   "Sowing a runner"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does it mean to 'harden off' seedlings?",
+  "options": [
+   "Freeze the seeds before planting",
+   "Gradually get them used to outdoor conditions",
+   "Let the soil dry out completely",
+   "Press the soil down firmly"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A daffodil grows from which type of underground storage organ?",
+  "options": [
+   "A tuber",
+   "A corm root",
+   "A rhizome",
+   "A bulb"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "A potato is which type of underground plant part?",
+  "options": [
+   "A rhizome",
+   "A tuber",
+   "A bulb",
+   "A taproot"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the practice of composting food scraps using worms called?",
+  "options": [
+   "Worm farming",
+   "Green manuring",
+   "Hot composting",
+   "Mulching"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a tree that drops all its leaves each year described as?",
+  "options": [
+   "Perennial",
+   "Herbaceous",
+   "Deciduous",
+   "Evergreen"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which flower is Australia's national floral emblem?",
+  "options": [
+   "The golden wattle",
+   "The kangaroo paw",
+   "The waratah",
+   "The Sturt's desert pea"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which flower is the floral emblem of New South Wales?",
+  "options": [
+   "The Cooktown orchid",
+   "The waratah",
+   "The golden wattle",
+   "The pink heath"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which distinctive flower is the floral emblem of Western Australia?",
+  "options": [
+   "The banksia",
+   "The kangaroo paw",
+   "The waratah",
+   "The bottlebrush"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian native shrub genus has flower spikes that gave it the common name bottlebrush?",
+  "options": [
+   "Callistemon",
+   "Grevillea",
+   "Banksia",
+   "Acacia"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which northern New South Wales city is famous for its jacaranda festival?",
+  "options": [
+   "Orange",
+   "Dubbo",
+   "Grafton",
+   "Armidale"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which is the world's most famous flower show, held each year in London?",
+  "options": [
+   "The Kew Garden Show",
+   "The Chelsea Flower Show",
+   "The Hyde Park Bloom",
+   "The Covent Garden Fair"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which prickly lawn weed is a common backyard nuisance in Australia?",
+  "options": [
+   "Dandelion",
+   "Bindii",
+   "Chickweed",
+   "Clover"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which of these is a common Australian lawn grass?",
+  "options": [
+   "Redgrass",
+   "Silvergrass",
+   "Bluegrass fern",
+   "Buffalo"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a soil made of a balanced mix of sand, silt and clay called?",
+  "options": [
+   "Chalk",
+   "Loam",
+   "Peat",
+   "Shale"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a glass or plastic cover placed over a plant to protect it from cold called?",
+  "options": [
+   "A cold rack",
+   "A shade sail",
+   "A cloche",
+   "A frame net"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a plant described as when its roots have filled the pot and started circling?",
+  "options": [
+   "Root bound",
+   "Chlorotic",
+   "Bolted",
+   "Leggy"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is it called when a leafy vegetable runs to seed early in hot weather?",
+  "options": [
+   "Bolting",
+   "Wilting",
+   "Curling",
+   "Blighting"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which flowers are traditionally planted among vegetables to help deter pests?",
+  "options": [
+   "Tulips",
+   "Marigolds",
+   "Petunias",
+   "Camellias"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is planting two crops side by side because they help each other called?",
+  "options": [
+   "Green manuring",
+   "Intercropping seed",
+   "Companion planting",
+   "Crop rotation"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is changing which crop is grown in a bed each season called?",
+  "options": [
+   "Crop rotation",
+   "Successive sowing",
+   "Fallowing",
+   "Bed cycling"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which garden structure is designed to trap heat and light for growing plants?",
+  "options": [
+   "A gazebo",
+   "A glasshouse",
+   "A pergola",
+   "A shade house"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which common Australian tree genus is known simply as the gum tree?",
+  "options": [
+   "Eucalyptus",
+   "Casuarina",
+   "Melaleuca",
+   "Acacia"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who founded the Scout movement?",
+  "options": [
+   "Ernest Shackleton",
+   "Robert Baden-Powell",
+   "Thomas Barnardo",
+   "William Booth"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Scout motto?",
+  "options": [
+   "Always Ready",
+   "Serve and Learn",
+   "Be Prepared",
+   "Do Your Best"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On which island was the first experimental Scout camp held in 1907?",
+  "options": [
+   "Isle of Man",
+   "Isle of Wight",
+   "Brownsea Island",
+   "Lundy Island"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many fingers are raised in the traditional Scout salute?",
+  "options": [
+   "One",
+   "Two",
+   "Four",
+   "Three"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the ring that holds a Scout's neckerchief in place called?",
+  "options": [
+   "A woggle",
+   "A toggle band",
+   "A tie loop",
+   "A clasp ring"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a very large international gathering of Scouts called?",
+  "options": [
+   "A jamboree",
+   "A muster",
+   "A convention",
+   "A rally camp"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Australian Scouting, what is the youngest section called?",
+  "options": [
+   "Joey Scouts",
+   "Rover Scouts",
+   "Venturer Scouts",
+   "Cub Scouts"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which knot forms a fixed loop that will not slip, often called the king of knots?",
+  "options": [
+   "The sheepshank",
+   "The reef knot",
+   "The clove hitch",
+   "The bowline"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which knot is used to join two ropes of the same thickness?",
+  "options": [
+   "The reef knot",
+   "The timber hitch",
+   "The clove hitch",
+   "The bowline"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which knot is best for joining two ropes of different thicknesses?",
+  "options": [
+   "The sheet bend",
+   "The reef knot",
+   "The bowline",
+   "The figure of eight"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which hitch is commonly used to tie a rope to a post or rail?",
+  "options": [
+   "The reef knot",
+   "The bowline",
+   "The sheet bend",
+   "The clove hitch"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which knot is traditionally used to temporarily shorten a rope?",
+  "options": [
+   "The bowline",
+   "The reef knot",
+   "The sheepshank",
+   "The clove hitch"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which knot is tied as a stopper at the end of a rope to keep it from running through a hole?",
+  "options": [
+   "The sheet bend",
+   "The figure of eight",
+   "The clove hitch",
+   "The bowline"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which direction does the needle on a magnetic compass point?",
+  "options": [
+   "True south",
+   "Magnetic north",
+   "Magnetic east",
+   "The nearest hill"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many degrees are there in a full circle on a compass?",
+  "options": [
+   "360",
+   "270",
+   "400",
+   "180"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On a topographic map, what do contour lines show?",
+  "options": [
+   "Rainfall",
+   "Height above sea level",
+   "Vegetation type",
+   "Road surfaces"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a topographic map, what does it mean when contour lines are very close together?",
+  "options": [
+   "The ground is steep",
+   "The ground is flat",
+   "There is dense scrub",
+   "There is water"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which constellation is used to help find south in the Australian night sky?",
+  "options": [
+   "The Plough",
+   "The Southern Cross",
+   "Orion",
+   "Cassiopeia"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Australian bushman's name for the tin can used to boil water over a fire?",
+  "options": [
+   "A jug pot",
+   "A char pot",
+   "A quart tin",
+   "A billy"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the simple bread traditionally baked in the coals of a campfire in Australia called?",
+  "options": [
+   "Johnny cake loaf",
+   "Ash roll",
+   "Bush bun",
+   "Damper"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional Australian bedroll used for sleeping outdoors called?",
+  "options": [
+   "A roll pack",
+   "A swag",
+   "A bunkroll",
+   "A bindle"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the lines that hold a tent steady in the wind called?",
+  "options": [
+   "Brace cords",
+   "Guy ropes",
+   "Tie wires",
+   "Stay lines"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the outer waterproof layer of a tent called?",
+  "options": [
+   "The fly",
+   "The shell",
+   "The cap",
+   "The skin"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the three stages of material used to build a campfire, in order?",
+  "options": [
+   "Fuel, kindling and tinder",
+   "Bark, coals and logs",
+   "Tinder, kindling and fuel",
+   "Kindling, tinder and logs"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the outdoor principle of leaving a campsite exactly as you found it called?",
+  "options": [
+   "Leave No Trace",
+   "Zero Mark",
+   "Clean Camp",
+   "Pack Out Pledge"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does the temperature rating on a sleeping bag tell you?",
+  "options": [
+   "The lowest temperature it is designed to keep you comfortable in",
+   "How quickly it dries",
+   "How much it weighs",
+   "How long it lasts"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian brand name for a portable cooler became the everyday word for one?",
+  "options": [
+   "Esky",
+   "Ice chest",
+   "Cooler box",
+   "Chilly bin"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What dangerous condition happens when the body loses heat faster than it can produce it?",
+  "options": [
+   "Hyperthermia",
+   "Dehydration",
+   "Hypothermia",
+   "Heat stroke"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In bushwalking, what is the pack carried on your back with a hip belt usually called?",
+  "options": [
+   "A duffel",
+   "A satchel",
+   "A rucksack",
+   "A holdall"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Australian long-distance walking track that runs through the Grampians called?",
+  "options": [
+   "The Grampians Peaks Trail",
+   "The Bibbulmun Track",
+   "The Larapinta Trail",
+   "The Overland Track"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which famous multi-day walking track crosses Tasmania's Cradle Mountain region?",
+  "options": [
+   "The Larapinta Trail",
+   "The Heysen Trail",
+   "The Bibbulmun Track",
+   "The Overland Track"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which long-distance walking track runs through the West MacDonnell Ranges in the Northern Territory?",
+  "options": [
+   "The Overland Track",
+   "The Bibbulmun Track",
+   "The Larapinta Trail",
+   "The Great South West Walk"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Western Australian long-distance track runs from Perth to Albany?",
+  "options": [
+   "The Bibbulmun Track",
+   "The Cape to Cape Track",
+   "The Munda Biddi",
+   "The Heysen Trail"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the youth award scheme founded by Prince Philip that includes hikes and skills?",
+  "options": [
+   "The Prince's Challenge",
+   "The Duke of Edinburgh's Award",
+   "The Royal Youth Medal",
+   "The Queen's Trust"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the sister organisation to Scouts, founded for girls?",
+  "options": [
+   "Lady Scouts",
+   "Junior Guiders",
+   "Girl Rangers",
+   "Girl Guides"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the compass bearing for due east in degrees?",
+  "options": [
+   "45",
+   "180",
+   "270",
+   "90"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the compass bearing for due west in degrees?",
+  "options": [
+   "90",
+   "270",
+   "360",
+   "180"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In camping, what is the ground sheet placed under a tent mainly for?",
+  "options": [
+   "Marking the site",
+   "Keeping moisture and sharp objects off the tent floor",
+   "Holding the pegs",
+   "Insulating the roof"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sport combines cross-country running with map and compass navigation?",
+  "options": [
+   "Rogaining relay",
+   "Pathfinding",
+   "Trailblazing",
+   "Orienteering"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the small portable cooker fuelled by methylated spirits, popular with hikers, commonly called?",
+  "options": [
+   "A Trangia",
+   "A Primus torch",
+   "A Coleman kettle",
+   "A Solo pot"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which knot is used to tie a taut guy rope so its tension can be adjusted?",
+  "options": [
+   "The taut-line hitch",
+   "The bowline",
+   "The reef knot",
+   "The sheet bend"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the term for a fish's forward fin on its back?",
+  "options": [
+   "The dorsal fin",
+   "The anal fin",
+   "The pectoral fin",
+   "The caudal fin"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a fish's tail fin properly called?",
+  "options": [
+   "The adipose fin",
+   "The pelvic fin",
+   "The dorsal fin",
+   "The caudal fin"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which country's Lapland region is a major destination for anglers fishing through holes drilled in frozen lakes?",
+  "options": [
+   "Finland",
+   "Portugal",
+   "Greece",
+   "Spain"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the flexible top section of a fishing rod called?",
+  "options": [
+   "The butt",
+   "The stem",
+   "The shank",
+   "The tip"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the small rings along a fishing rod that guide the line called?",
+  "options": [
+   "Cams and stops",
+   "Runners or guides",
+   "Eyelets and cleats",
+   "Rollers and hooks"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a fishing line made from a single strand of nylon called?",
+  "options": [
+   "Braid",
+   "Monofilament",
+   "Wire trace",
+   "Fluoro braid"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What does the 'breaking strain' printed on a spool of fishing line describe?",
+  "options": [
+   "The weight of pull the line can take before it snaps",
+   "The thickness of the line",
+   "How far it can be cast",
+   "The length of the line"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In gardening, what does 'pruning' a plant mean?",
+  "options": [
+   "Cutting back stems or branches",
+   "Feeding it liquid fertiliser",
+   "Moving it to a new bed",
+   "Covering the roots"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the practice of growing plants without soil, in nutrient-rich water, called?",
+  "options": [
+   "Hydroponics",
+   "Aquascaping",
+   "Aeroponics grafting",
+   "Permaculture"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a garden designed to need very little watering called?",
+  "options": [
+   "A parterre",
+   "A rockery",
+   "A xeriscape",
+   "A hothouse"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the tool with a long handle and fan-shaped head used to gather leaves?",
+  "options": [
+   "A spade",
+   "A hoe",
+   "A fork",
+   "A rake"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the small holes around the edge of a stamp that let it be torn off called?",
+  "options": [
+   "Serrations",
+   "Perforations",
+   "Punchings",
+   "Notches"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a stamp with no perforations at all described as?",
+  "options": [
+   "Imperforate",
+   "Trimmed",
+   "Plain cut",
+   "Blank edged"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a stamp that has never been used and still has its gum called?",
+  "options": [
+   "Fresh",
+   "Clean",
+   "Prime",
+   "Mint"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What tool do stamp collectors use to handle stamps without touching them?",
+  "options": [
+   "Forceps clamps",
+   "Chopsticks",
+   "Pliers",
+   "Tongs"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the small folded piece of gummed paper used to mount a stamp in an album called?",
+  "options": [
+   "A hinge",
+   "A clip",
+   "A strip",
+   "A tab"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In stamp collecting, what is an envelope that has been through the post called?",
+  "options": [
+   "A wrapper",
+   "A cover",
+   "A packet",
+   "A carrier"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the ink mark applied to a stamp to stop it being reused called?",
+  "options": [
+   "A stamp seal",
+   "An overprint",
+   "A cancellation",
+   "A frank strip"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a stamp issued for everyday postage over a long period called?",
+  "options": [
+   "A commemorative",
+   "A provisional",
+   "A definitive",
+   "A standing issue"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a stamp issued to mark a special event or anniversary called?",
+  "options": [
+   "A commemorative",
+   "A revenue stamp",
+   "A definitive",
+   "A postal note"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What faint design pressed into stamp paper helps prove it is genuine?",
+  "options": [
+   "A serial code",
+   "A watermark",
+   "A hologram",
+   "A weave line"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which stamp followed the Penny Black as Britain's everyday postage stamp?",
+  "options": [
+   "The Penny Brown",
+   "The Twopenny Blue",
+   "The Penny Lilac",
+   "The Penny Red"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which is the only country that does not print its name on its postage stamps?",
+  "options": [
+   "The Vatican",
+   "Switzerland",
+   "France",
+   "The United Kingdom"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal appeared on Australia's first national stamp series, issued in 1913?",
+  "options": [
+   "An emu",
+   "A koala",
+   "A kangaroo",
+   "A platypus"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "The famous American stamp error known as the Inverted Jenny shows what upside down?",
+  "options": [
+   "An aeroplane",
+   "An eagle",
+   "A ship",
+   "A steam train"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the front, or head, side of a coin properly called?",
+  "options": [
+   "The rim",
+   "The field",
+   "The reverse",
+   "The obverse"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the tail side of a coin properly called?",
+  "options": [
+   "The exergue",
+   "The relief",
+   "The reverse",
+   "The obverse"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the fine grooves cut around the edge of many coins called?",
+  "options": [
+   "Serration teeth",
+   "Milling or reeding",
+   "Knurled grain",
+   "Fluting"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a small letter or symbol on a coin showing which mint made it called?",
+  "options": [
+   "A privy seal",
+   "A mint mark",
+   "A maker's stamp",
+   "A die code"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a specially struck collector's coin with a mirror-like finish called?",
+  "options": [
+   "A proof",
+   "A restrike",
+   "A token",
+   "A blank"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which mint produces Australia's circulating coins?",
+  "options": [
+   "The Melbourne Mint",
+   "The Sydney Mint",
+   "The Royal Australian Mint in Canberra",
+   "The Perth Mint"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year did Australia change over to decimal currency?",
+  "options": [
+   "1966",
+   "1971",
+   "1956",
+   "1961"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal appears on the Australian five cent coin?",
+  "options": [
+   "A lyrebird",
+   "An echidna",
+   "A platypus",
+   "A frilled-neck lizard"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which animal appears on the Australian twenty cent coin?",
+  "options": [
+   "A lyrebird",
+   "An echidna",
+   "A platypus",
+   "A kangaroo"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which bird appears on the Australian ten cent coin?",
+  "options": [
+   "A kookaburra",
+   "A lyrebird",
+   "An emu",
+   "A black swan"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many sides does the Australian fifty cent coin have?",
+  "options": [
+   "Ten",
+   "Six",
+   "Eight",
+   "Twelve"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many kangaroos are shown on the Australian one dollar coin?",
+  "options": [
+   "Four",
+   "Six",
+   "Three",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which animal appeared on the Australian two cent coin before it was withdrawn?",
+  "options": [
+   "A bilby",
+   "A ringtail possum",
+   "A feathertail glider",
+   "A frilled-neck lizard"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In which year were the Australian one and two cent coins withdrawn from circulation?",
+  "options": [
+   "1992",
+   "1988",
+   "1985",
+   "1998"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "The early colonial coin known as the 'holey dollar' was made by doing what to a Spanish dollar?",
+  "options": [
+   "Cutting it in half",
+   "Stamping a new date on it",
+   "Melting and recasting it",
+   "Punching out the centre"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In pre-decimal Australian currency, how many pennies made up one shilling?",
+  "options": [
+   "Twenty",
+   "Six",
+   "Twelve",
+   "Ten"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In pre-decimal currency, how many shillings made up one pound?",
+  "options": [
+   "Ten",
+   "Twenty-four",
+   "Twenty",
+   "Twelve"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian mint is best known for producing gold and silver bullion coins?",
+  "options": [
+   "The Royal Australian Mint",
+   "The Perth Mint",
+   "The Brisbane Mint",
+   "The Adelaide Mint"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In coin collecting, what does the grade 'uncirculated' mean?",
+  "options": [
+   "The coin shows no wear from being used as money",
+   "The coin has been cleaned",
+   "The coin is a fake",
+   "The coin has never been minted"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the metal stamp used to strike the design onto a coin called?",
+  "options": [
+   "A mould",
+   "A press plate",
+   "A die",
+   "A punch block"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which model railway gauge is the most widely used in the world?",
+  "options": [
+   "HO",
+   "Z",
+   "N",
+   "O"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which of these model railway gauges is the smallest?",
+  "options": [
+   "HO",
+   "N",
+   "Z",
+   "O"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which model railway gauge is large enough to be run outdoors in a garden?",
+  "options": [
+   "N",
+   "HO",
+   "G",
+   "Z"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the general term for model carriages and wagons on a model railway?",
+  "options": [
+   "Trackside kit",
+   "Traction units",
+   "Rolling stock",
+   "Consist gear"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the crushed stone spread around model railway track to look realistic called?",
+  "options": [
+   "Grit fill",
+   "Aggregate",
+   "Ballast",
+   "Roadbed dust"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the moving section of track that sends a train onto a different line called?",
+  "options": [
+   "Points",
+   "A junction bar",
+   "A crossover pin",
+   "A swivel rail"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In model railways, what do the initials DCC stand for?",
+  "options": [
+   "Drive Chain Coupling",
+   "Dual Cab Controller",
+   "Direct Current Circuit",
+   "Digital Command Control"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which British company is the best known maker of model railway sets?",
+  "options": [
+   "Corgi",
+   "Airfix",
+   "Hornby",
+   "Meccano"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which German company is famous for its model trains and its long history in tinplate toys?",
+  "options": [
+   "Noch",
+   "Fleischmann",
+   "Marklin",
+   "Faller"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the plastic frame that model kit parts are attached to called?",
+  "options": [
+   "The runner tray",
+   "The lattice",
+   "The sprue",
+   "The mould gate"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which construction toy uses perforated metal strips, nuts and bolts?",
+  "options": [
+   "K'nex",
+   "Lego",
+   "Bayko",
+   "Meccano"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In photography, what happens to the size of the opening as the f-number gets smaller?",
+  "options": [
+   "The opening gets wider",
+   "Nothing changes",
+   "The opening gets narrower",
+   "The shutter closes"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In photography, what does a very wide aperture do to the depth of field?",
+  "options": [
+   "Removes it entirely",
+   "Makes it shallow, so the background blurs",
+   "Makes it deeper",
+   "Doubles the exposure time"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the three settings of the exposure triangle in photography?",
+  "options": [
+   "Aperture, shutter speed and ISO",
+   "ISO, contrast and colour",
+   "Aperture, focus and zoom",
+   "Shutter speed, flash and white balance"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In photography, what do the initials SLR stand for?",
+  "options": [
+   "Selective lens ratio",
+   "Single lens reflex",
+   "Standard light range",
+   "Shutter lock release"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of lens is designed for extreme close-up photographs of small subjects?",
+  "options": [
+   "A macro lens",
+   "A fisheye lens",
+   "A zoom lens",
+   "A telephoto lens"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What sort of lens has a long focal length and is used to bring distant subjects closer?",
+  "options": [
+   "A macro lens",
+   "A prime portrait lens",
+   "A telephoto lens",
+   "A wide angle lens"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the three-legged stand used to hold a camera steady called?",
+  "options": [
+   "A rig",
+   "A tripod",
+   "A boom",
+   "A monopod"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In photography, what is the 'golden hour'?",
+  "options": [
+   "Midday when the sun is highest",
+   "Any hour with no cloud",
+   "The hour before dawn",
+   "The period soon after sunrise or before sunset"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In photography, what does the word 'bokeh' describe?",
+  "options": [
+   "The noise in a dark photo",
+   "The quality of the out-of-focus areas",
+   "The lens flare",
+   "The shutter sound"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which film format was the standard for most amateur cameras in the twentieth century?",
+  "options": [
+   "70 millimetre",
+   "16 millimetre",
+   "35 millimetre",
+   "8 millimetre"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the room with no white light, used to develop photographic film, called?",
+  "options": [
+   "A dim lab",
+   "A black box",
+   "A darkroom",
+   "A shade room"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In film photography, what is the image called where light areas appear dark and dark areas light?",
+  "options": [
+   "A contact sheet",
+   "A plate",
+   "A positive",
+   "A negative"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which brand became a byword for instant photographs that develop in your hand?",
+  "options": [
+   "Agfa",
+   "Ilford",
+   "Kodachrome",
+   "Polaroid"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was the early photographic process announced in France in 1839 called?",
+  "options": [
+   "The daguerreotype",
+   "The ambrotype",
+   "The calotype",
+   "The tintype"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In photography, what does the white balance setting correct?",
+  "options": [
+   "The colour cast caused by different kinds of light",
+   "The lens distortion",
+   "The overall brightness",
+   "The sharpness of the image"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the uncompressed camera file format that keeps all the sensor data called?",
+  "options": [
+   "RAW",
+   "JPEG",
+   "GIF",
+   "PNG"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What technique keeps a moving subject sharp while blurring the background?",
+  "options": [
+   "Bracketing",
+   "Stacking",
+   "Panning",
+   "Dodging"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What sort of exposure is needed to capture light trails from car headlights at night?",
+  "options": [
+   "A long exposure",
+   "A flash exposure",
+   "A high ISO burst",
+   "A very fast shutter"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On a camera dial, what does the setting marked A or Av usually mean?",
+  "options": [
+   "Advanced view",
+   "Aperture priority",
+   "Ambient light",
+   "Automatic video"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a lens with a fixed focal length, that cannot zoom, called?",
+  "options": [
+   "A prime lens",
+   "A zoom lens",
+   "A variable lens",
+   "A kit lens"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who is credited with inventing the crossword puzzle, published in 1913?",
+  "options": [
+   "Erno Rubik",
+   "Alfred Butts",
+   "Arthur Wynne",
+   "Howard Garns"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In a crossword, what do the numbers in brackets at the end of a clue tell you?",
+  "options": [
+   "How many words cross it",
+   "The difficulty of the clue",
+   "The clue number",
+   "How many letters are in the answer"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the person who writes a crossword called?",
+  "options": [
+   "The editor",
+   "The plotter",
+   "The setter",
+   "The scribe"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the two directions of answers in a crossword grid?",
+  "options": [
+   "Left and right",
+   "Up and along",
+   "Across and down",
+   "Row and file"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a cryptic crossword, a clue usually has how many parts?",
+  "options": [
+   "Four, one per corner",
+   "Two, a definition and some wordplay",
+   "One, just a definition",
+   "Three, always"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many squares are in the grid of a standard sudoku puzzle?",
+  "options": [
+   "100",
+   "81",
+   "64",
+   "49"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In sudoku, which numbers are used to fill the grid?",
+  "options": [
+   "One to six",
+   "One to nine",
+   "One to twelve",
+   "Zero to nine"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In sudoku, each number may appear how many times in a row?",
+  "options": [
+   "Three times",
+   "Twice",
+   "Any number of times",
+   "Once"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Who invented the Rubik's Cube?",
+  "options": [
+   "Erno Rubik",
+   "Arthur Wynne",
+   "Ralph Baer",
+   "Laszlo Biro"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country was the inventor of the Rubik's Cube from?",
+  "options": [
+   "Austria",
+   "Poland",
+   "Hungary",
+   "Czechoslovakia"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many coloured stickers are on a standard three by three Rubik's Cube?",
+  "options": [
+   "36",
+   "54",
+   "64",
+   "48"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the competitive hobby of solving Rubik's Cubes as fast as possible called?",
+  "options": [
+   "Cube racing",
+   "Turn sprinting",
+   "Speedcubing",
+   "Rapid twisting"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a puzzle that uses pictures and letters to represent words called?",
+  "options": [
+   "A cryptogram",
+   "An acrostic",
+   "A logogram",
+   "A rebus"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which English cabinet maker is credited with inventing the jigsaw puzzle by cutting up a map?",
+  "options": [
+   "John Spilsbury",
+   "Josiah Wedgwood",
+   "Thomas Chippendale",
+   "William Morris"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In knitting, what is the first step of putting stitches onto the needle called?",
+  "options": [
+   "Ribbing",
+   "Blocking",
+   "Casting off",
+   "Casting on"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In knitting, what is the process of finishing and securing the last row called?",
+  "options": [
+   "Casting off",
+   "Casting on",
+   "Felting",
+   "Purling"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In knitting, what is the stitch pattern made by knitting every single row called?",
+  "options": [
+   "Moss stitch",
+   "Garter stitch",
+   "Stocking stitch",
+   "Rib stitch"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In knitting, what is the stretchy pattern of alternating knit and purl stitches in a row called?",
+  "options": [
+   "Ribbing",
+   "Cabling",
+   "Basketweave",
+   "Garter stitch"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a small test square knitted to check stitch size called?",
+  "options": [
+   "A sample cloth",
+   "A trial patch",
+   "A gauge swatch board",
+   "A tension square"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a coiled bundle of yarn as sold in a craft shop usually called?",
+  "options": [
+   "A skein",
+   "A bobbin",
+   "A spool",
+   "A reel"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In crochet, what is the basic square unit often joined together to make blankets called?",
+  "options": [
+   "A crochet tile",
+   "A granny square",
+   "A patch round",
+   "A block stitch"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the round frame that holds fabric tight for embroidery called?",
+  "options": [
+   "A stretcher",
+   "A drum",
+   "A hoop",
+   "A ring clamp"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which fabric with a regular open grid is most used for cross stitch?",
+  "options": [
+   "Chintz",
+   "Hessian",
+   "Calico",
+   "Aida"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "On a sewing machine, what holds the lower thread?",
+  "options": [
+   "The presser foot",
+   "The feed dog",
+   "The bobbin",
+   "The take-up lever"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a sewing machine, what holds the fabric down against the feed?",
+  "options": [
+   "The tension dial",
+   "The presser foot",
+   "The bobbin case",
+   "The throat plate"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are scissors with a zigzag blade, used to stop fabric fraying, called?",
+  "options": [
+   "Trimming scissors",
+   "Tailor's snips",
+   "Pinking shears",
+   "Notching shears"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In sewing, what is the distance between the stitching and the raw edge of the fabric called?",
+  "options": [
+   "The seam allowance",
+   "The hem depth",
+   "The dart",
+   "The selvedge"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the loose temporary stitching used to hold fabric before sewing properly called?",
+  "options": [
+   "Hemming",
+   "Overlocking",
+   "Topstitching",
+   "Tacking"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the small metal cap worn on a finger to push a needle through fabric?",
+  "options": [
+   "A shield",
+   "A thimble",
+   "A nub cap",
+   "A bodkin"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What machine trims and stitches a fabric edge in one pass to stop it fraying?",
+  "options": [
+   "A binder press",
+   "A serger loom",
+   "A hemmer",
+   "An overlocker"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In weaving, what are the threads that run lengthwise on the loom called?",
+  "options": [
+   "The warp",
+   "The selvedge",
+   "The weft",
+   "The heddle"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In weaving, what are the threads passed across the loom called?",
+  "options": [
+   "The shed",
+   "The weft",
+   "The reed",
+   "The warp"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the frame used for weaving cloth called?",
+  "options": [
+   "A loom",
+   "A frame press",
+   "A rack",
+   "A jig"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What device is traditionally used to twist raw wool into yarn?",
+  "options": [
+   "A carding drum",
+   "A niddy loom",
+   "A shuttle press",
+   "A spinning wheel"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Indonesian fabric technique uses wax to resist dye?",
+  "options": [
+   "Batik",
+   "Ikat",
+   "Shibori",
+   "Kalamkari"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the technique of twisting and binding fabric before dyeing to make patterns called?",
+  "options": [
+   "Tie-dye",
+   "Resist bleaching",
+   "Block print",
+   "Screen wash"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the padded middle layer inside a quilt called?",
+  "options": [
+   "Backing",
+   "Interfacing",
+   "Lining",
+   "Wadding"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the central string of a candle called?",
+  "options": [
+   "The fuse",
+   "The taper",
+   "The core",
+   "The wick"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which craft makes pictures by inlaying thin pieces of coloured wood veneer?",
+  "options": [
+   "Chip carving",
+   "Pyrography",
+   "Marquetry",
+   "Fretwork"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the interlocking woodworking joint shaped like a bird's tail called?",
+  "options": [
+   "A dovetail",
+   "A rebate",
+   "A biscuit joint",
+   "A mortise pin"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What machine spins a piece of wood so a chisel can shape it into a bowl or spindle?",
+  "options": [
+   "A bandsaw",
+   "A lathe",
+   "A router table",
+   "A jointer"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the strip of metal that holds the pieces of glass together in a stained glass window called?",
+  "options": [
+   "Came or lead",
+   "Bead trim",
+   "Fillet",
+   "Fixing rail"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which craft makes objects from paper strips and paste over a mould?",
+  "options": [
+   "Quilling",
+   "Decoupage",
+   "Bookbinding",
+   "Papier mache"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the lace-making technique that uses a small shuttle to tie knots and loops called?",
+  "options": [
+   "Tatting",
+   "Bobbin work",
+   "Netting",
+   "Crewel"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the craft of matting wool fibres together with water, soap and pressure called?",
+  "options": [
+   "Napping",
+   "Fulling loops",
+   "Roving",
+   "Felting"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the paper guide showing the pieces to cut out for a garment called?",
+  "options": [
+   "A block plan",
+   "A sewing pattern",
+   "A cutting chart",
+   "A layout sheet"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, which player is responsible for placing the mat and rolling the jack?",
+  "options": [
+   "The third",
+   "The second",
+   "The skip",
+   "The lead"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, who starts the next end?",
+  "options": [
+   "The team that won the previous end",
+   "The team that won the toss",
+   "The team that lost the previous end",
+   "The visiting team"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In pairs lawn bowls, how many bowls does each player deliver in an end?",
+  "options": [
+   "Two",
+   "Three",
+   "Six",
+   "Four"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What are the practice ends played before a game of bowls begins called?",
+  "options": [
+   "Opening ends",
+   "Warm-up ends",
+   "Trial ends",
+   "Test ends"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Why must lawn bowlers wear flat-soled shoes?",
+  "options": [
+   "To stop them slipping",
+   "To improve their grip on the bowl",
+   "To avoid damaging the green",
+   "To meet uniform rules only"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what does the term 'weight' refer to?",
+  "options": [
+   "How much pace is put on the bowl",
+   "How heavy the bowl is",
+   "The bias of the bowl",
+   "The size of the bowl"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what does the term 'line' refer to?",
+  "options": [
+   "The scoreboard row",
+   "The direction the bowl is aimed",
+   "The edge of the rink",
+   "The mat position"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is it called when a bowler delivers a bowl the wrong way round so it curves away from the head?",
+  "options": [
+   "Cross grain",
+   "Wrong bias",
+   "Reverse draw",
+   "Off line"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the assistive device that lets bowlers deliver without bending down called?",
+  "options": [
+   "A drop stick",
+   "A roll aid",
+   "A launcher rail",
+   "A bowling arm"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the nickname of Australia's national lawn bowls team?",
+  "options": [
+   "The Bowlers",
+   "The Greens",
+   "The Jackaroos",
+   "The Kookaburras"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the international governing body for the sport of bowls called?",
+  "options": [
+   "Bowls International",
+   "The Global Bowls Union",
+   "The World Green Council",
+   "World Bowls"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In Australian club bowls, what is the name of the regular inter-club competition played in grades?",
+  "options": [
+   "League cup",
+   "The circuit",
+   "Pennant",
+   "Premiership"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "If a game of lawn bowls finishes level, what usually decides the winner?",
+  "options": [
+   "A shoot-out on the jack",
+   "A shared result",
+   "An extra end",
+   "A coin toss"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, what does a player do to 'kill' an end deliberately?",
+  "options": [
+   "Refuse to bowl",
+   "Drive the jack out of the rink",
+   "Move the mat",
+   "Bowl into the ditch"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, what is a very short jack length used for tactically?",
+  "options": [
+   "To stop drives",
+   "To help the lead only",
+   "To crowd the head and make drawing harder",
+   "To make the green run faster"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What surface is used for indoor bowls played inside a club or hall?",
+  "options": [
+   "Timber",
+   "Sand",
+   "Carpet",
+   "Concrete"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the person who marks the scoreboard in a bowls match doing?",
+  "options": [
+   "Measuring every bowl",
+   "Recording the shots scored each end",
+   "Calling the jack length",
+   "Timing the players"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what does the umpire do?",
+  "options": [
+   "Keeps the score",
+   "Rolls the jack",
+   "Chooses the rink",
+   "Rules on disputes and takes official measures"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, which two things must a bowler judge on every delivery?",
+  "options": [
+   "Grip and stance",
+   "Line and weight",
+   "Height and angle",
+   "Speed and spin"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the person who keeps score at a pub darts match traditionally called?",
+  "options": [
+   "The tallyman",
+   "The scorer's mate",
+   "The chalker",
+   "The marker boy"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Who was the first woman to beat a man at the PDC World Darts Championship?",
+  "options": [
+   "Fallon Sherrock",
+   "Lisa Ashton",
+   "Deta Hedman",
+   "Mikuru Suzuki"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which player threw the first televised nine-dart finish, in 1984?",
+  "options": [
+   "Phil Taylor",
+   "Eric Bristow",
+   "Jocky Wilson",
+   "John Lowe"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many world darts championships did Eric Bristow win?",
+  "options": [
+   "Five",
+   "Seven",
+   "Nine",
+   "Three"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which British game show based on darts was hosted by Jim Bowen?",
+  "options": [
+   "The Oche",
+   "Bullseye",
+   "Big Break",
+   "Bully's Board"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What score does a dart in the treble 17 give?",
+  "options": [
+   "34",
+   "17",
+   "57",
+   "51"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In darts, what is the highest score you can throw with a single dart?",
+  "options": [
+   "50",
+   "40",
+   "57",
+   "60"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a darts player's chosen entrance song called?",
+  "options": [
+   "The stage tune",
+   "The intro theme",
+   "Walk-on music",
+   "The oche anthem"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which double must you hit to finish from 40?",
+  "options": [
+   "Double 16",
+   "Double 8",
+   "Double 20",
+   "Double 10"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which double must you hit to finish from 36?",
+  "options": [
+   "Double 12",
+   "Double 20",
+   "Double 16",
+   "Double 18"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many dominoes are in a double-nine set?",
+  "options": [
+   "55",
+   "45",
+   "64",
+   "36"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the pile of unused dominoes that players draw from called?",
+  "options": [
+   "The pool room",
+   "The bank",
+   "The stack",
+   "The boneyard"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a single domino tile also nicknamed?",
+  "options": [
+   "A chip",
+   "A bone",
+   "A brick",
+   "A block"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In dominoes, what are the dots on each half of a tile called?",
+  "options": [
+   "Pips",
+   "Marks",
+   "Points",
+   "Spots"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In the Australian game of two-up, what are the coins traditionally made of in a proper set?",
+  "options": [
+   "Pennies",
+   "Fifty cent pieces",
+   "Silver dollars",
+   "Brass tokens"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In two-up, what is the small piece of wood used to throw the coins called?",
+  "options": [
+   "The tosser",
+   "The paddle",
+   "The kip",
+   "The board"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On which day is two-up traditionally played legally in Australian pubs?",
+  "options": [
+   "New Year's Day",
+   "Australia Day",
+   "Melbourne Cup Day",
+   "Anzac Day"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the traditional call to start a round of two-up?",
+  "options": [
+   "Heads up",
+   "Let it fly",
+   "Toss away",
+   "Come in spinner"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a pinball machine, what are the two paddles at the bottom of the table called?",
+  "options": [
+   "Bumpers",
+   "Kickers",
+   "Slings",
+   "Flippers"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What happens when a pinball machine registers a 'tilt'?",
+  "options": [
+   "A bonus ball is released",
+   "The flippers speed up",
+   "The score doubles",
+   "The current ball ends because the machine has been shaken"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the spring-loaded rod used to launch a pinball called?",
+  "options": [
+   "The trigger",
+   "The striker",
+   "The plunger",
+   "The lever"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pub table game uses rods with small figures to flick a ball into a goal?",
+  "options": [
+   "Table football",
+   "Shuffleboard",
+   "Air hockey",
+   "Bar billiards"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pub game uses a puck floating on a cushion of air?",
+  "options": [
+   "Bar billiards",
+   "Shuffleboard",
+   "Table football",
+   "Air hockey"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which record speed, in revolutions per minute, was standard for early shellac records?",
+  "options": [
+   "78",
+   "33",
+   "16",
+   "45"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Old 78 rpm records were made mainly from which brittle material?",
+  "options": [
+   "Shellac",
+   "Bakelite",
+   "Celluloid",
+   "Vinyl"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the small tip that sits in a record groove called?",
+  "options": [
+   "The spindle",
+   "The stylus",
+   "The cartridge",
+   "The tonearm"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the arm holding the cartridge on a record player called?",
+  "options": [
+   "The swing bar",
+   "The pickup rail",
+   "The tonearm",
+   "The lift arm"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Among record collectors, what is the top condition grade usually called?",
+  "options": [
+   "First grade",
+   "Prime",
+   "Perfect",
+   "Mint"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the paper or card cover a vinyl record is sold in called?",
+  "options": [
+   "The wrapper",
+   "The jacket liner strip",
+   "The folio",
+   "The sleeve"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What are the marks stamped into silver to show its purity and maker called?",
+  "options": [
+   "Hallmarks",
+   "Maker's cuts",
+   "Trade seals",
+   "Assay prints"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What percentage of pure silver is sterling silver?",
+  "options": [
+   "80 per cent",
+   "75 per cent",
+   "100 per cent",
+   "92.5 per cent"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many carats is pure gold?",
+  "options": [
+   "22",
+   "18",
+   "9",
+   "24"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Eighteen carat gold is what proportion of pure gold?",
+  "options": [
+   "Three quarters",
+   "Half",
+   "Nine tenths",
+   "One third"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In the antiques world, what does 'provenance' mean?",
+  "options": [
+   "The recorded history of who has owned an item",
+   "The country it was made in",
+   "The material it is made from",
+   "Its estimated value"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the soft sheen that builds up on old wood or metal over years called?",
+  "options": [
+   "Bloom",
+   "Lustre coat",
+   "Glaze",
+   "Patina"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "At an auction, what is a single item or group of items offered for sale called?",
+  "options": [
+   "A parcel",
+   "A batch bid",
+   "A lot",
+   "A block"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "At an auction, what is the lowest price a seller will accept called?",
+  "options": [
+   "The base",
+   "The floor bid",
+   "The margin",
+   "The reserve"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What small wooden mallet does an auctioneer use?",
+  "options": [
+   "A mallet block",
+   "A gavel",
+   "A hammer stick",
+   "A rapper"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which pair of famous auction houses were both founded in London in the eighteenth century?",
+  "options": [
+   "Phillips and Harrods",
+   "Bonhams and Tiffany",
+   "Sotheby's and Christie's",
+   "Lloyd's and Coutts"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which English pottery firm is famous for pale blue jasperware with white raised figures?",
+  "options": [
+   "Spode",
+   "Minton",
+   "Royal Doulton",
+   "Wedgwood"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a character jug shaped like a seated man in a tricorn hat called?",
+  "options": [
+   "A Doulton flagon",
+   "A grog pot",
+   "A Toby jug",
+   "A Staffordshire pitcher"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What early plastic, popular for 1930s radios and jewellery, is now widely collected?",
+  "options": [
+   "Melamine",
+   "Perspex",
+   "Vulcanite",
+   "Bakelite"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the collecting of beer bottles, cans and brewery advertising known as?",
+  "options": [
+   "Publicana",
+   "Beerology",
+   "Breweriana",
+   "Malt collecting"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the collecting of teddy bears called?",
+  "options": [
+   "Plushphily",
+   "Arctophily",
+   "Ursaphily",
+   "Bearology"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Someone who collects and loves books is called what?",
+  "options": [
+   "A tomeophile",
+   "A scriptophile",
+   "A libraphile",
+   "A bibliophile"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company makes Hot Wheels die-cast cars?",
+  "options": [
+   "Mattel",
+   "Lesney",
+   "Corgi",
+   "Hasbro"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which British firm made Dinky Toys?",
+  "options": [
+   "Corgi",
+   "Meccano",
+   "Triang",
+   "Lesney"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which company launched the Barbie doll in 1959?",
+  "options": [
+   "Hasbro",
+   "Tyco",
+   "Kenner",
+   "Mattel"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which soft toy line came with adoption papers and a signature on the bottom?",
+  "options": [
+   "Care Bears",
+   "Popples",
+   "Beanie Babies",
+   "Cabbage Patch Kids"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which company made the collectable soft toys called Beanie Babies?",
+  "options": [
+   "Mattel",
+   "Ty",
+   "Hasbro",
+   "Steiff"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which company made the original Star Wars action figures in the 1970s?",
+  "options": [
+   "Kenner",
+   "Hasbro",
+   "Mattel",
+   "Palitoy"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In trading card collecting, what is a card showing a player's first professional season called?",
+  "options": [
+   "A first strike",
+   "A season one",
+   "A debut card",
+   "A rookie card"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do the initials COA stand for in the memorabilia world?",
+  "options": [
+   "Certified original artefact",
+   "Collector's official appraisal",
+   "Certificate of authenticity",
+   "Care of asset"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In comic collecting, what is an issue containing a character's first appearance often called?",
+  "options": [
+   "A key issue",
+   "An origin book",
+   "A prime print",
+   "A gold run"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the craft of cutting and polishing gemstones called?",
+  "options": [
+   "Gemmology",
+   "Lapidary",
+   "Faceting art",
+   "Stonecraft"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the Australian term for searching the bush for gemstones or gold?",
+  "options": [
+   "Scratching",
+   "Fossicking",
+   "Rockhounding",
+   "Prospecting rounds"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which New South Wales town is famous for black opal?",
+  "options": [
+   "Lightning Ridge",
+   "Coober Pedy",
+   "Broken Hill",
+   "White Cliffs"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which South Australian town is known as the opal capital of the world?",
+  "options": [
+   "Woomera",
+   "Coober Pedy",
+   "Andamooka",
+   "Roxby Downs"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which gemstone is Australia's national gemstone?",
+  "options": [
+   "The sapphire",
+   "The opal",
+   "The diamond",
+   "The pearl"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Queensland gemfields area is best known for sapphires?",
+  "options": [
+   "Charters Towers",
+   "Mount Isa",
+   "Rubyvale",
+   "Gympie"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What simple tool is used to separate gold from gravel in a creek?",
+  "options": [
+   "A sieve tray",
+   "A trowel",
+   "A pan",
+   "A magnet"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In gold prospecting, what is a sluice box used for?",
+  "options": [
+   "Storing nuggets",
+   "Washing gravel so heavier gold settles out",
+   "Measuring purity",
+   "Crushing quartz"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the hobby of collecting and studying old picture postcards called?",
+  "options": [
+   "Postalogy",
+   "Vueography",
+   "Deltiology",
+   "Cartophily"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the hobby of collecting cigarette and trade cards called?",
+  "options": [
+   "Cartophily",
+   "Deltiology",
+   "Philately",
+   "Notaphily"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the specific term for the collecting of banknotes?",
+  "options": [
+   "Notaphily",
+   "Deltiology",
+   "Philately",
+   "Cartophily"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a shop selling second-hand goods for charity commonly called in Australia?",
+  "options": [
+   "A swap shop",
+   "A trade stall",
+   "An op shop",
+   "A junk store"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a large outdoor market of second-hand car parts and collectables commonly called in Australia?",
+  "options": [
+   "A flea run",
+   "A swap meet",
+   "A boot sale day",
+   "A trade fair"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the hobby of building and flying model aircraft with an engine or motor called?",
+  "options": [
+   "Flight modelling",
+   "Aeromodelling",
+   "Skybuilding",
+   "Aviation crafting"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the hobby of listening to distant radio stations and logging them called?",
+  "options": [
+   "Signal trailing",
+   "Wave chasing",
+   "DXing",
+   "Band hopping"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is an amateur radio operator commonly called?",
+  "options": [
+   "A jack",
+   "A sparks hobbyist",
+   "A bandsman",
+   "A ham"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a unique identifier issued to every amateur radio operator called?",
+  "options": [
+   "A band number",
+   "A station code",
+   "A call sign",
+   "A licence tag"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the pastime of noting down train numbers and details called?",
+  "options": [
+   "Line marking",
+   "Trainspotting",
+   "Track watching",
+   "Rail logging"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In archery, what is the centre of the target called?",
+  "options": [
+   "The eye",
+   "The gold",
+   "The bull",
+   "The pin"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In archery, what is the notch at the end of an arrow that sits on the string called?",
+  "options": [
+   "The pile",
+   "The shaft cap",
+   "The nock",
+   "The fletch"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In archery, what are the feathers or vanes on an arrow called?",
+  "options": [
+   "Nocking",
+   "Plumage",
+   "Trimming",
+   "Fletching"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In archery, what is the container that holds a set of arrows called?",
+  "options": [
+   "A quiver",
+   "A sheath",
+   "A scabbard",
+   "A caddy"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which type of bow has wheels at the tips to reduce the pull at full draw?",
+  "options": [
+   "A compound bow",
+   "A crossbow",
+   "A longbow",
+   "A recurve bow"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which type of bow is used at the Olympic Games in the individual target event?",
+  "options": [
+   "The compound",
+   "The recurve",
+   "The longbow",
+   "The flatbow"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In shooting sports, what is the clay target thrown into the air commonly called?",
+  "options": [
+   "A clay pigeon",
+   "A skeet ball",
+   "A disc bird",
+   "A flyer"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In pigeon racing, what is the building where a fancier keeps and trains the birds called?",
+  "options": [
+   "A loft",
+   "A mews",
+   "A hutch",
+   "A run"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In beekeeping, what is the smoke from a smoker used for?",
+  "options": [
+   "To flavour the honey",
+   "To kill mites",
+   "To calm the bees while the hive is opened",
+   "To sterilise the frames"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In beekeeping, what is the removable wooden part the bees build comb on called?",
+  "options": [
+   "A shelf",
+   "A rack",
+   "A tray",
+   "A frame"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In home brewing, what turns sugar into alcohol?",
+  "options": [
+   "Hops",
+   "Yeast",
+   "Malt",
+   "Enzyme salts"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In home brewing, what do hops mainly add to beer?",
+  "options": [
+   "Bitterness and aroma",
+   "Fizz",
+   "Colour only",
+   "Alcohol"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What instrument does a home brewer use to measure the sugar in the liquid?",
+  "options": [
+   "A hydrometer",
+   "A thermometer",
+   "A barometer",
+   "A viscometer"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In wine making at home, what is the vessel with an airlock used for fermentation called?",
+  "options": [
+   "A demijohn",
+   "A decanter",
+   "A firkin",
+   "A carafe"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In model painting, what is a very thin wash of dark paint run into the crevices called?",
+  "options": [
+   "A dry brush base",
+   "A sealer",
+   "A primer coat",
+   "A wash or ink"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In lawn bowls, what is the name for a bowl deliberately left short of the head to block an opponent's line?",
+  "options": [
+   "A blocker",
+   "A toucher",
+   "A wick",
+   "A driver"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, if the jack is driven into the ditch but stays inside the rink boundary, what happens?",
+  "options": [
+   "It is put back on the centre line",
+   "The other team scores",
+   "It stays in play",
+   "The end is dead"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What are the two common ways of holding a lawn bowl called?",
+  "options": [
+   "The palm grip and the pinch grip",
+   "The over grip and the under grip",
+   "The wide grip and the short grip",
+   "The cradle grip and the claw grip"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How are the rinks on a bowling green usually identified?",
+  "options": [
+   "By coloured flags",
+   "By numbers on markers at each end",
+   "By the club's letters",
+   "By painted lines only"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In lawn bowls, what happens to a bowl that finishes outside the boundary of its own rink?",
+  "options": [
+   "It counts if it is closest",
+   "It is dead and removed",
+   "It scores half a shot",
+   "It is replayed"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a game of lawn bowls between two players called?",
+  "options": [
+   "Singles",
+   "Head to head fours",
+   "Pairs",
+   "Solo ends"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In a game of fours in lawn bowls, which player delivers immediately before the skip?",
+  "options": [
+   "The third",
+   "The lead",
+   "The second",
+   "The marker"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In a game of fours, which player usually helps the skip judge the head and takes measures?",
+  "options": [
+   "The marker",
+   "The third",
+   "The second",
+   "The lead"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In darts, how many legs must you win in a best-of-five leg match?",
+  "options": [
+   "Four",
+   "Three",
+   "Two",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What score do three darts in the single 20 bed give?",
+  "options": [
+   "20",
+   "60",
+   "120",
+   "40"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the total of two treble 20s and a double 20?",
+  "options": [
+   "180",
+   "140",
+   "160",
+   "150"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the fewest number of darts in which a leg of 501 can be finished?",
+  "options": [
+   "Ten",
+   "Eight",
+   "Twelve",
+   "Nine"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do the initials BDO stand for in darts?",
+  "options": [
+   "Board Darts Open",
+   "British Darts Organisation",
+   "British Darts Open",
+   "Bristol Darts Order"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In darts, what is a dart that hits the board and falls out called?",
+  "options": [
+   "A bounce-out",
+   "A miss out",
+   "A slip dart",
+   "A drop shot"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In darts, what does the term 'bed' refer to?",
+  "options": [
+   "A single scoring segment on the board",
+   "The scoreboard",
+   "The player's stance area",
+   "The wall behind the board"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the total score of three darts in the treble 18?",
+  "options": [
+   "162",
+   "171",
+   "144",
+   "180"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In yo-yo tricks, what is the move where the yo-yo runs along the ground called?",
+  "options": [
+   "Around the world",
+   "The sleeper",
+   "Rock the baby",
+   "Walk the dog"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In yo-yo tricks, what is the basic move where the yo-yo spins at the end of the string called?",
+  "options": [
+   "The sleeper",
+   "The stall",
+   "The looper",
+   "The hang"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the basic three-ball juggling pattern called?",
+  "options": [
+   "The shower ring",
+   "The fountain",
+   "The cascade",
+   "The column"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the formal word for magic performed with skilful hand movements?",
+  "options": [
+   "Mentalism",
+   "Sleight of hand",
+   "Illusion craft",
+   "Escapology"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "On a pair of binoculars marked '8 by 42', what does the 8 mean?",
+  "options": [
+   "The lens diameter",
+   "The magnification",
+   "The field of view",
+   "The weight"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "On a pair of binoculars marked '8 by 42', what does the 42 mean?",
+  "options": [
+   "The eye relief",
+   "The diameter of the front lenses in millimetres",
+   "The magnification",
+   "The focus range"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In fish keeping, what is the process of building up helpful bacteria in a new tank called?",
+  "options": [
+   "Cycling the tank",
+   "Curing",
+   "Seeding the filter only",
+   "Priming"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Male Siamese fighting fish cannot be kept together, but what does the male build at the water surface for the eggs?",
+  "options": [
+   "A bubble nest",
+   "A sand pit",
+   "A weed tunnel",
+   "A gravel mound"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a sealed glass container planted with small plants called?",
+  "options": [
+   "An aquarium",
+   "A vivarium of moss",
+   "A terrarium",
+   "A conservatory jar"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In cake decorating, what is the smooth rolled icing draped over a cake called?",
+  "options": [
+   "Royal icing",
+   "Fondant",
+   "Ganache",
+   "Marzipan glaze"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In cake decorating, what tool is used to pipe icing into patterns?",
+  "options": [
+   "A dredger",
+   "A crimping wheel",
+   "A palette knife",
+   "A piping bag and nozzle"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In dog showing, what is the top award of the whole event called?",
+  "options": [
+   "Champion of Breed",
+   "Grand Ribbon",
+   "Supreme Class",
+   "Best in Show"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which is the world's most famous dog show, held each year in Britain?",
+  "options": [
+   "The Kennel Cup",
+   "Westminster",
+   "Crufts",
+   "The Royal Canine"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In poultry keeping, what is a small breed of chicken called?",
+  "options": [
+   "A bantam",
+   "A minorca",
+   "A pygmy hen",
+   "A pullet dwarf"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In poultry keeping, what is a young female chicken that has not yet laid called?",
+  "options": [
+   "A broody",
+   "A capon",
+   "A bantam",
+   "A pullet"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the woodworker's oldest piece of advice about accuracy?",
+  "options": [
+   "Cut long and sand back",
+   "Measure twice, cut once",
+   "Always start at the middle",
+   "Follow the grain first"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the puzzle where numbers along the edges tell you which squares in a grid to fill in to make a picture?",
+  "options": [
+   "A cryptogram",
+   "A kakuro",
+   "A nonogram",
+   "A sudoku"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the puzzle that looks like a crossword but is filled with numbers that add to given totals?",
+  "options": [
+   "Anacross",
+   "Nonogram",
+   "Kakuro",
+   "Word ladder"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the puzzle where a coded message must be decoded letter by letter called?",
+  "options": [
+   "A palindrome",
+   "A rebus",
+   "A cryptogram",
+   "An acrostic"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In metal detecting, what is the small handheld device used to find the exact spot in a dug hole called?",
+  "options": [
+   "A pinpointer",
+   "A probe coil",
+   "A scanner wand",
+   "A locator pen"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In family history research, what is a chart showing generations of relatives called?",
+  "options": [
+   "A kin chart",
+   "An ancestry map",
+   "A lineage grid",
+   "A family tree"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which official record is the most common starting point for family history research?",
+  "options": [
+   "Land titles",
+   "School reports",
+   "Council rates notices",
+   "Birth, death and marriage records"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the paper craft of folding a bird that has become a symbol of peace called in Japanese tradition?",
+  "options": [
+   "The origami crane",
+   "The paper heron",
+   "The kirigami swan",
+   "The folded dove"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the Japanese craft of cutting paper, rather than folding it, called?",
+  "options": [
+   "Kirigami",
+   "Washi",
+   "Shodo",
+   "Origami"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In kite flying, what is the long strip attached at the bottom for stability called?",
+  "options": [
+   "The tail",
+   "The keel",
+   "The bridle",
+   "The spar"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the hobby of making detailed miniature rooms and furniture usually called?",
+  "options": [
+   "Diorama sculpting",
+   "Miniature joinery",
+   "Room crafting",
+   "Dolls house modelling"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In pottery, what is the liquid clay used to join two pieces together called?",
+  "options": [
+   "Grog",
+   "Glaze",
+   "Slurry wash",
+   "Slip"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In pottery, what is the glassy coating applied before the final firing called?",
+  "options": [
+   "Slip",
+   "Engobe",
+   "Burnish",
+   "Glaze"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In pottery, what is the first firing of unglazed clay called?",
+  "options": [
+   "The stone firing",
+   "The raku firing",
+   "The bisque firing",
+   "The glost firing"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the traditional pastime of building a ship inside a bottle famous for requiring?",
+  "options": [
+   "Using a magnet",
+   "Folding the masts down to fit through the neck",
+   "Melting the glass",
+   "Cutting the bottle in half"
+  ],
+  "correctIndex": 1,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Scandinavian lawn game involves throwing wooden batons to knock over your opponent's blocks and then the king?",
+  "options": [
+   "Boules",
+   "Molkky",
+   "Kubb",
+   "Quoits"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is the lawn game where players toss bean bags at a raised board with a hole?",
+  "options": [
+   "Quoits",
+   "Skittles",
+   "Horseshoes",
+   "Cornhole"
+  ],
+  "correctIndex": 3,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In bushwalking, roughly how many litres is a typical day pack?",
+  "options": [
+   "About 20 to 30 litres",
+   "About 5 litres",
+   "About 70 litres",
+   "About 100 litres"
+  ],
+  "correctIndex": 0,
+  "category": "Hobbies & Collectables",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the hobby of collecting and pressing wild flowers and leaves into an album called?",
+  "options": [
+   "Leaf casting",
+   "Making a florilege",
+   "Making a herbarium",
+   "Botanical bookbinding"
+  ],
+  "correctIndex": 2,
+  "category": "Hobbies & Collectables",
+  "difficulty": "hard"
+ }
+]

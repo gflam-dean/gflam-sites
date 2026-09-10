@@ -1,0 +1,1298 @@
+[
+ {
+  "question": "How many players are on a soccer team on the field?",
+  "options": [
+   "Ten",
+   "Nine",
+   "Eleven",
+   "Twelve"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How long is a standard soccer match, not counting stoppages?",
+  "options": [
+   "60 minutes",
+   "80 minutes",
+   "100 minutes",
+   "90 minutes"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country has won the most FIFA men's World Cups?",
+  "options": [
+   "Brazil",
+   "Germany",
+   "Argentina",
+   "Italy"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which year did Australia first qualify for a FIFA World Cup?",
+  "options": [
+   "1974",
+   "1982",
+   "1966",
+   "1990"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "What is a hat-trick in soccer?",
+  "options": [
+   "Three corners in a row",
+   "Three yellow cards",
+   "Three goals by one player in a match",
+   "Three saves in a row"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What card does a soccer referee show for a sending off?",
+  "options": [
+   "Red",
+   "Blue",
+   "Yellow",
+   "Black"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How far is a penalty spot from the goal line in soccer?",
+  "options": [
+   "9 metres",
+   "11 metres",
+   "18 metres",
+   "14 metres"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which trophy do English Premier League clubs compete for domestically in a knockout cup dating to 1871?",
+  "options": [
+   "The League Cup",
+   "The Champions League",
+   "The FA Cup",
+   "The Charity Shield"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which club is nicknamed the Red Devils?",
+  "options": [
+   "Manchester United",
+   "Liverpool",
+   "Chelsea",
+   "Arsenal"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Argentine footballer scored the 'Hand of God' goal in 1986?",
+  "options": [
+   "Diego Maradona",
+   "Gabriel Batistuta",
+   "Lionel Messi",
+   "Mario Kempes"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many players are in a cricket team?",
+  "options": [
+   "Twelve",
+   "Ten",
+   "Eleven",
+   "Nine"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many balls are in a cricket over?",
+  "options": [
+   "Five",
+   "Eight",
+   "Four",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is it called when a batter is dismissed on the very first ball they face?",
+  "options": [
+   "A blob",
+   "A first-baller",
+   "A silver duck",
+   "A golden duck"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many runs is a boundary that clears the rope on the full worth in cricket?",
+  "options": [
+   "Five",
+   "Four",
+   "Eight",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is a bowler taking three wickets in three consecutive deliveries called?",
+  "options": [
+   "A trifecta",
+   "A three-peat",
+   "A hat-trick",
+   "A triple"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How long is a cricket pitch between the wickets?",
+  "options": [
+   "30 yards",
+   "20 yards",
+   "25 yards",
+   "22 yards"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian bowler took 708 Test wickets?",
+  "options": [
+   "Dennis Lillee",
+   "Shane Warne",
+   "Glenn McGrath",
+   "Nathan Lyon"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which delivery is Shane Warne's famous 1993 'Ball of the Century' an example of?",
+  "options": [
+   "A yorker",
+   "A leg break",
+   "A bouncer",
+   "An off break"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many days is a Test cricket match scheduled over?",
+  "options": [
+   "Four",
+   "Three",
+   "Five",
+   "Six"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many overs does each side face in a One Day International?",
+  "options": [
+   "20",
+   "50",
+   "40",
+   "60"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many overs per side are in a Twenty20 match?",
+  "options": [
+   "10",
+   "25",
+   "15",
+   "20"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian cricket ground hosts the Boxing Day Test?",
+  "options": [
+   "The MCG",
+   "The Gabba",
+   "The SCG",
+   "Adelaide Oval"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many players are in a rugby union team on the field?",
+  "options": [
+   "Fifteen",
+   "Seventeen",
+   "Thirteen",
+   "Eleven"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which trophy do Australia and New Zealand contest in rugby union?",
+  "options": [
+   "The Webb Ellis Cup",
+   "The Tri Nations Shield",
+   "The Cook Cup",
+   "The Bledisloe Cup"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Rugby World Cup trophy called?",
+  "options": [
+   "The Six Nations Trophy",
+   "The Calcutta Cup",
+   "The Bledisloe Cup",
+   "The Webb Ellis Cup"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the New Zealand rugby union team called?",
+  "options": [
+   "The Pumas",
+   "The Blacks Caps",
+   "The All Blacks",
+   "The Springboks"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the pre-match Maori challenge performed by the All Blacks called?",
+  "options": [
+   "The haka",
+   "The siva tau",
+   "The cibi",
+   "The sipi tau"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the South African rugby union team nicknamed?",
+  "options": [
+   "The Springboks",
+   "The Wallabies",
+   "The Lions",
+   "The All Blacks"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the AFL's premiership trophy called?",
+  "options": [
+   "The Brownlow Shield",
+   "The Premiership Cup",
+   "The Norm Smith Cup",
+   "The Grand Final Trophy"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which AFL award is given to the best and fairest player of the season?",
+  "options": [
+   "The Norm Smith Medal",
+   "The Brownlow Medal",
+   "The Coleman Medal",
+   "The Leigh Matthews Trophy"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which AFL medal goes to the best player in the Grand Final?",
+  "options": [
+   "The Coleman Medal",
+   "The Jock McHale Medal",
+   "The Norm Smith Medal",
+   "The Brownlow Medal"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which AFL award goes to the season's leading goal kicker?",
+  "options": [
+   "The Coleman Medal",
+   "The Norm Smith Medal",
+   "The Rising Star",
+   "The Brownlow Medal"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which NRL trophy is awarded to the premiers?",
+  "options": [
+   "The Winfield Cup only",
+   "The Clive Churchill Cup",
+   "The Provan-Summons Trophy",
+   "The Dally M Shield"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which NRL medal goes to the best player in the Grand Final?",
+  "options": [
+   "The Ron Coote Medal",
+   "The Clive Churchill Medal",
+   "The Dally M Medal",
+   "The Wally Lewis Medal"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which NRL award goes to the player of the year?",
+  "options": [
+   "The Dally M Medal",
+   "The Brownlow Medal",
+   "The Golden Boot",
+   "The Clive Churchill Medal"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many players are on a basketball team on court?",
+  "options": [
+   "Seven",
+   "Six",
+   "Four",
+   "Five"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many points is a shot from beyond the arc worth in basketball?",
+  "options": [
+   "Four",
+   "Three",
+   "Two",
+   "One"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How high is a basketball hoop from the floor?",
+  "options": [
+   "10 feet",
+   "12 feet",
+   "8 feet",
+   "9 feet"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which basketball player is nicknamed 'His Airness'?",
+  "options": [
+   "LeBron James",
+   "Magic Johnson",
+   "Kobe Bryant",
+   "Michael Jordan"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian basketballer was the number one NBA draft pick in 2016?",
+  "options": [
+   "Patty Mills",
+   "Joe Ingles",
+   "Andrew Bogut",
+   "Ben Simmons"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How many players are on a netball team on court?",
+  "options": [
+   "Seven",
+   "Five",
+   "Eight",
+   "Six"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In netball, which positions are allowed to shoot?",
+  "options": [
+   "Centre and wing attack",
+   "All positions",
+   "Goal keeper only",
+   "Goal shooter and goal attack"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many sets must a man win to take a Grand Slam tennis match?",
+  "options": [
+   "Two",
+   "Three",
+   "Four",
+   "Five"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is a score of zero called in tennis?",
+  "options": [
+   "Duck",
+   "Nil",
+   "Love",
+   "Blank"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which tennis tournament is played on grass?",
+  "options": [
+   "The French Open",
+   "The Australian Open",
+   "Wimbledon",
+   "The US Open"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Grand Slam is played on clay?",
+  "options": [
+   "Wimbledon",
+   "The Australian Open",
+   "The US Open",
+   "The French Open"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is the term for a serve the opponent cannot touch?",
+  "options": [
+   "A fault",
+   "A smash",
+   "A let",
+   "An ace"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which male player has won the most Grand Slam singles titles as of 2024?",
+  "options": [
+   "Rafael Nadal",
+   "Pete Sampras",
+   "Novak Djokovic",
+   "Roger Federer"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which player is nicknamed the King of Clay?",
+  "options": [
+   "Bjorn Borg",
+   "Rafael Nadal",
+   "Roger Federer",
+   "Novak Djokovic"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In golf, what is one under par on a hole called?",
+  "options": [
+   "A bogey",
+   "A birdie",
+   "An eagle",
+   "An albatross"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What is two under par on a hole called in golf?",
+  "options": [
+   "A condor",
+   "A birdie",
+   "An albatross",
+   "An eagle"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is one over par called in golf?",
+  "options": [
+   "A double bogey",
+   "A bogey",
+   "A par plus",
+   "A birdie"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many holes are in a standard round of golf?",
+  "options": [
+   "24",
+   "20",
+   "18",
+   "9"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which golf major is played at Augusta National every April?",
+  "options": [
+   "The Open Championship",
+   "The Masters",
+   "The US Open",
+   "The PGA Championship"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the winner of the Masters awarded to wear?",
+  "options": [
+   "A red vest",
+   "A silver cape",
+   "A gold blazer",
+   "A green jacket"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many events are in a decathlon?",
+  "options": [
+   "Five",
+   "Seven",
+   "Ten",
+   "Twelve"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many events are in a heptathlon?",
+  "options": [
+   "Five",
+   "Seven",
+   "Eight",
+   "Ten"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How long is a marathon?",
+  "options": [
+   "42.195 kilometres",
+   "26 kilometres",
+   "40 kilometres",
+   "45 kilometres"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sprinter set the 100 metres world record of 9.58 seconds?",
+  "options": [
+   "Tyson Gay",
+   "Yohan Blake",
+   "Usain Bolt",
+   "Asafa Powell"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which country does Usain Bolt represent?",
+  "options": [
+   "Trinidad and Tobago",
+   "Jamaica",
+   "Barbados",
+   "The Bahamas"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What do the Olympic rings represent?",
+  "options": [
+   "The five founding nations",
+   "Five sporting values",
+   "The five inhabited continents",
+   "Five ancient games"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In which country did the Olympic Games originate?",
+  "options": [
+   "Turkey",
+   "Italy",
+   "Egypt",
+   "Greece"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which year were the first modern Olympic Games held?",
+  "options": [
+   "1912",
+   "1888",
+   "1896",
+   "1900"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the Olympic motto in its traditional Latin form?",
+  "options": [
+   "Semper Fidelis",
+   "Per Ardua ad Astra",
+   "Citius, Altius, Fortius",
+   "Veni, Vidi, Vici"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which swimmer has won the most Olympic gold medals?",
+  "options": [
+   "Ian Thorpe",
+   "Michael Phelps",
+   "Mark Spitz",
+   "Caeleb Dressel"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which swimming stroke is swum on the back?",
+  "options": [
+   "Butterfly",
+   "Backstroke",
+   "Freestyle",
+   "Breaststroke"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In what order are the strokes swum in an individual medley?",
+  "options": [
+   "Butterfly, backstroke, breaststroke, freestyle",
+   "Backstroke, butterfly, freestyle, breaststroke",
+   "Breaststroke, butterfly, backstroke, freestyle",
+   "Freestyle, backstroke, breaststroke, butterfly"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "How long is an Olympic swimming pool?",
+  "options": [
+   "25 metres",
+   "50 metres",
+   "100 metres",
+   "33 metres"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian swimmer won gold in the 1500 metres freestyle in 1992 and 1996?",
+  "options": [
+   "Kieren Perkins",
+   "Ian Thorpe",
+   "Grant Hackett",
+   "Duncan Armstrong"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian swimmer was nicknamed the Thorpedo?",
+  "options": [
+   "Ian Thorpe",
+   "Eamon Sullivan",
+   "Grant Hackett",
+   "Michael Klim"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In boxing, how many rounds are in a modern world title fight?",
+  "options": [
+   "Ten",
+   "Eight",
+   "Fifteen",
+   "Twelve"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which boxer called himself 'The Greatest'?",
+  "options": [
+   "Joe Frazier",
+   "George Foreman",
+   "Mike Tyson",
+   "Muhammad Ali"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What was Muhammad Ali's name at birth?",
+  "options": [
+   "Joe Louis",
+   "Ken Norton",
+   "Cassius Clay",
+   "Sonny Liston"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sport uses terms like 'ippon' and 'dojo'?",
+  "options": [
+   "Wrestling",
+   "Archery",
+   "Judo",
+   "Fencing"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which martial art originated in Korea and focuses on kicking?",
+  "options": [
+   "Aikido",
+   "Judo",
+   "Taekwondo",
+   "Karate"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In Formula 1, what flag signals the end of a race?",
+  "options": [
+   "The red flag",
+   "The blue flag",
+   "The chequered flag",
+   "The yellow flag"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What does a yellow flag mean in motor racing?",
+  "options": [
+   "Let faster cars pass",
+   "Race finished",
+   "Caution, slow down",
+   "Race stopped"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which driver holds the record for most Formula 1 world titles alongside Michael Schumacher?",
+  "options": [
+   "Lewis Hamilton",
+   "Ayrton Senna",
+   "Alain Prost",
+   "Sebastian Vettel"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Australian won the Formula 1 world championship in 1980?",
+  "options": [
+   "Alan Jones",
+   "Daniel Ricciardo",
+   "Mark Webber",
+   "Jack Brabham"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian won three Formula 1 world titles, one in a car of his own construction?",
+  "options": [
+   "Mark Webber",
+   "Larry Perkins",
+   "Jack Brabham",
+   "Alan Jones"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian motor race is held annually at Mount Panorama?",
+  "options": [
+   "The Adelaide 500",
+   "The Bathurst 1000",
+   "The Gold Coast 600",
+   "The Sandown 500"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In which New South Wales town is Mount Panorama?",
+  "options": [
+   "Dubbo",
+   "Bathurst",
+   "Orange",
+   "Wagga Wagga"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which two car brands dominated the traditional Bathurst rivalry?",
+  "options": [
+   "BMW and Audi",
+   "Holden and Ford",
+   "Toyota and Nissan",
+   "Mazda and Subaru"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which cycling race is held over three weeks each July in France?",
+  "options": [
+   "Paris-Roubaix",
+   "The Tour de France",
+   "The Vuelta a Espana",
+   "The Giro d'Italia"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "What colour jersey does the Tour de France leader wear?",
+  "options": [
+   "Pink",
+   "White",
+   "Green",
+   "Yellow"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which Australian won the Tour de France in 2011?",
+  "options": [
+   "Robbie McEwen",
+   "Richie Porte",
+   "Stuart O'Grady",
+   "Cadel Evans"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In ice hockey, what is the object hit into the goal called?",
+  "options": [
+   "A ball",
+   "A disc",
+   "A puck",
+   "A slug"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which trophy is awarded to the NHL champions?",
+  "options": [
+   "The Stanley Cup",
+   "The Vince Lombardi Trophy",
+   "The Larry O'Brien Trophy",
+   "The Commissioner's Trophy"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the championship game of the NFL called?",
+  "options": [
+   "The Super Bowl",
+   "The Stanley Cup",
+   "The World Series",
+   "The Grand Final"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many points is a touchdown worth in American football?",
+  "options": [
+   "Six",
+   "Five",
+   "Seven",
+   "Three"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "What is the championship series of Major League Baseball called?",
+  "options": [
+   "The Commissioner's Final",
+   "The Fall Classic Cup",
+   "The World Series",
+   "The Super Bowl"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many strikes make an out in baseball?",
+  "options": [
+   "Five",
+   "Three",
+   "Four",
+   "Two"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "How many bases must a runner touch to score a run in baseball?",
+  "options": [
+   "Five",
+   "Two",
+   "Three",
+   "Four including home"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sport is played at Lord's in London?",
+  "options": [
+   "Tennis",
+   "Cricket",
+   "Rugby",
+   "Football"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sport is associated with the term 'love all, play'?",
+  "options": [
+   "Table tennis",
+   "Volleyball",
+   "Badminton",
+   "Squash"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many points win a standard game of squash under the point-a-rally system?",
+  "options": [
+   "Twenty one",
+   "Nine",
+   "Eleven",
+   "Fifteen"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "In volleyball, how many players are on court per side?",
+  "options": [
+   "Seven",
+   "Five",
+   "Four",
+   "Six"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sport uses a shuttlecock?",
+  "options": [
+   "Pickleball",
+   "Tennis",
+   "Badminton",
+   "Squash"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sport features the terms 'birdie', 'bogey' and 'fairway'?",
+  "options": [
+   "Lawn bowls",
+   "Croquet",
+   "Golf",
+   "Cricket"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "Which sport is known as the sport of kings?",
+  "options": [
+   "Fencing",
+   "Horse racing",
+   "Sailing",
+   "Polo"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "easy"
+ },
+ {
+  "question": "In horse racing, what is a jockey's minimum riding weight equipment called?",
+  "options": [
+   "The girth",
+   "The stirrup",
+   "The bridle",
+   "The saddle and lead weights"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian surfer won seven world titles, including six in a row from 1998?",
+  "options": [
+   "Layne Beachley",
+   "Pam Burridge",
+   "Stephanie Gilmore",
+   "Wendy Botha"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Australian surfer has won eight world titles and is from Tweed Heads?",
+  "options": [
+   "Tyler Wright",
+   "Stephanie Gilmore",
+   "Layne Beachley",
+   "Sally Fitzgibbons"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "hard"
+ },
+ {
+  "question": "Which Queensland surf break is famous as a long right-hand point break?",
+  "options": [
+   "Snapper Rocks",
+   "Margaret River",
+   "Bondi",
+   "Bells Beach"
+  ],
+  "correctIndex": 0,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which Victorian beach hosts the Rip Curl Pro at Easter?",
+  "options": [
+   "Portsea",
+   "Bells Beach",
+   "Lorne",
+   "Torquay Point"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "In lawn bowls, what is a bowl's curved path caused by?",
+  "options": [
+   "The slope only",
+   "The wind",
+   "Its weighted bias",
+   "The grass length"
+  ],
+  "correctIndex": 2,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "Which sport is played on a velodrome?",
+  "options": [
+   "Rowing",
+   "Speed skating",
+   "Motocross",
+   "Track cycling"
+  ],
+  "correctIndex": 3,
+  "category": "Sport",
+  "difficulty": "medium"
+ },
+ {
+  "question": "How many people are in a coxless four rowing crew?",
+  "options": [
+   "Five",
+   "Four",
+   "Three",
+   "Eight"
+  ],
+  "correctIndex": 1,
+  "category": "Sport",
+  "difficulty": "medium"
+ }
+]
