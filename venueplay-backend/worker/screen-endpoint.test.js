@@ -43,7 +43,7 @@ function lift(n) {
    indistinguishable from a clean pass unless something is counting. That has
    already cost us once: money.test.js quietly dropped four checks and printed no
    summary at all. So the count is declared up front and verified at the end. */
-var EXPECT = 15;
+var EXPECT = 19;
 var bad = 0, ran = 0, order = [], BEHAVE = {};
 function ok(n, c, extra) {
   ran++;
@@ -108,11 +108,31 @@ handleScreen(req('the-average-joe'), {}, json).then(function (r) {
   ok('the board is simply empty', Array.isArray(d.draws) && d.draws.length === 0);
   ok('the venue code is still shown', d.join_code === '3A7TES');
 
-  print('\n== a venue that is not set up, and rubbish input ==');
+  /* THE CASE THAT COST A VENUE ITS TELEVISION.
+
+     This used to empty vp_venue_screen ONLY, leave a venue row sitting there, and
+     assert exists === false. That is not an unknown venue: it is a REAL one that
+     nobody has set a screen up for, and answering false for it is what put Tugun
+     Bowls Club into an endless setup loop. The TV reads exists:false as "no such
+     venue", shows the setup card, counts down 45 seconds, redirects to the same
+     link and starts again. It never showed a night in its life.
+
+     So both cases are tested now, and they are different cases. */
+  print('\n== a REAL venue that has never set up a screen ==');
   base(); BEHAVE.vp_venue_screen = [];
-  return handleScreen(req('nobody'), {}, json);
+  return handleScreen(req('tugun-bowls'), {}, json);
 }).then(function (r) {
-  ok('an unknown venue says so instead of throwing', r._json.exists === false);
+  ok('a real venue with no screen row still exists', r._json.exists === true,
+     'answering false here sends its TV round the setup loop for ever');
+  ok('and it is handed no slides, rather than an error', r._json.slides.length === 0);
+  ok('its name still reaches the wall', r._json.name === 'The Average Joe');
+  ok('and its join code with it', r._json.join_code === '3A7TES');
+
+  print('\n== a slug that is nobody at all ==');
+  base(); BEHAVE.vp_venue_screen = []; BEHAVE.vp_venues = [];
+  return handleScreen(req('no-such-pub-anywhere'), {}, json);
+}).then(function (r) {
+  ok('a venue that really does not exist says so', r._json.exists === false);
   order = [];
   return handleScreen(req('../etc/passwd'), {}, json);
 }).then(function (r) {

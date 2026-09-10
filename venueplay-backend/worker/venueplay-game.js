@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '10 Sep 2026, 17:24 · c88fa0a5';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Sep 2026, 21:30 · 9680a49b';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1829,7 +1829,32 @@ async function handleScreen(request, env, json) {
     'slug=eq.' + enc(slug) + '&select=slides,raffle,logo_url,venue_id&limit=1');
   const cfg = (rows && rows[0]) || null;
 
-  let name = '', joinCode = '';
+  /* A REAL VENUE THAT HAS NEVER SET UP A SCREEN IS STILL A REAL VENUE.
+
+     `exists` used to mean "there is a vp_venue_screen row", and the TV reads it as
+     "there is such a venue": loadScreen() answers a false with askWhichVenue(). So an
+     ACTIVE venue that nobody had configured a screen for was reported byte for byte
+     the same as a slug typed in wrong, and its television ran the setup flow, counted
+     down 45 seconds, redirected to the same link, and did it again. For ever. It never
+     showed a night in its life.
+
+     Tugun Bowls Club, active since 29 July 2026, was doing exactly that on 10 Sep, and
+     so was one other. Dean saw it on the wall: "tugun has no slides or anything and
+     keeps doing the screen setup".
+
+     The extra lookup happens ONLY when there is no screen row. This endpoint is the
+     single most-called thing in the product, every TV every thirty seconds, and the
+     ordinary path must not pay for a case that is rare by definition. */
+  let name = '', joinCode = '', venueIsReal = !!cfg;
+  if (!cfg) {
+    const v0 = await sbGet(env, 'vp_venues',
+      'slug=eq.' + enc(slug) + '&select=name,join_code&limit=1').catch(() => null);
+    if (v0 && v0[0]) {
+      venueIsReal = true;
+      name = v0[0].name || '';
+      joinCode = v0[0].join_code || '';
+    }
+  }
   if (cfg && cfg.venue_id) {
     const v = await sbGet(env, 'vp_venues',
       'id=eq.' + enc(cfg.venue_id) + '&select=name,join_code&limit=1').catch(() => null);
@@ -1849,7 +1874,7 @@ async function handleScreen(request, env, json) {
   } catch (e) { /* the board is a nicety; never fail the whole screen for it */ }
 
   return json({
-    exists: !!cfg,
+    exists: venueIsReal,
     name: name,
     join_code: joinCode,
     logo_url: (cfg && cfg.logo_url) || '',
