@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '10 Sep 2026, 21:30 · 9680a49b';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:16 · 5b963076';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6050,8 +6050,27 @@ async function applyOverageCharge(env, o) {
      might not see another invoice for eleven months, and the item is discarded if
      they cancel, so it is raised on its own invoice immediately - which means NOT
      attaching it to the subscription, or a standalone invoice cannot pick it up. */
-  const interval = await subscriptionInterval(env, acct);
-  const billNow = interval === 'year';
+  /* EVERY CHARGE GETS ITS OWN INVOICE, MONTHLY OR ANNUAL.
+
+     Dean, 11 Sep 2026: "We need to invoice every time we charge someone so their accounts
+     team isnt waiting a month to verify a charge."
+
+     A monthly venue's overage used to be attached to the subscription and swept up by the
+     next cycle, so a $6 charge agreed on a Saturday appeared on an invoice up to a month
+     later, by which time the person who tapped OK has forgotten and the venue's bookkeeper
+     has an unexplained line. A pub's accounts team checks a charge against the night it
+     happened or not at all.
+
+     So the item is created WITHOUT `subscription` and collected straight away, which is
+     exactly what the annual path already did. If collection fails the line simply stays on
+     the customer and the next invoice carries it, with an audit row saying so: it is never
+     lost, only late.
+
+     THE COST OF THIS, so it is a decision and not a surprise: each invoice is its own card
+     transaction, and Stripe's fixed fee is about 30c. On a $6 overage that is 5%, where the
+     same $6 riding the monthly invoice costs almost nothing extra. Dean's call, made
+     knowingly: a venue that can verify a charge on the night is worth more than the fee. */
+  const billNow = true;
   const item = {
     customer: acct.stripe_customer_id,
     currency: 'aud',
