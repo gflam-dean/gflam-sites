@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 06:45 · 93a9162d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 08:01 · 2d1c5965';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3811,6 +3811,15 @@ async function vpaFirePaymentFailedEmail(env, invoice) {
     const email = invoice.customer_email;
     if (!email) return;
     const amount = '$' + (Number(invoice.amount_due || 0) / 100).toFixed(2);
+    /* SAY WHAT THE CHARGE WAS FOR. This read "for your VenuePlay subscription" on every failed
+       invoice, and on 11 Sep 2026 a venue got it twice for $2.00 extra-player invoices while its
+       subscription was paid up and fine. A subscription invoice says subscription; anything else
+       names its line ("The Jolly Jess - Extra Player - 11/09/2026"). */
+    const reason = String(invoice.billing_reason || '');
+    const firstLine = invoice.lines && invoice.lines.data && invoice.lines.data[0];
+    const what = /^subscription/.test(reason) || !firstLine || !firstLine.description
+      ? 'your VenuePlay subscription'
+      : String(firstLine.description).replace(/[<>&]/g, '').slice(0, 80);
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const billing = site + '/app/billing.html';
     /* Send them to STRIPE'S invoice page, not ours. Our Account page needs them to sign in with a
@@ -3823,7 +3832,7 @@ async function vpaFirePaymentFailedEmail(env, invoice) {
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
       + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Your card did not go through.</p>'
-      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for your VenuePlay subscription and it was declined. Nine times out of ten it is an expired card.</p>'
+      + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for ' + what + ' and it was declined. Nine times out of ten it is an expired card.</p>'
       + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">Nothing has changed at your venue and your games are running as normal. We will try again over the next few days. If it keeps failing your games will pause until it is sorted, so it is worth a minute now.</p>'
       + '<a href="' + payNow + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Pay now with a new card</a>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">No sign in needed, it takes a minute. You can also do it from <a href="' + billing + '" style="color:#FF1F8E">your account page</a>.</p>'
