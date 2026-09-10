@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:34 · 51729e07';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:39 · 5bf54ceb';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4390,7 +4390,11 @@ async function vpbAdjustPlayerBilling(env, info, delta, planName, label, idemTag
       const mRes = await vpbStripePost(env, 'invoiceitems', {
         customer: customer, currency: 'aud',
         quantity: n, unit_amount: Math.round(rate * 100),
-        description: (label || 'Venue') + ' - Extra Player - ' + new Date().toISOString().slice(0, 10),
+        /* Australian order, and Brisbane rather than UTC: a change made after 10pm here
+           is already tomorrow in UTC, and the venue would be looking at a date it did
+           nothing on. Same +10h shift vpaFmtDate uses. */
+        description: (label || 'Venue') + ' - Extra Player - ' +
+                     new Date(Date.now() + 36000000).toISOString().slice(0, 10).split('-').reverse().join('/'),
       }, idemTag ? ('padd:' + idemTag) : null);
       // vpbStripePost never throws, so an unchecked call reported a Stripe refusal to the venue,
       // and to the audit trail, as money successfully charged.

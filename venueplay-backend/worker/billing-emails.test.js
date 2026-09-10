@@ -7,6 +7,7 @@ function find(rel){ var t=[rel,"../"+rel]; for(var i=0;i<t.length;i++){ try{var 
 function lift(src,name){ var m=new RegExp("(?:async\\s+)?function\\s+"+name+"\\s*\\(").exec(src); if(!m)return null;
   var i=src.indexOf("{",m.index),d=0; for(var j=i;j<src.length;j++){ if(src[j]==="{")d++; else if(src[j]==="}"){d--; if(!d) return src.slice(m.index,j+1);} } return null; }
 var BILL=find("venueplay-backend/worker/venueplay-api-FULL.js");
+var GAME=find("venueplay-backend/worker/venueplay-game.js");
 var abn=/const VP_ABN = '([^']+)'/.exec(BILL);
 pass("the ABN is defined once in the Worker", !!abn, abn?abn[1]:"not found");
 var VP_ABN = abn?abn[1]:"";
@@ -71,7 +72,6 @@ pass("a plain subscription invoice says nothing about upgrades",
      vpaUpliftNoticeHtml({ lines: { data: [{ description: "1 Player x Founding Membership", amount: 250 }] } }) === "");
 
 print("\nTHE NEW INVOICE LINE FORMAT");
-var GAME = find("venueplay-backend/worker/venueplay-game.js");
 pass("the big night line is quantity x unit price, not one lump",
      /quantity: overage,/.test(GAME) && /unit_amount: Math\.round\(rateDollars \* 100\)/.test(GAME),
      "so the invoice shows 3 x $2.00 rather than a single figure");
@@ -79,6 +79,27 @@ pass("and it names the venue and the night",
      /description: \(venue\.name \|\| 'Venue'\) \+ ' - Extra Player - ' \+ when/.test(GAME));
 pass("the plan-change line does the same in the billing Worker",
      /quantity: n, unit_amount: Math\.round\(rate \* 100\)/.test(BILL));
+
+
+print("\nTHE DATE ON THE LINE IS THE NIGHT THEY PLAYED, IN AUSTRALIAN ORDER");
+eval(lift(GAME,"brisbaneNightKey"));
+function au(ms){ return brisbaneNightKey(ms).split('-').reverse().join('/'); }
+
+var sat9pm   = Date.parse('2026-09-12T11:00:00Z');   // Sat 12 Sep, 9pm Brisbane
+var sweep3am = Date.parse('2026-09-12T17:00:00Z');   // Sun 13 Sep, 3am Brisbane
+var sat1am   = Date.parse('2026-09-12T15:30:00Z');   // Sun 13 Sep 1:30am Brisbane, still Saturday night
+
+pass("a date reads day/month/year", /^\d{2}\/\d{2}\/\d{4}$/.test(au(sat9pm)), au(sat9pm));
+pass("a Saturday night is dated Saturday", au(sat9pm) === "12/09/2026");
+pass("a 1:30am finish is still that Saturday night", au(sat1am) === "12/09/2026",
+     "the 2am rollover, so a late finish is not billed as the next day");
+pass("and it is NOT dated from when the sweep ran", au(sat9pm) !== au(sweep3am),
+     "the 3am sweep would have labelled Saturday's game " + au(sweep3am));
+pass("the code dates the line from the SESSION, not from now",
+     /Date\.parse\(session\.opened_at \|\| session\.started_at/.test(GAME),
+     "otherwise every swept night carries the following day");
+pass("the billing Worker also uses Brisbane, not UTC",
+     /Date\.now\(\) \+ 36000000/.test(BILL));
 
 print("");
 print(bad?(bad+" OF "+ran+" FAILED"):("ALL "+ran+" CHECKS PASSED"));

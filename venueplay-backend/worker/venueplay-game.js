@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 05:33 · 889f52fb';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:39 · 9d0c48e0';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6094,7 +6094,21 @@ async function applyOverageCharge(env, o) {
   const amountCents = Math.round(overage * rateDollars * 100);
   if (amountCents <= 0) return;
 
-  const when = new Date().toISOString().slice(0, 10);
+  /* THE NIGHT THEY PLAYED, IN AUSTRALIAN ORDER. Not the moment we billed it.
+
+     new Date() was wrong twice over. It read 2026-09-10, which is not how an Australian
+     invoice states a date. And it was the time of the CHARGE, not of the night: the
+     nightly sweep raises these at 3am, so a Saturday night closed by the sweep was
+     labelled Sunday on the venue's own bill. Nobody can reconcile that against their
+     till.
+
+     brisbaneNightKey is the same function the billing streak uses to decide which night
+     a game belongs to, including the 2am rollover that keeps a late finish on the right
+     night. Feeding it the SESSION's own opening time means the date on the bill is the
+     night the streak counted and the night the room was actually full. Then day/month/
+     year, which is what a pub's bookkeeper reads. */
+  const nightMs = Date.parse(session.opened_at || session.started_at || '') || Date.now();
+  const when = brisbaneNightKey(nightMs).split('-').reverse().join('/');
   /* ANNUAL IS BILLED NOW, MONTHLY RIDES THE NEXT INVOICE.
      A pending invoiceitem needs an invoice to land on. Monthly gets one within the
      month, so attach it to the subscription and let the cycle collect it. Annual
