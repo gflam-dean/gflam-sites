@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '10 Sep 2026, 23:31 · 34b3cd84';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 05:31 · fc8e05c5';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3362,6 +3362,75 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
    chargeNightOverage in the game Worker writes exactly one shape: "Big night extra players - ...".
    Anchor on that and nothing else can be mistaken for it. The per-night rate is read back out of
    the description rather than assumed. */
+/* EVERY LINE ON THE BILL, NOT JUST THE BIG NIGHTS.
+
+   The reminder showed a bare "Amount due $10.00" and nothing else, because the only
+   breakdown it could build was vpaOverageFromInvoice(), which matches lines beginning
+   "Big night extra players" and nothing else. Jess's $10 was three PLAN CHANGES
+   ("1 extra player, full month") plus the subscription, so none of it matched and she
+   was told a total with no explanation. Her accounts person has no way to check it.
+
+   Stripe already itemises the invoice. This just shows what is on it, in the order
+   Stripe has it, with the venue name Stripe already puts in each description, which is
+   what makes it read correctly for a group account billed for several venues.
+
+   Dean, 11 Sep 2026: "just says you are being billed for $10. No breakdown and as part
+   of a group we said we would do that right?" */
+/* WHAT AN AUSTRALIAN ACCOUNTS TEAM ACTUALLY NEEDS ON A RECEIPT.
+
+   The paid-invoice email said "Payment received" and an amount. That is a nice note,
+   not something a bookkeeper can file. A tax invoice needs the SUPPLIER'S ABN and the
+   GST, and ours carried neither: ABN appeared in exactly zero emails, and GST in none
+   of them, while terms.html has said "GST inclusive" since launch.
+
+   VenuePlay prices INCLUDE GST, so the GST component is the total divided by eleven,
+   not added on top. Getting that backwards would overstate every venue's claimable
+   credit, so it is written out here rather than left to a reader.
+
+   The ABN is the one on terms.html. If it ever changes it has to change in both, which
+   is why it says so here. */
+const VP_ABN = '35 679 383 049';   // also on venueplay/terms.html; keep them the same
+
+function vpaTaxSummaryHtml(invoice) {
+  const total = Number((invoice && (invoice.amount_paid || invoice.amount_due)) || 0);
+  if (!(total > 0)) return '';
+  const gst = Math.round(total / 11);          // GST-inclusive pricing: the component, not an addition
+  const ex = total - gst;
+  const row = function (label, cents, strong) {
+    return '<tr><td style="padding:5px 0;font-size:13px;color:' + (strong ? '#12101a' : '#6a6a75') + '">' + label + '</td>'
+         + '<td style="padding:5px 0;font-size:13px;text-align:right;white-space:nowrap;color:#12101a'
+         + (strong ? ';font-weight:700' : '') + '">$' + (cents / 100).toFixed(2) + '</td></tr>';
+  };
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+       + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
+       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
+       + row('Subtotal (excluding GST)', ex, false)
+       + row('GST', gst, false)
+       + row('Total paid', total, true)
+       + '</table>'
+       + '<p style="margin:12px 0 0;font-size:12px;color:#9a9aa4">Tax invoice. VenuePlay is a Gflam Group '
+       + 'business, ABN ' + VP_ABN + '. Prices include GST.</p>'
+       + '</td></tr></table>';
+}
+
+function vpaInvoiceLinesHtml(invoice) {
+  const lines = (invoice && invoice.lines && invoice.lines.data) || [];
+  if (!Array.isArray(lines) || lines.length < 1) return '';
+  const rows = lines.map(function (l) {
+    const amt = Number(l.amount || 0);
+    const desc = String((l && l.description) || 'VenuePlay');
+    return '<tr>'
+      + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;border-bottom:1px solid #f0f0f3">' + vpaEsc(desc) + '</td>'
+      + '<td style="padding:7px 0;font-size:13.5px;color:#12101a;text-align:right;white-space:nowrap;border-bottom:1px solid #f0f0f3">$'
+      + (amt / 100).toFixed(2) + '</td></tr>';
+  }).join('');
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+       + 'style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
+       + '<p style="margin:0 0 8px;font-size:13px;color:#6a6a75">What this is for</p>'
+       + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + rows + '</table>'
+       + '</td></tr></table>';
+}
+
 function vpaOverageFromInvoice(invoice) {
   const out = { nights: 0, players: 0, cents: 0 };
   const lines = invoice && invoice.lines && invoice.lines.data;
@@ -3387,7 +3456,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
     const email = invoice.customer_email;
     if (!email) return;
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-    const logo = site + '/logos/venueplay_primary_rebuilt.png';
+    const logo = site + '/logos/venueplay_primary_dark.png';
     const amount = '$' + (Number(invoice.amount_paid) / 100).toFixed(2);
     const ov = vpaOverageFromInvoice(invoice);
     const number = invoice.number ? String(invoice.number) : '';
@@ -3406,11 +3475,13 @@ async function vpaFireInvoiceEmail(env, invoice) {
             ? '<p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:13px;color:#6a6a75">Includes <b style="color:#12101a">' + ov.players + ' extra player' + (ov.players === 1 ? '' : 's') + '</b> over <b style="color:#12101a">' + ov.nights + ' big night' + (ov.nights === 1 ? '' : 's') + '</b> &middot; $' + (ov.cents / 100).toFixed(2) + ' at $2/head.</p>'
             : '')
       + '</td></tr></table>'
+      + vpaInvoiceLinesHtml(invoice)
+      + vpaTaxSummaryHtml(invoice)
       + (ov.nights > 0 ? '<p style="font-size:13px;color:#6a6a75;margin:0 0 18px">Running over most weeks? A bigger plan usually works out cheaper than the per-night rate - adjust it anytime on your billing page.</p>' : '')
       + (btn ? '<a href="' + btn + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">View invoice</a>' : '')
       + (pdf ? ' <a href="' + pdf + '" style="display:inline-block;color:#12101a;text-decoration:none;font-size:14px;font-weight:700;border:1.5px solid #12101a;padding:9.5px 22px;border-radius:8px">Download PDF</a>' : '')
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:26px 0 0">Questions about your bill? Reply to this email or contact hello@venueplay.com.au</p>'
-      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au</p>'
+      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
       + '</div>';
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -3454,7 +3525,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
     const whenTs = invoice.next_payment_attempt || invoice.period_end || 0;
     const when = whenTs ? vpaFmtDate(whenTs) : '';
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
-    const logo = site + '/logos/venueplay_primary_rebuilt.png';
+    const logo = site + '/logos/venueplay_primary_dark.png';
     const billing = site + '/app/billing.html';
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
@@ -3466,6 +3537,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       +   '<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:#12101a">' + amount + '</p>'
       +   (when ? '<p style="margin:6px 0 0;font-size:13px;color:#6a6a75">On ' + vpaEsc(when) + '</p>' : '')
       + '</td></tr></table>'
+      + vpaInvoiceLinesHtml(invoice)
       + (ov.nights > 0
           ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff6fb;border:1px solid #ffd0e6;border-radius:12px;margin-bottom:22px"><tr><td style="padding:16px 18px">'
             + '<p style="margin:0;font-size:14px;font-weight:700;color:#12101a">Busy month! This bill includes extra players.</p>'
@@ -3483,7 +3555,7 @@ async function vpaFireUpcomingEmail(env, invoice) {
       + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">Manage your plan</a>'
       + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">You can add or reduce players anytime from your billing page. On monthly, added players are a full month and reductions start at your next renewal. On annual, added players are pro rata to your renewal, and if you reduce, the unused value is held as credit against next year rather than lost.</p>'
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Prefer not to get these? Turn payment reminders off on your billing page. Questions? Reply to this email or contact hello@venueplay.com.au</p>'
-      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au</p>'
+      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
       + '</div>';
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -3685,7 +3757,7 @@ async function vpaFirePaymentFailedEmail(env, invoice) {
     const payNow = invoice.hosted_invoice_url || billing;
     const html =
       '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
-      + '<img src="' + site + '/logos/venueplay_primary_rebuilt.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
+      + '<img src="' + site + '/logos/venueplay_primary_dark.png" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
       + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">Your card did not go through.</p>'
       + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">We tried to charge ' + amount + ' for your VenuePlay subscription and it was declined. Nine times out of ten it is an expired card.</p>'
       + '<p style="font-size:14px;color:#3a3a44;margin:0 0 20px">Nothing has changed at your venue and your games are running as normal. We will try again over the next few days. If it keeps failing your games will pause until it is sorted, so it is worth a minute now.</p>'
