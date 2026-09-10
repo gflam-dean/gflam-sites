@@ -1648,15 +1648,37 @@ WORKER_SOURCE = {
 
 
 def repo_build(name):
-    """The stamp the repo says this Worker should be carrying."""
+    """The stamp the repo says this Worker should be carrying.
+
+    THIS RETURNED None FOR EVERY WORKER, ALWAYS, AND NOBODY NOTICED FOR WEEKS.
+
+    It matched `const BUILD = '([0-9a-f]{8})'`: eight hex characters and nothing
+    else. The real line has read `const BUILD = '11 Sep 2026, 05:39 - 9d0c48e0'`
+    since stamps gained a date. No match, None returned, and the caller skips the
+    check WITHOUT PRINTING ANYTHING, so "is running the current code" never once
+    appeared in the output.
+
+    What that cost: on 11 Sep 2026 five commits of BILLING changes sat undeployed
+    while the full gate reported "All 205 checks passed". The one check whose whole
+    job is to say "you have not pasted this yet" was the one that could not fire.
+    The section footer of this very file still promises it: "it asks each Worker its
+    own name and compares its build stamp to the repo".
+
+    A regex that returns nothing looks exactly like a file that is fine. That is the
+    third time this class has bitten this repo, so this one is loud: if the BUILD
+    line cannot be read at all, say so instead of returning None quietly.
+    """
     src_path = WORKER_SOURCE.get(name)
     if not src_path:
         return None
     p = os.path.join(ROOT, src_path)
     if not os.path.isfile(p):
         return None
-    m = re.search(r"const BUILD = '([0-9a-f]{8})'", io.open(p, encoding='utf-8').read())
-    return m.group(1) if m else None
+    body = io.open(p, encoding='utf-8').read()
+    m = re.search(r"const BUILD = '([^']+)'", body)
+    if not m:
+        return '(no BUILD line in %s)' % os.path.basename(src_path)
+    return m.group(1)
 
 
 def worker_health(name, api, needs_config=True):
@@ -1686,8 +1708,8 @@ def worker_health(name, api, needs_config=True):
                          'this becomes a straight yes or no.')
                 else:
                     ok('%s is running the current code' % name, live == want,
-                       'build %s' % live,
-                       why='deployed %s, repo has %s. Paste %s.'
+                       live,
+                       why='LIVE has %s but the repo has %s. Paste %s.'
                            % (live, want, os.path.basename(WORKER_SOURCE[name])))
             if 'photos' in d:
                 ok('%s photo store is bound' % name, d.get('photos') is True,
