@@ -23,13 +23,12 @@ LIB = os.path.join(ROOT, 'venueplay', 'data', 'musical-library.json')
 # Titles that would be printed on a bingo card in a family pub. The two marked "already
 # there" predate the chart work; they are the reason to check the whole library and not
 # only what arrived today.
-PULL = [
-    'fuck-it-i-don-t-want-you-back-eamon',
-    's-m-dave-aude-club-rihanna',
-    'sexy-bitch-feat-akon-extended-david-guetta',
-    'bitch-meredith-brooks',
-    'smack-my-bitch-up-radio-edit-the-prodigy',      # already there before today
-]
+# EMPTY ON PURPOSE. Dean, 10 Sep 2026: "Oh put those songs in these guys are 18+
+# anyway." He is right: a pub is an adult room and these are songs the room knows.
+# The list is kept here, and kept empty, so the next person can see the decision was
+# made rather than the question never asked.
+#     Fuck It (I Don't Want You Back), Sexy Bitch, S&M, Bitch, Smack My Bitch Up
+PULL = []
 # Not the plain studio recording. A room singing along to a clip that starts somewhere
 # unfamiliar is a worse game, and every one of these has a studio version people know.
 PULL_VERSIONS = [
