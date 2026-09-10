@@ -61,10 +61,37 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 68 | venue-join-code | applied on live and Sydney (vp_venues.join_code seen in both, 9 Sep) |
 | 69 | members-draw-hold | applied on live and Sydney (last_drawn_at seen in both, 9 Sep) |
 | 70 | bingo-server-draw | applied on live and Sydney (vp_bingo_draws exists in both, 9 Sep) |
-| 71 | one-trip-answer | applied on SYDNEY (8 Sep). applied on LIVE 9 Sep (functions and indexes seen in the live database). The Worker falls back to the old path where the function is missing, so order is safe |
-| 72 | one-trip-screen-poll | applied on SYDNEY (8 Sep). applied on LIVE 9 Sep (functions and indexes seen in the live database). Same fallback |
-| 73 | one-trip-host-trivia | applied on SYDNEY only (9 Sep). Not on live. The Worker falls back to the many-trip path where the functions are missing, so order is safe |
-| 76 | one-trip-host-draws | NOT RUN anywhere (written 10 Sep). The bingo ball and the members draw in one call each. It REQUIRES 73 first (it calls vp_host_staff) and refuses to install without it. Same fallback: the Worker takes the many-trip path where the functions are missing, so the order of migration and paste is safe |
+| 71 | one-trip-answer | ON BOTH. live and Sydney, checked 10 Sep 2026 |
+| 72 | one-trip-screen-poll | ON BOTH, checked 10 Sep 2026 |
+| 73 | one-trip-host-trivia | ON BOTH, checked 10 Sep 2026. This table said "Sydney only, not on live" and that was WRONG: live has had it since 9 Sep |
+| 74 | members-draw-pending | ON BOTH. Was live only; run on Sydney 10 Sep. Adds the outcome CHECK and the open-draw index |
+| 75 | CHECK-settings-policies | read only, one query. Nothing to apply |
+| 76 | one-trip-host-draws | ON BOTH, checked 10 Sep 2026. This table said "NOT RUN anywhere" and that was WRONG: live has it |
+| 77 | owner-only-settings | ON BOTH. Was live only; run on Sydney 10 Sep. Without it a MANAGER could change the columns only an owner may change, and nothing would have said so |
+| 78 | trivia-one-answer-index | ON BOTH, and a no-op on both because the index was already there. Written down 10 Sep because it had been created BY HAND and lived in no migration at all: rebuild from this repo and the duplicate-answer guard silently disappears |
+
+## Stop reading this table. Ask the databases.
+
+    python3 venueplay-backend/tools/check-databases-match.py
+
+It compares the live database with Sydney on tables, columns, functions, triggers,
+indexes and policies, and names anything live has that Sydney does not, because at
+cut-over those stop existing. Almost none of them fail loudly: a missing trigger
+means a rule quietly stops applying, a missing unique index means a guard quietly
+stops guarding, a missing function only makes the Worker take its slower fallback.
+
+ON 10 SEP 2026 IT FOUND TWO, and this table had three lines backwards at the same
+time. Sydney was missing 77's owner-only trigger and 74's index, while this file
+claimed 73 and 76 were not on live when live had both. Four days after the note
+below was written about exactly this. A ledger drifts because it is written by
+hand and the database is not; the tool cannot drift. Run it before Saturday, and
+run it again after the cut-over.
+
+    python3 venueplay-backend/tools/check-signing.py
+
+Same idea for the other thing a database cannot tell you by being read: it signs
+in as a real host and proves the signing key route works, and refuses everyone
+else.
 
 Verified against the live database on 5 Sep 2026, not from memory: vp_captures
 .player_id and .source exist, vp_venues.overage_streak_day exists,
