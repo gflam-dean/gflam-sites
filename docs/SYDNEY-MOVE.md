@@ -55,6 +55,7 @@ most of which is waiting.
 
 Then, and only after ALL MATCH:
 
+    echo 'VP_LIVE=new' >> ~/.gflam-migrate.env      <- ONE LINE, do not skip it
     python3 venueplay-backend/tools/migrate-sydney.py checklist   what to paste where
     the two Workers redeployed with the Sydney variables
     auth settings on the new project
@@ -64,6 +65,24 @@ Then, and only after ALL MATCH:
     python3 tools/play-a-game.py
     prove a real game on The Mini Bar
     check The Average Joe is untouched and healthy
+
+### VP_LIVE, and why it is on the list
+
+The rewrite repoints hardcoded URLs in 84 files. It cannot touch a tool that reads
+`OLD_DB_URL` or `OLD_SERVICE_KEY` from the environment, because those are variable NAMES,
+not URLs, and after the move "old" quietly stops meaning live.
+
+Two tools were exposed. `check-signing.py` and `enforce-signing.py` would have got Sydney's
+URL with Singapore's key, which is a 401: loud, but for a reason nobody would guess. The
+dangerous one was **`check-stale-sessions.py`, which reads `OLD_DB_URL` and is not
+rewritten at all.** It would have gone on asking SINGAPORE whether any session was
+unclosed, found nothing because nothing writes there any more, and reported a clean bill
+every night for ever. That is precisely the fault this repo spent 10 Sep fixing in the
+nightly sweep: a check that cannot fail.
+
+They all ask `vp_live.py` now, so `VP_LIVE=new` moves the lot in one line, and **every one
+of them prints which project it asked before it does anything**, so a wrong target shows up
+in the first line of output rather than in a result that looks fine.
 
 Singapore is never written to. It stays exactly as it is, which is the rollback:
 if anything is wrong, the Workers point back at it and the night carries on.

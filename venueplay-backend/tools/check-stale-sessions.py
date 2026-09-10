@@ -29,8 +29,10 @@ question, and are not kicked and not a test player. So a lobby somebody left ope
 with people sitting in it bills nothing, and is reported here as untidy rather
 than as a problem. An unclosed session with billable players is the problem.
 """
-import subprocess, sys
+import os, subprocess, sys
 from pathlib import Path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from vp_live import live
 
 PSQL = '/Applications/Postgres.app/Contents/Versions/latest/bin/psql'
 ENV  = Path.home() / '.gflam-migrate.env'
@@ -52,10 +54,12 @@ select v.slug,
 """
 
 def main():
-    url = None
-    for l in ENV.read_text().splitlines():
-        if l.startswith('OLD_DB_URL='): url = l.split('=', 1)[1].strip()
-    if not url: print('STOP: OLD_DB_URL missing from %s' % ENV); sys.exit(1)
+    # NOT 'OLD_DB_URL'. After the move to Sydney, "old" is the abandoned copy: this would
+    # have found nothing there, for ever, and reported a clean bill every night. See vp_live.py.
+    L = live()
+    url = L.db_url
+    if not url: print('STOP: no live database configured'); sys.exit(1)
+    print('\n' + L.banner())
 
     r = subprocess.run([PSQL, url, '-At', '-F', '|', '-c', SQL], capture_output=True, text=True, timeout=120)
     if r.returncode != 0:

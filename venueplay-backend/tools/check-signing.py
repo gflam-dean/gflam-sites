@@ -24,8 +24,10 @@ check that quietly skips is worse than no check. See docs/CHECK-STANDARD.md.
 Every request sends a User-Agent. Cloudflare answers a request without one with error
 1010, which arrives as a refusal and once made an attack test report a clean pass.
 """
-import base64, json, sys, urllib.request, urllib.error
+import base64, json, os, sys, urllib.request, urllib.error
 from pathlib import Path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from vp_live import live
 
 SUPA = 'https://gpoolavkghnxedzrmtmc.supabase.co'
 GAME = 'https://venueplay-game.dean-tindale.workers.dev'
@@ -68,9 +70,16 @@ def skip(line):
     print('  --   NOT RUN: ' + line); notrun.append(line)
 
 def main():
-    e = env()
-    key = e.get('OLD_SERVICE_KEY')
-    if not key: print('STOP: OLD_SERVICE_KEY missing from %s' % ENV); sys.exit(1)
+    # The rewrite step of the move repoints the hardcoded URL at Sydney but cannot know
+    # that OLD_SERVICE_KEY is still SINGAPORE's key. That pairing is a 401 against every
+    # check here: loud, but for a reason nobody would guess. Both come from one place now.
+    # global, because LIVE is read by the module-level default above.
+    L = live()
+    global LIVE
+    LIVE = L.rest_url or LIVE
+    key = L.service_key
+    if not key: print('STOP: no live service key configured'); sys.exit(1)
+    print(L.banner())
     h = {'apikey': key, 'Authorization': 'Bearer ' + key}
 
     print('\nKEYS')
