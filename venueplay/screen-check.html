@@ -77,8 +77,10 @@
     note('venue under test', VENUE + '   (add ?venue=slug to change it)');
 
     var errors = [];
+    var loadedAt = 0;
     stage.src = '/tv?venue=' + encodeURIComponent(VENUE);
     await new Promise(function (r) { stage.onload = r; setTimeout(r, 15000); });
+    loadedAt = Date.now();
     try { stage.contentWindow.addEventListener('error', function (e) { errors.push(String(e.message || e)); }); } catch (e) {}
 
     var d = null;
@@ -156,6 +158,23 @@
     pass(slideSig(d) === before, 'waking does not jump back to the first slide',
          'the lit slide changed when the screen woke, so the loop restarted');
 
+    /* WATCH FOR LONG ENOUGH THAT THE SCREEN HAS ADMITTED IT.
+
+       Measured on a real screen, not guessed: an unknown venue paints "Game on here"
+       immediately and looks perfectly healthy, and only puts up NOT LINKED TO AN ACCOUNT
+       at about 33 SECONDS. Two earlier versions of this check finished in ten and reported
+       everything passed, on a wall that was about to say it was broken.
+
+       So it waits out the window before it will say a screen is fine. That is also a fact
+       worth knowing about the product: a venue with a bad link shows a friendly holding
+       screen for half a minute before admitting anything is wrong. */
+    var WATCH_MS = 40000;
+    var wait_left = WATCH_MS - (Date.now() - loadedAt);
+    if (wait_left > 0) {
+      note('watching the screen for ' + Math.round(WATCH_MS / 1000) + ' seconds',
+           'an unknown venue does not admit it for about 33 seconds, so a shorter look passes a broken wall');
+      await wait(wait_left);
+    }
     clearInterval(watcher);
     try { var m2 = APOLOGY.exec(visibleText(d).join(' ~ ')); if (m2 && !apology) apology = m2[0]; } catch (e) {}
     pass(!apology, 'the screen is linked to a venue, and stayed that way while we watched',
