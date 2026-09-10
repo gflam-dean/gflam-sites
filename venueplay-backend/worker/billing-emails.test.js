@@ -170,6 +170,12 @@ function extrasChecks() {
     return vpaMoveExtrasToMonthly({}, jessExtras);
   }).then(function (r) {
     pass("an annual venue's extras move the same way", r.moved === true, JSON.stringify(r));
+    // Stripe's 2025 API shape: the renewal date lives on the item, not the subscription. This is
+    // what live Stripe returned for Jess on 11 Sep 2026 and the email went out with no date.
+    reset({ sub: { status: "active", items: { data: [{ quantity: 1, current_period_end: 1790812800, price: { unit_amount: 1000, recurring: { interval: "month" } } }] } } });
+    return vpaMoveExtrasToMonthly({}, jessExtras);
+  }).then(function (r) {
+    pass("the renewal date is read off the subscription ITEM when Stripe puts it there (live shape)", r.moved === true && r.next === "1 October 2026", JSON.stringify(r));
     reset({ freshStatus: "void" });
     return vpaMoveExtrasToMonthly({}, jessExtras);
   }).then(function (r) {
@@ -209,8 +215,13 @@ function extrasChecks() {
       lines: { data: [{ description: "The Jolly Jess - Extra Player - 11/09/2026", amount: 200 }] } };
     var subInv = { id: "in_SUB", customer_email: "jess@example.com", amount_due: 1000, billing_reason: "subscription_cycle", hosted_invoice_url: "https://pay.example/y",
       lines: { data: [{ description: "1 x Founding Membership", amount: 1000 }] } };
+    audits = [];
     return vpaFirePaymentFailedEmail(envR, extrasInv, { moved: true, next: "1 October 2026" }).then(function () {
       var h = sent[0] && sent[0].body.html;
+      var rec = audits.filter(function (x) { return x.row.action === "payment_failed_email"; })[0];
+      pass("every placeholder that went into the email is written down (amount, what, reason, outcome, date, sent)", !!rec
+        && rec.row.detail.to === "jess@example.com" && rec.row.detail.amount === "$2.00" && rec.row.detail.what === "The Jolly Jess - Extra Player - 11/09/2026"
+        && typeof rec.row.detail.reason_line === "string" && rec.row.detail.outcome === "moved to next invoice" && rec.row.detail.next === "1 October 2026" && rec.row.detail.sent === true, JSON.stringify(rec));
       pass("REAL email, extras moved: names the $2.00 line, says next subscription payment on 1 October 2026, no button", !!h && /\$2\.00 for The Jolly Jess - Extra Player - 11\/09\/2026/.test(h) && /next subscription payment on 1 October 2026/.test(h) && !/Pay now/.test(h) && !/pause/.test(h), h ? h.slice(0, 400) : "no email");
       return vpaFirePaymentFailedEmail(envR, extrasInv, { moved: false, why: "over the $30 line" });
     }).then(function () {

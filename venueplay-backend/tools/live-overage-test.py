@@ -92,9 +92,12 @@ def stripe_state(cus):
         'invoices': {i['id']: i for i in stripe('invoices', customer=cus, limit=20).get('data', [])},
     }
 
-def db_state(venue_id):
+def db_state(venue_id, acct_id=None, cus=None):
     v = db('vp_venues?id=eq.%s&select=max_players,pending_players,overage_streak,overage_streak_peaks,overage_streak_day,status' % venue_id)[0]
-    audit = db('vp_admin_audit?target=eq.%s&select=id,action,detail,created_at&order=created_at.desc&limit=10' % venue_id)
+    # The game Worker writes against the venue; the billing Worker's webhook writes against the
+    # account (extras_moved_to_monthly) and the customer (payment_failed_email). Read all three.
+    targets = [venue_id] + (['account:' + str(acct_id)] if acct_id else []) + (['customer:' + str(cus)] if cus else [])
+    audit = db('vp_admin_audit?target=in.(%s)&select=id,action,detail,created_at&order=created_at.desc&limit=20' % ','.join(urllib.parse.quote(t, safe=':') for t in targets))
     return {'venue': v, 'audit_ids': {a['id'] for a in audit}, 'audit': audit}
 
 def brisbane_date_today():
@@ -148,7 +151,7 @@ def main():
     if not cap: sys.exit('STOP: this venue has no player cap, so nothing could ever be over it')
     if not a.go: print('\n  dry run. Add --go to do it.'); return
 
-    before_s = stripe_state(cus); before_d = db_state(venue['id'])
+    before_s = stripe_state(cus); before_d = db_state(venue['id'], acct['id'], cus)
     print('\nBEFORE  sub %s qty %s, balance %s, %d pending items, %d invoices, streak %s' % (
         before_s['sub_status'], before_s['sub_qty'], money(before_s['balance']), len(before_s['pending_items']),
         len(before_s['invoices']), before_d['venue']['overage_streak']))
@@ -190,7 +193,7 @@ def main():
         step('close the night', *http(GAME + '/session/close', 'POST', {'session_id': sid}, H))
 
     print('\n  waiting 8s for Stripe and the webhook...'); time.sleep(8)
-    after_s = stripe_state(cus); after_d = db_state(venue['id'])
+    after_s = stripe_state(cus); after_d = db_state(venue['id'], acct['id'], cus)
     sess = db('vp_sessions?id=eq.%s&select=status,ended_at,overage_approved,overage_approved_count,plan_cap_at_start' % sid)[0]
     print('\nAFTER   session %s, approved %s (count %s), cap at start %s' % (sess['status'], sess['overage_approved'], sess['overage_approved_count'], sess['plan_cap_at_start']))
     new_items = {k: v for k, v in after_s['pending_items'].items() if k not in before_s['pending_items']}
@@ -200,7 +203,7 @@ def main():
     for inv in new_invs.values():
         print('  new invoice       %s %s total=%s paid=%s method=%s' % (inv.get('number') or inv['id'], inv['status'], money(inv.get('total')), inv.get('paid'), inv.get('collection_method')))
         for ln in inv['lines']['data']: print('      line  qty=%s amount=%s "%s"' % (ln.get('quantity'), money(ln.get('amount')), ln.get('description')))
-    for x in new_audit: print('  new audit row     %s %s' % (x['action'], json.dumps(x.get('detail'))[:200]))
+    for x in new_audit: print('  new audit row     %s %s' % (x['action'], json.dumps(x.get('detail'))[:300]))
     print('  streak            %s -> %s (peaks %s, day %s)' % (before_d['venue']['overage_streak'], after_d['venue']['overage_streak'], after_d['venue']['overage_streak_peaks'], after_d['venue']['overage_streak_day']))
     print('  balance           %s -> %s' % (money(before_s['balance']), money(after_s['balance'])))
     if after_s['sub_qty'] != before_s['sub_qty']: print('  FAIL subscription quantity moved %s -> %s (overage must not change the plan)' % (before_s['sub_qty'], after_s['sub_qty'])); steps.append(False)
@@ -216,8 +219,41 @@ def main():
         verdict.append(('nothing else rode that invoice', len(lines) == len(mine)))
         inv = list(new_invs.values())[0] if new_invs else {}
         want_paid = not acct.get('bill_by_invoice')
-        verdict.append(('invoice %s' % ('paid now (card)' if want_paid else 'issued (bill by invoice)'), bool(inv) and (inv.get('paid') is True if want_paid else inv.get('status') == 'open')))
-        verdict.append(('no item left pending', not new_items))
+        # THE CARD SAID NO. Dean, 11 Sep 2026: one try, then up to $30 rides the next subscription
+        # invoice. The billing Worker's webhook voids the invoice and re-adds the line as a pending
+        # item tied to the subscription. That is a PASS of a different shape, not a failed charge.
+        declined = [x for x in new_audit if x['action'] == 'overage_invoice_unpaid']
+        moved = [x for x in new_audit if x['action'] == 'extras_moved_to_monthly']
+        if want_paid and declined:
+            reason = (declined[0].get('detail') or {}).get('reason') or '?'
+            print('  CARD DECLINED     %s' % reason[:120])
+            small = a.extra * 200 <= 3000
+            items = list(new_items.values())
+            verdict.append(('card tried once and the bank said no (recorded with its reason)', bool(inv) and inv.get('paid') is not True))
+            if small:
+                def item_sub(it):
+                    par = it.get('parent') or {}
+                    return it.get('subscription') or ((par.get('subscription_details') or {}).get('subscription'))
+                verdict.append(('the failed invoice was VOIDED (no retries, no nagging)', inv.get('status') == 'void'))
+                verdict.append(('one pending item of %s now rides the next subscription invoice' % money(a.extra * 200),
+                                len(items) == 1 and items[0].get('amount') == a.extra * 200 and items[0].get('description') == want_desc))
+                verdict.append(('that item is tied to the subscription, so it can only land on its next invoice', bool(items) and bool(item_sub(items[0]))))
+                verdict.append(('HQ row extras_moved_to_monthly names the invoice and the renewal date', bool(moved) and (moved[0].get('detail') or {}).get('invoice') == inv.get('id') and bool((moved[0].get('detail') or {}).get('next'))))
+            # THE EMAIL'S PLACEHOLDERS, read back from what the Worker recorded it sent. Dean, 11 Sep
+            # 2026: "double check that the placeholders are current for it all cause it cant be wrong".
+            mail = [x for x in new_audit if x['action'] == 'payment_failed_email']
+            md = (mail[0].get('detail') or {}) if mail else {}
+            if md: print('  EMAIL SENT        to %s | %s for "%s" | reason: %s (%s) | %s%s' % (md.get('to'), md.get('amount'), md.get('what'), md.get('reason_line'), md.get('reason_code'), md.get('outcome'), (' on ' + md['next']) if md.get('next') else ''))
+            verdict.append(('the decline email was sent and Resend accepted it', bool(md) and md.get('sent') is True and bool(md.get('resend_id'))))
+            verdict.append(('email placeholders: amount %s and the line "%s"' % (money(a.extra * 200), want_desc), md.get('amount') == money(a.extra * 200) and md.get('what') == want_desc))
+            verdict.append(('email placeholders: the bank\'s real reason, not the generic fallback', bool(md.get('reason_code')) and 'Nine times out of ten' not in (md.get('reason_line') or '')))
+            if small: verdict.append(('email placeholders: the renewal date is filled in', bool(md.get('next'))))
+            else:
+                verdict.append(('over $30: the invoice stays OPEN to be chased now', inv.get('status') == 'open'))
+                verdict.append(('nothing moved onto the monthly bill', not new_items and not moved))
+        else:
+            verdict.append(('invoice %s' % ('paid now (card)' if want_paid else 'issued (bill by invoice)'), bool(inv) and (inv.get('paid') is True if want_paid else inv.get('status') == 'open')))
+            verdict.append(('no item left pending', not new_items))
         # The streak counts NIGHTS (2am Brisbane rollover), not sessions, so three games in one
         # evening cannot move a plan up. A second run on the same night must leave it alone.
         import datetime as _dt
@@ -233,7 +269,13 @@ def main():
         recent = [e for e in ev if e.get('event_type') == 'invoice.paid'
                   and calendar.timegm(time.strptime(e['claimed_at'][:19], '%Y-%m-%dT%H:%M:%S')) > closed_at - 60]
         for e in recent: print('  webhook           %s %s finished=%s' % (e['event_type'], e['event_id'], bool(e.get('completed_at'))))
-        verdict.append(('invoice.paid webhook arrived and finished (receipt email path)', bool(recent) and all(e.get('completed_at') for e in recent)))
+        if want_paid and declined:
+            failed = [e for e in ev if e.get('event_type') == 'invoice.payment_failed'
+                      and calendar.timegm(time.strptime(e['claimed_at'][:19], '%Y-%m-%dT%H:%M:%S')) > closed_at - 60]
+            for e in failed: print('  webhook           %s %s finished=%s' % (e['event_type'], e['event_id'], bool(e.get('completed_at'))))
+            verdict.append(('invoice.payment_failed webhook arrived and finished (decline email path)', bool(failed) and all(e.get('completed_at') for e in failed)))
+        else:
+            verdict.append(('invoice.paid webhook arrived and finished (receipt email path)', bool(recent) and all(e.get('completed_at') for e in recent)))
     else:
         verdict.append(('subscription is %s: no new invoice item' % before_s['sub_status'], not new_items))
         verdict.append(('no new invoice', not new_invs))

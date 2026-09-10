@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 09:19 · 6c6955bd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 09:55 · 7246c89f';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3919,7 +3919,11 @@ async function vpaMoveExtrasToMonthly(env, inv) {
         return no('could not void: ' + msg);
       }
     }
-    const next = sub.current_period_end ? vpaFmtDate(sub.current_period_end) : null;
+    // Stripe moved the renewal date off the subscription and onto its items in the 2025 API
+    // versions. Live proof on 11 Sep 2026 wrote next: null and the email went out with no date.
+    const firstItem = sub.items && sub.items.data && sub.items.data[0];
+    const periodEnd = sub.current_period_end || (firstItem && firstItem.current_period_end) || null;
+    const next = periodEnd ? vpaFmtDate(periodEnd) : null;
     await vpaInsert(env, 'vp_admin_audit', {
       actor_admin: null, actor_label: 'stripe',
       action: 'extras_moved_to_monthly',
@@ -3968,7 +3972,7 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved) {
       + vpaPaymentFailedNextStep(moved, payNow, billing)
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:22px 0 0">Questions? Reply to this email or contact hello@venueplay.com.au</p>'
       + '</div>';
-    await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -3979,6 +3983,23 @@ async function vpaFirePaymentFailedEmail(env, invoice, moved) {
         html: html,
       }),
     });
+    /* RECORD WHAT WAS SAID. Nobody here can read Resend's outbox, and on 11 Sep 2026 this email
+       went out to a venue with its date placeholder empty and nothing but the venue's inbox knew.
+       Every value that was filled into the email is written down, so a live run can check the
+       placeholders against the row instead of asking the customer what they received. */
+    let resendId = null;
+    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}
+    await vpaInsert(env, 'vp_admin_audit', {
+      actor_admin: null, actor_label: 'stripe',
+      action: 'payment_failed_email',
+      target: 'customer:' + String(invoice.customer || ''),
+      detail: {
+        to: email, invoice: invoice.id || null, amount: amount, what: what,
+        reason_code: (decline && decline.code) || null, reason_line: why.line, ours: !!why.ours,
+        outcome: moved ? (moved.moved ? 'moved to next invoice' : 'stays open') : 'subscription',
+        next: (moved && moved.next) || null, sent: res.ok, resend_id: resendId,
+      },
+    }, false).catch(() => {});
   } catch (_) { /* best-effort */ }
 }
 
