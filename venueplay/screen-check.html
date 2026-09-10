@@ -102,11 +102,19 @@
        venue's night or an error message.
 
        That is not hypothetical. A venue TV has read exactly this after an owner pressed
-       Change code, and this file would have said the screen was fine. */
-    var wallText = visibleText(d).join(' ~ ');
-    var apology = /not linked to an account|no such venue|cannot find|couldn.t find|sign up at/i.exec(wallText);
-    pass(!apology, 'the screen is linked to a venue',
-         'the wall is showing an error, not a night: "' + (apology ? apology[0] : '') + '"');
+       Change code, and this file would have said the screen was fine.
+
+       AND IT HAS TO WATCH, NOT GLANCE. The first version asked once, six seconds in,
+       and passed: the banner only goes up AFTER the venue lookup comes back empty, which
+       is later than that. A screen is not judged by the instant you happened to look.
+
+       It reads only what is PAINTED, never body.innerText: that banner sits in the DOM of
+       every healthy screen too, waiting, and matching it there would fail every venue. */
+    var APOLOGY = /not linked to an account|no such venue|cannot find|couldn.t find|sign up at/i;
+    var apology = null;
+    var watcher = setInterval(function () {
+      try { var m = APOLOGY.exec(visibleText(d).join(' ~ ')); if (m && !apology) apology = m[0]; } catch (e) {}
+    }, 500);
 
     var status = d.getElementById('statusText');
     pass(!!status && /connected/i.test(status.textContent), 'it says it is connected',
@@ -147,6 +155,11 @@
          'the slide container was emptied ' + emptied + ' time(s), which is the flash');
     pass(slideSig(d) === before, 'waking does not jump back to the first slide',
          'the lit slide changed when the screen woke, so the loop restarted');
+
+    clearInterval(watcher);
+    try { var m2 = APOLOGY.exec(visibleText(d).join(' ~ ')); if (m2 && !apology) apology = m2[0]; } catch (e) {}
+    pass(!apology, 'the screen is linked to a venue, and stayed that way while we watched',
+         'the wall showed an error rather than a night: "' + (apology || '') + '"');
 
     pass(errors.length === 0, 'the screen threw no errors while we watched', errors.slice(0, 2).join(' / '));
     finish();
