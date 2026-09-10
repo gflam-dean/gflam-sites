@@ -178,3 +178,28 @@ that nothing else closes.
 8. Then, and it is the biggest one: **something that opens a page and asserts what is on
    it.** Every other line on this page is checked by reading text. That is why the two
    faults that reached Dean today were invisible to all of it.
+
+## Added 10 Sep 2026, after a second review
+
+Three rows the first version of this page did not have. Two came from an outside
+review, one from Dean.
+
+| what | why it matters in a pub | level | covered | evidence | who can prove it |
+|---|---|---|---|---|---|
+| **The fallback stampede.** If the room server goes away while N venues are on it, they all fall back to Supabase in the same few seconds. | The fallback exists so a room never notices. If everyone arrives at once and the database cannot take them, the safety net becomes a second, larger outage. Measured today: the free tier bends at roughly 20 to 25 database calls a second, and fifteen trivia rooms already collapsed. | CRITICAL | **no** | | me, once phase 2 lands: put N rooms on the room server, kill the room mid game, and measure what the database does |
+| **Silent to the pub, deafening to us.** A fallback is invisible today: nothing records it and nothing tells anyone. | Every room fault on 10 Sep was invisible. A page said Connected while talking to nobody. If a venue silently spends a month on the slow path we would never know. | CRITICAL | **no** | | me: record venue, session, time, transport, reason and retries, and alert. Then pin the session rather than bouncing it between transports |
+| **A minimum supported-device list.** Not a full matrix: current iPhone Safari, Android Chrome, the host's actual iPad, the venue's actual TV. | Before taking money you have to be able to say what VenuePlay supports. Right now nobody can. | CRITICAL | **no** | | Dean, on the actual devices in the room. No tool can stand in for this |
+
+And two changes of level, both from the same review and both accepted:
+
+* **Basic error tracking** moves from LATER to **HIGH**. Not a launch blocker, but once
+  somebody pays, a JavaScript error on their Samsung should not have to be described to
+  us over the phone. Browser testing first, error tracking soon after.
+* **MFA on the high-privilege HQ accounts** moves from LATER to **HIGH**. MFA for the
+  bloke running Tuesday trivia stays in LATER. A host account and an account that can
+  reach every venue in the country have completely different blast radii.
+
+One thing left where it was, with the reason: a paid penetration test stays in LATER,
+but **automated adversarial tenant isolation is now CRITICAL and DONE**, which is the
+part of a pentest that matters most for a multi-tenant product. See
+tools/tenant-isolation-attack.py and the commit that added it.
