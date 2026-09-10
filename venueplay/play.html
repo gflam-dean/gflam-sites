@@ -418,6 +418,36 @@
   function send(obj){ if(!wireOut(obj)) sendQueue.push(obj); }
   function flushQueue(){ while(sendQueue.length && (ch || _room)){ if(!wireOut(sendQueue[0])) break; sendQueue.shift(); } }
 
+  /* WHAT THE PHONE DOES WHEN ITS CHANNEL CHANGES STATE.
+
+     TWO FAULTS LIVED HERE, and both meant a punter tapping an answer into nothing.
+
+     1. CLOSED WAS NOT HANDLED AT ALL. Supabase reports CHANNEL_ERROR, TIMED_OUT and
+        CLOSED, and this listed the first two. A closed channel left the phone showing
+        Connected, cheerfully, for ever.
+     2. subscribed WAS NEVER CLEARED. send() checks that flag: with it still true the
+        phone kept calling ch.send() into a dead channel and every answer, every join and
+        every ticket request went nowhere. Cleared, the same messages go to sendQueue
+        instead and flushQueue() posts the backlog the moment it reconnects.
+
+     The host console had exactly this bug and it was fixed there: "subscribed was never
+     reset here. It said Reconnecting on screen and then kept calling ch.send() into a
+     dead socket." The phone was never given the same line. Half a fix is the kind that
+     looks done. */
+  function onChannelStatus(status){
+    if(status==="SUBSCRIBED"){
+      subscribed=true; flushQueue();
+      // re-announce on every (re)connect so the host rebuilds our seat and re-deals our tickets
+      if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); setConn("waiting"); }
+      else { setConn("ready"); }
+      return;
+    }
+    if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+      subscribed=false;
+      setConn("reconnecting");
+    }
+  }
+
   // Connection light: it goes green ONLY once a live host actually answers on this
   // channel, so it can never say "Connected" while nobody is running the game.
   function setConn(state){
@@ -1342,16 +1372,9 @@
     if(!_room){
         ch=client.channel("vp-"+room, { config:{ broadcast:{ self:false } } });
     ch.on("broadcast", { event:"msg" }, function(e){ if(window.VPSign){ VPSign.gate(e.payload, onMsg); } else { onMsg(e.payload); } });
-    ch.subscribe(function(status){
-      if(status==="SUBSCRIBED"){
-        subscribed=true; flushQueue();
-        // re-announce on every (re)connect so the host rebuilds our seat and re-deals our tickets
-        if(P.joined){ send({ t:"join", pid:P.pid, name:P.name, cards:P.numCards }); setConn("waiting"); }
-        else { setConn("ready"); }
-      } else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){
-        setConn("reconnecting");
-      }
-    });
+    /* NAMED, so it can be RUN by a test. It was an anonymous callback and the fault below
+       lived in it for weeks: no test in this repo could reach it. */
+    ch.subscribe(onChannelStatus);
     }
     if(!P.joined) loadJoinInfo();   // show any extra fields this venue collects
     renderPicker();                 // ticket-count buttons (default to the host's number)
