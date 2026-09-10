@@ -1,0 +1,962 @@
+{
+ "generated": "2026-09-10",
+ "what_this_is": "Last.fm listeners for the recording each song used to hold and the one it holds now.",
+ "lifted": 106,
+ "checked": 106,
+ "list": [
+  {
+   "id": "just-dance-feat-colby-o-donis-lady-gaga",
+   "held_title": "Just Dance (feat. Colby O'Donis)",
+   "new_title": "Just Dance",
+   "artist": "Lady Gaga",
+   "artist_asked": "Lady Gaga",
+   "before": 147166,
+   "after": 2923900
+  },
+  {
+   "id": "beat-it-single-version-michael-jackson",
+   "held_title": "Beat It (Single Version)",
+   "new_title": "Beat It",
+   "artist": "Michael Jackson",
+   "artist_asked": "Michael Jackson",
+   "before": 68330,
+   "after": 2842766
+  },
+  {
+   "id": "ms-jackson-radio-mix-outkast",
+   "held_title": "Ms. Jackson (Radio Mix)",
+   "new_title": "Ms. Jackson",
+   "artist": "Outkast",
+   "artist_asked": "Outkast",
+   "before": 6654,
+   "after": 2407838
+  },
+  {
+   "id": "enter-sandman-may-13th-1991-rough-mix-metallica",
+   "held_title": "Enter Sandman (May 13th, 1991 Rough Mix)",
+   "new_title": "Enter Sandman",
+   "artist": "Metallica",
+   "artist_asked": "Metallica",
+   "before": 2450,
+   "after": 1897327
+  },
+  {
+   "id": "girlfriend-feat-lil-mama-avril-lavigne",
+   "held_title": "Girlfriend (feat. Lil Mama)",
+   "new_title": "Girlfriend",
+   "artist": "Avril Lavigne",
+   "artist_asked": "Avril Lavigne",
+   "before": 1199,
+   "after": 1881738
+  },
+  {
+   "id": "pump-it-itunes-originals-version-black-eyed-peas",
+   "held_title": "Pump It (iTunes Originals Version)",
+   "new_title": "Pump It",
+   "artist": "Black Eyed Peas",
+   "artist_asked": "Black Eyed Peas",
+   "before": 476,
+   "after": 1790770
+  },
+  {
+   "id": "the-way-i-are-feat-keri-hilson-d-o-e-timbaland",
+   "held_title": "The Way I Are (feat. Keri Hilson & D.O.E.)",
+   "new_title": "The Way I Are",
+   "artist": "Timbaland",
+   "artist_asked": "Timbaland",
+   "before": 60714,
+   "after": 1760837
+  },
+  {
+   "id": "happier-than-ever-edit-billie-eilish",
+   "held_title": "Happier Than Ever (Edit)",
+   "new_title": "Happier Than Ever",
+   "artist": "Billie Eilish",
+   "artist_asked": "Billie Eilish",
+   "before": 9674,
+   "after": 1606753
+  },
+  {
+   "id": "stan-feat-dido-eminem",
+   "held_title": "Stan (feat. Dido)",
+   "new_title": "Stan",
+   "artist": "Eminem",
+   "artist_asked": "Eminem",
+   "before": 150484,
+   "after": 1667572
+  },
+  {
+   "id": "party-rock-anthem-feat-lauren-bennett-goonrock-lmfao",
+   "held_title": "Party Rock Anthem (feat. Lauren Bennett & GoonRock)",
+   "new_title": "Party Rock Anthem",
+   "artist": "LMFAO",
+   "artist_asked": "LMFAO",
+   "before": 81986,
+   "after": 1547884
+  },
+  {
+   "id": "jeremy-live-mtv-unplugged-pearl-jam",
+   "held_title": "Jeremy (Live MTV Unplugged)",
+   "new_title": "Jeremy",
+   "artist": "Pearl Jam",
+   "artist_asked": "Pearl Jam",
+   "before": 2236,
+   "after": 1369064
+  },
+  {
+   "id": "let-me-love-you-feat-justin-bieber-dj-snake",
+   "held_title": "Let Me Love You (feat. Justin Bieber)",
+   "new_title": "Let Me Love You",
+   "artist": "DJ Snake",
+   "artist_asked": "DJ Snake",
+   "before": 47555,
+   "after": 1346836
+  },
+  {
+   "id": "problem-feat-iggy-azalea-ariana-grande",
+   "held_title": "Problem (feat. Iggy Azalea)",
+   "new_title": "Problem",
+   "artist": "Ariana Grande",
+   "artist_asked": "Ariana Grande",
+   "before": 119335,
+   "after": 1386223
+  },
+  {
+   "id": "break-your-heart-feat-ludacris-taio-cruz",
+   "held_title": "Break Your Heart (feat. Ludacris)",
+   "new_title": "Break Your Heart",
+   "artist": "Taio Cruz",
+   "artist_asked": "Taio Cruz",
+   "before": 67064,
+   "after": 1257632
+  },
+  {
+   "id": "money-for-nothing-edit-dire-straits",
+   "held_title": "Money For Nothing (Edit)",
+   "new_title": "Money For Nothing",
+   "artist": "Dire Straits",
+   "artist_asked": "Dire Straits",
+   "before": 9336,
+   "after": 1184705
+  },
+  {
+   "id": "come-together-2019-mix-the-beatles",
+   "held_title": "Come Together (2019 Mix)",
+   "new_title": "Come Together",
+   "artist": "The Beatles",
+   "artist_asked": "The Beatles",
+   "before": 32807,
+   "after": 1185227
+  },
+  {
+   "id": "what-s-going-on-the-detroit-mix-marvin-gaye",
+   "held_title": "What's Going On (The Detroit Mix)",
+   "new_title": "What's Going On",
+   "artist": "Marvin Gaye",
+   "artist_asked": "Marvin Gaye",
+   "before": 302,
+   "after": 1136326
+  },
+  {
+   "id": "forever-main-version-chris-brown",
+   "held_title": "Forever (Main Version)",
+   "new_title": "Forever",
+   "artist": "Chris Brown",
+   "artist_asked": "Chris Brown",
+   "before": 24757,
+   "after": 1144589
+  },
+  {
+   "id": "youngblood-acoustic-5-seconds-of-summer",
+   "held_title": "Youngblood (Acoustic)",
+   "new_title": "Youngblood",
+   "artist": "5 Seconds of Summer",
+   "artist_asked": "5 Seconds of Summer",
+   "before": 3042,
+   "after": 1096396
+  },
+  {
+   "id": "right-round-feat-ke-ha-flo-rida",
+   "held_title": "Right Round (feat. Ke$ha)",
+   "new_title": "Right Round",
+   "artist": "Flo Rida",
+   "artist_asked": "Flo Rida",
+   "before": 145168,
+   "after": 1238429
+  },
+  {
+   "id": "no-diggity-feat-dr-dre-queen-pen-blackstreet",
+   "held_title": "No Diggity (feat. Dr. Dre & Queen Pen)",
+   "new_title": "No Diggity",
+   "artist": "Blackstreet",
+   "artist_asked": "Blackstreet",
+   "before": 18443,
+   "after": 1071810
+  },
+  {
+   "id": "blurred-lines-feat-t-i-pharrell-robin-thicke",
+   "held_title": "Blurred Lines (feat. T.I. & Pharrell)",
+   "new_title": "Blurred Lines",
+   "artist": "Robin Thicke",
+   "artist_asked": "Robin Thicke",
+   "before": 69884,
+   "after": 1084460
+  },
+  {
+   "id": "here-comes-the-sun-2019-mix-the-beatles",
+   "held_title": "Here Comes the Sun (2019 Mix)",
+   "new_title": "Here Comes the Sun",
+   "artist": "The Beatles",
+   "artist_asked": "The Beatles",
+   "before": 40711,
+   "after": 1041645
+  },
+  {
+   "id": "smack-my-bitch-up-radio-edit-the-prodigy",
+   "held_title": "Smack My Bitch Up (Radio Edit)",
+   "new_title": "Smack My Bitch Up",
+   "artist": "The Prodigy",
+   "artist_asked": "The Prodigy",
+   "before": 2363,
+   "after": 971999
+  },
+  {
+   "id": "chocolate-acoustic-version-the-1975",
+   "held_title": "Chocolate (Acoustic Version)",
+   "new_title": "Chocolate",
+   "artist": "The 1975",
+   "artist_asked": "The 1975",
+   "before": 2327,
+   "after": 933207
+  },
+  {
+   "id": "rock-you-like-a-hurricane-2015-remaster-scorpions",
+   "held_title": "Rock You Like a Hurricane (2015 - Remaster)",
+   "new_title": "Rock You Like a Hurricane",
+   "artist": "Scorpions",
+   "artist_asked": "Scorpions",
+   "before": 66757,
+   "after": 981485
+  },
+  {
+   "id": "sandstorm-radio-edit-darude",
+   "held_title": "Sandstorm (Radio Edit)",
+   "new_title": "Sandstorm",
+   "artist": "Darude",
+   "artist_asked": "Darude",
+   "before": 44265,
+   "after": 920664
+  },
+  {
+   "id": "dream-a-little-dream-of-me-with-introduction-the-mamas-and-the-papas",
+   "held_title": "Dream A Little Dream Of Me (With Introduction)",
+   "new_title": "Dream A Little Dream Of Me",
+   "artist": "The Mamas & The Papas",
+   "artist_asked": "The Mamas & The Papas",
+   "before": 7000,
+   "after": 858944
+  },
+  {
+   "id": "changes-feat-talent-greatest-hits-version-2pac",
+   "held_title": "Changes (feat. Talent) [Greatest Hits Version]",
+   "new_title": "Changes",
+   "artist": "2Pac",
+   "artist_asked": "2Pac",
+   "before": 103,
+   "after": 807092
+  },
+  {
+   "id": "praise-you-radio-edit-fatboy-slim",
+   "held_title": "Praise You (Radio Edit)",
+   "new_title": "Praise You",
+   "artist": "Fatboy Slim",
+   "artist_asked": "Fatboy Slim",
+   "before": 176089,
+   "after": 980661
+  },
+  {
+   "id": "music-sounds-better-with-you-radio-edit-stardust",
+   "held_title": "Music Sounds Better with You (Radio Edit)",
+   "new_title": "Music Sounds Better With You",
+   "artist": "Stardust",
+   "artist_asked": "Stardust",
+   "before": 47294,
+   "after": 851223
+  },
+  {
+   "id": "boy-s-a-liar-mixed-pinkpantheress",
+   "held_title": "Boy's a liar (Mixed)",
+   "new_title": "Boy's a liar",
+   "artist": "PinkPantheress",
+   "artist_asked": "PinkPantheress",
+   "before": 57,
+   "after": 794949
+  },
+  {
+   "id": "somebody-s-watching-me-single-version-rockwell",
+   "held_title": "Somebody's Watching Me (Single Version)",
+   "new_title": "Somebody's Watching Me",
+   "artist": "Rockwell",
+   "artist_asked": "Rockwell",
+   "before": 19651,
+   "after": 779557
+  },
+  {
+   "id": "the-way-you-make-me-feel-single-version-michael-jackson",
+   "held_title": "The Way You Make Me Feel (Single Version)",
+   "new_title": "The Way You Make Me Feel",
+   "artist": "Michael Jackson",
+   "artist_asked": "Michael Jackson",
+   "before": 23109,
+   "after": 776268
+  },
+  {
+   "id": "castle-on-the-hill-acoustic-ed-sheeran",
+   "held_title": "Castle on the Hill (Acoustic)",
+   "new_title": "Castle on the Hill",
+   "artist": "Ed Sheeran",
+   "artist_asked": "Ed Sheeran",
+   "before": 3993,
+   "after": 756407
+  },
+  {
+   "id": "just-lose-it-edited-eminem",
+   "held_title": "Just Lose It (Edited)",
+   "new_title": "Just Lose It",
+   "artist": "Eminem",
+   "artist_asked": "Eminem",
+   "before": 110,
+   "after": 724312
+  },
+  {
+   "id": "middle-feat-bipolar-sunshine-dj-snake",
+   "held_title": "Middle (feat. Bipolar Sunshine)",
+   "new_title": "Middle",
+   "artist": "DJ Snake",
+   "artist_asked": "DJ Snake",
+   "before": 28905,
+   "after": 714829
+  },
+  {
+   "id": "silence-feat-khalid-marshmello",
+   "held_title": "Silence (feat. Khalid)",
+   "new_title": "Silence",
+   "artist": "Marshmello",
+   "artist_asked": "Marshmello",
+   "before": 31923,
+   "after": 693365
+  },
+  {
+   "id": "despacito-mandarin-version-feat-jj-lin-luis-fonsi",
+   "held_title": "Despacito (Mandarin Version) [feat. JJ Lin]",
+   "new_title": "Despacito",
+   "artist": "Luis Fonsi",
+   "artist_asked": "Luis Fonsi",
+   "before": 175,
+   "after": 652688
+  },
+  {
+   "id": "think-feat-the-blues-brothers-aretha-franklin",
+   "held_title": "Think (feat. The Blues Brothers)",
+   "new_title": "Think",
+   "artist": "Aretha Franklin",
+   "artist_asked": "Aretha Franklin",
+   "before": 1298,
+   "after": 633220
+  },
+  {
+   "id": "broken-feat-amy-lee-seether",
+   "held_title": "Broken (feat. Amy Lee)",
+   "new_title": "Broken",
+   "artist": "Seether",
+   "artist_asked": "Seether",
+   "before": 68249,
+   "after": 682094
+  },
+  {
+   "id": "rock-with-you-single-version-michael-jackson",
+   "held_title": "Rock with You (Single Version)",
+   "new_title": "Rock with You",
+   "artist": "Michael Jackson",
+   "artist_asked": "Michael Jackson",
+   "before": 78044,
+   "after": 677068
+  },
+  {
+   "id": "you-should-be-dancing-serban-mix-bee-gees",
+   "held_title": "You Should Be Dancing (Serban Mix)",
+   "new_title": "You Should Be Dancing",
+   "artist": "Bee Gees",
+   "artist_asked": "Bee Gees",
+   "before": 1826,
+   "after": 533501
+  },
+  {
+   "id": "west-end-girls-7-mix-pet-shop-boys",
+   "held_title": "West End Girls (7'' Mix)",
+   "new_title": "West End Girls",
+   "artist": "Pet Shop Boys",
+   "artist_asked": "Pet Shop Boys",
+   "before": 13230,
+   "after": 544170
+  },
+  {
+   "id": "firestone-feat-conrad-sewell-kygo",
+   "held_title": "Firestone (feat. Conrad Sewell)",
+   "new_title": "Firestone",
+   "artist": "Kygo",
+   "artist_asked": "Kygo",
+   "before": 89285,
+   "after": 612614
+  },
+  {
+   "id": "love-hurts-single-edit-nazareth",
+   "held_title": "Love Hurts (Single Edit)",
+   "new_title": "Love Hurts",
+   "artist": "Nazareth",
+   "artist_asked": "Nazareth",
+   "before": 6652,
+   "after": 501987
+  },
+  {
+   "id": "crave-you-feat-giselle-flight-facilities",
+   "held_title": "Crave You (feat. Giselle)",
+   "new_title": "Crave You",
+   "artist": "Flight Facilities",
+   "artist_asked": "Flight Facilities",
+   "before": 25515,
+   "after": 483369
+  },
+  {
+   "id": "we-r-who-we-r-fred-falke-club-mix-kesha",
+   "held_title": "We R Who We R (Fred Falke Club Mix)",
+   "new_title": "We R Who We R",
+   "artist": "Kesha",
+   "artist_asked": "Kesha",
+   "before": 6183,
+   "after": 461020
+  },
+  {
+   "id": "a-whiter-shade-of-pale-50th-anniversary-stereo-mix-procol-harum",
+   "held_title": "A Whiter Shade of Pale (50th Anniversary Stereo Mix)",
+   "new_title": "A Whiter Shade of Pale",
+   "artist": "Procol Harum",
+   "artist_asked": "Procol Harum",
+   "before": 1558,
+   "after": 443601
+  },
+  {
+   "id": "empire-state-of-mind-feat-alicia-keys-ja-z",
+   "held_title": "Empire State Of Mind (feat. Alicia Keys)",
+   "new_title": "Empire State Of Mind",
+   "artist": "JAŸ-Z",
+   "artist_asked": "JAŸ-Z",
+   "before": 5173,
+   "after": 444960
+  },
+  {
+   "id": "call-on-me-radio-mix-eric-prydz",
+   "held_title": "Call on Me (Radio Mix)",
+   "new_title": "Call on Me",
+   "artist": "Eric Prydz",
+   "artist_asked": "Eric Prydz",
+   "before": 20658,
+   "after": 414769
+  },
+  {
+   "id": "i-got-u-feat-jax-jones-duke-dumont",
+   "held_title": "I Got U (feat. Jax Jones)",
+   "new_title": "I Got U",
+   "artist": "Duke Dumont",
+   "artist_asked": "Duke Dumont",
+   "before": 17620,
+   "after": 409881
+  },
+  {
+   "id": "nights-in-white-satin-single-edit-the-moody-blues",
+   "held_title": "Nights In White Satin (Single Edit)",
+   "new_title": "Nights In White Satin",
+   "artist": "The Moody Blues",
+   "artist_asked": "The Moody Blues",
+   "before": 6184,
+   "after": 397714
+  },
+  {
+   "id": "hypnotize-radio-mix-the-notorious-b-i-g",
+   "held_title": "Hypnotize (Radio Mix)",
+   "new_title": "Hypnotize",
+   "artist": "The Notorious B.I.G.",
+   "artist_asked": "The Notorious B.I.G.",
+   "before": 1912,
+   "after": 392044
+  },
+  {
+   "id": "jackson-with-june-carter-cash-johnny-cash-with-june-carter-cash",
+   "held_title": "Jackson (with June Carter Cash)",
+   "new_title": "Jackson",
+   "artist": "Johnny Cash",
+   "artist_asked": "Johnny Cash",
+   "before": 1467,
+   "after": 379424
+  },
+  {
+   "id": "breaking-me-mixed-topic-a7s",
+   "held_title": "Breaking Me (Mixed)",
+   "new_title": "Breaking Me",
+   "artist": "Topic & A7S",
+   "artist_asked": "Topic & A7S",
+   "before": 100,
+   "after": 14447
+  },
+  {
+   "id": "mr-vain-original-radio-edit-culture-beat",
+   "held_title": "Mr. Vain (Original Radio Edit)",
+   "new_title": "Mr. Vain",
+   "artist": "Culture Beat",
+   "artist_asked": "Culture Beat",
+   "before": 8355,
+   "after": 334946
+  },
+  {
+   "id": "here-with-me-feat-chvrches-marshmello",
+   "held_title": "Here With Me (feat. CHVRCHES)",
+   "new_title": "Here With Me",
+   "artist": "Marshmello",
+   "artist_asked": "Marshmello",
+   "before": 13063,
+   "after": 318094
+  },
+  {
+   "id": "we-found-love-feat-calvin-harris-calvin-harris-extended-mix-rihanna",
+   "held_title": "We Found Love (feat. Calvin Harris) [Calvin Harris Extended Mix]",
+   "new_title": "We Found Love",
+   "artist": "Rihanna",
+   "artist_asked": "Rihanna",
+   "before": 5609,
+   "after": 297934
+  },
+  {
+   "id": "papa-s-got-a-brand-new-bag-pts-1-2-single-version-james-brown",
+   "held_title": "Papa's Got a Brand New Bag (Pts.1 & 2 / Single Version)",
+   "new_title": "Papa's Got A Brand New Bag",
+   "artist": "James Brown",
+   "artist_asked": "James Brown",
+   "before": 1478,
+   "after": 285688
+  },
+  {
+   "id": "mony-mony-live-1985-billy-idol",
+   "held_title": "Mony Mony (Live 1985)",
+   "new_title": "Mony Mony",
+   "artist": "Billy Idol",
+   "artist_asked": "Billy Idol",
+   "before": 122,
+   "after": 277868
+  },
+  {
+   "id": "one-call-away-feat-j-weav-chingy",
+   "held_title": "One Call Away (feat. J/Weav)",
+   "new_title": "One Call Away",
+   "artist": "Chingy",
+   "artist_asked": "Chingy",
+   "before": 1037,
+   "after": 271512
+  },
+  {
+   "id": "don-t-give-up-feat-kate-bush-peter-gabriel",
+   "held_title": "Don't Give Up (feat. Kate Bush)",
+   "new_title": "Don't Give Up",
+   "artist": "Peter Gabriel",
+   "artist_asked": "Peter Gabriel",
+   "before": 6505,
+   "after": 262001
+  },
+  {
+   "id": "parisienne-walkways-feat-phil-lynott-gary-moore",
+   "held_title": "Parisienne Walkways (feat. Phil Lynott)",
+   "new_title": "Parisienne Walkways",
+   "artist": "Gary Moore",
+   "artist_asked": "Gary Moore",
+   "before": 1308,
+   "after": 254830
+  },
+  {
+   "id": "four-to-the-floor-thin-white-duke-mix-short-version-starsailor",
+   "held_title": "Four To the Floor (Thin White Duke Mix) [Short Version]",
+   "new_title": "Four To the Floor",
+   "artist": "Starsailor",
+   "artist_asked": "Starsailor",
+   "before": 722,
+   "after": 251018
+  },
+  {
+   "id": "beep-feat-will-i-am-the-pussycat-dolls",
+   "held_title": "Beep (feat. will.i.am)",
+   "new_title": "Beep",
+   "artist": "The Pussycat Dolls",
+   "artist_asked": "The Pussycat Dolls",
+   "before": 79634,
+   "after": 318540
+  },
+  {
+   "id": "here-comes-the-hotstepper-heartical-mix-ini-kamoze",
+   "held_title": "Here Comes the Hotstepper (Heartical Mix)",
+   "new_title": "Here Comes the Hotstepper",
+   "artist": "Ini Kamoze",
+   "artist_asked": "Ini Kamoze",
+   "before": 23768,
+   "after": 261669
+  },
+  {
+   "id": "save-the-world-radio-mix-swedish-house-mafia",
+   "held_title": "Save the World (Radio Mix)",
+   "new_title": "Save The World",
+   "artist": "Swedish House Mafia",
+   "artist_asked": "Swedish House Mafia",
+   "before": 104810,
+   "after": 327060
+  },
+  {
+   "id": "unchain-my-heart-90-s-version-joe-cocker",
+   "held_title": "Unchain My Heart (90's Version)",
+   "new_title": "Unchain My Heart",
+   "artist": "Joe Cocker",
+   "artist_asked": "Joe Cocker",
+   "before": 10072,
+   "after": 211426
+  },
+  {
+   "id": "walk-this-way-feat-aerosmith-run-dmc",
+   "held_title": "Walk This Way (feat. Aerosmith)",
+   "new_title": "Walk This Way",
+   "artist": "Run-DMC",
+   "artist_asked": "Run-DMC",
+   "before": 5746,
+   "after": 201148
+  },
+  {
+   "id": "get-lucky-feat-pharrell-williams-radio-edit-daft-punk",
+   "held_title": "Get Lucky (feat. Pharrell Williams) [Radio Edit]",
+   "new_title": "Get Lucky",
+   "artist": "Daft Punk",
+   "artist_asked": "Daft Punk",
+   "before": 10001,
+   "after": 196918
+  },
+  {
+   "id": "good-vibrations-feat-loleatta-holloway-marky-mark-and-the-funky-bunch",
+   "held_title": "Good Vibrations (feat. Loleatta Holloway)",
+   "new_title": "Good Vibrations",
+   "artist": "Marky Mark and the Funky Bunch",
+   "artist_asked": "Marky Mark and the Funky Bunch",
+   "before": 3286,
+   "after": 162677
+  },
+  {
+   "id": "back-for-good-radio-mix-take-that",
+   "held_title": "Back for Good (Radio Mix)",
+   "new_title": "Back for Good",
+   "artist": "Take That",
+   "artist_asked": "Take That",
+   "before": 20717,
+   "after": 178688
+  },
+  {
+   "id": "boogie-oogie-oogie-re-recorded-remastered-a-taste-of-honey",
+   "held_title": "Boogie Oogie Oogie (Re-Recorded / Remastered)",
+   "new_title": "Boogie Oogie Oogie",
+   "artist": "A Taste of Honey",
+   "artist_asked": "A Taste of Honey",
+   "before": 5996,
+   "after": 160131
+  },
+  {
+   "id": "i-ll-be-missing-you-feat-faith-evans-112-puff-daddy",
+   "held_title": "I'll Be Missing You (feat. Faith Evans & 112)",
+   "new_title": "I'll Be Missing You",
+   "artist": "Puff Daddy",
+   "artist_asked": "Puff Daddy",
+   "before": 11878,
+   "after": 162612
+  },
+  {
+   "id": "run-it-a-cappella-chris-brown",
+   "held_title": "Run It! (A Cappella)",
+   "new_title": "Run It!",
+   "artist": "Chris Brown",
+   "artist_asked": "Chris Brown",
+   "before": 42,
+   "after": 148896
+  },
+  {
+   "id": "shake-your-body-down-to-the-ground-single-version-the-jacksons",
+   "held_title": "Shake Your Body (Down to the Ground) [Single Version]",
+   "new_title": "Shake Your Body (Down to the Ground)",
+   "artist": "The Jacksons",
+   "artist_asked": "The Jacksons",
+   "before": 2529,
+   "after": 151010
+  },
+  {
+   "id": "black-betty-edit-spiderbait",
+   "held_title": "Black Betty (Edit)",
+   "new_title": "Black Betty",
+   "artist": "Spiderbait",
+   "artist_asked": "Spiderbait",
+   "before": 8100,
+   "after": 143929
+  },
+  {
+   "id": "clair-de-lune-feat-christine-hoberg-flight-facilities",
+   "held_title": "Clair de Lune (feat. Christine Hoberg)",
+   "new_title": "Clair de Lune",
+   "artist": "Flight Facilities",
+   "artist_asked": "Flight Facilities",
+   "before": 34288,
+   "after": 136030
+  },
+  {
+   "id": "mustang-sally-feat-andrew-strong-the-commitments",
+   "held_title": "Mustang Sally (feat. Andrew Strong)",
+   "new_title": "Mustang Sally",
+   "artist": "The Commitments",
+   "artist_asked": "The Commitments",
+   "before": 1855,
+   "after": 100685
+  },
+  {
+   "id": "itchycoo-park-mono-small-faces",
+   "held_title": "Itchycoo Park (Mono)",
+   "new_title": "Itchycoo Park",
+   "artist": "Small Faces",
+   "artist_asked": "Small Faces",
+   "before": 4696,
+   "after": 96365
+  },
+  {
+   "id": "spicks-and-specks-remastered-bee-gees",
+   "held_title": "Spicks And Specks (Remastered)",
+   "new_title": "Spicks And Specks",
+   "artist": "Bee Gees",
+   "artist_asked": "Bee Gees",
+   "before": 40,
+   "after": 66595
+  },
+  {
+   "id": "light-it-up-feat-nyla-major-lazer",
+   "held_title": "Light It Up (feat. Nyla)",
+   "new_title": "Light It Up",
+   "artist": "Major Lazer",
+   "artist_asked": "Major Lazer",
+   "before": 64503,
+   "after": 130706
+  },
+  {
+   "id": "me-against-the-music-feat-madonna-britney-spears",
+   "held_title": "Me Against the Music (feat. Madonna)",
+   "new_title": "Me Against The Music",
+   "artist": "Britney Spears",
+   "artist_asked": "Britney Spears",
+   "before": 55966,
+   "after": 121492
+  },
+  {
+   "id": "nutbush-city-limits-1993-version-tina-turner",
+   "held_title": "Nutbush City Limits (1993 Version)",
+   "new_title": "Nutbush City Limits",
+   "artist": "Tina Turner",
+   "artist_asked": "Tina Turner",
+   "before": 183,
+   "after": 60953
+  },
+  {
+   "id": "we-got-love-feat-ella-henderson-sigala",
+   "held_title": "We Got Love (feat. Ella Henderson)",
+   "new_title": "We Got Love",
+   "artist": "Sigala",
+   "artist_asked": "Sigala",
+   "before": 5318,
+   "after": 58426
+  },
+  {
+   "id": "macarthur-park-single-version-donna-summer",
+   "held_title": "MacArthur Park (Single Version)",
+   "new_title": "MacArthur Park",
+   "artist": "Donna Summer",
+   "artist_asked": "Donna Summer",
+   "before": 4735,
+   "after": 57500
+  },
+  {
+   "id": "you-don-t-know-me-feat-duane-harden-radio-edit-armand-van-helden",
+   "held_title": "You Don't Know Me (feat. Duane Harden) [Radio Edit]",
+   "new_title": "You Don't Know Me",
+   "artist": "Armand Van Helden",
+   "artist_asked": "Armand Van Helden",
+   "before": 2767,
+   "after": 31991
+  },
+  {
+   "id": "get-up-i-feel-like-being-a-sex-machine-feat-the-original-j-b-s-james-brown",
+   "held_title": "Get Up I Feel Like Being a Sex Machine (feat. The Original J.B.s)",
+   "new_title": "Get Up I Feel Like Being a Sex Machine",
+   "artist": "James Brown",
+   "artist_asked": "James Brown",
+   "before": 1213,
+   "after": 29145
+  },
+  {
+   "id": "you-got-the-love-feat-chaka-khan-rufus",
+   "held_title": "You Got the Love (feat. Chaka Khan)",
+   "new_title": "You Got the Love",
+   "artist": "Rufus",
+   "artist_asked": "Rufus",
+   "before": 1078,
+   "after": 25886
+  },
+  {
+   "id": "that-girl-feat-shaggy-maxi-priest",
+   "held_title": "That Girl (feat. Shaggy)",
+   "new_title": "That Girl",
+   "artist": "Maxi Priest",
+   "artist_asked": "Maxi Priest",
+   "before": 2577,
+   "after": 25725
+  },
+  {
+   "id": "you-re-having-my-baby-feat-odia-coates-paul-anka",
+   "held_title": "(You're) Having My Baby (feat. Odia Coates)",
+   "new_title": "(You're) Having My Baby",
+   "artist": "Paul Anka",
+   "artist_asked": "Paul Anka",
+   "before": 923,
+   "after": 23320
+  },
+  {
+   "id": "i-could-get-used-to-this-orchestral-acoustic-becky-hill",
+   "held_title": "I Could Get Used To This (Orchestral Acoustic)",
+   "new_title": "I Could Get Used To This",
+   "artist": "Becky Hill",
+   "artist_asked": "Becky Hill",
+   "before": 1611,
+   "after": 22813
+  },
+  {
+   "id": "sally-feat-mataya-thundamentals",
+   "held_title": "Sally (feat. Mataya)",
+   "new_title": "Sally",
+   "artist": "Thundamentals",
+   "artist_asked": "Thundamentals",
+   "before": 559,
+   "after": 20982
+  },
+  {
+   "id": "almost-here-feat-delta-goodrem-brian-mcfadden",
+   "held_title": "Almost Here (feat. Delta Goodrem)",
+   "new_title": "Almost Here",
+   "artist": "Brian McFadden",
+   "artist_asked": "Brian McFadden",
+   "before": 1181,
+   "after": 21449
+  },
+  {
+   "id": "you-ve-made-me-so-very-happy-promo-version-brenda-holloway",
+   "held_title": "You've Made Me So Very Happy (Promo Version)",
+   "new_title": "You've Made Me So Very Happy",
+   "artist": "Brenda Holloway",
+   "artist_asked": "Brenda Holloway",
+   "before": 444,
+   "after": 19892
+  },
+  {
+   "id": "happy-feelin-s-feat-frankie-beverly-remastered-2004-maze-featuring-frankie-beverly",
+   "held_title": "Happy Feelin's (feat. Frankie Beverly)",
+   "new_title": "Happy Feelin's",
+   "artist": "Maze featuring Frankie Beverly",
+   "artist_asked": "Maze featuring Frankie Beverly",
+   "before": 24,
+   "after": 6264
+  },
+  {
+   "id": "the-tracks-of-my-tears-single-version-mono-smokey-robinson-the-miracles",
+   "held_title": "The Tracks of My Tears (Single Version / Mono)",
+   "new_title": "The Tracks of My Tears",
+   "artist": "Smokey Robinson & The Miracles",
+   "artist_asked": "Smokey Robinson & The Miracles",
+   "before": 189,
+   "after": 128435
+  },
+  {
+   "id": "stay-feat-chaka-khan-rufus",
+   "held_title": "Stay (feat. Chaka Khan)",
+   "new_title": "Stay",
+   "artist": "Rufus",
+   "artist_asked": "Rufus",
+   "before": 675,
+   "after": 14602
+  },
+  {
+   "id": "no-more-tears-enough-is-enough-with-donna-summer-barbra-streisand",
+   "held_title": "No More Tears (Enough Is Enough) [with Donna Summer]",
+   "new_title": "No More Tears (Enough Is Enough)",
+   "artist": "Barbra Streisand",
+   "artist_asked": "Barbra Streisand",
+   "before": 639,
+   "after": 10043
+  },
+  {
+   "id": "love-lies-rick-ross-remix-khalid-normani-rick-ross",
+   "held_title": "Love Lies (Rick Ross Remix)",
+   "new_title": "Love Lies",
+   "artist": "Khalid & Normani",
+   "artist_asked": "Khalid & Normani",
+   "before": 301,
+   "after": 28453
+  },
+  {
+   "id": "don-t-know-much-feat-ag-thomas-aaron-neville-linda-ronstadt",
+   "held_title": "Don't Know Much (feat. AG Thomas & Aaron Neville)",
+   "new_title": "Don't Know Much",
+   "artist": "Linda Ronstadt",
+   "artist_asked": "Linda Ronstadt",
+   "before": 230,
+   "after": 6420
+  },
+  {
+   "id": "two-wrongs-feat-claudette-ortiz-wyclef-jean",
+   "held_title": "Two Wrongs (feat. Claudette Ortiz)",
+   "new_title": "Two Wrongs",
+   "artist": "Wyclef Jean",
+   "artist_asked": "Wyclef Jean",
+   "before": 7984,
+   "after": 14155
+  },
+  {
+   "id": "when-the-war-is-over-accoustic-cosima-de-vito",
+   "held_title": "When the War Is Over (Accoustic)",
+   "new_title": "When the War Is Over",
+   "artist": "Cosima De Vito",
+   "artist_asked": "Cosima De Vito",
+   "before": 1,
+   "after": 596
+  },
+  {
+   "id": "ladies-night-rerecorded-version-kool-and-the-gang",
+   "held_title": "Ladies Night (Rerecorded Version)",
+   "new_title": "Ladies Night",
+   "artist": "Kool & The Gang",
+   "artist_asked": "Kool & The Gang",
+   "before": 11,
+   "after": 270423
+  },
+  {
+   "id": "river-deep-mountain-high-ike-s-73-bolic-studios-mix-ike-and-tina-turner",
+   "held_title": "River Deep, Mountain High (Ike's '73 Bolic Studios Mix)",
+   "new_title": "River Deep - Mountain High",
+   "artist": "Ike & Tina Turner",
+   "artist_asked": "Ike & Tina Turner",
+   "before": 1,
+   "after": 121342
+  }
+ ]
+}

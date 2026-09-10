@@ -1,0 +1,3212 @@
+{
+ "generated": "2026-09-10",
+ "what_this_is": "For every least-played song whose title carries a version marker, what the PLAIN recording pulls on Last.fm.",
+ "how_to_read_it": "A big gain means swap the clip, not cut the song. The room knows the song; it would hear the wrong recording.",
+ "australian_warning": "Songs by Australian acts sit low on a GLOBAL service whatever their standing here. Slim Dusty, Lee Kernaghan and Skyhooks are on this list and must never be cut on this number.",
+ "australian_maybe": [
+  {
+   "id": "que-sera-sera-whatever-will-be-will-be-normie-rowe",
+   "title": "Que Será, Será (Whatever Will Be, Will Be)",
+   "artist": "Normie Rowe",
+   "listeners": 8
+  },
+  {
+   "id": "i-told-the-brook-billy-thorpe-the-aztecs",
+   "title": "I Told the Brook",
+   "artist": "Billy Thorpe & The Aztecs",
+   "listeners": 237
+  },
+  {
+   "id": "over-the-rainbow-single-version-billy-thorpe-the-aztecs",
+   "title": "Over the Rainbow",
+   "artist": "Billy Thorpe & The Aztecs",
+   "listeners": 315
+  },
+  {
+   "id": "flesh-and-blood-jimmy-barnes",
+   "title": "Flesh and Blood",
+   "artist": "Jimmy Barnes",
+   "listeners": 357
+  },
+  {
+   "id": "shakin-all-over-normie-rowe",
+   "title": "Shakin All Over",
+   "artist": "Normie Rowe",
+   "listeners": 369
+  },
+  {
+   "id": "high-country-remastered-2017-lee-kernaghan",
+   "title": "High Country",
+   "artist": "Lee Kernaghan",
+   "listeners": 838
+  },
+  {
+   "id": "sadie-the-cleaning-lady-john-farnham",
+   "title": "Sadie (The Cleaning Lady)",
+   "artist": "John Farnham",
+   "listeners": 875
+  },
+  {
+   "id": "lights-on-the-hill-slim-dusty",
+   "title": "Lights On the Hill",
+   "artist": "Slim Dusty",
+   "listeners": 928
+  },
+  {
+   "id": "the-outback-club-remastered-2017-lee-kernaghan",
+   "title": "The Outback Club",
+   "artist": "Lee Kernaghan",
+   "listeners": 968
+  },
+  {
+   "id": "most-people-i-know-think-that-i-m-crazy-billy-thorpe-the-aztecs",
+   "title": "Most People I Know Think That I'm Crazy",
+   "artist": "Billy Thorpe & The Aztecs",
+   "listeners": 1115
+  },
+  {
+   "id": "poison-ivy-billy-thorpe-the-aztecs",
+   "title": "Poison Ivy",
+   "artist": "Billy Thorpe & The Aztecs",
+   "listeners": 1560
+  },
+  {
+   "id": "get-it-done-guy-sebastian",
+   "title": "Get It Done",
+   "artist": "Guy Sebastian",
+   "listeners": 1796
+  },
+  {
+   "id": "boys-from-the-bush-remastered-2017-lee-kernaghan",
+   "title": "Boys from the Bush",
+   "artist": "Lee Kernaghan",
+   "listeners": 2013
+  },
+  {
+   "id": "like-wow-wipeout-hoodoo-gurus",
+   "title": "Like Wow - Wipeout!",
+   "artist": "Hoodoo Gurus",
+   "listeners": 2034
+  },
+  {
+   "id": "jukebox-in-siberia-skyhooks",
+   "title": "Jukebox In Siberia",
+   "artist": "Skyhooks",
+   "listeners": 2095
+  },
+  {
+   "id": "ego-is-not-a-dirty-word-skyhooks",
+   "title": "Ego Is Not a Dirty Word",
+   "artist": "Skyhooks",
+   "listeners": 2342
+  },
+  {
+   "id": "all-my-friends-are-getting-married-skyhooks",
+   "title": "All My Friends Are Getting Married",
+   "artist": "Skyhooks",
+   "listeners": 2406
+  },
+  {
+   "id": "deep-water-richard-clapton",
+   "title": "Deep Water",
+   "artist": "Richard Clapton",
+   "listeners": 2426
+  },
+  {
+   "id": "summer-love-sherbet",
+   "title": "Summer Love",
+   "artist": "Sherbet",
+   "listeners": 2628
+  },
+  {
+   "id": "living-in-the-70-s-2009-remaster-skyhooks",
+   "title": "Living in the 70's",
+   "artist": "Skyhooks",
+   "listeners": 3151
+  },
+  {
+   "id": "a-pub-with-no-beer-slim-dusty",
+   "title": "A Pub With No Beer",
+   "artist": "Slim Dusty",
+   "listeners": 3169
+  },
+  {
+   "id": "out-with-my-baby-guy-sebastian",
+   "title": "Out With My Baby",
+   "artist": "Guy Sebastian",
+   "listeners": 3171
+  },
+  {
+   "id": "too-much-ain-t-enough-love-jimmy-barnes",
+   "title": "Too Much Ain't Enough Love",
+   "artist": "Jimmy Barnes",
+   "listeners": 3684
+  },
+  {
+   "id": "enemy-from-arcane-league-of-legends-imagine-dragons-and-jid",
+   "title": "Enemy (From Arcane: League of Legends)",
+   "artist": "Imagine Dragons & JID",
+   "listeners": 4138
+  },
+  {
+   "id": "motor-s-too-fast-james-reyne",
+   "title": "Motor's Too Fast",
+   "artist": "James Reyne",
+   "listeners": 4710
+  },
+  {
+   "id": "i-am-australian-the-seekers",
+   "title": "I Am Australian",
+   "artist": "The Seekers",
+   "listeners": 4777
+  },
+  {
+   "id": "radioactive-itunes-session-imagine-dragons",
+   "title": "Radioactive (iTunes Session)",
+   "artist": "Imagine Dragons",
+   "listeners": 4984
+  },
+  {
+   "id": "rip-rip-woodchip-john-williamson",
+   "title": "Rip Rip Woodchip",
+   "artist": "John Williamson",
+   "listeners": 5026
+  },
+  {
+   "id": "reckless-australian-crawl",
+   "title": "Reckless",
+   "artist": "Australian Crawl",
+   "listeners": 5544
+  },
+  {
+   "id": "slave-james-reyne",
+   "title": "Slave",
+   "artist": "James Reyne",
+   "listeners": 5589
+  },
+  {
+   "id": "all-i-need-is-you-guy-sebastian",
+   "title": "All I Need Is You",
+   "artist": "Guy Sebastian",
+   "listeners": 5848
+  },
+  {
+   "id": "drive-shannon-noll",
+   "title": "Drive",
+   "artist": "Shannon Noll",
+   "listeners": 6024
+  },
+  {
+   "id": "if-you-leave-me-can-i-come-too-mental-as-anything",
+   "title": "If You Leave Me Can I Come Too?",
+   "artist": "Mental As Anything",
+   "listeners": 6052
+  },
+  {
+   "id": "old-man-emu-john-williamson",
+   "title": "Old Man Emu",
+   "artist": "John Williamson",
+   "listeners": 6064
+  },
+  {
+   "id": "stone-cold-jimmy-barnes",
+   "title": "Stone Cold",
+   "artist": "Jimmy Barnes",
+   "listeners": 6331
+  },
+  {
+   "id": "hot-chilli-woman-noiseworks",
+   "title": "Hot Chilli Woman",
+   "artist": "Noiseworks",
+   "listeners": 6356
+  },
+  {
+   "id": "duncan-slim-dusty",
+   "title": "Duncan",
+   "artist": "Slim Dusty",
+   "listeners": 7087
+  },
+  {
+   "id": "battle-scars-guy-sebastian",
+   "title": "Battle Scars",
+   "artist": "Guy Sebastian",
+   "listeners": 7291
+  },
+  {
+   "id": "true-blue-john-williamson",
+   "title": "True Blue",
+   "artist": "John Williamson",
+   "listeners": 8131
+  },
+  {
+   "id": "lay-down-your-guns-jimmy-barnes",
+   "title": "Lay Down Your Guns",
+   "artist": "Jimmy Barnes",
+   "listeners": 8647
+  },
+  {
+   "id": "horror-movie-2009-remaster-skyhooks",
+   "title": "Horror Movie",
+   "artist": "Skyhooks",
+   "listeners": 8805
+  },
+  {
+   "id": "as-the-days-go-by-daryl-braithwaite",
+   "title": "As the Days Go By",
+   "artist": "Daryl Braithwaite",
+   "listeners": 8937
+  },
+  {
+   "id": "touch-noiseworks",
+   "title": "Touch",
+   "artist": "Noiseworks",
+   "listeners": 10118
+  },
+  {
+   "id": "bow-river-cold-chisel",
+   "title": "Bow River",
+   "artist": "Cold Chisel",
+   "listeners": 11339
+  },
+  {
+   "id": "home-among-the-gumtrees-john-williamson",
+   "title": "Home Among the Gumtrees",
+   "artist": "John Williamson",
+   "listeners": 11542
+  },
+  {
+   "id": "girls-on-the-avenue-richard-clapton",
+   "title": "Girls On the Avenue",
+   "artist": "Richard Clapton",
+   "listeners": 12162
+  },
+  {
+   "id": "shine-shannon-noll",
+   "title": "Shine",
+   "artist": "Shannon Noll",
+   "listeners": 13135
+  },
+  {
+   "id": "kong-foo-sing-regurgitator",
+   "title": "Kong Foo Sing",
+   "artist": "Regurgitator",
+   "listeners": 13719
+  },
+  {
+   "id": "take-a-long-line-the-angels",
+   "title": "Take a Long Line",
+   "artist": "The Angels",
+   "listeners": 14238
+  },
+  {
+   "id": "you-sound-like-louis-burdett-the-whitlams",
+   "title": "You Sound Like Louis Burdett",
+   "artist": "The Whitlams",
+   "listeners": 14826
+  },
+  {
+   "id": "what-s-my-scene-2005-remaster-hoodoo-gurus",
+   "title": "What's My Scene",
+   "artist": "Hoodoo Gurus",
+   "listeners": 15534
+  },
+  {
+   "id": "bittersweet-2005-remaster-hoodoo-gurus",
+   "title": "Bittersweet",
+   "artist": "Hoodoo Gurus",
+   "listeners": 15940
+  },
+  {
+   "id": "the-boys-light-up-australian-crawl",
+   "title": "The Boys Light Up",
+   "artist": "Australian Crawl",
+   "listeners": 16622
+  },
+  {
+   "id": "cheap-wine-cold-chisel",
+   "title": "Cheap Wine",
+   "artist": "Cold Chisel",
+   "listeners": 16991
+  },
+  {
+   "id": "she-s-so-fine-the-easybeats",
+   "title": "She's so Fine",
+   "artist": "The Easybeats",
+   "listeners": 17136
+  },
+  {
+   "id": "age-of-reason-john-farnham",
+   "title": "Age of Reason",
+   "artist": "John Farnham",
+   "listeners": 17147
+  },
+  {
+   "id": "better-the-screaming-jets",
+   "title": "Better",
+   "artist": "The Screaming Jets",
+   "listeners": 18306
+  },
+  {
+   "id": "what-about-me-shannon-noll",
+   "title": "What About Me",
+   "artist": "Shannon Noll",
+   "listeners": 18549
+  },
+  {
+   "id": "purple-sneakers-you-am-i",
+   "title": "Purple Sneakers",
+   "artist": "You Am I",
+   "listeners": 19401
+  },
+  {
+   "id": "like-it-like-that-guy-sebastian",
+   "title": "Like It Like That",
+   "artist": "Guy Sebastian",
+   "listeners": 19529
+  },
+  {
+   "id": "take-me-back-noiseworks",
+   "title": "Take Me Back",
+   "artist": "Noiseworks",
+   "listeners": 19693
+  },
+  {
+   "id": "flame-trees-cold-chisel",
+   "title": "Flame Trees",
+   "artist": "Cold Chisel",
+   "listeners": 20187
+  },
+  {
+   "id": "howzat-sherbet",
+   "title": "Howzat",
+   "artist": "Sherbet",
+   "listeners": 20459
+  },
+  {
+   "id": "one-summer-daryl-braithwaite",
+   "title": "One Summer",
+   "artist": "Daryl Braithwaite",
+   "listeners": 20848
+  },
+  {
+   "id": "morningtown-ride-the-seekers",
+   "title": "Morningtown Ride",
+   "artist": "The Seekers",
+   "listeners": 20960
+  },
+  {
+   "id": "wings-delta-goodrem",
+   "title": "Wings",
+   "artist": "Delta Goodrem",
+   "listeners": 21037
+  },
+  {
+   "id": "a-world-of-our-own-the-seekers",
+   "title": "A World of Our Own",
+   "artist": "The Seekers",
+   "listeners": 21525
+  },
+  {
+   "id": "no-secrets-the-angels",
+   "title": "No Secrets",
+   "artist": "The Angels",
+   "listeners": 22335
+  },
+  {
+   "id": "choir-guy-sebastian",
+   "title": "Choir",
+   "artist": "Guy Sebastian",
+   "listeners": 22465
+  },
+  {
+   "id": "blow-up-the-pokies-the-whitlams",
+   "title": "Blow Up the Pokies",
+   "artist": "The Whitlams",
+   "listeners": 22724
+  },
+  {
+   "id": "the-nips-are-getting-bigger-mental-as-anything",
+   "title": "The Nips Are Getting Bigger",
+   "artist": "Mental As Anything",
+   "listeners": 23019
+  },
+  {
+   "id": "especially-for-you-jason-donovan-kylie-minogue",
+   "title": "Especially for You",
+   "artist": "Jason Donovan & Kylie Minogue",
+   "listeners": 23168
+  },
+  {
+   "id": "are-you-old-enough-dragon",
+   "title": "Are You Old Enough",
+   "artist": "Dragon",
+   "listeners": 24185
+  },
+  {
+   "id": "pressure-down-john-farnham",
+   "title": "Pressure Down",
+   "artist": "John Farnham",
+   "listeners": 24634
+  },
+  {
+   "id": "black-bugs-regurgitator",
+   "title": "Black Bugs",
+   "artist": "Regurgitator",
+   "listeners": 24733
+  },
+  {
+   "id": "am-i-ever-gonna-see-your-face-again-the-angels",
+   "title": "Am I Ever Gonna See Your Face Again",
+   "artist": "The Angels",
+   "listeners": 28094
+  },
+  {
+   "id": "20-good-reasons-thirsty-merc",
+   "title": "20 Good Reasons",
+   "artist": "Thirsty Merc",
+   "listeners": 28356
+  },
+  {
+   "id": "lost-control-grinspoon",
+   "title": "Lost Control",
+   "artist": "Grinspoon",
+   "listeners": 28585
+  },
+  {
+   "id": "the-carnival-is-over-the-seekers",
+   "title": "The Carnival Is Over",
+   "artist": "The Seekers",
+   "listeners": 28809
+  },
+  {
+   "id": "angels-brought-me-here-guy-sebastian",
+   "title": "Angels Brought Me Here",
+   "artist": "Guy Sebastian",
+   "listeners": 29166
+  },
+  {
+   "id": "working-class-man-jimmy-barnes",
+   "title": "Working Class Man",
+   "artist": "Jimmy Barnes",
+   "listeners": 31388
+  },
+  {
+   "id": "just-ace-grinspoon",
+   "title": "Just Ace",
+   "artist": "Grinspoon",
+   "listeners": 31706
+  },
+  {
+   "id": "eclipse-delta-goodrem",
+   "title": "Eclipse",
+   "artist": "Delta Goodrem",
+   "listeners": 32178
+  },
+  {
+   "id": "heavy-heart-you-am-i",
+   "title": "Heavy Heart",
+   "artist": "You Am I",
+   "listeners": 32210
+  },
+  {
+   "id": "khe-sanh-cold-chisel",
+   "title": "Khe Sanh",
+   "artist": "Cold Chisel",
+   "listeners": 33318
+  },
+  {
+   "id": "hey-little-girl-icehouse",
+   "title": "Hey, Little Girl",
+   "artist": "ICEHOUSE",
+   "listeners": 34466
+  },
+  {
+   "id": "in-the-summertime-thirsty-merc",
+   "title": "In The Summertime",
+   "artist": "Thirsty Merc",
+   "listeners": 34862
+  },
+  {
+   "id": "no-aphrodisiac-the-whitlams",
+   "title": "No Aphrodisiac",
+   "artist": "The Whitlams",
+   "listeners": 35324
+  },
+  {
+   "id": "dumb-things-paul-kelly",
+   "title": "Dumb Things",
+   "artist": "Paul Kelly",
+   "listeners": 36179
+  },
+  {
+   "id": "the-unguarded-moment-remastered-the-church",
+   "title": "The Unguarded Moment",
+   "artist": "The Church",
+   "listeners": 40152
+  },
+  {
+   "id": "help-is-on-its-way-little-river-band",
+   "title": "Help Is On Its Way",
+   "artist": "Little River Band",
+   "listeners": 41233
+  },
+  {
+   "id": "to-her-door-paul-kelly",
+   "title": "To Her Door",
+   "artist": "Paul Kelly",
+   "listeners": 41257
+  },
+  {
+   "id": "out-of-the-blue-delta-goodrem",
+   "title": "Out of the Blue",
+   "artist": "Delta Goodrem",
+   "listeners": 41857
+  },
+  {
+   "id": "rain-dragon",
+   "title": "Rain",
+   "artist": "Dragon",
+   "listeners": 42742
+  },
+  {
+   "id": "second-solution-the-living-end",
+   "title": "Second Solution",
+   "artist": "The Living End",
+   "listeners": 43031
+  },
+  {
+   "id": "holy-grail-hunters-collectors",
+   "title": "Holy Grail",
+   "artist": "Hunters & Collectors",
+   "listeners": 43613
+  },
+  {
+   "id": "locomotion-kylie-minogue",
+   "title": "Locomotion",
+   "artist": "Kylie Minogue",
+   "listeners": 43758
+  },
+  {
+   "id": "buy-me-a-pony-spiderbait",
+   "title": "Buy Me a Pony",
+   "artist": "Spiderbait",
+   "listeners": 45652
+  },
+  {
+   "id": "the-horses-daryl-braithwaite",
+   "title": "The Horses",
+   "artist": "Daryl Braithwaite",
+   "listeners": 46006
+  },
+  {
+   "id": "roll-on-the-living-end",
+   "title": "Roll On",
+   "artist": "The Living End",
+   "listeners": 46512
+  },
+  {
+   "id": "how-to-make-gravy-paul-kelly",
+   "title": "How To Make Gravy",
+   "artist": "Paul Kelly",
+   "listeners": 47172
+  },
+  {
+   "id": "april-sun-in-cuba-dragon",
+   "title": "April Sun in Cuba",
+   "artist": "Dragon",
+   "listeners": 47526
+  },
+  {
+   "id": "berlin-chair-you-am-i",
+   "title": "Berlin Chair",
+   "artist": "You Am I",
+   "listeners": 48367
+  },
+  {
+   "id": "predictable-delta-goodrem",
+   "title": "Predictable",
+   "artist": "Delta Goodrem",
+   "listeners": 48520
+  },
+  {
+   "id": "throw-your-arms-around-me-hunters-collectors",
+   "title": "Throw Your Arms Around Me",
+   "artist": "Hunters & Collectors",
+   "listeners": 50956
+  },
+  {
+   "id": "got-to-be-certain-kylie-minogue",
+   "title": "Got to Be Certain",
+   "artist": "Kylie Minogue",
+   "listeners": 51381
+  },
+  {
+   "id": "from-the-sea-eskimo-joe",
+   "title": "From the Sea",
+   "artist": "Eskimo Joe",
+   "listeners": 51400
+  },
+  {
+   "id": "chemical-heart-grinspoon",
+   "title": "Chemical Heart",
+   "artist": "Grinspoon",
+   "listeners": 53529
+  },
+  {
+   "id": "not-me-not-i-delta-goodrem",
+   "title": "Not Me, Not I",
+   "artist": "Delta Goodrem",
+   "listeners": 57745
+  },
+  {
+   "id": "baby-i-ve-got-you-on-my-mind-powderfinger",
+   "title": "(Baby I've Got You) On My Mind",
+   "artist": "Powderfinger",
+   "listeners": 57857
+  },
+  {
+   "id": "i-ll-never-find-another-you-the-seekers",
+   "title": "I'll Never Find Another You",
+   "artist": "The Seekers",
+   "listeners": 58266
+  },
+  {
+   "id": "live-it-up-mental-as-anything",
+   "title": "Live It Up",
+   "artist": "Mental As Anything",
+   "listeners": 59761
+  },
+  {
+   "id": "sunsets-powderfinger",
+   "title": "Sunsets",
+   "artist": "Powderfinger",
+   "listeners": 60303
+  },
+  {
+   "id": "in-this-life-delta-goodrem",
+   "title": "In This Life",
+   "artist": "Delta Goodrem",
+   "listeners": 61910
+  },
+  {
+   "id": "innocent-eyes-delta-goodrem",
+   "title": "Innocent Eyes",
+   "artist": "Delta Goodrem",
+   "listeners": 65273
+  },
+  {
+   "id": "steer-missy-higgins",
+   "title": "Steer",
+   "artist": "Missy Higgins",
+   "listeners": 67683
+  },
+  {
+   "id": "cool-change-little-river-band",
+   "title": "Cool Change",
+   "artist": "Little River Band",
+   "listeners": 67721
+  },
+  {
+   "id": "black-fingernails-red-wine-eskimo-joe",
+   "title": "Black Fingernails, Red Wine",
+   "artist": "Eskimo Joe",
+   "listeners": 73412
+  },
+  {
+   "id": "great-southern-land-icehouse",
+   "title": "Great Southern Land",
+   "artist": "Icehouse",
+   "listeners": 76318
+  },
+  {
+   "id": "georgy-girl-the-seekers",
+   "title": "Georgy Girl",
+   "artist": "The Seekers",
+   "listeners": 76577
+  },
+  {
+   "id": "these-days-powderfinger",
+   "title": "These Days",
+   "artist": "Powderfinger",
+   "listeners": 79616
+  },
+  {
+   "id": "electric-blue-icehouse",
+   "title": "Electric Blue",
+   "artist": "ICEHOUSE",
+   "listeners": 79671
+  },
+  {
+   "id": "the-special-two-missy-higgins",
+   "title": "The Special Two",
+   "artist": "Missy Higgins",
+   "listeners": 87059
+  },
+  {
+   "id": "born-to-try-delta-goodrem",
+   "title": "Born to Try",
+   "artist": "Delta Goodrem",
+   "listeners": 91551
+  },
+  {
+   "id": "calypso-spiderbait",
+   "title": "Calypso",
+   "artist": "Spiderbait",
+   "listeners": 99144
+  },
+  {
+   "id": "reminiscing-little-river-band",
+   "title": "Reminiscing",
+   "artist": "Little River Band",
+   "listeners": 103848
+  },
+  {
+   "id": "prisoner-of-society-the-living-end",
+   "title": "Prisoner of Society",
+   "artist": "The Living End",
+   "listeners": 111652
+  },
+  {
+   "id": "lost-without-you-delta-goodrem",
+   "title": "Lost Without You",
+   "artist": "Delta Goodrem",
+   "listeners": 131305
+  },
+  {
+   "id": "my-happiness-powderfinger",
+   "title": "My Happiness",
+   "artist": "Powderfinger",
+   "listeners": 136451
+  },
+  {
+   "id": "abuse-me-silverchair",
+   "title": "Abuse Me",
+   "artist": "Silverchair",
+   "listeners": 151473
+  },
+  {
+   "id": "scar-missy-higgins",
+   "title": "Scar",
+   "artist": "Missy Higgins",
+   "listeners": 154003
+  },
+  {
+   "id": "confide-in-me-kylie-minogue",
+   "title": "Confide In Me",
+   "artist": "Kylie Minogue",
+   "listeners": 160231
+  },
+  {
+   "id": "on-a-night-like-this-kylie-minogue",
+   "title": "On a Night Like This",
+   "artist": "Kylie Minogue",
+   "listeners": 194749
+  },
+  {
+   "id": "straight-lines-silverchair",
+   "title": "Straight Lines",
+   "artist": "Silverchair",
+   "listeners": 203358
+  }
+ ],
+ "list": [
+  {
+   "id": "river-deep-mountain-high-ike-s-73-bolic-studios-mix-ike-and-tina-turner",
+   "held_as": "River Deep, Mountain High (Ike's '73 Bolic Studios Mix)",
+   "held_artist": "Ike & Tina Turner",
+   "held_listeners": 1,
+   "plain_title": "River Deep, Mountain High",
+   "plain_artist": "Ike",
+   "plain_listeners": 193,
+   "matched_as": "River Deep, Mountain High",
+   "gain": 192
+  },
+  {
+   "id": "when-the-war-is-over-accoustic-cosima-de-vito",
+   "held_as": "When the War Is Over (Accoustic)",
+   "held_artist": "Cosima De Vito",
+   "held_listeners": 1,
+   "plain_title": "When the War Is Over",
+   "plain_artist": "Cosima De Vito",
+   "plain_listeners": 596,
+   "matched_as": "When The War Is Over",
+   "gain": 595
+  },
+  {
+   "id": "boom-boom-boom-feat-alphaman-y-trap-brinkenstjarna-the-outhere-brothers-brink",
+   "held_as": "Boom Boom Boom (feat. Alphaman & Y-Trap)",
+   "held_artist": "Brinkenstjärna, The Outhere Brothers & Brink",
+   "held_listeners": 2,
+   "plain_title": "Boom Boom Boom",
+   "plain_artist": "Brinkenstjärna, The Outhere Brothers",
+   "plain_listeners": null,
+   "matched_as": null,
+   "gain": null
+  },
+  {
+   "id": "stars-on-45-a-side-beatles-medley-stars-on-45",
+   "held_as": "\"Stars on 45\" a - Side (Beatles Medley)",
+   "held_artist": "Stars On 45",
+   "held_listeners": 3,
+   "plain_title": "\"Stars on 45\" a - Side",
+   "plain_artist": "Stars On 45",
+   "plain_listeners": null,
+   "matched_as": null,
+   "gain": null
+  },
+  {
+   "id": "the-newcastle-song-live-bob-hudson",
+   "held_as": "The Newcastle Song (Live)",
+   "held_artist": "Bob Hudson",
+   "held_listeners": 10,
+   "plain_title": "The Newcastle Song",
+   "plain_artist": "Bob Hudson",
+   "plain_listeners": 273,
+   "matched_as": "The Newcastle Song",
+   "gain": 263
+  },
+  {
+   "id": "ladies-night-rerecorded-version-kool-and-the-gang",
+   "held_as": "Ladies Night (Rerecorded Version)",
+   "held_artist": "Kool & The Gang",
+   "held_listeners": 11,
+   "plain_title": "Ladies Night",
+   "plain_artist": "Kool",
+   "plain_listeners": 217,
+   "matched_as": "ladies night",
+   "gain": 206
+  },
+  {
+   "id": "right-said-fred-lou-vegas-dj-haili-mix-right-said-fred",
+   "held_as": "Right Said Fred (Lou Vegas / DJ Haili Mix)",
+   "held_artist": "Right Said Fred",
+   "held_listeners": 17,
+   "plain_title": "Right Said Fred",
+   "plain_artist": "Right Said Fred",
+   "plain_listeners": 32,
+   "matched_as": "Right Said Fred",
+   "gain": 15
+  },
+  {
+   "id": "happy-feelin-s-feat-frankie-beverly-remastered-2004-maze-featuring-frankie-beverly",
+   "held_as": "Happy Feelin's (feat. Frankie Beverly)",
+   "held_artist": "Maze featuring Frankie Beverly",
+   "held_listeners": 24,
+   "plain_title": "Happy Feelin's",
+   "plain_artist": "Maze",
+   "plain_listeners": 17536,
+   "matched_as": "Happy Feelin's",
+   "gain": 17512
+  },
+  {
+   "id": "gonna-make-you-sweat-everybody-dance-now-feat-freedom-williams-c-c-music-factory",
+   "held_as": "Gonna Make You Sweat (Everybody Dance Now) [feat. Freedom Williams]",
+   "held_artist": "C+C Music Factory",
+   "held_listeners": 25,
+   "plain_title": "Gonna Make You Sweat (Everybody Dance Now)",
+   "plain_artist": "C+C Music Factory",
+   "plain_listeners": 679,
+   "matched_as": "Gonna Make You Sweat (Everybody Dance Now)",
+   "gain": 654
+  },
+  {
+   "id": "miss-you-argy-remix-oliver-tree-robin-schulz",
+   "held_as": "Miss You (Argy Remix)",
+   "held_artist": "Oliver Tree & Robin Schulz",
+   "held_listeners": 35,
+   "plain_title": "Miss You",
+   "plain_artist": "Oliver Tree",
+   "plain_listeners": 405553,
+   "matched_as": "Miss You",
+   "gain": 405518
+  },
+  {
+   "id": "saturday-love-feat-alexander-o-neal-re-record-cherrelle",
+   "held_as": "Saturday Love (feat. Alexander O'Neal) [Re-record]",
+   "held_artist": "Cherrelle",
+   "held_listeners": 38,
+   "plain_title": "Saturday Love [Re-record]",
+   "plain_artist": "Cherrelle",
+   "plain_listeners": 31,
+   "matched_as": "Saturday Love [Re-record]",
+   "gain": -7
+  },
+  {
+   "id": "spicks-and-specks-remastered-bee-gees",
+   "held_as": "Spicks And Specks (Remastered)",
+   "held_artist": "Bee Gees",
+   "held_listeners": 40,
+   "plain_title": "Spicks And Specks",
+   "plain_artist": "Bee Gees",
+   "plain_listeners": 66595,
+   "matched_as": "Spicks and Specks",
+   "gain": 66555
+  },
+  {
+   "id": "scandalous-feat-stargate-stargate-radio-mix-mis-teeq",
+   "held_as": "Scandalous (feat. Stargate) [Stargate Radio Mix]",
+   "held_artist": "Mis-Teeq",
+   "held_listeners": 42,
+   "plain_title": "Scandalous",
+   "plain_artist": "Mis-Teeq",
+   "plain_listeners": 81120,
+   "matched_as": "Scandalous",
+   "gain": 81078
+  },
+  {
+   "id": "run-it-a-cappella-chris-brown",
+   "held_as": "Run It! (A Cappella)",
+   "held_artist": "Chris Brown",
+   "held_listeners": 42,
+   "plain_title": "Run It!",
+   "plain_artist": "Chris Brown",
+   "plain_listeners": 148896,
+   "matched_as": "Run It!",
+   "gain": 148854
+  },
+  {
+   "id": "the-best-things-in-life-are-free-feat-bell-biv-devoe-ralph-tresvant-luther-vandross-janet-jackson",
+   "held_as": "The Best Things In Life Are Free (feat. Bell Biv DeVoe & Ralph Tresvant)",
+   "held_artist": "Luther Vandross & Janet Jackson",
+   "held_listeners": 47,
+   "plain_title": "The Best Things In Life Are Free",
+   "plain_artist": "Luther Vandross",
+   "plain_listeners": 4418,
+   "matched_as": "The Best Things in Life Are Free",
+   "gain": 4371
+  },
+  {
+   "id": "the-less-i-know-the-better-tame-impala-cover-memphis-lk",
+   "held_as": "The Less I Know the Better (Tame Impala Cover)",
+   "held_artist": "Memphis LK",
+   "held_listeners": 48,
+   "plain_title": "The Less I Know the Better",
+   "plain_artist": "Memphis LK",
+   "plain_listeners": 23,
+   "matched_as": "The Less I Know The Better",
+   "gain": -25
+  },
+  {
+   "id": "nanana-it-goes-like-edit-mixed-peggy-gou",
+   "held_as": "Nanana (It Goes Like) (Edit) [Mixed]",
+   "held_artist": "Peggy Gou",
+   "held_listeners": 54,
+   "plain_title": "Nanana (It Goes Like)",
+   "plain_artist": "Peggy Gou",
+   "plain_listeners": 13,
+   "matched_as": "Nanana (It Goes Like)",
+   "gain": -41
+  },
+  {
+   "id": "boy-s-a-liar-mixed-pinkpantheress",
+   "held_as": "Boy's a liar (Mixed)",
+   "held_artist": "PinkPantheress",
+   "held_listeners": 57,
+   "plain_title": "Boy's a liar",
+   "plain_artist": "PinkPantheress",
+   "plain_listeners": 794949,
+   "matched_as": "Boy's a liar",
+   "gain": 794892
+  },
+  {
+   "id": "i-hate-u-i-love-u-feat-olivia-o-brien-acapella-gnash",
+   "held_as": "i hate u, i love u (feat. Olivia O'Brien) [Acapella]",
+   "held_artist": "gnash",
+   "held_listeners": 72,
+   "plain_title": "i hate u, i love u [Acapella]",
+   "plain_artist": "gnash",
+   "plain_listeners": 8,
+   "matched_as": "i hate u, i love u [Acapella]",
+   "gain": -64
+  },
+  {
+   "id": "lay-down-candles-in-the-rain-with-the-edwin-hawkins-singers-melanie",
+   "held_as": "Lay Down (Candles In the Rain) [with The Edwin Hawkins Singers]",
+   "held_artist": "Melanie",
+   "held_listeners": 89,
+   "plain_title": "Lay Down (Candles In the Rain)",
+   "plain_artist": "Melanie",
+   "plain_listeners": 33767,
+   "matched_as": "Lay Down (Candles In The Rain)",
+   "gain": 33678
+  },
+  {
+   "id": "breaking-me-mixed-topic-a7s",
+   "held_as": "Breaking Me (Mixed)",
+   "held_artist": "Topic & A7S",
+   "held_listeners": 100,
+   "plain_title": "Breaking Me",
+   "plain_artist": "Topic",
+   "plain_listeners": 333703,
+   "matched_as": "Breaking Me",
+   "gain": 333603
+  },
+  {
+   "id": "changes-feat-talent-greatest-hits-version-2pac",
+   "held_as": "Changes (feat. Talent) [Greatest Hits Version]",
+   "held_artist": "2Pac",
+   "held_listeners": 103,
+   "plain_title": "Changes",
+   "plain_artist": "2Pac",
+   "plain_listeners": 807092,
+   "matched_as": "Changes",
+   "gain": 806989
+  },
+  {
+   "id": "just-lose-it-edited-eminem",
+   "held_as": "Just Lose It (Edited)",
+   "held_artist": "Eminem",
+   "held_listeners": 110,
+   "plain_title": "Just Lose It",
+   "plain_artist": "Eminem",
+   "plain_listeners": 724312,
+   "matched_as": "Just Lose It",
+   "gain": 724202
+  },
+  {
+   "id": "mony-mony-live-1985-billy-idol",
+   "held_as": "Mony Mony (Live 1985)",
+   "held_artist": "Billy Idol",
+   "held_listeners": 122,
+   "plain_title": "Mony Mony",
+   "plain_artist": "Billy Idol",
+   "plain_listeners": 277868,
+   "matched_as": "Mony Mony",
+   "gain": 277746
+  },
+  {
+   "id": "soul-revival-radio-mix-johnny-diesel-the-injectors",
+   "held_as": "Soul Revival (Radio Mix)",
+   "held_artist": "Johnny Diesel & The Injectors",
+   "held_listeners": 145,
+   "plain_title": "Soul Revival",
+   "plain_artist": "Johnny Diesel",
+   "plain_listeners": 58,
+   "matched_as": "Soul Revival",
+   "gain": -87
+  },
+  {
+   "id": "despacito-mandarin-version-feat-jj-lin-luis-fonsi",
+   "held_as": "Despacito (Mandarin Version) [feat. JJ Lin]",
+   "held_artist": "Luis Fonsi",
+   "held_listeners": 175,
+   "plain_title": "Despacito",
+   "plain_artist": "Luis Fonsi",
+   "plain_listeners": 652688,
+   "matched_as": "Despacito",
+   "gain": 652513
+  },
+  {
+   "id": "nutbush-city-limits-1993-version-tina-turner",
+   "held_as": "Nutbush City Limits (1993 Version)",
+   "held_artist": "Tina Turner",
+   "held_listeners": 183,
+   "plain_title": "Nutbush City Limits",
+   "plain_artist": "Tina Turner",
+   "plain_listeners": 60953,
+   "matched_as": "Nutbush City Limits",
+   "gain": 60770
+  },
+  {
+   "id": "the-tracks-of-my-tears-single-version-mono-smokey-robinson-the-miracles",
+   "held_as": "The Tracks of My Tears (Single Version / Mono)",
+   "held_artist": "Smokey Robinson & The Miracles",
+   "held_listeners": 189,
+   "plain_title": "The Tracks of My Tears",
+   "plain_artist": "Smokey Robinson",
+   "plain_listeners": 14765,
+   "matched_as": "The Tracks Of My Tears",
+   "gain": 14576
+  },
+  {
+   "id": "hips-don-t-lie-featuring-wyclef-jean-en-espa-ol-shakira",
+   "held_as": "Hips Don't Lie (featuring Wyclef Jean) [En Español]",
+   "held_artist": "Shakira",
+   "held_listeners": 217,
+   "plain_title": "Hips Don't Lie [En Español]",
+   "plain_artist": "Shakira",
+   "plain_listeners": 82,
+   "matched_as": "Hips Don't Lie [En Español]",
+   "gain": -135
+  },
+  {
+   "id": "don-t-know-much-feat-ag-thomas-aaron-neville-linda-ronstadt",
+   "held_as": "Don't Know Much (feat. AG Thomas & Aaron Neville)",
+   "held_artist": "Linda Ronstadt",
+   "held_listeners": 230,
+   "plain_title": "Don't Know Much",
+   "plain_artist": "Linda Ronstadt",
+   "plain_listeners": 6420,
+   "matched_as": "Don't Know Much",
+   "gain": 6190
+  },
+  {
+   "id": "prada-feat-d-block-europe-cass-and-raye",
+   "held_as": "Prada (feat. D-Block Europe)",
+   "held_artist": "cassö & RAYE",
+   "held_listeners": 253,
+   "plain_title": "Prada",
+   "plain_artist": "cassö",
+   "plain_listeners": 626408,
+   "matched_as": "Prada",
+   "gain": 626155
+  },
+  {
+   "id": "errol-2013-remaster-australian-crawl",
+   "held_as": "Errol (2013 Remaster)",
+   "held_artist": "Australian Crawl",
+   "held_listeners": 258,
+   "plain_title": "Errol",
+   "plain_artist": "Australian Crawl",
+   "plain_listeners": 10751,
+   "matched_as": "Errol",
+   "gain": 10493
+  },
+  {
+   "id": "love-lies-rick-ross-remix-khalid-normani-rick-ross",
+   "held_as": "Love Lies (Rick Ross Remix)",
+   "held_artist": "Khalid, Normani & Rick Ross",
+   "held_listeners": 301,
+   "plain_title": "Love Lies",
+   "plain_artist": "Khalid, Normani",
+   "plain_listeners": 6717,
+   "matched_as": "Love Lies",
+   "gain": 6416
+  },
+  {
+   "id": "what-s-going-on-the-detroit-mix-marvin-gaye",
+   "held_as": "What's Going On (The Detroit Mix)",
+   "held_artist": "Marvin Gaye",
+   "held_listeners": 302,
+   "plain_title": "What's Going On",
+   "plain_artist": "Marvin Gaye",
+   "plain_listeners": 1136326,
+   "matched_as": "What's Going On",
+   "gain": 1136024
+  },
+  {
+   "id": "back-and-forth-acoustic-becky-hill",
+   "held_as": "Back And Forth (Acoustic)",
+   "held_artist": "Becky Hill",
+   "held_listeners": 302,
+   "plain_title": "Back And Forth",
+   "plain_artist": "Becky Hill",
+   "plain_listeners": 415,
+   "matched_as": "Back And Forth",
+   "gain": 113
+  },
+  {
+   "id": "marryuna-feat-yirrmal-baker-boy",
+   "held_as": "Marryuna (feat. Yirrmal)",
+   "held_artist": "Baker Boy",
+   "held_listeners": 330,
+   "plain_title": "Marryuna",
+   "plain_artist": "Baker Boy",
+   "plain_listeners": 6343,
+   "matched_as": "Marryuna",
+   "gain": 6013
+  },
+  {
+   "id": "astronaut-in-the-ocean-ezhel-remix-masked-wolf",
+   "held_as": "Astronaut in the Ocean (Ezhel Remix)",
+   "held_artist": "Masked Wolf",
+   "held_listeners": 364,
+   "plain_title": "Astronaut in the Ocean",
+   "plain_artist": "Masked Wolf",
+   "plain_listeners": 551903,
+   "matched_as": "Astronaut in the Ocean",
+   "gain": 551539
+  },
+  {
+   "id": "right-in-the-night-fall-in-love-with-music-feat-plavka-jam-spoon",
+   "held_as": "Right in the Night (Fall in Love with Music) [feat. Plavka]",
+   "held_artist": "Jam & Spoon",
+   "held_listeners": 409,
+   "plain_title": "Right in the Night",
+   "plain_artist": "Jam",
+   "plain_listeners": 12,
+   "matched_as": "Right in the Night",
+   "gain": -397
+  },
+  {
+   "id": "you-ve-made-me-so-very-happy-promo-version-brenda-holloway",
+   "held_as": "You've Made Me So Very Happy (Promo Version)",
+   "held_artist": "Brenda Holloway",
+   "held_listeners": 444,
+   "plain_title": "You've Made Me So Very Happy",
+   "plain_artist": "Brenda Holloway",
+   "plain_listeners": 19892,
+   "matched_as": "You've Made Me So Very Happy",
+   "gain": 19448
+  },
+  {
+   "id": "pump-it-itunes-originals-version-black-eyed-peas",
+   "held_as": "Pump It (iTunes Originals Version)",
+   "held_artist": "Black Eyed Peas",
+   "held_listeners": 476,
+   "plain_title": "Pump It",
+   "plain_artist": "Black Eyed Peas",
+   "plain_listeners": 1790770,
+   "matched_as": "Pump It",
+   "gain": 1790294
+  },
+  {
+   "id": "sally-feat-mataya-thundamentals",
+   "held_as": "Sally (feat. Mataya)",
+   "held_artist": "Thundamentals",
+   "held_listeners": 559,
+   "plain_title": "Sally",
+   "plain_artist": "Thundamentals",
+   "plain_listeners": 20982,
+   "matched_as": "Sally",
+   "gain": 20423
+  },
+  {
+   "id": "sexy-bitch-feat-akon-extended-david-guetta",
+   "held_as": "Sexy Bitch (feat. Akon) [Extended]",
+   "held_artist": "David Guetta",
+   "held_listeners": 562,
+   "plain_title": "Sexy Bitch [Extended]",
+   "plain_artist": "David Guetta",
+   "plain_listeners": 85,
+   "matched_as": "Sexy Bitch [Extended]",
+   "gain": -477
+  },
+  {
+   "id": "no-more-tears-enough-is-enough-with-donna-summer-barbra-streisand",
+   "held_as": "No More Tears (Enough Is Enough) [with Donna Summer]",
+   "held_artist": "Barbra Streisand",
+   "held_listeners": 639,
+   "plain_title": "No More Tears (Enough Is Enough)",
+   "plain_artist": "Barbra Streisand",
+   "plain_listeners": 10043,
+   "matched_as": "No More Tears (Enough Is Enough)",
+   "gain": 9404
+  },
+  {
+   "id": "soul-man-rerecorded-sam-dave",
+   "held_as": "Soul Man (Rerecorded)",
+   "held_artist": "Sam & Dave",
+   "held_listeners": 659,
+   "plain_title": "Soul Man",
+   "plain_artist": "Sam",
+   "plain_listeners": 467,
+   "matched_as": "Soul Man",
+   "gain": -192
+  },
+  {
+   "id": "stay-feat-chaka-khan-rufus",
+   "held_as": "Stay (feat. Chaka Khan)",
+   "held_artist": "Rufus",
+   "held_listeners": 675,
+   "plain_title": "Stay",
+   "plain_artist": "Rufus",
+   "plain_listeners": 14602,
+   "matched_as": "Stay",
+   "gain": 13927
+  },
+  {
+   "id": "four-to-the-floor-thin-white-duke-mix-short-version-starsailor",
+   "held_as": "Four To the Floor (Thin White Duke Mix) [Short Version]",
+   "held_artist": "Starsailor",
+   "held_listeners": 722,
+   "plain_title": "Four To the Floor",
+   "plain_artist": "Starsailor",
+   "plain_listeners": 251018,
+   "matched_as": "Four to the Floor",
+   "gain": 250296
+  },
+  {
+   "id": "give-it-up-7-version-kc-and-the-sunshine-band",
+   "held_as": "Give It Up (7\" Version)",
+   "held_artist": "KC and the Sunshine Band",
+   "held_listeners": 792,
+   "plain_title": "Give It Up",
+   "plain_artist": "KC and the Sunshine Band",
+   "plain_listeners": 55546,
+   "matched_as": "Give It Up",
+   "gain": 54754
+  },
+  {
+   "id": "here-i-go-again-1987-version-2017-remaster-whitesnake",
+   "held_as": "Here I Go Again (1987 Version / 2017 Remaster)",
+   "held_artist": "Whitesnake",
+   "held_listeners": 849,
+   "plain_title": "Here I Go Again",
+   "plain_artist": "Whitesnake",
+   "plain_listeners": 595298,
+   "matched_as": "Here I Go Again",
+   "gain": 594449
+  },
+  {
+   "id": "jai-ho-you-are-my-destiny-feat-nicole-scherzinger-a-r-rahman-the-pussycat-dolls",
+   "held_as": "Jai Ho! (You Are My Destiny) [feat. Nicole Scherzinger]",
+   "held_artist": "A.R. Rahman & The Pussycat Dolls",
+   "held_listeners": 880,
+   "plain_title": "Jai Ho! (You Are My Destiny)",
+   "plain_artist": "A.R. Rahman",
+   "plain_listeners": 264344,
+   "matched_as": "Jai Ho! (You Are My Destiny)",
+   "gain": 263464
+  },
+  {
+   "id": "you-re-having-my-baby-feat-odia-coates-paul-anka",
+   "held_as": "(You're) Having My Baby (feat. Odia Coates)",
+   "held_artist": "Paul Anka",
+   "held_listeners": 923,
+   "plain_title": "(You're) Having My Baby",
+   "plain_artist": "Paul Anka",
+   "plain_listeners": 23320,
+   "matched_as": "(You're) Having My Baby",
+   "gain": 22397
+  },
+  {
+   "id": "one-call-away-feat-j-weav-chingy",
+   "held_as": "One Call Away (feat. J/Weav)",
+   "held_artist": "Chingy",
+   "held_listeners": 1037,
+   "plain_title": "One Call Away",
+   "plain_artist": "Chingy",
+   "plain_listeners": 271512,
+   "matched_as": "One Call Away",
+   "gain": 270475
+  },
+  {
+   "id": "sometimes-love-just-ain-t-enough-feat-don-henley-patty-smyth",
+   "held_as": "Sometimes Love Just Ain't Enough (feat. Don Henley)",
+   "held_artist": "Patty Smyth",
+   "held_listeners": 1051,
+   "plain_title": "Sometimes Love Just Ain't Enough",
+   "plain_artist": "Patty Smyth",
+   "plain_listeners": 33029,
+   "matched_as": "Sometimes Love Just Ain't Enough",
+   "gain": 31978
+  },
+  {
+   "id": "you-got-the-love-feat-chaka-khan-rufus",
+   "held_as": "You Got the Love (feat. Chaka Khan)",
+   "held_artist": "Rufus",
+   "held_listeners": 1078,
+   "plain_title": "You Got the Love",
+   "plain_artist": "Rufus",
+   "plain_listeners": 25886,
+   "matched_as": "You Got The Love",
+   "gain": 24808
+  },
+  {
+   "id": "almost-here-feat-delta-goodrem-brian-mcfadden",
+   "held_as": "Almost Here (feat. Delta Goodrem)",
+   "held_artist": "Brian McFadden",
+   "held_listeners": 1181,
+   "plain_title": "Almost Here",
+   "plain_artist": "Brian McFadden",
+   "plain_listeners": 21449,
+   "matched_as": "Almost Here",
+   "gain": 20268
+  },
+  {
+   "id": "girlfriend-feat-lil-mama-avril-lavigne",
+   "held_as": "Girlfriend (feat. Lil Mama)",
+   "held_artist": "Avril Lavigne",
+   "held_listeners": 1199,
+   "plain_title": "Girlfriend",
+   "plain_artist": "Avril Lavigne",
+   "plain_listeners": 1881738,
+   "matched_as": "Girlfriend",
+   "gain": 1880539
+  },
+  {
+   "id": "get-up-i-feel-like-being-a-sex-machine-feat-the-original-j-b-s-james-brown",
+   "held_as": "Get Up I Feel Like Being a Sex Machine (feat. The Original J.B.s)",
+   "held_artist": "James Brown",
+   "held_listeners": 1213,
+   "plain_title": "Get Up I Feel Like Being a Sex Machine",
+   "plain_artist": "James Brown",
+   "plain_listeners": 29145,
+   "matched_as": "Get Up I Feel Like Being A Sex Machine",
+   "gain": 27932
+  },
+  {
+   "id": "think-feat-the-blues-brothers-aretha-franklin",
+   "held_as": "Think (feat. The Blues Brothers)",
+   "held_artist": "Aretha Franklin",
+   "held_listeners": 1298,
+   "plain_title": "Think",
+   "plain_artist": "Aretha Franklin",
+   "plain_listeners": 633220,
+   "matched_as": "Think",
+   "gain": 631922
+  },
+  {
+   "id": "parisienne-walkways-feat-phil-lynott-gary-moore",
+   "held_as": "Parisienne Walkways (feat. Phil Lynott)",
+   "held_artist": "Gary Moore",
+   "held_listeners": 1308,
+   "plain_title": "Parisienne Walkways",
+   "plain_artist": "Gary Moore",
+   "plain_listeners": 254830,
+   "matched_as": "Parisienne Walkways",
+   "gain": 253522
+  },
+  {
+   "id": "jackson-with-june-carter-cash-johnny-cash-with-june-carter-cash",
+   "held_as": "Jackson (with June Carter Cash)",
+   "held_artist": "Johnny Cash with June Carter Cash",
+   "held_listeners": 1467,
+   "plain_title": "Jackson",
+   "plain_artist": "Johnny Cash",
+   "plain_listeners": 379424,
+   "matched_as": "Jackson",
+   "gain": 377957
+  },
+  {
+   "id": "papa-s-got-a-brand-new-bag-pts-1-2-single-version-james-brown",
+   "held_as": "Papa's Got a Brand New Bag (Pts.1 & 2 / Single Version)",
+   "held_artist": "James Brown",
+   "held_listeners": 1478,
+   "plain_title": "Papa's Got a Brand New Bag",
+   "plain_artist": "James Brown",
+   "plain_listeners": 285688,
+   "matched_as": "Papa's Got A Brand New Bag",
+   "gain": 284210
+  },
+  {
+   "id": "a-whiter-shade-of-pale-50th-anniversary-stereo-mix-procol-harum",
+   "held_as": "A Whiter Shade of Pale (50th Anniversary Stereo Mix)",
+   "held_artist": "Procol Harum",
+   "held_listeners": 1558,
+   "plain_title": "A Whiter Shade of Pale",
+   "plain_artist": "Procol Harum",
+   "plain_listeners": 443601,
+   "matched_as": "A Whiter Shade of Pale",
+   "gain": 442043
+  },
+  {
+   "id": "old-time-rock-and-roll-live-bob-seger-the-silver-bullet-band",
+   "held_as": "Old Time Rock and Roll (Live)",
+   "held_artist": "Bob Seger & The Silver Bullet Band",
+   "held_listeners": 1560,
+   "plain_title": "Old Time Rock and Roll",
+   "plain_artist": "Bob Seger",
+   "plain_listeners": 116869,
+   "matched_as": "Old Time Rock and Roll",
+   "gain": 115309
+  },
+  {
+   "id": "the-ketchup-song-aserej-spanglish-version-las-ketchup",
+   "held_as": "The Ketchup Song (Aserejé) [Spanglish Version]",
+   "held_artist": "Las Ketchup",
+   "held_listeners": 1592,
+   "plain_title": "The Ketchup Song (Aserejé)",
+   "plain_artist": "Las Ketchup",
+   "plain_listeners": 16700,
+   "matched_as": "The Ketchup Song (Aserejé)",
+   "gain": 15108
+  },
+  {
+   "id": "i-could-get-used-to-this-orchestral-acoustic-becky-hill",
+   "held_as": "I Could Get Used To This (Orchestral Acoustic)",
+   "held_artist": "Becky Hill",
+   "held_listeners": 1611,
+   "plain_title": "I Could Get Used To This",
+   "plain_artist": "Becky Hill",
+   "plain_listeners": 22813,
+   "matched_as": "I Could Get Used To This",
+   "gain": 21202
+  },
+  {
+   "id": "turn-the-beat-around-7-single-edit-vicki-sue-robinson",
+   "held_as": "Turn the Beat Around (7\" Single Edit)",
+   "held_artist": "Vicki Sue Robinson",
+   "held_listeners": 1635,
+   "plain_title": "Turn the Beat Around",
+   "plain_artist": "Vicki Sue Robinson",
+   "plain_listeners": 78211,
+   "matched_as": "Turn the Beat Around",
+   "gain": 76576
+  },
+  {
+   "id": "you-should-be-dancing-serban-mix-bee-gees",
+   "held_as": "You Should Be Dancing (Serban Mix)",
+   "held_artist": "Bee Gees",
+   "held_listeners": 1826,
+   "plain_title": "You Should Be Dancing",
+   "plain_artist": "Bee Gees",
+   "plain_listeners": 533501,
+   "matched_as": "You Should Be Dancing",
+   "gain": 531675
+  },
+  {
+   "id": "emotion-feat-bee-gees-samantha-sang",
+   "held_as": "Emotion (feat. Bee Gees)",
+   "held_artist": "Samantha Sang",
+   "held_listeners": 1854,
+   "plain_title": "Emotion",
+   "plain_artist": "Samantha Sang",
+   "plain_listeners": 69187,
+   "matched_as": "Emotion",
+   "gain": 67333
+  },
+  {
+   "id": "mustang-sally-feat-andrew-strong-the-commitments",
+   "held_as": "Mustang Sally (feat. Andrew Strong)",
+   "held_artist": "The Commitments",
+   "held_listeners": 1855,
+   "plain_title": "Mustang Sally",
+   "plain_artist": "The Commitments",
+   "plain_listeners": 100685,
+   "matched_as": "Mustang Sally",
+   "gain": 98830
+  },
+  {
+   "id": "hypnotize-radio-mix-the-notorious-b-i-g",
+   "held_as": "Hypnotize (Radio Mix)",
+   "held_artist": "The Notorious B.I.G.",
+   "held_listeners": 1912,
+   "plain_title": "Hypnotize",
+   "plain_artist": "The Notorious B.I.G.",
+   "plain_listeners": 392044,
+   "matched_as": "Hypnotize",
+   "gain": 390132
+  },
+  {
+   "id": "girls-on-film-remastered-duran-duran",
+   "held_as": "Girls On Film (Remastered)",
+   "held_artist": "Duran Duran",
+   "held_listeners": 1969,
+   "plain_title": "Girls On Film",
+   "plain_artist": "Duran Duran",
+   "plain_listeners": 507410,
+   "matched_as": "Girls on Film",
+   "gain": 505441
+  },
+  {
+   "id": "3d-justin-timberlake-remix-jung-kook-justin-timberlake",
+   "held_as": "3D (Justin Timberlake Remix)",
+   "held_artist": "Jung Kook & Justin Timberlake",
+   "held_listeners": 2094,
+   "plain_title": "3D",
+   "plain_artist": "Jung Kook",
+   "plain_listeners": 3578,
+   "matched_as": "3D",
+   "gain": 1484
+  },
+  {
+   "id": "just-say-so-feat-kevin-rudolf-brian-mcfadden",
+   "held_as": "Just Say So (feat. Kevin Rudolf)",
+   "held_artist": "Brian McFadden",
+   "held_listeners": 2125,
+   "plain_title": "Just Say So",
+   "plain_artist": "Brian McFadden",
+   "plain_listeners": 4034,
+   "matched_as": "Just Say So",
+   "gain": 1909
+  },
+  {
+   "id": "jeremy-live-mtv-unplugged-pearl-jam",
+   "held_as": "Jeremy (Live MTV Unplugged)",
+   "held_artist": "Pearl Jam",
+   "held_listeners": 2236,
+   "plain_title": "Jeremy",
+   "plain_artist": "Pearl Jam",
+   "plain_listeners": 1369064,
+   "matched_as": "Jeremy",
+   "gain": 1366828
+  },
+  {
+   "id": "chocolate-acoustic-version-the-1975",
+   "held_as": "Chocolate (Acoustic Version)",
+   "held_artist": "The 1975",
+   "held_listeners": 2327,
+   "plain_title": "Chocolate",
+   "plain_artist": "The 1975",
+   "plain_listeners": 933207,
+   "matched_as": "Chocolate",
+   "gain": 930880
+  },
+  {
+   "id": "smack-my-bitch-up-radio-edit-the-prodigy",
+   "held_as": "Smack My Bitch Up (Radio Edit)",
+   "held_artist": "The Prodigy",
+   "held_listeners": 2363,
+   "plain_title": "Smack My Bitch Up",
+   "plain_artist": "The Prodigy",
+   "plain_listeners": 971999,
+   "matched_as": "Smack My Bitch Up",
+   "gain": 969636
+  },
+  {
+   "id": "enter-sandman-may-13th-1991-rough-mix-metallica",
+   "held_as": "Enter Sandman (May 13th, 1991 Rough Mix)",
+   "held_artist": "Metallica",
+   "held_listeners": 2450,
+   "plain_title": "Enter Sandman",
+   "plain_artist": "Metallica",
+   "plain_listeners": 1897327,
+   "matched_as": "Enter Sandman",
+   "gain": 1894877
+  },
+  {
+   "id": "shake-your-body-down-to-the-ground-single-version-the-jacksons",
+   "held_as": "Shake Your Body (Down to the Ground) [Single Version]",
+   "held_artist": "The Jacksons",
+   "held_listeners": 2529,
+   "plain_title": "Shake Your Body (Down to the Ground)",
+   "plain_artist": "The Jacksons",
+   "plain_listeners": 151010,
+   "matched_as": "Shake Your Body (Down to the Ground)",
+   "gain": 148481
+  },
+  {
+   "id": "that-girl-feat-shaggy-maxi-priest",
+   "held_as": "That Girl (feat. Shaggy)",
+   "held_artist": "Maxi Priest",
+   "held_listeners": 2577,
+   "plain_title": "That Girl",
+   "plain_artist": "Maxi Priest",
+   "plain_listeners": 25725,
+   "matched_as": "That Girl",
+   "gain": 23148
+  },
+  {
+   "id": "you-don-t-know-me-feat-duane-harden-radio-edit-armand-van-helden",
+   "held_as": "You Don't Know Me (feat. Duane Harden) [Radio Edit]",
+   "held_artist": "Armand Van Helden",
+   "held_listeners": 2767,
+   "plain_title": "You Don't Know Me",
+   "plain_artist": "Armand Van Helden",
+   "plain_listeners": 31991,
+   "matched_as": "You Don't Know Me",
+   "gain": 29224
+  },
+  {
+   "id": "let-me-blow-ya-mind-feat-gwen-stefani-stevie-j-eve",
+   "held_as": "Let Me Blow Ya Mind (feat. Gwen Stefani & Stevie J.)",
+   "held_artist": "Eve",
+   "held_listeners": 3005,
+   "plain_title": "Let Me Blow Ya Mind",
+   "plain_artist": "Eve",
+   "plain_listeners": 688922,
+   "matched_as": "Let Me Blow Ya Mind",
+   "gain": 685917
+  },
+  {
+   "id": "youngblood-acoustic-5-seconds-of-summer",
+   "held_as": "Youngblood (Acoustic)",
+   "held_artist": "5 Seconds of Summer",
+   "held_listeners": 3042,
+   "plain_title": "Youngblood",
+   "plain_artist": "5 Seconds of Summer",
+   "plain_listeners": 1096396,
+   "matched_as": "Youngblood",
+   "gain": 1093354
+  },
+  {
+   "id": "good-vibrations-feat-loleatta-holloway-marky-mark-and-the-funky-bunch",
+   "held_as": "Good Vibrations (feat. Loleatta Holloway)",
+   "held_artist": "Marky Mark and the Funky Bunch",
+   "held_listeners": 3286,
+   "plain_title": "Good Vibrations",
+   "plain_artist": "Marky Mark and the Funky Bunch",
+   "plain_listeners": 162677,
+   "matched_as": "Good Vibrations",
+   "gain": 159391
+  },
+  {
+   "id": "blue-da-ba-dee-gabry-ponte-video-edit-eiffel-65",
+   "held_as": "Blue (Da Ba Dee) [Gabry Ponte Video Edit]",
+   "held_artist": "Eiffel 65",
+   "held_listeners": 3490,
+   "plain_title": "Blue (Da Ba Dee)",
+   "plain_artist": "Eiffel 65",
+   "plain_listeners": 364060,
+   "matched_as": "Blue (Da Ba Dee)",
+   "gain": 360570
+  },
+  {
+   "id": "from-this-moment-on-feat-bryan-white-shania-twain",
+   "held_as": "From This Moment On (feat. Bryan White)",
+   "held_artist": "Shania Twain",
+   "held_listeners": 3620,
+   "plain_title": "From This Moment On",
+   "plain_artist": "Shania Twain",
+   "plain_listeners": 217962,
+   "matched_as": "From This Moment On",
+   "gain": 214342
+  },
+  {
+   "id": "where-are-u-now-with-justin-bieber-feat-justin-bieber-jack-u-skrillex-diplo",
+   "held_as": "Where Are Ü Now (with Justin Bieber) [feat. Justin Bieber]",
+   "held_artist": "Jack Ü, Skrillex & Diplo",
+   "held_listeners": 3666,
+   "plain_title": "Where Are Ü Now",
+   "plain_artist": "Jack Ü, Skrille",
+   "plain_listeners": null,
+   "matched_as": null,
+   "gain": null
+  },
+  {
+   "id": "the-boys-of-summer-remastered-2024-don-henley",
+   "held_as": "The Boys Of Summer (Remastered 2024)",
+   "held_artist": "Don Henley",
+   "held_listeners": 3678,
+   "plain_title": "The Boys Of Summer",
+   "plain_artist": "Don Henley",
+   "plain_listeners": 734923,
+   "matched_as": "The Boys of Summer",
+   "gain": 731245
+  },
+  {
+   "id": "loose-ends-feat-g-flip-illy",
+   "held_as": "Loose Ends (feat. G Flip)",
+   "held_artist": "Illy",
+   "held_listeners": 3921,
+   "plain_title": "Loose Ends",
+   "plain_artist": "Illy",
+   "plain_listeners": 42,
+   "matched_as": "Loose Ends",
+   "gain": -3879
+  },
+  {
+   "id": "castle-on-the-hill-acoustic-ed-sheeran",
+   "held_as": "Castle on the Hill (Acoustic)",
+   "held_artist": "Ed Sheeran",
+   "held_listeners": 3993,
+   "plain_title": "Castle on the Hill",
+   "plain_artist": "Ed Sheeran",
+   "plain_listeners": 756407,
+   "matched_as": "Castle on the Hill",
+   "gain": 752414
+  },
+  {
+   "id": "good-riddance-time-of-your-life-live-green-day",
+   "held_as": "Good Riddance (Time of Your Life) [Live]",
+   "held_artist": "Green Day",
+   "held_listeners": 4309,
+   "plain_title": "Good Riddance (Time of Your Life)",
+   "plain_artist": "Green Day",
+   "plain_listeners": 1562053,
+   "matched_as": "Good Riddance (Time of Your Life)",
+   "gain": 1557744
+  },
+  {
+   "id": "boys-like-you-feat-gossling-360",
+   "held_as": "Boys Like You (feat. Gossling)",
+   "held_artist": "360",
+   "held_listeners": 4322,
+   "plain_title": "Boys Like You",
+   "plain_artist": "360",
+   "plain_listeners": 12247,
+   "matched_as": "Boys Like You",
+   "gain": 7925
+  },
+  {
+   "id": "itchycoo-park-mono-small-faces",
+   "held_as": "Itchycoo Park (Mono)",
+   "held_artist": "Small Faces",
+   "held_listeners": 4696,
+   "plain_title": "Itchycoo Park",
+   "plain_artist": "Small Faces",
+   "plain_listeners": 96365,
+   "matched_as": "Itchycoo Park",
+   "gain": 91669
+  },
+  {
+   "id": "macarthur-park-single-version-donna-summer",
+   "held_as": "MacArthur Park (Single Version)",
+   "held_artist": "Donna Summer",
+   "held_listeners": 4735,
+   "plain_title": "MacArthur Park",
+   "plain_artist": "Donna Summer",
+   "plain_listeners": 57500,
+   "matched_as": "MacArthur Park",
+   "gain": 52765
+  },
+  {
+   "id": "empire-state-of-mind-feat-alicia-keys-ja-z",
+   "held_as": "Empire State Of Mind (feat. Alicia Keys)",
+   "held_artist": "JAŸ-Z",
+   "held_listeners": 5173,
+   "plain_title": "Empire State Of Mind",
+   "plain_artist": "JAŸ-Z",
+   "plain_listeners": 444960,
+   "matched_as": "Empire State Of Mind",
+   "gain": 439787
+  },
+  {
+   "id": "crazy-in-love-feat-ja-z-beyonc",
+   "held_as": "Crazy in Love (feat. JAŸ-Z)",
+   "held_artist": "Beyoncé",
+   "held_listeners": 5193,
+   "plain_title": "Crazy in Love",
+   "plain_artist": "Beyoncé",
+   "plain_listeners": 708484,
+   "matched_as": "Crazy in Love",
+   "gain": 703291
+  },
+  {
+   "id": "we-got-love-feat-ella-henderson-sigala",
+   "held_as": "We Got Love (feat. Ella Henderson)",
+   "held_artist": "Sigala",
+   "held_listeners": 5318,
+   "plain_title": "We Got Love",
+   "plain_artist": "Sigala",
+   "plain_listeners": 58426,
+   "matched_as": "We Got Love",
+   "gain": 53108
+  },
+  {
+   "id": "gloria-mono-version-them",
+   "held_as": "Gloria (Mono Version)",
+   "held_artist": "Them",
+   "held_listeners": 5513,
+   "plain_title": "Gloria",
+   "plain_artist": "Them",
+   "plain_listeners": 99751,
+   "matched_as": "Gloria",
+   "gain": 94238
+  },
+  {
+   "id": "waka-waka-this-time-for-africa-feat-freshlyground-shakira",
+   "held_as": "Waka Waka (This Time for Africa) [feat. Freshlyground]",
+   "held_artist": "Shakira",
+   "held_listeners": 5589,
+   "plain_title": "Waka Waka (This Time for Africa)",
+   "plain_artist": "Shakira",
+   "plain_listeners": 132932,
+   "matched_as": "Waka Waka (This Time for Africa)",
+   "gain": 127343
+  },
+  {
+   "id": "we-found-love-feat-calvin-harris-calvin-harris-extended-mix-rihanna",
+   "held_as": "We Found Love (feat. Calvin Harris) [Calvin Harris Extended Mix]",
+   "held_artist": "Rihanna",
+   "held_listeners": 5609,
+   "plain_title": "We Found Love",
+   "plain_artist": "Rihanna",
+   "plain_listeners": 297934,
+   "matched_as": "We Found Love (feat. Calvin Harris)",
+   "gain": 292325
+  },
+  {
+   "id": "walk-this-way-feat-aerosmith-run-dmc",
+   "held_as": "Walk This Way (feat. Aerosmith)",
+   "held_artist": "Run-DMC",
+   "held_listeners": 5746,
+   "plain_title": "Walk This Way",
+   "plain_artist": "Run-DMC",
+   "plain_listeners": 201148,
+   "matched_as": "Walk This Way",
+   "gain": 195402
+  },
+  {
+   "id": "livin-it-up-feat-case-ja-rule",
+   "held_as": "Livin' It Up (feat. Case)",
+   "held_artist": "Ja Rule",
+   "held_listeners": 5758,
+   "plain_title": "Livin' It Up",
+   "plain_artist": "Ja Rule",
+   "plain_listeners": 199490,
+   "matched_as": "Livin' It Up",
+   "gain": 193732
+  },
+  {
+   "id": "boogie-oogie-oogie-re-recorded-remastered-a-taste-of-honey",
+   "held_as": "Boogie Oogie Oogie (Re-Recorded / Remastered)",
+   "held_artist": "A Taste of Honey",
+   "held_listeners": 5996,
+   "plain_title": "Boogie Oogie Oogie",
+   "plain_artist": "A Taste of Honey",
+   "plain_listeners": 160131,
+   "matched_as": "Boogie Oogie Oogie",
+   "gain": 154135
+  },
+  {
+   "id": "we-r-who-we-r-fred-falke-club-mix-kesha",
+   "held_as": "We R Who We R (Fred Falke Club Mix)",
+   "held_artist": "Kesha",
+   "held_listeners": 6183,
+   "plain_title": "We R Who We R",
+   "plain_artist": "Kesha",
+   "plain_listeners": 461020,
+   "matched_as": "We R Who We R",
+   "gain": 454837
+  },
+  {
+   "id": "nights-in-white-satin-single-edit-the-moody-blues",
+   "held_as": "Nights In White Satin (Single Edit)",
+   "held_artist": "The Moody Blues",
+   "held_listeners": 6184,
+   "plain_title": "Nights In White Satin",
+   "plain_artist": "The Moody Blues",
+   "plain_listeners": 397714,
+   "matched_as": "Nights in White Satin",
+   "gain": 391530
+  },
+  {
+   "id": "umbrella-feat-ja-z-rihanna",
+   "held_as": "Umbrella (feat. JAŸ-Z)",
+   "held_artist": "Rihanna",
+   "held_listeners": 6256,
+   "plain_title": "Umbrella",
+   "plain_artist": "Rihanna",
+   "plain_listeners": 2444078,
+   "matched_as": "Umbrella",
+   "gain": 2437822
+  },
+  {
+   "id": "wish-you-well-feat-bernard-fanning-baker-boy",
+   "held_as": "Wish You Well (feat. Bernard Fanning)",
+   "held_artist": "Baker Boy",
+   "held_listeners": 6476,
+   "plain_title": "Wish You Well",
+   "plain_artist": "Baker Boy",
+   "plain_listeners": 108,
+   "matched_as": "Wish You Well",
+   "gain": -6368
+  },
+  {
+   "id": "don-t-give-up-feat-kate-bush-peter-gabriel",
+   "held_as": "Don't Give Up (feat. Kate Bush)",
+   "held_artist": "Peter Gabriel",
+   "held_listeners": 6505,
+   "plain_title": "Don't Give Up",
+   "plain_artist": "Peter Gabriel",
+   "plain_listeners": 262001,
+   "matched_as": "Don't Give Up",
+   "gain": 255496
+  },
+  {
+   "id": "do-it-to-it-feat-cherish-acraze",
+   "held_as": "Do It To It (feat. Cherish)",
+   "held_artist": "Acraze",
+   "held_listeners": 6640,
+   "plain_title": "Do It To It",
+   "plain_artist": "Acraze",
+   "plain_listeners": 418882,
+   "matched_as": "Do It To It",
+   "gain": 412242
+  },
+  {
+   "id": "love-hurts-single-edit-nazareth",
+   "held_as": "Love Hurts (Single Edit)",
+   "held_artist": "Nazareth",
+   "held_listeners": 6652,
+   "plain_title": "Love Hurts",
+   "plain_artist": "Nazareth",
+   "plain_listeners": 501987,
+   "matched_as": "Love Hurts",
+   "gain": 495335
+  },
+  {
+   "id": "ms-jackson-radio-mix-outkast",
+   "held_as": "Ms. Jackson (Radio Mix)",
+   "held_artist": "Outkast",
+   "held_listeners": 6654,
+   "plain_title": "Ms. Jackson",
+   "plain_artist": "Outkast",
+   "plain_listeners": 2407838,
+   "matched_as": "Ms. Jackson",
+   "gain": 2401184
+  },
+  {
+   "id": "what-s-love-got-to-do-with-it-2015-remaster-tina-turner",
+   "held_as": "What's Love Got to Do with It (2015 Remaster)",
+   "held_artist": "Tina Turner",
+   "held_listeners": 6927,
+   "plain_title": "What's Love Got to Do with It",
+   "plain_artist": "Tina Turner",
+   "plain_listeners": 572681,
+   "matched_as": "What's Love Got to Do with It",
+   "gain": 565754
+  },
+  {
+   "id": "dream-a-little-dream-of-me-with-introduction-the-mamas-and-the-papas",
+   "held_as": "Dream A Little Dream Of Me (With Introduction)",
+   "held_artist": "The Mamas & The Papas",
+   "held_listeners": 7000,
+   "plain_title": "Dream A Little Dream Of Me",
+   "plain_artist": "The Mamas",
+   "plain_listeners": 858944,
+   "matched_as": "Dream a Little Dream of Me",
+   "gain": 851944
+  },
+  {
+   "id": "say-my-name-feat-benjamin-joseph-peking-duk",
+   "held_as": "Say My Name (feat. Benjamin Joseph)",
+   "held_artist": "Peking Duk",
+   "held_listeners": 7562,
+   "plain_title": "Say My Name",
+   "plain_artist": "Peking Duk",
+   "plain_listeners": 18759,
+   "matched_as": "Say My Name",
+   "gain": 11197
+  },
+  {
+   "id": "everybody-backstreet-s-back-radio-edit-backstreet-boys",
+   "held_as": "Everybody (Backstreet's Back) [Radio Edit]",
+   "held_artist": "Backstreet Boys",
+   "held_listeners": 7844,
+   "plain_title": "Everybody (Backstreet's Back)",
+   "plain_artist": "Backstreet Boys",
+   "plain_listeners": 187523,
+   "matched_as": "Everybody (Backstreet's Back)",
+   "gain": 179679
+  },
+  {
+   "id": "two-wrongs-feat-claudette-ortiz-wyclef-jean",
+   "held_as": "Two Wrongs (feat. Claudette Ortiz)",
+   "held_artist": "Wyclef Jean",
+   "held_listeners": 7984,
+   "plain_title": "Two Wrongs",
+   "plain_artist": "Wyclef Jean",
+   "plain_listeners": 14155,
+   "matched_as": "Two Wrongs",
+   "gain": 6171
+  },
+  {
+   "id": "double-fantasy-feat-future-the-weeknd",
+   "held_as": "Double Fantasy (feat. Future)",
+   "held_artist": "The Weeknd",
+   "held_listeners": 8094,
+   "plain_title": "Double Fantasy",
+   "plain_artist": "The Weeknd",
+   "plain_listeners": 8277,
+   "matched_as": "Double Fantasy",
+   "gain": 183
+  },
+  {
+   "id": "black-betty-edit-spiderbait",
+   "held_as": "Black Betty (Edit)",
+   "held_artist": "Spiderbait",
+   "held_listeners": 8100,
+   "plain_title": "Black Betty",
+   "plain_artist": "Spiderbait",
+   "plain_listeners": 143929,
+   "matched_as": "Black Betty",
+   "gain": 135829
+  },
+  {
+   "id": "mr-vain-original-radio-edit-culture-beat",
+   "held_as": "Mr. Vain (Original Radio Edit)",
+   "held_artist": "Culture Beat",
+   "held_listeners": 8355,
+   "plain_title": "Mr. Vain",
+   "plain_artist": "Culture Beat",
+   "plain_listeners": 334946,
+   "matched_as": "Mr. Vain",
+   "gain": 326591
+  },
+  {
+   "id": "burn-confessions-special-edition-version-usher",
+   "held_as": "Burn (Confessions Special Edition Version)",
+   "held_artist": "USHER",
+   "held_listeners": 8494,
+   "plain_title": "Burn",
+   "plain_artist": "USHER",
+   "plain_listeners": 688079,
+   "matched_as": "Burn",
+   "gain": 679585
+  },
+  {
+   "id": "death-bed-feat-beabadoobee-coffee-for-your-head-powfu",
+   "held_as": "death bed (feat. beabadoobee) [coffee for your head]",
+   "held_artist": "Powfu",
+   "held_listeners": 8700,
+   "plain_title": "death bed [coffee for your head]",
+   "plain_artist": "Powfu",
+   "plain_listeners": 30,
+   "matched_as": "death bed [coffee for your head]",
+   "gain": -8670
+  },
+  {
+   "id": "disco-inferno-single-edit-the-trammps",
+   "held_as": "Disco Inferno (Single Edit)",
+   "held_artist": "The Trammps",
+   "held_listeners": 8747,
+   "plain_title": "Disco Inferno",
+   "plain_artist": "The Trammps",
+   "plain_listeners": 292286,
+   "matched_as": "Disco Inferno",
+   "gain": 283539
+  },
+  {
+   "id": "money-for-nothing-edit-dire-straits",
+   "held_as": "Money For Nothing (Edit)",
+   "held_artist": "Dire Straits",
+   "held_listeners": 9336,
+   "plain_title": "Money For Nothing",
+   "plain_artist": "Dire Straits",
+   "plain_listeners": 1184705,
+   "matched_as": "Money for Nothing",
+   "gain": 1175369
+  },
+  {
+   "id": "happier-than-ever-edit-billie-eilish",
+   "held_as": "Happier Than Ever (Edit)",
+   "held_artist": "Billie Eilish",
+   "held_listeners": 9674,
+   "plain_title": "Happier Than Ever",
+   "plain_artist": "Billie Eilish",
+   "plain_listeners": 1606753,
+   "matched_as": "Happier Than Ever",
+   "gain": 1597079
+  },
+  {
+   "id": "get-lucky-feat-pharrell-williams-radio-edit-daft-punk",
+   "held_as": "Get Lucky (feat. Pharrell Williams) [Radio Edit]",
+   "held_artist": "Daft Punk",
+   "held_listeners": 10001,
+   "plain_title": "Get Lucky",
+   "plain_artist": "Daft Punk",
+   "plain_listeners": 196918,
+   "matched_as": "Get Lucky (feat. Pharrell Williams)",
+   "gain": 186917
+  },
+  {
+   "id": "unchain-my-heart-90-s-version-joe-cocker",
+   "held_as": "Unchain My Heart (90's Version)",
+   "held_artist": "Joe Cocker",
+   "held_listeners": 10072,
+   "plain_title": "Unchain My Heart",
+   "plain_artist": "Joe Cocker",
+   "plain_listeners": 211426,
+   "matched_as": "Unchain My Heart",
+   "gain": 201354
+  },
+  {
+   "id": "destination-calabria-feat-crystal-waters-alex-gaudino",
+   "held_as": "Destination Calabria (feat. Crystal Waters)",
+   "held_artist": "Alex Gaudino",
+   "held_listeners": 10073,
+   "plain_title": "Destination Calabria",
+   "plain_artist": "Ale",
+   "plain_listeners": 1,
+   "matched_as": "Destination Calabria",
+   "gain": -10072
+  },
+  {
+   "id": "whatta-man-feat-en-vogue-salt-n-pepa",
+   "held_as": "Whatta Man (feat. En Vogue)",
+   "held_artist": "Salt-N-Pepa",
+   "held_listeners": 10761,
+   "plain_title": "Whatta Man",
+   "plain_artist": "Salt-N-Pepa",
+   "plain_listeners": 270813,
+   "matched_as": "Whatta Man",
+   "gain": 260052
+  },
+  {
+   "id": "move-on-up-single-edit-curtis-mayfield",
+   "held_as": "Move On Up (Single Edit)",
+   "held_artist": "Curtis Mayfield",
+   "held_listeners": 10796,
+   "plain_title": "Move On Up",
+   "plain_artist": "Curtis Mayfield",
+   "plain_listeners": 599472,
+   "matched_as": "Move On Up",
+   "gain": 588676
+  },
+  {
+   "id": "i-don-t-wanna-know-feat-enya-p-diddy-mario-winans",
+   "held_as": "I Don't Wanna Know (feat. Enya & P. Diddy)",
+   "held_artist": "Mario Winans",
+   "held_listeners": 11660,
+   "plain_title": "I Don't Wanna Know",
+   "plain_artist": "Mario Winans",
+   "plain_listeners": 126933,
+   "matched_as": "I Don't Wanna Know",
+   "gain": 115273
+  },
+  {
+   "id": "i-ll-be-missing-you-feat-faith-evans-112-puff-daddy",
+   "held_as": "I'll Be Missing You (feat. Faith Evans & 112)",
+   "held_artist": "Puff Daddy",
+   "held_listeners": 11878,
+   "plain_title": "I'll Be Missing You",
+   "plain_artist": "Puff Daddy",
+   "plain_listeners": 162612,
+   "matched_as": "I'll Be Missing You",
+   "gain": 150734
+  },
+  {
+   "id": "barbie-world-with-aqua-nicki-minaj-ice-spice",
+   "held_as": "Barbie World (with Aqua)",
+   "held_artist": "Nicki Minaj & Ice Spice",
+   "held_listeners": 12881,
+   "plain_title": "Barbie World",
+   "plain_artist": "Nicki Minaj",
+   "plain_listeners": 654,
+   "matched_as": "Barbie World",
+   "gain": -12227
+  },
+  {
+   "id": "here-with-me-feat-chvrches-marshmello",
+   "held_as": "Here With Me (feat. CHVRCHES)",
+   "held_artist": "Marshmello",
+   "held_listeners": 13063,
+   "plain_title": "Here With Me",
+   "plain_artist": "Marshmello",
+   "plain_listeners": 318094,
+   "matched_as": "Here With Me",
+   "gain": 305031
+  },
+  {
+   "id": "west-end-girls-7-mix-pet-shop-boys",
+   "held_as": "West End Girls (7'' Mix)",
+   "held_artist": "Pet Shop Boys",
+   "held_listeners": 13230,
+   "plain_title": "West End Girls",
+   "plain_artist": "Pet Shop Boys",
+   "plain_listeners": 544170,
+   "matched_as": "West End Girls",
+   "gain": 530940
+  },
+  {
+   "id": "sun-goes-down-feat-jasmine-thompson-radio-mix-robin-schulz",
+   "held_as": "Sun Goes Down (feat. Jasmine Thompson) [Radio Mix]",
+   "held_artist": "Robin Schulz",
+   "held_listeners": 14143,
+   "plain_title": "Sun Goes Down",
+   "plain_artist": "Robin Schulz",
+   "plain_listeners": 11179,
+   "matched_as": "Sun Goes Down",
+   "gain": -2964
+  },
+  {
+   "id": "electricity-feat-diplo-mark-ronson-silk-city-dua-lipa",
+   "held_as": "Electricity (feat. Diplo & Mark Ronson)",
+   "held_artist": "Silk City, Dua Lipa",
+   "held_listeners": 15437,
+   "plain_title": "Electricity",
+   "plain_artist": "Silk City, Dua Lipa",
+   "plain_listeners": 1734,
+   "matched_as": "Electricity",
+   "gain": -13703
+  },
+  {
+   "id": "i-can-see-you-taylor-s-version-from-the-vault-taylor-swift",
+   "held_as": "I Can See You (Taylor's Version) (From The Vault)",
+   "held_artist": "Taylor Swift",
+   "held_listeners": 15615,
+   "plain_title": "I Can See You (From The Vault)",
+   "plain_artist": "Taylor Swift",
+   "plain_listeners": 112,
+   "matched_as": "I Can See You (From The Vault)",
+   "gain": -15503
+  },
+  {
+   "id": "angel-feat-rayvon-shaggy",
+   "held_as": "Angel (feat. Rayvon)",
+   "held_artist": "Shaggy",
+   "held_listeners": 15748,
+   "plain_title": "Angel",
+   "plain_artist": "Shaggy",
+   "plain_listeners": 682798,
+   "matched_as": "Angel",
+   "gain": 667050
+  },
+  {
+   "id": "peaches-feat-daniel-caesar-giv-on-justin-bieber",
+   "held_as": "Peaches (feat. Daniel Caesar & GIVĒON)",
+   "held_artist": "Justin Bieber",
+   "held_listeners": 16286,
+   "plain_title": "Peaches",
+   "plain_artist": "Justin Bieber",
+   "plain_listeners": 28108,
+   "matched_as": "Peaches",
+   "gain": 11822
+  },
+  {
+   "id": "california-girls-mono-the-beach-boys",
+   "held_as": "California Girls (Mono)",
+   "held_artist": "The Beach Boys",
+   "held_listeners": 16448,
+   "plain_title": "California Girls",
+   "plain_artist": "The Beach Boys",
+   "plain_listeners": 407589,
+   "matched_as": "California Girls",
+   "gain": 391141
+  },
+  {
+   "id": "i-got-u-feat-jax-jones-duke-dumont",
+   "held_as": "I Got U (feat. Jax Jones)",
+   "held_artist": "Duke Dumont",
+   "held_listeners": 17620,
+   "plain_title": "I Got U",
+   "plain_artist": "Duke Dumont",
+   "plain_listeners": 409881,
+   "matched_as": "I Got U",
+   "gain": 392261
+  },
+  {
+   "id": "where-s-your-head-at-radio-edit-basement-jaxx",
+   "held_as": "Where's Your Head At (Radio Edit)",
+   "held_artist": "Basement Jaxx",
+   "held_listeners": 17771,
+   "plain_title": "Where's Your Head At",
+   "plain_artist": "Basement Jaxx",
+   "plain_listeners": 679925,
+   "matched_as": "Where's Your Head At",
+   "gain": 662154
+  },
+  {
+   "id": "no-diggity-feat-dr-dre-queen-pen-blackstreet",
+   "held_as": "No Diggity (feat. Dr. Dre & Queen Pen)",
+   "held_artist": "Blackstreet",
+   "held_listeners": 18443,
+   "plain_title": "No Diggity",
+   "plain_artist": "Blackstreet",
+   "plain_listeners": 1071810,
+   "matched_as": "No Diggity",
+   "gain": 1053367
+  },
+  {
+   "id": "somebody-s-watching-me-single-version-rockwell",
+   "held_as": "Somebody's Watching Me (Single Version)",
+   "held_artist": "Rockwell",
+   "held_listeners": 19651,
+   "plain_title": "Somebody's Watching Me",
+   "plain_artist": "Rockwell",
+   "plain_listeners": 779557,
+   "matched_as": "Somebody's Watching Me",
+   "gain": 759906
+  },
+  {
+   "id": "we-don-t-talk-anymore-feat-selena-gomez-charlie-puth",
+   "held_as": "We Don’t Talk Anymore (feat. Selena Gomez)",
+   "held_artist": "Charlie Puth",
+   "held_listeners": 20333,
+   "plain_title": "We Don’t Talk Anymore",
+   "plain_artist": "Charlie Puth",
+   "plain_listeners": 2465,
+   "matched_as": "We Don’t Talk Anymore",
+   "gain": -17868
+  },
+  {
+   "id": "ain-t-gonna-bump-no-more-with-no-big-fat-woman-joe-tex",
+   "held_as": "Ain't Gonna Bump No More (With No Big Fat Woman)",
+   "held_artist": "Joe Tex",
+   "held_listeners": 20524,
+   "plain_title": "Ain't Gonna Bump No More",
+   "plain_artist": "Joe Tex",
+   "plain_listeners": 3756,
+   "matched_as": "Ain't Gonna Bump No More",
+   "gain": -16768
+  },
+  {
+   "id": "call-on-me-radio-mix-eric-prydz",
+   "held_as": "Call on Me (Radio Mix)",
+   "held_artist": "Eric Prydz",
+   "held_listeners": 20658,
+   "plain_title": "Call on Me",
+   "plain_artist": "Eric Prydz",
+   "plain_listeners": 414769,
+   "matched_as": "Call On Me",
+   "gain": 394111
+  },
+  {
+   "id": "back-for-good-radio-mix-take-that",
+   "held_as": "Back for Good (Radio Mix)",
+   "held_artist": "Take That",
+   "held_listeners": 20717,
+   "plain_title": "Back for Good",
+   "plain_artist": "Take That",
+   "plain_listeners": 178688,
+   "matched_as": "Back for Good",
+   "gain": 157971
+  },
+  {
+   "id": "take-me-home-country-roads-original-version-john-denver",
+   "held_as": "Take Me Home, Country Roads (Original Version)",
+   "held_artist": "John Denver",
+   "held_listeners": 21328,
+   "plain_title": "Take Me Home, Country Roads",
+   "plain_artist": "John Denver",
+   "plain_listeners": 890779,
+   "matched_as": "Take Me Home, Country Roads",
+   "gain": 869451
+  },
+  {
+   "id": "how-soon-is-now-12-version-the-smiths",
+   "held_as": "How Soon Is Now? (12\" Version)",
+   "held_artist": "The Smiths",
+   "held_listeners": 21431,
+   "plain_title": "How Soon Is Now?",
+   "plain_artist": "The Smiths",
+   "plain_listeners": 653415,
+   "matched_as": "How Soon Is Now?",
+   "gain": 631984
+  },
+  {
+   "id": "girls-want-girls-feat-lil-baby-drake",
+   "held_as": "Girls Want Girls (feat. Lil Baby)",
+   "held_artist": "Drake",
+   "held_listeners": 21735,
+   "plain_title": "Girls Want Girls",
+   "plain_artist": "Drake",
+   "plain_listeners": 8071,
+   "matched_as": "Girls Want Girls",
+   "gain": -13664
+  },
+  {
+   "id": "who-s-that-girl-feat-eve-guy-sebastian",
+   "held_as": "Who's That Girl (feat. Eve)",
+   "held_artist": "Guy Sebastian",
+   "held_listeners": 21860,
+   "plain_title": "Who's That Girl",
+   "plain_artist": "Guy Sebastian",
+   "plain_listeners": 2972,
+   "matched_as": "Who's That Girl",
+   "gain": -18888
+  },
+  {
+   "id": "it-wasn-t-me-feat-ricardo-ducent-shaggy",
+   "held_as": "It Wasn't Me (feat. Ricardo Ducent)",
+   "held_artist": "Shaggy",
+   "held_listeners": 21992,
+   "plain_title": "It Wasn't Me",
+   "plain_artist": "Shaggy",
+   "plain_listeners": 1273390,
+   "matched_as": "It Wasn't Me",
+   "gain": 1251398
+  },
+  {
+   "id": "is-it-over-now-taylor-s-version-from-the-vault-taylor-swift",
+   "held_as": "Is It Over Now? (Taylor's Version) [From The Vault]",
+   "held_artist": "Taylor Swift",
+   "held_listeners": 22128,
+   "plain_title": "Is It Over Now? [From The Vault]",
+   "plain_artist": "Taylor Swift",
+   "plain_listeners": 16,
+   "matched_as": "Is It Over Now? [From The Vault]",
+   "gain": -22112
+  },
+  {
+   "id": "the-way-you-make-me-feel-single-version-michael-jackson",
+   "held_as": "The Way You Make Me Feel (Single Version)",
+   "held_artist": "Michael Jackson",
+   "held_listeners": 23109,
+   "plain_title": "The Way You Make Me Feel",
+   "plain_artist": "Michael Jackson",
+   "plain_listeners": 776268,
+   "matched_as": "The Way You Make Me Feel",
+   "gain": 753159
+  },
+  {
+   "id": "common-people-full-length-version-pulp",
+   "held_as": "Common People (Full Length Version)",
+   "held_artist": "Pulp",
+   "held_listeners": 23158,
+   "plain_title": "Common People",
+   "plain_artist": "Pulp",
+   "plain_listeners": 616137,
+   "matched_as": "Common People",
+   "gain": 592979
+  },
+  {
+   "id": "here-comes-the-hotstepper-heartical-mix-ini-kamoze",
+   "held_as": "Here Comes the Hotstepper (Heartical Mix)",
+   "held_artist": "Ini Kamoze",
+   "held_listeners": 23768,
+   "plain_title": "Here Comes the Hotstepper",
+   "plain_artist": "Ini Kamoze",
+   "plain_listeners": 261669,
+   "matched_as": "Here Comes the Hotstepper",
+   "gain": 237901
+  },
+  {
+   "id": "forever-main-version-chris-brown",
+   "held_as": "Forever (Main Version)",
+   "held_artist": "Chris Brown",
+   "held_listeners": 24757,
+   "plain_title": "Forever",
+   "plain_artist": "Chris Brown",
+   "plain_listeners": 1144589,
+   "matched_as": "Forever",
+   "gain": 1119832
+  },
+  {
+   "id": "crave-you-feat-giselle-flight-facilities",
+   "held_as": "Crave You (feat. Giselle)",
+   "held_artist": "Flight Facilities",
+   "held_listeners": 25515,
+   "plain_title": "Crave You",
+   "plain_artist": "Flight Facilities",
+   "plain_listeners": 483369,
+   "matched_as": "Crave you",
+   "gain": 457854
+  },
+  {
+   "id": "papercuts-feat-vera-blue-illy",
+   "held_as": "Papercuts (feat. Vera Blue)",
+   "held_artist": "Illy",
+   "held_listeners": 28865,
+   "plain_title": "Papercuts",
+   "plain_artist": "Illy",
+   "plain_listeners": 1998,
+   "matched_as": "Papercuts",
+   "gain": -26867
+  },
+  {
+   "id": "middle-feat-bipolar-sunshine-dj-snake",
+   "held_as": "Middle (feat. Bipolar Sunshine)",
+   "held_artist": "DJ Snake",
+   "held_listeners": 28905,
+   "plain_title": "Middle",
+   "plain_artist": "DJ Snake",
+   "plain_listeners": 714829,
+   "matched_as": "Middle",
+   "gain": 685924
+  },
+  {
+   "id": "cold-heart-pnau-remix-elton-john-and-dua-lipa",
+   "held_as": "Cold Heart (PNAU Remix)",
+   "held_artist": "Elton John & Dua Lipa",
+   "held_listeners": 29547,
+   "plain_title": "Cold Heart",
+   "plain_artist": "Elton John",
+   "plain_listeners": 29638,
+   "matched_as": "Cold Heart",
+   "gain": 91
+  },
+  {
+   "id": "hallelujah-club-mix-happy-mondays",
+   "held_as": "Hallelujah (Club Mix)",
+   "held_artist": "Happy Mondays",
+   "held_listeners": 29618,
+   "plain_title": "Hallelujah",
+   "plain_artist": "Happy Mondays",
+   "plain_listeners": 28798,
+   "matched_as": "Hallelujah",
+   "gain": -820
+  },
+  {
+   "id": "silence-feat-khalid-marshmello",
+   "held_as": "Silence (feat. Khalid)",
+   "held_artist": "Marshmello",
+   "held_listeners": 31923,
+   "plain_title": "Silence",
+   "plain_artist": "Marshmello",
+   "plain_listeners": 693365,
+   "matched_as": "Silence",
+   "gain": 661442
+  },
+  {
+   "id": "physical-remastered-2021-olivia-newton-john",
+   "held_as": "Physical (Remastered 2021)",
+   "held_artist": "Olivia Newton-John",
+   "held_listeners": 32276,
+   "plain_title": "Physical",
+   "plain_artist": "Olivia Newton-John",
+   "plain_listeners": 201749,
+   "matched_as": "Physical",
+   "gain": 169473
+  },
+  {
+   "id": "come-together-2019-mix-the-beatles",
+   "held_as": "Come Together (2019 Mix)",
+   "held_artist": "The Beatles",
+   "held_listeners": 32807,
+   "plain_title": "Come Together",
+   "plain_artist": "The Beatles",
+   "plain_listeners": 1185227,
+   "matched_as": "Come Together",
+   "gain": 1152420
+  },
+  {
+   "id": "clair-de-lune-feat-christine-hoberg-flight-facilities",
+   "held_as": "Clair de Lune (feat. Christine Hoberg)",
+   "held_artist": "Flight Facilities",
+   "held_listeners": 34288,
+   "plain_title": "Clair de Lune",
+   "plain_artist": "Flight Facilities",
+   "plain_listeners": 136030,
+   "matched_as": "Clair De Lune",
+   "gain": 101742
+  },
+  {
+   "id": "you-don-t-own-me-feat-g-eazy-grace",
+   "held_as": "You Don't Own Me (feat. G-Eazy)",
+   "held_artist": "Grace",
+   "held_listeners": 37324,
+   "plain_title": "You Don't Own Me",
+   "plain_artist": "Grace",
+   "plain_listeners": 95803,
+   "matched_as": "You Don't Own Me",
+   "gain": 58479
+  },
+  {
+   "id": "you-me-feat-eliza-doolittle-disclosure",
+   "held_as": "You & Me (feat. Eliza Doolittle)",
+   "held_artist": "Disclosure",
+   "held_listeners": 37883,
+   "plain_title": "You & Me",
+   "plain_artist": "Disclosure",
+   "plain_listeners": 37883,
+   "matched_as": "You & Me (feat. Eliza Doolittle)",
+   "gain": 0
+  },
+  {
+   "id": "magnets-feat-lorde-disclosure",
+   "held_as": "Magnets (feat. Lorde)",
+   "held_artist": "Disclosure",
+   "held_listeners": 39027,
+   "plain_title": "Magnets",
+   "plain_artist": "Disclosure",
+   "plain_listeners": 453467,
+   "matched_as": "Magnets",
+   "gain": 414440
+  },
+  {
+   "id": "spectrum-feat-matthew-koma-zedd",
+   "held_as": "Spectrum (feat. Matthew Koma)",
+   "held_artist": "Zedd",
+   "held_listeners": 40579,
+   "plain_title": "Spectrum",
+   "plain_artist": "Zedd",
+   "plain_listeners": 40579,
+   "matched_as": "Spectrum (feat. Matthew Koma)",
+   "gain": 0
+  },
+  {
+   "id": "here-comes-the-sun-2019-mix-the-beatles",
+   "held_as": "Here Comes the Sun (2019 Mix)",
+   "held_artist": "The Beatles",
+   "held_listeners": 40711,
+   "plain_title": "Here Comes the Sun",
+   "plain_artist": "The Beatles",
+   "plain_listeners": 1041645,
+   "matched_as": "Here Comes the Sun",
+   "gain": 1000934
+  },
+  {
+   "id": "sandstorm-radio-edit-darude",
+   "held_as": "Sandstorm (Radio Edit)",
+   "held_artist": "Darude",
+   "held_listeners": 44265,
+   "plain_title": "Sandstorm",
+   "plain_artist": "Darude",
+   "plain_listeners": 920664,
+   "matched_as": "Sandstorm",
+   "gain": 876399
+  },
+  {
+   "id": "the-warrior-feat-patty-smyth-scandal",
+   "held_as": "The Warrior (feat. Patty Smyth)",
+   "held_artist": "Scandal",
+   "held_listeners": 44383,
+   "plain_title": "The Warrior",
+   "plain_artist": "Scandal",
+   "plain_listeners": 37687,
+   "matched_as": "The Warrior",
+   "gain": -6696
+  },
+  {
+   "id": "music-sounds-better-with-you-radio-edit-stardust",
+   "held_as": "Music Sounds Better with You (Radio Edit)",
+   "held_artist": "Stardust",
+   "held_listeners": 47294,
+   "plain_title": "Music Sounds Better with You",
+   "plain_artist": "Stardust",
+   "plain_listeners": 851223,
+   "matched_as": "Music Sounds Better With You",
+   "gain": 803929
+  },
+  {
+   "id": "let-me-love-you-feat-justin-bieber-dj-snake",
+   "held_as": "Let Me Love You (feat. Justin Bieber)",
+   "held_artist": "DJ Snake",
+   "held_listeners": 47555,
+   "plain_title": "Let Me Love You",
+   "plain_artist": "DJ Snake",
+   "plain_listeners": 1346836,
+   "matched_as": "Let Me Love You",
+   "gain": 1299281
+  },
+  {
+   "id": "elastic-heart-feat-the-weeknd-diplo-sia",
+   "held_as": "Elastic Heart (feat. The Weeknd & Diplo)",
+   "held_artist": "Sia",
+   "held_listeners": 50039,
+   "plain_title": "Elastic Heart",
+   "plain_artist": "Sia",
+   "plain_listeners": 1009237,
+   "matched_as": "Elastic Heart",
+   "gain": 959198
+  },
+  {
+   "id": "sing-it-back-feat-naila-ash",
+   "held_as": "Sing It Back (feat. Naila)",
+   "held_artist": "Ash",
+   "held_listeners": 53885,
+   "plain_title": "Sing It Back",
+   "plain_artist": "Ash",
+   "plain_listeners": 21555,
+   "matched_as": "Sing it back",
+   "gain": -32330
+  },
+  {
+   "id": "me-against-the-music-feat-madonna-britney-spears",
+   "held_as": "Me Against the Music (feat. Madonna)",
+   "held_artist": "Britney Spears",
+   "held_listeners": 55966,
+   "plain_title": "Me Against the Music",
+   "plain_artist": "Britney Spears",
+   "plain_listeners": 121492,
+   "matched_as": "Me Against the Music",
+   "gain": 65526
+  },
+  {
+   "id": "the-way-i-are-feat-keri-hilson-d-o-e-timbaland",
+   "held_as": "The Way I Are (feat. Keri Hilson & D.O.E.)",
+   "held_artist": "Timbaland",
+   "held_listeners": 60714,
+   "plain_title": "The Way I Are",
+   "plain_artist": "Timbaland",
+   "plain_listeners": 1760837,
+   "matched_as": "The Way I Are",
+   "gain": 1700123
+  },
+  {
+   "id": "into-you-feat-ashanti-fabolous",
+   "held_as": "Into You (feat. Ashanti)",
+   "held_artist": "Fabolous",
+   "held_listeners": 61447,
+   "plain_title": "Into You",
+   "plain_artist": "Fabolous",
+   "plain_listeners": 47443,
+   "matched_as": "Into You",
+   "gain": -14004
+  },
+  {
+   "id": "light-it-up-feat-nyla-major-lazer",
+   "held_as": "Light It Up (feat. Nyla)",
+   "held_artist": "Major Lazer",
+   "held_listeners": 64503,
+   "plain_title": "Light It Up",
+   "plain_artist": "Major Lazer",
+   "plain_listeners": 130706,
+   "matched_as": "Light It Up",
+   "gain": 66203
+  },
+  {
+   "id": "rock-you-like-a-hurricane-2015-remaster-scorpions",
+   "held_as": "Rock You Like a Hurricane (2015 - Remaster)",
+   "held_artist": "Scorpions",
+   "held_listeners": 66757,
+   "plain_title": "Rock You Like a Hurricane",
+   "plain_artist": "Scorpions",
+   "plain_listeners": 981485,
+   "matched_as": "Rock You Like a Hurricane",
+   "gain": 914728
+  },
+  {
+   "id": "break-your-heart-feat-ludacris-taio-cruz",
+   "held_as": "Break Your Heart (feat. Ludacris)",
+   "held_artist": "Taio Cruz",
+   "held_listeners": 67064,
+   "plain_title": "Break Your Heart",
+   "plain_artist": "Taio Cruz",
+   "plain_listeners": 1257632,
+   "matched_as": "Break Your Heart",
+   "gain": 1190568
+  },
+  {
+   "id": "broken-feat-amy-lee-seether",
+   "held_as": "Broken (feat. Amy Lee)",
+   "held_artist": "Seether",
+   "held_listeners": 68249,
+   "plain_title": "Broken",
+   "plain_artist": "Seether",
+   "plain_listeners": 682094,
+   "matched_as": "Broken",
+   "gain": 613845
+  },
+  {
+   "id": "beat-it-single-version-michael-jackson",
+   "held_as": "Beat It (Single Version)",
+   "held_artist": "Michael Jackson",
+   "held_listeners": 68330,
+   "plain_title": "Beat It",
+   "plain_artist": "Michael Jackson",
+   "plain_listeners": 2842766,
+   "matched_as": "Beat It",
+   "gain": 2774436
+  },
+  {
+   "id": "blurred-lines-feat-t-i-pharrell-robin-thicke",
+   "held_as": "Blurred Lines (feat. T.I. & Pharrell)",
+   "held_artist": "Robin Thicke",
+   "held_listeners": 69884,
+   "plain_title": "Blurred Lines",
+   "plain_artist": "Robin Thicke",
+   "plain_listeners": 1084460,
+   "matched_as": "Blurred Lines",
+   "gain": 1014576
+  },
+  {
+   "id": "i-wish-feat-mabel-joel-corry",
+   "held_as": "I Wish (feat. Mabel)",
+   "held_artist": "Joel Corry",
+   "held_listeners": 72438,
+   "plain_title": "I Wish",
+   "plain_artist": "Joel Corry",
+   "plain_listeners": 2401,
+   "matched_as": "I Wish",
+   "gain": -70037
+  },
+  {
+   "id": "rock-with-you-single-version-michael-jackson",
+   "held_as": "Rock with You (Single Version)",
+   "held_artist": "Michael Jackson",
+   "held_listeners": 78044,
+   "plain_title": "Rock with You",
+   "plain_artist": "Michael Jackson",
+   "plain_listeners": 677068,
+   "matched_as": "Rock with You",
+   "gain": 599024
+  },
+  {
+   "id": "beep-feat-will-i-am-the-pussycat-dolls",
+   "held_as": "Beep (feat. will.i.am)",
+   "held_artist": "The Pussycat Dolls",
+   "held_listeners": 79634,
+   "plain_title": "Beep",
+   "plain_artist": "The Pussycat Dolls",
+   "plain_listeners": 318540,
+   "matched_as": "Beep",
+   "gain": 238906
+  },
+  {
+   "id": "party-rock-anthem-feat-lauren-bennett-goonrock-lmfao",
+   "held_as": "Party Rock Anthem (feat. Lauren Bennett & GoonRock)",
+   "held_artist": "LMFAO",
+   "held_listeners": 81986,
+   "plain_title": "Party Rock Anthem",
+   "plain_artist": "LMFAO",
+   "plain_listeners": 1547884,
+   "matched_as": "Party Rock Anthem",
+   "gain": 1465898
+  },
+  {
+   "id": "price-tag-feat-b-o-b-jessie-j",
+   "held_as": "Price Tag (feat. B.o.B)",
+   "held_artist": "Jessie J",
+   "held_listeners": 83192,
+   "plain_title": "Price Tag",
+   "plain_artist": "Jessie J",
+   "plain_listeners": 974302,
+   "matched_as": "Price Tag",
+   "gain": 891110
+  },
+  {
+   "id": "endless-love-with-mariah-carey-luther-vandross",
+   "held_as": "Endless Love (with Mariah Carey)",
+   "held_artist": "Luther Vandross",
+   "held_listeners": 83960,
+   "plain_title": "Endless Love",
+   "plain_artist": "Luther Vandross",
+   "plain_listeners": 44592,
+   "matched_as": "Endless Love",
+   "gain": -39368
+  },
+  {
+   "id": "pma-feat-pale-waves-all-time-low",
+   "held_as": "PMA (feat. Pale Waves)",
+   "held_artist": "All Time Low",
+   "held_listeners": 83978,
+   "plain_title": "PMA",
+   "plain_artist": "All Time Low",
+   "plain_listeners": 2555,
+   "matched_as": "PMA",
+   "gain": -81423
+  },
+  {
+   "id": "firestone-feat-conrad-sewell-kygo",
+   "held_as": "Firestone (feat. Conrad Sewell)",
+   "held_artist": "Kygo",
+   "held_listeners": 89285,
+   "plain_title": "Firestone",
+   "plain_artist": "Kygo",
+   "plain_listeners": 612614,
+   "matched_as": "Firestone",
+   "gain": 523329
+  },
+  {
+   "id": "work-feat-drake-rihanna",
+   "held_as": "Work (feat. Drake)",
+   "held_artist": "Rihanna",
+   "held_listeners": 96800,
+   "plain_title": "Work",
+   "plain_artist": "Rihanna",
+   "plain_listeners": 1253049,
+   "matched_as": "Work",
+   "gain": 1156249
+  },
+  {
+   "id": "what-is-love-7-mix-haddaway",
+   "held_as": "What Is Love (7\" Mix)",
+   "held_artist": "Haddaway",
+   "held_listeners": 99592,
+   "plain_title": "What Is Love",
+   "plain_artist": "Haddaway",
+   "plain_listeners": 685033,
+   "matched_as": "What Is Love",
+   "gain": 585441
+  },
+  {
+   "id": "clarity-feat-foxes-zedd",
+   "held_as": "Clarity (feat. Foxes)",
+   "held_artist": "Zedd",
+   "held_listeners": 100861,
+   "plain_title": "Clarity",
+   "plain_artist": "Zedd",
+   "plain_listeners": 1227243,
+   "matched_as": "Clarity",
+   "gain": 1126382
+  },
+  {
+   "id": "jerusalema-feat-nomcebo-zikode-master-kg",
+   "held_as": "Jerusalema (feat. Nomcebo Zikode)",
+   "held_artist": "Master KG",
+   "held_listeners": 103766,
+   "plain_title": "Jerusalema",
+   "plain_artist": "Master KG",
+   "plain_listeners": 5117,
+   "matched_as": "Jerusalema",
+   "gain": -98649
+  },
+  {
+   "id": "free-feat-emeli-sande-rudimental",
+   "held_as": "Free (feat. Emeli Sandé)",
+   "held_artist": "Rudimental",
+   "held_listeners": 104054,
+   "plain_title": "Free",
+   "plain_artist": "Rudimental",
+   "plain_listeners": 9316,
+   "matched_as": "Free",
+   "gain": -94738
+  },
+  {
+   "id": "save-the-world-radio-mix-swedish-house-mafia",
+   "held_as": "Save the World (Radio Mix)",
+   "held_artist": "Swedish House Mafia",
+   "held_listeners": 104810,
+   "plain_title": "Save the World",
+   "plain_artist": "Swedish House Mafia",
+   "plain_listeners": 327060,
+   "matched_as": "Save the World",
+   "gain": 222250
+  },
+  {
+   "id": "that-s-what-friends-are-for-with-elton-john-gladys-knight-stevie-wonder-dionne-warwick",
+   "held_as": "That's What Friends Are For (with Elton John, Gladys Knight & Stevie Wonder)",
+   "held_artist": "Dionne Warwick",
+   "held_listeners": 106171,
+   "plain_title": "That's What Friends Are For",
+   "plain_artist": "Dionne Warwick",
+   "plain_listeners": 64905,
+   "matched_as": "That's What Friends Are For",
+   "gain": -41266
+  },
+  {
+   "id": "dreamin-feat-daya-dom-dolla",
+   "held_as": "Dreamin (feat. Daya)",
+   "held_artist": "Dom Dolla",
+   "held_listeners": 108302,
+   "plain_title": "Dreamin",
+   "plain_artist": "Dom Dolla",
+   "plain_listeners": 649,
+   "matched_as": "Dreamin",
+   "gain": -107653
+  },
+  {
+   "id": "problem-feat-iggy-azalea-ariana-grande",
+   "held_as": "Problem (feat. Iggy Azalea)",
+   "held_artist": "Ariana Grande",
+   "held_listeners": 119335,
+   "plain_title": "Problem",
+   "plain_artist": "Ariana Grande",
+   "plain_listeners": 1386223,
+   "matched_as": "Problem",
+   "gain": 1266888
+  },
+  {
+   "id": "the-monster-feat-rihanna-eminem",
+   "held_as": "The Monster (feat. Rihanna)",
+   "held_artist": "Eminem",
+   "held_listeners": 122340,
+   "plain_title": "The Monster",
+   "plain_artist": "Eminem",
+   "plain_listeners": 1159299,
+   "matched_as": "The Monster",
+   "gain": 1036959
+  },
+  {
+   "id": "payphone-feat-wiz-khalifa-maroon-5",
+   "held_as": "Payphone (feat. Wiz Khalifa)",
+   "held_artist": "Maroon 5",
+   "held_listeners": 122464,
+   "plain_title": "Payphone",
+   "plain_artist": "Maroon 5",
+   "plain_listeners": 1752856,
+   "matched_as": "Payphone",
+   "gain": 1630392
+  },
+  {
+   "id": "don-t-let-me-down-feat-daya-the-chainsmokers",
+   "held_as": "Don't Let Me Down (feat. Daya)",
+   "held_artist": "The Chainsmokers",
+   "held_listeners": 127211,
+   "plain_title": "Don't Let Me Down",
+   "plain_artist": "The Chainsmokers",
+   "plain_listeners": 999478,
+   "matched_as": "Don't Let Me Down",
+   "gain": 872267
+  },
+  {
+   "id": "feel-so-close-radio-edit-calvin-harris",
+   "held_as": "Feel So Close (Radio Edit)",
+   "held_artist": "Calvin Harris",
+   "held_listeners": 129321,
+   "plain_title": "Feel So Close",
+   "plain_artist": "Calvin Harris",
+   "plain_listeners": 197322,
+   "matched_as": "Feel So Close",
+   "gain": 68001
+  },
+  {
+   "id": "i-wish-i-was-a-punk-rocker-with-flowers-in-my-hair-sandi-thom",
+   "held_as": "I Wish I Was a Punk Rocker (with Flowers in My Hair)",
+   "held_artist": "Sandi Thom",
+   "held_listeners": 132673,
+   "plain_title": "I Wish I Was a Punk Rocker",
+   "plain_artist": "Sandi Thom",
+   "plain_listeners": 54175,
+   "matched_as": "I Wish I was a Punk Rocker",
+   "gain": -78498
+  },
+  {
+   "id": "roses-feat-rozes-the-chainsmokers",
+   "held_as": "Roses (feat. ROZES)",
+   "held_artist": "The Chainsmokers",
+   "held_listeners": 137867,
+   "plain_title": "Roses",
+   "plain_artist": "The Chainsmokers",
+   "plain_listeners": 892772,
+   "matched_as": "Roses",
+   "gain": 754905
+  },
+  {
+   "id": "beneath-your-beautiful-feat-emeli-sande-labrinth",
+   "held_as": "Beneath Your Beautiful (feat. Emeli Sandé)",
+   "held_artist": "Labrinth",
+   "held_listeners": 138251,
+   "plain_title": "Beneath Your Beautiful",
+   "plain_artist": "Labrinth",
+   "plain_listeners": 170875,
+   "matched_as": "Beneath Your Beautiful",
+   "gain": 32624
+  },
+  {
+   "id": "right-round-feat-ke-ha-flo-rida",
+   "held_as": "Right Round (feat. Ke$ha)",
+   "held_artist": "Flo Rida",
+   "held_listeners": 145168,
+   "plain_title": "Right Round",
+   "plain_artist": "Flo Rida",
+   "plain_listeners": 1238429,
+   "matched_as": "Right Round",
+   "gain": 1093261
+  },
+  {
+   "id": "born-to-be-alive-mix-79-patrick-hernandez",
+   "held_as": "Born to Be Alive (Mix 79)",
+   "held_artist": "Patrick Hernandez",
+   "held_listeners": 145172,
+   "plain_title": "Born to Be Alive",
+   "plain_artist": "Patrick Hernandez",
+   "plain_listeners": 145172,
+   "matched_as": "Born to Be Alive",
+   "gain": 0
+  },
+  {
+   "id": "just-dance-feat-colby-o-donis-lady-gaga",
+   "held_as": "Just Dance (feat. Colby O'Donis)",
+   "held_artist": "Lady Gaga",
+   "held_listeners": 147166,
+   "plain_title": "Just Dance",
+   "plain_artist": "Lady Gaga",
+   "plain_listeners": 2923900,
+   "matched_as": "Just Dance",
+   "gain": 2776734
+  },
+  {
+   "id": "stan-feat-dido-eminem",
+   "held_as": "Stan (feat. Dido)",
+   "held_artist": "Eminem",
+   "held_listeners": 150484,
+   "plain_title": "Stan",
+   "plain_artist": "Eminem",
+   "plain_listeners": 1667572,
+   "matched_as": "Stan",
+   "gain": 1517088
+  },
+  {
+   "id": "praise-you-radio-edit-fatboy-slim",
+   "held_as": "Praise You (Radio Edit)",
+   "held_artist": "Fatboy Slim",
+   "held_listeners": 176089,
+   "plain_title": "Praise You",
+   "plain_artist": "Fatboy Slim",
+   "plain_listeners": 980661,
+   "matched_as": "Praise You",
+   "gain": 804572
+  },
+  {
+   "id": "feel-the-love-feat-john-newman-rudimental",
+   "held_as": "Feel the Love (feat. John Newman)",
+   "held_artist": "Rudimental",
+   "held_listeners": 181828,
+   "plain_title": "Feel the Love",
+   "plain_artist": "Rudimental",
+   "plain_listeners": 181828,
+   "matched_as": "Feel the Love - feat. John Newman",
+   "gain": 0
+  },
+  {
+   "id": "love-the-way-you-lie-feat-rihanna-eminem",
+   "held_as": "Love the Way You Lie (feat. Rihanna)",
+   "held_artist": "Eminem",
+   "held_listeners": 184687,
+   "plain_title": "Love the Way You Lie",
+   "plain_artist": "Eminem",
+   "plain_listeners": 1665729,
+   "matched_as": "Love the Way You Lie",
+   "gain": 1481042
+  },
+  {
+   "id": "4-minutes-feat-justin-timberlake-timbaland-madonna",
+   "held_as": "4 Minutes (feat. Justin Timberlake & Timbaland)",
+   "held_artist": "Madonna",
+   "held_listeners": 201703,
+   "plain_title": "4 Minutes",
+   "plain_artist": "Madonna",
+   "plain_listeners": 201703,
+   "matched_as": "4 Minutes",
+   "gain": 0
+  },
+  {
+   "id": "ever-fallen-in-love-with-someone-you-shouldn-t-ve-buzzcocks",
+   "held_as": "Ever Fallen in Love (with Someone You Shouldn't've)",
+   "held_artist": "Buzzcocks",
+   "held_listeners": 202188,
+   "plain_title": "Ever Fallen in Love",
+   "plain_artist": "Buzzcocks",
+   "plain_listeners": 202188,
+   "matched_as": "Ever Fallen in Love (With Someone You Shouldn't've)?",
+   "gain": 0
+  }
+ ]
+}
