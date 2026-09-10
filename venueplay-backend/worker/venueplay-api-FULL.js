@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '10 Sep 2026, 16:53 · d0b63875';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Sep 2026, 16:56 · 0e4d4af3';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -419,6 +419,72 @@ async function handleCheckout(request, env, json) {
   return json(embedded ? { client_secret: session.client_secret } : { url: session.url });
 }
 
+/* ---- Has this Stripe event already been handled? (migration 79) ----
+
+   Stripe RETRIES a webhook it does not get a 2xx for, and can deliver the same
+   event more than once even when it did. Until this, every retry ran every
+   branch again. Today the damage is duplicate emails and duplicate audit rows
+   rather than duplicate money, because no money-moving Stripe call sits on this
+   path and each branch happens to be individually guarded. That is luck. The
+   next branch somebody writes inherits none of it.
+
+   FAILS OPEN, ALWAYS. Every error path here returns 'go'. If the table is not
+   there yet, if Supabase is having a moment, if the reply is not what we expect:
+   handle the event, exactly as this Worker did before the ledger existed. A
+   webhook that is dropped because the bookkeeping broke is far worse than one
+   handled twice, which is the thing we were already living with.
+*/
+const VPA_EVENT_STALE_MS = 5 * 60 * 1000;   // longer than any branch here takes
+
+async function vpaClaimStripeEvent(env, event) {
+  const id = event && event.id;
+  if (!id || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return 'go';
+  try {
+    /* ONE ATOMIC CLAIM. resolution=ignore-duplicates makes this an insert that
+       does nothing on a primary key clash, so the row comes back to exactly ONE
+       of two deliveries that arrive together. Reading first and then inserting
+       would be the same race this whole function exists to close. */
+    const res = await fetch(env.SUPABASE_URL + '/rest/v1/vp_stripe_events', {
+      method: 'POST',
+      headers: { ...vpaHeaders(env), 'Prefer': 'resolution=ignore-duplicates,return=representation' },
+      body: JSON.stringify({ event_id: String(id), event_type: (event.type || null) }),
+    });
+    if (!res.ok) return 'go';                        // includes "no such table": no ledger, old behaviour
+    const rows = await res.json().catch(() => []);
+    if (Array.isArray(rows) && rows.length) return 'go';   // we got it
+
+    // Somebody already holds it. Finished, running now, or died halfway?
+    const prev = await vpaSelect(env, 'vp_stripe_events',
+      'event_id=eq.' + encodeURIComponent(String(id)) + '&select=claimed_at,completed_at,attempts&limit=1');
+    const row = prev && prev[0];
+    if (!row) return 'go';
+    if (row.completed_at) return 'skip';             // a real duplicate
+    const age = Date.now() - Date.parse(row.claimed_at || '');
+    if (!(age > VPA_EVENT_STALE_MS)) return 'skip';  // another delivery is mid-flight right now
+    /* Past the window with no completion: the attempt that claimed it died. Take
+       it over rather than strand it, because an event nobody will ever finish is
+       the one failure a ledger must not introduce. */
+    await fetch(env.SUPABASE_URL + '/rest/v1/vp_stripe_events?event_id=eq.' + encodeURIComponent(String(id)), {
+      method: 'PATCH',
+      headers: { ...vpaHeaders(env), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ claimed_at: new Date().toISOString(), attempts: (Number(row.attempts) || 1) + 1 }),
+    }).catch(() => {});
+    return 'go';
+  } catch (_) { return 'go'; }
+}
+
+async function vpaFinishStripeEvent(env, event) {
+  const id = event && event.id;
+  if (!id || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return;
+  try {
+    await fetch(env.SUPABASE_URL + '/rest/v1/vp_stripe_events?event_id=eq.' + encodeURIComponent(String(id)), {
+      method: 'PATCH',
+      headers: { ...vpaHeaders(env), 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ completed_at: new Date().toISOString() }),
+    });
+  } catch (_) { /* the next delivery ages it out; never throw out of a webhook */ }
+}
+
 /* ------------------------------ /webhook ------------------------------ */
 async function handleWebhook(request, env, cors) {
   const sig = request.headers.get('Stripe-Signature') || '';
@@ -428,6 +494,15 @@ async function handleWebhook(request, env, cors) {
   if (!ok) return new Response('bad signature', { status: 400, headers: cors });
 
   const event = JSON.parse(raw);
+
+  /* AFTER the signature, BEFORE any handling. Signature first because an unsigned
+     event must never be allowed to write a row at all, let alone claim an id that
+     would then make us ignore the real one. */
+  if ((await vpaClaimStripeEvent(env, event)) === 'skip') {
+    // 200 is the whole point: it is what tells Stripe to stop retrying.
+    return new Response('already handled', { status: 200, headers: cors });
+  }
+
   if (event.type === 'checkout.session.completed') {
     const s = event.data.object;
     const rowId = s.client_reference_id || (s.metadata && s.metadata.row_id);
@@ -513,6 +588,10 @@ async function handleWebhook(request, env, cors) {
   if (event.type === 'invoice.paid') {
     await vpaReactivateOnPayment(env, event.data.object && event.data.object.customer);
   }
+  /* Marked finished only HERE, at the bottom. Anything above that throws leaves
+     completed_at null, so Stripe's retry finds an unfinished claim and, once the
+     stale window has passed, takes it over and runs it properly. */
+  await vpaFinishStripeEvent(env, event);
   return new Response('ok', { status: 200, headers: cors });
 }
 
