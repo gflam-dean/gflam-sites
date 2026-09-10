@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '10 Sep 2026, 16:15 · 848abd2f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '10 Sep 2026, 17:24 · c88fa0a5';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -324,9 +324,22 @@ async function sweepStaleSessions(env, staleHours) {
   const cutoff = new Date(Date.now() - STALE_HOURS * 3600 * 1000).toISOString();
   let rows = [];
   try {
+    /* ASK FOR "NOT ENDED", NOT FOR A LIST OF STATUSES.
+
+       This used to be status=in.(lobby,running,paused). A session at the-average-joe
+       was opened on 26 Aug 2026, was never ended, and sat there until 10 Sep with four
+       players who had actually played and three over the venue's cap. Its status was
+       'cancelled', which is not in that list, so the sweep never even asked about it.
+       Fifteen nightly runs, every one of them reporting a quiet night.
+
+       'cancelled' is in the table's CHECK constraint and NOTHING IN THIS PRODUCT EVER
+       WRITES IT. It is a state with no producer, which is exactly the kind that gets
+       left out of a whitelist, and any status added later would inherit the same fault
+       silently. ended_at is what "closed" means everywhere else that counts: the
+       metering view, HQ, and check-stale-sessions.py. So ask for that. */
     rows = await sbGet(env, 'vp_sessions',
-      'status=in.(lobby,running,paused)&opened_at=lt.' + enc(cutoff) +
-      '&select=id,venue_id,opened_at&order=opened_at.asc&limit=200');
+      'ended_at=is.null&opened_at=lt.' + enc(cutoff) +
+      '&select=id,venue_id,opened_at,status&order=opened_at.asc&limit=200');
   } catch (e) {
     return { found: 0, closed: 0, failed: 0, error: String((e && e.message) || e) };
   }
@@ -335,7 +348,16 @@ async function sweepStaleSessions(env, staleHours) {
   for (const s of rows) {
     try {
       const session = await getSession(env, s.id);
-      if (session.status === 'finished' || session.status === 'cancelled') continue;
+      // Somebody closed it between listing and now. ended_at, not status, for the reason above.
+      if (session.ended_at) continue;
+      /* A NIGHT THAT RAN GETS BILLED. ANYTHING ELSE GETS CLOSED AND NOT BILLED.
+         lobby, running and paused are the three states a real night passes through, and
+         those bill exactly as they did before. A status outside that set reached here
+         only because nothing in this product writes it, so nobody can say what it was
+         meant to mean, and inventing an invoice from a state whose meaning is undefined
+         is the worse of the two mistakes. Close it so it stops being invisible, say so
+         in the log, and leave the money alone. */
+      const ranANight = (session.status === 'lobby' || session.status === 'running' || session.status === 'paused');
       // Exactly the sequence handleSessionClose uses, so a swept night is billed and
       // recorded identically to one the host closed themselves.
       await sbPatch(env, 'vp_games', 'session_id=eq.' + enc(session.id) + '&status=eq.running',
@@ -343,7 +365,13 @@ async function sweepStaleSessions(env, staleHours) {
       await sbPatch(env, 'vp_sessions', 'id=eq.' + enc(session.id),
         { status: 'finished', ended_at: new Date().toISOString() });
       try { await emitEvent(env, session, 'session.closed', {}, 'system'); } catch (e2) {}
-      try { await chargeNightOverage(env, session); } catch (e2) { /* billing never blocks close */ }
+      if (ranANight) {
+        try { await chargeNightOverage(env, session); } catch (e2) { /* billing never blocks close */ }
+      } else {
+        console.log('[sweep] closed ' + session.id + ' with status "' + session.status +
+                    '" and did NOT bill it: nothing in this product writes that status, ' +
+                    'so what it was meant to mean is not knowable from here.');
+      }
       closed++;
     } catch (e) {
       failed++;
