@@ -69,6 +69,8 @@ Verified by asking PostgREST for each column, not by reading the files.
 | 76 | one-trip-host-draws | ON BOTH, checked 10 Sep 2026. This table said "NOT RUN anywhere" and that was WRONG: live has it |
 | 77 | owner-only-settings | ON BOTH. Was live only; run on Sydney 10 Sep. Without it a MANAGER could change the columns only an owner may change, and nothing would have said so |
 | 78 | trivia-one-answer-index | ON BOTH, and a no-op on both because the index was already there. Written down 10 Sep because it had been created BY HAND and lived in no migration at all: rebuild from this repo and the duplicate-answer guard silently disappears |
+| 79 | stripe-event-ledger | ON LIVE. vp_stripe_events is being written and read right now: the live overage runs on 11 Sep read `claimed_at`/`completed_at` off it to prove the webhook finished. Was missing from this table entirely, which is the same fault row 76 and row 78 record. Sydney NOT verified |
+| 80 | owner-test-matches-the-worker | **NOT RUN.** 77 asks `role = 'owner'` and only 3 of 17 active venues have such a row, so at 13 venues the real owner is silently refused and the page still says "Saved." This asks what the Worker asks: an owner-side role AND no permissions object. Measured on live data 12 Sep 2026. tugun-bowls stays locked out on purpose, it has no owner-side row at all |
 
 ## Stop reading this table. Ask the databases.
 
