@@ -247,16 +247,36 @@ def main():
     for x in new_audit: print('  new audit row     %s %s' % (x['action'], json.dumps(x.get('detail'))[:300]))
     print('  streak            %s -> %s (peaks %s, day %s)' % (before_d['venue']['overage_streak'], after_d['venue']['overage_streak'], after_d['venue']['overage_streak_peaks'], after_d['venue']['overage_streak_day']))
     print('  balance           %s -> %s' % (money(before_s['balance']), money(after_s['balance'])))
-    if after_s['sub_qty'] != before_s['sub_qty']: print('  FAIL subscription quantity moved %s -> %s (overage must not change the plan)' % (before_s['sub_qty'], after_s['sub_qty'])); steps.append(False)
+    _uplifted_early = any(x['action'] == 'plan_uplift_after_three_big_nights' for x in new_audit)
+    if after_s['sub_qty'] != before_s['sub_qty'] and not _uplifted_early:
+        print('  FAIL subscription quantity moved %s -> %s (overage must not change the plan)' % (before_s['sub_qty'], after_s['sub_qty'])); steps.append(False)
+    elif _uplifted_early:
+        print('  plan moved       quantity %s -> %s, which is what the third big night is FOR' % (before_s['sub_qty'], after_s['sub_qty']))
 
+    # THE THIRD BIG NIGHT IS A DIFFERENT NIGHT, AND THIS TOOL DID NOT KNOW IT.
+    # Run for the first time on 11 Sep 2026, the night the plan upgrade finally fired,
+    # it reported SIX failures and every one of them was this tool being wrong:
+    #
+    #   expected $2.00              it is $1.00, because halfPrice pays for the upgrade
+    #   expected the exact line     the real one ends "(3rd big night, plan moved up)"
+    #   expected the streak to go   the uplift RESETS it to 0, which is correct
+    #   expected the plan to hold   the whole point of this night is that it moves
+    #
+    # Six red lines you are meant to ignore is how a real one gets missed. So the night
+    # the upgrade fires is judged on its own terms, off the audit row the Worker writes. 
+    uplift_rows = [x for x in new_audit if x['action'] == 'plan_uplift_after_three_big_nights']
+    uplifted = bool(uplift_rows)
+    rate_cents = 100 if uplifted else 200
     want_desc = '%s - Extra Player - %s' % (venue['name'], brisbane_date_today())
+    if uplifted:
+        want_desc += ' (3rd big night, plan moved up)'
     verdict = []
     if expect_charge:
         lines = [ln for inv in new_invs.values() for ln in inv['lines']['data']]
         mine = [ln for ln in lines if ln.get('description') == want_desc]
         verdict.append(('exactly one new invoice', len(new_invs) == 1))
         verdict.append(('its line reads "%s"' % want_desc, len(mine) == 1))
-        verdict.append(('quantity %d x $2.00 = %s' % (a.extra, money(a.extra * 200)), bool(mine) and mine[0].get('quantity') == a.extra and mine[0].get('amount') == a.extra * 200))
+        verdict.append(('quantity %d x $2.00 = %s' % (a.extra, money(a.extra * rate_cents)), bool(mine) and mine[0].get('quantity') == a.extra and mine[0].get('amount') == a.extra * rate_cents))
         verdict.append(('nothing else rode that invoice', len(lines) == len(mine)))
         inv = list(new_invs.values())[0] if new_invs else {}
         want_paid = not acct.get('bill_by_invoice')
@@ -268,16 +288,16 @@ def main():
         if want_paid and declined:
             reason = (declined[0].get('detail') or {}).get('reason') or '?'
             print('  CARD DECLINED     %s' % reason[:120])
-            small = a.extra * 200 <= 3000
+            small = a.extra * rate_cents <= 3000
             items = list(new_items.values())
-            verdict.append(('card tried once and the bank said no (recorded with its reason)', bool(inv) and not invoice_is_paid(inv, a.extra * 200)))
+            verdict.append(('card tried once and the bank said no (recorded with its reason)', bool(inv) and not invoice_is_paid(inv, a.extra * rate_cents)))
             if small:
                 def item_sub(it):
                     par = it.get('parent') or {}
                     return it.get('subscription') or ((par.get('subscription_details') or {}).get('subscription'))
                 verdict.append(('the failed invoice was VOIDED (no retries, no nagging)', inv.get('status') == 'void'))
-                verdict.append(('one pending item of %s now rides the next subscription invoice' % money(a.extra * 200),
-                                len(items) == 1 and items[0].get('amount') == a.extra * 200 and items[0].get('description') == want_desc))
+                verdict.append(('one pending item of %s now rides the next subscription invoice' % money(a.extra * rate_cents),
+                                len(items) == 1 and items[0].get('amount') == a.extra * rate_cents and items[0].get('description') == want_desc))
                 verdict.append(('that item is tied to the subscription, so it can only land on its next invoice', bool(items) and bool(item_sub(items[0]))))
                 verdict.append(('HQ row extras_moved_to_monthly names the invoice and the renewal date', bool(moved) and (moved[0].get('detail') or {}).get('invoice') == inv.get('id') and bool((moved[0].get('detail') or {}).get('next'))))
             # THE EMAIL'S PLACEHOLDERS, read back from what the Worker recorded it sent. Dean, 11 Sep
@@ -286,14 +306,14 @@ def main():
             md = (mail[0].get('detail') or {}) if mail else {}
             if md: print('  EMAIL SENT        to %s | %s for "%s" | reason: %s (%s) | %s%s' % (md.get('to'), md.get('amount'), md.get('what'), md.get('reason_line'), md.get('reason_code'), md.get('outcome'), (' on ' + md['next']) if md.get('next') else ''))
             verdict.append(('the decline email was sent and Resend accepted it', bool(md) and md.get('sent') is True and bool(md.get('resend_id'))))
-            verdict.append(('email placeholders: amount %s and the line "%s"' % (money(a.extra * 200), want_desc), md.get('amount') == money(a.extra * 200) and md.get('what') == want_desc))
+            verdict.append(('email placeholders: amount %s and the line "%s"' % (money(a.extra * rate_cents), want_desc), md.get('amount') == money(a.extra * rate_cents) and md.get('what') == want_desc))
             verdict.append(('email placeholders: the bank\'s real reason, not the generic fallback', bool(md.get('reason_code')) and 'Nine times out of ten' not in (md.get('reason_line') or '')))
             if small: verdict.append(('email placeholders: the renewal date is filled in', bool(md.get('next'))))
             else:
                 verdict.append(('over $30: the invoice stays OPEN to be chased now', inv.get('status') == 'open'))
                 verdict.append(('nothing moved onto the monthly bill', not new_items and not moved))
         else:
-            verdict.append(('invoice %s' % ('paid now (card)' if want_paid else 'issued (bill by invoice)'), bool(inv) and (invoice_is_paid(inv, a.extra * 200) if want_paid else inv.get('status') == 'open')))
+            verdict.append(('invoice %s' % ('paid now (card)' if want_paid else 'issued (bill by invoice)'), bool(inv) and (invoice_is_paid(inv, a.extra * rate_cents) if want_paid else inv.get('status') == 'open')))
             verdict.append(('no item left pending', not new_items))
         # The streak counts NIGHTS (2am Brisbane rollover), not sessions, so three games in one
         # evening cannot move a plan up. A second run on the same night must leave it alone.
@@ -303,7 +323,16 @@ def main():
             verdict.append(('streak unchanged at %d (already counted tonight, %s)' % (before_d['venue']['overage_streak'], tonight),
                             after_d['venue']['overage_streak'] == before_d['venue']['overage_streak']))
         else:
-            verdict.append(('streak advanced to %d' % ((before_d['venue']['overage_streak'] or 0) + 1), after_d['venue']['overage_streak'] == (before_d['venue']['overage_streak'] or 0) + 1))
+            if uplifted:
+                verdict.append(('streak RESET to 0, because the plan moved up instead',
+                                (after_d['venue']['overage_streak'] or 0) == 0))
+                d0 = uplift_rows[0].get('detail') or {}
+                verdict.append(('the plan was raised %s -> %s and recorded' % (d0.get('from'), d0.get('to')),
+                                d0.get('to') is not None and d0.get('from') is not None and d0['to'] > d0['from']))
+                verdict.append(('it names the three nights it is based on',
+                                isinstance(d0.get('nights'), list) and len(d0['nights']) >= 3))
+            else:
+                verdict.append(('streak advanced to %d' % ((before_d['venue']['overage_streak'] or 0) + 1), after_d['venue']['overage_streak'] == (before_d['venue']['overage_streak'] or 0) + 1))
         verdict.append(('no failure audit row', not any(x['action'] in ('overage_charge_failed', 'overage_left_pending_until_renewal') for x in new_audit)))
         ev = db('vp_stripe_events?select=event_id,event_type,claimed_at,completed_at&order=claimed_at.desc&limit=8')
         recent = [e for e in ev if e.get('event_type') == 'invoice.paid'
