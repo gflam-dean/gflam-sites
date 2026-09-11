@@ -149,7 +149,7 @@ def audit_venue(slug):
     print('\n%s' % slug.upper())
 
     # 1. The screen a TV on the wall asks for.
-    s, scr, ms = jget(GAME + '/screen?venue=' + slug)
+    s, scr, ms = jget(GAME + '/screen?probe=1&venue=' + slug)
     if s != 200 or not scr:
         return fail('the TV can load this venue', 'HTTP %s' % s)
     if not scr.get('exists'):
@@ -166,7 +166,7 @@ def audit_venue(slug):
     ok('the venue is shown a code', code)
 
     # 3. THE ONE THAT MATTERS. Does that code open that venue's door?
-    s, v, ms = jget(GAME + '/venue?code=' + code)
+    s, v, ms = jget(GAME + '/venue?probe=1&code=' + code)
     if s != 200 or not v or not v.get('exists'):
         return fail('the code the venue is SHOWN lets people in',
                     '%s is displayed on their console and refused at the door (HTTP %s). '
@@ -181,7 +181,7 @@ def audit_venue(slug):
     #    Cloudflare isolate cached separately: one go failed, the next worked.
     misses = 0
     for _ in range(6):
-        s2, v2, _ = jget(GAME + '/venue?code=' + code)
+        s2, v2, _ = jget(GAME + '/venue?probe=1&code=' + code)
         if s2 != 200 or not v2 or not v2.get('exists') or v2.get('slug') != slug:
             misses += 1
     if misses:
@@ -195,14 +195,14 @@ def audit_venue(slug):
     #    Once an owner presses Change code the two differ, and only this asks about it.
     hashed = fnv_venue_code(slug)
     note = 'same as the shown code' if hashed == code else 'this venue has changed its code: %s on the wall, %s behind it' % (code, hashed)
-    s, tvv, ms = jget(GAME + '/venue?code=' + hashed)          # a TV that has not reloaded since the fix
+    s, tvv, ms = jget(GAME + '/venue?probe=1&code=' + hashed)          # a TV that has not reloaded since the fix
     if s != 200 or not tvv or not tvv.get('exists') or (tvv.get('slug') or '') != slug:
         fail('the code the TV polls with still opens this venue',
              '%s (a hash of the slug) got exists=%s slug=%s - in 60 seconds the TV shows "not linked to an '
              'account" and forgets its venue' % (hashed, (tvv or {}).get('exists'), (tvv or {}).get('slug')))
     else:
         ok('the code the TV polls with still opens this venue', '%s, %s' % (hashed, note))
-    s, tvv2, ms = jget(GAME + '/venue?code=%s&venue=%s&v=daily-audit' % (hashed, slug))   # what a reloaded TV sends
+    s, tvv2, ms = jget(GAME + '/venue?probe=1&code=%s&venue=%s&v=daily-audit' % (hashed, slug))   # what a reloaded TV sends
     if s != 200 or not tvv2 or not tvv2.get('exists') or (tvv2.get('slug') or '') != slug:
         fail('the TV poll with the slug on it opens this venue', 'exists=%s' % (tvv2 or {}).get('exists'))
     else:

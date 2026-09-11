@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 10:09 · 82a8e2fd';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 20:14 · c65ded84';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1557,7 +1557,19 @@ async function venueLookupThreeTrips(env, url, slug, ver) {
      and a heartbeat that only sometimes records is worse than none. Best effort:
      a screen must never be told its venue is missing because a bookkeeping write
      failed. */
-  if ('screen_seen_at' in v) {
+  /* A MONITORING TOOL MUST NOT BE ABLE TO FAKE THE THING IT MONITORS.
+     On 11 Sep 2026 daily-venue-audit.py was changed to sweep all seventeen active
+     venues instead of the one that was hardcoded. It polls this very route, so one
+     run wrote screen_seen_at for every venue in the fleet and set screen_version to
+     'daily-audit'. HQ's SCREEN OK / SCREEN DOWN badge reads screen_seen_at. So the
+     audit made every venue's TV look alive, including any that had been black for a
+     day, and the badge that exists to catch a black screen was reporting the health
+     of the tool that asked.
+     A probe says so and gets a read-only answer. Everything else about the reply is
+     identical, so the audit still proves the route works, the venue resolves and the
+     code matches. It just cannot leave a footprint. */
+  const isProbe = url.searchParams.get('probe') === '1';
+  if ('screen_seen_at' in v && !isProbe) {
     const last = v.screen_seen_at ? Date.parse(v.screen_seen_at) : 0;
     if (!isFinite(last) || Date.now() - last > 25000 || ver !== v.screen_version) {
       try {

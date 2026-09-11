@@ -697,6 +697,16 @@ MUTATIONS = [
      '<<COPYTO:partyplay-backend/supabase/partyplay-01-a-second-file.sql>>', '',
      'two migrations claim the same number and one gets skipped'),
 
+    # ---- 11 Sep: a monitoring tool must not be able to fake the thing it monitors ----
+    # Caused by that morning's own fix: daily-venue-audit went from one hardcoded venue
+    # to the whole fleet, and it polls the route that records the screen heartbeat, so
+    # one run marked seventeen screens alive whether or not a TV was switched on.
+    ('screen-probe.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "if ('screen_seen_at' in v && !isProbe) {",
+     "if ('screen_seen_at' in v) {",
+     'the daily audit marks every screen in the fleet alive, so a black TV reads as healthy in HQ'),
+
     # ---- 11 Sep: a browser dialog on a host console freezes the console ----
     ('no host console calls alert()',
      'venueplay/app/members/host.html',
