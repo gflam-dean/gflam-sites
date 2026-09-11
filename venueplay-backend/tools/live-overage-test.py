@@ -79,6 +79,29 @@ def stripe(path, **q):
     if st >= 300: raise RuntimeError('stripe %s -> %s %s' % (path, st, str(d)[:300]))
     return d
 
+def invoice_is_paid(inv, expect_cents):
+    """DID THE MONEY ACTUALLY ARRIVE?
+
+    This used to ask inv['paid'], a top-level boolean the 2025 API no longer fills. It
+    comes back None on every invoice, which broke this tool in BOTH directions:
+
+      * the success check asked `paid is True`  -> False forever, so the first overage
+        ever collected in production (9FGBRAJG-0016, $2.00, 11 Sep 2026) was reported
+        as a FAILURE while Stripe held amount_paid=200, amount_remaining=0.
+      * the decline check asked `paid is not True` -> True forever, so "the bank said
+        no" passed whether or not the card had actually paid. A check that cannot fail.
+
+    Same root as the renewal-date fault the morning before: a field that moved in the
+    2025 API and a checker that never noticed. So judge on the money and the status,
+    all three, and never on a single flag.
+    """
+    if not inv:
+        return False
+    return (inv.get('status') == 'paid'
+            and inv.get('amount_paid') == expect_cents
+            and inv.get('amount_remaining') == 0)
+
+
 def money(c): return '$%.2f' % ((c or 0) / 100)
 
 def stripe_state(cus):
@@ -219,7 +242,7 @@ def main():
         if unit is None and i.get('quantity'): unit = round((i.get('amount') or 0) / i['quantity'])
         print('  new pending item  %s qty=%s unit=%s total=%s "%s"' % (i['id'], i.get('quantity'), money(unit), money(i.get('amount')), i.get('description')))
     for inv in new_invs.values():
-        print('  new invoice       %s %s total=%s paid=%s method=%s' % (inv.get('number') or inv['id'], inv['status'], money(inv.get('total')), inv.get('paid'), inv.get('collection_method')))
+        print('  new invoice       %s %s total=%s paid=%s method=%s' % (inv.get('number') or inv['id'], inv['status'], money(inv.get('total')), money(inv.get('amount_paid')), inv.get('collection_method')))
         for ln in inv['lines']['data']: print('      line  qty=%s amount=%s "%s"' % (ln.get('quantity'), money(ln.get('amount')), ln.get('description')))
     for x in new_audit: print('  new audit row     %s %s' % (x['action'], json.dumps(x.get('detail'))[:300]))
     print('  streak            %s -> %s (peaks %s, day %s)' % (before_d['venue']['overage_streak'], after_d['venue']['overage_streak'], after_d['venue']['overage_streak_peaks'], after_d['venue']['overage_streak_day']))
@@ -247,7 +270,7 @@ def main():
             print('  CARD DECLINED     %s' % reason[:120])
             small = a.extra * 200 <= 3000
             items = list(new_items.values())
-            verdict.append(('card tried once and the bank said no (recorded with its reason)', bool(inv) and inv.get('paid') is not True))
+            verdict.append(('card tried once and the bank said no (recorded with its reason)', bool(inv) and not invoice_is_paid(inv, a.extra * 200)))
             if small:
                 def item_sub(it):
                     par = it.get('parent') or {}
@@ -270,7 +293,7 @@ def main():
                 verdict.append(('over $30: the invoice stays OPEN to be chased now', inv.get('status') == 'open'))
                 verdict.append(('nothing moved onto the monthly bill', not new_items and not moved))
         else:
-            verdict.append(('invoice %s' % ('paid now (card)' if want_paid else 'issued (bill by invoice)'), bool(inv) and (inv.get('paid') is True if want_paid else inv.get('status') == 'open')))
+            verdict.append(('invoice %s' % ('paid now (card)' if want_paid else 'issued (bill by invoice)'), bool(inv) and (invoice_is_paid(inv, a.extra * 200) if want_paid else inv.get('status') == 'open')))
             verdict.append(('no item left pending', not new_items))
         # The streak counts NIGHTS (2am Brisbane rollover), not sessions, so three games in one
         # evening cannot move a plan up. A second run on the same night must leave it alone.

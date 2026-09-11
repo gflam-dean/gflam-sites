@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 20:18 · 0eb435f8';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 21:05 · 9aef92c6';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -6359,6 +6359,24 @@ async function applyOverageCharge(env, o) {
     } else {
       console.log('[overage] ' + o.idemKey + ' PAID: invoice ' + got.invoice + ' ' +
                   (amountCents / 100).toFixed(2) + ' AUD, ' + overage + ' x ' + rateDollars.toFixed(2));
+      /* A SUCCESSFUL CHARGE LEFT NO RECORD ANYWHERE WE CAN QUERY.
+         Every failing path writes a row: overage_invoice_unpaid, extras_moved_to_monthly,
+         payment_failed_email. The success path wrote a console line, which expires with the
+         Worker's logs and cannot be searched. On 11 Sep 2026 the first overage ever collected
+         in production (invoice 9FGBRAJG-0016, $2.00) could only be found by asking Stripe:
+         vp_admin_audit held six unpaid rows and not one paid one.
+         "Did we bill this venue extra, and did the money arrive" has to be answerable from
+         our own records, not from a third party's dashboard. */
+      try {
+        await sbInsert(env, 'vp_admin_audit', {
+          actor_admin: null, actor_label: 'system',
+          action: 'overage_charged',
+          target: venue.id,
+          detail: { source: o.idemKey, venue_name: venue.name || null, invoice: got.invoice,
+                    amount_cents: amountCents, players_over: overage, rate_dollars: rateDollars,
+                    night: night },
+        }, false);
+      } catch (e) { /* audit is best effort: it must never undo a charge that worked */ }
     }
   }
 

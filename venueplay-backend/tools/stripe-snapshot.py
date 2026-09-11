@@ -48,7 +48,7 @@ def snapshot(cus):
     for i in pend:
         print('    %s qty=%s unit=%s amount=%s  "%s"  sub=%s' % (i['id'], i.get('quantity'), money(i.get('unit_amount') or 0), money(i.get('amount') or 0), i.get('description'), i.get('subscription')))
     for inv in get('invoices', customer=cus, limit=5).get('data', []):
-        print('  invoice %s %s total=%s paid=%s created=%s' % (inv.get('number') or inv['id'], inv['status'], money(inv.get('total') or 0), inv.get('paid'), inv.get('created')))
+        print('  invoice %s %s total=%s paid=%s created=%s' % (inv.get('number') or inv['id'], inv['status'], money(inv.get('total') or 0), inv.get('amount_paid'), inv.get('created')))
         for ln in inv.get('lines', {}).get('data', []):
             print('      %s x %s = %s  "%s"' % (ln.get('quantity'), money((ln.get('price') or {}).get('unit_amount') or (ln.get('unit_amount_excluding_tax') and 0) or 0) if ln.get('price') else '-', money(ln.get('amount') or 0), ln.get('description')))
 

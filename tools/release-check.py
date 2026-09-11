@@ -2247,6 +2247,37 @@ def every_active_venue_knows_its_state():
        why='run venueplay-backend/tools/check-gaming-state.py for which venue')
 
 
+def stripe_fields_still_exist():
+    """EVERY STRIPE FIELD THIS CODE READS, AGAINST REAL OBJECTS.
+
+    Dean, 11 Sep 2026: "FML! Seriously you picked up old stripe code this morning. I told
+    you to audit the billing." He was right. Stripe moved and removed fields in the 2025
+    API versions and this repo had been bitten three times, each found by accident:
+    subscription.current_period_end (moved onto the item), discount.coupon (now under
+    source.coupon), and invoice.paid (gone), which broke live-overage-test.py in BOTH
+    directions at once and reported the first overage ever collected as a failure.
+
+    Fixing them one at a time is not an audit. This runs the sweep.
+    """
+    head('Every Stripe field this code reads still exists')
+    tool = os.path.join(ROOT, 'venueplay-backend', 'tools', 'check-stripe-fields.py')
+    env_file = os.path.join(os.path.expanduser('~'), '.gflam-migrate.env')
+    if not os.path.exists(tool):
+        ok('the Stripe field check exists', False, why='check-stripe-fields.py is missing')
+        return
+    if not os.path.exists(env_file):
+        note('Stripe fields: NOT CHECKED',
+             'no ~/.gflam-migrate.env on this machine, so Stripe was never asked. '
+             'Deliberately not a pass.')
+        return
+    r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=180)
+    out = re.sub(r'\033\[[0-9;]*m', '', (r.stdout or '') + (r.stderr or ''))
+    last = [l for l in out.splitlines() if l.strip()]
+    ok('no field is read that Stripe no longer sends', r.returncode == 0,
+       detail=last[-1].strip() if last else 'no output',
+       why='run venueplay-backend/tools/check-stripe-fields.py for which field and which line')
+
+
 def nobody_paid_and_got_nothing():
     """PartyPlay is delivered by ONE email. A failed send is a log line nobody reads.
 
@@ -2502,6 +2533,7 @@ def main():
             founding_windows_are_open()
             no_session_left_open()
             every_active_venue_knows_its_state()
+            stripe_fields_still_exist()
         if which in ('both', 'partyplay'):
             pages_live('PartyPlay', PP, PP_PAGES)
             every_page_is_reachable('PartyPlay', PP, 'partyplay')

@@ -218,7 +218,19 @@ scenario("an active founding venue, one over a cap of one, host approved", funct
     pass("the streak advanced to 1 with tonight's peak", vp.length === 1 && vp[0].body.overage_streak === 1 && String(vp[0].body.overage_streak_peaks) === "2",
          vp.length ? JSON.stringify(vp[0].body) : "no venue patch");
     pass("streak day is the Brisbane night", vp.length === 1 && vp[0].body.overage_streak_day === brisbaneNightKey(Date.now()));
-    pass("no audit row: nothing failed", inserts.length === 0, JSON.stringify(inserts.map(function (i) { return i.row.action; })));
+    /* A SUCCESSFUL CHARGE MUST LEAVE A ROW WE CAN QUERY. This used to assert the exact
+       opposite - that nothing was written - and that is why vp_admin_audit held six
+       overage_invoice_unpaid rows and not one paid row on 11 Sep 2026. The only record of
+       the first overage ever collected was in Stripe. */
+    var okRow = inserts.filter(function (i) { return i.row.action === "overage_charged"; });
+    pass("a successful charge writes an overage_charged row", okRow.length === 1,
+         JSON.stringify(inserts.map(function (i) { return i.row.action; })));
+    pass("naming the invoice, the money and how many were over",
+         okRow.length === 1 && okRow[0].row.detail.invoice === "in_test" &&
+         okRow[0].row.detail.amount_cents === 200 && okRow[0].row.detail.players_over === 1,
+         okRow.length ? JSON.stringify(okRow[0].row.detail) : "");
+    pass("and nothing failed", inserts.filter(function (i) { return /unpaid|failed|crashed|pending/.test(i.row.action); }).length === 0,
+         JSON.stringify(inserts.map(function (i) { return i.row.action; })));
   });
 });
 
