@@ -1386,6 +1386,31 @@ def local_checks(which):
        '%d console(s) read' % seen,
        why=('a dialog freezes the whole page until somebody taps OK: ' + ', '.join(noisy)))
 
+    head('D. The sales pages still show the real screen')
+    """Dean, 12 Sep 2026: "Can you double check that the set up guide and the look at a
+    night things both have the current look of the screens? Can you do that say once a
+    month?"
+
+    There are no screenshots to go stale. It is worse: see-a-night.html and index.html
+    draw the screens BY HAND in CSS, under .vps-* names that appear nowhere in tv.html.
+    So the real screen can be redesigned completely and both sales pages keep showing
+    last month's product for ever, with nothing going red.
+
+    This is the tripwire. It is silent until a real screen's styling changes, and then it
+    fails until somebody has looked and run --accept. It cannot tell you they LOOK alike,
+    because nothing here renders a pixel. It can only make sure nobody redesigns the
+    screen without being asked whether the sales page still matches."""
+    tool = os.path.join(ROOT, 'tools', 'check-mockups.py')
+    if not os.path.isfile(tool):
+        ok('the mockup tripwire exists', False, why='tools/check-mockups.py is missing')
+    else:
+        r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=120)
+        out = re.sub(r'\033\[[0-9;]*m', '', (r.stdout or '') + (r.stderr or ''))
+        line = [l.strip() for l in out.splitlines() if l.strip().startswith(('LOOK', '--', 'ok'))]
+        ok('no screen has changed since the sales pages were last checked', r.returncode == 0,
+           detail=(line[0][:90] if line else 'nothing to say'),
+           why='run python3 tools/check-mockups.py, look at /see-a-night beside a real /tv, then --accept')
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging

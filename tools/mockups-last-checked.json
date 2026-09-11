@@ -1,0 +1,11 @@
+{
+  "screens_fingerprint": "35d420707469",
+  "checked_on": "2026-09-12",
+  "screens": [
+    "venueplay/tv.html",
+    "venueplay/app/trivia/screen.html",
+    "venueplay/app/musical/screen.html",
+    "venueplay/app/raffle/screen.html",
+    "venueplay/app/members/screen.html"
+  ]
+}
