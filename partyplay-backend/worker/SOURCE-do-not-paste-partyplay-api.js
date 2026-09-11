@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '3 Sep 2026, 13:39 · 4f1b01ca';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 07:16 · 33cdfc4d';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -25,6 +25,9 @@ const BUILD = '3 Sep 2026, 13:39 · 4f1b01ca';   // tools/stamp-workers.py, do n
  * and half of these are read on a phone.
  * ------------------------------------------------------------------------ */
 const PINK = '#FF1F8E', INK = '#12101A', PAPER = '#FFF1E6', MUTE = '#6A6076';
+
+// The one on terms.html and privacy.html, for both products. Keep the three in step.
+const PP_ABN = '35 679 383 049';
 
 function emailShell(opts) {
   const site = (opts.site || '').replace(/\/$/, '');
@@ -45,7 +48,13 @@ function emailShell(opts) {
 '<tr><td style="padding:0 30px 26px;font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.62;color:#3A3444">' + opts.body + '</td></tr>' +
 '<tr><td style="padding:20px 30px 30px;font-family:Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#8A8296;border-top:1px solid #EDE9E4">' +
 (opts.foot || '') +
-'<p style="margin:10px 0 0">PartyPlay is made by Gflam Group Pty Ltd on the Gold Coast. <a href="' + site + '" style="color:#8A8296">partyplay.com.au</a></p>' +
+/* THE ABN WAS MISSING FROM EVERY PARTYPLAY EMAIL. VenuePlay's carry it, these did
+   not, and these are commercial emails to consumers: a receipt, a licence, an album
+   link. Dean's own standard is that the ABN belongs in every email footer, and the
+   Spam Act agrees. Confirmed with him on 12 Sep 2026 that 35 679 383 049 is the right
+   number, the same one on terms.html and privacy.html for both products. One shell,
+   so this fixes every PartyPlay email at once. */
+'<p style="margin:10px 0 0">PartyPlay is made by Gflam Group Pty Ltd, ABN ' + PP_ABN + ', on the Gold Coast. <a href="' + site + '" style="color:#8A8296">partyplay.com.au</a></p>' +
 '</td></tr></table></td></tr></table></body></html>';
 }
 

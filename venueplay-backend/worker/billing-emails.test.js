@@ -24,6 +24,8 @@ eval(lift(BILL,"vpaUpliftNoticeHtml"));
 eval(lift(BILL,"vpaUpliftWarningHtml"));
 eval(lift(BILL,"vpaFireInvoiceEmail"));
 eval(lift(BILL,"vpaFirePlanUpliftEmail"));
+var VPA_CANCEL_ALERTS = (function(){ var m=/VPA_CANCEL_ALERTS = (\[[^\]]*\])/.exec(BILL); return m?JSON.parse(m[1].replace(/'/g,'"')):[]; })();
+eval(lift(BILL,"vpaFireCancelAlert"));
 eval(lift(BILL,"vpaSendEmail"));
 
 // Jess's actual invoice, as Stripe returned it.
@@ -163,7 +165,8 @@ Promise.resolve().then(function(){}).then(function(){}).then(function(){}).then(
   return extrasChecks()
     .then(receiptChecks, function (e) { pass("extras checks did not crash", false, String(e && e.message || e)); return receiptChecks(); })
     .then(upliftEmailChecks, function (e) { pass("receipt checks did not crash", false, String(e && e.message || e)); return upliftEmailChecks(); })
-    .then(finish, function (e) { pass("uplift email checks did not crash", false, String(e && e.message || e)); finish(); });
+    .then(cancelAlertChecks, function (e) { pass("uplift email checks did not crash", false, String(e && e.message || e)); return cancelAlertChecks(); })
+    .then(finish, function (e) { pass("cancel alert checks did not crash", false, String(e && e.message || e)); finish(); });
 });
 
 /* EXTRAS THAT THE CARD WOULD NOT PAY FOR. Dean, 11 Sep 2026: try once, tell them, and a small
@@ -365,6 +368,51 @@ pass("the billing Worker also uses Brisbane, not UTC",
    by the evening, by which time a venue's plan had moved from 1 player to 2 and nothing
    told her. Untested email code is exactly what put the receipt in the state it was in
    tonight, so this runs the real function rather than asserting it exists. */
+/* THE CANCELLATION ALERT, RUN. Wellshot Hotel cancelled eight hours after signing up
+   and nobody knew for twenty-four days. This is the email that would have said so. */
+function cancelAlertChecks() {
+  var sent = [], rows = [];
+  vpaInsert = function (env, t, row) { rows.push(row); return Promise.resolve(); };
+  fetch = function (url, opts) { sent.push({ url: url, body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ id: "re_c" }); } }); };
+  var ENV = { RESEND_API_KEY: "k", SITE_URL: "https://venueplay.com.au" };
+  var VENUE = { venueId: "v9", name: "Wellshot Hotel", slug: "wellshot-hotel",
+                ends: "18 September 2026", players: 20, monthly: "$40.02" };
+
+  pass("both addresses are on the list", VPA_CANCEL_ALERTS.length === 2 &&
+       VPA_CANCEL_ALERTS.indexOf("dean@venueplay.com.au") >= 0 &&
+       VPA_CANCEL_ALERTS.indexOf("hello@venueplay.com.au") >= 0,
+       VPA_CANCEL_ALERTS.join(", "));
+
+  return vpaFireCancelAlert(ENV, VENUE).then(function () {
+    pass("a cancellation emails both of them", sent.length === 2,
+         sent.length + " sent");
+    if (sent.length) {
+      var h = sent[0].body.html || "";
+      pass("the subject names the venue", /Wellshot Hotel has cancelled/.test(sent[0].body.subject), sent[0].body.subject);
+      pass("it says when they stop", h.indexOf("18 September 2026") >= 0, "so you know how long you have to call");
+      pass("and what it is worth", h.indexOf("$40.02") >= 0 && h.indexOf("20") >= 0);
+      pass("with the ABN in the footer", h.indexOf("35 679 383 049") >= 0);
+    }
+    var r = rows.filter(function (x) { return x.action === "venue_cancel_alert"; });
+    pass("the alert is recorded", r.length === 1 && r[0].detail.outcome === "sent" && r[0].detail.sent === 2,
+         r.length ? JSON.stringify(r[0].detail) : "nothing written");
+
+    sent = []; rows = [];
+    return vpaFireCancelAlert(ENV, Object.assign({}, VENUE, { undo: true }));
+  }).then(function () {
+    pass("un-cancelling is good news and also worth knowing", sent.length === 2 &&
+         /UN-cancelled/.test(sent[0].body.subject), sent.length ? sent[0].body.subject : "");
+
+    sent = []; rows = [];
+    return vpaFireCancelAlert({ SITE_URL: "x" }, VENUE);
+  }).then(function () {
+    var r = rows.filter(function (x) { return x.action === "venue_cancel_alert"; });
+    pass("no Resend key is recorded, not swallowed",
+         sent.length === 0 && r.length === 1 && /no Resend key/.test(r[0].detail.outcome),
+         r.length ? r[0].detail.outcome : "nothing written");
+  });
+}
+
 function upliftEmailChecks() {
   var sent = [], rows = [];
   var venues = [{ id: "v1", name: "The Jolly Jess" }];

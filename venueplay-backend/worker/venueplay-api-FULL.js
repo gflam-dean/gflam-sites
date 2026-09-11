@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 23:16 · 97c1b70f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 07:16 · 36ce77db';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5019,6 +5019,75 @@ async function vpbAddVenue(request, env, json) {
    credit lands at renewal), and if EVERY venue is now cancelling we end the whole
    subscription at period end. The webhook suspends flagged venues when the period
    actually rolls over. Sending { undo: true } reverses it while still in the period. */
+/* A VENUE CANCELLING IS THE ONE EVENT NOBODY WAS TOLD ABOUT.
+   Dean, 12 Sep 2026: "Can you email Dean@venueplay.com.au and hello@venueplay.com.au
+   everytime a venue cancels?"
+
+   Wellshot Hotel is why. They signed up on 19 Aug at 10:19, cancelled the same day at
+   19:01, eight hours and forty-two minutes later, and stayed on the books looking like
+   the biggest account on the platform: twenty players, $40.02 a month in the billing
+   table. Nobody knew for twenty-four days, and it was found by a check written for
+   something else entirely.
+
+   A cancellation is the most time-sensitive thing that happens on this platform. They
+   keep working until the end of the period, so there is a real window to ring them, and
+   that window is only useful if somebody knows it has opened.
+
+   Sent to both addresses, best effort, and never allowed to fail the cancellation
+   itself: a venue must always be able to leave, even if our own mail is down. */
+const VPA_CANCEL_ALERTS = ['dean@venueplay.com.au', 'hello@venueplay.com.au'];
+
+async function vpaFireCancelAlert(env, opts) {
+  const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
+    actor_admin: null, actor_label: 'system',
+    action: 'venue_cancel_alert',
+    target: 'venue:' + String((opts && opts.venueId) || ''),
+    detail: Object.assign({ outcome: why, venue: (opts && opts.name) || null }, extra || {}),
+  }, false).catch(() => {});
+  try {
+    if (!env.RESEND_API_KEY) { await say('not sent: no Resend key on this Worker'); return; }
+    const undo = !!(opts && opts.undo);
+    const name = (opts && opts.name) || 'A venue';
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+    const when = (opts && opts.ends) ? opts.ends : 'the end of their current period';
+    const heading = undo ? (name + ' has UN-cancelled') : (name + ' has cancelled');
+    const lead = undo
+      ? (vpaEsc(name) + ' was scheduled to end and the owner has just reversed it. Nothing further to do.')
+      : (vpaEsc(name) + ' has scheduled their cancellation. They keep playing until <b>'
+         + vpaEsc(when) + '</b>, so there is a window to call them before it takes effect.');
+    const rows = [
+      ['Venue', vpaEsc(name)],
+      ['Slug', vpaEsc((opts && opts.slug) || '')],
+      ['Stops', undo ? 'no longer stopping' : vpaEsc(when)],
+      ['Players on the plan', String((opts && opts.players) != null ? opts.players : '')],
+      ['Worth', (opts && opts.monthly) ? vpaEsc(opts.monthly) + ' a month' : ''],
+    ].filter((r) => r[1] !== '');
+    const html =
+        '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
+      + '<h1 style="font-size:20px;margin:0 0 14px">' + vpaEsc(heading) + '</h1>'
+      + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">' + lead + '</p>'
+      + '<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;border-collapse:collapse;margin:0 0 18px">'
+      + rows.map((r) => '<tr><td style="padding:4px 14px 4px 0;color:#6b6b78">' + r[0]
+                      + '</td><td style="padding:4px 0"><b>' + r[1] + '</b></td></tr>').join('')
+      + '</table>'
+      + '<p style="margin:20px 0"><a href="' + site + '/app/hq" '
+      + 'style="background:#e6007e;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600">'
+      + 'Open HQ</a></p>'
+      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+      + '</div>';
+    let sent = 0;
+    for (const to of VPA_CANCEL_ALERTS) {
+      const ok = await vpaSendEmail(env, to, heading, html).catch(() => false);
+      if (ok) sent++;
+    }
+    await say(sent === VPA_CANCEL_ALERTS.length ? 'sent'
+              : (sent ? 'sent to ' + sent + ' of ' + VPA_CANCEL_ALERTS.length : 'not sent: Resend refused it'),
+              { to: VPA_CANCEL_ALERTS, undo: undo, ends: (opts && opts.ends) || null, sent: sent });
+  } catch (e) {
+    await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
+  }
+}
+
 async function vpbCancelVenue(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
@@ -5049,6 +5118,15 @@ async function vpbCancelVenue(request, env, json) {
     target: 'venue:' + venueId,
     detail: { name: venue.name, ends: endsDate, actor_user: o.authUserId },
   }, false).catch(() => {});
+
+  /* Tell us, now, while there is still a window to ring them. Awaited so the write
+     cannot be cancelled when the response returns, and caught so a mail failure can
+     never stop a venue leaving. */
+  await vpaFireCancelAlert(env, {
+    venueId: venueId, name: venue.name, slug: venue.slug || '', undo: undo,
+    ends: endsDate, players: venue.max_players,
+    monthly: (info && info.monthly) || null,
+  }).catch(() => {});
 
   return json({ ok: true, cancelling: !undo, ends: endsDate });
 }
