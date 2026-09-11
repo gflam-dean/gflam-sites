@@ -85,7 +85,23 @@ echo
 echo "── called but never defined ──"
 # The Worker by name, because the checker used to glob site/*.html and ignore its
 # arguments, so running it on the Worker reported "ok" without opening the file.
-python3 check-defs.py site/*.html site/lib/*.js worker/SOURCE-do-not-paste-partyplay-api.js || bad=$((bad+1))
+#
+# AND THE PAGES HAD MOVED. This said site/*.html, and there is no site/ directory
+# anywhere in this repo: the pages live in ../partyplay/. So for as long as that has
+# been true, this line has checked the Worker and NOT ONE PAGE, while printing
+# "2 file(s) would throw a ReferenceError at runtime", which is not what an empty glob
+# means and reads like a fault in the product rather than in the path.
+# The earlier fix corrected the globbing and left the directory wrong. Fixed 12 Sep 2026.
+#
+# The glob is guarded so an empty one can never quietly become "nothing to check":
+# check-defs.py is given explicit paths, and the count it prints is the proof.
+PAGES=(../partyplay/*.html ../partyplay/lib/*.js)
+if [ ! -e "${PAGES[0]}" ]; then
+  echo "  FAIL ../partyplay/*.html matched nothing. The pages have moved again; fix this path."
+  bad=$((bad+1))
+else
+  python3 check-defs.py "${PAGES[@]}" worker/SOURCE-do-not-paste-partyplay-api.js || bad=$((bad+1))
+fi
 
 echo
 echo "── house rules ──"

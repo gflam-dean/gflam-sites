@@ -14,7 +14,13 @@
    already happened twice on this project. Resolve against the repo instead, the
    same way every other suite does. */
 function ppFile(rel) {
-  var tries = ['partyplay/' + rel, rel, '../' + rel, '../../' + rel];  // release-check runs from the repo root
+  /* THE SAME SUITE PASSED IN ONE GATE AND FAILED IN ANOTHER, and the only difference
+     was the directory it was started from. release-check runs from the repo root, where
+     'partyplay/...' resolves. smoke-test.sh runs from partyplay-backend/, where none of
+     the four candidates below used to resolve, so it threw before its first check and
+     the smoke test reported a failure nobody could reproduce from the root.
+     A suite whose answer depends on where you stand is not a suite. Found 12 Sep 2026. */
+  var tries = ['partyplay/' + rel, '../partyplay/' + rel, rel, '../' + rel, '../../' + rel];
   for (var i = 0; i < tries.length; i++) {
     try { var t = readFile(tries[i]); if (t && t.length > 20) return tries[i]; } catch (e) {}
   }
