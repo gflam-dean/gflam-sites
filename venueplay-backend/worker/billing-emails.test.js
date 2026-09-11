@@ -93,6 +93,11 @@ pass("the email headline changes when the fault is ours", /why\.ours \? 'A payme
 /* vpaLookupDecline against a fake Stripe, both invoice shapes. */
 var asked = [];
 var PI_ANSWER = { id: "pi_1", last_payment_error: { decline_code: "insufficient_funds", code: "card_declined", message: "Your card has insufficient funds." } };
+/* What the third live Jess run found: the void cancelled the intent and Stripe cleared its error.
+   The charge still says what the bank said. */
+var PI_CANCELLED = { id: "pi_void", status: "canceled", cancellation_reason: "void_invoice", last_payment_error: null,
+  latest_charge: { id: "ch_1", status: "failed", failure_code: "payment_method_provider_decline", outcome: { reason: "partner_insufficient_funds", type: "issuer_declined" },
+                   failure_message: "The customer has insufficient funds with the payment provider." } };
 /* The shape the live webhook payload had on 11 Sep 2026: an invoice with an id and NO payment on it.
    Stripe answers the expand with the payments list; the bare id alone is not enough. */
 var stripeInvoices = { "in_live": { id: "in_live", payments: { data: [{ payment: { payment_intent: "pi_1" } }] } },
@@ -101,6 +106,7 @@ var stripeInvoices = { "in_live": { id: "in_live", payments: { data: [{ payment:
    of these promises run; that fake hands decline lookups back here. */
 function declineStripeGet(env, path) {
   asked.push(path);
+  if (/^payment_intents\/pi_void/.test(path)) return Promise.resolve(PI_CANCELLED);
   if (/^payment_intents\//.test(path)) return Promise.resolve(PI_ANSWER);
   var m = /^invoices\/(in_[a-z]+)\?expand\[\]=payments$/.exec(path);
   if (m) return Promise.resolve(stripeInvoices[m[1]] || { error: { message: "no such invoice" } });
@@ -125,13 +131,20 @@ Promise.resolve().then(function(){}).then(function(){}).then(function(){}).then(
   pass("THE LIVE SHAPE (id, no payment on the payload): the invoice is fetched with its payments and the bank's code comes back",
        !!got4 && got4.code === "insufficient_funds", JSON.stringify(got4));
   pass("by asking for the invoice with payments expanded, then the PaymentIntent",
-       JSON.stringify(mine) === JSON.stringify(["invoices/in_live?expand[]=payments", "payment_intents/pi_1"]), JSON.stringify(mine));
+       JSON.stringify(mine) === JSON.stringify(["invoices/in_live?expand[]=payments", "payment_intents/pi_1?expand[]=latest_charge"]), JSON.stringify(mine));
   askedBefore4 = asked.length;
   return vpaLookupDecline({}, { id: "in_nopay" });
 }).then(function (r) {
   got5 = r;
   pass("an invoice Stripe says has no payments at all returns null (the email then says the bank did not say why)", got5 === null, JSON.stringify(got5));
   pass("after also trying the invoice_payments list", asked.slice(askedBefore4).some(function (p) { return /^invoice_payments\?invoice=in_nopay/.test(p); }), JSON.stringify(asked.slice(askedBefore4)));
+  return vpaLookupDecline({}, { payment_intent: "pi_void" });
+}).then(function (r) {
+  pass("AFTER THE VOID (intent cancelled, its error cleared): the bank's answer is read off the charge instead",
+       !!r && r.code === "partner_insufficient_funds" && /insufficient funds/.test(r.message), JSON.stringify(r));
+  pass("and that answer reads as insufficient funds in the email", /not enough funds/.test(vpaDeclineReason(r && r.code, r && r.message).line));
+  pass("the handler reads the bank's answer BEFORE the mover voids the invoice, and hands it to the email",
+       /const decline = await vpaLookupDecline\(env, inv\);\s*const moved = await vpaMoveExtrasToMonthly\(env, inv\);\s*if \(!moved\.already\) await vpaFirePaymentFailedEmail\(env, inv, moved, decline\);/.test(BILL));
   return extrasChecks().then(finish, function (e) { pass("extras checks did not crash", false, String(e && e.message || e)); finish(); });
 });
 
@@ -283,7 +296,7 @@ function webhookWiring() {
     pass("the payment_failed handler sends extras to the mover and counts strikes only in the ELSE branch", atExtras > -1 && atStrike > atExtras && !!extrasBranch, [atExtras, atStrike, !!extrasBranch].join(","));
     pass("the extras branch does not return out of the handler (the event must reach vpaFinishStripeEvent)", !!extrasBranch && !/return /.test(extrasBranch[0]), extrasBranch && extrasBranch[0]);
     pass("no return anywhere in the payment_failed handler", !/return /.test(handler));
-    pass("the mover's answer reaches the email", /vpaFirePaymentFailedEmail\(env, inv, moved\)/.test(handler));
+    pass("the mover's answer reaches the email", /vpaFirePaymentFailedEmail\(env, inv, moved, decline\)/.test(handler));
 }
 
 print("\nTHE NEW INVOICE LINE FORMAT");

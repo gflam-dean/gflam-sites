@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 10:09 · 2b644a61';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 10:20 · 3e2fb4f7';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -548,8 +548,12 @@ async function handleWebhook(request, env, cors) {
        with completed_at null: Stripe's retry would have re-run the mover and sent the email a
        second time once the claim went stale. if/else, so the event falls through and finishes. */
     if (vpaIsExtrasInvoice(inv)) {
+      /* The bank's answer is read BEFORE the mover voids the invoice: voiding cancels the
+         PaymentIntent and Stripe clears its error. The charge keeps it either way (see
+         vpaLookupDecline), but this is the answer as Stripe reported it at the time. */
+      const decline = await vpaLookupDecline(env, inv);
       const moved = await vpaMoveExtrasToMonthly(env, inv);
-      if (!moved.already) await vpaFirePaymentFailedEmail(env, inv, moved);
+      if (!moved.already) await vpaFirePaymentFailedEmail(env, inv, moved, decline);
     } else {
       await vpaFirePaymentFailedEmail(env, inv);
       // Stop the games only once the grace window is used up. attempt_count is Stripe's own count
@@ -3871,10 +3875,20 @@ async function vpaLookupDecline(env, invoice) {
       if (pays && !pays.error && pays.data && pays.data.length) pi = vpaPaymentIntentOf({ payments: pays });
     }
     if (!pi) return null;
-    const intent = await vpbStripeGet(env, 'payment_intents/' + encodeURIComponent(pi));
-    const err = intent && !intent.error && intent.last_payment_error;
-    if (!err) return null;
-    return { code: err.decline_code || err.code || null, message: err.message || null };
+    const intent = await vpbStripeGet(env, 'payment_intents/' + encodeURIComponent(pi) + '?expand[]=latest_charge');
+    if (!intent || intent.error) return null;
+    const err = intent.last_payment_error;
+    if (err) return { code: err.decline_code || err.code || null, message: err.message || null };
+    /* Voiding the invoice CANCELS its PaymentIntent, and Stripe clears last_payment_error on a
+       cancelled intent (third live Jess run, 11 Sep 2026: status canceled, reason void_invoice,
+       error null). The charge keeps the bank's answer for good: outcome.reason is the specific
+       one (partner_insufficient_funds), failure_code the broad one. */
+    const ch = intent.latest_charge && typeof intent.latest_charge === 'object' ? intent.latest_charge : null;
+    if (ch && (ch.status === 'failed' || ch.failure_code || ch.failure_message)) {
+      const outcome = ch.outcome || {};
+      return { code: outcome.reason || ch.failure_code || outcome.type || null, message: ch.failure_message || outcome.seller_message || null };
+    }
+    return null;
   } catch (_) { return null; }
 }
 
@@ -3961,12 +3975,12 @@ async function vpaMoveExtrasToMonthly(env, inv) {
 /* A failed attempt is not an overdue invoice. Tell them and change nothing.
    moved: the answer from vpaMoveExtrasToMonthly when this is an extras invoice; absent for a
    subscription invoice. It changes what the venue is told to do, and whether there is a button. */
-async function vpaFirePaymentFailedEmail(env, invoice, moved) {
+async function vpaFirePaymentFailedEmail(env, invoice, moved, declineKnown) {
   try {
     if (!env.RESEND_API_KEY || !invoice) return;
     const email = invoice.customer_email;
     if (!email) return;
-    const decline = await vpaLookupDecline(env, invoice);
+    const decline = declineKnown || await vpaLookupDecline(env, invoice);
     const why = vpaDeclineReason(decline && decline.code, decline && decline.message);
     const amount = '$' + (Number(invoice.amount_due || 0) / 100).toFixed(2);
     /* SAY WHAT THE CHARGE WAS FOR. This read "for your VenuePlay subscription" on every failed
