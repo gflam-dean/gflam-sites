@@ -1309,8 +1309,17 @@ def local_checks(which):
         ddir = os.path.join(ROOT, site, 'data')
         if not os.path.isdir(ddir):
             continue
-        r = subprocess.run(['git', 'ls-files', site + '/data'], capture_output=True, text=True, cwd=ROOT)
-        tracked = [x for x in r.stdout.splitlines() if x.strip()]
+        # WALK THE DISK, NOT GIT, for the same reason the internal-file check two sections
+        # below already states: prove-checks.py copies the repo WITHOUT .git, so `git ls-files`
+        # returns nothing there, this check read zero files, and it could neither pass nor be
+        # proven. I wrote that reason down for the other check and then used git here anyway.
+        # An untracked data file in a deploy directory is one `git add .` from being served,
+        # so the disk is the honest question in both places.
+        tracked = []
+        for d, dirs, fs in os.walk(ddir):
+            dirs[:] = [x for x in dirs if x not in ('node_modules', '__pycache__')]
+            for f in fs:
+                tracked.append(os.path.relpath(os.path.join(d, f), ROOT))
         if not tracked:
             continue
         # Everything that could name one, EXCLUDING the data folder itself: a backup
@@ -1322,6 +1331,14 @@ def local_checks(which):
             if os.path.join(site, 'data') in d:
                 continue
             for f in fs:
+                # A MENTION IN THE MUTATION CATALOGUE IS NOT A READER.
+                # prove-checks.py names the file each mutation creates, so the mutation written
+                # to prove THIS check made the check pass: the file it planted was "named
+                # somewhere in the repo", by the very entry condemning it. Reported BLIND, and
+                # it was the mutation vouching for its own victim. Nothing in that file reads a
+                # data file; it is a list of strings.
+                if os.path.join('tools', 'prove-checks.py') in os.path.join(d, f):
+                    continue
                 if f.rsplit('.', 1)[-1] in ('py', 'js', 'html', 'json', 'md', 'sh', 'txt'):
                     try:
                         blob.append(io.open(os.path.join(d, f), encoding='utf-8', errors='replace').read())

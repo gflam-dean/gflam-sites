@@ -750,6 +750,21 @@ MUTATIONS = [
      'alert("No active members to draw from. Enable at least one member.")',
      'a host taps Draw on an empty draw and the console freezes until somebody taps OK'),
 
+    # ---- 12 Sep: the two checks prove-checks itself said were unproven ----
+    # A data file in the deploy directory that nothing asks for is one Cloudflare serves
+    # to anyone who guesses the name. 754 MB of trivia bank went that way on 11 Sep.
+    ('every deployed data file is one something reads',
+     'venueplay/data/trivia-count.json',
+     '<<COPYTO:venueplay/data/_nothing-reads-this.json>>', '',
+     'a data file nobody asks for is served to the public from the deploy directory'),
+
+    # The sales pages draw the venue screen BY HAND. Nothing links the two, so a redesign
+    # of the real screen leaves both pages selling last month's product with nothing red.
+    ('no screen has changed since the sales pages were last checked',
+     'venueplay/tv.html',
+     '<style>', '<style>\n  .vp-probe-restyle{color:#123456}\n',
+     'the venue screen is restyled and the sales pages still show the old one'),
+
     # ---- 11 Sep: the gate had never parsed its own tools ----
     # song-popularity.py sat broken in the repo for a day and nothing said so, because
     # the parse sweep only read the site and the Workers. The mutation is that exact
