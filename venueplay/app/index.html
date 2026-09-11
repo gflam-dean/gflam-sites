@@ -2502,7 +2502,57 @@
   // Show a neutral splash until auth resolves, THEN route, so the sign-in screen never flashes for
   // someone who is actually signed in. Signed-out users fall through to vSignIn once ready resolves.
   go("vBoot");
-  if(window.VP){ VP.ready().then(function(ctx){ __ctx=ctx; VP.suspensionBanner(ctx); applyRoute(ctx); }).catch(function(){ go("vSignIn"); }); }
+  /* ?demo=1 : THE REAL CONSOLE, MID GAME, SIGNED IN TO NOTHING.
+     The third of the three (see /tv?demo=1 and /play?demo=1). The sales page can now show a
+     real screen, a real phone and a real console side by side, and none of them can drift
+     from the product because all three ARE the product.
+
+     It never calls VP.ready(), so there is no auth, no Supabase client and no venue. It does
+     not call nextBall() either: that fetches the ball from the Worker, holds the button and
+     refuses over an open claim, none of which belongs on a marketing page. It sets the state
+     a running game has and calls the same render the live console calls.
+
+     Nothing is sent anywhere. send() is never reached, so no channel, no signing, no venue
+     row, and no screen anywhere in the country hears a word of it. */
+  if(/[?&]demo=1/.test(window.location.search||"")){
+    document.documentElement.setAttribute("data-vp-demo","1");
+    (function(){
+      var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53];
+      G.code="DEMO24"; G.pattern="one"; G.prize="$50 bar tab"; G.status="running";
+      G.players={ p1:{name:"Ann"}, p2:{name:"Table 4"}, p3:{name:"Baz"}, p4:{name:"Nan"} };
+      G.order=["p1","p2","p3","p4"];
+      $("headerTag").textContent="Bingo";
+      go("vConsole");
+      /* vConsole opens on the GAMES MENU, not on a game. Without this the demo showed five
+         tiles and "CONNECTING", which is a picker and not a night. selectGame is the real
+         function the real button calls. */
+      selectGame("bingo");
+      buildBoard();          // the 90 cells exist only after this; without it the board is empty
+      /* The three things the live console gets from a channel it has not got here: the paired
+         chip, the screen code, and the called board. Re-applied after every render because
+         renderConsole is written for a console that IS connected. */
+      function dress(){
+        var chip=$("pairedChip"); if(chip) chip.textContent="\u00b7 connected";
+        var rc=$("roomCode"); if(rc) rc.textContent=G.code;
+        updateBoard();
+      }
+      var t=[];
+      function run(){
+        t.forEach(clearTimeout); t=[];
+        G.draw=[]; G.idx=-1; G.called={}; G.won=false; G.claims=[]; G.lastWins=[];
+        renderConsole(); dress();
+        BALLS.forEach(function(n,i){
+          t.push(setTimeout(function(){
+            G.draw.push(n); G.idx=G.draw.length-1; G.called[n]=true;
+            renderConsole(); dress();
+          }, 1200 + i*2100));
+        });
+        t.push(setTimeout(run, 1200 + BALLS.length*2100 + 6000));
+      }
+      run();
+    })();
+  }
+  else if(window.VP){ VP.ready().then(function(ctx){ __ctx=ctx; VP.suspensionBanner(ctx); applyRoute(ctx); }).catch(function(){ go("vSignIn"); }); }
   else { go("vSignIn"); }
 })();
 </script>

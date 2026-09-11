@@ -1671,6 +1671,51 @@
     P.assist=loadAssist(); var ac=$("assistChk"); if(ac) ac.checked=P.assist;
     if(loadLight()) setLight(true); var lc=$("lightChk"); if(lc) lc.checked=loadLight();
     setLayout(loadLayout());
+    /* ?demo=1 : THE REAL PHONE, PLAYING A SCRIPTED NIGHT, JOINED TO NOTHING.
+       The same idea as /tv?demo=1. Every pixel on this page is driven by onMsg(), so a
+       demo is a script of MESSAGES and not a second copy of the ticket rendering. The
+       sales page can then show a real phone beside a real screen, and neither can drift
+       from the product, because both ARE the product.
+
+       It joins nothing: no channel, no /join, no server session, no player row, so a
+       marketing page can never add a head to a venue's bill. The ticket below is fixed
+       rather than dealt, so a screenshot of it is the same every time.
+
+       The ticket is a legitimate 90 ball ticket: three rows of five, fifteen numbers,
+       each column holding its own decade in ascending order. The top row completes on
+       the scripted balls, so the demo shows a daub filling in and then a win, which is
+       the thing worth showing. */
+    if(/[?&]demo=1/.test(window.location.search||"")){
+      document.documentElement.setAttribute("data-vp-demo","1");
+      P.room="DEMO24"; P.name="Ann"; P.joined=true; P.numCards=1;
+      /* ASSIST ON, so the ticket marks itself. A demo with nobody tapping sat there
+         nagging "2 numbers away, you have not marked 6 called numbers, tap the glowing
+         squares", which on a sales page reads as a product that is not working rather
+         than one waiting for a finger. Assist is a real setting a real player can turn
+         on, so the demo is showing the product and not a special case of it. */
+      P.assist=true;
+      var CELLS=[[5,null,23,null,42,null,64,null,88],
+                 [null,13,null,31,null,53,null,71,90],
+                 [7,null,26,null,45,null,69,77,null]];
+      var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53], called=[], timers=[];
+      function d(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
+      function run(){
+        called=[]; timers.forEach(clearTimeout); timers=[];
+        P.won=false; P.ended=false; P.claimPending=false;
+        timers.push(setTimeout(function(){
+          d({ t:"cards", cards:[{ cardNo:1, cells:CELLS }], pattern:"one", prize:"$50 bar tab" });
+        }, 300));
+        BALLS.forEach(function(n,i){
+          timers.push(setTimeout(function(){
+            called.push(n);
+            d({ t:"ball", number:n, called:called.slice(), active:true });
+          }, 2600 + i*2100));
+        });
+        timers.push(setTimeout(run, 2600 + BALLS.length*2100 + 9000));
+      }
+      run();
+      return;                       // never reaches goToCode/watchVenue, so nothing connects
+    }
     var m=/[?&]room=([^&]+)/.exec(window.location.search);
     var room = m ? decodeURIComponent(m[1]).toUpperCase().trim() : "";
     var slug = room ? "" : venueSlugFromURL();
