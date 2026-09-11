@@ -697,6 +697,21 @@ MUTATIONS = [
      '<<COPYTO:partyplay-backend/supabase/partyplay-01-a-second-file.sql>>', '',
      'two migrations claim the same number and one gets skipped'),
 
+    # ---- 11 Sep: the plan upgrade, which nothing had ever run ----
+    # overage-charge.test.js stubs upliftPlan and counts calls to the stub, and production
+    # holds zero plan_uplift rows, so the function that raises a venue's plan and moves the
+    # Stripe quantity had never been executed by anything at all.
+    ('plan-uplift.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "    await sbPatch(env, 'vp_venues', 'id=eq.' + enc(venue.id), { max_players: current });",
+     "    // rollback removed on purpose",
+     'Stripe refuses the quantity and the venue keeps a bigger plan we never billed for, for ever'),
+    ('plan-uplift.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     '  if (venue.pending_players != null) {',
+     '  if (false) {',
+     "a venue that chose a SMALLER plan for next renewal is silently pushed back up"),
+
     # ---- 11 Sep: a monitoring tool must not be able to fake the thing it monitors ----
     # Caused by that morning's own fix: daily-venue-audit went from one hardcoded venue
     # to the whole fleet, and it polls the route that records the screen heartbeat, so
