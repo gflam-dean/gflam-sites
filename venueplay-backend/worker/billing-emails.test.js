@@ -23,6 +23,8 @@ eval(lift(BILL,"vpaOverageFromInvoice"));
 eval(lift(BILL,"vpaUpliftNoticeHtml"));
 eval(lift(BILL,"vpaUpliftWarningHtml"));
 eval(lift(BILL,"vpaFireInvoiceEmail"));
+eval(lift(BILL,"vpaFirePlanUpliftEmail"));
+eval(lift(BILL,"vpaSendEmail"));
 
 // Jess's actual invoice, as Stripe returned it.
 var jess = { amount_paid: 1000, number: "9FGBRAJG-0008", lines: { data: [
@@ -160,7 +162,8 @@ Promise.resolve().then(function(){}).then(function(){}).then(function(){}).then(
   // is the same fault as one that fakes them.
   return extrasChecks()
     .then(receiptChecks, function (e) { pass("extras checks did not crash", false, String(e && e.message || e)); return receiptChecks(); })
-    .then(finish, function (e) { pass("receipt checks did not crash", false, String(e && e.message || e)); finish(); });
+    .then(upliftEmailChecks, function (e) { pass("receipt checks did not crash", false, String(e && e.message || e)); return upliftEmailChecks(); })
+    .then(finish, function (e) { pass("uplift email checks did not crash", false, String(e && e.message || e)); finish(); });
 });
 
 /* EXTRAS THAT THE CARD WOULD NOT PAY FOR. Dean, 11 Sep 2026: try once, tell them, and a small
@@ -358,6 +361,62 @@ pass("the billing Worker also uses Brisbane, not UTC",
    So now every exit is recorded, and this runs the real function to prove it: a
    send, a refusal, a missing key, a missing address. "It returned early" and "it
    sent" must never look the same from the outside. */
+/* THE PLAN-CHANGE EMAIL, RUN. Dean asked for this in the morning and it did not exist
+   by the evening, by which time a venue's plan had moved from 1 player to 2 and nothing
+   told her. Untested email code is exactly what put the receipt in the state it was in
+   tonight, so this runs the real function rather than asserting it exists. */
+function upliftEmailChecks() {
+  var sent = [], rows = [];
+  var venues = [{ id: "v1", name: "The Jolly Jess" }];
+  var upliftRow = { id: "aud1", target: "venue:v1", created_at: new Date().toISOString(),
+                    detail: { from: 1, to: 2, nights: [2,2,2], effective: "next_invoice" } };
+  var world = { already: [] };
+  vpaSelect = function (env, table, q) {
+    if (table === "venueplay_founding") return Promise.resolve([{ id: "f1", contact_email: world.email === null ? null : (world.email || "jess@example.com") }]);
+    if (table === "vp_venues") return Promise.resolve(venues);
+    if (/plan_uplift_after_three_big_nights/.test(q)) return Promise.resolve(world.noUplift ? [] : [upliftRow]);
+    if (/plan_uplift_email/.test(q)) return Promise.resolve(world.already);
+    return Promise.resolve([]);
+  };
+  vpaInsert = function (env, t, row) { rows.push(row); return Promise.resolve(); };
+  fetch = function (url, opts) { sent.push({ url: url, body: JSON.parse(opts.body) }); return Promise.resolve({ ok: true, json: function () { return Promise.resolve({ id: "re_u" }); } }); };
+  var ENV = { RESEND_API_KEY: "k", SITE_URL: "https://venueplay.com.au" };
+
+  return vpaFirePlanUpliftEmail(ENV, "cus_1").then(function () {
+    pass("a plan uplift sends its own email", sent.length === 1, sent.length + " sent");
+    if (sent.length) {
+      var h = sent[0].body.html || "";
+      pass("the subject says the plan moved", /plan has moved up/i.test(sent[0].body.subject), sent[0].body.subject);
+      pass("it names the old and new limit", h.indexOf(">1<") >= 0 && h.indexOf(">2<") >= 0);
+      pass("and says when it starts", /next invoice/i.test(h), "so nobody thinks they are charged today");
+      pass("and that tonight was charged at half rate", /half the usual rate/i.test(h));
+    }
+    var r = rows.filter(function (x) { return x.action === "plan_uplift_email"; });
+    pass("the send is recorded against the uplift row", r.length === 1 && r[0].detail.uplift_row === "aud1" && r[0].detail.sent === true,
+         r.length ? JSON.stringify(r[0].detail) : "nothing written");
+
+    // Stripe redelivers, and setPlayers raises the same event. Neither may email twice.
+    world.already = [{ id: "x", detail: { uplift_row: "aud1" } }];
+    sent = []; rows = [];
+    return vpaFirePlanUpliftEmail(ENV, "cus_1");
+  }).then(function () {
+    pass("a second delivery of the same event says nothing", sent.length === 0 && rows.length === 0,
+         sent.length + " sent, " + rows.length + " written");
+    world.already = []; world.noUplift = true; sent = []; rows = [];
+    return vpaFirePlanUpliftEmail(ENV, "cus_1");
+  }).then(function () {
+    pass("an ordinary quantity change is silent", sent.length === 0 && rows.length === 0,
+         "setPlayers and addVenue raise the same event");
+    world.noUplift = false; world.email = null; sent = []; rows = [];
+    return vpaFirePlanUpliftEmail(ENV, "cus_1");
+  }).then(function () {
+    var r = rows.filter(function (x) { return x.action === "plan_uplift_email"; });
+    pass("no contact email is recorded, not swallowed",
+         sent.length === 0 && r.length === 1 && /no contact email/.test(r[0].detail.outcome),
+         r.length ? r[0].detail.outcome : "nothing written");
+  });
+}
+
 function receiptChecks() {
   var sent = [];                       // the decline block's `sent` is scoped to itself
   var paid = { id: "in_1", number: "9FGBRAJG-0018", customer: "cus_1",

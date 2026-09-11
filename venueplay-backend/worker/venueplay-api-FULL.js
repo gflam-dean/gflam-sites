@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 23:01 · eca7ba08';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 23:16 · 97c1b70f';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -578,6 +578,12 @@ async function handleWebhook(request, env, cors) {
     // window is long gone either way and this is the backstop.
     if (st === 'unpaid') {
       await vpaSuspendForNonpayment(env, event.data.object.customer);
+    }
+    /* THE PLAN MOVED. Told at the moment it moves, not buried in a receipt that may
+       never arrive. Returns immediately unless a plan_uplift row was written in the last
+       half hour, so the other quantity writes named below are silent. */
+    if (st === 'active') {
+      await vpaFirePlanUpliftEmail(env, event.data.object && event.data.object.customer);
     }
     // NO reactivation here. Every subscription_items quantity write WE make raises this event
     // with status 'active': setPlayers, addVenue, applyPendingOnInvoice, the plan uplift. So a
@@ -3525,6 +3531,91 @@ function vpaOverageFromInvoice(invoice) {
   return out;
 }
 
+/* "I SAID YOU NEEDED A NOTIFICATION THIS MORNING THAT THEIR PLAN WAS GOING UP."
+   Dean, 11 Sep 2026, after The Jolly Jess was moved from 1 player to 2 by the three
+   big nights rule and nothing whatsoever told her. Her monthly goes $2.50 -> $5.00.
+
+   There was no such email. The only mention of an uplift anywhere was a BLOCK inside
+   the receipt for that night's invoice, so a venue learned their bill had gone up only
+   if that receipt arrived. That night it did not: the receipt threw a ReferenceError on
+   every send. So the plan moved in silence, which is not something you do to somebody's
+   recurring bill.
+
+   This is its own email, fired the moment the plan moves, and it does not care whether
+   any invoice or receipt works.
+
+   WHY IT LIVES IN THE BILLING WORKER. upliftPlan runs in the GAME Worker, which has no
+   Resend key. It does write plan_uplift_after_three_big_nights the moment it succeeds,
+   and every quantity change it makes raises customer.subscription.updated here, where
+   the key is. So the audit row is the trigger and the event is the doorbell.
+
+   IDEMPOTENT ON THE ROW, not on the event. setPlayers, addVenue and applyPendingOnInvoice
+   all raise the same event, and Stripe redelivers. An uplift is emailed once because the
+   row it came from is recorded in plan_uplift_email and checked before sending. */
+async function vpaFirePlanUpliftEmail(env, customerId) {
+  const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
+    actor_admin: null, actor_label: 'stripe',
+    action: 'plan_uplift_email',
+    target: 'customer:' + String(customerId || ''),
+    detail: Object.assign({ outcome: why }, extra || {}),
+  }, false).catch(() => {});
+  try {
+    if (!customerId) return;
+    const accts = await vpaSelect(env, 'venueplay_founding',
+      'stripe_customer_id=eq.' + encodeURIComponent(customerId) + '&select=id,contact_email&limit=1');
+    const acct = accts && accts[0];
+    if (!acct) return;                       // not one of ours: nothing to say
+    const venues = await vpaSelect(env, 'vp_venues',
+      'founding_id=eq.' + encodeURIComponent(acct.id) + '&select=id,name&limit=50');
+    if (!venues || !venues.length) return;
+    const targets = venues.map((v) => 'venue:' + v.id);
+    const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const rows = await vpaSelect(env, 'vp_admin_audit',
+      'action=eq.plan_uplift_after_three_big_nights&created_at=gte.' + encodeURIComponent(since) +
+      '&target=in.(' + targets.map(encodeURIComponent).join(',') + ')' +
+      '&select=id,target,created_at,detail&order=created_at.desc&limit=1');
+    const up = rows && rows[0];
+    if (!up) return;                          // this event was some other quantity change
+    // Already told them about THIS uplift? Then say nothing, however many times Stripe knocks.
+    const done = await vpaSelect(env, 'vp_admin_audit',
+      'action=eq.plan_uplift_email&select=id,detail&order=created_at.desc&limit=20');
+    if ((done || []).some((d) => d && d.detail && d.detail.uplift_row === up.id)) return;
+
+    const venue = venues.filter((v) => ('venue:' + v.id) === up.target)[0] || venues[0];
+    const email = acct.contact_email;
+    if (!email) { await say('not sent: the account has no contact email', { uplift_row: up.id }); return; }
+    const d = up.detail || {};
+    const nights = Array.isArray(d.nights) ? d.nights : [];
+    const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+    const when = d.effective === 'pro_rata_now'
+      ? 'It is charged pro rata to your renewal, on a separate invoice.'
+      : 'It starts from your next invoice. Nothing extra is charged today.';
+    const html =
+        '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
+      + '<h1 style="font-size:20px;margin:0 0 14px">Your plan has moved up</h1>'
+      + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">'
+      + vpaEsc(venue.name || 'Your venue') + ' has been over its player limit on three nights in a row, '
+      + 'so the plan has moved from <b>' + vpaEsc(String(d.from)) + '</b> to <b>' + vpaEsc(String(d.to)) + '</b> players'
+      + (nights.length ? ' (' + vpaEsc(nights.join(', ')) + ' players on those nights)' : '') + '.</p>'
+      + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">' + when + ' '
+      + 'Tonight\'s extra players were charged at half the usual rate, because the plan moving up is what pays for it.</p>'
+      + '<p style="font-size:15px;line-height:1.55;margin:0 0 16px">'
+      + 'If that is not what you want, you can set your player limit back on your account page and the change '
+      + 'takes effect at your next renewal.</p>'
+      + '<p style="margin:22px 0"><a href="' + site + '/app/billing.html" '
+      + 'style="background:#e6007e;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600">'
+      + 'See your plan</a></p>'
+      + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+      + '</div>';
+    const ok = await vpaSendEmail(env, email, 'Your VenuePlay plan has moved up', html);
+    await say(ok ? 'sent' : 'not sent: Resend refused it',
+              { uplift_row: up.id, to: email, venue: venue.name || null,
+                from_players: d.from, to_players: d.to, nights: nights, sent: !!ok });
+  } catch (e) {
+    await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
+  }
+}
+
 async function vpaFireInvoiceEmail(env, invoice) {
   /* THE RECEIPT WROTE NOTHING DOWN, SO NOBODY COULD SAY WHETHER IT WENT.
      Dean, 11 Sep 2026, after three real charges collected on a live card: "so the
@@ -4483,7 +4574,27 @@ async function vpbAccountSummary(request, env, json) {
     return dollars;
   }
 
-  const totalPlayers = venues.reduce((n, v) => n + v.players, 0);
+  /* WHAT THEY ARE ACTUALLY BEING CHARGED, ASKED OF STRIPE.
+     Dean, 11 Sep 2026: "Jess says shes got 3 players this month, 2 next month so the
+     numbers havent rolled over in their account."
+
+     Her account held two venues: the-jolly-jess on 2 players, and not-jess, SUSPENDED and
+     already set to cancel at period end, on 1. This line summed both and told her 3 players
+     and $7.50 a month. Stripe's subscription quantity was 2, so she was being charged $5.00.
+     The page was the only number in the whole product that counted a cancelling venue:
+     accountBilledTotal in the game Worker skips them, and so does billedPlayers three lines
+     below. Two definitions of "how many players are you paying for", and the customer-facing
+     one was the odd one out, by $2.50 a month.
+
+     So stop deriving this month's bill from our own table when Stripe holds the answer. The
+     subscription's quantity IS the number being charged, and using it makes the page agree
+     with the invoice by construction rather than by us keeping two sums in step.
+     The local sum stays as the fallback for an account with no subscription item yet (a
+     trialing or comped venue), and it is now computed the same way as everything else:
+     cancelling venues do not count. */
+  const localPlayers = venues.reduce((n, v) => v.cancelling ? n : n + v.players, 0);
+  const stripeQty = info && Number.isFinite(Number(info.quantity)) ? Number(info.quantity) : null;
+  const totalPlayers = (stripeQty != null && stripeQty > 0) ? stripeQty : localPlayers;
   // What Stripe will actually bill next: the scheduled reduction where one is pending, else
   // capacity. On annual plans the renewal charge is the yearly figure, not the monthly one.
   const billedPlayers = venues.reduce((n, v) => v.cancelling ? n : n + ((v.pending != null) ? v.pending : v.players), 0);
