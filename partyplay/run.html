@@ -824,7 +824,23 @@
   }
 
   document.addEventListener("click",function(ev){
-    var el=ev.target.closest?ev.target.closest("[data-run],#call,#back,#again,#reveal,#next,#shownight,#resetnight,#flip,#hstart"):null;
+    /* THE SAME LIST, KEPT TWICE, AND THE TWO COPIES DRIFTED.
+       This filter named nine buttons. The body below acts on twenty six, so SEVENTEEN
+       buttons rendered, looked right, and did nothing at all when pressed. #startnow was
+       one of them: "Start the party" never called startClock(), never sent
+       POST /licence/start, so the clock never started and no guest could ever join.
+       Prize draw, Guess the photo, Two truths and a lie, Who here has ever, Charades and
+       Who am I were all dead for the same reason. Live on partyplay.com.au.
+
+       Adding seventeen names would rebuild the same trap for whoever adds the eighteenth.
+       So the list lives in ONE place now: the body. Any button with an id reaches the
+       handler and the branches below decide. Every branch returns, and an id none of them
+       recognises falls through and does nothing, which is what it did before.
+
+       Found 12 Sep 2026 while asking why PartyPlay had not launched. Nothing had ever
+       pressed a PartyPlay button: the suites call the game functions directly, and
+       tools/play-a-game.py only covers VenuePlay. */
+    var el=ev.target.closest?ev.target.closest("[data-run],button[id]"):null;
     if(!el) return;
     if(el.hasAttribute("data-run")){
       var g=GAMES[+el.getAttribute("data-run")];

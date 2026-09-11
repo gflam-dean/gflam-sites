@@ -630,7 +630,13 @@
 
   /* ------------------------------------------------------------- listeners --- */
   document.addEventListener("click", function(ev){
-    var el = ev.target.closest ? ev.target.closest("[data-add],[data-edit],[data-del],[data-rm],#addItem") : null;
+    /* THE SAME TRAP AS run.html. This filter named one id, #addItem, and the branches
+       below act on three. #dlAll (Download) and #copyShare (Copy link) on the photo
+       album both rendered, looked right, and did nothing when pressed.
+       One list, in the body, for the same reason as run.html: naming the two missing ids
+       here would just rebuild the trap for whoever adds the fourth. Every branch below
+       returns, so an id none of them knows falls straight through, exactly as now. */
+    var el = ev.target.closest ? ev.target.closest("[data-add],[data-edit],[data-del],[data-rm],button[id]") : null;
     if(!el) return;
 
     if(el.hasAttribute("data-add")){
