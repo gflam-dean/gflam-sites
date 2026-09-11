@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 10:20 · 3e2fb4f7';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 22:47 · 61320367';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3526,11 +3526,29 @@ function vpaOverageFromInvoice(invoice) {
 }
 
 async function vpaFireInvoiceEmail(env, invoice) {
+  /* THE RECEIPT WROTE NOTHING DOWN, SO NOBODY COULD SAY WHETHER IT WENT.
+     Dean, 11 Sep 2026, after three real charges collected on a live card: "so the
+     reciept was never sent to jess we just charged it? I thought you said everything
+     worked". The honest answer was that I could not tell him. The failure path writes a
+     payment_failed_email row with the recipient, the amount and Resend's id; the receipt
+     path sent the mail and swallowed everything, including its own errors. Three payments
+     took money and left no evidence a receipt existed either way.
+     Every exit from here is now recorded, including the quiet ones: no Resend key, no
+     email address on the customer, a zero-amount invoice. "It returned early" and "it
+     sent" must never look the same from the outside. */
+  const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
+    actor_admin: null, actor_label: 'stripe',
+    action: 'invoice_receipt_email',
+    target: 'customer:' + String((invoice && invoice.customer) || ''),
+    detail: Object.assign({ invoice: (invoice && invoice.id) || null,
+                            number: (invoice && invoice.number) || null,
+                            outcome: why }, extra || {}),
+  }, false).catch(() => {});
   try {
-    if (!env.RESEND_API_KEY) return;                                  // Resend not configured yet
-    if (!invoice || Number(invoice.amount_paid || 0) <= 0) return;    // only real payments, not $0 trial invoices
+    if (!env.RESEND_API_KEY) { await say('not sent: no Resend key on this Worker'); return; }
+    if (!invoice || Number(invoice.amount_paid || 0) <= 0) return;    // $0 trial invoice: no receipt is correct
     const email = invoice.customer_email;
-    if (!email) return;
+    if (!email) { await say('not sent: the customer has no email address'); return; }
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const logo = site + '/logos/venueplay_primary_dark.png';
     const amount = '$' + (Number(invoice.amount_paid) / 100).toFixed(2);
@@ -3553,9 +3571,17 @@ async function vpaFireInvoiceEmail(env, invoice) {
             : '')
       + '</td></tr></table>'
       + vpaInvoiceLinesHtml(invoice)
+      /* `customer` did not exist here. It was written on 11 Sep 2026 at 05:34 (0d1f1fd),
+         the only `customer` in the file is a const inside the UPCOMING-reminder function,
+         and vpaUpliftWarningHtml's own parameter is called customerId. So this line threw
+         a ReferenceError on every single receipt, the catch at the bottom swallowed it,
+         and NO RECEIPT WAS SENT AT ALL from 05:34 that morning: not for the three real
+         overage charges collected that night, not for any renewal.
+         Nothing reported it because the receipt path wrote nothing down, which is the
+         other half of this fix. The duplicate vpaUpliftNoticeHtml line arrived in the
+         same commit and is gone too. */
       + vpaUpliftNoticeHtml(invoice)
-      + (await vpaUpliftWarningHtml(env, customer))
-      + vpaUpliftNoticeHtml(invoice)
+      + (await vpaUpliftWarningHtml(env, invoice.customer))
       + vpaTaxSummaryHtml(invoice)
       + (ov.nights > 0 ? '<p style="font-size:13px;color:#6a6a75;margin:0 0 18px">Running over most weeks? A bigger plan usually works out cheaper than the per-night rate - adjust it anytime on your billing page.</p>' : '')
       + (btn ? '<a href="' + btn + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">View invoice</a>' : '')
@@ -3565,7 +3591,7 @@ async function vpaFireInvoiceEmail(env, invoice) {
       + '<p style="font-size:12.5px;color:#9a9aa4;margin:14px 0 0">Questions about your bill? Reply to this email or contact hello@venueplay.com.au</p>'
       + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
       + '</div>';
-    await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -3576,7 +3602,15 @@ async function vpaFireInvoiceEmail(env, invoice) {
         html: html,
       }),
     });
-  } catch (_) { /* invoice email is best-effort */ }
+    let resendId = null;
+    try { const j = await res.json(); resendId = (j && j.id) || null; } catch (_) {}
+    await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',
+              { to: email, amount: amount, sent: !!(res && res.ok), resend_id: resendId,
+                status: (res && res.status) || null });
+  } catch (e) {
+    // Best effort still, but no longer silent: a receipt that threw is a receipt nobody got.
+    await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
+  }
 }
 
 /* 5-day payment reminder, sent on Stripe's invoice.upcoming event (set the lead time to 5 days in

@@ -697,6 +697,18 @@ MUTATIONS = [
      '<<COPYTO:partyplay-backend/supabase/partyplay-01-a-second-file.sql>>', '',
      'two migrations claim the same number and one gets skipped'),
 
+    # ---- 11 Sep: the receipt email threw on every payment and nobody could tell ----
+    ('billing-emails.test.js',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     '+ (await vpaUpliftWarningHtml(env, invoice.customer))',
+     '+ (await vpaUpliftWarningHtml(env, customer))',
+     'the receipt throws a ReferenceError on every payment and the catch swallows it'),
+    ('billing-emails.test.js',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     "await say(res && res.ok ? 'sent' : 'not sent: Resend refused it',",
+     "await Promise.resolve(res && res.ok ? 'sent' : 'not sent',",
+     'a receipt sends or fails and leaves no record either way'),
+
     # ---- 11 Sep: the plan upgrade, which nothing had ever run ----
     # overage-charge.test.js stubs upliftPlan and counts calls to the stub, and production
     # holds zero plan_uplift rows, so the function that raises a venue's plan and moves the

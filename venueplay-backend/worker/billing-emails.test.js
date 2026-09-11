@@ -14,6 +14,15 @@ var VP_ABN = abn?abn[1]:"";
 eval(lift(BILL,"vpaEsc"));
 eval(lift(BILL,"vpaInvoiceLinesHtml"));
 eval(lift(BILL,"vpaTaxSummaryHtml"));
+/* The receipt and the helpers it calls. These must be lifted at TOP LEVEL: an eval inside a
+   function does not leak its declarations. Twice: first inside receiptChecks, then inside a
+   forEach callback, which is also a function. Plain statements at top level, like the ones
+   above. The failures both times read "not sent: Can't find variable: ...", which was the new
+   instrumentation correctly reporting a fault in the suite that was testing it. */
+eval(lift(BILL,"vpaOverageFromInvoice"));
+eval(lift(BILL,"vpaUpliftNoticeHtml"));
+eval(lift(BILL,"vpaUpliftWarningHtml"));
+eval(lift(BILL,"vpaFireInvoiceEmail"));
 
 // Jess's actual invoice, as Stripe returned it.
 var jess = { amount_paid: 1000, number: "9FGBRAJG-0008", lines: { data: [
@@ -145,7 +154,13 @@ Promise.resolve().then(function(){}).then(function(){}).then(function(){}).then(
   pass("and that answer reads as insufficient funds in the email", /not enough funds/.test(vpaDeclineReason(r && r.code, r && r.message).line));
   pass("the handler reads the bank's answer BEFORE the mover voids the invoice, and hands it to the email",
        /const decline = await vpaLookupDecline\(env, inv\);\s*const moved = await vpaMoveExtrasToMonthly\(env, inv\);\s*if \(!moved\.already\) await vpaFirePaymentFailedEmail\(env, inv, moved, decline\);/.test(BILL));
-  return extrasChecks().then(finish, function (e) { pass("extras checks did not crash", false, String(e && e.message || e)); finish(); });
+  // The receipt checks run AFTER these, and only the last thing in the chain calls
+  // finish(). Run in parallel they raced it: finish() printed the old total of 82 and
+  // the nine receipt checks never appeared at all. A suite that silently drops checks
+  // is the same fault as one that fakes them.
+  return extrasChecks()
+    .then(receiptChecks, function (e) { pass("extras checks did not crash", false, String(e && e.message || e)); return receiptChecks(); })
+    .then(finish, function (e) { pass("receipt checks did not crash", false, String(e && e.message || e)); finish(); });
 });
 
 /* EXTRAS THAT THE CARD WOULD NOT PAY FOR. Dean, 11 Sep 2026: try once, tell them, and a small
@@ -332,6 +347,78 @@ pass("and it is NOT dated from when the sweep ran", au(sat9pm) !== au(sweep3am),
    on Sunday and reads the date off the Stripe request. Behaviour there, not text here. */
 pass("the billing Worker also uses Brisbane, not UTC",
      /Date\.now\(\) \+ 36000000/.test(BILL));
+
+/* ---- THE RECEIPT, RUN. Dean, 11 Sep 2026, after three real charges collected:
+   "so the reciept was never sent to jess we just charged it? I thought you said
+   everything worked". The honest answer was that nobody could tell, because the
+   receipt path sent the mail and wrote nothing down, while the FAILURE path wrote a
+   row with the recipient, the amount and Resend's id. Three payments took money and
+   left no evidence a receipt existed either way.
+
+   So now every exit is recorded, and this runs the real function to prove it: a
+   send, a refusal, a missing key, a missing address. "It returned early" and "it
+   sent" must never look the same from the outside. */
+function receiptChecks() {
+  var sent = [];                       // the decline block's `sent` is scoped to itself
+  var paid = { id: "in_1", number: "9FGBRAJG-0018", customer: "cus_1",
+               customer_email: "jess@example.com", amount_paid: 100,
+               lines: { data: [{ description: "Extra Player", amount: 100, quantity: 1 }] } };
+
+  function run(env, inv, reply) {
+    audits.length = 0; sent.length = 0;
+    fetch = function (url, opts) {
+      sent.push({ url: url, body: opts && opts.body ? JSON.parse(opts.body) : null });
+      return Promise.resolve(reply || { ok: true, json: function () { return Promise.resolve({ id: "re_1" }); } });
+    };
+    return vpaFireInvoiceEmail(env, inv);
+  }
+  var ENV = { RESEND_API_KEY: "re_key", SITE_URL: "https://venueplay.com.au" };
+
+  // RETURNED, not just started. Without this the caller got undefined, finish() ran
+  // immediately and printed the old total while these nine checks were still pending.
+  return run(ENV, paid).then(function () {
+    var r = audits.filter(function (a) { return a.row.action === "invoice_receipt_email"; });
+    pass("a paid invoice sends a receipt", sent.length === 1 && /api\.resend\.com/.test(sent[0].url));
+    pass("and it is RECORDED, so nobody has to ask the customer", r.length === 1,
+         JSON.stringify(audits.map(function (a) { return a.row.action; })));
+    pass("naming who, how much, and Resend's id",
+         r.length === 1 && r[0].row.detail.to === "jess@example.com" &&
+         r[0].row.detail.sent === true && r[0].row.detail.resend_id === "re_1" &&
+         r[0].row.detail.outcome === "sent",
+         r.length ? JSON.stringify(r[0].row.detail) : "");
+    pass("and the invoice it is a receipt FOR",
+         r.length === 1 && r[0].row.detail.invoice === "in_1" && r[0].row.detail.number === "9FGBRAJG-0018");
+
+    // Resend refuses it. The money was still taken, so this must be loud in the data.
+    return run(ENV, paid, { ok: false, status: 422, json: function () { return Promise.resolve({}); } });
+  }).then(function () {
+    var r = audits.filter(function (a) { return a.row.action === "invoice_receipt_email"; });
+    pass("a refused receipt is recorded as NOT sent",
+         r.length === 1 && r[0].row.detail.sent === false && /refused/.test(r[0].row.detail.outcome),
+         r.length ? JSON.stringify(r[0].row.detail) : "");
+
+    // The quiet exits. These are the ones that used to be indistinguishable from success.
+    return run({ SITE_URL: "x" }, paid);
+  }).then(function () {
+    var r = audits.filter(function (a) { return a.row.action === "invoice_receipt_email"; });
+    pass("no Resend key says so instead of returning in silence",
+         r.length === 1 && /no Resend key/.test(r[0].row.detail.outcome) && sent.length === 0,
+         r.length ? r[0].row.detail.outcome : "nothing was written");
+    return run(ENV, { id: "in_2", customer: "cus_1", amount_paid: 200, customer_email: null,
+                      lines: { data: [] } });
+  }).then(function () {
+    var r = audits.filter(function (a) { return a.row.action === "invoice_receipt_email"; });
+    pass("a customer with no email address says so too",
+         r.length === 1 && /no email address/.test(r[0].row.detail.outcome) && sent.length === 0,
+         r.length ? r[0].row.detail.outcome : "nothing was written");
+    return run(ENV, { id: "in_3", customer: "cus_1", customer_email: "a@b.c", amount_paid: 0,
+                      lines: { data: [] } });
+  }).then(function () {
+    pass("a $0 trial invoice sends nothing and writes nothing",
+         sent.length === 0 && audits.length === 0,
+         "a receipt for nothing would be noise, not evidence");
+  });
+}
 
 /* The summary is called from the END of the async decline chain above, so it is the last line
    printed, which is the line release-check reads. */
