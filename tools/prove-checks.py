@@ -92,8 +92,10 @@ MUTATIONS = [
 
     ('sweep-sessions.test.js',
      'venueplay-backend/worker/venueplay-game.js',
-     "      'ended_at=is.null&opened_at=lt.' + enc(cutoff) +",
-     "      'status=in.(lobby,running,paused)&opened_at=lt.' + enc(cutoff) +",
+     # Re-aimed 11 Sep 2026: the cutoff became optional, so the old find-string stopped
+     # matching and prove-checks reported the mutation dead rather than the check blind.
+     "      'ended_at=is.null' + (cutoff ? ('&opened_at=lt.' + enc(cutoff)) : '') +",
+     "      'status=in.(lobby,running,paused)' + (cutoff ? ('&opened_at=lt.' + enc(cutoff)) : '') +",
      'the nightly sweep goes back to asking by status, and a cancelled session sits open for ever holding billable players'),
 
     ('sweep-sessions.test.js',
