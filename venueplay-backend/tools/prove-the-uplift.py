@@ -32,9 +32,12 @@ WHAT IT DOES, in order, stopping at the first thing that is wrong:
          - a plan_uplift_after_three_big_nights audit row exists, naming the three nights
          - the third night was charged at HALF the usual rate, because the upgrade pays for it
 
-WHAT IT COSTS. Two more real charges on the venue's card: about $2 then about $1 (the
-third night is half price). The venue's plan also moves up, which raises their monthly
-bill from the next invoice. THIS IS A TEST VENUE'S ACCOUNT: put the plan back afterwards
+WHAT IT COSTS. Exactly, because vague numbers on somebody's card are not good enough:
+rateDollars = halfPrice ? 1.00 : 2.00 (venueplay-game.js), so one extra player is $2.00
+on an ordinary big night and $1.00 on the night the upgrade fires, because the upgrade
+is what pays for the discount. The plan is raised to Math.min of the three peaks, not
+the largest, so three nights of two players gives a plan of two. The script prints the
+real figures for the venue named, read from Stripe, before it does anything. THIS IS A TEST VENUE'S ACCOUNT: put the plan back afterwards
 and refund the charges. The script prints exactly what to undo when it finishes.
 
 IT REFUSES a venue that is not a test venue unless --i-know is given, because moving a
@@ -131,7 +134,31 @@ def main():
         print('        leaves such a venue alone. The upgrade will NOT fire. Clear it first.%s' % OFF)
     if needed == 0:
         print('  already at three. The next big night on a NEW night will upgrade it.')
-    print('  cost       about $2 per night, and the third is HALF price because the upgrade pays for it')
+    # EXACT, NOT "ABOUT". rateDollars = halfPrice ? 1.00 : 2.00 in venueplay-game.js, and
+    # the plan is raised to Math.min of the three peaks, so a night of 2 players three times
+    # gives a plan of 2. Vague numbers on someone's card are not good enough.
+    extra = 1
+    full_nights = max(0, needed - 1)
+    charge = full_nights * extra * 2.00 + (extra * 1.00 if needed >= 1 else 0)
+    unit = 0
+    try:
+        si = stripe('subscriptions/' + acct['stripe_subscription_id'])
+        unit = (((si.get('items') or {}).get('data') or [{}])[0].get('price') or {}).get('unit_amount') or 0
+    except Exception:
+        pass
+    peak = (v.get('overage_streak_peaks') or [2])
+    new_max = min(list(peak) + [extra + (v.get('max_players') or 0)])
+    print('  COST, exactly:')
+    for i in range(needed):
+        rate = 1.00 if i == needed - 1 else 2.00
+        print('    night %d   %d extra player x $%.2f = $%.2f%s'
+              % (streak + i + 1, extra, rate, extra * rate,
+                 '   (half price: the upgrade pays for it)' if rate == 1.00 else ''))
+    print('    total     $%.2f charged to the card on file' % charge)
+    print('  THEN, from the next invoice:')
+    print('    plan      max_players %s -> %s, Stripe quantity %s -> %s'
+          % (v['max_players'], new_max, qty0, new_max))
+    print('    monthly   $%.2f -> $%.2f' % (unit * (qty0 or 1) / 100, unit * new_max / 100))
     print()
     if not a.go:
         print('  dry run. Add --go to do it.')
