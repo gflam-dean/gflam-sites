@@ -291,6 +291,38 @@
   function refresh() { _ready = build(); return _ready; }
   function getContext() { return _ctx; }
 
+  /* HOW MANY PHONES HAVE ACTUALLY SCANNED IN, ASKED OF THE SERVER.
+
+     A console only knows the players it personally heard announce themselves on its own
+     broadcast channel. For trivia that is nobody until the round starts, because a phone
+     that types the code sits on /play holding "YOU'RE IN" and does not reach the trivia
+     page, or the trivia channel, until the host taps Start. On 11 Sep 2026 a phone joined
+     a trivia lobby, the phone said it was in, and the host console said PLAYERS (0) for as
+     long as anyone cared to watch. A host with a full room reads that as nobody turned up.
+
+     GET /snapshot is public, already used by four consoles to recover themselves, and
+     returns player_count: vp_players for the session, deduped by device id, which is the
+     same figure the night is billed on.
+
+     Resolves to null on anything going wrong, never rejects, so a caller can only ever
+     end up showing nothing extra. app/index.html keeps its own serverPlayerCount: that one
+     is the number printed on the end-of-night card as the billed figure, and it should not
+     share a fate with a lobby hint.  */
+  function sessionPlayerCount(apiBase, sessionId) {
+    if (!apiBase || !sessionId) return Promise.resolve(null);
+    var ctrl = (typeof AbortController === "function") ? new AbortController() : null;
+    var timer = root.setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
+    return root.fetch(apiBase + "/snapshot?session=" + encodeURIComponent(sessionId),
+                      { signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        root.clearTimeout(timer);
+        var n = j && j.player_count;
+        return (typeof n === "number" && isFinite(n) && n >= 0) ? n : null;
+      })
+      .catch(function () { root.clearTimeout(timer); return null; });
+  }
+
   function setCurrentVenue(id) {
     return ready().then(function (ctx) {
       if (!ctx.authed) return ctx;
@@ -646,6 +678,7 @@
     refresh: refresh,
     getContext: getContext,
     setCurrentVenue: setCurrentVenue,
+    sessionPlayerCount: sessionPlayerCount,
     listVenues: listVenues,
     gameApiPost: gameApiPost,
     gameApiCall: gameApiCall,

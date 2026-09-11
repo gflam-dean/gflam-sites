@@ -1283,6 +1283,41 @@ def local_checks(which):
            '%d migrations' % len(nums),
            why='; '.join(dupes[:2]))
 
+    head('D. No host console can be frozen by a browser dialog')
+    """A HOST CONSOLE THAT POPS AN alert() STOPS BEING A HOST CONSOLE.
+
+    On 11 Sep 2026 a members draw was run on a test venue with nobody in the draw.
+    startDraw() called alert("No TV connected yet...") and the whole page stopped:
+    no rendering, no websocket handling, no buttons, until somebody walks over and
+    taps OK. On a tablet behind a bar, mid-service, that is a dead console and a room
+    staring at a frozen wall. It also froze the browser automation that found it,
+    which is how obvious the failure mode is.
+
+    Every console already has hostError(): a dismissible bar that scrolls itself into
+    view and blocks nothing. musical/host.html has said in a comment for weeks that it
+    is "the ONLY error surface". members/host.html had six alert() calls and raffle
+    four, all of them bypassing the bar sitting right there in the same file.
+
+    confirm() is deliberately NOT included. It asks a question and waits for an answer
+    from a host who is standing right there, which is the point of it."""
+    consoles = ['venueplay/app/index.html', 'venueplay/app/members/host.html',
+                'venueplay/app/musical/host.html', 'venueplay/app/raffle/host.html',
+                'venueplay/app/trivia/host.html']
+    seen, noisy = 0, []
+    for rel in consoles:
+        full = os.path.join(ROOT, rel)
+        if not os.path.isfile(full):
+            noisy.append(rel + ' is missing')
+            continue
+        seen += 1
+        src = io.open(full, encoding='utf-8', errors='replace').read()
+        hits = len(re.findall(r'(?<![.\w])alert\s*\(', src))
+        if hits:
+            noisy.append('%s (%d)' % (rel.split('/app/')[-1], hits))
+    ok('no host console calls alert()', seen == len(consoles) and not noisy,
+       '%d console(s) read' % seen,
+       why=('a dialog freezes the whole page until somebody taps OK: ' + ', '.join(noisy)))
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
@@ -2103,6 +2138,47 @@ def no_session_left_open():
        why='run venueplay-backend/tools/check-stale-sessions.py for which venue and which session')
 
 
+def every_active_venue_knows_its_state():
+    """THE COMPLIANCE CARD THAT CANNOT NAME THE REGULATOR.
+
+    Before bingo, musical bingo, a raffle or a members draw, vp-gaming.js shows the
+    host their own state's rules. Which state comes from vp_venues.au_state, derived
+    by the Worker from the venue's postcode. No postcode, no state, and the card says
+    "We do not know which state this venue is in yet."
+
+    Nothing goes red when that happens. The night runs. On a product whose gaming card
+    exists because of Queensland's OLGR, that sentence is the one it must never show.
+
+    Found on 11 Sep 2026 by running a real raffle on a test venue and READING the card,
+    which is the only way it could have been found: no check in this repo looked at it.
+    Four active venues were in that state, tugun-bowls among them.
+
+    Separate tool, same reason as the stale-session check: it needs the service
+    credentials this one deliberately does not carry. The public key reads vp_venues
+    and gets zero rows, so a version built on the public key would pass for ever.
+    """
+    head('Every active venue can be shown its own state\'s gaming rules')
+    tool = os.path.join(ROOT, 'venueplay-backend', 'tools', 'check-gaming-state.py')
+    env_file = os.path.join(os.path.expanduser('~'), '.gflam-migrate.env')
+    if not os.path.exists(tool):
+        ok('the gaming state check exists', False,
+           why='venueplay-backend/tools/check-gaming-state.py is missing')
+        return
+    if not os.path.exists(env_file):
+        note('gaming state: NOT CHECKED',
+             'no ~/.gflam-migrate.env on this machine, so the database was never asked. '
+             'This is deliberately not a pass: run check-gaming-state.py where the '
+             'credentials are.')
+        return
+    r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=180)
+    out = (r.stdout or '') + (r.stderr or '')
+    last = [l for l in out.splitlines() if l.strip()]
+    tail = last[-1].strip() if last else 'no output'
+    ok('no active venue is told we do not know its state', r.returncode == 0,
+       detail=re.sub(r'\033\[[0-9;]*m', '', tail),
+       why='run venueplay-backend/tools/check-gaming-state.py for which venue')
+
+
 def nobody_paid_and_got_nothing():
     """PartyPlay is delivered by ONE email. A failed send is a log line nobody reads.
 
@@ -2357,6 +2433,7 @@ def main():
             venue_codes_are_unique()
             founding_windows_are_open()
             no_session_left_open()
+            every_active_venue_knows_its_state()
         if which in ('both', 'partyplay'):
             pages_live('PartyPlay', PP, PP_PAGES)
             every_page_is_reachable('PartyPlay', PP, 'partyplay')

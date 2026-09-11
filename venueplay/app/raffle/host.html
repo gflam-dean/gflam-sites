@@ -712,11 +712,11 @@
   function startDraw(){
     if(G.busy) return;
     readInputs();
-    if(!validRange()){ alert("Enter a valid ticket range first."); return; }
-    if(G.jackOn && G.jackAmt<=0){ alert("Enter a jackpot amount."); return; }
+    if(!validRange()){ hostError("Enter a valid ticket range first."); return; }
+    if(G.jackOn && G.jackAmt<=0){ hostError("Enter a jackpot amount."); return; }
     if(!G.jackOn && G.prizeIdx>=G.prizes.length){ var typed=($("rfPrize").value||"").trim(); if(typed) addPrize(typed); }   // single-prize quick draw: add what's typed
-    if(!G.jackOn && !drawingPrize()){ alert("Add at least one prize to draw for."); return; }
-    if(remainingCount()<1){ alert("No undrawn tickets left. Tap New raffle to start again."); return; }
+    if(!G.jackOn && !drawingPrize()){ hostError("Add at least one prize to draw for."); return; }
+    if(remainingCount()<1){ hostError("No undrawn tickets left. Tap New raffle to start again."); return; }
 
     G.busy=true; clearTimers();
     $("winnerCard").classList.remove("show"); $("claimBtn").classList.remove("pulse");

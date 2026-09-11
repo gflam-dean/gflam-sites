@@ -274,7 +274,7 @@
   // Faults the host has to act on go here, not to the 11.5px status pill and not to console.error.
   function hostError(msg){
     var t=$("hostErrText"), b=$("hostErrBar");
-    if(!t||!b) return;
+    if(!t||!b){ var st=$("statusText"); if(st) st.textContent=msg||"Something went wrong"; return; }
     t.textContent=msg||"Something went wrong";
     b.classList.add("show");
     try{ window.scrollTo({ top:0, behavior:"smooth" }); }catch(e){ window.scrollTo(0,0); }
@@ -515,7 +515,7 @@
   }
 
   function startDraw(){
-    if(!subscribed){ alert("No TV connected yet. Open venueplay.com.au/tv on your screen, then tap Draw."); return; }   // was a silent no-op
+    if(!subscribed){ hostError("No TV connected yet. Open venueplay.com.au/tv on your screen, then tap Draw."); return; }   // was a silent no-op
     if(alreadyDrawnTonight() && !confirm("This draw has already been drawn tonight.\n\nOnly draw again if the first draw never showed a winner (for example the wifi dropped, or the tablet reloaded). Drawing again picks a new random member.\n\nDraw again?")) return;
     if(G.busy || G.round) return;
     var d=curDraw();
@@ -524,12 +524,12 @@
        call for a host. So the message asked them to use controls they are locked out of, and the
        night could not start. Say who can actually fix it. */
     if(!d){
-      alert(G.canManage
+      hostError(G.canManage
         ? "No draw set up yet. Fill in the draw name and settings on the right, tap Save to create it, then tap Draw."
         : "This venue has no members draw set up yet.\n\nYour manager or the account owner needs to set it up on the Account page. A host cannot create one.");
       return;
     }
-    if(activeMembers(d).length < 1){ alert("No active members to draw from. Enable at least one member."); return; }
+    if(activeMembers(d).length < 1){ hostError("No active members to draw from. Enable at least one member."); return; }
     clearTimers(); hideWinnerCard();
     G.busy=true;
     $("drawBtn").disabled=true; $("drawBtn").textContent="Drawing…";
@@ -640,7 +640,7 @@
     m.status=next; renderMembers(); renderStats();   // optimistic
     apiPost("/host/members/roster", { member_id:mid, status:next })
       .then(function(){ sendState(); })
-      .catch(function(e){ m.status=(next==="valid")?"excluded":"valid"; renderMembers(); renderStats(); alert(e.message||"Could not update the member"); });
+      .catch(function(e){ m.status=(next==="valid")?"excluded":"valid"; renderMembers(); renderStats(); hostError(e.message||"Could not update the member"); });
   }
 
   // ---- settings (MANAGER/OWNER only; the Worker enforces the same gate) ----
@@ -760,7 +760,7 @@
   $("connectBtn").addEventListener("click", tryConnect);
 
   $("drawSel").addEventListener("change", function(){
-    if(G.round){ this.value=G.currentDrawId; alert("Finish this draw first: tap Claim, or Jackpot to next week."); return; }
+    if(G.round){ this.value=G.currentDrawId; hostError("Finish this draw first: tap Claim, or Jackpot to next week."); return; }
     if(G.busy){ clearTimers(); G.round=null; G.busy=false; hideWinnerCard(); drawBtnIdle(); }
     G.currentDrawId=this.value; renderStats(); renderMembers(); renderSettings(); sendIdle();
   });
@@ -775,7 +775,7 @@
       if(!G.canManage) return;
       var nd=b.getAttribute("data-nd"); var prev=G.nameDisplay; G.nameDisplay=nd; renderNameSeg();
       if(window.VP&&VP.saveSettings){
-        VP.saveSettings(G.venueId, { name_display:nd }).then(function(){ sendState(); }, function(){ G.nameDisplay=prev; renderNameSeg(); alert("Could not save that setting."); });
+        VP.saveSettings(G.venueId, { name_display:nd }).then(function(){ sendState(); }, function(){ G.nameDisplay=prev; renderNameSeg(); hostError("Could not save that setting."); });
       }
     });
   });

@@ -107,6 +107,12 @@ def main():
             fid = (f[0] if isinstance(f, list) else f)['id']
             st, r = rest(e, 'POST', 'vp_venues',
                          {'slug': v['slug'], 'name': v['name'], 'state': v['state'],
+                          # au_state is the column the GAMING RULES card reads, and it is not
+                          # the same column as 'state'. Writing only 'state' left all three test
+                          # venues showing "We do not know which state this venue is in yet" on
+                          # every bingo, raffle and members draw. Found 11 Sep 2026 by running a
+                          # real raffle and reading the card. check-gaming-state.py now fails on it.
+                          'au_state': v['state'],
                           'postcode': v['postcode'], 'status': 'active', 'founding_id': fid,
                           'hide_from_trusted': True, 'timezone': 'Australia/Brisbane',
                           'included_players': 40 if v['slug'] != 'test-charlie' else 5},

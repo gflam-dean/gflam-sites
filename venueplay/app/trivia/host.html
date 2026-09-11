@@ -208,6 +208,7 @@
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
           </div>
+          <div class="note" id="lobbyWait" style="display:none;margin-top:4px"></div>
           <div class="two">
             <div class="field"><label>Time per question (seconds)</label><input type="number" id="cfgTime" class="mono" min="5" max="60" value="30"></div>
             <div class="field"><label>Correct answer points</label><input type="number" id="cfgBase" class="mono" min="0" value="100"></div>
@@ -731,6 +732,41 @@
   }
   // Open the join lobby first (same flow as bingo): the TV shows the QR + code and players
   // scan in and see "you're in" before the first question. Then "Start round" builds the game.
+  /* WHAT THE HOST COULD NOT SEE. A phone that types the code on the wall lands on /play and
+     waits there. It does not reach this page, or this page's broadcast channel, until the
+     host taps Start round, so G.players stays empty and the Players box says 0 for the whole
+     lobby however many people have scanned in. Watched live on 11 Sep 2026: the phone said
+     "YOU'RE IN", the console said PLAYERS (0), and both were telling the truth.
+
+     A host reading 0 with a full room in front of them concludes the thing is broken. So ask
+     the server, which does know: /snapshot counts vp_players for the session, deduped by
+     device, the same figure the night is billed on.
+
+     It is a HINT, never a gate. VP.sessionPlayerCount resolves to null on any failure, and a
+     null simply hides the line: nothing here can stop a round starting. */
+  var lobbyWatch=null;
+  function paintLobbyWait(n){
+    var el=$("lobbyWait"); if(!el) return;
+    if(G.status!=="lobby" || typeof n!=="number" || n<1){ el.style.display="none"; el.textContent=""; return; }
+    el.style.display="";
+    el.textContent = n===1 ? "1 phone has scanned in and is waiting. They pick a team name when you start the round."
+                           : n+" phones have scanned in and are waiting. They pick a team name when you start the round.";
+  }
+  function pollLobbyWait(){
+    if(G.status!=="lobby") return;
+    if(!VP.sessionPlayerCount){ return; }   // older shared script: show nothing rather than guess
+    VP.sessionPlayerCount(VP_GAME_API, G.sessionId).then(paintLobbyWait);
+  }
+  function startLobbyWatch(){
+    stopLobbyWatch();
+    pollLobbyWait();
+    lobbyWatch=setInterval(pollLobbyWait, 5000);
+  }
+  function stopLobbyWatch(){
+    if(lobbyWatch){ clearInterval(lobbyWatch); lobbyWatch=null; }
+    paintLobbyWait(null);
+  }
+
   function openLobby(){
     if(G.busy) return;
     G.busy=true; var btn=$("startBtn"); if(btn){ btn.disabled=true; btn.textContent="Opening..."; }
@@ -738,6 +774,7 @@
     openSession().then(function(){
       bcast({ t:"mode", mode:"trivia", title:G.setTitle });   // TV shows the trivia join screen, named after the night
       G.status="lobby";
+      startLobbyWatch();
       gsend({ t:"rollcall" });               // new round: pull the still-connected players back onto the roster
       bcast({ t:"players", count:playerCount() });
     }).catch(function(e){ hostError(e.message); }).then(function(){
@@ -746,12 +783,14 @@
   }
   function cancelLobby(){
     if(G.busy) return;
+    stopLobbyWatch();
     G.status="setup";
     bcast({ t:"idle" });   // TV back to the idle join screen
     renderConsole();
   }
   function startRound(){
     if(G.busy) return;
+    stopLobbyWatch();
     readSettings();
     if(!G.setId){ hostError("Pick a question set first"); return; }
     G.busy=true;

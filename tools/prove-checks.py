@@ -695,6 +695,13 @@ MUTATIONS = [
      '<<COPYTO:partyplay-backend/supabase/partyplay-01-a-second-file.sql>>', '',
      'two migrations claim the same number and one gets skipped'),
 
+    # ---- 11 Sep: a browser dialog on a host console freezes the console ----
+    ('no host console calls alert()',
+     'venueplay/app/members/host.html',
+     'hostError("No active members to draw from. Enable at least one member.")',
+     'alert("No active members to draw from. Enable at least one member.")',
+     'a host taps Draw on an empty draw and the console freezes until somebody taps OK'),
+
     # ---- 11 Sep: the gate had never parsed its own tools ----
     # song-popularity.py sat broken in the repo for a day and nothing said so, because
     # the parse sweep only read the site and the Workers. The mutation is that exact

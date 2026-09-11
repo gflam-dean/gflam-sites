@@ -842,7 +842,7 @@
     var t=$("quietRows");
     if(t) t.addEventListener("click", function(e){
       var va=e.target.closest("button[data-viewas]");
-      if(va){ viewAs(va.getAttribute("data-viewas")); return; }
+      if(va){ viewAs(va.getAttribute("data-viewas"), va); return; }
       var h=e.target.closest("button[data-history]");
       if(h) toggleHistory(h.getAttribute("data-history"));
     });
@@ -1209,7 +1209,7 @@
   $("venueFilter").addEventListener("change", function(){ S.vFilter=this.value; renderVenues(); });
   $("venueRows").addEventListener("click", function(e){
     var va=e.target.closest("button[data-viewas]");
-    if(va){ viewAs(va.getAttribute("data-viewas")); return; }
+    if(va){ viewAs(va.getAttribute("data-viewas"), va); return; }
     var rs=e.target.closest("button[data-resend]");
     if(rs){
       var rid=rs.getAttribute("data-resend"), rname=(S.venues.filter(function(x){return x.id===rid;})[0]||{}).name||"this venue";
@@ -1447,13 +1447,40 @@
   }
 
   /* ---- VIEW AS (impersonation) ---- */
-  function viewAs(id){
+  /* SETTING THE VENUE LOADS THE VENUE ROW AND ITS SETTINGS BEFORE IT CAN NAVIGATE, and on
+     11 Sep 2026 that was measured at twelve to sixteen seconds against the live database.
+     For all of it this button did nothing visible: no spinner, no disabled state, nothing.
+     It reads exactly like a dead button, and the honest reading of a dead button is to press
+     it again, which starts the whole switch a second time.
+
+     It was also unguarded. setCurrentVenue() returns a promise that REJECTS if either load
+     fails, and there was no second callback, so a failure left the button looking dead for
+     ever, with nothing on screen. The alert() it used on the other path has gone the same way
+     as the ones on the host consoles: it froze this page too, and a frozen HQ cannot even
+     show you the venue you were trying to open.
+
+     The message is written into a node next to the button rather than through flash(), which
+     returns silently when its target id is not on the page. There is no flash element beside
+     this table, so every failure would have been announced to nobody. */
+  function viewAsSay(btn, msg){
+    if(!btn || !btn.parentNode) return;
+    var n=btn.parentNode.querySelector(".viewAsErr");
+    if(!n){ n=document.createElement("div"); n.className="viewAsErr"; n.style.cssText="color:var(--roll,#f0a020);font-size:12px;margin-top:6px;max-width:22ch"; btn.parentNode.appendChild(n); }
+    n.textContent=msg;
+  }
+  function viewAs(id, btn){
     var name=venueName(id);
+    if(btn && btn.disabled) return;                  // a second press must not start a second switch
+    var old=btn?btn.textContent:"";
+    if(btn){ btn.disabled=true; btn.textContent="Opening…"; viewAsSay(btn,""); }
+    function give(msg){ if(btn){ btn.disabled=false; btn.textContent=old; } viewAsSay(btn,msg); }
     VP.setCurrentVenue(id).then(function(ctx){
-      if(!ctx || ctx.currentVenueId!==id){ alert("Could not switch to that venue."); return; }
+      if(!ctx || ctx.currentVenueId!==id){ give("Could not switch to "+name+"."); return; }
       try{ localStorage.setItem("vpImpersonate", JSON.stringify({ id:id, name:name })); }catch(e){}
       auditBestEffort("view_as", "venue:"+id, { name:name });   // best-effort; ignored if Worker absent
       window.location.href="index.html";
+    }, function(e){
+      give("Could not open "+name+": "+((e&&e.message)||"the venue would not load")+".");
     });
   }
 
