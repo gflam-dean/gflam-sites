@@ -30,7 +30,39 @@ import argparse, json, sys, time, urllib.request, urllib.error
 
 GAME = 'https://venueplay-game.dean-tindale.workers.dev'
 SITE = 'https://venueplay.com.au'
-VENUES = ['the-average-joe']
+# NO HAND-MAINTAINED LIST. This said ['the-average-joe'] while SEVENTEEN venues were
+# active, so the daily audit cleared the fleet every morning having looked at one pub.
+# check-stale-sessions.py carried the identical fault and its docstring already spells
+# out what it cost: it reported the-average-joe clean while that venue held a session
+# open since 26 August with 4 billable players on it.
+#
+# Ask the database which venues are active. Falls back to the one name only when there
+# are no credentials on this machine, and SAYS SO, because a fallback that looks like a
+# full run is the fault all over again.
+FALLBACK = ['the-average-joe']
+
+
+def active_slugs():
+    """Every active venue, from the live database. (slugs, how_we_got_them)"""
+    try:
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                        'venueplay-backend', 'tools'))
+        from vp_live import live
+        L = live()
+        if not L.rest_url or not L.service_key:
+            return FALLBACK, 'NO CREDENTIALS on this machine, so this is ONE venue, not the fleet'
+        req = urllib.request.Request(
+            L.rest_url.rstrip('/') + '/rest/v1/vp_venues?status=eq.active&select=slug&order=slug',
+            headers={'apikey': L.service_key, 'Authorization': 'Bearer ' + L.service_key})
+        rows = json.load(urllib.request.urlopen(req, timeout=25))
+        slugs = [r['slug'] for r in rows if r.get('slug')]
+        if not slugs:
+            return FALLBACK, 'the database returned NO active venues, which is itself wrong'
+        return slugs, '%d active venue(s), from the %s database' % (len(slugs), L.where)
+    except Exception as e:
+        return FALLBACK, 'could not ask the database (%s), so this is ONE venue, not the fleet' % (
+            str(e)[:60])
 
 BAD = []
 def fail(what, detail):
@@ -331,15 +363,20 @@ def main():
     a = ap.parse_args()
     if a.prove: return prove()
     print('VenuePlay daily venue audit - read-only, %s' % time.strftime('%Y-%m-%d %H:%M'))
+    if a.slug:
+        slugs, how = a.slug, 'named on the command line'
+    else:
+        slugs, how = active_slugs()
+    print('  %s' % how)
     audit_platform()
-    for slug in (a.slug or VENUES):
+    for slug in slugs:
         audit_venue(slug)
     print()
     if BAD:
         print('%d PROBLEM(S) A VENUE WOULD HIT:' % len(BAD))
         for w, d in BAD: print('  - %s: %s' % (w, d))
         return 1
-    print('No problem a venue would hit.')
+    print('No problem a venue would hit, across %d venue(s).' % len(slugs))
     return 0
 
 if __name__ == '__main__':
