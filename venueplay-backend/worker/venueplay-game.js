@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 06:55 · edce091e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 10:09 · 82a8e2fd';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -5624,13 +5624,15 @@ function upliftRate(tier, annual) {
  *
  * Two details matter and both are easy to get wrong:
  *
- *  - An invoiceitem created WITH `subscription` is reserved for that
- *    subscription's next invoice, and a standalone invoice will not pick it up.
- *    So for the annual path the item must be created WITHOUT it.
- *  - pending_invoice_items_behavior 'include' sweeps every unattached pending item
- *    for that customer, which is what we want: if an earlier night's charge is
- *    still sitting there, it should go out on this invoice too rather than wait
- *    another year.
+ *  - An invoiceitem created WITH `subscription` rides that subscription's next
+ *    invoice. It is NOT safe from a standalone invoice: on 11 Sep 2026, live, an
+ *    invoice raised with pending_invoice_items_behavior 'include' swept a $2.00 line
+ *    that had just been moved onto Jess's monthly bill straight back onto a card
+ *    charge. The comment that used to sit here said the opposite.
+ *  - So a one-off invoice is opened EMPTY ('exclude'), and the night's line is
+ *    created ON it by id (openInvoice, then invoiceitems with `invoice`). It carries
+ *    exactly that line. An earlier night that could not be collected is tied to the
+ *    subscription and waits for the renewal, which is what the venue was told.
  *
  * Keyed, because this moves money and a retry must not raise a second invoice.
  */
@@ -5657,7 +5659,18 @@ async function subscriptionPaymentMethod(env, acct) {
   return idOf(cus.invoice_settings && cus.invoice_settings.default_payment_method) || idOf(cus.default_source) || null;
 }
 
-async function collectNow(env, acct, idemKey, why) {
+/* OPEN THE NIGHT'S INVOICE, EMPTY, WITH NOTHING ELSE ON IT.
+
+   This used to be one step that created the invoice with pending_invoice_items_behavior
+   'include', on the theory that a subscription-tied item would be left alone and anything else
+   waiting on the customer might as well go out now. Live Stripe disagreed on 11 Sep 2026: the
+   second Jess test night raised a $4.00 invoice, because the $2.00 the webhook had just moved
+   onto her NEXT MONTHLY BILL (tied to the subscription and all) was swept straight back onto a
+   same-day card charge. The same sweep would take a plan-add line or anything else parked for
+   the renewal. So the invoice is opened EMPTY and the night's line is put on it by id; nothing
+   the venue was told would wait for the monthly bill can ride it. auto_advance is off here so a
+   crash between this and the line leaves a harmless empty draft, not an hour-later surprise. */
+async function openInvoice(env, acct, idemKey, why) {
   if (!acct || !acct.stripe_customer_id) return { ok: false, reason: 'no_customer' };
 
   /* A GROUP BILLED BY INVOICE MUST NOT HAVE ITS CARD CHARGED.
@@ -5670,8 +5683,8 @@ async function collectNow(env, acct, idemKey, why) {
   const byInvoice = acct.bill_by_invoice === true;
   const body = {
     customer: acct.stripe_customer_id,
-    auto_advance: true,                       // finalise either way; only the collection differs
-    pending_invoice_items_behavior: 'include',
+    auto_advance: false,                      // finalised by hand in settleInvoice, never by Stripe's clock
+    pending_invoice_items_behavior: 'exclude',
     description: why || 'VenuePlay extras',
   };
   if (byInvoice) {
@@ -5697,42 +5710,45 @@ async function collectNow(env, acct, idemKey, why) {
   }
   const inv = await stripePost(env, 'invoices', body, idemKey ? ('inv_' + idemKey) : null);
   if (!inv || inv.error) {
-    /* The line is still on the customer, so nothing is lost: it will go out on the
-       renewal invoice, which is the old behaviour rather than a new failure. Say so
-       loudly, because on an annual plan that could be months away. */
-    console.log('[billing] could not raise an invoice to collect now: ' +
+    console.log('[billing] could not open an invoice to collect now: ' +
                 ((inv && inv.error && inv.error.message) || 'unknown') +
-                ' - the item stays pending until renewal');
+                ' - the line will ride the renewal instead');
     return { ok: false, reason: (inv && inv.error && inv.error.message) || 'unknown' };
   }
-  /* NOW MEANS NOW. Creating an invoice with auto_advance leaves it a DRAFT that Stripe
-     finalises and charges on its own clock, about an hour later. The first real overage
-     night to get this far (The Jolly Jess, 11 Sep 2026, in_1UEEss5JnH4tsSwMStIksM0D) sat
-     as a $2.00 draft: right line, right date, nothing taken, no receipt. The point of
-     collecting on the night is that the venue can match the charge to the night, so
-     finalise it here and, for a card account, pay it here. A group billed by invoice gets
-     the invoice sent instead, and its terms start now rather than in an hour.
+  return { ok: true, invoice: inv, byInvoice: byInvoice };
+}
 
-     A declined card is reported as exactly that (ok, unpaid, the invoice stays OPEN and
-     Stripe's own retries take it from there). It is not a failure of the night's billing,
-     the money is owed and on the books, so the streak still advances. */
+/* NOW MEANS NOW. Creating an invoice with auto_advance leaves it a DRAFT that Stripe
+   finalises and charges on its own clock, about an hour later. The first real overage
+   night to get this far (The Jolly Jess, 11 Sep 2026, in_1UEEss5JnH4tsSwMStIksM0D) sat
+   as a $2.00 draft: right line, right date, nothing taken, no receipt. The point of
+   collecting on the night is that the venue can match the charge to the night, so
+   finalise it here and, for a card account, pay it here. A group billed by invoice gets
+   the invoice sent instead, and its terms start now rather than in an hour.
+
+   A declined card is reported as exactly that (ok, unpaid, the invoice stays OPEN and the
+   billing Worker's webhook decides what happens next: up to $30 moves onto the next monthly
+   bill, more stays open for Stripe's retries). It is not a failure of the night's billing,
+   the money is owed and on the books, so the streak still advances. */
+async function settleInvoice(env, opened, idemKey, cents) {
+  const inv = opened.invoice, byInvoice = opened.byInvoice;
   const fin = await stripePost(env, 'invoices/' + enc(inv.id) + '/finalize', { auto_advance: true },
                                idemKey ? ('fin_' + idemKey) : null);
   if (!fin || fin.error) {
     console.log('[billing] invoice ' + inv.id + ' raised but could not be finalised: ' +
-                ((fin && fin.error && fin.error.message) || 'unknown') + ' - Stripe will auto-advance it');
-    return { ok: true, invoice: inv.id, cents: inv.amount_due, status: 'draft' };
+                ((fin && fin.error && fin.error.message) || 'unknown') + ' - it is a DRAFT and needs a hand');
+    return { ok: true, invoice: inv.id, cents: cents, status: 'draft' };
   }
-  if (fin.status === 'paid') return { ok: true, invoice: inv.id, cents: inv.amount_due, status: 'paid' };
+  if (fin.status === 'paid') return { ok: true, invoice: inv.id, cents: cents, status: 'paid' };
   const step = byInvoice ? 'send' : 'pay';
   const done = await stripePost(env, 'invoices/' + enc(inv.id) + '/' + step, {},
                                 idemKey ? (step + '_' + idemKey) : null);
   if (!done || done.error) {
     console.log('[billing] invoice ' + inv.id + ' finalised but ' + step + ' failed: ' +
-                ((done && done.error && done.error.message) || 'unknown') + ' - it is OPEN and Stripe will retry');
-    return { ok: true, invoice: inv.id, cents: inv.amount_due, status: 'open', problem: (done && done.error && done.error.message) || 'unknown' };
+                ((done && done.error && done.error.message) || 'unknown') + ' - it is OPEN');
+    return { ok: true, invoice: inv.id, cents: cents, status: 'open', problem: (done && done.error && done.error.message) || 'unknown' };
   }
-  return { ok: true, invoice: inv.id, cents: inv.amount_due, status: done.status || (byInvoice ? 'open' : 'paid') };
+  return { ok: true, invoice: inv.id, cents: cents, status: done.status || (byInvoice ? 'open' : 'paid') };
 }
 
 async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
@@ -5781,14 +5797,25 @@ async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
              the venue cancelled. Left unattached it can be swept onto an invoice we
              raise right now, a few lines below. */
           const idem = 'uplift_' + venue.id + '_' + newMax + '_' + Math.floor(periodEnd / 86400);
-          const res = await stripePost(env, 'invoiceitems', {
+          /* The invoice is opened EMPTY first and this line is put on it by id, so nothing else
+             waiting on the customer (a big-night extra moved to the monthly bill, say) is swept
+             onto a same-day card charge. See openInvoice. If it cannot be opened the line is
+             left on the customer as before and recorded as left pending. */
+          const upliftInv = await openInvoice(env, acct, idem,
+            (venue.name || 'Venue') + ': plan raised to ' + newMax + ' players');
+          const upliftItem = {
             customer: acct.stripe_customer_id,
             currency: 'aud',
             amount: cents,
             description: (venue.name || 'Venue') + ': plan raised to ' + newMax + ' players after three big nights, '
                        + added + ' extra pro rata to renewal (' + months + ' months)',
-          }, idem);
+          };
+          if (upliftInv.ok) upliftItem.invoice = upliftInv.invoice.id;
+          const res = await stripePost(env, 'invoiceitems', upliftItem, idem);
           if (res && res.error) {
+            if (upliftInv.ok) {
+              try { await stripePost(env, 'invoices/' + enc(upliftInv.invoice.id) + '/void', {}, 'void_' + idem); } catch (e) { /* recorded below */ }
+            }
             /* AN ANNUAL UPLIFT IS COLLECTED BY THIS CALL AND NOTHING ELSE.
                The quantity update above carries proration_behavior 'none' on an
                annual plan, so it changes what they pay from the NEXT renewal and
@@ -5814,8 +5841,7 @@ async function upliftPlan(env, venue, acct, newMax, peaks, tier) {
             quantityOk = false;
           } else {
             prorata = { cents: cents, months: months, added: added };
-            const got = await collectNow(env, acct, idem,
-              (venue.name || 'Venue') + ': plan raised to ' + newMax + ' players');
+            const got = upliftInv.ok ? await settleInvoice(env, upliftInv, idem, cents) : upliftInv;
             if (!got.ok) {
               /* The line is still on the customer and the renewal will carry it, so
                  the uplift is NOT rolled back - they keep the bigger plan and we are
@@ -6229,9 +6255,24 @@ async function applyOverageCharge(env, o) {
                     matcher in vpaUpliftNoticeHtml, which looks for "plan moved up". */
                  (halfPrice ? ' (3rd big night, plan moved up)' : ''),
   };
-  if (!billNow) item.subscription = acct.stripe_subscription_id;
+  /* THE INVOICE IS OPENED BEFORE THE LINE EXISTS, and the line is created ON it. That is the
+     only way Stripe lets a one-off invoice carry exactly one line and nothing else that
+     happens to be waiting on the customer (see openInvoice). If the invoice cannot be opened,
+     the line is tied to the subscription instead and rides the renewal, which is the old
+     "left pending" behaviour, now with the tie that makes it land there and nowhere else. */
+  let opened = { ok: false, reason: 'not billing now' };
+  if (billNow) {
+    opened = await openInvoice(env, acct, o.idemKey,
+      'VenuePlay: big night extra players, ' + (venue.name || 'venue') + ' ' + when);
+  }
+  if (opened.ok) item.invoice = opened.invoice.id;
+  else item.subscription = acct.stripe_subscription_id;
   const res = await stripePost(env, 'invoiceitems', item, o.idemKey);
   if (!res || res.error) {
+    /* The empty draft must not be left behind to confuse a bookkeeper. Best effort, keyed. */
+    if (opened.ok) {
+      try { await stripePost(env, 'invoices/' + enc(opened.invoice.id) + '/void', {}, 'void_' + o.idemKey); } catch (e) { /* the audit row below still says what happened */ }
+    }
     console.log('[overage] ' + o.idemKey + ' Stripe invoiceitem FAILED: ' +
                 ((res && res.error && res.error.message) || 'unknown') + ' (needs manual billing)');
     /* A FAILED CHARGE MUST NOT ADVANCE THE STREAK.
@@ -6260,8 +6301,7 @@ async function applyOverageCharge(env, o) {
   }
 
   if (billNow) {
-    const got = await collectNow(env, acct, o.idemKey,
-      'VenuePlay: big night extra players, ' + (venue.name || 'venue') + ' ' + when);
+    const got = opened.ok ? await settleInvoice(env, opened, o.idemKey, amountCents) : opened;
     if (!got.ok) {
       /* Not a failure to bill: the line is still on the customer and the renewal
          invoice will carry it. But on an annual plan that is months away, so it is

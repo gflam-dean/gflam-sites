@@ -192,14 +192,32 @@ def main():
         closed_at = time.time()
         step('close the night', *http(GAME + '/session/close', 'POST', {'session_id': sid}, H))
 
-    print('\n  waiting 8s for Stripe and the webhook...'); time.sleep(8)
+    # The webhook has to arrive, move the money and send the email before there is anything to
+    # judge. Poll up to 40s for a finished payment webhook rather than guess at eight seconds.
+    import calendar
+    def webhook_done():
+        ev = db('vp_stripe_events?select=event_type,claimed_at,completed_at&order=claimed_at.desc&limit=8')
+        for e in ev:
+            if e.get('event_type') in ('invoice.paid', 'invoice.payment_failed') and e.get('completed_at') \
+               and calendar.timegm(time.strptime(e['claimed_at'][:19], '%Y-%m-%dT%H:%M:%S')) > closed_at - 60:
+                return True
+        return False
+    print('\n  waiting for Stripe and the webhook (up to 40s)...', end='', flush=True)
+    waited = 0
+    while waited < 40:
+        time.sleep(4); waited += 4; print('.', end='', flush=True)
+        if waited >= 8 and webhook_done(): break
+    print(' %ds' % waited)
     after_s = stripe_state(cus); after_d = db_state(venue['id'], acct['id'], cus)
     sess = db('vp_sessions?id=eq.%s&select=status,ended_at,overage_approved,overage_approved_count,plan_cap_at_start' % sid)[0]
     print('\nAFTER   session %s, approved %s (count %s), cap at start %s' % (sess['status'], sess['overage_approved'], sess['overage_approved_count'], sess['plan_cap_at_start']))
     new_items = {k: v for k, v in after_s['pending_items'].items() if k not in before_s['pending_items']}
     new_invs = {k: v for k, v in after_s['invoices'].items() if k not in before_s['invoices']}
     new_audit = [x for x in after_d['audit'] if x['id'] not in before_d['audit_ids']]
-    for i in new_items.values(): print('  new pending item  %s qty=%s unit=%s "%s"' % (i['id'], i.get('quantity'), money(i.get('unit_amount')), i.get('description')))
+    for i in new_items.values():
+        unit = i.get('unit_amount')
+        if unit is None and i.get('quantity'): unit = round((i.get('amount') or 0) / i['quantity'])
+        print('  new pending item  %s qty=%s unit=%s total=%s "%s"' % (i['id'], i.get('quantity'), money(unit), money(i.get('amount')), i.get('description')))
     for inv in new_invs.values():
         print('  new invoice       %s %s total=%s paid=%s method=%s' % (inv.get('number') or inv['id'], inv['status'], money(inv.get('total')), inv.get('paid'), inv.get('collection_method')))
         for ln in inv['lines']['data']: print('      line  qty=%s amount=%s "%s"' % (ln.get('quantity'), money(ln.get('amount')), ln.get('description')))
@@ -265,7 +283,6 @@ def main():
             verdict.append(('streak advanced to %d' % ((before_d['venue']['overage_streak'] or 0) + 1), after_d['venue']['overage_streak'] == (before_d['venue']['overage_streak'] or 0) + 1))
         verdict.append(('no failure audit row', not any(x['action'] in ('overage_charge_failed', 'overage_left_pending_until_renewal') for x in new_audit)))
         ev = db('vp_stripe_events?select=event_id,event_type,claimed_at,completed_at&order=claimed_at.desc&limit=8')
-        import calendar
         recent = [e for e in ev if e.get('event_type') == 'invoice.paid'
                   and calendar.timegm(time.strptime(e['claimed_at'][:19], '%Y-%m-%dT%H:%M:%S')) > closed_at - 60]
         for e in recent: print('  webhook           %s %s finished=%s' % (e['event_type'], e['event_id'], bool(e.get('completed_at'))))

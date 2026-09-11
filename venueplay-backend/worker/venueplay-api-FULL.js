@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 09:55 · 7246c89f';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 10:09 · 2b644a61';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -543,21 +543,25 @@ async function handleWebhook(request, env, cors) {
        next subscription invoice and a big one stays open for Stripe to chase; either way it never
        counts toward pausing the venue's games. Only the subscription itself does that. Before
        11 Sep 2026 two declined $2.00 test invoices would have paused a paid-up venue. */
+    /* NO `return` OUT OF THIS BRANCH. vpaFinishStripeEvent sits at the bottom of the handler,
+       and the first version returned here, so both live extras events on 11 Sep 2026 were left
+       with completed_at null: Stripe's retry would have re-run the mover and sent the email a
+       second time once the claim went stale. if/else, so the event falls through and finishes. */
     if (vpaIsExtrasInvoice(inv)) {
       const moved = await vpaMoveExtrasToMonthly(env, inv);
       if (!moved.already) await vpaFirePaymentFailedEmail(env, inv, moved);
-      return new Response('ok', { status: 200, headers: cors });
-    }
-    await vpaFirePaymentFailedEmail(env, inv);
-    // Stop the games only once the grace window is used up. attempt_count is Stripe's own count
-    // of tries on THIS invoice, so this tracks the retry schedule instead of guessing at dates.
-    const cust = inv.customer;
-    if (cust) {
-      const accts = await vpaSelect(env, 'venueplay_founding',
-        'stripe_customer_id=eq.' + encodeURIComponent(cust) + '&select=plan&limit=1');
-      const plan = (accts && accts[0] && accts[0].plan) || 'monthly';
-      const tries = parseInt(inv.attempt_count, 10) || 0;
-      if (tries >= vpaFailuresBeforeSuspend(plan)) await vpaSuspendForNonpayment(env, cust);
+    } else {
+      await vpaFirePaymentFailedEmail(env, inv);
+      // Stop the games only once the grace window is used up. attempt_count is Stripe's own count
+      // of tries on THIS invoice, so this tracks the retry schedule instead of guessing at dates.
+      const cust = inv.customer;
+      if (cust) {
+        const accts = await vpaSelect(env, 'venueplay_founding',
+          'stripe_customer_id=eq.' + encodeURIComponent(cust) + '&select=plan&limit=1');
+        const plan = (accts && accts[0] && accts[0].plan) || 'monthly';
+        const tries = parseInt(inv.attempt_count, 10) || 0;
+        if (tries >= vpaFailuresBeforeSuspend(plan)) await vpaSuspendForNonpayment(env, cust);
+      }
     }
   }
   // The invoice is now OVERDUE, or Stripe has given up entirely. Games stop until it is paid.
@@ -3817,9 +3821,10 @@ async function vpaClearCreditOnEnd(env, customerId, eventId) {
 /* THE BANK'S ACTUAL ANSWER, in plain words. The email used to say "Nine times out of ten it
    is an expired card" whatever had happened; on 11 Sep 2026 a venue read that twice when the
    bank had said insufficient funds, and once when the fault was ours (no card on the invoice).
-   Stripe's decline_code is the truth, so it is looked up and said. Anything unrecognised falls
-   back to the honest generic line. Returns { line, ours } where ours=true means the venue's
-   card was never the problem and the email must not blame it. */
+   Stripe's decline_code is the truth, so it is looked up and said. Anything unrecognised, or no
+   code at all, says exactly that: this email goes to a paying venue and Dean's rule is that a
+   guess is not acceptable in it ("it cant be wrong"). Returns { line, ours } where ours=true
+   means the venue's card was never the problem and the email must not blame it. */
 function vpaDeclineReason(code, message) {
   const c = String(code || '').toLowerCase();
   const m = String(message || '');
@@ -3834,19 +3839,36 @@ function vpaDeclineReason(code, message) {
   if (/default_payment_method|no payment method|payment method/i.test(m) || /resource_missing|missing/.test(c)) {
     return { line: 'We could not find a card to charge on your account. That is on our side to sort out, not yours.', ours: true };
   }
-  return say('Nine times out of ten it is an expired card.');
+  return say('The bank did not say why. Your bank can tell you.');
 }
 
-/* The decline behind a failed invoice. A recent invoice lists its payments; an older shape
-   carries payment_intent directly. Either way the PaymentIntent's last_payment_error has the
-   bank's code. Never throws; null when there is nothing to read. */
+/* The decline behind a failed invoice. An older API shape carries payment_intent on the
+   invoice; the current one lists its payments, but ONLY when asked: the invoice.payment_failed
+   webhook payload carries neither (checked live 11 Sep 2026, both Jess events), which is why the
+   first two decline emails fell back to a guess. So when the payload has nothing, the invoice's
+   payments are fetched from Stripe. The PaymentIntent's last_payment_error has the bank's code.
+   Never throws; null when there is nothing to read. */
+function vpaPaymentIntentOf(invoice) {
+  if (!invoice) return null;
+  let pi = typeof invoice.payment_intent === 'string' ? invoice.payment_intent : (invoice.payment_intent && invoice.payment_intent.id);
+  const list = invoice.payments && invoice.payments.data;
+  if (!pi && list && list.length) {
+    const last = list[list.length - 1];
+    const pay = last && last.payment;
+    pi = pay && (typeof pay.payment_intent === 'string' ? pay.payment_intent : (pay.payment_intent && pay.payment_intent.id));
+  }
+  return pi || null;
+}
 async function vpaLookupDecline(env, invoice) {
   try {
-    let pi = typeof invoice.payment_intent === 'string' ? invoice.payment_intent : (invoice.payment_intent && invoice.payment_intent.id);
-    if (!pi && invoice.payments && invoice.payments.data && invoice.payments.data.length) {
-      const last = invoice.payments.data[invoice.payments.data.length - 1];
-      const pay = last && last.payment;
-      pi = pay && (typeof pay.payment_intent === 'string' ? pay.payment_intent : (pay.payment_intent && pay.payment_intent.id));
+    let pi = vpaPaymentIntentOf(invoice);
+    if (!pi && invoice && invoice.id) {
+      const full = await vpbStripeGet(env, 'invoices/' + encodeURIComponent(invoice.id) + '?expand[]=payments');
+      if (full && !full.error) pi = vpaPaymentIntentOf(full);
+    }
+    if (!pi && invoice && invoice.id) {
+      const pays = await vpbStripeGet(env, 'invoice_payments?invoice=' + encodeURIComponent(invoice.id) + '&limit=10');
+      if (pays && !pays.error && pays.data && pays.data.length) pi = vpaPaymentIntentOf({ payments: pays });
     }
     if (!pi) return null;
     const intent = await vpbStripeGet(env, 'payment_intents/' + encodeURIComponent(pi));

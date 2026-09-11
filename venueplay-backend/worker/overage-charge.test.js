@@ -40,7 +40,7 @@ function lift(src, name) {
 }
 var GAME = find("venueplay-backend/worker/venueplay-game.js");
 var NAMES = ["chargeNightOverage", "applyOverageCharge", "playerIdsWhoPlayed", "countPlayersWhoPlayed",
-             "countPlayers", "overageCeiling", "brisbaneNightKey", "venueInFreeMonth", "collectNow",
+             "countPlayers", "overageCeiling", "brisbaneNightKey", "venueInFreeMonth", "openInvoice", "settleInvoice",
              "stripeGet", "stripePost", "recordOverageCrash", "subscriptionPaymentMethod"];
 var missing = NAMES.filter(function (n) { return !lift(GAME, n); });
 pass("every function in the charge path came out of the shipped Worker", missing.length === 0, missing.join(", "));
@@ -94,6 +94,8 @@ function fetch(url, opts) {
                  "tax_behavior", "tax_code", "tax_rates", "unit_amount_decimal"];
     var unknown = Object.keys(body).filter(function (k) { return known.indexOf(k.replace(/\[.*$/, "")) === -1; });
     if (unknown.length) reply = { error: { message: "Received unknown parameter: " + unknown[0] } };
+    else if (body.invoice !== undefined && body.invoice !== "in_test") reply = { error: { message: "No such invoice: " + body.invoice } };
+    else if (body.invoice !== undefined && body.subscription !== undefined) reply = { error: { message: "You may not specify both invoice and subscription" } };
     else if (body.unit_amount_decimal !== undefined && body.quantity === undefined && body.quantity_decimal === undefined) reply = { error: { message: "unit_amount_decimal needs a quantity" } };
     else reply = world.itemReply || { id: "ii_test", object: "invoiceitem" };
   }
@@ -101,6 +103,7 @@ function fetch(url, opts) {
   else if (method === "POST" && /^invoices\/in_test\/finalize$/.test(path)) { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.finalizeReply || { id: "in_test", status: "open" }; }
   else if (method === "POST" && /^invoices\/in_test\/pay$/.test(path)) { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.payReply || { id: "in_test", status: "paid" }; }
   else if (method === "POST" && /^invoices\/in_test\/send$/.test(path)) { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = world.sendReply || { id: "in_test", status: "open" }; }
+  else if (method === "POST" && /^invoices\/in_test\/void$/.test(path)) { posts.push({ path: path, body: body, idem: headers["Idempotency-Key"] }); reply = { id: "in_test", status: "void" }; }
   else reply = { error: { message: "unexpected call " + method + " " + path } };
   return Promise.resolve({ ok: !reply.error, status: reply.error ? 400 : 200, json: function () { return Promise.resolve(reply); } });
 }
@@ -165,6 +168,7 @@ function run(sess, label) {
 function item() { return posts.filter(function (p) { return p.path === "invoiceitems"; }); }
 function invoice() { return posts.filter(function (p) { return p.path === "invoices"; }); }
 function step(name) { return posts.filter(function (p) { return p.path === "invoices/in_test/" + name; }); }
+function order() { return posts.map(function (p) { return p.path.replace("invoices/in_test/", ""); }); }
 function afterInvoice() { var i = posts.map(function (p) { return p.path; }).indexOf("invoices"); return posts.slice(i + 1).map(function (p) { return p.path.replace("invoices/in_test/", ""); }); }
 function venuePatch() { return patches.filter(function (p) { return p.table === "vp_venues"; }); }
 
@@ -186,11 +190,17 @@ scenario("an active founding venue, one over a cap of one, host approved", funct
     pass("no lump `amount` field", b.amount === undefined, "amount=" + b.amount);
     pass("described as \"The Jolly Jess - Extra Player - 11/09/2026\"", b.description === "The Jolly Jess - Extra Player - 11/09/2026", JSON.stringify(b.description));
     pass("not attached to the subscription (it must get its own invoice)", b.subscription === undefined, "subscription=" + b.subscription);
+    /* Live, 11 Sep 2026: the second Jess night raised $4.00 because 'include' swept the $2.00 the
+       webhook had just moved onto her monthly bill. The line now goes ON an invoice opened empty. */
+    pass("the line is put ON the night's invoice by id", b.invoice === "in_test", "invoice=" + b.invoice);
     pass("keyed on the session so a double close cannot double charge", it[0].idem === "overage_" + SESSION, it[0].idem);
     var inv = invoice();
-    pass("then an invoice was raised to collect it now", inv.length === 1, inv.length + " raised");
+    pass("an invoice was opened to collect it now", inv.length === 1, inv.length + " raised");
+    pass("the invoice is opened BEFORE the line exists, then the line, then finalise, then pay, and nothing else",
+         JSON.stringify(order()) === JSON.stringify(["invoices", "invoiceitems", "finalize", "pay"]), JSON.stringify(order()));
     if (inv.length) {
-      pass("the invoice sweeps in the pending item", inv[0].body.pending_invoice_items_behavior === "include");
+      pass("the invoice EXCLUDES anything else waiting on the customer", inv[0].body.pending_invoice_items_behavior === "exclude", inv[0].body.pending_invoice_items_behavior);
+      pass("and is not left to Stripe's clock while still empty", inv[0].body.auto_advance === "false", "auto_advance=" + inv[0].body.auto_advance);
       pass("and charges the card", inv[0].body.collection_method === "charge_automatically", inv[0].body.collection_method);
       /* Checkout puts the card on the subscription; the customer's own default is empty; a
          standalone invoice looks only at the customer. Live night three was refused for this. */
@@ -199,7 +209,7 @@ scenario("an active founding venue, one over a cap of one, host approved", funct
       /* Stripe leaves a new invoice as a DRAFT and gets to it about an hour later. The first
          live night that got this far sat as a $2.00 draft with nothing taken. */
       pass("the invoice is finalised and PAID on the night, in that order, and nothing else",
-           JSON.stringify(afterInvoice()) === JSON.stringify(["finalize", "pay"]), JSON.stringify(afterInvoice()));
+           JSON.stringify(afterInvoice()) === JSON.stringify(["invoiceitems", "finalize", "pay"]), JSON.stringify(afterInvoice()));
       pass("both steps keyed on the session", !!(step("finalize")[0] && step("finalize")[0].idem === "fin_overage_" + SESSION &&
            step("pay")[0] && step("pay")[0].idem === "pay_overage_" + SESSION));
       pass("and it said PAID in the log", logged.some(function (l) { return /PAID: invoice in_test 2\.00 AUD, 1 x 2\.00/.test(l); }), logged.join(" | "));
@@ -286,15 +296,19 @@ scenario("Stripe refuses the invoice item", function () {
     var a = inserts.filter(function (i) { return i.row.action === "overage_charge_failed"; });
     pass("an overage_charge_failed audit row was written", a.length === 1);
     pass("naming the venue and the money", a.length === 1 && a[0].row.target === VENUE && a[0].row.detail.amount_cents === 200, a.length ? JSON.stringify(a[0].row.detail) : "");
-    pass("no invoice raised on a failed item", invoice().length === 0);
+    pass("the empty invoice that was opened for it is voided, keyed", step("void").length === 1 && step("void")[0].idem === "void_overage_" + SESSION, JSON.stringify(order()));
+    pass("and never finalised or paid", step("finalize").length === 0 && step("pay").length === 0);
     pass("streak untouched", venuePatch().length === 0);
   });
 });
-scenario("the item lands but the invoice cannot be raised", function () {
+scenario("the invoice cannot be opened", function () {
   var w = night(); w.invoiceReply = { error: { message: "no payment method" } }; reset(w);
   return run(mkSession(), "no invoice").then(function () {
     var a = inserts.filter(function (i) { return i.row.action === "overage_left_pending_until_renewal"; });
     pass("an overage_left_pending_until_renewal audit row was written", a.length === 1);
+    var b = item()[0] && item()[0].body;
+    pass("the line was still created, tied to the SUBSCRIPTION so it rides the renewal and nothing else",
+         !!b && b.subscription === "sub_1" && b.invoice === undefined, JSON.stringify(b));
     pass("the streak still advanced (the night was real and the item exists)", venuePatch().length === 1 && venuePatch()[0].body.overage_streak === 1);
   });
 });
@@ -342,7 +356,7 @@ scenario("an account that pays by invoice, 30 day terms, PO reference", function
     pass("invoice is sent, not charged", !!inv && inv.collection_method === "send_invoice", inv && inv.collection_method);
     pass("30 days to pay", !!inv && inv.days_until_due === "30", inv && inv.days_until_due);
     pass("the PO reference is on it", !!inv && inv["custom_fields[0][value]"] === "PO-4471");
-    pass("finalised and SENT, never charged to a card", JSON.stringify(afterInvoice()) === JSON.stringify(["finalize", "send"]), JSON.stringify(afterInvoice()));
+    pass("finalised and SENT, never charged to a card", JSON.stringify(order()) === JSON.stringify(["invoices", "invoiceitems", "finalize", "send"]), JSON.stringify(order()));
     pass("an open invoice with terms is not reported as an unpaid card", inserts.filter(function (i) { return i.row.action === "overage_invoice_unpaid"; }).length === 0);
   });
 });
