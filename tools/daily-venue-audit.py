@@ -356,6 +356,47 @@ def prove():
     return 0 if passed == len(cases) and clean else 1
 
 
+def probe_is_honoured():
+    """DOES THE LIVE WORKER ACTUALLY HONOUR probe=1 YET?
+
+    The guard shipped on 11 Sep 2026, but Workers here are deployed by hand, so the
+    repo having the fix and the fleet having it are different questions. Until it is
+    pasted, every run of this audit writes screen_seen_at for all seventeen venues and
+    HQ's SCREEN OK badge reports the health of this tool instead of the venue's TV.
+
+    So do not take the paste on trust: poll a TEST venue with probe=1 and see whether
+    its heartbeat moved. Answers (True|False|None, explanation).
+    """
+    try:
+        import os, re, datetime
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                        'venueplay-backend', 'tools'))
+        from vp_live import live
+        L = live()
+        if not L.rest_url or not L.service_key:
+            return None, 'no credentials, so it could not be checked'
+        h = {'apikey': L.service_key, 'Authorization': 'Bearer ' + L.service_key}
+
+        def seen():
+            q = L.rest_url.rstrip('/') + '/rest/v1/vp_venues?slug=eq.test-charlie&select=screen_seen_at'
+            r = json.load(urllib.request.urlopen(urllib.request.Request(q, headers=h), timeout=20))
+            return (r[0]['screen_seen_at'] if r else None)
+
+        before = seen()
+        if before is None:
+            return None, 'no test-charlie venue to probe with'
+        get(GAME + '/venue?probe=1&code=%s&venue=test-charlie&v=probe-check' % fnv_venue_code('test-charlie'))
+        time.sleep(2)
+        after = seen()
+        if after == before:
+            return True, 'the live Worker honours probe=1, so this run leaves no footprint'
+        return False, ('the live Worker does NOT honour probe=1 yet, so this run has just marked '
+                       'every screen alive. Paste venueplay-game.js. Until then HQ\'s SCREEN OK '
+                       'badge is this tool, not the venue\'s TV.')
+    except Exception as e:
+        return None, 'could not be checked (%s)' % str(e)[:60]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--slug', action='append')
@@ -368,6 +409,8 @@ def main():
     else:
         slugs, how = active_slugs()
     print('  %s' % how)
+    honoured, why = probe_is_honoured()
+    print('  %s %s' % ({True: 'read-only:', False: 'WRITES:', None: 'probe:'}[honoured], why))
     audit_platform()
     for slug in slugs:
         audit_venue(slug)

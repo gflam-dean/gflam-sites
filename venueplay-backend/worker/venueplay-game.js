@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 20:14 · c65ded84';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 20:18 · 0eb435f8';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -1483,6 +1483,7 @@ async function handleVenueLookup(request, env, json) {
      screen reporting healthy while ignoring every reload, because it predated the
      reload code. Recorded so HQ can say "ok, and current" rather than just "ok". */
   const ver = String(url.searchParams.get('v') || '').slice(0, 24).replace(/[^A-Za-z0-9.-]/g, '') || 'pre-5-sep';
+  const isProbe = url.searchParams.get('probe') === '1';   // a monitoring tool, not a screen
 
   /* ONE TRIP, NOT THREE (migration 72).
      This is the most frequent request the Worker gets: every screen, every thirty
@@ -1496,8 +1497,19 @@ async function handleVenueLookup(request, env, json) {
      screen must never be told its venue is missing over a bookkeeping call. An empty
      answer also falls through: the old path still knows the derived-code map for a
      venue whose join_code predates migration 68. */
+  /* A PROBE TAKES THE SLOW PATH ON PURPOSE.
+     vp_screen_poll finds the venue, reads the row AND writes the heartbeat in one
+     database call, so there is no way to ask it for a read-only answer without a new
+     migration. A probe is a handful of requests in an audit run, not thirty seconds
+     of every screen, so it can afford three REST calls to get an answer that leaves
+     no footprint. The guard in venueLookupThreeTrips is what actually holds the write
+     back; this is what makes sure a probe reaches it.
+
+     Found by testing the deployed Worker against a real database rather than the fake
+     one: the unit suite passed while probe=1 still wrote, because it exercised the
+     fallback and the fleet uses the RPC. */
   let v = null;
-  if (!screenPollRpcMissing) {
+  if (!screenPollRpcMissing && !isProbe) {
     const code = String(url.searchParams.get('code') || '').trim().toUpperCase().slice(0, 6);
     const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/vp_screen_poll', {
       method: 'POST', headers: sbHeaders(env),

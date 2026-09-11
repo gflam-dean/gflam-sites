@@ -706,6 +706,15 @@ MUTATIONS = [
      "if ('screen_seen_at' in v && !isProbe) {",
      "if ('screen_seen_at' in v) {",
      'the daily audit marks every screen in the fleet alive, so a black TV reads as healthy in HQ'),
+    # The path the first version of this suite MISSED. The fleet does not use the
+    # fallback; every screen poll goes to vp_screen_poll, which writes the heartbeat
+    # inside the database where no Worker guard can reach it. The suite passed in full
+    # while a probe against the deployed Worker wrote to a real venue row on staging.
+    ('screen-probe.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     'if (!screenPollRpcMissing && !isProbe) {',
+     'if (!screenPollRpcMissing) {',
+     'a probe reaches the one-trip RPC and writes the heartbeat after all'),
 
     # ---- 11 Sep: a browser dialog on a host console freezes the console ----
     ('no host console calls alert()',

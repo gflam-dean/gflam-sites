@@ -40,11 +40,25 @@ function find(rel) {
 var GAME = find("venueplay-backend/worker/venueplay-game.js");
 
 /* THE GUARD IS IN THE SHIPPED FILE, not a copy of it. If somebody deletes the probe
-   check, these two claims are the ones that go red. */
+   check, these claims are the ones that go red. */
 pass("the Worker reads a probe flag at all", /searchParams\.get\('probe'\)/.test(GAME));
 pass("and the heartbeat write is gated on it",
      /if \('screen_seen_at' in v && !isProbe\)/.test(GAME),
      "not gated means every probe writes");
+
+/* THE PATH THIS SUITE MISSED THE FIRST TIME, and the whole reason it is written down.
+   The fleet does not use venueLookupThreeTrips. Every screen poll goes to the
+   vp_screen_poll RPC, which finds the venue, reads the row AND writes the heartbeat
+   inside one database call, so guarding the fallback guarded nothing that matters.
+   The first version of this suite passed, in full, while a probe against the deployed
+   Worker wrote to a real venue row on staging. Only running it against the real thing
+   found that. So: a probe must not be allowed to reach the RPC at all. */
+pass("a probe never takes the one-trip RPC path",
+     /if \(!screenPollRpcMissing && !isProbe\) \{/.test(GAME),
+     "the RPC writes the heartbeat in the database, where no Worker guard can reach it");
+pass("and the probe flag is read before that decision",
+     GAME.indexOf("const isProbe") < GAME.indexOf("if (!screenPollRpcMissing && !isProbe)"),
+     "reading it after the branch would make the guard dead code");
 
 /* Now RUN it. A regex says the line exists; only running it says the line works. */
 var patches = [];
@@ -127,7 +141,7 @@ run("code=ABC123", "real-screen-v9").then(function (v) {
   pass("probe=true is NOT a probe, so a typo fails safe", patches.length === 1,
        "a wrong value must not silently stop every heartbeat in the fleet");
 
-  if (ran !== 10) { print("\nONLY " + ran + " OF 10 RAN"); throw new Error("incomplete"); }
+  if (ran !== 12) { print("\nONLY " + ran + " OF 12 RAN"); throw new Error("incomplete"); }
   if (bad) { print("\n" + bad + " OF " + ran + " FAILED"); throw new Error(bad + " failed"); }
   print("\nALL " + ran + " CHECKS PASSED");
 }).catch(function (e) {
