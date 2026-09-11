@@ -25,6 +25,13 @@ eval(lift(BILL,"vpaUpliftWarningHtml"));
 eval(lift(BILL,"vpaFireInvoiceEmail"));
 eval(lift(BILL,"vpaFirePlanUpliftEmail"));
 var VPA_CANCEL_ALERTS = (function(){ var m=/VPA_CANCEL_ALERTS = (\[[^\]]*\])/.exec(BILL); return m?JSON.parse(m[1].replace(/'/g,'"')):[]; })();
+var VPA_ALERT_KINDS = (function(){
+  var m=/const VPA_ALERT_KINDS = \{([\s\S]*?)\};/.exec(BILL); if(!m) return {};
+  var o={}, re=/(\w+):\s*'([^']+)'/g, x;
+  while((x=re.exec(m[1]))) o[x[1]]=x[2];
+  return o;
+})();
+eval(lift(BILL,"vpaAlertSubject"));
 eval(lift(BILL,"vpaFireCancelAlert"));
 eval(lift(BILL,"vpaSendEmail"));
 
@@ -166,7 +173,8 @@ Promise.resolve().then(function(){}).then(function(){}).then(function(){}).then(
     .then(receiptChecks, function (e) { pass("extras checks did not crash", false, String(e && e.message || e)); return receiptChecks(); })
     .then(upliftEmailChecks, function (e) { pass("receipt checks did not crash", false, String(e && e.message || e)); return upliftEmailChecks(); })
     .then(cancelAlertChecks, function (e) { pass("uplift email checks did not crash", false, String(e && e.message || e)); return cancelAlertChecks(); })
-    .then(finish, function (e) { pass("cancel alert checks did not crash", false, String(e && e.message || e)); finish(); });
+    .then(alertSubjectChecks, function (e) { pass("cancel alert checks did not crash", false, String(e && e.message || e)); return alertSubjectChecks(); })
+    .then(finish, function (e) { pass("alert subject checks did not crash", false, String(e && e.message || e)); finish(); });
 });
 
 /* EXTRAS THAT THE CARD WOULD NOT PAY FOR. Dean, 11 Sep 2026: try once, tell them, and a small
@@ -368,6 +376,81 @@ pass("the billing Worker also uses Brisbane, not UTC",
    by the evening, by which time a venue's plan had moved from 1 player to 2 and nothing
    told her. Untested email code is exactly what put the receipt in the state it was in
    tonight, so this runs the real function rather than asserting it exists. */
+
+/* THE SUBJECT LINE RULE, checked against the Worker itself rather than one email.
+
+   Dean asked for CANCELLED VENUE: / NEW VENUE: prefixes on 12 Sep 2026. A check that only
+   proves the cancellation alert got one is worth very little: the next alert somebody adds
+   will phrase itself however it likes and nothing will notice. So this asserts the rule.
+
+   It also asserts the OTHER half, which is the half that would embarrass us: no email that
+   goes to a VENUE may carry one of these tags. Shouting NEW VENUE at a customer who just
+   paid us is worse than no prefix at all. */
+function alertSubjectChecks() {
+  var kinds = Object.keys(VPA_ALERT_KINDS);
+  pass("every alert kind is defined in one place", kinds.length >= 6, kinds.join(", "));
+  pass("Dean's two words are exactly as he asked for them",
+       VPA_ALERT_KINDS.cancelled === "CANCELLED VENUE" && VPA_ALERT_KINDS.new_venue === "NEW VENUE",
+       VPA_ALERT_KINDS.cancelled + " / " + VPA_ALERT_KINDS.new_venue);
+  var allCaps = kinds.every(function (k) { return VPA_ALERT_KINDS[k] === VPA_ALERT_KINDS[k].toUpperCase(); });
+  pass("they are all capitals, so the inbox sorts and scans", allCaps);
+
+  pass("the tag comes first and the name after a colon",
+       vpaAlertSubject("cancelled", "Praze The Roof Sports Bar") === "CANCELLED VENUE: Praze The Roof Sports Bar",
+       vpaAlertSubject("cancelled", "Praze The Roof Sports Bar"));
+  pass("a missing name leaves a tag, never a dangling colon",
+       vpaAlertSubject("new_venue", "") === "NEW VENUE" && vpaAlertSubject("new_venue", null) === "NEW VENUE",
+       vpaAlertSubject("new_venue", null));
+  pass("an unknown kind still produces something sendable",
+       vpaAlertSubject("nonsense", "A Venue") === "VENUEPLAY: A Venue");
+
+  /* EVERY SUBJECT IN THE WORKER, CLASSIFIED. The first version of this scanned for a
+     literal to: ['dean@...'] near a subject, and found two of the three: the new-signup
+     alert sends to a variable, so the one Dean actually named ("NEW VENUE:") was the one
+     the check could not see. A scan that silently covers two thirds is worse than none,
+     because it reads as full coverage.
+
+     So: find EVERY subject line in the Worker, and require each to be either helper-built
+     or on the customer list below by name. A fifth alert added next month is on neither,
+     and this check goes red until somebody decides which it is. */
+  var CUSTOMER_SUBJECTS = [
+    "Your venues are set up. Welcome to VenuePlay",
+    "You are in. Welcome to VenuePlay",
+    "Your VenuePlay invoice",
+    "Your VenuePlay payment is coming up",
+    "Your VenuePlay payment did not go through",
+    "Your VenuePlay plan has moved up",
+  ];
+  var subjects = [], uncovered = [], sre = /^\s*subject:\s*(.+?),?\s*$/gm, sm;
+  while ((sm = sre.exec(BILL))) {
+    var line = sm[1].trim();
+    if (line === "subject," || line === "subject") continue;    // vpaSendEmail's own parameter
+    subjects.push(line);
+    if (/vpaAlertSubject/.test(line)) continue;                 // an alert to us: covered above
+    if (CUSTOMER_SUBJECTS.some(function (c) { return line.indexOf(c) >= 0; })) continue;
+    uncovered.push(line.slice(0, 70));
+  }
+  pass("every subject line in the Worker was found", subjects.length >= 7, subjects.length + " found");
+  pass("and each one is either an alert to us or a named email to a venue",
+       uncovered.length === 0, uncovered.join(" | "));
+  var viaHelper = subjects.filter(function (l) { return /vpaAlertSubject/.test(l); }).length;
+  pass("all three of the alerts that come to us go through the helper", viaHelper === 3,
+       viaHelper + " of 3: flagged signup, enquiry, new signup");
+
+  /* And the cancellation alert, which sends through vpaSendEmail rather than its own
+     subject: line, so the scan above cannot see it. Named directly. */
+  var cx = lift(BILL, "vpaFireCancelAlert") || "";
+  pass("the cancellation alert uses it too", /vpaAlertSubject\(/.test(cx));
+
+  /* THE OTHER HALF. A venue's receipt, their reminder and their welcome must stay
+     free of these tags. */
+  var customer = ["vpaFireInvoiceEmail", "vpaFirePlanUpliftEmail"].map(function (n) {
+    return lift(BILL, n) || "";
+  }).join("\n");
+  var shouted = kinds.filter(function (k) { return customer.indexOf(VPA_ALERT_KINDS[k]) >= 0; });
+  pass("no email to a venue shouts one of these at them", shouted.length === 0, shouted.join(", "));
+}
+
 /* THE CANCELLATION ALERT, RUN. Wellshot Hotel cancelled eight hours after signing up
    and nobody knew for twenty-four days. This is the email that would have said so. */
 function cancelAlertChecks() {
@@ -388,7 +471,13 @@ function cancelAlertChecks() {
          sent.length + " sent");
     if (sent.length) {
       var h = sent[0].body.html || "";
-      pass("the subject names the venue", /Wellshot Hotel has cancelled/.test(sent[0].body.subject), sent[0].body.subject);
+      /* THE SUBJECT LEADS WITH THE KIND. Dean reads these in a list, not one at a time,
+         so "CANCELLED VENUE: Wellshot Hotel" is scannable and filterable where
+         "Wellshot Hotel has cancelled" is not. The venue still has to be in there. */
+      pass("the subject leads with CANCELLED VENUE and then the venue",
+           sent[0].body.subject === "CANCELLED VENUE: Wellshot Hotel", sent[0].body.subject);
+      pass("the heading inside is still a sentence, not a shout",
+           /Wellshot Hotel has cancelled/.test(h), "the subject is the queue, the email is the read");
       pass("it says when they stop", h.indexOf("18 September 2026") >= 0, "so you know how long you have to call");
       pass("and what it is worth", h.indexOf("$40.02") >= 0 && h.indexOf("20") >= 0);
       pass("with the ABN in the footer", h.indexOf("35 679 383 049") >= 0);
@@ -401,7 +490,8 @@ function cancelAlertChecks() {
     return vpaFireCancelAlert(ENV, Object.assign({}, VENUE, { undo: true }));
   }).then(function () {
     pass("un-cancelling is good news and also worth knowing", sent.length === 2 &&
-         /UN-cancelled/.test(sent[0].body.subject), sent.length ? sent[0].body.subject : "");
+         sent[0].body.subject === "UNCANCELLED VENUE: Wellshot Hotel",
+         sent.length ? sent[0].body.subject : "");
 
     sent = []; rows = [];
     return vpaFireCancelAlert({ SITE_URL: "x" }, VENUE);

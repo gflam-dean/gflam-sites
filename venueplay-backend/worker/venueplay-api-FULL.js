@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Sep 2026, 07:21 · 89210924';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 09:13 · bbc0482e';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -333,7 +333,7 @@ async function handleCheckout(request, env, json) {
             from: 'VenuePlay <hello@send.venueplay.com.au>',
             to: ['dean@venueplay.com.au'],
             reply_to: email,
-            subject: 'Review needed: signup ' + venues[0].name + ' (' + email + ')',
+            subject: vpaAlertSubject('check', venues[0].name + ' (' + email + ')'),
             html: '<h2>Signup flagged for review</h2>'
               + '<p>This signup email does not look like a venue, so opt-in collection is <b>LOCKED</b> until you approve it. They can still run games (team names only), but collect no player data.</p>'
               + '<p><b>Venue:</b> ' + vpaEsc(venues[0].name) + '</p>'
@@ -645,7 +645,7 @@ async function handleContact(request, env, json) {
       from: 'VenuePlay <hello@send.venueplay.com.au>',   // sending domain must be verified in Resend
       to: ['dean@venueplay.com.au', 'hello@venueplay.com.au'],
       reply_to: email,
-      subject: 'VenuePlay enquiry from ' + name,
+      subject: vpaAlertSubject('enquiry', name),
       html: html,
     }),
   });
@@ -3184,6 +3184,30 @@ async function vpaAddCardRedirect(request, env) {
   }
 }
 
+/* THE SUBJECT LINE OF EVERY EMAIL THAT COMES TO US, not to a venue.
+
+   Dean, 12 Sep 2026: "Maybe with the emails to venueplay we start the subject off with
+   what it is CANCELLED VENUE: Praze the Roof Sports Bar NEW VENUE: etc". The inbox is the
+   queue, and four alerts that each phrase themselves differently cannot be scanned, sorted
+   or filtered. So the kind comes first, in capitals, always, and the name follows it.
+
+   ONLY OUR OWN ALERTS. A venue's receipt, their payment reminder and their welcome email
+   are not on this list and must never be: shouting a category at a customer is not what
+   this is for. */
+const VPA_ALERT_KINDS = {
+  new_venue:   'NEW VENUE',
+  new_group:   'NEW GROUP',
+  cancelled:   'CANCELLED VENUE',
+  uncancelled: 'UNCANCELLED VENUE',
+  check:       'CHECK SIGNUP',
+  enquiry:     'ENQUIRY',
+};
+function vpaAlertSubject(kind, rest) {
+  const tag = VPA_ALERT_KINDS[kind] || 'VENUEPLAY';
+  const tail = String(rest == null ? '' : rest).trim();
+  return tail ? tag + ': ' + tail : tag;
+}
+
 /* One place that actually posts to Resend, so the three emails below cannot
    drift on the from address or the reply-to. Returns true if it went. */
 async function vpaSendEmail(env, to, subject, html) {
@@ -3358,9 +3382,10 @@ async function vpaNotifyNewSignup(env, session, f, venues, isGroup) {
         reply_to: contactEmail || 'hello@venueplay.com.au',  // reply goes straight to the venue
         to: [to],
         // Flag the ones needing a decision in the subject, so it is actionable from the inbox list.
-        subject: (isGroup ? 'New group signup: ' + list.length + ' venues, ' : 'New signup: ')
+        subject: vpaAlertSubject(isGroup ? 'new_group' : 'new_venue',
+                 (isGroup ? list.length + ' venues, ' : '')
                  + (list.length ? list[0].name : 'venue') + (state ? ' (' + state + ')' : '')
-                 + (guessed ? '' : ' [club or pub?]'),
+                 + (guessed ? '' : ' [club or pub?]')),
         html: html,
       }),
     });
@@ -5065,6 +5090,9 @@ async function vpaFireCancelAlert(env, opts) {
     const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
     const when = (opts && opts.ends) ? opts.ends : 'the end of their current period';
     const heading = undo ? (name + ' has UN-cancelled') : (name + ' has cancelled');
+    /* The subject says the kind first so the inbox reads as a queue; the heading inside stays
+       a sentence, because that is what a person reads once the email is open. */
+    const subject = vpaAlertSubject(undo ? 'uncancelled' : 'cancelled', name);
     const lead = undo
       ? (vpaEsc(name) + ' was scheduled to end and the owner has just reversed it. Nothing further to do.')
       : (vpaEsc(name) + ' has scheduled their cancellation. They keep playing until <b>'
@@ -5102,12 +5130,13 @@ async function vpaFireCancelAlert(env, opts) {
       + '</div>';
     let sent = 0;
     for (const to of VPA_CANCEL_ALERTS) {
-      const ok = await vpaSendEmail(env, to, heading, html).catch(() => false);
+      const ok = await vpaSendEmail(env, to, subject, html).catch(() => false);
       if (ok) sent++;
     }
     await say(sent === VPA_CANCEL_ALERTS.length ? 'sent'
               : (sent ? 'sent to ' + sent + ' of ' + VPA_CANCEL_ALERTS.length : 'not sent: Resend refused it'),
-              { to: VPA_CANCEL_ALERTS, undo: undo, ends: (opts && opts.ends) || null, sent: sent });
+              { to: VPA_CANCEL_ALERTS, undo: undo, ends: (opts && opts.ends) || null,
+                sent: sent, subject: subject });
   } catch (e) {
     await say('not sent: ' + String((e && e.message) || e).slice(0, 120));
   }

@@ -202,6 +202,39 @@
   .edv{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:7px 12px;font-size:12.5px;cursor:pointer}
   .edv:hover{border-color:var(--pink);color:#fff}
   .hostrow .own{color:var(--faint);font-size:12px;font-family:'JetBrains Mono',ui-monospace,monospace}
+  /* THE CANCEL DIALOG. It used to be built from inline styles that named three things
+     this page does not have: class "ghost", var(--card) and var(--dim). A missing class is
+     not an error, it is a browser-default grey button sitting in the middle of a VenuePlay
+     screen, and the two missing variables fell back to #171522 and #a9a2bb, which are
+     neither the brand's card colour nor its muted text. Dean, 12 Sep 2026: "cancelation pop
+     up needs to be more on brand and the buttons dont look right".
+     So it is written in the page's own language now: Anton heading, Hanken buttons, the same
+     radius and the same ink as every card above it. */
+  .dlgwrap{position:fixed;inset:0;background:rgba(10,10,11,.78);backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;padding:20px;z-index:70;overflow-y:auto}
+  .dlg{background:var(--ink-2);border:1px solid var(--line);border-radius:18px;max-width:440px;width:100%;
+    padding:24px 24px 20px;box-shadow:0 24px 70px rgba(0,0,0,.6);margin:auto}
+  .dlg h3{font-family:'Anton',sans-serif;text-transform:uppercase;font-weight:400;font-size:23px;
+    color:#fff;letter-spacing:.005em;line-height:1.1;margin:0 0 8px}
+  .dlg .dtext{color:var(--muted);font-size:13.5px;line-height:1.55;margin:0 0 18px}
+  .dlg .flabel{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin:0 0 7px}
+  .dlg select,.dlg textarea{width:100%;background:var(--ink-3);border:1px solid var(--line);color:#fff;
+    border-radius:12px;padding:11px 12px;font-size:15px;font-family:'Manrope',sans-serif;line-height:1.45}
+  .dlg textarea{resize:vertical;min-height:78px}
+  .dlg select:focus,.dlg textarea:focus{outline:none;border-color:var(--pink)}
+  .dlgmore{margin-top:14px}
+  .dlgacts{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:20px;flex-wrap:wrap}
+  /* Both buttons are real buttons. The quiet one is still a VenuePlay button, not the
+     browser's, and the loud one is the pink the rest of the app uses to commit. */
+  .dlgbtn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13.5px;border-radius:12px;
+    padding:11px 18px;cursor:pointer;transition:.15s;min-height:44px}
+  .dlgbtn.keep{background:var(--ink-3);border:1px solid var(--line);color:var(--text)}
+  .dlgbtn.keep:hover{border-color:rgba(255,255,255,.3);color:#fff}
+  .dlgbtn.go{background:var(--pink);border:1px solid var(--pink);color:#fff}
+  .dlgbtn.go:hover{background:var(--pink-deep);border-color:var(--pink-deep)}
+  @media(max-width:420px){ .dlgacts{flex-direction:column-reverse;align-items:stretch}
+    .dlgacts .dlgbtn{width:100%} }
 </style>
 </head>
 <body>
@@ -574,30 +607,30 @@
     if (old) old.remove();
     var w = document.createElement("div");
     w.id = "whyWrap";
-    w.style.cssText = "position:fixed;inset:0;background:rgba(10,8,16,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:70";
+    w.className = "dlgwrap";
     w.innerHTML =
-      '<div role="dialog" aria-modal="true" aria-labelledby="whyH" style="background:var(--card,#171522);border:1px solid rgba(255,255,255,.12);border-radius:14px;max-width:440px;width:100%;padding:22px">' +
-        '<h3 id="whyH" style="margin:0 0 6px;font-size:19px">Cancel ' + esc(v.name) + '?</h3>' +
-        '<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:var(--dim,#a9a2bb)">' +
+      '<div role="dialog" aria-modal="true" aria-labelledby="whyH" class="dlg">' +
+        '<h3 id="whyH">Cancel ' + esc(v.name) + '?</h3>' +
+        '<p class="dtext">' +
           (lastOne
             ? "It stays live until the end of your current paid period, then your subscription ends. You can undo this any time before then."
             : "It stays live until the end of your current paid period, then it is removed and you stop paying for it. Your other venues are unaffected. You can undo this any time before then.") +
         '</p>' +
-        '<label for="whyPick" style="display:block;font-size:13px;margin:0 0 6px">If you do not mind us asking, why?</label>' +
-        '<select id="whyPick" style="width:100%;padding:10px;border-radius:9px;background:#0f0e18;color:inherit;border:1px solid rgba(255,255,255,.16);font:inherit">' +
+        '<label class="flabel" for="whyPick">If you do not mind us asking, why?</label>' +
+        '<select id="whyPick">' +
           '<option value="">Rather not say</option>' +
           '<option value="expensive">VenuePlay is too expensive</option>' +
           '<option value="trial">We just wanted to trial it</option>' +
           '<option value="dislike">We do not like it</option>' +
           '<option value="other">Something else</option>' +
         '</select>' +
-        '<div id="whyMoreWrap" style="display:none;margin-top:12px">' +
-          '<label id="whyMoreLbl" for="whyMore" style="display:block;font-size:13px;margin:0 0 6px"></label>' +
-          '<textarea id="whyMore" rows="3" maxlength="2000" style="width:100%;padding:10px;border-radius:9px;background:#0f0e18;color:inherit;border:1px solid rgba(255,255,255,.16);font:inherit;resize:vertical"></textarea>' +
+        '<div id="whyMoreWrap" class="dlgmore" style="display:none">' +
+          '<label class="flabel" id="whyMoreLbl" for="whyMore"></label>' +
+          '<textarea id="whyMore" rows="3" maxlength="2000"></textarea>' +
         '</div>' +
-        '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap">' +
-          '<button type="button" id="whyBack" class="ghost">Keep it</button>' +
-          '<button type="button" id="whyGo" style="background:#e6007e;color:#fff;border:0;border-radius:9px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer">Cancel this venue</button>' +
+        '<div class="dlgacts">' +
+          '<button type="button" id="whyBack" class="dlgbtn keep">Keep it</button>' +
+          '<button type="button" id="whyGo" class="dlgbtn go">Cancel this venue</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(w);

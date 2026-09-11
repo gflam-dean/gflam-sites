@@ -146,6 +146,26 @@
   .grouphead .gn{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:16px}
   .grouphead .gm{font-size:12px;color:var(--muted)}
 
+  /* The cancelled screen. One card per departure, because the interesting part is a sentence
+     somebody typed and a table cell is the wrong shape for it. */
+  .cxcard{margin:0 0 12px}
+  .cxhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+  .cxname{font-family:'Hanken Grotesk',sans-serif;font-weight:800;color:#fff;font-size:16px}
+  .cxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 18px}
+  .cxk{font-size:12.5px;color:var(--muted)}
+  .cxk b{color:var(--text);font-weight:700}
+  .cxsaid{margin:12px 0 0;padding:11px 13px;background:var(--ink-3);border-left:3px solid var(--pink);
+    border-radius:0 10px 10px 0;color:var(--text);font-size:14px;line-height:1.55}
+  .cxacts{margin:13px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .cxnotes{margin:12px 0 0;display:flex;flex-direction:column;gap:8px}
+  .cxnote{background:var(--ink-3);border:1px solid var(--line-2);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--text)}
+  .cxnote b{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 4px}
+  .cxnoteform{margin:12px 0 0;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+  .cxnoteform textarea{flex:1 1 260px;background:var(--ink-3);border:1px solid var(--line);color:#fff;
+    border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;resize:vertical}
+  .cxnoteform textarea:focus{outline:none;border-color:var(--pink)}
+
   .foot{max-width:1240px;margin:0 auto 44px;padding:0 22px;font-size:12px;color:var(--faint);line-height:1.6}
 </style>
 </head>
@@ -176,6 +196,7 @@
     <button data-pane="venues" class="on">Venues</button>
     <button data-pane="live">Live now</button>
     <button data-pane="quiet">Quiet</button>
+    <button data-pane="cancelled">Cancelled</button>
     <button data-pane="billing">Billing</button>
     <button data-pane="groups">Groups</button>
     <button data-pane="usage">Usage</button>
@@ -194,6 +215,7 @@
           <option value="grouped">Grouped</option>
           <option value="independent">Independent</option>
           <option value="live">Live now</option>
+          <option value="cancelling">Cancelling</option>
           <option value="suspended">Suspended</option>
           <option value="archived">Archived</option>
         </select>
@@ -300,6 +322,27 @@
     <div class="note">Sorted <b>shortest quiet first</b>, because a venue that missed one week is the one you can still win back. Last game counts every format: sessions for trivia, musical bingo and raffles, and game reports for broadcast bingo, which opens no session. Bingo is recorded from the first ball, so a night the host never formally ended still counts. A venue that has never run a night is measured from the day it was set up. We only look back a year, so an older venue with nothing in that window reads <b>over a year</b> rather than never.</div>
   </div>
 
+  <!-- ============ CANCELLED ============ -->
+  <div id="paneCancelled" class="hidden">
+    <div class="lblk" style="margin-top:0">Everyone who has asked to leave</div>
+    <div class="panel pad" style="margin-bottom:14px">
+      <div class="note" style="margin:0">One screen for every venue that has cancelled, whether it is still inside its paid
+        period or long since archived. The reason and the words they typed come from the cancellation itself, so this is what
+        they actually said, not a summary. Mark one <b>Contacted</b> once you have rung them, and leave a note for whoever
+        picks it up next. Both are stored against the venue and show here for good.</div>
+    </div>
+    <div class="filterbar" style="margin-bottom:12px">
+      <select id="cxFilter" style="width:auto">
+        <option value="all">All</option>
+        <option value="open">Still inside their paid period</option>
+        <option value="gone">Archived</option>
+        <option value="uncontacted">Not contacted yet</option>
+      </select>
+      <button class="btn ghost sp" id="cxRefresh">Refresh</button>
+    </div>
+    <div id="cxList"></div>
+  </div>
+
   <!-- ============ BILLING ============ -->
   <div id="paneBilling" class="hidden">
     <div class="lblk" style="margin-top:0">Group nights nobody has billed</div>
@@ -328,7 +371,7 @@
         <div class="field" style="margin:0"><label>To (month)</label><input type="month" id="xeroTo" style="width:auto"></div>
         <button class="btn ghost" id="xeroCsv">Download CSV</button>
       </div>
-      <div class="note">One row per venue per billed month, from metered usage (<b>vp_billing_usage</b>). Amounts are GST-inclusive estimates using the group's negotiated rate; independent-venue amounts are worked out by the billing Worker and left blank here. For your final payment figures, cross-check the matching Stripe invoices. Columns are laid out for a Xero sales-invoice import.</div>
+      <div class="note">This CSV reads <b>vp_billing_usage</b>, which is meant to hold the INVOICED history and currently has no rows: nothing writes to it yet. An empty download is not a quiet month. The live figures are in the table below. Amounts are GST-inclusive estimates using the group's negotiated rate; independent-venue amounts are worked out by the billing Worker and left blank here. For your final payment figures, cross-check the matching Stripe invoices. Columns are laid out for a Xero sales-invoice import.</div>
       <div class="errflash" id="xeroErr"></div>
     </div>
 
@@ -396,7 +439,7 @@
       <thead><tr><th>Venue</th><th>Sessions</th><th>Peak billable</th><th>Included</th><th>Overage</th><th style="text-align:right">Est overage charge</th></tr></thead>
       <tbody id="usageRows"></tbody>
     </table></div></div>
-    <div class="note">From <b>vp_billing_usage</b>. Peak rule: the biggest metered night sets the month. Raffles and members draws never count. Automatic metering is a post-launch job; rows appear here once it runs.</div>
+    <div class="note">Counted live from the sessions themselves, the same way an overage charge is counted, so a figure here cannot disagree with an invoice. Peak rule: the biggest metered night sets the month, so two busy Saturdays are one charge and not two. Raffles and members draws mint no players and never count. A phone that opened the page but was never dealt in is not billed.</div>
   </div>
 
   <!-- ============ TEAM ============ -->
@@ -548,6 +591,9 @@
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
           admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null, hideHp:{},
+          cancelling:{}, cancelAudit:null, cxFilter:"all",
+          health:undefined, healthErr:null, healthAsked:false,
+          meter:undefined, meterErr:null, meterAsked:false,
           vFilter:"all", vSearch:"", openVenue:null, openBilling:null, openGroup:null,
           gFilter:"all", gSearch:"" };
 
@@ -595,7 +641,13 @@
          screen_seen_at in listVenues would 400 the whole venue list on a database
          that has not run migration 64, and an ops indicator is never worth the list
          it is printed on. A 400 here just leaves every screen "unknown". */
-      c.from("vp_venues").select("id,screen_seen_at,screen_version")
+      c.from("vp_venues").select("id,screen_seen_at,screen_version"),
+      /* WHO HAS ASKED TO LEAVE. Separate and fault-tolerant for the same reason as the two
+         above, and for one more: cancel_at_period_end is NOT in listVenues' select list, so
+         a filter written against v.cancel_at_period_end would have read undefined on every
+         venue and quietly matched nothing, for ever. A filter that cannot match is the same
+         fault as a check that cannot fail. */
+      c.from("vp_venues").select("id,cancel_at_period_end")
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -605,6 +657,7 @@
       }
       S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
       S.hideHp={}; ((r[9] && r[9].data) || []).forEach(function(v){ S.hideHp[v.id]=!!v.hide_from_trusted; });   // homepage-marquee visibility (migration 54)
+      S.cancelling={}; ((r[11] && r[11].data) || []).forEach(function(v){ S.cancelling[v.id]=!!v.cancel_at_period_end; });
       S.screenSeen={}; S.screenVer={};
       ((r[10] && r[10].data) || []).forEach(function(v){
         S.screenSeen[v.id]=v.screen_seen_at||null;                 // heartbeat (migration 64)
@@ -649,7 +702,9 @@
       S.openNoGame={}; S.openSessions.forEach(function(s){ S.openNoGame[s.venue_id]=true; });
       S.stale={}; S.staleSessions.forEach(function(s){ S.stale[s.venue_id]=true; });
       // latest usage month present
-      S.usageMonth = S.usage.length ? S.usage[0].period_month : null;
+      // NOT from S.usage: that table is empty and pinning the month to it is what made the
+      // billing tab permanently dateless. renderBilling picks the month off the live meter.
+      S.usageMonth = null;
       (function(){ var p=$("gstPanel"); if(p) p.style.display = canBilling() ? "" : "none"; })();
     if(canBilling()) renderGst(0);
     renderStats(); renderVenues(); renderLive(); renderBilling(); renderGroups(); renderUsage(); renderTeam(); renderFlagged(); renderAudit(); populateGroupSelect();
@@ -785,7 +840,7 @@
   }
 
   /* ================= NAV ================= */
-  var PANES=["venues","live","quiet","billing","groups","usage","team","flagged","audit"];
+  var PANES=["venues","live","quiet","cancelled","billing","groups","usage","team","flagged","audit"];
   /* Switching pane was only ever done inline by the nav's own click handler, so nothing else could
      send you to a pane. Now anything can, and the tab highlights correctly when it does. */
   function goPane(pane){
@@ -793,6 +848,7 @@
     Array.prototype.forEach.call(nav.children, function(x){ x.classList.toggle("on", x.getAttribute("data-pane")===pane); });
     PANES.forEach(function(p){ show("pane"+p.charAt(0).toUpperCase()+p.slice(1), p===pane); });
     if(pane==="quiet") loadQuiet();
+    if(pane==="cancelled") loadCancelled();
   }
   $("liveRefresh").addEventListener("click", loadLiveOnly);
   $("hqNav").addEventListener("click", function(e){
@@ -978,8 +1034,184 @@
     }).catch(function(){ cell.innerHTML='<div class="empty">Could not load that just now.</div>'; });
   }
 
+
+  /* ================= CANCELLED ================= */
+  /* WHERE THIS COMES FROM, and why there is no new table.
+
+     Everything on this screen already exists in vp_admin_audit. A cancellation writes a
+     venue_cancel_scheduled row carrying the reason key, the label the owner was actually
+     shown, and whatever they typed in the box. Undoing one writes venue_cancel_undone,
+     archiving writes venue_archived, and the alert to Dean writes venue_cancel_alert with
+     its outcome. So the history is complete and the only thing missing was a screen.
+
+     Contacted and the note are written the same way, through POST /admin/audit, which any
+     admin can already call. No migration, no new column, nothing for Dean to paste.
+
+     IT ASKS FOR ITS OWN ROWS. S.audit is the last 250 rows of everything, and the Praze The
+     Roof cancellation was already the 300th row on 12 Sep. A screen that answers "who has
+     left" from a general 250-row window starts dropping the oldest departures silently and
+     looks exactly the same while it does it. This query is filtered by action, so the only
+     limit it hits is the number of cancellations that have ever happened. */
+  var CX_ACTIONS = ["venue_cancel_scheduled","venue_cancel_undone","venue_cancel_alert",
+                    "venue_archived","venue_cancel_contacted","venue_cancel_note"];
+  function loadCancelled(force){
+    if(S.cancelAudit && !force){ renderCancelled(); return; }
+    $("cxList").innerHTML='<div class="empty">Loading&hellip;</div>';
+    VP.getClient().from("vp_admin_audit").select("*")
+      .in("action", CX_ACTIONS)
+      .order("created_at",{ascending:false}).limit(2000)
+      .then(function(r){
+        if(r && r.error){ $("cxList").innerHTML='<div class="empty">Could not load the cancellation history: '+esc(r.error.message||r.error)+'</div>'; return; }
+        S.cancelAudit=(r && r.data) || [];
+        renderCancelled();
+      })
+      .catch(function(e){ $("cxList").innerHTML='<div class="empty">Could not load the cancellation history: '+esc(e&&e.message||e)+'</div>'; });
+  }
+  // The audit stores a venue as "venue:<uuid>". Everything else here works in plain ids.
+  function cxVenueId(t){ return String(t||"").replace(/^venue:/,""); }
+  function cxWhen(iso){
+    var t=Date.parse(iso||""); if(isNaN(t)) return "";
+    var d=new Date(t);
+    return d.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"});
+  }
+  /* One venue, one story. The rows are newest first, so the FIRST scheduled row is the most
+     recent cancellation and the one that matters. A venue that cancelled, undid it, and
+     cancelled again months later should read as the second cancellation, not the first. */
+  function cxStories(){
+    var by={};
+    (S.cancelAudit||[]).forEach(function(a){
+      var id=cxVenueId(a.target); if(!id) return;
+      var st=by[id] || (by[id]={ venue_id:id, scheduled:null, undone:null, archived:null,
+                                 alert:null, contacted:null, notes:[] });
+      if(a.action==="venue_cancel_scheduled" && !st.scheduled) st.scheduled=a;
+      else if(a.action==="venue_cancel_undone" && !st.undone) st.undone=a;
+      else if(a.action==="venue_archived" && !st.archived) st.archived=a;
+      else if(a.action==="venue_cancel_alert" && !st.alert) st.alert=a;
+      else if(a.action==="venue_cancel_contacted" && !st.contacted) st.contacted=a;
+      else if(a.action==="venue_cancel_note") st.notes.push(a);
+    });
+    /* AN ARCHIVED VENUE WITH NO AUDIT ROW STILL LEFT. The five venues archived before the
+       cancellation flow existed have no scheduled row at all, and leaving them off would make
+       this screen disagree with the Venues list. They appear with the reason unknown, which is
+       the truth. */
+    S.venues.forEach(function(v){
+      if((isArchived(v) || isCancelling(v)) && !by[v.id]){
+        by[v.id]={ venue_id:v.id, scheduled:null, undone:null, archived:null, alert:null,
+                   contacted:null, notes:[] };
+      }
+    });
+    var out=[];
+    Object.keys(by).forEach(function(id){
+      var st=by[id], v=venueById(id);
+      // A venue that undid its cancellation and is not archived has not left. Off the list.
+      if(!v) return;
+      var gone=isArchived(v), leaving=isCancelling(v) && !gone;
+      if(!gone && !leaving) return;
+      st.v=v; st.gone=gone; st.leaving=leaving;
+      st.when = (st.scheduled && st.scheduled.created_at) || (st.archived && st.archived.created_at) || null;
+      out.push(st);
+    });
+    out.sort(function(a,b){ return String(b.when||"").localeCompare(String(a.when||"")); });
+    return out;
+  }
+  function cxPasses(st){
+    if(S.cxFilter==="open" && !st.leaving) return false;
+    if(S.cxFilter==="gone" && !st.gone) return false;
+    if(S.cxFilter==="uncontacted" && st.contacted) return false;
+    return true;
+  }
+  function renderCancelled(){
+    var wrap=$("cxList"); if(!wrap) return;
+    var all=cxStories(), list=all.filter(cxPasses);
+    if(!all.length){
+      wrap.innerHTML='<div class="empty">Nobody has cancelled. Long may it last.</div>';
+      return;
+    }
+    if(!list.length){ wrap.innerHTML='<div class="empty">No cancellation matches that filter ('+all.length+' in total).</div>'; return; }
+    wrap.innerHTML=list.map(function(st){
+      var d=(st.scheduled && st.scheduled.detail) || {};
+      var badge = st.gone ? '<span class="badge suspend">Archived</span>'
+                          : '<span class="badge grouped">Still inside their paid period</span>';
+      var ends = d.ends ? '<div class="cxk">Their last paid day <b>'+esc(d.ends)+'</b></div>' : "";
+      /* THE REASON, IN THEIR WORDS. reason_label is the exact sentence the dropdown showed,
+         stored alongside the key on purpose, so relabelling the dropdown later can never
+         rewrite what an owner was asked. reason_detail is the free text box. */
+      var reason = d.reason_label ? esc(d.reason_label)
+                 : (d.reason ? esc(d.reason) : '<span style="color:var(--faint)">Not given</span>');
+      var said = d.reason_detail
+        ? '<div class="cxsaid">&ldquo;'+esc(d.reason_detail)+'&rdquo;</div>'
+        : '';
+      var noReason = (!st.scheduled)
+        ? '<div class="note" style="margin:8px 0 0">This one was archived before we started asking why, so there is no reason on file.</div>' : '';
+      var alertLine = st.alert
+        ? '<div class="cxk">We were emailed <b>'+esc(cxWhen(st.alert.created_at))+'</b>'
+          + (((st.alert.detail||{}).outcome && st.alert.detail.outcome!=="sent") ? ' <span class="badge suspend">'+esc(st.alert.detail.outcome)+'</span>' : '')
+          + '</div>'
+        : '<div class="cxk" style="color:var(--faint)">No alert email on file for this one</div>';
+      var contacted = st.contacted
+        ? '<span class="badge live">Contacted '+esc(cxWhen(st.contacted.created_at))
+          + (st.contacted.actor_label ? ' by '+esc(st.contacted.actor_label) : '') + '</span>'
+        : '<button class="btn ghost sp" data-cxcontact="'+esc(st.venue_id)+'">Mark contacted</button>';
+      var notes = st.notes.length
+        ? '<div class="cxnotes">'+st.notes.slice().reverse().map(function(n){
+            return '<div class="cxnote"><b>'+esc(cxWhen(n.created_at))+(n.actor_label?' &middot; '+esc(n.actor_label):"")+'</b>'
+                 + '<div>'+esc((n.detail&&n.detail.note)||"")+'</div></div>';
+          }).join("")+'</div>'
+        : '';
+      return '<div class="panel pad cxcard">'
+        + '<div class="cxhead"><div class="cxname">'+esc(st.v.name||st.venue_id)+'</div>'+badge+'</div>'
+        + '<div class="cxgrid">'
+          + '<div class="cxk">Cancelled <b>'+(st.when?esc(cxWhen(st.when)):'<span style="color:var(--faint)">date unknown</span>')+'</b></div>'
+          + ends
+          + '<div class="cxk">Reason <b>'+reason+'</b></div>'
+          + alertLine
+        + '</div>'
+        + said + noReason
+        + '<div class="cxacts">'+contacted+'</div>'
+        + notes
+        + '<div class="cxnoteform">'
+          + '<textarea data-cxnote="'+esc(st.venue_id)+'" rows="2" maxlength="2000" placeholder="Add a note for whoever picks this up next&hellip;"></textarea>'
+          + '<button class="btn ghost sp" data-cxsave="'+esc(st.venue_id)+'">Save note</button>'
+        + '</div>'
+        + '</div>';
+    }).join("");
+  }
+  /* Both buttons write an audit row and then re-read, rather than patching the screen and
+     hoping. If the write did not land, the row does not appear, which is the honest answer. */
+  $("cxList").addEventListener("click", function(e){
+    var b=e.target.closest("button"); if(!b) return;
+    var id=b.getAttribute("data-cxcontact");
+    if(id){
+      var v=venueById(id);
+      b.disabled=true; b.textContent="Saving…";
+      workerPost("/admin/audit", { action:"venue_cancel_contacted", target:"venue:"+id,
+                                   detail:{ name:(v&&v.name)||null } }).then(function(res){
+        if(res && res.error){ b.disabled=false; b.textContent="Mark contacted"; alert("That did not save: "+res.error); return; }
+        loadCancelled(true);
+      });
+      return;
+    }
+    var sid=b.getAttribute("data-cxsave");
+    if(sid){
+      var ta=$("cxList").querySelector('[data-cxnote="'+sid+'"]');
+      var note=(ta && ta.value || "").trim();
+      if(!note){ if(ta) ta.focus(); return; }
+      var sv=venueById(sid);
+      b.disabled=true; b.textContent="Saving…";
+      workerPost("/admin/audit", { action:"venue_cancel_note", target:"venue:"+sid,
+                                   detail:{ note:note, name:(sv&&sv.name)||null } }).then(function(res){
+        if(res && res.error){ b.disabled=false; b.textContent="Save note"; alert("That note did not save: "+res.error); return; }
+        loadCancelled(true);
+      });
+    }
+  });
+  $("cxFilter").addEventListener("change", function(){ S.cxFilter=this.value; renderCancelled(); });
+  $("cxRefresh").addEventListener("click", function(){ loadCancelled(true); });
+
   /* ================= VENUES ================= */
   function isArchived(v){ return v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling"; }
+  // Reads the side-loaded map, never v.cancel_at_period_end: that column is not in listVenues.
+  function isCancelling(v){ return !!(S.cancelling && S.cancelling[v.id]); }
   function venueById(id){
     for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i]; }
     return null;
@@ -995,6 +1227,10 @@
     if(S.vFilter==="independent" && v.group_id) return false;
     if(S.vFilter==="live" && !S.live[v.id]) return false;
     if(S.vFilter==="suspended" && (v.status!=="suspended" || isArchived(v))) return false;
+    /* A venue that has asked to leave is still active, still paying and still on "All venues",
+       so until now the only way to find one was to remember its name. Dean, 12 Sep 2026:
+       "there is no cancelled filter in HQ so we cant see them all on one screen". */
+    if(S.vFilter==="cancelling" && !(isCancelling(v) && !isArchived(v))) return false;
     if(S.vSearch){
       var q=S.vSearch.toLowerCase();
       if(String(v.name||"").toLowerCase().indexOf(q)<0 && String(v.slug||"").toLowerCase().indexOf(q)<0) return false;
@@ -1561,17 +1797,135 @@
   }
 
   /* ================= BILLING ================= */
-  function usageForMonth(){ return S.usage.filter(function(u){ return u.period_month===S.usageMonth; }); }
+  /* ONE SOURCE. usageForMonth used to read S.usage (vp_billing_usage), which no code anywhere
+     has ever written a row to, while the billing table beside it now reads the live meter. Two
+     screens quoting different figures for the same month is the fault this repo keeps having;
+     both read the meter. S.usage is kept only for the Xero export, which is a different
+     question (what was invoiced) and is labelled as such. */
+  function usageForMonth(){ return (S.meter||[]).filter(function(u){ return u.period_month===S.usageMonth; }); }
   function groupRate(v){ if(v.group_id && S.groupById[v.group_id] && S.groupById[v.group_id].negotiated_rate_cents!=null) return S.groupById[v.group_id].negotiated_rate_cents/100; return null; }
   function usageByVenue(id){ var rows=usageForMonth(); for(var i=0;i<rows.length;i++){ if(rows[i].venue_id===id) return rows[i]; } return null; }
+
+  /* BILLING HEALTH, FROM OUR OWN RECORDS.
+
+     What used to be here was one sentence saying payment health "is not readable from this
+     page. It appears here once the billing Worker feeds it." That was true on the day it was
+     written and stopped being true on 11 Sep 2026, when every money path started writing its
+     outcome to vp_admin_audit. Dean, 12 Sep: "it also says nobodies card has cancelled we know
+     that jess's did". He was right and the page was stale: six overage_invoice_unpaid rows,
+     four extras_moved_to_monthly, three payment_failed_email and one overage_charge_failed were
+     sitting in the database while this panel said there was nothing to see.
+
+     A panel that says "nothing yet" when something HAS happened is worse than an empty one: it
+     is an all-clear nobody earned. So it reads the rows.
+
+     ITS OWN QUERY, for the same reason the cancelled screen has one. S.audit is the last 250
+     rows of every kind, and screen_updated alone is 60 of them. A money event that scrolls out
+     of that window would disappear from this panel in silence. */
+  var HEALTH_ACTIONS = ["overage_invoice_unpaid","overage_charge_failed","payment_failed_email",
+                        "extras_moved_to_monthly","overage_charged","invoice_receipt_email",
+                        "plan_uplift_after_three_big_nights"];
+  var HEALTH_BAD = { overage_invoice_unpaid:1, overage_charge_failed:1, payment_failed_email:1 };
+  var HEALTH_LABEL = {
+    overage_invoice_unpaid: "Extras invoice not paid",
+    overage_charge_failed:  "Extra-player charge failed",
+    payment_failed_email:   "We emailed them that a payment failed",
+    extras_moved_to_monthly:"Extras moved onto their next monthly bill",
+    overage_charged:        "Extra players charged and paid",
+    invoice_receipt_email:  "Receipt",
+    plan_uplift_after_three_big_nights: "Plan moved up after three big nights",
+  };
+  function loadHealth(){
+    VP.getClient().from("vp_admin_audit").select("*")
+      .in("action", HEALTH_ACTIONS)
+      .order("created_at",{ascending:false}).limit(500)
+      .then(function(r){
+        if(r && r.error){ S.health=null; S.healthErr=(r.error.message||String(r.error)); }
+        else { S.health=(r && r.data) || []; S.healthErr=null; }
+        renderHealth();
+      })
+      .catch(function(e){ S.health=null; S.healthErr=(e&&e.message)||String(e); renderHealth(); });
+  }
+  function renderHealth(){
+    var el=$("healthList"); if(!el) return;
+    var susp=S.venues.filter(function(v){return v.status==="suspended";}).length;
+    if(S.health===null && S.healthErr){
+      el.innerHTML='<div class="empty">Could not read the billing record: '+esc(S.healthErr)+'. Nothing here is an all-clear.</div>';
+      return;
+    }
+    if(S.health===undefined){ el.innerHTML='<div class="empty">Loading&hellip;</div>'; return; }
+    var rows=S.health||[];
+    /* A RECEIPT ROW IS ONLY INTERESTING WHEN IT DID NOT GO. "sent" is the normal case and
+       there is one for every payment; listing them would bury the four that failed. */
+    var shown=rows.filter(function(a){
+      if(a.action==="invoice_receipt_email") return ((a.detail||{}).outcome||"")!=="sent";
+      return true;
+    });
+    var bad=shown.filter(function(a){ return HEALTH_BAD[a.action] ||
+      (a.action==="invoice_receipt_email" && ((a.detail||{}).outcome||"")!=="sent"); });
+    if(!rows.length){
+      el.innerHTML='<div class="empty">No payment has failed and no extra has been charged. '
+        + 'This reads the money rows in vp_admin_audit, so an empty panel means there are none, '
+        + 'not that we cannot see. Suspended venues: '+susp+'.</div>';
+      return;
+    }
+    var head='<div class="panel pad" style="margin-bottom:10px"><div class="cxk">'
+      + '<b>'+bad.length+'</b> need'+(bad.length===1?'s':'')+' a look, out of '+rows.length
+      + ' money events on record. Suspended venues: <b>'+susp+'</b>.'
+      + '</div><div class="note" style="margin-top:7px">Every charge, decline and receipt writes a row here as it happens. '
+      + 'Stripe is still where the money is; this is where the evidence is.</div></div>';
+    var list=shown.slice(0,40).map(function(a){
+      var d=a.detail||{}, isBad=HEALTH_BAD[a.action] ||
+        (a.action==="invoice_receipt_email" && (d.outcome||"")!=="sent");
+      var who=d.venue_name || d.venue || d.name || (a.target ? esc(cxVenueId(a.target)) : "");
+      var vn=venueById(cxVenueId(a.target||""));
+      if(vn) who=vn.name;
+      var amt = (d.amount_cents!=null) ? " &middot; $"+(Number(d.amount_cents)/100).toFixed(2)
+              : (d.amount ? " &middot; "+esc(String(d.amount)) : "");
+      var extra = d.outcome ? " &middot; "+esc(String(d.outcome))
+                : (d.reason ? " &middot; "+esc(String(d.reason)) : "");
+      var inv = d.invoice ? ' <span class="mono" style="color:var(--faint)">'+esc(String(d.invoice))+'</span>' : "";
+      return '<div class="cxnote" style="border-color:'+(isBad?'rgba(255,107,107,.45)':'var(--line-2)')+'">'
+        + '<b>'+esc(cxWhen(a.created_at))+' &middot; '+esc(HEALTH_LABEL[a.action]||a.action)+'</b>'
+        + '<div>'+(who?'<b>'+esc(String(who))+'</b>':'')+amt+extra+inv+'</div></div>';
+    }).join("");
+    el.innerHTML = head + '<div class="cxnotes">' + (list ||
+      '<div class="cxnote">Every money event on record went through cleanly.</div>') + '</div>'
+      + (shown.length>40 ? '<div class="note">Showing the 40 most recent of '+shown.length+'. The Audit tab has the rest.</div>' : '');
+  }
+
+  /* THE METERED FIGURES, COMPUTED LIVE. See handleMetering in venueplay-game.js for why there
+     is no table behind this: vp_billing_usage has never had a row written to it by anything,
+     so the tab reported "no metered usage yet" on a business that had played 39 games and
+     collected two overage charges. The game Worker counts it the same way it charges it. */
+  function loadMetering(){
+    gameWorkerGet("/admin/metering?months=12").then(function(r){
+      if(r && r.error){ S.meter=null; S.meterErr=r.error; }
+      else { S.meter=(r && r.rows) || []; S.meterErr=null; }
+      renderBilling();
+    });
+  }
+  // One row per venue for the month on show, in the shape renderBilling already expects.
+  function meterForMonth(){
+    return (S.meter||[]).filter(function(u){ return u.period_month===S.usageMonth; });
+  }
 
   function renderBilling(){
     // Default the Xero month range to the latest usage month on first render.
     var xf=$("xeroFrom"), xt=$("xeroTo");
     if(xf && !xf.value){ var dv=(S.usageMonth?String(S.usageMonth).slice(0,7):new Date().toISOString().slice(0,7)); xf.value=dv; if(xt && !xt.value) xt.value=dv; }
-    // health: not browser-readable
-    $("healthList").innerHTML='<div class="empty">Payment health (declined cards, overdue) comes from Stripe and the founding records, which are not readable from this page. It appears here once the billing Worker feeds it. Suspended venues: '+S.venues.filter(function(v){return v.status==="suspended";}).length+'.</div>';
+    renderHealth();
+    if(S.health===undefined && !S.healthAsked){ S.healthAsked=true; loadHealth(); }
+    if(S.meter===undefined && !S.meterAsked){ S.meterAsked=true; loadMetering(); }
 
+    /* WHICH MONTH IS ON SHOW. It used to come from vp_billing_usage, so with that table empty
+       it was always null and the heading always said "no metered usage yet". Now it is the
+       newest month the game Worker has nights for, and falls back to this month so the screen
+       is never dateless. */
+    if(!S.usageMonth){
+      var mm=(S.meter||[]).map(function(u){ return u.period_month; }).sort();
+      S.usageMonth = mm.length ? mm[mm.length-1] : null;
+    }
     $("billMonth").textContent = S.usageMonth ? ("· "+monthLabel(S.usageMonth)) : "";
     var b=$("billingRows"); b.innerHTML="";
     // Before any metering has run there is no usage to show, but a venue still needs to be
@@ -1590,7 +1944,7 @@
        nothing to bill, and every archived venue in the no-usage-yet fallback,
        where there is no invoice to speak of at all. */
     var rows = S.usageMonth
-      ? usageForMonth().filter(function(u){
+      ? meterForMonth().filter(function(u){
           var v = venueById(u.venue_id);
           if (!v || !isArchived(v)) return true;
           var billable = (u.peak_billable_players || 0) + (u.overage_players || 0);
@@ -1601,14 +1955,21 @@
                    overage_players:0, peak_billable_players:null, _noUsageYet:true };
         });
     if(!rows.length){ b.innerHTML='<tr><td colspan="7"><div class="empty" style="border:none;background:none">No venues yet.</div></td></tr>'; renderDiscounts(); return; }
-    if(!S.usageMonth) $("billMonth").textContent = "· no metered usage yet";
+    /* WHY THERE IS NOTHING, said accurately. "No metered usage yet" was printed whether the
+       Worker had not been asked, could not be reached, was too old to have the route, or had
+       genuinely found no nights. Four different problems, one sentence, and the one it read
+       as was "nothing has happened", which was false. */
+    if(!S.usageMonth){
+      $("billMonth").textContent = S.meterErr ? "· could not read the meter"
+        : (S.meter===undefined ? "· reading the meter\u2026" : "· no nights metered in the last 12 months");
+    }
     rows.sort(function(a,b){ return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
     rows.forEach(function(u){
       var v=null; for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===u.venue_id){ v=S.venues[i]; break; } }
       var over=u.overage_players||0;
       var overCell=over>0?'<span class="badge gold">+'+over+' over</span>':'<span style="color:var(--muted)">None</span>';
       var rate=v?groupRate(v):null;
-      var est= u._noUsageYet ? '<span style="color:var(--faint)">Not metered yet</span>'
+      var est= u._noUsageYet ? '<span style="color:var(--faint)">No nights yet</span>'
              : (rate!=null ? aud(((u.plan_cap||0)+over)*rate) : '<span style="color:var(--faint)">Worker</span>');
       var hasDisc = S.discounts.some(function(d){ return d.target_type==="venue" && d.target_id===u.venue_id; });
       var tr=document.createElement("tr");
@@ -1629,7 +1990,7 @@
   function billingDetailHtml(u,v,rate){
     var over=u.overage_players||0, h='';
     if(u._noUsageYet){
-      h+='<div class="note" style="margin:0 0 6px">This venue has not been metered yet, so there is no charge to break down. You can still set a rate for a period below and it applies from their next invoice.</div>';
+      h+='<div class="note" style="margin:0 0 6px">This venue has run no metered night in the window, so there is nothing to break down. That is a real answer now, not a missing feature. You can still set a rate for a period below and it applies from their next invoice.</div>';
     } else if(rate!=null){
       h+='<div class="bkline"><span class="l">Included ('+(u.plan_cap||0)+' x '+aud(rate)+')</span><span class="r">'+aud((u.plan_cap||0)*rate)+'</span></div>';
       if(over>0) h+='<div class="bkline"><span class="l">Peak add-on ('+over+' over x '+aud(rate)+')</span><span class="r">'+aud(over*rate)+'</span></div>';
@@ -1789,7 +2150,9 @@
       if(to && pm>to) return false;
       return true;
     });
-    if(!rows.length){ errFlash("xeroErr", (S.usage&&S.usage.length)?"No billing rows in that date range.":"No metered usage recorded yet, so there is nothing to export. Rows appear here once the metering job runs."); return; }
+    if(!rows.length){ errFlash("xeroErr", (S.usage&&S.usage.length)
+      ? "No billing rows in that date range."
+      : "This export reads vp_billing_usage, which is the INVOICED history, and nothing writes to it yet. The live figures are in the table below and in Stripe. Do not treat an empty export as a quiet month."); return; }
     rows.sort(function(a,b){ var pa=String(a.period_month||""), pb=String(b.period_month||""); if(pa!==pb) return pa<pb?-1:1; return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
     var out=[["Date","Venue","Description","Reference","Amount (GST inc)","GST","Status"]];
     rows.forEach(function(u){
@@ -1971,7 +2334,12 @@
   function renderUsage(){
     $("usageMonth").textContent = S.usageMonth ? ("· "+monthLabel(S.usageMonth)) : "";
     var b=$("usageRows"); b.innerHTML="";
-    if(!S.usageMonth){ b.innerHTML='<tr><td colspan="6"><div class="empty" style="border:none;background:none">No usage recorded yet.</div></td></tr>'; return; }
+    if(!S.usageMonth){
+      b.innerHTML='<tr><td colspan="6"><div class="empty" style="border:none;background:none">'
+        + (S.meterErr ? 'Could not read the meter: '+esc(S.meterErr)+'. This is not an all-clear.'
+          : (S.meter===undefined ? 'Reading the meter\u2026 open the Billing tab if this stays.'
+            : 'No nights metered in the last 12 months.'))
+        + '</div></td></tr>'; return; }
     var rows=usageForMonth();
     rows.sort(function(a,b){ return String(venueName(a.venue_id)).localeCompare(String(venueName(b.venue_id))); });
     rows.forEach(function(u){
@@ -1980,7 +2348,7 @@
       var est= rate!=null ? aud(over*rate) : '<span style="color:var(--faint)">Worker</span>';
       var tr=document.createElement("tr");
       tr.innerHTML='<td class="vn">'+esc(venueName(u.venue_id))+'</td>'+
-        '<td class="num">'+(u.sessions_count!=null?u.sessions_count:"—")+'</td>'+
+        '<td class="num">'+(u.nights!=null?u.nights:(u.sessions_count!=null?u.sessions_count:"—"))+'</td>'+
         '<td class="num">'+(u.peak_billable_players!=null?u.peak_billable_players:"—")+'</td>'+
         '<td class="num">'+(u.plan_cap!=null?u.plan_cap:"—")+'</td>'+
         '<td>'+(over>0?'<span class="badge gold">+'+over+'</span>':'<span style="color:var(--muted)">None</span>')+'</td>'+

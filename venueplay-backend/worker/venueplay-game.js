@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 21:05 · 9aef92c6';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 09:13 · 713a1c26';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -218,6 +218,7 @@ export default {
       if (method === 'POST' && path === '/screen/reload')      return await handleScreenReload(request, env, json, await readJson(request));
       if (method === 'POST' && path === '/screen/command')     return await handleScreenCommand(request, env, json, await readJson(request));
       if (method === 'GET'  && path === '/admin/group-overage') return await handleGroupOverage(request, env, json);
+      if (method === 'GET'  && path === '/admin/metering')       return await handleMetering(request, env, json);
       /* Broadcast signing (migrations 38 + 55). vp-sign.js has been loaded by every TV, phone and
          console since 20 Aug calling these three; they were never written, so every page fell back
          to send-unsigned / render-everything and the signing was decorative. */
@@ -1710,6 +1711,127 @@ async function handleGroupOverage(request, env, json) {
   return json({ ok: true, months: months, venues: venues.length,
                 nights: nights.length, rows: nights, total_cents: total,
                 note: 'a report only: nothing here has been charged or asked for' });
+}
+
+
+/* GET /admin/metering?months=3   (HQ admin only)
+ *
+ * WHAT HQ'S BILLING TAB SHOWS, and why this had to exist.
+ *
+ * That tab read vp_billing_usage. On 12 Sep 2026 that table held ZERO rows, and nothing in
+ * this repo has ever written one: grep it, HQ is the only file that mentions it. So the tab
+ * said "no metered usage yet" while 39 games sat in vp_game_reports and two real overage
+ * charges sat in Stripe. Dean: "in the billing filter there says there is no metered usage
+ * yet. We have played games".
+ *
+ * An empty table and a month with no games look identical from a browser, which is the same
+ * fault as a check that cannot fail: the screen could not tell the truth either way.
+ *
+ * COUNTED THE WAY THE MONEY IS COUNTED, or it is not worth showing. The peak that decides an
+ * overage charge is countPlayersWhoPlayed over vp_players for a session, clamped by
+ * overageCeiling to what the host approved. This calls the same three functions on the same
+ * rows, so a figure here and a figure on an invoice cannot disagree. Quoting a venue a number
+ * that then does not match their bill is worse than showing them nothing.
+ *
+ * FIVE QUERIES, not five per session. The per-session shape was two round trips a session and
+ * grows with the business; the gateway ceiling is about fifty REST calls a second on this
+ * plan. Everything is fetched in bulk by id and grouped here.
+ *
+ * It charges nothing, writes nothing and is safe to call as often as you like.
+ */
+async function handleMetering(request, env, json) {
+  const admin = await requireScreenAdmin(request, env, json);
+  if (admin.error) return admin.error;
+  const url = new URL(request.url);
+  let months = parseInt(url.searchParams.get('months') || '6', 10);
+  if (!isFinite(months) || months < 1) months = 6;
+  if (months > 24) months = 24;
+  const since = new Date(Date.now() - months * 31 * 24 * 3600 * 1000).toISOString();
+
+  const venues = await sbGet(env, 'vp_venues', 'select=id,name,slug,max_players,status,suspended_reason');
+  const capOf = {};
+  for (const v of (venues || [])) capOf[v.id] = parseInt(v.max_players, 10) || 0;
+
+  /* Sessions are the meter. Broadcast bingo opens one too, so every billable format is here;
+     a raffle or members draw mints no vp_players and lands as a zero, which is correct. */
+  const sessions = await sbGetAll(env, 'vp_sessions',
+    'opened_at=gte.' + enc(since) +
+    '&select=id,venue_id,opened_at,started_at,ended_at,status,plan_cap_at_start,overage_approved_count');
+  if (!sessions || !sessions.length) {
+    return json({ ok: true, months: months, sessions: 0, rows: [],
+                  note: 'no sessions have been opened in that window' });
+  }
+  const ids = sessions.map((s) => s.id);
+  const bySession = {};
+  for (const s of sessions) bySession[s.id] = s;
+
+  // Everyone who joined, and which game rows those sessions produced.
+  const players = await sbGetAll(env, 'vp_players',
+    'session_id=in.(' + ids.join(',') + ')&kicked=eq.false&select=id,session_id,device_id');
+  const games = await sbGetAll(env, 'vp_games',
+    'session_id=in.(' + ids.join(',') + ')&select=id,session_id');
+  const gameIds = games.map((g) => g.id);
+  const sessionOfGame = {};
+  for (const g of games) sessionOfGame[g.id] = g.session_id;
+
+  /* WHO ACTUALLY PLAYED, per session. Same two tables playerIdsWhoPlayed reads, and the same
+     fallback: a session with no game rows, or none of these traces, counts everyone who
+     joined, which is what the billing path does and errs in the venue's favour. */
+  const playedBySession = {};
+  if (gameIds.length) {
+    const cards = await sbGetAll(env, 'vp_cards', 'game_id=in.(' + gameIds.join(',') + ')&select=player_id,game_id');
+    const answers = await sbGetAll(env, 'vp_trivia_answers', 'game_id=in.(' + gameIds.join(',') + ')&select=player_id,game_id');
+    for (const r of cards.concat(answers)) {
+      const sid = r && sessionOfGame[r.game_id];
+      if (!sid || !r.player_id) continue;
+      (playedBySession[sid] || (playedBySession[sid] = new Set())).add(r.player_id);
+    }
+  }
+  const hasGames = {};
+  for (const g of games) hasGames[g.session_id] = true;
+
+  const rosterBySession = {};
+  for (const p of (players || [])) (rosterBySession[p.session_id] || (rosterBySession[p.session_id] = [])).push(p);
+
+  /* One row per venue per month, holding that month's BIGGEST night, because the peak rule is
+     what the plan is measured against: a venue is not charged twice for two busy Saturdays. */
+  const rows = {};
+  let counted = 0;
+  for (const s of sessions) {
+    const roster = rosterBySession[s.id] || [];
+    // Exactly the fallback playerIdsWhoPlayed uses: no game rows, or no trace, means count everyone.
+    const played = (hasGames[s.id] && playedBySession[s.id] && playedBySession[s.id].size)
+                 ? playedBySession[s.id] : null;
+    const raw = countPlayersWhoPlayed(roster, played);
+    const cap = Number(s.plan_cap_at_start || 0) || capOf[s.venue_id] || 0;
+    const peak = cap ? Math.min(raw, overageCeiling(s, cap)) : raw;
+    counted++;
+    const when = s.opened_at || s.started_at || s.ended_at;
+    if (!when) continue;
+    const month = String(when).slice(0, 7) + '-01';
+    const key = s.venue_id + '|' + month;
+    const r = rows[key] || (rows[key] = {
+      venue_id: s.venue_id, period_month: month, plan_cap: cap,
+      peak_billable_players: 0, overage_players: 0, nights: 0, peak_night: null,
+    });
+    r.nights++;
+    if (cap && !r.plan_cap) r.plan_cap = cap;
+    if (peak > r.peak_billable_players) {
+      r.peak_billable_players = peak;
+      r.peak_night = String(when).slice(0, 10);
+    }
+  }
+  const out = Object.keys(rows).map((k) => {
+    const r = rows[k];
+    r.overage_players = (r.plan_cap && r.peak_billable_players > r.plan_cap)
+      ? (r.peak_billable_players - r.plan_cap) : 0;
+    return r;
+  });
+  out.sort((a, b) => (a.period_month === b.period_month
+    ? String(a.venue_id).localeCompare(String(b.venue_id))
+    : (a.period_month < b.period_month ? 1 : -1)));
+  return json({ ok: true, months: months, sessions: counted, rows: out,
+                note: 'computed live from vp_players the same way an overage charge is; nothing was charged' });
 }
 
 /* POST /screen/command   { slug, command }   (HQ admin only)
