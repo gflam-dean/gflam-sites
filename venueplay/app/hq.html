@@ -168,6 +168,7 @@
   .cxnote.bad{border-color:rgba(255,107,107,.45)}
   .hqwho{color:#fff;font-weight:700}
   .hqid{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:var(--faint)}
+  .hqsaid{margin:6px 0 0;color:var(--text);font-size:13px;line-height:1.45;opacity:.92}
   .cxnoteform{margin:12px 0 0;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
   .cxnoteform textarea{flex:1 1 260px;background:var(--ink-3);border:1px solid var(--line);color:#fff;
     border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;resize:vertical}
@@ -1897,26 +1898,43 @@
     var list=shown.slice(0,40).map(function(a){
       var d=a.detail||{}, isBad=HEALTH_BAD[a.action] ||
         (a.action==="invoice_receipt_email" && (d.outcome||"")!=="sent");
-      /* WHO IT WAS ABOUT. The target is a venue id on some rows and "customer:cus_..." or
-         "account:<uuid>" on others, and printing it raw put CUSTOMER:CUS_V3KN0IXVCU8ZXX on
-         the screen in the label's uppercase mono, which is neither readable nor a name.
-         Resolve it to a venue where we can, fall back to whatever the detail carries, and
-         say "an account" rather than shout an identifier at somebody. */
+      /* WHO IT WAS ABOUT. A target is a venue id on some rows, "account:<founding uuid>" on
+         others and "customer:cus_..." on the rest. Printing it raw put
+         cus_V3KN0IxvCU8zxX where a pub's name belongs. Every one of these is resolvable:
+         a founding id is on the venue row, and the Stripe rows carry the venue in their
+         own detail. Only fall back to an identifier when nothing else exists. */
       var t=String(a.target||""), who=null;
-      if(/^venue:/.test(t)){ var vn=venueById(cxVenueId(t)); who=vn?vn.name:(d.venue_name||d.venue||d.name||null); }
-      else { who = d.venue_name || d.venue || d.name || null; }
+      if(/^account:/.test(t)){
+        var fid=t.slice(8);
+        var names=S.venues.filter(function(v){ return v.founding_id===fid; }).map(function(v){ return v.name; });
+        // One founding account can hold several venues. Name them rather than pick one.
+        if(names.length) who = names.length>2 ? (names[0]+" and "+(names.length-1)+" more") : names.join(", ");
+      } else if(/^customer:/.test(t)){
+        // "The Jolly Jess - Extra Player - 11/09/2026": the venue is the part before the dash.
+        if(d.what) who = String(d.what).split(" - ")[0];
+        if(!who && d.to) who = String(d.to);
+      } else {
+        var vn=venueById(cxVenueId(t)); who = vn ? vn.name : null;
+      }
+      if(!who) who = d.venue_name || d.venue || d.name || null;
       var idNote = (!who && t) ? '<span class="hqid">'+esc(t.replace(/^(customer|account):/,""))+'</span>' : "";
       var amt = (d.amount_cents!=null) ? "$"+(Number(d.amount_cents)/100).toFixed(2)
               : (d.amount ? esc(String(d.amount)) : "");
       var extra = d.outcome ? esc(String(d.outcome)) : (d.reason ? esc(String(d.reason)) : "");
       var inv = d.invoice ? '<span class="hqid">'+esc(String(d.invoice))+'</span>' : "";
-      /* Joined here rather than concatenated with a leading separator on each part. Every one
-         of these is optional, and the old version started half the lines with a bare middot. */
+      /* Joined, not concatenated with a leading separator on each part. Every one of these is
+         optional and the first version started half the lines with a bare middot. */
       var bits=[ who ? '<b class="hqwho">'+esc(String(who))+'</b>' : idNote, amt, extra, inv ]
         .filter(function(x){ return x; });
+      /* THE BANK'S OWN WORDS, on their own line. reason_line is why a card was refused, in a
+         sentence somebody can read out on the phone, and it was being dropped in favour of
+         "moved to next invoice", which says what WE did and not what went wrong. It is the
+         most useful sentence on this screen and it was not on it. */
+      var said = d.reason_line ? '<div class="hqsaid">'+esc(String(d.reason_line))+'</div>' : "";
       return '<div class="cxnote'+(isBad?' bad':'')+'">'
         + '<b>'+esc(cxWhen(a.created_at))+' &middot; '+esc(HEALTH_LABEL[a.action]||a.action)+'</b>'
-        + '<div>'+bits.join(' &middot; ')+'</div></div>';
+        + '<div>'+bits.join(' &middot; ')+'</div>'
+        + said + '</div>';
     }).join("");
     el.innerHTML = head + '<div class="cxnotes">' + (list ||
       '<div class="cxnote">Every money event on record went through cleanly.</div>') + '</div>'
