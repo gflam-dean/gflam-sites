@@ -36,7 +36,13 @@ RED, GRN, YEL, DIM, OFF = '\033[31m', '\033[32m', '\033[33m', '\033[2m', '\033[0
 
 # Things that are not part of a website. A venue never needs any of these, and
 # each one tells somebody how the system is built.
-NEVER = re.compile(r'\.(test\.js|spec\.js|sql|py|sh|bak|backup|orig|rej|map|lock|env|ini|log)$'
+# .md is on this list because of what was found on 11 Sep 2026: three internal
+# working documents, tracked and therefore uploaded, and all three live. 42 KB of
+# song-curation notes naming Dean and the reasoning behind every pack decision,
+# a chart-gap memo, and partyplay/ANALYTICS.md, which told the world exactly which
+# pages carry the Google tag and which deliberately do not. Neither site serves a
+# .md on purpose; robots.txt and llms.txt are .txt and stay.
+NEVER = re.compile(r'\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$'
                    r'|(^|/)(\.env|\.git|package(-lock)?\.json|requirements\.txt|Makefile)$', re.I)
 
 # A path on somebody's machine, in a file the world can read.
@@ -136,6 +142,9 @@ def prove():
         ('a .test.js path is flagged',        bool(NEVER.search('lib/pp-trivia-pack.test.js'))),
         ('a .sql path is flagged',            bool(NEVER.search('supabase/venueplay-67.sql'))),
         ('a .py path is flagged',             bool(NEVER.search('tools/add-songs.py'))),
+        ('an internal .md is flagged',        bool(NEVER.search('data/song-curation-2026-09-08.md'))),
+        ('robots.txt is NOT flagged',         not NEVER.search('robots.txt')),
+        ('llms.txt is NOT flagged',           not NEVER.search('llms.txt')),
         ('a real page is NOT flagged',        not NEVER.search('app/trivia/host.html')),
         ('a real script is NOT flagged',      not NEVER.search('app/vp-session.js')),
         ('a logo is NOT flagged',             not NEVER.search('logos/venueplay-mark.svg')),

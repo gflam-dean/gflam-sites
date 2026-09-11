@@ -6,7 +6,7 @@
    quietly lost it. Where the behaviour needs a host, a TV and forty phones in a
    room, the check is structural and says which fault it is guarding.
 
-   Run: jsc venueplay/app/trivia/trivia-night.test.js   (from the repo root)
+   Run: jsc venueplay-backend/app/trivia/trivia-night.test.js   (from the repo root)
 */
 var bad = 0;
 function pass(n, c, why){ print((c ? "  ok   " : "  FAIL ") + n + (c || !why ? "" : "   " + why)); if(!c) bad++; }

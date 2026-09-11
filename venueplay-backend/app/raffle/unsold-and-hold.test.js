@@ -11,7 +11,7 @@
    3. A tablet reload rebuilt the drawn tickets but not tonight's prize list, so the host retyped
       six prizes with the room waiting.
 
-   Run: jsc venueplay/app/raffle/unsold-and-hold.test.js   (the gate runs it from the repo root) */
+   Run: jsc venueplay-backend/app/raffle/unsold-and-hold.test.js   (the gate runs it from the repo root) */
 
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel, '../../../' + rel];

@@ -18,7 +18,7 @@
    The real functions are lifted out of tv.html and run against a stubbed DOM,
    rather than restated here: a copy keeps passing while the page changes.
 
-   Run: jsc venueplay/app/tv-ads-rebuild.test.js
+   Run: jsc venueplay-backend/app/tv-ads-rebuild.test.js
 */
 var bad = 0, pass = 0;
 function ok(n, c, extra){

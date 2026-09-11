@@ -5,7 +5,7 @@
    fake clock and a fake button, and checks the second tap is the only thing that
    ever reaches onRedraw.
 
-   Run: jsc venueplay/app/raffle/redraw-confirm.test.js  (the gate runs it from the repo root) */
+   Run: jsc venueplay-backend/app/raffle/redraw-confirm.test.js  (the gate runs it from the repo root) */
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel, '../../../' + rel];
   for (var i = 0; i < tries.length; i++) {

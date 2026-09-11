@@ -19,7 +19,7 @@
    The real poll handler is lifted out of tv.html and run against stubs, rather
    than restated here: a copy keeps passing while the page changes.
 
-   Run: jsc venueplay/app/tv-stale-screen.test.js
+   Run: jsc venueplay-backend/app/tv-stale-screen.test.js
 */
 var bad = 0, pass = 0;
 function ok(n, c, extra){

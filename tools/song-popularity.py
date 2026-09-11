@@ -158,7 +158,7 @@ def main():
         time.sleep(0.12)
     json.dump({'generated': '2026-09-10',
                'what_this_is': 'Spotify popularity, 0 to 100, for songs sitting in a musical bingo pack.',
-               'what_this_is_not': 'Suitability, which is Dean's judgement and not a tool's. A LOW score is evidence for cutting; a high one is not evidence for keeping.',
+               'what_this_is_not': "Suitability, which is Dean's judgement and not a tool's. A LOW score is evidence for cutting; a high one is not evidence for keeping.",
                'scope': 'every song in a pack' if every else 'the songs with no Australian chart evidence',
                'not_matched': miss, 'list': out},
               io.open(OUT, 'w', encoding='utf-8'), indent=1, ensure_ascii=False)

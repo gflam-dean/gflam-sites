@@ -14,7 +14,7 @@
 
    NOT covered here, because jsc has no browser: what the paper actually looks like.
 
-   Run: jsc venueplay/app/signage-logo.test.js  (the gate runs it from the repo root) */
+   Run: jsc venueplay-backend/app/signage-logo.test.js  (the gate runs it from the repo root) */
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel];
   for (var i = 0; i < tries.length; i++) {

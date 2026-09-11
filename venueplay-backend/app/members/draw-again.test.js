@@ -13,7 +13,7 @@
       two files must agree on the numbers, and the screen must keep an early idle rather than
       obey it or drop it.
 
-   Run: jsc venueplay/app/members/draw-again.test.js   (the gate runs it from the repo root) */
+   Run: jsc venueplay-backend/app/members/draw-again.test.js   (the gate runs it from the repo root) */
 
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel, '../../../' + rel];

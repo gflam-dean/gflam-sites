@@ -10,7 +10,7 @@
    venueplay/app/billing.html between the two VP-HOSTS-HELPERS markers and runs that.
    A copy would still pass after the page had changed underneath it.
 
-   Run: jsc venueplay/app/billing-hosts.test.js  (the gate runs it from the repo root) */
+   Run: jsc venueplay-backend/app/billing-hosts.test.js  (the gate runs it from the repo root) */
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel];
   for (var i = 0; i < tries.length; i++) {

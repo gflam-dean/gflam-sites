@@ -4,7 +4,7 @@
    on the same page has submitted on Enter since the start; the two sign-in fields
    never did, and a host at a bar tablet or a laptop expects Enter to mean "go".
 
-   Run: jsc venueplay/app/sign-in.test.js  (the gate runs it from the repo root) */
+   Run: jsc venueplay-backend/app/sign-in.test.js  (the gate runs it from the repo root) */
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel];
   for (var i = 0; i < tries.length; i++) {

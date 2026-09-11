@@ -7,7 +7,7 @@
 
    These checks read the real pages, not a copy of them.
 
-   Run: jsc venueplay/app/room-optin.test.js
+   Run: jsc venueplay-backend/app/room-optin.test.js
 */
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel];

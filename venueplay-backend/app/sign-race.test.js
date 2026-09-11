@@ -16,7 +16,7 @@
 
    Dean: "wait after a reset we are back" - which is exactly what a race looks like.
 
-   Run: jsc venueplay/app/sign-race.test.js
+   Run: jsc venueplay-backend/app/sign-race.test.js
 */
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel];

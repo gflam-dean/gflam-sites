@@ -11,7 +11,7 @@
    VIRTUAL CLOCK, so six seconds of pub time costs nothing and the budgets are
    tested as budgets rather than as constants that happen to be written down.
 
-   Run: jsc venueplay/app/room-fallback.test.js
+   Run: jsc venueplay-backend/app/room-fallback.test.js
 */
 var bad = 0, ran = 0;
 function pass(n, c, extra){ ran++; print((c ? "  ok   " : "  FAIL ") + n + (extra ? "   " + extra : "")); if(!c) bad++; }

@@ -13,7 +13,7 @@
    rather than copied here, for the reason musical-draw.test.js gives: a copy
    keeps passing while the page changes underneath it.
 
-   Run: jsc venueplay/app/bingo-win.test.js
+   Run: jsc venueplay-backend/app/bingo-win.test.js
 */
 var bad = 0, pass = 0;
 function ok(n, c, extra){

@@ -9,7 +9,7 @@
    the real library. It is written this way on purpose: a copy of the logic here
    would keep passing while the page changed underneath it.
 
-   Run: jsc venueplay/app/musical/musical-draw.test.js
+   Run: jsc venueplay-backend/app/musical/musical-draw.test.js
 */
 var bad = 0;
 function pass(n, c, extra){ print((c ? "  ok   " : "  FAIL ") + n + (extra ? "   " + extra : "")); if(!c) bad++; }

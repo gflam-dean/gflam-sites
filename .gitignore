@@ -9,3 +9,29 @@ Thumbs.db
 gflam-ai-team/
 venueplay-backend/tools/song-years.jsonl
 venueplay-backend/tools/song-audit.csv
+
+# A DEPLOY DIRECTORY IS A PUBLIC DIRECTORY. Everything tracked under venueplay/
+# and partyplay/ is uploaded to Cloudflare Pages and served to anyone who asks
+# for it by name, linked or not. On 11 Sep 2026 twenty-seven internal files were
+# being served that way, including a suite that printed a local path to the world.
+# These scripts belong in the -backend sibling. git is the first gate that stops
+# them coming back; tools/release-check.py --local is the second.
+venueplay/**/*.py
+venueplay/**/*.sql
+venueplay/**/*.sh
+venueplay/**/*.test.js
+venueplay/**/*.md
+venueplay/supabase/
+venueplay/tools/
+partyplay/**/*.py
+partyplay/**/*.sql
+partyplay/**/*.sh
+partyplay/**/*.test.js
+partyplay/**/*.md
+
+# Claude Code's own working directory, including embedded worktree checkouts.
+.claude/
+# Scratch scripts moved out of the deploy directory on 11 Sep 2026. They were
+# untracked where they were and they stay untracked here: out of the public
+# directory is the point, putting eighteen superseded migrations into the repo is not.
+venueplay-backend/tools/moved-out-of-site-dir-2026-09-11/

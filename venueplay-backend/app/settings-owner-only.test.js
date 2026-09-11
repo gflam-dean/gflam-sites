@@ -11,7 +11,7 @@
    own token, and the policy allowed owner OR manager to write every column. Hiding the
    card is the door; the trigger is the lock. This suite is about the door.
 
-   Run: jsc venueplay/app/settings-owner-only.test.js
+   Run: jsc venueplay-backend/app/settings-owner-only.test.js
 */
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel];

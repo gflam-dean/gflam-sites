@@ -39,6 +39,8 @@ broadcasts on no real venue's channel: VenuePlay has a live client.
         serves branch SITE code but talks to the same Workers and the same
         database as production, so play on it with a throwaway venue slug.
 """
+import ast
+import importlib.util
 import hashlib
 import atexit, io, json, os, re, shutil, subprocess, sys, tempfile, urllib.error, urllib.request
 
@@ -443,6 +445,39 @@ def local_checks(which):
     ok('every Worker actually loads, not just parses', not worker_bad,
        why='; '.join(worker_bad[:2]))
 
+    head('A. Every tool parses too, not just the site')
+    """THE GATE PARSED THE SITE AND THE WORKERS AND NOTHING ELSE.
+
+    tools/song-popularity.py had been in the repo since 10 Sep 2026 with an
+    apostrophe inside a single-quoted string:
+
+        'what_this_is_not': 'Suitability, which is Dean's judgement ...'
+
+    It is a SyntaxError on the first line of the file that Python reads, so the
+    tool had never once run since that line was written, and nothing said so. The
+    checks in this repo are mostly Python; a checker that cannot start is a check
+    that cannot fail, and it reports nothing at all rather than red.
+
+    ast.parse only, no import: importing runs module-level code, and several of
+    these tools hit Stripe or Supabase the moment they load."""
+    pyfiles, broken = [], []
+    for d, dirs, fs in os.walk(ROOT):
+        dirs[:] = [x for x in dirs
+                   if x not in ('.git', 'node_modules', '__pycache__', '.claude')]
+        for f in sorted(fs):
+            if not f.endswith('.py'):
+                continue
+            full = os.path.join(d, f)
+            pyfiles.append(full)
+            try:
+                ast.parse(io.open(full, encoding='utf-8', errors='replace').read())
+            except SyntaxError as e:
+                broken.append('%s line %s' % (short(full), e.lineno))
+    ok('every .py in the repo parses', bool(pyfiles) and not broken,
+       '%d tool(s) checked' % len(pyfiles),
+       why=('nothing was read at all' if not pyfiles else
+            'these cannot run: ' + '; '.join(broken[:4])))
+
     head('B. Nothing calls a function that does not exist')
     # partyplay/ is the directory Pages deploys, so a tool kept there is served
     # to the public: check-defs.py was downloadable from partyplay.com.au on
@@ -534,6 +569,71 @@ def local_checks(which):
         out = (r.stdout + r.stderr).strip().splitlines()
         line = out[-1] if out else ''
         ok(os.path.basename(t), 'ALL' in line and 'PASSED' in line, line)
+
+    head('C. Nothing internal sits in a directory the world can download')
+    """A DEPLOY DIRECTORY IS A PUBLIC DIRECTORY. Everything under venueplay/ and
+    partyplay/ is uploaded to Cloudflare Pages and served to anyone who asks for
+    it by name, whether or not a page links to it.
+
+    check-exposure.py has been saying so for days, but it asks the LIVE site, so
+    it can only speak after the push, and the pre-push gate does not run it. On
+    11 Sep 2026 it found twenty-seven: twenty-four .test.js suites under
+    venueplay/app/ served from venueplay.com.au, partyplay/check-defs.py (already
+    copied to the backend a week earlier and never deleted from the deploy
+    directory), and partyplay/lib/pp-trivia-pack.test.js, which printed the path
+    /Users/dean.tindale to the world.
+
+    None of them could break a venue's night, which is exactly why they sat there:
+    nothing that fails loudly was failing. So this asks the question BEFORE the
+    push instead, off the same rule check-exposure uses, imported rather than
+    copied so the two definitions cannot drift apart.
+
+    It walks the directory on disk rather than asking git what is tracked, for two
+    reasons. prove-checks.py copies the repo WITHOUT .git, so a git-based version
+    of this check would have found nothing tracked there, reported "0 files" and
+    gone green in the one harness whose whole job is to prove it can go red. And
+    an untracked script sitting in the deploy directory is one `git add .` from
+    being served anyway: on 11 Sep there were eighteen old migrations and a
+    grant-admin-access.py in there, none of them tracked, all of them one command
+    from the public. They now live in venueplay-backend/tools/.
+
+    The root .gitignore refuses to stage a .py, .sql, .sh or .test.js under either
+    deploy directory, so this check and git say no to the same thing."""
+    never = None
+    try:
+        _spec = importlib.util.spec_from_file_location(
+            '_exposure', os.path.join(ROOT, 'tools', 'check-exposure.py'))
+        _mod = importlib.util.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod)
+        never = _mod.NEVER
+    except Exception as e:
+        ok('the rule for what must never ship could be read', False,
+           why='check-exposure.py would not import: %s' % e)
+    if never is not None:
+        # The rule has to be able to say no. If this probe stops working the rule has
+        # been widened into one that flags nothing, and every tick below is empty.
+        probe = (bool(never.search('app/x.test.js')) and bool(never.search('tools/a.py'))
+                 and not never.search('app/index.html'))
+        ok('the rule can tell an internal file from a page', probe,
+           'probe verified' if probe else 'THE RULE FLAGS NOTHING')
+        for site in (['venueplay'] if which in ('both', 'venueplay') else []) + \
+                    (['partyplay'] if which in ('both', 'partyplay') else []):
+            base = os.path.join(ROOT, site)
+            walked, bad = 0, []
+            for d, dirs, fs in os.walk(base):
+                dirs[:] = [x for x in dirs if x not in ('node_modules', '__pycache__')]
+                for f in fs:
+                    walked += 1
+                    rel = os.path.relpath(os.path.join(d, f), ROOT)
+                    if never.search(rel):
+                        bad.append(rel)
+            # walked == 0 means the directory moved and this check read nothing at
+            # all, which must never be reported as a pass. Rule 3 of this tool.
+            ok('%s/ holds nothing internal' % site, probe and walked > 0 and not bad,
+               '%d file(s) walked' % walked,
+               why=(('the directory is empty or gone' if not walked else
+                     'anyone can download these: ' + ', '.join(sorted(bad)[:6])
+                     + ('' if len(bad) <= 6 else ' and %d more' % (len(bad) - 6)))))
 
     head('D. No test reads code from outside the repo')
     """A TEST POINTED AT THE WRONG FILE CANNOT FAIL, and it is worse than no test,

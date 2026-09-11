@@ -12,7 +12,7 @@
    The real functions are lifted out of the page and run against a stubbed DOM,
    rather than restated here: a copy keeps passing while the page changes.
 
-   Run: jsc venueplay/app/tv-states.test.js
+   Run: jsc venueplay-backend/app/tv-states.test.js
 */
 var bad = 0, pass = 0;
 function ok(n, c, extra){

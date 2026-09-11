@@ -12,7 +12,7 @@
    loaded before song ids shipped broadcasts titles alone, and refusing to fall
    back would leave every card in the room blank for the rest of that night.
 
-   Run: jsc venueplay/app/musical/musical-win.test.js
+   Run: jsc venueplay-backend/app/musical/musical-win.test.js
 */
 var bad = 0, pass = 0;
 function ok(n, c, extra){

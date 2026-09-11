@@ -1,5 +1,5 @@
 /* Does a phone actually move when the host changes game?
-   Run: jsc venueplay/app/vp-follow.test.js                                     */
+   Run: jsc venueplay-backend/app/vp-follow.test.js                                     */
 var pass=0, fail=0, notes=[];
 function ok(c,m){ if(c) pass++; else { fail++; notes.push("  FAIL  "+m); } }
 

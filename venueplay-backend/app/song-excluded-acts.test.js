@@ -15,7 +15,7 @@
    The list is a judgement and it is his. This suite exists so the judgement survives the
    next bulk import, which is exactly how it got in.
 
-   Run: jsc venueplay/app/song-excluded-acts.test.js
+   Run: jsc venueplay-backend/app/song-excluded-acts.test.js
 */
 function find(rel) {
   var tries = [rel, '../' + rel, '../../' + rel];

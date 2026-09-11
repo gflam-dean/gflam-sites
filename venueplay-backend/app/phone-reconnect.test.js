@@ -17,7 +17,7 @@
    an anonymous callback inside ch.subscribe, which no test in this repo could
    reach; it is a named function now for that reason.
 
-   Run: jsc venueplay/app/phone-reconnect.test.js
+   Run: jsc venueplay-backend/app/phone-reconnect.test.js
 */
 var bad = 0, ran = 0;
 /* pass(name, condition). The arguments went in the other way round while this suite was

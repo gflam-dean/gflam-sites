@@ -25,7 +25,7 @@
    The real functions are lifted, never restated, so a copy cannot keep passing while the
    page changes.
 
-   Run: jsc venueplay/app/tv-screen.test.js
+   Run: jsc venueplay-backend/app/tv-screen.test.js
 */
 
 var bad = 0, pass = 0;

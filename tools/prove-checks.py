@@ -223,7 +223,7 @@ MUTATIONS = [
      'the house rule breaks in the one file that is not .html'),
 
     ('every test reads the code this repo ships',
-     'venueplay/app/vp-follow.test.js',
+     'venueplay-backend/app/vp-follow.test.js',
      '"vp-follow.js",', '"/Users/dean.tindale/an-old-copy/vp-follow.js",',
      'a suite starts testing a copy nobody ships'),
 
@@ -694,6 +694,76 @@ MUTATIONS = [
      'partyplay-backend/supabase/partyplay-01-core.sql',
      '<<COPYTO:partyplay-backend/supabase/partyplay-01-a-second-file.sql>>', '',
      'two migrations claim the same number and one gets skipped'),
+
+    # ---- 11 Sep: the gate had never parsed its own tools ----
+    # song-popularity.py sat broken in the repo for a day and nothing said so, because
+    # the parse sweep only read the site and the Workers. The mutation is that exact
+    # fault: an apostrophe inside a single-quoted Python string.
+    ('every .py in the repo parses',
+     'venueplay-backend/tools/check-data.py',
+     'import ', "x = 'Dean's'\nimport ",
+     'a tool in this repo cannot start, and reports nothing rather than red'),
+
+    # ---- 11 Sep: the last three suites nobody had ever broken on purpose ----
+    ('phone-reconnect.test.js',
+     'venueplay/play.html',
+     'if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){',
+     'if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){',
+     'a phone whose channel CLOSED keeps tapping answers into a dead socket, saying Connected'),
+    ('pp-host-channel.test.js',
+     'partyplay/run.html',
+     'if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ subscribed=false; }',
+     'if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ subscribed=false; }',
+     'the party host keeps sending into a closed channel and the room sees nothing'),
+    ('song-excluded-acts.test.js',
+     'tools/pull-from-packs.py',
+     'if any(a in who for a in PULL_ARTISTS) and sid not in targets:',
+     'if sid in PULL_ARTISTS and sid not in targets:',
+     'the next import matches by song id and walks a banned act back into a pack'),
+
+    # ---- 11 Sep: nothing internal in a directory Cloudflare Pages uploads ----
+    # This is the fault exactly as it happened: a suite written beside the page it
+    # tests, inside venueplay/, and therefore downloadable from venueplay.com.au by
+    # anyone who guesses the name. Twenty-four of them were, for days, along with a
+    # PartyPlay suite that printed a local path to the world. COPYTO reproduces it
+    # rather than an edit, because the fault is a file being in the wrong place and
+    # no edit to an existing file can express that.
+    ('venueplay/ holds nothing internal',
+     'venueplay-backend/app/vp-follow.test.js',
+     '<<COPYTO:venueplay/app/vp-follow.test.js>>', '',
+     'a suite sits in the deploy directory and is served to the public'),
+    ('partyplay/ holds nothing internal',
+     'partyplay-backend/lib/pp-trivia-pack.test.js',
+     '<<COPYTO:partyplay/lib/pp-trivia-pack.test.js>>', '',
+     'a suite sits in the deploy directory and is served to the public'),
+
+    # And the rule those two lean on. Widened until it matches nothing, both checks
+    # above would walk every file, flag none and report a tick each: a green line
+    # saying the job was done. The probe is what stops that, so the probe is proven too.
+    # ---- 11 Sep: the money path itself. Eight live runs at The Jolly Jess found
+    # eight faults that every green suite had missed, and the suites written after
+    # them had still never been broken on purpose. These three are those faults.
+    ('overage-charge.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     'unit_amount_decimal: String(Math.round(rateDollars * 100)),',
+     'unit_amount: Math.round(rateDollars * 100),',
+     'Stripe is sent a parameter it does not have and the night is billed nothing'),
+    ('overage-charge.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "pending_invoice_items_behavior: 'exclude',",
+     "pending_invoice_items_behavior: 'include',",
+     "the night's invoice sweeps back the extras a failed payment just moved to the monthly bill"),
+    ('billing-emails.test.js',
+     'venueplay-backend/worker/venueplay-api-FULL.js',
+     'const VPA_EXTRAS_MOVE_MAX_CENTS = 3000;',
+     'const VPA_EXTRAS_MOVE_MAX_CENTS = 1;',
+     'a declined $2 extra is chased on the card instead of riding the next monthly bill'),
+
+    ('the rule can tell an internal file from a page',
+     'tools/check-exposure.py',
+     r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",
+     r"\.(nothing-this-will-never-match)$",
+     'the rule for what must never ship is widened until it flags nothing'),
 ]
 
 

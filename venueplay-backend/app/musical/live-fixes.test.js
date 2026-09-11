@@ -10,7 +10,7 @@
    that the guard is gone, which is the moment the fault comes back. Each check
    names the night it came from, so a future edit knows what it is deleting.
 
-   Run: jsc venueplay/app/musical/live-fixes.test.js
+   Run: jsc venueplay-backend/app/musical/live-fixes.test.js
 */
 var bad = 0;
 function pass(n, c, why){ print((c ? "  ok   " : "  FAIL ") + n + (c || !why ? "" : "   " + why)); if(!c) bad++; }
