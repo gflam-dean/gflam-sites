@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '11 Sep 2026, 22:47 · 61320367';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '11 Sep 2026, 23:01 · eca7ba08';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -3575,8 +3575,12 @@ async function vpaFireInvoiceEmail(env, invoice) {
          the only `customer` in the file is a const inside the UPCOMING-reminder function,
          and vpaUpliftWarningHtml's own parameter is called customerId. So this line threw
          a ReferenceError on every single receipt, the catch at the bottom swallowed it,
-         and NO RECEIPT WAS SENT AT ALL from 05:34 that morning: not for the three real
-         overage charges collected that night, not for any renewal.
+         and no receipt was sent at all while it was live.
+         THE WINDOW IS THE DEPLOY, NOT THE COMMIT, and I got that wrong first time: the
+         line was written at 05:34 but only reached the fleet with build 3e2fb4f7 at 10:21,
+         and was fixed by build 61320367 at 22:47. Dean said "they sent this morning
+         remember", and he was right: everything before 10:21 was fine. Three payments
+         collected inside that window, all of tonight's overage runs, $5.00, no receipts.
          Nothing reported it because the receipt path wrote nothing down, which is the
          other half of this fix. The duplicate vpaUpliftNoticeHtml line arrived in the
          same commit and is gone too. */
