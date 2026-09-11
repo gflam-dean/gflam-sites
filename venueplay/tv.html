@@ -1761,8 +1761,83 @@
   $("tvJoinCode").textContent=joinCode;
   drawQR($("qrBig"), playURL, 720);
   drawQR($("qrMini"), playURL, 240);
-  connectRealtime(); // realtime is best-effort and retries; the ads are already showing
-  validateVenue(); // warn if this screen link isn't tied to a real venue
+  /* ?demo=1 : THE REAL SCREEN, PLAYING A SCRIPTED NIGHT, CONNECTED TO NOTHING.
+
+     Dean, 12 Sep 2026, on the sales pages: "Can we just use a screenshot model? Or
+     somehow auto update them".
+
+     see-a-night.html and index.html each hold a hand-built CSS replica of this screen,
+     2,852 lines and 156 class names between them, under .vps-* names that appear nowhere
+     in this file. Nothing links them to the real thing, so this page could be redesigned
+     completely and both sales pages would keep showing last month's product for ever.
+
+     A screenshot only moves the problem: somebody still has to remember to retake it.
+     This removes it. The sales page embeds THIS file, so what a prospect sees IS the
+     screen, and there is nothing left to keep in step.
+
+     It works because every pixel on this page is already driven by onMsg(). A demo is
+     therefore a SCRIPT OF MESSAGES and not one line of duplicated rendering.
+
+     It connects to nothing, on purpose:
+       - no realtime channel, so no venue's game can appear on a marketing page
+       - no /venue poll, so it cannot write a screen heartbeat and make a dead TV look
+         alive in HQ (that fault is one day old, see screen-probe.test.js)
+       - no venue slug, so loadVenueScreen() returns at its first line and no venue's
+         advertising or logo is ever fetched
+       - no join code a stranger could use, which is the whole reason this is not simply
+         pointed at a live demo venue */
+  var DEMO = /[?&]demo=1/.test(window.location.search || "");
+  if(DEMO){
+    document.documentElement.setAttribute("data-vp-demo","1");
+    (function demoNight(){
+      var BALLS=[7,42,13,88,31,64,5,77,26,90,19,53];
+      var called=[];
+      function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
+      var steps=[];
+      function at(ms, fn){ steps.push([ms, fn]); }
+
+      // A bingo round: lobby, a dozen balls, a claim, a winner, then back to the ads.
+      at(300,  function(){ m({t:"session", session_id:"demo", join_code:"DEMO24"}); m({t:"mode", mode:"bingo"}); });
+      // "one", a PATTERN_NAMES key, so the wall reads "One line" rather than a raw slug.
+      at(1200, function(){ m({t:"started", pattern:"one", prize:"$50 bar tab"}); });
+      BALLS.forEach(function(n,i){
+        at(2600 + i*2100, function(){ called.push(n); m({t:"ball", number:n, called:called.slice()}); });
+      });
+      at(2600 + BALLS.length*2100 + 900,  function(){ m({t:"claim_pending", name:"Table 4"}); });
+      at(2600 + BALLS.length*2100 + 3200, function(){ m({t:"winner", name:"Table 4", prize:"$50 bar tab"}); });
+      at(2600 + BALLS.length*2100 + 9000, function(){ m({t:"idle"}); });
+
+      /* NO JOIN CORNER IN A DEMO. The code on a demo wall cannot be joined: there is no
+         venue and no session behind it, so a prospect who scans the QR would be told
+         "no room" by the very product being sold to them. The rest of the screen is the
+         real thing; this one corner is the only part that would lie. */
+      (function hideJoin(){
+        var j=document.getElementById("tvJoinCorner");
+        if(j) j.classList.add("hidden");
+        var o=new MutationObserver(function(){ if(j && !j.classList.contains("hidden")) j.classList.add("hidden"); });
+        if(j) o.observe(j, { attributes:true, attributeFilter:["class"] });
+      })();
+
+      var timers=[];
+      function run(){
+        called=[];
+        timers.forEach(clearTimeout); timers=[];
+        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
+        // Loop for as long as the page is open. A sales page is left sitting on a desk.
+        timers.push(setTimeout(run, 2600 + BALLS.length*2100 + 14000));
+      }
+      run();
+    })();
+  }
+
+  /* Guarded rather than returned. A `return` here is a return at the TOP LEVEL of a
+     script, which is a SyntaxError that kills the whole page, and it slipped through a
+     syntax check that wrapped the source in new Function() -- where a top level return
+     is perfectly legal. The browser is the one that said no. */
+  if(!DEMO){
+    connectRealtime(); // realtime is best-effort and retries; the ads are already showing
+    validateVenue(); // warn if this screen link isn't tied to a real venue
+  }
 
   // Unified TV: ONE /tv?venue link follows whatever game is on air. /tv (the bingo + ads screen)
   // also watches the venue's other games and, the moment a host puts one ON AIR (t:"mode", or a
