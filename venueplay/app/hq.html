@@ -159,8 +159,15 @@
   .cxacts{margin:13px 0 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .cxnotes{margin:12px 0 0;display:flex;flex-direction:column;gap:8px}
   .cxnote{background:var(--ink-3);border:1px solid var(--line-2);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--text)}
-  .cxnote b{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
+  /* SCOPED TO THE DIRECT CHILD. As "> b" this styled the nested <b> around a venue name too,
+     so "The Jolly Jess" rendered as a tiny uppercase mono label identical to the date line
+     above it. A descendant selector that reaches further than the element it was written for
+     is the CSS version of the same fault this repo keeps finding in code. */
+  .cxnote > b{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;
     letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;margin:0 0 4px}
+  .cxnote.bad{border-color:rgba(255,107,107,.45)}
+  .hqwho{color:#fff;font-weight:700}
+  .hqid{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:var(--faint)}
   .cxnoteform{margin:12px 0 0;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
   .cxnoteform textarea{flex:1 1 260px;background:var(--ink-3);border:1px solid var(--line);color:#fff;
     border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;resize:vertical}
@@ -472,7 +479,7 @@
       <thead><tr><th>When</th><th>Who</th><th>Action</th></tr></thead>
       <tbody id="auditRows"></tbody>
     </table></div></div>
-    <div class="note">Every discount, suspension, new venue and staff change the Worker records lands here, newest first.</div>
+    <div class="note">Every discount, suspension, new venue and staff change the Worker records lands here, newest first. <b id="auditCap" style="color:var(--roll)"></b></div>
   </div>
 
   <!-- ============ FLAGGED SIGNUPS ============ -->
@@ -849,6 +856,11 @@
     PANES.forEach(function(p){ show("pane"+p.charAt(0).toUpperCase()+p.slice(1), p===pane); });
     if(pane==="quiet") loadQuiet();
     if(pane==="cancelled") loadCancelled();
+    /* THE METER IS ASKED FOR HERE, not inside renderBilling. It used to be kicked off by the
+       billing tab alone, so opening Usage first sat on "Reading the meter..." for ever and
+       there was no way to tell that from a slow request. Two screens need it; the pane switch
+       is the one place both go through. Found in Chrome, 12 Sep 2026. */
+    if(pane==="billing" || pane==="usage") needMeter();
   }
   $("liveRefresh").addEventListener("click", loadLiveOnly);
   $("hqNav").addEventListener("click", function(e){
@@ -1241,7 +1253,12 @@
     var b=$("venueRows"); b.innerHTML="";
     var list=S.venues.filter(venuePasses);
     var pool=S.venues.filter(function(v){ return S.vFilter==="archived" ? isArchived(v) : !isArchived(v); });
-    var lbl=S.vFilter==="archived" ? "Archived venues" : "All venues";
+    /* SAY WHICH FILTER IS ON. Only "archived" ever changed this heading, so choosing
+       Cancelling gave "All venues (3 of 17)", which reads as a bug in the count rather than
+       a filter doing its job. */
+    var FLBL={ archived:"Archived venues", cancelling:"Cancelling", grouped:"Grouped venues",
+               independent:"Independent venues", live:"Live now", suspended:"Suspended venues" };
+    var lbl=FLBL[S.vFilter] || "All venues";
     $("venuesLbl").textContent=lbl+" ("+list.length+(list.length===pool.length?"":" of "+pool.length)+")";
     if(!list.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'+(S.venues.length?"No venues match that filter.":"No venues yet. Use Add venue to onboard the first one.")+'</div></td></tr>'; return; }
     // Venues that share a founding account (a self-serve multi-venue account) are one account,
@@ -1848,7 +1865,10 @@
   }
   function renderHealth(){
     var el=$("healthList"); if(!el) return;
-    var susp=S.venues.filter(function(v){return v.status==="suspended";}).length;
+    /* THE SAME ANSWER AS THE CARD AT THE TOP. This counted every suspended row including
+       archived ones, so the panel said "Suspended venues: 5" two inches under a card saying
+       0. renderStats is right: an archived venue is not a suspended customer. */
+    var susp=S.venues.filter(function(v){ return v.status==="suspended" && !isArchived(v); }).length;
     if(S.health===null && S.healthErr){
       el.innerHTML='<div class="empty">Could not read the billing record: '+esc(S.healthErr)+'. Nothing here is an all-clear.</div>';
       return;
@@ -1877,17 +1897,26 @@
     var list=shown.slice(0,40).map(function(a){
       var d=a.detail||{}, isBad=HEALTH_BAD[a.action] ||
         (a.action==="invoice_receipt_email" && (d.outcome||"")!=="sent");
-      var who=d.venue_name || d.venue || d.name || (a.target ? esc(cxVenueId(a.target)) : "");
-      var vn=venueById(cxVenueId(a.target||""));
-      if(vn) who=vn.name;
-      var amt = (d.amount_cents!=null) ? " &middot; $"+(Number(d.amount_cents)/100).toFixed(2)
-              : (d.amount ? " &middot; "+esc(String(d.amount)) : "");
-      var extra = d.outcome ? " &middot; "+esc(String(d.outcome))
-                : (d.reason ? " &middot; "+esc(String(d.reason)) : "");
-      var inv = d.invoice ? ' <span class="mono" style="color:var(--faint)">'+esc(String(d.invoice))+'</span>' : "";
-      return '<div class="cxnote" style="border-color:'+(isBad?'rgba(255,107,107,.45)':'var(--line-2)')+'">'
+      /* WHO IT WAS ABOUT. The target is a venue id on some rows and "customer:cus_..." or
+         "account:<uuid>" on others, and printing it raw put CUSTOMER:CUS_V3KN0IXVCU8ZXX on
+         the screen in the label's uppercase mono, which is neither readable nor a name.
+         Resolve it to a venue where we can, fall back to whatever the detail carries, and
+         say "an account" rather than shout an identifier at somebody. */
+      var t=String(a.target||""), who=null;
+      if(/^venue:/.test(t)){ var vn=venueById(cxVenueId(t)); who=vn?vn.name:(d.venue_name||d.venue||d.name||null); }
+      else { who = d.venue_name || d.venue || d.name || null; }
+      var idNote = (!who && t) ? '<span class="hqid">'+esc(t.replace(/^(customer|account):/,""))+'</span>' : "";
+      var amt = (d.amount_cents!=null) ? "$"+(Number(d.amount_cents)/100).toFixed(2)
+              : (d.amount ? esc(String(d.amount)) : "");
+      var extra = d.outcome ? esc(String(d.outcome)) : (d.reason ? esc(String(d.reason)) : "");
+      var inv = d.invoice ? '<span class="hqid">'+esc(String(d.invoice))+'</span>' : "";
+      /* Joined here rather than concatenated with a leading separator on each part. Every one
+         of these is optional, and the old version started half the lines with a bare middot. */
+      var bits=[ who ? '<b class="hqwho">'+esc(String(who))+'</b>' : idNote, amt, extra, inv ]
+        .filter(function(x){ return x; });
+      return '<div class="cxnote'+(isBad?' bad':'')+'">'
         + '<b>'+esc(cxWhen(a.created_at))+' &middot; '+esc(HEALTH_LABEL[a.action]||a.action)+'</b>'
-        + '<div>'+(who?'<b>'+esc(String(who))+'</b>':'')+amt+extra+inv+'</div></div>';
+        + '<div>'+bits.join(' &middot; ')+'</div></div>';
     }).join("");
     el.innerHTML = head + '<div class="cxnotes">' + (list ||
       '<div class="cxnote">Every money event on record went through cleanly.</div>') + '</div>'
@@ -1898,11 +1927,12 @@
      is no table behind this: vp_billing_usage has never had a row written to it by anything,
      so the tab reported "no metered usage yet" on a business that had played 39 games and
      collected two overage charges. The game Worker counts it the same way it charges it. */
+  function needMeter(){ if(S.meter===undefined && !S.meterAsked){ S.meterAsked=true; loadMetering(); } }
   function loadMetering(){
     gameWorkerGet("/admin/metering?months=12").then(function(r){
       if(r && r.error){ S.meter=null; S.meterErr=r.error; }
       else { S.meter=(r && r.rows) || []; S.meterErr=null; }
-      renderBilling();
+      renderBilling(); renderUsage();     // both read it; repainting one left the other stale
     });
   }
   // One row per venue for the month on show, in the shape renderBilling already expects.
@@ -1916,7 +1946,7 @@
     if(xf && !xf.value){ var dv=(S.usageMonth?String(S.usageMonth).slice(0,7):new Date().toISOString().slice(0,7)); xf.value=dv; if(xt && !xt.value) xt.value=dv; }
     renderHealth();
     if(S.health===undefined && !S.healthAsked){ S.healthAsked=true; loadHealth(); }
-    if(S.meter===undefined && !S.meterAsked){ S.meterAsked=true; loadMetering(); }
+    needMeter();
 
     /* WHICH MONTH IS ON SHOW. It used to come from vp_billing_usage, so with that table empty
        it was always null and the heading always said "no metered usage yet". Now it is the
@@ -2409,8 +2439,19 @@
   });
 
   /* ================= AUDIT ================= */
+  /* THE AUDIT IS A WINDOW, AND IT NEVER SAID SO.
+     S.audit is the newest 250 rows. On 12 Sep 2026 there were 315, so the oldest 65 were not
+     on this screen and nothing on the screen suggested anything was missing: it looked like
+     the complete history of the business. The same window feeds flaggedAccounts(), which is
+     the screen that decides whether a venue may collect a player's email, so a flagged signup
+     could scroll out of sight and read as "nothing waiting for review".
+     It cannot show everything without paging, but it can stop pretending. */
+  var AUDIT_LIMIT=250;
   function renderAudit(){
     var b=$("auditRows"); b.innerHTML="";
+    var cap=$("auditCap");
+    if(cap) cap.textContent = (S.audit.length>=AUDIT_LIMIT)
+      ? ("Showing the newest "+AUDIT_LIMIT+" only. Older entries are in the database and not on this screen.") : "";
     if(!S.audit.length){ b.innerHTML='<tr><td colspan="3"><div class="empty" style="border:none;background:none">No admin actions recorded yet.</div></td></tr>'; return; }
     S.audit.forEach(function(a){
       var det=a.detail && Object.keys(a.detail).length ? (' &middot; <span style="color:var(--faint)">'+esc(JSON.stringify(a.detail))+'</span>') : '';
@@ -2436,7 +2477,7 @@
   function renderFlagged(){
     var b=$("flaggedRows"); if(!b) return; b.innerHTML="";
     var rows=flaggedAccounts();
-    if(!rows.length){ b.innerHTML='<tr><td colspan="4"><div class="empty" style="border:none;background:none">No signups waiting for review. Non-venue emails show up here.</div></td></tr>'; return; }
+    if(!rows.length){ b.innerHTML='<tr><td colspan="4"><div class="empty" style="border:none;background:none">No signups waiting for review in the newest '+AUDIT_LIMIT+' audit entries. Non-venue emails show up here.</div></td></tr>'; return; }
     rows.forEach(function(a){
       var fid=String(a.target||"").replace(/^account:/,""), d=a.detail||{};
       var tr=document.createElement("tr");

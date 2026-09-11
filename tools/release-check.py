@@ -1112,6 +1112,51 @@ def local_checks(which):
                     late.append('%s uses %s before %s' % (short(f), g, lib))
     ok('every shared script loads before it is used', not late, why='; '.join(late[:3]))
 
+
+    head('D. No screen can sit on a "loading" line nothing will finish')
+    """A pane that says "Reading the meter..." and never stops is indistinguishable from a
+    slow request, and there is nothing on the screen to tell you which. HQ's Usage tab did
+    exactly that on 12 Sep 2026: the loader was fired from renderBilling alone, so opening
+    Usage first waited for ever. Found in a browser, because no check here could see it.
+
+    THE RULE IT ENFORCES. A page that renders a "still loading" branch off S.<name> must have
+    a loader for that state reachable from the pane switch, not only from one pane's render.
+    goPane is where every pane change goes through, so that is where the ask belongs."""
+    spinners = []
+    for f in files:
+        if not f.endswith('.html'):
+            continue
+        src = io.open(f, encoding='utf-8').read()
+        if 'function goPane(' not in src:
+            continue
+        gp = src[src.index('function goPane('):]
+        gp = gp[:gp.index('\n  }') + 4] if '\n  }' in gp else gp[:2000]
+        # Every lazily-loaded state: a render branch that tests S.<name> === undefined.
+        for name in sorted(set(re.findall(r'S\.(\w+)\s*===\s*undefined', src))):
+            cap = name[0].upper() + name[1:]
+            # Which panes read it? Anything inside a render<Pane> function that names S.<name>.
+            readers = []
+            for rm in re.finditer(r'function render(\w+)\s*\(', src):
+                body = src[rm.start():]
+                end = body.find('\n  }')
+                body = body[:end if end > 0 else 4000]
+                if re.search(r'S\.' + name + r'\b', body):
+                    readers.append(rm.group(1).lower())
+            panes = re.findall(r'data-pane="(\w+)"', src)
+            need = [p for p in readers if p in panes]
+            if not need:
+                continue
+            asked = re.findall(r'pane\s*===\s*"(\w+)"', gp)
+            asked += re.findall(r'pane\s*===\s*"(\w+)"\s*\|\|\s*pane\s*===\s*"(\w+)"', gp) and []
+            for extra in re.finditer(r'pane\s*===\s*"(\w+)"', gp):
+                asked.append(extra.group(1))
+            missing = [p for p in need if p not in asked]
+            if missing:
+                spinners.append('%s: %s is shown as loading on %s, but goPane never asks for it there'
+                                % (short(f), 'S.' + name, '/'.join(sorted(set(missing)))))
+    ok('every loading line has something that will finish it', not spinners,
+       why='; '.join(spinners[:3]))
+
     head('D. Founding pages: the code, the month and the date agree')
     """Each state page carries its founding code, its month in prose, and a
     closing date, in several places. They are edited by hand and they drift. On
