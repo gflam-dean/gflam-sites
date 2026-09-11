@@ -1283,6 +1283,74 @@ def local_checks(which):
            '%d migrations' % len(nums),
            why='; '.join(dupes[:2]))
 
+    head('D. The deploy directory serves no data file nothing reads')
+    """THE PRODUCT WAS FREE TO DOWNLOAD FROM THE PRODUCT'S OWN WEBSITE.
+
+    On 11 Sep 2026 venueplay.com.au/data/trivia-library.json answered 200 with
+    15 MB of application/json: 37,570 pub trivia questions WITH their answers.
+    Behind it sat 55 more copies of the same bank, 75 generated question batches
+    and the xlsx source chunks. 182 files, 754 MB, every one of them public,
+    and the site loads exactly three: musical-library.json, trivia-count.json
+    and music-count.json.
+
+    A player sitting in the pub could have downloaded the answers mid-quiz. A
+    competitor could have taken the bank whole. check-live.py had been reporting
+    that one file as "not published: still deployed" for days, in a tool nobody
+    runs on a schedule, and the earlier exposure rule could not see it because
+    .json is legitimately served and three of them genuinely are.
+
+    So the rule is not about the extension. A data file that is deployed must be
+    one something actually asks for: a page that fetches it, or a tool or suite
+    that reads it by that path. Anything else is dead weight on a public URL.
+    """
+    dead, walked = [], 0
+    for site in (['venueplay'] if which in ('both', 'venueplay') else []) + \
+                (['partyplay'] if which in ('both', 'partyplay') else []):
+        ddir = os.path.join(ROOT, site, 'data')
+        if not os.path.isdir(ddir):
+            continue
+        r = subprocess.run(['git', 'ls-files', site + '/data'], capture_output=True, text=True, cwd=ROOT)
+        tracked = [x for x in r.stdout.splitlines() if x.strip()]
+        if not tracked:
+            continue
+        # Everything that could name one, EXCLUDING the data folder itself: a backup
+        # named inside another backup must not vouch for itself. Scanning only the .py
+        # tools the first time would have moved a file a .test.js suite reads.
+        blob = []
+        for d, dirs, fs in os.walk(ROOT):
+            dirs[:] = [x for x in dirs if x not in ('.git', 'node_modules', '__pycache__', '.claude')]
+            if os.path.join(site, 'data') in d:
+                continue
+            for f in fs:
+                if f.rsplit('.', 1)[-1] in ('py', 'js', 'html', 'json', 'md', 'sh', 'txt'):
+                    try:
+                        blob.append(io.open(os.path.join(d, f), encoding='utf-8', errors='replace').read())
+                    except Exception:
+                        pass
+        blob = '\n'.join(blob)
+        # A WHOLE DIRECTORY CAN BE FETCHED BY A NAME BUILT AT RUN TIME, and every file
+        # in it is then genuinely served on purpose. PartyPlay does exactly that:
+        #     fetch("/data/trivia/" + encodeURIComponent(slug) + ".json")
+        # so its 24 packs are named nowhere and are all live, correctly. The first
+        # version of this check called every one of them dead, which would have taken
+        # PartyPlay's trivia offline. A rule that cannot tell those apart is worse than
+        # no rule, because the fix it demands breaks the product.
+        served_dirs = set()
+        for m in re.finditer(r'["\']/data/([A-Za-z0-9._-]+)/["\']\s*\+', blob):
+            served_dirs.add(m.group(1))
+        for rel in tracked:
+            walked += 1
+            parts = rel.split('/')
+            if len(parts) > 3 and parts[2] in served_dirs:
+                continue                      # <site>/data/<dir>/... and <dir> is fetched by name
+            if os.path.basename(rel) not in blob:
+                dead.append(rel)
+    ok('every deployed data file is one something reads', walked > 0 and not dead,
+       '%d tracked data file(s) checked' % walked,
+       why=(('no data file was read at all, so nothing was checked' if not walked else
+             '%d file(s) served to the public that nothing asks for: %s'
+             % (len(dead), ', '.join(dead[:4]) + ('' if len(dead) <= 4 else ' and %d more' % (len(dead) - 4))))))
+
     head('D. No host console can be frozen by a browser dialog')
     """A HOST CONSOLE THAT POPS AN alert() STOPS BEING A HOST CONSOLE.
 
