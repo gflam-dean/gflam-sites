@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Sep 2026, 07:16 · 36ce77db';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 07:21 · 89210924';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -5037,6 +5037,20 @@ async function vpbAddVenue(request, env, json) {
    itself: a venue must always be able to leave, even if our own mail is down. */
 const VPA_CANCEL_ALERTS = ['dean@venueplay.com.au', 'hello@venueplay.com.au'];
 
+/* WHY THEY LEFT, IN THEIR WORDS. Dean, 12 Sep 2026: a dropdown, a follow up question
+   where the answer is something we can act on, and a box for everything else.
+
+   The list is here and the page renders from the same wording, so the reason stored is
+   the reason they were shown. Anything not on this list is recorded as 'other' rather
+   than rejected: a venue must ALWAYS be able to leave, and a cancellation is never
+   refused because a form field did not validate. */
+const VPA_CANCEL_REASONS = {
+  expensive: 'VenuePlay is too expensive',
+  trial: 'We just wanted to trial it',
+  dislike: 'We do not like it',
+  other: 'Something else',
+};
+
 async function vpaFireCancelAlert(env, opts) {
   const say = (why, extra) => vpaInsert(env, 'vp_admin_audit', {
     actor_admin: null, actor_label: 'system',
@@ -5055,13 +5069,23 @@ async function vpaFireCancelAlert(env, opts) {
       ? (vpaEsc(name) + ' was scheduled to end and the owner has just reversed it. Nothing further to do.')
       : (vpaEsc(name) + ' has scheduled their cancellation. They keep playing until <b>'
          + vpaEsc(when) + '</b>, so there is a window to call them before it takes effect.');
+    const reasonLabel = (opts && opts.reason && VPA_CANCEL_REASONS[opts.reason]) || '';
     const rows = [
       ['Venue', vpaEsc(name)],
       ['Slug', vpaEsc((opts && opts.slug) || '')],
       ['Stops', undo ? 'no longer stopping' : vpaEsc(when)],
       ['Players on the plan', String((opts && opts.players) != null ? opts.players : '')],
       ['Worth', (opts && opts.monthly) ? vpaEsc(opts.monthly) + ' a month' : ''],
+      ['Reason', undo ? '' : vpaEsc(reasonLabel)],
     ].filter((r) => r[1] !== '');
+    /* THEIR OWN WORDS GET THEIR OWN BLOCK, not a table cell. This is the only part of
+       the email worth reading twice, and a paragraph of feedback squeezed into a
+       right-hand column is a paragraph nobody reads. */
+    const said = (!undo && opts && opts.reasonDetail)
+      ? '<div style="background:#fdf3f8;border-left:3px solid #e6007e;padding:12px 16px;margin:0 0 18px">'
+        + '<div style="font-size:12px;color:#6b6b78;margin-bottom:4px">What they said</div>'
+        + '<div style="font-size:15px;line-height:1.5">' + vpaEsc(opts.reasonDetail) + '</div></div>'
+      : '';
     const html =
         '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;padding:28px 22px;color:#1a1a22">'
       + '<h1 style="font-size:20px;margin:0 0 14px">' + vpaEsc(heading) + '</h1>'
@@ -5070,6 +5094,7 @@ async function vpaFireCancelAlert(env, opts) {
       + rows.map((r) => '<tr><td style="padding:4px 14px 4px 0;color:#6b6b78">' + r[0]
                       + '</td><td style="padding:4px 0"><b>' + r[1] + '</b></td></tr>').join('')
       + '</table>'
+      + said
       + '<p style="margin:20px 0"><a href="' + site + '/app/hq" '
       + 'style="background:#e6007e;color:#fff;text-decoration:none;padding:11px 18px;border-radius:9px;font-weight:600">'
       + 'Open HQ</a></p>'
@@ -5096,6 +5121,12 @@ async function vpbCancelVenue(request, env, json) {
   const b = await request.json();
   const venueId = (b.venue_id || '').trim();
   const undo = b.undo === true;
+  /* Never reject a cancellation over a form field. An unknown reason becomes 'other'
+     and a missing one becomes null; neither stops them leaving. */
+  const reason = (!undo && VPA_CANCEL_REASONS[String(b.reason || '')]) ? String(b.reason)
+               : (!undo && b.reason ? 'other' : null);
+  const reasonDetail = (!undo && b.reason_detail)
+    ? String(b.reason_detail).replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 2000) : null;
   const venue = o.venues.filter((v) => v.id === venueId)[0];
   if (!venue) return json({ error: 'That venue is not on your account.' }, 403);
 
@@ -5116,7 +5147,9 @@ async function vpbCancelVenue(request, env, json) {
     ...vpbActorFields(o),
     action: undo ? 'venue_cancel_undone' : 'venue_cancel_scheduled',
     target: 'venue:' + venueId,
-    detail: { name: venue.name, ends: endsDate, actor_user: o.authUserId },
+    detail: { name: venue.name, ends: endsDate, actor_user: o.authUserId,
+              reason: reason, reason_label: reason ? VPA_CANCEL_REASONS[reason] : null,
+              reason_detail: reasonDetail },
   }, false).catch(() => {});
 
   /* Tell us, now, while there is still a window to ring them. Awaited so the write
@@ -5126,6 +5159,7 @@ async function vpbCancelVenue(request, env, json) {
     venueId: venueId, name: venue.name, slug: venue.slug || '', undo: undo,
     ends: endsDate, players: venue.max_players,
     monthly: (info && info.monthly) || null,
+    reason: reason, reasonDetail: reasonDetail,
   }).catch(() => {});
 
   return json({ ok: true, cancelling: !undo, ends: endsDate });

@@ -558,6 +558,81 @@
     }).catch(function(){ return { error: "Something went wrong. Please check your connection and try again." }; });
   }
   function money(n){ return "$" + (n).toFixed(2); }
+  /* WHY ARE YOU LEAVING. Built as a real dialog rather than a browser prompt, for the
+     same reason the host consoles no longer call alert(): a prompt blocks the whole page
+     until it is answered, and this one has a dropdown and a text box in it anyway.
+
+     THE WORDING IS THE WORKER'S. VPA_CANCEL_REASONS in venueplay-api-FULL.js holds the
+     same four keys and the same four labels, so the reason stored is the reason they were
+     shown. If you change one, change both.
+
+     IT NEVER BLOCKS THE CANCELLATION. "Skip and cancel" is always there, the dropdown
+     starts empty, and both fields are optional. They are leaving; making them fill in a
+     form first is how a cancellation becomes a complaint. */
+  function askWhy(v, lastOne, go){
+    var old = document.getElementById("whyWrap");
+    if (old) old.remove();
+    var w = document.createElement("div");
+    w.id = "whyWrap";
+    w.style.cssText = "position:fixed;inset:0;background:rgba(10,8,16,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:70";
+    w.innerHTML =
+      '<div role="dialog" aria-modal="true" aria-labelledby="whyH" style="background:var(--card,#171522);border:1px solid rgba(255,255,255,.12);border-radius:14px;max-width:440px;width:100%;padding:22px">' +
+        '<h3 id="whyH" style="margin:0 0 6px;font-size:19px">Cancel ' + esc(v.name) + '?</h3>' +
+        '<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:var(--dim,#a9a2bb)">' +
+          (lastOne
+            ? "It stays live until the end of your current paid period, then your subscription ends. You can undo this any time before then."
+            : "It stays live until the end of your current paid period, then it is removed and you stop paying for it. Your other venues are unaffected. You can undo this any time before then.") +
+        '</p>' +
+        '<label for="whyPick" style="display:block;font-size:13px;margin:0 0 6px">If you do not mind us asking, why?</label>' +
+        '<select id="whyPick" style="width:100%;padding:10px;border-radius:9px;background:#0f0e18;color:inherit;border:1px solid rgba(255,255,255,.16);font:inherit">' +
+          '<option value="">Rather not say</option>' +
+          '<option value="expensive">VenuePlay is too expensive</option>' +
+          '<option value="trial">We just wanted to trial it</option>' +
+          '<option value="dislike">We do not like it</option>' +
+          '<option value="other">Something else</option>' +
+        '</select>' +
+        '<div id="whyMoreWrap" style="display:none;margin-top:12px">' +
+          '<label id="whyMoreLbl" for="whyMore" style="display:block;font-size:13px;margin:0 0 6px"></label>' +
+          '<textarea id="whyMore" rows="3" maxlength="2000" style="width:100%;padding:10px;border-radius:9px;background:#0f0e18;color:inherit;border:1px solid rgba(255,255,255,.16);font:inherit;resize:vertical"></textarea>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap">' +
+          '<button type="button" id="whyBack" class="ghost">Keep it</button>' +
+          '<button type="button" id="whyGo" style="background:#e6007e;color:#fff;border:0;border-radius:9px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer">Cancel this venue</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(w);
+
+    /* The follow up only appears where the answer is something we could act on. Asking
+       "how could we improve" of somebody who only ever wanted a trial is noise, and it
+       reads as if nobody listened to the answer they just gave. */
+    var ASK = {
+      dislike:   "What could we have done better?",
+      other:     "What happened?",
+      expensive: "What would have felt fair? (optional)"
+    };
+    var pick = w.querySelector("#whyPick"), moreWrap = w.querySelector("#whyMoreWrap"),
+        moreLbl = w.querySelector("#whyMoreLbl"), more = w.querySelector("#whyMore");
+    pick.addEventListener("change", function(){
+      var q = ASK[pick.value];
+      moreWrap.style.display = q ? "" : "none";
+      moreLbl.textContent = q || "";
+      if (q) more.focus();
+    });
+    function close(){ w.remove(); }
+    w.querySelector("#whyBack").addEventListener("click", close);
+    w.addEventListener("click", function(e){ if (e.target === w) close(); });
+    document.addEventListener("keydown", function esc2(e){
+      if (e.key === "Escape" && document.getElementById("whyWrap")) { close(); document.removeEventListener("keydown", esc2); }
+    });
+    w.querySelector("#whyGo").addEventListener("click", function(){
+      var reason = pick.value || null;
+      var detail = (more.value || "").trim() || null;
+      close();
+      go(reason, detail);
+    });
+    pick.focus();
+  }
+
   function showMsg(t, ok){ var m=$("msg"); m.textContent=t; m.className = "msg " + (ok?"ok":"err"); if(ok) setTimeout(function(){ if(m.textContent===t){m.textContent="";m.className="msg";} }, 4500); }
   // An error stays up until it is read, so give it a way off the screen.
   (function(){ var m=$("msg"); if(m) m.addEventListener("click", function(){ m.textContent=""; m.className="msg"; }); })();
@@ -786,15 +861,20 @@
       if (canx){
         canx.addEventListener("click", function(){
           var lastOne = !multi;
-          var warn = lastOne
-            ? "Cancel your VenuePlay subscription?\n\n" + v.name + " stays live until the end of your current paid period, then your subscription ends. You can undo this anytime before then."
-            : "Cancel " + v.name + "?\n\nIt stays live until the end of your current paid period, then it is removed and you stop paying for it. Your other venues are unaffected. You can undo this anytime before then.";
-          if (!confirm(warn)) return;
-          canx.disabled = true; canx.textContent = "Cancelling…";
-          api("/account/cancel-venue", { venue_id:v.id }).then(function(r){
-            if (r.error){ showMsg(r.error); canx.disabled=false; canx.textContent="Cancel this venue"; return; }
-            var when = r.ends ? (" It stays live until " + r.ends + ".") : "";
-            showMsg(v.name + " is set to cancel." + when, true); load();
+          /* ASK WHY, ON THE WAY OUT. A confirm() box can only say yes or no, and the
+             one moment a venue will tell you what was wrong is the moment they leave.
+             Dean, 12 Sep 2026: a dropdown, a follow up where the answer is something we
+             can act on, and a box for everything else.
+             It NEVER blocks the cancellation. They can pick nothing and press the button,
+             and it goes through. A form that stands between somebody and leaving is how
+             you turn a cancellation into a complaint. */
+          askWhy(v, lastOne, function(reason, detail){
+            canx.disabled = true; canx.textContent = "Cancelling…";
+            api("/account/cancel-venue", { venue_id:v.id, reason:reason, reason_detail:detail }).then(function(r){
+              if (r.error){ showMsg(r.error); canx.disabled=false; canx.textContent="Cancel this venue"; return; }
+              var when = r.ends ? (" It stays live until " + r.ends + ".") : "";
+              showMsg(v.name + " is set to cancel." + when, true); load();
+            });
           });
         });
       }
