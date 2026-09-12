@@ -582,7 +582,12 @@
       if(_s.nickname && window._ppSend) window._ppSend({ t:"hello", name:_s.nickname });
       return;
     }
-    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null; var s = load()||{}; waiting(s.nickname||""); return; }
+    /* BETWEEN GAMES, NOT DISCONNECTED. This passed no state, so it fell through to
+       "Getting you in..." with the waiting dot, on a phone that is connected perfectly
+       well. All three people who played the games read that as "it has dropped out" and
+       reloaded. If the channel really is live, say so. */
+    if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null;
+      var s = load()||{}; waiting(s.nickname||"", _ppLive ? "live" : undefined); return; }
     if(m.t === "bingo"){ Q=null; H=null; bingoStart(); return; }
     if(m.t === "photo"){
       B=null;Q=null;H=null;T=null;V=null;W=null;
@@ -689,6 +694,32 @@
         B.last = n; B.lastSaid = m.sub||"";
         bingoSave(); paintBingo(); return;
       }
+      /* A "big" IS A MESSAGE FOR THE TELEVISION, AND IT WAS WIPING EVERY PHONE.
+
+         run.html sends the game payload and then, on the very next line, a big for the
+         wall. Both go down the one channel, so a phone got both: it drew the answer
+         buttons from the first and then this handler replaced the whole of #app with the
+         wall's text. Measured between 1 and 17 milliseconds apart. There are 26 of these
+         sends in run.html.
+
+         What that cost, found by three people playing the games on 12 Sep 2026:
+           - trivia, how well, who here: the telly says "Tap if it is you" and the phone
+             has nothing to tap. The host sits on "0 of 2 answered" for ever.
+           - heads or tails: unplayable, the Heads and Tails buttons are deleted.
+           - charades: the actor never gets the word, so the host has to show their tablet,
+             which is the one thing this game is sold as avoiding.
+           - who am I: the guesser's phone ends up parked on the ANSWER.
+           - two truths: nobody can vote.
+           - and every ending: "Alex wins, you finished on 300" with the leaderboard,
+             replaced a millisecond later by "Alex, 300 points".
+
+         The wall's text is still welcome on a phone that has nothing of its own to show,
+         which is what a guest sees between games. So the rule is: if this phone is holding
+         a game, the television's caption is not allowed to take it away. lobby is what
+         clears these, so an ending survives until the host moves on, which is right.
+
+         The same shape guards connect(): see the note there. */
+      if(B || Q || H || T || W || V || PH) return;
       $("app").innerHTML = '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
         '<div class="waiting"><div class="who">' + esc(m.text||"") + '</div>' +
         '<p>' + esc(m.sub||"") + '</p></div>';

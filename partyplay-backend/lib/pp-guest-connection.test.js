@@ -135,6 +135,51 @@ ok("charades is still gated on knowing somebody is there",
    /Waiting for someone to join/.test(RUN),
    "the gate is right, it was the empty list that was wrong");
 
+print("== the television's caption must not wipe a game off a phone ==");
+/* THE ONE BUG BEHIND NINE BROKEN GAMES. run.html sends the game payload and then, on the
+   next line, a {t:"big"} for the wall. Both go down the one channel, so the phone drew its
+   answer buttons and this handler replaced the whole of #app between 1 and 17 milliseconds
+   later. 26 of those sends exist in run.html.
+
+   Trivia, how well, who here: "Tap if it is you" on the wall, nothing to tap on the phone.
+   Heads or tails: unplayable. Charades: the actor never gets the word. Who am I: the
+   guesser's phone parks on the ANSWER. Two truths: nobody can vote. And every ending is
+   replaced a millisecond after it renders.
+
+   Found 12 Sep 2026 by three people playing the ten games, not by reading anything. */
+var BIG = (function () {
+  var i = code.indexOf('m.t === "big"');
+  return i < 0 ? "" : code.slice(i, i + 1200);
+})();
+ok("the phone still has a big handler at all", !!BIG);
+ok("a bingo BALL still gets through, because that really is for the phone",
+   /B && !isNaN\(n\)[\s\S]{0,200}paintBingo\(\); return;/.test(BIG),
+   "the ball arrives as a big whose text is just a number, and it must keep working");
+ok("but a caption is DROPPED while this phone is holding a game",
+   /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH\) return;/.test(BIG),
+   "this single line is what makes nine of the ten games playable");
+ok("and every one of the seven game states is named in that guard",
+   ["B","Q","H","T","W","V","PH"].every(function (v) {
+     return new RegExp("\\b" + v + "\\b").test((BIG.match(/if\([^)]*\) return;/)||[""])[0]);
+   }),
+   "a state left out is one more game the wall can wipe");
+ok("the guard sits BEFORE the line that replaces the screen",
+   BIG.indexOf("|| PH) return;") < BIG.indexOf('$("app").innerHTML'),
+   "after it, it protects nothing");
+ok("a phone with nothing of its own STILL shows the wall's words",
+   BIG.indexOf('$("app").innerHTML') > 0,
+   "between games the caption is the only thing a guest has to look at");
+
+print("== between games a connected phone does not claim to be connecting ==");
+var LOBBY = (function () {
+  var i = code.indexOf('m.t === "lobby"');
+  return i < 0 ? "" : code.slice(i, i + 420);
+})();
+ok("the lobby handler clears every game state", /B = null[\s\S]{0,120}PH = null/.test(LOBBY));
+ok("and tells the guest they are still in, when they are",
+   /waiting\(s\.nickname\|\|"", _ppLive \? "live" : undefined\)/.test(LOBBY),
+   'it passed no state, so it fell through to "Getting you in..." on a healthy phone');
+
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

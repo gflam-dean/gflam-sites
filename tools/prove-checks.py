@@ -1207,6 +1207,30 @@ MUTATIONS = [
      '    if(false){',
      'the phones stop answering the roll call, which is the same fault from the other end'),
 
+    # ---- 12 Sep 2026: the television's caption wiped every phone. Nine games.
+    ('pp-guest-connection.test.js',
+     'partyplay/play.html',
+     '      if(B || Q || H || T || W || V || PH) return;\n',
+     '',
+     "the wall's caption replaces the whole phone again a millisecond after the game "
+     'arrives: nothing to tap in trivia, no Heads or Tails buttons, the charades actor '
+     'never gets the word, and every ending is erased as it renders'),
+
+    ('pp-guest-connection.test.js',
+     'partyplay/play.html',
+     '      if(B || Q || H || T || W || V || PH) return;',
+     '      if(B || Q || H || T || W) return;',
+     'two of the seven game states drop out of the guard, so Guess the photo and the video '
+     'prompt go back to being wiped while the other five are fine, which is the hardest '
+     'kind of this bug to find'),
+
+    ('pp-guest-connection.test.js',
+     'partyplay/play.html',
+     'waiting(s.nickname||"", _ppLive ? "live" : undefined)',
+     'waiting(s.nickname||"")',
+     'between every game a perfectly connected phone says "Getting you in..." with the '
+     'waiting dot, so guests reload in the gap'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",
