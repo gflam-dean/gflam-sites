@@ -40,8 +40,27 @@
                      : 'https://partyplay-api.dean-tindale.workers.dev', */
     API: 'https://partyplay-api.dean-tindale.workers.dev',
 
+    /* THE URL AND THE KEY HAVE TO BE FROM THE SAME PROJECT, and for a while they were not.
+
+       The Sydney move on 12 Sep rewrote SUPA_URL here and updated VenuePlay's publishable
+       key, and missed this one. So the URL said Sydney and the key still belonged to
+       SINGAPORE, and Supabase answered every browser request with 401 "This API key might
+       also be owned by another Supabase project".
+
+       That is the WHOLE GAME on PartyPlay. The host console, the television and every
+       guest's phone talk over one realtime channel and nothing else: a host pressing Call a
+       number reached nobody, and no phone could join a room. The Worker was fine throughout,
+       because it uses the SERVICE key from its own environment, so /health said ok and the
+       licence emails went out. The gate was green. Nothing anywhere would have said a word.
+
+       It stayed invisible because play.html printed "You are in. Watch the big screen."
+       before it ever tried to connect, and swallowed the failure. Both are fixed; this is
+       the cause and that was the reason nobody would have found it.
+
+       Checked, not assumed: this key returns 200 on Sydney and the old one returns 200 on
+       Singapore. release-check now asks Supabase directly, on every run. Found 12 Sep 2026. */
     SUPA_URL:  'https://ijkzgmdtwtgfkedqspxm.supabase.co',
-    SUPA_ANON: 'sb_publishable_DqFZOQsLYxrmlHDBLe1kfg_QdQ5DEV0',
+    SUPA_ANON: 'sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb',
 
     /* Realtime channel name. One place, because the host console, the television
        and every phone have to agree on it exactly or the night silently does

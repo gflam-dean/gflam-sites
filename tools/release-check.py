@@ -2740,6 +2740,58 @@ def nobody_paid_and_got_nothing():
     has no code and no host key, and nothing inside the business knows. The first
     anyone hears is somebody asking where their party went, if they bother.
     """
+    head('Every browser key actually works against the project it is paired with')
+    """A URL FROM ONE PROJECT AND A KEY FROM ANOTHER IS SILENT UNTIL SOMEBODY PLAYS.
+
+    The Sydney move rewrote partyplay/lib/pp-config.js SUPA_URL and updated VenuePlay's
+    publishable key, and missed PartyPlay's. The URL said Sydney, the key still belonged to
+    SINGAPORE, and Supabase answered every browser request 401.
+
+    That is the whole of PartyPlay. Host console, television and every guest phone talk over
+    one realtime channel and nothing else, so a host pressing Call a number reached nobody.
+    The WORKER was fine the entire time, because it uses the service key from its own
+    environment: /health said ok, licence emails went out, and the gate was green.
+
+    Nothing here could have caught it, because every existing check either read files or
+    asked the Worker. So this asks SUPABASE, with the key a browser is actually handed.
+    Found 12 Sep 2026 by opening play.html and watching a channel fail."""
+    import urllib.request as _u, urllib.error as _ue
+    pairs = []
+    for label, rel, url_re, key_re in (
+            ('PartyPlay', os.path.join('partyplay', 'lib', 'pp-config.js'),
+             r"SUPA_URL:\s*'([^']+)'", r"SUPA_ANON:\s*'([^']+)'"),
+            ('VenuePlay', os.path.join('venueplay', 'app', 'vp-session.js'),
+             r"SUPA_URL\s*=\s*[\"']([^\"']+)", r"SUPA_ANON\s*=\s*[\"']([^\"']+)")):
+        f = os.path.join(ROOT, rel)
+        if not os.path.isfile(f):
+            continue
+        src = io.open(f, encoding='utf-8').read()
+        mu, mk = re.search(url_re, src), re.search(key_re, src)
+        if mu and mk:
+            pairs.append((label, rel, mu.group(1).rstrip('/'), mk.group(1)))
+    ok('both products declare a project and a browser key', len(pairs) == 2,
+       '%d found' % len(pairs))
+    for label, rel, url, key in pairs:
+        try:
+            # /auth/v1/settings, NOT /rest/v1/. The first version of this asked the REST
+            # root, which answers 401 "Only secret API keys can be used for this endpoint"
+            # for ANY publishable key, so it failed on VenuePlay too, which I knew was
+            # working. A check that fails on known-good code gets switched off.
+            # This one answers 200 for a good publishable key and 401 for a bad one,
+            # verified both ways before it was written down.
+            rq = _u.Request(url + '/auth/v1/settings',
+                            headers={'apikey': key, 'Authorization': 'Bearer ' + key,
+                                     'User-Agent': 'VenuePlay-gate/1.0'})
+            code = _u.urlopen(rq, timeout=20).status
+        except _ue.HTTPError as x:
+            code = x.code
+        except Exception as x:
+            note('%s browser key: NOT CHECKED' % label, str(x)[:90]); continue
+        ok('%s: its browser key is accepted by the project its URL names' % label,
+           code < 400, 'HTTP %s from %s' % (code, url.split('//')[-1].split('.')[0]),
+           why='a 401 here means every realtime channel and every browser read is dead, '
+               'while the Worker and /health stay perfectly healthy')
+
     head('Nobody paid for a party and got nothing')
     tool = os.path.join(ROOT, 'partyplay-backend', 'tools', 'check-paid-not-delivered.py')
     env_file = os.path.join(os.path.expanduser('~'), '.gflam-migrate.env')
