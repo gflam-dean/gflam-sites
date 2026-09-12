@@ -26,9 +26,11 @@ import base64, json, sys, urllib.request, urllib.error
 from pathlib import Path
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
+from vp_live import live   # which database is LIVE; never guess from a variable name
 
 ENV  = Path.home() / '.gflam-migrate.env'
-LIVE = 'https://gpoolavkghnxedzrmtmc.supabase.co'
+LIVE = None   # set from vp_live at run time; a hardcoded ref is how a tool asks the abandoned copy
+L = None      # the resolved live project; set in main(), used by the helpers below
 
 def b64u(n, size):
     return base64.urlsafe_b64encode(n.to_bytes(size, 'big')).decode().rstrip('=')
@@ -48,11 +50,22 @@ def env():
     for line in ENV.read_text().splitlines():
         if '=' in line and not line.startswith('#'):
             k, v = line.split('=', 1); e[k.strip()] = v.strip()
-    if not e.get('OLD_SERVICE_KEY'): print('STOP: OLD_SERVICE_KEY missing'); sys.exit(1)
+    # NOTE-VP-LIVE
+    # WHICH DATABASE. Read from vp_live, never OLD_SERVICE_KEY.
+    # This tool paired a URL that migrate-sydney.py rewrites with a key that it does not, so
+    # after the cut-over it would have sent Singapore's key to Sydney and 401'd on every call.
+    # For enforce-signing.py that matters most of all: --off ALL is the documented one-command
+    # rollback for broadcast signing, and it would have stopped working at the exact moment it
+    # was needed. Fixed 12 Sep 2026, on the morning of the move.
+    global LIVE, L
+    L = live()
+    LIVE = L.rest_url
+    print(L.banner())
+    if not L.service_key: print('STOP: no service key for the live database'); sys.exit(1)
     return e
 
 def rest(e, method, path, body=None, prefer=None):
-    h = {'apikey': e['OLD_SERVICE_KEY'], 'Authorization': 'Bearer ' + e['OLD_SERVICE_KEY'],
+    h = {'apikey': L.service_key, 'Authorization': 'Bearer ' + L.service_key,
          'Content-Type': 'application/json', 'User-Agent': 'VenuePlay-mint-keys/1.0'}
     if prefer: h['Prefer'] = prefer
     req = urllib.request.Request(LIVE + '/rest/v1/' + path,

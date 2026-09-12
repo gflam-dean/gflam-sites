@@ -41,7 +41,7 @@ import sys
 import urllib.error
 import urllib.request
 
-SUPA_URL = "https://gpoolavkghnxedzrmtmc.supabase.co"
+SUPA_URL = "https://ijkzgmdtwtgfkedqspxm.supabase.co"
 # The public anon key. Already shipped in every page on the site, so it is not a secret.
 # A service key, if you have one, comes from the environment and is never written here.
 ANON = ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdwb29sYXZrZ2h"

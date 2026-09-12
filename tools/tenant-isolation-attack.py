@@ -27,7 +27,7 @@ from pathlib import Path
 
 ENV = Path.home() / '.gflam-migrate.env'
 PASS_FILE = Path.home() / '.gflam-migrate' / 'test-host.pass'
-LIVE = 'https://gpoolavkghnxedzrmtmc.supabase.co'
+LIVE = 'https://ijkzgmdtwtgfkedqspxm.supabase.co'
 UA = 'VenuePlay-tenant-attack/1.0 (contact: dean.tindale@outlook.com)'
 # WITHOUT A USER AGENT CLOUDFLARE ANSWERS 1010 AND EVERY ATTACK 'FAILS' FOR THE WRONG
 # REASON. The first run of this file reported the Worker refusing a made-up venue; it

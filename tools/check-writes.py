@@ -47,7 +47,7 @@ import urllib.request
 import concurrent.futures as cf
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SUPA = "https://gpoolavkghnxedzrmtmc.supabase.co"
+SUPA = "https://ijkzgmdtwtgfkedqspxm.supabase.co"
 GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0m'
 
 # WHAT THIS CHECKS, AND WHY IT IS A NAMED LIST RATHER THAN A SWEEP.
@@ -82,10 +82,19 @@ BAD_UUID = json.dumps({'id': 'definitely-not-a-uuid'}).encode()
 NOWHERE = '?id=eq.00000000-0000-0000-0000-000000000000'
 
 
+# THE PUBLIC KEY HAS TWO SHAPES NOW.
+# Singapore issued a JWT starting eyJ. Sydney issues the newer publishable format,
+# sb_publishable_..., which is not a JWT and does not start with eyJ. This search was
+# written for the old one only, so the morning the project moved BOTH checkers that use it
+# stopped being able to find a key and reported "the checker itself could not run" - which
+# is the one outcome this repo treats as worse than a failure, because the line is not green
+# and not red and is easy to scroll past. Found during the cut-over, 12 Sep 2026.
+PUBLIC_KEY_RE = r'(?:eyJ[A-Za-z0-9_.-]{80,}|sb_publishable_[A-Za-z0-9_-]{20,})'
+
 def anon_key():
     for p in ('venueplay/play.html', 'partyplay/play.html'):
         try:
-            m = re.search(r'eyJ[A-Za-z0-9_.-]{80,}',
+            m = re.search(PUBLIC_KEY_RE,
                           io.open(os.path.join(ROOT, p), encoding='utf-8').read())
             if m:
                 return m.group(0)

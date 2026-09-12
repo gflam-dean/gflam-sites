@@ -22,12 +22,14 @@ Run it twice and it resets the password rather than making a second account.
 """
 import json, os, secrets, string, sys, urllib.request, urllib.error
 from pathlib import Path
+from vp_live import live   # which database is LIVE; never guess from a variable name
 
 ENV  = Path.home() / '.gflam-migrate.env'
 WORK = Path.home() / '.gflam-migrate'
 PASS_FILE = WORK / 'test-host.pass'
 EMAIL = 'test-host@venueplay.invalid'
-LIVE  = 'https://gpoolavkghnxedzrmtmc.supabase.co'
+LIVE = None   # set from vp_live at run time; a hardcoded ref is how a tool asks the abandoned copy
+L = None      # the resolved live project; set in main(), used by the helpers below
 
 def die(m): print('STOP: ' + m); sys.exit(1)
 
@@ -37,13 +39,24 @@ def env():
     for line in ENV.read_text().splitlines():
         if '=' in line and not line.startswith('#'):
             k, v = line.split('=', 1); e[k.strip()] = v.strip()
-    if not e.get('OLD_SERVICE_KEY'): die('OLD_SERVICE_KEY is not in the env file')
+    # NOTE-VP-LIVE
+    # WHICH DATABASE. Read from vp_live, never OLD_SERVICE_KEY.
+    # This tool paired a URL that migrate-sydney.py rewrites with a key that it does not, so
+    # after the cut-over it would have sent Singapore's key to Sydney and 401'd on every call.
+    # For enforce-signing.py that matters most of all: --off ALL is the documented one-command
+    # rollback for broadcast signing, and it would have stopped working at the exact moment it
+    # was needed. Fixed 12 Sep 2026, on the morning of the move.
+    global LIVE, L
+    L = live()
+    LIVE = L.rest_url
+    print(L.banner())
+    if not L.service_key: die('no service key for the live database')
     return e
 
 def admin(e, method, path, body=None):
     req = urllib.request.Request(LIVE + '/auth/v1' + path,
         data=json.dumps(body).encode() if body else None, method=method,
-        headers={'apikey': e['OLD_SERVICE_KEY'], 'Authorization': 'Bearer ' + e['OLD_SERVICE_KEY'],
+        headers={'apikey': L.service_key, 'Authorization': 'Bearer ' + L.service_key,
                  'Content-Type': 'application/json'})
     try:
         r = urllib.request.urlopen(req, timeout=30); return r.status, json.loads(r.read() or b'{}')

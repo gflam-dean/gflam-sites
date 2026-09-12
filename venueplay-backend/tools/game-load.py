@@ -39,7 +39,7 @@ PG = '/Applications/Postgres.app/Contents/Versions/latest/bin'
 PROD = ('venueplay-game.dean-tindale.workers.dev', 'venueplay-api.dean-tindale.workers.dev', 'partyplay-api.dean-tindale.workers.dev')
 UA = {'User-Agent': 'venueplay-game-load/2.0', 'Content-Type': 'application/json'}
 CTX = ssl.create_default_context()
-LIVE_REF = 'gpoolavkghnxedzrmtmc'
+LIVE_REF = 'ijkzgmdtwtgfkedqspxm'
 
 def env():
     e = {}

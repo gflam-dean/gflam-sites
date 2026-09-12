@@ -27,7 +27,7 @@ that looks fine.
 from pathlib import Path
 
 ENV = Path.home() / '.gflam-migrate.env'
-REFS = {'gpoolavkghnxedzrmtmc': 'Singapore', 'ijkzgmdtwtgfkedqspxm': 'Sydney'}
+REFS = {'ijkzgmdtwtgfkedqspxm': 'Singapore', 'ijkzgmdtwtgfkedqspxm': 'Sydney'}
 
 
 class Live:

@@ -24,7 +24,7 @@ Nothing is written without --go. IDs can be comma separated, and a short prefix 
 import json, os, re, sys, unicodedata, urllib.parse, urllib.request, urllib.error
 from datetime import date
 
-URL = os.environ.get("SUPABASE_URL", "https://gpoolavkghnxedzrmtmc.supabase.co").rstrip("/")
+URL = os.environ.get("SUPABASE_URL", "https://ijkzgmdtwtgfkedqspxm.supabase.co").rstrip("/")
 KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 HERE = os.path.dirname(os.path.abspath(__file__))
 if not KEY or len(KEY) < 40:

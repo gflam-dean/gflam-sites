@@ -40,7 +40,7 @@
                      : 'https://partyplay-api.dean-tindale.workers.dev', */
     API: 'https://partyplay-api.dean-tindale.workers.dev',
 
-    SUPA_URL:  'https://gpoolavkghnxedzrmtmc.supabase.co',
+    SUPA_URL:  'https://ijkzgmdtwtgfkedqspxm.supabase.co',
     SUPA_ANON: 'sb_publishable_DqFZOQsLYxrmlHDBLe1kfg_QdQ5DEV0',
 
     /* Realtime channel name. One place, because the host console, the television

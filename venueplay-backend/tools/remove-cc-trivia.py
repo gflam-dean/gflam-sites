@@ -40,7 +40,7 @@ It writes data/trivia-library.BACKUP-<n>.json before touching anything.
 """
 import json, os, re, sys, urllib.request, urllib.error
 
-URL = os.environ.get("SUPABASE_URL", "https://gpoolavkghnxedzrmtmc.supabase.co").rstrip("/")
+URL = os.environ.get("SUPABASE_URL", "https://ijkzgmdtwtgfkedqspxm.supabase.co").rstrip("/")
 KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.join(HERE, "data", "trivia-library.json")

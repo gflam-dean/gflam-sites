@@ -25,7 +25,7 @@ Options (environment variables):
 """
 import json, os, sys, urllib.request, urllib.error, random
 
-URL = os.environ.get("SUPABASE_URL", "https://gpoolavkghnxedzrmtmc.supabase.co").rstrip("/")
+URL = os.environ.get("SUPABASE_URL", "https://ijkzgmdtwtgfkedqspxm.supabase.co").rstrip("/")
 KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 LIB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "trivia-library.json")
 RESET = os.environ.get("SEED_RESET") == "1"

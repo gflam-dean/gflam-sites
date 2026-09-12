@@ -22,7 +22,7 @@ import json, os, sys, urllib.request, urllib.parse
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LIB = os.path.join(HERE, 'data', 'musical-library.json')
-SUPA = 'https://gpoolavkghnxedzrmtmc.supabase.co'
+SUPA = 'https://ijkzgmdtwtgfkedqspxm.supabase.co'
 THRESHOLD = 3
 
 

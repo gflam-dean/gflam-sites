@@ -27,7 +27,7 @@ WHAT IT WILL NOT DO
 
 import json, os, sys, urllib.parse, urllib.request, urllib.error
 
-URL = "https://gpoolavkghnxedzrmtmc.supabase.co"
+URL = "https://ijkzgmdtwtgfkedqspxm.supabase.co"
 KEY = os.environ.get("SUPABASE_SERVICE_KEY", "").strip()
 if not KEY:
     sys.exit("Set SUPABASE_SERVICE_KEY first.")

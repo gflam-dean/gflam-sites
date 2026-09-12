@@ -26,7 +26,7 @@ import hashlib, json, os, random, re, sys, unicodedata, urllib.request, urllib.e
 HERE = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.join(HERE, "data", "trivia-library.json")
 COUNT = os.path.join(HERE, "data", "trivia-count.json")
-URL = os.environ.get("SUPABASE_URL", "https://gpoolavkghnxedzrmtmc.supabase.co").rstrip("/")
+URL = os.environ.get("SUPABASE_URL", "https://ijkzgmdtwtgfkedqspxm.supabase.co").rstrip("/")
 KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 
 

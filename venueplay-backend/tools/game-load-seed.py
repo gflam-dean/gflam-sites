@@ -38,7 +38,7 @@ ENV_FILE = Path.home() / '.gflam-migrate.env'
 WORK = Path.home() / '.gflam-migrate'
 PASS_FILE = WORK / 'load-host.pass'
 PG = '/Applications/Postgres.app/Contents/Versions/latest/bin'
-OLD_REF_NEVER = 'gpoolavkghnxedzrmtmc'   # the live project. Refused by name, whatever the env file says.
+OLD_REF_NEVER = 'ijkzgmdtwtgfkedqspxm'   # the live project. Refused by name, whatever the env file says.
 HOST_EMAIL = 'load-host-00001@load.invalid'
 FORMATS = {'trivia': 'trivia', 'musical': 'musical_bingo', 'bingo': 'bingo90', 'raffle': 'raffle'}
 
