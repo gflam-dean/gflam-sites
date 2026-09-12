@@ -1,5 +1,16 @@
 # partyplay.com.au cache rules (Cloudflare Pages).
 #
+# THIS FILE WAS NOT IN FORCE FOR .js UNTIL 12 Sep 2026, and nothing in it was wrong.
+# The ZONE had Browser Cache TTL set to 4 hours, which overrides Cache-Control from here
+# for everything that is not HTML. So /lib/pp-config.js came back "max-age=14400" while
+# this file said no-cache, and the security headers below arrived correctly the whole
+# time, which is what made it look fine. venueplay.com.au was already set to "Respect
+# Existing Headers"; partyplay.com.au now matches it.
+#
+# It mattered because pp-config.js carries the Supabase key. A config fix could sit
+# unreachable in a guest's phone for four hours, and a guest's phone at a party is the
+# product.
+#
 # Copied from venueplay.com.au, where two wrong assumptions were each paid for once.
 # Do not "tidy" this without reading the notes.
 #
@@ -29,6 +40,14 @@
   Cache-Control: no-cache, must-revalidate
 
 # The admin screen. Not linked from anywhere, but "not linked" is not a control.
+# THE LOGOS ARE THE ONE THING WORTH CACHING HARD, and this rule has to exist BEFORE the
+# zone's Browser Cache TTL is set to respect these headers, or every logo starts
+# revalidating on every page view. At a party that is a phone on someone's home wifi, or
+# on data, fetching the same mark over and over. They are content-addressed by name and
+# change about once a year, so a year is honest. Same rule and same reason as venueplay.
+/logos/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /admin
   X-Robots-Tag: noindex, nofollow, noarchive
   Cache-Control: no-store
