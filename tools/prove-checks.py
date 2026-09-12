@@ -125,6 +125,76 @@ MUTATIONS = [
      "      if (true) {",
      'anyone who learns the Worker URL can send SMS on our Mobile Message account'),
 
+    # ---- 12 Sep 2026: THE END OF A BINGO GAME.
+    # Every bingo suite in the repo stopped at the claim. bingo-after-the-win.test.js drives
+    # the real console from the claim through Confirm, Finish game and Keep playing, singly
+    # and as a tie, and asserts the MESSAGES, because the wall and every phone in the room are
+    # driven entirely by them. Each find-string below was taken out of index.html by machine,
+    # not typed: a hand-typed one that matches nothing reports the check BLIND, which happened
+    # twice on 12 Sep.
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '    announce(false);',
+     '    announce(true);',
+     'Finish game broadcasts cont:true, so the wall celebrates and goes straight back to the '
+     'board on a game that is over'),
+
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '    else if(act==="keepplaying") keepPlaying();',
+     '    else if(act==="keepplaying_disabled") keepPlaying();',
+     'Keep playing is rendered on the win card and does nothing when the host taps it, which '
+     'strands the room between prizes'),
+
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '    G.pattern=nxt; G.prize=nextPrize; G.won=false;',
+     '    G.pattern=nxt; G.prize=nextPrize; G.won=false; G.draw=[]; G.called={}; G.idx=-1;',
+     'playing on for the next prize wipes the called numbers, so every board in the room clears '
+     'and the tickets people have been daubing for twenty minutes mean nothing'),
+
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '              shared:ws.length>1, cont:!!cont };',
+     '              shared:false, cont:!!cont };',
+     'a tie is announced as a single winner, so the wall and both phones say one person has '
+     'won a prize that is being split'),
+
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '    var ws=G.lastWins.slice().sort(function(a,b){ return (a.seq||0)-(b.seq||0); });',
+     '    var ws=G.lastWins.slice();',
+     'a tie is announced in the order the host happened to tap Confirm, so any screen on the '
+     'pre-tie shape names the wrong winner'),
+
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '    else if(G.status==="running" && G.lastWins.length){ b.disabled=true; b.classList.add("waiting"); b.textContent="Announce the win"; }',
+     '    else if(G.status==="running" && G.lastWins.length){ b.disabled=false; b.textContent="Next number"; }',
+     'the biggest button on the console reads Next number over an unannounced win, so the host '
+     'taps it instead of announcing and is refused by a toast they are not looking at'),
+
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '    if(G.lastWins.length && !G.claims.length && !G.won){',
+     '    if(G.lastWins.length && !G.won){',
+     'Finish game appears while another player is still waiting to have their ticket checked, '
+     'so the host can end the game over an unheard bingo'),
+
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '    if(G.lastWins.length){ showToast("Announce the win first: keep playing, or finish the game."); return; }',
+     '    if(false){ showToast("Announce the win first: keep playing, or finish the game."); return; }',
+     'the host calls the next number over a confirmed win, which closes the tie window on that '
+     'ball and leaves the console deaf to the next genuine bingo'),
+
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '    if(G.claims.length>1){',
+     '    if(false){',
+     'two people calling on the same number are shown as two separate claims with no tie bar '
+     'and no one-tap split, so the host confirms one and the other is served by luck'),
+
     # ---- 10 Sep: money, the nightly sweep, and the road a game message takes ----
     # THE LABEL IS THE SUITE'S FILE NAME, not the check inside it. The gate prints a
     # failing suite as "FAIL stripe-idempotency.test.js ...", and gate() looks for the

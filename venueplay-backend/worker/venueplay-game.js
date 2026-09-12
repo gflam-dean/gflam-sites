@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Sep 2026, 09:13 · 713a1c26';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 16:13 · b6cddf71';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -7282,9 +7282,30 @@ async function verifyJwtHS256(token, secret, env) {
   if (parts.length !== 3) throw httpError(401, 'Malformed token');
 
   const enc = new TextEncoder();
-  const header = JSON.parse(b64urlToString(parts[0]));
-  const signed = enc.encode(parts[0] + '.' + parts[1]);
-  const sigBytes = b64urlToBytes(parts[2]);
+  /* A TOKEN THAT IS RUBBISH IS A SIGN-IN PROBLEM, NOT AN OUTAGE.
+
+     These three lines threw on anything that had three dots but was not a token: the header
+     parse on non-JSON, and b64urlToBytes on a signature that is not base64url. The router
+     turned that into 500 "Something went wrong" with a support code. Measured on the live
+     Worker, 12 Sep 2026:
+
+         Bearer aaa.bbb            401  Malformed token          <- correct
+         Bearer aaaa.bbbb.cccc     500  Something went wrong     <- same fault, wrong answer
+
+     A host whose stored session has been corrupted is told the product is broken and to
+     contact support, when what they need to do is sign in again. The refusal itself was never
+     in doubt: this throws before any database call and nothing is written. It is the sentence
+     that was wrong, which is the same fault as the sign-in screen blaming a host's phone
+     number for our own SMS outage, found earlier the same day. */
+  let header, signed, sigBytes;
+  try {
+    header = JSON.parse(b64urlToString(parts[0]));
+    signed = enc.encode(parts[0] + '.' + parts[1]);
+    sigBytes = b64urlToBytes(parts[2]);
+  } catch (e) {
+    throw httpError(401, 'Malformed token');
+  }
+  if (!header || typeof header !== 'object') throw httpError(401, 'Malformed token');
   let ok = false;
   if (header.alg === 'HS256') {
     if (!secret) throw httpError(500, 'SUPABASE_JWT_SECRET is not configured');
