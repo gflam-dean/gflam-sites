@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '12 Sep 2026, 18:02 · 66b94514';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 20:14 · a92ff918';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -2006,10 +2006,19 @@ async function handleJoin(request, env) {
       body: JSON.stringify([{ licence_id: l.id, nickname: name, token }])
     });
   } catch (e) {
-    /* The fifty cap is a database trigger, so this is where it surfaces. Say it
-       in words a guest can act on rather than showing them a constraint error. */
-    if (/50 players/i.test(e.message)) {
-      return json({ error: 'This party is full, it is capped at 50 players.' }, 409);
+    /* The cap is a database trigger (partyplay-01-core.sql), so this is where it surfaces.
+       Say it in words a guest can act on rather than showing them a constraint error.
+
+       MATCH ON "capped at", NOT ON THE NUMBER. This read /50 players/i, which couples the
+       friendly message to the figure: raise the cap in the trigger and its message becomes
+       "capped at 60 players", this stops matching, the throw below fires, and a guest gets a
+       raw constraint error at the exact moment the party fills up. The number is then written
+       out of PPLicence.PLAYER_CAP so the wording cannot drift from the library either.
+       Found 12 Sep 2026; release-check now fails if the trigger, the library and terms.html
+       stop agreeing. */
+    if (/capped at/i.test(e.message)) {
+      return json({ error: 'This party is full, it is capped at ' +
+                           PPLicence.PLAYER_CAP + ' players.' }, 409);
     }
     throw e;
   }

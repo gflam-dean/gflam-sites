@@ -1143,6 +1143,21 @@ MUTATIONS = [
      'the four game walls go back into a scaling box, where each renders at full size with '
      'only its top-left corner inside the bezel'),
 
+    # ---- 12 Sep 2026: the fifty player cap, enforced once and promised once.
+    ('the "party is full" message is not matched on the NUMBER',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "    if (/capped at/i.test(e.message)) {",
+     "    if (/50 players/i.test(e.message)) {",
+     'the friendly "this party is full" is matched on the FIGURE again, so raising the cap '
+     'hands a guest a raw database constraint error at the moment the party fills up'),
+
+    ('and the Terms promise the same number',
+     'partyplay/terms.html',
+     'capped at <strong>50 players</strong>',
+     'capped at <strong>80 players</strong>',
+     'the Terms promise a cap that is not the cap enforced, which is a promise to a paying '
+     'customer that the product does not keep'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",

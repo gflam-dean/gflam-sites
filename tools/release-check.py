@@ -778,6 +778,49 @@ def local_checks(which):
                'PPLicence.UNUSED_EXPIRY_DAYS' if 'PPLicence.UNUSED_EXPIRY_DAYS' in w else 'never asked for',
                why='a check that only forbids the literal passes a Worker that lost the rule entirely')
 
+    """THE FIFTY PLAYER CAP: ENFORCED ONCE, PROMISED ONCE, AND THEY HAVE TO AGREE.
+
+    The cap is a DATABASE TRIGGER. terms.html states it as a contractual promise. The licence
+    library exports it. The Worker turns the trigger's error into words a guest can read. Four
+    places, one number, and nothing tied them together.
+
+    The sharp end was the Worker, which matched the trigger's message with /50 players/i. Raise
+    the cap and the trigger says "capped at 60 players", that stops matching, and a guest gets a
+    raw constraint error at the exact moment the party fills up. It now matches "capped at" and
+    prints PPLicence.PLAYER_CAP.
+
+    What is left is the promise. If the trigger and terms.html disagree, one of them is a lie to
+    a customer, so this reads all three and requires the same number. Found 12 Sep 2026."""
+    sql_p = os.path.join(PARTYPLAY_BACK, 'supabase', 'partyplay-01-core.sql')
+    lib_p2 = os.path.join(PARTYPLAY_BACK, 'lib', 'pp-licence.js')
+    terms_p = os.path.join(PARTYPLAY_SITE, 'terms.html')
+    if all(os.path.isfile(x) for x in (sql_p, lib_p2, terms_p)):
+        sql = io.open(sql_p, encoding='utf-8').read()
+        m_sql = re.search(r"capped at (\d+) players", sql)
+        m_lib = re.search(r"PLAYER_CAP:\s*(\d+)", io.open(lib_p2, encoding='utf-8').read())
+        m_trm = re.search(r"capped at\s*<strong>\s*(\d+) players", io.open(terms_p, encoding='utf-8').read())
+        ok('the player cap is enforced by a database trigger',
+           bool(m_sql), (m_sql.group(1) + ' players') if m_sql else 'no cap found in partyplay-01-core.sql',
+           why='without the trigger nothing stops a 200 person party on a 50 player licence')
+        ok('and the licence library states the same number',
+           bool(m_sql and m_lib and m_sql.group(1) == m_lib.group(1)),
+           'trigger %s, library %s' % (m_sql and m_sql.group(1), m_lib and m_lib.group(1)))
+        ok('and the Terms promise the same number',
+           bool(m_sql and m_trm and m_sql.group(1) == m_trm.group(1)),
+           'trigger %s, terms %s' % (m_sql and m_sql.group(1), m_trm and m_trm.group(1)),
+           why='a cap in the Terms that is not the cap enforced is a promise we are not keeping')
+        wsrc3 = io.open(os.path.join(PARTYPLAY_BACK, 'worker',
+                                     'SOURCE-do-not-paste-partyplay-api.js'), encoding='utf-8').read()
+        # STRIP THE COMMENTS FIRST. The note beside the fix QUOTES the old pattern to explain
+        # what was wrong with it, so the first version of this check failed on the very code
+        # that fixed it. Third time in one day a comment tripped one of my own scans, which is
+        # why the repo's other detectors all strip first.
+        wcode3 = re.sub(r'/\*.*?\*/', '', wsrc3, flags=re.S)
+        wcode3 = re.sub(r'(^|[^:])//[^\n]*', r'\1', wcode3)
+        ok('the "party is full" message is not matched on the NUMBER',
+           '/50 players/i' not in wcode3 and re.search(r"/capped at/i", wcode3) is not None,
+           why='matching the figure means raising the cap hands a guest a raw constraint error')
+
     head('D. Nothing shares a corner of the venue TV')
     """A TV is the one surface a whole room looks at, and its corners are crowded.
 
