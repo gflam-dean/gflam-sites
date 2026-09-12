@@ -509,6 +509,17 @@ def local_checks(which):
                 r = subprocess.run([JSC, os.path.join(d, f)], capture_output=True, text=True)
                 last = (r.stdout.strip().splitlines() or [''])[-1]
                 ok(f, last.startswith('ALL '), last)
+    """A .test.py under tools/ runs the same way a .test.js does. redirect-verdict.test.py is
+    the first: it drives redirect_verdict with the answers a broken edge rule would give, which
+    a live probe can never produce while the rule is working."""
+    for f in sorted(os.listdir(os.path.join(ROOT, 'tools'))):
+        if not f.endswith('.test.py'):
+            continue
+        r = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', f)],
+                           capture_output=True, text=True, cwd=ROOT)
+        last = (r.stdout.strip().splitlines() or [''])[-1]
+        ok(f, r.returncode == 0 and last.startswith('ALL '), last)
+
     for f in ['check-tv-watchdog.py', 'check-venue-scoping.py']:
         p = os.path.join(ROOT, 'venueplay-backend', 'tools', f)
         if which in ('both', 'venueplay') and os.path.isfile(p):
@@ -1148,6 +1159,7 @@ def local_checks(which):
                 elif at + m.start() < loads[lib]:
                     late.append('%s uses %s before %s' % (short(f), g, lib))
     ok('every shared script loads before it is used', not late, why='; '.join(late[:3]))
+
 
 
 
@@ -2098,6 +2110,74 @@ def worker_health(name, api, needs_config=True):
            'HTTP %s' % status if status != 404 else 'no /health on this Worker')
 
 
+def redirect_verdict(path, mustkeep, code, loc):
+    """Is this answer a correct www-to-apex redirect? Returns None if it is, else what is wrong.
+
+    SPLIT OUT SO IT CAN BE PROVEN. As part of one_address_check it could only ever be tested
+    against the live site, which currently answers correctly, so deleting either of the last
+    two rules changed nothing and the mutation stayed green. A branch that cannot be made to
+    fire is a branch nobody has checked. Here it takes the answer as arguments, so
+    redirect-verdict.test.py can hand it the answers a broken edge rule would give."""
+    if code not in (301, 302, 307, 308):
+        return '%s answered %s, not a redirect' % (path, code)
+    if not loc.startswith('https://venueplay.com.au'):
+        return '%s went to %s' % (path, loc)
+    if loc.startswith('https://venueplay.com.au.'):
+        return '%s went to a lookalike host: %s' % (path, loc)   # venueplay.com.au.evil.example
+    if mustkeep and mustkeep not in loc:
+        return '%s LOST the query string, went to %s' % (path, loc)
+    return None
+
+
+def one_address_check():
+    """www.venueplay.com.au and venueplay.com.au both answered 200 and NEITHER redirected to the
+    other, so they were two origins. Games worked on both, because the Workers reflect either,
+    so nothing looked wrong. Logins did not: a browser keeps a session against the exact origin
+    it was made on, so a host who signed in on one and later typed the other was silently signed
+    out with nothing on screen to say why. Dean found it on 12 Sep 2026 by asking what a venue
+    would actually type, which was a better question than any being asked in this file.
+
+    Fixed at the edge with a Cloudflare redirect rule, which is the right place: it fires before
+    a byte of HTML is sent, needs no JavaScript, and cannot flash the wrong page first. The
+    first attempt was a snippet in all thirty-nine pages. It worked, and it was thirty-nine
+    copies of one answer, so it came back out.
+
+    THE CATCH WITH FIXING IT IN A DASHBOARD is that nothing in this repo would notice the rule
+    being deleted. So this asks the live site. The query string is the part that matters most: a
+    venue screen is /tv?their-slug, so a redirect that drops the query sends every television to
+    the pairing screen instead of to their venue.
+
+    LIVE ONLY. It was first written inside local_checks, where the name `live` does not exist,
+    so the whole gate died with a NameError, and a grep over the output hid the crash and showed
+    green. Read the last line of this tool, never a filtered slice of it."""
+    head('Everything still arrives at one address')
+    import urllib.request as _u
+
+    class _NoRedir(_u.HTTPRedirectHandler):
+        def redirect_request(self, *a, **k):
+            return None
+
+    bad = []
+    for path, mustkeep in [('/', None), ('/app/', None), ('/tv?the-mini-bar', 'the-mini-bar')]:
+        url = 'https://www.venueplay.com.au' + path
+        try:
+            opener = _u.build_opener(_NoRedir)
+            code, loc = None, ''
+            try:
+                opener.open(_u.Request(url), timeout=15)
+                bad.append(path + ' did not redirect at all'); continue
+            except Exception as e:
+                code = getattr(e, 'code', None)
+                hdrs = getattr(e, 'headers', None)
+                loc = hdrs.get('Location', '') if hdrs else ''
+            v = redirect_verdict(path, mustkeep, code, loc)
+            if v:
+                bad.append(v)
+        except Exception as ex:
+            bad.append('%s could not be checked: %s' % (path, str(ex)[:50]))
+    ok('www lands on the one address, query string and all', not bad, why='; '.join(bad[:3]))
+
+
 def cors_checks(name, api, path, good_origins, bad_origin='https://evil.example'):
     head('%s: who the Worker lets in' % name)
     for o in good_origins:
@@ -2698,6 +2778,7 @@ def main():
                                     skip=('test.html',))
             worker_health('VenuePlay game', VP_GAME)
             worker_health('VenuePlay billing', VP_API)
+            one_address_check()
             cors_checks('VenuePlay', VP_GAME, '/play/live',
                         ['https://venueplay.com.au', 'https://www.venueplay.com.au'])
             each_worker_is_the_right_worker()
