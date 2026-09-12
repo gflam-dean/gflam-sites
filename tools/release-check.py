@@ -1443,7 +1443,8 @@ def local_checks(which):
     wrong = []
     for f in files:
         b = os.path.basename(f)
-        if b not in ('nsw.html','qld.html','vic.html','sa.html','wa.html','nt.html','tas.html','act.html'):
+        if b not in ('nsw.html','qld.html','vic.html','sa.html','wa.html','nt.html','tas.html','act.html',
+                     'last-call.html'):
             continue
         src = io.open(f, encoding='utf-8').read()
         codes = set(re.findall(r'[A-Z]{2,3}-([A-Z]{3})-(20\d\d)', src))
@@ -1460,7 +1461,19 @@ def local_checks(which):
         # postcode on an NSW code and says so where it does it.
         pre = set(re.findall(r'([A-Z]{2,3})-[A-Z]{3}-20\d\d', src))
         want = b[:-5].upper()
-        allowed = {want} | ({'NSW'} if want == 'ACT' else set())
+        # /last-call is the one NATIONAL page: it carries a code for every state and
+        # chooses between them from the venue's postcode, because the Worker compares
+        # a code's prefix to that postcode and no made-up national prefix matches.
+        # So it may carry all seven, and it must carry all seven: a state missing here
+        # is a state that reads $2.50 and is charged $3.00.
+        if b == 'last-call.html':
+            allowed = {'NSW','VIC','QLD','SA','WA','TAS','NT'}
+            if pre != allowed:
+                wrong.append('last-call.html carries %d state codes, needs all 7 (missing %s)'
+                             % (len(pre), ', '.join(sorted(allowed - pre)) or 'none'))
+                continue
+        else:
+            allowed = {want} | ({'NSW'} if want == 'ACT' else set())
         if not pre or not pre <= allowed:
             wrong.append('%s carries %s' % (b, ', '.join(sorted(pre)) or 'no code'))
             continue
@@ -2637,7 +2650,13 @@ def founding_windows_are_open():
     root = os.path.join(ROOT, 'venueplay')
     pages = [f for f in sorted(os.listdir(root))
              if f in ('nsw.html','qld.html','vic.html','sa.html','wa.html',
-                      'nt.html','tas.html','act.html')] if os.path.isdir(root) else []
+                      'nt.html','tas.html','act.html',
+                      # /last-call is NATIONAL. It carries one code per state and
+                      # picks between them from the venue's postcode, because the
+                      # Worker's gate compares a code's prefix to that postcode and
+                      # a made-up national prefix matches nothing. See
+                      # founding-postcode-agree.test.js.
+                      'last-call.html')] if os.path.isdir(root) else []
     if not pages:
         return
     shut, unreachable = [], []
@@ -2646,22 +2665,25 @@ def founding_windows_are_open():
         codes = sorted(set(re.findall(r'[A-Z]{2,3}-[A-Z]{3}-20\d\d', src)))
         if not codes:
             continue
-        code = codes[0]
-        status, body, _ = get(VP_API + '/founding?code=' + code)
-        # AN UNANSWERED QUESTION IS NOT A NO. /founding lives on the billing
-        # Worker, so when the wrong file is pasted into that slot the route 404s
-        # and every page looked shut. On 5 Sep this printed "the Worker will
-        # charge STANDARD on act, nsw, nt, qld" when the truth was that nothing
-        # had been asked. Say which, because the two need opposite actions: one
-        # is an env var to edit, the other is a Worker to re-paste.
-        try:
-            answer = json.loads(body)
-        except Exception:
-            answer = None
-        if not isinstance(answer, dict) or 'open' not in answer:
-            unreachable.append('%s (HTTP %s)' % (b, status))
-        elif answer.get('open') is not True:
-            shut.append('%s (%s)' % (b, code))
+        # Ask about EVERY code on the page. /last-call carries seven, one per state,
+        # and taking codes[0] would have declared it healthy while six states were
+        # shut and being charged $3.00 against a page promising $2.50.
+        for code in codes:
+            status, body, _ = get(VP_API + '/founding?code=' + code)
+            # AN UNANSWERED QUESTION IS NOT A NO. /founding lives on the billing
+            # Worker, so when the wrong file is pasted into that slot the route 404s
+            # and every page looked shut. On 5 Sep this printed "the Worker will
+            # charge STANDARD on act, nsw, nt, qld" when the truth was that nothing
+            # had been asked. Say which, because the two need opposite actions: one
+            # is an env var to edit, the other is a Worker to re-paste.
+            try:
+                answer = json.loads(body)
+            except Exception:
+                answer = None
+            if not isinstance(answer, dict) or 'open' not in answer:
+                unreachable.append('%s (HTTP %s)' % (b, status))
+            elif answer.get('open') is not True:
+                shut.append('%s (%s)' % (b, code))
     if unreachable:
         ok('the founding-code route answers at all', False,
            why='%s could not be asked: %s. That is the billing Worker refusing, '
