@@ -103,14 +103,26 @@
      missing postcode is unmistakable against a printed setup sheet. */
   /* The wordmark on both "something is wrong" screens, sized in cqw like everything else on
      this page so it scales with the wall instead of racing it. */
-  .bvmark,.admark{display:flex;align-items:center;justify-content:center;gap:.5em;margin:0 0 .7em}
+  /* The mark sits ABOVE the card, not tucked against the heading. Dean: "venueplay logo could
+     go up a bit on the error screen". It is a wordmark introducing the screen, not a bullet
+     point on it, so it gets room to breathe. */
+  .bvmark{margin:0 0 1.4em}
+  .bvmark,.admark{display:flex;align-items:center;justify-content:center;gap:.5em;margin-bottom:.7em}
   .bvmark svg,.admark svg{width:clamp(16px,2.2cqw,30px);height:auto;display:block;
     filter:drop-shadow(0 0 .5cqw rgba(255,31,142,.75))}
   .bvmark span,.admark span{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
     font-size:clamp(13px,2cqw,26px);letter-spacing:.02em;color:#fff}
+  /* The address, on its own line between the problem and what to do about it, boxed so the eye
+     lands on it. Mono so a hyphen or a missing postcode is unmistakable against a printed
+     setup sheet, and break-all so a long slug cannot push the card off a narrow screen. */
+  .bvissue{margin:0 0 1.1em;padding:.7em 1em;border-radius:.6em;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10)}
+  .bvissue[hidden]{display:none}
+  .bvissuelbl{font-family:'JetBrains Mono',ui-monospace,monospace;
+    font-size:clamp(9px,1.2cqw,15px);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted,#9A9AA4);margin:0 0 .35em}
   .bvaddr{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:clamp(13px,2.4cqw,30px);
-    color:var(--gold,#FFC24B);margin:0 0 .6em;word-break:break-all}
-  .bvaddr[hidden]{display:none}
+    color:var(--gold,#FFC24B);word-break:break-all;line-height:1.25}
   .bvtext b{color:#fff}
   /* A GRID, NOT A LIST, AND NOTHING THAT HAS TO BE SCROLLED.
      This is a television. Plenty of them are driven by a Fire Stick remote,
@@ -342,12 +354,18 @@
            while deciding whether they have been sold something that works. -->
       <div class="bvmark"><svg viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg><span>VenuePlay</span></div>
       <div class="bvtitle">Not linked to an account</div>
-      <!-- THE ADDRESS THEY ACTUALLY TYPED. Almost every screen that lands here got here by a
-           typo on a TV remote, and the card never showed them what it had read, so there was
-           nothing to compare against the address on their setup sheet. Filled in by script;
-           if it is empty the line stays hidden rather than showing a bare slash. -->
-      <div class="bvaddr" id="bvAddr" hidden></div>
-      <div class="bvtext">This link doesn't seem to be linked to an account. Check the address above against your setup email, or sign up at <b>www.venueplay.com.au</b>. Contact us at <b>hello@venueplay.com.au</b> if you think this is wrong.</div>
+      <!-- THREE THINGS, IN THE ORDER A PERSON NEEDS THEM. Dean, 12 Sep 2026: "maybe we say its
+           not linked to an account and then a new line so it shows the issue then trouble
+           shooting". So: what is wrong, then WHICH address is wrong, then what to do about it.
+           The address is the middle one because almost every screen that lands here got here
+           by a typo on a TV remote, and until it was shown there was nothing to compare
+           against the setup email. Filled in by script; if it is empty the whole block stays
+           hidden rather than showing a bare slash. -->
+      <div class="bvissue" id="bvIssue" hidden>
+        <div class="bvissuelbl">This screen is set to</div>
+        <div class="bvaddr" id="bvAddr"></div>
+      </div>
+      <div class="bvtext">Check that against the address in your setup email. If it is wrong, change it on the screen and it will connect itself. If it looks right, email <b>hello@venueplay.com.au</b> and we will sort it out.</div>
     </div>
   </div>
 
@@ -549,10 +567,10 @@
        to be told which venue it is. Throwing "not linked to an account" over the
        top of that would be wrong and would hide the answer. */
     if(pickerIsUp()) return;
-    var a=$("bvAddr");
-    if(a){
-      if(VENUE_SLUG){ a.textContent=String(ORIGIN).replace(/^https?:\/\//,"")+"/tv?"+VENUE_SLUG; a.hidden=false; }
-      else a.hidden=true;
+    var a=$("bvAddr"), box=$("bvIssue");
+    if(a && box){
+      if(VENUE_SLUG){ a.textContent=String(ORIGIN).replace(/^https?:\/\//,"")+"/tv?"+VENUE_SLUG; box.hidden=false; }
+      else box.hidden=true;   // nothing to show beats an empty box with a label on it
     }
     var el=$("badVenue"); if(el) el.classList.remove("hidden");
   }
