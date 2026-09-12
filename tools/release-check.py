@@ -821,6 +821,47 @@ def local_checks(which):
            '/50 players/i' not in wcode3 and re.search(r"/capped at/i", wcode3) is not None,
            why='matching the figure means raising the cap hands a guest a raw constraint error')
 
+    """WHAT THE PRIVACY PAGE PROMISES ABOUT A FINISHED PARTY, SOMETHING HAS TO DO.
+
+    privacy.html makes three promises, not one: the album goes 30 days after the party, the
+    nickname goes when the album does, and guest emails go with everything else. Only the
+    first was kept. pp_players and pp_album_requests both hold guest EMAIL ADDRESSES and
+    nothing had ever deleted either, so a party from a year ago still had its guests'
+    addresses in the database while the page said otherwise. 114 passing checks did not
+    notice, because they all tested the photos.
+
+    This is the same shape as the fifty player cap: a promise in a customer-facing document
+    and an enforcement somewhere else, with nothing tying them together. Found 12 Sep 2026."""
+    priv_p = os.path.join(PARTYPLAY_SITE, 'privacy.html')
+    wsrc4_p = os.path.join(PARTYPLAY_BACK, 'worker', 'SOURCE-do-not-paste-partyplay-api.js')
+    if os.path.isfile(priv_p) and os.path.isfile(wsrc4_p):
+        priv = io.open(priv_p, encoding='utf-8').read()
+        w4 = io.open(wsrc4_p, encoding='utf-8').read()
+        w4c = re.sub(r'/\*.*?\*/', '', w4, flags=re.S)
+        w4c = re.sub(r'(^|[^:])//[^\n]*', r'\1', w4c)
+        m_days = re.search(r'ALBUM_KEEP_DAYS\s*=\s*(\d+)', w4c)
+        ok('the album keep window is written once, in the Worker',
+           bool(m_days), (m_days.group(1) + ' days') if m_days else 'ALBUM_KEEP_DAYS is gone')
+        if m_days:
+            ok('and the privacy page promises the same number of days',
+               re.search(r'\b' + m_days.group(1) + r'\s*days\b', priv) is not None,
+               'code keeps %s days' % m_days.group(1),
+               why='a retention period on the page that is not the one enforced is a promise we do not keep')
+        # The page names three things. The sweep has to touch all three.
+        for label, table, phrase in (
+                ('the album', 'pp_photos', 'album is deleted'),
+                ("the guests' nicknames", 'pp_players', 'nickname is deleted'),
+                ("the guests' email addresses", 'pp_album_requests', 'emails are deleted')):
+            promised = phrase.split()[0].lower() in priv.lower()
+            ok('%s are actually deleted, not just promised' % label,
+               ("'" + table) in w4c and 'DELETE' in w4c,
+               table,
+               why='privacy.html says this goes 30 days after the party')
+        ok("the sweep removes guest rows, not only picture rows",
+           re.search(r"pp_players\?licence_id=eq\.", w4c) is not None and
+           re.search(r"pp_album_requests\?licence_id=eq\.", w4c) is not None,
+           why='both of those tables hold guest email addresses')
+
     head('D. Nothing shares a corner of the venue TV')
     """A TV is the one surface a whole room looks at, and its corners are crowded.
 

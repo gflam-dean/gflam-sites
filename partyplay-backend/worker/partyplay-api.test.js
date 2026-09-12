@@ -562,6 +562,74 @@ test("an old file with no row is deleted, a new one and a known one are not", fu
 });
 
 /* ============================================================================
+   THE PRIVACY PAGE MAKES THREE PROMISES ABOUT A FINISHED PARTY, NOT ONE.
+
+     "The whole album is deleted 30 days after the party ends."
+     "The nickname is deleted when the album is."
+     "Guest emails are deleted with everything else from that party, 30 days after it."
+
+   Only the first was kept. pp_players and pp_album_requests both hold guest EMAIL
+   ADDRESSES, and nothing had ever deleted either: the only pp_players delete in the
+   Worker is the admin "clear players" button a host presses by hand. A party from a
+   year ago still had its guests' addresses in the database while the page said
+   otherwise. 114 passing checks did not notice, because they tested the photos.
+   ========================================================================== */
+print("== a finished party takes its guests' details with it ==");
+test("the sweep deletes the nicknames and the guest emails, not just the pictures", function(){
+  var ENV3 = Object.assign({}, ENV, { PHOTOS: {
+    put:function(){ return Promise.resolve(); }, get:function(){ return Promise.resolve(null); },
+    "delete":function(){ return Promise.resolve(); },
+    list:function(){ return Promise.resolve({ truncated:false, objects:[] }); }
+  }});
+  FETCH.calls = [];
+  FETCH.plan = [
+    { status:200, body:"[]" },                                        // no photo rows due
+    { status:200, body:JSON.stringify([{ id:"lic-old" }]) },           // one finished licence
+    { status:200, body:JSON.stringify([{ id:"p1" },{ id:"p2" }]) },    // two players removed
+    { status:200, body:JSON.stringify([{ id:"a1" }]) }                 // one album request removed
+  ];
+  return W.fetch(req("POST","/admin/sweep-photos",{key:"test-admin-key"},
+                     {"x-admin-key":"test-admin-key"}), ENV3).then(function(r){
+    return r.json().then(function(j){
+      var dels = FETCH.calls.filter(function(c){ return c.init && c.init.method === "DELETE"; });
+      var players = dels.filter(function(c){ return String(c.url).indexOf("pp_players") >= 0; });
+      var asks    = dels.filter(function(c){ return String(c.url).indexOf("pp_album_requests") >= 0; });
+      ok(players.length === 1, "the guests' nicknames were deleted, saw " + players.length);
+      ok(asks.length === 1, "the guests' email addresses were deleted, saw " + asks.length);
+      ok(String(players[0] && players[0].url).indexOf("lic-old") >= 0,
+         "against the finished party, not all of them");
+      ok(j.players === 2, "it reported the nicknames it removed, said " + j.players);
+      ok(j.albumAsks === 1, "and the emails, said " + j.albumAsks);
+    });
+  });
+});
+test("it only sweeps parties whose album window has passed", function(){
+  var ENV3 = Object.assign({}, ENV, { PHOTOS: {
+    put:function(){ return Promise.resolve(); }, get:function(){ return Promise.resolve(null); },
+    "delete":function(){ return Promise.resolve(); },
+    list:function(){ return Promise.resolve({ truncated:false, objects:[] }); }
+  }});
+  FETCH.calls = []; FETCH.plan = [{ status:200, body:"[]" }];
+  return W.fetch(req("POST","/admin/sweep-photos",{key:"test-admin-key"},
+                     {"x-admin-key":"test-admin-key"}), ENV3).then(function(){
+    var lic = FETCH.calls.filter(function(c){ return String(c.url).indexOf("pp_licences") >= 0; })[0];
+    ok(!!lic, "it asks which parties are finished");
+    var u = String(lic && lic.url);
+    ok(u.indexOf("expires_at=lt.") >= 0, "filtered on when the party ENDED, got " + u.slice(-90));
+    ok(u.indexOf("expires_at=not.is.null") >= 0,
+       "and skips a licence that was never started, which has no end to count from");
+    /* The cutoff has to be 30 days back, not now: sweeping on expires_at < now would
+       delete a guest's details the morning after the party, while the album they were
+       told they have 30 days to download is still up. */
+    var m = /expires_at=lt\.([^&]+)/.exec(u);
+    var when = m ? Date.parse(decodeURIComponent(m[1])) : NaN;
+    var daysBack = (Date.now() - when) / 86400000;
+    ok(daysBack > 29 && daysBack < 31,
+       "the cutoff is 30 days back, it was " + (isNaN(daysBack) ? "unreadable" : daysBack.toFixed(1) + " days"));
+  });
+});
+
+/* ============================================================================
    GUESS THE PHOTO: a guest's photo reaches the television only on purpose.
 
    host.html concatenated the host's game photos with the party album and saved

@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '12 Sep 2026, 20:14 · a92ff918';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 20:27 · dfc6d3d9';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -1099,7 +1099,49 @@ async function runPhotoSweep(env) {
     }
   } catch (e) { /* listing is best effort; the row sweep above is the main job */ }
 
-  return { ok: true, deleted: gone, orphans: orphans,
+  /* AND THE PEOPLE, NOT JUST THE PICTURES.
+
+     privacy.html makes three promises about a finished party, not one:
+       "The whole album is deleted 30 days after the party ends."   <- the rows above
+       "The nickname is deleted when the album is."                 <- pp_players
+       "Guest emails are deleted with everything else from that party, 30 days after it."
+                                                                    <- pp_album_requests
+
+     Only the first was kept. pp_players and pp_album_requests both hold guest EMAIL
+     ADDRESSES and nicknames, and nothing had ever deleted either: the only pp_players
+     delete in this Worker is the admin "clear players" button a host presses by hand.
+     So a party from a year ago still had its guests' addresses sitting in the database
+     while the page told them otherwise.
+
+     Same clock as the photos, deliberately: expires_at plus ALBUM_KEEP_DAYS, so the
+     album and the people who are in it go together, which is what the page says.
+
+     CONSENT IS NOT LOST. A guest who ticked the marketing box was copied into
+     pp_subscribers at the time, with opted_in_at, and that is a separate list they
+     agreed to and can leave from /unsubscribe. This only clears the party.
+
+     Found 12 Sep 2026 by reading the privacy page against the code. */
+  let people = 0, asks = 0;
+  try {
+    const cutoff = new Date(Date.now() - ALBUM_KEEP_DAYS * 86400e3).toISOString();
+    const finished = await sb(env, 'pp_licences?expires_at=lt.' + encodeURIComponent(cutoff) +
+      '&expires_at=not.is.null&select=id&limit=200');
+    for (const l of (finished || [])) {
+      const p1 = await sb(env, 'pp_players?licence_id=eq.' + encodeURIComponent(l.id),
+        { method: 'DELETE', headers: { prefer: 'return=representation' } });
+      people += (p1 || []).length;
+      const p2 = await sb(env, 'pp_album_requests?licence_id=eq.' + encodeURIComponent(l.id),
+        { method: 'DELETE', headers: { prefer: 'return=representation' } });
+      asks += (p2 || []).length;
+    }
+  } catch (e) {
+    /* Loud, not silent. This one is a privacy promise: if it stops working we need to
+       know from the job's own output rather than from somebody asking what we hold. */
+    return { ok: false, deleted: gone, orphans: orphans,
+             error: 'personal data sweep failed: ' + e.message };
+  }
+
+  return { ok: true, deleted: gone, orphans: orphans, players: people, albumAsks: asks,
            remaining: due.length === 500 ? 'more' : 0 };
 }
 

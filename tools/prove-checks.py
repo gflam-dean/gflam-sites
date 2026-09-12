@@ -1158,6 +1158,21 @@ MUTATIONS = [
      'the Terms promise a cap that is not the cap enforced, which is a promise to a paying '
      'customer that the product does not keep'),
 
+    # ---- 12 Sep 2026: the privacy page promised three deletions and one happened.
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "      const p2 = await sb(env, 'pp_album_requests?licence_id=eq.' + encodeURIComponent(l.id),",
+     "      const p2 = await sb(env, 'pp_photos?id=eq.nothing-at-all&licence_id=eq.' + encodeURIComponent(l.id),",
+     "guest EMAIL ADDRESSES are left in the database after a party, while privacy.html says "
+     'they are deleted with everything else 30 days after it'),
+
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "    const cutoff = new Date(Date.now() - ALBUM_KEEP_DAYS * 86400e3).toISOString();",
+     "    const cutoff = new Date(Date.now()).toISOString();",
+     "a guest's details are deleted the morning after the party, while the album they were "
+     'told they have thirty days to download is still up'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",
