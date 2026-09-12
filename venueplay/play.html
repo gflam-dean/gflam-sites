@@ -593,7 +593,7 @@
         ' &middot; tap the glowing squares</span>'
       : '';
     if(n===1){ el.classList.remove("hidden"); el.className="tension hot"; el.innerHTML="&#128293; One to go!" + miss;
-      if(_lastShort>1){ try{ if(navigator.vibrate) navigator.vibrate([0,70,50,70]); }catch(e){} } }   // buzz once, on the transition
+      if(_lastShort>1){ buzz([0,70,50,70]); } }   // buzz once, on the transition
     else if(n===2){ el.classList.remove("hidden"); el.className="tension two"; el.innerHTML="2 numbers away" + miss; }
     else { el.classList.add("hidden"); el.className="tension hidden"; }
     _lastShort=n;
@@ -963,6 +963,25 @@
     if(P.cards.length) renderCards();
   }
 
+  /* ONE PLACE THAT BUZZES A PHONE.
+
+     Dean said "get rid of the sound on the demo" and I silenced the fanfare, then swept again
+     properly and found this page buzzing on its own three separate times, none of them through
+     the celebrate library and so none of them covered. One of them is not even a win: line ~596
+     buzzes on an ordinary transition, so a visitor holding their phone on the sales page would
+     have felt it over and over.
+
+     A vibration is a noise as far as somebody reading a website is concerned, and it is worse
+     than a beep because it cannot be muted. Three call sites is three chances to miss one, so
+     they all come through here now and the question is asked once. Same flag the fanfare
+     reads: see isDemoPage() in /app/vp-celebrate.js. */
+  function buzz(pattern){
+    try{
+      if(document.documentElement.getAttribute("data-vp-demo")==="1") return;
+      if(navigator.vibrate) navigator.vibrate(pattern);
+    }catch(e){}
+  }
+
   // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file to host) ----
   // Phone speakers are often muted, so we lead with the confetti + vibrate and treat sound as a bonus.
   var _ac=null;
@@ -993,8 +1012,8 @@
     }catch(e){}
   }
   var _celebrated=false;
-  function celebrate(){ if(_celebrated) return; _celebrated=true; try{ if(navigator.vibrate) navigator.vibrate([0,90,60,90,60,150]); }catch(e){} playFanfare(); confettiBurst(); }
-  function celebrateStage(){ try{ if(navigator.vibrate) navigator.vibrate([0,90,60,90,60,150]); }catch(e){} playFanfare(); confettiBurst(); }
+  function celebrate(){ if(_celebrated) return; _celebrated=true; buzz([0,90,60,90,60,150]); playFanfare(); confettiBurst(); }
+  function celebrateStage(){ buzz([0,90,60,90,60,150]); playFanfare(); confettiBurst(); }
 
   // ---- actions ----
   // Ask the Worker which extra fields this venue collects, and render them on the join screen.

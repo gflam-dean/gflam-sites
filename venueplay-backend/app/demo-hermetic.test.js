@@ -201,6 +201,28 @@ pass("and it does not buzz a phone either",
      chime.indexOf("data-vp-demo") < chime.indexOf("navigator.vibrate"),
      "a website that vibrates somebody's phone is worse than one that beeps");
 
+/* NOR DOES IT BUZZ. A vibration is a noise to somebody reading a website, and a worse one
+   than a beep because it cannot be muted. The first pass silenced the fanfare and missed three
+   navigator.vibrate calls in play.html, one of which is not even a win: it fires on an ordinary
+   transition, so a visitor holding their phone would have felt it over and over. So: NO page
+   may call navigator.vibrate directly. It goes through a helper that asks the flag first. */
+["venueplay/play.html", "venueplay/app/index.html", "venueplay/tv.html"].forEach(function (rel) {
+  var src = find(rel);
+  var name = rel.split("/").pop();
+  var direct = (src.match(/navigator\.vibrate\s*\(/g) || []).length;
+  var guarded = (src.match(/data-vp-demo[\s\S]{0,400}?navigator\.vibrate\s*\(/g) || []).length;
+  pass(name + " buzzes only from behind the demo guard", direct === guarded,
+       direct + " call(s), " + guarded + " behind a guard");
+});
+var PLAY = find('venueplay/play.html');
+pass("play.html asks the question once, not at each call site",
+     (PLAY.match(/function buzz\(/g) || []).length === 1 &&
+     (PLAY.match(/navigator\.vibrate\s*\(/g) || []).length === 1,
+     "three call sites was three chances to miss one");
+var buzzFn = PLAY.slice(PLAY.indexOf("function buzz("), PLAY.indexOf("function buzz(") + 320);
+pass("and the guard is before the buzz, not after it",
+     buzzFn.indexOf("data-vp-demo") < buzzFn.indexOf("navigator.vibrate"));
+
 /* EVERY DEMO PAGE STAMPS THE FLAG the guards read. A page that forgot would be loud again. */
 ["venueplay/tv.html", "venueplay/play.html", "venueplay/app/index.html"].forEach(function (rel) {
   var src = find(rel);
