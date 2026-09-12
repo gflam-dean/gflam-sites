@@ -1733,6 +1733,91 @@ def local_checks(which):
                'venueplay-room.js, so a fix made in one and not the other is a fix '
                'that did not happen. Re-copy the file under the ROOM SERVER banner.')
 
+    head('D. Every link in an email goes somewhere that exists')
+    """A LINK IN AN EMAIL IS FOLLOWED BY SOMEBODY WE CANNOT WATCH.
+
+    The Unsubscribe link in every PartyPlay follow-up was built as SITE_ORIGIN +
+    "/unsubscribe", and the handler that does the work is on the WORKER. Cloudflare
+    Pages answers a path it does not have with the homepage and a 200, so the
+    recipient pressed Unsubscribe, landed on a page selling them PartyPlay, and
+    nothing was recorded anywhere. pp_subscribers.unsubscribed_at could never be set
+    by a recipient, and the opt-out check that reads it was guarding nothing. Under
+    the Spam Act a working unsubscribe is not optional.
+
+    Nothing could catch that: check-links.py reads the PAGES, and this link is
+    assembled inside the Worker out of an environment variable and a string. So the
+    Worker is read the same way: every path an email sends a person to has to be a
+    file this site actually serves.
+
+    The second half is the one that let it happen twice. The expiry reminder had no
+    unsubscribe link AT ALL, so the roster of senders is closed: a new one fails
+    this check until somebody says which kind it is.
+    """
+    wsrc_p = os.path.join(PARTYPLAY_BACK, 'worker', 'SOURCE-do-not-paste-partyplay-api.js')
+    if which in ('both', 'partyplay') and os.path.isfile(wsrc_p):
+        wsrc = io.open(wsrc_p, encoding='utf-8').read()
+
+        def serves(path):
+            """Would Cloudflare Pages have a file for this path, really."""
+            rel = path.lstrip('/')
+            if not rel:
+                rel = 'index.html'
+            cand = [rel]
+            if '.' not in os.path.basename(rel):
+                cand = [rel + '.html', os.path.join(rel, 'index.html')]
+            return any(os.path.isfile(os.path.join(PARTYPLAY_SITE, c)) for c in cand)
+
+        # site is always SITE_ORIGIN with the trailing slash taken off, so every
+        # link an email carries is written as: site + '/something'
+        # The closing double quote of an HTML attribute lives INSIDE the JavaScript
+        # string, so href="' + site + '/setup" captured /setup" and read as a missing
+        # page. The first pass of this check reported two of those, and a check that
+        # cries wolf on a file that is sitting right there is one nobody reads.
+        linked = sorted(set(re.findall(r"""site \+ '(/[^'?"\s]*)""", wsrc)))
+        # A scan that finds nothing must never pass. Every email has a logo and a
+        # button in it, so an empty reading means the pattern stopped matching.
+        ok('the email links could be read at all', len(linked) >= 3,
+           '%d link(s): %s' % (len(linked), ', '.join(linked[:6])),
+           why='no "site + \'/...\'" links were found in the Worker at all, which '
+               'means this check is reading the wrong thing, not that the emails '
+               'have no links in them')
+        for path in linked:
+            ok('an email links to %s' % path, serves(path),
+               why='partyplay/ has no file for it, so Cloudflare Pages answers the '
+                   'HOMEPAGE with a 200 and the person who pressed it sees an advert '
+                   'instead of whatever they asked for')
+
+        # Marketing goes to somebody who is not waiting for it, so it carries a way
+        # to stop it. A receipt and an album link do not: they are the thing that
+        # was bought and the thing that was asked for at the party.
+        MARKETING = {'sendFollowupEmail': 'the "how was the party" follow-up',
+                     'sendNudgeEmail': 'the reminder about an unused code'}
+        ASKED_FOR = {'sendLicenceEmail', 'sendAlbumEmail'}
+        # sendEmail is the one door all four go through, not a message of its own.
+        NOT_A_SENDER = {'sendEmail'}
+        senders = re.findall(r'async function (send\w*Email)\(', wsrc)
+        senders = [n for n in senders if n not in NOT_A_SENDER]
+        unknown = [n for n in senders if n not in MARKETING and n not in ASKED_FOR]
+        # A COUNT OF ZERO IS NOT A PASS. If the pattern stops matching, every
+        # sender becomes invisible and "none of them is unjudged" is true and
+        # worthless. Four are known to be there, so fewer than four is the check
+        # failing to read, not the Worker having fewer emails.
+        ok('every email sender has been judged marketing or not',
+           not unknown and len(senders) >= 4,
+           '%d sender(s)' % len(senders),
+           why=('new sender(s) %s: decide whether it goes to somebody who asked for '
+                'it. If it does not, it needs an unsubscribe link and the opt-out '
+                'check, and either way add it to this list in tools/release-check.py'
+                % ', '.join(unknown)) if unknown else
+               ('only %d email sender(s) were found in the Worker and there are at '
+                'least four, so this check is no longer reading them' % len(senders)))
+        for name, what in sorted(MARKETING.items()):
+            m = re.search(r'async function ' + name + r'\(.*?\n\}\n', wsrc, re.S)
+            body = m.group(0) if m else ''
+            ok('%s can be stopped' % what, "/unsubscribe?e=" in body,
+               why='%s does not put an unsubscribe link in the email it sends. That '
+                   'is a Spam Act problem, not a nicety' % name)
+
     head('E. The Worker you are about to paste')
     dep = os.path.join(PARTYPLAY_BACK, 'worker', 'DEPLOY-partyplay-api.js')
     if which in ('both', 'partyplay') and os.path.isfile(dep):

@@ -1033,6 +1033,87 @@ MUTATIONS = [
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",
      r"\.(nothing-this-will-never-match)$",
      'the rule for what must never ship is widened until it flags nothing'),
+
+    # ---- 12 Sep: PartyPlay. The unsubscribe, the guest photo, the failed email,
+    #      and the four jobs that called themselves crons. ----
+    # Every one of these was broken by hand and watched go red as it was written.
+    ('an email links to',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "site + '/unsubscribe?e='",
+     "site + '/unsubscribed?e='",
+     'the Unsubscribe link in a follow-up points at a path Pages does not have, so it '
+     'answers the homepage with a 200 and the recipient is sold PartyPlay instead'),
+
+    ('the reminder about an unused code can be stopped',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     """            '<p style="margin:10px 0 0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
+            '" style="color:#8A8296">Unsubscribe</a></p>'""",
+     "''",
+     'the expiry reminder goes back to having no way to stop it, which is where it started'),
+
+    ('the "how was the party" follow-up can be stopped',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     """      foot: '<p style="margin:0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
+            '" style="color:#8A8296">Unsubscribe</a></p>'""",
+     "      foot: ''",
+     'the follow-up email loses its unsubscribe link, which is the half of the Spam Act '
+     'that was there before the link was found to be dead'),
+
+    # The guard on the guard: if the pattern stops matching, every link becomes
+    # invisible and "none of them is broken" is true and worthless. An empty
+    # Worker is the honest way to ask, because zero found must never read as zero
+    # wrong.
+    ('the email links could be read at all',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     '<<EMPTY>>', '',
+     'the email links are read from a Worker that says nothing, and a scan that '
+     'finds nothing reports every link as fine'),
+
+    ('every email sender has been judged marketing or not',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     'async function sendNudgeEmail(env, l, daysLeft) {',
+     'async function sendChopChopEmail(env, l, daysLeft) {',
+     'a new email sender appears and nobody has said whether it needs an unsubscribe link'),
+
+    # The suite. THE LABEL IS THE FILE NAME, because that is what the gate prints.
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     "        licence_id: l.id, object_key: key, taken_by: src.taken_by, purpose: 'game',",
+     "        licence_id: l.id, object_key: key, taken_by: src.taken_by, purpose: 'album',",
+     'a guest photo picked for Guess the Photo is copied but not made a game photo, so '
+     '/game/photo still 404s and the television paints a broken image'),
+
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     """  if (!r.ok) {
+    const e = new Error('resend ' + r.status + ': ' + String(text).slice(0, 300));
+    e.status = 502;
+    throw e;
+  }
+""",
+     "",
+     'nothing reads what Resend answered, so a refused email is stamped as delivered and '
+     'a $50 purchase that delivered nothing reads as delivered'),
+
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     '  async scheduled(event, env, ctx) {',
+     '  async notASchedule(event, env, ctx) {',
+     'the Worker exports fetch and nothing else again, so a Cron Trigger can run none of '
+     'the four jobs and the 30 day album deletion promise goes back to being enforced by nobody'),
+
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     '      if (off.length) { skipped++; continue; }',
+     '      if (false) { skipped++; continue; }',
+     'the expiry reminder is sent to somebody who has already pressed unsubscribe'),
+
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     '      if (ids.filter(x => !have[x]).length) {',
+     '      if (false) {',
+     'a Guess the Photo game is stored naming a photo the television cannot fetch, and '
+     'the host finds out in front of the room'),
 ]
 
 
