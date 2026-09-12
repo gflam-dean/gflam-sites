@@ -19,6 +19,14 @@ ask where their party went, and only if they bother.
 There is a /licence/resend route, so the repair is easy. Finding out is the hard
 part, and that is what this does.
 
+THIS TOOL ONLY BECAME TRUE ON 12 SEP 2026. Until then every Resend call was a
+bare fetch with nothing reading the answer, so a message Resend REFUSED still
+looked like a message sent: the webhook wrote welcome_sent_at either way, and
+/licence/resend wrote it BEFORE it even tried. This tool looks for paid rows with
+no stamp, so it reported "Nothing paid is undelivered" about exactly the buyers
+it exists to find. The send now throws on anything but a 2xx and the stamp is
+written after it returns, which is what makes the question below worth asking.
+
 WHAT IT WILL NOT DO IS CRY WOLF. welcome_sent_at only exists from migration 12b,
 2 Sep 2026. Two licences were paid before that (26 and 29 Aug, both Dean's own
 test purchases) and can never have the stamp. They are reported as unjudgeable,

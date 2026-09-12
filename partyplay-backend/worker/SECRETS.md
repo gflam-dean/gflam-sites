@@ -19,6 +19,27 @@ The repo auto-deploys, so a key committed here is a key published to the interne
 | `ADMIN_KEY` | make one up, 32+ random characters | Guards `/admin/comp` and `/admin/followups`. Anyone holding it can issue free licences |
 | `FOLLOWUP_PROMO_CODE` | Stripe > Products > Coupons > promotion code | Optional. Defaults to `AGAIN10`. Plain Text |
 
+## The Cron Trigger (this is not a secret, but it is on the same screen)
+
+The Worker has four scheduled jobs in it: album links, the photo sweep that keeps
+the 30 day deletion promise on privacy.html and terms.html, the follow up email
+and the reminder about an unused code. **None of them happens until a Cron
+Trigger is added**, because a Worker with no trigger only ever runs when somebody
+asks it for a page.
+
+    Cloudflare dashboard > Workers & Pages > partyplay-api > Settings
+      > Triggers > Cron Triggers > Add Cron Trigger
+
+    Type exactly:   0,15,30,45 * * * *
+
+That is every fifteen minutes. Every job is idempotent and each one is a single
+database query when there is nothing to do, so there is nothing to tune and only
+one line to get wrong. The two jobs that email somebody who is not waiting for it
+keep daytime hours on their own, between 9am and 8pm Brisbane time.
+
+The buttons on /admin still work and still run the same code, for when you want
+one of them to happen right now.
+
 ## THESE ARE LIVE, NOT TEST
 
 Verified 26 Aug 2026: a checkout call returned a `cs_live_` session, which only a

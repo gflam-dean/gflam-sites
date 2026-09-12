@@ -502,6 +502,24 @@
            people actually want; the second is a bonus once a party is running. */
         var mine = d.mine || [], party = d.party || [];
         var pics = mine.concat(party);
+        /* WHICH OF THESE IS A GUEST'S PHOTO.
+
+           Both lists were concatenated and every pick was saved as
+           /game/photo?id=..., which serves game photos and nothing else. So a
+           host who picked a face the room had photographed tonight saved a URL
+           that answers 404, and the television painted a broken image in front
+           of everybody. A guest's photo has to be promoted to a game photo
+           first, which copies it and grants that one photo the right to be shown
+           on a screen. gameId maps the tile the host pressed to the id that is
+           actually saved. */
+        var isAlbum = {}, gameId = {};
+        party.forEach(function(p){ isAlbum[p.id] = 1; });
+        function promote(id){
+          return api("/photos/promote?code=" + encodeURIComponent(CODE) +
+                     "&key=" + encodeURIComponent(KEY),
+                     { method:"POST", body: JSON.stringify({ id:id }) })
+            .then(function(j){ return j.id; });
+        }
         $("pickHint").innerHTML =
           'Upload your own photos, then say who is in each. Baby photos work best.' +
           (party.length ? ' Photos your guests have taken tonight are down the bottom.' : '');
@@ -523,7 +541,8 @@
                   '</label><input type="file" id="gamePhotos" accept="image/*" multiple hidden>' +
                   '<div class="upnote" id="upnote"></div>';
           h += '<div class="pickgrid">' + pics.map(function(p){
-            return '<button type="button" class="' + (chosen[p.id] ? "on" : "") + '" data-pick="' + esc(p.id) + '">' +
+            return '<button type="button" class="' + (chosen[gameId[p.id] || p.id] ? "on" : "") +
+                   '" data-pick="' + esc(p.id) + '">' +
                    '<img loading="lazy" src="' + url(p.id) + '" alt=""></button>'; }).join("") + '</div>';
           var picked = Object.keys(chosen);
           if(picked.length){
@@ -578,9 +597,25 @@
           grab();
           if(b.hasAttribute("data-pick")){
             var id = b.getAttribute("data-pick");
-            if(chosen[id]) delete chosen[id];
-            else chosen[id] = { id:id, q:"", a:"", url:shown(id) };
-          } else { delete chosen[b.getAttribute("data-unpick")]; }
+            var gid = gameId[id] || (isAlbum[id] ? null : id);
+            if(gid){
+              if(chosen[gid]) delete chosen[gid];
+              else chosen[gid] = { id:gid, q:"", a:"", url:shown(gid) };
+              paint();
+              return;
+            }
+            /* First time this guest photo has been picked. Copy it into the
+               game photos and use the copy, so what goes on the television is a
+               photo that was deliberately put there. The album keeps its own. */
+            b.disabled = true;
+            promote(id).then(function(newId){
+              gameId[id] = newId;
+              chosen[newId] = { id:newId, q:"", a:"", url:shown(newId) };
+              paint();
+            }, function(e){ b.disabled = false; toast(e.message); });
+            return;
+          }
+          delete chosen[b.getAttribute("data-unpick")];
           paint();
         });
         editing._collect = function(){

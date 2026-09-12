@@ -82,7 +82,7 @@ var ENV = {
   STRIPE_SECRET_KEY:"sk_test", STRIPE_WEBHOOK_SECRET:"whsec_test_abc123",
   STRIPE_PRICE_1DAY:"price_1", STRIPE_PRICE_3DAY:"price_3",
   SUPABASE_URL:"https://x.supabase.co", SUPABASE_SERVICE_KEY:"svc",
-  RESEND_API_KEY:"", SITE_ORIGIN:"https://partyplay.com.au",
+  RESEND_API_KEY:"re_test", SITE_ORIGIN:"https://partyplay.com.au",
   ADMIN_KEY:"test-admin-key",
   // R2, bound as PHOTOS in the Cloudflare dashboard. A stub is enough here: the
   // point is that health notices when it is ABSENT.
@@ -342,6 +342,17 @@ test("health says so when the photo store is not bound", function(){
     ok(j.ok === false && j.photos === false && /R2 is not bound/.test(j.warning||""),
        "expected a clear warning, got "+JSON.stringify(j)); }); });
 });
+/* The same fault as the photo store, one step further along: without an email key
+   nothing can be delivered AT ALL. The code and the host key exist in that email
+   and nowhere else, so $50 is taken and the buyer gets nothing. It is not in
+   REQUIRED on purpose, because 503ing every request would end a party that is
+   already running, but health has to say it out loud. */
+test("health says so when it cannot send an email at all", function(){
+  var noMail = Object.assign({}, ENV, { RESEND_API_KEY: "" });
+  return W.fetch(req("GET","/health"), noMail).then(function(r){ return r.json().then(function(j){
+    ok(j.ok === false && j.email === false && /NO email can be sent/.test(j.warning||""),
+       "expected a clear warning, got "+JSON.stringify(j)); }); });
+});
 test("and stays quiet about it when it is bound", function(){
   return W.fetch(req("GET","/health"), ENV).then(function(r){ return r.json().then(function(j){
     ok(j.photos === true && !j.warning, "expected no warning, got "+JSON.stringify(j)); }); });
@@ -490,6 +501,251 @@ test("an old file with no row is deleted, a new one and a known one are not", fu
       ok(j.orphans === 1, "it reported 1 orphan, said " + j.orphans);
     });
   });
+});
+
+/* ============================================================================
+   GUESS THE PHOTO: a guest's photo reaches the television only on purpose.
+
+   host.html concatenated the host's game photos with the party album and saved
+   every pick as /game/photo?id=..., which serves purpose='game' only. So every
+   album photo picked answered 404 and the television painted a broken image.
+   The fix is not to widen /game/photo, which carries no key deliberately, but to
+   COPY the photo into a game photo at the moment the host picks it.
+   ========================================================================== */
+print("== a guest's photo reaches the television only on purpose ==");
+var ALBUM_ID = "11111111-2222-4333-8444-555555555555";
+var GAME_ID  = "99999999-8888-4777-8666-555555555555";
+
+function photoEnv(rec){
+  return Object.assign({}, ENV, { PHOTOS: {
+    put: function(k, buf){ rec.put.push(k); return Promise.resolve(); },
+    get: function(k){ rec.got.push(k);
+      return Promise.resolve({ arrayBuffer: function(){ return Promise.resolve({ byteLength: 1234 }); } }); },
+    "delete": function(k){ rec.del.push(k); return Promise.resolve(); }
+  }});
+}
+function albumRow(extra){
+  var base = { id:ALBUM_ID, object_key:"L1/aaaa.jpg", content_type:"image/jpeg",
+               purpose:"album", taken_by:"Sam" };
+  for (var k in (extra||{})) base[k]=extra[k];
+  return { status:200, body: JSON.stringify([base]) };
+}
+function promote(body, plan, env){
+  FETCH.calls = []; FETCH.plan = plan;
+  return W.fetch(req("POST","/photos/promote?code=ACDEFG&key="+HK, body), env);
+}
+
+test("picking a guest's photo copies it into a game photo", function(){
+  var rec = { put:[], got:[], del:[] };
+  return promote({ id:ALBUM_ID },
+    [ licenceRow(), albumRow(), { status:200, body:"[]" },
+      { status:200, body: JSON.stringify([{ id:GAME_ID }]) } ], photoEnv(rec))
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===200 && j.id===GAME_ID, "expected the new id, got "+r.status+" "+JSON.stringify(j));
+      ok(rec.got[0]==="L1/aaaa.jpg", "it read the original, read "+rec.got[0]);
+      ok((rec.put[0]||"").indexOf("/game/from-"+ALBUM_ID) > 0,
+         "the copy is keyed off the source, wrote "+rec.put[0]);
+      var ins = FETCH.calls[FETCH.calls.length-1];
+      ok(/"purpose":"game"/.test(ins.init.body||""), "the copy is a GAME photo, wrote "+(ins.init.body||""));
+      /* Copied, never moved. The album belongs to the guests and a photo must not
+         disappear out of it because the host built a round. */
+      var patched = FETCH.calls.filter(function(c){ return (c.init||{}).method === "PATCH"; });
+      ok(patched.length === 0, "the guest's own row was left alone, saw "+patched.length+" PATCH");
+    }); });
+});
+
+test("picking the same face twice does not copy it twice", function(){
+  var rec = { put:[], got:[], del:[] };
+  return promote({ id:ALBUM_ID },
+    [ licenceRow(), albumRow(), { status:200, body: JSON.stringify([{ id:GAME_ID }]) } ], photoEnv(rec))
+    .then(function(r){ return r.json().then(function(j){
+      ok(j.id===GAME_ID && j.already===true, "expected the first copy back, got "+JSON.stringify(j));
+      ok(rec.put.length===0, "nothing was written again, wrote "+rec.put.length);
+    }); });
+});
+
+test("a photo belonging to another party cannot be promoted", function(){
+  var rec = { put:[], got:[], del:[] };
+  return promote({ id:ALBUM_ID }, [ licenceRow(), { status:200, body:"[]" } ], photoEnv(rec))
+    .then(function(r){ ok(r.status===404, "expected 404, got "+r.status);
+      ok(rec.put.length===0, "and nothing was copied"); });
+});
+
+test("a guest holding only the join code cannot promote anything", function(){
+  var rec = { put:[], got:[], del:[] };
+  FETCH.calls = []; FETCH.plan = [ licenceRow() ];
+  return W.fetch(req("POST","/photos/promote?code=ACDEFG&key=b"+HK.slice(1), { id:ALBUM_ID }), photoEnv(rec))
+    .then(function(r){ ok(r.status===403, "expected 403, got "+r.status); });
+});
+
+/* AND THE ROUTE IT FEEDS IS STILL NARROW. The whole point of promoting is that
+   /game/photo stays unable to serve an album photo: it is unauthenticated, and
+   the id is broadcast to every phone in the room. */
+test("/game/photo still asks only for game photos", function(){
+  FETCH.calls = []; FETCH.plan = [ { status:200, body:"[]" } ];
+  return W.fetch(req("GET","/game/photo?id="+ALBUM_ID), ENV).then(function(r){
+    ok(r.status===404, "an album photo is not found there, got "+r.status);
+    ok((FETCH.calls[0]||{}).url.indexOf("purpose=eq.game") > 0,
+       "it filtered on purpose=game, asked "+((FETCH.calls[0]||{}).url||""));
+  });
+});
+
+/* The browser half can be edited, cached or rewritten. This is the half that
+   cannot be forgotten: a game naming a photo the television cannot fetch is a
+   broken image in front of a room, and it is refused while somebody is still at
+   a keyboard and can pick another. */
+test("a game will not save naming a photo the television cannot show", function(){
+  FETCH.plan = [ licenceRow(), { status:200, body:"[]" } ];
+  return W.fetch(req("POST","/games",{ code:"ACDEFG", key:HK, format:"photos",
+      config:{ items:[{ id:ALBUM_ID, a:"Sam" }] } }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===400 && /Pick it again/.test(j.error||""),
+         "expected a plain refusal, got "+r.status+" "+JSON.stringify(j)); }); });
+});
+test("and saves normally once the photos are game photos", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ licenceRow(), { status:200, body: JSON.stringify([{ id:GAME_ID }]) },
+                 { status:200, body:"[]" }, { status:200, body: JSON.stringify([{ id:"G1" }]) } ];
+  return W.fetch(req("POST","/games",{ code:"ACDEFG", key:HK, format:"photos",
+      config:{ items:[{ id:GAME_ID, a:"Sam" }] } }), ENV)
+    .then(function(r){
+      ok(r.status===200, "expected 200, got "+r.status);
+      /* And it asked only about THIS licence's game photos. A check that reads
+         every photo on the table would pass a host a face from another party. */
+      var asked = FETCH.calls[1] ? FETCH.calls[1].url : "";
+      ok(/licence_id=eq\.L1/.test(asked) && /purpose=eq\.game/.test(asked),
+         "the photo lookup is scoped, asked " + asked);
+    });
+});
+
+/* ============================================================================
+   THE WELCOME EMAIL CAN FAIL, AND SAYING SO IS THE WHOLE POINT.
+
+   Every Resend call was a bare fetch with nothing reading the answer, and the
+   resend route stamped welcome_sent_at BEFORE it sent. welcome_sent_at is the
+   only column that says a buyer has their code, and check-paid-not-delivered.py
+   looks for paid rows without it, so the repair tool was marking the damage
+   repaired: the buyer had nothing and the tool printed "Nothing paid is
+   undelivered".
+   ========================================================================== */
+print("== a failed email must not read as a delivered one ==");
+function licenceForResend(){
+  return { status:200, body: JSON.stringify([{ id:"L1", code:"ACDEFG", host_key:HK,
+    buyer_name:"Dean", buyer_email:"d@e.f", party_name:"The party", days:1,
+    is_comp:false, welcome_sent_at:null }]) };
+}
+function stamps(){
+  return FETCH.calls.filter(function(c){
+    return (c.init||{}).method === "PATCH" && /welcome_sent_at/.test((c.init||{}).body||"");
+  });
+}
+test("Resend refusing the message leaves the party marked undelivered", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ licenceForResend(),
+                 { status:422, body: JSON.stringify({ message:"domain is not verified" }) } ];
+  return W.fetch(req("POST","/licence/resend",{ code:"ACDEFG" }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===200 && j.ok===true, "the answer still must not vary, got "+r.status+" "+JSON.stringify(j));
+      ok(stamps().length === 0, "nothing was stamped as sent, saw "+stamps().length);
+    }); });
+});
+test("and a message that went out is stamped", function(){
+  FETCH.calls = [];
+  FETCH.plan = [ licenceForResend(), { status:200, body: JSON.stringify({ id:"em_1" }) } ];
+  return W.fetch(req("POST","/licence/resend",{ code:"ACDEFG" }), ENV)
+    .then(function(r){ return r.json().then(function(j){
+      ok(r.status===200 && j.ok===true, "got "+r.status+" "+JSON.stringify(j));
+      ok(stamps().length === 1, "the stamp is written after the send, saw "+stamps().length);
+    }); });
+});
+test("a Worker with no email key cannot pretend it sent one", function(){
+  var noMail = Object.assign({}, ENV, { RESEND_API_KEY: "" });
+  FETCH.calls = []; FETCH.plan = [ licenceForResend() ];
+  return W.fetch(req("POST","/licence/resend",{ code:"ACDEFG" }), noMail)
+    .then(function(r){ ok(r.status===503, "it says so, got "+r.status);
+      ok(stamps().length === 0, "and stamped nothing"); });
+});
+
+/* ============================================================================
+   THE UNSUBSCRIBE THAT NOTHING COULD REACH.
+
+   The link in every follow-up pointed at the SITE, and the handler is on the
+   WORKER. Pages answers a path it does not have with the homepage and a 200, so
+   the recipient landed on a page selling them PartyPlay and nothing was
+   recorded. The nudge carried no unsubscribe link at all and went to every paid
+   buyer. Spam Act, not a nicety.
+   ========================================================================== */
+print("== the unsubscribe has to reach somebody ==");
+function dueNudge(){
+  return { status:200, body: JSON.stringify([{ id:"L1", code:"ACDEFG", buyer_name:"Dean",
+    buyer_email:"d@e.f", party_name:"The party", host_key:HK, days:1, is_comp:false,
+    paid_at: new Date(Date.now() - 340*86400e3).toISOString() }]) };
+}
+function nudge(plan){
+  FETCH.calls = []; FETCH.plan = plan;
+  return W.fetch(req("POST","/admin/nudge-expiring",{},{"x-admin-key":"test-admin-key"}), ENV);
+}
+function resendCalls(){
+  return FETCH.calls.filter(function(c){ return /api\.resend\.com/.test(c.url); });
+}
+test("the reminder carries an unsubscribe link", function(){
+  return nudge([ dueNudge(), { status:200, body:"[]" }, { status:200, body:"[]" },
+                 { status:200, body: JSON.stringify({ id:"em_1" }) } ])
+    .then(function(r){ return r.json().then(function(j){
+      ok(j.sent === 1, "one went out, said "+JSON.stringify(j));
+      var sent = resendCalls()[0];
+      ok(!!sent && /\/unsubscribe\?e=/.test((sent.init||{}).body||""),
+         "the email carries the link, body was "+((sent&&sent.init.body)||"").slice(0,120));
+    }); });
+});
+test("and nobody who has already unsubscribed is sent one", function(){
+  return nudge([ dueNudge(), { status:200, body: JSON.stringify([{ id:"S1" }]) },
+                 { status:200, body:"[]" } ])
+    .then(function(r){ return r.json().then(function(j){
+      ok(j.sent === 0 && j.skipped === 1, "skipped, said "+JSON.stringify(j));
+      ok(resendCalls().length === 0, "and no email was sent, saw "+resendCalls().length);
+    }); });
+});
+
+/* ============================================================================
+   NOTHING RAN ON A SCHEDULE. Four jobs called themselves crons and were buttons.
+   The sweep is the one that matters: privacy.html and terms.html both promise
+   every guest that the album is deleted 30 days after the party.
+   ========================================================================== */
+print("== the jobs that call themselves crons can actually be run by one ==");
+test("the Worker exports a scheduled handler", function(){
+  ok(typeof W.scheduled === "function", "no scheduled() export, so no Cron Trigger can run anything");
+});
+test("a cron tick deletes a photo that is past its delete_after", function(){
+  var rec = { put:[], got:[], del:[] };
+  var env2 = Object.assign({}, ENV, { PHOTOS: {
+    put: function(k){ rec.put.push(k); return Promise.resolve(); },
+    get: function(k){ rec.got.push(k); return Promise.resolve(null); },
+    "delete": function(k){ rec.del.push(k); return Promise.resolve(); },
+    list: function(){ return Promise.resolve({ truncated:false, objects:[] }); }
+  }});
+  /* A router rather than a queue: which jobs run depends on the hour in
+     Brisbane, so a fixed list of answers would be right for part of the day and
+     wrong for the rest. */
+  var real = globalThis.fetch;
+  FETCH.calls = [];
+  globalThis.fetch = function(url, init){
+    FETCH.calls.push({ url:url, init:init });
+    var body = "[]";
+    if (url.indexOf("pp_photos?delete_after=lt.") >= 0) {
+      body = JSON.stringify([{ id:"P1", object_key:"L1/expired.jpg" }]);
+    }
+    return Promise.resolve(new Response(body, { status:200 }));
+  };
+  return Promise.resolve(W.scheduled({ cron:"0,15,30,45 * * * *" }, env2, { waitUntil:function(){} }))
+    .then(function(){
+      globalThis.fetch = real;
+      ok(rec.del.indexOf("L1/expired.jpg") >= 0,
+         "the expired file was deleted, deleted " + JSON.stringify(rec.del));
+      var rows = FETCH.calls.filter(function(c){
+        return /pp_photos\?id=eq\.P1/.test(c.url) && (c.init||{}).method === "DELETE"; });
+      ok(rows.length === 1, "and its row went with it, saw "+rows.length);
+    }, function(e){ globalThis.fetch = real; throw e; });
 });
 
 print("== routing ==");

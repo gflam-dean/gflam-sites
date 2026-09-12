@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 12 Sep 2026, 07:16:37   fingerprint 1b13eee1eae5
+   Built 12 Sep 2026, 16:21:11   fingerprint 92e035840356
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '12 Sep 2026, 07:16 · 33cdfc4d';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 16:21 · faf64a02';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -336,6 +336,44 @@ async function sb(env, path, init = {}) {
   return body;
 }
 
+/* ----------------------------------------------------------- one door ----
+ * EVERY EMAIL THIS WORKER SENDS GOES THROUGH HERE.
+ *
+ * All four senders used to be a bare `await fetch(...)` with nothing looking at
+ * the answer. Resend replies 200 with an id, or 4xx with a reason: an unverified
+ * sending domain, a rolled key, an address on its suppression list. Either way
+ * the await resolved, the caller carried on as though the email had gone, and
+ * the webhook then stamped welcome_sent_at. So a $50 purchase that delivered
+ * NOTHING read as delivered, and check-paid-not-delivered.py printed "Nothing
+ * paid is undelivered" while the buyer had no code and no host key.
+ *
+ * A missing key throws for the same reason: silently returning made "email is
+ * switched off" and "email was sent" the same event to every caller.
+ *
+ * Status 502/503 on purpose, both >= 500, so the router's catch turns them into
+ * a reference rather than echoing Resend's words at a customer.
+ * ------------------------------------------------------------------------ */
+async function sendEmail(env, payload) {
+  if (!env.RESEND_API_KEY) {
+    const e = new Error('no RESEND_API_KEY is set on this Worker, so nothing was sent');
+    e.status = 503;
+    throw e;
+  }
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  let text = '';
+  try { text = await r.text(); } catch (e) {}
+  if (!r.ok) {
+    const e = new Error('resend ' + r.status + ': ' + String(text).slice(0, 300));
+    e.status = 502;
+    throw e;
+  }
+  return text;
+}
+
 /* --------------------------------------------------- Stripe signature ------ */
 /* Verify a webhook the way Stripe documents it, because the alternative is an
    endpoint that anybody on the internet can use to mark licences paid.
@@ -526,6 +564,40 @@ async function handleGameSave(request, env) {
     return json({ error: 'That game is too big. Split it into two.' }, 413);
   }
 
+  /* GUESS THE PHOTO MAY ONLY HOLD GAME PHOTOS.
+
+     The console fix is to promote a picked album photo first, and that is where
+     the capability is granted. This is the half that cannot be forgotten by a
+     browser that is cached, edited, or written later: a game that names a photo
+     /game/photo will not serve is a broken image on a television in front of a
+     room, and the host finds out at the worst possible moment. Refuse it here,
+     while somebody is sitting at a keyboard and can pick it again. */
+  if (format === 'photos') {
+    const items = Array.isArray(config.items) ? config.items : [];
+    const ids = [];
+    for (const it of items) {
+      const pid = String((it && it.id) || '');
+      if (!pid) continue;
+      if (!PHOTO_ID_RE.test(pid)) return json({ error: 'One of those photos is not one of yours. Pick it again.' }, 400);
+      if (ids.indexOf(pid) < 0) ids.push(pid);
+    }
+    if (ids.length) {
+      /* ASK FOR THE LICENCE'S GAME PHOTOS, not for these ids. A photo id list
+         would go into an in.() filter, and a comma inside a percent-encoded
+         PostgREST filter is a thing to be sure about rather than to assume on a
+         route a host presses to save their night's work. There are at most sixty
+         game photos on a licence, so the whole list is one cheap query and the
+         comparison happens here where it can be read. */
+      const found = await sb(env, 'pp_photos?licence_id=eq.' + l.id +
+        '&purpose=eq.game&select=id&limit=500');
+      const have = {};
+      (found || []).forEach(r => { have[r.id] = 1; });
+      if (ids.filter(x => !have[x]).length) {
+        return json({ error: 'One of those photos is not ready to show yet. Pick it again.' }, 400);
+      }
+    }
+  }
+
   if (b.id) {
     const rows = await sb(env, 'pp_games?id=eq.' + encodeURIComponent(String(b.id)) + '&licence_id=eq.' + l.id, {
       method: 'PATCH', headers: { prefer: 'return=representation' },
@@ -597,6 +669,14 @@ async function handleFollowups(request, env) {
   const b = await request.json().catch(() => ({}));
   const actor = await adminActor(request, env, b.key);
   if (!actor) return json({ error: 'no' }, 403);
+  return json(await runFollowups(env));
+}
+
+/* The work, with no request and no admin in front of it, so scheduled() can do
+   it too. The button in admin.html and the cron now run the SAME code: a job
+   that only exists behind a button is a job that only happens when somebody
+   remembers. */
+async function runFollowups(env) {
   const cutoff = new Date(Date.now() - 7 * 86400e3).toISOString();
   /* Keyed off when the party actually finished, not a date somebody guessed at
      purchase. A licence never started gets no follow-up, which is right: there is
@@ -617,11 +697,10 @@ async function handleFollowups(request, env) {
     if (off.length) { skipped++; continue; }
     try { await sendFollowupEmail(env, l); sent++; } catch (e) { console.log('followup failed ' + l.code + ': ' + e.message); }
   }
-  return json({ ok: true, due: due.length, sent, skipped });
+  return { ok: true, due: due.length, sent, skipped };
 }
 
 async function sendFollowupEmail(env, l) {
-  if (!env.RESEND_API_KEY) return;
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
   const now = new Date();
   const endOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
@@ -629,25 +708,21 @@ async function sendFollowupEmail(env, l) {
   const what = l.party_name ? escapeHtml(l.party_name) : 'the party';
   const promo = escapeHtml(env.FOLLOWUP_PROMO_CODE || 'AGAIN10');
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      from: 'PartyPlay <hello@send.partyplay.com.au>',
-      to: [l.buyer_email],
-      subject: 'How was ' + (l.party_name || 'the party') + '?',
-      html: emailShell({
-        site: site,
-        preview: '10% off the next one, if you are planning it.',
-        heading: 'How was ' + what + '?',
-        body: '<p>Hope it went well, ' + escapeHtml(l.buyer_name) + '.</p>' +
-              '<p>If you are planning the next one, here is <b>10% off</b> with the code ' +
-              '<b style="font-size:18px;color:' + PINK + '">' + promo + '</b> at checkout. ' +
-              'It runs out on ' + expires + '.</p>' +
-              emailButton(site + '/start', 'Book the next one'),
-        foot: '<p style="margin:0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
-              '" style="color:#8A8296">Unsubscribe</a></p>'
-      })
+  await sendEmail(env, {
+    from: 'PartyPlay <hello@send.partyplay.com.au>',
+    to: [l.buyer_email],
+    subject: 'How was ' + (l.party_name || 'the party') + '?',
+    html: emailShell({
+      site: site,
+      preview: '10% off the next one, if you are planning it.',
+      heading: 'How was ' + what + '?',
+      body: '<p>Hope it went well, ' + escapeHtml(l.buyer_name) + '.</p>' +
+            '<p>If you are planning the next one, here is <b>10% off</b> with the code ' +
+            '<b style="font-size:18px;color:' + PINK + '">' + promo + '</b> at checkout. ' +
+            'It runs out on ' + expires + '.</p>' +
+            emailButton(site + '/start', 'Book the next one'),
+      foot: '<p style="margin:0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
+            '" style="color:#8A8296">Unsubscribe</a></p>'
     })
   });
 }
@@ -660,6 +735,10 @@ async function sendFollowupEmail(env, l) {
  * Guests upload with their PLAYER TOKEN, which they only have because they were
  * in the room. The host downloads with the HOST KEY.
  * -------------------------------------------------------------------------- */
+
+/* A photo id is a v4 UUID and it is checked in three places now, so it is
+   written once. */
+const PHOTO_ID_RE = /^[0-9a-f-]{36}$/i;
 
 const PHOTO_MAX_BYTES = 5 * 1024 * 1024;    // generous: the browser resizes to ~300KB first
 /* Video is capped at 15 seconds and 720p in the browser, which lands around
@@ -766,7 +845,7 @@ async function handlePhotoPick(request, env) {
 async function handleGamePhoto(request, env) {
   if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
   const id = String(new URL(request.url).searchParams.get('id') || '');
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ error: 'Not found.' }, 404);
+  if (!PHOTO_ID_RE.test(id)) return json({ error: 'Not found.' }, 404);
 
   const rows = await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(id) +
     '&purpose=eq.game&select=object_key,content_type');
@@ -855,6 +934,10 @@ async function handleSendAlbums(request, env) {
   const b = await request.json().catch(() => ({}));
   const actor = await adminActor(request, env, b.key);
   if (!actor) return json({ error: 'no' }, 403);
+  return json(await runSendAlbums(env));
+}
+
+async function runSendAlbums(env) {
   const now = new Date().toISOString();
   const pending = await sb(env, 'pp_album_requests?sent_at=is.null&select=id,email,nickname,licence_id&limit=300');
   let sent = 0;
@@ -883,33 +966,28 @@ async function handleSendAlbums(request, env) {
       console.log('album email failed, will retry next run: ' + e.message);
     }
   }
-  return json({ ok: true, pending: pending.length, sent });
+  return { ok: true, pending: pending.length, sent };
 }
 
 async function sendAlbumEmail(env, req, lic) {
-  if (!env.RESEND_API_KEY) return;
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
   const gone = new Date(Date.parse(lic.expires_at) + ALBUM_KEEP_DAYS * 86400e3);
   const goneStr = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long' }).format(gone);
   const what = lic.party_name ? escapeHtml(lic.party_name) : 'the party';
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      from: 'PartyPlay <hello@send.partyplay.com.au>',
-      to: [req.email],
-      subject: 'Photos from ' + (lic.party_name || 'the party'),
-      html: emailShell({
-        site: site,
-        preview: 'They are deleted on ' + goneStr + '. Save what you want before then.',
-        heading: 'Photos from ' + what,
-        body: '<p>Hi ' + escapeHtml(req.nickname || 'there') + ', here you go.</p>' +
-              emailButton(site + '/album?share=' + encodeURIComponent(lic.share_key), 'See the album') +
-              '<p style="margin-top:18px"><b>They are deleted on ' + goneStr + '.</b> ' +
-              'Save anything you want to keep before then.</p>',
-        foot: '<p style="margin:0">You asked for this at the party. It is a one off and you are not on any list.</p>'
-      })
+  await sendEmail(env, {
+    from: 'PartyPlay <hello@send.partyplay.com.au>',
+    to: [req.email],
+    subject: 'Photos from ' + (lic.party_name || 'the party'),
+    html: emailShell({
+      site: site,
+      preview: 'They are deleted on ' + goneStr + '. Save what you want before then.',
+      heading: 'Photos from ' + what,
+      body: '<p>Hi ' + escapeHtml(req.nickname || 'there') + ', here you go.</p>' +
+            emailButton(site + '/album?share=' + encodeURIComponent(lic.share_key), 'See the album') +
+            '<p style="margin-top:18px"><b>They are deleted on ' + goneStr + '.</b> ' +
+            'Save anything you want to keep before then.</p>',
+      foot: '<p style="margin:0">You asked for this at the party. It is a one off and you are not on any list.</p>'
     })
   });
 }
@@ -949,6 +1027,77 @@ async function handleHostPhotoUpload(request, env) {
       }])
     });
     row = rows[0];
+  } catch (e) {
+    try { await env.PHOTOS.delete(key); } catch (e2) {}
+    if (/plenty for one game/i.test(e.message)) return json({ error: 'Sixty photos is plenty for one game.' }, 409);
+    throw e;
+  }
+  return json({ ok: true, id: row.id });
+}
+
+/* POST /photos/promote?code=&key=   { id }
+   THE HOST HAS PICKED A GUEST'S PHOTO FOR GUESS THE PHOTO.
+
+   The picker shows two sets side by side: the host's own game photos, and the
+   album the room has been filling tonight. Both were saved into the game as
+   /game/photo?id=..., and that route serves purpose='game' and nothing else, so
+   every album photo a host picked came out of the television as a broken image.
+
+   Widening /game/photo is the wrong fix. It carries NO KEY on purpose: the id
+   alone is the whole capability, and it is broadcast to every phone in the room
+   the second the game starts. Album photos are guests photographing each other
+   at a party and they must not become reachable that way.
+
+   So the capability is granted deliberately, here, at the moment the host picks
+   one. The file is COPIED to a second object marked purpose='game'. Copied and
+   not moved, because the album belongs to the guests: a photo must not vanish
+   out of it because the host built a game round. The copy's object key is
+   derived from the source id, so picking the same face twice returns the first
+   copy instead of putting another megabyte in the bucket. */
+async function handlePhotoPromote(request, env) {
+  if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
+  const u = new URL(request.url);
+  const b = await request.json().catch(() => ({}));
+  const l = await requireHost(env, u.searchParams.get('code') || (b && b.code),
+                                   u.searchParams.get('key')  || (b && b.key));
+  const id = String((b && b.id) || u.searchParams.get('id') || '');
+  if (!PHOTO_ID_RE.test(id)) return json({ error: 'Which photo?' }, 400);
+
+  /* Scoped to this licence, so a host holding one party's key cannot reach into
+     another party's album and pull a face out of it. */
+  const rows = await sb(env, 'pp_photos?id=eq.' + encodeURIComponent(id) +
+    '&licence_id=eq.' + l.id + '&select=id,object_key,content_type,purpose,taken_by');
+  if (!rows.length) return json({ error: 'That photo is not on this party.' }, 404);
+  const src = rows[0];
+  if (src.purpose === 'game') return json({ ok: true, id: src.id, already: true });
+  if (/^video\//.test(src.content_type || '')) return json({ error: 'Photos only for this one.' }, 415);
+
+  const type = src.content_type || 'image/jpeg';
+  const ext = type === 'image/png' ? 'png' : (type === 'image/webp' ? 'webp' : 'jpg');
+  const key = l.id + '/game/from-' + src.id + '.' + ext;
+
+  const had = await sb(env, 'pp_photos?licence_id=eq.' + l.id + '&purpose=eq.game' +
+    '&object_key=eq.' + encodeURIComponent(key) + '&select=id');
+  if (had.length) return json({ ok: true, id: had[0].id, already: true });
+
+  const obj = await env.PHOTOS.get(src.object_key);
+  if (!obj) return json({ error: 'That photo is not here any more.' }, 404);
+  const buf = await obj.arrayBuffer();
+  await env.PHOTOS.put(key, buf, { httpMetadata: { contentType: type } });
+
+  /* The album's clock is the party plus thirty days. A game photo has to still
+     be there on the night, so the copy is kept on the game clock instead. */
+  const deleteAfter = new Date(Date.parse(l.created_at) + 400 * 86400e3).toISOString();
+  let row;
+  try {
+    const made = await sb(env, 'pp_photos', {
+      method: 'POST', headers: { prefer: 'return=representation' },
+      body: JSON.stringify([{
+        licence_id: l.id, object_key: key, taken_by: src.taken_by, purpose: 'game',
+        bytes: buf.byteLength, content_type: type, delete_after: deleteAfter
+      }])
+    });
+    row = made[0];
   } catch (e) {
     try { await env.PHOTOS.delete(key); } catch (e2) {}
     if (/plenty for one game/i.test(e.message)) return json({ error: 'Sixty photos is plenty for one game.' }, 409);
@@ -1003,7 +1152,12 @@ async function handlePhotoSweep(request, env) {
   const b = await request.json().catch(() => ({}));
   const actor = await adminActor(request, env, b.key);
   if (!actor) return json({ error: 'no' }, 403);
-  if (!env.PHOTOS) return json({ error: 'Photos are not switched on yet.' }, 503);
+  const out = await runPhotoSweep(env);
+  return json(out, out.ok ? 200 : 503);
+}
+
+async function runPhotoSweep(env) {
+  if (!env.PHOTOS) return { ok: false, error: 'Photos are not switched on yet.' };
   const now = new Date().toISOString();
   const due = await sb(env, 'pp_photos?delete_after=lt.' + encodeURIComponent(now) +
     '&select=id,object_key&limit=500');
@@ -1051,8 +1205,8 @@ async function handlePhotoSweep(request, env) {
     }
   } catch (e) { /* listing is best effort; the row sweep above is the main job */ }
 
-  return json({ ok: true, deleted: gone, orphans: orphans,
-                remaining: due.length === 500 ? 'more' : 0 });
+  return { ok: true, deleted: gone, orphans: orphans,
+           remaining: due.length === 500 ? 'more' : 0 };
 }
 
 /* GET /unsubscribe?e=<email>   shows a button
@@ -1233,7 +1387,15 @@ async function handleAdminAction(request, env) {
 
   if (act === 'resend') {
     /* The single commonest call: they cannot find the email. */
-    await sendLicenceEmail(env, l);
+    try {
+      await sendLicenceEmail(env, l);
+    } catch (e) {
+      /* Whoever pressed this is repairing an undelivered party. Answering "done"
+         when Resend refused the message is the same lie the rest of this fix is
+         about, and here there is a person reading the reply who can act on the
+         reason. */
+      return json({ error: 'That email would not send. ' + e.message }, 502);
+    }
     did = 'resent the licence email to ' + l.buyer_email;
 
   } else if (act === 'unstart') {
@@ -1303,7 +1465,12 @@ async function handleAdminAction(request, env) {
 async function handleNudgeExpiring(request, env) {
   const actor = await adminActor(request, env);
   if (!actor) return json({ error: 'no' }, 403);
-  if (!env.RESEND_API_KEY) return json({ error: 'No email key set on this Worker' }, 503);
+  const out = await runNudgeExpiring(env);
+  return json(out, out.ok ? 200 : 503);
+}
+
+async function runNudgeExpiring(env) {
+  if (!env.RESEND_API_KEY) return { ok: false, error: 'No email key set on this Worker' };
 
   const now = Date.now();
   const UNUSED_MS = 365 * 86400e3;
@@ -1316,21 +1483,31 @@ async function handleNudgeExpiring(request, env) {
     return gone > now && gone - now < 30 * 86400e3;
   });
 
-  let sent = 0;
+  let sent = 0, skipped = 0;
   const failed = [];
   for (const r of due) {
     const daysLeft = Math.max(1, Math.round((Date.parse(r.paid_at) + UNUSED_MS - now) / 86400e3));
     try {
+      /* NOBODY WHO HAS ASKED US TO STOP. This went to every paid buyer, and it
+         carried no unsubscribe link at all, so there was no way to make it stop
+         and nothing checked whether somebody already had. Both halves are now
+         here: the footer links to /unsubscribe, and this reads what that writes.
+         marketing_optin is deliberately not the test: a code somebody paid for
+         and is about to lose is worth telling them about either way. Somebody
+         who pressed unsubscribe is not. */
+      const off = await sb(env, 'pp_subscribers?email=eq.' + encodeURIComponent(r.buyer_email) +
+        '&unsubscribed_at=not.is.null&select=id');
       await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(r.id), {
         method: 'PATCH', body: JSON.stringify({ nudged_at: new Date().toISOString() })
       });
+      if (off.length) { skipped++; continue; }
       await sendNudgeEmail(env, r, daysLeft);
       sent++;
     } catch (e) {
       failed.push(r.code);
     }
   }
-  return json({ ok: true, considered: rows.length, due: due.length, sent, failed });
+  return { ok: true, considered: rows.length, due: due.length, sent, skipped, failed };
 }
 
 async function sendNudgeEmail(env, l, daysLeft) {
@@ -1338,28 +1515,26 @@ async function sendNudgeEmail(env, l, daysLeft) {
   const host = site + '/host?code=' + l.code + '&key=' + (l.host_key || '');
   const what = l.party_name ? escapeHtml(l.party_name) : 'your party';
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      from: 'PartyPlay <hello@send.partyplay.com.au>',
-      to: [l.buyer_email],
-      subject: 'Your party code runs out in ' + daysLeft + ' days',
-      html: emailShell({
-        site: site,
-        preview: 'Code ' + l.code + ' has not been used yet, and it expires soon.',
-        heading: 'Still got a party in you?',
-        body: '<p>Hi ' + escapeHtml(l.buyer_name) + '. You bought a PartyPlay code and never used it, ' +
-              'and it runs out in <b>' + daysLeft + ' days</b>.</p>' +
-              emailCode(l.code) +
-              '<p>Nothing has been ticking. Your ' + (l.days === 3 ? '3 days' : '24 hours') +
-              ' of play still starts the moment you press start, so all you need is a night.</p>' +
-              emailButton(host, 'Get ' + what + ' going') +
-              '<p style="margin-top:18px;font-size:14.5px;color:' + MUTE + '">' +
-              'If the party is off, no hard feelings and you can ignore this. ' +
-              'Reply and tell us what got in the way, we do read them.</p>',
-        foot: '<p style="margin:0">This is the only reminder we will send you about this code.</p>'
-      })
+  await sendEmail(env, {
+    from: 'PartyPlay <hello@send.partyplay.com.au>',
+    to: [l.buyer_email],
+    subject: 'Your party code runs out in ' + daysLeft + ' days',
+    html: emailShell({
+      site: site,
+      preview: 'Code ' + l.code + ' has not been used yet, and it expires soon.',
+      heading: 'Still got a party in you?',
+      body: '<p>Hi ' + escapeHtml(l.buyer_name) + '. You bought a PartyPlay code and never used it, ' +
+            'and it runs out in <b>' + daysLeft + ' days</b>.</p>' +
+            emailCode(l.code) +
+            '<p>Nothing has been ticking. Your ' + (l.days === 3 ? '3 days' : '24 hours') +
+            ' of play still starts the moment you press start, so all you need is a night.</p>' +
+            emailButton(host, 'Get ' + what + ' going') +
+            '<p style="margin-top:18px;font-size:14.5px;color:' + MUTE + '">' +
+            'If the party is off, no hard feelings and you can ignore this. ' +
+            'Reply and tell us what got in the way, we do read them.</p>',
+      foot: '<p style="margin:0">This is the only reminder we will send you about this code.</p>' +
+            '<p style="margin:10px 0 0"><a href="' + site + '/unsubscribe?e=' + encodeURIComponent(l.buyer_email) +
+            '" style="color:#8A8296">Unsubscribe</a></p>'
     })
   });
 }
@@ -1396,10 +1571,29 @@ async function handleResendWelcome(request, env) {
   const l = rows[0];
   if (l.welcome_sent_at && Date.now() - Date.parse(l.welcome_sent_at) < RESEND_GAP_MS) return same();
 
+  /* SEND FIRST, STAMP AFTER.
+
+     This stamped welcome_sent_at and then tried to send. Nothing read the answer
+     from Resend either, so a send that was refused still left the stamp behind,
+     and welcome_sent_at is the one column that says a buyer has their code.
+     check-paid-not-delivered.py looks for status='paid' with no stamp, so the
+     repair tool itself was what marked the damage repaired: the buyer had
+     nothing and the tool printed "Nothing paid is undelivered".
+
+     The reply still must not vary. Saying "that failed" for a real code and "ok"
+     for a made up one is how somebody finds out which codes exist, so a failure
+     is logged and answered exactly like every other case. The difference is that
+     the stamp is not written, so the party shows up as undelivered where
+     somebody will see it. */
+  try {
+    await sendLicenceEmail(env, l);
+  } catch (e) {
+    console.log('resend welcome failed for ' + l.code + ': ' + e.message);
+    return same();
+  }
   await sb(env, 'pp_licences?id=eq.' + encodeURIComponent(l.id), {
     method: 'PATCH', body: JSON.stringify({ welcome_sent_at: new Date().toISOString() })
   });
-  await sendLicenceEmail(env, l);
   return same();
 }
 
@@ -1890,7 +2084,6 @@ async function handleJoin(request, env) {
 }
 
 async function sendLicenceEmail(env, l) {
-  if (!env.RESEND_API_KEY) return;
   const site = (env.SITE_ORIGIN || '').replace(/\/$/, '');
   const plan = PPLicence.plan(l.days).label;
   const host = site + '/host?code=' + l.code + '&key=' + l.host_key;
@@ -1912,20 +2105,16 @@ async function sendLicenceEmail(env, l) {
     'video button under it for a 30 second message. It all lands in one album you can download or share, ' +
     'and the whole lot is deleted 30 days after your party.</p>';
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      from: 'PartyPlay <hello@send.partyplay.com.au>',
-      to: [l.buyer_email],
-      subject: l.is_comp ? 'A party on us: your code is ' + l.code : 'Your party code is ' + l.code,
-      html: emailShell({
-        site: site,
-        preview: 'Your code is ' + l.code + '. Build your games whenever suits, nothing is ticking yet.',
-        heading: l.is_comp ? 'A party, on us' : 'You are all set',
-        body: body,
-        foot: '<p style="margin:0">Stuck on anything? Just reply to this email, it comes straight to us.</p>'
-      })
+  await sendEmail(env, {
+    from: 'PartyPlay <hello@send.partyplay.com.au>',
+    to: [l.buyer_email],
+    subject: l.is_comp ? 'A party on us: your code is ' + l.code : 'Your party code is ' + l.code,
+    html: emailShell({
+      site: site,
+      preview: 'Your code is ' + l.code + '. Build your games whenever suits, nothing is ticking yet.',
+      heading: l.is_comp ? 'A party, on us' : 'You are all set',
+      body: body,
+      foot: '<p style="margin:0">Stuck on anything? Just reply to this email, it comes straight to us.</p>'
     })
   });
 }
@@ -1949,6 +2138,64 @@ function missingSecrets(env) {
 export default {
   // exposed so the test runner can check the allow-list directly
   _allowedOrigin: allowedOrigin,
+
+  /* NOTHING RAN ON A SCHEDULE.
+
+     Four jobs in this file described themselves as crons. None of them was one:
+     this Worker exported fetch and nothing else, so all four were buttons in
+     admin.html that happened when somebody remembered to press them. The album
+     link a guest asked for at the party, the follow-up, the expiry reminder, and
+     the one that is not a nicety at all: privacy.html and terms.html both tell
+     every guest "the whole album is deleted 30 days after the party ends", and
+     the only thing that deletes anything is the sweep below.
+
+     A HANDLER IS NOT A SCHEDULE. This code does nothing until a Cron Trigger is
+     added in the Cloudflare dashboard: the Worker, Settings, Triggers, Cron
+     Triggers, Add Cron Trigger. One entry is enough and the value to type is
+
+         0,15,30,45 * * * *
+
+     which is every fifteen minutes, written the long way round because the
+     shorthand for it contains a star followed by a slash and would close this
+     comment. Every job here is idempotent and cheap, so one expression is
+     enough, and a single expression cannot be half set up.
+     Whatever expression is used, every tick does the same thing, so there is no
+     schedule to get wrong.
+
+     THE ONLY THING THAT WATCHES THE CLOCK is what time it is in Brisbane, and
+     only for the two jobs that email somebody who is not waiting for it.
+     Queensland has no daylight saving, so Brisbane is UTC+10 all year. An album
+     a guest asked for goes out the moment their party ends even if that is 2am,
+     because they asked for it; a "how was the party" does not. */
+  async scheduled(event, env, ctx) {
+    const missing = missingSecrets(env);
+    if (missing.length) {
+      console.log('scheduled: this Worker is not configured, missing ' + missing.join(', '));
+      return;
+    }
+    const brisbane = (new Date().getUTCHours() + 10) % 24;
+
+    /* albums: asked for at the party, and the album expires. Every tick.
+       photos: the 30 day promise on privacy.html and terms.html. Every tick.
+       The other two email somebody who is not waiting for it, so they keep
+       daytime hours. */
+    const jobs = [['albums', runSendAlbums], ['photos', runPhotoSweep]];
+    if (brisbane >= 9 && brisbane < 20) {
+      jobs.push(['followups', runFollowups], ['nudge', runNudgeExpiring]);
+    }
+
+    /* One job falling over must not take the rest of the night's work with it. */
+    const done = {};
+    for (const j of jobs) {
+      try { done[j[0]] = await j[1](env); }
+      catch (e) {
+        done[j[0]] = 'failed: ' + ((e && e.message) || e);
+        console.log('scheduled ' + j[0] + ' failed: ' + ((e && e.stack) || e));
+      }
+    }
+    console.log('scheduled ' + ((event && event.cron) || '?') + ' ' + JSON.stringify(done));
+  },
+
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -1970,6 +2217,14 @@ export default {
          genuinely does work without it: the games all run, only the album is
          dead. But it must be VISIBLE. */
       const photos = !!env.PHOTOS;
+
+      /* AND CAN IT SEND AN EMAIL? The entire product is delivered by one: the
+         party code and the host key exist nowhere else. RESEND_API_KEY is not in
+         REQUIRED on purpose, because a Worker that cannot email must still let a
+         party that is already running finish, and putting it there would answer
+         503 to every join mid-party. But it must be VISIBLE, so it is reported
+         here and it makes ok false, exactly like a locked-out admin. */
+      const email = !!env.RESEND_API_KEY;
 
       /* CAN ANYBODY ACTUALLY GET IN?
 
@@ -1993,6 +2248,7 @@ export default {
 
       const warnings = [];
       if (!photos) warnings.push('R2 is not bound as PHOTOS. Every photo and video upload will fail, and the album will be empty.');
+      if (!email) warnings.push('RESEND_API_KEY is not set, so NO email can be sent. Every purchase from now on takes $50 and delivers nothing: the party code and the host key only exist in that email.');
       if (lockedOut) warnings.push('pp_admins has no active rows and no ADMIN_KEY is set, so NOBODY can sign in to the admin. Comping a party, refunds and resends will all answer "no". Seed your mobile: partyplay-12-seed-first-admin.sql.');
 
       return json({
@@ -2004,9 +2260,10 @@ export default {
            wrong slot here would still look healthy. */
         worker: 'partyplay-api',
         build: BUILD,
-        ok: !missing.length && photos && !lockedOut,
+        ok: !missing.length && photos && email && !lockedOut,
         missing,
         photos,
+        email,
         admins,
         warning: warnings.length ? warnings.join(' ') : undefined
       }, missing.length ? 503 : 200, ch);
@@ -2046,6 +2303,7 @@ export default {
       else if (method === 'GET'  && path === '/photo')           res = await handlePhotoGet(request, env);
       else if (method === 'GET'  && path === '/photos/pick')     res = await handlePhotoPick(request, env);
       else if (method === 'POST' && path === '/photos/host')     res = await handleHostPhotoUpload(request, env);
+      else if (method === 'POST' && path === '/photos/promote')  res = await handlePhotoPromote(request, env);
       else if (method === 'POST' && path === '/admin/sweep-photos') res = await handlePhotoSweep(request, env);
       else if (method === 'GET'  && path === '/album')           res = await handleAlbumShare(request, env);
       else if (method === 'GET'  && path === '/album/photo')     res = await handleAlbumPhoto(request, env);

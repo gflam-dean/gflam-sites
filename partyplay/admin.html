@@ -284,7 +284,10 @@
       '<button class="sec" data-job="send-albums">Send album links</button>'+
       '<button class="sec" data-job="sweep-photos">Delete expired photos</button>'+
       '</div><div class="out" id="jobout"></div>'+
-      '<div class="note"><p>These want to run daily. Once you are happy with them, put a Cloudflare Cron Trigger on the Worker so nobody has to remember.</p></div></section>'+
+      '<div class="note"><p>These now run on their own, every fifteen minutes, but only once a Cron Trigger '+
+      'is added: Cloudflare, the partyplay-api Worker, Settings, Triggers, Cron Triggers, Add Cron Trigger, '+
+      'and type <b>0,15,30,45 * * * *</b>. Until that is there, this page is the only thing that runs them. '+
+      'The buttons stay either way, for when you want one to happen now.</p></div></section>'+
       '<section id="staff"><h2>Who can get in</h2><p>Loading...</p></section>';
 
     api("/admin/stats?months=12").then(function(d){
