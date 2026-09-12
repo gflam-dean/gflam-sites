@@ -662,12 +662,51 @@
     if(d.slice(0,2)==="61") return "+"+d;             // already carries the country code
     return "+61"+d;                                   // assume an Australian mobile
   }
+  /* WHOSE FAULT WAS IT? Say so honestly, and read the ERROR CODE rather than guessing from
+     the sentence.
+
+     Dean, 12 Sep 2026, locked out during the Sydney move: "it came up with We could not send
+     a code, check the number or try again. if its our fault should it not be different
+     wording?" It should, and there was already a branch meant to do exactly that. It could
+     not match. It searched the human-readable message for "sms" or "phone", and what Supabase
+     actually returned was:
+
+       422  sms_send_failed
+       "Error sending confirmation OTP to provider: Authentication Error - invalid username"
+
+     No "sms" anywhere in that sentence. sms_send_failed is a separate field the check never
+     looked at. So a host whose number was perfectly fine was told to check their number,
+     while our own provider was misconfigured. That is the worst way to be wrong: it sends
+     somebody to fix a thing that is not broken, and it hides an outage from us.
+
+     So the code is the question and the words are only a fallback. A provider or
+     configuration failure is OURS and says so, with a way to reach a person. */
   function otpSendError(err){
     var msg=(err&&err.message)?String(err.message).toLowerCase():"";
-    var off=(msg.indexOf("phone")>=0 || msg.indexOf("sms")>=0) &&
-            (msg.indexOf("disabled")>=0 || msg.indexOf("not enabled")>=0 || msg.indexOf("unsupported")>=0 || msg.indexOf("provider")>=0);
-    if(off){ $("mobileErr").textContent="We could not text you a code. Try again in a moment, or email hello@venueplay.com.au and we will sort it out."; }
-    else { $("mobileErr").textContent="We could not send a code, check the number or try again."; }
+    var code=String((err&&(err.code||err.error_code))||"").toLowerCase();
+    var status=Number((err&&err.status)||0);
+    /* Ours: the send itself failed, or phone sign-in is off, or the provider refused US.
+       Every one of these is a thing only we can fix. */
+    var ours = code.indexOf("sms_send_failed")>=0
+            || code.indexOf("provider_disabled")>=0
+            || code.indexOf("unexpected_failure")>=0
+            || code.indexOf("hook")>=0
+            || msg.indexOf("sending confirmation otp")>=0
+            || msg.indexOf("error sending")>=0
+            || ((msg.indexOf("phone")>=0 || msg.indexOf("sms")>=0) &&
+                (msg.indexOf("disabled")>=0 || msg.indexOf("not enabled")>=0 || msg.indexOf("unsupported")>=0 || msg.indexOf("provider")>=0))
+            || status>=500;
+    /* Theirs, and only when the number itself is what was rejected. */
+    var theirs = code.indexOf("validation_failed")>=0
+              || msg.indexOf("invalid phone")>=0
+              || msg.indexOf("invalid format")>=0
+              || msg.indexOf("unable to validate phone")>=0;
+    if(ours || !theirs){
+      $("mobileErr").textContent="That one is on us, not your number. The text did not go out. "+
+        "Try again in a moment, or call Dean on 0497 605 423 and we will get you in.";
+    } else {
+      $("mobileErr").textContent="That number did not look right. Check it and try again.";
+    }
   }
 
   $("sendCodeBtn").addEventListener("click", function(){
