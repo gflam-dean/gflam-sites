@@ -889,8 +889,16 @@ def local_checks(which):
             ok('%s loads the shared names' % label,
                '/lib/pp-games.js' in src,
                why='without it PPGames is undefined and the page falls back to the slug')
+        # PRESENCE on BOTH lines of the card. Absence alone is not enough and I proved that
+        # twice in one evening: a mutation that fed the slug through a variable instead of
+        # esc(g.format) satisfied "the old pattern is gone" and prove-checks called it BLIND.
+        # So name what must be TRUE: the heading asks PPGames, and so does the line under it.
+        head_named = 'esc(PPGames.name(g.format,g.title))' in run
+        sub_named = re.search(r"var kind = PPGames\.name\(g\.format\);", run) is not None
+        no_raw = re.search(r"esc\(g\.format\)", run) is None
         ok('run.html names a game rather than printing its format',
-           'PPGames.name(g.format' in run and re.search(r"esc\(g\.title\s*\|\|\s*g\.format\)", run) is None,
+           head_named and sub_named and no_raw,
+           'heading=%s subtitle=%s no-raw-slug=%s' % (head_named, sub_named, no_raw),
            why="a host mid-party should not be reading 'headstails' off their own console")
         # PRESENCE, not absence. The first version of this only checked that the OLD
         # expression was gone, so a mutation that put the slug back a DIFFERENT way sailed

@@ -359,8 +359,19 @@
       var n=(g.config&&g.config.items&&g.config.items.length)||0;
       /* PPGames.name, not g.format. The fallback here used to be the stored slug, so a host
          running a party read "headstails" and "truths" off their own console. */
+      /* THE SECOND LINE PRINTED THE SLUG TOO. Fixing only the heading left "headstails"
+         sitting directly under "Heads or tails", which is worse than before because now it
+         looks deliberate.
+
+         What this line is actually for is telling a host WHICH GAME their own title is, so
+         it earns its place only when they have named it something: "Nan's Round" over
+         "Trivia, 12 ready". With no title it would just repeat the heading, so it drops to
+         the count on its own. */
+      var kind = PPGames.name(g.format);
+      var titled = String(g.title || "").trim() !== "";
+      var sub = (titled ? kind + (n ? " &middot; " : "") : "") + (n ? n + " ready" : "");
       h+='<div class="card"><div class="row"><div class="meta"><h3>'+esc(PPGames.name(g.format,g.title))+'</h3>'+
-         '<p>'+esc(g.format)+(n?" &middot; "+n+" ready":"")+'</p></div>'+
+         (sub ? '<p>'+sub+'</p>' : '')+'</div>'+
          '<button class="play" data-run="'+i+'">Start</button></div></div>';
     });
     var nb = nightBoard();

@@ -1176,8 +1176,8 @@ MUTATIONS = [
     # ---- 12 Sep 2026: the host console and the TV showed the database's word for a game.
     ('run.html names a game rather than printing its format',
      'partyplay/run.html',
-     "esc(PPGames.name(g.format,g.title))",
-     "esc(g.title||g.format)",
+     "      var kind = PPGames.name(g.format);",
+     "      var kind = g.format;",
      'the host reads "headstails" and "truths" off their own console part way through a party'),
 
     ('and the TELEVISION gets the name too, not the slug',
