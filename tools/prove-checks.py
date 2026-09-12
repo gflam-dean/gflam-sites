@@ -115,8 +115,8 @@ MUTATIONS = [
 
     ('sms-hook-secrets.test.js',
      'venueplay-backend/worker/venueplay-sms-hook.js',
-     '    .replace(/v\\d+\\s*,\\s*whsec_/gi, "whsec_")',
-     '    ',
+     '    .map(function (x) { return x.trim().replace(/^whsec_/i, ""); })',
+     '    .map(function (x) { return x.trim(); })',
      'the hook refuses the exact secret string Supabase displays, so no host can be sent a sign-in code'),
 
     ('sms-hook-secrets.test.js',

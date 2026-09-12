@@ -71,7 +71,7 @@
 /* The build stamp every other Worker carries. Without it deploy-worker.py refuses to ship
    this file, which is why the SMS hook had been pasted by hand and nothing could say which
    version was running. */
-const BUILD = '12 Sep 2026, 13:35 · ebf17e10';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 16:07 · 4351628a';   // tools/stamp-workers.py, do not edit by hand
 
 const FIVE_MINUTES_SECONDS = 60 * 5;
 
@@ -303,6 +303,11 @@ async function verifySignature(request, rawBody, env) {
      ORDER MATTERS: "v1,whsec_" contains a comma, so the prefix goes BEFORE the list is split,
      or one secret becomes the two useless halves "v1" and "whsec_<base64>". */
   const secrets = String(secretB64)
+    /* BELT AND BRACES, and prove-checks proved it. Breaking this line on purpose did not
+       make a single check go red, because splitting on the comma and stripping whsec_ from
+       each entry already handles "v1,whsec_<base64>" on its own: it becomes the two entries
+       "v1" and "<base64>", and the loop tries both. Kept because it states the intent and
+       costs nothing, but it is not the mechanism; the strip below is. */
     .replace(/v\d+\s*,\s*whsec_/gi, "whsec_")
     .split(",")
     .map(function (x) { return x.trim().replace(/^whsec_/i, ""); })
