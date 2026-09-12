@@ -13,7 +13,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '12 Sep 2026, 20:27 · dfc6d3d9';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 21:59 · 2924ba03';   // tools/stamp-workers.py, do not edit by hand
 // The licence window rules live in one place and are shared with the browser.
 // Paste lib/pp-licence.js above this line when deploying, or inline it. It is
 // referenced here as PPLicence.
@@ -426,7 +426,18 @@ const FORMATS = ['bingo90','trivia','musical','draw','howwell','headstails','who
 async function handleGamesList(request, env) {
   const u = new URL(request.url);
   const l = await requireHost(env, u.searchParams.get('code'), u.searchParams.get('key'));
-  const games = await sb(env, 'pp_games?licence_id=eq.' + l.id + '&order=sort_order.asc&select=id,format,title,config,sort_order');
+  /* created_at IS THE TIEBREAK, and it is needed because sort_order is not unique.
+
+     It is set to `existing.length` at the moment each game is added, so a host who clicks
+     three tiles faster than the round trips complete gives all three the same number: every
+     one of them counted the same "existing" list. Seen for real on 12 Sep, adding four games
+     in a row left three of them on sort_order 1.
+
+     Ordering by sort_order alone then returns those three in whatever order Postgres feels
+     like, which can differ between page loads, so the host's running order is not stable.
+     Ordering by when they were added is exactly the order the host clicked them in. */
+  const games = await sb(env, 'pp_games?licence_id=eq.' + l.id +
+    '&order=sort_order.asc,created_at.asc&select=id,format,title,config,sort_order');
   const lic = licWindow(l);
   return json({ games, party: {
     code: l.code, party: l.party_name, days: l.days,

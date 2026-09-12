@@ -862,6 +862,56 @@ def local_checks(which):
            re.search(r"pp_album_requests\?licence_id=eq\.", w4c) is not None,
            why='both of those tables hold guest email addresses')
 
+    head('Every PartyPlay game has a name a person would say out loud')
+    """THE HOST'S CONSOLE AND THE TELEVISION SHOWED THE DATABASE'S WORD FOR IT.
+
+    The names lived only in host.html's TYPES, which draws the "Add a game" tiles, so the
+    BUILD page looked perfect. run.html, the screen a host actually runs the night from, had
+    none of them and fell back to pp_games.format. A host mid-party read "headstails",
+    "truths", "draw" and "bingo90" off their own console, and run.html sends the same string
+    to the TELEVISION when a game starts, so the slug went up in front of the room.
+
+    Nothing was broken in the usual sense. Every game ran. Found 12 Sep 2026 by running a
+    party, not by reading the code.
+
+    They are in lib/pp-games.js now. This checks both pages ask it, and that every format the
+    product can store has an entry, because one that does not falls straight back to its slug."""
+    gl = os.path.join(PARTYPLAY_SITE, 'lib', 'pp-games.js')
+    hh = os.path.join(PARTYPLAY_SITE, 'host.html')
+    rh = os.path.join(PARTYPLAY_SITE, 'run.html')
+    if all(os.path.isfile(x) for x in (gl, hh, rh)):
+        glib = io.open(gl, encoding='utf-8').read()
+        host = io.open(hh, encoding='utf-8').read()
+        run = io.open(rh, encoding='utf-8').read()
+        named = set(re.findall(r"\n    ([a-z0-9]+):\s*\{\s*name:", glib))
+        ok('the game names live in lib/pp-games.js', len(named) >= 10, '%d game(s)' % len(named))
+        for page, src, label in ((hh, host, 'host.html'), (rh, run, 'run.html')):
+            ok('%s loads the shared names' % label,
+               '/lib/pp-games.js' in src,
+               why='without it PPGames is undefined and the page falls back to the slug')
+        ok('run.html names a game rather than printing its format',
+           'PPGames.name(g.format' in run and re.search(r"esc\(g\.title\s*\|\|\s*g\.format\)", run) is None,
+           why="a host mid-party should not be reading 'headstails' off their own console")
+        # PRESENCE, not absence. The first version of this only checked that the OLD
+        # expression was gone, so a mutation that put the slug back a DIFFERENT way sailed
+        # through and prove-checks called it BLIND. Assert what has to be true: the string
+        # handed to the television is the one PPGames produced.
+        tv_named = re.search(r'var _n=PPGames\.name\(g\.format,g\.title\);', run) is not None
+        tv_uses = re.search(r'send\(\{t:"big",text:_n,', run) is not None
+        ok('and the TELEVISION gets the name too, not the slug',
+           tv_named and tv_uses,
+           'named=%s used=%s' % (tv_named, tv_uses),
+           why='this is the half the whole room sees')
+        ok('host.html takes its names from the same place, so they cannot drift',
+           'name:PPGames.name(' in host and re.search(r'\{ icon:"[^"]*", name:"', host) is None,
+           why='two lists of the same names is the next one of these')
+        # every format the TYPES table knows must have a name in the shared map
+        types = set(re.findall(r"\n    ([a-z0-9]+):\s*\{\s*icon:PPGames", host))
+        missing = sorted(types - named)
+        ok('every format the product offers has a name',
+           not missing, ', '.join(missing) if missing else '%d format(s)' % len(types),
+           why='a format with no entry falls back to its slug, on the console and on the TV')
+
     head('D. Nothing shares a corner of the venue TV')
     """A TV is the one surface a whole room looks at, and its corners are crowded.
 

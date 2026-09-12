@@ -79,6 +79,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="/lib/pp-config.js"></script>
+<script src="/lib/pp-games.js"></script>
 <script src="/lib/pp-licence.js"></script>
 <script src="/lib/pp-quiz.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -337,7 +338,9 @@
     }
     GAMES.forEach(function(g,i){
       var n=(g.config&&g.config.items&&g.config.items.length)||0;
-      h+='<div class="card"><div class="row"><div class="meta"><h3>'+esc(g.title||g.format)+'</h3>'+
+      /* PPGames.name, not g.format. The fallback here used to be the stored slug, so a host
+         running a party read "headstails" and "truths" off their own console. */
+      h+='<div class="card"><div class="row"><div class="meta"><h3>'+esc(PPGames.name(g.format,g.title))+'</h3>'+
          '<p>'+esc(g.format)+(n?" &middot; "+n+" ready":"")+'</p></div>'+
          '<button class="play" data-run="'+i+'">Start</button></div></div>';
     });
@@ -854,7 +857,10 @@
       else if(g.format==="photos") runPhotos(g);
       else if(g.format==="charades") runCharades(g);
       else if(g.format==="guesswho") runGuessWho(g);
-      else { send({t:"big",text:(g.title||g.format),sub:"Off we go"}); toast("Running "+(g.title||g.format)); }
+      /* AND THE SAME ON THE TELEVISION. This is the worse half: the slug went up on the big
+         screen in front of the whole room when the game started. */
+      else { var _n=PPGames.name(g.format,g.title);
+             send({t:"big",text:_n,sub:"Off we go"}); toast("Running "+_n); }
       return;
     }
     if(el.id==="charstart" || el.id==="charnext"){ charadesGo(); return; }

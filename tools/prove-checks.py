@@ -1173,6 +1173,27 @@ MUTATIONS = [
      "a guest's details are deleted the morning after the party, while the album they were "
      'told they have thirty days to download is still up'),
 
+    # ---- 12 Sep 2026: the host console and the TV showed the database's word for a game.
+    ('run.html names a game rather than printing its format',
+     'partyplay/run.html',
+     "esc(PPGames.name(g.format,g.title))",
+     "esc(g.title||g.format)",
+     'the host reads "headstails" and "truths" off their own console part way through a party'),
+
+    ('and the TELEVISION gets the name too, not the slug',
+     'partyplay/run.html',
+     '      else { var _n=PPGames.name(g.format,g.title);',
+     '      else { var _n=(g.title||g.format);',
+     'the raw format slug goes up on the big screen in front of the whole room when a game '
+     'starts, which is the half everybody sees'),
+
+    ('every format the product offers has a name',
+     'partyplay/lib/pp-games.js',
+     "    draw:       { name: 'Prize draw',",
+     "    draw_gone:  { name: 'Prize draw',",
+     'a format loses its entry, so the prize draw falls back to "draw" on the console and on '
+     'the television'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",
