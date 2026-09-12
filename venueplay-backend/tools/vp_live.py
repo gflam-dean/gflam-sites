@@ -27,7 +27,12 @@ that looks fine.
 from pathlib import Path
 
 ENV = Path.home() / '.gflam-migrate.env'
-REFS = {'ijkzgmdtwtgfkedqspxm': 'Singapore', 'ijkzgmdtwtgfkedqspxm': 'Sydney'}
+# THE SAME KEY TWICE IS A MAP WITH ONE ENTRY. Until 12 Sep 2026 both of these read
+# 'ijkzgmdtwtgfkedqspxm', so the second silently overwrote the first: Singapore's real ref
+# was not in here at all and any tool pointed at it announced "unknown project". This file
+# exists for one job, to say out loud which database a tool just asked, and half of it could
+# not do that job. Found by the load-test agent, 12 Sep 2026.
+REFS = {'gpoolavkghnxedzrmtmc': 'Singapore', 'ijkzgmdtwtgfkedqspxm': 'Sydney'}
 
 
 class Live:

@@ -195,6 +195,22 @@ MUTATIONS = [
      'two people calling on the same number are shown as two separate claims with no tie bar '
      'and no one-tap split, so the host confirms one and the other is served by luck'),
 
+    # The fault this one names is the one the suite was WRITTEN to find, on 12 Sep 2026:
+    # endGame() had no guard at all, where nextBall() and finishGame() both have one. The
+    # find-string is the guard that was added, so taking it out restores the shipped console
+    # exactly. Verified red before it was written down: 3 of 124.
+    ('bingo-after-the-win.test.js',
+     'venueplay/app/index.html',
+     '''    if(G.lastWins.length && !G.won){
+      announce(false);
+      G.won = true;
+    }
+    clearCallGuards();''',
+     '    clearCallGuards();',
+     'the host taps End game over a confirmed winner, the wall goes back to the ads and the '
+     "winner message is never sent, so the punter's phone never says YOU WON and they have "
+     'nothing to show the host to claim the prize'),
+
     # ---- 10 Sep: money, the nightly sweep, and the road a game message takes ----
     # THE LABEL IS THE SUITE'S FILE NAME, not the check inside it. The gate prints a
     # failing suite as "FAIL stripe-idempotency.test.js ...", and gate() looks for the

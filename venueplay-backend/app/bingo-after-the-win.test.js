@@ -73,7 +73,7 @@ var NEED = ["isCalled", "rowComplete", "completeRows", "cornerNums", "checkPatte
             "calledArray", "playerCount", "sendState", "sendClaimPending",
             "winnerNames", "renderClaimCard", "renderClaimQueue", "syncNextBtn",
             "nextPattern", "hostConfirm", "hostConfirmAll", "hostReject",
-            "announce", "keepPlaying", "finishGame", "nextBall", "onMsg"];
+            "announce", "keepPlaying", "finishGame", "nextBall", "endGame", "onMsg"];
 var SRC = {}, missing = [];
 NEED.forEach(function(n){ SRC[n] = grab(n); if (!SRC[n]) missing.push(n); });
 ok("every function the end of a game runs through is still there", missing.length === 0, missing.join(", "));
@@ -150,6 +150,15 @@ var consoleRenders = 0;
 // it this suite is about. Everything else it does is board, player list and coach line.
 function renderConsole(){ consoleRenders++; if (G.status === "running") renderLive(); }
 function updateBoard(){}
+/* endGame runs on past the winner into closing the session, the report and the night card.
+   None of that is what this suite is about, so it is stubbed to counters. They are counters
+   rather than empty functions because "ended the night" has to be distinguishable from
+   "threw before it got there": a test that cannot tell those apart passes on a console that
+   crashed. */
+var guardsCleared = 0;  function clearCallGuards(){ guardsCleared++; }
+var reports = 0;        function postReport(){ reports++; }
+var nightCards = 0;     function showNightCard(){ nightCards++; }
+var overageAcked = false, overageApproved = 0;
 
 var G;
 eval(PAT_NAMES_SRC); eval(ALL_PAT_SRC);
@@ -494,6 +503,60 @@ MSGS = [];
 ok("Keep playing still works after five more", click("keepplaying") && !!lastOf("winner"));
 ok("and it is still one listener on the queue, not one per render",
    $("claimQueue")._on.click.length === 1, String($("claimQueue")._on.click.length));
+
+/* ================= ENDING THE NIGHT OVER A WINNER WHO WAS NEVER ANNOUNCED =================
+
+   The two ways out of the win state sit next to each other on the tablet: "Finish game" on the
+   claim card, and "End game / Back to ads" on the console. A host at the loudest moment of the
+   night taps the wrong one, and before 12 Sep 2026 that ended the night with the winner message
+   never sent. The wall went to ads. The winner's phone stayed on "the host is checking your
+   ticket" - which is the screen they were told to show to claim the prize.
+
+   So the order of the messages is the assertion, not just their presence: winner BEFORE idle.
+   A console that sends the winner after the TV has already gone back to the advertising has
+   announced it to nobody. */
+print("");
+print("== ending the night does not lose a confirmed winner ==");
+room({ p1: { name:"Kate", card:CARD_A, no:332 } });
+onMsg({ t:"claim", pid:"p1", cardNo:332 });
+click("confirm", 0);
+ok("the winner is confirmed and nothing has been announced yet",
+   G.lastWins.length === 1 && G.won === false, "won=" + G.won);
+MSGS = [];
+endGame();
+var kinds = MSGS.map(function(m){ return m.t; });
+ok("End game announces the win instead of dropping it", !!lastOf("winner"), kinds.join(",") || "nothing sent");
+ok("and the winner goes out BEFORE the TV is sent back to ads",
+   kinds.indexOf("winner") >= 0 && kinds.indexOf("idle") >= 0 &&
+   kinds.indexOf("winner") < kinds.indexOf("idle"), kinds.join(","));
+ok("the winner message still names who won and on which ticket",
+   (lastOf("winner")||{}).names === "Kate" || ((lastOf("winner")||{}).winners||[]).length === 1,
+   JSON.stringify(lastOf("winner")));
+ok("the night still ends: the TV is back on the ads", !!lastOf("idle"));
+ok("and the game really did close, not throw on the way",
+   guardsCleared > 0 && reports > 0 && G.status === "setup" && G.sessionId === null,
+   "guards=" + guardsCleared + " reports=" + reports + " status=" + G.status);
+
+print("== ending the night with nothing confirmed announces nothing ==");
+room({ p1: { name:"Kate", card:CARD_A, no:332 } });
+onMsg({ t:"claim", pid:"p1", cardNo:332 });   // shouted, never confirmed
+MSGS = [];
+endGame();
+ok("an unconfirmed shout is not turned into a winner by ending the night", !lastOf("winner"),
+   MSGS.map(function(m){ return m.t; }).join(","));
+ok("the TV still goes back to the ads", !!lastOf("idle"));
+
+print("== a win already announced is not announced twice ==");
+room({ p1: { name:"Kate", card:CARD_A, no:332 } });
+onMsg({ t:"claim", pid:"p1", cardNo:332 });
+click("confirm", 0);
+finishGame();                      // the host used the right button
+ok("finishGame announced it", G.won === true);
+MSGS = [];
+endGame();
+ok("End game afterwards does not send a second winner message", sent("winner").length === 0,
+   MSGS.map(function(m){ return m.t; }).join(","));
+ok("and it still ends the night", !!lastOf("idle"));
 
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }

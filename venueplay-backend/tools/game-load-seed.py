@@ -38,7 +38,12 @@ ENV_FILE = Path.home() / '.gflam-migrate.env'
 WORK = Path.home() / '.gflam-migrate'
 PASS_FILE = WORK / 'load-host.pass'
 PG = '/Applications/Postgres.app/Contents/Versions/latest/bin'
-OLD_REF_NEVER = 'ijkzgmdtwtgfkedqspxm'   # the live project. Refused by name, whatever the env file says.
+# THE LIVE PROJECT, REFUSED BY NAME whatever the env file says. This ref was Singapore's
+# staging target when the rail was written; after the 12 Sep cut-over it is SYDNEY, which is
+# production. The refusal is still exactly right, it was the wording below that named the
+# wrong city. This tool seeds thousands of fake venues, so it needs a genuinely separate
+# staging project before it can run again.
+LIVE_REF_NEVER = 'ijkzgmdtwtgfkedqspxm'
 HOST_EMAIL = 'load-host-00001@load.invalid'
 FORMATS = {'trivia': 'trivia', 'musical': 'musical_bingo', 'bingo': 'bingo90', 'raffle': 'raffle'}
 
@@ -50,8 +55,8 @@ def env():
     url = e.get('NEW_DB_URL') or sys.exit('NEW_DB_URL missing')
     m = re.match(r'postgres(?:ql)?://postgres\.([a-z]{20}):', url)
     ref = m.group(1) if m else sys.exit('NEW_DB_URL is not a pooler URI')
-    if ref == OLD_REF_NEVER: sys.exit('REFUSED: NEW_DB_URL points at the live Singapore project')
-    if OLD_REF_NEVER in e.get('NEW_SUPABASE_URL', ''): sys.exit('REFUSED: NEW_SUPABASE_URL is the live Singapore project')
+    if ref == LIVE_REF_NEVER: sys.exit('REFUSED: NEW_DB_URL points at the LIVE Sydney project. This tool seeds thousands of fake venues. Point it at a staging project.')
+    if LIVE_REF_NEVER in e.get('NEW_SUPABASE_URL', ''): sys.exit('REFUSED: NEW_SUPABASE_URL is the LIVE Sydney project. This tool seeds thousands of fake venues. Point it at a staging project.')
     return url, ref, e
 
 def psql(url, sql):

@@ -2051,6 +2051,30 @@
     renderConsole();
   }
   function endGame(){
+    /* A CONFIRMED WINNER MUST NOT BE LOST BY ENDING THE NIGHT.
+
+       nextBall() and finishGame() both refuse to move while a confirmed win is unannounced.
+       endGame() did not: it cleared G.lastWins and sent idle, so a host who taps
+       "End game / Back to ads" instead of "Finish game" - two buttons a few centimetres apart,
+       at the moment the room is loudest - ended the night with NO winner message ever
+       broadcast. The wall went back to the advertising and the winner's phone stayed on
+       "the host is checking your ticket".
+
+       That phone screen is not a nicety. It reads "show this screen to the host to claim",
+       and it carries the card number the host checks against. Without it the punter has
+       nothing to claim with, and the one person in the room who won has the worst experience
+       of the night.
+
+       So announce it first, then end. Refusing would be the other option and it is the wrong
+       one: the host has said plainly that they want to stop, and making them find a different
+       button while a room waits is how a host learns to distrust the console. Their intent is
+       honoured AND the winner keeps their proof.
+
+       Found 12 Sep 2026 while putting the end of a game under test for the first time. */
+    if(G.lastWins.length && !G.won){
+      announce(false);
+      G.won = true;
+    }
     clearCallGuards();
     postReport();   // send this game's figures to the backend before returning to ads
     /* Closing the session is what meters and bills the night: chargeNightOverage counts the
