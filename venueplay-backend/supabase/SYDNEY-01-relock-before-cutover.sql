@@ -1,106 +1,112 @@
--- SYDNEY-01-relock-before-cutover.sql
--- RUN THIS ON SYDNEY ONLY. Not on the live (Singapore) database, which already has all of it.
+-- SYDNEY-01-relock-before-cutover.sql   (version 2)
+-- RUN ON SYDNEY ONLY. Not on the live (Singapore) database, which already has all of this.
 --
--- WHAT IS WRONG, measured on 12 September 2026 rather than assumed.
+-- WHY VERSION 2. Version 1 was a plain list of REVOKE statements with a note saying that a line
+-- erroring with "does not exist" could be skipped. In the Supabase SQL editor you cannot skip a
+-- line: the whole script runs as ONE TRANSACTION, so the first missing object rolls back every
+-- statement that came before it and the editor still reports a result. Dean ran it, it reported
+-- fine, and a probe afterwards showed all eleven paths still wide open. My error, not his.
 --
--- The Sydney copy was built with pg_dump --schema-only. Supabase re-grants everything to the
--- public key on every table as it is created, and a schema dump does not carry the REVOKE
--- statements that took those grants away again. So the shape matched perfectly (73 tables,
--- 892 columns, 106 policies, all identical) while the PERMISSIONS did not, and nothing in the
--- migration toolkit compares permissions. check-databases-match.py says "Sydney has everything
--- live has" and it is telling the truth about the only thing it looks at.
+-- So every statement is now wrapped so that a missing object skips THAT line and nothing else.
 --
--- PROVED, with the actual public key that is printed in every VenuePlay page:
+-- WHAT IS WRONG, measured rather than assumed. Sydney was built with pg_dump --schema-only, and
+-- Supabase re-grants everything to the public key as each table is created. A schema dump does
+-- not carry the REVOKEs that took those grants back. The shape matched perfectly (73 tables,
+-- 892 columns, 106 policies, identical) while the PERMISSIONS did not, and nothing in the
+-- migration toolkit compares permissions.
+--
+-- Probed with the actual public key printed in every VenuePlay page:
 --
 --     vp_bingo_next_ball    Singapore 401 refused     Sydney 200 REACHED IT
 --     vp_draw_next_ball     Singapore 401 refused     Sydney 200 REACHED IT
---     v_signups_all         Singapore 401 refused     Sydney 200, real signup rows returned
---     vp_players            Singapore 401 refused     Sydney 200
---     vp_bingo_draws        Singapore 401 refused     Sydney 200
---     ops_questions         Singapore 401 refused     Sydney 200
+--     v_signups_all         Singapore 401 refused     Sydney 200, real rows
+--     vp_players, vp_bingo_draws, ops_questions, ops_approvals, and four more: all 200
 --
--- The first two are the server-side bingo ball draw. That is the RNG the OLGR submission is
--- built around, and on Sydney anyone holding the key out of the page source can call it.
+-- The first two are the server-side bingo ball draw, which is the RNG the OLGR submission is
+-- built around. Nothing is live on Sydney yet, so this is a blocker and not an incident.
 --
--- NOTHING IS LIVE ON SYDNEY YET, so this is not an incident. It is a blocker: cut over without
--- running this and it becomes one in the same minute.
---
--- SAFE TO RUN TWICE. Every statement is a REVOKE; re-running takes away what is already gone.
--- IF A LINE ERRORS with "does not exist", that object is not on Sydney and the line can be
--- skipped: it means there is less to take away, not more.
---
--- AFTERWARDS, PROVE IT rather than trusting this file. The check at the bottom of this file
--- lists what anon can still reach; it should come back empty.
+-- SAFE TO RUN TWICE. Everything here is a REVOKE.
+-- AFTER RUNNING IT, the last statement prints what anon can still reach. It should be empty.
 
--- ---------------------------------------------------------------- functions
--- The ball draw and the one-trip host routes. Service role only: the Workers call these with
--- the service key, and nothing in a browser has any business reaching them.
-revoke all on function public.vp_bingo_next_ball(uuid)                     from public, anon, authenticated;
-revoke all on function public.vp_bingo_ball(uuid, uuid, int)               from public, anon, authenticated;
-revoke all on function public.vp_draw_next_ball(uuid)                      from public, anon, authenticated;
-revoke all on function public.vp_emit_event(uuid, text, jsonb, text)       from public, anon, authenticated;
-revoke all on function public.vp_park_flagged(integer)                     from public, anon, authenticated;
-revoke all on function public.vp_host_question(uuid, uuid)                 from public, anon, authenticated;
-revoke all on function public.vp_host_reveal(uuid, uuid)                   from public, anon, authenticated;
-revoke all on function public.vp_host_staff(uuid, uuid)                    from public, anon, authenticated;
-revoke all on function public.vp_member_name(text, text, text)             from public, anon, authenticated;
-revoke all on function public.vp_members_draw(uuid, uuid, bigint[], int, int, int) from public, anon, authenticated;
-revoke all on function public.vp_player_answer(text, uuid, int, int)       from public, anon, authenticated;
-revoke all on function public.vp_screen_poll(text, text, text)             from public, anon, authenticated;
+do $$
+declare
+  r record;
+  -- Functions: revoked by name, whatever their arguments, so a signature that drifted since
+  -- the migration was written cannot let one through.
+  fns text[] := array[
+    'vp_bingo_next_ball','vp_bingo_ball','vp_draw_next_ball','vp_emit_event','vp_park_flagged',
+    'vp_host_question','vp_host_reveal','vp_host_staff','vp_member_name','vp_members_draw',
+    'vp_player_answer','vp_screen_poll'
+  ];
+  -- Tables and views that must be invisible to the key in the page.
+  shut text[] := array[
+    'vp_bingo_draws','vp_bingo_draw_balls','vp_players','vp_venue_screen',
+    'v_vp_player_optins','v_vp_prizes_given','v_vp_question_review_queue','v_vp_screen_draws',
+    'v_vp_feedback_by_session','v_vp_song_flag_counts','v_signups_all',
+    'ops_approvals','ops_questions','ops_priorities'
+  ];
+  -- The other Gflam sites read these, so SELECT stays and only the write half goes.
+  readonly text[] := array['reviews','shows','venues','signups','contacts',
+                           'experience','tour_categories','ticket_milestones'];
+  n text;
+begin
+  foreach n in array fns loop
+    for r in select p.oid::regprocedure as sig
+               from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
+              where ns.nspname = 'public' and p.proname = n
+    loop
+      execute format('revoke all on function %s from public, anon, authenticated', r.sig);
+      raise notice 'revoked function %', r.sig;
+    end loop;
+  end loop;
 
--- ---------------------------------------------------------------- the draw tables
-revoke all on public.vp_bingo_draws      from public, anon, authenticated;
-revoke all on public.vp_bingo_draw_balls from public, anon, authenticated;
+  foreach n in array shut loop
+    begin
+      execute format('revoke all on public.%I from anon, authenticated', n);
+      raise notice 'shut %', n;
+    exception when undefined_table then
+      raise notice 'skipped %, not on this database', n;
+    end;
+  end loop;
 
--- ---------------------------------------------------------------- the views that carry people
--- Opt-ins, prizes, feedback and the review queue all hold a player's own details.
-revoke all on public.v_vp_player_optins         from anon, authenticated;
-revoke all on public.v_vp_prizes_given          from anon;
-revoke all on public.v_vp_question_review_queue from anon, authenticated;
-revoke all on public.v_vp_screen_draws          from anon, authenticated;
-revoke all on public.v_vp_feedback_by_session   from anon, authenticated;
-revoke all on public.v_vp_song_flag_counts      from anon, authenticated;
-revoke all on public.vp_venue_screen            from anon, authenticated;
-revoke all on public.v_signups_all              from anon, authenticated;
+  foreach n in array readonly loop
+    begin
+      execute format('revoke insert, update, delete, truncate, references, trigger on public.%I from anon, authenticated', n);
+      raise notice 'write access removed from %', n;
+    exception when undefined_table then
+      raise notice 'skipped %, not on this database', n;
+    end;
+  end loop;
 
--- ---------------------------------------------------------------- the ops tables
--- These are Dean's own approval queue and they were open to the public key on Sydney with
--- FULL WRITE. On live, anon has nothing here at all.
-revoke all on public.ops_approvals  from anon, authenticated;
-revoke all on public.ops_questions  from anon, authenticated;
-revoke all on public.ops_priorities from anon, authenticated;
+  -- The public sites draw a tour page from these two, so reading stays.
+  begin execute 'grant select on public.shows to anon';   exception when undefined_table then null; end;
+  begin execute 'grant select on public.reviews to anon'; exception when undefined_table then null; end;
+end $$;
 
--- ---------------------------------------------------------------- the other sites' tables
--- Sydney handed anon DELETE, INSERT, UPDATE and TRUNCATE on these. Live gives SELECT where a
--- page needs it and nothing else. Taking the write half away; re-grant select below.
-revoke insert, update, delete, truncate, references, trigger on public.reviews  from anon;
-revoke insert, update, delete, truncate, references, trigger on public.shows    from anon;
-revoke insert, update, delete, truncate, references, trigger on public.venues   from anon;
-revoke insert, update, delete, truncate, references, trigger on public.signups  from anon;
-revoke insert, update, delete, truncate, references, trigger on public.contacts from anon;
+-- PostgREST caches what a role may see. Without this the change is real in the database and
+-- invisible over the API, which looks exactly like the script having done nothing.
+notify pgrst, 'reload schema';
 
--- The public sites READ shows and reviews to draw a tour page, so that stays.
-grant select on public.shows   to anon;
-grant select on public.reviews to anon;
-
--- ---------------------------------------------------------------- PROVE IT
--- Run this after the statements above. It should return NO ROWS. Anything it lists is still
--- reachable by the key printed in every page.
---
---   select table_schema, table_name, privilege_type
---     from information_schema.role_table_grants
---    where grantee = 'anon'
---      and table_schema = 'public'
---      and (privilege_type <> 'SELECT'
---           or table_name in ('vp_players','vp_bingo_draws','ops_questions','ops_approvals',
---                             'v_signups_all','v_vp_player_optins','v_vp_prizes_given',
---                             'v_vp_screen_draws','v_vp_question_review_queue'))
---    order by table_name, privilege_type;
---
--- And the functions, which should list none:
---
---   select p.proname
---     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
---    where n.nspname = 'public'
---      and has_function_privilege('anon', p.oid, 'EXECUTE')
---    order by 1;
+-- PROVE IT. Both of these should come back with NO ROWS.
+select 'function still reachable by anon' as problem, p.proname
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public'
+   and has_function_privilege('anon', p.oid, 'EXECUTE')
+   and p.proname = any (array['vp_bingo_next_ball','vp_bingo_ball','vp_draw_next_ball',
+        'vp_emit_event','vp_park_flagged','vp_host_question','vp_host_reveal','vp_host_staff',
+        'vp_member_name','vp_members_draw','vp_player_answer','vp_screen_poll'])
+union all
+select 'table still readable by anon', table_name
+  from information_schema.role_table_grants
+ where grantee = 'anon' and table_schema = 'public'
+   and table_name = any (array['vp_bingo_draws','vp_bingo_draw_balls','vp_players',
+        'vp_venue_screen','v_vp_player_optins','v_vp_prizes_given','v_vp_question_review_queue',
+        'v_vp_screen_draws','v_vp_feedback_by_session','v_vp_song_flag_counts','v_signups_all',
+        'ops_approvals','ops_questions','ops_priorities'])
+union all
+select 'anon can still WRITE to', table_name
+  from information_schema.role_table_grants
+ where grantee = 'anon' and table_schema = 'public'
+   and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE')
+   and table_name = any (array['reviews','shows','venues','signups','contacts',
+        'experience','tour_categories','ticket_milestones']);

@@ -1081,12 +1081,41 @@ def local_checks(which):
     silent: the page looks fine, the feature just never happens. partyplay's
     parties counter was dead this way and nobody could have noticed, because it
     hides itself below 25 parties and there are none yet."""
-    GLOBALS = {'pp-config.js': 'PPConfig', 'pp-ticket.js': 'PPTicket', 'pp-quiz.js': 'PPQuiz',
-               'pp-photo.js': 'PPPhoto', 'pp-video.js': 'PPVideo', 'vp-sign.js': 'VPSign',
-               'vp-gaming.js': 'VPGaming', 'vp-follow.js': 'VPFollow',
-               'vp-screen-router.js': 'VPScreenRouter', 'vp-session.js': 'VPSession',
-               'vp-feedback.js': 'VPFeedback', 'vp-celebrate.js': 'VPCelebrate',
-               'vp-qr.js': 'VPQR'}
+    """THE TABLE IS DERIVED, NOT REMEMBERED.
+
+    It used to be typed out by hand, and it said 'vp-session.js': 'VPSession'. Nothing in this
+    repo has ever been called VPSession: the global is VP. So the row covering the most widely
+    used shared script in the product, loaded by thirteen pages, could never fail. It was a
+    check that could not fail hiding inside a check that could, which is the worst shape of all
+    because the surrounding green makes it look covered.
+
+    vp-room.js and pp-licence.js were simply missing from the table, so those were not covered
+    either. A hand-kept list of what a file exports drifts from the file the moment somebody
+    renames an export, and nothing says so.
+
+    So read it off the files. Whatever each shared script assigns to root/window IS the global,
+    by definition, and a rename moves the check with it."""
+    GLOBALS = {}
+    for root_dir in ('venueplay', 'partyplay'):
+        for dirpath, _dirs, names in os.walk(os.path.join(ROOT, root_dir)):
+            for n in names:
+                if not (n.startswith(('vp-', 'pp-')) and n.endswith('.js')):
+                    continue
+                try:
+                    src = io.open(os.path.join(dirpath, n), encoding='utf-8').read()
+                except Exception:
+                    continue
+                src = re.sub(r'/\*.*?\*/', ' ', src, flags=re.S)
+                src = re.sub(r'^\s*//.*$', ' ', src, flags=re.M)
+                for m in re.finditer(r'\b(?:root|window|self|globalThis)\s*\.\s*([A-Z][A-Za-z0-9_]*)\s*=', src):
+                    GLOBALS.setdefault(n, m.group(1))
+    # A file that exports nothing recognisable is not a shared library; say so rather than
+    # silently covering nothing. Zero of them would mean the scan above stopped working.
+    if not GLOBALS:
+        ok('the shared-script table could be built at all', False,
+           why='no vp-*.js or pp-*.js assigns a global; this check can no longer see anything')
+        return
+
     late = []
     for f in files:
         if not f.endswith('.html'):
@@ -1097,8 +1126,16 @@ def local_checks(which):
             loads.setdefault(m.group(1).split('/')[-1], m.start())
         for tag, body in re.findall(r'(<script(?![^>]*\bsrc=)[^>]*>)(.*?)</script>', src, re.S):
             at = src.index(body)
+            # A MENTION IN A COMMENT IS NOT A CALL. Blanked rather than removed, so every
+            # offset below still lines up with the real file and "used before loaded" stays
+            # true. This never mattered while the table named a global that did not exist;
+            # the moment the names were right it produced three false alarms, all of them
+            # comments saying which files keep a helper in lockstep by hand.
+            code = re.sub(r'/\*.*?\*/', lambda m: ' ' * len(m.group(0)), body, flags=re.S)
+            code = re.sub(r'^([ \t]*)//.*$', lambda m: m.group(1) + ' ' * (len(m.group(0)) - len(m.group(1))),
+                          code, flags=re.M)
             for lib, g in GLOBALS.items():
-                m = re.search(r'(?<![.\w])' + g + r'\s*\.', body)
+                m = re.search(r'(?<![.\w])' + g + r'\s*\.', code)
                 if not m:
                     continue
                 # NOT LOADED AT ALL is worse than loaded late, and this used to

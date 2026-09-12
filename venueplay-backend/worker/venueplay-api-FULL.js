@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Sep 2026, 09:13 · bbc0482e';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 12:18 · f950f241';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -4212,8 +4212,20 @@ function vpaPaymentFailedNextStep(moved, payNow, billing) {
   return p('Nothing has changed at your venue and your games are running as normal. We will try again over the next few days. If it keeps failing your games will pause until it is sorted, so it is worth a minute now.') + btn;
 }
 
+/* THE SAME esc AS EVERYWHERE ELSE, including the single quote.
+
+   This one was missing `'` from its character class while the other twenty-three copies in
+   the repo have it, and the rename from esc to vpaEsc is what let it drift: the gate holds
+   every function CALLED esc identical and this one is not called esc, so nothing compared it.
+   Found 12 Sep 2026 by mapping where each shared answer lives.
+
+   Not exploitable today, and I looked: nothing here builds a single-quoted HTML attribute.
+   That is a weak reason to leave it, and this repo has the scar to prove it. The next admin
+   page or email that writes id='...' makes it one, and whoever writes that line will read the
+   name, see "esc", and reasonably assume it escapes quotes. */
 function vpaEsc(s) {
-  return String(s == null ? '' : s).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 // Format a unix-seconds timestamp as a Brisbane calendar date, e.g. "24 September 2026".
 function vpaFmtDate(ts) {
