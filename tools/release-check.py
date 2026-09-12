@@ -746,6 +746,38 @@ def local_checks(which):
            len(seen) == 1, '%d file(s)' % sum(len(v) for v in seen.values()),
            why='%d version(s); the odd ones out: %s' % (len(seen), ', '.join(odd[:4])))
 
+    """HOW LONG AN UNSTARTED PARTYPLAY CODE KEEPS, written once.
+
+    lib/pp-licence.js owns UNUSED_EXPIRY_DAYS and expires codes by it. The Worker
+    wrote "365 * 86400e3" twice by hand instead, in the nudge that chases unused
+    codes and in the admin figures. Change the library to 180 and the code would
+    have died at 180 while the Worker still chased at 365: the warning email fires
+    six months after the thing it warns about, and the people owed a warning get
+    none. Nothing would have gone red. Found 12 Sep 2026.
+
+    The number is only allowed to appear in the library. Anywhere else has to ask."""
+    lib_p = os.path.join(PARTYPLAY_BACK, 'lib', 'pp-licence.js')
+    wsrc_p2 = os.path.join(PARTYPLAY_BACK, 'worker', 'SOURCE-do-not-paste-partyplay-api.js')
+    if os.path.isfile(lib_p) and os.path.isfile(wsrc_p2):
+        lib = io.open(lib_p, encoding='utf-8').read()
+        m = re.search(r'var\s+UNUSED_EXPIRY_DAYS\s*=\s*(\d+)', lib)
+        ok('the unused-code expiry is declared in the licence library',
+           bool(m), m.group(1) + ' days' if m else 'UNUSED_EXPIRY_DAYS is not in pp-licence.js',
+           why='nothing owns the number, so every copy of it is a guess')
+        if m:
+            days = m.group(1)
+            w = io.open(wsrc_p2, encoding='utf-8').read()
+            w = re.sub(r'/\*.*?\*/', '', w, flags=re.S)      # a comment may say 365
+            w = re.sub(r'//[^\n]*', '', w)
+            hard = re.findall(r'(?<![\d.])' + days + r'\s*\*\s*86400', w)
+            ok('the Worker asks the library for it rather than writing it again',
+               not hard, '%d hardcoded copy(ies)' % len(hard),
+               why='the Worker would keep chasing at %s days after the library changed' % days)
+            ok('and the Worker can actually reach the constant',
+               'PPLicence.UNUSED_EXPIRY_DAYS' in w,
+               'PPLicence.UNUSED_EXPIRY_DAYS' if 'PPLicence.UNUSED_EXPIRY_DAYS' in w else 'never asked for',
+               why='a check that only forbids the literal passes a Worker that lost the rule entirely')
+
     head('D. Nothing shares a corner of the venue TV')
     """A TV is the one surface a whole room looks at, and its corners are crowded.
 

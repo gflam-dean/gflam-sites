@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 12 Sep 2026, 17:55:26   fingerprint dd4193d6e590
+   Built 12 Sep 2026, 18:02:31   fingerprint cc25dad8d135
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '12 Sep 2026, 17:55 · 85e85e43';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 18:02 · 66b94514';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -1502,7 +1502,12 @@ async function runNudgeExpiring(env) {
   if (!env.RESEND_API_KEY) return { ok: false, error: 'No email key set on this Worker' };
 
   const now = Date.now();
-  const UNUSED_MS = 365 * 86400e3;
+  /* HOW LONG AN UNSTARTED CODE KEEPS. lib/pp-licence.js owns this number and
+     expires codes by it; these two places used to write 365 again by hand. Change
+     the library to 180 and the code would have died at 180 while this still chased
+     at 365: the warning would fire six months after the thing it warns about, and
+     nobody would get the warning they were owed. One answer per question. */
+  const UNUSED_MS = PPLicence.UNUSED_EXPIRY_DAYS * 86400e3;
   const rows = await sb(env, 'pp_licences?status=eq.paid&activated_at=is.null&nudged_at=is.null' +
     '&select=id,code,buyer_name,buyer_email,party_name,paid_at,is_comp,host_key,days&limit=200');
 
@@ -1713,7 +1718,12 @@ async function handleStats(request, env) {
     'buyer_name,buyer_email,party_name,nudged_at,status&limit=5000');
 
   const inWindow = (iso) => !!iso && iso >= since;
-  const UNUSED_MS = 365 * 86400e3;
+  /* HOW LONG AN UNSTARTED CODE KEEPS. lib/pp-licence.js owns this number and
+     expires codes by it; these two places used to write 365 again by hand. Change
+     the library to 180 and the code would have died at 180 while this still chased
+     at 365: the warning would fire six months after the thing it warns about, and
+     nobody would get the warning they were owed. One answer per question. */
+  const UNUSED_MS = PPLicence.UNUSED_EXPIRY_DAYS * 86400e3;
 
   /* Bought, never started. The licence keeps for a year from purchase, so this is
      the clock that decides who gets chased. */

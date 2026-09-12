@@ -1053,6 +1053,21 @@ MUTATIONS = [
      'the PATCH stops asking for the row back, so the handler cannot tell whether it matched '
      'anything and silently stops recording opt-outs for everybody not already on the list'),
 
+    # ---- 12 Sep 2026: how long an unstarted PartyPlay code keeps, written once.
+    ('the Worker asks the library for it rather than writing it again',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     # Either copy tripping it is enough, and they are the same claim.
+     '<<ANY:PPLicence.UNUSED_EXPIRY_DAYS * 86400e3>>',
+     '365 * 86400e3',
+     'the Worker goes back to writing the expiry by hand, so changing it in the licence '
+     'library stops changing when people are warned their code is about to run out'),
+
+    ('the unused-code expiry is declared in the licence library',
+     'partyplay-backend/lib/pp-licence.js',
+     'var UNUSED_EXPIRY_DAYS = 365;',
+     'var UNUSED_EXPIRY_DAYS_RENAMED = 365;',
+     'the one place that owns how long a code keeps is renamed away, so nothing owns it'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",
