@@ -89,7 +89,57 @@
     should raise every row, possibly by a lot. That is not measured, so it is not claimed.
   </div>
 
-  <h2>What it costs at 5,000 venues</h2>
+  <h2>What you need, and what it costs, at each size</h2>
+  <p>The money is not the story. At every size below, infrastructure is under a quarter of one
+  percent of revenue. <b>What you are buying is engineering work, not servers.</b></p>
+
+  <table>
+    <tr>
+      <th>Venues</th><th class="n">Live at once</th><th class="n">Phones</th>
+      <th class="n">Cost / month</th><th class="n">Revenue / month</th><th>What it needs</th>
+    </tr>
+    <tr>
+      <td><b>100</b></td><td class="n">25</td><td class="n">1,000</td>
+      <td class="n"><b>$30</b></td><td class="n">$15,000</td>
+      <td>Pro, and the lobby poll cached</td>
+    </tr>
+    <tr>
+      <td><b>250</b></td><td class="n">62</td><td class="n">2,480</td>
+      <td class="n"><b>$43</b></td><td class="n">$37,500</td>
+      <td>same</td>
+    </tr>
+    <tr>
+      <td><b>500</b></td><td class="n">125</td><td class="n">5,000</td>
+      <td class="n"><b>$62</b></td><td class="n">$75,000</td>
+      <td>same, plus turn the room server on for headroom</td>
+    </tr>
+    <tr class="goal">
+      <td><b>1,000</b></td><td class="n">250</td><td class="n">10,000</td>
+      <td class="n"><b>$98</b></td><td class="n">$150,000</td>
+      <td>all of the above, <b>and a cheaper join</b></td>
+    </tr>
+  </table>
+
+  <div class="note">
+    <b>Caching the lobby poll is not optional past about 30 venues.</b> At 100 venues, a thousand
+    phones sitting in lobbies is <b>528 database calls a second</b> against a measured ceiling of 155.
+    With it cached the same 100 venues need 28. It is the single cheapest change on this page and
+    everything else depends on it.
+  </div>
+
+  <h2>Where each tier actually sits against the ceiling</h2>
+  <table>
+    <tr><th>Venues</th><th class="n">Calls/sec WITH the poll</th><th class="n">With it cached</th><th class="n">Cached + room server</th></tr>
+    <tr class="now"><td>100</td><td class="n">528 &nbsp;over</td><td class="n">28 &nbsp;fine</td><td class="n">20 &nbsp;fine</td></tr>
+    <tr><td>250</td><td class="n">1,310 &nbsp;over</td><td class="n">70 &nbsp;fine</td><td class="n">50 &nbsp;fine</td></tr>
+    <tr><td>500</td><td class="n">2,641 &nbsp;over</td><td class="n">141 &nbsp;tight</td><td class="n">100 &nbsp;fine</td></tr>
+    <tr class="goal"><td>1,000</td><td class="n">5,282 &nbsp;over</td><td class="n">282 &nbsp;OVER</td><td class="n">200 &nbsp;still over</td></tr>
+  </table>
+  <p>The measured ceiling is <b>155 calls a second</b>. At 500 venues you would be running at 91% of
+  it with no headroom, which is why the room server belongs there rather than later. At 1,000 the
+  joins alone are 200 a second, so the join has to come down from 12 calls to about 3.</p>
+
+  <h2>And the long view, at 5,000 venues</h2>
   <div class="two">
     <table>
       <tr><th>Item</th><th class="n">Per month</th></tr>
@@ -97,14 +147,13 @@
       <tr><td>Compute, XL to 2XL</td><td class="n">$210 to $410</td></tr>
       <tr><td>Cloudflare Workers Paid</td><td class="n">$5</td></tr>
       <tr><td>Durable Objects, the room server</td><td class="n">$300 to $400</td></tr>
-      <tr><td>Residual Supabase realtime</td><td class="n">about $50</td></tr>
-      <tr class="goal"><td><b>Total</b></td><td class="n"><b>$600 to $900 USD</b></td></tr>
+      <tr class="goal"><td><b>Total</b></td><td class="n"><b>$600 to $900</b></td></tr>
     </table>
     <div>
-      <p>Against 5,000 venues at 50 seats and $3 a player, that is about
-      <b>$750,000 a month of revenue</b>.</p>
-      <p>Infrastructure is around <b>0.1%</b> of it.</p>
-      <p>Money is never your constraint on this curve. Engineering is.</p>
+      <p>5,000 venues at 50 seats and $3 a player is about <b>$750,000 a month of revenue</b>.
+      Infrastructure is around <b>0.1%</b>.</p>
+      <p>By then the join has to be down to about 2 calls. That is the one real piece of work
+      between here and there.</p>
     </div>
   </div>
 
