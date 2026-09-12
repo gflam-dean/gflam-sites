@@ -1530,6 +1530,22 @@ block (all classes prefixed .vpa-)
     font-family:'Manrope',sans-serif;font-weight:600;font-size:12.5px;
     color:var(--muted);line-height:1.5;max-width:214px;
   }
+
+  /* The way out of the demo. Deliberately the loudest thing below the fold: everything above
+     it is a toy, and this is the only part that asks for anything. */
+  .vp-next{max-width:760px;margin:52px auto 64px;padding:32px 26px;text-align:center;
+    background:linear-gradient(180deg,rgba(255,31,142,.10),rgba(255,31,142,.03));
+    border:1px solid rgba(255,31,142,.28);border-radius:20px}
+  .vp-next h2{font-family:'Anton',sans-serif;text-transform:uppercase;letter-spacing:.01em;
+    font-size:clamp(26px,4.4vw,40px);margin:0 0 10px;color:#fff}
+  .vp-next-price{font-size:clamp(16px,2.2vw,20px);margin:0 0 8px;color:#fff}
+  .vp-next-sub{color:#B9B2C7;margin:0 0 22px;font-size:15px}
+  .vp-next-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .vp-next-go,.vp-next-alt{display:inline-block;text-decoration:none;font-weight:800;
+    font-family:'Hanken Grotesk',sans-serif;border-radius:12px;padding:15px 30px;font-size:17px}
+  .vp-next-go{background:#FF1F8E;color:#fff;box-shadow:0 10px 30px -12px rgba(255,31,142,.9)}
+  .vp-next-alt{background:transparent;color:#E9E4F0;border:1px solid rgba(255,255,255,.22)}
+  .vp-next-fine{color:#8E869E;font-size:13.5px;margin:20px 0 0}
 </style>
 
 <style>
@@ -1742,6 +1758,33 @@ block (all classes prefixed .vpa-)
       </button>
     </div>
   </div>
+</div>
+
+<!-- THE WAY OUT.
+
+     Dean, 13 Sep 2026: "theres no buy button or way to get out of see a night. they need a
+     call to action."
+
+     He was right and it was worse than a copy problem. This page had NO outbound links at
+     all: every <a> on it was an in-page anchor and every button drove the demo. So a
+     prospect who clicked through from a cold email, played with the real screens, and was
+     sold, had no price, no signup and no way to contact anybody. The whole campaign pointed
+     at a dead end.
+
+     One block, at the bottom, after they have seen the thing. Price first, because the next
+     question after "that looks good" is always "what does it cost", and a page that makes
+     somebody hunt for that loses them. -->
+<div class="vp-next">
+  <h2>Like the look of it?</h2>
+  <p class="vp-next-price"><b>$3 per player, per month.</b> You choose how many players. No lock-in,
+    no setup fee, and nothing extra per night.</p>
+  <p class="vp-next-sub">Every format on this page is included: bingo, trivia, musical bingo,
+    raffles, your members draw and your own screen ads.</p>
+  <div class="vp-next-btns">
+    <a class="vp-next-go" href="/#claim">Get started</a>
+    <a class="vp-next-alt" href="/#faq">Questions first</a>
+  </div>
+  <p class="vp-next-fine">Runs on the telly you already have. Players join on their phones, no app.</p>
 </div>
 
 <!-- Modal -->
