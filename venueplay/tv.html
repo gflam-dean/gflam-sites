@@ -1981,7 +1981,40 @@
        It lives HERE and not in the demo block because setVenueName is scoped to this
        function. Called from out there it is a ReferenceError, swallowed by a try/catch,
        which is a line of code that looks like it works and does nothing. */
-    if(DEMO){ setVenueName("The Rose and Crown"); return; }   // and nothing else on this path runs
+    if(DEMO){
+      setVenueName("The Rose and Crown");
+      /* AND THE PUB'S ADVERTISING, which is half of what the screen is FOR.
+
+         Dean, 12 Sep 2026: "that invented pub has all the advertising etc needed for all
+         those nights?" It did not. The demo fetched nothing, so loopEntries() fell through
+         to its single holding slide, whose own words are "Screen not showing your promos or
+         game? Email hello@venueplay.com.au". That slide exists to tell a VENUE their screen
+         is broken. Showing it to a prospect is worse than showing nothing: the one thing a
+         buyer took away from the demo was a troubleshooting line.
+
+         The screen earns its keep between games, and a demo that only ever shows a game
+         leaves that out entirely. So the invented pub gets what a real one runs: a few
+         promos, the weekly draws board and a raffle, which is also the only way the
+         auto-draws and auto-raffle slides get in front of anybody on a sales page.
+
+         Invented, like the name. No dates on the slides, so slideVisible() keeps them all
+         and the loop cannot empty itself on a particular day. */
+      ADS.rotationSecs = 6;
+      ADS.slides = [
+        { tag:"Tonight",   accent:"pink",  head:"Bingo from 7pm",          sub:"Free to play. $50 bar tab on the line." },
+        { tag:"Kitchen",   accent:"gold",  head:"Parma and a pot, $22",    sub:"Every night until close" },
+        { tag:"Members",   accent:"green", head:"Join the club, $5",       sub:"Members prices at the bar and the bistro" },
+        { tag:"Saturday",  accent:"blue",  head:"Live music, 8pm",         sub:"No cover charge" }
+      ];
+      ADS.draws = [
+        { day:"Thursday", jackpot:"$1,400", time:"7:30pm" },
+        { day:"Friday",   jackpot:"$3,200", time:"6:00pm" },
+        { day:"Sunday",   jackpot:"$900",   time:"5:00pm" }
+      ];
+      ADS.raffle = { label:"Meat raffle", day:"Friday", time:"6:30pm" };
+      buildAds(true); startAds();
+      return;   // and nothing else on this path runs: no fetch, no logo, no poll
+    }
     if(!slug) return;
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
     // When buildAds() DOES replace the slides it hands back a set with no "show" class on any
