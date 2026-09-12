@@ -51,6 +51,20 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 #   <<ALL:text>>   replace every occurrence, not the first
 #   <<TRUNCATE>>   cut the file in half
 #   <<EMPTY>>      leave it zero bytes
+#   <<ANY:text>>   the text appears many times ON PURPOSE and breaking any one of
+#                  them proves the check. Say so out loud, because the default is
+#                  now that a find-string matching twice is an ERROR.
+#
+# WHY THAT DEFAULT CHANGED, 12 Sep 2026. This file used to say "two matches is
+# FINE, because the real run only ever touches the first". It is not fine. The
+# fix that stopped endGame() losing a confirmed winner added
+# "      announce(false);" to index.html, six spaces in. The finishGame mutation
+# searches for "    announce(false);", four spaces in, and the six-space line
+# CONTAINS the four-space string and sits earlier in the file. So the mutation
+# quietly started breaking endGame instead of finishGame, the finishGame check
+# stayed green, and prove-checks reported it BLIND. Nothing was wrong with the
+# check. A product change two hundred lines away had silently re-aimed the
+# mutation, and the only reason anybody noticed is that this tool was run.
 #
 # Half a Worker does not parse, so four other checks catch it before the
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
@@ -134,8 +148,10 @@ MUTATIONS = [
     # twice on 12 Sep.
     ('bingo-after-the-win.test.js',
      'venueplay/app/index.html',
-     '    announce(false);',
-     '    announce(true);',
+     # Anchored on the line AFTER it as well, so it can only be finishGame's call.
+     # Bare "    announce(false);" also matches inside endGame's six-space line.
+     '    announce(false);\n    G.won=true;',
+     '    announce(true);\n    G.won=true;',
      'Finish game broadcasts cont:true, so the wall celebrates and goes straight back to the '
      'board on a game that is over'),
 
@@ -353,7 +369,7 @@ MUTATIONS = [
 
     ('every playlist points at songs that exist',
      'venueplay/data/musical-library.json',
-     '"songIds": [\n', '"songIds": [\n    "no-such-song",\n',
+     '<<ANY:"songIds": [\n>>', '"songIds": [\n    "no-such-song",\n',
      'a playlist pointing at a song that is not there deals a blank cell'),
 
     ('esc() is the same in all',
@@ -495,12 +511,15 @@ MUTATIONS = [
 
     ('live-fixes.test.js',
      'venueplay/app/musical/screen.html',
-     'LOBBY_MAX_MS', 'LOBBY_MAX_MS_DISABLED',
+     # The DECLARATION, not whichever use comes first. Renaming the declaration is what
+     # leaves the reader pointing at a name that is gone, which is what the check catches.
+     'var LOBBY_MAX_MS=60*60*1000', 'var LOBBY_MAX_MS_DISABLED=60*60*1000',
      'the 60 minute lobby cap disappears'),
 
     ('slug-ladder.test.js',
      'venueplay-backend/worker/venueplay-api-FULL.js',
-     'vpaUniqueSlug', 'vpaUniqueSlugRenamed',
+     # The declaration, not one of the three call sites.
+     'async function vpaUniqueSlug(', 'async function vpaUniqueSlugRenamed(',
      'the slug ladder that keeps 100 Royal Hotels apart is renamed away'),
 
     # NOT founding_id_removed: the check asks whether "founding_id" appears in the
@@ -520,7 +539,7 @@ MUTATIONS = [
     # ---- the data ----
     ('every song has audio',
      'venueplay/data/musical-library.json',
-     '"previewUrl": "https', '"previewUrl": "", "x": "https',
+     '<<ANY:"previewUrl": "https>>', '"previewUrl": "", "x": "https',
      'a song loses its audio and the host plays silence'),
 
     ('songs know what year they are',
@@ -588,7 +607,10 @@ MUTATIONS = [
     # index, the packs and pp-quiz.js; the licence block is the thing it was
     # written to guard, and dropping one has happened on this bank before.
     ('pp-trivia-pack.test.js', 'partyplay/data/trivia/index.json',
-     '"license"', '"licence_dropped"',
+     # The BANK's own licence line. Four blocks in this file carry the word, and the
+     # per-pack ones are a different claim.
+     '"license": "CC BY-SA 4.0 for imported questions',
+     '"licence_dropped": "CC BY-SA 4.0 for imported questions',
      'the licence block is dropped from the question bank'),
     # A fresh random code per session is what made the wall change mid-night and
     # made a table talker impossible to print.
@@ -748,14 +770,35 @@ MUTATIONS = [
      '.sign .vlogo{height:14cqh;', '.sign .vlogo{height:auto;',
      'the venue logo loses its fixed slot and lands on the writing when it prints'),
     ('one-trip-draws.test.js', 'venueplay-backend/supabase/venueplay-76-one-trip-host-draws.sql',
-     '  v_who := public.vp_host_staff(p_auth_user_id, v_draw.venue_id);',
-     '  v_who := null;',
-     'the staff check disappears from the one-trip draw, which is an authorisation hole not a speed-up'),
+     # ANCHORED TO vp_bingo_ball. The identical line sits in vp_members_draw too, and the
+     # bare string only ever broke whichever came first in the file. Two different
+     # authorisation checks on two different games, so each now gets its own mutation.
+     """  -- 2. may this person run games at THAT venue (the draw's venue, never one
+  --    the caller named), and is the venue switched on
+  v_who := public.vp_host_staff(p_auth_user_id, v_draw.venue_id);""",
+     """  -- 2. may this person run games at THAT venue (the draw's venue, never one
+  --    the caller named), and is the venue switched on
+  v_who := null;""",
+     'the staff check disappears from the one-trip BINGO BALL draw, which is an '
+     'authorisation hole not a speed-up'),
+
+    # ADDED 12 Sep 2026. The mutation above used to be the bare v_who line, which matched
+    # twice and only ever broke the first. So the members draw half of this migration has
+    # never once been proven. If this one comes back BLIND, that is a real gap in cover,
+    # not a broken mutation.
+    ('one-trip-draws.test.js',
+     'venueplay-backend/supabase/venueplay-76-one-trip-host-draws.sql',
+     """  -- 2. staff at the DRAW's venue, and the kill-switch
+  v_who := public.vp_host_staff(p_auth_user_id, v_draw.venue_id);""",
+     """  -- 2. staff at the DRAW's venue, and the kill-switch
+  v_who := null;""",
+     'the staff check disappears from the one-trip MEMBERS DRAW, so anyone who can reach the '
+     'function can spin another venue draw'),
     ('vp-follow.test.js', 'venueplay/app/vp-follow.js',
      '<<ALL:root.VPFollow>>', 'root.VPFollowRenamed',
      'the follow-the-host library stops exporting itself'),
     ('musical-draw.test.js', 'venueplay/app/musical/host.html',
-     'HITS_ALPHA', 'HITS_ALPHA_REMOVED',
+     'var HITS_ALPHA=45;', 'var HITS_ALPHA_REMOVED=45;',
      'the weighting that keeps a night singable is renamed away'),
     # The rejection sampler is what makes the draw unbiased. Take the loop away
     # and x % max favours the low numbers, which for bingo means some balls come
@@ -794,7 +837,8 @@ MUTATIONS = [
      'number and charged another'),
 
     ('one-game.test.js', 'venueplay-backend/worker/venueplay-game.js',
-     'endOtherRunningGames', 'endOtherRunningGamesRenamed',
+     # The declaration, not one of the two call sites.
+     'async function endOtherRunningGames(', 'async function endOtherRunningGamesRenamed(',
      'the one-game-at-a-time rule is renamed away'),
     ('check-tv-watchdog.py', 'venueplay/tv.html',
      '<<ALL:tv_reload>>', 'tv_reload_disabled',
@@ -805,7 +849,7 @@ MUTATIONS = [
      'function cryptoInt', 'function cryptoInt(max){ return 0; } function cryptoIntOld',
      'one copy of the unbiased draw is quietly replaced, which is a licence matter'),
     ('no playlist is empty', 'venueplay/data/musical-library.json',
-     '"songIds": [\n', '"songIds": [], "wasSongIds": [\n',
+     '<<ANY:"songIds": [\n>>', '"songIds": [], "wasSongIds": [\n',
      'a pack empties and a host picks a night with nothing in it'),
     ('every founding page agrees with its own code', 'venueplay/qld.html',
      '<<ALL:30 September>>', '31 September',
@@ -1045,6 +1089,15 @@ def main():
             after = ''
         elif find == '<<TRUNCATE>>':
             after = before[:len(before) // 2]
+        elif find.startswith('<<ANY:'):
+            # Many identical occurrences on purpose; breaking any one proves the check.
+            target = find[len('<<ANY:'):-2] if find.endswith('>>') else find[len('<<ANY:'):]
+            if target not in before:
+                print('  %s----%s %s %sthe mutation no longer applies, rewrite it%s'
+                      % (YEL, OFF, label.ljust(52), DIM, OFF))
+                skipped += 1
+                continue
+            after = before.replace(target, repl, 1)
         elif find.startswith('<<ALL:'):
             target = find[len('<<ALL:'):-2] if find.endswith('>>') else find[len('<<ALL:'):]
             if target not in before:
@@ -1113,10 +1166,17 @@ def check_mutations_still_apply():
     to prove has not been tested since.
 
     IT FOLLOWS THE SAME RULES THE REAL RUN DOES, which the first version of this did
-    not, and it reported 28 healthy mutations as broken. Two matches is FINE, because
-    the real run uses replace(find, repl, 1) and only ever touches the first. And the
-    <<...>> directives do not search for anything at all. A checker that does not
-    model the thing it checks produces confident nonsense.
+    not, and it reported 28 healthy mutations as broken. And the <<...>> directives do
+    not search for anything at all. A checker that does not model the thing it checks
+    produces confident nonsense.
+
+    TWO MATCHES IS NOT FINE, which this docstring used to claim. The real run breaks
+    only the FIRST, so a find-string that matches twice is a mutation whose target is
+    decided by file order rather than by its author. On 12 Sep 2026 a product fix two
+    hundred lines away added an earlier match and silently re-aimed the finishGame
+    mutation at endGame; the check it was meant to prove stayed green and reported
+    BLIND. So a mutation that matches more than once must now SAY so, with <<ANY:...>>,
+    which is a promise that the occurrences are interchangeable.
 
         python3 tools/prove-checks.py --list
     """
@@ -1130,11 +1190,19 @@ def check_mutations_still_apply():
         # <<EMPTY>>, <<TRUNCATE>> and <<COPYTO:...>> do not search for anything.
         if find in ('<<EMPTY>>', '<<TRUNCATE>>') or find.startswith('<<COPYTO:'):
             continue
-        target = find
-        if find.startswith('<<ALL:'):
-            target = find[len('<<ALL:'):-2] if find.endswith('>>') else find[len('<<ALL:'):]
+        target, declared_many = find, False
+        for marker in ('<<ALL:', '<<ANY:'):
+            if find.startswith(marker):
+                target = find[len(marker):-2] if find.endswith('>>') else find[len(marker):]
+                declared_many = True
         if target not in body:
             print('  NEVER   %-56s not found in %s' % (label[:56], rel)); bad += 1; continue
+        n = body.count(target)
+        if n > 1 and not declared_many:
+            print('  AMBIG   %-56s matches %d times in %s, so which one it breaks is decided'
+                  % (label[:56], n, rel))
+            print('          by file order. Anchor it, or say <<ANY:...>> if they are interchangeable.')
+            bad += 1
         if target == repl:
             print('  NO-OP   %-56s replaces itself, so it changes nothing' % label[:56]); bad += 1
     if bad:
