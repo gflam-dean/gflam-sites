@@ -1881,11 +1881,17 @@ block (all classes prefixed .vpa-)
                describes, and I walked into it writing this line. */
             : /^[a-z]+-tv$/.test(view)
                 ? "/app/" + view.replace("-tv","") + "/screen" + PAGE_EXT + "?demo=1"
+            /* A game's PLAYER page, same idea as its wall. app/trivia/play.html gained a
+               scripted ?demo=1 on 13 Sep, so the trivia phone is the real phone now. */
+            : /^[a-z]+-phone$/.test(view)
+                ? "/app/" + view.replace("-phone","") + "/play" + PAGE_EXT + "?demo=1"
             : view === "host"      ? (PAGE_EXT ? "/app/index.html?demo=1" : "/app/?demo=1")
             :                        "/play" + PAGE_EXT + "?demo=1";
     var title = view === "tv"        ? "The venue screen, running a bingo night"
               : /^[a-z]+-tv$/.test(view)
                   ? "The venue screen, running a " + view.replace("-tv","").replace("members","members draw") + " night"
+              : /^[a-z]+-phone$/.test(view)
+                  ? "A player's phone, mid " + view.replace("-phone","") + " game"
               : view === "host"      ? "The host console, mid game"
               :                        "A player's phone, mid game";
     /* loading="lazy" so the two you have not opened cost nothing, and no sandbox attribute:
@@ -2801,10 +2807,18 @@ block (all classes prefixed .vpa-)
       if (view === "tv") {
         body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
           realScreen("trivia-tv") + '</div><div class="vp-tvstand"></div>';
+      } else if (view === "player") {
+        /* THE TRIVIA PHONE IS THE REAL PAGE NOW. The hand-built replica below it was a
+           drawing that could not go wrong, which is the problem: it could not go RIGHT
+           either, and a venue comparing the trivia wall to a phone playing bingo is the
+           thing Dean spotted on 13 Sep. app/trivia/play.html now has the same scripted
+           ?demo=1 its wall has, so this tile breaks when the product breaks. */
+        body.innerHTML = '<div class="vp-phoneframe"><div class="vp-live-phone">' +
+          realScreen("trivia-phone") + '</div></div>';
+        if (typeof vpFitFrames === "function") { vpFitFrames(); requestAnimationFrame(vpFitFrames); }
       } else {
         body.innerHTML = triviaViews[view] || "";
         if (view === "host") { wireTriviaHost(); }
-        else if (view === "player") { wireTriviaPlayer(); }
       }
     } else if (currentMode === "musical") {
       /* THE WALL IS THE REAL PAGE. app/musical/screen.html gained ?demo=1 on 12 Sep: no venue, no

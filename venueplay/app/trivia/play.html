@@ -511,6 +511,9 @@
     }
     // Optimistic paint from the broadcast, then correct it with the Worker's numbers.
     paint(answered && P.choice===ci, 0);
+    /* A scripted night has no Worker to ask, so it carries its own number. Only the demo
+       ever sets demoPts; a real reveal has no such field and falls through unchanged. */
+    if(m.demoPts!=null){ paint(answered && P.choice===ci, m.demoPts); return; }
     if(P.gameId){
       playerGet("/player/score?game="+encodeURIComponent(P.gameId)).then(function(r){
         if(typeof r.total==="number") P.total=r.total;
@@ -834,6 +837,64 @@
     try{ if(ch) ch.unsubscribe(); }catch(e){}
     window.location.href=window.location.pathname;   // drop ?room -> back to the enter-code screen
   }); }
+
+  /* ?demo=1 : THE REAL PHONE, PLAYING A SCRIPTED NIGHT, JOINED TO NOTHING.
+
+     see-a-night.html embedded five real WALLS but only one phone and one tablet, and both
+     of those were bingo. So a venue could see what trivia looks like on the telly and then
+     be shown a punter's phone playing a different game. Dean, 13 Sep 2026: "no other phones
+     or tablets are done apart from bingo", and it matters more now the whole NSW campaign
+     opens on trivia to 350 venues who already run one.
+
+     Same shape as the bingo demo in /play: every pixel on this page is already driven by
+     onMsg(), so a demo is a SCRIPT OF MESSAGES and not a second copy of the rendering. If
+     the question screen ever breaks, this breaks with it, which is the point.
+
+     It taps its own answers, because a phone sitting on "Tap your answer" for the whole
+     loop shows the furniture rather than the game. Gets one right, one wrong, one right,
+     so the result screen is seen doing both things and nobody is sold a product that only
+     ever congratulates you. */
+  var VP_DEMO = /[?&]demo=1/.test(window.location.search||"");
+  if(VP_DEMO){
+    document.documentElement.setAttribute("data-vp-demo","1");
+    P.joined=true; P.name="Dre"; P.pid="demo"; P.gameId=""; P.total=0; P.rank=0; P.playersCount=42;
+    $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+    var _dt=[];
+    function d(ms, fn){ _dt.push(setTimeout(function(){ try{ fn(); }catch(e){} }, ms)); }
+    function q(qi, text, options, secs){
+      return { t:"question", qseq:qi, qi:qi, qtotal:12, text:text, options:options,
+               secs:secs||15, endsAt:Date.now()+(secs||15)*1000 };
+    }
+    function fire(o){ try{ onMsg(o); }catch(e){} }
+    function round(){
+      for(var i=0;i<_dt.length;i++) clearTimeout(_dt[i]);
+      _dt=[]; P.total=0; P.rank=0; P.ended=false;
+      fire({ t:"started" });
+      d(1800, function(){ fire(q(4,"Which Australian city is known as the City of Churches?",
+                                 ["Hobart","Adelaide","Perth","Ballarat"],15)); });
+      d(5200, function(){ answer(1); });
+      d(9000, function(){ P.total=130; P.rank=3;
+                          fire({ t:"reveal", qseq:4, correctIndex:1,
+                                 options:["Hobart","Adelaide","Perth","Ballarat"], demoPts:130 }); });
+      d(15000,function(){ fire(q(5,"In what year did the Sydney Harbour Bridge open?",
+                                 ["1923","1932","1938","1945"],15)); });
+      d(18600,function(){ answer(2); });
+      d(22400,function(){ P.rank=4;
+                          fire({ t:"reveal", qseq:5, correctIndex:1,
+                                 options:["1923","1932","1938","1945"], demoPts:0 }); });
+      d(28000,function(){ fire(q(6,"Which of these is NOT a native Australian animal?",
+                                 ["Capybara","Quokka","Bilby","Numbat"],15)); });
+      d(31400,function(){ answer(0); });
+      d(35200,function(){ P.total=275; P.rank=2;
+                          fire({ t:"reveal", qseq:6, correctIndex:0,
+                                 options:["Capybara","Quokka","Bilby","Numbat"], demoPts:145 }); });
+      d(41000,function(){ P.total=275; P.rank=2; fire({ t:"podium" }); });
+      d(50000,round);
+    }
+    showWait("The quiz is starting. Your questions will pop up here.");
+    d(900, round);
+    return;                      /* never connect, never follow a host, never touch a venue */
+  }
 
   // ---- init: read ?room ----
   (function(){
