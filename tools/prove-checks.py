@@ -1099,6 +1099,28 @@ MUTATIONS = [
      'the guard comes off, so a shared script that fails to load throws mid-boot and takes '
      'VP.setGameActive with it: a host loses their night to save them a warning banner'),
 
+    # ---- 12 Sep 2026: a venue's account state read before the caller was known.
+    ('suspend-not-before-auth.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "    ? 'Your tab has run a bit long. Settle up on your account page and we will get your games going again.'\n    : 'Games are paused here tonight. Have a word with the staff.';",
+     "    ? 'Games are paused here tonight. Have a word with the staff.'\n    : 'Games are paused here tonight. Have a word with the staff.';",
+     'a host is shown the message written for a punter, so the one person who can clear a '
+     'suspension is never told what it is'),
+
+    ('suspend-not-before-auth.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "  await assertVenueActive(env, venueId, audience);\n  return Object.assign(",
+     "  await assertVenueActive(env, venueId, 'host');\n  return Object.assign(",
+     'requireStaff hardcodes the host wording again, which silently rewords all 36 host routes '
+     'including the bingo ball and members draw, whose replies must match migration 76 byte for byte'),
+
+    ('suspend-not-before-auth.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "  const suspended = audience === 'host'",
+     "  const suspended = audience !== 'player'",
+     'the host wording becomes the DEFAULT, so every unauthenticated player route starts '
+     "reading out the venue's billing state"),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",

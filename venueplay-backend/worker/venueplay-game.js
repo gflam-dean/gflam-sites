@@ -138,7 +138,7 @@
  * crypto.getRandomValues / crypto.subtle. Australian English throughout.
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Sep 2026, 16:13 · b6cddf71';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 18:57 · 900cbf48';   // tools/stamp-workers.py, do not edit by hand
 /* ---------------------------------------------------------------------------
  * ANTI-ABUSE TUNING (soft limits; Workers KV is eventually consistent so these
  * are approximate under a burst, which is fine for abuse control). All windows
@@ -2390,17 +2390,24 @@ async function handleHostGame(request, env, json) {
   }
 
   const sessions = await sbGet(env, 'vp_sessions', 'id=eq.' + enc(sessionId) + '&select=*');
-  // SUSPEND kill-switch: a suspended venue's hosts cannot start any game (blocks the venue AND its hosts).
-  if (sessions && sessions[0] && sessions[0].venue_id) {
-    const _sv = await sbGet(env, 'vp_venues', 'id=eq.' + enc(sessions[0].venue_id) + '&select=status');
-    if (_sv && _sv[0] && _sv[0].status === 'suspended') {
-      return json({ error: 'Your tab has run a bit long. Settle up on your account page and we will get your games going again.' }, 403);
-    }
-  }
+  /* THE SUSPEND CHECK USED TO SIT HERE, BEFORE requireStaff, AND THAT LEAKED.
+
+     sessionId comes from the caller. Any signed-in host, at any venue, could hand in ANOTHER
+     venue's session id and read the answer: a 403 saying "your tab has run a bit long" meant
+     that venue was behind on payment, and any other error meant it was not. Whether a venue is
+     paid up is that venue's business, and the rule here is that a venue only ever sees its own
+     account.
+
+     It is not lost, only moved. requireStaff calls assertVenueActive on both of its paths, so
+     the kill-switch still fires on every host route, and it now passes 'host' so a real host
+     still gets the useful "settle up" wording rather than the player-facing one. That is a
+     better message on all 36 host routes, not just this one.
+
+     Found 12 Sep 2026. Nothing about the enforcement changed; only who is allowed to learn it. */
   if (!sessions.length) return json({ error: 'Session not found' }, 404);
   const session = sessions[0];
   if (session.status === 'finished' || session.status === 'cancelled') return json({ error: 'This session is closed' }, 409);
-  const staff = await requireStaff(env, authUserId, session.venue_id);   // ENFORCED: staff at the session's venue (also kill-switch)
+  const staff = await requireStaff(env, authUserId, session.venue_id, 'host');   // ENFORCED: staff at the session's venue (also kill-switch, in the host's words)
 
   // Once-a-week limit for trivia + musical bingo, checked BEFORE the rollover below so a
   // blocked start can never finish the game already running. Extra rounds within THIS
@@ -6652,7 +6659,11 @@ function actorRef(staff) {
   return 'host:' + (staff.id || 'unknown');
 }
 
-async function requireStaff(env, authUserId, venueId) {
+async function requireStaff(env, authUserId, venueId, audience) {
+  /* audience is OPT-IN and every existing caller leaves it out, so their wording does not move.
+     Only a route whose reader is definitely the venue's own host passes 'host'. The bingo ball
+     and members draw deliberately answer in the ROOM's words and have a SQL twin in migration 76
+     that has to match byte for byte, which is what one-trip-draws.test.js guards. */
   assertUuid(authUserId, 'user');     // sub claim from the verified JWT
   assertUuid(venueId, 'venue_id');    // re-derived per request; never trusted raw
   const rows = await sbGet(env, 'vp_venue_staff',
@@ -6679,7 +6690,7 @@ async function requireStaff(env, authUserId, venueId) {
     if (!admins.length) throw httpError(403, 'Not authorised: you are not staff at this venue');
     // The kill-switch still applies: an admin must not be able to run games at a venue we have
     // switched off, or the suspension would not mean anything.
-    await assertVenueActive(env, venueId);
+    await assertVenueActive(env, venueId, audience);
     // 'owner' so the manager-gated routes (draw settings, members list) work, which is the whole
     // point of View as. id is null: there is no staff row to attribute to, and the audit trail
     // records the auth user either way.
@@ -6688,7 +6699,7 @@ async function requireStaff(env, authUserId, venueId) {
 
   // M6 kill-switch: an admin-suspended venue (or its group) cannot run games,
   // regardless of a valid host login or Stripe state.
-  await assertVenueActive(env, venueId);
+  await assertVenueActive(env, venueId, audience);
   return Object.assign({ auth_user_id: authUserId }, rows[0]);
 }
 
@@ -6711,14 +6722,25 @@ function staffCan(staff, key) {
 // (/join, /player/claim). An admin-suspended venue (or its group) must not accrue
 // more metered vp_players rows or vp_session_events, so this is re-checked on
 // every write path even the unauthenticated ones. Throws on suspension.
-async function assertVenueActive(env, venueId) {
+async function assertVenueActive(env, venueId, audience) {
+  /* WHO IS READING THIS. A player is told "have a word with the staff", because the reason the
+     games stopped is not their business and there is nothing they can do about it. A HOST needs
+     to be told what it actually is and how to clear it, and anybody who has come through
+     requireStaff is a host by definition.
+
+     Pass 'host' only from a path that has ALREADY established the caller is staff at THIS venue.
+     The suspended state is account information: see the note where the old pre-auth check was
+     deleted, in the game start route. */
+  const suspended = audience === 'host'
+    ? 'Your tab has run a bit long. Settle up on your account page and we will get your games going again.'
+    : 'Games are paused here tonight. Have a word with the staff.';
   assertUuid(venueId, 'venue_id');   // re-derived per request; never trusted raw
   const venues = await sbGet(env, 'vp_venues', 'id=eq.' + enc(venueId) + '&select=status,group_id');
   if (!venues.length) throw httpError(403, 'Venue not available');
-  if (venues[0].status !== 'active') throw httpError(403, 'Games are paused here tonight. Have a word with the staff.');
+  if (venues[0].status !== 'active') throw httpError(403, suspended);
   if (venues[0].group_id) {
     const groups = await sbGet(env, 'vp_venue_groups', 'id=eq.' + enc(venues[0].group_id) + '&select=status');
-    if (groups.length && groups[0].status !== 'active') throw httpError(403, 'Games are paused here tonight. Have a word with the staff.');
+    if (groups.length && groups[0].status !== 'active') throw httpError(403, suspended);
   }
 }
 
