@@ -306,6 +306,7 @@
             <div class="box"><div class="k">Players</div><div class="v" id="setupPlayers">0</div></div>
             <div class="box" style="display:none"><div class="k">Join code</div><div class="v g" id="setupCode">------</div></div>
           </div>
+          <div id="weekBanner" style="display:none;margin:0 0 12px;padding:12px 14px;background:rgba(245,165,36,.12);border:1px solid rgba(245,165,36,.45);border-radius:11px;color:#F5A524;font-size:13.5px;line-height:1.5"></div>
           <button class="btn pink big" id="startBtn">Open lobby</button>
           <button class="btn ghost big" id="cancelLobbyBtn" style="display:none;margin-top:8px">Close lobby</button>
           <p class="note" style="text-align:center;margin-top:10px" id="startNote">Opens the join screen on the TV so players can scan in. Deal the cards and start when everyone is on.</p>
@@ -428,6 +429,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
 <script src="../vp-gaming.js"></script>
+<script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-hold.js"></script>
 <script>
@@ -1116,6 +1118,35 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     }
     renderPlayers();
   }
+  /* ONCE-A-WEEK, SAID BEFORE THE ROOM IS IN.
+
+     The Worker refuses a second musical bingo night inside 7 days, and it does it on the GAME
+     START route, which is after the lobby is open, the QR is on the TV and the room has scanned
+     in. Trivia got a warning for this months ago and musical bingo never did, so a musical host
+     still got the full version of the fault: a 429 in front of a seated room.
+
+     The rule lives in /app/vp-weekly.js so both consoles ask the same one. This only warns and
+     parks the button; the Worker stays the referee, which is why "Try anyway" exists. The
+     banner deliberately STAYS UP after that is pressed, because hiding it reads as permission
+     and the refusal still lands at Start. Added 12 Sep 2026. */
+  function weeklyPreCheck(v){
+    var bn=$("weekBanner"); if(!bn || !v) return;
+    if(G.status!=="setup") return;            // a recovered live game is never blocked
+    var w=VPWeekly.check(v,"musical"); if(!w) return;
+    bn.innerHTML=w.text+'<b>'+w.nextDay+'</b>. '+
+      '<button type="button" id="weekAnyway" style="background:none;border:1px solid rgba(245,165,36,.5);border-radius:7px;color:#F5A524;font-weight:700;font-size:12px;padding:4px 10px;margin-left:6px;cursor:pointer;min-height:32px">Try anyway</button>';
+    bn.style.display="";
+    G.weekHold=true;
+    renderConsole();
+    $("weekAnyway").addEventListener("click", function(){
+      G.weekHold=false;
+      bn.innerHTML='Going ahead anyway. The once-a-week rule is enforced by the server, not here, '+
+        'and it is checked again when you <b>start the game</b>, which is after the room has '+
+        'scanned in. If the server still says no, you will be refused with everyone seated. '+
+        'Your next musical bingo night is available from <b>'+w.nextDay+'</b>.';
+      renderConsole();
+    });
+  }
   function renderConsole(){
     var live=G.status==="running", lobby=G.status==="lobby";
     $("setupBlock").classList.toggle("hidden", live);
@@ -1130,7 +1161,8 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
     syncRoomCode();
     $("playerCount").textContent=playerCount();
     if(!live){
-      $("startBtn").textContent = lobby ? "Start game" : "Open lobby";
+      $("startBtn").textContent = G.weekHold ? "Musical bingo ran this week" : (lobby ? "Start game" : "Open lobby");
+      $("startBtn").disabled = !!G.weekHold;
       var cl=$("cancelLobbyBtn"); if(cl) cl.style.display = lobby ? "" : "none";
       var sn=$("startNote"); if(sn) sn.textContent = lobby
         ? "Players are scanning in on their phones. Deal the cards and start the game when you are ready."
@@ -1876,6 +1908,7 @@ var PATTERN_NAMES={one:"One line across",two:"Two lines across",corners:"Four co
       if(!ctx.currentVenueId){ $("statusText").textContent="No venue"; showSignIn("This login is not linked to a venue yet."); return; }
       G.venueId=ctx.currentVenueId; G.venue=ctx.venue||null;
       G.slug=(ctx.venue && ctx.venue.slug) || "";   // so the console can show the code the ROOM is shown
+      weeklyPreCheck(ctx.venue);
       // Tell vp-session when a game is actually on, so the forced sign-out stops closing the
       // session out from under it. It still signs the host out; it just leaves the night open
       // so signing back in restores it instead of burning the once-a-week musical slot.

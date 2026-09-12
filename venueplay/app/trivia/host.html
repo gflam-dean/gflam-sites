@@ -266,6 +266,7 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../vp-session.js"></script>
+<script src="/app/vp-weekly.js"></script>
 <script src="/app/vp-sign.js"></script>
 <script>
 (function(){
@@ -391,14 +392,10 @@
   // The pill keeps showing connection state so the two are not fighting over one element.
   /* The Worker's once-a-week message carries an ISO date (2026-09-14). Nobody in a pub reads
      that; say "Monday 14 September" instead. Any other message passes through untouched. */
-  var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
-  function friendlyDay(iso){
-    var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||""); if(!m) return iso;
-    var d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
-    return DAYS[d.getUTCDay()]+" "+d.getUTCDate()+" "+MONTHS[d.getUTCMonth()];
-  }
-  function friendlyMsg(msg){ return String(msg||"").replace(/\b(\d{4}-\d{2}-\d{2})\b/g, function(_,iso){ return friendlyDay(iso); }); }
+  /* Both live in /app/vp-weekly.js now, with the once-a-week rule they belong to. Musical
+     bingo needed the same three things and had none of them. */
+  function friendlyDay(iso){ return VPWeekly.friendlyDay(iso); }
+  function friendlyMsg(msg){ return VPWeekly.friendlyMsg(msg); }
   function hostError(msg){
     msg=friendlyMsg(msg);
     var t=$("hostErrText"), b=$("hostErrBar");
@@ -1044,18 +1041,37 @@
      before the lobby opens. The Worker stays the referee: this only warns and parks the button,
      and "Open anyway" hands the decision back to it (an 8 hour resume grace lives there too). */
   function weeklyPreCheck(v){
-    var bn=$("weekBanner"); if(!bn || !v || !v.last_trivia_at) return;
+    var bn=$("weekBanner"); if(!bn || !v) return;
     if(G.status!=="setup") return;                     // a recovered live quiz is never blocked
-    var last=new Date(v.last_trivia_at).getTime(); if(isNaN(last)) return;
-    var elapsed=Date.now()-last, WEEK=7*24*3600*1000, GRACE=8*3600*1000;
-    if(elapsed<GRACE || elapsed>=WEEK) return;
-    var nextIso=new Date(last+WEEK+10*3600*1000).toISOString().slice(0,10);
-    bn.innerHTML='Trivia has already run at this venue this week. Your next trivia night is available from <b>'+friendlyDay(nextIso)+'</b>. '+
-      '<button type="button" id="weekAnyway" style="background:none;border:1px solid rgba(245,165,36,.5);border-radius:7px;color:#F5A524;font-weight:700;font-size:12px;padding:4px 10px;margin-left:6px;cursor:pointer;min-height:32px">Open anyway</button>';
+    var w=VPWeekly.check(v,"trivia"); if(!w) return;
+    var nextIso=w.nextIso;
+    bn.innerHTML=w.text+'<b>'+w.nextDay+'</b>. '+
+      '<button type="button" id="weekAnyway" style="background:none;border:1px solid rgba(245,165,36,.5);border-radius:7px;color:#F5A524;font-weight:700;font-size:12px;padding:4px 10px;margin-left:6px;cursor:pointer;min-height:32px">Try anyway</button>';
     bn.style.display="";
     var sb=$("startBtn"); if(sb){ sb.disabled=true; sb.textContent="Trivia ran this week"; }
     G.weekHold=true;
-    $("weekAnyway").addEventListener("click", function(){ G.weekHold=false; bn.style.display="none"; renderConsole(); });
+    /* THE BANNER STAYS UP, AND THE BUTTON NO LONGER PROMISES.
+
+       This pre-check exists because the Worker used to refuse only at Start, after the QR was
+       on the TV and the room had scanned in. The escape hatch put that fault straight back:
+       "Open anyway" hid the warning and re-enabled the button, the host opened the lobby, the
+       room seated itself, and the Worker returned 429 on Start because the once-a-week rule
+       lives there and takes no override.
+
+       The hatch is still worth having. This warning is only a MIRROR of vp_venues.last_trivia_at
+       as the console last read it, so it can be wrong, and the Worker is the referee. What was
+       wrong was hiding the warning, which reads as permission.
+
+       So: the banner stays, reworded to say exactly where the real decision happens and that it
+       happens AFTER the room is in. A host who reads it can choose knowingly. Found 12 Sep 2026. */
+    $("weekAnyway").addEventListener("click", function(){
+      G.weekHold=false;
+      bn.innerHTML='Going ahead anyway. The once-a-week rule is enforced by the server, not here, '+
+        'and it is checked again when you <b>start the round</b>, which is after the room has '+
+        'scanned in. If the server still says no, you will be refused with everyone seated. '+
+        'Your next trivia night is available from <b>'+friendlyDay(nextIso)+'</b>.';
+      renderConsole();
+    });
   }
 
   // ---- boot: resolve the host login, then let them pair + run ----

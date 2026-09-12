@@ -107,8 +107,16 @@ print("4. THE ONCE A WEEK MESSAGE IS IN ENGLISH (finding 2: the host was shown 2
 var fnDay = grab("friendlyDay", host), fnMsg = grab("friendlyMsg", host);
 pass("host.html still translates the date", !!(fnDay && fnMsg));
 if (fnDay && fnMsg){
-  var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  /* These two now DELEGATE to /app/vp-weekly.js, where the once-a-week rule lives, so the
+     shared file has to be loaded for them to run at all. That is an improvement on the old
+     shape: this used to eval the page's copy against its OWN DAYS and MONTHS arrays, which
+     meant it could pass while the page's real arrays were wrong. Now it exercises the actual
+     chain the host gets. Rewired 12 Sep 2026 when the rule moved out to be shared with the
+     musical console, which never had this warning at all. */
+  var LIB = firstReadable(["venueplay/app/vp-weekly.js", "../../../venueplay/app/vp-weekly.js",
+                           "../../vp-weekly.js"], 200);
+  pass("the shared once-a-week rule is readable", !!LIB);
+  if (LIB) (new Function(LIB))();
   eval(fnDay); eval(fnMsg);
   pass("2026-09-14 becomes Monday 14 September", friendlyDay("2026-09-14") === "Monday 14 September", friendlyDay("2026-09-14"));
   pass("the Worker's whole sentence is rewritten in place",

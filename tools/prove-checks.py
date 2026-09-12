@@ -1068,6 +1068,30 @@ MUTATIONS = [
      'var UNUSED_EXPIRY_DAYS_RENAMED = 365;',
      'the one place that owns how long a code keeps is renamed away, so nothing owns it'),
 
+    # ---- 12 Sep 2026: the once-a-week rule, and when the host finds out.
+    # The Worker refuses on the START route, after the QR is up and the room has
+    # scanned in. Trivia warned the host up front; musical bingo never did.
+    ('weekly-before-the-room.test.js',
+     'venueplay/app/musical/host.html',
+     '<script src="/app/vp-weekly.js"></script>\n',
+     '',
+     'the musical console stops loading the shared rule, so a musical host is refused at Start '
+     'with the room already seated, which is the fault this was written to end'),
+
+    ('weekly-before-the-room.test.js',
+     'venueplay/app/vp-weekly.js',
+     '  var RESUME_GRACE = 8 * 60 * 60 * 1000;',
+     '  var RESUME_GRACE = 4 * 60 * 60 * 1000;',
+     'the mirror disagrees with the Worker about the resume grace, so a host picking a night '
+     'back up after a handover is warned off their own game'),
+
+    ('weekly-before-the-room.test.js',
+     'venueplay/app/trivia/host.html',
+     "      G.weekHold=false;\n      bn.innerHTML='Going ahead anyway.",
+     "      G.weekHold=false; bn.style.display=\"none\";\n      bn.innerHTML='Going ahead anyway.",
+     'the escape hatch hides the warning again, which reads as the console saying it is fine '
+     'when the Worker still refuses at Start'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",
