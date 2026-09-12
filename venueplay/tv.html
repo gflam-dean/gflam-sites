@@ -465,7 +465,20 @@
      So it is now forgotten as soon as the Worker has CONFIRMED there is no such
      venue, which takes two strikes thirty seconds apart, the same protection that
      stops one bad read throwing a card over a working screen. */
+  /* ?demo=1 IS DECIDED HERE, before anything reads a venue.
+
+     The demo block further down says in its own comment that no real venue is involved:
+     "no advertising or logo is ever fetched", "no join code a stranger could use". Both
+     were untrue on any browser that had ever opened a venue screen, because VENUE_SLUG
+     falls back to localStorage. Dean's own laptop ran the demo and put TEST ALPHA on the
+     wall, with that venue's real derived join code beside it.
+
+     On a sales page that is the wrong kind of wrong: a prospect would be shown either
+     nothing, or another pub's name, and a scannable code belonging to a real room. So a
+     demo forgets the browser entirely. Found 12 Sep 2026 by opening it. */
+  var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
   var VENUE_SLUG=(function(){
+    if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
     var fromUrl=tvVenueSlug();
     if(fromUrl){ rememberVenue(fromUrl); return fromUrl; }
     try{ var s=localStorage.getItem("vpTvVenue"); if(s) return s; }catch(e){}
@@ -1786,7 +1799,7 @@
          advertising or logo is ever fetched
        - no join code a stranger could use, which is the whole reason this is not simply
          pointed at a live demo venue */
-  var DEMO = /[?&]demo=1/.test(window.location.search || "");
+  var DEMO = VP_DEMO;      // decided up at VENUE_SLUG, because that read has to know too
   if(DEMO){
     document.documentElement.setAttribute("data-vp-demo","1");
     (function demoNight(){
@@ -1961,7 +1974,15 @@
   // any failure just leaves the samples showing.
   var reloadVenueScreen=null;
   (function loadVenueScreen(){
-    var slug=VENUE_SLUG; if(!slug) return;   // the already-parsed slug (handles /tv?venue= AND /tv?bare-slug AND the remembered one)
+    var slug=VENUE_SLUG;
+    /* A DEMO GETS AN INVENTED PUB. The corner reads better with a name in it than empty,
+       and an invented one is the only safe name to put there: anything real is either
+       somebody else's pub or, on a venue's own laptop, their own.
+       It lives HERE and not in the demo block because setVenueName is scoped to this
+       function. Called from out there it is a ReferenceError, swallowed by a try/catch,
+       which is a line of code that looks like it works and does nothing. */
+    if(DEMO){ setVenueName("The Rose and Crown"); return; }   // and nothing else on this path runs
+    if(!slug) return;
     var hdr={ apikey:SUPA_ANON, Authorization:"Bearer "+SUPA_ANON };
     // When buildAds() DOES replace the slides it hands back a set with no "show" class on any
     // of them, so whatever rebuilds MUST call startAds() or the screen is left black. The old
