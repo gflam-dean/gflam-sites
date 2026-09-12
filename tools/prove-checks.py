@@ -1092,6 +1092,13 @@ MUTATIONS = [
      'the escape hatch hides the warning again, which reads as the console saying it is fine '
      'when the Worker still refuses at Start'),
 
+    ('weekly-before-the-room.test.js',
+     'venueplay/app/musical/host.html',
+     '    if (typeof VPWeekly === "undefined" || !VPWeekly || !VPWeekly.check) return;\n',
+     '',
+     'the guard comes off, so a shared script that fails to load throws mid-boot and takes '
+     'VP.setGameActive with it: a host loses their night to save them a warning banner'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",

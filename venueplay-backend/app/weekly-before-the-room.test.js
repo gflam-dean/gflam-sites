@@ -161,6 +161,31 @@ CONSOLES.forEach(function (c) {
 });
 
 print("");
+print("== a missing shared script degrades to silence, it does not take the console down ==");
+/* weeklyPreCheck runs MID-BOOT in both consoles, and VP.setGameActive runs after it. That is
+   the call that keeps a night alive through the forced sign-out, so a throw here costs a host
+   their game to save them a banner. /app/vp-celebrate.js went missing from eight screens for
+   half a day once, so this is not hypothetical. */
+CONSOLES.forEach(function (c) {
+  var name = c[0], body = strip(c[1]);
+  var i = body.indexOf("function weeklyPreCheck");
+  var fn = i < 0 ? "" : body.slice(i, i + 900);
+  /* Either direction is fine, the guard just has to ASK. The first version of this check
+     insisted on "!==" while the consoles bail with "===", so it failed on correct code. */
+  ok(name + ": weeklyPreCheck checks VPWeekly exists before using it",
+     /typeof VPWeekly\s*[!=]==\s*"undefined"/.test(fn),
+     "an undefined VPWeekly throws mid-boot and VP.setGameActive never runs");
+  ok(name + ": and returns rather than throwing", /return;/.test(fn));
+  ok(name + ": the call still sits before setGameActive, so the guard is what protects it",
+     body.indexOf("weeklyPreCheck(ctx.venue)") < body.indexOf("VP.setGameActive"),
+     "if this order changed the guard is no longer the thing keeping the night alive");
+});
+/* hostError() runs friendlyMsg over every server error the host is shown. */
+ok("trivia: friendlyMsg falls back to the raw text rather than swallowing an error",
+   /function friendlyMsg\(msg\)\{[\s\S]{0,220}typeof VPWeekly !== "undefined"/.test(strip(TRIVIA)),
+   "every server error passes through this on its way to the host");
+
+print("");
 print("== the Worker is still the referee, and still refuses on START ==");
 ok("the Worker checks the weekly limit on the game start route",
    /checkWeeklyFormatLimit\(env, session, isTrivia\)/.test(WORKER));

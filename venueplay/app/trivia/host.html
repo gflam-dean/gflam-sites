@@ -394,8 +394,16 @@
      that; say "Monday 14 September" instead. Any other message passes through untouched. */
   /* Both live in /app/vp-weekly.js now, with the once-a-week rule they belong to. Musical
      bingo needed the same three things and had none of them. */
-  function friendlyDay(iso){ return VPWeekly.friendlyDay(iso); }
-  function friendlyMsg(msg){ return VPWeekly.friendlyMsg(msg); }
+  /* hostError() runs friendlyMsg over EVERY server error, so if the shared script were
+     missing this would swallow the error the host needs to read. Fall back to the raw text:
+     an ISO date is ugly, and silence is worse. */
+  function friendlyDay(iso){
+    return (typeof VPWeekly !== "undefined" && VPWeekly) ? VPWeekly.friendlyDay(iso) : iso;
+  }
+  function friendlyMsg(msg){
+    return (typeof VPWeekly !== "undefined" && VPWeekly) ? VPWeekly.friendlyMsg(msg)
+                                                         : String(msg == null ? "" : msg);
+  }
   function hostError(msg){
     msg=friendlyMsg(msg);
     var t=$("hostErrText"), b=$("hostErrBar");
@@ -1041,6 +1049,16 @@
      before the lobby opens. The Worker stays the referee: this only warns and parks the button,
      and "Open anyway" hands the decision back to it (an 8 hour resume grace lives there too). */
   function weeklyPreCheck(v){
+    /* A MISSING SHARED SCRIPT MUST NOT TAKE THE CONSOLE DOWN.
+
+       This runs mid-boot, and VP.setGameActive runs AFTER it. That is the call that keeps a
+       night alive through the forced sign-out, so a throw here would cost a host their game
+       to save them a warning banner. /app/vp-celebrate.js went missing from eight screens for
+       half a day once; assume this one can too.
+
+       Degrading to silence is safe: the Worker is the referee either way, so the worst case
+       is the behaviour we had before this warning existed. */
+    if (typeof VPWeekly === "undefined" || !VPWeekly || !VPWeekly.check) return;
     var bn=$("weekBanner"); if(!bn || !v) return;
     if(G.status!=="setup") return;                     // a recovered live quiz is never blocked
     var w=VPWeekly.check(v,"trivia"); if(!w) return;
