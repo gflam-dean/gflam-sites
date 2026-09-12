@@ -908,9 +908,60 @@
   // check-in, a venue gone three months is a different conversation, and the winnable ones are the
   // ones at the top. Served by the Worker because it has to read vp_game_reports, which is
   // service-role only and stays that way.
-  /* WHO HAS BEEN RUNG. Its own actions rather than reusing the cancellation ones: ringing a
-     venue that has gone quiet and ringing one that has cancelled are different conversations
-     with different outcomes, and marking one should never tick the other off. */
+  /* WHAT DOES "WE CONTACTED THEM" MEAN, in one place.
+
+     Two screens can mark a venue contacted, and I built them as two independent marks on the
+     grounds that chasing a quiet venue and chasing a departing one are different conversations.
+     Dean, 12 Sep 2026: "I think if they have cancelled and they are quiet and we contact them
+     it should auto mark the other as well. Only if they have cancelled."
+
+     He is right, and the condition is the whole point. A venue that has CANCELLED and is also
+     quiet is one phone call: you ring them about leaving, and the fact they have not run a
+     night in a month is the same conversation. Making somebody tick it twice means one of the
+     two lists is always wrong, and the one that is wrong is whichever they did not happen to
+     have open. A venue that is merely quiet has not cancelled, there is nothing on the
+     cancelled screen to tick, and its mark stays its own.
+
+     So the rule is: mark both when the venue has cancelled, either one alone otherwise. It is
+     written here rather than in the two click handlers, because the same rule applied twice in
+     two places is the fault this repo keeps finding. Undo is the exact mirror: if one call
+     ticked both, one undo clears both, or the screen you are not looking at keeps a tick for a
+     conversation that has been taken back. */
+  function contactActions(venueId, on) {
+    var v = venueById(venueId);
+    var cancelled = !!v && (isCancelling(v) || isArchived(v));
+    var acts = [ on ? "venue_quiet_contacted" : "venue_quiet_uncontacted" ];
+    if (cancelled) acts.push(on ? "venue_cancel_contacted" : "venue_cancel_uncontacted");
+    return acts;
+  }
+  /* One write per action, and the screens only repaint once every write has landed. Repainting
+     off the first reply showed one tick and not the other for as long as the second took. */
+  function setContacted(venueId, on) {
+    var v = venueById(venueId);
+    var acts = contactActions(venueId, on);
+    return Promise.all(acts.map(function (action) {
+      return workerPost("/admin/audit", { action: action, target: "venue:" + venueId,
+        detail: { name: (v && v.name) || null,
+                  /* Which screen it was tapped on, and whether it carried the other mark with
+                     it. Six months from now "why is this venue ticked on a screen nobody
+                     opened" should be answerable from the row itself. */
+                  also: acts.length > 1 } });
+    })).then(function (results) {
+      var bad = results.filter(function (r) { return r && r.error; })[0];
+      if (bad) return { error: bad.error };
+      return { ok: true, both: acts.length > 1 };
+    });
+  }
+  // Both lists hold a copy of the answer, so both are re-read whichever screen did the marking.
+  function refreshContactScreens() {
+    S.cancelAudit = null;
+    var pc = document.getElementById("paneCancelled"), pq = document.getElementById("paneQuiet");
+    if (pc && !pc.classList.contains("hidden")) loadCancelled(true);
+    if (pq && !pq.classList.contains("hidden")) loadQuiet();
+  }
+
+  /* WHO HAS BEEN RUNG about going quiet. Still its own pair of actions: see contactActions
+     above for when a cancellation ticks this one too. */
   function quietContacted(id){
     var a=S.quietContact && S.quietContact[id];
     return (a && a.action==="venue_quiet_contacted") ? a : null;
@@ -971,9 +1022,9 @@
            retention list sends somebody to win back a venue that already told us they were
            leaving. The cancel flag is read from the map HQ side-loads, because the Worker's
            quiet query does not select that column. */
-        var state = (mine && isCancelling(mine)) ? '<span class="badge suspend">Cancelled</span>'
-                  : (v.status==="suspended") ? '<span class="badge suspend">'+(v.suspended_reason==="nonpayment"?"Unpaid":v.suspended_reason==="ended"?"Ended":"Paused")+'</span>'
-                  : '<span class="badge">Active</span>';
+        // The archived ones are already filtered out above, so this is the same answer the
+        // venue list gives, from the same function.
+        var state = stateBadgeFor(mine || { id:v.id, status:v.status, suspended_reason:v.suspended_reason });
         var con=quietContacted(v.id);
         var conCell = con
           ? '<span class="badge live">Contacted '+esc(cxWhen(con.created_at))+'</span>'
@@ -1006,14 +1057,11 @@
       var b=qc||qu;
       if(!b) return;
       var id=(qc||qu).getAttribute(qc?"data-qcontact":"data-quncontact");
-      var v=venueById(id);
       b.disabled=true; b.textContent="Saving\u2026";
-      workerPost("/admin/audit", { action: qc?"venue_quiet_contacted":"venue_quiet_uncontacted",
-                                   target:"venue:"+id, detail:{ name:(v&&v.name)||null } })
-        .then(function(res){
-          if(res && res.error){ b.disabled=false; b.textContent=qc?"Contacted":"Undo"; alert("That did not save: "+res.error); return; }
-          loadQuiet();
-        });
+      setContacted(id, !!qc).then(function(res){
+        if(res && res.error){ b.disabled=false; b.textContent=qc?"Contacted":"Undo"; alert("That did not save: "+res.error); return; }
+        refreshContactScreens();
+      });
     });
   })();
 
@@ -1308,25 +1356,13 @@
      hoping. If the write did not land, the row does not appear, which is the honest answer. */
   $("cxList").addEventListener("click", function(e){
     var b=e.target.closest("button"); if(!b) return;
-    var id=b.getAttribute("data-cxcontact");
-    if(id){
-      var v=venueById(id);
-      b.disabled=true; b.textContent="Saving…";
-      workerPost("/admin/audit", { action:"venue_cancel_contacted", target:"venue:"+id,
-                                   detail:{ name:(v&&v.name)||null } }).then(function(res){
-        if(res && res.error){ b.disabled=false; b.textContent="Mark contacted"; alert("That did not save: "+res.error); return; }
-        loadCancelled(true);
-      });
-      return;
-    }
-    var uid=b.getAttribute("data-cxuncontact");
-    if(uid){
-      var uv=venueById(uid);
+    var id=b.getAttribute("data-cxcontact"), uid=b.getAttribute("data-cxuncontact");
+    if(id || uid){
+      var on=!!id;
       b.disabled=true; b.textContent="Saving\u2026";
-      workerPost("/admin/audit", { action:"venue_cancel_uncontacted", target:"venue:"+uid,
-                                   detail:{ name:(uv&&uv.name)||null } }).then(function(res){
-        if(res && res.error){ b.disabled=false; b.textContent="Undo"; alert("That did not save: "+res.error); return; }
-        loadCancelled(true);
+      setContacted(id||uid, on).then(function(res){
+        if(res && res.error){ b.disabled=false; b.textContent=on?"Mark contacted":"Undo"; alert("That did not save: "+res.error); return; }
+        refreshContactScreens();
       });
       return;
     }
@@ -1351,6 +1387,29 @@
   function isArchived(v){ return v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling"; }
   // Reads the side-loaded map, never v.cancel_at_period_end: that column is not in listVenues.
   function isCancelling(v){ return !!(S.cancelling && S.cancelling[v.id]); }
+
+  /* WHAT STATE IS THIS VENUE IN, answered once for every screen that asks.
+
+     Dean, 12 Sep 2026: "also wellshot says active on the venues screen". It did. Wellshot
+     cancelled on 20 August and the venue list called it Active, because cancel_at_period_end
+     is not one of the things that row was ever taught to look at. Active is not even wrong,
+     exactly: they keep playing until their paid period ends. But on a list somebody scans to
+     see who their customers are, a venue that has told us it is leaving must not read the same
+     as one that is staying.
+
+     THE POINT OF PUTTING IT HERE. I fixed this on the Quiet screen an hour ago and left the
+     venue list saying something different about the same venue, which is precisely the fault
+     this repo keeps having: one copy corrected, the others left standing. Three screens, one
+     function. Change the word here and it changes everywhere. */
+  function stateBadgeFor(v){
+    if(!v) return '<span class="badge">Unknown</span>';
+    if(isArchived(v)) return '<span class="badge suspend">Archived</span>';
+    if(isCancelling(v)) return '<span class="badge suspend" title="They have cancelled. They keep playing until the end of their paid period, then it stops.">Cancelled</span>';
+    if(v.status==="suspended") return '<span class="badge suspend">'
+      + (v.suspended_reason==="nonpayment"?"Unpaid":v.suspended_reason==="ended"?"Ended":"Paused")+'</span>';
+    if(S.live && S.live[v.id]) return '<span class="badge live">Live now</span>';
+    return '<span class="badge idle">Active</span>';
+  }
 
   /* TEST VENUES. Dean, 12 Sep 2026: "our test venues can hide from all the pages maybe just
      have a test dropdown on the venues page". Eight of the twenty-two venues exist so that
@@ -1460,9 +1519,7 @@
         : (inAccount ? '<span class="badge grouped">Account &middot; '+acctCount[v.founding_id]+' venues</span>'
         : '<span class="badge indep">Independent</span>');
       var testBadge = isTest(v) ? ' <span class="badge gold">Test</span>' : '';
-      var statusCell = (v.suspended_reason==='archived') ? '<span class="badge suspend">Archived</span>'
-                     : suspended ? '<span class="badge suspend">'+(v.suspended_reason==='nonpayment'?'Unpaid':v.suspended_reason==='ended'?'Ended':'Paused')+'</span>'
-                       : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
+      var statusCell = stateBadgeFor(v);
       statusCell += testBadge + " " + screenBadge(v);
       /* TWO BUTTONS PER ROW, NOT NINE.
          At 400 venues a row of nine controls is 3,600 buttons on one page: unusable,
