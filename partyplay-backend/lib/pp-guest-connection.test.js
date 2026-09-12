@@ -109,6 +109,32 @@ ok("a waiting dot and a bad dot exist and are not the same as the good one",
 ok("the bad one is not green",
    /\.dot-bad\{background:var\(--pink\)\}/.test(SRC));
 
+print("== a console that opens late, or is reloaded, finds the room ==");
+/* `players` in run.html was built ONLY from hello broadcasts arriving while that console was
+   open, and nothing ever asked. A host who reloaded part way through a party saw "0 playing"
+   in a full room. Not cosmetic: paintCharades disables its own start button at zero and reads
+   "Waiting for someone to join", so charades could not be started at all, and nextActor picks
+   the actor from the same empty list. Found 12 Sep 2026 by running a party. */
+var RUN = readFile(ppFile("../partyplay/run.html"));
+var runCode = strip(RUN);
+ok("the console asks the room who is there when it connects",
+   /status==="SUBSCRIBED"[\s\S]{0,700}send\(\{t:"rollcall"\}\)/.test(runCode),
+   "without asking, it only ever learns about phones that join AFTER it");
+ok("and it asks on every connect, not once at page load",
+   runCode.indexOf('send({t:"rollcall"})') > runCode.indexOf('function onChannelStatus'),
+   "a reconnect has to re-ask, because the list is rebuilt from nothing");
+ok("the phone answers a rollcall", /m\.t === "rollcall"/.test(code));
+ok("and answers with the SAME hello the console already understands",
+   /rollcall[\s\S]{0,260}_ppSend\(\{ t:"hello", name:/.test(code),
+   "a new message shape would need handling at the other end too");
+ok("a phone that has not joined yet stays quiet",
+   /rollcall[\s\S]{0,200}if\(_s\.nickname/.test(code),
+   "answering with an empty name would put a blank guest on the host's list");
+ok("charades is still gated on knowing somebody is there",
+   /players\.length\?''\:' disabled'|players\.length\?/.test(runCode.replace(/\s/g,'')) ||
+   /Waiting for someone to join/.test(RUN),
+   "the gate is right, it was the empty list that was wrong");
+
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

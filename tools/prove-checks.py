@@ -1194,6 +1194,19 @@ MUTATIONS = [
      'a format loses its entry, so the prize draw falls back to "draw" on the console and on '
      'the television'),
 
+    ('pp-guest-connection.test.js',
+     'partyplay/run.html',
+     '      send({t:"rollcall"});\n',
+     '',
+     'the host console stops asking who is in the room, so a host who RELOADS part way '
+     'through a party sees "0 playing" with a full house and cannot start charades at all'),
+
+    ('pp-guest-connection.test.js',
+     'partyplay/play.html',
+     '    if(m.t === "rollcall"){',
+     '    if(false){',
+     'the phones stop answering the roll call, which is the same fault from the other end'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",

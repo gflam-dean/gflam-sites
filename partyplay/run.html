@@ -139,7 +139,25 @@
   /* NAMED, so it can be run by a test. It was ch.subscribe() with NO CALLBACK AT ALL:
      the host had no idea whether it was connected, and nothing could ever tell it. */
   function onChannelStatus(status){
-    if(status==="SUBSCRIBED"){ subscribed=true; flushQueue(); return; }
+    if(status==="SUBSCRIBED"){
+      subscribed=true; flushQueue();
+      /* WHO IS ALREADY HERE.
+
+         `players` was built ONLY from hello broadcasts arriving while this console was
+         open, and nothing ever asked. So a host who opened the console after people had
+         started joining, or who simply RELOADED it part way through, saw "0 playing" with
+         a room full of guests.
+
+         Not cosmetic. paintCharades disables its own start button when players.length is
+         0 and reads "Waiting for someone to join", so a host who reloaded could not start
+         charades at all, and nextActor picks from the same empty list.
+
+         So ask. Every phone answers a rollcall with its hello, which is the message this
+         console already understands, so nothing else changes. VenuePlay does the same
+         thing under the same name. Added 12 Sep 2026. */
+      send({t:"rollcall"});
+      return;
+    }
     if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ subscribed=false; }
   }
 
@@ -169,6 +187,7 @@
           if(G && G.resend){ try{ G.resend(); }catch(e){} }
         }
         if(m.t==="tv-here"){ send({t:"players",names:players}); if(G) G.repaint&&G.repaint(); }
+        /* A phone answering the roll call below. Same shape as a hello, handled above. */
         /* An answer from a phone. First one per person per question counts: a
            guest who taps twice has changed their mind after seeing a face, and
            letting that through makes the whole board meaningless. */
