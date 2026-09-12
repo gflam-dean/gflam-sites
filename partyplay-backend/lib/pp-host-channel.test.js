@@ -59,10 +59,20 @@ var ch, subscribed, sendQueue, sent;
 function reset() { sent = []; sendQueue = []; subscribed = false; ch = { send: function (m) { sent.push(m.payload); return true; } }; }
 eval(srcs.join("\n"));
 
+/* THE ROLL CALL IS PART OF SUBSCRIBING NOW, so it lands in `sent` before anything a game
+   sends. That is deliberate: the console asks the room who is already there, because its
+   player list is rebuilt from nothing on every connect and a host who RELOADED part way
+   through a party used to see "0 playing" in a full house, with the charades start button
+   disabled. Counted separately here rather than ignored, so it cannot quietly disappear. */
+function games() { return sent.filter(function (m) { return m.t !== "rollcall"; }); }
+function rollcalls() { return sent.filter(function (m) { return m.t === "rollcall"; }); }
+
 print("\nWHILE THE PARTY IS CONNECTED");
 reset(); onChannelStatus("SUBSCRIBED");
+pass("subscribing asks the room who is already here", rollcalls().length === 1,
+     "without it the console only ever learns about phones that join AFTER it");
 send({ t: "ball", n: 7 });
-pass("a ball reaches the room", sent.length === 1 && sent[0].n === 7);
+pass("a ball reaches the room", games().length === 1 && games()[0].n === 7);
 pass("and nothing is left waiting", sendQueue.length === 0);
 
 print("\nWHEN THE HOST'S CHANNEL DROPS");
@@ -81,10 +91,13 @@ send({ t: "ball", n: 1 }); send({ t: "word", w: "elephant" }); send({ t: "ball",
 pass("three messages are held while it is down", sendQueue.length === 3);
 sent = [];
 onChannelStatus("SUBSCRIBED");
-pass("all three arrive when it reconnects", sent.length === 3, "only " + sent.length + " arrived");
+pass("all three arrive when it reconnects", games().length === 3, "only " + games().length + " arrived");
+pass("and the room is asked again, because the player list was rebuilt from nothing",
+     rollcalls().length === 1,
+     "a reconnect that does not re-ask leaves the host with an empty room");
 pass("and IN ORDER, because a ball called after a word must not arrive before it",
-     sent[0].n === 1 && sent[1].w === "elephant" && sent[2].n === 2,
-     sent.map(function (m) { return m.t; }).join(","));
+     games()[0].n === 1 && games()[1].w === "elephant" && games()[2].n === 2,
+     games().map(function (m) { return m.t; }).join(","));
 pass("the queue is empty afterwards", sendQueue.length === 0);
 
 print("\nA LONG OUTAGE MUST NOT EAT THE TABLET");

@@ -576,7 +576,10 @@
        "0 playing" in a full room and cannot start charades. */
     if(m.t === "rollcall"){
       var _s = load() || {};
-      if(_s.nickname && window._ppSend) _ppSend({ t:"hello", name:_s.nickname });
+      /* window._ppSend, not a bare _ppSend: it is only ever ASSIGNED as a window
+         property inside connect(), so the bare name is not defined anywhere and
+         check-defs.py was right to call it a ReferenceError waiting to happen. */
+      if(_s.nickname && window._ppSend) window._ppSend({ t:"hello", name:_s.nickname });
       return;
     }
     if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null; var s = load()||{}; waiting(s.nickname||""); return; }
