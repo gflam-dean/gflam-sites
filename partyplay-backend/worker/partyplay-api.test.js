@@ -459,6 +459,64 @@ test("POST /unsubscribe does the work", function(){
     ok(hit, "the patch was against pp_subscribers");
   });
 });
+/* THE BUTTON SAID DONE AND THE TABLE WAS EMPTY.
+
+   recordSubscriber only runs when a buyer ticks the marketing box, so MOST buyers
+   have no pp_subscribers row at all. Both senders skip on unsubscribed_at rather
+   than on marketing consent, so those people are emailed, and a PATCH by email
+   matched nothing for them. The handler wrote nothing and still answered "Done".
+
+   The test above cannot see that: it asserts a PATCH was ISSUED, which is true
+   either way. What matters is whether an opt-out now EXISTS for that address, so
+   these drive both roads and assert the recorded row. Found by pressing the
+   button on the live site and then looking in the table. */
+print("== the opt-out is recorded even for somebody who was never on the list ==");
+test("never on the list: the opt-out is inserted, not silently dropped", function(){
+  FETCH.calls = []; FETCH.plan = [];   // default reply is [] = the PATCH matched nothing
+  return W.fetch(req("POST","/unsubscribe?e=nobody%40example.com"), ENV).then(function(r){
+    ok(r.status===200, "answers 200, got "+r.status);
+    var posts = FETCH.calls.filter(function(c){
+      return c.init && c.init.method === "POST" && String(c.url).indexOf("pp_subscribers") >= 0;
+    });
+    ok(posts.length === 1, "the opt-out was written, saw "+posts.length+" insert(s)");
+    var row = null;
+    try { row = JSON.parse(posts[0].init.body)[0]; } catch(e) {}
+    ok(!!row && row.email === "nobody@example.com", "against the right address, got "+(row&&row.email));
+    ok(!!row && !!row.unsubscribed_at, "with unsubscribed_at set, got "+(row&&row.unsubscribed_at));
+    ok(!!row && row.opted_in === false, "and opted_in false, got "+(row&&row.opted_in));
+    ok(!!row && row.source === "unsubscribe",
+       "marked as coming from the unsubscribe, not from consent, got "+(row&&row.source));
+  });
+});
+test("already on the list: patched, and not inserted a second time", function(){
+  FETCH.calls = [];
+  // the PATCH matches a real row, so nothing should be inserted
+  FETCH.plan = [{ status:200, body: JSON.stringify([{ id:"s1", email:"someone@example.com" }]) }];
+  return W.fetch(req("POST","/unsubscribe?e=someone%40example.com"), ENV).then(function(r){
+    ok(r.status===200, "answers 200, got "+r.status);
+    var posts = FETCH.calls.filter(function(c){
+      return c.init && c.init.method === "POST" && String(c.url).indexOf("pp_subscribers") >= 0;
+    });
+    ok(posts.length === 0, "no duplicate row was inserted, saw "+posts.length);
+    var patches = FETCH.calls.filter(function(c){
+      return c.init && c.init.method === "PATCH" && String(c.url).indexOf("pp_subscribers") >= 0;
+    });
+    ok(patches.length === 1, "the existing row was patched, saw "+patches.length);
+  });
+});
+test("the PATCH asks for the row back, or it cannot tell whether it matched", function(){
+  FETCH.calls = []; FETCH.plan = [];
+  return W.fetch(req("POST","/unsubscribe?e=someone%40example.com"), ENV).then(function(){
+    var patch = FETCH.calls.filter(function(c){
+      return c.init && c.init.method === "PATCH" && String(c.url).indexOf("pp_subscribers") >= 0;
+    })[0];
+    var h = (patch && patch.init && patch.init.headers) || {};
+    var pref = h.prefer || h.Prefer || "";
+    ok(/return=representation/.test(pref),
+       "prefer: return=representation, got "+JSON.stringify(pref));
+  });
+});
+
 test("a bad address is refused without writing", function(){
   FETCH.calls = []; FETCH.plan = [];
   return W.fetch(req("POST","/unsubscribe?e=not-an-email"), ENV).then(function(r){

@@ -1,5 +1,5 @@
 /* PASTE THIS ONE.
-   Built 12 Sep 2026, 16:21:11   fingerprint 92e035840356
+   Built 12 Sep 2026, 17:55:26   fingerprint dd4193d6e590
    If that time is not within the last few minutes, close this window and reopen. */
 /* ============================================================================
    PartyPlay Worker: checkout, licences, joining.
@@ -16,7 +16,7 @@
      RESEND_API_KEY           re_...
      SITE_ORIGIN              https://partyplay.com.au
    ========================================================================== */
-const BUILD = '12 Sep 2026, 16:21 · faf64a02';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '12 Sep 2026, 17:55 · 85e85e43';   // tools/stamp-workers.py, do not edit by hand
 /* ---- lib/pp-licence.js, inlined at build time. Edit the file, not this. ---- */
 const PPLicence = (function () {
   const module = { exports: {} };
@@ -1277,9 +1277,38 @@ async function handleUnsubscribe(request, env) {
       { headers: { 'content-type': 'text/html; charset=utf-8' } });
   }
 
-  await sb(env, 'pp_subscribers?email=eq.' + encodeURIComponent(email), {
-    method: 'PATCH', body: JSON.stringify({ opted_in: false, unsubscribed_at: new Date().toISOString() })
+  /* AN OPT-OUT HAS TO BE RECORDED FOR SOMEBODY WHO WAS NEVER ON THE LIST.
+
+     recordSubscriber only runs when a buyer ticks the marketing box, so most
+     buyers have NO pp_subscribers row at all. They still get the follow-up and
+     the expiry reminder, because both of those skip on unsubscribed_at rather
+     than on marketing consent. A PATCH matches no row for those people, writes
+     nothing, and this handler still answers "Done".
+
+     So the link was dead, then the link worked and the button was dead. A person
+     who pressed Unsubscribe was told they were off the list and kept receiving
+     email, which is worse than the broken link because they stop expecting it to
+     be wrong. Under the Spam Act the facility has to actually work.
+
+     PATCH first and ask for the row back. If nothing matched, insert the opt-out
+     on its own. source says where it came from so a row with no consent behind it
+     is never mistaken for one that opted in. Found 12 Sep 2026 by pressing the
+     button on the live site and then looking in the table, which is the only
+     reason it was found: the screen said Done both times. */
+  const nowIso = new Date().toISOString();
+  const patched = await sb(env, 'pp_subscribers?email=eq.' + encodeURIComponent(email), {
+    method: 'PATCH',
+    headers: { prefer: 'return=representation' },
+    body: JSON.stringify({ opted_in: false, unsubscribed_at: nowIso })
   });
+  if (!patched || !patched.length) {
+    await sb(env, 'pp_subscribers?on_conflict=email', {
+      method: 'POST',
+      headers: { prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ email, opted_in: false, opted_in_at: null,
+                              source: 'unsubscribe', unsubscribed_at: nowIso }])
+    });
+  }
   /* Also stop any album link that has not gone out yet. Somebody unsubscribing
      the day after a party should not then get one more email from us. */
   await sb(env, 'pp_album_requests?email=eq.' + encodeURIComponent(email) + '&sent_at=is.null', {

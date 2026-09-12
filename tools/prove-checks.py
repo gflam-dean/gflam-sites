@@ -1028,6 +1028,31 @@ MUTATIONS = [
      'const VPA_EXTRAS_MOVE_MAX_CENTS = 1;',
      'a declined $2 extra is chased on the card instead of riding the next monthly bill'),
 
+    # ---- 12 Sep 2026: the unsubscribe that answered Done and wrote nothing.
+    # The link was dead, then the link worked and the BUTTON was dead: a PATCH by
+    # email matches no row for the majority of buyers, who never ticked the
+    # marketing box and so were never in pp_subscribers, yet are emailed anyway.
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     '  if (!patched || !patched.length) {',
+     '  if (false) {',
+     'somebody who was never on the marketing list presses Unsubscribe, is told Done, and '
+     'nothing is recorded, so the follow-up and the expiry reminder keep arriving'),
+
+    ('partyplay-api.test.js',
+     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+     # Anchored to the unsubscribe PATCH. The bare header line appears three times.
+     # Anchored to the pp_subscribers PATCH. Both the bare header line and the
+     # method+header pair appear elsewhere in this Worker.
+     """pp_subscribers?email=eq.' + encodeURIComponent(email), {
+    method: 'PATCH',
+    headers: { prefer: 'return=representation' },""",
+     """pp_subscribers?email=eq.' + encodeURIComponent(email), {
+    method: 'PATCH',
+    headers: {},""",
+     'the PATCH stops asking for the row back, so the handler cannot tell whether it matched '
+     'anything and silently stops recording opt-outs for everybody not already on the list'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",
@@ -1039,7 +1064,9 @@ MUTATIONS = [
     # Every one of these was broken by hand and watched go red as it was written.
     ('an email links to',
      'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
-     "site + '/unsubscribe?e='",
+     # Two emails carry this link. The check reads the SET of distinct paths out of the
+     # Worker, so introducing /unsubscribed in either one trips it. Interchangeable.
+     "<<ANY:site + '/unsubscribe?e='>>",
      "site + '/unsubscribed?e='",
      'the Unsubscribe link in a follow-up points at a path Pages does not have, so it '
      'answers the homepage with a 200 and the recipient is sold PartyPlay instead'),
