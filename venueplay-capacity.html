@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<title>VenuePlay capacity and cost</title>
+<style>
+  /* Built to PRINT. Black on white, no dark theme, nothing that eats a cartridge.
+     Two A4 pages exactly, with the page break controlled rather than left to chance. */
+  @page { size: A4; margin: 14mm 13mm; }
+
+  :root{ --ink:#111; --mid:#555; --line:#c9c9c9; --pink:#D6006F; --band:#f4f4f6; }
+  *{ box-sizing:border-box }
+  body{
+    margin:0; background:#fff; color:var(--ink);
+    font:13px/1.45 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .sheet{ max-width:190mm; margin:0 auto; padding:10mm 0 16mm }
+
+  h1{ font-size:22px; margin:0 0 2px; letter-spacing:-.3px }
+  .sub{ color:var(--mid); margin:0 0 4px }
+  .head{ border-bottom:2px solid var(--ink); padding-bottom:8px; margin-bottom:14px }
+  .mark{ float:right; color:var(--pink); font-weight:700; font-size:12px; letter-spacing:.06em }
+
+  h2{ font-size:14px; margin:18px 0 7px; text-transform:uppercase; letter-spacing:.07em }
+  h2:first-of-type{ margin-top:6px }
+  p{ margin:0 0 8px }
+  .lead{ font-size:14px; font-weight:600 }
+
+  table{ border-collapse:collapse; width:100%; margin:0 0 10px; font-size:12.5px }
+  th,td{ border-bottom:1px solid var(--line); padding:5px 7px; text-align:left; vertical-align:top }
+  th{ background:var(--band); font-size:11px; text-transform:uppercase; letter-spacing:.05em }
+  td.n,th.n{ text-align:right; white-space:nowrap }
+  tr.now td{ background:#fdecf4 }
+  tr.goal td{ background:#eef7ee }
+  b.big{ font-size:14px }
+
+  .two{ display:flex; gap:14px }
+  .two > *{ flex:1; min-width:0 }
+
+  ol{ margin:0 0 8px; padding-left:18px }
+  ol li{ margin-bottom:6px }
+  .note{ color:var(--mid); font-size:11.5px; border-left:3px solid var(--line); padding-left:9px; margin:9px 0 }
+  .foot{ margin-top:16px; padding-top:7px; border-top:1px solid var(--line); color:var(--mid); font-size:11px }
+  .brk{ break-before:page; page-break-before:always }
+
+  /* On screen only: a nudge to press print. Never on paper. */
+  .hint{ background:#111; color:#fff; padding:9px 13px; border-radius:7px; font-size:12.5px; margin:0 auto 12px; max-width:190mm }
+  @media print { .hint{ display:none } .sheet{ padding-top:0 } }
+</style>
+</head>
+<body>
+
+<div class="hint">Press <b>Cmd + P</b> to print. Two pages, A4, already sized. Nothing here is dark, so it will not drink the ink.</div>
+
+<div class="sheet">
+
+  <div class="head">
+    <span class="mark">VENUEPLAY</span>
+    <h1>How many venues, and what it costs</h1>
+    <p class="sub">Measured against the live Sydney system, 12 September 2026. Prices read off Supabase and Cloudflare the same day.</p>
+  </div>
+
+  <p class="lead">The plan is not what stops you. The architecture is.</p>
+
+  <h2>How many venues each road carries</h2>
+  <p>Assuming 40 phones in an average room, and a quarter of all venues playing at the same moment on a peak night.</p>
+  <table>
+    <tr><th>Road</th><th class="n">Venues</th><th>What stops it</th></tr>
+    <tr class="now"><td><b>Today. Free plan, nothing changed</b></td><td class="n"><b class="big">10</b></td><td>database calls</td></tr>
+    <tr><td>Pro $25/month, same code</td><td class="n">29</td><td>database calls</td></tr>
+    <tr><td>Pro, and buy more connections</td><td class="n">29</td><td>database calls</td></tr>
+    <tr><td>&nbsp;&nbsp;+ cache the 8 second lobby poll</td><td class="n">549</td><td>database calls</td></tr>
+    <tr><td>&nbsp;&nbsp;+ turn the room server on</td><td class="n">773</td><td>database calls</td></tr>
+  </table>
+
+  <p>Then the wall becomes the <b>join</b> itself, which costs 12 database calls every time one phone scans the code.</p>
+  <table>
+    <tr><th>A join costs</th><th class="n">Venues</th></tr>
+    <tr><td>12 calls (today)</td><td class="n">773</td></tr>
+    <tr><td>6 calls</td><td class="n">1,549</td></tr>
+    <tr><td>3 calls</td><td class="n">3,101</td></tr>
+    <tr class="goal"><td><b>2 calls</b></td><td class="n"><b class="big">4,650</b></td></tr>
+  </table>
+
+  <div class="note">
+    These are <b>conservative</b>. Every number assumes you never buy bigger compute than the small box
+    you are on now, because 155 calls a second is the only paid figure actually measured. Bigger compute
+    should raise every row, possibly by a lot. That is not measured, so it is not claimed.
+  </div>
+
+  <h2>What it costs at 5,000 venues</h2>
+  <div class="two">
+    <table>
+      <tr><th>Item</th><th class="n">Per month</th></tr>
+      <tr><td>Supabase Pro</td><td class="n">$25</td></tr>
+      <tr><td>Compute, XL to 2XL</td><td class="n">$210 to $410</td></tr>
+      <tr><td>Cloudflare Workers Paid</td><td class="n">$5</td></tr>
+      <tr><td>Durable Objects, the room server</td><td class="n">$300 to $400</td></tr>
+      <tr><td>Residual Supabase realtime</td><td class="n">about $50</td></tr>
+      <tr class="goal"><td><b>Total</b></td><td class="n"><b>$600 to $900 USD</b></td></tr>
+    </table>
+    <div>
+      <p>Against 5,000 venues at 50 seats and $3 a player, that is about
+      <b>$750,000 a month of revenue</b>.</p>
+      <p>Infrastructure is around <b>0.1%</b> of it.</p>
+      <p>Money is never your constraint on this curve. Engineering is.</p>
+    </div>
+  </div>
+
+  <h2>What to do, in order</h2>
+  <ol>
+    <li><b>Supabase Sydney to Pro, about $25 USD a month.</b> Mostly for the <b>backups</b>: Free has
+      none at all, and seventeen paying venues sit on a database with no restore point. It also lifts
+      10 venues to 29 and stops the project pausing itself after a quiet week.</li>
+    <li><b>Cache the 8 second lobby poll.</b> Biggest single win, 29 venues to about 550, and cheap.
+      That endpoint hands every phone on the same code the same four fields, so caching it at
+      Cloudflare for three seconds removes roughly 99% of the dominant load.</li>
+    <li><b>Turn the room server on.</b> Already built, already tested, took 500 phones in one room.
+      Gets you to about 775 and moves live game traffic off Supabase entirely.</li>
+    <li><b>Make the join cheaper.</b> 12 calls down to 3 is what takes you past 3,000 venues. This is
+      the real engineering job, and nobody has started it.</li>
+  </ol>
+
+  <!-- page two -->
+  <div class="brk"></div>
+
+  <div class="head">
+    <span class="mark">VENUEPLAY</span>
+    <h1>The numbers behind it</h1>
+    <p class="sub">Measured, not estimated. Page 2 of 2.</p>
+  </div>
+
+  <h2>Free versus paid, on the same size box</h2>
+  <table>
+    <tr><th>What</th><th class="n">Free (Sydney, today)</th><th class="n">Paid (Singapore, same box)</th></tr>
+    <tr><td>Database calls per second</td><td class="n"><b>45</b></td><td class="n">155</td></tr>
+    <tr><td>Phones holding a live channel</td><td class="n"><b>about 200</b>, then refused</td><td class="n">600+</td></tr>
+    <tr><td>Speed of one call when idle</td><td class="n">109ms</td><td class="n">282ms</td></tr>
+  </table>
+  <p>Both projects report identical <i>max_connections</i>, <i>shared_buffers</i> and <i>work_mem</i>.
+  Same size box. So that gap is the <b>plan</b>, not the hardware.</p>
+
+  <h2>Where the load actually comes from</h2>
+  <table>
+    <tr><th>What somebody does</th><th class="n">Database cost</th><th>How often</th></tr>
+    <tr class="now"><td><b>A phone waiting in a lobby</b></td><td class="n"><b>0.5 calls/sec</b></td><td>every second, forever</td></tr>
+    <tr><td>A phone joining</td><td class="n">10 to 14 calls</td><td>once</td></tr>
+    <tr><td>A venue mid-trivia</td><td class="n">0.33 calls/sec</td><td>while playing</td></tr>
+    <tr><td>A TV checking in</td><td class="n">1 call</td><td>every 30 seconds</td></tr>
+  </table>
+  <p>The waiting phone is the dominant load and the cheapest thing to fix. Ninety phones standing in
+  lobbies is the entire project's budget, before anybody has answered a single question.</p>
+
+  <h2>One busy room</h2>
+  <p>Fine to about <b>80 phones</b>. Visibly slowing at 90. Falls over at 100. Because the ceiling is
+  shared across the whole project, <b>a hundred phones in one pub is felt by all seventeen venues at
+  once</b>.</p>
+  <p>The speed win from the Sydney move is real, and it only exists while the system is quiet. Under a
+  crowd Sydney is slower than Singapore was, because it runs out of capacity sooner.</p>
+
+  <h2>Database size is a non-issue</h2>
+  <p><b>35 MB</b> of the 500 MB free ceiling, and 14 MB of that is the 37,678 question trivia bank,
+  which barely grows. You would not see 500 MB for years.</p>
+
+  <h2>Supabase prices, for reference</h2>
+  <table>
+    <tr><th>Plan</th><th class="n">Price</th><th class="n">Database</th><th class="n">Realtime connections</th><th>Backups</th></tr>
+    <tr><td>Free</td><td class="n">$0</td><td class="n">500 MB</td><td class="n">200</td><td><b>none</b></td></tr>
+    <tr class="goal"><td>Pro</td><td class="n">$25</td><td class="n">8 GB</td><td class="n">500</td><td>7 days</td></tr>
+    <tr><td>Team</td><td class="n">$599</td><td class="n">8 GB</td><td class="n"><b>still 500</b></td><td>14 days</td></tr>
+  </table>
+  <p>A bigger plan does not buy you more rooms. Overage does: <b>$10 per 1,000 connections</b>,
+  $2.50 per million realtime messages, $0.125 per GB of database, $0.09 per GB of egress.</p>
+  <p>Compute add-ons: Micro $10, Small $15, Medium $60, Large $110, XL $210, 2XL $410, 4XL $960.</p>
+
+  <div class="foot">
+    Every figure marked as measured came from probing the live Sydney project on 12 September 2026.
+    The venue ceilings come from a model whose assumptions are listed above, and it is deliberately
+    pessimistic: it assumes the compute is never upgraded.
+  </div>
+
+</div>
+</body>
+</html>
