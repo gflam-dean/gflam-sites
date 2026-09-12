@@ -1231,6 +1231,22 @@ MUTATIONS = [
      'between every game a perfectly connected phone says "Getting you in..." with the '
      'waiting dot, so guests reload in the gap'),
 
+    # ---- 13 Sep 2026: a phone found out a game had started by polling for it.
+    ('vp-follow.test.js',
+     'venueplay/play.html',
+     '    if(m.t==="mode" && typeof VP_LOOK_NOW === "function"){ VP_LOOK_NOW(); }\n',
+     '',
+     'the phone goes back to ignoring the announcement it is already subscribed to, so the '
+     'room watches the television change to trivia while their phones do nothing for up to '
+     'thirty seconds'),
+
+    ('vp-follow.test.js',
+     'venueplay/play.html',
+     '    look(); setInterval(look, 30000);',
+     '    look(); setInterval(look, 8000);',
+     'the backstop poll goes back to every eight seconds, which is four database reads per '
+     'waiting phone and the single biggest load the product generates'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",

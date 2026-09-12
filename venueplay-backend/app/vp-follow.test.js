@@ -123,3 +123,40 @@ chain.catch(function(e){ fail++; notes.push("  THREW "+e); }).then(function(){
   notes.forEach(function(n){ print(n); });
   print(fail ? "FAILED " + fail + " of " + (pass+fail) : "ALL " + pass + " CHECKS PASSED");
 });
+
+/* THE PHONE HOPS ON THE BROADCAST IT WAS ALREADY HEARING.
+
+   A punter who scans the permanent QR on the table sits on the VENUE channel. Every console
+   announces {t:"mode"} there the moment it goes on air, which is how the unified /tv switches
+   itself over. The phone was subscribed to that exact message and IGNORED it, then found out
+   by polling /play/live every eight seconds.
+
+   So the room watched the television change to trivia while their phones did nothing for up
+   to eight seconds, with the host saying "right, phones out". Dean, 13 Sep 2026: "did you say
+   it takes 8 seconds to join a game plus 3? Thats far too long."
+
+   The poll stays as a backstop for a phone that arrived mid-announcement, but drops to thirty
+   seconds, which also takes three quarters off the biggest load the product generates. */
+(function () {
+  var PLAY = null;
+  var tries = ["venueplay/play.html", "../../venueplay/play.html", "../play.html"];
+  for (var i = 0; i < tries.length; i++) {
+    try { var t = readFile(tries[i]); if (t && t.length > 40000) { PLAY = t; break; } } catch (e) {}
+  }
+  ok(!!PLAY, "play.html is readable for the hop checks");
+  if (!PLAY) return;
+  var code = PLAY.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+
+  ok(/m\.t==="mode" && typeof VP_LOOK_NOW === "function"/.test(code),
+     "the phone acts on the mode announcement it is already subscribed to, rather than polling for the same news");
+  ok(/VP_LOOK_NOW = look;/.test(code),
+     "and it calls the SAME lookup the poll uses, so the two cannot drift apart");
+  ok(!/m\.t==="mode"[\s\S]{0,200}m\.(join_code|room|format)/.test(code),
+     "nothing is trusted from the broadcast: a forged mode may only make a phone ASK early");
+
+  var m = /setInterval\(look,\s*(\d+)\)/.exec(code);
+  ok(!!m, "the venue-watch poll still exists as a backstop");
+  ok(!!m && Number(m[1]) >= 30000,
+     "the poll runs no more often than every 30s (it is four database reads per waiting phone, and at 8s it was the single biggest load VenuePlay generates)");
+})();
+

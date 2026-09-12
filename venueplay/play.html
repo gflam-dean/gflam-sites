@@ -1210,10 +1210,30 @@
      purpose: it means the game just ended. */
   var PLAY_TYPES = { ball:1, started:1, state:1, resume:1, winner:1, claim_pending:1, cards:1 };
   var lastPlay = 0;
+  var VP_LOOK_NOW = null;   // set by watchVenue: the lookup that decides where a phone belongs
   function playingHere(){ return P.active && lastPlay && (Date.now() - lastPlay < 60000); }
   function onMsg(m){
     if(m && m.t && PLAY_TYPES[m.t]) lastPlay = Date.now();
     if(!m||!m.t) return;
+    /* A GAME HAS GONE ON AIR AND THIS PHONE IS ALREADY LISTENING.
+
+       A punter who scans the permanent QR on the table sits on the VENUE channel. Every
+       console announces {t:"mode"} there the moment it goes live, which is how the unified
+       /tv switches itself over. This phone was subscribed to that exact message and ignored
+       it, then found out by POLLING /play/live every eight seconds.
+
+       So the room watched the television change to trivia and their phones did nothing for
+       up to eight seconds. On a stage that is a long time: the host has said "right, phones
+       out" and twenty people are looking at a screen that has not moved.
+
+       Now it hops the moment it hears. The poll below is still there, because a phone that
+       joined during the announcement, or missed it on a flaky connection, still has to find
+       its way; but it is a fallback rather than the mechanism, so it runs far less often.
+
+       Nothing is trusted from the message itself: it only triggers the same lookup the poll
+       does, which is the thing that decides where to send them. A forged broadcast can
+       therefore make a phone ask a question early, and nothing more. Added 13 Sep 2026. */
+    if(m.t==="mode" && typeof VP_LOOK_NOW === "function"){ VP_LOOK_NOW(); }
     if(m.t==="tv_here" || m.t==="tv_pair" || m.t==="session"){ return; }   // host<->TV only
     if(typeof m.defaultCards==="number"){ setHostDefault(m.defaultCards); }
     if(typeof m.allowEarly==="boolean"){ P.allowEarly=m.allowEarly; }
@@ -1681,7 +1701,21 @@
           }).catch(function(){});               // worker unreachable/old: bingo still works
       }catch(e){}
     }
-    look(); setInterval(look, 8000);
+    /* THE HOP IS PUSHED NOW, AND THIS IS THE BACKSTOP.
+
+       onMsg calls VP_LOOK_NOW the instant a console announces its mode on this channel, so a
+       phone normally moves in the time a broadcast takes rather than in the time a poll takes.
+
+       That lets this drop from eight seconds to thirty. It is four database reads every time
+       it runs, per waiting phone, and at eight seconds that was half a database call a second
+       per phone and the single biggest load VenuePlay generates: ninety phones standing in
+       lobbies was the whole project's budget. At thirty it is a quarter of that, and it is
+       only catching the phone that arrived mid-announcement.
+
+       This is why the edge cache is not the answer. Caching made the same volume of asking
+       cheaper; this asks far less and answers instantly. */
+    VP_LOOK_NOW = look;
+    look(); setInterval(look, 30000);
   }
 
   // ---- init: read ?room, or a permanent ?venue link off a printed sign ----
