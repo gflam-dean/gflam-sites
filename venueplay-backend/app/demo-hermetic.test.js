@@ -136,5 +136,77 @@ pass("the ad content is invented in the page, not fetched from a venue",
 pass("the demo hides the join corner and keeps it hidden",
      /tvJoinCorner/.test(TV) && /MutationObserver/.test(TV.slice(TV.indexOf("function hideJoin"), TV.indexOf("function hideJoin") + 600)));
 
+/* 6. A DEMONSTRATION IS WATCHED, NOT HEARD.
+
+   Dean, 12 Sep 2026: "Maybe get rid of the sound on the demo". The win fanfare is written for
+   a pub PA at the moment somebody shouts bingo. On /see-a-night it came out of a visitor's
+   laptop, unasked, about once a minute for as long as the tab was open, and because the modal
+   opens on a click the browser's autoplay rule did not stop it.
+
+   RUN, not grepped. Load the real vp-celebrate.js with a fake AudioContext and count the
+   oscillators it creates. A check that greps for the word "demo" would pass on a guard that
+   was spelled wrong or placed after the noise. */
+var CEL = find('venueplay/app/vp-celebrate.js');
+
+function loadCelebrate(demoFlag) {
+  var made = 0;
+  function node() {
+    return { type:"", frequency:{value:0}, gain:{ value:0, setValueAtTime:function(){}, exponentialRampToValueAtTime:function(){}, linearRampToValueAtTime:function(){} },
+             connect:function(){}, start:function(){}, stop:function(){}, threshold:{value:0}, knee:{value:0},
+             ratio:{value:0}, attack:{value:0}, release:{value:0} };
+  }
+  var ctx = { currentTime:0, state:"running", resume:function(){}, destination:{},
+              createOscillator:function(){ made++; return node(); },
+              createGain:node, createDynamicsCompressor:node };
+  var root = {
+    AudioContext: function(){ return ctx; },
+    document: { documentElement: { getAttribute: function(k){ return k === "data-vp-demo" ? (demoFlag ? "1" : null) : null; } } }
+  };
+  (new Function("root", "window", "self", CEL + "\nreturn root.VPCelebrate;"))(root, root, root);
+  return { api: root.VPCelebrate, oscillators: function(){ return made; }, ctx: ctx };
+}
+
+var normal = loadCelebrate(false);
+pass("the celebrate library still loads and exposes fanfare", !!(normal.api && normal.api.fanfare));
+normal.api.fanfare({ profile:"pa", ctx:normal.ctx });
+pass("a REAL win still makes a noise, which is the point of it",
+     normal.oscillators() > 0, normal.oscillators() + " oscillator(s)");
+
+var demo = loadCelebrate(true);
+demo.api.fanfare({ profile:"pa", ctx:demo.ctx });
+demo.api.fanfare({ profile:"phone", ctx:demo.ctx });
+pass("a demo makes none, on the venue PA profile or the phone one",
+     demo.oscillators() === 0, demo.oscillators() + " oscillator(s) on a demo page");
+
+/* ONLY THE SOUND. The confetti is the part worth watching and wakes nobody up. */
+pass("the confetti still fires on a demo", typeof demo.api.burst === "function" &&
+     CEL.indexOf("isDemoPage") < CEL.indexOf("function burst"),
+     "the guard is on fanfare, not on burst");
+var burstFn = CEL.slice(CEL.indexOf("function burst"));
+pass("and burst carries no demo guard of its own", burstFn.indexOf("isDemoPage") < 0);
+
+/* THE GUARD IS FIRST. Placed after the context is built it would still be silent, but placed
+   after the oscillators start it would not, and both read the same in a diff. */
+var ff = CEL.slice(CEL.indexOf("function fanfare"), CEL.indexOf("function fanfare") + 200);
+pass("and it is the first thing fanfare does", /function fanfare\([^)]*\)\s*\{\s*if \(isDemoPage\(\)\) return;/.test(ff));
+
+/* AND THE HOST CONSOLE'S OWN CHIME, which does not go through this library at all, so the
+   guard above cannot cover it. It is the console's own oscillator plus a vibrate. */
+var APP = find('venueplay/app/index.html');
+var chime = APP.slice(APP.indexOf("function claimChime"), APP.indexOf("function claimChime") + 900);
+pass("the host console's claim chime is silent in a demo too",
+     /data-vp-demo/.test(chime) && chime.indexOf("data-vp-demo") < chime.indexOf("createOscillator"),
+     "it has its own oscillator; vp-celebrate's guard does not reach it");
+pass("and it does not buzz a phone either",
+     chime.indexOf("data-vp-demo") < chime.indexOf("navigator.vibrate"),
+     "a website that vibrates somebody's phone is worse than one that beeps");
+
+/* EVERY DEMO PAGE STAMPS THE FLAG the guards read. A page that forgot would be loud again. */
+["venueplay/tv.html", "venueplay/play.html", "venueplay/app/index.html"].forEach(function (rel) {
+  var src = find(rel);
+  pass(rel.split("/").pop() + " stamps data-vp-demo when it is demonstrating",
+       /setAttribute\("data-vp-demo"\s*,\s*"1"\)/.test(src));
+});
+
 print("");
 print(bad ? (bad + " OF " + ran + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));

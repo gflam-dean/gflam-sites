@@ -70,7 +70,30 @@
     }
   };
 
+  /* IS THIS PAGE A DEMONSTRATION?
+
+     Dean, 12 Sep 2026: "Maybe get rid of the sound on the demo". The win fanfare is written
+     for a pub PA at the moment somebody shouts bingo. Coming out of a laptop on the /see-a-night
+     page, unasked, roughly once a minute for as long as the tab is open, it is not a feature: a
+     visitor reading the pricing in an office gets a fanfare at their desk, and the modal opens
+     on a click, so the browser's autoplay rule does not save anybody from it.
+
+     THE GUARD GOES HERE, not in the three pages that call this. tv.html, play.html and the
+     host console all make a noise at a win, and all three already stamp the page with
+     data-vp-demo when they are demonstrating. Three separate guards is three chances to add a
+     fourth page and forget. One question, asked in the one place that makes the sound.
+
+     ONLY THE SOUND. burst() is untouched: the confetti is the part worth watching, it wakes
+     nobody up, and a silent celebration still reads as a win. */
+  function isDemoPage() {
+    try {
+      var el = root.document && root.document.documentElement;
+      return !!(el && el.getAttribute("data-vp-demo") === "1");
+    } catch (e) { return false; }
+  }
+
   function fanfare(opts) {
+    if (isDemoPage()) return;      // a demonstration is watched, not heard
     try {
       var p = PROFILE[(opts && opts.profile) === "pa" ? "pa" : "phone"];
       var ctx = context(opts && opts.ctx);

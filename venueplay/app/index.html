@@ -1194,6 +1194,12 @@
   function unlockAudio(){ try{ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!_ac) _ac=new AC(); if(_ac.state==="suspended") _ac.resume(); }catch(e){} }
   document.addEventListener("pointerdown", unlockAudio, { passive:true });
   function claimChime(){
+    /* Silent in a demonstration, for the same reason the fanfare is. This one does not go
+       through VPCelebrate, so the guard there does not cover it: it is the console's own
+       oscillator, and it would chime on the sales page every time the scripted claim lands.
+       The vibrate goes too, because a phone buzzing at somebody reading a website is worse
+       than a noise. See isDemoPage() in /app/vp-celebrate.js for the same question. */
+    if(document.documentElement.getAttribute("data-vp-demo")==="1") return;
     try{ if(navigator.vibrate) navigator.vibrate([0,120,80,120]); }catch(e){}
     try{
       if(!_ac) return;
