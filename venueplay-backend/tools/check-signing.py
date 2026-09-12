@@ -128,7 +128,12 @@ def main():
     for d in [Path(__file__).resolve()] + list(Path(__file__).resolve().parents):
         if (d / 'venueplay' / 'app').is_dir(): app = d / 'venueplay' / 'app'; break
     for f in (app.rglob('*.js') if app else []):
-        m = re.search(r'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{40,}\.[A-Za-z0-9_-]{20,}', f.read_text(errors='ignore'))
+        # TWO SHAPES. Singapore issued a JWT (eyJ...); Sydney issues the newer
+        # sb_publishable_... which is not a JWT at all. Written for the first only, this
+        # returned None the morning of the move and the check reported that the host route
+        # "was never exercised", which is a check that cannot fail wearing a red hat.
+        m = re.search(r'eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{40,}\.[A-Za-z0-9_-]{20,}'
+                      r'|sb_publishable_[A-Za-z0-9_-]{20,}', f.read_text(errors='ignore'))
         if m: anon = m.group(0); break
     if app and not anon:
         say(False, 'found the site at %s but no public anon key in it, so the host route was never exercised' % app)

@@ -59,7 +59,15 @@ def main():
     if not live or not syd:
         print('STOP: OLD_DB_URL and NEW_DB_URL must both be in %s' % ENV); sys.exit(1)
 
-    print('\nComparing the LIVE database (Singapore) with SYDNEY.')
+    # WHICH ONE IS LIVE IS A QUESTION, NOT A CONSTANT. This said "(Singapore)" in the
+    # heading, which stopped being true at 12:45 on 12 Sep 2026 and would have had somebody
+    # reading this output backwards: it now compares the ABANDONED copy against the live one.
+    from vp_live import live as _live
+    _L = _live()
+    _old_is_live = (_L.where == 'Singapore')
+    print('\nComparing Singapore with Sydney.  LIVE IS %s.' % _L.where.upper())
+    if not _old_is_live:
+        print('  Read this the other way round: the left column is now the abandoned copy.')
     print('Only the shape is compared. The rows are different on purpose.\n')
     gaps = 0
     for kind, sql in QUERIES.items():
