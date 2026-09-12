@@ -101,6 +101,13 @@
   .bvtext{font-family:'Manrope',sans-serif;font-size:clamp(13px,2.1cqw,26px);color:var(--text);line-height:1.5}
   /* The address, big enough to read from across a bar and in the mono face so a hyphen or a
      missing postcode is unmistakable against a printed setup sheet. */
+  /* The wordmark on both "something is wrong" screens, sized in cqw like everything else on
+     this page so it scales with the wall instead of racing it. */
+  .bvmark,.admark{display:flex;align-items:center;justify-content:center;gap:.5em;margin:0 0 .7em}
+  .bvmark svg,.admark svg{width:clamp(16px,2.2cqw,30px);height:auto;display:block;
+    filter:drop-shadow(0 0 .5cqw rgba(255,31,142,.75))}
+  .bvmark span,.admark span{font-family:'Hanken Grotesk',sans-serif;font-weight:800;
+    font-size:clamp(13px,2cqw,26px);letter-spacing:.02em;color:#fff}
   .bvaddr{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:clamp(13px,2.4cqw,30px);
     color:var(--gold,#FFC24B);margin:0 0 .6em;word-break:break-all}
   .bvaddr[hidden]{display:none}
@@ -330,6 +337,10 @@
   <!-- WRONG-LINK PROMPT (screen link doesn't match a venue) -->
   <div class="badvenue hidden" id="badVenue">
     <div class="bvcard">
+      <!-- THE MARK. Dean, 12 Sep 2026: "it loads the errorscreen no logo or anything". A bare
+           card on black does not read as VenuePlay, and this is a screen somebody stares at
+           while deciding whether they have been sold something that works. -->
+      <div class="bvmark"><svg viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg><span>VenuePlay</span></div>
       <div class="bvtitle">Not linked to an account</div>
       <!-- THE ADDRESS THEY ACTUALLY TYPED. Almost every screen that lands here got here by a
            typo on a TV remote, and the card never showed them what it had read, so there was
@@ -925,6 +936,11 @@
   function venuePending(){
     return !!VENUE_SLUG && !VENUE_CONFIRMED && Date.now() < VENUE_PENDING_UNTIL;
   }
+  /* THE VENUEPLAY MARK, once. It was drawn inline in #tvCorner and nowhere else, so the two
+     screens a venue sees when something is wrong had no logo on them at all and did not read
+     as our product. Same path, same pink, one place to change it. */
+  var VP_MARK_SVG = '<svg viewBox="0 0 26 30" fill="none" aria-hidden="true">'+
+    '<path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>';
   var ACCENT={pink:"ad-b",gold:"ad-a",green:"ad-c",blue:"ad-d"};
   var ACCENT_COLOR={pink:"#FF1F8E",gold:"#FFC24B",green:"#35D07F",blue:"#4C8DFF"};
   function accentClass(a){ return ACCENT[a]||"ad-b"; }
@@ -961,7 +977,10 @@
   function entryClass(e){
     if(e.type==="auto-draws") return "ad-e";
     if(e.type==="auto-raffle") return "ad-b";
-    if(e.type==="holding") return "ad-a";
+    /* The ordinary holding slide ("Game on here") keeps the gold card: it is a cheerful
+       message and gold is ours. The "Setting up" one does not, because it sits under a pink
+       mark and the two together looked like two different products. Dean: "very off brand". */
+    if(e.type==="holding") return venuePending() ? "ad-b" : "ad-a";
     return accentClass(e.slide.accent);
   }
   function entryInner(e){
@@ -993,7 +1012,12 @@
          what it is trying instead: a person who has just typed it in can read their own typo
          off the wall, which is the whole difficulty of setting one of these up on a remote. */
       if(venuePending()){
-        return '<div class="adtag" style="color:'+accentHex("gold")+'">VenuePlay</div>'+
+        /* THE MARK, NOT A GOLD WORD. Dean, 12 Sep 2026: "it comes up with a yellow venueplay
+           wording. very off brand". It was: accentHex("gold") on a page whose brand colour is
+           pink, and a word where every other VenuePlay surface shows the play triangle. This
+           is the first thing a venue sees while setting a screen up, so it should look like
+           the product they bought. Same mark and same pink as #tvCorner. */
+        return '<div class="admark">' + VP_MARK_SVG + '<span>VenuePlay</span></div>'+
                '<div class="adbig">Setting up</div>'+
                '<div class="adsub">Checking this screen&rsquo;s address&hellip;</div>'+
                '<div class="adhelp">'+esc(String(ORIGIN).replace(/^https?:\/\//,""))+'/tv?'+esc(VENUE_SLUG)+'</div>';
