@@ -501,6 +501,46 @@
   /* Player phone frame keeps its own .vps-phone bezel */
   .vp-phoneframe{ display:flex; justify-content:center; }
 
+  /* THE REAL PAGE, INSIDE THE BEZEL. Each iframe is given the shape of the thing it is
+     pretending to be, and the page inside does the rest: tv.html is built in container query
+     units, so it lays itself out for whatever box it is handed exactly as it does on a wall.
+     That is the point of embedding it rather than drawing it. */
+  .vp-live{ display:block; border:0; background:#0A0A0B; }
+
+  /* RENDERED AT THE REAL DEVICE SIZE, THEN SCALED DOWN.
+
+     The first version simply set the iframe to 100% of its bezel: 270 CSS pixels for the phone
+     and about 530 for the tablet. Those are not sizes any phone or tablet reports, so the app
+     inside laid itself out for a screen nobody owns. The ticket lost its right-hand column and
+     the host console was cut off below "Playing 4", with scrolling off so a visitor could not
+     reach the rest of it. A sales page showing the product clipped is worse than one showing a
+     drawing of it whole.
+
+     So each frame renders at the dimensions of the device it is pretending to be and is scaled
+     to fit with a transform. The page inside believes it is on a real phone and lays out
+     exactly as it does in somebody's hand, which is the entire claim this page now makes.
+     vpFitFrames() sets the scale from the measured width, so it is right at any window size. */
+  .vp-livebox{ overflow:hidden; position:relative; }
+  .vp-livebox .vp-live{ position:absolute; top:0; left:0; transform-origin:top left; }
+
+  /* The wall is the one that genuinely adapts: tv.html is written in container query units and
+     is designed for whatever size screen a venue hangs, so it is handed the box directly. */
+  .vp-live-tv{ aspect-ratio:16/9; padding:10px; }
+  .vp-live-tv .vp-live{ position:static; width:100%; height:100%; border-radius:10px; transform:none; }
+
+  .vp-live-tablet{ padding:14px; }
+  .vp-live-tablet .vp-livebox{ aspect-ratio:1024/768; border-radius:8px; }
+  .vp-live-tablet .vp-live{ width:1024px; height:768px; }
+
+  .vp-live-phone{
+    width:270px;max-width:100%;margin:0 auto;border-radius:34px;background:#0d0d10;
+    border:1px solid var(--line-2);
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.9),0 0 0 8px #050506,0 0 50px -24px var(--glow);
+    overflow:hidden;position:relative;
+  }
+  .vp-live-phone .vp-livebox{ aspect-ratio:390/844; border-radius:33px; }
+  .vp-live-phone .vp-live{ width:390px; height:844px; }
+
   @media (max-width: 560px){
     .vp-tabletframe{ padding:20px 14px; }
     .vps-con-grid{ grid-template-columns:1fr; }
@@ -1538,10 +1578,14 @@ block (all classes prefixed .vpa-)
 
 <div class="vp-wrap">
   <div class="vp-inner">
-    <span class="vp-eyebrow"><span class="dot"></span>Interactive concept</span>
+    <span class="vp-eyebrow"><span class="dot"></span>The real screens</span>
     <h1 class="vp-h1">See a night on <span class="accent">VenuePlay</span></h1>
     <p class="vp-intro">One room, one platform. Tap the big screen, the host and a player to see each view.</p>
-    <p class="vp-note">This is an interactive concept prototype, not a live game.</p>
+    <!-- The "interactive concept prototype, not a live game" line went when the drawings did.
+         It was true of a mockup and is not true of this: these are the actual pages, running a
+         scripted night. What replaces it says what a visitor is looking at rather than
+         apologising for it. -->
+    <p class="vp-note">These are the real VenuePlay screens, playing a demonstration night. Nothing here is a picture.</p>
 
     <div class="vp-modebar">
       <button class="vp-modebtn" id="vpModeBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="vpModeMenu">
@@ -1723,8 +1767,8 @@ block (all classes prefixed .vpa-)
     player: "The player phone"
   };
 
-  /* Selected game mode. "bingo" opens the real mockups; any other
-     mode shows an honest per-screen placeholder in the same frame. */
+  /* Selected game mode. "bingo" embeds the real screens; the other modes show a card saying
+     the game is live and the preview is coming, until each gets a demo script of its own. */
   var currentMode = "bingo";
   var currentModeLabel = "Bingo";
 
@@ -1734,15 +1778,19 @@ block (all classes prefixed .vpa-)
     player: "Player phone"
   };
 
-  /* Placeholder card for a not-yet-built mode, wrapped in the same
-     device frame (TV bezel, tablet or phone) as the real view. */
+  /* The card for a mode this PREVIEW does not cover yet, wrapped in the same device frame as
+     the live views. The game itself is built and running; only its demo script is missing. */
   function placeholderView(view) {
     var card =
       '<div class="vp-ph-card">' +
         '<span class="vp-ph-logo"><svg width="26" height="30" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg></span>' +
         '<div class="vp-ph-mode">' + currentModeLabel + '</div>' +
-        '<div class="vp-ph-sub">' + screenLabels[view] + ' view, in design</div>' +
-        '<span class="vp-ph-badge">Concept, not built yet</span>' +
+        /* NOT "not built yet". Trivia, musical bingo, the raffle and the members draw all run
+           at real venues tonight; it is this PREVIEW that does not cover them, because only
+           bingo has a demo script so far. Telling a prospect that a shipped game is a concept
+           is the opposite of the mistake the rest of this page was making, and just as wrong. */
+        '<div class="vp-ph-sub">' + screenLabels[view] + '</div>' +
+        '<span class="vp-ph-badge">Live at venues now, preview coming</span>' +
       '</div>';
     if (view === "tv") {
       return '<div class="vp-tvframe"><div class="vps-tv vp-ph-stage">' + card + '</div><div class="vp-tvstand"></div></div>';
@@ -1755,112 +1803,69 @@ block (all classes prefixed .vpa-)
 
   var views = {};
 
-  /* Real TV mockup (verbatim markup from the live site), inside a
-     thin dark bezel with a little stand so it reads as a screen. */
-  views.tv =
-    '<div class="vp-tvframe">' +
-      '<div class="vps-tv vps-inview">' +
-        '<div class="vps-tv-top">' +
-          '<span class="vps-tv-venue">Tugun Bowls Club &middot; Tuesday Bingo</span>' +
-          '<span class="vps-tv-recent">' +
-            '<span class="vps-chip-lbl">Last calls</span>' +
-            '<span class="vps-ball-chip">90</span>' +
-            '<span class="vps-ball-chip">71</span>' +
-          '</span>' +
-          '<span style="display:flex;gap:8px;flex-wrap:wrap">' +
-            '<span class="vps-pill vps-prize">One line &middot; $50 bar tab</span>' +
-          '</span>' +
-        '</div>' +
-        '<div class="vps-tv-body">' +
-          '<div class="vps-ball-col">' +
-            '<div class="vps-ball-idx">Ball 17 of 90</div>' +
-            '<div class="vps-ball"><span class="vps-nm">53</span></div>' +
-            '<div class="vps-ball-prev">' +
-              '<span class="vps-ball-chip">90</span>' +
-              '<span class="vps-ball-chip">71</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="vps-board" id="vps-board"></div>' +
-        '</div>' +
-        '<div class="vps-tv-foot">' +
-          '<div class="vps-qr"><canvas id="vps-qr" width="46" height="46"></canvas></div>' +
-          '<div class="vps-join">' +
-            '<div class="vps-l">Join from your phone</div>' +
-            '<div class="vps-u"><svg class="vps-u-mark" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.8" stroke-linejoin="round"></path></svg>venueplay.com.au/play</div>' +
-          '</div>' +
-          '<div class="vps-code">TQ7M4C</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="vp-tvstand"></div>' +
-    '</div>';
+  /* THE REAL SCREENS, NOT A DRAWING OF THEM.
 
-  /* Real host console mockup, inside a landscape tablet bezel. */
-  views.host =
-    '<div class="vp-tabletframe">' +
-      '<div class="vps-console">' +
-        '<div class="vps-con-top">' +
-          '<div class="vps-con-brand">' +
-            '<span class="vps-mini-mark">' +
-              '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
-              '<span class="vps-w">VenuePlay</span>' +
-            '</span>' +
-            '<div class="vps-con-venue">Tugun Bowls Club</div>' +
-            '<div class="vps-g">Game 2: One line<small>Prize: $50 bar tab</small></div>' +
-          '</div>' +
-          '<span class="vps-pill vps-live"><span class="vps-dot"></span>Running</span>' +
-        '</div>' +
-        '<div class="vps-con-grid">' +
-          '<div>' +
-            '<button class="vps-next-ball" type="button" tabindex="-1" aria-hidden="true">' +
-              '<span class="vps-k">Next ball</span>' +
-              '<span class="vps-s" style="display:block">17 of 90 called</span>' +
-            '</button>' +
-            '<div class="vps-recent">' +
-              '<div class="vps-rl">Recent</div>' +
-              '<div class="vps-balls"><span class="vps-rb vps-cur">53</span><span class="vps-rb">90</span><span class="vps-rb">71</span><span class="vps-rb">27</span><span class="vps-rb">66</span></div>' +
-            '</div>' +
-            '<button class="vps-allballs-btn" type="button" id="vps-allballs-btn">See all balls</button>' +
-            '<div class="vps-allballs" id="vps-allballs" hidden>' +
-              '<div class="vps-allballs-h">All 90 balls, called ones lit</div>' +
-              '<div class="vps-board" id="vps-hostboard"></div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="vps-claim">' +
-            '<div class="vps-cl">Claim to check</div>' +
-            '<div class="vps-who">Card 27 &middot; Marta</div>' +
-            '<div class="vps-verdict"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19 6.5" stroke="#2FD27A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg> Valid line, verified</div>' +
-            '<div class="vps-btns">' +
-              '<button class="vps-cbtn vps-ok" type="button" tabindex="-1" aria-hidden="true">Confirm winner</button>' +
-              '<button class="vps-cbtn vps-no" type="button" tabindex="-1" aria-hidden="true">Reject</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="vps-con-foot">' +
-          '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Pause</button>' +
-          '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">End game</button>' +
-          '<button class="vps-ghost" type="button" tabindex="-1" aria-hidden="true">Start raffle</button>' +
-          '<span class="vps-count"><b>62</b> in the room</span>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+     What was here was 2,852 lines of hand-copied markup under .vps-* class names that appear
+     nowhere in tv.html, with a line under the heading reading "This is an interactive concept
+     prototype, not a live game". Dean chose to show the real screen instead of screenshots,
+     and then, on 12 Sep 2026: "Btw See a night hasn't changed on the homepage", and "also get
+     rid of the prototype wording on see a night".
 
-  /* Real player phone mockup (the .vps-phone is already a phone frame). */
-  views.player =
-    '<div class="vp-phoneframe">' +
-      '<div class="vps-phone">' +
-        '<div class="vps-notch"></div>' +
-        '<div class="vps-ph-head">' +
-          '<span class="vps-mini-mark">' +
-            '<svg width="15" height="17" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"></path></svg>' +
-            '<span class="vps-w">VenuePlay</span>' +
-          '</span>' +
-          '<span class="vps-v">Tugun Bowls</span>' +
-        '</div>' +
-        '<div class="vps-ticker">Last call <b>53</b> mark it if you have got it</div>' +
-        '<div class="vps-pcard" id="vps-pcard"></div>' +
-        '<button class="vps-bingo-btn" type="button" tabindex="-1" aria-hidden="true">BINGO!</button>' +
-      '</div>' +
-    '</div>';
+     Both are the same job. The wording was honest while the page was a drawing; the way to
+     remove it is to stop drawing. Each frame now holds the actual page a venue runs, in its
+     demo mode, so this screen cannot go stale: change tv.html and this changes with it. That
+     is the whole reason the demo modes were built.
+
+     ONE AT A TIME. body.innerHTML is replaced when you tap a device, so only one of these
+     iframes is ever loaded, which is also why three heavy pages on one sales page is not the
+     cost it looks like.
+
+     WHAT MAKES THIS SAFE TO EMBED. /tv?demo=1 resolves no venue, fetches no venue's slides or
+     logo, opens no realtime socket and hides the join corner, so there is nothing on screen a
+     stranger could act on and nothing our database is asked for. See demo-hermetic.test.js. */
+  /* THE SAME LINKS HAVE TO WORK IN BOTH PLACES. Cloudflare Pages serves this page at
+     /see-a-night and rewrites the extension away; a plain file server, which is how you
+     preview a change before pushing it, serves /see-a-night.html and 404s on /tv. The first
+     version of this hardcoded the extensionless form, so every frame was "Error code: 404"
+     locally, and the only way to find out would have been to push it live and look.
+     So take the style from the page's own address: whatever form loaded this one works. */
+  var PAGE_EXT = /\.html($|[?#])/.test(window.location.pathname + window.location.search) ? ".html" : "";
+  function realScreen(view) {
+    var src = view === "tv"   ? "/tv" + PAGE_EXT + "?demo=1"
+            : view === "host" ? (PAGE_EXT ? "/app/index.html?demo=1" : "/app/?demo=1")
+            :                   "/play" + PAGE_EXT + "?demo=1";
+    var title = view === "tv"   ? "The venue screen, running a bingo night"
+              : view === "host" ? "The host console, mid game"
+              :                   "A player's phone, mid game";
+    /* loading="lazy" so the two you have not opened cost nothing, and no sandbox attribute:
+       these are our own pages on our own origin and they need their own scripts to run. */
+    var f = '<iframe class="vp-live" src="' + src + '" title="' + title + '" loading="lazy" scrolling="no" tabindex="-1"></iframe>';
+    // The wall needs no scaling box; the two app screens are rendered at device size inside one.
+    return view === "tv" ? f : '<div class="vp-livebox">' + f + '</div>';
+  }
+
+  /* SCALE EACH DEVICE SCREEN TO ITS BEZEL. The iframe is laid out at real device pixels, so
+     what is left is to shrink the picture to fit. Measured rather than hardcoded, because the
+     bezels shrink on a narrow window and a fixed scale would leave the page hanging out of the
+     frame on a phone, which is where a lot of this will be read. */
+  function vpFitFrames() {
+    var boxes = document.querySelectorAll(".vp-livebox");
+    for (var i = 0; i < boxes.length; i++) {
+      var box = boxes[i], f = box.querySelector(".vp-live");
+      if (!f) continue;
+      var natural = parseFloat(f.style.width) || f.offsetWidth || 0;
+      // offsetWidth is the laid-out width from the stylesheet (390 or 1024), before transform.
+      if (!natural) continue;
+      var scale = box.clientWidth / natural;
+      f.style.transform = scale > 0 ? "scale(" + scale + ")" : "none";
+    }
+  }
+  /* A window that changes width after a view is open must not leave it at the old scale. */
+  window.addEventListener("resize", vpFitFrames);
+
+  views.tv     = '<div class="vp-tvframe vp-live-tv">' + realScreen("tv") + '</div><div class="vp-tvstand"></div>';
+  views.host   = '<div class="vp-tabletframe vp-live-tablet">' + realScreen("host") + '</div>';
+  views.player = '<div class="vp-phoneframe"><div class="vp-live-phone">' + realScreen("player") + '</div></div>';
 
   /* ============================================================
      TRIVIA views. Same sample content across all three screens.
@@ -2725,10 +2730,11 @@ block (all classes prefixed .vpa-)
     modal.className = "vp-modal" + (view ? " is-" + view : "");
     if (currentMode === "bingo") {
       body.innerHTML = views[view] || "";
-      /* Run the relevant builder against the freshly injected markup. */
-      if (view === "tv") { buildTvBoard(); drawQR(); }
-      else if (view === "player") { buildPcard(); }
-      else if (view === "host") { wireBingoHost(); }
+      /* The three builders that used to run here (buildTvBoard, drawQR, buildPcard,
+         wireBingoHost) drew the hand-made board, its QR and its ticket. There is nothing left
+         for them to draw: the real pages draw themselves. Sizing happens once the modal is
+         actually on screen, below: called from here it measured a hidden box as zero wide and
+         set no scale at all, which is how the first version left the phone unscaled. */
     } else if (currentMode === "trivia") {
       body.innerHTML = triviaViews[view] || "";
       /* Run trivia post-inject JS against the freshly injected markup. */
@@ -2747,6 +2753,11 @@ block (all classes prefixed .vpa-)
       body.innerHTML = placeholderView(view);
     }
     backdrop.classList.add("open");
+    /* NOW it has a width. A box inside a closed modal measures zero, so scaling it there sets
+       nothing and the page inside stays at full device size, overflowing its bezel. After the
+       class is on, and again on the next frame in case the open transition changes the width. */
+    vpFitFrames();
+    requestAnimationFrame(vpFitFrames);
   }
   function close() {
     backdrop.classList.remove("open");

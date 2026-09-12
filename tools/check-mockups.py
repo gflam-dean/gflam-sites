@@ -51,8 +51,30 @@ REAL = [
     'venueplay/app/raffle/screen.html',
     'venueplay/app/members/screen.html',
 ]
-# The places that draw a picture of a screen for somebody who is not a customer yet.
+# The places that show a screen to somebody who is not a customer yet.
 MOCKUPS = ['venueplay/see-a-night.html', 'venueplay/index.html']
+
+
+def embeds_real_screen(path):
+    """Does this page EMBED the real screen rather than draw a picture of it?
+
+    A page that iframes /tv?demo=1 cannot drift, by construction: it is the same file the
+    venue runs. Asking somebody to compare it against tv.html every month would be asking
+    them to compare a thing with itself, and a check that asks for pointless work is one
+    people learn to dismiss, which costs the checks that do matter.
+
+    see-a-night stopped drawing on 12 Sep 2026. index.html still draws, so it is still
+    watched. The test is on the CODE rather than a list kept here, so a page that goes back
+    to drawing starts being watched again on its own."""
+    full = os.path.join(ROOT, path)
+    if not os.path.isfile(full):
+        return False
+    src = io.open(full, encoding='utf-8', errors='replace').read()
+    src = re.sub(r'<!--.*?-->', '', src, flags=re.S)          # a comment is not an embed
+    # NOT a literal "/tv?demo=1". see-a-night builds its src by concatenation so the same page
+    # works on Pages (/tv) and off a plain file server (/tv.html), and the first version of this
+    # looked for the joined-up string and found nothing. An embed is an iframe pointed at a demo.
+    return bool(re.search(r'<iframe', src)) and bool(re.search(r'demo=1', src))
 DAYS = 31
 
 
@@ -143,7 +165,11 @@ def main():
     # tell that apart from drift, so it is COUNTED and never failed on. Calling a
     # deliberate difference a fault is how a check gets ignored, and this one has to
     # survive being read once a month for a year.
-    sets = {m: rules(m) for m in MOCKUPS if styles_of(m) is not None}
+    # WHICH PAGES CAN STILL DRIFT. A page that embeds the real screen is the real screen, so
+    # it is named as settled and left out of the comparison rather than quietly dropped.
+    embeds = [m for m in MOCKUPS if embeds_real_screen(m)]
+    draws = [m for m in MOCKUPS if m not in embeds]
+    sets = {m: rules(m) for m in draws if styles_of(m) is not None}
     disagree = []
     names = list(sets)
     if len(names) == 2:
@@ -157,13 +183,23 @@ def main():
 
     print()
     print('%sTHE SALES MOCKUPS%s' % (YEL, OFF))
-    print('%s  the sales pages draw the screens by hand. Nothing links them to the real ones.%s' % (DIM, OFF))
+    if embeds:
+        print('%s  settled, cannot drift: %s%s' % (DIM, ', '.join(embeds), OFF))
+        print('%s  these embed the real screen, so there is nothing to compare them against.%s' % (DIM, OFF))
+    if draws:
+        print('%s  still drawn by hand: %s%s' % (DIM, ', '.join(draws), OFF))
+        print('%s  nothing links these to the real screens. That is what this watches.%s' % (DIM, OFF))
+    else:
+        print('%s  every sales page now shows the real screen. This check has nothing left to do.%s' % (DIM, OFF))
     print()
     if never:
         print('  %s--%s  nobody has ever confirmed these match. Look once, then run --accept.' % (YEL, OFF))
     elif changed:
         print('  %sLOOK%s  a real screen has CHANGED since %s (%s -> %s).' % (RED, OFF, when, was, fp))
-        print('        open /see-a-night and the front page beside a real /tv and compare.')
+        if draws:
+            print('        open %s beside a real /tv and compare.' % ', '.join('/' + d.split('/')[-1] for d in draws))
+        else:
+            print('        nothing draws a screen by hand any more, so run --accept.')
     elif old:
         print('  %s--%s  %s days since anyone looked (last on %s). Screens unchanged since.'
               % (YEL, OFF, DAYS, when))

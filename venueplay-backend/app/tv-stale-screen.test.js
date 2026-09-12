@@ -64,6 +64,14 @@ var window = { __vpTvReload: function(){ pageReloads++; } };
 var location = { reload: function(){ pageReloads++; } };
 var intervals = [];
 function setInterval(fn, ms){ intervals.push({ fn:fn, ms:ms }); return intervals.length; }
+/* The "Setting up" window added 12 Sep 2026. validateVenue confirms the address on its first
+   good reply and arms one timeout for the deadline, so both have to exist here or the real
+   function throws before its first check. The timeouts are captured, not run, the same way
+   the interval is: this suite is about the ORDER of the guards, not the clock. */
+var VENUE_CONFIRMED = false, VENUE_PENDING_MS = 45000, tvMode = "ads";
+var timeouts = [];
+function setTimeout(fn, ms){ timeouts.push({ fn:fn, ms:ms }); return timeouts.length; }
+function buildAds(){} function startAds(){}
 
 var answer = null;
 var asked = 0;

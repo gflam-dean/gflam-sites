@@ -99,6 +99,11 @@
   .bvcard{max-width:76cqw;text-align:center;background:var(--ink-2);border:1px solid var(--line);border-radius:2cqw;padding:2.6cqw 3cqw}
   .bvtitle{font-family:'Anton',sans-serif;text-transform:uppercase;font-size:clamp(22px,3.6cqw,44px);color:var(--pink);line-height:1.05;margin-bottom:1.2cqw}
   .bvtext{font-family:'Manrope',sans-serif;font-size:clamp(13px,2.1cqw,26px);color:var(--text);line-height:1.5}
+  /* The address, big enough to read from across a bar and in the mono face so a hyphen or a
+     missing postcode is unmistakable against a printed setup sheet. */
+  .bvaddr{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:clamp(13px,2.4cqw,30px);
+    color:var(--gold,#FFC24B);margin:0 0 .6em;word-break:break-all}
+  .bvaddr[hidden]{display:none}
   .bvtext b{color:#fff}
   /* A GRID, NOT A LIST, AND NOTHING THAT HAS TO BE SCROLLED.
      This is a television. Plenty of them are driven by a Fire Stick remote,
@@ -326,7 +331,12 @@
   <div class="badvenue hidden" id="badVenue">
     <div class="bvcard">
       <div class="bvtitle">Not linked to an account</div>
-      <div class="bvtext">This link doesn't seem to be linked to an account. You can sign up at <b>www.venueplay.com.au</b>, or contact us at <b>hello@venueplay.com.au</b> if you think this is wrong.</div>
+      <!-- THE ADDRESS THEY ACTUALLY TYPED. Almost every screen that lands here got here by a
+           typo on a TV remote, and the card never showed them what it had read, so there was
+           nothing to compare against the address on their setup sheet. Filled in by script;
+           if it is empty the line stays hidden rather than showing a bare slash. -->
+      <div class="bvaddr" id="bvAddr" hidden></div>
+      <div class="bvtext">This link doesn't seem to be linked to an account. Check the address above against your setup email, or sign up at <b>www.venueplay.com.au</b>. Contact us at <b>hello@venueplay.com.au</b> if you think this is wrong.</div>
     </div>
   </div>
 
@@ -528,6 +538,11 @@
        to be told which venue it is. Throwing "not linked to an account" over the
        top of that would be wrong and would hide the answer. */
     if(pickerIsUp()) return;
+    var a=$("bvAddr");
+    if(a){
+      if(VENUE_SLUG){ a.textContent=String(ORIGIN).replace(/^https?:\/\//,"")+"/tv?"+VENUE_SLUG; a.hidden=false; }
+      else a.hidden=true;
+    }
     var el=$("badVenue"); if(el) el.classList.remove("hidden");
   }
 
@@ -760,6 +775,11 @@
             return;
           }
           strikes=0;
+          /* CONFIRMED. Anything but exists:false means this address is a real venue, so the
+             "Setting up" wording has done its job. Rebuild is forced: the holding entry's
+             signature does not change when only its words do, so buildAds() would compare
+             equal and leave the old text on the wall. */
+          if(!VENUE_CONFIRMED){ VENUE_CONFIRMED=true; if(tvMode==="ads"){ buildAds(true); startAds(); } }
           var el=$("badVenue"); if(el) el.classList.add("hidden");   // it resolved: take the card down
           /* A SCREEN THAT WAS NOT LISTENING STILL CATCHES UP.
              When an owner saves their slides, billing.html broadcasts screen_refresh and every
@@ -838,6 +858,13 @@
     }
     ask();
     setInterval(ask, 30000);
+    /* AND WHEN THE WINDOW CLOSES, repaint. Without this the deadline is only consulted the
+       next time something happens to rebuild the ads, so a screen whose Worker never answered
+       would sit on "Setting up" indefinitely: the exact stuck state the deadline exists to
+       prevent. One timer, once. */
+    setTimeout(function(){
+      if(!VENUE_CONFIRMED && tvMode==="ads"){ buildAds(true); startAds(); }
+    }, VENUE_PENDING_MS + 500);
   }
 
   // show the pair QR whenever this screen is in ads mode and no host has connected
@@ -874,6 +901,30 @@
     draws:[],
     raffle:null
   };
+  /* HAS THIS SCREEN'S ADDRESS BEEN CONFIRMED YET?
+
+     Dean, 12 Sep 2026: "so a tv screen where they enter the wrong address comes up with the
+     default trouble shooting for maybe 1 minute before it says not linked to an account".
+     Measured: twenty four seconds of "GAME ON HERE" before the card appears. To somebody
+     standing at a Fire Stick who has just mistyped their address, "Game on here" reads as
+     success, and plenty of them would walk away.
+
+     The twenty four seconds are on purpose and stay: validateVenue has to hear exists:false
+     TWICE, thirty seconds apart, so that one bad read during a Worker deploy cannot take a
+     live venue's wall down for the night. What changes is only what is on the screen while
+     nobody knows yet: not a claim that a game is on, but the address it is trying, which is
+     the one thing a person debugging a typo needs to see.
+
+     TIME BOXED, so it can never become a new way to be stuck. If the Worker is unreachable
+     the answer never arrives and the strike count never advances, so without a deadline a
+     venue with no slides yet would sit on "checking" for ever. After this many seconds the
+     screen goes back to the ordinary holding slide, which is the behaviour it has today. */
+  var VENUE_CONFIRMED = false;
+  var VENUE_PENDING_MS = 45000;
+  var VENUE_PENDING_UNTIL = Date.now() + VENUE_PENDING_MS;
+  function venuePending(){
+    return !!VENUE_SLUG && !VENUE_CONFIRMED && Date.now() < VENUE_PENDING_UNTIL;
+  }
   var ACCENT={pink:"ad-b",gold:"ad-a",green:"ad-c",blue:"ad-d"};
   var ACCENT_COLOR={pink:"#FF1F8E",gold:"#FFC24B",green:"#35D07F",blue:"#4C8DFF"};
   function accentClass(a){ return ACCENT[a]||"ad-b"; }
@@ -938,6 +989,15 @@
       return '<div class="adtag">'+esc(r.tag||"")+'</div><div class="adbig">'+escBr(r.head||"")+'</div><div class="adsub">'+esc(r.sub||"")+'</div>';
     }
     if(e.type==="holding"){   // shown when a venue has no ads/draws/raffle yet, so the screen is never blank
+      /* Nobody has confirmed this address yet, so do not tell the room a game is on. Show
+         what it is trying instead: a person who has just typed it in can read their own typo
+         off the wall, which is the whole difficulty of setting one of these up on a remote. */
+      if(venuePending()){
+        return '<div class="adtag" style="color:'+accentHex("gold")+'">VenuePlay</div>'+
+               '<div class="adbig">Setting up</div>'+
+               '<div class="adsub">Checking this screen&rsquo;s address&hellip;</div>'+
+               '<div class="adhelp">'+esc(String(ORIGIN).replace(/^https?:\/\//,""))+'/tv?'+esc(VENUE_SLUG)+'</div>';
+      }
       // The help line covers the "our issue" case: if a set-up venue's screen is sitting here,
       // their promos/game did not load, so point them to support rather than only cheering.
       return '<div class="adtag" style="color:'+accentHex("pink")+'">VenuePlay</div>'+
@@ -1810,7 +1870,14 @@
       function at(ms, fn){ steps.push([ms, fn]); }
 
       // A bingo round: lobby, a dozen balls, a claim, a winner, then back to the ads.
-      at(300,  function(){ m({t:"session", session_id:"demo", join_code:"DEMO24"}); m({t:"mode", mode:"bingo"}); });
+      /* AT ZERO, not 300ms. Until the first message arrives tv.html shows its ordinary
+         full-screen JOIN THE GAME lobby, with a QR built from the code this browser invented.
+         Embedded on the sales page that was the FIRST thing a visitor saw when they tapped the
+         big screen, and it is a scannable code leading to a room that does not exist: the one
+         thing this demo promises it will never show. Three hundred milliseconds is not long,
+         but it is the first frame, which is the one people photograph. A zero timeout still
+         runs after this script finishes parsing, so the page is ready either way. */
+      at(0,    function(){ m({t:"session", session_id:"demo", join_code:"DEMO24"}); m({t:"mode", mode:"bingo"}); });
       // "one", a PATTERN_NAMES key, so the wall reads "One line" rather than a raw slug.
       at(1200, function(){ m({t:"started", pattern:"one", prize:"$50 bar tab"}); });
       BALLS.forEach(function(n,i){
