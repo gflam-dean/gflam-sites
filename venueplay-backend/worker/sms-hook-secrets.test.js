@@ -97,6 +97,17 @@ crypto = {
   }
 };
 
+/* jsc has no console. The Worker logs when a configured secret cannot be used, which is worth
+   keeping: without it a ReferenceError inside the loop reads as "no matching signature", which
+   is indistinguishable from a stranger knocking. Capture the lines rather than silence them, so
+   a check below can assert the Worker actually said something. */
+var logged = [];
+if (typeof console === "undefined") {
+  console = { error: function () { logged.push(Array.prototype.join.call(arguments, " ")); },
+              warn:  function () { logged.push(Array.prototype.join.call(arguments, " ")); },
+              log:   function () {} };
+}
+
 var bad = 0, ran = 0;
 function pass(n, c, x) {
   if (typeof n !== "string") throw new Error("name first");
@@ -120,7 +131,7 @@ function fnbody(src, name) {
 }
 var SRC = find("venueplay-backend/worker/venueplay-sms-hook.js");
 var FIVE_MINUTES_SECONDS = (function () { var m = /FIVE_MINUTES_SECONDS\s*=\s*(\d+)/.exec(SRC); return m ? +m[1] : 300; })();
-["base64ToBytes", "bytesToBase64", "constantTimeEqual", "verifySignature"].forEach(function (n) {
+["base64ToBytes", "bytesToBase64", "constantTimeEqual", "normaliseB64", "verifySignature"].forEach(function (n) {
   var b = fnbody(SRC, n);
   if (!b) { pass("the Worker still defines " + n, false); return; }
   (0, eval)(b);
@@ -171,12 +182,42 @@ function env(secret) { return { SEND_SMS_HOOK_SECRET: secret }; }
   r = await verifySignature(await signedRequest(STRANGER), BODY, env(BOTH));
   pass("a stranger is still refused with two configured", r.ok === false, r.reason);
 
+  /* THE SHAPE SUPABASE ACTUALLY SHOWS YOU. This is the one that broke it live: Dean pasted
+     the whole displayed value, "v1,whsec_<base64>", and atob threw on the comma. The outer
+     catch turned that into a 500, Supabase said "Unexpected status code returned from hook",
+     and the host saw "we could not send a code" with no way to know why. */
+  r = await verifySignature(await signedRequest(SYDNEY), BODY, env("v1,whsec_" + SYDNEY));
+  pass("the secret is accepted exactly as the dashboard displays it", r.ok === true,
+       "v1,whsec_<base64> is what a person copies, so it must be what the Worker takes");
+  r = await verifySignature(await signedRequest(SYDNEY), BODY, env("whsec_" + SYDNEY));
+  pass("and with just the whsec_ prefix", r.ok === true);
+  r = await verifySignature(await signedRequest(SYDNEY), BODY, env(SYDNEY));
+  pass("and bare, the way it always worked", r.ok === true);
+  /* Both projects, both in full display form. The v1, contains a comma, so stripping has to
+     happen BEFORE the list is split or each secret becomes two useless halves. */
+  r = await verifySignature(await signedRequest(SINGAPORE), BODY,
+        env("v1,whsec_" + SYDNEY + ",v1,whsec_" + SINGAPORE));
+  pass("two secrets, both in full display form, and the old one still verifies", r.ok === true,
+       "the comma inside v1,whsec_ must not split them into halves");
+  r = await verifySignature(await signedRequest(STRANGER), BODY,
+        env("v1,whsec_" + SYDNEY + ",v1,whsec_" + SINGAPORE));
+  pass("a stranger is still refused with two full-form secrets", r.ok === false, r.reason);
+  /* A value that has been through a URL, or had its padding trimmed. */
+  r = await verifySignature(await signedRequest(SYDNEY), BODY,
+        env(SYDNEY.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")));
+  pass("base64url with the padding trimmed still works", r.ok === true,
+       "a throw here reads to a host as 'we could not send a code'");
+
   /* TYPED BY HAND UNDER PRESSURE. Spaces, a trailing comma, and one mangled entry. */
   r = await verifySignature(await signedRequest(SYDNEY), BODY, env("  " + SYDNEY + " ,  " + SINGAPORE + " ,"));
   pass("spaces and a trailing comma do not break it", r.ok === true);
+  logged = [];
   r = await verifySignature(await signedRequest(SINGAPORE), BODY, env("!!!not-base64!!!," + SINGAPORE));
   pass("one mangled secret does not stop the good one being tried", r.ok === true,
        "a rollback list is typed in a hurry");
+  pass("and the Worker SAYS the bad one was unusable, rather than swallowing it",
+       logged.length > 0 && /could not be used/.test(logged.join(" ")),
+       "silently continuing reads as 'no matching signature', which looks like a stranger");
   r = await verifySignature(await signedRequest(SINGAPORE), BODY, env(",, ,"));
   pass("a list of nothing is refused, not waved through", r.ok === false, r.reason);
 

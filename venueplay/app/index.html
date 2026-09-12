@@ -702,8 +702,13 @@
               || msg.indexOf("invalid format")>=0
               || msg.indexOf("unable to validate phone")>=0;
     if(ours || !theirs){
+      /* THE SUPPORT ADDRESS, NEVER A PERSON'S MOBILE. I put Dean's own number here on
+         12 Sep 2026 while fixing the wording, which puts his personal phone on a sign-in
+         screen at every venue, for any host, at any hour. Dean: "WTF are we telling people
+         to call me for?" Quite. That was not mine to decide and it is not what a support
+         contact is for. */
       $("mobileErr").textContent="That one is on us, not your number. The text did not go out. "+
-        "Try again in a moment, or call Dean on 0497 605 423 and we will get you in.";
+        "Try again in a moment, or email hello@venueplay.com.au and we will get you in.";
     } else {
       $("mobileErr").textContent="That number did not look right. Check it and try again.";
     }

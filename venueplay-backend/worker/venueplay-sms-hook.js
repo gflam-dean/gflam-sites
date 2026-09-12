@@ -68,6 +68,11 @@
  * Notes: plain ES module, Australian English, Web Crypto only for HMAC.
  */
 
+/* The build stamp every other Worker carries. Without it deploy-worker.py refuses to ship
+   this file, which is why the SMS hook had been pasted by hand and nothing could say which
+   version was running. */
+const BUILD = '12 Sep 2026, 13:35 · ebf17e10';   // tools/stamp-workers.py, do not edit by hand
+
 const FIVE_MINUTES_SECONDS = 60 * 5;
 
 export default {
@@ -286,9 +291,21 @@ async function verifySignature(request, rawBody, env) {
   /* A secret is itself base64 and base64 never contains a comma, so splitting on one is
      unambiguous. Blanks are dropped so a trailing comma cannot become an empty secret that
      throws on import and takes the good one down with it. */
+  /* TAKE THE SECRET IN WHATEVER SHAPE SUPABASE SHOWED IT.
+
+     Supabase displays the hook secret as "v1,whsec_<base64>" and this Worker wanted only the
+     <base64> half. The header comment said so; on 12 Sep 2026 Dean pasted the whole displayed
+     value, which is the obvious thing to do with a string a screen hands you. atob() threw on
+     the comma, the outer catch turned it into a 500, Supabase reported "Unexpected status code
+     returned from hook: 500", and the host saw "we could not send a code" with no clue why.
+     A Worker that refuses the exact string its own dashboard gives you is a trap.
+
+     ORDER MATTERS: "v1,whsec_" contains a comma, so the prefix goes BEFORE the list is split,
+     or one secret becomes the two useless halves "v1" and "whsec_<base64>". */
   const secrets = String(secretB64)
+    .replace(/v\d+\s*,\s*whsec_/gi, "whsec_")
     .split(",")
-    .map(function (x) { return x.trim(); })
+    .map(function (x) { return x.trim().replace(/^whsec_/i, ""); })
     .filter(function (x) { return x.length > 0; });
   if (!secrets.length) {
     return { ok: false, reason: "SEND_SMS_HOOK_SECRET is set but empty" };
@@ -303,7 +320,7 @@ async function verifySignature(request, rawBody, env) {
     try {
       const cryptoKey = await crypto.subtle.importKey(
         "raw",
-        base64ToBytes(secrets[s]),
+        base64ToBytes(normaliseB64(secrets[s])),
         { name: "HMAC", hash: "SHA-256" },
         false,
         ["sign"]
@@ -315,8 +332,15 @@ async function verifySignature(request, rawBody, env) {
       );
       expectedSignature = bytesToBase64(new Uint8Array(signatureBuffer));
     } catch (e) {
-      // One malformed secret must not stop the others being tried. A rollback list is
-      // typed by hand under pressure, which is exactly when a character goes missing.
+      /* One malformed secret must not stop the others being tried: a rollback list is typed
+         by hand under pressure, which is exactly when a character goes missing.
+
+         BUT IT MUST SAY SO. Silently continuing turned a ReferenceError into "no matching
+         signature", which is indistinguishable from a stranger knocking. It cost a round of
+         debugging on 12 Sep 2026 and in production it would have looked like a wrong secret
+         when the real fault was in this file. */
+      console.error("SMS hook: secret " + (s + 1) + " of " + secrets.length +
+                    " could not be used: " + ((e && e.message) || e));
       continue;
     }
     for (let i = 0; i < provided.length; i++) {
@@ -354,6 +378,16 @@ function constantTimeEqual(a, b) {
 }
 
 /** Decode a base64 string into a Uint8Array. */
+/* Base64 that atob() will actually accept. Supabase's secret is standard base64, but a value
+   that has been through a URL or a copy-paste can arrive base64url (- and _ for + and /) or
+   with its padding trimmed. Rejecting those throws, and a throw here reads to the host as "we
+   could not send a code" with no clue why: exactly what happened on 12 Sep 2026. */
+function normaliseB64(x) {
+  var out = String(x).replace(/-/g, "+").replace(/_/g, "/").replace(/\s+/g, "");
+  while (out.length % 4 !== 0) { out += "="; }
+  return out;
+}
+
 function base64ToBytes(b64) {
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);

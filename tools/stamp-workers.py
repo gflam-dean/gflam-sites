@@ -28,6 +28,10 @@ WORKERS = [
     'venueplay-backend/worker/venueplay-game.js',
     'venueplay-backend/worker/venueplay-api-FULL.js',
     'partyplay-backend/worker/SOURCE-do-not-paste-partyplay-api.js',
+    # The Send SMS hook. It delivers every host's sign-in code, so "which build is running"
+    # is a question worth being able to answer about it. Added 12 Sep 2026, after it turned
+    # out to be the last unproved leg of the Sydney move.
+    'venueplay-backend/worker/venueplay-sms-hook.js',
 ]
 LINE = re.compile(r"^const BUILD = '[^']*';.*$", re.M)
 # For hashing: exactly the stamp line and its own newline. NOT the blank lines

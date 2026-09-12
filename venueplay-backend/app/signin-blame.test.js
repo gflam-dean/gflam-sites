@@ -63,7 +63,13 @@ var REAL = { status: 422, code: "sms_send_failed",
 var t = say(REAL);
 pass("the real Sydney failure is owned, not blamed on the host", blamesUs(t) && !blamesThem(t), t);
 pass("and it does not tell them to check a number that was fine", !/check the number/i.test(t));
-pass("it gives them a way to reach a person", /0497 605 423|hello@venueplay/.test(t), t);
+pass("it gives them a way to reach us", /hello@venueplay\.com\.au/.test(t), t);
+/* AND THAT WAY IS THE SUPPORT ADDRESS, NOT SOMEBODY'S MOBILE. This screen is in front of
+   every host at every venue, at any hour. A personal number on it is a phone call at 9pm on
+   a Saturday from somebody whose thumb slipped. It got there once, on 12 Sep 2026, because I
+   put it there while fixing the wording. */
+pass("and it is not a personal phone number",
+     !/\b0[45]\d{2}\s?\d{3}\s?\d{3}\b/.test(t) && !/\bDean\b/.test(t), t);
 
 /* The same failure with the code field missing, which is how an older client surfaces it. */
 pass("owned even when only the message survives",
