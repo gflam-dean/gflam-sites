@@ -211,6 +211,12 @@
     <button data-pane="team">Team</button>
     <button data-pane="flagged">Flagged</button>
     <button data-pane="audit">Audit</button>
+    <!-- NOTHING IS EVER TRULY HIDDEN. One switch brings the test venues back on every screen
+         at once, so "where did that venue go" is always one click, never a support question. -->
+    <label id="showTestWrap" style="margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="showTest" style="accent-color:var(--pink);width:15px;height:15px;cursor:pointer">
+      Show test venues
+    </label>
   </div>
 
   <!-- ============ VENUES ============ -->
@@ -224,6 +230,7 @@
           <option value="independent">Independent</option>
           <option value="live">Live now</option>
           <option value="cancelling">Cancelling</option>
+          <option value="test">Test venues</option>
           <option value="suspended">Suspended</option>
           <option value="archived">Archived</option>
         </select>
@@ -599,6 +606,7 @@
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
           admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null, hideHp:{},
+          testFlag:{}, showTest:false,
           cancelling:{}, cancelAudit:null,
           /* OPENS ON THE ONES THAT NEED DOING. Dean, 12 Sep 2026: "can we have that default
              filter to say not contacted yet when you open that page?" A retention screen is a
@@ -660,7 +668,11 @@
          a filter written against v.cancel_at_period_end would have read undefined on every
          venue and quietly matched nothing, for ever. A filter that cannot match is the same
          fault as a check that cannot fail. */
-      c.from("vp_venues").select("id,cancel_at_period_end")
+      c.from("vp_venues").select("id,cancel_at_period_end"),
+      // Which venues are ours to break. Its own query so the 250-row audit window cannot hide one.
+      c.from("vp_admin_audit").select("action,target,created_at")
+       .in("action",["venue_marked_test","venue_unmarked_test"])
+       .order("created_at",{ascending:false}).limit(500)
     ]).then(function(settled){
       var r = settled.map(function(x){ return x.status==="fulfilled" ? x.value : null; });
       var venuesFailed = settled[0].status !== "fulfilled";
@@ -671,6 +683,7 @@
       S.venues=(r[0]||[]).slice().sort(function(a,b){ return String(a.name||"").localeCompare(String(b.name||"")); });
       S.hideHp={}; ((r[9] && r[9].data) || []).forEach(function(v){ S.hideHp[v.id]=!!v.hide_from_trusted; });   // homepage-marquee visibility (migration 54)
       S.cancelling={}; ((r[11] && r[11].data) || []).forEach(function(v){ S.cancelling[v.id]=!!v.cancel_at_period_end; });
+      loadTestFlags((r[12] && r[12].data) || []);
       S.screenSeen={}; S.screenVer={};
       ((r[10] && r[10].data) || []).forEach(function(v){
         S.screenSeen[v.id]=v.screen_seen_at||null;                 // heartbeat (migration 64)
@@ -729,7 +742,8 @@
   /* ================= STATS ================= */
   function renderStats(){
     // Archived venues are not customers, so they are not in any headline number.
-    var active=S.venues.filter(function(v){ return !isArchived(v); });
+    // A test venue is not a customer and was inflating every card at the top of this page.
+    var active=S.venues.filter(function(v){ return !isArchived(v) && !hideAsTest(v); });
     var grouped=active.filter(function(v){ return !!v.group_id; }).length;
     var indep=active.length-grouped;
     var susp=active.filter(function(v){ return v.status==="suspended"; }).length;
@@ -765,7 +779,8 @@
   function venueById(id){ for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i]; } return null; }
   function renderLive(){
     var b=$("liveRows"); if(!b) return; b.innerHTML="";
-    var sessions=(S.liveSessions||[]).slice();
+    // A test night of our own on the live list sends somebody looking at a game nobody is playing.
+    var sessions=(S.liveSessions||[]).filter(function(x){ return !hideAsTest(venueById(x.venue_id)); });
     sessions.sort(function(a,b){ return String(b.started_at||b.opened_at||"").localeCompare(String(a.started_at||a.opened_at||"")); });
     if($("liveCount")) $("liveCount").textContent = sessions.length ? ("· "+sessions.length) : "";
     /* Say what the stale ones are rather than quietly counting them as live. These are sessions
@@ -858,7 +873,10 @@
      send you to a pane. Now anything can, and the tab highlights correctly when it does. */
   function goPane(pane){
     var nav=$("hqNav");
-    Array.prototype.forEach.call(nav.children, function(x){ x.classList.toggle("on", x.getAttribute("data-pane")===pane); });
+    Array.prototype.forEach.call(nav.children, function(x){
+      if(!x.getAttribute("data-pane")) return;               // the Show-test label is not a tab
+      x.classList.toggle("on", x.getAttribute("data-pane")===pane);
+    });
     PANES.forEach(function(p){ show("pane"+p.charAt(0).toUpperCase()+p.slice(1), p===pane); });
     if(pane==="quiet") loadQuiet();
     if(pane==="cancelled") loadCancelled();
@@ -871,7 +889,17 @@
   $("liveRefresh").addEventListener("click", loadLiveOnly);
   $("hqNav").addEventListener("click", function(e){
     var b=e.target.closest("button"); if(!b) return;
-    goPane(b.getAttribute("data-pane"));
+    var pane=b.getAttribute("data-pane"); if(!pane) return;   // the Show-test label lives here too
+    goPane(pane);
+  });
+  /* One switch, every screen. Repainting only the visible pane leaves the others holding a
+     count taken under the old setting, which is how two numbers on one page disagree. */
+  $("showTest").addEventListener("change", function(){
+    S.showTest = this.checked;
+    renderStats(); renderVenues(); renderBilling(); renderUsage(); renderLive();
+    S.cancelAudit=null;
+    if(!document.getElementById("paneCancelled").classList.contains("hidden")) loadCancelled(true);
+    if(!document.getElementById("paneQuiet").classList.contains("hidden")) loadQuiet();
   });
 
 
@@ -880,29 +908,84 @@
   // check-in, a venue gone three months is a different conversation, and the winnable ones are the
   // ones at the top. Served by the Worker because it has to read vp_game_reports, which is
   // service-role only and stays that way.
+  /* WHO HAS BEEN RUNG. Its own actions rather than reusing the cancellation ones: ringing a
+     venue that has gone quiet and ringing one that has cancelled are different conversations
+     with different outcomes, and marking one should never tick the other off. */
+  function quietContacted(id){
+    var a=S.quietContact && S.quietContact[id];
+    return (a && a.action==="venue_quiet_contacted") ? a : null;
+  }
+  function loadQuietContacts(){
+    return VP.getClient().from("vp_admin_audit").select("action,target,created_at,actor_label")
+      .in("action",["venue_quiet_contacted","venue_quiet_uncontacted"])
+      .order("created_at",{ascending:false}).limit(1000)
+      .then(function(r){
+        S.quietContact={};
+        var seen={};
+        ((r && r.data) || []).forEach(function(a){        // newest first, newest wins
+          var id=cxVenueId(a.target); if(!id || seen[id]) return;
+          seen[id]=true; S.quietContact[id]=a;
+        });
+      })
+      .catch(function(){ S.quietContact=S.quietContact||{}; });
+  }
   function loadQuiet(){
     var days=parseInt($("quietDays").value,10)||7;
     var tb=$("quietRows");
     tb.innerHTML='<tr><td colspan="5" class="empty">Looking…</td></tr>';
-    workerPost("/admin/quiet-venues", { days:days }).then(function(res){
+    // Both, before rendering: sorting by "contacted" with the contacts still loading would put
+    // the list in one order and then silently reorder it under the cursor.
+    Promise.all([ workerPost("/admin/quiet-venues", { days:days }), loadQuietContacts() ])
+      .then(function(both){ var res=both[0];
       if(res.error){ tb.innerHTML='<tr><td colspan="5" class="empty">'+esc(res.error)+'</td></tr>'; return; }
-      var list=res.venues||[];
-      $("quietCount").textContent = list.length ? (list.length+" to chase") : "none, all busy";
+      /* WHO IS ACTUALLY WORTH A PHONE CALL.
+         This listed every venue the Worker returned, which included the archived ones. An
+         archived venue has been quiet for ever by definition, is not a customer, and sat at the
+         top of the chase list for that exact reason. Dean, 12 Sep 2026: "in the quiet screen we
+         need to hide of archived and label those venues cancelled if they have cancelled".
+         Test venues go too, for the same reason they go everywhere else. */
+      var list=(res.venues||[]).filter(function(v){
+        if(v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling") return false;
+        var mine=venueById(v.id);
+        return !(mine && hideAsTest(mine));
+      });
+      /* NOT CONTACTED FIRST. Same reason the Cancelled screen opens on them: this is a to-do
+         list. Contacted ones stay on it, at the bottom, because "we rang them three weeks ago
+         and nothing changed" is the next conversation, not a finished one. */
+      list.sort(function(a,b){
+        var ca=!!quietContacted(a.id), cb=!!quietContacted(b.id);
+        if(ca!==cb) return ca?1:-1;
+        return (b.days_quiet||0)-(a.days_quiet||0);
+      });
+      var todo=list.filter(function(v){ return !quietContacted(v.id); }).length;
+      $("quietCount").textContent = list.length
+        ? (todo ? (todo+" to chase"+(todo<list.length?" of "+list.length:"")) : "all "+list.length+" contacted")
+        : "none, all busy";
       if(!list.length){ tb.innerHTML='<tr><td colspan="5" class="empty">Nobody has been quiet that long. Good sign.</td></tr>'; return; }
       var html="";
       list.forEach(function(v){
         var wks=Math.floor(v.days_quiet/7);
         var quiet = v.days_quiet<14 ? (v.days_quiet+" days") : (wks+" weeks");
-        var state = ((v.suspended_reason==="archived"||v.suspended_reason==="archived_cancelling")) ? '<span class="badge suspend">Archived</span>'
+        var mine=venueById(v.id);
+        /* A VENUE THAT HAS CANCELLED IS NOT MERELY QUIET, and calling it "Active" on a
+           retention list sends somebody to win back a venue that already told us they were
+           leaving. The cancel flag is read from the map HQ side-loads, because the Worker's
+           quiet query does not select that column. */
+        var state = (mine && isCancelling(mine)) ? '<span class="badge suspend">Cancelled</span>'
                   : (v.status==="suspended") ? '<span class="badge suspend">'+(v.suspended_reason==="nonpayment"?"Unpaid":v.suspended_reason==="ended"?"Ended":"Paused")+'</span>'
                   : '<span class="badge">Active</span>';
-        html += '<tr><td><b>'+esc(v.name||"Venue")+'</b></td>'
+        var con=quietContacted(v.id);
+        var conCell = con
+          ? '<span class="badge live">Contacted '+esc(cxWhen(con.created_at))+'</span>'
+            + ' <button class="mini" data-quncontact="'+esc(v.id)+'">Undo</button>'
+          : '<button class="mini" data-qcontact="'+esc(v.id)+'">Contacted</button>';
+        html += '<tr'+(con?' style="opacity:.62"':'')+'><td><b>'+esc(v.name||"Venue")+'</b></td>'
               + '<td class="mono">'+quiet+'</td>'
               + '<td class="mono">'+(v.never_played ? '<span style="color:var(--roll)">never played</span>'
                                     : v.long_gone ? '<span style="color:var(--roll)">over a year</span>'
                                     : esc(v.last_game||""))+'</td>'
               + '<td>'+state+'</td>'
-              + '<td><button class="mini" data-history="'+esc(v.id)+'">History</button> '
+              + '<td>'+conCell+' <button class="mini" data-history="'+esc(v.id)+'">History</button> '
               + '<button class="mini" data-viewas="'+esc(v.id)+'">View as</button></td>'
               + '</tr><tr class="histrow" id="hist-'+esc(v.id)+'" hidden><td colspan="5"></td></tr>';
       });
@@ -918,7 +1001,19 @@
       var va=e.target.closest("button[data-viewas]");
       if(va){ viewAs(va.getAttribute("data-viewas"), va); return; }
       var h=e.target.closest("button[data-history]");
-      if(h) toggleHistory(h.getAttribute("data-history"));
+      if(h){ toggleHistory(h.getAttribute("data-history")); return; }
+      var qc=e.target.closest("button[data-qcontact]"), qu=e.target.closest("button[data-quncontact]");
+      var b=qc||qu;
+      if(!b) return;
+      var id=(qc||qu).getAttribute(qc?"data-qcontact":"data-quncontact");
+      var v=venueById(id);
+      b.disabled=true; b.textContent="Saving\u2026";
+      workerPost("/admin/audit", { action: qc?"venue_quiet_contacted":"venue_quiet_uncontacted",
+                                   target:"venue:"+id, detail:{ name:(v&&v.name)||null } })
+        .then(function(res){
+          if(res && res.error){ b.disabled=false; b.textContent=qc?"Contacted":"Undo"; alert("That did not save: "+res.error); return; }
+          loadQuiet();
+        });
     });
   })();
 
@@ -1116,6 +1211,7 @@
        this screen disagree with the Venues list. They appear with the reason unknown, which is
        the truth. */
     S.venues.forEach(function(v){
+      if(hideAsTest(v)) return;
       if((isArchived(v) || isCancelling(v)) && !by[v.id]){
         by[v.id]={ venue_id:v.id, scheduled:null, undone:null, archived:null, alert:null,
                    contactState:null, notes:[] };
@@ -1125,7 +1221,7 @@
     Object.keys(by).forEach(function(id){
       var st=by[id], v=venueById(id);
       // A venue that undid its cancellation and is not archived has not left. Off the list.
-      if(!v) return;
+      if(!v || hideAsTest(v)) return;
       var gone=isArchived(v), leaving=isCancelling(v) && !gone;
       if(!gone && !leaving) return;
       st.v=v; st.gone=gone; st.leaving=leaving;
@@ -1255,6 +1351,31 @@
   function isArchived(v){ return v.suspended_reason==="archived" || v.suspended_reason==="archived_cancelling"; }
   // Reads the side-loaded map, never v.cancel_at_period_end: that column is not in listVenues.
   function isCancelling(v){ return !!(S.cancelling && S.cancelling[v.id]); }
+
+  /* TEST VENUES. Dean, 12 Sep 2026: "our test venues can hide from all the pages maybe just
+     have a test dropdown on the venues page". Eight of the twenty-two venues exist so that
+     somebody could try a decline or a plan uplift without touching a customer, and they sit in
+     every count, every chase list and every departure screen making all of it read wrong.
+
+     NO MIGRATION. It is a vp_admin_audit row like Contacted, through /admin/audit, which any
+     admin can already call. Newest of flag/unflag wins, so it is reversible and it keeps the
+     history of who called what a test.
+
+     NOTHING IS EVER INVISIBLE. The header toggle brings them back on every screen at once, and
+     the Venues filter has its own "Test venues" option. A venue that cannot be found is worse
+     than one that is in the way: this is a default, not a delete. */
+  function isTest(v){ return !!(S.testFlag && S.testFlag[v && v.id]); }
+  // The one question every list asks: should this venue be on screen at all?
+  function hideAsTest(v){ return !S.showTest && isTest(v); }
+  function loadTestFlags(rows){
+    S.testFlag={};
+    var seen={};
+    (rows||[]).forEach(function(a){          // newest first
+      var id=cxVenueId(a.target); if(!id || seen[id]) return;
+      seen[id]=true;
+      if(a.action==="venue_marked_test") S.testFlag[id]=true;
+    });
+  }
   function venueById(id){
     for(var i=0;i<S.venues.length;i++){ if(S.venues[i].id===id) return S.venues[i]; }
     return null;
@@ -1274,6 +1395,9 @@
        so until now the only way to find one was to remember its name. Dean, 12 Sep 2026:
        "there is no cancelled filter in HQ so we cant see them all on one screen". */
     if(S.vFilter==="cancelling" && !(isCancelling(v) && !isArchived(v))) return false;
+    // "Test venues" is the one filter that goes looking for them; everything else hides them.
+    if(S.vFilter==="test") return isTest(v);
+    if(hideAsTest(v)) return false;
     if(S.vSearch){
       var q=S.vSearch.toLowerCase();
       if(String(v.name||"").toLowerCase().indexOf(q)<0 && String(v.slug||"").toLowerCase().indexOf(q)<0) return false;
@@ -1283,12 +1407,17 @@
   function renderVenues(){
     var b=$("venueRows"); b.innerHTML="";
     var list=S.venues.filter(venuePasses);
-    var pool=S.venues.filter(function(v){ return S.vFilter==="archived" ? isArchived(v) : !isArchived(v); });
+    var pool=S.venues.filter(function(v){
+      if(S.vFilter==="test") return isTest(v);
+      if(hideAsTest(v)) return false;
+      return S.vFilter==="archived" ? isArchived(v) : !isArchived(v);
+    });
     /* SAY WHICH FILTER IS ON. Only "archived" ever changed this heading, so choosing
        Cancelling gave "All venues (3 of 17)", which reads as a bug in the count rather than
        a filter doing its job. */
     var FLBL={ archived:"Archived venues", cancelling:"Cancelling", grouped:"Grouped venues",
-               independent:"Independent venues", live:"Live now", suspended:"Suspended venues" };
+               independent:"Independent venues", live:"Live now", suspended:"Suspended venues",
+               test:"Test venues" };
     var lbl=FLBL[S.vFilter] || "All venues";
     $("venuesLbl").textContent=lbl+" ("+list.length+(list.length===pool.length?"":" of "+pool.length)+")";
     if(!list.length){ b.innerHTML='<tr><td colspan="5"><div class="empty" style="border:none;background:none">'+(S.venues.length?"No venues match that filter.":"No venues yet. Use Add venue to onboard the first one.")+'</div></td></tr>'; return; }
@@ -1330,10 +1459,11 @@
       var billBadge=v.group_id ? '<span class="badge grouped">'+esc(groupName(v.group_id))+'</span>'
         : (inAccount ? '<span class="badge grouped">Account &middot; '+acctCount[v.founding_id]+' venues</span>'
         : '<span class="badge indep">Independent</span>');
+      var testBadge = isTest(v) ? ' <span class="badge gold">Test</span>' : '';
       var statusCell = (v.suspended_reason==='archived') ? '<span class="badge suspend">Archived</span>'
                      : suspended ? '<span class="badge suspend">'+(v.suspended_reason==='nonpayment'?'Unpaid':v.suspended_reason==='ended'?'Ended':'Paused')+'</span>'
                        : (S.live[v.id] ? '<span class="badge live">Live now</span>' : '<span class="badge idle">Active</span>');
-      statusCell += " " + screenBadge(v);
+      statusCell += testBadge + " " + screenBadge(v);
       /* TWO BUTTONS PER ROW, NOT NINE.
          At 400 venues a row of nine controls is 3,600 buttons on one page: unusable,
          and worse than unusable for the dangerous ones, which sat one careless click
@@ -1355,6 +1485,8 @@
            delete the venue and build it again. */
         (canBilling() ? '<button class="mini" data-resend="'+esc(v.id)+'">Resend welcome</button>' : '')+
         '<button class="mini" data-hidehp="'+esc(v.id)+'">'+(S.hideHp[v.id]?"Show on homepage":"Hide from homepage")+'</button>'+
+        // Marks it ours. Off every count and chase list, still reachable under Test venues.
+        '<button class="mini" data-testflag="'+esc(v.id)+'">'+(isTest(v)?"Not a test venue":"Mark as a test venue")+'</button>'+
         '<a class="mini" href="settings.html?venue='+encodeURIComponent(v.id)+'">Settings</a>';
       if(canBilling()){
         /* SEPARATED, AND TYPED, NOT CLICKED. These two stop a venue trading. They sat
@@ -1542,6 +1674,25 @@
     if(ta){ adsBackOn(ta.getAttribute("data-tvads"), ta); return; }
     var hh=e.target.closest("button[data-hidehp]");
     if(hh){ toggleHideHomepage(hh.getAttribute("data-hidehp"), hh); return; }
+    var tf=e.target.closest("button[data-testflag]");
+    if(tf){
+      var tid=tf.getAttribute("data-testflag"), tv=venueById(tid), was=isTest(tv);
+      tf.disabled=true; tf.textContent="Saving\u2026";
+      workerPost("/admin/audit", { action: was?"venue_unmarked_test":"venue_marked_test",
+                                   target:"venue:"+tid, detail:{ name:(tv&&tv.name)||null } })
+        .then(function(res){
+          tf.disabled=false;
+          if(res && res.error){ tf.textContent = was?"Not a test venue":"Mark as a test venue"; alert("That did not save: "+res.error); return; }
+          S.testFlag[tid] = !was;
+          /* Repaint everything it touches. It changes the headline numbers, the chase list and
+             the departures screen, and leaving those stale is how two screens end up disagreeing. */
+          renderStats(); renderVenues(); renderBilling(); renderUsage();
+          S.cancelAudit=null;
+          if(!document.getElementById("paneCancelled").classList.contains("hidden")) loadCancelled(true);
+          if(!document.getElementById("paneQuiet").classList.contains("hidden")) loadQuiet();
+        });
+      return;
+    }
     var pcb=e.target.closest("button[data-pcsave]");
     if(pcb){
       var vid=pcb.getAttribute("data-pcsave");
@@ -1850,7 +2001,9 @@
      screens quoting different figures for the same month is the fault this repo keeps having;
      both read the meter. S.usage is kept only for the Xero export, which is a different
      question (what was invoiced) and is labelled as such. */
-  function usageForMonth(){ return (S.meter||[]).filter(function(u){ return u.period_month===S.usageMonth; }); }
+  function usageForMonth(){ return (S.meter||[]).filter(function(u){
+    var v=venueById(u.venue_id);
+    return u.period_month===S.usageMonth && !(v && hideAsTest(v)); }); }
   function groupRate(v){ if(v.group_id && S.groupById[v.group_id] && S.groupById[v.group_id].negotiated_rate_cents!=null) return S.groupById[v.group_id].negotiated_rate_cents/100; return null; }
   function usageByVenue(id){ var rows=usageForMonth(); for(var i=0;i<rows.length;i++){ if(rows[i].venue_id===id) return rows[i]; } return null; }
 
@@ -2024,11 +2177,12 @@
     var rows = S.usageMonth
       ? meterForMonth().filter(function(u){
           var v = venueById(u.venue_id);
+          if (v && hideAsTest(v)) return false;
           if (!v || !isArchived(v)) return true;
           var billable = (u.peak_billable_players || 0) + (u.overage_players || 0);
           return billable > 0;                    // a real invoice for the month they left
         })
-      : S.venues.filter(function(v){ return !isArchived(v); }).map(function(v){
+      : S.venues.filter(function(v){ return !isArchived(v) && !hideAsTest(v); }).map(function(v){
           return { venue_id:v.id, plan_cap:(v.max_players!=null?v.max_players:null),
                    overage_players:0, peak_billable_players:null, _noUsageYet:true };
         });
