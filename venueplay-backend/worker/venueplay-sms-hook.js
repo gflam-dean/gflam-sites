@@ -230,6 +230,19 @@ export default {
  * unless ALLOW_UNSIGNED is explicitly "true". Production MUST set the secret.
  */
 async function verifySignature(request, rawBody, env) {
+  /* MORE THAN ONE SECRET, BECAUSE A ROLLBACK NEEDS BOTH TO WORK.
+
+     This held exactly one secret. On 12 Sep 2026 VenuePlay moved from the Singapore project
+     to Sydney, and the new project issues its OWN hook secret: the moment this Worker was
+     pointed at Sydney's, Singapore's hook stopped verifying. That is fine while the move
+     holds, and it quietly destroys the rollback. Going back to Singapore would have left
+     every host unable to receive a sign-in text on EITHER project, which is worse than the
+     fault you were rolling back from.
+
+     So the secret is a comma-separated list and any one of them may match. Put the new
+     project's first and keep the old one until the move is settled, then drop it. Each is
+     still the base64 half, after "v1,whsec_", exactly as before; a single secret with no
+     comma behaves precisely as it always did. */
   const secretB64 = env.SEND_SMS_HOOK_SECRET;
 
   if (!secretB64) {
@@ -267,37 +280,56 @@ async function verifySignature(request, rawBody, env) {
     return { ok: false, reason: "webhook-timestamp skew too large" };
   }
 
-  // Compute the expected signature.
+  // Compute the expected signature, once per configured secret.
   const signedContent = webhookId + "." + webhookTimestamp + "." + rawBody;
-  const keyBytes = base64ToBytes(secretB64);
 
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    keyBytes,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    cryptoKey,
-    new TextEncoder().encode(signedContent)
-  );
-  const expectedSignature = bytesToBase64(new Uint8Array(signatureBuffer));
+  /* A secret is itself base64 and base64 never contains a comma, so splitting on one is
+     unambiguous. Blanks are dropped so a trailing comma cannot become an empty secret that
+     throws on import and takes the good one down with it. */
+  const secrets = String(secretB64)
+    .split(",")
+    .map(function (x) { return x.trim(); })
+    .filter(function (x) { return x.length > 0; });
+  if (!secrets.length) {
+    return { ok: false, reason: "SEND_SMS_HOOK_SECRET is set but empty" };
+  }
 
   // The header may carry several space-separated signatures, each prefixed
-  // with a version like "v1,". Compare against each (constant-time).
+  // with a version like "v1,".
   const provided = webhookSignature.split(" ");
-  for (let i = 0; i < provided.length; i++) {
-    const entry = provided[i];
-    if (!entry) {
+
+  for (let s = 0; s < secrets.length; s++) {
+    let expectedSignature;
+    try {
+      const cryptoKey = await crypto.subtle.importKey(
+        "raw",
+        base64ToBytes(secrets[s]),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+      const signatureBuffer = await crypto.subtle.sign(
+        "HMAC",
+        cryptoKey,
+        new TextEncoder().encode(signedContent)
+      );
+      expectedSignature = bytesToBase64(new Uint8Array(signatureBuffer));
+    } catch (e) {
+      // One malformed secret must not stop the others being tried. A rollback list is
+      // typed by hand under pressure, which is exactly when a character goes missing.
       continue;
     }
-    // Strip the "v1," (or similar "vN,") version prefix if present.
-    const commaIndex = entry.indexOf(",");
-    const sigValue = commaIndex >= 0 ? entry.slice(commaIndex + 1) : entry;
-    if (constantTimeEqual(sigValue, expectedSignature)) {
-      return { ok: true };
+    for (let i = 0; i < provided.length; i++) {
+      const entry = provided[i];
+      if (!entry) {
+        continue;
+      }
+      // Strip the "v1," (or similar "vN,") version prefix if present.
+      const commaIndex = entry.indexOf(",");
+      const sigValue = commaIndex >= 0 ? entry.slice(commaIndex + 1) : entry;
+      if (constantTimeEqual(sigValue, expectedSignature)) {
+        return { ok: true };
+      }
     }
   }
 
