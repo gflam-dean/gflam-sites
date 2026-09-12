@@ -56,6 +56,75 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 12 Sep 2026: the Sydney move, the demo, and the day Dean asked how many
+    # ---- times my own checks had been wrong. Answer at the time: ten.
+    #
+    # Every mutation below was run by hand as the check was written, in a scratch copy,
+    # and watched go red. That proved nothing durable: the runs were one-offs nobody
+    # could repeat and they did not run the next day. prove-checks listed all six suites
+    # as NOT YET PROVEN while I was describing them as proven, which is the same shape
+    # as a green check that cannot fail. Written down so they run every time.
+
+    ('metering.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "    const raw = countPlayersWhoPlayed(roster, played);",
+     "    const raw = roster.length;",
+     'billing the phones that opened the page rather than the people who played, which once invoiced a venue for a room bigger than the host was looking at'),
+
+    ('metering.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "    const peak = cap ? Math.min(raw, overageCeiling(s, cap)) : raw;",
+     "    const peak = raw;",
+     'quoting a venue more than the host approved, so the billing screen and the invoice disagree'),
+
+    ('demo-hermetic.test.js',
+     'venueplay/tv.html',
+     '    if(VP_DEMO) return "";                       // hermetic: never inherit a real venue',
+     '    ',
+     'the sales demo shows whichever pub this browser last opened, with that venue\'s real join code on the wall'),
+
+    ('demo-hermetic.test.js',
+     'venueplay/app/vp-celebrate.js',
+     "    if (isDemoPage()) return;      // a demonstration is watched, not heard",
+     "    ",
+     'a pub PA fanfare out of a visitor\'s laptop, unasked, once a minute for as long as the tab is open'),
+
+    ('hq-contact-rule.test.js',
+     'venueplay/app/hq.html',
+     "    if (cancelled) acts.push(on ? \"venue_cancel_contacted\" : \"venue_cancel_uncontacted\");",
+     "    ",
+     'ringing a venue that has cancelled ticks only one of the two lists, so whichever screen you did not have open is wrong'),
+
+    ('hq-contact-rule.test.js',
+     'venueplay/app/hq.html',
+     "      var statusCell = stateBadgeFor(v);",
+     "      var statusCell = '<span class=\"badge idle\">Active</span>';",
+     'a venue that has told us it is leaving reads as Active on the list you scan to see who your customers are'),
+
+    ('one-answer.test.js',
+     'venueplay-backend/worker/venueplay-game.js',
+     "  let s = String(slug || '').toLowerCase().replace(/[^a-z0-9]/g, ''), h = 2166136261 >>> 0;",
+     "  let s = String(slug || '').toLowerCase().replace(/[^a-z0-9]/g, ''), h = 2166136262 >>> 0;",
+     'the game Worker hashes a venue slug differently from the seven pages, so a phone and a TV join different channels and the room sees nothing'),
+
+    ('signin-blame.test.js',
+     'venueplay/app/index.html',
+     "    if(ours || !theirs){",
+     "    if(false){",
+     'a host with a perfectly good number is told to check their number while our own SMS provider is down'),
+
+    ('sms-hook-secrets.test.js',
+     'venueplay-backend/worker/venueplay-sms-hook.js',
+     '    .replace(/v\\d+\\s*,\\s*whsec_/gi, "whsec_")',
+     '    ',
+     'the hook refuses the exact secret string Supabase displays, so no host can be sent a sign-in code'),
+
+    ('sms-hook-secrets.test.js',
+     'venueplay-backend/worker/venueplay-sms-hook.js',
+     "      if (constantTimeEqual(sigValue, expectedSignature)) {",
+     "      if (true) {",
+     'anyone who learns the Worker URL can send SMS on our Mobile Message account'),
+
     # ---- 10 Sep: money, the nightly sweep, and the road a game message takes ----
     # THE LABEL IS THE SUITE'S FILE NAME, not the check inside it. The gate prints a
     # failing suite as "FAIL stripe-idempotency.test.js ...", and gate() looks for the
