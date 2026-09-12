@@ -186,9 +186,33 @@ function runAt3(rows, tzmap) {
 
 /* Build one venue that IS at 3am and one that is not, whatever the real time is. */
 function zoneWhereHourIs(target) {
-  var zones = ["Australia/Perth","Australia/Brisbane","Australia/Adelaide","Australia/Sydney",
-               "Pacific/Auckland","Asia/Tokyo","Asia/Singapore","Europe/London","America/New_York",
-               "America/Los_Angeles","Asia/Kolkata","Europe/Berlin","Asia/Dubai","Pacific/Honolulu"];
+  /* A ZONE AT 3AM MUST ALWAYS EXIST, so these are FIXED-OFFSET zones.
+
+     The list here used to be fourteen real places, and for several hours of every
+     day none of them was at 3am: the block below was skipped and three checks on
+     the 3am closing rule did not run. The suite said so out loud rather than
+     passing silently, which is the only reason it was noticed.
+
+     Replacing them with thirty real places did NOT fix it, and that is the useful
+     part. Real zones move with daylight saving, so in September every US and
+     European entry shifts an hour and the coverage moves with them: simulated over
+     a full day, two hours still had no zone. Etc/GMT+N never observes daylight
+     saving, so the twenty four offsets stay put. Verified by simulation at every
+     five minutes across a day and every day across a year: a zone reading 3am
+     always exists.
+
+     Note the sign. Etc/GMT+5 is UTC MINUS five, by the POSIX convention, which is
+     backwards from what anyone expects. It does not matter here, because all this
+     needs is one zone per hour, but it is why the list is not worth reading as
+     geography.
+
+     The rule being protected is not a small one: a session nobody closed keeps
+     billing every player who ever joined it, and 3am is the only thing that
+     closes it. */
+  var zones = ["Etc/GMT+12","Etc/GMT+11","Etc/GMT+10","Etc/GMT+9","Etc/GMT+8","Etc/GMT+7",
+               "Etc/GMT+6","Etc/GMT+5","Etc/GMT+4","Etc/GMT+3","Etc/GMT+2","Etc/GMT+1","UTC",
+               "Etc/GMT-1","Etc/GMT-2","Etc/GMT-3","Etc/GMT-4","Etc/GMT-5","Etc/GMT-6",
+               "Etc/GMT-7","Etc/GMT-8","Etc/GMT-9","Etc/GMT-10","Etc/GMT-11"];
   for (var i = 0; i < zones.length; i++) if (venueLocalHour(zones[i]) === target) return zones[i];
   return null;
 }
@@ -196,8 +220,11 @@ var atThree = zoneWhereHourIs(3);
 var notThree = zoneWhereHourIs((venueLocalHour("Australia/Brisbane") + 1) % 24);
 
 if (!atThree) {
-  print("  --   no timezone on the list is at 3am right now, so the picking rule was NOT exercised");
-  print("       (it is exercised on most runs; this is honest rather than a silent pass)");
+  /* The list now covers every UTC offset, so this is unreachable. If it ever fires,
+     something is wrong with the clock or the zone database, and the 3am rule is
+     going untested. That is a FAILURE now, not a note. */
+  bad++;
+  print("  FAIL no timezone is at 3am, so the 3am closing rule was not exercised at all");
 } else {
   var r3 = runAt3([
     { id: "s-three",  venue_id: "v-three",  status: "running", opened_at: hoursAgo(1), ended_at: null },
