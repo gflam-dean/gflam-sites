@@ -302,6 +302,18 @@ function extrasChecks() {
       pass("every placeholder that went into the email is written down (amount, what, reason, outcome, date, sent)", !!rec
         && rec.row.detail.to === "jess@example.com" && rec.row.detail.amount === "$2.00" && rec.row.detail.what === "The Jolly Jess - Extra Player - 11/09/2026"
         && typeof rec.row.detail.reason_line === "string" && rec.row.detail.outcome === "moved to next invoice" && rec.row.detail.next === "1 October 2026" && rec.row.detail.sent === true, JSON.stringify(rec));
+      /* THE SAME SENTENCE, NOT A SECOND ONE. Dean, 12 Sep 2026: "the reason line is also in
+         the email they get too". It is, and that is the point of this check.
+
+         HQ's billing health panel prints detail.reason_line, and the venue's email prints
+         why.line. Today they are the same variable, so when Dean rings a venue he is reading
+         out the exact sentence that landed in their inbox rather than our summary of it.
+         Nothing but this check stops somebody rewording one of them, and a venue being told
+         two different reasons for the same decline is the kind of thing that gets argued
+         about on the phone. */
+      pass("the reason in the email is the SAME sentence we store for HQ to read out",
+           !!rec && !!h && h.indexOf(rec.row.detail.reason_line) >= 0,
+           rec ? rec.row.detail.reason_line : "nothing recorded");
       pass("REAL email, extras moved: names the $2.00 line, says next subscription payment on 1 October 2026, no button", !!h && /\$2\.00 for The Jolly Jess - Extra Player - 11\/09\/2026/.test(h) && /next subscription payment on 1 October 2026/.test(h) && !/Pay now/.test(h) && !/pause/.test(h), h ? h.slice(0, 400) : "no email");
       return vpaFirePaymentFailedEmail(envR, extrasInv, { moved: false, why: "over the $30 line" });
     }).then(function () {

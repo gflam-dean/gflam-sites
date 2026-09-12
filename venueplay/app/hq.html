@@ -341,10 +341,10 @@
     </div>
     <div class="filterbar" style="margin-bottom:12px">
       <select id="cxFilter" style="width:auto">
+        <option value="uncontacted" selected>Not contacted yet</option>
         <option value="all">All</option>
         <option value="open">Still inside their paid period</option>
         <option value="gone">Archived</option>
-        <option value="uncontacted">Not contacted yet</option>
       </select>
       <button class="btn ghost sp" id="cxRefresh">Refresh</button>
     </div>
@@ -599,7 +599,12 @@
   var S={ ctx:null, adminRole:null,
           venues:[], groups:[], groupById:{}, discounts:[], usage:[], usageMonth:null,
           admins:[], audit:[], live:{}, liveSessions:[], gameBySession:{}, spots:null, hideHp:{},
-          cancelling:{}, cancelAudit:null, cxFilter:"all",
+          cancelling:{}, cancelAudit:null,
+          /* OPENS ON THE ONES THAT NEED DOING. Dean, 12 Sep 2026: "can we have that default
+             filter to say not contacted yet when you open that page?" A retention screen is a
+             to-do list, and a to-do list that opens on everything you have already done is a
+             list you scroll past. */
+          cxFilter:"uncontacted",
           health:undefined, healthErr:null, healthAsked:false,
           meter:undefined, meterErr:null, meterAsked:false,
           vFilter:"all", vSearch:"", openVenue:null, openBilling:null, openGroup:null,
@@ -1095,12 +1100,15 @@
     (S.cancelAudit||[]).forEach(function(a){
       var id=cxVenueId(a.target); if(!id) return;
       var st=by[id] || (by[id]={ venue_id:id, scheduled:null, undone:null, archived:null,
-                                 alert:null, contacted:null, notes:[] });
+                                 alert:null, contactState:null, notes:[] });
       if(a.action==="venue_cancel_scheduled" && !st.scheduled) st.scheduled=a;
       else if(a.action==="venue_cancel_undone" && !st.undone) st.undone=a;
       else if(a.action==="venue_archived" && !st.archived) st.archived=a;
       else if(a.action==="venue_cancel_alert" && !st.alert) st.alert=a;
-      else if(a.action==="venue_cancel_contacted" && !st.contacted) st.contacted=a;
+      /* NEWEST WINS, and nothing is deleted. Undo writes its own row rather than removing one:
+         /admin/audit only ever inserts, and "we rang them, then decided we had not" is history
+         worth keeping. Rows arrive newest first, so the first of either kind is the answer. */
+      else if((a.action==="venue_cancel_contacted" || a.action==="venue_cancel_uncontacted") && !st.contactState) st.contactState=a;
       else if(a.action==="venue_cancel_note") st.notes.push(a);
     });
     /* AN ARCHIVED VENUE WITH NO AUDIT ROW STILL LEFT. The five venues archived before the
@@ -1110,7 +1118,7 @@
     S.venues.forEach(function(v){
       if((isArchived(v) || isCancelling(v)) && !by[v.id]){
         by[v.id]={ venue_id:v.id, scheduled:null, undone:null, archived:null, alert:null,
-                   contacted:null, notes:[] };
+                   contactState:null, notes:[] };
       }
     });
     var out=[];
@@ -1121,6 +1129,7 @@
       var gone=isArchived(v), leaving=isCancelling(v) && !gone;
       if(!gone && !leaving) return;
       st.v=v; st.gone=gone; st.leaving=leaving;
+      st.contacted = (st.contactState && st.contactState.action==="venue_cancel_contacted") ? st.contactState : null;
       st.when = (st.scheduled && st.scheduled.created_at) || (st.archived && st.archived.created_at) || null;
       out.push(st);
     });
@@ -1140,7 +1149,12 @@
       wrap.innerHTML='<div class="empty">Nobody has cancelled. Long may it last.</div>';
       return;
     }
-    if(!list.length){ wrap.innerHTML='<div class="empty">No cancellation matches that filter ('+all.length+' in total).</div>'; return; }
+    if(!list.length){
+      wrap.innerHTML='<div class="empty">'
+        + (S.cxFilter==="uncontacted"
+           ? 'Everyone who has cancelled has been contacted. '+all.length+' in total, switch to All to see them.'
+           : 'No cancellation matches that filter ('+all.length+' in total).')
+        + '</div>'; return; }
     wrap.innerHTML=list.map(function(st){
       var d=(st.scheduled && st.scheduled.detail) || {};
       var badge = st.gone ? '<span class="badge suspend">Archived</span>'
@@ -1161,9 +1175,14 @@
           + (((st.alert.detail||{}).outcome && st.alert.detail.outcome!=="sent") ? ' <span class="badge suspend">'+esc(st.alert.detail.outcome)+'</span>' : '')
           + '</div>'
         : '<div class="cxk" style="color:var(--faint)">No alert email on file for this one</div>';
+      /* AND A WAY BACK. The first version had no undo, so a mis-tap was permanent and the only
+         fix was somebody with the service key deleting a row. Dean did exactly that within a
+         day: "sorry on the cancelled screen i said wellshot was contacted can you undo that?"
+         Any button that changes a record needs the other button beside it. */
       var contacted = st.contacted
         ? '<span class="badge live">Contacted '+esc(cxWhen(st.contacted.created_at))
           + (st.contacted.actor_label ? ' by '+esc(st.contacted.actor_label) : '') + '</span>'
+          + ' <button class="btn ghost sp" data-cxuncontact="'+esc(st.venue_id)+'">Undo</button>'
         : '<button class="btn ghost sp" data-cxcontact="'+esc(st.venue_id)+'">Mark contacted</button>';
       var notes = st.notes.length
         ? '<div class="cxnotes">'+st.notes.slice().reverse().map(function(n){
@@ -1200,6 +1219,17 @@
       workerPost("/admin/audit", { action:"venue_cancel_contacted", target:"venue:"+id,
                                    detail:{ name:(v&&v.name)||null } }).then(function(res){
         if(res && res.error){ b.disabled=false; b.textContent="Mark contacted"; alert("That did not save: "+res.error); return; }
+        loadCancelled(true);
+      });
+      return;
+    }
+    var uid=b.getAttribute("data-cxuncontact");
+    if(uid){
+      var uv=venueById(uid);
+      b.disabled=true; b.textContent="Saving\u2026";
+      workerPost("/admin/audit", { action:"venue_cancel_uncontacted", target:"venue:"+uid,
+                                   detail:{ name:(uv&&uv.name)||null } }).then(function(res){
+        if(res && res.error){ b.disabled=false; b.textContent="Undo"; alert("That did not save: "+res.error); return; }
         loadCancelled(true);
       });
       return;
