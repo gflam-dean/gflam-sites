@@ -1121,6 +1121,28 @@ MUTATIONS = [
      'the host wording becomes the DEFAULT, so every unauthenticated player route starts '
      "reading out the venue's billing state"),
 
+    # ---- 12 Sep 2026: the four game walls stopped being drawings on the sales page.
+    ('demo-hermetic.test.js',
+     'venueplay/app/musical/screen.html',
+     '  if(!VP_DEMO) ch.subscribe(function(status){',
+     '  ch.subscribe(function(status){',
+     'a wall embedded in the public sales page subscribes to a venue channel, where a real '
+     "game can surface, and answers tv_here, which is what HQ reads to decide a screen is alive"),
+
+    ('demo-hermetic.test.js',
+     'venueplay/app/raffle/screen.html',
+     '    if(VP_DEMO) return "";',
+     '    if(false) return "";',
+     'the sales page frame inherits whatever venue this browser last looked at, so a real '
+     "pub's branding and code appear on a marketing page"),
+
+    ('demo-hermetic.test.js',
+     'venueplay/see-a-night.html',
+     'var isWall = view === "tv" || /-tv$/.test(view);',
+     'var isWall = view === "tv";',
+     'the four game walls go back into a scaling box, where each renders at full size with '
+     'only its top-left corner inside the bezel'),
+
     ('the rule can tell an internal file from a page',
      'tools/check-exposure.py',
      r"\.(test\.js|spec\.js|sql|py|sh|md|bak|backup|orig|rej|map|lock|env|ini|log)$",

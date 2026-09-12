@@ -254,7 +254,15 @@
     for(var j=0;j<6;j++){ x=(Math.imul(x,1103515245)+12345)>>>0; out+=A[x%A.length]; }
     return out;
   }
+  /* ?demo=1 IS DECIDED HERE, before anything reads a venue.
+
+     Same order, and for the same reason, as tv.html: VENUE_SLUG is what the divert guard,
+     VPSign.initReceiver and VPScreenRouter all hang off, so a demo that resolves no venue is
+     hermetic almost by construction. Deciding it after any of them would have bounced the
+     sales page straight to /tv, which is exactly what a direct open is meant to do. */
+  var VP_DEMO = /[?&]demo=1/.test(window.location.search || "");
   var VENUE_SLUG=(function(){
+    if(VP_DEMO) return "";                       // hermetic: never inherit a real venue
     var q=window.location.search||"";
     var m=/[?&]venue=([^&]+)/.exec(q); var raw=m?m[1]:"";
     if(!raw){ var bare=q.replace(/^\?/,"").split("&")[0]; if(bare && bare.indexOf("=")===-1) raw=bare; }  // /screen.html?bare-slug
@@ -620,7 +628,11 @@
     if(_m && _m.t==="screen_refresh"){ try{ reloadVenueLogo(); }catch(_){} return; }
     onMsg(_m);
   }); });
-  ch.subscribe(function(status){
+  /* A DEMO OPENS NO CHANNEL. Not for tidiness: this screen is embedded in a public sales
+     page, and a subscribed screen would sit on a venue channel where a real game could appear
+     on a marketing page, and would answer tv_here, which is what HQ reads to decide a screen
+     is alive. A demo must never make a dead TV look healthy. */
+  if(!VP_DEMO) ch.subscribe(function(status){
     if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; }
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
   });
@@ -754,6 +766,114 @@
   function drawQR(el, url, size){ VPQR.draw(el, url, size); }
   show("tvLobby");
   renderLobby();   // draws the pairing QR (flips to the player QR once a session opens)
+
+  /* ?demo=1 : THE REAL TRIVIA WALL, PLAYING A SCRIPTED ROUND, CONNECTED TO NOTHING.
+
+     see-a-night.html held a hand-built CSS replica of this screen under .vps-trivia-* class
+     names that appear nowhere in this file, so this page could be redesigned completely and the
+     sales page would keep showing last month's product for ever. The bingo wall stopped being a
+     drawing on 12 Sep; this is the same job for trivia.
+
+     It works for the same reason: every pixel here is already driven by onMsg(), so a demo is a
+     SCRIPT OF MESSAGES and not one line of duplicated rendering.
+
+     Hermetic, and each of these is a specific thing it must not do:
+       - VENUE_SLUG is "" so the divert guard, VPSign and VPScreenRouter never start
+       - no channel is subscribed, so no venue's game can surface on a sales page and no
+         tv_here is ever sent, which is what HQ reads to decide a screen is alive
+       - the pairing QR is hidden. It encodes host.html?tv=CODE, and a prospect who scanned it
+         would be handed the console pairing screen for a room that does not exist */
+  if(VP_DEMO){
+    document.documentElement.setAttribute("data-vp-demo","1");
+    (function demoQuiz(){
+      function m(o){ try{ onMsg(o); }catch(e){ console.warn("[demo]", e && e.message); } }
+      var Q = [
+        { text:"Which Australian city hosted the 2000 Summer Olympics?",
+          options:["Melbourne","Sydney","Brisbane","Perth"], correct:1, split:[4,31,6,2] },
+        { text:"What is the only food that never spoils?",
+          options:["Rice","Honey","Salt","Tinned fish"], correct:1, split:[7,26,9,1] },
+        { text:"Which band released the album Back in Black?",
+          options:["AC/DC","Cold Chisel","INXS","Midnight Oil"], correct:0, split:[33,5,4,1] }
+      ];
+      var BOARD = [
+        { name:"The Quiztopher Nolans", points:840 },
+        { name:"Table 6",               points:790 },
+        { name:"Nan's Army",            points:735 },
+        { name:"Last Place Again",      points:690 },
+        { name:"Two Beers or Not",      points:615 },
+        { name:"The Ring Ins",          points:540 }
+      ];
+      var SECS = 15, steps = [], t = 0;
+      function at(ms, fn){ steps.push([ms, fn]); }
+
+      /* AT ZERO, not after a pause. Until the first message lands this page shows its ordinary
+         pairing lobby, and on a sales page that is the first frame a visitor sees, which is the
+         one they photograph. tv.html learned this the same way. */
+      at(0, function(){
+        m({ t:"session", session_id:"demo", join_code:"DEMO24", title:"Trivia Night" });
+        m({ t:"mode", mode:"trivia", title:"Trivia Night" });
+        m({ t:"started", title:"Trivia Night", colour:true });
+      });
+      t = 900;
+      Q.forEach(function(q, i){
+        at(t, function(){
+          m({ t:"question", qseq:i+1, qi:i+1, qtotal:Q.length, text:q.text,
+              options:q.options, secs:SECS, endsAt:Date.now()+SECS*1000 });
+        });
+        // The count climbing is what makes a still screen look like a room full of people.
+        [1,2,3].forEach(function(n, k){
+          at(t + 1200 + k*1100, function(){ m({ t:"answered", count: 14 + n*9 }); });
+        });
+        at(t + 5200, function(){ m({ t:"lock", title:"Pens down" }); });
+        at(t + 6200, function(){
+          m({ t:"reveal", correctIndex:q.correct, options:q.options, split:q.split });
+        });
+        at(t + 9400, function(){
+          m({ t:"leaderboard", title:"After question "+(i+1), rows:BOARD.slice(0, 5) });
+        });
+        t += 13200;
+      });
+      at(t,        function(){ m({ t:"podium", top:BOARD.slice(0,3), rows:BOARD }); });
+      at(t + 6500, function(){ m({ t:"leaderboard", title:"Final scores", rows:BOARD }); });
+      at(t + 12000, function(){ m({ t:"idle" }); });
+
+      /* NO JOIN CORNER ON A SALES PAGE, and the id is tvJoinCorner, the same one tv.html
+         hides, which I only found by opening the page and reading the DOM rather than guessing
+         at names. The first attempt aimed at four ids that do not exist here and the QR stayed
+         up, which is the one thing this demo promises it will never show: a scannable code
+         leading to a room that does not exist.
+
+         Watched, not hidden once, because renderLobby and the layer switches redraw it. */
+      (function hideJoin(){
+        var j=document.getElementById("tvJoinCorner");
+        if(j) j.classList.add("hidden");
+        try{
+          var o=new MutationObserver(function(){
+            if(j && !j.classList.contains("hidden")) j.classList.add("hidden");
+          });
+          if(j) o.observe(j, { attributes:true, attributeFilter:["class"] });
+        }catch(e){}
+      })();
+
+      /* AND NO CONNECTION CHIP. It reports the realtime socket, which a demo does not open, so
+         it sat on "Connecting" for ever and read as a product that cannot reach its own server.
+         It is an operational indicator for a venue running a night, not part of the show. */
+      (function hideStatus(){
+        var d=document.getElementById("statusDot"), t=document.getElementById("statusText");
+        if(d && d.parentNode) d.parentNode.style.visibility="hidden";
+        else { if(d) d.style.visibility="hidden"; if(t) t.style.visibility="hidden"; }
+      })();
+
+      var timers=[];
+      function run(){
+        timers.forEach(clearTimeout); timers=[];
+        steps.forEach(function(s){ timers.push(setTimeout(s[1], s[0])); });
+        // A sales page is left sitting open on a desk, so it loops for as long as it is up.
+        timers.push(setTimeout(run, t + 17000));
+      }
+      run();
+    })();
+  }
 
   /* ---- the venue's own logo, top left ----------------------------------------------------
      The main TV has carried this since the logo upload shipped; these four game screens never

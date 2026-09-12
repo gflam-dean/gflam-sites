@@ -1831,17 +1831,30 @@ block (all classes prefixed .vpa-)
      So take the style from the page's own address: whatever form loaded this one works. */
   var PAGE_EXT = /\.html($|[?#])/.test(window.location.pathname + window.location.search) ? ".html" : "";
   function realScreen(view) {
-    var src = view === "tv"   ? "/tv" + PAGE_EXT + "?demo=1"
-            : view === "host" ? (PAGE_EXT ? "/app/index.html?demo=1" : "/app/?demo=1")
-            :                   "/play" + PAGE_EXT + "?demo=1";
-    var title = view === "tv"   ? "The venue screen, running a bingo night"
-              : view === "host" ? "The host console, mid game"
-              :                   "A player's phone, mid game";
+    var src = view === "tv"        ? "/tv" + PAGE_EXT + "?demo=1"
+            /* PAGE_EXT, not (PAGE_EXT || ".html"). PAGE_EXT is "" on Cloudflare Pages, which
+               rewrites the extension away, so the fallback would have forced .html and 404'd
+               in production while working perfectly here. That is the same trap the note above
+               describes, and I walked into it writing this line. */
+            : /^[a-z]+-tv$/.test(view)
+                ? "/app/" + view.replace("-tv","") + "/screen" + PAGE_EXT + "?demo=1"
+            : view === "host"      ? (PAGE_EXT ? "/app/index.html?demo=1" : "/app/?demo=1")
+            :                        "/play" + PAGE_EXT + "?demo=1";
+    var title = view === "tv"        ? "The venue screen, running a bingo night"
+              : /^[a-z]+-tv$/.test(view)
+                  ? "The venue screen, running a " + view.replace("-tv","").replace("members","members draw") + " night"
+              : view === "host"      ? "The host console, mid game"
+              :                        "A player's phone, mid game";
     /* loading="lazy" so the two you have not opened cost nothing, and no sandbox attribute:
        these are our own pages on our own origin and they need their own scripts to run. */
     var f = '<iframe class="vp-live" src="' + src + '" title="' + title + '" loading="lazy" scrolling="no" tabindex="-1"></iframe>';
-    // The wall needs no scaling box; the two app screens are rendered at device size inside one.
-    return view === "tv" ? f : '<div class="vp-livebox">' + f + '</div>';
+    /* A WALL needs no scaling box; the two app screens are rendered at device size inside one.
+       Both wall views count, not just the bingo one: trivia/screen.html is written in the same
+       container query units as tv.html and adapts to whatever box it is handed. Testing "tv"
+       alone put the trivia wall in a livebox, where it rendered at full size with only its
+       top-left corner inside the bezel. Seen by opening the page, not by reading this file. */
+    var isWall = view === "tv" || /-tv$/.test(view);
+    return isWall ? f : '<div class="vp-livebox">' + f + '</div>';
   }
 
   /* SCALE EACH DEVICE SCREEN TO ITS BEZEL. The iframe is laid out at real device pixels, so
@@ -2736,17 +2749,50 @@ block (all classes prefixed .vpa-)
          actually on screen, below: called from here it measured a hidden box as zero wide and
          set no scale at all, which is how the first version left the phone unscaled. */
     } else if (currentMode === "trivia") {
-      body.innerHTML = triviaViews[view] || "";
-      /* Run trivia post-inject JS against the freshly injected markup. */
-      if (view === "tv") { drawQR(); }
-      else if (view === "host") { wireTriviaHost(); }
-      else if (view === "player") { wireTriviaPlayer(); }
+      /* THE TRIVIA WALL IS THE REAL PAGE NOW, not a drawing of it.
+         app/trivia/screen.html gained a ?demo=1 mode on 12 Sep, the same shape tv.html has:
+         it resolves no venue, opens no channel, sends no tv_here and hides the join corner,
+         and a scripted run of onMsg() messages plays a round. So this frame cannot go stale.
+         The host and player tiles are still hand-built until those two pages get the same
+         treatment; when they do, they move here and their replicas are deleted. */
+      if (view === "tv") {
+        body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
+          realScreen("trivia-tv") + '</div><div class="vp-tvstand"></div>';
+      } else {
+        body.innerHTML = triviaViews[view] || "";
+        if (view === "host") { wireTriviaHost(); }
+        else if (view === "player") { wireTriviaPlayer(); }
+      }
     } else if (currentMode === "musical") {
-      body.innerHTML = musicalViews[view] || "";
+      /* THE WALL IS THE REAL PAGE. app/musical/screen.html gained ?demo=1 on 12 Sep: no venue, no
+         channel, no tv_here, no join corner, and a scripted run of onMsg() messages. The host
+         and player tiles are still hand-built until those pages get the same treatment. */
+      if (view === "tv") {
+        body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
+          realScreen("musical-tv") + '</div><div class="vp-tvstand"></div>';
+      } else {
+        body.innerHTML = musicalViews[view] || "";
+      }
     } else if (currentMode === "raffle") {
-      body.innerHTML = raffleViews[view] || "";
+      /* THE WALL IS THE REAL PAGE. app/raffle/screen.html gained ?demo=1 on 12 Sep: no venue, no
+         channel, no tv_here, no join corner, and a scripted run of onMsg() messages. The host
+         and player tiles are still hand-built until those pages get the same treatment. */
+      if (view === "tv") {
+        body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
+          realScreen("raffle-tv") + '</div><div class="vp-tvstand"></div>';
+      } else {
+        body.innerHTML = raffleViews[view] || "";
+      }
     } else if (currentMode === "members") {
-      body.innerHTML = membersViews[view] || "";
+      /* THE WALL IS THE REAL PAGE. app/members/screen.html gained ?demo=1 on 12 Sep: no venue, no
+         channel, no tv_here, no join corner, and a scripted run of onMsg() messages. The host
+         and player tiles are still hand-built until those pages get the same treatment. */
+      if (view === "tv") {
+        body.innerHTML = '<div class="vp-tvframe vp-live-tv">' +
+          realScreen("members-tv") + '</div><div class="vp-tvstand"></div>';
+      } else {
+        body.innerHTML = membersViews[view] || "";
+      }
     } else if (currentMode === "ads") {
       body.innerHTML = adViews[view] || "";
     } else {

@@ -236,6 +236,69 @@ pass("the one buzz asks whether the page is a demo first",
        "calling it without loading it is the fault that silenced the fanfare on eight screens");
 });
 
+/* THE FOUR GAME WALLS, added 12 Sep 2026 when see-a-night stopped drawing them.
+
+   Each of app/{trivia,musical,raffle,members}/screen.html now has a ?demo=1 mode and is
+   EMBEDDED IN A PUBLIC SALES PAGE, which is a much sharper requirement than a page a venue
+   opens. Each line below is a specific thing that would be wrong on a marketing page:
+
+     - VP_DEMO has to be decided BEFORE VENUE_SLUG, because the divert guard, VPSign and
+       VPScreenRouter all hang off the slug. Decided after, the sales page bounces to /tv.
+     - the slug must resolve EMPTY, or the frame inherits whatever venue this browser last
+       looked at and shows a real pub's branding on a marketing page
+     - no channel may be subscribed. A subscribed screen sits where a real game can appear,
+       and answers tv_here, which is what HQ reads to decide a screen is alive. A sales page
+       must never make a dead TV look healthy.
+     - the join corner has to go. Its code is one the browser invented, so a prospect who
+       scans it is told "no room" by the product being sold to them. */
+["trivia", "musical", "raffle", "members"].forEach(function (game) {
+  var rel = "venueplay/app/" + game + "/screen.html";
+  var src = find(rel);
+  var iDemo = src.indexOf("var VP_DEMO"), iSlug = src.indexOf("var VENUE_SLUG=(function(){");
+  pass(game + " wall: has a demo mode at all", iDemo >= 0);
+  pass(game + " wall: decides ?demo=1 BEFORE it reads a venue",
+       iDemo >= 0 && iSlug >= 0 && iDemo < iSlug,
+       "decided after, the divert guard bounces the sales page straight to /tv");
+  pass(game + " wall: a demo resolves NO venue",
+       /if\(VP_DEMO\) return "";/.test(src),
+       "otherwise the frame shows whatever pub this browser last looked at");
+  pass(game + " wall: a demo subscribes to no channel",
+       /if\(!VP_DEMO\) ch\.subscribe\(/.test(src),
+       "a subscribed screen answers tv_here, which HQ reads as a living screen");
+  pass(game + " wall: stamps data-vp-demo",
+       /setAttribute\("data-vp-demo"\s*,\s*"1"\)/.test(src));
+  pass(game + " wall: hides the join corner and the connection chip",
+       /tvJoinCorner/.test(src) && /statusText/.test(src));
+
+  /* THE OBSERVER MUST NOT FEED ITSELF. The first version of this watched
+     {childList, subtree, attributes} on document.body and then SET a style inside the
+     callback, which is an attribute mutation. It retriggered itself and froze the renderer
+     hard enough that Chrome could not take a screenshot of it. Only found by opening it. */
+  var iHide = src.indexOf("function hideChrome");
+  if (iHide >= 0) {
+    var hide = src.slice(iHide, iHide + 1200);
+    pass(game + " wall: its chrome-hiding observer cannot retrigger itself",
+         hide.indexOf("attributes:true") < 0 && hide.indexOf("attributes: true") < 0,
+         "watching attributes while writing one is an infinite loop, and it froze the tab");
+  }
+});
+
+/* AND THE SALES PAGE ACTUALLY POINTS AT THEM, or all of the above protects nothing. */
+(function () {
+  var san = find("venueplay/see-a-night.html");
+  ["trivia", "musical", "raffle", "members"].forEach(function (game) {
+    pass("see-a-night shows the REAL " + game + " wall, not a drawing of it",
+         san.indexOf('realScreen("' + game + '-tv")') >= 0,
+         "a hand-drawn replica goes stale the day the real screen changes");
+  });
+  pass("see-a-night hands a wall the box directly rather than a scaling box",
+       /var isWall = view === "tv" \|\| \/-tv\$\/\.test\(view\)/.test(san),
+       "in a livebox the wall renders full size with only its top-left corner in the bezel");
+  pass("and builds the wall path without forcing an extension",
+       san.indexOf('"/screen" + PAGE_EXT + "?demo=1"') >= 0,
+       "PAGE_EXT is empty on Pages; a hardcoded .html 404s in production and works locally");
+})();
+
 /* EVERY DEMO PAGE STAMPS THE FLAG the guards read. A page that forgot would be loud again. */
 ["venueplay/tv.html", "venueplay/play.html", "venueplay/app/index.html"].forEach(function (rel) {
   var src = find(rel);
