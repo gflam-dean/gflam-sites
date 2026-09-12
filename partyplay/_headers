@@ -40,11 +40,22 @@
   Cache-Control: no-cache, must-revalidate
 
 # The admin screen. Not linked from anywhere, but "not linked" is not a control.
-# THE LOGOS ARE THE ONE THING WORTH CACHING HARD, and this rule has to exist BEFORE the
-# zone's Browser Cache TTL is set to respect these headers, or every logo starts
-# revalidating on every page view. At a party that is a phone on someone's home wifi, or
-# on data, fetching the same mark over and over. They are content-addressed by name and
-# change about once a year, so a year is honest. Same rule and same reason as venueplay.
+# THIS RULE DOES NOT WORK, and it is here anyway. Read this before deleting it OR
+# before trusting it.
+#
+# I added it on 12 Sep expecting it to keep the logos cached once the zone stopped
+# forcing a 4 hour TTL. It cannot. Cloudflare Pages MERGES every matching rule rather
+# than picking the most specific, so a logo comes back with /* AND this one joined
+# together, and per RFC 9111 a no-cache anywhere in the field forces revalidation. The
+# no-cache from /* wins. venueplay/_headers worked this out first and says the same
+# thing; I should have read it before writing the rule rather than after.
+#
+# Kept because it is what we would want if /* ever stopped setting Cache-Control, and
+# because deleting it invites somebody to add it again next year. The real cost is
+# small: a revalidation of an 8 KB SVG returns 304 and no body.
+#
+# What DID matter was the zone setting, which was overriding Cache-Control on every
+# .js file including the one that carries the Supabase key.
 /logos/*
   Cache-Control: public, max-age=31536000, immutable
 
