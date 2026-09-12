@@ -189,6 +189,53 @@ pass("every contacted/uncontacted action the page writes is one it reads back",
 pass("Undo on the cancelled screen is readable, not just writable",
      !!reads["venue_cancel_uncontacted"], "CX_ACTIONS must include it or Undo does nothing");
 pass("Undo on the quiet screen is readable too", !!reads["venue_quiet_uncontacted"]);
+/* ---------------- 4. WHICH OF THE TWO ROWS WINS ----------------
+
+   Undo does not delete the contacted row, it writes an uncontacted one beside it, so the
+   screen's answer depends entirely on reading the newest of the pair. That rule had no test:
+   the suite checked what gets WRITTEN and never what the screen then DECIDES. Run cxStories,
+   the real one, over rows shaped like the ones PostgREST returns. */
+var hideAsTest = function () { return false; };
+eval(lift(HQ, "cxVenueId"));
+eval(lift(HQ, "cxStories"));
+
+function auditRow(action, vid, when) { return { action: action, target: "venue:" + vid, created_at: when, detail: {} }; }
+function storyFor(rows, vid) {
+  S.cancelAudit = rows;                       // newest first, as the query orders them
+  var out = cxStories();
+  for (var i = 0; i < out.length; i++) if (out[i].venue_id === vid) return out[i];
+  return null;
+}
+setVenues([{ id: "leaving", name: "Wellshot Hotel", status: "active", _cancelling: true }]);
+
+pass("a venue with no contact rows at all reads as not contacted",
+     storyFor([], "leaving").contacted === null);
+pass("one contacted row reads as contacted",
+     !!storyFor([auditRow("venue_cancel_contacted", "leaving", "2026-09-12T00:34:44Z")], "leaving").contacted);
+pass("contacted then undone reads as NOT contacted, which is the whole point of Undo",
+     storyFor([auditRow("venue_cancel_uncontacted", "leaving", "2026-09-12T00:36:40Z"),
+               auditRow("venue_cancel_contacted",   "leaving", "2026-09-12T00:34:44Z")], "leaving").contacted === null);
+pass("undone then contacted again reads as contacted",
+     !!storyFor([auditRow("venue_cancel_contacted",   "leaving", "2026-09-12T00:40:00Z"),
+                 auditRow("venue_cancel_uncontacted", "leaving", "2026-09-12T00:36:40Z"),
+                 auditRow("venue_cancel_contacted",   "leaving", "2026-09-12T00:34:44Z")], "leaving").contacted);
+/* Four taps, which is exactly what happened while testing this in a browser on 12 Sep. */
+pass("a whole afternoon of ticking and unticking still ends on the last tap",
+     storyFor([auditRow("venue_cancel_uncontacted", "leaving", "2026-09-12T00:36:40Z"),
+               auditRow("venue_cancel_contacted",   "leaving", "2026-09-12T00:36:17Z"),
+               auditRow("venue_cancel_uncontacted", "leaving", "2026-09-12T00:35:12Z"),
+               auditRow("venue_cancel_contacted",   "leaving", "2026-09-12T00:34:44Z")], "leaving").contacted === null);
+/* THE FILTER USES THE SAME ANSWER. "Not contacted yet" is the screen's default, so a venue
+   whose undo was ignored would be missing from the one list somebody actually works through. */
+eval(lift(HQ, "cxPasses"));
+S.cxFilter = "uncontacted";
+pass("an undone venue is back on the Not-contacted-yet list",
+     cxPasses(storyFor([auditRow("venue_cancel_uncontacted", "leaving", "2026-09-12T00:36:40Z"),
+                        auditRow("venue_cancel_contacted",   "leaving", "2026-09-12T00:34:44Z")], "leaving")));
+pass("and a genuinely contacted one is off it",
+     !cxPasses(storyFor([auditRow("venue_cancel_contacted", "leaving", "2026-09-12T00:34:44Z")], "leaving")));
+S.cxFilter = "all";
+
 pass("and the test-venue flag is read by its own query",
      /venue_unmarked_test/.test(HQ.slice(HQ.indexOf('"venue_marked_test"'), HQ.indexOf('"venue_marked_test"') + 200)) ||
      !!reads["venue_unmarked_test"]);
