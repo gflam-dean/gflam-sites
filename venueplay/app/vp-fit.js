@@ -113,15 +113,29 @@
     applied[layer.id] = scale;
   }
 
-  var queued = false;
+  /* SCHEDULING, AND WHY IT IS NOT JUST requestAnimationFrame.
+
+     It was, and it deadlocked. A hidden tab never fires rAF, so `queued` was set to
+     true and never cleared, and the fitter stopped for good: every later call returned
+     at the guard. Found 13 Sep 2026 checking the deployed file on a background tab,
+     which is also what a Fire Stick does when the launcher comes forward. A wall that
+     silently stops fitting looks exactly like a wall that never fitted.
+
+     So: ask for a frame, but also arm a timer. Whichever arrives first does the work
+     and disarms the other. Nothing can leave the flag stuck. */
+  var queued = false, fallbackId = 0;
+  function runFit() {
+    if (!queued) return;
+    queued = false;
+    if (fallbackId) { w.clearTimeout(fallbackId); fallbackId = 0; }
+    var ls = visibleLayers();
+    for (var i = 0; i < ls.length; i++) fitOne(ls[i]);
+  }
   function fit() {
     if (queued) return;
     queued = true;
-    w.requestAnimationFrame(function () {
-      queued = false;
-      var ls = visibleLayers();
-      for (var i = 0; i < ls.length; i++) fitOne(ls[i]);
-    });
+    try { w.requestAnimationFrame(runFit); } catch (e) {}
+    fallbackId = w.setTimeout(runFit, 60);
   }
 
   w.VP_FIT = fit;
@@ -134,18 +148,35 @@
     w.addEventListener("resize", fit, { passive: true });
     w.addEventListener("orientationchange", fit, { passive: true });
 
-    /* childList ONLY. See the note at the top about the attribute observer. */
+    /* A wall is put on air by toggling .hidden, which is a CLASS change. childList
+       cannot see it, so the first version only caught it on the 1500ms safety tick:
+       up to a second and a half of clipped question on screen at the exact moment the
+       room is reading it. Measured on the live page, tvQ sat at 1020px with no
+       transform while it was on air.
+
+       attributeFilter is what makes this safe. The 28 Aug freeze was an observer
+       watching ALL attributes while the callback wrote a style, and `style` is an
+       attribute, so each write re-entered the observer. This watches "class" only, and
+       this file never writes a class. Writing style.transform cannot retrigger it. */
     try {
       var mo = new MutationObserver(fit);
       var all = d.querySelectorAll(".layer");
       for (var i = 0; i < all.length; i++) {
-        mo.observe(all[i], { childList: true, subtree: true, characterData: true });
+        mo.observe(all[i], { childList: true, subtree: true, characterData: true,
+                             attributes: true, attributeFilter: ["class"] });
       }
+      /* and the parent, for a layer added after load */
+      var tv = d.querySelector(".tv");
+      if (tv) mo.observe(tv, { childList: true });
     } catch (e) {}
 
-    /* A layer is shown by toggling .hidden, which no childList observer can see, and a
-       screen runs unattended all night. Measuring is cheap; do it on a slow tick. */
+    /* Backstop only now, not the primary path. A screen runs unattended all night and
+       measuring is cheap. */
     w.setInterval(fit, 1500);
+
+    /* Coming back from hidden: re-measure, because anything queued while the tab was
+       backgrounded may have been throttled. */
+    d.addEventListener("visibilitychange", function () { if (!d.hidden) fit(); });
   }
 
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", start);
