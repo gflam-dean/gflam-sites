@@ -134,5 +134,64 @@ pass("neither screen writes a contacted row behind contactActions' back",
      "every write goes through setContacted");
 pass("both screens call setContacted", (HQ.match(/setContacted\(/g) || []).length >= 3);
 
+/* ---------------- 3. EVERY ACTION IT WRITES, IT READS BACK ----------------
+
+   The fault this exists for, found in a browser on 12 Sep 2026 an hour after the undo shipped:
+   venue_cancel_uncontacted was missing from CX_ACTIONS, the list of actions the cancelled
+   screen asks the database for. So Undo wrote its row every time, perfectly, and the screen
+   never asked for it: the tick stayed, and the only way to clear one was somebody with the
+   service key deleting rows. It looked exactly like a button that does nothing.
+
+   The checks above could not see it. They test contactActions, which decides WHAT to write,
+   and stateBadgeFor, which decides how to say it. Neither goes near the query. A pure function
+   can be perfect while the round trip is broken, which is the whole reason this repo's rule is
+   that a test must run the thing rather than inspect it.
+
+   So: collect every action name the page WRITES, and require each to appear in an .in(...)
+   filter somewhere in the same page. A new pair of actions added next month is caught the day
+   it is added rather than whenever somebody happens to press the second button. */
+var writes = {};
+var wre = /action:\s*(?:"([a-z_]+)"|[^,\n]*\?\s*"([a-z_]+)"\s*:\s*"([a-z_]+)")/g, wm;
+while ((wm = wre.exec(HQ))) {
+  [wm[1], wm[2], wm[3]].forEach(function (a) { if (a && /^venue_/.test(a)) writes[a] = true; });
+}
+// contactActions builds its names as plain literals inside the function; take those too.
+var ca = lift(HQ, "contactActions");
+(ca.match(/"(venue_[a-z_]+)"/g) || []).forEach(function (q) { writes[q.replace(/"/g, "")] = true; });
+
+var reads = {};
+var rre = /\.in\(\s*"action"\s*,\s*(\[[^\]]*\]|[A-Z_]+)/g, rm;
+while ((rm = rre.exec(HQ))) {
+  var lit = rm[1];
+  if (/^\[/.test(lit)) {
+    (lit.match(/"([a-z_]+)"/g) || []).forEach(function (q) { reads[q.replace(/"/g, "")] = true; });
+  } else {
+    // a named constant: find its array and read that
+    var cm = new RegExp("var\\s+" + lit + "\\s*=\\s*(\\[[\\s\\S]*?\\])").exec(HQ);
+    if (cm) (cm[1].match(/"([a-z_]+)"/g) || []).forEach(function (q) { reads[q.replace(/"/g, "")] = true; });
+  }
+}
+var written = Object.keys(writes).sort();
+pass("the page writes a recognisable set of venue actions", written.length >= 6, written.join(", "));
+pass("at least one screen actually queries by action", Object.keys(reads).length >= 6,
+     Object.keys(reads).sort().join(", "));
+/* Only the ones a screen depends on reading back. A one-way record (an archive, an alert) is
+   written for the audit log and nothing here has to re-read it, so those are named as such
+   rather than silently skipped, which would let a real gap hide behind the exemption. */
+var WRITE_ONLY = { venue_marked_test:0, venue_unmarked_test:0 };   // read via their own query below
+var unread = written.filter(function (a) {
+  if (a in WRITE_ONLY) return false;
+  return !reads[a];
+});
+pass("every contacted/uncontacted action the page writes is one it reads back",
+     unread.length === 0, unread.join(", ") + " written but never queried");
+/* And specifically the pair that broke, named, so the reason is legible in the failure. */
+pass("Undo on the cancelled screen is readable, not just writable",
+     !!reads["venue_cancel_uncontacted"], "CX_ACTIONS must include it or Undo does nothing");
+pass("Undo on the quiet screen is readable too", !!reads["venue_quiet_uncontacted"]);
+pass("and the test-venue flag is read by its own query",
+     /venue_unmarked_test/.test(HQ.slice(HQ.indexOf('"venue_marked_test"'), HQ.indexOf('"venue_marked_test"') + 200)) ||
+     !!reads["venue_unmarked_test"]);
+
 print("");
 print(bad ? (bad + " OF " + ran + " FAILED") : ("ALL " + ran + " CHECKS PASSED"));

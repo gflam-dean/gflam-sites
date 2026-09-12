@@ -1213,8 +1213,15 @@
      left" from a general 250-row window starts dropping the oldest departures silently and
      looks exactly the same while it does it. This query is filtered by action, so the only
      limit it hits is the number of cancellations that have ever happened. */
+  /* EVERY ACTION THIS SCREEN NEEDS, and venue_cancel_uncontacted is not optional.
+     It was missing for half a day: the Undo button wrote its row perfectly and this query never
+     asked for it, so the screen went on showing the old Contacted mark and the only way to
+     clear one was the service key. A write nobody reads back is the same fault as a check that
+     cannot fail, and my own suite could not see it because it tested contactActions, which
+     decides WHAT to write, and never the round trip. There is a gate check for this now. */
   var CX_ACTIONS = ["venue_cancel_scheduled","venue_cancel_undone","venue_cancel_alert",
-                    "venue_archived","venue_cancel_contacted","venue_cancel_note"];
+                    "venue_archived","venue_cancel_contacted","venue_cancel_uncontacted",
+                    "venue_cancel_note"];
   function loadCancelled(force){
     if(S.cancelAudit && !force){ renderCancelled(); return; }
     $("cxList").innerHTML='<div class="empty">Loading&hellip;</div>';
