@@ -555,7 +555,10 @@
     }catch(e){}
   }
   var _celebrated=false;
-  function celebrate(){ if(_celebrated) return; _celebrated=true; try{ if(navigator.vibrate) navigator.vibrate([0,90,60,90,60,150]); }catch(e){} playFanfare(); confettiBurst(); }
+  // The buzz goes through the shared VPCelebrate, which asks the demo flag first. See
+  // /app/vp-celebrate.js: five copies of this line across four pages was five chances to miss one.
+  function buzz(pattern){ try{ if(window.VPCelebrate) VPCelebrate.buzz(pattern); }catch(e){} }
+  function celebrate(){ if(_celebrated) return; _celebrated=true; buzz([0,90,60,90,60,150]); playFanfare(); confettiBurst(); }
   function ordinal(n){ var s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
 
   function decorateFinal(){

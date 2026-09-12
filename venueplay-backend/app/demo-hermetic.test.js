@@ -182,8 +182,13 @@ pass("a demo makes none, on the venue PA profile or the phone one",
 pass("the confetti still fires on a demo", typeof demo.api.burst === "function" &&
      CEL.indexOf("isDemoPage") < CEL.indexOf("function burst"),
      "the guard is on fanfare, not on burst");
-var burstFn = CEL.slice(CEL.indexOf("function burst"));
-pass("and burst carries no demo guard of its own", burstFn.indexOf("isDemoPage") < 0);
+/* BURST'S OWN BODY, not everything after it. The first version sliced to the end of the file,
+   which then swallowed buzz() when that moved in below, and went red about the confetti being
+   guarded when it was the vibration guard it had found. A slice with no end is not a function. */
+var burstAt = CEL.indexOf("function burst");
+var burstFn = CEL.slice(burstAt, CEL.indexOf("\n  function ", burstAt + 10) + 1 || CEL.length);
+pass("and burst carries no demo guard of its own", burstFn.indexOf("isDemoPage") < 0,
+     "the confetti is the part worth watching");
 
 /* THE GUARD IS FIRST. Placed after the context is built it would still be silent, but placed
    after the oscillators start it would not, and both read the same in a diff. */
@@ -197,9 +202,9 @@ var chime = APP.slice(APP.indexOf("function claimChime"), APP.indexOf("function 
 pass("the host console's claim chime is silent in a demo too",
      /data-vp-demo/.test(chime) && chime.indexOf("data-vp-demo") < chime.indexOf("createOscillator"),
      "it has its own oscillator; vp-celebrate's guard does not reach it");
-pass("and it does not buzz a phone either",
-     chime.indexOf("data-vp-demo") < chime.indexOf("navigator.vibrate"),
-     "a website that vibrates somebody's phone is worse than one that beeps");
+pass("and it does not buzz a phone itself either",
+     chime.indexOf("navigator.vibrate") < 0 && /VPCelebrate\.buzz/.test(chime),
+     "it hands the buzz to the one place that asks the question");
 
 /* NOR DOES IT BUZZ. A vibration is a noise to somebody reading a website, and a worse one
    than a beep because it cannot be muted. The first pass silenced the fanfare and missed three
@@ -214,14 +219,22 @@ pass("and it does not buzz a phone either",
   pass(name + " buzzes only from behind the demo guard", direct === guarded,
        direct + " call(s), " + guarded + " behind a guard");
 });
-var PLAY = find('venueplay/play.html');
-pass("play.html asks the question once, not at each call site",
-     (PLAY.match(/function buzz\(/g) || []).length === 1 &&
-     (PLAY.match(/navigator\.vibrate\s*\(/g) || []).length === 1,
-     "three call sites was three chances to miss one");
-var buzzFn = PLAY.slice(PLAY.indexOf("function buzz("), PLAY.indexOf("function buzz(") + 320);
-pass("and the guard is before the buzz, not after it",
-     buzzFn.indexOf("data-vp-demo") < buzzFn.indexOf("navigator.vibrate"));
+/* ONE PLACE FOR THE WHOLE PRODUCT, not one per page. There were five call sites across four
+   files and I was finding them a screen at a time as Dean ran into them. Dean: "Why are you not
+   checking everywhere this code shit lives at once?" So the rule is the repo's own: the same
+   answer exists once, and the gate scans every deployed file for a second copy. */
+var buzzHome = CEL.slice(CEL.indexOf("function buzz("), CEL.indexOf("function buzz(") + 400);
+pass("the one buzz asks whether the page is a demo first",
+     buzzHome.indexOf("isDemoPage") > 0 && buzzHome.indexOf("isDemoPage") < buzzHome.indexOf("vibrate"),
+     "after the call it would be a guard that guards nothing");
+["venueplay/play.html", "venueplay/app/trivia/play.html",
+ "venueplay/app/musical/play.html", "venueplay/app/index.html"].forEach(function (rel) {
+  var src = find(rel), nm = rel.replace("venueplay/", "");
+  pass(nm + " hands its buzz to the shared one", /VPCelebrate\.buzz\(/.test(src));
+  pass(nm + " loads the file that holds it",
+       /<script[^>]+vp-celebrate\.js/.test(src),
+       "calling it without loading it is the fault that silenced the fanfare on eight screens");
+});
 
 /* EVERY DEMO PAGE STAMPS THE FLAG the guards read. A page that forgot would be loud again. */
 ["venueplay/tv.html", "venueplay/play.html", "venueplay/app/index.html"].forEach(function (rel) {

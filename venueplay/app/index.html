@@ -485,6 +485,11 @@
 <script src="/app/vp-sign.js"></script>
 <script src="/app/vp-room.js"></script>
 <script src="/app/vp-hold.js"></script>
+<!-- The shared celebration helpers. This console only needs buzz(), which is the one place in
+     the product that vibrates a phone and the one place that asks whether the page is a demo
+     first. It was calling navigator.vibrate itself, which is how a sales page ended up buzzing
+     somebody reading it. Loaded here, before the script below uses it. -->
+<script src="/app/vp-celebrate.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1200,7 +1205,7 @@
        The vibrate goes too, because a phone buzzing at somebody reading a website is worse
        than a noise. See isDemoPage() in /app/vp-celebrate.js for the same question. */
     if(document.documentElement.getAttribute("data-vp-demo")==="1") return;
-    try{ if(navigator.vibrate) navigator.vibrate([0,120,80,120]); }catch(e){}
+    try{ if(window.VPCelebrate) VPCelebrate.buzz([0,120,80,120]); }catch(e){}
     try{
       if(!_ac) return;
       var t=_ac.currentTime;

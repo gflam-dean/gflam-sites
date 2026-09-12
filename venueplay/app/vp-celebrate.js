@@ -177,5 +177,26 @@
     } catch (e) { /* confetti is never worth an exception mid-win */ }
   }
 
-  root.VPCelebrate = { fanfare: fanfare, burst: burst };
+  /* BUZZING A PHONE IS THE SAME QUESTION AS MAKING A NOISE, so it is answered in the same
+     place. Dean, 12 Sep 2026, after I had silenced the fanfare and then found three
+     unguarded vibrate calls in one page and two more in two others: "Why are you not checking
+     everywhere this code shit lives at once?"
+
+     He is right. There were five call sites across four pages, each with its own try/catch and
+     its own chance to be missed, and I was finding them one screen at a time as he ran into
+     them. The repo's own rule covers this and I did not apply it: the same answer must exist
+     in ONE place. esc(), cryptoInt() and tvSend() are held identical across every file by the
+     gate for exactly this reason.
+
+     So: nothing anywhere calls navigator.vibrate any more except this function, and the gate
+     fails if anything does. A page added next month gets the demo guard for free. */
+  function buzz(pattern) {
+    try {
+      if (isDemoPage()) return;                 // a demonstration is watched, not felt
+      var nav = root.navigator;
+      if (nav && nav.vibrate) nav.vibrate(pattern);
+    } catch (e) {}
+  }
+
+  root.VPCelebrate = { fanfare: fanfare, burst: burst, buzz: buzz };
 })(window);

@@ -975,12 +975,11 @@
      than a beep because it cannot be muted. Three call sites is three chances to miss one, so
      they all come through here now and the question is asked once. Same flag the fanfare
      reads: see isDemoPage() in /app/vp-celebrate.js. */
-  function buzz(pattern){
-    try{
-      if(document.documentElement.getAttribute("data-vp-demo")==="1") return;
-      if(navigator.vibrate) navigator.vibrate(pattern);
-    }catch(e){}
-  }
+  /* THE SHARED ONE. This was a local copy for about ten minutes, which is how this repo ends
+     up with eleven versions of esc(). Nothing here calls navigator.vibrate: VPCelebrate.buzz
+     does, once, and asks the demo flag first. If the shared file has not loaded we stay still
+     rather than throw, the same way playFanfare stays silent. */
+  function buzz(pattern){ try{ if(window.VPCelebrate) VPCelebrate.buzz(pattern); }catch(e){} }
 
   // ---- win celebration (synthesised fanfare + buzz + confetti; no audio file to host) ----
   // Phone speakers are often muted, so we lead with the confetti + vibrate and treat sound as a bonus.

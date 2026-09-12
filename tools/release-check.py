@@ -1113,6 +1113,54 @@ def local_checks(which):
     ok('every shared script loads before it is used', not late, why='; '.join(late[:3]))
 
 
+
+    head('D. One place decides whether a screen may make a noise')
+    """Dean, 12 Sep 2026: "Why are you not checking everywhere this code shit lives at once?"
+
+    Fair. He asked for the demo to be silent, I guarded the win fanfare, he heard it again, I
+    found three more vibrate calls in one page, and a proper sweep then found two more in two
+    other pages. Five call sites across four files, each with its own try/catch, found one at a
+    time as he ran into them. This repo already knows the answer to that and I did not apply
+    it: the same answer must exist in ONE place, which is why esc, cryptoInt and tvSend are
+    held identical by the checks above.
+
+    So no deployed page calls the vibration API at all. VPCelebrate.buzz does, once, and asks
+    whether the page is a demonstration before it fires. A page added next month gets the guard
+    without anybody remembering, and if one calls the API directly this goes red naming the
+    file and the line."""
+    SOUND_HOME = 'venueplay/app/vp-celebrate.js'
+    direct = []
+    for f in files:
+        if not f.endswith(('.html', '.js')):
+            continue
+        rel = short(f)
+        if rel.replace('\\', '/').endswith('vp-celebrate.js'):
+            continue                      # the one place that is allowed to
+        src = io.open(f, encoding='utf-8').read()
+        # Comments explain the rule and are not calls. Strip them before looking.
+        body = re.sub(r'/\*.*?\*/', ' ', src, flags=re.S)
+        body = re.sub(r'^\s*//.*$', ' ', body, flags=re.M)
+        for m in re.finditer(r'navigator\s*\.\s*vibrate\s*\(', body):
+            line = body[:m.start()].count('\n') + 1
+            direct.append('%s:%d' % (rel, line))
+    ok('nothing buzzes a phone except %s' % SOUND_HOME, not direct,
+       why='; '.join(direct[:4]))
+
+    """AND THE ONE PLACE ACTUALLY ASKS. A single call site is only an improvement if the guard
+    is in front of it; without this the check above would pass a shared helper that buzzes
+    unconditionally, which is a worse fault than five guarded copies."""
+    home = os.path.join(ROOT, SOUND_HOME)
+    guarded = False
+    if os.path.isfile(home):
+        h = io.open(home, encoding='utf-8').read()
+        i = h.find('function buzz(')
+        if i >= 0:
+            blk = h[i:i + 400]
+            guarded = ('isDemoPage()' in blk
+                       and blk.index('isDemoPage()') < (blk.index('vibrate') if 'vibrate' in blk else 10 ** 9))
+    ok('and it asks whether the page is a demo BEFORE it does', guarded,
+       why='the guard must be in front of the call, not after it')
+
     head('D. No screen can sit on a "loading" line nothing will finish')
     """A pane that says "Reading the meter..." and never stops is indistinguishable from a
     slow request, and there is nothing on the screen to tell you which. HQ's Usage tab did
