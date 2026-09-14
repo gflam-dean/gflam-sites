@@ -355,7 +355,13 @@
      because ten is about one turn each around a room. */
   var WORD_INDEX = {};        // by format
   var WORD_PACKS = {};        // by format + slug
-  var WORDY = { charades: "charades", guesswho: "guesswho" };
+  /* "Who here has ever" was the only content game with no pack, so it was the only one
+     a host had to type from nothing. The site sells SEVEN games that need nothing
+     prepared, and it gets there by counting the two-click ones: pick a category, press
+     Add ten. This was the odd one out. 125 prompts across five categories, written to
+     the same rule as the charades packs: a nine year old and a grandparent should both
+     be able to answer honestly, in front of each other. */
+  var WORDY = { charades: "charades", guesswho: "guesswho", whohere: "whohere" };
 
   function wordIndexFor(fmt){
     if(WORD_INDEX[fmt]) return Promise.resolve(WORD_INDEX[fmt]);
@@ -425,7 +431,11 @@
   function categoryStrip(){
     var fmt = editing.format, idx = null, thing = "questions", noun = "question";
     if(fmt === "trivia"){ idx = TRIVIA_INDEX; }
-    else if(WORDY[fmt]){ idx = WORD_INDEX[fmt]; thing = "words"; noun = "word"; }
+    else if(WORDY[fmt]){ idx = WORD_INDEX[fmt];
+      /* "Find someone who has been swooped by a magpie" is a prompt, not a word, and
+         "Not got words ready?" over a list of sentences reads like the wrong screen. */
+      var isPrompt = (fmt === "whohere");
+      thing = isPrompt ? "prompts" : "words"; noun = isPrompt ? "prompt" : "word"; }
     else return "";
     var opts = (idx ? idx.categories : []).map(function(c){
       return '<option value="' + esc(c.slug) + '">' + esc(c.category) + '</option>'; }).join("");
