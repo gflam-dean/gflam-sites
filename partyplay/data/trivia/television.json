@@ -1,1472 +1,5014 @@
 {
-"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"sources": [
-{
-"name": "Open Trivia Database",
-"url": "https://opentdb.com",
-"license": "CC BY-SA 4.0",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"commercialUse": "permitted with attribution and share-alike",
-"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"questionCount": 4320
-},
-{
-"name": "OpenTriviaQA",
-"url": "https://github.com/uberspot/OpenTriviaQA",
-"license": "CC BY-SA 4.0",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"commercialUse": "permitted with attribution and share-alike",
-"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"questionCount": 6310
-},
-{
-"name": "VenuePlay original",
-"url": "",
-"license": "VenuePlay original content",
-"licenseUrl": "",
-"commercialUse": "owned by VenuePlay; no third-party attribution required",
-"attribution": "Australian pub-culture questions authored by VenuePlay.",
-"questionCount": 76
-}
-],
-"attributions": [
-"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
-],
-"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
-"category": "Television",
-"count": 130,
-"questions": [
-{
-"q": "What does Elmer J. Fudd usually hunt in the Looney Tunes animated series?",
-"options": [
-"Rabbits",
-"Foxes",
-"Deer",
-"Ducks"
-],
-"answer": "Rabbits",
-"d": "easy"
-},
-{
-"q": "In the show Stranger Things, what is Eleven's favorite breakfast food?",
-"options": [
-"Toaster Strudels",
-"Pop-Tarts",
-"Leftover Pizza",
-"Eggo Waffles"
-],
-"answer": "Eggo Waffles",
-"d": "easy"
-},
-{
-"q": "In Supernatural, what's is Sam's brothers name?",
-"options": [
-"Bobby",
-"Crowley",
-"Castiel",
-"Dean"
-],
-"answer": "Dean",
-"d": "easy"
-},
-{
-"q": "On November 22, 1963 which president did Walter Cronkite announce had died?",
-"options": [
-"Truman",
-"Kennedy",
-"Eisenhower",
-"Lincoln"
-],
-"answer": "Kennedy",
-"d": "easy"
-},
-{
-"q": "Which of these characters in \"Stranger Things\" has the power of Telekinesis?",
-"options": [
-"Steve",
-"Max",
-"Eleven",
-"Will"
-],
-"answer": "Eleven",
-"d": "easy"
-},
-{
-"q": "Which of the four Teenage Mutant Ninja Turtles wore the purple mask?",
-"options": [
-"Donatello",
-"Leonardo",
-"Michelangelo",
-"Splinter"
-],
-"answer": "Donatello",
-"d": "easy"
-},
-{
-"q": "I am married to a man, named Ricky and my best friend is Ethel. What TV show was I on?",
-"options": [
-"The Honeymooners",
-"The Brady Bunch",
-"The Dick Van Dyke Show",
-"I Love Lucy"
-],
-"answer": "I Love Lucy",
-"d": "easy"
-},
-{
-"q": "In \"Breaking Bad\", Walter White is a high school teacher diagnosed with which form of cancer?",
-"options": [
-"Prostate Cancer",
-"Testicular Cancer",
-"Throat Cancer",
-"Lung Cancer"
-],
-"answer": "Lung Cancer",
-"d": "easy"
-},
-{
-"q": "What NBC sitcom once saw two of its characters try to pitch NBC on a sitcom about nothing?",
-"options": [
-"Frasier",
-"Friends",
-"Seinfeld",
-"Curb Your Enthusiasm"
-],
-"answer": "Seinfeld",
-"d": "easy"
-},
-{
-"q": "The HBO series \"Game of Thrones\" is based on which series of books?",
-"options": [
-"A Clash of Kings",
-"The Wheel of Time",
-"The Notebook",
-"A Song of Ice and Fire"
-],
-"answer": "A Song of Ice and Fire",
-"d": "easy"
-},
-{
-"q": "What fruit does Spongebob live in?",
-"options": [
-"Pineapple",
-"Coconut",
-"Mango",
-"Watermelon"
-],
-"answer": "Pineapple",
-"d": "easy"
-},
-{
-"q": "In Breaking Bad, the initials W.W. refer to which of the following?",
-"options": [
-"William Wolf",
-"Wally Walrus",
-"Winnie the Pooh",
-"Walter White"
-],
-"answer": "Walter White",
-"d": "easy"
-},
-{
-"q": "What breed of dog is \"Scooby Doo\"?",
-"options": [
-"Mastiff",
-"Chihuahua",
-"Weimaraner",
-"Great Dane"
-],
-"answer": "Great Dane",
-"d": "easy"
-},
-{
-"q": "In the original Star Trek TV series, what was Captain James T. Kirk's middle name?",
-"options": [
-"Thaddeus",
-"Tiberius",
-"Tarquin",
-"Tobias"
-],
-"answer": "Tiberius",
-"d": "easy"
-},
-{
-"q": "What is the surname of the character Daryl in AMC's show The Walking Dead?",
-"options": [
-"Dixon",
-"Dixson",
-"Crossbow",
-"Grimes"
-],
-"answer": "Dixon",
-"d": "easy"
-},
-{
-"q": "Don't have a cow, man! and Eat my shorts! are the catch phrases used by what character on The Simpsons?",
-"options": [
-"Bart",
-"Mr. Burns",
-"Lisa",
-"Homer"
-],
-"answer": "Bart",
-"d": "easy"
-},
-{
-"q": "In AMC's TV Series \"The Walking Dead\" what are \"Zombies\" referred to as?",
-"options": [
-"Draggers",
-"Walkers",
-"Creepers",
-"Munchers"
-],
-"answer": "Walkers",
-"d": "easy"
-},
-{
-"q": "Who is the star of the AMC series Breaking Bad?",
-"options": [
-"Walter White",
-"Saul Goodman",
-"Jesse Pinkman",
-"Skyler White"
-],
-"answer": "Walter White",
-"d": "easy"
-},
-{
-"q": "What TV show is about a grandfather dragging his grandson around on adventures?",
-"options": [
-"Peppa Pig",
-"Solar Opposites",
-"Rick & Morty",
-"Futurama"
-],
-"answer": "Rick & Morty",
-"d": "easy"
-},
-{
-"q": "In the show, Doctor Who, what does T.A.R.D.I.S stand for?",
-"options": [
-"Time And Roving Dimensions In Space",
-"Time And Relative Dimensions In Space",
-"Toilet Aid Rope Dog Is Soup",
-"Time And Relative Distance In Space"
-],
-"answer": "Time And Relative Dimensions In Space",
-"d": "easy"
-},
-{
-"q": "Do, or do not. There is no try was a mystical phrase used in which classic film?",
-"options": [
-"Star Wars: Return of the Jedi",
-"Star Trek II: The Wrath of Khan",
-"Star Wars V: The Empire Strikes Back",
-"Star Wars: A New Hope"
-],
-"answer": "Star Wars V: The Empire Strikes Back",
-"d": "easy"
-},
-{
-"q": "Which actor portrays \"Walter White\" in the series \"Breaking Bad\"?",
-"options": [
-"Bob Odenkirk",
-"Andrew Lincoln",
-"Bryan Cranston",
-"Aaron Paul"
-],
-"answer": "Bryan Cranston",
-"d": "easy"
-},
-{
-"q": "What is the setting of the show \"Parks and Recreation\"?",
-"options": [
-"Eagleton, Indiana",
-"Pawnee, Indiana",
-"Indianapolis, Indiana",
-"Springfield, USA"
-],
-"answer": "Pawnee, Indiana",
-"d": "medium"
-},
-{
-"q": "Which character on Buffy the Vampire Slayer was played by actress Eliza Dushku?",
-"options": [
-"Kendra",
-"Buffy",
-"Faith",
-"Cordelia"
-],
-"answer": "Faith",
-"d": "medium"
-},
-{
-"q": "Which track by \"Massive Attack\" is used for the theme of \"House\"?",
-"options": [
-"Greensleeves",
-"Unfinished Sympathy",
-"Teardrop",
-"Angel"
-],
-"answer": "Teardrop",
-"d": "medium"
-},
-{
-"q": "In the cartoon 'SpongeBob SquarePants', what did the acronym E.V.I.L stand for?",
-"options": [
-"Every Villain Is Lazy",
-"Every Villain Is Limes",
-"Every Villain Is Lemons",
-"Every Villain Is Lemonade"
-],
-"answer": "Every Villain Is Lemons",
-"d": "medium"
-},
-{
-"q": "Which of these Bojack Horseman characters is a human?",
-"options": [
-"Tom Jumbo-Grumbo",
-"Princess Carolyn",
-"Mr. Peanutbutter",
-"Todd Chavez"
-],
-"answer": "Todd Chavez",
-"d": "medium"
-},
-{
-"q": "Which character dies in the Buffy the Vampire Slayer episode Passion?",
-"options": [
-"Buffy",
-"Giles",
-"Jenny",
-"Joyce"
-],
-"answer": "Jenny",
-"d": "medium"
-},
-{
-"q": "In the show \"The Office\" who does Michael Scott eventually end up with?",
-"options": [
-"His World's Best Boss mug",
-"Pam Beesly",
-"Holly Flax",
-"Jan Levinson"
-],
-"answer": "Holly Flax",
-"d": "medium"
-},
-{
-"q": "In Desperate Housewives season one, how many children does Lynette have?",
-"options": [
-"five",
-"two",
-"four",
-"a dozen"
-],
-"answer": "four",
-"d": "medium"
-},
-{
-"q": "In the TV show \"Mad Men\", what was Donald Draper's birthname?",
-"options": [
-"Donald Whitman",
-"Richard Draper",
-"Richard \"Dick\" Whitman",
-"Bob Benson"
-],
-"answer": "Richard \"Dick\" Whitman",
-"d": "medium"
-},
-{
-"q": "The TV series The Wonder Years, created by Carol Black and Neal Marlens, focuses on which fictional family?",
-"options": [
-"The Pfeiffers",
-"The Arnolds",
-"The Coopers",
-"The Cleavers"
-],
-"answer": "The Arnolds",
-"d": "medium"
-},
-{
-"q": "In the 80s cartoon Thundercats what was the name of Lion-Os sword?",
-"options": [
-"Excalibur",
-"Sword of Omens",
-"Sword of Thundera",
-"Blade of Omens"
-],
-"answer": "Sword of Omens",
-"d": "medium"
-},
-{
-"q": "What is the name of Jacks father on the TV show Lost?",
-"options": [
-"Christian",
-"Jacob",
-"Ray",
-"Darth Vader"
-],
-"answer": "Christian",
-"d": "medium"
-},
-{
-"q": "What is Xanders special power in Buffy the Vampire Slayer?",
-"options": [
-"Super strength",
-"Telepathy",
-"Turning into a hyena",
-"None"
-],
-"answer": "None",
-"d": "medium"
-},
-{
-"q": "In the comedy series \"Trailer Park Boys\", which of the following characters takes care of stray cats?",
-"options": [
-"Bubbles",
-"Garfield",
-"Julian",
-"Ricky"
-],
-"answer": "Bubbles",
-"d": "medium"
-},
-{
-"q": "Which of these singers has never appeared on the Mickey Mouse Club?",
-"options": [
-"Jessica Simpson",
-"Ryan Gosling",
-"Christina Aguilera",
-"Britney Spears"
-],
-"answer": "Jessica Simpson",
-"d": "medium"
-},
-{
-"q": "In Game of Thrones, what is Littlefinger's real name?",
-"options": [
-"Jorah Mormont",
-"Hodor",
-"Petyr Baelish",
-"Varys"
-],
-"answer": "Petyr Baelish",
-"d": "medium"
-},
-{
-"q": "In Game of Thrones what is the name of Jon Snow's sword?",
-"options": [
-"Ice",
-"Longclaw",
-"Sting",
-"Needle"
-],
-"answer": "Longclaw",
-"d": "medium"
-},
-{
-"q": "Which company has exclusive rights to air episodes of the \"The Grand Tour\"?",
-"options": [
-"Netflix",
-"CCTV",
-"BBC",
-"Amazon"
-],
-"answer": "Amazon",
-"d": "medium"
-},
-{
-"q": "Who played Agent Fox Mulder in the TV sci-fi drama \"The X-Files\"?",
-"options": [
-"David Duchovny",
-"Gillian Anderson",
-"Robert Patrick",
-"Mitch Pileggi"
-],
-"answer": "David Duchovny",
-"d": "medium"
-},
-{
-"q": "What part did Robert Lowe play in three seasons of The West Wing?",
-"options": [
-"Leo McGarry",
-"Sam Seaborn",
-"President Bartlet",
-"Josh Lyman"
-],
-"answer": "Sam Seaborn",
-"d": "medium"
-},
-{
-"q": "In season one of the Netflix political drama \"House of Cards\", what government position does Frank Underwood hold?",
-"options": [
-"House Majority Whip",
-"House Majority Leader",
-"Secretary of State",
-"Vice President"
-],
-"answer": "House Majority Whip",
-"d": "medium"
-},
-{
-"q": "When did Spongebob Squarepants first air?",
-"options": [
-"May 1, 1999",
-"May 1, 1998",
-"July 17, 1999",
-"April 1, 2000"
-],
-"answer": "May 1, 1999",
-"d": "medium"
-},
-{
-"q": "Who plays the character of Dennis Reynolds on It's Always Sunny in Philadelphia?",
-"options": [
-"Charlie Day",
-"Glenn Howerton",
-"Rob McElhenney",
-"Danny DeVito"
-],
-"answer": "Glenn Howerton",
-"d": "medium"
-},
-{
-"q": "Which Star Trek race advances itself through assimilation?",
-"options": [
-"Romulan",
-"Borg",
-"Ewok",
-"Klingon"
-],
-"answer": "Borg",
-"d": "medium"
-},
-{
-"q": "In Star Trek: The Next Generation, what is the name of Data's cat?",
-"options": [
-"Data Jr.",
-"Whiskers",
-"Spot",
-"Riker"
-],
-"answer": "Spot",
-"d": "medium"
-},
-{
-"q": "In \"Breaking Bad,\" which main character was planned to be killed in Season 1 but wasn't because the show creator liked the actor?",
-"options": [
-"Hank Schrader",
-"Jesse Pinkman",
-"Skyler White",
-"Heisenberg"
-],
-"answer": "Jesse Pinkman",
-"d": "medium"
-},
-{
-"q": "In DuckTales, what is the name of the city where all the main characters live?",
-"options": [
-"Mallardton",
-"Quacktown",
-"Duckville",
-"Duckburg"
-],
-"answer": "Duckburg",
-"d": "medium"
-},
-{
-"q": "In the TV show \"Cheers\", Sam Malone was a former relief pitcher for which baseball team?",
-"options": [
-"Boston Red Sox",
-"Boston Braves",
-"Chicago Cubs",
-"New York Yankees"
-],
-"answer": "Boston Red Sox",
-"d": "medium"
-},
-{
-"q": "What is the name of the main character in \"The Flash\" TV series?",
-"options": [
-"Bart Allen",
-"Wally West",
-"Bruce Wayne",
-"Barry Allen"
-],
-"answer": "Barry Allen",
-"d": "medium"
-},
-{
-"q": "What was the name of the toy shell SpongeBob and Patrick had with them in the Kelp Woods?",
-"options": [
-"Magic conch shell",
-"Magic Clam Shell",
-"Mystic Sea Shell",
-"Talking Sand Dollar"
-],
-"answer": "Magic conch shell",
-"d": "medium"
-},
-{
-"q": "What is the name of the \"Flash\" and \"Arrow\" spinoff featuring a team of characters that have appeared on both shows?",
-"options": [
-"Legends of Tomorrow",
-"Titans",
-"Legends of the Hidden Temple",
-"Heroes of Tomorrow"
-],
-"answer": "Legends of Tomorrow",
-"d": "medium"
-},
-{
-"q": "In Game of Thrones, what continent lies across the Narrow Sea from Westeros?",
-"options": [
-"Easteros",
-"Sothoryos",
-"Essos",
-"Ulthos"
-],
-"answer": "Essos",
-"d": "medium"
-},
-{
-"q": "What was the name of Ross' pet monkey on \"Friends\"?",
-"options": [
-"Coco",
-"Marcel",
-"Marcus",
-"Curious George"
-],
-"answer": "Marcel",
-"d": "medium"
-},
-{
-"q": "From what show is the character \"James Doakes\"?",
-"options": [
-"Dexter",
-"Boardwalk Empire",
-"The Wire",
-"Sesame Street"
-],
-"answer": "Dexter",
-"d": "medium"
-},
-{
-"q": "When did the TV show Lost premier?",
-"options": [
-"August 2004",
-"September 1994",
-"October 2004",
-"September 2004"
-],
-"answer": "September 2004",
-"d": "medium"
-},
-{
-"q": "Who is Izzie talking about on the show Greys Anatomy when she asks the following question: What self-respecting surgeon wears salmon-colored scrubs??",
-"options": [
-"Dr. McDreamy",
-"Addison",
-"Cristina",
-"Callie"
-],
-"answer": "Addison",
-"d": "medium"
-},
-{
-"q": "Which show is known for the songs \"You are a Pirate\", \"Cooking by the Book\" and \"We Are Number One\"?",
-"options": [
-"Sofia the First",
-"Yo Gabba Gabba!",
-"Teletubbies",
-"LazyTown"
-],
-"answer": "LazyTown",
-"d": "medium"
-},
-{
-"q": "What was the first song fictional character Hannah Montana ever sang?",
-"options": [
-"Best of Both Worlds",
-"Nobody's Perfect",
-"If We Were a Movie",
-"The Best of Both"
-],
-"answer": "Best of Both Worlds",
-"d": "medium"
-},
-{
-"q": "How long was Ken Jennings' win streak on Jeopardy?",
-"options": [
-"1000",
-"75",
-"74",
-"68"
-],
-"answer": "74",
-"d": "medium"
-},
-{
-"q": "What TV show featured older women named Blanche, Rose, Dorothy and Sophia?",
-"options": [
-"The Wonder Years",
-"Designing Women",
-"The Golden Palace",
-"The Golden Girls"
-],
-"answer": "The Golden Girls",
-"d": "medium"
-},
-{
-"q": "Where does Jim decide to go on vacation in The Office, season 2?",
-"options": [
-"Austrailia",
-"Mordor",
-"Fiji",
-"Hong Kong"
-],
-"answer": "Austrailia",
-"d": "medium"
-},
-{
-"q": "Who was the winner of the first season of Americas Next Top Model?",
-"options": [
-"Adrianne Curry",
-"Elyse Sewell",
-"Tyra Banks",
-"Shannon Stewart"
-],
-"answer": "Adrianne Curry",
-"d": "medium"
-},
-{
-"q": "What 1970s show, starring Peter Falk, popularized the inverted detective story format?",
-"options": [
-"Columbo",
-"McCloud",
-"Murder She Wrote",
-"Kojak"
-],
-"answer": "Columbo",
-"d": "medium"
-},
-{
-"q": "What color hat does Timmy, the main character of The Fairly OddParents, wear?",
-"options": [
-"Red",
-"Rainbow",
-"Pink",
-"Purple"
-],
-"answer": "Pink",
-"d": "medium"
-},
-{
-"q": "Who composed the theme song for The Simpsons?",
-"options": [
-"Bart Simpson",
-"Alf Clausen",
-"Danny Elfman",
-"Hans Zimmer"
-],
-"answer": "Danny Elfman",
-"d": "medium"
-},
-{
-"q": "When did the TV show Rick and Morty first air on Adult Swim?",
-"options": [
-"1999",
-"2012",
-"2014",
-"2013"
-],
-"answer": "2013",
-"d": "medium"
-},
-{
-"q": "In Two and a Half Men, what is Alan Harper's son's name?",
-"options": [
-"Chuck",
-"Jake",
-"Charlie",
-"Jack"
-],
-"answer": "Jake",
-"d": "medium"
-},
-{
-"q": "British actor David Morrissey stars as which role in \"The Walking Dead\"?",
-"options": [
-"The Governor",
-"Negan",
-"Merle Dixon",
-"Rick Grimes"
-],
-"answer": "The Governor",
-"d": "medium"
-},
-{
-"q": "In the Star Trek universe, what color is Vulcan blood?",
-"options": [
-"Purple",
-"Green",
-"Blue",
-"Fluorescent Pink"
-],
-"answer": "Green",
-"d": "medium"
-},
-{
-"q": "What was the favorite after-school hangout for the students in Happy Days?",
-"options": [
-"Al's",
-"The Krusty Burger",
-"Arnolds",
-"Rosie's"
-],
-"answer": "Arnolds",
-"d": "medium"
-},
-{
-"q": "In the Doctor Who universe, how many times can a time lord normally regenerate?",
-"options": [
-"10",
-"13",
-"12",
-"Infinite"
-],
-"answer": "12",
-"d": "medium"
-},
-{
-"q": "How many gallons are there in a barrel of oil?",
-"options": [
-"40 US gallons",
-"42 US gallons",
-"100 US gallons",
-"55 US gallons"
-],
-"answer": "42 US gallons",
-"d": "medium"
-},
-{
-"q": "Who plays the part of A.C. Slater on Saved by the Bell?",
-"options": [
-"Mario Suarez",
-"Super Mario",
-"Mario Lopez",
-"Mario Ruiz"
-],
-"answer": "Mario Lopez",
-"d": "medium"
-},
-{
-"q": "What is the name of the main antagonists in Battlestar Galactica?",
-"options": [
-"The Daleks",
-"The Cylons",
-"The Colonials",
-"The Borg"
-],
-"answer": "The Cylons",
-"d": "medium"
-},
-{
-"q": "Which member of the Office staff often calls Pam hot?",
-"options": [
-"Ryan",
-"Creed",
-"Stanley",
-"Kevin"
-],
-"answer": "Kevin",
-"d": "medium"
-},
-{
-"q": "What unforgettable question did Jay Leno ask Hugh Grant on July 10, 1995 on the The Tonight Show in reference to Hughs arrest for being with a prostitute?",
-"options": [
-"Don't you have a wife at home?",
-"And how was she?",
-"Have you lost your mind?",
-"What the hell were you thinking?"
-],
-"answer": "What the hell were you thinking?",
-"d": "medium"
-},
-{
-"q": "Who plays the recurring character of Mr. Big?",
-"options": [
-"John Corbett",
-"Kyle MacLachlan",
-"Chris Meloni",
-"Chris Noth"
-],
-"answer": "Chris Noth",
-"d": "medium"
-},
-{
-"q": "In what year did \"The Big Bang Theory\" debut on CBS?",
-"options": [
-"2008",
-"1969",
-"2007",
-"2006"
-],
-"answer": "2007",
-"d": "medium"
-},
-{
-"q": "What is the name of the mad scientist who owns Planet Express in Futurama?",
-"options": [
-"Ogden Wernstrom",
-"Hubert J. Farnsworth",
-"Rick Sanchez",
-"Hubert Zoidberg"
-],
-"answer": "Hubert J. Farnsworth",
-"d": "medium"
-},
-{
-"q": "What is the gadget which insures that no one can overhear the discussions in the Chiefs office on the Get Smart TV show?",
-"options": [
-"The Cone of Shame",
-"Sound Dome",
-"Privacy Shield",
-"Cone of Silence"
-],
-"answer": "Cone of Silence",
-"d": "medium"
-},
-{
-"q": "The fictional movie 'Rochelle, Rochelle' features in which sitcom?",
-"options": [
-"Curb Your Enthusiasm",
-"Friends",
-"Seinfeld",
-"Gilligan's Island"
-],
-"answer": "Seinfeld",
-"d": "medium"
-},
-{
-"q": "What was the name of the teenage witch played by Melisa Joan Hart who lives with her witch aunts Hilda and Zelda?",
-"options": [
-"Wanda",
-"Hermione",
-"Sabrina",
-"Samantha"
-],
-"answer": "Sabrina",
-"d": "medium"
-},
-{
-"q": "In the show \"Futurama\" what is Fry's full name?",
-"options": [
-"Fry Philip Jr.",
-"Philip J. Fry",
-"Fry Rodr\u00edguez",
-"Phillip J. Fry"
-],
-"answer": "Philip J. Fry",
-"d": "medium"
-},
-{
-"q": "Who is Ravens best friend on the show That's So Raven?",
-"options": [
-"Chelsea",
-"Alana",
-"Hannah Montana",
-"Sydney"
-],
-"answer": "Chelsea",
-"d": "medium"
-},
-{
-"q": "Who was Fred and Barneys boss in the popular animated series The Flintstones?",
-"options": [
-"Mr. Rockhead",
-"Mr. Spacely",
-"Mr. Slate",
-"Mr. Granite"
-],
-"answer": "Mr. Slate",
-"d": "medium"
-},
-{
-"q": "In the television show Breaking Bad, what is the street name of Walter and Jesse's notorious product?",
-"options": [
-"Blue Ice",
-"Smurf Dust",
-"Blue Sky",
-"Heisenberg Blue"
-],
-"answer": "Blue Sky",
-"d": "medium"
-},
-{
-"q": "At which university do \"The Big Bang Theory\" characters Mr. Wolowitz and Drs. Cooper, Hofstadter and Koothrappali work?",
-"options": [
-"Caltech",
-"Stanford",
-"Hogwarts",
-"UCLA"
-],
-"answer": "Caltech",
-"d": "medium"
-},
-{
-"q": "Who was the original voice actor of Shaggy Rogers in Scooby-Doo?",
-"options": [
-"Matthew Lillard",
-"Don Messick",
-"Casey Kasem",
-"Frank Welker"
-],
-"answer": "Casey Kasem",
-"d": "medium"
-},
-{
-"q": "Who played Nora Tyler Bing, Chandlers mother in Friends?",
-"options": [
-"Christina Pickles",
-"Betty White",
-"Morgan Fairchild",
-"Kathleen Turner"
-],
-"answer": "Morgan Fairchild",
-"d": "medium"
-},
-{
-"q": "In the TV show 'M*A*S*H', what was the nickname of Corporal Walter O'Reilly?",
-"options": [
-"Klinger",
-"Radar",
-"Sonar",
-"Sparky"
-],
-"answer": "Radar",
-"d": "medium"
-},
-{
-"q": "Cesar Romero played which iconic Batman villain from the 1960's TV show?",
-"options": [
-"The Joker",
-"The Riddler",
-"The Penguin",
-"The Hamburglar"
-],
-"answer": "The Joker",
-"d": "medium"
-},
-{
-"q": "What is the name of the planet that the Doctor from television series \"Doctor Who\" comes from?",
-"options": [
-"Gallifrey",
-"Mondas",
-"Tatooine",
-"Skaro"
-],
-"answer": "Gallifrey",
-"d": "medium"
-},
-{
-"q": "Which employee does Michael Scott run into with his car in an episode of The Office?",
-"options": [
-"Phyllis",
-"Oscar",
-"Meredith",
-"Stanley"
-],
-"answer": "Meredith",
-"d": "medium"
-},
-{
-"q": "In Star Trek, what is the name of Spock's father?",
-"options": [
-"Tuvok",
-"T'Pal",
-"Surak",
-"Sarek"
-],
-"answer": "Sarek",
-"d": "medium"
-},
-{
-"q": "What's Dr. Doofenshmirtz first name?",
-"options": [
-"Hans",
-"Heinz",
-"Heidi",
-"Hank"
-],
-"answer": "Heinz",
-"d": "medium"
-},
-{
-"q": "Which British writer wrote for both Doctor Who and Sherlock?",
-"options": [
-"Steven Moffatt",
-"William Shakespeare",
-"Chris Chibnall",
-"Russell T Davies"
-],
-"answer": "Steven Moffatt",
-"d": "medium"
-},
-{
-"q": "Who was Peyton going out with in the very first episode?",
-"options": [
-"Jake",
-"Nathan",
-"Lucas",
-"Whitey"
-],
-"answer": "Nathan",
-"d": "medium"
-},
-{
-"q": "Who was the winner of the 2016 WWE Royal Rumble?",
-"options": [
-"Santa Claus",
-"Roman Reigns",
-"Dean Ambrose",
-"Triple H"
-],
-"answer": "Triple H",
-"d": "medium"
-},
-{
-"q": "Dr. Daniel Jackson is a member of a secret military team that travels through space in which TV series?",
-"options": [
-"Stargate SG-1",
-"Quantum Leap",
-"Babylon 5",
-"Battlestar Galactica"
-],
-"answer": "Stargate SG-1",
-"d": "medium"
-},
-{
-"q": "When did Judge Judy first air on American television?",
-"options": [
-"1997",
-"1999",
-"1996",
-"1985"
-],
-"answer": "1996",
-"d": "medium"
-},
-{
-"q": "In which British seaside town was the BBC sitcom \"Fawlty Towers\" set?",
-"options": [
-"Torquay",
-"Skegness",
-"Brighton",
-"Paignton"
-],
-"answer": "Torquay",
-"d": "medium"
-},
-{
-"q": "What was Kels occupation in the Kath Kim TV series?",
-"options": [
-"Greengrocer",
-"Brain surgeon",
-"Butcher",
-"Baker"
-],
-"answer": "Butcher",
-"d": "medium"
-},
-{
-"q": "What game show host has a Black Belt in Martial Arts and studied under Chuck Norris?",
-"options": [
-"Alex Trebek",
-"Chuck Norris",
-"Bob Barker",
-"Pat Sajak"
-],
-"answer": "Bob Barker",
-"d": "medium"
-},
-{
-"q": "What was the last name of Chachi, the character from Happy Days, who eventually married Joanie Cunningham?",
-"options": [
-"Cunningham",
-"Malachi",
-"Fonzarelli",
-"Arcola"
-],
-"answer": "Arcola",
-"d": "medium"
-},
-{
-"q": "How many seasons did The Flintstones air?",
-"options": [
-"5",
-"20",
-"8",
-"6"
-],
-"answer": "6",
-"d": "medium"
-},
-{
-"q": "On the TV show Supernatural, Dean Winchesters most beloved possession is his automobile. What kind of vehicle does he drive?",
-"options": [
-"The Batmobile",
-"Chevrolet Impala",
-"Ford Mustang",
-"Dodge Charger"
-],
-"answer": "Chevrolet Impala",
-"d": "medium"
-},
-{
-"q": "When Jim Halpert has an interview with the company CEO on the TV show The Office, what comment does the CEO make about Jim?",
-"options": [
-"He needs an MBA to advance in the company.",
-"He makes a good impression on everyone he meets.",
-"He reminds me of myself.",
-"He has a firm handshake."
-],
-"answer": "He makes a good impression on everyone he meets.",
-"d": "medium"
-},
-{
-"q": "Which widowed TV mother travelled around in a colorful bus with her children Keith, Laurie, Danny, Christopher and Tracy?",
-"options": [
-"Morticia Addams",
-"Marion Cunningham",
-"Shirley Partridge",
-"Carol Brady"
-],
-"answer": "Shirley Partridge",
-"d": "medium"
-},
-{
-"q": "Which character was played by Dustin Diamond in the sitcom 'Saved by the Bell'?",
-"options": [
-"Zack Morris",
-"Mr. Belding",
-"Screech",
-"A.C. Slater"
-],
-"answer": "Screech",
-"d": "medium"
-},
-{
-"q": "Guy's Grocery Games is hosted by which presenter?",
-"options": [
-"Guy Fieri",
-"Guy Martin",
-"Bobby Flay",
-"Guy Ritchie"
-],
-"answer": "Guy Fieri",
-"d": "medium"
-},
-{
-"q": "What year was Netflix founded?",
-"options": [
-"1997",
-"1975",
-"1998",
-"1999"
-],
-"answer": "1997",
-"d": "medium"
-},
-{
-"q": "Which of the following actors portrayed the Ninth Doctor in the British television show \"Doctor Who\"?",
-"options": [
-"Tom Baker",
-"Christopher Eccleston",
-"Matt Smith",
-"David Tennant"
-],
-"answer": "Christopher Eccleston",
-"d": "medium"
-},
-{
-"q": "In TV series The Saint, what is the Saints actual name?",
-"options": [
-"Sebastian Cain",
-"Artemus Gordon",
-"Simon Templar",
-"Bruce Wayne"
-],
-"answer": "Simon Templar",
-"d": "medium"
-},
-{
-"q": "In the Sci-Fi television show Doctor Who, who plays the Tenth Doctor?",
-"options": [
-"Christopher Eccleston",
-"Matt Smith",
-"David Tennant",
-"Rowan Atkinson"
-],
-"answer": "David Tennant",
-"d": "medium"
-},
-{
-"q": "Grant Gustin plays which superhero on the CW show of the same name?",
-"options": [
-"Aquaman",
-"The Flash",
-"The Arrow",
-"The Atom"
-],
-"answer": "The Flash",
-"d": "medium"
-},
-{
-"q": "What was the name of the family featured in the TV comedy Bewitched?",
-"options": [
-"Stephens",
-"Munster",
-"Tate",
-"Kravitz"
-],
-"answer": "Stephens",
-"d": "medium"
-},
-{
-"q": "The \"Psycho\" series of videos on YouTube was created by which of the following?",
-"options": [
-"RiDGiD Films",
-"Billy Familia",
-"PewDiePie",
-"RiDGiD STUDiOS"
-],
-"answer": "RiDGiD STUDiOS",
-"d": "hard"
-},
-{
-"q": "What is the favorite band of Phineas and Ferbs parents on the popular animated TV series?",
-"options": [
-"Slamm",
-"The Beatles",
-"Love Handel",
-"The Bettys"
-],
-"answer": "Love Handel",
-"d": "hard"
-},
-{
-"q": "Which of the following awards do Matt Stone and Trey Parker NOT have?",
-"options": [
-"Tony",
-"Emmy",
-"Oscar",
-"Grammy"
-],
-"answer": "Oscar",
-"d": "hard"
-},
-{
-"q": "Which of these Nickelodeon game shows aired first?",
-"options": [
-"Finders Keepers",
-"Nick Arcade",
-"Nickelodeon Guts",
-"Double Dare"
-],
-"answer": "Double Dare",
-"d": "hard"
-},
-{
-"q": "What was the callsign of Commander William Adama in Battlestar Galactica (2004)?",
-"options": [
-"Starbuck",
-"Husker",
-"Apollo",
-"Crashdown"
-],
-"answer": "Husker",
-"d": "hard"
-},
-{
-"q": "Who played the role of Oliver Wendell Douglas on TV show, Green Acres?",
-"options": [
-"Eddie Albert",
-"Pat Buttram",
-"Mister Ed",
-"Buddy Ebsen"
-],
-"answer": "Eddie Albert",
-"d": "hard"
-},
-{
-"q": "Alan Reed is known for providing the voice of which character?",
-"options": [
-"Mickey Mouse",
-"Fred Flintstone",
-"Yogi Bear",
-"Barney Rubble"
-],
-"answer": "Fred Flintstone",
-"d": "hard"
-},
-{
-"q": "How many episodes of the animated show Top Cat were aired on television?",
-"options": [
-"30",
-"100",
-"52",
-"26"
-],
-"answer": "30",
-"d": "hard"
-},
-{
-"q": "How many seasons did \"Stargate SG-1\" have?",
-"options": [
-"10",
-"12",
-"3",
-"9"
-],
-"answer": "10",
-"d": "hard"
-},
-{
-"q": "Which actor was not a major character in TV Show Freaks and Geeks?",
-"options": [
-"James Franco",
-"Seth Rogen",
-"Jason Segel",
-"Jonah Hill"
-],
-"answer": "Jonah Hill",
-"d": "hard"
-},
-{
-"q": "What was the name of the woman with whom Captain Kirk had a 2-year relationship in the Star Trek series?",
-"options": [
-"Ruth",
-"Edith",
-"Lieutenant Uhura",
-"Anatonia"
-],
-"answer": "Anatonia",
-"d": "hard"
-},
-{
-"q": "What Days of Our Lives character choked on their own doughnut?",
-"options": [
-"Julie",
-"Stefano",
-"Marlena",
-"Alice"
-],
-"answer": "Alice",
-"d": "hard"
-}
-]
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "category": "Cartoons and TV",
+ "count": 452,
+ "questions": [
+  {
+   "q": "Which of the following actors portrayed the Ninth Doctor in the British television show \"Doctor Who\"?",
+   "options": [
+    "Tom Baker",
+    "Christopher Eccleston",
+    "Matt Smith",
+    "David Tennant"
+   ],
+   "answer": "Christopher Eccleston",
+   "d": "medium"
+  },
+  {
+   "q": "What color hat does Timmy, the main character of The Fairly OddParents, wear?",
+   "options": [
+    "Red",
+    "Rainbow",
+    "Pink",
+    "Purple"
+   ],
+   "answer": "Pink",
+   "d": "medium"
+  },
+  {
+   "q": "Superman is originally from which destroyed planet?",
+   "options": [
+    "Krypton",
+    "Tamaran",
+    "Mars",
+    "Oa"
+   ],
+   "answer": "Krypton",
+   "d": "easy"
+  },
+  {
+   "q": "What was the first song fictional character Hannah Montana ever sang?",
+   "options": [
+    "Best of Both Worlds",
+    "Nobody's Perfect",
+    "If We Were a Movie",
+    "The Best of Both"
+   ],
+   "answer": "Best of Both Worlds",
+   "d": "medium"
+  },
+  {
+   "q": "What job does Clark Kent do when he is not being Superman?",
+   "options": [
+    "Teacher",
+    "Reporter",
+    "Police officer",
+    "Doctor"
+   ],
+   "answer": "Reporter",
+   "d": "easy"
+  },
+  {
+   "q": "Who played Agent Fox Mulder in the TV sci-fi drama \"The X-Files\"?",
+   "options": [
+    "David Duchovny",
+    "Gillian Anderson",
+    "Robert Patrick",
+    "Mitch Pileggi"
+   ],
+   "answer": "David Duchovny",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the underwater town where SpongeBob lives?",
+   "options": [
+    "Atlantis Bay",
+    "Bikini Bottom",
+    "Sponge Harbour",
+    "Coral Cove"
+   ],
+   "answer": "Bikini Bottom",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon features an ogre, a donkey and a princess?",
+   "options": [
+    "Tangled",
+    "Frozen",
+    "Brave",
+    "Shrek"
+   ],
+   "answer": "Shrek",
+   "d": "easy"
+  },
+  {
+   "q": "In 'The Simpsons', what is the name of the local pub?",
+   "options": [
+    "Moe's Tavern",
+    "The Krusty Bar",
+    "Barney's",
+    "Duff Hall"
+   ],
+   "answer": "Moe's Tavern",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the cowboy toy in the Toy Story films?",
+   "options": [
+    "Sheriff Splinter",
+    "Rex",
+    "Woody",
+    "Buzz"
+   ],
+   "answer": "Woody",
+   "d": "easy"
+  },
+  {
+   "q": "Which famous line is associated with Spider-Man's Uncle Ben?",
+   "options": [
+    "Do what is right",
+    "Always look up",
+    "A hero never quits",
+    "With great power comes great responsibility"
+   ],
+   "answer": "With great power comes great responsibility",
+   "d": "easy"
+  },
+  {
+   "q": "Which British animation features a postman and his black-and-white cat?",
+   "options": [
+    "Postman Pat",
+    "Bob the Builder",
+    "Fireman Sam",
+    "Thomas"
+   ],
+   "answer": "Postman Pat",
+   "d": "easy"
+  },
+  {
+   "q": "Which bear from darkest Peru is famous for marmalade sandwiches?",
+   "options": [
+    "Baloo",
+    "Winnie the Pooh",
+    "Rupert",
+    "Paddington"
+   ],
+   "answer": "Paddington",
+   "d": "easy"
+  },
+  {
+   "q": "Which Simpson child is the school's star saxophone player?",
+   "options": [
+    "Bart",
+    "Maggie",
+    "Marge",
+    "Lisa"
+   ],
+   "answer": "Lisa",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney film features a wooden cowboy doll named Woody?",
+   "options": [
+    "Coco",
+    "Up",
+    "Toy Story",
+    "Cars"
+   ],
+   "answer": "Toy Story",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Batman's butler?",
+   "options": [
+    "Alfred",
+    "Wayne",
+    "Jarvis",
+    "Reginald"
+   ],
+   "answer": "Alfred",
+   "d": "easy"
+  },
+  {
+   "q": "Which superhero team includes Mr Fantastic, the Invisible Woman, the Human Torch and the Thing?",
+   "options": [
+    "The Fantastic Four",
+    "The Avengers",
+    "The Defenders",
+    "The Justice League"
+   ],
+   "answer": "The Fantastic Four",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the boy raised by wolves in The Jungle Book?",
+   "options": [
+    "Mowgli",
+    "Peter",
+    "Christopher",
+    "Tarzan"
+   ],
+   "answer": "Mowgli",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Clark Kent's reporter colleague and love interest?",
+   "options": [
+    "Jimmy Olsen",
+    "Cat Grant",
+    "Lana Lang",
+    "Lois Lane"
+   ],
+   "answer": "Lois Lane",
+   "d": "easy"
+  },
+  {
+   "q": "In Two and a Half Men, what is Alan Harper's son's name?",
+   "options": [
+    "Chuck",
+    "Jake",
+    "Charlie",
+    "Jack"
+   ],
+   "answer": "Jake",
+   "d": "medium"
+  },
+  {
+   "q": "What does Elsa create with her powers in Frozen?",
+   "options": [
+    "Plants",
+    "Wind",
+    "Ice and snow",
+    "Fire"
+   ],
+   "answer": "Ice and snow",
+   "d": "easy"
+  },
+  {
+   "q": "In TV series The Saint, what is the Saints actual name?",
+   "options": [
+    "Sebastian Cain",
+    "Artemus Gordon",
+    "Simon Templar",
+    "Bruce Wayne"
+   ],
+   "answer": "Simon Templar",
+   "d": "medium"
+  },
+  {
+   "q": "Which superhero is known as the Web-Slinger?",
+   "options": [
+    "Nightcrawler",
+    "Silk",
+    "Spider-Man",
+    "Daredevil"
+   ],
+   "answer": "Spider-Man",
+   "d": "easy"
+  },
+  {
+   "q": "Which Marvel writer and editor co-created many heroes and had cameos in the films?",
+   "options": [
+    "Stan Lee",
+    "Bob Kane",
+    "Jack Kirby",
+    "Frank Miller"
+   ],
+   "answer": "Stan Lee",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney dog is Mickey Mouse's pet and does not speak?",
+   "options": [
+    "Pluto",
+    "Goofy",
+    "Max",
+    "Bolt"
+   ],
+   "answer": "Pluto",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Homer Simpson's employer?",
+   "options": [
+    "Springfield Nuclear Power Plant",
+    "Duff Brewery",
+    "Burns Chemical",
+    "Springfield Steelworks"
+   ],
+   "answer": "Springfield Nuclear Power Plant",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon series features four turtles named after Renaissance artists?",
+   "options": [
+    "Biker Mice from Mars",
+    "Teenage Mutant Ninja Turtles",
+    "Battletoads",
+    "Street Sharks"
+   ],
+   "answer": "Teenage Mutant Ninja Turtles",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Mickey Mouse?",
+   "options": [
+    "A rat",
+    "A squirrel",
+    "A mouse",
+    "A hamster"
+   ],
+   "answer": "A mouse",
+   "d": "easy"
+  },
+  {
+   "q": "On the TV show Supernatural, Dean Winchesters most beloved possession is his automobile. What kind of vehicle does he drive?",
+   "options": [
+    "The Batmobile",
+    "Chevrolet Impala",
+    "Ford Mustang",
+    "Dodge Charger"
+   ],
+   "answer": "Chevrolet Impala",
+   "d": "medium"
+  },
+  {
+   "q": "What kind of creature is the Pokemon Charmander in the anime?",
+   "options": [
+    "A mouse",
+    "A turtle",
+    "A bird",
+    "A lizard"
+   ],
+   "answer": "A lizard",
+   "d": "easy"
+  },
+  {
+   "q": "In Toy Story, what is Buzz Lightyear's catchphrase?",
+   "options": [
+    "You've got a friend in me",
+    "To infinity and beyond",
+    "There's a snake in my boot",
+    "Reach for the stars"
+   ],
+   "answer": "To infinity and beyond",
+   "d": "easy"
+  },
+  {
+   "q": "What does Elmer J. Fudd usually hunt in the Looney Tunes animated series?",
+   "options": [
+    "Rabbits",
+    "Foxes",
+    "Deer",
+    "Ducks"
+   ],
+   "answer": "Rabbits",
+   "d": "easy"
+  },
+  {
+   "q": "Which superhero wears an iron suit that lets him fly?",
+   "options": [
+    "Aquaman",
+    "The Flash",
+    "Superman",
+    "Iron Man"
+   ],
+   "answer": "Iron Man",
+   "d": "easy"
+  },
+  {
+   "q": "Which bouncy striped character is a friend of Winnie the Pooh?",
+   "options": [
+    "Roo",
+    "Eeyore",
+    "Tigger",
+    "Rabbit"
+   ],
+   "answer": "Tigger",
+   "d": "easy"
+  },
+  {
+   "q": "In the TV show \"Cheers\", Sam Malone was a former relief pitcher for which baseball team?",
+   "options": [
+    "Boston Red Sox",
+    "Boston Braves",
+    "Chicago Cubs",
+    "New York Yankees"
+   ],
+   "answer": "Boston Red Sox",
+   "d": "medium"
+  },
+  {
+   "q": "In the television show Breaking Bad, what is the street name of Walter and Jesse's notorious product?",
+   "options": [
+    "Blue Ice",
+    "Smurf Dust",
+    "Blue Sky",
+    "Heisenberg Blue"
+   ],
+   "answer": "Blue Sky",
+   "d": "medium"
+  },
+  {
+   "q": "Which X-Men character has retractable claws and a healing factor?",
+   "options": [
+    "Nightcrawler",
+    "Wolverine",
+    "Beast",
+    "Cyclops"
+   ],
+   "answer": "Wolverine",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Simba in The Lion King?",
+   "options": [
+    "A tiger",
+    "A leopard",
+    "A lion",
+    "A cheetah"
+   ],
+   "answer": "A lion",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the mad scientist who owns Planet Express in Futurama?",
+   "options": [
+    "Ogden Wernstrom",
+    "Hubert J. Farnsworth",
+    "Rick Sanchez",
+    "Hubert Zoidberg"
+   ],
+   "answer": "Hubert J. Farnsworth",
+   "d": "medium"
+  },
+  {
+   "q": "What colour is the cartoon character SpongeBob SquarePants?",
+   "options": [
+    "Green",
+    "Orange",
+    "Yellow",
+    "Beige, like a real sponge"
+   ],
+   "answer": "Yellow",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Jerry in Tom and Jerry?",
+   "options": [
+    "A hamster",
+    "A mouse",
+    "A cat",
+    "A rabbit"
+   ],
+   "answer": "A mouse",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the star of the AMC series Breaking Bad?",
+   "options": [
+    "Walter White",
+    "Saul Goodman",
+    "Jesse Pinkman",
+    "Skyler White"
+   ],
+   "answer": "Walter White",
+   "d": "easy"
+  },
+  {
+   "q": "In The Flintstones, what is the name of Fred and Wilma's daughter?",
+   "options": [
+    "Dino",
+    "Bamm-Bamm",
+    "Rubble",
+    "Pebbles"
+   ],
+   "answer": "Pebbles",
+   "d": "easy"
+  },
+  {
+   "q": "Which actor portrays \"Walter White\" in the series \"Breaking Bad\"?",
+   "options": [
+    "Bob Odenkirk",
+    "Andrew Lincoln",
+    "Bryan Cranston",
+    "Aaron Paul"
+   ],
+   "answer": "Bryan Cranston",
+   "d": "easy"
+  },
+  {
+   "q": "Which 'Family Guy' character is the football-headed baby with a British accent?",
+   "options": [
+    "Meg",
+    "Stewie",
+    "Chris",
+    "Brian"
+   ],
+   "answer": "Stewie",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is SpongeBob's best friend Patrick?",
+   "options": [
+    "Blue",
+    "Green",
+    "Pink",
+    "Orange"
+   ],
+   "answer": "Pink",
+   "d": "easy"
+  },
+  {
+   "q": "In Cinderella, what does she leave behind at the ball?",
+   "options": [
+    "A glass slipper",
+    "A glove",
+    "A necklace",
+    "A ribbon"
+   ],
+   "answer": "A glass slipper",
+   "d": "easy"
+  },
+  {
+   "q": "Which of the four Teenage Mutant Ninja Turtles wore the purple mask?",
+   "options": [
+    "Donatello",
+    "Leonardo",
+    "Michelangelo",
+    "Splinter"
+   ],
+   "answer": "Donatello",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon character eats spinach to gain instant strength?",
+   "options": [
+    "Popeye",
+    "Bluto",
+    "Wimpy",
+    "Olive Oyl"
+   ],
+   "answer": "Popeye",
+   "d": "easy"
+  },
+  {
+   "q": "In the Pokemon anime, what does Ash want to become?",
+   "options": [
+    "A Professor",
+    "A Gym Leader",
+    "A Nurse",
+    "A Pokemon Master"
+   ],
+   "answer": "A Pokemon Master",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the talking dog in Family Guy?",
+   "options": [
+    "Chris",
+    "Rupert",
+    "Stewie",
+    "Brian"
+   ],
+   "answer": "Brian",
+   "d": "easy"
+  },
+  {
+   "q": "In AMC's TV Series \"The Walking Dead\" what are \"Zombies\" referred to as?",
+   "options": [
+    "Draggers",
+    "Walkers",
+    "Creepers",
+    "Munchers"
+   ],
+   "answer": "Walkers",
+   "d": "easy"
+  },
+  {
+   "q": "What is the setting of the show \"Parks and Recreation\"?",
+   "options": [
+    "Eagleton, Indiana",
+    "Pawnee, Indiana",
+    "Indianapolis, Indiana",
+    "Springfield, USA"
+   ],
+   "answer": "Pawnee, Indiana",
+   "d": "medium"
+  },
+  {
+   "q": "What NBC sitcom once saw two of its characters try to pitch NBC on a sitcom about nothing?",
+   "options": [
+    "Frasier",
+    "Friends",
+    "Seinfeld",
+    "Curb Your Enthusiasm"
+   ],
+   "answer": "Seinfeld",
+   "d": "easy"
+  },
+  {
+   "q": "What unforgettable question did Jay Leno ask Hugh Grant on July 10, 1995 on the The Tonight Show in reference to Hughs arrest for being with a prostitute?",
+   "options": [
+    "Don't you have a wife at home?",
+    "And how was she?",
+    "Have you lost your mind?",
+    "What the hell were you thinking?"
+   ],
+   "answer": "What the hell were you thinking?",
+   "d": "medium"
+  },
+  {
+   "q": "Which fictional city does Batman protect?",
+   "options": [
+    "Coast City",
+    "Gotham City",
+    "Central City",
+    "Metropolis"
+   ],
+   "answer": "Gotham City",
+   "d": "easy"
+  },
+  {
+   "q": "Who usually turns out to be the monster in Scooby-Doo?",
+   "options": [
+    "A person in a costume",
+    "An alien",
+    "A robot",
+    "A real ghost"
+   ],
+   "answer": "A person in a costume",
+   "d": "easy"
+  },
+  {
+   "q": "Which Looney Tunes character is a small yellow canary?",
+   "options": [
+    "Tweety",
+    "Woodstock",
+    "Chirpy",
+    "Sunny"
+   ],
+   "answer": "Tweety",
+   "d": "easy"
+  },
+  {
+   "q": "What does Batman drive?",
+   "options": [
+    "The Batplane only",
+    "A tractor",
+    "A taxi",
+    "The Batmobile"
+   ],
+   "answer": "The Batmobile",
+   "d": "easy"
+  },
+  {
+   "q": "Which comic book hero's costume is blue and red with a spider on the chest?",
+   "options": [
+    "Spider-Man",
+    "Captain America",
+    "Nightwing",
+    "Superman"
+   ],
+   "answer": "Spider-Man",
+   "d": "easy"
+  },
+  {
+   "q": "In Winnie the Pooh, what is Pooh Bear's favourite food?",
+   "options": [
+    "Porridge",
+    "Berries",
+    "Deep-fried acorns",
+    "Honey"
+   ],
+   "answer": "Honey",
+   "d": "easy"
+  },
+  {
+   "q": "The HBO series \"Game of Thrones\" is based on which series of books?",
+   "options": [
+    "A Clash of Kings",
+    "The Wheel of Time",
+    "The Notebook",
+    "A Song of Ice and Fire"
+   ],
+   "answer": "A Song of Ice and Fire",
+   "d": "easy"
+  },
+  {
+   "q": "In The Jungle Book, what kind of animal is Baloo?",
+   "options": [
+    "A tiger",
+    "A panther",
+    "A bear",
+    "An orangutan"
+   ],
+   "answer": "A bear",
+   "d": "easy"
+  },
+  {
+   "q": "Which anime series follows a boy called Ash and his Pikachu?",
+   "options": [
+    "Beyblade",
+    "Pokemon",
+    "Digimon",
+    "Yu-Gi-Oh"
+   ],
+   "answer": "Pokemon",
+   "d": "easy"
+  },
+  {
+   "q": "What kind of toy is Hobbes in Calvin and Hobbes?",
+   "options": [
+    "A stuffed bear",
+    "A toy robot",
+    "A stuffed tiger",
+    "A rag doll"
+   ],
+   "answer": "A stuffed tiger",
+   "d": "easy"
+  },
+  {
+   "q": "Which track by \"Massive Attack\" is used for the theme of \"House\"?",
+   "options": [
+    "Greensleeves",
+    "Unfinished Sympathy",
+    "Teardrop",
+    "Angel"
+   ],
+   "answer": "Teardrop",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the planet that the Doctor from television series \"Doctor Who\" comes from?",
+   "options": [
+    "Gallifrey",
+    "Mondas",
+    "Tatooine",
+    "Skaro"
+   ],
+   "answer": "Gallifrey",
+   "d": "medium"
+  },
+  {
+   "q": "What is Superman's name on Earth?",
+   "options": [
+    "Peter Parker",
+    "Barry Allen",
+    "Bruce Wayne",
+    "Clark Kent"
+   ],
+   "answer": "Clark Kent",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is the skin of the characters in The Simpsons?",
+   "options": [
+    "Pink",
+    "Green",
+    "Blue",
+    "Yellow"
+   ],
+   "answer": "Yellow",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is Batman's costume mostly?",
+   "options": [
+    "White and silver",
+    "Red and blue",
+    "Black and grey",
+    "Green and gold"
+   ],
+   "answer": "Black and grey",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian cartoon about a dog family became a worldwide hit for the ABC?",
+   "options": [
+    "Bluey",
+    "The Magic Pudding",
+    "Blinky Bill",
+    "Dot and the Kangaroo"
+   ],
+   "answer": "Bluey",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the yellow electric mouse-like Pokemon?",
+   "options": [
+    "Pikachu",
+    "Squirtle",
+    "Charizard",
+    "Zappy McShock"
+   ],
+   "answer": "Pikachu",
+   "d": "easy"
+  },
+  {
+   "q": "In Pinocchio, what happens when he tells a lie?",
+   "options": [
+    "His ears grow",
+    "His nose grows",
+    "He shrinks",
+    "He turns green"
+   ],
+   "answer": "His nose grows",
+   "d": "easy"
+  },
+  {
+   "q": "What is the surname of Batman's loyal butler Alfred?",
+   "options": [
+    "Peabody",
+    "Prescott",
+    "Pemberton",
+    "Pennyworth"
+   ],
+   "answer": "Pennyworth",
+   "d": "easy"
+  },
+  {
+   "q": "Which Looney Tunes character ends cartoons with 'That's all, folks!'",
+   "options": [
+    "Bugs Bunny",
+    "Yosemite Sam",
+    "Porky Pig",
+    "Sylvester"
+   ],
+   "answer": "Porky Pig",
+   "d": "easy"
+  },
+  {
+   "q": "Who acts as Pinocchio's conscience?",
+   "options": [
+    "Figaro",
+    "Geppetto",
+    "Timothy Mouse",
+    "Jiminy Cricket"
+   ],
+   "answer": "Jiminy Cricket",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon bear steals picnic baskets in Jellystone Park?",
+   "options": [
+    "Paddington",
+    "Baloo",
+    "Yogi Bear",
+    "Fozzie"
+   ],
+   "answer": "Yogi Bear",
+   "d": "easy"
+  },
+  {
+   "q": "In Star Trek: The Next Generation, what is the name of Data's cat?",
+   "options": [
+    "Data Jr.",
+    "Whiskers",
+    "Spot",
+    "Riker"
+   ],
+   "answer": "Spot",
+   "d": "medium"
+  },
+  {
+   "q": "What does Tweety say when he spots the cat?",
+   "options": [
+    "Look out below",
+    "Here comes trouble",
+    "I tawt I taw a puddy tat",
+    "Not again"
+   ],
+   "answer": "I tawt I taw a puddy tat",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon character is a purple dinosaur who sings about love?",
+   "options": [
+    "Dino",
+    "Grimlock",
+    "Rex",
+    "Barney"
+   ],
+   "answer": "Barney",
+   "d": "easy"
+  },
+  {
+   "q": "In the Pixar film Ratatouille, what animal wants to be a chef?",
+   "options": [
+    "A cat",
+    "A rat",
+    "A raccoon",
+    "A mouse"
+   ],
+   "answer": "A rat",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Yogi Bear's small bow-tied companion?",
+   "options": [
+    "Ranger Smith",
+    "Boo-Boo",
+    "Snagglepuss",
+    "Cindy"
+   ],
+   "answer": "Boo-Boo",
+   "d": "easy"
+  },
+  {
+   "q": "Which member of the Scooby-Doo gang wears an orange jumper and is always hungry?",
+   "options": [
+    "Daphne",
+    "Velma",
+    "Shaggy",
+    "Fred"
+   ],
+   "answer": "Shaggy",
+   "d": "easy"
+  },
+  {
+   "q": "In Frozen, which sister has ice powers?",
+   "options": [
+    "Both",
+    "Elsa",
+    "Neither",
+    "Anna"
+   ],
+   "answer": "Elsa",
+   "d": "easy"
+  },
+  {
+   "q": "What creature bit Peter Parker and gave him his powers?",
+   "options": [
+    "A radioactive spider",
+    "A mutated scorpion",
+    "A cosmic beetle",
+    "A gamma-charged ant"
+   ],
+   "answer": "A radioactive spider",
+   "d": "easy"
+  },
+  {
+   "q": "What does Popeye eat from a tin?",
+   "options": [
+    "Spinach",
+    "Peaches",
+    "Baked beans",
+    "Tuna"
+   ],
+   "answer": "Spinach",
+   "d": "easy"
+  },
+  {
+   "q": "Dr. Daniel Jackson is a member of a secret military team that travels through space in which TV series?",
+   "options": [
+    "Stargate SG-1",
+    "Quantum Leap",
+    "Babylon 5",
+    "Battlestar Galactica"
+   ],
+   "answer": "Stargate SG-1",
+   "d": "medium"
+  },
+  {
+   "q": "Which Marvel character can shrink to the size of an insect?",
+   "options": [
+    "Falcon",
+    "Hawkeye",
+    "Ant-Man",
+    "Vision"
+   ],
+   "answer": "Ant-Man",
+   "d": "easy"
+  },
+  {
+   "q": "What is Bart Simpson's catchphrase when he is caught?",
+   "options": [
+    "Give me a break",
+    "That's the way",
+    "Eat my shorts",
+    "No worries"
+   ],
+   "answer": "Eat my shorts",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Japanese word for comics, used worldwide?",
+   "options": [
+    "Otaku",
+    "Anime",
+    "Kanji",
+    "Manga"
+   ],
+   "answer": "Manga",
+   "d": "easy"
+  },
+  {
+   "q": "Which country produces anime?",
+   "options": [
+    "China",
+    "South Korea",
+    "Japan",
+    "Thailand"
+   ],
+   "answer": "Japan",
+   "d": "easy"
+  },
+  {
+   "q": "In the Pixar film Cars, what is the red race car called?",
+   "options": [
+    "Doc Hudson",
+    "Lightning McQueen",
+    "Sally",
+    "Mater"
+   ],
+   "answer": "Lightning McQueen",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Garfield's owner?",
+   "options": [
+    "Liz",
+    "Nermal",
+    "Odie",
+    "Jon Arbuckle"
+   ],
+   "answer": "Jon Arbuckle",
+   "d": "easy"
+  },
+  {
+   "q": "On November 22, 1963 which president did Walter Cronkite announce had died?",
+   "options": [
+    "Truman",
+    "Kennedy",
+    "Eisenhower",
+    "Lincoln"
+   ],
+   "answer": "Kennedy",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the fast bird that Wile E. Coyote is always chasing?",
+   "options": [
+    "Speedy McFeathers",
+    "Woody",
+    "Tweety",
+    "Road Runner"
+   ],
+   "answer": "Road Runner",
+   "d": "easy"
+  },
+  {
+   "q": "In the Doctor Who universe, how many times can a time lord normally regenerate?",
+   "options": [
+    "10",
+    "13",
+    "12",
+    "Infinite"
+   ],
+   "answer": "12",
+   "d": "medium"
+  },
+  {
+   "q": "Who is Mickey Mouse's girlfriend?",
+   "options": [
+    "Clarabelle",
+    "Daisy Duck",
+    "Penny",
+    "Minnie Mouse"
+   ],
+   "answer": "Minnie Mouse",
+   "d": "easy"
+  },
+  {
+   "q": "At which university do \"The Big Bang Theory\" characters Mr. Wolowitz and Drs. Cooper, Hofstadter and Koothrappali work?",
+   "options": [
+    "Caltech",
+    "Stanford",
+    "Hogwarts",
+    "UCLA"
+   ],
+   "answer": "Caltech",
+   "d": "medium"
+  },
+  {
+   "q": "What is Tigger famous for doing?",
+   "options": [
+    "Digging",
+    "Sleeping",
+    "Swimming",
+    "Bouncing"
+   ],
+   "answer": "Bouncing",
+   "d": "easy"
+  },
+  {
+   "q": "Who played the role of Oliver Wendell Douglas on TV show, Green Acres?",
+   "options": [
+    "Eddie Albert",
+    "Pat Buttram",
+    "Mister Ed",
+    "Buddy Ebsen"
+   ],
+   "answer": "Eddie Albert",
+   "d": "hard"
+  },
+  {
+   "q": "Which cartoon film features a boy who never grows up?",
+   "options": [
+    "Bambi",
+    "Dumbo",
+    "Peter Pan",
+    "Pinocchio"
+   ],
+   "answer": "Peter Pan",
+   "d": "easy"
+  },
+  {
+   "q": "Which stuttering Looney Tunes pig closes cartoons with 'That's all folks'?",
+   "options": [
+    "Porky Pig",
+    "Petunia Pig",
+    "Hamton",
+    "Pumbaa"
+   ],
+   "answer": "Porky Pig",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney film features a boy raised by gorillas in the jungle?",
+   "options": [
+    "George of the Jungle",
+    "Brother Bear",
+    "Tarzan",
+    "The Jungle Book"
+   ],
+   "answer": "Tarzan",
+   "d": "easy"
+  },
+  {
+   "q": "Which Batman character began as the Joker's psychiatrist?",
+   "options": [
+    "Poison Ivy",
+    "Harley Quinn",
+    "Batgirl",
+    "Catwoman"
+   ],
+   "answer": "Harley Quinn",
+   "d": "easy"
+  },
+  {
+   "q": "Who was the original voice actor of Shaggy Rogers in Scooby-Doo?",
+   "options": [
+    "Matthew Lillard",
+    "Don Messick",
+    "Casey Kasem",
+    "Frank Welker"
+   ],
+   "answer": "Casey Kasem",
+   "d": "medium"
+  },
+  {
+   "q": "How long was Ken Jennings' win streak on Jeopardy?",
+   "options": [
+    "1000",
+    "75",
+    "74",
+    "68"
+   ],
+   "answer": "74",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the signal that calls Batman to duty?",
+   "options": [
+    "The Gotham Light",
+    "The Dark Flare",
+    "The Night Beacon",
+    "The Bat-Signal"
+   ],
+   "answer": "The Bat-Signal",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Thor's mischievous adopted brother?",
+   "options": [
+    "Balder",
+    "Heimdall",
+    "Loki",
+    "Odin"
+   ],
+   "answer": "Loki",
+   "d": "easy"
+  },
+  {
+   "q": "Which cat is always chasing Tweety in Looney Tunes?",
+   "options": [
+    "Felix",
+    "Sylvester",
+    "Tom",
+    "Top Cat"
+   ],
+   "answer": "Sylvester",
+   "d": "easy"
+  },
+  {
+   "q": "Which meal is Garfield most famous for eating?",
+   "options": [
+    "Fish and chips",
+    "Lasagne",
+    "Roast chicken",
+    "Pizza"
+   ],
+   "answer": "Lasagne",
+   "d": "easy"
+  },
+  {
+   "q": "In The Simpsons, what colour is Marge Simpson's hair?",
+   "options": [
+    "Green",
+    "Blue",
+    "Radioactive from the plant",
+    "Purple"
+   ],
+   "answer": "Blue",
+   "d": "easy"
+  },
+  {
+   "q": "Which Ninja Turtle wears an orange mask?",
+   "options": [
+    "Michelangelo",
+    "Leonardo",
+    "Raphael",
+    "Donatello"
+   ],
+   "answer": "Michelangelo",
+   "d": "easy"
+  },
+  {
+   "q": "In Shrek, what is the name of the princess?",
+   "options": [
+    "Belle",
+    "Fiona",
+    "Odette",
+    "Aurora"
+   ],
+   "answer": "Fiona",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Garfield?",
+   "options": [
+    "A fox",
+    "A cat",
+    "A dog",
+    "A lion"
+   ],
+   "answer": "A cat",
+   "d": "easy"
+  },
+  {
+   "q": "Which puppet show features Kermit the Frog and Miss Piggy?",
+   "options": [
+    "Sesame Street",
+    "The Muppet Show",
+    "Fraggle Rock",
+    "Rainbow"
+   ],
+   "answer": "The Muppet Show",
+   "d": "easy"
+  },
+  {
+   "q": "Which Roman leader appears as a character in the Asterix books?",
+   "options": [
+    "Nero",
+    "Hadrian",
+    "Julius Caesar",
+    "Augustus"
+   ],
+   "answer": "Julius Caesar",
+   "d": "easy"
+  },
+  {
+   "q": "In Peter Pan, which island is the story set on?",
+   "options": [
+    "Skull Island",
+    "Treasure Island",
+    "Hook Island",
+    "Neverland"
+   ],
+   "answer": "Neverland",
+   "d": "easy"
+  },
+  {
+   "q": "In Shrek 2, which sword-fighting cat joins the story?",
+   "options": [
+    "Felix",
+    "Sylvester",
+    "Puss in Boots",
+    "Tom"
+   ],
+   "answer": "Puss in Boots",
+   "d": "easy"
+  },
+  {
+   "q": "Which fictional city does Superman protect?",
+   "options": [
+    "Star City",
+    "Gotham City",
+    "Metropolis",
+    "Central City"
+   ],
+   "answer": "Metropolis",
+   "d": "easy"
+  },
+  {
+   "q": "Which comic and film character is a wall-crawling hero also known as your friendly neighbourhood hero?",
+   "options": [
+    "Batman",
+    "Daredevil",
+    "Nightwing",
+    "Spider-Man"
+   ],
+   "answer": "Spider-Man",
+   "d": "easy"
+  },
+  {
+   "q": "The fictional movie 'Rochelle, Rochelle' features in which sitcom?",
+   "options": [
+    "Curb Your Enthusiasm",
+    "Friends",
+    "Seinfeld",
+    "Gilligan's Island"
+   ],
+   "answer": "Seinfeld",
+   "d": "medium"
+  },
+  {
+   "q": "In The Simpsons, what is the name of Homer and Marge's baby daughter?",
+   "options": [
+    "Maggie",
+    "Lisa",
+    "Patty",
+    "Baby Boop"
+   ],
+   "answer": "Maggie",
+   "d": "easy"
+  },
+  {
+   "q": "What is the surname of the character Daryl in AMC's show The Walking Dead?",
+   "options": [
+    "Dixon",
+    "Dixson",
+    "Crossbow",
+    "Grimes"
+   ],
+   "answer": "Dixon",
+   "d": "easy"
+  },
+  {
+   "q": "What kind of animal is Pluto in the Disney cartoons?",
+   "options": [
+    "Mouse",
+    "Cat",
+    "Dog",
+    "A very confused duck"
+   ],
+   "answer": "Dog",
+   "d": "easy"
+  },
+  {
+   "q": "Cesar Romero played which iconic Batman villain from the 1960's TV show?",
+   "options": [
+    "The Joker",
+    "The Riddler",
+    "The Penguin",
+    "The Hamburglar"
+   ],
+   "answer": "The Joker",
+   "d": "medium"
+  },
+  {
+   "q": "Which Japanese cartoon character is a small yellow creature with a red-and-white ball associated with it?",
+   "options": [
+    "Kirby",
+    "Chi",
+    "Pikachu",
+    "Jibanyan"
+   ],
+   "answer": "Pikachu",
+   "d": "easy"
+  },
+  {
+   "q": "What is the famous burger sold at the Krusty Krab?",
+   "options": [
+    "The Bottom Burger",
+    "The Krabby Patty",
+    "The Sea Stack",
+    "The Chum Burger"
+   ],
+   "answer": "The Krabby Patty",
+   "d": "easy"
+  },
+  {
+   "q": "In 101 Dalmatians, what is the villain's name?",
+   "options": [
+    "Madame Medusa",
+    "Maleficent",
+    "Ursula",
+    "Cruella de Vil"
+   ],
+   "answer": "Cruella de Vil",
+   "d": "easy"
+  },
+  {
+   "q": "Alan Reed is known for providing the voice of which character?",
+   "options": [
+    "Mickey Mouse",
+    "Fred Flintstone",
+    "Yogi Bear",
+    "Barney Rubble"
+   ],
+   "answer": "Fred Flintstone",
+   "d": "hard"
+  },
+  {
+   "q": "What sort of fruit is SpongeBob SquarePants' house?",
+   "options": [
+    "A mango",
+    "A coconut",
+    "A pineapple",
+    "A watermelon"
+   ],
+   "answer": "A pineapple",
+   "d": "easy"
+  },
+  {
+   "q": "What does Bart Simpson ride around Springfield on?",
+   "options": [
+    "A motorbike",
+    "A pony",
+    "A scooter",
+    "A skateboard"
+   ],
+   "answer": "A skateboard",
+   "d": "easy"
+  },
+  {
+   "q": "In the Pixar film Inside Out, where do the emotions live?",
+   "options": [
+    "In a factory",
+    "Inside a girl's mind",
+    "In a school",
+    "On an island"
+   ],
+   "answer": "Inside a girl's mind",
+   "d": "easy"
+  },
+  {
+   "q": "Which day of the week does Garfield famously hate?",
+   "options": [
+    "Friday",
+    "Sunday",
+    "Monday",
+    "Wednesday"
+   ],
+   "answer": "Monday",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the leader of the Smurfs?",
+   "options": [
+    "Grandpa Smurf",
+    "Smurfette",
+    "Brainy Smurf",
+    "Papa Smurf"
+   ],
+   "answer": "Papa Smurf",
+   "d": "easy"
+  },
+  {
+   "q": "Who co-created many Marvel heroes and made cameo appearances in the films?",
+   "options": [
+    "Bob Kane",
+    "Stan Lee",
+    "Alan Moore",
+    "Frank Miller"
+   ],
+   "answer": "Stan Lee",
+   "d": "easy"
+  },
+  {
+   "q": "Which Batman villain has green hair and a permanent grin?",
+   "options": [
+    "Two-Face",
+    "The Joker",
+    "The Riddler",
+    "The Penguin"
+   ],
+   "answer": "The Joker",
+   "d": "easy"
+  },
+  {
+   "q": "In Star Trek, what is the name of Spock's father?",
+   "options": [
+    "Tuvok",
+    "T'Pal",
+    "Surak",
+    "Sarek"
+   ],
+   "answer": "Sarek",
+   "d": "medium"
+  },
+  {
+   "q": "Which cartoon character wears a sailor suit and has huge forearms?",
+   "options": [
+    "Barnacle Bill",
+    "Sinbad",
+    "Popeye",
+    "Donald Duck"
+   ],
+   "answer": "Popeye",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the Ninja Turtles' rat master?",
+   "options": [
+    "Casey",
+    "Splinter",
+    "Krang",
+    "Shredder"
+   ],
+   "answer": "Splinter",
+   "d": "easy"
+  },
+  {
+   "q": "In Peter Pan, what is the fairy called?",
+   "options": [
+    "Silvermist",
+    "Periwinkle",
+    "Wendy",
+    "Tinker Bell"
+   ],
+   "answer": "Tinker Bell",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Snoopy?",
+   "options": [
+    "A cat",
+    "A bear",
+    "A rabbit",
+    "A dog"
+   ],
+   "answer": "A dog",
+   "d": "easy"
+  },
+  {
+   "q": "Which Japanese monster first appeared in a 1954 film and inspired many cartoons?",
+   "options": [
+    "Mothra",
+    "Gamera",
+    "Rodan",
+    "Godzilla"
+   ],
+   "answer": "Godzilla",
+   "d": "easy"
+  },
+  {
+   "q": "In Desperate Housewives season one, how many children does Lynette have?",
+   "options": [
+    "five",
+    "two",
+    "four",
+    "a dozen"
+   ],
+   "answer": "four",
+   "d": "medium"
+  },
+  {
+   "q": "What was the last name of Chachi, the character from Happy Days, who eventually married Joanie Cunningham?",
+   "options": [
+    "Cunningham",
+    "Malachi",
+    "Fonzarelli",
+    "Arcola"
+   ],
+   "answer": "Arcola",
+   "d": "medium"
+  },
+  {
+   "q": "What is the gadget which insures that no one can overhear the discussions in the Chiefs office on the Get Smart TV show?",
+   "options": [
+    "The Cone of Shame",
+    "Sound Dome",
+    "Privacy Shield",
+    "Cone of Silence"
+   ],
+   "answer": "Cone of Silence",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the \"Flash\" and \"Arrow\" spinoff featuring a team of characters that have appeared on both shows?",
+   "options": [
+    "Legends of Tomorrow",
+    "Titans",
+    "Legends of the Hidden Temple",
+    "Heroes of Tomorrow"
+   ],
+   "answer": "Legends of Tomorrow",
+   "d": "medium"
+  },
+  {
+   "q": "Which brand of beer does Homer Simpson drink?",
+   "options": [
+    "Duff",
+    "Skittlebrau",
+    "Fudd",
+    "Buzz"
+   ],
+   "answer": "Duff",
+   "d": "easy"
+  },
+  {
+   "q": "Which Scooby-Doo character wears glasses and always loses them?",
+   "options": [
+    "Fred",
+    "Shaggy",
+    "Velma",
+    "Daphne"
+   ],
+   "answer": "Velma",
+   "d": "easy"
+  },
+  {
+   "q": "Which anime features a boy named Ash and a yellow electric creature?",
+   "options": [
+    "Digimon",
+    "Beyblade",
+    "Pokemon",
+    "Yu-Gi-Oh!"
+   ],
+   "answer": "Pokemon",
+   "d": "easy"
+  },
+  {
+   "q": "In Tom and Jerry, what type of animal is Jerry?",
+   "options": [
+    "Rat",
+    "A very small elephant",
+    "Mouse",
+    "Hamster"
+   ],
+   "answer": "Mouse",
+   "d": "easy"
+  },
+  {
+   "q": "What was the name of the teenage witch played by Melisa Joan Hart who lives with her witch aunts Hilda and Zelda?",
+   "options": [
+    "Wanda",
+    "Hermione",
+    "Sabrina",
+    "Samantha"
+   ],
+   "answer": "Sabrina",
+   "d": "medium"
+  },
+  {
+   "q": "Which Looney Tunes character has a lisp and is a black duck?",
+   "options": [
+    "Donald Duck",
+    "Daffy Duck",
+    "Plucky Duck",
+    "Count Duckula"
+   ],
+   "answer": "Daffy Duck",
+   "d": "easy"
+  },
+  {
+   "q": "What is Bugs Bunny's famous catchphrase question?",
+   "options": [
+    "What's up, Doc?",
+    "Where's the carrots, mate?",
+    "That's all folks",
+    "How you doin?"
+   ],
+   "answer": "What's up, Doc?",
+   "d": "easy"
+  },
+  {
+   "q": "What is the favorite band of Phineas and Ferbs parents on the popular animated TV series?",
+   "options": [
+    "Slamm",
+    "The Beatles",
+    "Love Handel",
+    "The Bettys"
+   ],
+   "answer": "Love Handel",
+   "d": "hard"
+  },
+  {
+   "q": "In Aladdin, what does rubbing the lamp produce?",
+   "options": [
+    "A parrot",
+    "A genie",
+    "A tiger",
+    "A carpet"
+   ],
+   "answer": "A genie",
+   "d": "easy"
+  },
+  {
+   "q": "In season one of the Netflix political drama \"House of Cards\", what government position does Frank Underwood hold?",
+   "options": [
+    "House Majority Whip",
+    "House Majority Leader",
+    "Secretary of State",
+    "Vice President"
+   ],
+   "answer": "House Majority Whip",
+   "d": "medium"
+  },
+  {
+   "q": "When did the TV show Lost premier?",
+   "options": [
+    "August 2004",
+    "September 1994",
+    "October 2004",
+    "September 2004"
+   ],
+   "answer": "September 2004",
+   "d": "medium"
+  },
+  {
+   "q": "In The Lion King, what is the meerkat called?",
+   "options": [
+    "Pumbaa",
+    "Timon",
+    "Zazu",
+    "Rafiki"
+   ],
+   "answer": "Timon",
+   "d": "easy"
+  },
+  {
+   "q": "What was the favorite after-school hangout for the students in Happy Days?",
+   "options": [
+    "Al's",
+    "The Krusty Burger",
+    "Arnolds",
+    "Rosie's"
+   ],
+   "answer": "Arnolds",
+   "d": "medium"
+  },
+  {
+   "q": "What fruit does Spongebob live in?",
+   "options": [
+    "Pineapple",
+    "Coconut",
+    "Mango",
+    "Watermelon"
+   ],
+   "answer": "Pineapple",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these singers has never appeared on the Mickey Mouse Club?",
+   "options": [
+    "Jessica Simpson",
+    "Ryan Gosling",
+    "Christina Aguilera",
+    "Britney Spears"
+   ],
+   "answer": "Jessica Simpson",
+   "d": "medium"
+  },
+  {
+   "q": "What sort of toy is Buzz Lightyear?",
+   "options": [
+    "A doll's house",
+    "A space ranger action figure",
+    "A train",
+    "A teddy bear"
+   ],
+   "answer": "A space ranger action figure",
+   "d": "easy"
+  },
+  {
+   "q": "How many episodes of the animated show Top Cat were aired on television?",
+   "options": [
+    "30",
+    "100",
+    "52",
+    "26"
+   ],
+   "answer": "30",
+   "d": "hard"
+  },
+  {
+   "q": "In Transformers, who leads the Autobots?",
+   "options": [
+    "Megatron",
+    "Optimus Prime",
+    "Bumblebee",
+    "Starscream"
+   ],
+   "answer": "Optimus Prime",
+   "d": "easy"
+  },
+  {
+   "q": "In The Lion King, what kind of animal is Pumbaa?",
+   "options": [
+    "A warthog",
+    "A hornbill",
+    "A meerkat",
+    "A baboon"
+   ],
+   "answer": "A warthog",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Asterix's large best friend who carries menhirs?",
+   "options": [
+    "Cacofonix",
+    "Obelix",
+    "Vitalstatistix",
+    "Getafix"
+   ],
+   "answer": "Obelix",
+   "d": "easy"
+  },
+  {
+   "q": "What kind of animal is the Disney character Bambi?",
+   "options": [
+    "A fawn-coloured dog",
+    "A skunk",
+    "A rabbit",
+    "A deer"
+   ],
+   "answer": "A deer",
+   "d": "easy"
+  },
+  {
+   "q": "Who owns the Springfield Nuclear Power Plant in The Simpsons?",
+   "options": [
+    "Krusty",
+    "Mr Burns",
+    "Ned Flanders",
+    "Moe Szyslak"
+   ],
+   "answer": "Mr Burns",
+   "d": "easy"
+  },
+  {
+   "q": "What noise does the Road Runner make?",
+   "options": [
+    "Beep beep",
+    "Toot toot",
+    "Caw caw",
+    "Cheep cheep"
+   ],
+   "answer": "Beep beep",
+   "d": "easy"
+  },
+  {
+   "q": "Which animated builder asks 'Can we fix it?'",
+   "options": [
+    "Fireman Sam",
+    "Handy Manny",
+    "Bob the Builder",
+    "Mike the Knight"
+   ],
+   "answer": "Bob the Builder",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the football-headed baby in Family Guy?",
+   "options": [
+    "Chris",
+    "Stewie",
+    "Peter",
+    "Brian"
+   ],
+   "answer": "Stewie",
+   "d": "easy"
+  },
+  {
+   "q": "In \"Breaking Bad,\" which main character was planned to be killed in Season 1 but wasn't because the show creator liked the actor?",
+   "options": [
+    "Hank Schrader",
+    "Jesse Pinkman",
+    "Skyler White",
+    "Heisenberg"
+   ],
+   "answer": "Jesse Pinkman",
+   "d": "medium"
+  },
+  {
+   "q": "In The Little Mermaid, what is the mermaid's name?",
+   "options": [
+    "Melody",
+    "Ursula",
+    "Marina",
+    "Ariel"
+   ],
+   "answer": "Ariel",
+   "d": "easy"
+  },
+  {
+   "q": "Which widowed TV mother travelled around in a colorful bus with her children Keith, Laurie, Danny, Christopher and Tracy?",
+   "options": [
+    "Morticia Addams",
+    "Marion Cunningham",
+    "Shirley Partridge",
+    "Carol Brady"
+   ],
+   "answer": "Shirley Partridge",
+   "d": "medium"
+  },
+  {
+   "q": "What sort of animal is Bluey?",
+   "options": [
+    "A cat",
+    "A koala",
+    "A kangaroo",
+    "A dog"
+   ],
+   "answer": "A dog",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Pokemon anime's famous slogan?",
+   "options": [
+    "Train them all",
+    "Be the very best",
+    "Gotta catch 'em all",
+    "Catch and release"
+   ],
+   "answer": "Gotta catch 'em all",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the main antagonists in Battlestar Galactica?",
+   "options": [
+    "The Daleks",
+    "The Cylons",
+    "The Colonials",
+    "The Borg"
+   ],
+   "answer": "The Cylons",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of Popeye's sweetheart?",
+   "options": [
+    "Betty Boop",
+    "Sweet Pea",
+    "Wilma",
+    "Olive Oyl"
+   ],
+   "answer": "Olive Oyl",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the Simpsons' baby?",
+   "options": [
+    "Minnie",
+    "Maggie",
+    "Molly",
+    "Mandy"
+   ],
+   "answer": "Maggie",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Bugs Bunny?",
+   "options": [
+    "A rabbit",
+    "A squirrel",
+    "A fox",
+    "A mouse"
+   ],
+   "answer": "A rabbit",
+   "d": "easy"
+  },
+  {
+   "q": "What treat is used to persuade Scooby-Doo to do something scary?",
+   "options": [
+    "Sausages",
+    "Bones",
+    "Scooby Snacks",
+    "Doughnuts"
+   ],
+   "answer": "Scooby Snacks",
+   "d": "easy"
+  },
+  {
+   "q": "What is Homer Simpson's catchphrase when something goes wrong?",
+   "options": [
+    "D'oh!",
+    "Yikes!",
+    "Blast!",
+    "Oh boy!"
+   ],
+   "answer": "D'oh!",
+   "d": "easy"
+  },
+  {
+   "q": "In Peppa Pig, what is the name of Peppa's little brother?",
+   "options": [
+    "Pedro",
+    "Danny",
+    "George",
+    "Richard"
+   ],
+   "answer": "George",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is Shrek?",
+   "options": [
+    "Brown",
+    "Green",
+    "Blue",
+    "Grey"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is Superman's cape?",
+   "options": [
+    "Black",
+    "Blue",
+    "Red",
+    "Yellow"
+   ],
+   "answer": "Red",
+   "d": "easy"
+  },
+  {
+   "q": "Which superhero carries a hammer?",
+   "options": [
+    "Thor",
+    "Loki",
+    "Hawkeye",
+    "Hulk"
+   ],
+   "answer": "Thor",
+   "d": "easy"
+  },
+  {
+   "q": "How many dwarfs are there in Snow White?",
+   "options": [
+    "Eight",
+    "Seven",
+    "Five",
+    "Six"
+   ],
+   "answer": "Seven",
+   "d": "easy"
+  },
+  {
+   "q": "In the Sci-Fi television show Doctor Who, who plays the Tenth Doctor?",
+   "options": [
+    "Christopher Eccleston",
+    "Matt Smith",
+    "David Tennant",
+    "Rowan Atkinson"
+   ],
+   "answer": "David Tennant",
+   "d": "medium"
+  },
+  {
+   "q": "What is 'cosplay'?",
+   "options": [
+    "Voice acting",
+    "Drawing manga",
+    "Reading manga aloud",
+    "Dressing up as a character from a story"
+   ],
+   "answer": "Dressing up as a character from a story",
+   "d": "easy"
+  },
+  {
+   "q": "What kind of animal is Pikachu in Pokemon?",
+   "options": [
+    "A rabbit",
+    "A squirrel",
+    "A tiny electric dragon",
+    "A mouse"
+   ],
+   "answer": "A mouse",
+   "d": "easy"
+  },
+  {
+   "q": "Which studio created Mickey Mouse?",
+   "options": [
+    "Mouse Incorporated",
+    "Pixar",
+    "Disney",
+    "Warner Bros"
+   ],
+   "answer": "Disney",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Winnie the Pooh?",
+   "options": [
+    "A pig",
+    "A bear",
+    "A donkey",
+    "A tiger"
+   ],
+   "answer": "A bear",
+   "d": "easy"
+  },
+  {
+   "q": "In The Simpsons, what is the name of the family's baby?",
+   "options": [
+    "Marge",
+    "Lisa",
+    "Maggie",
+    "Blinky"
+   ],
+   "answer": "Maggie",
+   "d": "easy"
+  },
+  {
+   "q": "British actor David Morrissey stars as which role in \"The Walking Dead\"?",
+   "options": [
+    "The Governor",
+    "Negan",
+    "Merle Dixon",
+    "Rick Grimes"
+   ],
+   "answer": "The Governor",
+   "d": "medium"
+  },
+  {
+   "q": "Which Disney character is a tall, clumsy dog who wears a hat and waistcoat?",
+   "options": [
+    "Horace",
+    "Pluto",
+    "Pete",
+    "Goofy"
+   ],
+   "answer": "Goofy",
+   "d": "easy"
+  },
+  {
+   "q": "Which show is known for the songs \"You are a Pirate\", \"Cooking by the Book\" and \"We Are Number One\"?",
+   "options": [
+    "Sofia the First",
+    "Yo Gabba Gabba!",
+    "Teletubbies",
+    "LazyTown"
+   ],
+   "answer": "LazyTown",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name for the bubble containing a comic character's speech?",
+   "options": [
+    "A caption",
+    "A tag",
+    "A cloud",
+    "A speech balloon"
+   ],
+   "answer": "A speech balloon",
+   "d": "easy"
+  },
+  {
+   "q": "What is Pinocchio made of?",
+   "options": [
+    "Metal",
+    "Stone",
+    "Clay",
+    "Wood"
+   ],
+   "answer": "Wood",
+   "d": "easy"
+  },
+  {
+   "q": "Which Sesame Street character lives in a rubbish bin?",
+   "options": [
+    "Oscar the Grouch",
+    "Elmo",
+    "Big Bird",
+    "Grover"
+   ],
+   "answer": "Oscar the Grouch",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon character says 'Th-th-th-that's all folks'?",
+   "options": [
+    "Porky Pig",
+    "Daffy Duck",
+    "Elmer Fudd",
+    "Bugs Bunny"
+   ],
+   "answer": "Porky Pig",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Scooby-Doo?",
+   "options": [
+    "A dog",
+    "A horse",
+    "A cat",
+    "A bear"
+   ],
+   "answer": "A dog",
+   "d": "easy"
+  },
+  {
+   "q": "What breed of dog is \"Scooby Doo\"?",
+   "options": [
+    "Mastiff",
+    "Chihuahua",
+    "Weimaraner",
+    "Great Dane"
+   ],
+   "answer": "Great Dane",
+   "d": "easy"
+  },
+  {
+   "q": "Which Looney Tunes character says 'What's up, doc?'",
+   "options": [
+    "Porky Pig",
+    "Bugs Bunny",
+    "Daffy Duck",
+    "Elmer Fudd"
+   ],
+   "answer": "Bugs Bunny",
+   "d": "easy"
+  },
+  {
+   "q": "Which colour is the Hulk in the classic comics?",
+   "options": [
+    "Blue",
+    "Green",
+    "Red",
+    "Grey"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "What game show host has a Black Belt in Martial Arts and studied under Chuck Norris?",
+   "options": [
+    "Alex Trebek",
+    "Chuck Norris",
+    "Bob Barker",
+    "Pat Sajak"
+   ],
+   "answer": "Bob Barker",
+   "d": "medium"
+  },
+  {
+   "q": "Which Batman villain leaves clues in the form of riddles?",
+   "options": [
+    "Scarecrow",
+    "The Joker",
+    "The Riddler",
+    "Bane"
+   ],
+   "answer": "The Riddler",
+   "d": "easy"
+  },
+  {
+   "q": "What was the name of the toy shell SpongeBob and Patrick had with them in the Kelp Woods?",
+   "options": [
+    "Magic conch shell",
+    "Magic Clam Shell",
+    "Mystic Sea Shell",
+    "Talking Sand Dollar"
+   ],
+   "answer": "Magic conch shell",
+   "d": "medium"
+  },
+  {
+   "q": "How many wishes does the Genie grant Aladdin?",
+   "options": [
+    "Three",
+    "Five",
+    "One",
+    "Ten"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Homer's regular barfly friend who often falls asleep at the bar?",
+   "options": [
+    "Lenny Leonard",
+    "Carl Carlson",
+    "Barney Gumble",
+    "Moe Szyslak"
+   ],
+   "answer": "Barney Gumble",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Charlie Brown's dog?",
+   "options": [
+    "Spike",
+    "Rerun",
+    "Woodstock",
+    "Snoopy"
+   ],
+   "answer": "Snoopy",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the cowardly lion-hearted Great Dane who solves mysteries?",
+   "options": [
+    "Goofy",
+    "Scooby-Doo",
+    "Marmaduke",
+    "Sir Barksalot"
+   ],
+   "answer": "Scooby-Doo",
+   "d": "easy"
+  },
+  {
+   "q": "In the show, Doctor Who, what does T.A.R.D.I.S stand for?",
+   "options": [
+    "Time And Roving Dimensions In Space",
+    "Time And Relative Dimensions In Space",
+    "Toilet Aid Rope Dog Is Soup",
+    "Time And Relative Distance In Space"
+   ],
+   "answer": "Time And Relative Dimensions In Space",
+   "d": "easy"
+  },
+  {
+   "q": "Which superhero's costume is famously red and gold armour?",
+   "options": [
+    "Thor",
+    "Iron Man",
+    "Hawkeye",
+    "Captain America"
+   ],
+   "answer": "Iron Man",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the wheelchair-using founder of the X-Men?",
+   "options": [
+    "Nick Fury",
+    "Professor X",
+    "Doctor Strange",
+    "Magneto"
+   ],
+   "answer": "Professor X",
+   "d": "easy"
+  },
+  {
+   "q": "Which Marvel character is an archer with a bow?",
+   "options": [
+    "Falcon",
+    "Winter Soldier",
+    "War Machine",
+    "Hawkeye"
+   ],
+   "answer": "Hawkeye",
+   "d": "easy"
+  },
+  {
+   "q": "What is Wallace's favourite food in Wallace and Gromit?",
+   "options": [
+    "Cheese",
+    "Chocolate",
+    "Fish and chips",
+    "Biscuits"
+   ],
+   "answer": "Cheese",
+   "d": "easy"
+  },
+  {
+   "q": "Who plays the part of A.C. Slater on Saved by the Bell?",
+   "options": [
+    "Mario Suarez",
+    "Super Mario",
+    "Mario Lopez",
+    "Mario Ruiz"
+   ],
+   "answer": "Mario Lopez",
+   "d": "medium"
+  },
+  {
+   "q": "Which company has exclusive rights to air episodes of the \"The Grand Tour\"?",
+   "options": [
+    "Netflix",
+    "CCTV",
+    "BBC",
+    "Amazon"
+   ],
+   "answer": "Amazon",
+   "d": "medium"
+  },
+  {
+   "q": "In Alice in Wonderland, which cat can disappear leaving only its grin?",
+   "options": [
+    "The Caterpillar",
+    "The March Hare",
+    "Dinah",
+    "The Cheshire Cat"
+   ],
+   "answer": "The Cheshire Cat",
+   "d": "easy"
+  },
+  {
+   "q": "Which superhero can run extremely fast?",
+   "options": [
+    "Cyborg",
+    "Green Lantern",
+    "The Flash",
+    "Aquaman"
+   ],
+   "answer": "The Flash",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon character rides a magic carpet in a Disney film set in Agrabah?",
+   "options": [
+    "Aladdin",
+    "Ali Baba",
+    "Hercules",
+    "Sinbad"
+   ],
+   "answer": "Aladdin",
+   "d": "easy"
+  },
+  {
+   "q": "Which Sesame Street character shares a flat with Bert?",
+   "options": [
+    "Elmo",
+    "Ernie",
+    "Grover",
+    "Herry"
+   ],
+   "answer": "Ernie",
+   "d": "easy"
+  },
+  {
+   "q": "How is Fred Flintstone's car powered?",
+   "options": [
+    "By his feet",
+    "By a dinosaur",
+    "By wind",
+    "By steam"
+   ],
+   "answer": "By his feet",
+   "d": "easy"
+  },
+  {
+   "q": "Which South Park character wears an orange hooded parka that muffles his voice?",
+   "options": [
+    "Kyle",
+    "Stan",
+    "Cartman",
+    "Kenny"
+   ],
+   "answer": "Kenny",
+   "d": "easy"
+  },
+  {
+   "q": "In Scooby-Doo, what breed of dog is Scooby?",
+   "options": [
+    "Bloodhound",
+    "A cowardly wolf",
+    "Great Dane",
+    "Labrador"
+   ],
+   "answer": "Great Dane",
+   "d": "easy"
+  },
+  {
+   "q": "Which comic book publisher created the X-Men?",
+   "options": [
+    "Dark Horse",
+    "DC",
+    "Image",
+    "Marvel"
+   ],
+   "answer": "Marvel",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the sailor cartoon character who eats spinach for strength?",
+   "options": [
+    "Sinbad",
+    "Salty Sam",
+    "Barnacle Bill",
+    "Popeye"
+   ],
+   "answer": "Popeye",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Izzie talking about on the show Greys Anatomy when she asks the following question: What self-respecting surgeon wears salmon-colored scrubs??",
+   "options": [
+    "Dr. McDreamy",
+    "Addison",
+    "Cristina",
+    "Callie"
+   ],
+   "answer": "Addison",
+   "d": "medium"
+  },
+  {
+   "q": "What colour are the Smurfs?",
+   "options": [
+    "Blue",
+    "Green",
+    "Yellow",
+    "Red"
+   ],
+   "answer": "Blue",
+   "d": "easy"
+  },
+  {
+   "q": "In Calvin and Hobbes, what does Hobbes look like to everyone except Calvin?",
+   "options": [
+    "A cushion",
+    "A real tiger",
+    "An ordinary stuffed toy",
+    "A dog"
+   ],
+   "answer": "An ordinary stuffed toy",
+   "d": "easy"
+  },
+  {
+   "q": "Which actor was not a major character in TV Show Freaks and Geeks?",
+   "options": [
+    "James Franco",
+    "Seth Rogen",
+    "Jason Segel",
+    "Jonah Hill"
+   ],
+   "answer": "Jonah Hill",
+   "d": "hard"
+  },
+  {
+   "q": "What is the name of the boy in The Simpsons?",
+   "options": [
+    "Ralph",
+    "Nelson",
+    "Bart",
+    "Milhouse"
+   ],
+   "answer": "Bart",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's animation features four colourful creatures with aerials on their heads?",
+   "options": [
+    "In the Night Garden",
+    "Boohbah",
+    "Teletubbies",
+    "The Tweenies"
+   ],
+   "answer": "Teletubbies",
+   "d": "easy"
+  },
+  {
+   "q": "In the show \"Futurama\" what is Fry's full name?",
+   "options": [
+    "Fry Philip Jr.",
+    "Philip J. Fry",
+    "Fry Rodríguez",
+    "Phillip J. Fry"
+   ],
+   "answer": "Philip J. Fry",
+   "d": "medium"
+  },
+  {
+   "q": "In The Flintstones, what is the name of Fred Flintstone's best friend and neighbour?",
+   "options": [
+    "Wilma",
+    "Rocky Boulder",
+    "Barney Rubble",
+    "Bam-Bam"
+   ],
+   "answer": "Barney Rubble",
+   "d": "easy"
+  },
+  {
+   "q": "What's Dr. Doofenshmirtz first name?",
+   "options": [
+    "Hans",
+    "Heinz",
+    "Heidi",
+    "Hank"
+   ],
+   "answer": "Heinz",
+   "d": "medium"
+  },
+  {
+   "q": "What was Kels occupation in the Kath Kim TV series?",
+   "options": [
+    "Greengrocer",
+    "Brain surgeon",
+    "Butcher",
+    "Baker"
+   ],
+   "answer": "Butcher",
+   "d": "medium"
+  },
+  {
+   "q": "In 'Tom and Jerry', what kind of animal is Jerry?",
+   "options": [
+    "A rat",
+    "A hamster",
+    "A mouse",
+    "A ferret"
+   ],
+   "answer": "A mouse",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Pluto?",
+   "options": [
+    "A duck",
+    "A dog",
+    "A horse",
+    "A cat"
+   ],
+   "answer": "A dog",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the van the Scooby-Doo gang drive?",
+   "options": [
+    "The Spook Bus",
+    "The Clue Cruiser",
+    "The Mystery Machine",
+    "The Ghost Wagon"
+   ],
+   "answer": "The Mystery Machine",
+   "d": "easy"
+  },
+  {
+   "q": "In 'Bluey', what is the name of Bluey's little sister?",
+   "options": [
+    "Bingo",
+    "Socks",
+    "Chilli",
+    "Muffin"
+   ],
+   "answer": "Bingo",
+   "d": "easy"
+  },
+  {
+   "q": "In The Lion King, what is the name of the young lion cub hero?",
+   "options": [
+    "Mufasa",
+    "Simba",
+    "Scar",
+    "Nala"
+   ],
+   "answer": "Simba",
+   "d": "easy"
+  },
+  {
+   "q": "In Frozen, what is the name of the snowman?",
+   "options": [
+    "Kristoff",
+    "Marshmallow",
+    "Olaf",
+    "Sven"
+   ],
+   "answer": "Olaf",
+   "d": "easy"
+  },
+  {
+   "q": "In Supernatural, what's is Sam's brothers name?",
+   "options": [
+    "Bobby",
+    "Crowley",
+    "Castiel",
+    "Dean"
+   ],
+   "answer": "Dean",
+   "d": "easy"
+  },
+  {
+   "q": "Which member of the Office staff often calls Pam hot?",
+   "options": [
+    "Ryan",
+    "Creed",
+    "Stanley",
+    "Kevin"
+   ],
+   "answer": "Kevin",
+   "d": "medium"
+  },
+  {
+   "q": "What colour are Mickey Mouse's shorts traditionally?",
+   "options": [
+    "Black",
+    "Green",
+    "Red",
+    "Blue"
+   ],
+   "answer": "Red",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney duck is famously bad-tempered and hard to understand?",
+   "options": [
+    "Daffy Duck",
+    "Donald Duck",
+    "Scrooge McDuck",
+    "Launchpad"
+   ],
+   "answer": "Donald Duck",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Batman's first sidekick?",
+   "options": [
+    "Red Hood",
+    "Batgirl",
+    "Robin",
+    "Nightwing"
+   ],
+   "answer": "Robin",
+   "d": "easy"
+  },
+  {
+   "q": "Which blue Sesame Street character is obsessed with biscuits?",
+   "options": [
+    "Cookie Monster",
+    "Zoe",
+    "Herry",
+    "Grover"
+   ],
+   "answer": "Cookie Monster",
+   "d": "easy"
+  },
+  {
+   "q": "Where does Jim decide to go on vacation in The Office, season 2?",
+   "options": [
+    "Austrailia",
+    "Mordor",
+    "Fiji",
+    "Hong Kong"
+   ],
+   "answer": "Austrailia",
+   "d": "medium"
+  },
+  {
+   "q": "What is a 'comic strip' usually found in?",
+   "options": [
+    "A newspaper",
+    "A cookbook",
+    "A phone book",
+    "A road atlas"
+   ],
+   "answer": "A newspaper",
+   "d": "easy"
+  },
+  {
+   "q": "In the cartoon 'The Flintstones', what is the name of Fred and Wilma's pet dinosaur?",
+   "options": [
+    "Dino",
+    "Rex",
+    "Barney Jr",
+    "Spike"
+   ],
+   "answer": "Dino",
+   "d": "easy"
+  },
+  {
+   "q": "Which Marvel team includes Iron Man, Captain America, Thor and the Hulk?",
+   "options": [
+    "The X-Men",
+    "The Avengers",
+    "The Fantastic Four",
+    "The Defenders"
+   ],
+   "answer": "The Avengers",
+   "d": "easy"
+  },
+  {
+   "q": "In Finding Nemo, what is the forgetful blue fish called?",
+   "options": [
+    "Gill",
+    "Bruce",
+    "Marlin",
+    "Dory"
+   ],
+   "answer": "Dory",
+   "d": "easy"
+  },
+  {
+   "q": "In Bluey, what is the name of Bluey's little sister?",
+   "options": [
+    "Socks",
+    "Chloe",
+    "Bingo",
+    "Muffin"
+   ],
+   "answer": "Bingo",
+   "d": "easy"
+  },
+  {
+   "q": "How many children do Homer and Marge Simpson have?",
+   "options": [
+    "Three",
+    "One",
+    "Two",
+    "Four"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "How many gallons are there in a barrel of oil?",
+   "options": [
+    "40 US gallons",
+    "42 US gallons",
+    "100 US gallons",
+    "55 US gallons"
+   ],
+   "answer": "42 US gallons",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the van driven by the Scooby-Doo gang?",
+   "options": [
+    "The Mystery Machine",
+    "The Ghost Buster",
+    "The Clue Cruiser",
+    "The Spook Wagon"
+   ],
+   "answer": "The Mystery Machine",
+   "d": "easy"
+  },
+  {
+   "q": "Which character dies in the Buffy the Vampire Slayer episode Passion?",
+   "options": [
+    "Buffy",
+    "Giles",
+    "Jenny",
+    "Joyce"
+   ],
+   "answer": "Jenny",
+   "d": "medium"
+  },
+  {
+   "q": "Which of the following awards do Matt Stone and Trey Parker NOT have?",
+   "options": [
+    "Tony",
+    "Emmy",
+    "Oscar",
+    "Grammy"
+   ],
+   "answer": "Oscar",
+   "d": "hard"
+  },
+  {
+   "q": "What kind of animal is Scooby-Doo?",
+   "options": [
+    "Labrador",
+    "A talking meatball with legs",
+    "Great Dane",
+    "Bloodhound"
+   ],
+   "answer": "Great Dane",
+   "d": "easy"
+  },
+  {
+   "q": "I am married to a man, named Ricky and my best friend is Ethel. What TV show was I on?",
+   "options": [
+    "The Honeymooners",
+    "The Brady Bunch",
+    "The Dick Van Dyke Show",
+    "I Love Lucy"
+   ],
+   "answer": "I Love Lucy",
+   "d": "easy"
+  },
+  {
+   "q": "Which large yellow bird is a Sesame Street resident?",
+   "options": [
+    "Big Bird",
+    "Tweety",
+    "Foghorn",
+    "Woodstock"
+   ],
+   "answer": "Big Bird",
+   "d": "easy"
+  },
+  {
+   "q": "Which actor voices Shrek?",
+   "options": [
+    "Antonio Banderas",
+    "John Lithgow",
+    "Mike Myers",
+    "Eddie Murphy"
+   ],
+   "answer": "Mike Myers",
+   "d": "easy"
+  },
+  {
+   "q": "When did the TV show Rick and Morty first air on Adult Swim?",
+   "options": [
+    "1999",
+    "2012",
+    "2014",
+    "2013"
+   ],
+   "answer": "2013",
+   "d": "medium"
+  },
+  {
+   "q": "Who plays the recurring character of Mr. Big?",
+   "options": [
+    "John Corbett",
+    "Kyle MacLachlan",
+    "Chris Meloni",
+    "Chris Noth"
+   ],
+   "answer": "Chris Noth",
+   "d": "medium"
+  },
+  {
+   "q": "Which British children's animation features a pink pig and her family?",
+   "options": [
+    "Bluey",
+    "Ben and Holly",
+    "Charlie and Lola",
+    "Peppa Pig"
+   ],
+   "answer": "Peppa Pig",
+   "d": "easy"
+  },
+  {
+   "q": "Don't have a cow, man! and Eat my shorts! are the catch phrases used by what character on The Simpsons?",
+   "options": [
+    "Bart",
+    "Mr. Burns",
+    "Lisa",
+    "Homer"
+   ],
+   "answer": "Bart",
+   "d": "easy"
+  },
+  {
+   "q": "What part did Robert Lowe play in three seasons of The West Wing?",
+   "options": [
+    "Leo McGarry",
+    "Sam Seaborn",
+    "President Bartlet",
+    "Josh Lyman"
+   ],
+   "answer": "Sam Seaborn",
+   "d": "medium"
+  },
+  {
+   "q": "Which cartoon dog speaks with an 'R' at the front of most of his words?",
+   "options": [
+    "Goofy",
+    "Scooby-Doo",
+    "Pluto",
+    "Odie"
+   ],
+   "answer": "Scooby-Doo",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney elephant can fly using his enormous ears?",
+   "options": [
+    "Bambi",
+    "Dumbo",
+    "Rajah",
+    "Tantor"
+   ],
+   "answer": "Dumbo",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon cat is forever trying to catch Tweety Bird?",
+   "options": [
+    "Tom",
+    "Sylvester",
+    "Top Cat",
+    "Felix"
+   ],
+   "answer": "Sylvester",
+   "d": "easy"
+  },
+  {
+   "q": "In the TV show 'M*A*S*H', what was the nickname of Corporal Walter O'Reilly?",
+   "options": [
+    "Klinger",
+    "Radar",
+    "Sonar",
+    "Sparky"
+   ],
+   "answer": "Radar",
+   "d": "medium"
+  },
+  {
+   "q": "What is Superman famous for being able to do?",
+   "options": [
+    "Read minds",
+    "Breathe underwater only",
+    "Fly",
+    "Turn invisible"
+   ],
+   "answer": "Fly",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Superman's bald businessman arch-enemy?",
+   "options": [
+    "The Joker",
+    "Brainiac",
+    "Lex Luthor",
+    "General Zod"
+   ],
+   "answer": "Lex Luthor",
+   "d": "easy"
+  },
+  {
+   "q": "Which animated film series features a green ogre who lives in a swamp?",
+   "options": [
+    "Monsters Inc",
+    "Trolls",
+    "Hotel Transylvania",
+    "Shrek"
+   ],
+   "answer": "Shrek",
+   "d": "easy"
+  },
+  {
+   "q": "Which empire are the Gauls resisting in the Asterix comics?",
+   "options": [
+    "The Greek Empire",
+    "The Persian Empire",
+    "The Roman Empire",
+    "The Egyptian Empire"
+   ],
+   "answer": "The Roman Empire",
+   "d": "easy"
+  },
+  {
+   "q": "In Toy Story, what happens to the toys when humans are in the room?",
+   "options": [
+    "They hide in a cupboard",
+    "They shrink",
+    "They talk quietly",
+    "They freeze and act lifeless"
+   ],
+   "answer": "They freeze and act lifeless",
+   "d": "easy"
+  },
+  {
+   "q": "Which company owns Mickey Mouse?",
+   "options": [
+    "Universal",
+    "Disney",
+    "Paramount",
+    "Warner Bros"
+   ],
+   "answer": "Disney",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian animated series follows a family of blue heeler dogs?",
+   "options": [
+    "Dot and the Kangaroo",
+    "Bluey",
+    "The Wiggles",
+    "Blinky Bill"
+   ],
+   "answer": "Bluey",
+   "d": "easy"
+  },
+  {
+   "q": "In Scooby-Doo, what is the name of the gang's van?",
+   "options": [
+    "The Mystery Machine",
+    "The Ghost Wagon",
+    "The Spooky Van",
+    "The Scoobymobile Deluxe"
+   ],
+   "answer": "The Mystery Machine",
+   "d": "easy"
+  },
+  {
+   "q": "What pattern do Dalmatians have?",
+   "options": [
+    "Spots",
+    "Stripes",
+    "Patches of tartan",
+    "Swirls"
+   ],
+   "answer": "Spots",
+   "d": "easy"
+  },
+  {
+   "q": "Which villain is Batman's arch-enemy and wears purple with green hair?",
+   "options": [
+    "The Joker",
+    "The Riddler",
+    "The Penguin",
+    "Two-Face"
+   ],
+   "answer": "The Joker",
+   "d": "easy"
+  },
+  {
+   "q": "Which comic book publisher created Superman, Batman and Wonder Woman?",
+   "options": [
+    "Image",
+    "DC",
+    "Marvel",
+    "Valiant"
+   ],
+   "answer": "DC",
+   "d": "easy"
+  },
+  {
+   "q": "In the original Star Trek TV series, what was Captain James T. Kirk's middle name?",
+   "options": [
+    "Thaddeus",
+    "Tiberius",
+    "Tarquin",
+    "Tobias"
+   ],
+   "answer": "Tiberius",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these Bojack Horseman characters is a human?",
+   "options": [
+    "Tom Jumbo-Grumbo",
+    "Princess Carolyn",
+    "Mr. Peanutbutter",
+    "Todd Chavez"
+   ],
+   "answer": "Todd Chavez",
+   "d": "medium"
+  },
+  {
+   "q": "Which orange cartoon cat loves lasagne?",
+   "options": [
+    "Felix",
+    "Heathcliff",
+    "Garfield",
+    "Top Cat"
+   ],
+   "answer": "Garfield",
+   "d": "easy"
+  },
+  {
+   "q": "In which fictional town do The Simpsons live?",
+   "options": [
+    "Bedrock",
+    "Quahog",
+    "Shelbyville",
+    "Springfield"
+   ],
+   "answer": "Springfield",
+   "d": "easy"
+  },
+  {
+   "q": "Which Marvel hero turns green when angry?",
+   "options": [
+    "Thor",
+    "The Hulk",
+    "Iron Man",
+    "Vision"
+   ],
+   "answer": "The Hulk",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Paddington?",
+   "options": [
+    "A badger",
+    "A dog",
+    "A bear",
+    "A monkey"
+   ],
+   "answer": "A bear",
+   "d": "easy"
+  },
+  {
+   "q": "Who plays the character of Dennis Reynolds on It's Always Sunny in Philadelphia?",
+   "options": [
+    "Charlie Day",
+    "Glenn Howerton",
+    "Rob McElhenney",
+    "Danny DeVito"
+   ],
+   "answer": "Glenn Howerton",
+   "d": "medium"
+  },
+  {
+   "q": "In which British seaside town was the BBC sitcom \"Fawlty Towers\" set?",
+   "options": [
+    "Torquay",
+    "Skegness",
+    "Brighton",
+    "Paignton"
+   ],
+   "answer": "Torquay",
+   "d": "medium"
+  },
+  {
+   "q": "Which Looney Tunes character is a spinning, growling Tasmanian devil?",
+   "options": [
+    "Pete",
+    "Gossamer",
+    "Taz",
+    "Marvin"
+   ],
+   "answer": "Taz",
+   "d": "easy"
+  },
+  {
+   "q": "In the cartoon 'SpongeBob SquarePants', what did the acronym E.V.I.L stand for?",
+   "options": [
+    "Every Villain Is Lazy",
+    "Every Villain Is Limes",
+    "Every Villain Is Lemons",
+    "Every Villain Is Lemonade"
+   ],
+   "answer": "Every Villain Is Lemons",
+   "d": "medium"
+  },
+  {
+   "q": "Do, or do not. There is no try was a mystical phrase used in which classic film?",
+   "options": [
+    "Star Wars: Return of the Jedi",
+    "Star Trek II: The Wrath of Khan",
+    "Star Wars V: The Empire Strikes Back",
+    "Star Wars: A New Hope"
+   ],
+   "answer": "Star Wars V: The Empire Strikes Back",
+   "d": "easy"
+  },
+  {
+   "q": "Which Snow White dwarf never speaks?",
+   "options": [
+    "Sleepy",
+    "Bashful",
+    "Dopey",
+    "Doc"
+   ],
+   "answer": "Dopey",
+   "d": "easy"
+  },
+  {
+   "q": "Which superhero is known as the Fastest Man Alive?",
+   "options": [
+    "The Flash",
+    "Nightwing",
+    "Quicksilver",
+    "Green Lantern"
+   ],
+   "answer": "The Flash",
+   "d": "easy"
+  },
+  {
+   "q": "Which Star Trek race advances itself through assimilation?",
+   "options": [
+    "Romulan",
+    "Borg",
+    "Ewok",
+    "Klingon"
+   ],
+   "answer": "Borg",
+   "d": "medium"
+  },
+  {
+   "q": "In The Flintstones, which prehistoric town do Fred and Wilma live in?",
+   "options": [
+    "Bedrock",
+    "Granite Falls",
+    "Rockville",
+    "Stone Valley"
+   ],
+   "answer": "Bedrock",
+   "d": "easy"
+  },
+  {
+   "q": "What TV show featured older women named Blanche, Rose, Dorothy and Sophia?",
+   "options": [
+    "The Wonder Years",
+    "Designing Women",
+    "The Golden Palace",
+    "The Golden Girls"
+   ],
+   "answer": "The Golden Girls",
+   "d": "medium"
+  },
+  {
+   "q": "What vegetable is Bugs Bunny always chewing?",
+   "options": [
+    "A parsnip",
+    "A carrot",
+    "A potato",
+    "Celery"
+   ],
+   "answer": "A carrot",
+   "d": "easy"
+  },
+  {
+   "q": "Who composed the theme song for The Simpsons?",
+   "options": [
+    "Bart Simpson",
+    "Alf Clausen",
+    "Danny Elfman",
+    "Hans Zimmer"
+   ],
+   "answer": "Danny Elfman",
+   "d": "medium"
+  },
+  {
+   "q": "Which company makes the Toy Story films?",
+   "options": [
+    "Pixar",
+    "DreamWorks",
+    "Illumination",
+    "Aardman"
+   ],
+   "answer": "Pixar",
+   "d": "easy"
+  },
+  {
+   "q": "In the Asterix books, who brews the drink that gives the villagers their strength?",
+   "options": [
+    "The bard",
+    "The chief",
+    "The druid",
+    "The blacksmith"
+   ],
+   "answer": "The druid",
+   "d": "easy"
+  },
+  {
+   "q": "In the show \"The Office\" who does Michael Scott eventually end up with?",
+   "options": [
+    "His World's Best Boss mug",
+    "Pam Beesly",
+    "Holly Flax",
+    "Jan Levinson"
+   ],
+   "answer": "Holly Flax",
+   "d": "medium"
+  },
+  {
+   "q": "In 101 Dalmatians, what does Cruella de Vil want to make from the puppies?",
+   "options": [
+    "A rug",
+    "A fur coat",
+    "A pair of gloves",
+    "A hat"
+   ],
+   "answer": "A fur coat",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these characters in \"Stranger Things\" has the power of Telekinesis?",
+   "options": [
+    "Steve",
+    "Max",
+    "Eleven",
+    "Will"
+   ],
+   "answer": "Eleven",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Nemo in Finding Nemo?",
+   "options": [
+    "A fish",
+    "A dolphin",
+    "A crab",
+    "A turtle"
+   ],
+   "answer": "A fish",
+   "d": "easy"
+  },
+  {
+   "q": "In Bluey, what is the name of Bluey's dad?",
+   "options": [
+    "Frisky",
+    "Stripe",
+    "Rad",
+    "Bandit"
+   ],
+   "answer": "Bandit",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these does Batman rely on instead of superpowers?",
+   "options": [
+    "Telepathy",
+    "Super strength",
+    "Training and gadgets",
+    "Flight"
+   ],
+   "answer": "Training and gadgets",
+   "d": "easy"
+  },
+  {
+   "q": "In the show Stranger Things, what is Eleven's favorite breakfast food?",
+   "options": [
+    "Toaster Strudels",
+    "Pop-Tarts",
+    "Leftover Pizza",
+    "Eggo Waffles"
+   ],
+   "answer": "Eggo Waffles",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the Simpsons' baby daughter?",
+   "options": [
+    "Sherri",
+    "Maggie",
+    "Terri",
+    "Lisa"
+   ],
+   "answer": "Maggie",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney animated film features an emperor turned into a llama?",
+   "options": [
+    "The Emperor's New Groove",
+    "Atlantis",
+    "Home on the Range",
+    "Brother Bear"
+   ],
+   "answer": "The Emperor's New Groove",
+   "d": "easy"
+  },
+  {
+   "q": "What was the name of Ross' pet monkey on \"Friends\"?",
+   "options": [
+    "Coco",
+    "Marcel",
+    "Marcus",
+    "Curious George"
+   ],
+   "answer": "Marcel",
+   "d": "medium"
+  },
+  {
+   "q": "In Snow White, what does the wicked queen use to poison Snow White?",
+   "options": [
+    "A pear",
+    "An apple",
+    "A cherry",
+    "A grape"
+   ],
+   "answer": "An apple",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon character lives in a pineapple under the sea?",
+   "options": [
+    "Sandy Cheeks",
+    "Squidward",
+    "SpongeBob SquarePants",
+    "Mr Krabs"
+   ],
+   "answer": "SpongeBob SquarePants",
+   "d": "easy"
+  },
+  {
+   "q": "In the comedy series \"Trailer Park Boys\", which of the following characters takes care of stray cats?",
+   "options": [
+    "Bubbles",
+    "Garfield",
+    "Julian",
+    "Ricky"
+   ],
+   "answer": "Bubbles",
+   "d": "medium"
+  },
+  {
+   "q": "Which cheerful yellow anime and game character says its own name repeatedly?",
+   "options": [
+    "Totoro",
+    "Chi",
+    "Doraemon",
+    "Pikachu"
+   ],
+   "answer": "Pikachu",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of toy is Woody in Toy Story?",
+   "options": [
+    "A cowboy doll",
+    "A dinosaur",
+    "A robot",
+    "A racing car"
+   ],
+   "answer": "A cowboy doll",
+   "d": "easy"
+  },
+  {
+   "q": "Which purple Marvel villain collects the Infinity Stones?",
+   "options": [
+    "Loki",
+    "Ultron",
+    "Kang",
+    "Thanos"
+   ],
+   "answer": "Thanos",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Hulk's name when he is not transformed?",
+   "options": [
+    "Hank Pym",
+    "Tony Stark",
+    "Bruce Banner",
+    "Steve Rogers"
+   ],
+   "answer": "Bruce Banner",
+   "d": "easy"
+  },
+  {
+   "q": "In Game of Thrones what is the name of Jon Snow's sword?",
+   "options": [
+    "Ice",
+    "Longclaw",
+    "Sting",
+    "Needle"
+   ],
+   "answer": "Longclaw",
+   "d": "medium"
+  },
+  {
+   "q": "In the TV show \"Mad Men\", what was Donald Draper's birthname?",
+   "options": [
+    "Donald Whitman",
+    "Richard Draper",
+    "Richard \"Dick\" Whitman",
+    "Bob Benson"
+   ],
+   "answer": "Richard \"Dick\" Whitman",
+   "d": "medium"
+  },
+  {
+   "q": "Who was the winner of the 2016 WWE Royal Rumble?",
+   "options": [
+    "Santa Claus",
+    "Roman Reigns",
+    "Dean Ambrose",
+    "Triple H"
+   ],
+   "answer": "Triple H",
+   "d": "medium"
+  },
+  {
+   "q": "In the Pixar film Up, what lifts Carl's house into the sky?",
+   "options": [
+    "A tornado",
+    "A crane",
+    "Rockets",
+    "Balloons"
+   ],
+   "answer": "Balloons",
+   "d": "easy"
+  },
+  {
+   "q": "How many seasons did The Flintstones air?",
+   "options": [
+    "5",
+    "20",
+    "8",
+    "6"
+   ],
+   "answer": "6",
+   "d": "medium"
+  },
+  {
+   "q": "What 1970s show, starring Peter Falk, popularized the inverted detective story format?",
+   "options": [
+    "Columbo",
+    "McCloud",
+    "Murder She Wrote",
+    "Kojak"
+   ],
+   "answer": "Columbo",
+   "d": "medium"
+  },
+  {
+   "q": "What kind of sea creature is Patrick Star?",
+   "options": [
+    "A crab",
+    "A starfish",
+    "An octopus",
+    "A jellyfish"
+   ],
+   "answer": "A starfish",
+   "d": "easy"
+  },
+  {
+   "q": "In Beauty and the Beast, what is the girl called?",
+   "options": [
+    "Jasmine",
+    "Belle",
+    "Ariel",
+    "Aurora"
+   ],
+   "answer": "Belle",
+   "d": "easy"
+  },
+  {
+   "q": "When did Judge Judy first air on American television?",
+   "options": [
+    "1997",
+    "1999",
+    "1996",
+    "1985"
+   ],
+   "answer": "1996",
+   "d": "medium"
+  },
+  {
+   "q": "What was the name of the family featured in the TV comedy Bewitched?",
+   "options": [
+    "Stephens",
+    "Munster",
+    "Tate",
+    "Kravitz"
+   ],
+   "answer": "Stephens",
+   "d": "medium"
+  },
+  {
+   "q": "Which cartoon dog is known for saying 'Ruh-roh'?",
+   "options": [
+    "Scooby-Doo",
+    "Pluto",
+    "Snoopy",
+    "Astro"
+   ],
+   "answer": "Scooby-Doo",
+   "d": "easy"
+  },
+  {
+   "q": "Which Marvel character is a Russian spy and expert fighter with red hair?",
+   "options": [
+    "Scarlet Witch",
+    "Gamora",
+    "Elektra",
+    "Black Widow"
+   ],
+   "answer": "Black Widow",
+   "d": "easy"
+  },
+  {
+   "q": "Guy's Grocery Games is hosted by which presenter?",
+   "options": [
+    "Guy Fieri",
+    "Guy Martin",
+    "Bobby Flay",
+    "Guy Ritchie"
+   ],
+   "answer": "Guy Fieri",
+   "d": "medium"
+  },
+  {
+   "q": "What colour is Pikachu?",
+   "options": [
+    "Green",
+    "Yellow",
+    "Pink",
+    "Orange"
+   ],
+   "answer": "Yellow",
+   "d": "easy"
+  },
+  {
+   "q": "In Game of Thrones, what is Littlefinger's real name?",
+   "options": [
+    "Jorah Mormont",
+    "Hodor",
+    "Petyr Baelish",
+    "Varys"
+   ],
+   "answer": "Petyr Baelish",
+   "d": "medium"
+  },
+  {
+   "q": "In Game of Thrones, what continent lies across the Narrow Sea from Westeros?",
+   "options": [
+    "Easteros",
+    "Sothoryos",
+    "Essos",
+    "Ulthos"
+   ],
+   "answer": "Essos",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the clownfish father in Finding Nemo?",
+   "options": [
+    "Nemo",
+    "Reef",
+    "Gill",
+    "Marlin"
+   ],
+   "answer": "Marlin",
+   "d": "easy"
+  },
+  {
+   "q": "In \"Breaking Bad\", Walter White is a high school teacher diagnosed with which form of cancer?",
+   "options": [
+    "Prostate Cancer",
+    "Testicular Cancer",
+    "Throat Cancer",
+    "Lung Cancer"
+   ],
+   "answer": "Lung Cancer",
+   "d": "easy"
+  },
+  {
+   "q": "In Cinderella, what turns into a coach?",
+   "options": [
+    "A watermelon",
+    "A barrel",
+    "A pumpkin",
+    "A cabbage"
+   ],
+   "answer": "A pumpkin",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is Bart Simpson's hair?",
+   "options": [
+    "Black",
+    "Brown",
+    "Red",
+    "Yellow"
+   ],
+   "answer": "Yellow",
+   "d": "easy"
+  },
+  {
+   "q": "In SpongeBob SquarePants, what is SpongeBob's job?",
+   "options": [
+    "Fry cook",
+    "Professional bubble blower",
+    "Waiter",
+    "Lifeguard"
+   ],
+   "answer": "Fry cook",
+   "d": "easy"
+  },
+  {
+   "q": "What is Peppa Pig's favourite activity?",
+   "options": [
+    "Swimming",
+    "Painting",
+    "Jumping in muddy puddles",
+    "Riding a bike"
+   ],
+   "answer": "Jumping in muddy puddles",
+   "d": "easy"
+  },
+  {
+   "q": "Which British writer wrote for both Doctor Who and Sherlock?",
+   "options": [
+    "Steven Moffatt",
+    "William Shakespeare",
+    "Chris Chibnall",
+    "Russell T Davies"
+   ],
+   "answer": "Steven Moffatt",
+   "d": "medium"
+  },
+  {
+   "q": "The TV series The Wonder Years, created by Carol Black and Neal Marlens, focuses on which fictional family?",
+   "options": [
+    "The Pfeiffers",
+    "The Arnolds",
+    "The Coopers",
+    "The Cleavers"
+   ],
+   "answer": "The Arnolds",
+   "d": "medium"
+  },
+  {
+   "q": "Which character was played by Dustin Diamond in the sitcom 'Saved by the Bell'?",
+   "options": [
+    "Zack Morris",
+    "Mr. Belding",
+    "Screech",
+    "A.C. Slater"
+   ],
+   "answer": "Screech",
+   "d": "medium"
+  },
+  {
+   "q": "The \"Psycho\" series of videos on YouTube was created by which of the following?",
+   "options": [
+    "RiDGiD Films",
+    "Billy Familia",
+    "PewDiePie",
+    "RiDGiD STUDiOS"
+   ],
+   "answer": "RiDGiD STUDiOS",
+   "d": "hard"
+  },
+  {
+   "q": "What colour is the Green Lantern's power ring energy?",
+   "options": [
+    "Blue",
+    "Yellow",
+    "Green",
+    "Red"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Mickey Mouse's pet dog?",
+   "options": [
+    "Sir Barksalot",
+    "Goofy",
+    "Pluto",
+    "Rex"
+   ],
+   "answer": "Pluto",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is Marge Simpson's hair?",
+   "options": [
+    "Green",
+    "Blue",
+    "Red",
+    "Purple"
+   ],
+   "answer": "Blue",
+   "d": "easy"
+  },
+  {
+   "q": "Which DC hero is the king of Atlantis?",
+   "options": [
+    "Triton",
+    "Aquaman",
+    "Poseidon",
+    "Namor"
+   ],
+   "answer": "Aquaman",
+   "d": "easy"
+  },
+  {
+   "q": "Which DC hero is known as the Fastest Man Alive?",
+   "options": [
+    "The Flash",
+    "Superman",
+    "Cyborg",
+    "Green Lantern"
+   ],
+   "answer": "The Flash",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney film features a girl who disguises herself as a soldier in China?",
+   "options": [
+    "Mulan",
+    "Brave",
+    "Raya",
+    "Pocahontas"
+   ],
+   "answer": "Mulan",
+   "d": "easy"
+  },
+  {
+   "q": "Which song from Frozen became a worldwide hit?",
+   "options": [
+    "For the First Time in Forever",
+    "Let It Go",
+    "Do You Want to Build a Snowman",
+    "Into the Unknown"
+   ],
+   "answer": "Let It Go",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the Simpsons' next-door neighbour?",
+   "options": [
+    "Apu",
+    "Moe Szyslak",
+    "Barney Gumble",
+    "Ned Flanders"
+   ],
+   "answer": "Ned Flanders",
+   "d": "easy"
+  },
+  {
+   "q": "In The Lion King, who is Simba's father?",
+   "options": [
+    "Scar",
+    "Rafiki",
+    "Mufasa",
+    "Zazu"
+   ],
+   "answer": "Mufasa",
+   "d": "easy"
+  },
+  {
+   "q": "Grant Gustin plays which superhero on the CW show of the same name?",
+   "options": [
+    "Aquaman",
+    "The Flash",
+    "The Arrow",
+    "The Atom"
+   ],
+   "answer": "The Flash",
+   "d": "medium"
+  },
+  {
+   "q": "In The Jungle Book, what kind of animal is Shere Khan?",
+   "options": [
+    "A panther",
+    "A bear",
+    "A tiger",
+    "A snake"
+   ],
+   "answer": "A tiger",
+   "d": "easy"
+  },
+  {
+   "q": "What breed of dog is Bluey?",
+   "options": [
+    "Corgi",
+    "Border collie",
+    "Blue heeler",
+    "Kelpie"
+   ],
+   "answer": "Blue heeler",
+   "d": "easy"
+  },
+  {
+   "q": "What does Bluey mostly spend her episodes doing?",
+   "options": [
+    "Going to school",
+    "Playing imaginative games",
+    "Racing cars",
+    "Solving crimes"
+   ],
+   "answer": "Playing imaginative games",
+   "d": "easy"
+  },
+  {
+   "q": "Which anime follows a ninja boy called Naruto Uzumaki?",
+   "options": [
+    "Naruto",
+    "One Piece",
+    "Bleach",
+    "Fairy Tail"
+   ],
+   "answer": "Naruto",
+   "d": "easy"
+  },
+  {
+   "q": "Which substance weakens Superman?",
+   "options": [
+    "Adamantium",
+    "Kryptonite",
+    "Uranium",
+    "Vibranium"
+   ],
+   "answer": "Kryptonite",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Wile E. Coyote endlessly chasing?",
+   "options": [
+    "Speedy Gonzales",
+    "Tweety",
+    "The Road Runner",
+    "Bugs Bunny"
+   ],
+   "answer": "The Road Runner",
+   "d": "easy"
+  },
+  {
+   "q": "Which city does Spider-Man protect?",
+   "options": [
+    "Metropolis",
+    "Gotham City",
+    "Chicago",
+    "New York"
+   ],
+   "answer": "New York",
+   "d": "easy"
+  },
+  {
+   "q": "In the 80s cartoon Thundercats what was the name of Lion-Os sword?",
+   "options": [
+    "Excalibur",
+    "Sword of Omens",
+    "Sword of Thundera",
+    "Blade of Omens"
+   ],
+   "answer": "Sword of Omens",
+   "d": "medium"
+  },
+  {
+   "q": "Who is Ravens best friend on the show That's So Raven?",
+   "options": [
+    "Chelsea",
+    "Alana",
+    "Hannah Montana",
+    "Sydney"
+   ],
+   "answer": "Chelsea",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the Flintstones' next-door neighbours?",
+   "options": [
+    "The Boulders",
+    "The Cobbles",
+    "The Rubbles",
+    "The Slates"
+   ],
+   "answer": "The Rubbles",
+   "d": "easy"
+  },
+  {
+   "q": "What is the only phrase Groot usually says?",
+   "options": [
+    "Groot is here",
+    "Hello Groot",
+    "We are Groot",
+    "I am Groot"
+   ],
+   "answer": "I am Groot",
+   "d": "easy"
+  },
+  {
+   "q": "In The Flintstones, what is the name of Fred and Wilma's pet dinosaur?",
+   "options": [
+    "Dino",
+    "Rex",
+    "Bamm-Bamm",
+    "Fossil the Fetch-osaurus"
+   ],
+   "answer": "Dino",
+   "d": "easy"
+  },
+  {
+   "q": "In the Pokemon world, what is a Poke Ball designed to do?",
+   "options": [
+    "Train a Pokemon",
+    "Heal a Pokemon",
+    "Store a Pokemon",
+    "Feed a Pokemon"
+   ],
+   "answer": "Store a Pokemon",
+   "d": "easy"
+  },
+  {
+   "q": "How does Pikachu attack in the anime?",
+   "options": [
+    "With water",
+    "With fire",
+    "With electricity",
+    "With ice"
+   ],
+   "answer": "With electricity",
+   "d": "easy"
+  },
+  {
+   "q": "Which 'South Park' character wears an orange parka and is hard to understand?",
+   "options": [
+    "Cartman",
+    "Kyle",
+    "Kenny",
+    "Stan"
+   ],
+   "answer": "Kenny",
+   "d": "easy"
+  },
+  {
+   "q": "Who was Fred and Barneys boss in the popular animated series The Flintstones?",
+   "options": [
+    "Mr. Rockhead",
+    "Mr. Spacely",
+    "Mr. Slate",
+    "Mr. Granite"
+   ],
+   "answer": "Mr. Slate",
+   "d": "medium"
+  },
+  {
+   "q": "Which animation studio made Toy Story?",
+   "options": [
+    "Illumination",
+    "Blue Sky",
+    "Pixar",
+    "DreamWorks"
+   ],
+   "answer": "Pixar",
+   "d": "easy"
+  },
+  {
+   "q": "Which Belgian comic features a young reporter with a quiff and his white dog?",
+   "options": [
+    "Tintin",
+    "Lucky Luke",
+    "Spirou",
+    "Asterix"
+   ],
+   "answer": "Tintin",
+   "d": "easy"
+  },
+  {
+   "q": "Which Peanuts character carries a security blanket?",
+   "options": [
+    "Schroeder",
+    "Pigpen",
+    "Charlie Brown",
+    "Linus"
+   ],
+   "answer": "Linus",
+   "d": "easy"
+  },
+  {
+   "q": "Which comic strip features a boy called Charlie Brown?",
+   "options": [
+    "Peanuts",
+    "Calvin and Hobbes",
+    "Dennis the Menace",
+    "Garfield"
+   ],
+   "answer": "Peanuts",
+   "d": "easy"
+  },
+  {
+   "q": "How many seasons did \"Stargate SG-1\" have?",
+   "options": [
+    "10",
+    "12",
+    "3",
+    "9"
+   ],
+   "answer": "10",
+   "d": "hard"
+  },
+  {
+   "q": "Which planet was Superman born on?",
+   "options": [
+    "Oa",
+    "Apokolips",
+    "Mars",
+    "Krypton"
+   ],
+   "answer": "Krypton",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'Hakuna Matata' mean in The Lion King?",
+   "options": [
+    "Circle of life",
+    "No worries",
+    "Welcome home",
+    "Long live the king"
+   ],
+   "answer": "No worries",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Bambi's friend Thumper?",
+   "options": [
+    "A rabbit",
+    "A mouse",
+    "A squirrel",
+    "A fox"
+   ],
+   "answer": "A rabbit",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of creature bit Peter Parker and gave him his powers?",
+   "options": [
+    "A wasp",
+    "A snake",
+    "A spider",
+    "A bat"
+   ],
+   "answer": "A spider",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the main character in \"The Flash\" TV series?",
+   "options": [
+    "Bart Allen",
+    "Wally West",
+    "Bruce Wayne",
+    "Barry Allen"
+   ],
+   "answer": "Barry Allen",
+   "d": "medium"
+  },
+  {
+   "q": "What is Xanders special power in Buffy the Vampire Slayer?",
+   "options": [
+    "Super strength",
+    "Telepathy",
+    "Turning into a hyena",
+    "None"
+   ],
+   "answer": "None",
+   "d": "medium"
+  },
+  {
+   "q": "Which anime and manga features four turtle brothers named after Renaissance artists?",
+   "options": [
+    "Biker Mice from Mars",
+    "Teenage Mutant Ninja Turtles",
+    "Street Sharks",
+    "Samurai Pizza Cats"
+   ],
+   "answer": "Teenage Mutant Ninja Turtles",
+   "d": "easy"
+  },
+  {
+   "q": "Which mirror does the wicked queen speak to in Snow White?",
+   "options": [
+    "A pool of water",
+    "A cracked mirror",
+    "A hand mirror",
+    "The magic mirror on the wall"
+   ],
+   "answer": "The magic mirror on the wall",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Japanese word for comics?",
+   "options": [
+    "Otaku",
+    "Anime",
+    "Manga",
+    "Kanji"
+   ],
+   "answer": "Manga",
+   "d": "easy"
+  },
+  {
+   "q": "Which comic book publisher created Spider-Man, Iron Man and the Hulk?",
+   "options": [
+    "DC",
+    "Image",
+    "Marvel",
+    "Dark Horse"
+   ],
+   "answer": "Marvel",
+   "d": "easy"
+  },
+  {
+   "q": "Which Looney Tunes hunter is forever trying to shoot Bugs Bunny?",
+   "options": [
+    "Yosemite Sam",
+    "Foghorn Leghorn",
+    "Marvin the Martian",
+    "Elmer Fudd"
+   ],
+   "answer": "Elmer Fudd",
+   "d": "easy"
+  },
+  {
+   "q": "Which fictional company sells Wile E. Coyote his gadgets?",
+   "options": [
+    "Apex",
+    "Vertex",
+    "Omni",
+    "Acme"
+   ],
+   "answer": "Acme",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the main character of 'Dragon Ball'?",
+   "options": [
+    "Gohan",
+    "Goku",
+    "Piccolo",
+    "Vegeta"
+   ],
+   "answer": "Goku",
+   "d": "easy"
+  },
+  {
+   "q": "In the cartoon Tom and Jerry, what type of animal is Jerry?",
+   "options": [
+    "Cat",
+    "Dog",
+    "A tiny lawyer",
+    "Mouse"
+   ],
+   "answer": "Mouse",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Pokemon series slogan?",
+   "options": [
+    "Duel to win",
+    "Gotta catch 'em all",
+    "Ready, set, go",
+    "Believe it"
+   ],
+   "answer": "Gotta catch 'em all",
+   "d": "easy"
+  },
+  {
+   "q": "What are Marvel and DC best known for producing?",
+   "options": [
+    "Sweets",
+    "Cars",
+    "Trainers",
+    "Comic books"
+   ],
+   "answer": "Comic books",
+   "d": "easy"
+  },
+  {
+   "q": "When did Spongebob Squarepants first air?",
+   "options": [
+    "May 1, 1999",
+    "May 1, 1998",
+    "July 17, 1999",
+    "April 1, 2000"
+   ],
+   "answer": "May 1, 1999",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the yellow electric Pokemon carried by Ash?",
+   "options": [
+    "Pikachu",
+    "Jolteon",
+    "Charmander",
+    "Raichu"
+   ],
+   "answer": "Pikachu",
+   "d": "easy"
+  },
+  {
+   "q": "In Aladdin, what colour is the Genie?",
+   "options": [
+    "Blue",
+    "Purple",
+    "Green",
+    "Red"
+   ],
+   "answer": "Blue",
+   "d": "easy"
+  },
+  {
+   "q": "Which animated Christmas special features a reindeer with a glowing red nose?",
+   "options": [
+    "Rudolph the Red-Nosed Reindeer",
+    "Santa Claus is Comin' to Town",
+    "The Snowman",
+    "Frosty the Snowman"
+   ],
+   "answer": "Rudolph the Red-Nosed Reindeer",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Popeye's long-suffering sweetheart?",
+   "options": [
+    "Wimpy",
+    "Sweet Pea",
+    "Betty Boop",
+    "Olive Oyl"
+   ],
+   "answer": "Olive Oyl",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon cat is forever chasing the mouse Jerry?",
+   "options": [
+    "Felix",
+    "Tom",
+    "Sir Pounce-a-Lot",
+    "Sylvester"
+   ],
+   "answer": "Tom",
+   "d": "easy"
+  },
+  {
+   "q": "In Breaking Bad, the initials W.W. refer to which of the following?",
+   "options": [
+    "William Wolf",
+    "Wally Walrus",
+    "Winnie the Pooh",
+    "Walter White"
+   ],
+   "answer": "Walter White",
+   "d": "easy"
+  },
+  {
+   "q": "Which Simpsons character is a clown who hosts a children's television show?",
+   "options": [
+    "Krusty",
+    "Sideshow Bob",
+    "Gabbo",
+    "Rainier Wolfcastle"
+   ],
+   "answer": "Krusty",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the restaurant where SpongeBob works?",
+   "options": [
+    "The Barnacle",
+    "The Krusty Krab",
+    "The Chum Bucket",
+    "The Salty Spoon"
+   ],
+   "answer": "The Krusty Krab",
+   "d": "easy"
+  },
+  {
+   "q": "What does Winnie the Pooh love to eat?",
+   "options": [
+    "Honey",
+    "Cheese",
+    "Fish",
+    "Cake"
+   ],
+   "answer": "Honey",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Blinky Bill?",
+   "options": [
+    "A possum",
+    "A wombat",
+    "A koala",
+    "A kangaroo"
+   ],
+   "answer": "A koala",
+   "d": "easy"
+  },
+  {
+   "q": "What is SpongeBob SquarePants' job at the Krusty Krab?",
+   "options": [
+    "Fry cook",
+    "Cashier",
+    "Manager",
+    "Cleaner"
+   ],
+   "answer": "Fry cook",
+   "d": "easy"
+  },
+  {
+   "q": "Who played Nora Tyler Bing, Chandlers mother in Friends?",
+   "options": [
+    "Christina Pickles",
+    "Betty White",
+    "Morgan Fairchild",
+    "Kathleen Turner"
+   ],
+   "answer": "Morgan Fairchild",
+   "d": "medium"
+  },
+  {
+   "q": "What sort of animal is Tom in Tom and Jerry?",
+   "options": [
+    "A rat",
+    "A mouse",
+    "A cat",
+    "A dog"
+   ],
+   "answer": "A cat",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon family lives in the town of Bedrock?",
+   "options": [
+    "The Jetsons",
+    "The Cavemens",
+    "The Flintstones",
+    "The Simpsons"
+   ],
+   "answer": "The Flintstones",
+   "d": "easy"
+  },
+  {
+   "q": "In DuckTales, what is the name of the city where all the main characters live?",
+   "options": [
+    "Mallardton",
+    "Quacktown",
+    "Duckville",
+    "Duckburg"
+   ],
+   "answer": "Duckburg",
+   "d": "medium"
+  },
+  {
+   "q": "Which cartoon mouse is Disney's mascot?",
+   "options": [
+    "Danger Mouse",
+    "Jerry",
+    "Speedy Gonzales",
+    "Mickey Mouse"
+   ],
+   "answer": "Mickey Mouse",
+   "d": "easy"
+  },
+  {
+   "q": "From what show is the character \"James Doakes\"?",
+   "options": [
+    "Dexter",
+    "Boardwalk Empire",
+    "The Wire",
+    "Sesame Street"
+   ],
+   "answer": "Dexter",
+   "d": "medium"
+  },
+  {
+   "q": "Which cartoon bear wears a hat and tie and steals picnic baskets?",
+   "options": [
+    "Paddington",
+    "Fozzie",
+    "Baloo",
+    "Yogi Bear"
+   ],
+   "answer": "Yogi Bear",
+   "d": "easy"
+  },
+  {
+   "q": "In which animated film does a green ogre travel with a talkative donkey?",
+   "options": [
+    "Tangled",
+    "Shrek",
+    "Hercules",
+    "Brave"
+   ],
+   "answer": "Shrek",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of vehicle is Thomas the Tank Engine?",
+   "options": [
+    "A boat",
+    "A tractor",
+    "A train",
+    "A bus"
+   ],
+   "answer": "A train",
+   "d": "easy"
+  },
+  {
+   "q": "What was the name of the woman with whom Captain Kirk had a 2-year relationship in the Star Trek series?",
+   "options": [
+    "Ruth",
+    "Edith",
+    "Lieutenant Uhura",
+    "Anatonia"
+   ],
+   "answer": "Anatonia",
+   "d": "hard"
+  },
+  {
+   "q": "What food are the Ninja Turtles obsessed with?",
+   "options": [
+    "Burgers",
+    "Tacos",
+    "Noodles",
+    "Pizza"
+   ],
+   "answer": "Pizza",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Donald Duck's girlfriend?",
+   "options": [
+    "Minnie Mouse",
+    "Clarabelle",
+    "Della",
+    "Daisy Duck"
+   ],
+   "answer": "Daisy Duck",
+   "d": "easy"
+  },
+  {
+   "q": "Which X-Man has retractable claws and a healing factor?",
+   "options": [
+    "Wolverine",
+    "Cyclops",
+    "Colossus",
+    "Beast"
+   ],
+   "answer": "Wolverine",
+   "d": "easy"
+  },
+  {
+   "q": "Which song does Baloo teach Mowgli in The Jungle Book?",
+   "options": [
+    "The Bare Necessities",
+    "I Wanna Be Like You",
+    "Trust in Me",
+    "Colonel Hathi's March"
+   ],
+   "answer": "The Bare Necessities",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the yellow electric mouse Pokemon?",
+   "options": [
+    "Pichu",
+    "Pikachu",
+    "Sparkrat",
+    "Raichu"
+   ],
+   "answer": "Pikachu",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Batman's underground base?",
+   "options": [
+    "The Watchtower",
+    "The Hall of Justice",
+    "The Batcave",
+    "The Fortress of Solitude"
+   ],
+   "answer": "The Batcave",
+   "d": "easy"
+  },
+  {
+   "q": "What instrument does Lisa Simpson play?",
+   "options": [
+    "Clarinet",
+    "Trumpet",
+    "Saxophone",
+    "Flute"
+   ],
+   "answer": "Saxophone",
+   "d": "easy"
+  },
+  {
+   "q": "Who was Peyton going out with in the very first episode?",
+   "options": [
+    "Jake",
+    "Nathan",
+    "Lucas",
+    "Whitey"
+   ],
+   "answer": "Nathan",
+   "d": "medium"
+  },
+  {
+   "q": "How does a Scooby-Doo mystery usually end?",
+   "options": [
+    "The gang runs away",
+    "The police solve it",
+    "The ghost escapes",
+    "The monster is unmasked as a person"
+   ],
+   "answer": "The monster is unmasked as a person",
+   "d": "easy"
+  },
+  {
+   "q": "Where on their bodies are the Teletubbies' aerials?",
+   "options": [
+    "Their heads",
+    "Their backs",
+    "Their feet",
+    "Their hands"
+   ],
+   "answer": "Their heads",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Mickey Mouse's dog?",
+   "options": [
+    "Pluto",
+    "Buster",
+    "Goofy",
+    "Bolt"
+   ],
+   "answer": "Pluto",
+   "d": "easy"
+  },
+  {
+   "q": "What is Popeye's occupation?",
+   "options": [
+    "Farmer",
+    "Sailor",
+    "Fisherman",
+    "Boxer"
+   ],
+   "answer": "Sailor",
+   "d": "easy"
+  },
+  {
+   "q": "What Days of Our Lives character choked on their own doughnut?",
+   "options": [
+    "Julie",
+    "Stefano",
+    "Marlena",
+    "Alice"
+   ],
+   "answer": "Alice",
+   "d": "hard"
+  },
+  {
+   "q": "What sort of animal is Piglet?",
+   "options": [
+    "A lamb",
+    "A rabbit",
+    "A pig",
+    "A mouse"
+   ],
+   "answer": "A pig",
+   "d": "easy"
+  },
+  {
+   "q": "Which author and illustrator created The Cat in the Hat?",
+   "options": [
+    "Eric Carle",
+    "Maurice Sendak",
+    "Dr Seuss",
+    "Roald Dahl"
+   ],
+   "answer": "Dr Seuss",
+   "d": "easy"
+  },
+  {
+   "q": "What year was Netflix founded?",
+   "options": [
+    "1997",
+    "1975",
+    "1998",
+    "1999"
+   ],
+   "answer": "1997",
+   "d": "medium"
+  },
+  {
+   "q": "Which of these Nickelodeon game shows aired first?",
+   "options": [
+    "Finders Keepers",
+    "Nick Arcade",
+    "Nickelodeon Guts",
+    "Double Dare"
+   ],
+   "answer": "Double Dare",
+   "d": "hard"
+  },
+  {
+   "q": "Which fictional company supplies Wile E. Coyote's gadgets?",
+   "options": [
+    "ZENITH",
+    "OMNI",
+    "APEX",
+    "ACME"
+   ],
+   "answer": "ACME",
+   "d": "easy"
+  },
+  {
+   "q": "In what year did \"The Big Bang Theory\" debut on CBS?",
+   "options": [
+    "2008",
+    "1969",
+    "2007",
+    "2006"
+   ],
+   "answer": "2007",
+   "d": "medium"
+  },
+  {
+   "q": "In 'Transformers', who leads the Autobots?",
+   "options": [
+    "Starscream",
+    "Bumblebee",
+    "Optimus Prime",
+    "Megatron"
+   ],
+   "answer": "Optimus Prime",
+   "d": "easy"
+  },
+  {
+   "q": "Which employee does Michael Scott run into with his car in an episode of The Office?",
+   "options": [
+    "Phyllis",
+    "Oscar",
+    "Meredith",
+    "Stanley"
+   ],
+   "answer": "Meredith",
+   "d": "medium"
+  },
+  {
+   "q": "Who was the winner of the first season of Americas Next Top Model?",
+   "options": [
+    "Adrianne Curry",
+    "Elyse Sewell",
+    "Tyra Banks",
+    "Shannon Stewart"
+   ],
+   "answer": "Adrianne Curry",
+   "d": "medium"
+  },
+  {
+   "q": "Which cartoon character's nose grows when he lies?",
+   "options": [
+    "Dumbo",
+    "Aladdin",
+    "Peter Pan",
+    "Pinocchio"
+   ],
+   "answer": "Pinocchio",
+   "d": "easy"
+  },
+  {
+   "q": "What TV show is about a grandfather dragging his grandson around on adventures?",
+   "options": [
+    "Peppa Pig",
+    "Solar Opposites",
+    "Rick & Morty",
+    "Futurama"
+   ],
+   "answer": "Rick & Morty",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the tree-like character in Guardians of the Galaxy?",
+   "options": [
+    "Drax",
+    "Gamora",
+    "Groot",
+    "Rocket"
+   ],
+   "answer": "Groot",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Japanese word for animation?",
+   "options": [
+    "Anime",
+    "Mecha",
+    "Kaiju",
+    "Manga"
+   ],
+   "answer": "Anime",
+   "d": "easy"
+  },
+  {
+   "q": "Which character on Buffy the Vampire Slayer was played by actress Eliza Dushku?",
+   "options": [
+    "Kendra",
+    "Buffy",
+    "Faith",
+    "Cordelia"
+   ],
+   "answer": "Faith",
+   "d": "medium"
+  },
+  {
+   "q": "In the Star Trek universe, what color is Vulcan blood?",
+   "options": [
+    "Purple",
+    "Green",
+    "Blue",
+    "Fluorescent Pink"
+   ],
+   "answer": "Green",
+   "d": "medium"
+  },
+  {
+   "q": "When Jim Halpert has an interview with the company CEO on the TV show The Office, what comment does the CEO make about Jim?",
+   "options": [
+    "He needs an MBA to advance in the company.",
+    "He makes a good impression on everyone he meets.",
+    "He reminds me of myself.",
+    "He has a firm handshake."
+   ],
+   "answer": "He makes a good impression on everyone he meets.",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of Jacks father on the TV show Lost?",
+   "options": [
+    "Christian",
+    "Jacob",
+    "Ray",
+    "Darth Vader"
+   ],
+   "answer": "Christian",
+   "d": "medium"
+  },
+  {
+   "q": "Which toy line of colourful ponies became a long-running cartoon series?",
+   "options": [
+    "Rainbow Brite",
+    "Strawberry Shortcake",
+    "Care Bears",
+    "My Little Pony"
+   ],
+   "answer": "My Little Pony",
+   "d": "easy"
+  },
+  {
+   "q": "How does Spider-Man travel between buildings?",
+   "options": [
+    "By swinging on webs",
+    "By flying",
+    "By teleporting",
+    "By jetpack"
+   ],
+   "answer": "By swinging on webs",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of animal is Peppa Pig?",
+   "options": [
+    "A sheep",
+    "A cow",
+    "A dog",
+    "A pig"
+   ],
+   "answer": "A pig",
+   "d": "easy"
+  },
+  {
+   "q": "Which Simpsons character is the barman at Moe's Tavern?",
+   "options": [
+    "Moe",
+    "Carl",
+    "Lenny",
+    "Barney"
+   ],
+   "answer": "Moe",
+   "d": "easy"
+  },
+  {
+   "q": "What was the callsign of Commander William Adama in Battlestar Galactica (2004)?",
+   "options": [
+    "Starbuck",
+    "Husker",
+    "Apollo",
+    "Crashdown"
+   ],
+   "answer": "Husker",
+   "d": "hard"
+  },
+  {
+   "q": "Which cartoon features a blue dog family in Australia?",
+   "options": [
+    "The Wiggles",
+    "Blinky Bill",
+    "Dot and the Kangaroo",
+    "Bluey"
+   ],
+   "answer": "Bluey",
+   "d": "easy"
+  }
+ ]
 }

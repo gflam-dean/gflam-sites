@@ -1,0 +1,1615 @@
+{
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "category": "Sport",
+ "count": 143,
+ "questions": [
+  {
+   "q": "Which Victorian AFL club is nicknamed the Bulldogs?",
+   "options": [
+    "Western Bulldogs",
+    "North Melbourne",
+    "St Kilda",
+    "The Blue Heelers"
+   ],
+   "answer": "Western Bulldogs",
+   "d": "easy"
+  },
+  {
+   "q": "In rugby union, what is the name of the formation where forwards bind together to contest the ball?",
+   "options": [
+    "Maul",
+    "Lineout",
+    "Scrum",
+    "Ruck"
+   ],
+   "answer": "Scrum",
+   "d": "easy"
+  },
+  {
+   "q": "What sport does the Australian national team the Kangaroos play?",
+   "options": [
+    "Rugby league",
+    "Competitive napping",
+    "Cricket",
+    "Basketball"
+   ],
+   "answer": "Rugby league",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport uses terms like 'birdie', 'eagle' and 'bogey'?",
+   "options": [
+    "Tennis",
+    "Cricket",
+    "Baseball",
+    "Golf"
+   ],
+   "answer": "Golf",
+   "d": "easy"
+  },
+  {
+   "q": "What shape is the ball used in AFL?",
+   "options": [
+    "A cube",
+    "Oval",
+    "A flat disc",
+    "Perfectly round"
+   ],
+   "answer": "Oval",
+   "d": "easy"
+  },
+  {
+   "q": "Which country won the 2010 FIFA World Cup in South Africa?",
+   "options": [
+    "Netherlands",
+    "Germany",
+    "Uruguay",
+    "Spain"
+   ],
+   "answer": "Spain",
+   "d": "easy"
+  },
+  {
+   "q": "How many holes are played in a standard round of golf?",
+   "options": [
+    "Nine",
+    "Twenty-one",
+    "Eighteen",
+    "Twelve"
+   ],
+   "answer": "Eighteen",
+   "d": "easy"
+  },
+  {
+   "q": "Which country did football legend Lionel Messi represent internationally?",
+   "options": [
+    "Spain",
+    "Brazil",
+    "Chile",
+    "Argentina"
+   ],
+   "answer": "Argentina",
+   "d": "easy"
+  },
+  {
+   "q": "How many holes are in a standard round of golf?",
+   "options": [
+    "24",
+    "20",
+    "18",
+    "9"
+   ],
+   "answer": "18",
+   "d": "easy"
+  },
+  {
+   "q": "In athletics, what is the standard length of a marathon in kilometres, rounded to the nearest whole number?",
+   "options": [
+    "32 km",
+    "48 km",
+    "42 km",
+    "38 km"
+   ],
+   "answer": "42 km",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport is contested in the National Hockey League (NHL)?",
+   "options": [
+    "Ice hockey",
+    "Baseball",
+    "Field hockey",
+    "Basketball"
+   ],
+   "answer": "Ice hockey",
+   "d": "easy"
+  },
+  {
+   "q": "The Ryder Cup is a team competition in which sport?",
+   "options": [
+    "Tennis",
+    "Golf",
+    "Cricket",
+    "Rugby"
+   ],
+   "answer": "Golf",
+   "d": "easy"
+  },
+  {
+   "q": "In rugby union, how many players are in a team on the field?",
+   "options": [
+    "Sixteen",
+    "Fifteen",
+    "Thirteen",
+    "Eleven"
+   ],
+   "answer": "Fifteen",
+   "d": "easy"
+  },
+  {
+   "q": "In Formula 1, what is the name of the area where cars stop for tyres and fuel?",
+   "options": [
+    "The grid",
+    "The paddock",
+    "The chicane",
+    "The pit lane"
+   ],
+   "answer": "The pit lane",
+   "d": "easy"
+  },
+  {
+   "q": "Which country won the 2014 FIFA World Cup in Brazil?",
+   "options": [
+    "Brazil",
+    "Argentina",
+    "Germany",
+    "Netherlands"
+   ],
+   "answer": "Germany",
+   "d": "easy"
+  },
+  {
+   "q": "Which country won the 2018 FIFA World Cup held in Russia?",
+   "options": [
+    "Brazil",
+    "Croatia",
+    "Germany",
+    "France"
+   ],
+   "answer": "France",
+   "d": "easy"
+  },
+  {
+   "q": "In tennis, how many Grand Slam singles tournaments are held each year?",
+   "options": [
+    "Six",
+    "Three",
+    "Four",
+    "Five"
+   ],
+   "answer": "Four",
+   "d": "easy"
+  },
+  {
+   "q": "Which swimming stroke is swum on the back?",
+   "options": [
+    "Butterfly",
+    "Backstroke",
+    "Freestyle",
+    "Breaststroke"
+   ],
+   "answer": "Backstroke",
+   "d": "easy"
+  },
+  {
+   "q": "What is the maximum number of clubs a golfer may carry in their bag during a round?",
+   "options": [
+    "Fourteen",
+    "Eighteen",
+    "Twelve",
+    "Sixteen"
+   ],
+   "answer": "Fourteen",
+   "d": "easy"
+  },
+  {
+   "q": "What is a hat-trick in soccer?",
+   "options": [
+    "Three corners in a row",
+    "Three yellow cards",
+    "Three goals by one player in a match",
+    "Three saves in a row"
+   ],
+   "answer": "Three goals by one player in a match",
+   "d": "easy"
+  },
+  {
+   "q": "How long is an Olympic swimming pool?",
+   "options": [
+    "25 metres",
+    "50 metres",
+    "100 metres",
+    "33 metres"
+   ],
+   "answer": "50 metres",
+   "d": "easy"
+  },
+  {
+   "q": "In which Australian city is the AFL Grand Final traditionally played?",
+   "options": [
+    "Wagga Wagga",
+    "Adelaide",
+    "Melbourne",
+    "Sydney"
+   ],
+   "answer": "Melbourne",
+   "d": "easy"
+  },
+  {
+   "q": "What are the two tall central posts on an AFL goal line called?",
+   "options": [
+    "The goal posts",
+    "The behind posts",
+    "The point posts",
+    "The wickets"
+   ],
+   "answer": "The goal posts",
+   "d": "easy"
+  },
+  {
+   "q": "The Brownlow Medal is awarded to the player judged to be what during the home-and-away season?",
+   "options": [
+    "The best and fairest",
+    "The loudest in the change rooms",
+    "The leading goalkicker",
+    "The best first-year player"
+   ],
+   "answer": "The best and fairest",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian motor race is held annually at Mount Panorama?",
+   "options": [
+    "The Adelaide 500",
+    "The Bathurst 1000",
+    "The Gold Coast 600",
+    "The Sandown 500"
+   ],
+   "answer": "The Bathurst 1000",
+   "d": "easy"
+  },
+  {
+   "q": "What colour jersey does the Tour de France leader wear?",
+   "options": [
+    "Pink",
+    "White",
+    "Green",
+    "Yellow"
+   ],
+   "answer": "Yellow",
+   "d": "easy"
+  },
+  {
+   "q": "Which country is famously known as the home of golf?",
+   "options": [
+    "England",
+    "Wales",
+    "Ireland",
+    "Scotland"
+   ],
+   "answer": "Scotland",
+   "d": "easy"
+  },
+  {
+   "q": "Which sprinter set the 100 metres world record of 9.58 seconds?",
+   "options": [
+    "Tyson Gay",
+    "Yohan Blake",
+    "Usain Bolt",
+    "Asafa Powell"
+   ],
+   "answer": "Usain Bolt",
+   "d": "easy"
+  },
+  {
+   "q": "What is one over par called in golf?",
+   "options": [
+    "A double bogey",
+    "A bogey",
+    "A par plus",
+    "A birdie"
+   ],
+   "answer": "A bogey",
+   "d": "easy"
+  },
+  {
+   "q": "What piece of equipment does a golfer use to hit the ball?",
+   "options": [
+    "Club",
+    "Cue",
+    "Bat",
+    "Racquet"
+   ],
+   "answer": "Club",
+   "d": "easy"
+  },
+  {
+   "q": "The traditional Anzac Day AFL blockbuster is played between Collingwood and which other club?",
+   "options": [
+    "Carlton",
+    "The Australian Army",
+    "Richmond",
+    "Essendon"
+   ],
+   "answer": "Essendon",
+   "d": "easy"
+  },
+  {
+   "q": "What card does a soccer referee show for a sending off?",
+   "options": [
+    "Red",
+    "Blue",
+    "Yellow",
+    "Black"
+   ],
+   "answer": "Red",
+   "d": "easy"
+  },
+  {
+   "q": "Which golf tournament awards the winner a green jacket?",
+   "options": [
+    "US Open",
+    "PGA Championship",
+    "The Masters",
+    "The Open"
+   ],
+   "answer": "The Masters",
+   "d": "easy"
+  },
+  {
+   "q": "Which tennis tournament is played on clay courts?",
+   "options": [
+    "French Open",
+    "US Open",
+    "Australian Open",
+    "Wimbledon"
+   ],
+   "answer": "French Open",
+   "d": "easy"
+  },
+  {
+   "q": "Which country did football star Cristiano Ronaldo play for at international level?",
+   "options": [
+    "Portugal",
+    "Brazil",
+    "Argentina",
+    "Spain"
+   ],
+   "answer": "Portugal",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport features the Super Bowl as its championship game?",
+   "options": [
+    "American Football",
+    "Baseball",
+    "Ice Hockey",
+    "Basketball"
+   ],
+   "answer": "American Football",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian swimmer was nicknamed the Thorpedo?",
+   "options": [
+    "Ian Thorpe",
+    "Eamon Sullivan",
+    "Grant Hackett",
+    "Michael Klim"
+   ],
+   "answer": "Ian Thorpe",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport is associated with Wimbledon?",
+   "options": [
+    "Cricket",
+    "Rowing",
+    "Tennis",
+    "Golf"
+   ],
+   "answer": "Tennis",
+   "d": "easy"
+  },
+  {
+   "q": "In basketball, what is it called when a player scores by dropping the ball down through the hoop from above?",
+   "options": [
+    "Free throw",
+    "Jump shot",
+    "Dunk",
+    "Layup"
+   ],
+   "answer": "Dunk",
+   "d": "easy"
+  },
+  {
+   "q": "Which AFL club plays its home games at the Gabba?",
+   "options": [
+    "The Wiggles",
+    "Brisbane Lions",
+    "Sydney Swans",
+    "Gold Coast Suns"
+   ],
+   "answer": "Brisbane Lions",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport is Tiger Woods famous for?",
+   "options": [
+    "Tennis",
+    "Golf",
+    "Cricket",
+    "Boxing"
+   ],
+   "answer": "Golf",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport does the New York Yankees team play?",
+   "options": [
+    "Basketball",
+    "Ice Hockey",
+    "Baseball",
+    "American Football"
+   ],
+   "answer": "Baseball",
+   "d": "easy"
+  },
+  {
+   "q": "Which country did sprinter Usain Bolt represent?",
+   "options": [
+    "Britain",
+    "United States",
+    "Jamaica",
+    "Canada"
+   ],
+   "answer": "Jamaica",
+   "d": "easy"
+  },
+  {
+   "q": "How many strikes make an out in baseball?",
+   "options": [
+    "Five",
+    "Three",
+    "Four",
+    "Two"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "How many points is a try worth in rugby league (NRL)?",
+   "options": [
+    "It depends how far it slid on the grass",
+    "5",
+    "6",
+    "4"
+   ],
+   "answer": "4",
+   "d": "easy"
+  },
+  {
+   "q": "The AFL Grand Final is traditionally played at which venue?",
+   "options": [
+    "Marvel Stadium",
+    "The Melbourne Cricket Ground",
+    "The Sydney Opera House",
+    "Adelaide Oval"
+   ],
+   "answer": "The Melbourne Cricket Ground",
+   "d": "easy"
+  },
+  {
+   "q": "Which country has won the most FIFA World Cups?",
+   "options": [
+    "Brazil",
+    "Germany",
+    "Argentina",
+    "Italy"
+   ],
+   "answer": "Brazil",
+   "d": "easy"
+  },
+  {
+   "q": "How many runs is a boundary that clears the rope on the full worth in cricket?",
+   "options": [
+    "Five",
+    "Four",
+    "Eight",
+    "Six"
+   ],
+   "answer": "Six",
+   "d": "easy"
+  },
+  {
+   "q": "Which basketball star was nicknamed 'Air Jordan'?",
+   "options": [
+    "Magic Johnson",
+    "Michael Jordan",
+    "Kobe Bryant",
+    "LeBron James"
+   ],
+   "answer": "Michael Jordan",
+   "d": "easy"
+  },
+  {
+   "q": "Which AFL club is nicknamed the Crows?",
+   "options": [
+    "Port Adelaide",
+    "The Kookaburras",
+    "Adelaide",
+    "West Coast"
+   ],
+   "answer": "Adelaide",
+   "d": "easy"
+  },
+  {
+   "q": "The Coleman Medal is awarded each season to the AFL's leading what?",
+   "options": [
+    "Moustache",
+    "Rising star",
+    "Goalkicker",
+    "Best and fairest"
+   ],
+   "answer": "Goalkicker",
+   "d": "easy"
+  },
+  {
+   "q": "The AFL Grand Final is traditionally played at which Melbourne stadium?",
+   "options": [
+    "Marvel Stadium",
+    "Bondi Beach",
+    "The MCG",
+    "Adelaide Oval"
+   ],
+   "answer": "The MCG",
+   "d": "easy"
+  },
+  {
+   "q": "The women's national Australian rules competition is known by which abbreviation?",
+   "options": [
+    "AFLW",
+    "WAFL",
+    "VFLW",
+    "The Sheilas League"
+   ],
+   "answer": "AFLW",
+   "d": "easy"
+  },
+  {
+   "q": "What is the pre-match Maori challenge performed by the All Blacks called?",
+   "options": [
+    "The haka",
+    "The siva tau",
+    "The cibi",
+    "The sipi tau"
+   ],
+   "answer": "The haka",
+   "d": "easy"
+  },
+  {
+   "q": "Which two car brands dominated the traditional Bathurst rivalry?",
+   "options": [
+    "BMW and Audi",
+    "Holden and Ford",
+    "Toyota and Nissan",
+    "Mazda and Subaru"
+   ],
+   "answer": "Holden and Ford",
+   "d": "easy"
+  },
+  {
+   "q": "Which AFL club is nicknamed the Cats?",
+   "options": [
+    "Geelong",
+    "Hawthorn",
+    "The Alley Strays",
+    "Richmond"
+   ],
+   "answer": "Geelong",
+   "d": "easy"
+  },
+  {
+   "q": "In football, what colour card does a referee show to send a player off?",
+   "options": [
+    "Black",
+    "Red",
+    "Yellow",
+    "Blue"
+   ],
+   "answer": "Red",
+   "d": "easy"
+  },
+  {
+   "q": "Which boxer was known as 'Iron Mike'?",
+   "options": [
+    "Mike Tyson",
+    "Evander Holyfield",
+    "Floyd Mayweather",
+    "Lennox Lewis"
+   ],
+   "answer": "Mike Tyson",
+   "d": "easy"
+  },
+  {
+   "q": "In which New South Wales town is Mount Panorama?",
+   "options": [
+    "Dubbo",
+    "Bathurst",
+    "Orange",
+    "Wagga Wagga"
+   ],
+   "answer": "Bathurst",
+   "d": "easy"
+  },
+  {
+   "q": "How many runs are scored when a batsman hits the ball over the boundary on the full?",
+   "options": [
+    "5",
+    "6",
+    "4",
+    "One, plus a broken pub window"
+   ],
+   "answer": "6",
+   "d": "easy"
+  },
+  {
+   "q": "In golf, what is one under par on a hole called?",
+   "options": [
+    "A bogey",
+    "A birdie",
+    "An eagle",
+    "An albatross"
+   ],
+   "answer": "A birdie",
+   "d": "easy"
+  },
+  {
+   "q": "Which cycling race is held over three weeks each July in France?",
+   "options": [
+    "Paris-Roubaix",
+    "The Tour de France",
+    "The Vuelta a Espana",
+    "The Giro d'Italia"
+   ],
+   "answer": "The Tour de France",
+   "d": "easy"
+  },
+  {
+   "q": "Serena Williams is a legend in which sport?",
+   "options": [
+    "Swimming",
+    "Athletics",
+    "Golf",
+    "Tennis"
+   ],
+   "answer": "Tennis",
+   "d": "easy"
+  },
+  {
+   "q": "How many players are on the field per team in a rugby league match?",
+   "options": [
+    "11",
+    "13 plus a mate who wandered on",
+    "15",
+    "13"
+   ],
+   "answer": "13",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport is associated with the World Series?",
+   "options": [
+    "Baseball",
+    "American Football",
+    "Ice Hockey",
+    "Basketball"
+   ],
+   "answer": "Baseball",
+   "d": "easy"
+  },
+  {
+   "q": "Boxer Muhammad Ali was originally born with which name?",
+   "options": [
+    "Sonny Liston",
+    "George Foreman",
+    "Cassius Clay",
+    "Joe Frazier"
+   ],
+   "answer": "Cassius Clay",
+   "d": "easy"
+  },
+  {
+   "q": "In boxing, what does the abbreviation KO stand for?",
+   "options": [
+    "Knock Out",
+    "Kick Off",
+    "Knuckle Only",
+    "Keep On"
+   ],
+   "answer": "Knock Out",
+   "d": "easy"
+  },
+  {
+   "q": "How many players from each team are on the field in an AFL match?",
+   "options": [
+    "22",
+    "15",
+    "One, but a very confident one",
+    "18"
+   ],
+   "answer": "18",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport uses a shuttlecock?",
+   "options": [
+    "Pickleball",
+    "Tennis",
+    "Badminton",
+    "Squash"
+   ],
+   "answer": "Badminton",
+   "d": "easy"
+  },
+  {
+   "q": "Which racquet sport is played at Flushing Meadows in New York?",
+   "options": [
+    "Squash",
+    "Badminton",
+    "Tennis",
+    "Table tennis"
+   ],
+   "answer": "Tennis",
+   "d": "easy"
+  },
+  {
+   "q": "Which Argentine footballer scored the 'Hand of God' goal at the 1986 World Cup?",
+   "options": [
+    "Mario Kempes",
+    "Lionel Messi",
+    "Diego Maradona",
+    "Gabriel Batistuta"
+   ],
+   "answer": "Diego Maradona",
+   "d": "easy"
+  },
+  {
+   "q": "How many points is a penalty kick worth in rugby union?",
+   "options": [
+    "Four",
+    "Three",
+    "Two",
+    "Five"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "Which country won the 2006 FIFA World Cup in Germany?",
+   "options": [
+    "Portugal",
+    "Germany",
+    "France",
+    "Italy"
+   ],
+   "answer": "Italy",
+   "d": "easy"
+  },
+  {
+   "q": "How long is a standard soccer match, not counting stoppages?",
+   "options": [
+    "60 minutes",
+    "80 minutes",
+    "100 minutes",
+    "90 minutes"
+   ],
+   "answer": "90 minutes",
+   "d": "easy"
+  },
+  {
+   "q": "In golf, what term describes a score of one stroke under par on a hole?",
+   "options": [
+    "Bogey",
+    "Par",
+    "Birdie",
+    "Eagle"
+   ],
+   "answer": "Birdie",
+   "d": "easy"
+  },
+  {
+   "q": "What sport is played by the Boston Celtics?",
+   "options": [
+    "Baseball",
+    "Basketball",
+    "American Football",
+    "Ice Hockey"
+   ],
+   "answer": "Basketball",
+   "d": "easy"
+  },
+  {
+   "q": "How many players are on a standard football (soccer) team on the pitch?",
+   "options": [
+    "Twelve",
+    "Ten",
+    "Nine",
+    "Eleven"
+   ],
+   "answer": "Eleven",
+   "d": "easy"
+  },
+  {
+   "q": "Which two clubs contest the traditional AFL Anzac Day match?",
+   "options": [
+    "Manly and Brisbane",
+    "Carlton and Richmond",
+    "Hawthorn and Geelong",
+    "Collingwood and Essendon"
+   ],
+   "answer": "Collingwood and Essendon",
+   "d": "easy"
+  },
+  {
+   "q": "How many overs does each side face in a One Day International?",
+   "options": [
+    "20",
+    "50",
+    "40",
+    "60"
+   ],
+   "answer": "50",
+   "d": "easy"
+  },
+  {
+   "q": "What is a bowler taking three wickets in three consecutive deliveries called?",
+   "options": [
+    "A trifecta",
+    "A three-peat",
+    "A hat-trick",
+    "A triple"
+   ],
+   "answer": "A hat-trick",
+   "d": "easy"
+  },
+  {
+   "q": "What is the championship game of the NFL called?",
+   "options": [
+    "The Super Bowl",
+    "The Stanley Cup",
+    "The World Series",
+    "The Grand Final"
+   ],
+   "answer": "The Super Bowl",
+   "d": "easy"
+  },
+  {
+   "q": "Which West Australian AFL club is known as the Eagles?",
+   "options": [
+    "Perth Glory",
+    "West Coast",
+    "Fremantle",
+    "The Wombats"
+   ],
+   "answer": "West Coast",
+   "d": "easy"
+  },
+  {
+   "q": "How many overs per side are in a Twenty20 match?",
+   "options": [
+    "10",
+    "25",
+    "15",
+    "20"
+   ],
+   "answer": "20",
+   "d": "easy"
+  },
+  {
+   "q": "What is a score of zero called in tennis?",
+   "options": [
+    "Duck",
+    "Nil",
+    "Love",
+    "Blank"
+   ],
+   "answer": "Love",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport features the terms 'birdie', 'bogey' and 'fairway'?",
+   "options": [
+    "Lawn bowls",
+    "Croquet",
+    "Golf",
+    "Cricket"
+   ],
+   "answer": "Golf",
+   "d": "easy"
+  },
+  {
+   "q": "How many players are in a cricket team?",
+   "options": [
+    "Twelve",
+    "Ten",
+    "Eleven",
+    "Nine"
+   ],
+   "answer": "Eleven",
+   "d": "easy"
+  },
+  {
+   "q": "How many points is an AFL goal (between the two big posts) worth?",
+   "options": [
+    "3",
+    "1",
+    "50, if the crowd cheers loud enough",
+    "6"
+   ],
+   "answer": "6",
+   "d": "easy"
+  },
+  {
+   "q": "In baseball, how many strikes result in a batter being out?",
+   "options": [
+    "Four",
+    "Five",
+    "Three",
+    "Two"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "How many points is a shot from beyond the arc worth in basketball?",
+   "options": [
+    "Four",
+    "Three",
+    "Two",
+    "One"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "Which annual horse race is known as 'the race that stops a nation'?",
+   "options": [
+    "The pub car park sprint",
+    "Melbourne Cup",
+    "Caulfield Cup",
+    "Cox Plate"
+   ],
+   "answer": "Melbourne Cup",
+   "d": "easy"
+  },
+  {
+   "q": "Which West Australian AFL club is nicknamed the Dockers?",
+   "options": [
+    "Perth",
+    "The Quokkas",
+    "Fremantle",
+    "West Coast"
+   ],
+   "answer": "Fremantle",
+   "d": "easy"
+  },
+  {
+   "q": "Which country won the 2022 FIFA World Cup in Qatar?",
+   "options": [
+    "Croatia",
+    "France",
+    "Argentina",
+    "Brazil"
+   ],
+   "answer": "Argentina",
+   "d": "easy"
+  },
+  {
+   "q": "Which boxer called himself 'The Greatest'?",
+   "options": [
+    "Joe Frazier",
+    "George Foreman",
+    "Mike Tyson",
+    "Muhammad Ali"
+   ],
+   "answer": "Muhammad Ali",
+   "d": "easy"
+  },
+  {
+   "q": "What sport is played at the US Masters, The Open, and the PGA Championship?",
+   "options": [
+    "Rowing",
+    "Golf",
+    "Cricket",
+    "Tennis"
+   ],
+   "answer": "Golf",
+   "d": "easy"
+  },
+  {
+   "q": "Roger Federer won the most of his Grand Slam titles at which tournament?",
+   "options": [
+    "French Open",
+    "US Open",
+    "Wimbledon",
+    "Australian Open"
+   ],
+   "answer": "Wimbledon",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian cricket ground hosts the Boxing Day Test?",
+   "options": [
+    "The MCG",
+    "The Gabba",
+    "The SCG",
+    "Adelaide Oval"
+   ],
+   "answer": "The MCG",
+   "d": "easy"
+  },
+  {
+   "q": "Which swimmer has won the most Olympic gold medals?",
+   "options": [
+    "Ian Thorpe",
+    "Michael Phelps",
+    "Mark Spitz",
+    "Caeleb Dressel"
+   ],
+   "answer": "Michael Phelps",
+   "d": "easy"
+  },
+  {
+   "q": "How many players are on a basketball team on court?",
+   "options": [
+    "Seven",
+    "Six",
+    "Four",
+    "Five"
+   ],
+   "answer": "Five",
+   "d": "easy"
+  },
+  {
+   "q": "In American football, how many points is a touchdown worth?",
+   "options": [
+    "Six",
+    "Seven",
+    "Three",
+    "Two"
+   ],
+   "answer": "Six",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport features the Ashes rivalry between Australia and England?",
+   "options": [
+    "Cricket",
+    "Football",
+    "Rugby",
+    "Tennis"
+   ],
+   "answer": "Cricket",
+   "d": "easy"
+  },
+  {
+   "q": "Which country is home to the football club Barcelona?",
+   "options": [
+    "France",
+    "Italy",
+    "Portugal",
+    "Spain"
+   ],
+   "answer": "Spain",
+   "d": "easy"
+  },
+  {
+   "q": "In Formula 1, what flag signals the end of a race?",
+   "options": [
+    "The red flag",
+    "The blue flag",
+    "The chequered flag",
+    "The yellow flag"
+   ],
+   "answer": "The chequered flag",
+   "d": "easy"
+  },
+  {
+   "q": "In the NBA, how many points is a standard basket from open play worth?",
+   "options": [
+    "Two",
+    "Three",
+    "One",
+    "Four"
+   ],
+   "answer": "Two",
+   "d": "easy"
+  },
+  {
+   "q": "Which Grand Slam is played on clay?",
+   "options": [
+    "Wimbledon",
+    "The Australian Open",
+    "The US Open",
+    "The French Open"
+   ],
+   "answer": "The French Open",
+   "d": "easy"
+  },
+  {
+   "q": "Which Grand Slam tennis tournament is held in Melbourne each January?",
+   "options": [
+    "The French Open",
+    "Wimbledon",
+    "The Australian Open",
+    "The Melbourne Cup of Tennis"
+   ],
+   "answer": "The Australian Open",
+   "d": "easy"
+  },
+  {
+   "q": "Which tennis tournament is played on grass?",
+   "options": [
+    "The French Open",
+    "The Australian Open",
+    "Wimbledon",
+    "The US Open"
+   ],
+   "answer": "Wimbledon",
+   "d": "easy"
+  },
+  {
+   "q": "How many players are on a soccer team on the field?",
+   "options": [
+    "Ten",
+    "Nine",
+    "Eleven",
+    "Twelve"
+   ],
+   "answer": "Eleven",
+   "d": "easy"
+  },
+  {
+   "q": "Lewis Hamilton is a champion in which sport?",
+   "options": [
+    "Cycling",
+    "Boxing",
+    "Athletics",
+    "Formula 1"
+   ],
+   "answer": "Formula 1",
+   "d": "easy"
+  },
+  {
+   "q": "In cricket, what term describes a bowler taking three wickets with three consecutive balls?",
+   "options": [
+    "Hat-trick",
+    "Maiden",
+    "A dusty dozen",
+    "Golden duck"
+   ],
+   "answer": "Hat-trick",
+   "d": "easy"
+  },
+  {
+   "q": "How many players from each team are on a basketball court at once in a standard game?",
+   "options": [
+    "Four",
+    "Seven",
+    "Six",
+    "Five"
+   ],
+   "answer": "Five",
+   "d": "easy"
+  },
+  {
+   "q": "Which trophy is awarded to the winner of the men's football UEFA Champions League?",
+   "options": [
+    "The Copa America",
+    "The European Cup",
+    "The Henri Delaunay Cup",
+    "The Jules Rimet Trophy"
+   ],
+   "answer": "The European Cup",
+   "d": "easy"
+  },
+  {
+   "q": "The Coleman Medal is awarded each season to which player?",
+   "options": [
+    "The loudest cheer squad member",
+    "The best and fairest",
+    "The leading goalkicker",
+    "The best first-year player"
+   ],
+   "answer": "The leading goalkicker",
+   "d": "easy"
+  },
+  {
+   "q": "How often are the Summer Olympic Games traditionally held?",
+   "options": [
+    "Every four years",
+    "Every two years",
+    "Every three years",
+    "Every five years"
+   ],
+   "answer": "Every four years",
+   "d": "easy"
+  },
+  {
+   "q": "In tennis, what shot is played when the ball is hit before it bounces?",
+   "options": [
+    "Slice",
+    "Lob",
+    "Drop shot",
+    "Volley"
+   ],
+   "answer": "Volley",
+   "d": "easy"
+  },
+  {
+   "q": "How many events are in a decathlon?",
+   "options": [
+    "Five",
+    "Seven",
+    "Ten",
+    "Twelve"
+   ],
+   "answer": "Ten",
+   "d": "easy"
+  },
+  {
+   "q": "What is the winner of the Masters awarded to wear?",
+   "options": [
+    "A red vest",
+    "A silver cape",
+    "A gold blazer",
+    "A green jacket"
+   ],
+   "answer": "A green jacket",
+   "d": "easy"
+  },
+  {
+   "q": "Which country did football legend Pele play for?",
+   "options": [
+    "Brazil",
+    "Uruguay",
+    "Argentina",
+    "Portugal"
+   ],
+   "answer": "Brazil",
+   "d": "easy"
+  },
+  {
+   "q": "The Ashes is a Test cricket series contested between Australia and which country?",
+   "options": [
+    "New Zealand's angriest sheep",
+    "England",
+    "India",
+    "South Africa"
+   ],
+   "answer": "England",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian city hosts the Australian Open tennis grand slam?",
+   "options": [
+    "Melbourne",
+    "Wagga Wagga",
+    "Sydney",
+    "Brisbane"
+   ],
+   "answer": "Melbourne",
+   "d": "easy"
+  },
+  {
+   "q": "What is the term for a serve the opponent cannot touch?",
+   "options": [
+    "A fault",
+    "A smash",
+    "A let",
+    "An ace"
+   ],
+   "answer": "An ace",
+   "d": "easy"
+  },
+  {
+   "q": "The Tour de France is held mainly in which country?",
+   "options": [
+    "Italy",
+    "Belgium",
+    "France",
+    "Spain"
+   ],
+   "answer": "France",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport is played at Lord's in London?",
+   "options": [
+    "Tennis",
+    "Cricket",
+    "Rugby",
+    "Football"
+   ],
+   "answer": "Cricket",
+   "d": "easy"
+  },
+  {
+   "q": "By what nickname is champion goalkicker Lance Franklin best known?",
+   "options": [
+    "Lightning McQueen",
+    "Bomber",
+    "Chief",
+    "Buddy"
+   ],
+   "answer": "Buddy",
+   "d": "easy"
+  },
+  {
+   "q": "Which country hosts the Masters golf tournament each year?",
+   "options": [
+    "United States",
+    "Australia",
+    "Scotland",
+    "England"
+   ],
+   "answer": "United States",
+   "d": "easy"
+  },
+  {
+   "q": "Which medal is awarded to the best player on the ground in the AFL Grand Final?",
+   "options": [
+    "Brownlow Medal",
+    "Coleman Medal",
+    "Norm Smith Medal",
+    "Bledisloe Cup"
+   ],
+   "answer": "Norm Smith Medal",
+   "d": "easy"
+  },
+  {
+   "q": "Which AFL club is nicknamed the Magpies?",
+   "options": [
+    "Essendon",
+    "The Bondi Lifesavers",
+    "Collingwood",
+    "Port Adelaide"
+   ],
+   "answer": "Collingwood",
+   "d": "easy"
+  },
+  {
+   "q": "Which piece of headwear is compulsory in Formula 1 for drivers?",
+   "options": [
+    "Cap",
+    "Beanie",
+    "Bandana",
+    "Helmet"
+   ],
+   "answer": "Helmet",
+   "d": "easy"
+  },
+  {
+   "q": "Which colour jersey is worn by the overall leader of the Tour de France?",
+   "options": [
+    "Yellow",
+    "Green",
+    "White",
+    "Polka dot"
+   ],
+   "answer": "Yellow",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport is known as the sport of kings?",
+   "options": [
+    "Fencing",
+    "Horse racing",
+    "Sailing",
+    "Polo"
+   ],
+   "answer": "Horse racing",
+   "d": "easy"
+  },
+  {
+   "q": "What is the championship series of Major League Baseball called?",
+   "options": [
+    "The Commissioner's Final",
+    "The Fall Classic Cup",
+    "The World Series",
+    "The Super Bowl"
+   ],
+   "answer": "The World Series",
+   "d": "easy"
+  },
+  {
+   "q": "How many days is a Test cricket match scheduled over?",
+   "options": [
+    "Four",
+    "Three",
+    "Five",
+    "Six"
+   ],
+   "answer": "Five",
+   "d": "easy"
+  },
+  {
+   "q": "In boxing, how long does each round last in a standard professional bout?",
+   "options": [
+    "Three minutes",
+    "Five minutes",
+    "Two minutes",
+    "Four minutes"
+   ],
+   "answer": "Three minutes",
+   "d": "easy"
+  },
+  {
+   "q": "In AFL, how many points is a goal worth?",
+   "options": [
+    "6",
+    "3",
+    "100",
+    "1"
+   ],
+   "answer": "6",
+   "d": "easy"
+  },
+  {
+   "q": "In ice hockey, what is the object hit into the goal called?",
+   "options": [
+    "A ball",
+    "A disc",
+    "A puck",
+    "A slug"
+   ],
+   "answer": "A puck",
+   "d": "easy"
+  },
+  {
+   "q": "Which country does Usain Bolt represent?",
+   "options": [
+    "Trinidad and Tobago",
+    "Jamaica",
+    "Barbados",
+    "The Bahamas"
+   ],
+   "answer": "Jamaica",
+   "d": "easy"
+  },
+  {
+   "q": "In AFL, how many points is a behind worth?",
+   "options": [
+    "2",
+    "Minus five",
+    "6",
+    "1"
+   ],
+   "answer": "1",
+   "d": "easy"
+  },
+  {
+   "q": "In which country did the Olympic Games originate?",
+   "options": [
+    "Turkey",
+    "Italy",
+    "Egypt",
+    "Greece"
+   ],
+   "answer": "Greece",
+   "d": "easy"
+  },
+  {
+   "q": "What is the highest individual award for the best and fairest player across an AFL home-and-away season?",
+   "options": [
+    "The Norm Smith Medal",
+    "The Bledisloe Cup",
+    "The Coleman Medal",
+    "The Brownlow Medal"
+   ],
+   "answer": "The Brownlow Medal",
+   "d": "easy"
+  },
+  {
+   "q": "How many balls are in a cricket over?",
+   "options": [
+    "Five",
+    "Eight",
+    "Four",
+    "Six"
+   ],
+   "answer": "Six",
+   "d": "easy"
+  },
+  {
+   "q": "How many players from each team are on the field at one time in an AFL match?",
+   "options": [
+    "16",
+    "22",
+    "18",
+    "45"
+   ],
+   "answer": "18",
+   "d": "easy"
+  },
+  {
+   "q": "The Wallabies are the national team of Australia in which sport?",
+   "options": [
+    "Cricket",
+    "Rugby union",
+    "Hockey",
+    "Football"
+   ],
+   "answer": "Rugby union",
+   "d": "easy"
+  },
+  {
+   "q": "What is the New Zealand rugby union team called?",
+   "options": [
+    "The Pumas",
+    "The Blacks Caps",
+    "The All Blacks",
+    "The Springboks"
+   ],
+   "answer": "The All Blacks",
+   "d": "easy"
+  },
+  {
+   "q": "Usain Bolt set world records in which sport?",
+   "options": [
+    "Swimming",
+    "Rowing",
+    "Athletics",
+    "Cycling"
+   ],
+   "answer": "Athletics",
+   "d": "easy"
+  }
+ ]
+}

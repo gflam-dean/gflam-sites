@@ -1,1769 +1,5421 @@
 {
-"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"sources": [
-{
-"name": "Open Trivia Database",
-"url": "https://opentdb.com",
-"license": "CC BY-SA 4.0",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"commercialUse": "permitted with attribution and share-alike",
-"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"questionCount": 4320
-},
-{
-"name": "OpenTriviaQA",
-"url": "https://github.com/uberspot/OpenTriviaQA",
-"license": "CC BY-SA 4.0",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"commercialUse": "permitted with attribution and share-alike",
-"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"questionCount": 6310
-},
-{
-"name": "VenuePlay original",
-"url": "",
-"license": "VenuePlay original content",
-"licenseUrl": "",
-"commercialUse": "owned by VenuePlay; no third-party attribution required",
-"attribution": "Australian pub-culture questions authored by VenuePlay.",
-"questionCount": 76
-}
-],
-"attributions": [
-"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
-],
-"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
-"category": "Video Games",
-"count": 157,
-"questions": [
-{
-"q": "Who is the main protagonist in the 'Ratchet and Clank' game series?",
-"options": [
-"Captain Qwark",
-"Clank",
-"Dr Nefarious",
-"Ratchet"
-],
-"answer": "Ratchet",
-"d": "easy"
-},
-{
-"q": "What is Marios nationality according to Nintendo video games?",
-"options": [
-"British",
-"American",
-"Mexican",
-"Italian"
-],
-"answer": "Italian",
-"d": "easy"
-},
-{
-"q": "Who controls the AT-ATs on Hoth in Star Wars: Battlefront?",
-"options": [
-"Empire",
-"The Republic",
-"Rebels",
-"The Ewoks"
-],
-"answer": "Empire",
-"d": "easy"
-},
-{
-"q": "What animal is featured in \"Bloons TD Battles\"?",
-"options": [
-"Frogs",
-"Monkeys",
-"Penguins",
-"Turtles"
-],
-"answer": "Monkeys",
-"d": "easy"
-},
-{
-"q": "What mainly favored rifle is used by the Terrorists in Counter Strike: Global Offensive?",
-"options": [
-"CZ-75 AUTO",
-"M4A4",
-"AK-74",
-"AK-47"
-],
-"answer": "AK-47",
-"d": "easy"
-},
-{
-"q": "What company created and developed the game \"Overwatch\"?",
-"options": [
-"Valve",
-"Gearbox Software",
-"Blizzard Entertainment",
-"Hi-Rez Studios"
-],
-"answer": "Blizzard Entertainment",
-"d": "easy"
-},
-{
-"q": "What does the D stand for in D-pad, found on most video game controllers?",
-"options": [
-"Design",
-"Dial-up",
-"Directional",
-"Dynamic"
-],
-"answer": "Directional",
-"d": "easy"
-},
-{
-"q": "Rocket League is a game which features..",
-"options": [
-"Helicopters",
-"Submarines",
-"Planes",
-"Cars"
-],
-"answer": "Cars",
-"d": "easy"
-},
-{
-"q": "Which puzzle game was designed by a Russian programmer, featuring Russian buildings and music?",
-"options": [
-"Jenga",
-"Dr. Mario",
-"Tetris",
-"Columns"
-],
-"answer": "Tetris",
-"d": "easy"
-},
-{
-"q": "What is the name of the main character in the 2006 third-person shooter Gears of War?",
-"options": [
-"Dominic Santiago",
-"Lt. Kim",
-"Marcus Fenix",
-"Baird"
-],
-"answer": "Marcus Fenix",
-"d": "easy"
-},
-{
-"q": "In which series of games do you collect souls to empower you and buy weaponry and armor with?",
-"options": [
-"The Legend of Zelda",
-"Souls",
-"Final Fantasy",
-"Monster Hunter"
-],
-"answer": "Souls",
-"d": "easy"
-},
-{
-"q": "What special abilities are unique to Metroids in the video game series Metroid?",
-"options": [
-"They can kill by eye contact.",
-"They can suck out your life energy.",
-"They can create lifelike illusions.",
-"They can kill by physical contact."
-],
-"answer": "They can suck out your life energy.",
-"d": "easy"
-},
-{
-"q": "In most FPS video games such as Counter-Strike, shooting which part of the body does the highest damage?",
-"options": [
-"Neck",
-"Chest",
-"Pinky toe",
-"Head"
-],
-"answer": "Head",
-"d": "easy"
-},
-{
-"q": "What video game genre were the original Warcraft games?",
-"options": [
-"RPG (Role Playing Game)",
-"RTS (Real Time Strategy)",
-"TBS (Turn Based Strategy)",
-"MMO (Massively Multiplayer Online)"
-],
-"answer": "RTS (Real Time Strategy)",
-"d": "easy"
-},
-{
-"q": "In Animal Crossing, who is the manager of the town shop?",
-"options": [
-"Timmy Nook",
-"K.K. Slider",
-"Kicks",
-"Tom Nook"
-],
-"answer": "Tom Nook",
-"d": "easy"
-},
-{
-"q": "In Super Mario Bros., who informs Mario that the princess is in another castle?",
-"options": [
-"Toad",
-"Toadsworth",
-"Bowser",
-"Luigi"
-],
-"answer": "Toad",
-"d": "easy"
-},
-{
-"q": "In the game \"Overwatch,\" what are the names of the two Australian criminals from the Junkers faction?",
-"options": [
-"Roadrat and Junkhog",
-"Junkrat and Roadhog",
-"Ana and Pharah",
-"McCree and Deadeye"
-],
-"answer": "Junkrat and Roadhog",
-"d": "easy"
-},
-{
-"q": "In Super Mario World, you start the game on which island?",
-"options": [
-"Toads Island",
-"Peachs Island",
-"Bowsers Island",
-"Yoshis Island"
-],
-"answer": "Yoshis Island",
-"d": "easy"
-},
-{
-"q": "Who is the main villain of the Crash Bandicoot series?",
-"options": [
-"Doctor N. Brio",
-"Sir Cortex-a-lot",
-"Doctor Nitrus Cortex",
-"Dr. Neo Cortex"
-],
-"answer": "Dr. Neo Cortex",
-"d": "easy"
-},
-{
-"q": "Where does the popular video game character Mario live?",
-"options": [
-"A pineapple under the sea",
-"Dinosaur Land",
-"The Mushroom Village",
-"The Mushroom Kingdom"
-],
-"answer": "The Mushroom Kingdom",
-"d": "easy"
-},
-{
-"q": "What is Pikachu's National Pok\u00e9Dex Number?",
-"options": [
-"#031",
-"#001",
-"#025",
-"#109"
-],
-"answer": "#025",
-"d": "easy"
-},
-{
-"q": "In the Mario video games, Bowser is the king of what?",
-"options": [
-"Koopas",
-"The Jungle",
-"Mushroom Kingdom",
-"Bowsers"
-],
-"answer": "Koopas",
-"d": "easy"
-},
-{
-"q": "What character from the Final Fantasy series used a weapon called the Buster Sword?",
-"options": [
-"Cloud Strife",
-"Sephiroth",
-"Seifer Almasy",
-"Squall Leonhart"
-],
-"answer": "Cloud Strife",
-"d": "easy"
-},
-{
-"q": "Who is Sonic's sidekick?",
-"options": [
-"Amy",
-"Knuckles",
-"Tails",
-"Dr. Eggman"
-],
-"answer": "Tails",
-"d": "easy"
-},
-{
-"q": "What does the Fire Flower do to Mario in the Mario video games?",
-"options": [
-"Makes him fireproof",
-"Allows him to throw fire balls.",
-"Lets him breathe fire",
-"Sets his overalls on fire"
-],
-"answer": "Allows him to throw fire balls.",
-"d": "easy"
-},
-{
-"q": "What is the name of the Italian plumber, that's also the mascot of Nintendo?",
-"options": [
-"Luigi",
-"Donkey Kong",
-"Sonic",
-"Mario"
-],
-"answer": "Mario",
-"d": "easy"
-},
-{
-"q": "Which soccer player is featured on the cover of EA Sport's FIFA 18?",
-"options": [
-"Cristiano Ronaldo",
-"Kylian Mbapp\u00e9",
-"Pel\u00e9",
-"Lionel Messi"
-],
-"answer": "Cristiano Ronaldo",
-"d": "easy"
-},
-{
-"q": "What is the name of the land where most of the Legend of Zelda games take place?",
-"options": [
-"Hylia",
-"Termina",
-"Hyrule",
-"Sacred Realm"
-],
-"answer": "Hyrule",
-"d": "easy"
-},
-{
-"q": "In vanilla Minecraft, you can make armor out of all BUT which of the following?",
-"options": [
-"Emeralds",
-"Iron",
-"Diamonds",
-"Leather"
-],
-"answer": "Emeralds",
-"d": "easy"
-},
-{
-"q": "In the video game Overwatch, which playable character is infamous for saying \"It's high noon.\"?",
-"options": [
-"Hanzo",
-"Pharah",
-"Soldier: 76",
-"McCree"
-],
-"answer": "McCree",
-"d": "easy"
-},
-{
-"q": "Which of these games was not released by Nintendo?",
-"options": [
-"Assassins Creed",
-"Warioware",
-"Star Fox",
-"Mario Galaxy"
-],
-"answer": "Assassins Creed",
-"d": "easy"
-},
-{
-"q": "In Minecraft, which two items must be combined to craft a torch?",
-"options": [
-"Stick and Flint",
-"Wood and Coal",
-"Stick and Coal",
-"Stick and Fire"
-],
-"answer": "Stick and Coal",
-"d": "easy"
-},
-{
-"q": "What effect does the Super Mushroom have on Mario in the popular series of video games?",
-"options": [
-"It makes him impervious to danger.",
-"None",
-"It makes him bigger.",
-"It makes him smaller."
-],
-"answer": "It makes him bigger.",
-"d": "easy"
-},
-{
-"q": "What is the name of a popular franchise that includes placing blocks down and surviving in an open world?",
-"options": [
-"Grand Theft Auto V",
-"Roblox",
-"Minecraft",
-"Unturned"
-],
-"answer": "Minecraft",
-"d": "easy"
-},
-{
-"q": "In the game Super Mario Kart, what does the mushroom item do to the racer?",
-"options": [
-"gives the racer a short burst of speed",
-"shrinks the racer so karts flatten them",
-"makes the racer spin out of control",
-"turns the racer invisible for a lap"
-],
-"answer": "gives the racer a short burst of speed",
-"d": "easy"
-},
-{
-"q": "What company developed the Xbox line of video game consoles?",
-"options": [
-"Microsoft",
-"Sony",
-"Toshiba",
-"IBM"
-],
-"answer": "Microsoft",
-"d": "easy"
-},
-{
-"q": "In the \"Hitman\" series, what is the name of the main character?",
-"options": [
-"Agent 48",
-"Agent 007",
-"Agent 74",
-"Agent 47"
-],
-"answer": "Agent 47",
-"d": "easy"
-},
-{
-"q": "This sound clip is from what Game Boy game that spawned an anime TV show and a collectible card game?",
-"options": [
-"Pokemon",
-"Magic the Gathering",
-"Final Fantasy",
-"Yu-Gi-Oh"
-],
-"answer": "Pokemon",
-"d": "easy"
-},
-{
-"q": "Zelda, featured in The Legend of Zelda series of video games, is what kind of character?",
-"options": [
-"The court jester",
-"A wise sage",
-"The princess",
-"The queen"
-],
-"answer": "The princess",
-"d": "easy"
-},
-{
-"q": "What is Marios occupation in the Mario series of games?",
-"options": [
-"builder",
-"ballet dancer",
-"plumber",
-"carpenter"
-],
-"answer": "plumber",
-"d": "easy"
-},
-{
-"q": "Which of the following is NOT a Nintendo game console?",
-"options": [
-"SNES",
-"Nintendo 64",
-"Dreamcast",
-"Wii"
-],
-"answer": "Dreamcast",
-"d": "easy"
-},
-{
-"q": "What is the name of the currency in the \"Animal Crossing\" series?",
-"options": [
-"Bugs",
-"Sea Shells",
-"Bells",
-"Leaves"
-],
-"answer": "Bells",
-"d": "easy"
-},
-{
-"q": "Which of these characters is the mascot of the video game company SEGA?",
-"options": [
-"Opa-Opa",
-"Sonic the Hedgehog",
-"Alex Kidd",
-"Mario"
-],
-"answer": "Sonic the Hedgehog",
-"d": "easy"
-},
-{
-"q": "Which of these is a type of monster found in Minecraft?",
-"options": [
-"Werewolf",
-"Minotaur",
-"Vampire",
-"Skeleton"
-],
-"answer": "Skeleton",
-"d": "easy"
-},
-{
-"q": "Link, one of the main characters in the Zelda series of games, is a member of what race?",
-"options": [
-"Goron",
-"Hylians",
-"Zora",
-"Kokiri"
-],
-"answer": "Hylians",
-"d": "easy"
-},
-{
-"q": "Which franchise does the creature \"Slowpoke\" originate from?",
-"options": [
-"Pokemon",
-"Dragon Ball",
-"Yugioh",
-"Sonic The Hedgehog"
-],
-"answer": "Pokemon",
-"d": "easy"
-},
-{
-"q": "In the game series \"The Legend of Zelda\", what was the first 3D game?",
-"options": [
-"The Wind Waker",
-"A Link to the Past",
-"Ocarina of Time",
-"Majora's Mask"
-],
-"answer": "Ocarina of Time",
-"d": "easy"
-},
-{
-"q": "Which company developed the free battle royale game Fortnite?",
-"options": [
-"Square Enix",
-"Epic Games",
-"Ubisoft",
-"Valve"
-],
-"answer": "Epic Games",
-"d": "easy"
-},
-{
-"q": "What's the name of the main protagonist in the \"Legend of Zelda\" franchise?",
-"options": [
-"Pit",
-"Mario",
-"Zelda",
-"Link"
-],
-"answer": "Link",
-"d": "easy"
-},
-{
-"q": "In the game \"Fire Emblem: Shadow Dragon\", what is the central protagonist's name?",
-"options": [
-"Eliwood",
-"Marth",
-"Robin",
-"Roy"
-],
-"answer": "Marth",
-"d": "medium"
-},
-{
-"q": "Which of the following is not a real Pok\u00e9mon?",
-"options": [
-"Dragalge",
-"Araquanid",
-"Mandibuzz",
-"Luminid"
-],
-"answer": "Luminid",
-"d": "medium"
-},
-{
-"q": "Which of the following characters is NOT a female marriage candidate in the game Stardew Valley?",
-"options": [
-"Haley",
-"Caroline",
-"Leah",
-"Penny"
-],
-"answer": "Caroline",
-"d": "medium"
-},
-{
-"q": "In Portal 2, which solar system body did Wheatley end up orbiting?",
-"options": [
-"Mars",
-"The moon",
-"Jupiter",
-"Earth"
-],
-"answer": "The moon",
-"d": "medium"
-},
-{
-"q": "In the video game DOTA 2, which of these is NOT a hero?",
-"options": [
-"Dark Seer",
-"Keeper of the Light",
-"Dragon Champion",
-"Mirana"
-],
-"answer": "Dragon Champion",
-"d": "medium"
-},
-{
-"q": "Which genre is the Touhou Project associated with?",
-"options": [
-"Shoot 'em up (bullet-hell) & Fighting",
-"Turn-Based Strategy",
-"MMORPG",
-"Building"
-],
-"answer": "Shoot 'em up (bullet-hell) & Fighting",
-"d": "medium"
-},
-{
-"q": "Which souls game was not directed by Hidetaka Miyazaki?",
-"options": [
-"Dark Souls 2",
-"Bloodborne",
-"Dark Souls",
-"Dark Souls 3"
-],
-"answer": "Dark Souls 2",
-"d": "medium"
-},
-{
-"q": "What video game sparked controversy because of its hidden \"Hot Coffee\" minigame?",
-"options": [
-"Grand Theft Auto: San Andreas",
-"Cooking Mama",
-"Hitman: Blood Money",
-"Grand Theft Auto: Vice City"
-],
-"answer": "Grand Theft Auto: San Andreas",
-"d": "medium"
-},
-{
-"q": "Which one of the Legend of Zelda games does not feature the same Link as the others?",
-"options": [
-"Links Awakening",
-"Wind Waker",
-"Ocarina of Time",
-"Majoras Mask"
-],
-"answer": "Wind Waker",
-"d": "medium"
-},
-{
-"q": "In the second-generation Pok\u00e9mon games, which Pok\u00e9mon can you start with?",
-"options": [
-"Bulbasaur, Charmander, and Squirtle",
-"Grassy, Firey, and Watery",
-"Treecko,Torchic, and Mudkip",
-"Chikorita, Cyndaquil, and Totodile"
-],
-"answer": "Chikorita, Cyndaquil, and Totodile",
-"d": "medium"
-},
-{
-"q": "Who is the leader of the Brotherhood of Nod in the Command and Conquer series?",
-"options": [
-"Kane",
-"Yuri",
-"CABAL",
-"Joseph Stalin"
-],
-"answer": "Kane",
-"d": "medium"
-},
-{
-"q": "Who made Garry's Mod?",
-"options": [
-"Garry Newman",
-"Gabe Newell",
-"Yahn Bernier",
-"Randy Newman"
-],
-"answer": "Garry Newman",
-"d": "medium"
-},
-{
-"q": "In what year was \"Metal Gear Solid\" released in North America?",
-"options": [
-"1987",
-"2001",
-"1998",
-"2004"
-],
-"answer": "1998",
-"d": "medium"
-},
-{
-"q": "How many Star Spirits do you rescue in the Nintendo 64 video game \"Paper Mario\"?",
-"options": [
-"8",
-"6",
-"7",
-"700"
-],
-"answer": "7",
-"d": "medium"
-},
-{
-"q": "What was Frank West's job in \"Dead Rising\"?",
-"options": [
-"Chef",
-"Taxi Driver",
-"Photojournalist",
-"Janitor"
-],
-"answer": "Photojournalist",
-"d": "medium"
-},
-{
-"q": "Of the following space shooter games, which came out first?",
-"options": [
-"Space Invaders",
-"Galaxian",
-"Sinistar",
-"Galaga"
-],
-"answer": "Space Invaders",
-"d": "medium"
-},
-{
-"q": "When was the first Call of Duty title released?",
-"options": [
-"October 29, 2005",
-"July 18, 2004",
-"October 29, 2003",
-"December 1, 2003"
-],
-"answer": "October 29, 2003",
-"d": "medium"
-},
-{
-"q": "Who is the main villain in Bendy and the ink machine?",
-"options": [
-"Joey Drew",
-"Boris",
-"Alice",
-"Bendy"
-],
-"answer": "Bendy",
-"d": "medium"
-},
-{
-"q": "How many controllers could a Nintendo GameCube have plugged in at one time?",
-"options": [
-"4",
-"6",
-"2",
-"64"
-],
-"answer": "4",
-"d": "medium"
-},
-{
-"q": "In the \"Metal Gear Solid\" series, what's the name of Solid Snake's brother?",
-"options": [
-"Plasma Snake",
-"Liquid Snake",
-"Vapor Snake",
-"Solid Steve"
-],
-"answer": "Liquid Snake",
-"d": "medium"
-},
-{
-"q": "Who is the creator of the Super Smash Bros. Series?",
-"options": [
-"Hideo Kojima",
-"Masahiro Sakurai",
-"Reggie Fils-Aim\u00e9",
-"Bill Trinen"
-],
-"answer": "Masahiro Sakurai",
-"d": "medium"
-},
-{
-"q": "What is the name of the main protagonist in \"Xenoblade Chronicles\"?",
-"options": [
-"Reyn",
-"Fiora",
-"Shulk",
-"Dunban"
-],
-"answer": "Shulk",
-"d": "medium"
-},
-{
-"q": "Which of these is NOT a player class in Team Fortress 2?",
-"options": [
-"Spy",
-"Healer",
-"Pyro",
-"Demoman"
-],
-"answer": "Healer",
-"d": "medium"
-},
-{
-"q": "Who are the original creators of Ratchet & Clank?",
-"options": [
-"Insomniac Games",
-"Rare",
-"Naughty Dog",
-"PixelTail Games"
-],
-"answer": "Insomniac Games",
-"d": "medium"
-},
-{
-"q": "Which Game Boy from the Game Boy series of portable video game consoles was released first?",
-"options": [
-"Game Boy Color",
-"Game Boy Advance SP",
-"Game Boy Micro",
-"Game Boy Advance"
-],
-"answer": "Game Boy Color",
-"d": "medium"
-},
-{
-"q": "What type of Pok\u00e9mon is Charizard?",
-"options": [
-"Fire",
-"Fire/Dragon",
-"Fire/Flying",
-"Dragon"
-],
-"answer": "Fire/Flying",
-"d": "medium"
-},
-{
-"q": "Which of the following is NOT one of the main characters in Grand Theft Auto V\u2019s story mode?",
-"options": [
-"Trevor Phillips",
-"Tommy Vercetti",
-"Franklin Clinton",
-"Michael de Santa"
-],
-"answer": "Tommy Vercetti",
-"d": "medium"
-},
-{
-"q": "When was Pokemon GO released in North America?",
-"options": [
-"May 24th, 2016",
-"June 5th, 2016",
-"July 6th, 2015",
-"July 6th, 2016"
-],
-"answer": "July 6th, 2016",
-"d": "medium"
-},
-{
-"q": "What is the main theme song of \"Sonic Adventure 2\"?",
-"options": [
-"His World",
-"Live and Learn",
-"Escape From the City",
-"Open Your Heart"
-],
-"answer": "Live and Learn",
-"d": "medium"
-},
-{
-"q": "What is Links fathers name according to the Zelda series of games?",
-"options": [
-"Sam",
-"It has never been revealed.",
-"Lance",
-"Gerald"
-],
-"answer": "It has never been revealed.",
-"d": "medium"
-},
-{
-"q": "What character from Super Smash Bros. Brawl was not in Super Smash Bros. Melee?",
-"options": [
-"Ike",
-"Falco",
-"Link",
-"Pikachu"
-],
-"answer": "Ike",
-"d": "medium"
-},
-{
-"q": "On the Nintendo 64 version of Mario Kart, Wario replaced which of the following playable characters from the Super NES version?",
-"options": [
-"Koopa Troopa",
-"Waluigi",
-"Toad",
-"Bowser"
-],
-"answer": "Koopa Troopa",
-"d": "medium"
-},
-{
-"q": "Which team won the first Overwatch League championship?",
-"options": [
-"Philadelphia Fusion",
-"London Spitfire",
-"Sydney Drop Bears",
-"New York Excelsior"
-],
-"answer": "London Spitfire",
-"d": "medium"
-},
-{
-"q": "When was Steam first released?",
-"options": [
-"2007",
-"1998",
-"2003",
-"2004"
-],
-"answer": "2003",
-"d": "medium"
-},
-{
-"q": "How many Wii consoles were sold worldwide?",
-"options": [
-"101,360,000",
-"7",
-"89,500,000",
-"101,630,000"
-],
-"answer": "101,630,000",
-"d": "medium"
-},
-{
-"q": "Who are the two protagonists of the game Yakuza 0?",
-"options": [
-"Kazuma Kiryu and Goro Majima",
-"Goro Majima and Taiga Saejima",
-"Kazuma Kiryu and Akira Nishikiyama",
-"Kazuma Kiryu and Nugget the chicken"
-],
-"answer": "Kazuma Kiryu and Goro Majima",
-"d": "medium"
-},
-{
-"q": "What happened to Half-Life 2 prior to its release, which resulted in Valve starting over the development of the game?",
-"options": [
-"They weren't satisfied with the result",
-"The story was not good enough",
-"The source code got leaked",
-"Way too many bugs to be fixed"
-],
-"answer": "The source code got leaked",
-"d": "medium"
-},
-{
-"q": "In the Yakuza series who is the Dragon of Dojima?",
-"options": [
-"Goro Majima",
-"Haruka Sawamura",
-"Ryuji Goda",
-"Kazuma Kiryu"
-],
-"answer": "Kazuma Kiryu",
-"d": "medium"
-},
-{
-"q": "What is the name of the creature that the main character befriends in \"The Last Guardian\"?",
-"options": [
-"Wolf",
-"Trico",
-"Andazi",
-"Nico"
-],
-"answer": "Trico",
-"d": "medium"
-},
-{
-"q": "In the video game, Half-life, what event started the Half-life universe as we know today?",
-"options": [
-"The Xen attack",
-"The Black Mesa meltdown",
-"The Resonance Cascade",
-"The Combine invasion"
-],
-"answer": "The Resonance Cascade",
-"d": "medium"
-},
-{
-"q": "What was the code name for the \"Nintendo Gamecube\"?",
-"options": [
-"Dolphin",
-"Nitro",
-"Revolution",
-"Atlantis"
-],
-"answer": "Dolphin",
-"d": "medium"
-},
-{
-"q": "What programming language was used to create the game \"Minecraft\"?",
-"options": [
-"Python",
-"C++",
-"Blockscript",
-"Java"
-],
-"answer": "Java",
-"d": "medium"
-},
-{
-"q": "What character is NOT apart of the Grand Theft Auto series?",
-"options": [
-"Michael Cardenas",
-"Tommy Vercetti",
-"Packie McReary",
-"Lester Crest"
-],
-"answer": "Michael Cardenas",
-"d": "medium"
-},
-{
-"q": "Who created the 2011 Video Game \"Minecraft\"?",
-"options": [
-"Daniel Rosenfeld",
-"Carl Manneh",
-"Markus Persson",
-"Jens Bergensten"
-],
-"answer": "Markus Persson",
-"d": "medium"
-},
-{
-"q": "Which Mario spin-off game did Waluigi make his debut?",
-"options": [
-"Mario Tennis",
-"Mario Party 3",
-"Mario Golf: Toadstool Tour",
-"Mario Kart: Double Dash!!"
-],
-"answer": "Mario Tennis",
-"d": "medium"
-},
-{
-"q": "Which one of these games wasn't released in 2016?",
-"options": [
-"Tom Clancy's The Division",
-"Metal Gear Solid V",
-"Killing Floor 2",
-"Hitman"
-],
-"answer": "Metal Gear Solid V",
-"d": "medium"
-},
-{
-"q": "What is the code name of Morgana the cat in Persona 5?",
-"options": [
-"Nightstalker",
-"Panther",
-"Zorro",
-"Mona"
-],
-"answer": "Mona",
-"d": "medium"
-},
-{
-"q": "What is not a default game mode in Counter-Strike (2000)?",
-"options": [
-"Hostage Rescue",
-"Bomb Defusal",
-"Arms Race",
-"Assassination"
-],
-"answer": "Arms Race",
-"d": "medium"
-},
-{
-"q": "This sound clip is a theme in which of the following Legend of Zelda games?",
-"options": [
-"The Legend of Zelda: Ganon's Karaoke Night",
-"The Legend of Zelda: Majora's Mask",
-"The Legend of Zelda: Ocarina of Time",
-"The Legend of Zelda: A Link to the Past"
-],
-"answer": "The Legend of Zelda: Ocarina of Time",
-"d": "medium"
-},
-{
-"q": "What was the first video game in which Mario appeared?",
-"options": [
-"Mario",
-"The Mario Bros.",
-"Donkey Kong",
-"Super Mario"
-],
-"answer": "Donkey Kong",
-"d": "medium"
-},
-{
-"q": "From where does the Nintendo video game character Mario derive his name?",
-"options": [
-"Miyamoto's favourite pizza topping",
-"The landlord of the American headquarters",
-"A character from Italian folklore",
-"Shigeru Miyamoto's father-in-law"
-],
-"answer": "The landlord of the American headquarters",
-"d": "medium"
-},
-{
-"q": "What is the name of the City in Saints Row The Third?",
-"options": [
-"Steelport",
-"Carcer",
-"Liberty",
-"Stilwater"
-],
-"answer": "Steelport",
-"d": "medium"
-},
-{
-"q": "What ingredients are required to make a cake in Minecraft?",
-"options": [
-"Milk, Sugar Cane, Egg, and Wheat",
-"Milk, Bread, Egg, and Wheat",
-"Milk, Sugar, Egg, and Wheat",
-"Milk, Sugar, and Wheat"
-],
-"answer": "Milk, Sugar, Egg, and Wheat",
-"d": "medium"
-},
-{
-"q": "In vanilla Minecraft, which of the following cannot be made into a block?",
-"options": [
-"Coal",
-"Wheat",
-"String",
-"Charcoal"
-],
-"answer": "Charcoal",
-"d": "medium"
-},
-{
-"q": "What major event caused the events of Half-Life 1?",
-"options": [
-"The Resonance Cascade",
-"The Blue Shift",
-"The Cascade Malfunction",
-"The Seven Hour War"
-],
-"answer": "The Resonance Cascade",
-"d": "medium"
-},
-{
-"q": "In Minecraft, which of these ingredients is needed to brew a Potion of Water Breathing?",
-"options": [
-"Pumpkin",
-"Pufferfish",
-"Fishing rod",
-"Ink sac"
-],
-"answer": "Pufferfish",
-"d": "medium"
-},
-{
-"q": "Which of these characters in \"Undertale\" can the player NOT go on a date with?",
-"options": [
-"Undyne",
-"Papyrus",
-"Alphys",
-"Toriel"
-],
-"answer": "Toriel",
-"d": "medium"
-},
-{
-"q": "In Grand Theft Auto: V, what wanted level does the player receive if they enter Zancudo Army Base north of Los Santos?",
-"options": [
-"3",
-"5",
-"6",
-"4"
-],
-"answer": "4",
-"d": "medium"
-},
-{
-"q": "What is the protagonist's title given by the demons in DOOM (2016)?",
-"options": [
-"Doom Slayer",
-"Doom Guy",
-"Doom Marine",
-"Doom Reaper"
-],
-"answer": "Doom Slayer",
-"d": "medium"
-},
-{
-"q": "In the video game \"Pizza Tower\", what is the protagonist's name?",
-"options": [
-"Pastachio",
-"Spinachio",
-"Pepper",
-"Peppino"
-],
-"answer": "Peppino",
-"d": "medium"
-},
-{
-"q": "The acronym DOTA stands for",
-"options": [
-"Defense of the Ancients",
-"Defense of the Antiques",
-"Defense of the Animated",
-"Defense of the Artifacts"
-],
-"answer": "Defense of the Ancients",
-"d": "medium"
-},
-{
-"q": "In The Elder Scrolls V: Skyrim, who is the jester in the dark brotherhood?",
-"options": [
-"Cicero",
-"Lucien Lachance",
-"Astrid",
-"Sheogorath"
-],
-"answer": "Cicero",
-"d": "medium"
-},
-{
-"q": "Which ones of these Mario Kart games was made for the Gameboy Advance?",
-"options": [
-"Mario Kart DS",
-"Mario Kart: Game & Watch",
-"Mario Kart: Super Circuit",
-"Mario Kart 7"
-],
-"answer": "Mario Kart: Super Circuit",
-"d": "medium"
-},
-{
-"q": "What's the Team Fortress 2 Scout's city of origin?",
-"options": [
-"Boston",
-"New York",
-"Sydney",
-"Detroit"
-],
-"answer": "Boston",
-"d": "medium"
-},
-{
-"q": "Who controls the Flood in the Halo series?",
-"options": [
-"Master Chief",
-"Gravemind",
-"343 Guilty Spark",
-"The Prophet of Truth"
-],
-"answer": "Gravemind",
-"d": "medium"
-},
-{
-"q": "In Team Fortress 2, which class wields a shotgun?",
-"options": [
-"Soldier",
-"Engineer",
-"Heavy",
-"Everyone Listed"
-],
-"answer": "Everyone Listed",
-"d": "medium"
-},
-{
-"q": "In the video game \"Team Fortress 2\", which class is able to double jump?",
-"options": [
-"Scout",
-"Pyro",
-"Engineer",
-"Spy"
-],
-"answer": "Scout",
-"d": "medium"
-},
-{
-"q": "Which of the following is not a realm type in World of Warcraft?",
-"options": [
-"Normal",
-"PvP",
-"RP",
-"RP-PvP"
-],
-"answer": "RP",
-"d": "medium"
-},
-{
-"q": "What type of Pokemon is Tyranitar?",
-"options": [
-"Rock dark",
-"Rock and roll",
-"Dark dragon",
-"Rock ground"
-],
-"answer": "Rock dark",
-"d": "medium"
-},
-{
-"q": "Which of these was NOT a launch title for the Nintendo 64?",
-"options": [
-"Saiky\u014d Habu Sh\u014dgi",
-"Mario Kart 64",
-"Pilotwings 64",
-"Super Mario 64"
-],
-"answer": "Mario Kart 64",
-"d": "medium"
-},
-{
-"q": "In the first Left 4 Dead, you can play as either of these four characters.",
-"options": [
-"Coach, Ellis, Nick, and Rochelle",
-"Francis, Bill, Zoey, and Louis",
-"Harry, Ron, Hermione and Dumbledore",
-"Bender, Andrew, Allison, and Brian"
-],
-"answer": "Francis, Bill, Zoey, and Louis",
-"d": "medium"
-},
-{
-"q": "Which of these pets can you own in Runescape?",
-"options": [
-"Kitten",
-"Dog",
-"Bird",
-"Hamster"
-],
-"answer": "Kitten",
-"d": "medium"
-},
-{
-"q": "Who taught Sasuke the Chidori technique in the Naruto series?",
-"options": [
-"Kakashi",
-"Orochimaru",
-"Itachi",
-"Naruto"
-],
-"answer": "Kakashi",
-"d": "medium"
-},
-{
-"q": "What is the highest level your character can go up to in the Runescape game for non-members?",
-"options": [
-"99",
-"113",
-"It never ends",
-"126"
-],
-"answer": "126",
-"d": "medium"
-},
-{
-"q": "At what location does the PS2 role-playing game Final Fantasy X start?",
-"options": [
-"Zanarkand",
-"Disneyland",
-"Besaid",
-"Luca"
-],
-"answer": "Zanarkand",
-"d": "medium"
-},
-{
-"q": "Who in this list is one of the co-founders of Valve?",
-"options": [
-"Robin Walker",
-"Marc Laidlaw",
-"Ray Ueno",
-"Gabe Newell"
-],
-"answer": "Gabe Newell",
-"d": "medium"
-},
-{
-"q": "Who is the main antagonist of Ori and the Blind Forest?",
-"options": [
-"Gumo",
-"Nibel",
-"Kuro",
-"King Rammer XII"
-],
-"answer": "Kuro",
-"d": "medium"
-},
-{
-"q": "In Dota 2, Wraith King was previously known as...",
-"options": [
-"Skeletor",
-"Skull King",
-"Skeleton King",
-"Bone King"
-],
-"answer": "Skeleton King",
-"d": "medium"
-},
-{
-"q": "In the Metroid video game, what is Samus profession?",
-"options": [
-"Soldier",
-"Professional Collector",
-"Pirate",
-"Bounty Hunter"
-],
-"answer": "Bounty Hunter",
-"d": "medium"
-},
-{
-"q": "In the game \"Dead Rising\", what is the profession of the main character Frank West?",
-"options": [
-"Stunt biker",
-"Mechanic",
-"Bartender",
-"Photojournalist"
-],
-"answer": "Photojournalist",
-"d": "medium"
-},
-{
-"q": "Why was the character Trevor Philips discharged from the Air Force?",
-"options": [
-"Mental Health Issues",
-"Bit His Commanding Officer",
-"Injuries",
-"Danger to Others"
-],
-"answer": "Mental Health Issues",
-"d": "medium"
-},
-{
-"q": "In the \"Halo\" franchise, in what country is New Mombasa?",
-"options": [
-"Uganda",
-"India",
-"Kenya",
-"Tanzania"
-],
-"answer": "Kenya",
-"d": "medium"
-},
-{
-"q": "The name of the Metroid series comes from what?",
-"options": [
-"The final boss's name",
-"A spaceship's name",
-"An enemy in the game",
-"The main character's name"
-],
-"answer": "An enemy in the game",
-"d": "medium"
-},
-{
-"q": "Who is the main character in the video game \"Just Cause 3\"?",
-"options": [
-"Rico Rodriguez",
-"Tom Sheldon",
-"Mario Frigo",
-"Nathan Drake"
-],
-"answer": "Rico Rodriguez",
-"d": "medium"
-},
-{
-"q": "In Portal 2, how did CEO of Aperture Science, Cave Johnson, presumably die?",
-"options": [
-"Mercury Poisoning",
-"Moon Rock Poisoning",
-"Asbestos Poisoning",
-"Slipped in the shower"
-],
-"answer": "Moon Rock Poisoning",
-"d": "medium"
-},
-{
-"q": "In the game Dark Souls, what is the name of the region you're in for the majority of the game?",
-"options": [
-"Lordran",
-"Oolacile",
-"Drangleic",
-"Catarina"
-],
-"answer": "Lordran",
-"d": "medium"
-},
-{
-"q": "Which of the following games was not a launch title for the Nintendo Gamecube?",
-"options": [
-"Star Wars Rogue Squadron II",
-"Disney\u2019s Tarzan Untamed",
-"Luigi\u2019s Mansion",
-"Super Mario Sunshine"
-],
-"answer": "Super Mario Sunshine",
-"d": "medium"
-},
-{
-"q": "Which of these covert groups employs Sam Fisher to work as a Splinter Cell?",
-"options": [
-"Black Arrow",
-"The Engineers",
-"Voron",
-"Third Echelon"
-],
-"answer": "Third Echelon",
-"d": "medium"
-},
-{
-"q": "Who stars in Brutal Legend?",
-"options": [
-"Ozzy Osbourne",
-"Jack Black",
-"Lemmy",
-"Kanye West"
-],
-"answer": "Jack Black",
-"d": "medium"
-},
-{
-"q": "Which of these is not a race featured in the Legend of Zelda video games?",
-"options": [
-"Hobbit",
-"Rito",
-"Hylian",
-"Zora"
-],
-"answer": "Hobbit",
-"d": "medium"
-},
-{
-"q": "In what year was the game \"Fallout\" released?",
-"options": [
-"1996",
-"1997",
-"1999",
-"1998"
-],
-"answer": "1997",
-"d": "medium"
-},
-{
-"q": "All of the following are items used in the game Super Mario Kart, for the Super NES, except which one of the following?",
-"options": [
-"banana peel",
-"blue shell",
-"ghost",
-"coins"
-],
-"answer": "blue shell",
-"d": "medium"
-},
-{
-"q": "Which is not an actual die?",
-"options": [
-"d100",
-"d10",
-"d4",
-"d18"
-],
-"answer": "d18",
-"d": "medium"
-},
-{
-"q": "Which of these is NOT the name of a team leader in Pok\u00e9mon GO?",
-"options": [
-"Spark",
-"Blanche",
-"Leif",
-"Candela"
-],
-"answer": "Leif",
-"d": "medium"
-},
-{
-"q": "Which of these is the best type of RuneScape weapon for non members?",
-"options": [
-"Barrows",
-"Rune",
-"Granite",
-"Dragon"
-],
-"answer": "Dragon",
-"d": "medium"
-},
-{
-"q": "What is the name of the protagonist of Life Is Strange?",
-"options": [
-"Frank Bowers",
-"Kate Marsh",
-"Max Caulfield",
-"Rachel Amber"
-],
-"answer": "Max Caulfield",
-"d": "medium"
-},
-{
-"q": "Where was the Sniper character in Team Fortress 2 born?",
-"options": [
-"Antarctica",
-"New Zealand",
-"Australia",
-"South Africa"
-],
-"answer": "New Zealand",
-"d": "hard"
-},
-{
-"q": "In Pokemon Diamond and Pearl, in what way do you evolve a Porygon2 into a Porygon-Z?",
-"options": [
-"Give it a dubious disc and trade it.",
-"Give it an upgrade and trade it.",
-"Give it a tech disc and trade it.",
-"Level it up."
-],
-"answer": "Give it a dubious disc and trade it.",
-"d": "hard"
-},
-{
-"q": "In \"The Elder Scrolls 3: Morrowind\", which of the following factions is not joinable?",
-"options": [
-"Mages Guild",
-"The Dark Brotherhood",
-"Thieves Guild",
-"Fighters Guild"
-],
-"answer": "The Dark Brotherhood",
-"d": "hard"
-},
-{
-"q": "In Runescape, what creature lives in the basement of Draynor Manor?",
-"options": [
-"a vampire",
-"a grumpy accountant",
-"a ghost",
-"a skeleton"
-],
-"answer": "a vampire",
-"d": "hard"
-},
-{
-"q": "Which of these is NOT DLC for the video game called \"Tabletop Simulator\"?",
-"options": [
-"Mr. Game!",
-"Three Kingdoms Redux",
-"The Binding of Isaac: Four Souls",
-"Superfight"
-],
-"answer": "The Binding of Isaac: Four Souls",
-"d": "hard"
-},
-{
-"q": "What is the 4th boss in the 1997 video game \"Crash Bandicoot 2: Cortex Strikes Back\"?",
-"options": [
-"Ripper Roo",
-"Tiny Tiger",
-"Dr. Neo Cortex",
-"Dr. N. Gin"
-],
-"answer": "Dr. N. Gin",
-"d": "hard"
-},
-{
-"q": "In \"Undertale\", how many main endings are there?",
-"options": [
-"4",
-"100",
-"2",
-"3"
-],
-"answer": "3",
-"d": "hard"
-},
-{
-"q": "What do you transform into in stage 4 of Altered Beast?",
-"options": [
-"Werewolf",
-"Weretiger",
-"Werebear",
-"Weredragon"
-],
-"answer": "Weretiger",
-"d": "hard"
-},
-{
-"q": "Which game in the \"Monster Hunter\" series introduced the monster \"Gobul\"?",
-"options": [
-"Monster Hunter World",
-"Monster Hunter Generations",
-"Monster Hunter Freedom Unite",
-"Monster Hunter Tri"
-],
-"answer": "Monster Hunter Tri",
-"d": "hard"
-},
-{
-"q": "In what year was Pok\u00e9mon Diamond & Pearl released in Japan?",
-"options": [
-"2007",
-"2006",
-"2005",
-"1996"
-],
-"answer": "2006",
-"d": "hard"
-},
-{
-"q": "Who must be defeated in the first quest of the second chapter of the computer game Diablo II?",
-"options": [
-"Radament",
-"Summoner",
-"Duriel",
-"Tal Rasha"
-],
-"answer": "Radament",
-"d": "hard"
-},
-{
-"q": "In \"Phoenix Wright: Ace Attorney\" which character is the District Chief of Police?",
-"options": [
-"Miles Edgeworth",
-"Damon Gant",
-"Lana Skye",
-"Mike Meekins"
-],
-"answer": "Damon Gant",
-"d": "hard"
-}
-]
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "category": "Video games",
+ "count": 489,
+ "questions": [
+  {
+   "q": "In the second-generation Pokémon games, which Pokémon can you start with?",
+   "options": [
+    "Bulbasaur, Charmander, and Squirtle",
+    "Grassy, Firey, and Watery",
+    "Treecko,Torchic, and Mudkip",
+    "Chikorita, Cyndaquil, and Totodile"
+   ],
+   "answer": "Chikorita, Cyndaquil, and Totodile",
+   "d": "medium"
+  },
+  {
+   "q": "What type of Pokémon is Charizard?",
+   "options": [
+    "Fire",
+    "Fire/Dragon",
+    "Fire/Flying",
+    "Dragon"
+   ],
+   "answer": "Fire/Flying",
+   "d": "medium"
+  },
+  {
+   "q": "What shape are the blocks in Minecraft?",
+   "options": [
+    "Cubes",
+    "Spheres",
+    "Pyramids",
+    "Cones"
+   ],
+   "answer": "Cubes",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the device that records data on every Pokemon you meet?",
+   "options": [
+    "Pokegear",
+    "Pokenav",
+    "Pokedex",
+    "Poketch"
+   ],
+   "answer": "Pokedex",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these is a games console?",
+   "options": [
+    "Filofax",
+    "Walkman",
+    "Xbox",
+    "Betamax"
+   ],
+   "answer": "Xbox",
+   "d": "easy"
+  },
+  {
+   "q": "Who are the two protagonists of the game Yakuza 0?",
+   "options": [
+    "Kazuma Kiryu and Goro Majima",
+    "Goro Majima and Taiga Saejima",
+    "Kazuma Kiryu and Akira Nishikiyama",
+    "Kazuma Kiryu and Nugget the chicken"
+   ],
+   "answer": "Kazuma Kiryu and Goro Majima",
+   "d": "medium"
+  },
+  {
+   "q": "In the video game DOTA 2, which of these is NOT a hero?",
+   "options": [
+    "Dark Seer",
+    "Keeper of the Light",
+    "Dragon Champion",
+    "Mirana"
+   ],
+   "answer": "Dragon Champion",
+   "d": "medium"
+  },
+  {
+   "q": "In the arcade game Centipede, what is the main enemy?",
+   "options": [
+    "A scorpion",
+    "A centipede",
+    "A worm",
+    "A spider"
+   ],
+   "answer": "A centipede",
+   "d": "easy"
+  },
+  {
+   "q": "From where does the Nintendo video game character Mario derive his name?",
+   "options": [
+    "Miyamoto's favourite pizza topping",
+    "The landlord of the American headquarters",
+    "A character from Italian folklore",
+    "Shigeru Miyamoto's father-in-law"
+   ],
+   "answer": "The landlord of the American headquarters",
+   "d": "medium"
+  },
+  {
+   "q": "In the \"Halo\" franchise, in what country is New Mombasa?",
+   "options": [
+    "Uganda",
+    "India",
+    "Kenya",
+    "Tanzania"
+   ],
+   "answer": "Kenya",
+   "d": "medium"
+  },
+  {
+   "q": "Which classic Nokia mobile phone game involved a growing line eating dots?",
+   "options": [
+    "Snake",
+    "Slither",
+    "Worms",
+    "Python"
+   ],
+   "answer": "Snake",
+   "d": "easy"
+  },
+  {
+   "q": "In Grand Theft Auto: V, what wanted level does the player receive if they enter Zancudo Army Base north of Los Santos?",
+   "options": [
+    "3",
+    "5",
+    "6",
+    "4"
+   ],
+   "answer": "4",
+   "d": "medium"
+  },
+  {
+   "q": "Which fruit appears as the first bonus item in Pac-Man?",
+   "options": [
+    "Apple",
+    "Strawberry",
+    "Orange",
+    "Cherry"
+   ],
+   "answer": "Cherry",
+   "d": "easy"
+  },
+  {
+   "q": "In pinball, what are the two paddles at the bottom of the table called?",
+   "options": [
+    "Bumpers",
+    "Plungers",
+    "Kickers",
+    "Flippers"
+   ],
+   "answer": "Flippers",
+   "d": "easy"
+  },
+  {
+   "q": "Which Mario spin-off game did Waluigi make his debut?",
+   "options": [
+    "Mario Tennis",
+    "Mario Party 3",
+    "Mario Golf: Toadstool Tour",
+    "Mario Kart: Double Dash!!"
+   ],
+   "answer": "Mario Tennis",
+   "d": "medium"
+  },
+  {
+   "q": "In the video game \"Pizza Tower\", what is the protagonist's name?",
+   "options": [
+    "Pastachio",
+    "Spinachio",
+    "Pepper",
+    "Peppino"
+   ],
+   "answer": "Peppino",
+   "d": "medium"
+  },
+  {
+   "q": "In a football video game, how do you score?",
+   "options": [
+    "Put the ball in the net",
+    "Knock over pins",
+    "Cross the finish line",
+    "Collect coins"
+   ],
+   "answer": "Put the ball in the net",
+   "d": "easy"
+  },
+  {
+   "q": "Which game combines rocket-powered cars with a giant football?",
+   "options": [
+    "Rocket League",
+    "Turbo Goal",
+    "Kickstart",
+    "Speedball"
+   ],
+   "answer": "Rocket League",
+   "d": "easy"
+  },
+  {
+   "q": "Who controls the Flood in the Halo series?",
+   "options": [
+    "Master Chief",
+    "Gravemind",
+    "343 Guilty Spark",
+    "The Prophet of Truth"
+   ],
+   "answer": "Gravemind",
+   "d": "medium"
+  },
+  {
+   "q": "Which platform is Valve's digital game store for PCs?",
+   "options": [
+    "GOG",
+    "Origin",
+    "Steam",
+    "Epic"
+   ],
+   "answer": "Steam",
+   "d": "easy"
+  },
+  {
+   "q": "What are the four symbols on a PlayStation controller's face buttons?",
+   "options": [
+    "Star, heart, moon and sun",
+    "A, B, X and Y",
+    "Diamond, club, heart and spade",
+    "Triangle, circle, cross and square"
+   ],
+   "answer": "Triangle, circle, cross and square",
+   "d": "easy"
+  },
+  {
+   "q": "What does the Fire Flower do to Mario in the Mario video games?",
+   "options": [
+    "Makes him fireproof",
+    "Allows him to throw fire balls.",
+    "Lets him breathe fire",
+    "Sets his overalls on fire"
+   ],
+   "answer": "Allows him to throw fire balls.",
+   "d": "easy"
+  },
+  {
+   "q": "What ingredients are required to make a cake in Minecraft?",
+   "options": [
+    "Milk, Sugar Cane, Egg, and Wheat",
+    "Milk, Bread, Egg, and Wheat",
+    "Milk, Sugar, Egg, and Wheat",
+    "Milk, Sugar, and Wheat"
+   ],
+   "answer": "Milk, Sugar, Egg, and Wheat",
+   "d": "medium"
+  },
+  {
+   "q": "What sort of game is 'Gran Turismo'?",
+   "options": [
+    "A puzzle game",
+    "A cooking game",
+    "A car racing game",
+    "A boxing game"
+   ],
+   "answer": "A car racing game",
+   "d": "easy"
+  },
+  {
+   "q": "What do you do in a game of Tetris?",
+   "options": [
+    "Fit falling shapes together",
+    "Race cars",
+    "Shoot aliens",
+    "Solve crosswords"
+   ],
+   "answer": "Fit falling shapes together",
+   "d": "easy"
+  },
+  {
+   "q": "In which year was the original Super Mario Bros released in Japan?",
+   "options": [
+    "1988",
+    "1990",
+    "1983",
+    "1985"
+   ],
+   "answer": "1985",
+   "d": "easy"
+  },
+  {
+   "q": "Which Mario power-up makes him briefly invincible?",
+   "options": [
+    "Fire Flower",
+    "Super Mushroom",
+    "Super Star",
+    "Cape Feather"
+   ],
+   "answer": "Super Star",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'esports'?",
+   "options": [
+    "Online sports betting",
+    "Electronic scoreboards for sport",
+    "Exercise gaming",
+    "Competitive organised video gaming"
+   ],
+   "answer": "Competitive organised video gaming",
+   "d": "easy"
+  },
+  {
+   "q": "In Wordle, what does a green tile mean?",
+   "options": [
+    "The letter is correct and in the right place",
+    "The letter is correct but in the wrong place",
+    "The letter is not in the word",
+    "The word is finished"
+   ],
+   "answer": "The letter is correct and in the right place",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'co-op' mean in gaming?",
+   "options": [
+    "A save format",
+    "Players competing",
+    "A cheat code",
+    "Players working together"
+   ],
+   "answer": "Players working together",
+   "d": "easy"
+  },
+  {
+   "q": "What is an 'avatar' in a video game?",
+   "options": [
+    "The character representing the player",
+    "A cheat menu",
+    "The game's soundtrack",
+    "The end credits"
+   ],
+   "answer": "The character representing the player",
+   "d": "easy"
+  },
+  {
+   "q": "What do gamers call a joke or secret the developers hid inside a game?",
+   "options": [
+    "A patch note",
+    "A side quest",
+    "An easter egg",
+    "A loot drop"
+   ],
+   "answer": "An easter egg",
+   "d": "easy"
+  },
+  {
+   "q": "What is the 4th boss in the 1997 video game \"Crash Bandicoot 2: Cortex Strikes Back\"?",
+   "options": [
+    "Ripper Roo",
+    "Tiny Tiger",
+    "Dr. Neo Cortex",
+    "Dr. N. Gin"
+   ],
+   "answer": "Dr. N. Gin",
+   "d": "hard"
+  },
+  {
+   "q": "What is the highest level your character can go up to in the Runescape game for non-members?",
+   "options": [
+    "99",
+    "113",
+    "It never ends",
+    "126"
+   ],
+   "answer": "126",
+   "d": "medium"
+  },
+  {
+   "q": "What colour tunic does Link traditionally wear?",
+   "options": [
+    "Brown",
+    "Red",
+    "Green",
+    "Blue"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "Which company makes the PlayStation 5?",
+   "options": [
+    "Nintendo",
+    "Sony",
+    "Samsung",
+    "Microsoft"
+   ],
+   "answer": "Sony",
+   "d": "easy"
+  },
+  {
+   "q": "What colour are Sonic the Hedgehog's shoes?",
+   "options": [
+    "White",
+    "Blue",
+    "Black",
+    "Red"
+   ],
+   "answer": "Red",
+   "d": "easy"
+  },
+  {
+   "q": "What animal is featured in \"Bloons TD Battles\"?",
+   "options": [
+    "Frogs",
+    "Monkeys",
+    "Penguins",
+    "Turtles"
+   ],
+   "answer": "Monkeys",
+   "d": "easy"
+  },
+  {
+   "q": "In the game \"Dead Rising\", what is the profession of the main character Frank West?",
+   "options": [
+    "Stunt biker",
+    "Mechanic",
+    "Bartender",
+    "Photojournalist"
+   ],
+   "answer": "Photojournalist",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of Mario's brother?",
+   "options": [
+    "Wario",
+    "Yoshi",
+    "Toad",
+    "Luigi"
+   ],
+   "answer": "Luigi",
+   "d": "easy"
+  },
+  {
+   "q": "Which puzzle game series has players matching coloured jewels in rows?",
+   "options": [
+    "Peggle",
+    "Zuma",
+    "Bejeweled",
+    "Bookworm"
+   ],
+   "answer": "Bejeweled",
+   "d": "easy"
+  },
+  {
+   "q": "What is Sudoku played with?",
+   "options": [
+    "Letters",
+    "Pictures",
+    "Colours",
+    "Numbers"
+   ],
+   "answer": "Numbers",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the shrinking play area in most battle royale games?",
+   "options": [
+    "The wall",
+    "The fog",
+    "The circle or storm",
+    "The border zone"
+   ],
+   "answer": "The circle or storm",
+   "d": "easy"
+  },
+  {
+   "q": "In Tetris, what happens when you completely fill a horizontal line?",
+   "options": [
+    "The game speeds up permanently",
+    "It flashes but stays",
+    "The line disappears",
+    "You lose a life"
+   ],
+   "answer": "The line disappears",
+   "d": "easy"
+  },
+  {
+   "q": "Which arcade game involves shooting asteroids from a triangular ship?",
+   "options": [
+    "Asteroids",
+    "Centipede",
+    "Defender",
+    "Galaga"
+   ],
+   "answer": "Asteroids",
+   "d": "easy"
+  },
+  {
+   "q": "In Super Mario Bros, what are the brown mushroom-shaped enemies called?",
+   "options": [
+    "Koopas",
+    "Goombas",
+    "Bloopers",
+    "Boos"
+   ],
+   "answer": "Goombas",
+   "d": "easy"
+  },
+  {
+   "q": "Which team won the first Overwatch League championship?",
+   "options": [
+    "Philadelphia Fusion",
+    "London Spitfire",
+    "Sydney Drop Bears",
+    "New York Excelsior"
+   ],
+   "answer": "London Spitfire",
+   "d": "medium"
+  },
+  {
+   "q": "In the game Dark Souls, what is the name of the region you're in for the majority of the game?",
+   "options": [
+    "Lordran",
+    "Oolacile",
+    "Drangleic",
+    "Catarina"
+   ],
+   "answer": "Lordran",
+   "d": "medium"
+  },
+  {
+   "q": "Which Nintendo game series is about training a pet dog on a handheld touchscreen?",
+   "options": [
+    "Petz",
+    "Pet Pals",
+    "Nintendogs",
+    "Dogz"
+   ],
+   "answer": "Nintendogs",
+   "d": "easy"
+  },
+  {
+   "q": "Which online platform lets users build and play games made by other users, with blocky avatars?",
+   "options": [
+    "Garry's Mod",
+    "Minecraft",
+    "Roblox",
+    "Fortnite"
+   ],
+   "answer": "Roblox",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nintendo game came bundled with the Wii and featured tennis and bowling?",
+   "options": [
+    "Wii Sports",
+    "Wii Fit",
+    "Wii Play",
+    "Mario Party 8"
+   ],
+   "answer": "Wii Sports",
+   "d": "easy"
+  },
+  {
+   "q": "What is the aim of a puzzle game?",
+   "options": [
+    "To finish a race",
+    "To score goals",
+    "To build an army",
+    "To solve problems using logic or matching"
+   ],
+   "answer": "To solve problems using logic or matching",
+   "d": "easy"
+  },
+  {
+   "q": "How many Wii consoles were sold worldwide?",
+   "options": [
+    "101,360,000",
+    "7",
+    "89,500,000",
+    "101,630,000"
+   ],
+   "answer": "101,630,000",
+   "d": "medium"
+  },
+  {
+   "q": "Which Nintendo console featured motion controls with a wand-shaped remote?",
+   "options": [
+    "Nintendo 64",
+    "Switch",
+    "GameCube",
+    "Wii"
+   ],
+   "answer": "Wii",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, what colour is a creeper?",
+   "options": [
+    "Green",
+    "Blue",
+    "Grey",
+    "Brown"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "What is a player attempting when they do a 'speedrun'?",
+   "options": [
+    "Reaching the top of a leaderboard",
+    "Playing at the hardest setting",
+    "Finishing a game as quickly as possible",
+    "Winning without taking damage"
+   ],
+   "answer": "Finishing a game as quickly as possible",
+   "d": "easy"
+  },
+  {
+   "q": "What does Yoshi use to swallow enemies?",
+   "options": [
+    "His tail",
+    "His claws",
+    "His wings",
+    "His long tongue"
+   ],
+   "answer": "His long tongue",
+   "d": "easy"
+  },
+  {
+   "q": "Of the following space shooter games, which came out first?",
+   "options": [
+    "Space Invaders",
+    "Galaxian",
+    "Sinistar",
+    "Galaga"
+   ],
+   "answer": "Space Invaders",
+   "d": "medium"
+  },
+  {
+   "q": "What is Marios nationality according to Nintendo video games?",
+   "options": [
+    "British",
+    "American",
+    "Mexican",
+    "Italian"
+   ],
+   "answer": "Italian",
+   "d": "easy"
+  },
+  {
+   "q": "What is a video game 'save'?",
+   "options": [
+    "A cheat",
+    "A bonus life",
+    "An advert",
+    "A record of your progress"
+   ],
+   "answer": "A record of your progress",
+   "d": "easy"
+  },
+  {
+   "q": "The acronym DOTA stands for",
+   "options": [
+    "Defense of the Ancients",
+    "Defense of the Antiques",
+    "Defense of the Animated",
+    "Defense of the Artifacts"
+   ],
+   "answer": "Defense of the Ancients",
+   "d": "medium"
+  },
+  {
+   "q": "What does the flagpole at the end of a Super Mario Bros level do?",
+   "options": [
+    "Gives an extra life always",
+    "Restarts the level",
+    "Ends the level and awards points",
+    "Opens a shop"
+   ],
+   "answer": "Ends the level and awards points",
+   "d": "easy"
+  },
+  {
+   "q": "Which game series features a gorilla rolling barrels at a plumber?",
+   "options": [
+    "Banjo-Kazooie",
+    "Rampage",
+    "Donkey Kong",
+    "Congo Bongo"
+   ],
+   "answer": "Donkey Kong",
+   "d": "easy"
+  },
+  {
+   "q": "What's the name of the main protagonist in the \"Legend of Zelda\" franchise?",
+   "options": [
+    "Pit",
+    "Mario",
+    "Zelda",
+    "Link"
+   ],
+   "answer": "Link",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pokemon rides on Ash's shoulder in the games' advertising and the cartoon?",
+   "options": [
+    "Meowth",
+    "Pikachu",
+    "Eevee",
+    "Bulbasaur"
+   ],
+   "answer": "Pikachu",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the main villain in Bendy and the ink machine?",
+   "options": [
+    "Joey Drew",
+    "Boris",
+    "Alice",
+    "Bendy"
+   ],
+   "answer": "Bendy",
+   "d": "medium"
+  },
+  {
+   "q": "Which puzzle game involves fitting falling coloured blocks into rows?",
+   "options": [
+    "Bejeweled",
+    "Tetris",
+    "Columns",
+    "Candy Crush"
+   ],
+   "answer": "Tetris",
+   "d": "easy"
+  },
+  {
+   "q": "In The Sims, what is the green diamond floating above a Sim's head called?",
+   "options": [
+    "Moodstone",
+    "Simgem",
+    "Lifelight",
+    "Plumbob"
+   ],
+   "answer": "Plumbob",
+   "d": "easy"
+  },
+  {
+   "q": "What colour are the pipes Mario travels through?",
+   "options": [
+    "Green",
+    "Blue",
+    "Red",
+    "Yellow"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "Who must be defeated in the first quest of the second chapter of the computer game Diablo II?",
+   "options": [
+    "Radament",
+    "Summoner",
+    "Duriel",
+    "Tal Rasha"
+   ],
+   "answer": "Radament",
+   "d": "hard"
+  },
+  {
+   "q": "What is the name of the protagonist of Life Is Strange?",
+   "options": [
+    "Frank Bowers",
+    "Kate Marsh",
+    "Max Caulfield",
+    "Rachel Amber"
+   ],
+   "answer": "Max Caulfield",
+   "d": "medium"
+  },
+  {
+   "q": "In the arcade game Pac-Man, what are the four ghosts collectively hunting?",
+   "options": [
+    "The fruit",
+    "The pellets",
+    "Pac-Man",
+    "Each other"
+   ],
+   "answer": "Pac-Man",
+   "d": "easy"
+  },
+  {
+   "q": "What rings does Sonic collect?",
+   "options": [
+    "Blue gems",
+    "Silver coins",
+    "Gold rings",
+    "Red stars"
+   ],
+   "answer": "Gold rings",
+   "d": "easy"
+  },
+  {
+   "q": "When four friends play Mario Kart together on one television, what is that called?",
+   "options": [
+    "Split-screen multiplayer",
+    "A time trial",
+    "A co-op campaign",
+    "Online ranked play"
+   ],
+   "answer": "Split-screen multiplayer",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'speedrun'?",
+   "options": [
+    "Completing a game as fast as possible",
+    "Playing on the hardest setting",
+    "Racing another player online",
+    "Playing without saving"
+   ],
+   "answer": "Completing a game as fast as possible",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these is NOT DLC for the video game called \"Tabletop Simulator\"?",
+   "options": [
+    "Mr. Game!",
+    "Three Kingdoms Redux",
+    "The Binding of Isaac: Four Souls",
+    "Superfight"
+   ],
+   "answer": "The Binding of Isaac: Four Souls",
+   "d": "hard"
+  },
+  {
+   "q": "What colour is Mario's cap?",
+   "options": [
+    "Red",
+    "Green",
+    "Blue",
+    "Yellow"
+   ],
+   "answer": "Red",
+   "d": "easy"
+  },
+  {
+   "q": "What do you do with a 'save point' in a game?",
+   "options": [
+    "Buy weapons there",
+    "Change the difficulty there",
+    "Watch the credits there",
+    "Store your progress there"
+   ],
+   "answer": "Store your progress there",
+   "d": "easy"
+  },
+  {
+   "q": "Link, one of the main characters in the Zelda series of games, is a member of what race?",
+   "options": [
+    "Goron",
+    "Hylians",
+    "Zora",
+    "Kokiri"
+   ],
+   "answer": "Hylians",
+   "d": "easy"
+  },
+  {
+   "q": "Which game features a shrinking storm, 100 players and building walls from gathered materials?",
+   "options": [
+    "Apex Legends",
+    "Fortnite",
+    "Warzone",
+    "PUBG"
+   ],
+   "answer": "Fortnite",
+   "d": "easy"
+  },
+  {
+   "q": "What do you build with in Minecraft?",
+   "options": [
+    "Rope",
+    "Cards",
+    "Blocks",
+    "Paper"
+   ],
+   "answer": "Blocks",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nintendo console can be used both docked to a TV and handheld?",
+   "options": [
+    "Wii U",
+    "3DS",
+    "GameCube",
+    "Switch"
+   ],
+   "answer": "Switch",
+   "d": "easy"
+  },
+  {
+   "q": "What does the pause button do in a video game?",
+   "options": [
+    "Ends the game",
+    "Stops the action temporarily",
+    "Skips a level",
+    "Deletes your save"
+   ],
+   "answer": "Stops the action temporarily",
+   "d": "easy"
+  },
+  {
+   "q": "Which one of the Legend of Zelda games does not feature the same Link as the others?",
+   "options": [
+    "Links Awakening",
+    "Wind Waker",
+    "Ocarina of Time",
+    "Majoras Mask"
+   ],
+   "answer": "Wind Waker",
+   "d": "medium"
+  },
+  {
+   "q": "In gaming, what is a 'checkpoint'?",
+   "options": [
+    "An enemy spawn",
+    "A locked door",
+    "A place the game saves your progress",
+    "A currency"
+   ],
+   "answer": "A place the game saves your progress",
+   "d": "easy"
+  },
+  {
+   "q": "Which Japanese company released Pac-Man in 1980?",
+   "options": [
+    "Taito",
+    "Namco",
+    "Konami",
+    "Sega"
+   ],
+   "answer": "Namco",
+   "d": "easy"
+  },
+  {
+   "q": "In \"Undertale\", how many main endings are there?",
+   "options": [
+    "4",
+    "100",
+    "2",
+    "3"
+   ],
+   "answer": "3",
+   "d": "hard"
+  },
+  {
+   "q": "What is the name of the creature that the main character befriends in \"The Last Guardian\"?",
+   "options": [
+    "Wolf",
+    "Trico",
+    "Andazi",
+    "Nico"
+   ],
+   "answer": "Trico",
+   "d": "medium"
+  },
+  {
+   "q": "What is a 'walkthrough'?",
+   "options": [
+    "A hidden level",
+    "A game trailer",
+    "A demo disc",
+    "A step by step guide to completing a game"
+   ],
+   "answer": "A step by step guide to completing a game",
+   "d": "easy"
+  },
+  {
+   "q": "Which Zelda game was a launch title for the Nintendo Switch in 2017?",
+   "options": [
+    "Breath of the Wild",
+    "Tears of the Kingdom",
+    "Skyward Sword",
+    "Twilight Princess"
+   ],
+   "answer": "Breath of the Wild",
+   "d": "easy"
+  },
+  {
+   "q": "What is the aim of the game Wordle?",
+   "options": [
+    "Defeat a boss",
+    "Guess a hidden word",
+    "Race a clock around a track",
+    "Match three colours"
+   ],
+   "answer": "Guess a hidden word",
+   "d": "easy"
+  },
+  {
+   "q": "Zelda, featured in The Legend of Zelda series of video games, is what kind of character?",
+   "options": [
+    "The court jester",
+    "A wise sage",
+    "The princess",
+    "The queen"
+   ],
+   "answer": "The princess",
+   "d": "easy"
+  },
+  {
+   "q": "Which company created the Mario games?",
+   "options": [
+    "Sega",
+    "Atari",
+    "Nintendo",
+    "Sony"
+   ],
+   "answer": "Nintendo",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Bowser's mischievous son in the Mario games?",
+   "options": [
+    "Bowser Jr",
+    "Baby Bowser",
+    "Ludwig",
+    "Iggy"
+   ],
+   "answer": "Bowser Jr",
+   "d": "easy"
+  },
+  {
+   "q": "What was the code name for the \"Nintendo Gamecube\"?",
+   "options": [
+    "Dolphin",
+    "Nitro",
+    "Revolution",
+    "Atlantis"
+   ],
+   "answer": "Dolphin",
+   "d": "medium"
+  },
+  {
+   "q": "In a racing video game, what are you usually trying to do?",
+   "options": [
+    "Collect coins only",
+    "Finish first",
+    "Score goals",
+    "Build a track"
+   ],
+   "answer": "Finish first",
+   "d": "easy"
+  },
+  {
+   "q": "In the game series \"The Legend of Zelda\", what was the first 3D game?",
+   "options": [
+    "The Wind Waker",
+    "A Link to the Past",
+    "Ocarina of Time",
+    "Majora's Mask"
+   ],
+   "answer": "Ocarina of Time",
+   "d": "easy"
+  },
+  {
+   "q": "Which of the following is not a realm type in World of Warcraft?",
+   "options": [
+    "Normal",
+    "PvP",
+    "RP",
+    "RP-PvP"
+   ],
+   "answer": "RP",
+   "d": "medium"
+  },
+  {
+   "q": "Who is the leader of the Brotherhood of Nod in the Command and Conquer series?",
+   "options": [
+    "Kane",
+    "Yuri",
+    "CABAL",
+    "Joseph Stalin"
+   ],
+   "answer": "Kane",
+   "d": "medium"
+  },
+  {
+   "q": "What is a 'mod' in gaming?",
+   "options": [
+    "A difficulty level",
+    "A player-made modification to a game",
+    "A type of controller",
+    "A moderator badge"
+   ],
+   "answer": "A player-made modification to a game",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'glitch' in a video game?",
+   "options": [
+    "A type of enemy",
+    "A save file",
+    "An unintended fault in the game",
+    "A planned challenge"
+   ],
+   "answer": "An unintended fault in the game",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of creature is Donkey Kong?",
+   "options": [
+    "A gorilla",
+    "An elephant",
+    "A bear",
+    "A donkey"
+   ],
+   "answer": "A gorilla",
+   "d": "easy"
+  },
+  {
+   "q": "Which social deduction game asks players to find the impostor on a spaceship?",
+   "options": [
+    "Town of Salem",
+    "Among Us",
+    "Fall Guys",
+    "Goose Goose Duck"
+   ],
+   "answer": "Among Us",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name for gaming on a personal computer rather than a console?",
+   "options": [
+    "PC gaming",
+    "Deck gaming",
+    "Rig play",
+    "Terminal play"
+   ],
+   "answer": "PC gaming",
+   "d": "easy"
+  },
+  {
+   "q": "Which criminal organisation are the villains of Pokemon Red and Blue?",
+   "options": [
+    "Team Galactic",
+    "Team Magma",
+    "Team Rocket",
+    "Team Plasma"
+   ],
+   "answer": "Team Rocket",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the City in Saints Row The Third?",
+   "options": [
+    "Steelport",
+    "Carcer",
+    "Liberty",
+    "Stilwater"
+   ],
+   "answer": "Steelport",
+   "d": "medium"
+  },
+  {
+   "q": "Which of these games was not released by Nintendo?",
+   "options": [
+    "Assassins Creed",
+    "Warioware",
+    "Star Fox",
+    "Mario Galaxy"
+   ],
+   "answer": "Assassins Creed",
+   "d": "easy"
+  },
+  {
+   "q": "What is Pac-Man eating as he moves around the maze?",
+   "options": [
+    "Coins",
+    "Bricks",
+    "Cards",
+    "Dots"
+   ],
+   "answer": "Dots",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the currency in the \"Animal Crossing\" series?",
+   "options": [
+    "Bugs",
+    "Sea Shells",
+    "Bells",
+    "Leaves"
+   ],
+   "answer": "Bells",
+   "d": "easy"
+  },
+  {
+   "q": "Which company's consoles are the Wii and the Switch?",
+   "options": [
+    "Microsoft",
+    "Sony",
+    "Sega",
+    "Nintendo"
+   ],
+   "answer": "Nintendo",
+   "d": "easy"
+  },
+  {
+   "q": "In the game \"Fire Emblem: Shadow Dragon\", what is the central protagonist's name?",
+   "options": [
+    "Eliwood",
+    "Marth",
+    "Robin",
+    "Roy"
+   ],
+   "answer": "Marth",
+   "d": "medium"
+  },
+  {
+   "q": "What kind of creature is the Pokemon Onix?",
+   "options": [
+    "A fire lion",
+    "A water dragon",
+    "A steel bird",
+    "A giant rock snake"
+   ],
+   "answer": "A giant rock snake",
+   "d": "easy"
+  },
+  {
+   "q": "Which video game genre asks players to manage resources and build structures in real time against opponents?",
+   "options": [
+    "Rhythm",
+    "Fighting",
+    "Platforming",
+    "Real-time strategy"
+   ],
+   "answer": "Real-time strategy",
+   "d": "easy"
+  },
+  {
+   "q": "What happens in Snake if the snake hits its own tail?",
+   "options": [
+    "It splits in two",
+    "It speeds up",
+    "It shrinks",
+    "The game ends"
+   ],
+   "answer": "The game ends",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these is NOT the name of a team leader in Pokémon GO?",
+   "options": [
+    "Spark",
+    "Blanche",
+    "Leif",
+    "Candela"
+   ],
+   "answer": "Leif",
+   "d": "medium"
+  },
+  {
+   "q": "In the Metroid video game, what is Samus profession?",
+   "options": [
+    "Soldier",
+    "Professional Collector",
+    "Pirate",
+    "Bounty Hunter"
+   ],
+   "answer": "Bounty Hunter",
+   "d": "medium"
+  },
+  {
+   "q": "Who taught Sasuke the Chidori technique in the Naruto series?",
+   "options": [
+    "Kakashi",
+    "Orochimaru",
+    "Itachi",
+    "Naruto"
+   ],
+   "answer": "Kakashi",
+   "d": "medium"
+  },
+  {
+   "q": "In the Atari game Breakout, what do you use to destroy the wall of bricks?",
+   "options": [
+    "A bomb",
+    "A laser",
+    "A ball and paddle",
+    "A drill"
+   ],
+   "answer": "A ball and paddle",
+   "d": "easy"
+  },
+  {
+   "q": "In the \"Metal Gear Solid\" series, what's the name of Solid Snake's brother?",
+   "options": [
+    "Plasma Snake",
+    "Liquid Snake",
+    "Vapor Snake",
+    "Solid Steve"
+   ],
+   "answer": "Liquid Snake",
+   "d": "medium"
+  },
+  {
+   "q": "In the Pokemon games, what is the group of four elite trainers before the champion called?",
+   "options": [
+    "The Council",
+    "The Elite Four",
+    "The Masters",
+    "The Final Four"
+   ],
+   "answer": "The Elite Four",
+   "d": "easy"
+  },
+  {
+   "q": "What video game sparked controversy because of its hidden \"Hot Coffee\" minigame?",
+   "options": [
+    "Grand Theft Auto: San Andreas",
+    "Cooking Mama",
+    "Hitman: Blood Money",
+    "Grand Theft Auto: Vice City"
+   ],
+   "answer": "Grand Theft Auto: San Andreas",
+   "d": "medium"
+  },
+  {
+   "q": "Which Pokemon can transform to copy the appearance of another Pokemon?",
+   "options": [
+    "Smeargle",
+    "Mew",
+    "Ditto",
+    "Zorua"
+   ],
+   "answer": "Ditto",
+   "d": "easy"
+  },
+  {
+   "q": "When was Steam first released?",
+   "options": [
+    "2007",
+    "1998",
+    "2003",
+    "2004"
+   ],
+   "answer": "2003",
+   "d": "medium"
+  },
+  {
+   "q": "Which red echidna is both a rival and an ally of Sonic?",
+   "options": [
+    "Shadow",
+    "Knuckles",
+    "Silver",
+    "Tails"
+   ],
+   "answer": "Knuckles",
+   "d": "easy"
+  },
+  {
+   "q": "In \"Phoenix Wright: Ace Attorney\" which character is the District Chief of Police?",
+   "options": [
+    "Miles Edgeworth",
+    "Damon Gant",
+    "Lana Skye",
+    "Mike Meekins"
+   ],
+   "answer": "Damon Gant",
+   "d": "hard"
+  },
+  {
+   "q": "Which Nintendo golf series lets Mario characters play a round?",
+   "options": [
+    "Golf Story",
+    "Mario Sports Mix",
+    "Mario Power Tennis",
+    "Mario Golf"
+   ],
+   "answer": "Mario Golf",
+   "d": "easy"
+  },
+  {
+   "q": "What was Frank West's job in \"Dead Rising\"?",
+   "options": [
+    "Chef",
+    "Taxi Driver",
+    "Photojournalist",
+    "Janitor"
+   ],
+   "answer": "Photojournalist",
+   "d": "medium"
+  },
+  {
+   "q": "This sound clip is from what Game Boy game that spawned an anime TV show and a collectible card game?",
+   "options": [
+    "Pokemon",
+    "Magic the Gathering",
+    "Final Fantasy",
+    "Yu-Gi-Oh"
+   ],
+   "answer": "Pokemon",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'games arcade'?",
+   "options": [
+    "A console brand",
+    "A games magazine",
+    "A type of controller",
+    "A venue full of coin-operated game machines"
+   ],
+   "answer": "A venue full of coin-operated game machines",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'multiplayer'?",
+   "options": [
+    "Playing several games at once",
+    "More than one person playing together",
+    "A type of screen",
+    "A price plan"
+   ],
+   "answer": "More than one person playing together",
+   "d": "easy"
+  },
+  {
+   "q": "In Runescape, what creature lives in the basement of Draynor Manor?",
+   "options": [
+    "a vampire",
+    "a grumpy accountant",
+    "a ghost",
+    "a skeleton"
+   ],
+   "answer": "a vampire",
+   "d": "hard"
+  },
+  {
+   "q": "How many controllers could a Nintendo GameCube have plugged in at one time?",
+   "options": [
+    "4",
+    "6",
+    "2",
+    "64"
+   ],
+   "answer": "4",
+   "d": "medium"
+  },
+  {
+   "q": "Who is the main protagonist in the 'Ratchet and Clank' game series?",
+   "options": [
+    "Captain Qwark",
+    "Clank",
+    "Dr Nefarious",
+    "Ratchet"
+   ],
+   "answer": "Ratchet",
+   "d": "easy"
+  },
+  {
+   "q": "Where does the popular video game character Mario live?",
+   "options": [
+    "A pineapple under the sea",
+    "Dinosaur Land",
+    "The Mushroom Village",
+    "The Mushroom Kingdom"
+   ],
+   "answer": "The Mushroom Kingdom",
+   "d": "easy"
+  },
+  {
+   "q": "What are you flinging in Angry Birds?",
+   "options": [
+    "Rocks",
+    "Eggs",
+    "Birds",
+    "Balls"
+   ],
+   "answer": "Birds",
+   "d": "easy"
+  },
+  {
+   "q": "In Fortnite, how many players are usually in a match at the start?",
+   "options": [
+    "50",
+    "500",
+    "10",
+    "100"
+   ],
+   "answer": "100",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these is not a race featured in the Legend of Zelda video games?",
+   "options": [
+    "Hobbit",
+    "Rito",
+    "Hylian",
+    "Zora"
+   ],
+   "answer": "Hobbit",
+   "d": "medium"
+  },
+  {
+   "q": "What is a console controller usually held in?",
+   "options": [
+    "A pocket",
+    "One foot",
+    "Both hands",
+    "The mouth"
+   ],
+   "answer": "Both hands",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of game is 'Tomb Raider'?",
+   "options": [
+    "A karaoke game",
+    "A quiz game",
+    "An action adventure game",
+    "A card game"
+   ],
+   "answer": "An action adventure game",
+   "d": "easy"
+  },
+  {
+   "q": "Which of the following is not a real Pokémon?",
+   "options": [
+    "Dragalge",
+    "Araquanid",
+    "Mandibuzz",
+    "Luminid"
+   ],
+   "answer": "Luminid",
+   "d": "medium"
+  },
+  {
+   "q": "Which puzzle game was designed by a Russian programmer, featuring Russian buildings and music?",
+   "options": [
+    "Jenga",
+    "Dr. Mario",
+    "Tetris",
+    "Columns"
+   ],
+   "answer": "Tetris",
+   "d": "easy"
+  },
+  {
+   "q": "In a golf video game, what are you trying to do?",
+   "options": [
+    "Get the ball in the hole",
+    "Score a goal",
+    "Cross a finish line",
+    "Knock down pins"
+   ],
+   "answer": "Get the ball in the hole",
+   "d": "easy"
+  },
+  {
+   "q": "Who are the original creators of Ratchet & Clank?",
+   "options": [
+    "Insomniac Games",
+    "Rare",
+    "Naughty Dog",
+    "PixelTail Games"
+   ],
+   "answer": "Insomniac Games",
+   "d": "medium"
+  },
+  {
+   "q": "What is a games 'cartridge'?",
+   "options": [
+    "A charging cable",
+    "A type of controller",
+    "A plastic case holding a game that slots into a console",
+    "A game manual"
+   ],
+   "answer": "A plastic case holding a game that slots into a console",
+   "d": "easy"
+  },
+  {
+   "q": "Which studio develops the Grand Theft Auto series?",
+   "options": [
+    "Naughty Dog",
+    "Ubisoft",
+    "Rockstar Games",
+    "Bethesda"
+   ],
+   "answer": "Rockstar Games",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of game is 'Minecraft'?",
+   "options": [
+    "A racing game",
+    "A quiz game",
+    "A boxing game",
+    "A building and survival game"
+   ],
+   "answer": "A building and survival game",
+   "d": "easy"
+  },
+  {
+   "q": "Which racing game series features Mario characters throwing shells?",
+   "options": [
+    "Crash Team Racing",
+    "Diddy Kong Racing",
+    "Mario Kart",
+    "F-Zero"
+   ],
+   "answer": "Mario Kart",
+   "d": "easy"
+  },
+  {
+   "q": "The name of the Metroid series comes from what?",
+   "options": [
+    "The final boss's name",
+    "A spaceship's name",
+    "An enemy in the game",
+    "The main character's name"
+   ],
+   "answer": "An enemy in the game",
+   "d": "medium"
+  },
+  {
+   "q": "How many letters are in a Wordle answer?",
+   "options": [
+    "Four",
+    "Six",
+    "Seven",
+    "Five"
+   ],
+   "answer": "Five",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, which skeletal mob shoots arrows at the player?",
+   "options": [
+    "Slime",
+    "Enderman",
+    "Skeleton",
+    "Zombie"
+   ],
+   "answer": "Skeleton",
+   "d": "easy"
+  },
+  {
+   "q": "In Pokemon, what is a person who catches and battles Pokemon called?",
+   "options": [
+    "A trainer",
+    "A ranger",
+    "A chef",
+    "A pilot"
+   ],
+   "answer": "A trainer",
+   "d": "easy"
+  },
+  {
+   "q": "What does a game's 'tutorial' do?",
+   "options": [
+    "Teaches you how to play",
+    "Shows the credits",
+    "Ends the game",
+    "Sells extra items"
+   ],
+   "answer": "Teaches you how to play",
+   "d": "easy"
+  },
+  {
+   "q": "In Angry Birds, what device launches the birds?",
+   "options": [
+    "Cannon",
+    "Catapult",
+    "Spring",
+    "Slingshot"
+   ],
+   "answer": "Slingshot",
+   "d": "easy"
+  },
+  {
+   "q": "In Wordle, what does a yellow tile mean?",
+   "options": [
+    "The letter is in the right place",
+    "The letter is not in the word",
+    "You have one guess left",
+    "The letter is in the word but in the wrong place"
+   ],
+   "answer": "The letter is in the word but in the wrong place",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, which animal do you shear to get wool?",
+   "options": [
+    "Chicken",
+    "Sheep",
+    "Cow",
+    "Pig"
+   ],
+   "answer": "Sheep",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, what do you use a furnace for?",
+   "options": [
+    "Enchanting",
+    "Storing items",
+    "Smelting ores and cooking food",
+    "Crafting tools"
+   ],
+   "answer": "Smelting ores and cooking food",
+   "d": "easy"
+  },
+  {
+   "q": "Which of the following characters is NOT a female marriage candidate in the game Stardew Valley?",
+   "options": [
+    "Haley",
+    "Caroline",
+    "Leah",
+    "Penny"
+   ],
+   "answer": "Caroline",
+   "d": "medium"
+  },
+  {
+   "q": "What does 'DLC' stand for?",
+   "options": [
+    "Digital light codec",
+    "Direct link controller",
+    "Downloadable content",
+    "Delayed launch copy"
+   ],
+   "answer": "Downloadable content",
+   "d": "easy"
+  },
+  {
+   "q": "Which game series is set in Los Santos and San Andreas?",
+   "options": [
+    "Mafia",
+    "Watch Dogs",
+    "Grand Theft Auto",
+    "Saints Row"
+   ],
+   "answer": "Grand Theft Auto",
+   "d": "easy"
+  },
+  {
+   "q": "What does the D stand for in D-pad, found on most video game controllers?",
+   "options": [
+    "Design",
+    "Dial-up",
+    "Directional",
+    "Dynamic"
+   ],
+   "answer": "Directional",
+   "d": "easy"
+  },
+  {
+   "q": "Which is not an actual die?",
+   "options": [
+    "d100",
+    "d10",
+    "d4",
+    "d18"
+   ],
+   "answer": "d18",
+   "d": "medium"
+  },
+  {
+   "q": "Which colourful party game has jellybean-shaped contestants racing through obstacle courses?",
+   "options": [
+    "Human Fall Flat",
+    "Fall Guys",
+    "Among Us",
+    "Gang Beasts"
+   ],
+   "answer": "Fall Guys",
+   "d": "easy"
+  },
+  {
+   "q": "What is Mario's profession in the games?",
+   "options": [
+    "Chef",
+    "Electrician",
+    "Carpenter",
+    "Plumber"
+   ],
+   "answer": "Plumber",
+   "d": "easy"
+  },
+  {
+   "q": "In the \"Hitman\" series, what is the name of the main character?",
+   "options": [
+    "Agent 48",
+    "Agent 007",
+    "Agent 74",
+    "Agent 47"
+   ],
+   "answer": "Agent 47",
+   "d": "easy"
+  },
+  {
+   "q": "What happens to the aliens in Space Invaders as you shoot more of them?",
+   "options": [
+    "They change colour",
+    "They speed up",
+    "They stop firing",
+    "They slow down"
+   ],
+   "answer": "They speed up",
+   "d": "easy"
+  },
+  {
+   "q": "In vanilla Minecraft, you can make armor out of all BUT which of the following?",
+   "options": [
+    "Emeralds",
+    "Iron",
+    "Diamonds",
+    "Leather"
+   ],
+   "answer": "Emeralds",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'single player'?",
+   "options": [
+    "A game with one level",
+    "A game played alone",
+    "A game with one button",
+    "A demo"
+   ],
+   "answer": "A game played alone",
+   "d": "easy"
+  },
+  {
+   "q": "Which 2015 film had classic arcade characters such as Pac-Man attacking Earth?",
+   "options": [
+    "Free Guy",
+    "Ready Player One",
+    "Pixels",
+    "Gamer"
+   ],
+   "answer": "Pixels",
+   "d": "easy"
+  },
+  {
+   "q": "In gaming, what does 'respawn' mean?",
+   "options": [
+    "To upgrade a weapon",
+    "To reappear in the game after being defeated",
+    "To restart the console",
+    "To join a new team"
+   ],
+   "answer": "To reappear in the game after being defeated",
+   "d": "easy"
+  },
+  {
+   "q": "Which football video game series is published by EA Sports?",
+   "options": [
+    "Pro Evolution Soccer",
+    "Football Manager",
+    "FIFA and EA Sports FC",
+    "Sensible Soccer"
+   ],
+   "answer": "FIFA and EA Sports FC",
+   "d": "easy"
+  },
+  {
+   "q": "In most FPS video games such as Counter-Strike, shooting which part of the body does the highest damage?",
+   "options": [
+    "Neck",
+    "Chest",
+    "Pinky toe",
+    "Head"
+   ],
+   "answer": "Head",
+   "d": "easy"
+  },
+  {
+   "q": "What time of day do monsters appear in Minecraft survival mode?",
+   "options": [
+    "Night",
+    "Sunrise only",
+    "Midday",
+    "They never appear"
+   ],
+   "answer": "Night",
+   "d": "easy"
+  },
+  {
+   "q": "Which Sega mascot is a blue hedgehog?",
+   "options": [
+    "Knuckles",
+    "Sonic",
+    "Shadow",
+    "Tails"
+   ],
+   "answer": "Sonic",
+   "d": "easy"
+  },
+  {
+   "q": "In Sonic the Hedgehog, what happens when Sonic is hit while carrying rings?",
+   "options": [
+    "He drops his rings",
+    "He turns grey",
+    "He loses a life instantly",
+    "He shrinks"
+   ],
+   "answer": "He drops his rings",
+   "d": "easy"
+  },
+  {
+   "q": "Which arcade game asks you to bounce a ball with a paddle to break a wall of bricks?",
+   "options": [
+    "Missile Command",
+    "Breakout",
+    "Tempest",
+    "Pong"
+   ],
+   "answer": "Breakout",
+   "d": "easy"
+  },
+  {
+   "q": "Which Game Boy from the Game Boy series of portable video game consoles was released first?",
+   "options": [
+    "Game Boy Color",
+    "Game Boy Advance SP",
+    "Game Boy Micro",
+    "Game Boy Advance"
+   ],
+   "answer": "Game Boy Color",
+   "d": "medium"
+  },
+  {
+   "q": "Which souls game was not directed by Hidetaka Miyazaki?",
+   "options": [
+    "Dark Souls 2",
+    "Bloodborne",
+    "Dark Souls",
+    "Dark Souls 3"
+   ],
+   "answer": "Dark Souls 2",
+   "d": "medium"
+  },
+  {
+   "q": "In video games, what is a 'lobby'?",
+   "options": [
+    "A cutscene",
+    "A shop",
+    "A waiting area where players gather before a match",
+    "A tutorial"
+   ],
+   "answer": "A waiting area where players gather before a match",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nintendo series has squid-like characters covering the ground in coloured ink?",
+   "options": [
+    "Kirby",
+    "Arms",
+    "Pikmin",
+    "Splatoon"
+   ],
+   "answer": "Splatoon",
+   "d": "easy"
+  },
+  {
+   "q": "In which arcade classic do you guide a frog across a busy road and a river?",
+   "options": [
+    "Hopper",
+    "Leap",
+    "Toad Trek",
+    "Frogger"
+   ],
+   "answer": "Frogger",
+   "d": "easy"
+  },
+  {
+   "q": "What does a 'games developer' do?",
+   "options": [
+    "Reviews games only",
+    "Makes video games",
+    "Sells consoles",
+    "Runs an arcade"
+   ],
+   "answer": "Makes video games",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the very simple two-paddle tennis video game from 1972?",
+   "options": [
+    "Bounce",
+    "Rally",
+    "Net",
+    "Pong"
+   ],
+   "answer": "Pong",
+   "d": "easy"
+  },
+  {
+   "q": "Which video game genre asks the player to solve environmental problems rather than fight?",
+   "options": [
+    "Puzzle",
+    "Shooter",
+    "Racing",
+    "Sports"
+   ],
+   "answer": "Puzzle",
+   "d": "easy"
+  },
+  {
+   "q": "On the Nintendo 64 version of Mario Kart, Wario replaced which of the following playable characters from the Super NES version?",
+   "options": [
+    "Koopa Troopa",
+    "Waluigi",
+    "Toad",
+    "Bowser"
+   ],
+   "answer": "Koopa Troopa",
+   "d": "medium"
+  },
+  {
+   "q": "Which device are mobile games usually played on?",
+   "options": [
+    "A television only",
+    "A calculator",
+    "A phone",
+    "A radio"
+   ],
+   "answer": "A phone",
+   "d": "easy"
+  },
+  {
+   "q": "What happened to Half-Life 2 prior to its release, which resulted in Valve starting over the development of the game?",
+   "options": [
+    "They weren't satisfied with the result",
+    "The story was not good enough",
+    "The source code got leaked",
+    "Way too many bugs to be fixed"
+   ],
+   "answer": "The source code got leaked",
+   "d": "medium"
+  },
+  {
+   "q": "What does 'esports' refer to?",
+   "options": [
+    "Online betting",
+    "Electric bicycle racing",
+    "Sports simulation only",
+    "Competitive video gaming played professionally"
+   ],
+   "answer": "Competitive video gaming played professionally",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, which tool do you need to mine stone?",
+   "options": [
+    "Hoe",
+    "Shovel",
+    "Axe",
+    "Pickaxe"
+   ],
+   "answer": "Pickaxe",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the tall, thin arcade machine you stand up to play?",
+   "options": [
+    "A pod",
+    "A cabinet",
+    "A booth",
+    "A stand"
+   ],
+   "answer": "A cabinet",
+   "d": "easy"
+  },
+  {
+   "q": "Which life simulation series lets you build houses and control families with needs?",
+   "options": [
+    "Habbo",
+    "Second Life",
+    "SimCity",
+    "The Sims"
+   ],
+   "answer": "The Sims",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is Luigi's cap?",
+   "options": [
+    "Red",
+    "Purple",
+    "Green",
+    "Blue"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "How many tails does Sonic's friend Tails have?",
+   "options": [
+    "Four",
+    "One",
+    "Two",
+    "Three"
+   ],
+   "answer": "Two",
+   "d": "easy"
+  },
+  {
+   "q": "In the Pokemon games, what building do you visit to heal your Pokemon for free?",
+   "options": [
+    "Pokemon Centre",
+    "Gym",
+    "Poke Mart",
+    "Safari Zone"
+   ],
+   "answer": "Pokemon Centre",
+   "d": "easy"
+  },
+  {
+   "q": "What are 'headphones' used for while gaming?",
+   "options": [
+    "Improving graphics",
+    "Storing saves",
+    "Hearing the game's sound privately",
+    "Charging the console"
+   ],
+   "answer": "Hearing the game's sound privately",
+   "d": "easy"
+  },
+  {
+   "q": "What is Marios occupation in the Mario series of games?",
+   "options": [
+    "builder",
+    "ballet dancer",
+    "plumber",
+    "carpenter"
+   ],
+   "answer": "plumber",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'joystick'?",
+   "options": [
+    "A speaker",
+    "A type of screen",
+    "A stick used to control movement in a game",
+    "A memory card"
+   ],
+   "answer": "A stick used to control movement in a game",
+   "d": "easy"
+  },
+  {
+   "q": "In the game Wii Sports Bowling, how many pins are there?",
+   "options": [
+    "Ten",
+    "Nine",
+    "Twelve",
+    "Six"
+   ],
+   "answer": "Ten",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the villain who kidnaps Princess Peach?",
+   "options": [
+    "King Boo",
+    "Bowser",
+    "Donkey Kong",
+    "Wario"
+   ],
+   "answer": "Bowser",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'games review'?",
+   "options": [
+    "A trade-in offer",
+    "A repair service",
+    "An opinion piece rating a game",
+    "A patch"
+   ],
+   "answer": "An opinion piece rating a game",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is Luigi's shirt in most Mario games?",
+   "options": [
+    "Blue",
+    "Red",
+    "Green",
+    "Yellow"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "How many ghosts chase Pac-Man in the original arcade game?",
+   "options": [
+    "Five",
+    "Four",
+    "Three",
+    "Six"
+   ],
+   "answer": "Four",
+   "d": "easy"
+  },
+  {
+   "q": "In the game \"Overwatch,\" what are the names of the two Australian criminals from the Junkers faction?",
+   "options": [
+    "Roadrat and Junkhog",
+    "Junkrat and Roadhog",
+    "Ana and Pharah",
+    "McCree and Deadeye"
+   ],
+   "answer": "Junkrat and Roadhog",
+   "d": "easy"
+  },
+  {
+   "q": "In the video game Overwatch, which playable character is infamous for saying \"It's high noon.\"?",
+   "options": [
+    "Hanzo",
+    "Pharah",
+    "Soldier: 76",
+    "McCree"
+   ],
+   "answer": "McCree",
+   "d": "easy"
+  },
+  {
+   "q": "What is a video game 'sequel'?",
+   "options": [
+    "A demo",
+    "A follow-up game to an earlier one",
+    "A cheat",
+    "A cancelled game"
+   ],
+   "answer": "A follow-up game to an earlier one",
+   "d": "easy"
+  },
+  {
+   "q": "Which mobile game has players tapping a bird through gaps between green pipes?",
+   "options": [
+    "Doodle Jump",
+    "Jetpack Joyride",
+    "Flappy Bird",
+    "Tiny Wings"
+   ],
+   "answer": "Flappy Bird",
+   "d": "easy"
+  },
+  {
+   "q": "Who in this list is one of the co-founders of Valve?",
+   "options": [
+    "Robin Walker",
+    "Marc Laidlaw",
+    "Ray Ueno",
+    "Gabe Newell"
+   ],
+   "answer": "Gabe Newell",
+   "d": "medium"
+  },
+  {
+   "q": "All of the following are items used in the game Super Mario Kart, for the Super NES, except which one of the following?",
+   "options": [
+    "banana peel",
+    "blue shell",
+    "ghost",
+    "coins"
+   ],
+   "answer": "blue shell",
+   "d": "medium"
+  },
+  {
+   "q": "What is a 'cutscene' in a video game?",
+   "options": [
+    "A deleted level",
+    "A loading error",
+    "A non-playable story sequence",
+    "A multiplayer lobby"
+   ],
+   "answer": "A non-playable story sequence",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the rainbow-coloured track that closes most Mario Kart games?",
+   "options": [
+    "Star Circuit",
+    "Neon Run",
+    "Rainbow Road",
+    "Sky Highway"
+   ],
+   "answer": "Rainbow Road",
+   "d": "easy"
+  },
+  {
+   "q": "In Grand Theft Auto, what do players spend a lot of time doing?",
+   "options": [
+    "Farming crops",
+    "Driving stolen cars around a city",
+    "Fishing",
+    "Building castles"
+   ],
+   "answer": "Driving stolen cars around a city",
+   "d": "easy"
+  },
+  {
+   "q": "What is the more common name for a video game's picture quality settings?",
+   "options": [
+    "Latency",
+    "Storage",
+    "Graphics",
+    "Volume"
+   ],
+   "answer": "Graphics",
+   "d": "easy"
+  },
+  {
+   "q": "Which video game genre involves guiding a character to jump between platforms?",
+   "options": [
+    "Puzzle",
+    "Platformer",
+    "Simulation",
+    "Shooter"
+   ],
+   "answer": "Platformer",
+   "d": "easy"
+  },
+  {
+   "q": "What is on Luigi's cap?",
+   "options": [
+    "The letter L",
+    "A coin",
+    "A leaf",
+    "The letter G"
+   ],
+   "answer": "The letter L",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nintendo game series lets players build and share their own Mario levels?",
+   "options": [
+    "Mario Paint",
+    "Mario Builder",
+    "Level Up",
+    "Super Mario Maker"
+   ],
+   "answer": "Super Mario Maker",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'skin' in a video game?",
+   "options": [
+    "A difficulty setting",
+    "A cosmetic look for a character or item",
+    "A save slot",
+    "An extra life"
+   ],
+   "answer": "A cosmetic look for a character or item",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'map' used for in a video game?",
+   "options": [
+    "Showing where you are and where to go",
+    "Saving the game",
+    "Buying items",
+    "Changing the difficulty"
+   ],
+   "answer": "Showing where you are and where to go",
+   "d": "easy"
+  },
+  {
+   "q": "What is Links fathers name according to the Zelda series of games?",
+   "options": [
+    "Sam",
+    "It has never been revealed.",
+    "Lance",
+    "Gerald"
+   ],
+   "answer": "It has never been revealed.",
+   "d": "medium"
+  },
+  {
+   "q": "Where was the Sniper character in Team Fortress 2 born?",
+   "options": [
+    "Antarctica",
+    "New Zealand",
+    "Australia",
+    "South Africa"
+   ],
+   "answer": "New Zealand",
+   "d": "hard"
+  },
+  {
+   "q": "What mainly favored rifle is used by the Terrorists in Counter Strike: Global Offensive?",
+   "options": [
+    "CZ-75 AUTO",
+    "M4A4",
+    "AK-74",
+    "AK-47"
+   ],
+   "answer": "AK-47",
+   "d": "easy"
+  },
+  {
+   "q": "Which Windows game asks you to move cards onto four piles of the same suit?",
+   "options": [
+    "FreeCell",
+    "Hearts",
+    "Solitaire",
+    "Minesweeper"
+   ],
+   "answer": "Solitaire",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is Spyro the dragon?",
+   "options": [
+    "Red",
+    "Purple",
+    "Green",
+    "Blue"
+   ],
+   "answer": "Purple",
+   "d": "easy"
+  },
+  {
+   "q": "What type of Pokemon is Tyranitar?",
+   "options": [
+    "Rock dark",
+    "Rock and roll",
+    "Dark dragon",
+    "Rock ground"
+   ],
+   "answer": "Rock dark",
+   "d": "medium"
+  },
+  {
+   "q": "Which Mario character wears yellow and purple and has a W on his cap?",
+   "options": [
+    "Waluigi",
+    "Wario",
+    "Donkey Kong",
+    "Bowser Jr"
+   ],
+   "answer": "Wario",
+   "d": "easy"
+  },
+  {
+   "q": "What are you trying to catch in the game Pokemon?",
+   "options": [
+    "Creatures called Pokemon",
+    "Criminals",
+    "Fish",
+    "Stars"
+   ],
+   "answer": "Creatures called Pokemon",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these characters in \"Undertale\" can the player NOT go on a date with?",
+   "options": [
+    "Undyne",
+    "Papyrus",
+    "Alphys",
+    "Toriel"
+   ],
+   "answer": "Toriel",
+   "d": "medium"
+  },
+  {
+   "q": "In the video game \"Team Fortress 2\", which class is able to double jump?",
+   "options": [
+    "Scout",
+    "Pyro",
+    "Engineer",
+    "Spy"
+   ],
+   "answer": "Scout",
+   "d": "medium"
+  },
+  {
+   "q": "What was the first video game in which Mario appeared?",
+   "options": [
+    "Mario",
+    "The Mario Bros.",
+    "Donkey Kong",
+    "Super Mario"
+   ],
+   "answer": "Donkey Kong",
+   "d": "medium"
+  },
+  {
+   "q": "In Minecraft, which mode lets you fly and use unlimited blocks?",
+   "options": [
+    "Survival",
+    "Adventure",
+    "Hardcore",
+    "Creative"
+   ],
+   "answer": "Creative",
+   "d": "easy"
+  },
+  {
+   "q": "Which number puzzle involves filling a nine by nine grid so each row, column and box has one to nine?",
+   "options": [
+    "Sudoku",
+    "Nonogram",
+    "Kakuro",
+    "Futoshiki"
+   ],
+   "answer": "Sudoku",
+   "d": "easy"
+  },
+  {
+   "q": "Which streaming platform is most associated with live game broadcasting?",
+   "options": [
+    "Twitch",
+    "SoundCloud",
+    "Vimeo",
+    "Spotify"
+   ],
+   "answer": "Twitch",
+   "d": "easy"
+  },
+  {
+   "q": "In The Sims, what are you controlling?",
+   "options": [
+    "Racing cars",
+    "Everyday people living their lives",
+    "Spaceships",
+    "Soldiers"
+   ],
+   "answer": "Everyday people living their lives",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of a popular franchise that includes placing blocks down and surviving in an open world?",
+   "options": [
+    "Grand Theft Auto V",
+    "Roblox",
+    "Minecraft",
+    "Unturned"
+   ],
+   "answer": "Minecraft",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, what is the tall black mob that becomes hostile when you look at it?",
+   "options": [
+    "Zombie",
+    "Witch",
+    "Enderman",
+    "Creeper"
+   ],
+   "answer": "Enderman",
+   "d": "easy"
+  },
+  {
+   "q": "In the Tomb Raider games, what is Lara Croft's profession?",
+   "options": [
+    "Archaeologist",
+    "Journalist",
+    "Doctor",
+    "Pilot"
+   ],
+   "answer": "Archaeologist",
+   "d": "easy"
+  },
+  {
+   "q": "In the game series Just Dance, what do players follow on screen?",
+   "options": [
+    "Coloured arrows on a mat",
+    "Musical notes",
+    "Dance moves performed by an on-screen avatar",
+    "Song lyrics only"
+   ],
+   "answer": "Dance moves performed by an on-screen avatar",
+   "d": "easy"
+  },
+  {
+   "q": "What is on Mario's cap?",
+   "options": [
+    "The letter N",
+    "The letter M",
+    "A star",
+    "A mushroom"
+   ],
+   "answer": "The letter M",
+   "d": "easy"
+  },
+  {
+   "q": "What are 'achievements' or 'trophies' in gaming?",
+   "options": [
+    "In-game currency",
+    "Player rankings",
+    "Downloadable maps",
+    "Rewards for completing set challenges"
+   ],
+   "answer": "Rewards for completing set challenges",
+   "d": "easy"
+  },
+  {
+   "q": "What does a games 'publisher' do?",
+   "options": [
+    "Writes the music only",
+    "Draws the artwork only",
+    "Funds and releases games to the public",
+    "Repairs consoles"
+   ],
+   "answer": "Funds and releases games to the public",
+   "d": "easy"
+  },
+  {
+   "q": "In Zelda games, what do you break to find hearts and rupees?",
+   "options": [
+    "Barrels only",
+    "Pots and grass",
+    "Trees only",
+    "Rocks only"
+   ],
+   "answer": "Pots and grass",
+   "d": "easy"
+  },
+  {
+   "q": "What is Pikachu's National PokéDex Number?",
+   "options": [
+    "#031",
+    "#001",
+    "#025",
+    "#109"
+   ],
+   "answer": "#025",
+   "d": "easy"
+  },
+  {
+   "q": "Which letters label the four face buttons on a standard Xbox controller?",
+   "options": [
+    "L, R, X, Y",
+    "A, B, C, D",
+    "W, A, S, D",
+    "A, B, X, Y"
+   ],
+   "answer": "A, B, X, Y",
+   "d": "easy"
+  },
+  {
+   "q": "Which genre is the Touhou Project associated with?",
+   "options": [
+    "Shoot 'em up (bullet-hell) & Fighting",
+    "Turn-Based Strategy",
+    "MMORPG",
+    "Building"
+   ],
+   "answer": "Shoot 'em up (bullet-hell) & Fighting",
+   "d": "medium"
+  },
+  {
+   "q": "Which company makes the Nintendo Switch?",
+   "options": [
+    "Sega",
+    "Nintendo",
+    "Sony",
+    "Atari"
+   ],
+   "answer": "Nintendo",
+   "d": "easy"
+  },
+  {
+   "q": "What is an 'inventory' in a video game?",
+   "options": [
+    "The credits",
+    "The player rankings",
+    "The options menu",
+    "The list of items your character is carrying"
+   ],
+   "answer": "The list of items your character is carrying",
+   "d": "easy"
+  },
+  {
+   "q": "In vanilla Minecraft, which of the following cannot be made into a block?",
+   "options": [
+    "Coal",
+    "Wheat",
+    "String",
+    "Charcoal"
+   ],
+   "answer": "Charcoal",
+   "d": "medium"
+  },
+  {
+   "q": "Which of the following is NOT a Nintendo game console?",
+   "options": [
+    "SNES",
+    "Nintendo 64",
+    "Dreamcast",
+    "Wii"
+   ],
+   "answer": "Dreamcast",
+   "d": "easy"
+  },
+  {
+   "q": "Which company developed the free battle royale game Fortnite?",
+   "options": [
+    "Square Enix",
+    "Epic Games",
+    "Ubisoft",
+    "Valve"
+   ],
+   "answer": "Epic Games",
+   "d": "easy"
+  },
+  {
+   "q": "Which mobile game involves launching birds at pigs' structures?",
+   "options": [
+    "Angry Birds",
+    "Fruit Ninja",
+    "Cut the Rope",
+    "Doodle Jump"
+   ],
+   "answer": "Angry Birds",
+   "d": "easy"
+  },
+  {
+   "q": "Which game franchise features Lara Croft?",
+   "options": [
+    "Far Cry",
+    "Uncharted",
+    "Tomb Raider",
+    "Assassin's Creed"
+   ],
+   "answer": "Tomb Raider",
+   "d": "easy"
+  },
+  {
+   "q": "What is the main theme song of \"Sonic Adventure 2\"?",
+   "options": [
+    "His World",
+    "Live and Learn",
+    "Escape From the City",
+    "Open Your Heart"
+   ],
+   "answer": "Live and Learn",
+   "d": "medium"
+  },
+  {
+   "q": "What is the point of a 'boss battle'?",
+   "options": [
+    "To save the game",
+    "To buy new items",
+    "To change the difficulty",
+    "To defeat a powerful enemy and progress"
+   ],
+   "answer": "To defeat a powerful enemy and progress",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the Italian plumber, that's also the mascot of Nintendo?",
+   "options": [
+    "Luigi",
+    "Donkey Kong",
+    "Sonic",
+    "Mario"
+   ],
+   "answer": "Mario",
+   "d": "easy"
+  },
+  {
+   "q": "What is not a default game mode in Counter-Strike (2000)?",
+   "options": [
+    "Hostage Rescue",
+    "Bomb Defusal",
+    "Arms Race",
+    "Assassination"
+   ],
+   "answer": "Arms Race",
+   "d": "medium"
+  },
+  {
+   "q": "Which game series lets players fight as Jedi and Sith in a galaxy far, far away?",
+   "options": [
+    "Halo",
+    "Star Trek",
+    "Mass Effect",
+    "Star Wars"
+   ],
+   "answer": "Star Wars",
+   "d": "easy"
+  },
+  {
+   "q": "The Batman: Arkham video games are based on characters from which comics publisher?",
+   "options": [
+    "Image",
+    "Dark Horse",
+    "DC",
+    "Marvel"
+   ],
+   "answer": "DC",
+   "d": "easy"
+  },
+  {
+   "q": "In what year was Pokémon Diamond & Pearl released in Japan?",
+   "options": [
+    "2007",
+    "2006",
+    "2005",
+    "1996"
+   ],
+   "answer": "2006",
+   "d": "hard"
+  },
+  {
+   "q": "Which arcade game has a yellow character eating dots while avoiding ghosts?",
+   "options": [
+    "Pac-Man",
+    "Dig Dug",
+    "Q*bert",
+    "Frogger"
+   ],
+   "answer": "Pac-Man",
+   "d": "easy"
+  },
+  {
+   "q": "Which arcade character is a yellow circle with a wedge cut out of it?",
+   "options": [
+    "Dig Dug",
+    "Q*bert",
+    "Pac-Man",
+    "Bomberman"
+   ],
+   "answer": "Pac-Man",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Link's horse in the Zelda games?",
+   "options": [
+    "Roach",
+    "Shadowmere",
+    "Epona",
+    "Agro"
+   ],
+   "answer": "Epona",
+   "d": "easy"
+  },
+  {
+   "q": "In Pokemon, which type is strong against rock?",
+   "options": [
+    "Water",
+    "Normal",
+    "Fire",
+    "Flying"
+   ],
+   "answer": "Water",
+   "d": "easy"
+  },
+  {
+   "q": "Which company makes the Xbox Series X console?",
+   "options": [
+    "Sony",
+    "Microsoft",
+    "Sega",
+    "Nintendo"
+   ],
+   "answer": "Microsoft",
+   "d": "easy"
+  },
+  {
+   "q": "Which video game series lets you build famous scenes out of plastic bricks?",
+   "options": [
+    "Meccano",
+    "Brick City",
+    "Blockland",
+    "Lego"
+   ],
+   "answer": "Lego",
+   "d": "easy"
+  },
+  {
+   "q": "In the Windows game Minesweeper, what are you trying to avoid?",
+   "options": [
+    "Traps",
+    "Ghosts",
+    "Mines",
+    "Guards"
+   ],
+   "answer": "Mines",
+   "d": "easy"
+  },
+  {
+   "q": "In the Mario video games, Bowser is the king of what?",
+   "options": [
+    "Koopas",
+    "The Jungle",
+    "Mushroom Kingdom",
+    "Bowsers"
+   ],
+   "answer": "Koopas",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pokemon is a small blue turtle?",
+   "options": [
+    "Totodile",
+    "Squirtle",
+    "Mudkip",
+    "Piplup"
+   ],
+   "answer": "Squirtle",
+   "d": "easy"
+  },
+  {
+   "q": "What do you download a modern game from on a console?",
+   "options": [
+    "A cassette",
+    "A newspaper",
+    "An online store",
+    "A radio"
+   ],
+   "answer": "An online store",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Nintendo Switch able to do that a PlayStation 5 cannot?",
+   "options": [
+    "Connect to a television",
+    "Use a controller",
+    "Be taken out of the house and played as a handheld",
+    "Play discs"
+   ],
+   "answer": "Be taken out of the house and played as a handheld",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'patch' in gaming?",
+   "options": [
+    "A control scheme",
+    "A save file",
+    "A physical sticker",
+    "An update that fixes or changes a game"
+   ],
+   "answer": "An update that fixes or changes a game",
+   "d": "easy"
+  },
+  {
+   "q": "Which company makes the Mario and Zelda games?",
+   "options": [
+    "Microsoft",
+    "Nintendo",
+    "Sony",
+    "Sega"
+   ],
+   "answer": "Nintendo",
+   "d": "easy"
+  },
+  {
+   "q": "Which large spiky-shelled villain kidnaps Princess Peach?",
+   "options": [
+    "Donkey Kong",
+    "Ganon",
+    "Bowser",
+    "Wario"
+   ],
+   "answer": "Bowser",
+   "d": "easy"
+  },
+  {
+   "q": "In gaming, what does 'GG' commonly mean at the end of a match?",
+   "options": [
+    "Good game",
+    "Game gone",
+    "Go go",
+    "Great gear"
+   ],
+   "answer": "Good game",
+   "d": "easy"
+  },
+  {
+   "q": "Which company makes the PlayStation consoles?",
+   "options": [
+    "Sony",
+    "Microsoft",
+    "Panasonic",
+    "Sega"
+   ],
+   "answer": "Sony",
+   "d": "easy"
+  },
+  {
+   "q": "What device do you wear on your head to play a virtual reality game?",
+   "options": [
+    "Headphones only",
+    "A hat with lights",
+    "A helmet camera",
+    "A headset"
+   ],
+   "answer": "A headset",
+   "d": "easy"
+  },
+  {
+   "q": "Which mobile puzzle game has players firing coloured balls up a winding track before they reach the hole?",
+   "options": [
+    "Bejeweled",
+    "Zuma",
+    "Candy Crush",
+    "Peggle"
+   ],
+   "answer": "Zuma",
+   "d": "easy"
+  },
+  {
+   "q": "Who made Garry's Mod?",
+   "options": [
+    "Garry Newman",
+    "Gabe Newell",
+    "Yahn Bernier",
+    "Randy Newman"
+   ],
+   "answer": "Garry Newman",
+   "d": "medium"
+  },
+  {
+   "q": "Who is the main character in the video game \"Just Cause 3\"?",
+   "options": [
+    "Rico Rodriguez",
+    "Tom Sheldon",
+    "Mario Frigo",
+    "Nathan Drake"
+   ],
+   "answer": "Rico Rodriguez",
+   "d": "medium"
+  },
+  {
+   "q": "Why was the character Trevor Philips discharged from the Air Force?",
+   "options": [
+    "Mental Health Issues",
+    "Bit His Commanding Officer",
+    "Injuries",
+    "Danger to Others"
+   ],
+   "answer": "Mental Health Issues",
+   "d": "medium"
+  },
+  {
+   "q": "What sort of creatures do you fight in most zombie video games?",
+   "options": [
+    "Dinosaurs",
+    "Aliens",
+    "The undead",
+    "Robots"
+   ],
+   "answer": "The undead",
+   "d": "easy"
+  },
+  {
+   "q": "In Pokemon, what do you earn for defeating a Gym Leader?",
+   "options": [
+    "A badge",
+    "A medal",
+    "A ribbon",
+    "A stone"
+   ],
+   "answer": "A badge",
+   "d": "easy"
+  },
+  {
+   "q": "What does Donkey Kong roll down at Mario in the original arcade game?",
+   "options": [
+    "Boulders",
+    "Tyres",
+    "Barrels",
+    "Bombs"
+   ],
+   "answer": "Barrels",
+   "d": "easy"
+  },
+  {
+   "q": "What's the Team Fortress 2 Scout's city of origin?",
+   "options": [
+    "Boston",
+    "New York",
+    "Sydney",
+    "Detroit"
+   ],
+   "answer": "Boston",
+   "d": "medium"
+  },
+  {
+   "q": "Which Pokemon is a flame-tailed lizard that is often the first choice of new players?",
+   "options": [
+    "Cyndaquil",
+    "Charmander",
+    "Torchic",
+    "Vulpix"
+   ],
+   "answer": "Charmander",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these pets can you own in Runescape?",
+   "options": [
+    "Kitten",
+    "Dog",
+    "Bird",
+    "Hamster"
+   ],
+   "answer": "Kitten",
+   "d": "medium"
+  },
+  {
+   "q": "Who is the hero of The Legend of Zelda games?",
+   "options": [
+    "Zelda",
+    "Navi",
+    "Ganon",
+    "Link"
+   ],
+   "answer": "Link",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the female Pac-Man character with a bow on her head?",
+   "options": [
+    "Ms. Pac-Man",
+    "Baby Pac-Man",
+    "Pac-Girl",
+    "Lady Pac"
+   ],
+   "answer": "Ms. Pac-Man",
+   "d": "easy"
+  },
+  {
+   "q": "In The Elder Scrolls V: Skyrim, who is the jester in the dark brotherhood?",
+   "options": [
+    "Cicero",
+    "Lucien Lachance",
+    "Astrid",
+    "Sheogorath"
+   ],
+   "answer": "Cicero",
+   "d": "medium"
+  },
+  {
+   "q": "What is the game Solitaire played with?",
+   "options": [
+    "Marbles",
+    "Cards",
+    "Dice",
+    "Dominoes"
+   ],
+   "answer": "Cards",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the creator of the Super Smash Bros. Series?",
+   "options": [
+    "Hideo Kojima",
+    "Masahiro Sakurai",
+    "Reggie Fils-Aimé",
+    "Bill Trinen"
+   ],
+   "answer": "Masahiro Sakurai",
+   "d": "medium"
+  },
+  {
+   "q": "In Pokemon Diamond and Pearl, in what way do you evolve a Porygon2 into a Porygon-Z?",
+   "options": [
+    "Give it a dubious disc and trade it.",
+    "Give it an upgrade and trade it.",
+    "Give it a tech disc and trade it.",
+    "Level it up."
+   ],
+   "answer": "Give it a dubious disc and trade it.",
+   "d": "hard"
+  },
+  {
+   "q": "What is the arcade game where two players hit a puck on a low friction table?",
+   "options": [
+    "Foosball",
+    "Skee-ball",
+    "Pinball",
+    "Air hockey"
+   ],
+   "answer": "Air hockey",
+   "d": "easy"
+  },
+  {
+   "q": "Which Sony controller added two analogue sticks and vibration to the original PlayStation?",
+   "options": [
+    "Analog Pad",
+    "DualShock",
+    "Sixaxis",
+    "DualSense"
+   ],
+   "answer": "DualShock",
+   "d": "easy"
+  },
+  {
+   "q": "In video game terms, what is a 'demo'?",
+   "options": [
+    "A game engine",
+    "The end credits",
+    "A cheat code",
+    "A free sample of part of a game"
+   ],
+   "answer": "A free sample of part of a game",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the finishing move in Mortal Kombat that ends a fight gruesomely?",
+   "options": [
+    "Finisher",
+    "Ender",
+    "Deathblow",
+    "Fatality"
+   ],
+   "answer": "Fatality",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Sonic's sidekick?",
+   "options": [
+    "Amy",
+    "Knuckles",
+    "Tails",
+    "Dr. Eggman"
+   ],
+   "answer": "Tails",
+   "d": "easy"
+  },
+  {
+   "q": "How many squares make up each falling piece in Tetris?",
+   "options": [
+    "Six",
+    "Four",
+    "Five",
+    "Three"
+   ],
+   "answer": "Four",
+   "d": "easy"
+  },
+  {
+   "q": "Which early video game simulated table tennis with two paddles and a dot?",
+   "options": [
+    "Pong",
+    "Tennis for Two only",
+    "Combat",
+    "Breakout"
+   ],
+   "answer": "Pong",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, which of these ingredients is needed to brew a Potion of Water Breathing?",
+   "options": [
+    "Pumpkin",
+    "Pufferfish",
+    "Fishing rod",
+    "Ink sac"
+   ],
+   "answer": "Pufferfish",
+   "d": "medium"
+  },
+  {
+   "q": "Which rhythm game series uses a plastic guitar controller?",
+   "options": [
+    "Guitar Hero",
+    "SingStar",
+    "Dance Dance Revolution",
+    "Just Dance"
+   ],
+   "answer": "Guitar Hero",
+   "d": "easy"
+  },
+  {
+   "q": "In which historical setting is 'Red Dead Redemption' set?",
+   "options": [
+    "Viking Scandinavia",
+    "Feudal Japan",
+    "Colonial India",
+    "The American Wild West"
+   ],
+   "answer": "The American Wild West",
+   "d": "easy"
+  },
+  {
+   "q": "What are the initials on Donkey Kong's tie?",
+   "options": [
+    "GK",
+    "DK",
+    "KD",
+    "DG"
+   ],
+   "answer": "DK",
+   "d": "easy"
+  },
+  {
+   "q": "Which game in the \"Monster Hunter\" series introduced the monster \"Gobul\"?",
+   "options": [
+    "Monster Hunter World",
+    "Monster Hunter Generations",
+    "Monster Hunter Freedom Unite",
+    "Monster Hunter Tri"
+   ],
+   "answer": "Monster Hunter Tri",
+   "d": "hard"
+  },
+  {
+   "q": "In Mario Kart, which fruit item is dropped on the track to make rivals spin out?",
+   "options": [
+    "Melon",
+    "Apple",
+    "Banana",
+    "Pineapple"
+   ],
+   "answer": "Banana",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport features in the video game series Tony Hawk's Pro Skater?",
+   "options": [
+    "Surfing",
+    "Skateboarding",
+    "BMX",
+    "Snowboarding"
+   ],
+   "answer": "Skateboarding",
+   "d": "easy"
+  },
+  {
+   "q": "What sound effect is famously associated with Mario collecting a coin?",
+   "options": [
+    "A thud",
+    "A buzz",
+    "A splash",
+    "A bright ping"
+   ],
+   "answer": "A bright ping",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, what do villagers do with emeralds?",
+   "options": [
+    "Light their homes",
+    "Craft armour",
+    "Use them as currency for trading",
+    "Build houses"
+   ],
+   "answer": "Use them as currency for trading",
+   "d": "easy"
+  },
+  {
+   "q": "What does a game's soundtrack refer to?",
+   "options": [
+    "Its controls",
+    "Its price",
+    "Its graphics",
+    "Its music"
+   ],
+   "answer": "Its music",
+   "d": "easy"
+  },
+  {
+   "q": "In Super Mario Bros, what are the turtle enemies called?",
+   "options": [
+    "Goombas",
+    "Koopa Troopas",
+    "Lakitus",
+    "Piranha Plants"
+   ],
+   "answer": "Koopa Troopas",
+   "d": "easy"
+  },
+  {
+   "q": "What kind of game is 'Football Manager'?",
+   "options": [
+    "A management simulation",
+    "A first person shooter",
+    "A puzzle game",
+    "A card game"
+   ],
+   "answer": "A management simulation",
+   "d": "easy"
+  },
+  {
+   "q": "Who created the 2011 Video Game \"Minecraft\"?",
+   "options": [
+    "Daniel Rosenfeld",
+    "Carl Manneh",
+    "Markus Persson",
+    "Jens Bergensten"
+   ],
+   "answer": "Markus Persson",
+   "d": "medium"
+  },
+  {
+   "q": "How many squares are in a standard Sudoku grid across the top?",
+   "options": [
+    "Six",
+    "Ten",
+    "Twelve",
+    "Nine"
+   ],
+   "answer": "Nine",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'handheld' console?",
+   "options": [
+    "A console bolted to a wall",
+    "A console with no screen",
+    "A console you hold and play anywhere",
+    "A console for two players only"
+   ],
+   "answer": "A console you hold and play anywhere",
+   "d": "easy"
+  },
+  {
+   "q": "Which Halo character is the armoured super soldier the player controls?",
+   "options": [
+    "The Arbiter",
+    "Noble Six",
+    "Sergeant Johnson",
+    "Master Chief"
+   ],
+   "answer": "Master Chief",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pokemon is a large orange dragon-like creature with a flame on its tail?",
+   "options": [
+    "Charizard",
+    "Typhlosion",
+    "Salamence",
+    "Dragonite"
+   ],
+   "answer": "Charizard",
+   "d": "easy"
+  },
+  {
+   "q": "Which soccer player is featured on the cover of EA Sport's FIFA 18?",
+   "options": [
+    "Cristiano Ronaldo",
+    "Kylian Mbappé",
+    "Pelé",
+    "Lionel Messi"
+   ],
+   "answer": "Cristiano Ronaldo",
+   "d": "easy"
+  },
+  {
+   "q": "Which social deduction game asks a crew aboard a spaceship to find the impostors?",
+   "options": [
+    "Deceit",
+    "Among Us",
+    "Project Winter",
+    "Town of Salem"
+   ],
+   "answer": "Among Us",
+   "d": "easy"
+  },
+  {
+   "q": "Which ones of these Mario Kart games was made for the Gameboy Advance?",
+   "options": [
+    "Mario Kart DS",
+    "Mario Kart: Game & Watch",
+    "Mario Kart: Super Circuit",
+    "Mario Kart 7"
+   ],
+   "answer": "Mario Kart: Super Circuit",
+   "d": "medium"
+  },
+  {
+   "q": "What is a 'gamer'?",
+   "options": [
+    "A referee",
+    "A shop assistant",
+    "Someone who plays video games",
+    "A game designer only"
+   ],
+   "answer": "Someone who plays video games",
+   "d": "easy"
+  },
+  {
+   "q": "What colour are the overalls Mario wears?",
+   "options": [
+    "Brown",
+    "Green",
+    "Blue",
+    "Black"
+   ],
+   "answer": "Blue",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nintendo console is played by waving a wireless remote?",
+   "options": [
+    "Switch",
+    "GameCube",
+    "Nintendo 64",
+    "Wii"
+   ],
+   "answer": "Wii",
+   "d": "easy"
+  },
+  {
+   "q": "In Mario Kart, what does a lightning bolt item do to your opponents?",
+   "options": [
+    "Shrinks and slows them",
+    "Blinds them",
+    "Freezes them",
+    "Reverses their controls"
+   ],
+   "answer": "Shrinks and slows them",
+   "d": "easy"
+  },
+  {
+   "q": "In a battle royale game, what is the aim?",
+   "options": [
+    "Build the biggest house",
+    "Be the last player standing",
+    "Finish the fastest lap",
+    "Collect the most coins"
+   ],
+   "answer": "Be the last player standing",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pokemon is a round blue-and-white creature famous for being lazy and sleeping across roads?",
+   "options": [
+    "Jigglypuff",
+    "Snorlax",
+    "Munchlax",
+    "Wobbuffet"
+   ],
+   "answer": "Snorlax",
+   "d": "easy"
+  },
+  {
+   "q": "What chases Pac-Man around the maze?",
+   "options": [
+    "Dogs",
+    "Zombies",
+    "Robots",
+    "Ghosts"
+   ],
+   "answer": "Ghosts",
+   "d": "easy"
+  },
+  {
+   "q": "What kind of game is 'Guitar Hero'?",
+   "options": [
+    "A music and rhythm game",
+    "A puzzle game",
+    "A racing game",
+    "A war game"
+   ],
+   "answer": "A music and rhythm game",
+   "d": "easy"
+  },
+  {
+   "q": "In gaming, what is a 'boss'?",
+   "options": [
+    "A powerful enemy at the end of a level",
+    "The player's employer",
+    "A save point",
+    "A difficulty setting"
+   ],
+   "answer": "A powerful enemy at the end of a level",
+   "d": "easy"
+  },
+  {
+   "q": "What does FPS stand for when describing a genre of game?",
+   "options": [
+    "Fast Paced Shooter",
+    "First Person Shooter",
+    "Full Play Simulation",
+    "Free Play System"
+   ],
+   "answer": "First Person Shooter",
+   "d": "easy"
+  },
+  {
+   "q": "What do you transform into in stage 4 of Altered Beast?",
+   "options": [
+    "Werewolf",
+    "Weretiger",
+    "Werebear",
+    "Weredragon"
+   ],
+   "answer": "Weretiger",
+   "d": "hard"
+  },
+  {
+   "q": "What company developed the Xbox line of video game consoles?",
+   "options": [
+    "Microsoft",
+    "Sony",
+    "Toshiba",
+    "IBM"
+   ],
+   "answer": "Microsoft",
+   "d": "easy"
+  },
+  {
+   "q": "What character from Super Smash Bros. Brawl was not in Super Smash Bros. Melee?",
+   "options": [
+    "Ike",
+    "Falco",
+    "Link",
+    "Pikachu"
+   ],
+   "answer": "Ike",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the main character in the 2006 third-person shooter Gears of War?",
+   "options": [
+    "Dominic Santiago",
+    "Lt. Kim",
+    "Marcus Fenix",
+    "Baird"
+   ],
+   "answer": "Marcus Fenix",
+   "d": "easy"
+  },
+  {
+   "q": "Which pink round Nintendo character can swallow enemies and copy their powers?",
+   "options": [
+    "Jigglypuff",
+    "Kirby",
+    "Yoshi",
+    "Ness"
+   ],
+   "answer": "Kirby",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the main villain of the Crash Bandicoot series?",
+   "options": [
+    "Doctor N. Brio",
+    "Sir Cortex-a-lot",
+    "Doctor Nitrus Cortex",
+    "Dr. Neo Cortex"
+   ],
+   "answer": "Dr. Neo Cortex",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these was NOT a launch title for the Nintendo 64?",
+   "options": [
+    "Saikyō Habu Shōgi",
+    "Mario Kart 64",
+    "Pilotwings 64",
+    "Super Mario 64"
+   ],
+   "answer": "Mario Kart 64",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of the main protagonist in \"Xenoblade Chronicles\"?",
+   "options": [
+    "Reyn",
+    "Fiora",
+    "Shulk",
+    "Dunban"
+   ],
+   "answer": "Shulk",
+   "d": "medium"
+  },
+  {
+   "q": "This sound clip is a theme in which of the following Legend of Zelda games?",
+   "options": [
+    "The Legend of Zelda: Ganon's Karaoke Night",
+    "The Legend of Zelda: Majora's Mask",
+    "The Legend of Zelda: Ocarina of Time",
+    "The Legend of Zelda: A Link to the Past"
+   ],
+   "answer": "The Legend of Zelda: Ocarina of Time",
+   "d": "medium"
+  },
+  {
+   "q": "What is an 'open world' game?",
+   "options": [
+    "One with no ending",
+    "One where you can roam freely rather than follow a set path",
+    "One with no enemies",
+    "One played outdoors"
+   ],
+   "answer": "One where you can roam freely rather than follow a set path",
+   "d": "easy"
+  },
+  {
+   "q": "In a fighting game, what are two characters usually doing?",
+   "options": [
+    "Dancing",
+    "Fighting each other",
+    "Farming",
+    "Racing"
+   ],
+   "answer": "Fighting each other",
+   "d": "easy"
+  },
+  {
+   "q": "What do you put into an old-fashioned arcade machine to play?",
+   "options": [
+    "Cards",
+    "Nothing",
+    "Tokens made of wood",
+    "Coins"
+   ],
+   "answer": "Coins",
+   "d": "easy"
+  },
+  {
+   "q": "What do Pokemon trainers throw to catch a wild Pokemon?",
+   "options": [
+    "Poke Flute",
+    "Net",
+    "Poke Ball",
+    "Master Key"
+   ],
+   "answer": "Poke Ball",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, what block do you place items on to build tools and weapons?",
+   "options": [
+    "Furnace",
+    "Crafting table",
+    "Chest",
+    "Anvil"
+   ],
+   "answer": "Crafting table",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nintendo Switch controllers slide onto the sides of the console?",
+   "options": [
+    "Nunchuks",
+    "Wii Remotes",
+    "Joy-Cons",
+    "Pro Pads"
+   ],
+   "answer": "Joy-Cons",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, which material is used to build circuits and mechanisms?",
+   "options": [
+    "Quartz",
+    "Obsidian",
+    "Lapis lazuli",
+    "Redstone"
+   ],
+   "answer": "Redstone",
+   "d": "easy"
+  },
+  {
+   "q": "What is an 'easter egg' in a video game?",
+   "options": [
+    "A bonus level you buy",
+    "A save point",
+    "A rare enemy",
+    "A hidden secret or joke"
+   ],
+   "answer": "A hidden secret or joke",
+   "d": "easy"
+  },
+  {
+   "q": "In gaming, what is 'lag'?",
+   "options": [
+    "A type of weapon",
+    "A delay between an action and the game responding",
+    "A bonus round",
+    "A save file"
+   ],
+   "answer": "A delay between an action and the game responding",
+   "d": "easy"
+  },
+  {
+   "q": "Which Mario spin-off series is played as a virtual board game with minigames?",
+   "options": [
+    "Mario Party",
+    "Mario Golf",
+    "Mario Strikers",
+    "Mario Sports Mix"
+   ],
+   "answer": "Mario Party",
+   "d": "easy"
+  },
+  {
+   "q": "Which weapon is Link famous for carrying along with a shield?",
+   "options": [
+    "A spear",
+    "An axe",
+    "A sword",
+    "A rifle"
+   ],
+   "answer": "A sword",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the land where most of the Legend of Zelda games take place?",
+   "options": [
+    "Hylia",
+    "Termina",
+    "Hyrule",
+    "Sacred Realm"
+   ],
+   "answer": "Hyrule",
+   "d": "easy"
+  },
+  {
+   "q": "Which pink hedgehog is a friend of Sonic?",
+   "options": [
+    "Rouge",
+    "Blaze",
+    "Amy Rose",
+    "Cream"
+   ],
+   "answer": "Amy Rose",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'NPC' stand for?",
+   "options": [
+    "Non-player character",
+    "Network play code",
+    "New player counter",
+    "Next play cycle"
+   ],
+   "answer": "Non-player character",
+   "d": "easy"
+  },
+  {
+   "q": "In Portal 2, how did CEO of Aperture Science, Cave Johnson, presumably die?",
+   "options": [
+    "Mercury Poisoning",
+    "Moon Rock Poisoning",
+    "Asbestos Poisoning",
+    "Slipped in the shower"
+   ],
+   "answer": "Moon Rock Poisoning",
+   "d": "medium"
+  },
+  {
+   "q": "What are the mushroom-headed citizens of the Mushroom Kingdom called?",
+   "options": [
+    "Shy Guys",
+    "Goombas",
+    "Toads",
+    "Boos"
+   ],
+   "answer": "Toads",
+   "d": "easy"
+  },
+  {
+   "q": "In Zelda games, what does a full container of hearts represent?",
+   "options": [
+    "The player's money",
+    "The player's magic",
+    "The player's speed",
+    "The player's health"
+   ],
+   "answer": "The player's health",
+   "d": "easy"
+  },
+  {
+   "q": "What colour are the rings Sonic collects?",
+   "options": [
+    "Silver",
+    "Gold",
+    "Blue",
+    "Green"
+   ],
+   "answer": "Gold",
+   "d": "easy"
+  },
+  {
+   "q": "Who stars in Brutal Legend?",
+   "options": [
+    "Ozzy Osbourne",
+    "Jack Black",
+    "Lemmy",
+    "Kanye West"
+   ],
+   "answer": "Jack Black",
+   "d": "medium"
+  },
+  {
+   "q": "The word Pokemon is a shortening of which phrase?",
+   "options": [
+    "Pocket Monsters",
+    "Portable Monsters",
+    "Power Monsters",
+    "Popular Monsters"
+   ],
+   "answer": "Pocket Monsters",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'game over' screen?",
+   "options": [
+    "The message shown when you lose",
+    "A settings page",
+    "The opening menu",
+    "A bonus round"
+   ],
+   "answer": "The message shown when you lose",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'streaming' a video game?",
+   "options": [
+    "Printing a walkthrough",
+    "Recording it to tape",
+    "Downloading it to a disc",
+    "Broadcasting your play live over the internet"
+   ],
+   "answer": "Broadcasting your play live over the internet",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, what shape is almost everything in the world built from?",
+   "options": [
+    "Cubes",
+    "Spheres",
+    "Pyramids",
+    "Cylinders"
+   ],
+   "answer": "Cubes",
+   "d": "easy"
+  },
+  {
+   "q": "In which series of games do you collect souls to empower you and buy weaponry and armor with?",
+   "options": [
+    "The Legend of Zelda",
+    "Souls",
+    "Final Fantasy",
+    "Monster Hunter"
+   ],
+   "answer": "Souls",
+   "d": "easy"
+  },
+  {
+   "q": "Which streaming service is most associated with watching people play games live?",
+   "options": [
+    "Twitch",
+    "Vimeo",
+    "Soundcloud",
+    "Spotify"
+   ],
+   "answer": "Twitch",
+   "d": "easy"
+  },
+  {
+   "q": "In Untitled Goose Game, what animal do you play as?",
+   "options": [
+    "A pelican",
+    "A swan",
+    "A duck",
+    "A goose"
+   ],
+   "answer": "A goose",
+   "d": "easy"
+  },
+  {
+   "q": "Which company makes the Xbox console?",
+   "options": [
+    "Nintendo",
+    "Microsoft",
+    "Sony",
+    "Atari"
+   ],
+   "answer": "Microsoft",
+   "d": "easy"
+  },
+  {
+   "q": "In Pac-Man, what does eating a power pellet let you do?",
+   "options": [
+    "Eat the ghosts",
+    "Freeze the maze",
+    "Skip a level",
+    "Double your speed"
+   ],
+   "answer": "Eat the ghosts",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of game is 'FIFA'?",
+   "options": [
+    "A wrestling game",
+    "A fishing game",
+    "A football game",
+    "A racing game"
+   ],
+   "answer": "A football game",
+   "d": "easy"
+  },
+  {
+   "q": "What kind of creature is Yoshi?",
+   "options": [
+    "A frog",
+    "A dinosaur",
+    "A turtle",
+    "A dragonfly"
+   ],
+   "answer": "A dinosaur",
+   "d": "easy"
+  },
+  {
+   "q": "What is the code name of Morgana the cat in Persona 5?",
+   "options": [
+    "Nightstalker",
+    "Panther",
+    "Zorro",
+    "Mona"
+   ],
+   "answer": "Mona",
+   "d": "medium"
+  },
+  {
+   "q": "What is Zelda in The Legend of Zelda?",
+   "options": [
+    "A princess",
+    "A sword",
+    "A horse",
+    "A castle"
+   ],
+   "answer": "A princess",
+   "d": "easy"
+  },
+  {
+   "q": "Which video game genre includes games such as Civilization and Age of Empires?",
+   "options": [
+    "Strategy",
+    "Rhythm",
+    "Fighting",
+    "Racing"
+   ],
+   "answer": "Strategy",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, which two items must be combined to craft a torch?",
+   "options": [
+    "Stick and Flint",
+    "Wood and Coal",
+    "Stick and Coal",
+    "Stick and Fire"
+   ],
+   "answer": "Stick and Coal",
+   "d": "easy"
+  },
+  {
+   "q": "In Mario Kart, what are the characters driving?",
+   "options": [
+    "Go-karts",
+    "Aeroplanes",
+    "Boats",
+    "Motorbikes only"
+   ],
+   "answer": "Go-karts",
+   "d": "easy"
+  },
+  {
+   "q": "What does a 'high score' table show?",
+   "options": [
+    "The best scores achieved",
+    "The controls",
+    "The game's price",
+    "The credits"
+   ],
+   "answer": "The best scores achieved",
+   "d": "easy"
+  },
+  {
+   "q": "In the game Frogger, what is the frog trying to cross?",
+   "options": [
+    "A desert",
+    "A mountain",
+    "A road and a river",
+    "A field"
+   ],
+   "answer": "A road and a river",
+   "d": "easy"
+  },
+  {
+   "q": "Which sandbox game lets players mine blocks and build worlds?",
+   "options": [
+    "Roblox",
+    "Terraria",
+    "Minecraft",
+    "Fortnite"
+   ],
+   "answer": "Minecraft",
+   "d": "easy"
+  },
+  {
+   "q": "In gaming, what does 'HP' usually stand for?",
+   "options": [
+    "High Power",
+    "Half Play",
+    "Hero Points",
+    "Hit Points"
+   ],
+   "answer": "Hit Points",
+   "d": "easy"
+  },
+  {
+   "q": "In many role playing games, what does 'NPC' stand for?",
+   "options": [
+    "Non-Player Character",
+    "Named Prize Card",
+    "Non-Playable Console",
+    "New Player Class"
+   ],
+   "answer": "Non-Player Character",
+   "d": "easy"
+  },
+  {
+   "q": "Which PlayStation series features Aloy hunting robotic creatures in a post-apocalyptic world?",
+   "options": [
+    "Horizon",
+    "Days Gone",
+    "Death Stranding",
+    "Ghost of Tsushima"
+   ],
+   "answer": "Horizon",
+   "d": "easy"
+  },
+  {
+   "q": "What is Mario's catchphrase when he jumps?",
+   "options": [
+    "Wahoo",
+    "Yippee",
+    "Kaboom",
+    "Hooray"
+   ],
+   "answer": "Wahoo",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these is a type of monster found in Minecraft?",
+   "options": [
+    "Werewolf",
+    "Minotaur",
+    "Vampire",
+    "Skeleton"
+   ],
+   "answer": "Skeleton",
+   "d": "easy"
+  },
+  {
+   "q": "In Angry Birds, which animals are the birds attacking?",
+   "options": [
+    "Foxes",
+    "Rats",
+    "Pigs",
+    "Cats"
+   ],
+   "answer": "Pigs",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian football code features in the AFL video game series?",
+   "options": [
+    "Rugby league",
+    "Australian rules football",
+    "Soccer",
+    "Rugby union"
+   ],
+   "answer": "Australian rules football",
+   "d": "easy"
+  },
+  {
+   "q": "Mario and Luigi are what to each other?",
+   "options": [
+    "Cousins",
+    "Best friends only",
+    "Father and son",
+    "Brothers"
+   ],
+   "answer": "Brothers",
+   "d": "easy"
+  },
+  {
+   "q": "What did players famously do to dusty Nintendo cartridges to try to make them work?",
+   "options": [
+    "Shake them",
+    "Freeze them",
+    "Blow into them",
+    "Wash them"
+   ],
+   "answer": "Blow into them",
+   "d": "easy"
+  },
+  {
+   "q": "Which fire-type starter Pokemon is offered in Pokemon Red and Blue?",
+   "options": [
+    "Bulbasaur",
+    "Squirtle",
+    "Charmander",
+    "Pidgey"
+   ],
+   "answer": "Charmander",
+   "d": "easy"
+  },
+  {
+   "q": "In \"The Elder Scrolls 3: Morrowind\", which of the following factions is not joinable?",
+   "options": [
+    "Mages Guild",
+    "The Dark Brotherhood",
+    "Thieves Guild",
+    "Fighters Guild"
+   ],
+   "answer": "The Dark Brotherhood",
+   "d": "hard"
+  },
+  {
+   "q": "What company created and developed the game \"Overwatch\"?",
+   "options": [
+    "Valve",
+    "Gearbox Software",
+    "Blizzard Entertainment",
+    "Hi-Rez Studios"
+   ],
+   "answer": "Blizzard Entertainment",
+   "d": "easy"
+  },
+  {
+   "q": "What special abilities are unique to Metroids in the video game series Metroid?",
+   "options": [
+    "They can kill by eye contact.",
+    "They can suck out your life energy.",
+    "They can create lifelike illusions.",
+    "They can kill by physical contact."
+   ],
+   "answer": "They can suck out your life energy.",
+   "d": "easy"
+  },
+  {
+   "q": "Which company created Sonic the Hedgehog?",
+   "options": [
+    "Nintendo",
+    "Konami",
+    "Capcom",
+    "Sega"
+   ],
+   "answer": "Sega",
+   "d": "easy"
+  },
+  {
+   "q": "In Candy Crush Saga, how many matching candies in a row do you need to clear them?",
+   "options": [
+    "Three",
+    "Five",
+    "Two",
+    "Four"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "In Dota 2, Wraith King was previously known as...",
+   "options": [
+    "Skeletor",
+    "Skull King",
+    "Skeleton King",
+    "Bone King"
+   ],
+   "answer": "Skeleton King",
+   "d": "medium"
+  },
+  {
+   "q": "What is a 'remaster' of a video game?",
+   "options": [
+    "A fan-made version",
+    "An older game rereleased with improved graphics",
+    "A brand new sequel",
+    "A cancelled project"
+   ],
+   "answer": "An older game rereleased with improved graphics",
+   "d": "easy"
+  },
+  {
+   "q": "In Mario Kart, what does hitting a mushroom item give you?",
+   "options": [
+    "Invisibility",
+    "A speed boost",
+    "Extra coins",
+    "A shield"
+   ],
+   "answer": "A speed boost",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'PvP' stand for?",
+   "options": [
+    "Point value Play",
+    "Player versus Player",
+    "Public versus Private",
+    "Play versus Practice"
+   ],
+   "answer": "Player versus Player",
+   "d": "easy"
+  },
+  {
+   "q": "Which console did Sony release first?",
+   "options": [
+    "PlayStation Portable",
+    "PlayStation 2",
+    "PlayStation",
+    "PlayStation 3"
+   ],
+   "answer": "PlayStation",
+   "d": "easy"
+  },
+  {
+   "q": "What does Mario do to defeat a Goomba?",
+   "options": [
+    "Freeze it",
+    "Jump on it",
+    "Shoot it",
+    "Kick it"
+   ],
+   "answer": "Jump on it",
+   "d": "easy"
+  },
+  {
+   "q": "Which of the following games was not a launch title for the Nintendo Gamecube?",
+   "options": [
+    "Star Wars Rogue Squadron II",
+    "Disney’s Tarzan Untamed",
+    "Luigi’s Mansion",
+    "Super Mario Sunshine"
+   ],
+   "answer": "Super Mario Sunshine",
+   "d": "medium"
+  },
+  {
+   "q": "What video game genre were the original Warcraft games?",
+   "options": [
+    "RPG (Role Playing Game)",
+    "RTS (Real Time Strategy)",
+    "TBS (Turn Based Strategy)",
+    "MMO (Massively Multiplayer Online)"
+   ],
+   "answer": "RTS (Real Time Strategy)",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport is simulated in the video game series 'Virtua Tennis'?",
+   "options": [
+    "Squash",
+    "Badminton",
+    "Table tennis",
+    "Tennis"
+   ],
+   "answer": "Tennis",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the main antagonist of Ori and the Blind Forest?",
+   "options": [
+    "Gumo",
+    "Nibel",
+    "Kuro",
+    "King Rammer XII"
+   ],
+   "answer": "Kuro",
+   "d": "medium"
+  },
+  {
+   "q": "What is a 'beta' version of a game?",
+   "options": [
+    "A test version played before full release",
+    "A cancelled version",
+    "A remastered version",
+    "The final version"
+   ],
+   "answer": "A test version played before full release",
+   "d": "easy"
+  },
+  {
+   "q": "In the game Wordle, how many guesses do you get?",
+   "options": [
+    "Five",
+    "Four",
+    "Six",
+    "Seven"
+   ],
+   "answer": "Six",
+   "d": "easy"
+  },
+  {
+   "q": "What effect does the Super Mushroom have on Mario in the popular series of video games?",
+   "options": [
+    "It makes him impervious to danger.",
+    "None",
+    "It makes him bigger.",
+    "It makes him smaller."
+   ],
+   "answer": "It makes him bigger.",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is the top half of a standard Poke Ball?",
+   "options": [
+    "Black",
+    "Red",
+    "Green",
+    "Blue"
+   ],
+   "answer": "Red",
+   "d": "easy"
+  },
+  {
+   "q": "What is the aim in a 'hidden object' game?",
+   "options": [
+    "Score goals",
+    "Find items in a busy picture",
+    "Beat a boss",
+    "Race to the finish"
+   ],
+   "answer": "Find items in a busy picture",
+   "d": "easy"
+  },
+  {
+   "q": "Which Sonic character is a black hedgehog with red stripes?",
+   "options": [
+    "Metal Sonic",
+    "Espio",
+    "Shadow",
+    "Silver"
+   ],
+   "answer": "Shadow",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the main villain of The Legend of Zelda series?",
+   "options": [
+    "Zant",
+    "Agahnim",
+    "Vaati",
+    "Ganondorf"
+   ],
+   "answer": "Ganondorf",
+   "d": "easy"
+  },
+  {
+   "q": "In the game Tetris, which piece is a straight line of four?",
+   "options": [
+    "T-piece",
+    "S-piece",
+    "I-piece",
+    "L-piece"
+   ],
+   "answer": "I-piece",
+   "d": "easy"
+  },
+  {
+   "q": "What is the aim of a 'tower defence' game in simple terms?",
+   "options": [
+    "Build the tallest tower",
+    "Race up a tower",
+    "Rescue a hostage",
+    "Stop enemies getting past your defences"
+   ],
+   "answer": "Stop enemies getting past your defences",
+   "d": "easy"
+  },
+  {
+   "q": "How many players could play the original Super Mario Bros at the same time?",
+   "options": [
+    "Three",
+    "Four",
+    "Two",
+    "One"
+   ],
+   "answer": "One",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is the standard Yoshi?",
+   "options": [
+    "Blue",
+    "Red",
+    "Green",
+    "Yellow"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "In Mario games, what do you collect that are gold and spin?",
+   "options": [
+    "Gems",
+    "Rings",
+    "Stars",
+    "Coins"
+   ],
+   "answer": "Coins",
+   "d": "easy"
+  },
+  {
+   "q": "What are you shooting at in the arcade game Space Invaders?",
+   "options": [
+    "Rows of aliens",
+    "Racing cars",
+    "Balloons",
+    "Ducks"
+   ],
+   "answer": "Rows of aliens",
+   "d": "easy"
+  },
+  {
+   "q": "What was Microsoft's online service for the original Xbox and the Xbox 360 called?",
+   "options": [
+    "Xbox Live",
+    "Battle Net",
+    "PlayStation Plus",
+    "Nintendo Online"
+   ],
+   "answer": "Xbox Live",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is the Xbox logo?",
+   "options": [
+    "Blue",
+    "Red",
+    "Green",
+    "Orange"
+   ],
+   "answer": "Green",
+   "d": "easy"
+  },
+  {
+   "q": "In the game Super Mario Kart, what does the mushroom item do to the racer?",
+   "options": [
+    "gives the racer a short burst of speed",
+    "shrinks the racer so karts flatten them",
+    "makes the racer spin out of control",
+    "turns the racer invisible for a lap"
+   ],
+   "answer": "gives the racer a short burst of speed",
+   "d": "easy"
+  },
+  {
+   "q": "In a bowling video game, what are you knocking down?",
+   "options": [
+    "Barrels",
+    "Pins",
+    "Targets",
+    "Hurdles"
+   ],
+   "answer": "Pins",
+   "d": "easy"
+  },
+  {
+   "q": "Which one of these games wasn't released in 2016?",
+   "options": [
+    "Tom Clancy's The Division",
+    "Metal Gear Solid V",
+    "Killing Floor 2",
+    "Hitman"
+   ],
+   "answer": "Metal Gear Solid V",
+   "d": "medium"
+  },
+  {
+   "q": "What is the name of Mario's dinosaur companion?",
+   "options": [
+    "Bowser",
+    "Yoshi",
+    "Birdo",
+    "Toad"
+   ],
+   "answer": "Yoshi",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these is NOT a player class in Team Fortress 2?",
+   "options": [
+    "Spy",
+    "Healer",
+    "Pyro",
+    "Demoman"
+   ],
+   "answer": "Healer",
+   "d": "medium"
+  },
+  {
+   "q": "In gaming, what is 'DLC' short for?",
+   "options": [
+    "Digital licence code",
+    "Dual layer console",
+    "Direct level change",
+    "Downloadable content"
+   ],
+   "answer": "Downloadable content",
+   "d": "easy"
+  },
+  {
+   "q": "Which classic Nintendo accessory was a plastic gun used to shoot ducks on screen?",
+   "options": [
+    "The Power Glove",
+    "The NES Zapper",
+    "The Wii Zapper",
+    "The Super Scope"
+   ],
+   "answer": "The NES Zapper",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'shooter' video game?",
+   "options": [
+    "One where you fire weapons at targets or enemies",
+    "One about photography",
+    "One about basketball",
+    "One about archery only"
+   ],
+   "answer": "One where you fire weapons at targets or enemies",
+   "d": "easy"
+  },
+  {
+   "q": "In Minecraft, what do you build to sleep and skip the night?",
+   "options": [
+    "A chair",
+    "A tent",
+    "A bed",
+    "A hammock"
+   ],
+   "answer": "A bed",
+   "d": "easy"
+  },
+  {
+   "q": "In what year was the game \"Fallout\" released?",
+   "options": [
+    "1996",
+    "1997",
+    "1999",
+    "1998"
+   ],
+   "answer": "1997",
+   "d": "medium"
+  },
+  {
+   "q": "Which musical instrument gives its name to a 1998 Zelda game on the Nintendo 64?",
+   "options": [
+    "Ocarina",
+    "Harp",
+    "Lute",
+    "Flute"
+   ],
+   "answer": "Ocarina",
+   "d": "easy"
+  },
+  {
+   "q": "What programming language was used to create the game \"Minecraft\"?",
+   "options": [
+    "Python",
+    "C++",
+    "Blockscript",
+    "Java"
+   ],
+   "answer": "Java",
+   "d": "medium"
+  },
+  {
+   "q": "In the first Left 4 Dead, you can play as either of these four characters.",
+   "options": [
+    "Coach, Ellis, Nick, and Rochelle",
+    "Francis, Bill, Zoey, and Louis",
+    "Harry, Ron, Hermione and Dumbledore",
+    "Bender, Andrew, Allison, and Brian"
+   ],
+   "answer": "Francis, Bill, Zoey, and Louis",
+   "d": "medium"
+  },
+  {
+   "q": "In Team Fortress 2, which class wields a shotgun?",
+   "options": [
+    "Soldier",
+    "Engineer",
+    "Heavy",
+    "Everyone Listed"
+   ],
+   "answer": "Everyone Listed",
+   "d": "medium"
+  },
+  {
+   "q": "In Space Invaders, which way do the aliens move down the screen?",
+   "options": [
+    "Side to side and steadily downwards",
+    "In circles",
+    "Only upwards",
+    "Diagonally only"
+   ],
+   "answer": "Side to side and steadily downwards",
+   "d": "easy"
+  },
+  {
+   "q": "Which franchise does the creature \"Slowpoke\" originate from?",
+   "options": [
+    "Pokemon",
+    "Dragon Ball",
+    "Yugioh",
+    "Sonic The Hedgehog"
+   ],
+   "answer": "Pokemon",
+   "d": "easy"
+  },
+  {
+   "q": "Which battle royale game features building mechanics and a shrinking storm?",
+   "options": [
+    "Apex Legends",
+    "Warzone",
+    "Fortnite",
+    "PUBG"
+   ],
+   "answer": "Fortnite",
+   "d": "easy"
+  },
+  {
+   "q": "Which of the following is NOT one of the main characters in Grand Theft Auto V’s story mode?",
+   "options": [
+    "Trevor Phillips",
+    "Tommy Vercetti",
+    "Franklin Clinton",
+    "Michael de Santa"
+   ],
+   "answer": "Tommy Vercetti",
+   "d": "medium"
+  },
+  {
+   "q": "In the Yakuza series who is the Dragon of Dojima?",
+   "options": [
+    "Goro Majima",
+    "Haruka Sawamura",
+    "Ryuji Goda",
+    "Kazuma Kiryu"
+   ],
+   "answer": "Kazuma Kiryu",
+   "d": "medium"
+  },
+  {
+   "q": "Which type is Pikachu?",
+   "options": [
+    "Electric",
+    "Psychic",
+    "Water",
+    "Fire"
+   ],
+   "answer": "Electric",
+   "d": "easy"
+  },
+  {
+   "q": "What kind of animal is Sonic?",
+   "options": [
+    "A hedgehog",
+    "A mouse",
+    "A porcupine",
+    "A squirrel"
+   ],
+   "answer": "A hedgehog",
+   "d": "easy"
+  },
+  {
+   "q": "Which party game has jellybean-shaped contestants racing through obstacle courses?",
+   "options": [
+    "Stumble Guys",
+    "Fall Guys",
+    "Human Fall Flat",
+    "Gang Beasts"
+   ],
+   "answer": "Fall Guys",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these characters is the mascot of the video game company SEGA?",
+   "options": [
+    "Opa-Opa",
+    "Sonic the Hedgehog",
+    "Alex Kidd",
+    "Mario"
+   ],
+   "answer": "Sonic the Hedgehog",
+   "d": "easy"
+  },
+  {
+   "q": "What character from the Final Fantasy series used a weapon called the Buster Sword?",
+   "options": [
+    "Cloud Strife",
+    "Sephiroth",
+    "Seifer Almasy",
+    "Squall Leonhart"
+   ],
+   "answer": "Cloud Strife",
+   "d": "easy"
+  },
+  {
+   "q": "In which arcade classic do you shoot descending rows of aliens?",
+   "options": [
+    "Asteroids",
+    "Defender",
+    "Galaga",
+    "Space Invaders"
+   ],
+   "answer": "Space Invaders",
+   "d": "easy"
+  },
+  {
+   "q": "What sort of game is 'Call of Duty'?",
+   "options": [
+    "A word game",
+    "A farming game",
+    "A dance game",
+    "A military shooter"
+   ],
+   "answer": "A military shooter",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these is the best type of RuneScape weapon for non members?",
+   "options": [
+    "Barrows",
+    "Rune",
+    "Granite",
+    "Dragon"
+   ],
+   "answer": "Dragon",
+   "d": "medium"
+  },
+  {
+   "q": "Which yellow electric Pokemon is the face of the series?",
+   "options": [
+    "Pikachu",
+    "Raichu",
+    "Pichu",
+    "Jolteon"
+   ],
+   "answer": "Pikachu",
+   "d": "easy"
+  },
+  {
+   "q": "In most video games, what does a health bar show?",
+   "options": [
+    "How fast you are going",
+    "How long you have played",
+    "How much money you have",
+    "How much damage your character can still take"
+   ],
+   "answer": "How much damage your character can still take",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Sonic the Hedgehog's arch-enemy?",
+   "options": [
+    "Bowser",
+    "Doctor Wily",
+    "Doctor Eggman",
+    "Ganondorf"
+   ],
+   "answer": "Doctor Eggman",
+   "d": "easy"
+  },
+  {
+   "q": "Which augmented reality mobile game had players catching creatures in the real world in 2016?",
+   "options": [
+    "Ingress",
+    "Jurassic World Alive",
+    "Pokemon GO",
+    "Harry Potter Wizards Unite"
+   ],
+   "answer": "Pokemon GO",
+   "d": "easy"
+  },
+  {
+   "q": "In the video game, Half-life, what event started the Half-life universe as we know today?",
+   "options": [
+    "The Xen attack",
+    "The Black Mesa meltdown",
+    "The Resonance Cascade",
+    "The Combine invasion"
+   ],
+   "answer": "The Resonance Cascade",
+   "d": "medium"
+  },
+  {
+   "q": "Which Mario power-up lets him throw fireballs?",
+   "options": [
+    "Super Leaf",
+    "Super Mushroom",
+    "Fire Flower",
+    "Super Star"
+   ],
+   "answer": "Fire Flower",
+   "d": "easy"
+  },
+  {
+   "q": "What is the gibberish language spoken by characters in The Sims called?",
+   "options": [
+    "Simlish",
+    "Simbabble",
+    "Simtongue",
+    "Simspeak"
+   ],
+   "answer": "Simlish",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these covert groups employs Sam Fisher to work as a Splinter Cell?",
+   "options": [
+    "Black Arrow",
+    "The Engineers",
+    "Voron",
+    "Third Echelon"
+   ],
+   "answer": "Third Echelon",
+   "d": "medium"
+  },
+  {
+   "q": "What is a 'cheat code'?",
+   "options": [
+    "A serial number",
+    "A secret input that gives an advantage",
+    "A password to buy a game",
+    "A refund code"
+   ],
+   "answer": "A secret input that gives an advantage",
+   "d": "easy"
+  },
+  {
+   "q": "What happens in Tetris when the blocks stack to the top of the screen?",
+   "options": [
+    "You get a bonus",
+    "Nothing",
+    "You win",
+    "The game is over"
+   ],
+   "answer": "The game is over",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'split-screen' play?",
+   "options": [
+    "Streaming to a second device",
+    "Playing on two consoles",
+    "A graphics glitch",
+    "Two players sharing one screen divided in half"
+   ],
+   "answer": "Two players sharing one screen divided in half",
+   "d": "easy"
+  },
+  {
+   "q": "What major event caused the events of Half-Life 1?",
+   "options": [
+    "The Resonance Cascade",
+    "The Blue Shift",
+    "The Cascade Malfunction",
+    "The Seven Hour War"
+   ],
+   "answer": "The Resonance Cascade",
+   "d": "medium"
+  },
+  {
+   "q": "What is the cross-shaped directional controller on a gamepad called?",
+   "options": [
+    "Joy-pad",
+    "Nav-pad",
+    "X-pad",
+    "D-pad"
+   ],
+   "answer": "D-pad",
+   "d": "easy"
+  },
+  {
+   "q": "In Animal Crossing, who is the manager of the town shop?",
+   "options": [
+    "Timmy Nook",
+    "K.K. Slider",
+    "Kicks",
+    "Tom Nook"
+   ],
+   "answer": "Tom Nook",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'Wii Sports' played with?",
+   "options": [
+    "A motion-sensing remote",
+    "A keyboard",
+    "A dance mat",
+    "A steering wheel only"
+   ],
+   "answer": "A motion-sensing remote",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'level' in a video game?",
+   "options": [
+    "A menu font",
+    "A stage the player works through",
+    "A type of controller",
+    "A price tier"
+   ],
+   "answer": "A stage the player works through",
+   "d": "easy"
+  },
+  {
+   "q": "What character is NOT apart of the Grand Theft Auto series?",
+   "options": [
+    "Michael Cardenas",
+    "Tommy Vercetti",
+    "Packie McReary",
+    "Lester Crest"
+   ],
+   "answer": "Michael Cardenas",
+   "d": "medium"
+  },
+  {
+   "q": "In which decade was the Nintendo Entertainment System released in Australia?",
+   "options": [
+    "1980s",
+    "1970s",
+    "2000s",
+    "1990s"
+   ],
+   "answer": "1980s",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nintendo series features a fox piloting a spacecraft called an Arwing?",
+   "options": [
+    "Pilotwings",
+    "Star Fox",
+    "F-Zero",
+    "Metroid"
+   ],
+   "answer": "Star Fox",
+   "d": "easy"
+  },
+  {
+   "q": "In Super Mario Bros., who informs Mario that the princess is in another castle?",
+   "options": [
+    "Toad",
+    "Toadsworth",
+    "Bowser",
+    "Luigi"
+   ],
+   "answer": "Toad",
+   "d": "easy"
+  },
+  {
+   "q": "Which Microsoft accessory let Xbox players control games with body movement and no controller?",
+   "options": [
+    "Kinect",
+    "Wiimote",
+    "Move",
+    "Eye Toy"
+   ],
+   "answer": "Kinect",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'FPS' stand for in gaming?",
+   "options": [
+    "Frame per stage",
+    "Full power score",
+    "Fast play system",
+    "First person shooter"
+   ],
+   "answer": "First person shooter",
+   "d": "easy"
+  },
+  {
+   "q": "What are the green exploding creatures in Minecraft called?",
+   "options": [
+    "Creepers",
+    "Zombies",
+    "Endermen",
+    "Slimes"
+   ],
+   "answer": "Creepers",
+   "d": "easy"
+  },
+  {
+   "q": "What is the in-game currency of The Sims called?",
+   "options": [
+    "Coins",
+    "Simoleons",
+    "Credits",
+    "Simbucks"
+   ],
+   "answer": "Simoleons",
+   "d": "easy"
+  },
+  {
+   "q": "Rocket League is a game which features..",
+   "options": [
+    "Helicopters",
+    "Submarines",
+    "Planes",
+    "Cars"
+   ],
+   "answer": "Cars",
+   "d": "easy"
+  },
+  {
+   "q": "Which Finnish company created Angry Birds?",
+   "options": [
+    "Supercell",
+    "Housemarque",
+    "Remedy",
+    "Rovio"
+   ],
+   "answer": "Rovio",
+   "d": "easy"
+  },
+  {
+   "q": "In Portal 2, which solar system body did Wheatley end up orbiting?",
+   "options": [
+    "Mars",
+    "The moon",
+    "Jupiter",
+    "Earth"
+   ],
+   "answer": "The moon",
+   "d": "medium"
+  },
+  {
+   "q": "Which arcade game asks players to grab a toy with a mechanical claw?",
+   "options": [
+    "A pinball table",
+    "An air hockey table",
+    "A racing cabinet",
+    "A claw machine"
+   ],
+   "answer": "A claw machine",
+   "d": "easy"
+  },
+  {
+   "q": "In gaming, what is 'loot'?",
+   "options": [
+    "The game engine",
+    "Items dropped by enemies or found in the world",
+    "A control layout",
+    "The end credits"
+   ],
+   "answer": "Items dropped by enemies or found in the world",
+   "d": "easy"
+  },
+  {
+   "q": "Which karaoke game series on PlayStation used microphones and pop songs?",
+   "options": [
+    "SingStar",
+    "Karaoke Revolution",
+    "We Sing",
+    "Lips"
+   ],
+   "answer": "SingStar",
+   "d": "easy"
+  },
+  {
+   "q": "How many Star Spirits do you rescue in the Nintendo 64 video game \"Paper Mario\"?",
+   "options": [
+    "8",
+    "6",
+    "7",
+    "700"
+   ],
+   "answer": "7",
+   "d": "medium"
+  },
+  {
+   "q": "In role playing games, what does 'XP' stand for?",
+   "options": [
+    "Experience Points",
+    "Extended Play",
+    "Extra Power",
+    "Exit Point"
+   ],
+   "answer": "Experience Points",
+   "d": "easy"
+  },
+  {
+   "q": "In which country is Nintendo's headquarters?",
+   "options": [
+    "South Korea",
+    "Japan",
+    "China",
+    "Taiwan"
+   ],
+   "answer": "Japan",
+   "d": "easy"
+  },
+  {
+   "q": "At what location does the PS2 role-playing game Final Fantasy X start?",
+   "options": [
+    "Zanarkand",
+    "Disneyland",
+    "Besaid",
+    "Luca"
+   ],
+   "answer": "Zanarkand",
+   "d": "medium"
+  },
+  {
+   "q": "Which video game character wears a red-and-blue cap and is often shown mid-jump with a fist raised?",
+   "options": [
+    "Mario",
+    "Sonic",
+    "Rayman",
+    "Crash"
+   ],
+   "answer": "Mario",
+   "d": "easy"
+  },
+  {
+   "q": "Which egg-shaped digital pet toy from Japan became a 1990s craze?",
+   "options": [
+    "Digimon Pet",
+    "Tamagotchi",
+    "Giga Pet",
+    "Furby"
+   ],
+   "answer": "Tamagotchi",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'Pong' generally considered to be a version of?",
+   "options": [
+    "Table tennis",
+    "Golf",
+    "Cricket",
+    "Football"
+   ],
+   "answer": "Table tennis",
+   "d": "easy"
+  },
+  {
+   "q": "What is Mario's job in the games?",
+   "options": [
+    "Chef",
+    "Postman",
+    "Plumber",
+    "Electrician"
+   ],
+   "answer": "Plumber",
+   "d": "easy"
+  },
+  {
+   "q": "When was Pokemon GO released in North America?",
+   "options": [
+    "May 24th, 2016",
+    "June 5th, 2016",
+    "July 6th, 2015",
+    "July 6th, 2016"
+   ],
+   "answer": "July 6th, 2016",
+   "d": "medium"
+  },
+  {
+   "q": "What do you use to control a game on a personal computer, as well as a keyboard?",
+   "options": [
+    "A remote",
+    "A mouse",
+    "A microphone",
+    "A stylus pen only"
+   ],
+   "answer": "A mouse",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'free-to-play' game?",
+   "options": [
+    "One with no online mode",
+    "One that never gets updates",
+    "One you can download and play without paying up front",
+    "One with no adverts"
+   ],
+   "answer": "One you can download and play without paying up front",
+   "d": "easy"
+  },
+  {
+   "q": "In Super Mario World, you start the game on which island?",
+   "options": [
+    "Toads Island",
+    "Peachs Island",
+    "Bowsers Island",
+    "Yoshis Island"
+   ],
+   "answer": "Yoshis Island",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pokemon has a plant bulb on its back?",
+   "options": [
+    "Bulbasaur",
+    "Chikorita",
+    "Oddish",
+    "Turtwig"
+   ],
+   "answer": "Bulbasaur",
+   "d": "easy"
+  },
+  {
+   "q": "What animal is Sonic's friend Tails?",
+   "options": [
+    "A fox",
+    "A squirrel",
+    "A raccoon",
+    "A cat"
+   ],
+   "answer": "A fox",
+   "d": "easy"
+  },
+  {
+   "q": "What is the protagonist's title given by the demons in DOOM (2016)?",
+   "options": [
+    "Doom Slayer",
+    "Doom Guy",
+    "Doom Marine",
+    "Doom Reaper"
+   ],
+   "answer": "Doom Slayer",
+   "d": "medium"
+  },
+  {
+   "q": "In what year was \"Metal Gear Solid\" released in North America?",
+   "options": [
+    "1987",
+    "2001",
+    "1998",
+    "2004"
+   ],
+   "answer": "1998",
+   "d": "medium"
+  },
+  {
+   "q": "What is an 'extra life' in a game?",
+   "options": [
+    "A new game",
+    "A bigger screen",
+    "A faster console",
+    "Another chance after you are defeated"
+   ],
+   "answer": "Another chance after you are defeated",
+   "d": "easy"
+  },
+  {
+   "q": "Who controls the AT-ATs on Hoth in Star Wars: Battlefront?",
+   "options": [
+    "Empire",
+    "The Republic",
+    "Rebels",
+    "The Ewoks"
+   ],
+   "answer": "Empire",
+   "d": "easy"
+  },
+  {
+   "q": "When was the first Call of Duty title released?",
+   "options": [
+    "October 29, 2005",
+    "July 18, 2004",
+    "October 29, 2003",
+    "December 1, 2003"
+   ],
+   "answer": "October 29, 2003",
+   "d": "medium"
+  }
+ ]
 }

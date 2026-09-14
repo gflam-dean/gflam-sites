@@ -1,0 +1,746 @@
+{
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "category": "Brands and ads",
+ "count": 64,
+ "questions": [
+  {
+   "q": "Which Australian airline uses a star and orange branding?",
+   "options": [
+    "Virgin Australia",
+    "Jetstar",
+    "Bonza",
+    "Rex"
+   ],
+   "answer": "Jetstar",
+   "d": "easy"
+  },
+  {
+   "q": "The Kellogg's Rice Bubbles mascots are Snap, Crackle and who?",
+   "options": [
+    "Pop",
+    "Bang",
+    "Fizz",
+    "Splat"
+   ],
+   "answer": "Pop",
+   "d": "easy"
+  },
+  {
+   "q": "Which luxury brand's logo is two interlocking Cs?",
+   "options": [
+    "Coach",
+    "Chanel",
+    "Calvin Klein",
+    "Cartier"
+   ],
+   "answer": "Chanel",
+   "d": "easy"
+  },
+  {
+   "q": "How many herbs and spices does KFC claim to use?",
+   "options": [
+    "Thirteen",
+    "Eleven",
+    "Seven",
+    "Nine"
+   ],
+   "answer": "Eleven",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand uses a green robot mascot?",
+   "options": [
+    "Java",
+    "Ubuntu",
+    "Firefox",
+    "Android"
+   ],
+   "answer": "Android",
+   "d": "easy"
+  },
+  {
+   "q": "Which company owns Instagram and WhatsApp?",
+   "options": [
+    "Meta",
+    "Snap",
+    "Alphabet",
+    "ByteDance"
+   ],
+   "answer": "Meta",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian breakfast spread's jingle famously spells out its name, 'happy little Vegemites'?",
+   "options": [
+    "Vegemite",
+    "Promite",
+    "Marmite",
+    "Spreadymite"
+   ],
+   "answer": "Vegemite",
+   "d": "easy"
+  },
+  {
+   "q": "Which chocolate malt drink is a Nestle staple in Australia?",
+   "options": [
+    "Aktavite",
+    "Milo",
+    "Horlicks",
+    "Ovaltine"
+   ],
+   "answer": "Milo",
+   "d": "easy"
+  },
+  {
+   "q": "Tony the Tiger, who says 'They're Grrreat!', advertises which breakfast cereal?",
+   "options": [
+    "Frosties / Frosted Flakes",
+    "Tiger Crunchies",
+    "Coco Pops",
+    "Weet-Bix"
+   ],
+   "answer": "Frosties / Frosted Flakes",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian hardware chain is famous for sausage sizzles?",
+   "options": [
+    "Mitre 10",
+    "Masters",
+    "Bunnings",
+    "Home Timber"
+   ],
+   "answer": "Bunnings",
+   "d": "easy"
+  },
+  {
+   "q": "Which tyre brand's mascot is made of white tyres?",
+   "options": [
+    "Pirelli",
+    "Michelin",
+    "Bridgestone",
+    "Goodyear"
+   ],
+   "answer": "Michelin",
+   "d": "easy"
+  },
+  {
+   "q": "Three parallel stripes are the signature logo motif of which sportswear brand?",
+   "options": [
+    "Adidas",
+    "Reebok",
+    "Tri-Stripe Threads",
+    "Puma"
+   ],
+   "answer": "Adidas",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand's slogan is 'I'm lovin' it'?",
+   "options": [
+    "Hungry Jack's",
+    "KFC",
+    "McDonald's",
+    "Subway"
+   ],
+   "answer": "McDonald's",
+   "d": "easy"
+  },
+  {
+   "q": "Which Vegemite jingle character sang about being 'happy little' something?",
+   "options": [
+    "Aussies",
+    "Campers",
+    "Kids",
+    "Vegemites"
+   ],
+   "answer": "Vegemites",
+   "d": "easy"
+  },
+  {
+   "q": "Which browser uses a fox wrapped around a globe?",
+   "options": [
+    "Edge",
+    "Firefox",
+    "Chrome",
+    "Safari"
+   ],
+   "answer": "Firefox",
+   "d": "easy"
+  },
+  {
+   "q": "Which cereal brand features a cartoon tiger named Tony as its mascot?",
+   "options": [
+    "Weet-Bix",
+    "Corn Flakes",
+    "Frosties (Frosted Flakes)",
+    "Coco Pops"
+   ],
+   "answer": "Frosties (Frosted Flakes)",
+   "d": "easy"
+  },
+  {
+   "q": "Which sportswear brand uses a leaping big cat?",
+   "options": [
+    "Kappa",
+    "Reebok",
+    "Nike",
+    "Puma"
+   ],
+   "answer": "Puma",
+   "d": "easy"
+  },
+  {
+   "q": "What animal is the mascot on the Qantas logo?",
+   "options": [
+    "Koala",
+    "Emu",
+    "A flying wombat",
+    "Kangaroo"
+   ],
+   "answer": "Kangaroo",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian brand's ads featured 'the fresh food people'?",
+   "options": [
+    "Coles",
+    "Franklins",
+    "Aldi",
+    "Woolworths"
+   ],
+   "answer": "Woolworths",
+   "d": "easy"
+  },
+  {
+   "q": "The slogan 'Because you're worth it' is associated with which cosmetics brand?",
+   "options": [
+    "Worth-It Beauty",
+    "Maybelline",
+    "Revlon",
+    "L'Oreal"
+   ],
+   "answer": "L'Oreal",
+   "d": "easy"
+  },
+  {
+   "q": "The apple with a bite taken out of it is the logo of which technology company?",
+   "options": [
+    "Android",
+    "Bitey Byte Inc",
+    "Microsoft",
+    "Apple"
+   ],
+   "answer": "Apple",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian brand's jingle promised 'happy little Vegemites' would grow?",
+   "options": [
+    "Milo",
+    "Uncle Tobys",
+    "Weet-Bix",
+    "Vegemite"
+   ],
+   "answer": "Vegemite",
+   "d": "easy"
+  },
+  {
+   "q": "The jolly red-suited figure used in Coca-Cola's Christmas advertising is based on which character?",
+   "options": [
+    "Rudolph",
+    "The Grinch",
+    "Santa Claus",
+    "A red-suited penguin"
+   ],
+   "answer": "Santa Claus",
+   "d": "easy"
+  },
+  {
+   "q": "What are the three Rice Bubbles mascots called?",
+   "options": [
+    "Bing, Bang and Bong",
+    "Snap, Crackle and Pop",
+    "Zip, Zap and Zoom",
+    "Tick, Tock and Boom"
+   ],
+   "answer": "Snap, Crackle and Pop",
+   "d": "easy"
+  },
+  {
+   "q": "Which fried chicken brand's founder is depicted with a white suit and goatee?",
+   "options": [
+    "Chicken Treat",
+    "Red Rooster",
+    "KFC",
+    "Popeyes"
+   ],
+   "answer": "KFC",
+   "d": "easy"
+  },
+  {
+   "q": "Which chocolate bar's slogan was 'Have a break, have a ...'?",
+   "options": [
+    "Mars",
+    "Break-a-leg bar",
+    "Cadbury",
+    "Kit Kat"
+   ],
+   "answer": "Kit Kat",
+   "d": "easy"
+  },
+  {
+   "q": "Which social media platform used a blue bird logo before rebranding?",
+   "options": [
+    "Facebook",
+    "LinkedIn",
+    "Twitter",
+    "Bluesky"
+   ],
+   "answer": "Twitter",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian telco was formerly Telecom Australia?",
+   "options": [
+    "Optus",
+    "Vodafone",
+    "TPG",
+    "Telstra"
+   ],
+   "answer": "Telstra",
+   "d": "easy"
+  },
+  {
+   "q": "Which chocolate bar's slogan was 'Have a break'?",
+   "options": [
+    "Twix",
+    "Snickers",
+    "Mars",
+    "Kit Kat"
+   ],
+   "answer": "Kit Kat",
+   "d": "easy"
+  },
+  {
+   "q": "What colour is the Michelin Man, the mascot of the Michelin tyre company?",
+   "options": [
+    "Grey",
+    "White",
+    "Rainbow like a stack of pancakes",
+    "Green"
+   ],
+   "answer": "White",
+   "d": "easy"
+  },
+  {
+   "q": "Which airline uses a kangaroo on its tail?",
+   "options": [
+    "Qantas",
+    "Jetstar",
+    "Virgin Australia",
+    "Rex"
+   ],
+   "answer": "Qantas",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian chicken chain has a rooster logo?",
+   "options": [
+    "Oporto",
+    "Red Rooster",
+    "Chicken Treat",
+    "Nando's"
+   ],
+   "answer": "Red Rooster",
+   "d": "easy"
+  },
+  {
+   "q": "Which soft drink's logo uses a red and white ribbon script?",
+   "options": [
+    "Fanta",
+    "Coca-Cola",
+    "Pepsi",
+    "Dr Pepper"
+   ],
+   "answer": "Coca-Cola",
+   "d": "easy"
+  },
+  {
+   "q": "Which soft drink's logo is a red, white and blue circle, historically linked to a 'Generation' campaign?",
+   "options": [
+    "Solo",
+    "Coca-Cola",
+    "Pepsi",
+    "Bubble Pop"
+   ],
+   "answer": "Pepsi",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian brand makes the classic wide-brimmed bush hat?",
+   "options": [
+    "Stetson",
+    "Driza-Bone",
+    "Akubra",
+    "Rossi"
+   ],
+   "answer": "Akubra",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian ice cream features a cowboy face with a bubblegum nose?",
+   "options": [
+    "Bubble O'Bill",
+    "Zooper Dooper",
+    "Calippo",
+    "Paddle Pop"
+   ],
+   "answer": "Bubble O'Bill",
+   "d": "easy"
+  },
+  {
+   "q": "Which coffee chain uses a green circular logo with a siren?",
+   "options": [
+    "The Coffee Club",
+    "Gloria Jean's",
+    "Starbucks",
+    "Zarraffa's"
+   ],
+   "answer": "Starbucks",
+   "d": "easy"
+  },
+  {
+   "q": "The swoosh logo belongs to which sportswear brand?",
+   "options": [
+    "Swoosh and Co Vacuum Cleaners",
+    "Puma",
+    "Adidas",
+    "Nike"
+   ],
+   "answer": "Nike",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand uses a polo player on horseback?",
+   "options": [
+    "Ralph Lauren",
+    "Burberry",
+    "Tommy Hilfiger",
+    "Lacoste"
+   ],
+   "answer": "Ralph Lauren",
+   "d": "easy"
+  },
+  {
+   "q": "Which streaming service's logo is a red N?",
+   "options": [
+    "Netflix",
+    "Nickelodeon",
+    "Nine Now",
+    "NBCUniversal"
+   ],
+   "answer": "Netflix",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of McDonald's clown mascot?",
+   "options": [
+    "Chuckles",
+    "Ronald McDonald",
+    "Bobo",
+    "Krusty"
+   ],
+   "answer": "Ronald McDonald",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian retail chain uses a red bullseye logo?",
+   "options": [
+    "Target",
+    "Best & Less",
+    "Kmart",
+    "Big W"
+   ],
+   "answer": "Target",
+   "d": "easy"
+  },
+  {
+   "q": "Which sportswear brand uses three stripes?",
+   "options": [
+    "Adidas",
+    "Fila",
+    "Puma",
+    "Nike"
+   ],
+   "answer": "Adidas",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand's slogan was 'Oh what a feeling' with a jump?",
+   "options": [
+    "Toyota",
+    "Mazda",
+    "Honda",
+    "Nissan"
+   ],
+   "answer": "Toyota",
+   "d": "easy"
+  },
+  {
+   "q": "Which fashion brand uses interlocking Gs?",
+   "options": [
+    "Guess",
+    "Gap",
+    "Gucci",
+    "Givenchy"
+   ],
+   "answer": "Gucci",
+   "d": "easy"
+  },
+  {
+   "q": "Which watch brand uses a crown logo?",
+   "options": [
+    "Tag Heuer",
+    "Seiko",
+    "Omega",
+    "Rolex"
+   ],
+   "answer": "Rolex",
+   "d": "easy"
+  },
+  {
+   "q": "Colonel Sanders, with his white suit and goatee, is the face of which chicken chain?",
+   "options": [
+    "Nando's",
+    "Red Rooster",
+    "Cluck Colonel Co",
+    "KFC"
+   ],
+   "answer": "KFC",
+   "d": "easy"
+  },
+  {
+   "q": "Which clothing brand uses a crocodile logo?",
+   "options": [
+    "Ralph Lauren",
+    "Lacoste",
+    "Crocs",
+    "Fred Perry"
+   ],
+   "answer": "Lacoste",
+   "d": "easy"
+  },
+  {
+   "q": "The Energizer battery mascot is a pink toy of which animal that 'keeps going'?",
+   "options": [
+    "Duck",
+    "Turbo Snail",
+    "Cat",
+    "Rabbit / Bunny"
+   ],
+   "answer": "Rabbit / Bunny",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand of chocolate uses a purple wrapper in Australia?",
+   "options": [
+    "Nestle",
+    "Hershey",
+    "Cadbury",
+    "Lindt"
+   ],
+   "answer": "Cadbury",
+   "d": "easy"
+  },
+  {
+   "q": "Which soft drink brand uses a red, white and blue circle?",
+   "options": [
+    "7 Up",
+    "Coca-Cola",
+    "Sprite",
+    "Pepsi"
+   ],
+   "answer": "Pepsi",
+   "d": "easy"
+  },
+  {
+   "q": "Which sandwich chain's slogan was 'Eat fresh'?",
+   "options": [
+    "Sumo Salad",
+    "Subway",
+    "Zambrero",
+    "Boost"
+   ],
+   "answer": "Subway",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand is known for the tagline 'Just do it'?",
+   "options": [
+    "Adidas",
+    "Nike",
+    "Reebok",
+    "Puma"
+   ],
+   "answer": "Nike",
+   "d": "easy"
+  },
+  {
+   "q": "What was the real title of KFC's founder Harland Sanders?",
+   "options": [
+    "Colonel",
+    "Captain",
+    "Major",
+    "General"
+   ],
+   "answer": "Colonel",
+   "d": "easy"
+  },
+  {
+   "q": "Which energy drink claims it 'gives you wings'?",
+   "options": [
+    "V",
+    "Rockstar",
+    "Monster",
+    "Red Bull"
+   ],
+   "answer": "Red Bull",
+   "d": "easy"
+  },
+  {
+   "q": "Which beer brand's advertising centred on a Mexican beach and a lime?",
+   "options": [
+    "Stella Artois",
+    "Heineken",
+    "Peroni",
+    "Corona"
+   ],
+   "answer": "Corona",
+   "d": "easy"
+  },
+  {
+   "q": "Which fast food brand's mascot is a clown?",
+   "options": [
+    "Jack in the Box",
+    "McDonald's",
+    "Burger King",
+    "KFC"
+   ],
+   "answer": "McDonald's",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand uses a shell as its logo at petrol stations?",
+   "options": [
+    "Caltex",
+    "Mobil",
+    "BP",
+    "Shell"
+   ],
+   "answer": "Shell",
+   "d": "easy"
+  },
+  {
+   "q": "What is Burger King called in Australia?",
+   "options": [
+    "Big Burger",
+    "Whopper King",
+    "Hungry Jack's",
+    "Burger Boss"
+   ],
+   "answer": "Hungry Jack's",
+   "d": "easy"
+  },
+  {
+   "q": "The golden arches are the logo of which fast food chain?",
+   "options": [
+    "Hungry Jack's",
+    "KFC",
+    "McDonald's",
+    "The Golden Arch Bank of England"
+   ],
+   "answer": "McDonald's",
+   "d": "easy"
+  },
+  {
+   "q": "Which fast-food chain uses a clown named Ronald as its long-running mascot?",
+   "options": [
+    "Clownburger Deluxe",
+    "KFC",
+    "Hungry Jack's",
+    "McDonald's"
+   ],
+   "answer": "McDonald's",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian biscuit brand makes Tim Tams?",
+   "options": [
+    "Paradise",
+    "Griffin's",
+    "Nabisco",
+    "Arnott's"
+   ],
+   "answer": "Arnott's",
+   "d": "easy"
+  },
+  {
+   "q": "Which cereal brand uses a tiger mascot?",
+   "options": [
+    "Frosties",
+    "Rice Bubbles",
+    "Nutri-Grain",
+    "Coco Pops"
+   ],
+   "answer": "Frosties",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand uses an LV monogram?",
+   "options": [
+    "Lacoste",
+    "Louis Vuitton",
+    "Levi's",
+    "Longchamp"
+   ],
+   "answer": "Louis Vuitton",
+   "d": "easy"
+  }
+ ]
+}

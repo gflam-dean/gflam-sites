@@ -1,0 +1,1538 @@
+{
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "category": "Kids and family",
+ "count": 136,
+ "questions": [
+  {
+   "q": "What is Winnie-the-Pooh's favourite food?",
+   "options": [
+    "Berries",
+    "Cake",
+    "Nuts",
+    "Honey"
+   ],
+   "answer": "Honey",
+   "d": "easy"
+  },
+  {
+   "q": "Which game involves throwing a stone and hopping through numbered squares?",
+   "options": [
+    "Hopscotch",
+    "Jacks",
+    "Skipping",
+    "Four square"
+   ],
+   "answer": "Hopscotch",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's TV show features a builder who asks 'Can we fix it?'",
+   "options": [
+    "Postman Pat",
+    "Thomas",
+    "Bob the Builder",
+    "Fireman Sam"
+   ],
+   "answer": "Bob the Builder",
+   "d": "easy"
+  },
+  {
+   "q": "What is George Pig's favourite toy?",
+   "options": [
+    "A teddy bear",
+    "A dinosaur",
+    "A truck",
+    "A ball"
+   ],
+   "answer": "A dinosaur",
+   "d": "easy"
+  },
+  {
+   "q": "What is the day after Christmas called in Australia and Britain?",
+   "options": [
+    "Boxing Day",
+    "Second Christmas",
+    "Saint Stephen's Day is the Irish name",
+    "Gift Day"
+   ],
+   "answer": "Boxing Day",
+   "d": "easy"
+  },
+  {
+   "q": "What Australian party food is bread with butter and hundreds and thousands?",
+   "options": [
+    "Chocolate crackles",
+    "Honey joys",
+    "Jelly slice",
+    "Fairy bread"
+   ],
+   "answer": "Fairy bread",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas film stars Will Ferrell as a human raised by elves?",
+   "options": [
+    "Elf",
+    "Fred Claus",
+    "The Santa Clause",
+    "Bad Santa"
+   ],
+   "answer": "Elf",
+   "d": "easy"
+  },
+  {
+   "q": "Which game is played by only following instructions that start with a name?",
+   "options": [
+    "Follow the Leader",
+    "Simon Says",
+    "Red Light Green Light",
+    "Marco Polo"
+   ],
+   "answer": "Simon Says",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's book series features a boy wizard at a school of magic?",
+   "options": [
+    "Artemis Fowl",
+    "Harry Potter",
+    "Percy Jackson",
+    "The Worst Witch"
+   ],
+   "answer": "Harry Potter",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas film features a train journey to the North Pole?",
+   "options": [
+    "Arthur Christmas",
+    "The Polar Express",
+    "The Christmas Chronicles",
+    "Klaus"
+   ],
+   "answer": "The Polar Express",
+   "d": "easy"
+  },
+  {
+   "q": "What headwear commonly comes out of a Christmas cracker?",
+   "options": [
+    "A Santa hat",
+    "A paper crown",
+    "A tinsel band",
+    "A party mask"
+   ],
+   "answer": "A paper crown",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian cartoon family are blue heeler dogs?",
+   "options": [
+    "The Barks",
+    "The Kelpies",
+    "The Heelers in Bluey",
+    "The Woofs"
+   ],
+   "answer": "The Heelers in Bluey",
+   "d": "easy"
+  },
+  {
+   "q": "What did the ugly duckling grow into?",
+   "options": [
+    "A swan",
+    "A pelican",
+    "A goose",
+    "An eagle"
+   ],
+   "answer": "A swan",
+   "d": "easy"
+  },
+  {
+   "q": "In the nursery rhyme, who went up the hill with Jack?",
+   "options": [
+    "Jill",
+    "Jenny",
+    "Jess",
+    "Jane"
+   ],
+   "answer": "Jill",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pixar film features a rat who wants to be a chef?",
+   "options": [
+    "Cars",
+    "Toy Story",
+    "A Bug's Life",
+    "Ratatouille"
+   ],
+   "answer": "Ratatouille",
+   "d": "easy"
+  },
+  {
+   "q": "Which singer released 'All I Want for Christmas Is You' in 1994?",
+   "options": [
+    "Celine Dion",
+    "Mariah Carey",
+    "Whitney Houston",
+    "Toni Braxton"
+   ],
+   "answer": "Mariah Carey",
+   "d": "easy"
+  },
+  {
+   "q": "What was the third little pig's house made of?",
+   "options": [
+    "Sticks",
+    "Mud",
+    "Bricks",
+    "Straw"
+   ],
+   "answer": "Bricks",
+   "d": "easy"
+  },
+  {
+   "q": "What did the cow do in 'Hey Diddle Diddle'?",
+   "options": [
+    "Played the fiddle",
+    "Ran away with the spoon",
+    "Ate the pie",
+    "Jumped over the moon"
+   ],
+   "answer": "Jumped over the moon",
+   "d": "easy"
+  },
+  {
+   "q": "What is traditionally given to naughty children in their stocking?",
+   "options": [
+    "Coal",
+    "Onions",
+    "Stones",
+    "Nothing at all"
+   ],
+   "answer": "Coal",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas decoration is a circular arrangement hung on doors?",
+   "options": [
+    "A garland",
+    "A bauble",
+    "A swag",
+    "A wreath"
+   ],
+   "answer": "A wreath",
+   "d": "easy"
+  },
+  {
+   "q": "What frightened Little Miss Muffet away?",
+   "options": [
+    "A mouse",
+    "A spider",
+    "A crow",
+    "A dog"
+   ],
+   "answer": "A spider",
+   "d": "easy"
+  },
+  {
+   "q": "What is Paddington Bear's favourite food?",
+   "options": [
+    "Honey",
+    "Fish",
+    "Marmalade sandwiches",
+    "Porridge"
+   ],
+   "answer": "Marmalade sandwiches",
+   "d": "easy"
+  },
+  {
+   "q": "Who won the race in the fable of the tortoise and the hare?",
+   "options": [
+    "It was a tie",
+    "The hare",
+    "The tortoise",
+    "Neither finished"
+   ],
+   "answer": "The tortoise",
+   "d": "easy"
+  },
+  {
+   "q": "Who is Barbie's long-time boyfriend?",
+   "options": [
+    "Ken",
+    "Steven",
+    "Alan",
+    "Blaine"
+   ],
+   "answer": "Ken",
+   "d": "easy"
+  },
+  {
+   "q": "Which vegetable is a divisive Christmas dinner staple in Britain?",
+   "options": [
+    "Cauliflower",
+    "Brussels sprouts",
+    "Parsnip",
+    "Broccoli"
+   ],
+   "answer": "Brussels sprouts",
+   "d": "easy"
+  },
+  {
+   "q": "What are the small yellow creatures in Despicable Me called?",
+   "options": [
+    "Yellows",
+    "Helpers",
+    "Munchkins",
+    "Minions"
+   ],
+   "answer": "Minions",
+   "d": "easy"
+  },
+  {
+   "q": "Which pool game involves one player calling out with eyes closed?",
+   "options": [
+    "Bombs",
+    "Chicken",
+    "Marco Polo",
+    "Sharks and minnows"
+   ],
+   "answer": "Marco Polo",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney film features a wooden puppet who wants to be a real boy?",
+   "options": [
+    "Dumbo",
+    "Bambi",
+    "Peter Pan",
+    "Pinocchio"
+   ],
+   "answer": "Pinocchio",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's character is a bear from darkest Peru?",
+   "options": [
+    "Rupert",
+    "Paddington",
+    "Winnie-the-Pooh",
+    "Baloo"
+   ],
+   "answer": "Paddington",
+   "d": "easy"
+  },
+  {
+   "q": "Which creature lived under the bridge in 'The Three Billy Goats Gruff'?",
+   "options": [
+    "A dragon",
+    "A troll",
+    "An ogre",
+    "A giant"
+   ],
+   "answer": "A troll",
+   "d": "easy"
+  },
+  {
+   "q": "Under which plant is it traditional to kiss at Christmas?",
+   "options": [
+    "Ivy",
+    "Mistletoe",
+    "Holly",
+    "Pine"
+   ],
+   "answer": "Mistletoe",
+   "d": "easy"
+  },
+  {
+   "q": "Which board game involves climbing ladders and sliding down snakes?",
+   "options": [
+    "Ludo",
+    "Trouble",
+    "Sorry",
+    "Snakes and Ladders"
+   ],
+   "answer": "Snakes and Ladders",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's book series features a superhero principal in his underwear?",
+   "options": [
+    "Bad Guys",
+    "Diary of a Wimpy Kid",
+    "Dog Man",
+    "Captain Underpants"
+   ],
+   "answer": "Captain Underpants",
+   "d": "easy"
+  },
+  {
+   "q": "What did Cinderella's coach turn back into at midnight?",
+   "options": [
+    "A rock",
+    "A carriage of straw",
+    "A pumpkin",
+    "A cart"
+   ],
+   "answer": "A pumpkin",
+   "d": "easy"
+  },
+  {
+   "q": "Which item is hung by the fireplace for Santa to fill?",
+   "options": [
+    "A stocking",
+    "A boot",
+    "A basket",
+    "A sack"
+   ],
+   "answer": "A stocking",
+   "d": "easy"
+  },
+  {
+   "q": "What is the small paper item inside a Christmas cracker that makes you laugh?",
+   "options": [
+    "A riddle card",
+    "A joke",
+    "A poem",
+    "A puzzle"
+   ],
+   "answer": "A joke",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's game involves freezing when the music stops?",
+   "options": [
+    "Musical chairs",
+    "Duck duck goose",
+    "Musical statues",
+    "Simon says"
+   ],
+   "answer": "Musical statues",
+   "d": "easy"
+  },
+  {
+   "q": "In 'The Twelve Days of Christmas', what is given on the fifth day?",
+   "options": [
+    "Five calling birds",
+    "Five gold rings",
+    "Five swans",
+    "Five french hens"
+   ],
+   "answer": "Five gold rings",
+   "d": "easy"
+  },
+  {
+   "q": "What did Cinderella leave behind at the ball?",
+   "options": [
+    "A necklace",
+    "A fan",
+    "A glove",
+    "A glass slipper"
+   ],
+   "answer": "A glass slipper",
+   "d": "easy"
+  },
+  {
+   "q": "How does Santa traditionally enter a house?",
+   "options": [
+    "Through the front door",
+    "Through a window",
+    "Down the chimney",
+    "Via the roof hatch"
+   ],
+   "answer": "Down the chimney",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian party treat is made with rice bubbles and copha?",
+   "options": [
+    "Honey joys",
+    "Chocolate crackles",
+    "Rocky road",
+    "Fairy bread"
+   ],
+   "answer": "Chocolate crackles",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney film features a Colombian family with magical gifts?",
+   "options": [
+    "Turning Red",
+    "Encanto",
+    "Coco",
+    "Luca"
+   ],
+   "answer": "Encanto",
+   "d": "easy"
+  },
+  {
+   "q": "In musical chairs, how many chairs are there compared to players?",
+   "options": [
+    "One fewer than the players",
+    "Half the players",
+    "The same as the players",
+    "One more than the players"
+   ],
+   "answer": "One fewer than the players",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney elephant could fly using his ears?",
+   "options": [
+    "Dumbo",
+    "Timon",
+    "Bambi",
+    "Baloo"
+   ],
+   "answer": "Dumbo",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's TV show features two bananas in pyjamas?",
+   "options": [
+    "Hi-5",
+    "The Wiggles",
+    "Play School",
+    "Bananas in Pyjamas"
+   ],
+   "answer": "Bananas in Pyjamas",
+   "d": "easy"
+  },
+  {
+   "q": "How many dwarfs live with Snow White?",
+   "options": [
+    "Seven",
+    "Eight",
+    "Five",
+    "Six"
+   ],
+   "answer": "Seven",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's show features a girl explorer and her monkey Boots?",
+   "options": [
+    "Dora the Explorer",
+    "Team Umizoomi",
+    "Bubble Guppies",
+    "Go Diego Go"
+   ],
+   "answer": "Dora the Explorer",
+   "d": "easy"
+  },
+  {
+   "q": "How many wise men are traditionally depicted in nativity scenes?",
+   "options": [
+    "Four",
+    "Three",
+    "Two",
+    "Twelve"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pixar film features a house lifted by balloons?",
+   "options": [
+    "Up",
+    "Wall-E",
+    "Onward",
+    "Brave"
+   ],
+   "answer": "Up",
+   "d": "easy"
+  },
+  {
+   "q": "Which actor plays the boy in 'Home Alone'?",
+   "options": [
+    "Jonathan Lipnicki",
+    "Haley Joel Osment",
+    "Macaulay Culkin",
+    "Elijah Wood"
+   ],
+   "answer": "Macaulay Culkin",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas number one is by Band Aid and asks about Africa?",
+   "options": [
+    "Feed the World",
+    "We Are the World",
+    "Do They Know It's Christmas?",
+    "Another Day in Paradise"
+   ],
+   "answer": "Do They Know It's Christmas?",
+   "d": "easy"
+  },
+  {
+   "q": "What did Jack trade the cow for in 'Jack and the Beanstalk'?",
+   "options": [
+    "A sack of flour",
+    "A golden coin",
+    "A harp",
+    "Magic beans"
+   ],
+   "answer": "Magic beans",
+   "d": "easy"
+  },
+  {
+   "q": "What is the traditional shape of a gingerbread Christmas building?",
+   "options": [
+    "A barn",
+    "A church",
+    "A castle",
+    "A house"
+   ],
+   "answer": "A house",
+   "d": "easy"
+  },
+  {
+   "q": "How many bears live in the house Goldilocks enters?",
+   "options": [
+    "Four",
+    "Three",
+    "One",
+    "Two"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "What was the witch's house made of in 'Hansel and Gretel'?",
+   "options": [
+    "Gingerbread and sweets",
+    "Stone",
+    "Ice",
+    "Straw"
+   ],
+   "answer": "Gingerbread and sweets",
+   "d": "easy"
+  },
+  {
+   "q": "Which toy brand makes foam dart blasters?",
+   "options": [
+    "Beyblade",
+    "LEGO",
+    "Hot Wheels",
+    "Nerf"
+   ],
+   "answer": "Nerf",
+   "d": "easy"
+  },
+  {
+   "q": "What went up the water spout in the nursery rhyme?",
+   "options": [
+    "A yellow duck",
+    "A little mouse",
+    "The incy wincy spider",
+    "A green frog"
+   ],
+   "answer": "The incy wincy spider",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pixar film features emotions living inside a girl's head?",
+   "options": [
+    "Brave",
+    "Soul",
+    "Inside Out",
+    "Up"
+   ],
+   "answer": "Inside Out",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian Christmas dessert is topped with cream and fresh fruit on meringue?",
+   "options": [
+    "Custard tart",
+    "Pavlova",
+    "Lamington",
+    "Trifle"
+   ],
+   "answer": "Pavlova",
+   "d": "easy"
+  },
+  {
+   "q": "Who was Little Red Riding Hood visiting?",
+   "options": [
+    "Her teacher",
+    "Her aunt",
+    "Her sister",
+    "Her grandmother"
+   ],
+   "answer": "Her grandmother",
+   "d": "easy"
+  },
+  {
+   "q": "In 'Baa Baa Black Sheep', how many bags of wool are there?",
+   "options": [
+    "Four",
+    "Two",
+    "One",
+    "Three"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "Which modelling compound comes in small tubs and is very colourful?",
+   "options": [
+    "Plaster",
+    "Blu Tack",
+    "Papier mache",
+    "Play-Doh"
+   ],
+   "answer": "Play-Doh",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's show features four colourful characters with aerials on their heads?",
+   "options": [
+    "Tweenies",
+    "In the Night Garden",
+    "Boohbah",
+    "Teletubbies"
+   ],
+   "answer": "Teletubbies",
+   "d": "easy"
+  },
+  {
+   "q": "Where was Jesus laid after his birth according to the nativity story?",
+   "options": [
+    "A basket",
+    "A cot",
+    "A manger",
+    "A cradle"
+   ],
+   "answer": "A manger",
+   "d": "easy"
+  },
+  {
+   "q": "Which toy brand makes coloured interlocking bricks?",
+   "options": [
+    "Play-Doh",
+    "LEGO",
+    "Hot Wheels",
+    "Nerf"
+   ],
+   "answer": "LEGO",
+   "d": "easy"
+  },
+  {
+   "q": "Which fairy tale features a girl in a red hooded cloak?",
+   "options": [
+    "Snow Queen",
+    "Goldilocks",
+    "Little Red Riding Hood",
+    "Thumbelina"
+   ],
+   "answer": "Little Red Riding Hood",
+   "d": "easy"
+  },
+  {
+   "q": "Which animated ogre lives in a swamp with a talking donkey?",
+   "options": [
+    "Shrek",
+    "Gru",
+    "Fiona",
+    "Hiccup"
+   ],
+   "answer": "Shrek",
+   "d": "easy"
+  },
+  {
+   "q": "What is Peppa Pig's little brother called?",
+   "options": [
+    "George",
+    "Danny",
+    "Edmond",
+    "Richard"
+   ],
+   "answer": "George",
+   "d": "easy"
+  },
+  {
+   "q": "What guided the wise men to Bethlehem?",
+   "options": [
+    "A star",
+    "An angel's voice",
+    "A comet trail",
+    "A dream map"
+   ],
+   "answer": "A star",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney film features a girl who joins the Chinese army?",
+   "options": [
+    "Moana",
+    "Pocahontas",
+    "Mulan",
+    "Brave"
+   ],
+   "answer": "Mulan",
+   "d": "easy"
+  },
+  {
+   "q": "What is a Secret Santa?",
+   "options": [
+    "A gift exchange where givers are anonymous",
+    "A charity appeal",
+    "A midnight delivery service",
+    "A Christmas Eve party game"
+   ],
+   "answer": "A gift exchange where givers are anonymous",
+   "d": "easy"
+  },
+  {
+   "q": "Which two children left a trail of breadcrumbs in the forest?",
+   "options": [
+    "Tom and Tilly",
+    "Hansel and Gretel",
+    "Peter and Jane",
+    "Jack and Jill"
+   ],
+   "answer": "Hansel and Gretel",
+   "d": "easy"
+  },
+  {
+   "q": "Which date is Christmas Eve?",
+   "options": [
+    "24 December",
+    "26 December",
+    "23 December",
+    "25 December"
+   ],
+   "answer": "24 December",
+   "d": "easy"
+  },
+  {
+   "q": "Which playground game involves one person being 'it' and chasing others?",
+   "options": [
+    "Hopscotch",
+    "Tag or tiggy",
+    "Elastics",
+    "Marbles"
+   ],
+   "answer": "Tag or tiggy",
+   "d": "easy"
+  },
+  {
+   "q": "Which yacht race starts on Boxing Day in Australia?",
+   "options": [
+    "The Brisbane to Gladstone",
+    "The Sydney to Hobart",
+    "The Fremantle Cup",
+    "The Melbourne to Osaka"
+   ],
+   "answer": "The Sydney to Hobart",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas plant has red berries and prickly green leaves?",
+   "options": [
+    "Mistletoe",
+    "Yew",
+    "Ivy",
+    "Holly"
+   ],
+   "answer": "Holly",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian children's group wears coloured skivvies and sings 'Hot Potato'?",
+   "options": [
+    "Hi-5",
+    "The Fairies",
+    "Bananas in Pyjamas",
+    "The Wiggles"
+   ],
+   "answer": "The Wiggles",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas film is often debated as an action movie set at a party?",
+   "options": [
+    "Die Hard",
+    "Gremlins",
+    "Batman Returns",
+    "Lethal Weapon"
+   ],
+   "answer": "Die Hard",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas film features a boy left home alone in Chicago?",
+   "options": [
+    "Home Alone",
+    "Elf",
+    "Jingle All the Way",
+    "The Santa Clause"
+   ],
+   "answer": "Home Alone",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's series features Greg Heffley and his journal?",
+   "options": [
+    "Dork Diaries",
+    "Big Nate",
+    "Diary of a Wimpy Kid",
+    "Captain Underpants"
+   ],
+   "answer": "Diary of a Wimpy Kid",
+   "d": "easy"
+  },
+  {
+   "q": "Whose porridge did Goldilocks find just right?",
+   "options": [
+    "Mummy Bear's",
+    "Daddy Bear's",
+    "Baby Bear's",
+    "The wolf's"
+   ],
+   "answer": "Baby Bear's",
+   "d": "easy"
+  },
+  {
+   "q": "Which cartoon pig loves jumping in muddy puddles?",
+   "options": [
+    "Olivia",
+    "Wilbur",
+    "Piglet",
+    "Peppa Pig"
+   ],
+   "answer": "Peppa Pig",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas song mentions 'dashing through the snow'?",
+   "options": [
+    "Frosty the Snowman",
+    "Sleigh Ride",
+    "Jingle Bells",
+    "Winter Wonderland"
+   ],
+   "answer": "Jingle Bells",
+   "d": "easy"
+  },
+  {
+   "q": "Which animated film features a woolly mammoth, sloth and sabre-toothed tiger?",
+   "options": [
+    "Ice Age",
+    "Early Man",
+    "The Croods",
+    "Madagascar"
+   ],
+   "answer": "Ice Age",
+   "d": "easy"
+  },
+  {
+   "q": "Which day do many Australians hit the shops for post-Christmas bargains?",
+   "options": [
+    "Boxing Day",
+    "Christmas Eve",
+    "Australia Day",
+    "New Year's Day"
+   ],
+   "answer": "Boxing Day",
+   "d": "easy"
+  },
+  {
+   "q": "Where was Paddington Bear found?",
+   "options": [
+    "Paddington Station",
+    "Victoria Station",
+    "Kings Cross Station",
+    "Waterloo Station"
+   ],
+   "answer": "Paddington Station",
+   "d": "easy"
+  },
+  {
+   "q": "What are the small helpers in Santa's workshop called?",
+   "options": [
+    "Gnomes",
+    "Elves",
+    "Imps",
+    "Sprites"
+   ],
+   "answer": "Elves",
+   "d": "easy"
+  },
+  {
+   "q": "Which Pixar film features monsters who collect children's screams?",
+   "options": [
+    "Inside Out",
+    "Brave",
+    "Coco",
+    "Monsters, Inc."
+   ],
+   "answer": "Monsters, Inc.",
+   "d": "easy"
+  },
+  {
+   "q": "Which Winnie-the-Pooh character bounces on his tail?",
+   "options": [
+    "Owl",
+    "Eeyore",
+    "Piglet",
+    "Tigger"
+   ],
+   "answer": "Tigger",
+   "d": "easy"
+  },
+  {
+   "q": "Which fairy tale character had extremely long hair?",
+   "options": [
+    "Cinderella",
+    "Gretel",
+    "Rapunzel",
+    "Thumbelina"
+   ],
+   "answer": "Rapunzel",
+   "d": "easy"
+  },
+  {
+   "q": "Which reindeer has a red nose?",
+   "options": [
+    "Dasher",
+    "Rudolph",
+    "Blitzen",
+    "Comet"
+   ],
+   "answer": "Rudolph",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas song title asks about a snowman being built?",
+   "options": [
+    "Winter Wonderland",
+    "Frosty the Snowman",
+    "Do You Want to Build a Snowman",
+    "Walking in the Air"
+   ],
+   "answer": "Do You Want to Build a Snowman",
+   "d": "easy"
+  },
+  {
+   "q": "In the rhyme, how many blind mice are there?",
+   "options": [
+    "Three",
+    "Four",
+    "Five",
+    "Two"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "What is left out for the reindeer in many households?",
+   "options": [
+    "Apples",
+    "Sugar cubes",
+    "Carrots",
+    "Hay"
+   ],
+   "answer": "Carrots",
+   "d": "easy"
+  },
+  {
+   "q": "Which carol begins 'God rest ye merry, gentlemen'?",
+   "options": [
+    "God Rest Ye Merry Gentlemen",
+    "Good King Wenceslas",
+    "We Three Kings",
+    "O Come All Ye Faithful"
+   ],
+   "answer": "God Rest Ye Merry Gentlemen",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian carol event is held annually by candlelight?",
+   "options": [
+    "Carols in the Domain is one of several",
+    "Silent Night Sessions",
+    "Carols by Candlelight",
+    "The Christmas Concert"
+   ],
+   "answer": "Carols by Candlelight",
+   "d": "easy"
+  },
+  {
+   "q": "In 'Old MacDonald', what does the farmer have?",
+   "options": [
+    "A shop",
+    "A farm",
+    "A boat",
+    "A truck"
+   ],
+   "answer": "A farm",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the Wiggles' big red car song subject?",
+   "options": [
+    "The Big Red Car",
+    "The Big Blue Bus",
+    "The Wiggly Wagon",
+    "The Red Rocket"
+   ],
+   "answer": "The Big Red Car",
+   "d": "easy"
+  },
+  {
+   "q": "What lives at the top of the beanstalk?",
+   "options": [
+    "A wizard",
+    "A witch",
+    "A dragon",
+    "A giant"
+   ],
+   "answer": "A giant",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport do children play on broomsticks in Harry Potter?",
+   "options": [
+    "Snitch tag",
+    "Quidditch",
+    "Broomball",
+    "Wizard polo"
+   ],
+   "answer": "Quidditch",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas film features a Grinch stealing Christmas from Whoville?",
+   "options": [
+    "Klaus",
+    "The Polar Express",
+    "Arthur Christmas",
+    "How the Grinch Stole Christmas"
+   ],
+   "answer": "How the Grinch Stole Christmas",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas food is a small pastry filled with dried fruit?",
+   "options": [
+    "A custard tart",
+    "A jam tart",
+    "An eccles cake",
+    "A mince pie"
+   ],
+   "answer": "A mince pie",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas carol includes the line 'Fa la la la la'?",
+   "options": [
+    "Deck the Halls",
+    "Ding Dong Merrily",
+    "Hark the Herald",
+    "Joy to the World"
+   ],
+   "answer": "Deck the Halls",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's book character is a very hungry insect larva?",
+   "options": [
+    "The Bad Tempered Ladybird",
+    "The Grouchy Beetle",
+    "The Busy Spider",
+    "The Very Hungry Caterpillar"
+   ],
+   "answer": "The Very Hungry Caterpillar",
+   "d": "easy"
+  },
+  {
+   "q": "Who tried to blow the pigs' houses down?",
+   "options": [
+    "A troll",
+    "The big bad wolf",
+    "A giant",
+    "A witch"
+   ],
+   "answer": "The big bad wolf",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney film features a young deer and his friend Thumper?",
+   "options": [
+    "Bambi",
+    "Chicken Little",
+    "Robin Hood",
+    "The Fox and the Hound"
+   ],
+   "answer": "Bambi",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney film is set in Polynesia with a wayfinding heroine?",
+   "options": [
+    "Encanto",
+    "Moana",
+    "Brave",
+    "Mulan"
+   ],
+   "answer": "Moana",
+   "d": "easy"
+  },
+  {
+   "q": "What word does Scrooge use to dismiss Christmas?",
+   "options": [
+    "Balderdash",
+    "Humbug",
+    "Poppycock",
+    "Nonsense"
+   ],
+   "answer": "Humbug",
+   "d": "easy"
+  },
+  {
+   "q": "How many little pigs are in the classic fairy tale?",
+   "options": [
+    "Three",
+    "Four",
+    "Five",
+    "Two"
+   ],
+   "answer": "Three",
+   "d": "easy"
+  },
+  {
+   "q": "Which character's nose grew when he told a lie?",
+   "options": [
+    "Gepetto",
+    "Aladdin",
+    "Pinocchio",
+    "Peter Pan"
+   ],
+   "answer": "Pinocchio",
+   "d": "easy"
+  },
+  {
+   "q": "Which show features a purple dinosaur who sings about love?",
+   "options": [
+    "Dinosaur Train",
+    "The Land Before Time",
+    "Barney",
+    "Dino Dan"
+   ],
+   "answer": "Barney",
+   "d": "easy"
+  },
+  {
+   "q": "Which cold seafood is a common centrepiece of an Australian Christmas lunch?",
+   "options": [
+    "Smoked salmon only",
+    "Oysters",
+    "Lobster tail only",
+    "Prawns"
+   ],
+   "answer": "Prawns",
+   "d": "easy"
+  },
+  {
+   "q": "Which festive shape is a striped red and white sweet?",
+   "options": [
+    "The gingerbread man",
+    "The sugar mouse",
+    "The candy cane",
+    "The humbug"
+   ],
+   "answer": "The candy cane",
+   "d": "easy"
+  },
+  {
+   "q": "Which animated film features penguins escaping a zoo with a lion and zebra?",
+   "options": [
+    "Rio",
+    "Ice Age",
+    "Happy Feet",
+    "Madagascar"
+   ],
+   "answer": "Madagascar",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas song is about a red-nosed reindeer being laughed at?",
+   "options": [
+    "Here Comes Santa Claus",
+    "Santa Claus Is Comin' to Town",
+    "Rudolph the Red-Nosed Reindeer",
+    "Frosty the Snowman"
+   ],
+   "answer": "Rudolph the Red-Nosed Reindeer",
+   "d": "easy"
+  },
+  {
+   "q": "Which meat is the most traditional centrepiece of a British Christmas dinner today?",
+   "options": [
+    "Beef",
+    "Goose",
+    "Turkey",
+    "Pork"
+   ],
+   "answer": "Turkey",
+   "d": "easy"
+  },
+  {
+   "q": "What is a traditional British Christmas dessert made with dried fruit and steamed?",
+   "options": [
+    "Yule log cake",
+    "Trifle",
+    "Pavlova",
+    "Christmas pudding"
+   ],
+   "answer": "Christmas pudding",
+   "d": "easy"
+  },
+  {
+   "q": "What are the shiny hanging balls on a Christmas tree called?",
+   "options": [
+    "Bells",
+    "Buttons",
+    "Beads",
+    "Baubles"
+   ],
+   "answer": "Baubles",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Advent calendar counting down to?",
+   "options": [
+    "Boxing Day",
+    "New Year",
+    "Epiphany",
+    "Christmas Day"
+   ],
+   "answer": "Christmas Day",
+   "d": "easy"
+  },
+  {
+   "q": "What sporting fixture traditionally starts in Melbourne on Boxing Day?",
+   "options": [
+    "The Grand Final",
+    "The Melbourne Cup",
+    "The Australian Open",
+    "The Boxing Day Test"
+   ],
+   "answer": "The Boxing Day Test",
+   "d": "easy"
+  },
+  {
+   "q": "Which fairy tale princess pricked her finger on a spindle?",
+   "options": [
+    "Sleeping Beauty",
+    "Cinderella",
+    "Snow White",
+    "Rapunzel"
+   ],
+   "answer": "Sleeping Beauty",
+   "d": "easy"
+  },
+  {
+   "q": "How many reindeer pull Santa's sleigh in the classic poem, not counting Rudolph?",
+   "options": [
+    "Eight",
+    "Six",
+    "Twelve",
+    "Nine"
+   ],
+   "answer": "Eight",
+   "d": "easy"
+  },
+  {
+   "q": "Which small animal outsmarts the Gruffalo?",
+   "options": [
+    "A hedgehog",
+    "A rabbit",
+    "A squirrel",
+    "A mouse"
+   ],
+   "answer": "A mouse",
+   "d": "easy"
+  },
+  {
+   "q": "Which animated film features small yellow creatures who serve a villain?",
+   "options": [
+    "Despicable Me",
+    "Shrek",
+    "Rio",
+    "Madagascar"
+   ],
+   "answer": "Despicable Me",
+   "d": "easy"
+  },
+  {
+   "q": "What did the wicked queen use to poison Snow White?",
+   "options": [
+    "A potion in a cup",
+    "An apple",
+    "A cake",
+    "A pear"
+   ],
+   "answer": "An apple",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the list Santa checks twice?",
+   "options": [
+    "The chimney register",
+    "The gift ledger",
+    "The naughty and nice list",
+    "The delivery roster"
+   ],
+   "answer": "The naughty and nice list",
+   "d": "easy"
+  },
+  {
+   "q": "Which Disney character is a genie in a lamp?",
+   "options": [
+    "Abu",
+    "Jafar",
+    "Iago",
+    "The Genie in Aladdin"
+   ],
+   "answer": "The Genie in Aladdin",
+   "d": "easy"
+  },
+  {
+   "q": "What is traditionally placed at the top of a Christmas tree?",
+   "options": [
+    "A candle",
+    "A ribbon",
+    "A bell",
+    "A star or angel"
+   ],
+   "answer": "A star or angel",
+   "d": "easy"
+  },
+  {
+   "q": "Which band released 'Last Christmas' in 1984?",
+   "options": [
+    "Bananarama",
+    "Duran Duran",
+    "Culture Club",
+    "Wham!"
+   ],
+   "answer": "Wham!",
+   "d": "easy"
+  },
+  {
+   "q": "Which historical figure is Santa Claus based on?",
+   "options": [
+    "Saint Christopher",
+    "Saint Nicholas",
+    "Saint Stephen",
+    "Saint Anthony"
+   ],
+   "answer": "Saint Nicholas",
+   "d": "easy"
+  },
+  {
+   "q": "Which shiny strands are draped over Christmas trees?",
+   "options": [
+    "Thread",
+    "Ribbon",
+    "Tinsel",
+    "Streamers"
+   ],
+   "answer": "Tinsel",
+   "d": "easy"
+  },
+  {
+   "q": "Which shape does Play School look through in each episode?",
+   "options": [
+    "The doors",
+    "The mirrors",
+    "The clocks",
+    "The windows"
+   ],
+   "answer": "The windows",
+   "d": "easy"
+  },
+  {
+   "q": "What colour was Mary's little lamb?",
+   "options": [
+    "White as snow",
+    "Brown",
+    "Black",
+    "Grey"
+   ],
+   "answer": "White as snow",
+   "d": "easy"
+  },
+  {
+   "q": "Which Christmas carol begins 'Silent night, holy night'?",
+   "options": [
+    "The First Noel",
+    "Silent Night",
+    "O Holy Night",
+    "Away in a Manger"
+   ],
+   "answer": "Silent Night",
+   "d": "easy"
+  },
+  {
+   "q": "What is given on the first day of Christmas in the song?",
+   "options": [
+    "Two turtle doves",
+    "A partridge in a pear tree",
+    "Three french hens",
+    "A golden ring"
+   ],
+   "answer": "A partridge in a pear tree",
+   "d": "easy"
+  },
+  {
+   "q": "Which colour combination is most associated with Christmas?",
+   "options": [
+    "Purple and gold",
+    "Red and green",
+    "Blue and silver",
+    "Pink and white"
+   ],
+   "answer": "Red and green",
+   "d": "easy"
+  }
+ ]
+}

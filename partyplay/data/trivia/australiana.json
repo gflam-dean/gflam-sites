@@ -1,0 +1,2297 @@
+{
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "category": "Very Australian",
+ "count": 205,
+ "questions": [
+  {
+   "q": "What is the large red rock in central Australia that is a famous cultural landmark?",
+   "options": [
+    "Mount Augustus",
+    "Kata Tjuta",
+    "Uluru",
+    "Wave Rock"
+   ],
+   "answer": "Uluru",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Australia's national cricket one-day and T20 team colour scheme?",
+   "options": [
+    "Black and gold",
+    "Blue and white",
+    "Red and white",
+    "Green and gold"
+   ],
+   "answer": "Green and gold",
+   "d": "easy"
+  },
+  {
+   "q": "What colour do the Queensland State of Origin team wear?",
+   "options": [
+    "Blue",
+    "Maroon",
+    "Green",
+    "Gold"
+   ],
+   "answer": "Maroon",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'jug' of beer in an Australian pub?",
+   "options": [
+    "A single tall glass",
+    "A takeaway bottle",
+    "A keg",
+    "A large shared pitcher"
+   ],
+   "answer": "A large shared pitcher",
+   "d": "easy"
+  },
+  {
+   "q": "Which racing event is billed as 'the race that stops a nation'?",
+   "options": [
+    "The Cox Plate",
+    "The Melbourne Cup",
+    "The Caulfield Cup",
+    "The Golden Slipper"
+   ],
+   "answer": "The Melbourne Cup",
+   "d": "easy"
+  },
+  {
+   "q": "'VB' is the abbreviation for which iconic Australian beer?",
+   "options": [
+    "Victoria Bitter",
+    "Vintage Brew",
+    "Very Bitter",
+    "Victorian Best"
+   ],
+   "answer": "Victoria Bitter",
+   "d": "easy"
+  },
+  {
+   "q": "The 'Zooper Dooper' is a classic frozen treat sold in what?",
+   "options": [
+    "A cone",
+    "A cup",
+    "A plastic tube",
+    "A tub"
+   ],
+   "answer": "A plastic tube",
+   "d": "easy"
+  },
+  {
+   "q": "What is a common prize at an Australian pub trivia night?",
+   "options": [
+    "A bar voucher",
+    "A cash jackpot of thousands",
+    "An overseas trip",
+    "A car"
+   ],
+   "answer": "A bar voucher",
+   "d": "easy"
+  },
+  {
+   "q": "What is the nickname of the Australian men's national cricket team's Test rivalry series with England?",
+   "options": [
+    "The Urn Cup",
+    "The Ashes",
+    "The Colonial Cup",
+    "The Empire Series"
+   ],
+   "answer": "The Ashes",
+   "d": "easy"
+  },
+  {
+   "q": "Which trophy is awarded to the winner of the AFL Grand Final?",
+   "options": [
+    "The Brownlow Medal",
+    "The Norm Smith Medal",
+    "The Provan-Barassi Cup",
+    "The Sheffield Shield"
+   ],
+   "answer": "The Provan-Barassi Cup",
+   "d": "easy"
+  },
+  {
+   "q": "The Melbourne Cup is run on which day of the week each year?",
+   "options": [
+    "Saturday",
+    "Tuesday",
+    "Sunday",
+    "Thursday"
+   ],
+   "answer": "Tuesday",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'housie' better known as internationally?",
+   "options": [
+    "Keno",
+    "Lotto",
+    "Raffle",
+    "Bingo"
+   ],
+   "answer": "Bingo",
+   "d": "easy"
+  },
+  {
+   "q": "Which South Australian brewery is known for its Pale Ale and Sparkling Ale?",
+   "options": [
+    "Cascade",
+    "Boag's",
+    "Coopers",
+    "Emu"
+   ],
+   "answer": "Coopers",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian cricketer is regarded as the greatest batsman of all time?",
+   "options": [
+    "Donald Bradman",
+    "Ricky Ponting",
+    "Steve Waugh",
+    "Allan Border"
+   ],
+   "answer": "Donald Bradman",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'chicken salt' most associated with in Australia?",
+   "options": [
+    "Salads",
+    "Hot chips",
+    "Pies",
+    "Roast dinners"
+   ],
+   "answer": "Hot chips",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian state is the smallest by area?",
+   "options": [
+    "Tasmania",
+    "Victoria",
+    "New South Wales",
+    "South Australia"
+   ],
+   "answer": "Tasmania",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian reef is the world's largest coral reef system?",
+   "options": [
+    "Ningaloo Reef",
+    "The Coral Sea Reef",
+    "Rowley Shoals",
+    "The Great Barrier Reef"
+   ],
+   "answer": "The Great Barrier Reef",
+   "d": "easy"
+  },
+  {
+   "q": "Which two states or regions contest the rugby league State of Origin series?",
+   "options": [
+    "Queensland and WA",
+    "Victoria and NSW",
+    "NSW and Queensland",
+    "NSW and ACT"
+   ],
+   "answer": "NSW and Queensland",
+   "d": "easy"
+  },
+  {
+   "q": "Which deadly Australian spider is most associated with Sydney?",
+   "options": [
+    "The funnel-web",
+    "The huntsman",
+    "The white-tail",
+    "The redback"
+   ],
+   "answer": "The funnel-web",
+   "d": "easy"
+  },
+  {
+   "q": "What is the nickname of Australia's national women's field hockey team?",
+   "options": [
+    "The Hockeyroos",
+    "The Opals",
+    "The Kookaburras",
+    "The Diamonds"
+   ],
+   "answer": "The Hockeyroos",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Australian national anthem called?",
+   "options": [
+    "God Save the King",
+    "I Am Australian",
+    "Advance Australia Fair",
+    "Waltzing Matilda"
+   ],
+   "answer": "Advance Australia Fair",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'karaoke' session in a venue?",
+   "options": [
+    "A comedy show",
+    "Singing along to backing tracks",
+    "A live band night",
+    "A DJ set"
+   ],
+   "answer": "Singing along to backing tracks",
+   "d": "easy"
+  },
+  {
+   "q": "Which large flightless Australian bird appears on the coat of arms with a kangaroo?",
+   "options": [
+    "The cassowary",
+    "The emu",
+    "The brolga",
+    "The bustard"
+   ],
+   "answer": "The emu",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'break' in pool?",
+   "options": [
+    "The opening shot that scatters the rack",
+    "A pause in play",
+    "A rest between games",
+    "A foul"
+   ],
+   "answer": "The opening shot that scatters the rack",
+   "d": "easy"
+  },
+  {
+   "q": "What is the trophy contested between Australia and England in cricket?",
+   "options": [
+    "The Frank Worrell Trophy",
+    "The Border-Gavaskar Trophy",
+    "The Chappell-Hadlee",
+    "The Ashes"
+   ],
+   "answer": "The Ashes",
+   "d": "easy"
+  },
+  {
+   "q": "Which long-running ABC children's program features toys Big Ted and Jemima?",
+   "options": [
+    "Mr Squiggle",
+    "Humphrey B. Bear",
+    "Play School",
+    "Romper Room"
+   ],
+   "answer": "Play School",
+   "d": "easy"
+  },
+  {
+   "q": "What is the annual rugby league series between Queensland and New South Wales called?",
+   "options": [
+    "The Ashes of League",
+    "The Origin Shield",
+    "State of Origin",
+    "The Interstate Cup"
+   ],
+   "answer": "State of Origin",
+   "d": "easy"
+  },
+  {
+   "q": "What Australian food is a sausage wrapped in bread at a hardware store famously called?",
+   "options": [
+    "A bunger",
+    "A hot dog",
+    "A snag roll",
+    "A sausage sizzle"
+   ],
+   "answer": "A sausage sizzle",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian tennis tournament is a grand slam held in January?",
+   "options": [
+    "The Hopman Cup",
+    "The Sydney International",
+    "The Brisbane International",
+    "The Australian Open"
+   ],
+   "answer": "The Australian Open",
+   "d": "easy"
+  },
+  {
+   "q": "Which wildlife TV presenter was known as 'The Crocodile Hunter'?",
+   "options": [
+    "David Fleay",
+    "Steve Irwin",
+    "Malcolm Douglas",
+    "Harry Butler"
+   ],
+   "answer": "Steve Irwin",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian dessert combines meringue, cream and fruit?",
+   "options": [
+    "Pavlova",
+    "Trifle",
+    "Sponge cake",
+    "Lamington"
+   ],
+   "answer": "Pavlova",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'corkage' fee?",
+   "options": [
+    "A charge for opening your own wine",
+    "A cleaning fee",
+    "A booking deposit",
+    "A charge for bar snacks"
+   ],
+   "answer": "A charge for opening your own wine",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'sanga' in Aussie slang?",
+   "options": [
+    "A singlet",
+    "A sunburn",
+    "A sandwich",
+    "A snake"
+   ],
+   "answer": "A sandwich",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian soap is set in the fictional coastal town of Summer Bay?",
+   "options": [
+    "Blue Heelers",
+    "Neighbours",
+    "Home and Away",
+    "SeaChange"
+   ],
+   "answer": "Home and Away",
+   "d": "easy"
+  },
+  {
+   "q": "Which pub raffle prize is a classic Australian Friday-night tradition?",
+   "options": [
+    "A car",
+    "A meat tray",
+    "A holiday",
+    "A TV"
+   ],
+   "answer": "A meat tray",
+   "d": "easy"
+  },
+  {
+   "q": "What is the dark, salty spread Australians famously eat on toast?",
+   "options": [
+    "Vegemite",
+    "Marmite",
+    "Promite",
+    "Bovril"
+   ],
+   "answer": "Vegemite",
+   "d": "easy"
+  },
+  {
+   "q": "What is the ABC marionette who draws pictures with a pencil nose?",
+   "options": [
+    "Humphrey",
+    "Mr Squiggle",
+    "Fatso",
+    "Norman Gunston"
+   ],
+   "answer": "Mr Squiggle",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'tribute act'?",
+   "options": [
+    "A support act",
+    "A charity performance",
+    "A band dedicated to one original artist",
+    "A DJ set of one genre"
+   ],
+   "answer": "A band dedicated to one original artist",
+   "d": "easy"
+  },
+  {
+   "q": "In which year did Australia federate as a nation?",
+   "options": [
+    "1911",
+    "1901",
+    "1888",
+    "1920"
+   ],
+   "answer": "1901",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian state is known as the Sunshine State?",
+   "options": [
+    "South Australia",
+    "New South Wales",
+    "Queensland",
+    "Western Australia"
+   ],
+   "answer": "Queensland",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'chook' in Australian slang?",
+   "options": [
+    "A cheque",
+    "A chicken",
+    "A chocolate",
+    "A child"
+   ],
+   "answer": "A chicken",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'happy hour' at a pub?",
+   "options": [
+    "A live music slot",
+    "A meal deal only",
+    "A period of discounted drinks",
+    "A staff break"
+   ],
+   "answer": "A period of discounted drinks",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian bushranger wore homemade armour at Glenrowan?",
+   "options": [
+    "Dan Morgan",
+    "Ned Kelly",
+    "Captain Thunderbolt",
+    "Ben Hall"
+   ],
+   "answer": "Ned Kelly",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'slab' of beer in Australia?",
+   "options": [
+    "A dozen bottles",
+    "A six pack",
+    "A keg",
+    "A carton of 24 cans or bottles"
+   ],
+   "answer": "A carton of 24 cans or bottles",
+   "d": "easy"
+  },
+  {
+   "q": "Which beer is famous for a two-part pour and a settling cascade?",
+   "options": [
+    "Guinness",
+    "Corona",
+    "Heineken",
+    "Peroni"
+   ],
+   "answer": "Guinness",
+   "d": "easy"
+  },
+  {
+   "q": "On which date is Anzac Day commemorated?",
+   "options": [
+    "11 November",
+    "1 September",
+    "26 January",
+    "25 April"
+   ],
+   "answer": "25 April",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'esky' used for?",
+   "options": [
+    "Carrying tools",
+    "Storing fishing rods",
+    "Camping shelter",
+    "Keeping drinks cold"
+   ],
+   "answer": "Keeping drinks cold",
+   "d": "easy"
+  },
+  {
+   "q": "What is the white ibis often nicknamed in Australian cities?",
+   "options": [
+    "Bin chicken",
+    "Trash hawk",
+    "Gutter goose",
+    "Bush turkey"
+   ],
+   "answer": "Bin chicken",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian city hosted the Summer Olympic Games in 2000?",
+   "options": [
+    "Melbourne",
+    "Brisbane",
+    "Perth",
+    "Sydney"
+   ],
+   "answer": "Sydney",
+   "d": "easy"
+  },
+  {
+   "q": "Which breakfast cereal's slogan is 'Aussie kids are ... kids'?",
+   "options": [
+    "Corn Flakes",
+    "Nutri-Grain",
+    "Vita Brits",
+    "Weet-Bix"
+   ],
+   "answer": "Weet-Bix",
+   "d": "easy"
+  },
+  {
+   "q": "What is the wide-brimmed felt hat associated with the Australian bush and army?",
+   "options": [
+    "Fedora",
+    "Trilby",
+    "Panama",
+    "Akubra"
+   ],
+   "answer": "Akubra",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'schooner' in an Australian pub?",
+   "options": [
+    "A pub band",
+    "A dartboard",
+    "A bar stool",
+    "A size of beer glass"
+   ],
+   "answer": "A size of beer glass",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian actor and comedian created the character Dame Edna Everage?",
+   "options": [
+    "Graham Kennedy",
+    "Garry McDonald",
+    "Paul Hogan",
+    "Barry Humphries"
+   ],
+   "answer": "Barry Humphries",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'bottle-o' in Australia?",
+   "options": [
+    "A rubbish bin",
+    "A bottle shop",
+    "A milk bottle",
+    "A recycling truck"
+   ],
+   "answer": "A bottle shop",
+   "d": "easy"
+  },
+  {
+   "q": "Which long-running Australian soap opera is set in the fictional Melbourne suburb of Erinsborough?",
+   "options": [
+    "The Sullivans",
+    "Neighbours",
+    "A Country Practice",
+    "Home and Away"
+   ],
+   "answer": "Neighbours",
+   "d": "easy"
+  },
+  {
+   "q": "In cricket, how many runs are scored when the ball is hit over the boundary rope on the full?",
+   "options": [
+    "Two",
+    "Four",
+    "Five",
+    "Six"
+   ],
+   "answer": "Six",
+   "d": "easy"
+  },
+  {
+   "q": "What sweet treat is sponge cake rolled in chocolate and coconut?",
+   "options": [
+    "Lamington",
+    "Anzac biscuit",
+    "Neenish tart",
+    "Pavlova"
+   ],
+   "answer": "Lamington",
+   "d": "easy"
+  },
+  {
+   "q": "Which Paul Hogan film features a knife-wielding bushman visiting New York?",
+   "options": [
+    "Australia",
+    "Crocodile Dundee",
+    "Quigley Down Under",
+    "The Man from Snowy River"
+   ],
+   "answer": "Crocodile Dundee",
+   "d": "easy"
+  },
+  {
+   "q": "Which winter sport did Steven Bradbury win a famous Olympic gold medal in when all his rivals crashed?",
+   "options": [
+    "Bobsled",
+    "Figure skating",
+    "Short track speed skating",
+    "Ski jumping"
+   ],
+   "answer": "Short track speed skating",
+   "d": "easy"
+  },
+  {
+   "q": "In cricket, how many balls are in a standard over?",
+   "options": [
+    "Six",
+    "Four",
+    "Eight",
+    "Five"
+   ],
+   "answer": "Six",
+   "d": "easy"
+  },
+  {
+   "q": "Which Victorian coastal rock formations are known as the Twelve Apostles?",
+   "options": [
+    "Limestone stacks on the Great Ocean Road",
+    "Sea caves at Port Fairy",
+    "Granite domes near Wilsons Prom",
+    "Basalt columns at Cape Schanck"
+   ],
+   "answer": "Limestone stacks on the Great Ocean Road",
+   "d": "easy"
+  },
+  {
+   "q": "How many points is a behind worth in Australian rules football?",
+   "options": [
+    "Six",
+    "Two",
+    "One",
+    "Three"
+   ],
+   "answer": "One",
+   "d": "easy"
+  },
+  {
+   "q": "Which savoury cornflake and rice-bubble treat uses Copha and cocoa?",
+   "options": [
+    "Honey joys",
+    "Chocolate crackles",
+    "Fairy bread",
+    "Rocky road"
+   ],
+   "answer": "Chocolate crackles",
+   "d": "easy"
+  },
+  {
+   "q": "What is a sweep in the context of the Melbourne Cup?",
+   "options": [
+    "A betting agency promotion",
+    "A trophy presentation",
+    "A cleaning of the track",
+    "A draw where each person gets a random horse"
+   ],
+   "answer": "A draw where each person gets a random horse",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'bar tab'?",
+   "options": [
+    "A drinks menu",
+    "A tip jar",
+    "A stool at the bar",
+    "A running account paid at the end"
+   ],
+   "answer": "A running account paid at the end",
+   "d": "easy"
+  },
+  {
+   "q": "Which biscuit is named after a New Zealand and Australian army corps?",
+   "options": [
+    "The Digger biscuit",
+    "The Anzac biscuit",
+    "The Iced VoVo",
+    "The Kingston"
+   ],
+   "answer": "The Anzac biscuit",
+   "d": "easy"
+  },
+  {
+   "q": "What is a common tiebreaker format in pub trivia?",
+   "options": [
+    "Highest team number",
+    "Closest guess to a number",
+    "A coin toss",
+    "Rock paper scissors"
+   ],
+   "answer": "Closest guess to a number",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'schooey' short for in Australian pub slang?",
+   "options": [
+    "A shot",
+    "A schnapps",
+    "A shandy",
+    "A schooner"
+   ],
+   "answer": "A schooner",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian city hosts the Melbourne Cup?",
+   "options": [
+    "Brisbane",
+    "Sydney",
+    "Melbourne",
+    "Adelaide"
+   ],
+   "answer": "Melbourne",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'Sunday session' in Australian pubs?",
+   "options": [
+    "A church service",
+    "A cleaning shift",
+    "A staff meeting",
+    "Extended Sunday afternoon drinking with music"
+   ],
+   "answer": "Extended Sunday afternoon drinking with music",
+   "d": "easy"
+  },
+  {
+   "q": "Fantales wrappers were famous for featuring what on the inside?",
+   "options": [
+    "Football scores",
+    "Jokes",
+    "Movie star trivia",
+    "Recipes"
+   ],
+   "answer": "Movie star trivia",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'Steak Night' at an Australian pub?",
+   "options": [
+    "A chef's tasting menu",
+    "A weekly discounted steak special",
+    "A steak eating contest",
+    "A butcher's market"
+   ],
+   "answer": "A weekly discounted steak special",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'meat tray' raffle in an Australian pub?",
+   "options": [
+    "A steak eating contest",
+    "A raffle where you win a tray of meat",
+    "A cooking class",
+    "A butcher's demonstration"
+   ],
+   "answer": "A raffle where you win a tray of meat",
+   "d": "easy"
+  },
+  {
+   "q": "Which Men at Work song references a 'land down under'?",
+   "options": [
+    "Who Can It Be Now?",
+    "Be Good Johnny",
+    "Overkill",
+    "Down Under"
+   ],
+   "answer": "Down Under",
+   "d": "easy"
+  },
+  {
+   "q": "Anzac Day marks the landing at which peninsula in 1915?",
+   "options": [
+    "Normandy",
+    "Kokoda",
+    "Crete",
+    "Gallipoli"
+   ],
+   "answer": "Gallipoli",
+   "d": "easy"
+  },
+  {
+   "q": "Which orange-coated chocolate balls were famously rolled down cinema aisles?",
+   "options": [
+    "Minties",
+    "Fantales",
+    "Maltesers",
+    "Jaffas"
+   ],
+   "answer": "Jaffas",
+   "d": "easy"
+  },
+  {
+   "q": "In lawn bowls, the small target ball that players aim towards is called what?",
+   "options": [
+    "The pin",
+    "The peg",
+    "The jack",
+    "The cot"
+   ],
+   "answer": "The jack",
+   "d": "easy"
+  },
+  {
+   "q": "Which iconic chocolate biscuit is famously used in the 'Slam' with a hot drink?",
+   "options": [
+    "Mint Slice",
+    "Tim Tam",
+    "Iced VoVo",
+    "Wagon Wheel"
+   ],
+   "answer": "Tim Tam",
+   "d": "easy"
+  },
+  {
+   "q": "What does the pub term 'shout' mean in Australia?",
+   "options": [
+    "Calling last drinks",
+    "Yelling an order",
+    "Buying a round of drinks",
+    "Cheering a goal"
+   ],
+   "answer": "Buying a round of drinks",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'trivia night' also commonly called?",
+   "options": [
+    "Bingo night",
+    "Karaoke night",
+    "Games night",
+    "Quiz night"
+   ],
+   "answer": "Quiz night",
+   "d": "easy"
+  },
+  {
+   "q": "How many players from each team are on the field in a rugby league match?",
+   "options": [
+    "11",
+    "18",
+    "15",
+    "13"
+   ],
+   "answer": "13",
+   "d": "easy"
+  },
+  {
+   "q": "What does RSA stand for in Australian hospitality?",
+   "options": [
+    "Restaurant Serving Authority",
+    "Responsible Service of Alcohol",
+    "Retail Sales Accreditation",
+    "Registered Serving Award"
+   ],
+   "answer": "Responsible Service of Alcohol",
+   "d": "easy"
+  },
+  {
+   "q": "Which animated ABC show features a Blue Heeler puppy and her family in Brisbane?",
+   "options": [
+    "Dot and the Kangaroo",
+    "Bananas in Pyjamas",
+    "Blinky Bill",
+    "Bluey"
+   ],
+   "answer": "Bluey",
+   "d": "easy"
+  },
+  {
+   "q": "What is the Australian term for a bar staff member who pours drinks?",
+   "options": [
+    "A steward",
+    "A bartender",
+    "A publican only",
+    "A cellarman"
+   ],
+   "answer": "A bartender",
+   "d": "easy"
+  },
+  {
+   "q": "Which two colours are Australia's traditional national sporting colours?",
+   "options": [
+    "Blue and gold",
+    "Red and white",
+    "Green and gold",
+    "Black and green"
+   ],
+   "answer": "Green and gold",
+   "d": "easy"
+  },
+  {
+   "q": "What is the room in a pub where beer kegs are stored called?",
+   "options": [
+    "The cellar",
+    "The vault",
+    "The store",
+    "The pantry"
+   ],
+   "answer": "The cellar",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian car brand produced the iconic Kingswood and Commodore?",
+   "options": [
+    "Holden",
+    "Leyland",
+    "Ford",
+    "Chrysler"
+   ],
+   "answer": "Holden",
+   "d": "easy"
+  },
+  {
+   "q": "In the NRL, what is the name of the annual three-game series between New South Wales and Queensland?",
+   "options": [
+    "State of Origin",
+    "The Super Series",
+    "The Bledisloe Cup",
+    "The Ashes"
+   ],
+   "answer": "State of Origin",
+   "d": "easy"
+  },
+  {
+   "q": "What does the Australian phrase 'she'll be right' mean?",
+   "options": [
+    "She will arrive",
+    "It will be fine",
+    "Turn right",
+    "She is correct"
+   ],
+   "answer": "It will be fine",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'sports bar'?",
+   "options": [
+    "A betting shop",
+    "A bar for athletes only",
+    "A gym with a bar",
+    "A bar with screens showing live sport"
+   ],
+   "answer": "A bar with screens showing live sport",
+   "d": "easy"
+  },
+  {
+   "q": "On Anzac Day, which two-coin gambling game is traditionally played in pubs and clubs?",
+   "options": [
+    "Keno",
+    "Housie",
+    "Craps",
+    "Two-up"
+   ],
+   "answer": "Two-up",
+   "d": "easy"
+  },
+  {
+   "q": "Which sheepskin boots are an iconic Australian winter footwear item?",
+   "options": [
+    "Desert boots",
+    "Gumboots",
+    "Ugg boots",
+    "Moccasins"
+   ],
+   "answer": "Ugg boots",
+   "d": "easy"
+  },
+  {
+   "q": "What is the nickname of the Australian women's national football (soccer) team?",
+   "options": [
+    "The Opals",
+    "The Matildas",
+    "The Jillaroos",
+    "The Diamonds"
+   ],
+   "answer": "The Matildas",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'neat' pour of spirits?",
+   "options": [
+    "Chilled and strained",
+    "With ice only",
+    "No ice and nothing added",
+    "With soda"
+   ],
+   "answer": "No ice and nothing added",
+   "d": "easy"
+  },
+  {
+   "q": "Which meringue dessert topped with cream and fruit is claimed by both Australia and New Zealand?",
+   "options": [
+    "Trifle",
+    "Lamington",
+    "Sponge",
+    "Pavlova"
+   ],
+   "answer": "Pavlova",
+   "d": "easy"
+  },
+  {
+   "q": "What garnish is traditionally served with a Corona?",
+   "options": [
+    "A lemon slice",
+    "A cherry",
+    "A lime wedge",
+    "An orange peel"
+   ],
+   "answer": "A lime wedge",
+   "d": "easy"
+  },
+  {
+   "q": "Which two pyjama-wearing characters come 'down the stairs' in an ABC kids show?",
+   "options": [
+    "Bananas in Pyjamas",
+    "Bluey and Bingo",
+    "The Wiggles",
+    "Kimba"
+   ],
+   "answer": "Bananas in Pyjamas",
+   "d": "easy"
+  },
+  {
+   "q": "The jingle 'Happy little Vegemites' promoted which product?",
+   "options": [
+    "Vegemite",
+    "Milk",
+    "Weet-Bix",
+    "Cheese"
+   ],
+   "answer": "Vegemite",
+   "d": "easy"
+  },
+  {
+   "q": "What sport is most commonly played on a pub table with cues?",
+   "options": [
+    "Snooker",
+    "Shuffleboard",
+    "Table tennis",
+    "Pool"
+   ],
+   "answer": "Pool",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian tennis player is nicknamed 'the Special Ks' partner and won multiple Grand Slam doubles titles alongside Thanasi Kokkinakis?",
+   "options": [
+    "Nick Kyrgios",
+    "Alex de Minaur",
+    "Jordan Thompson",
+    "John Millman"
+   ],
+   "answer": "Nick Kyrgios",
+   "d": "easy"
+  },
+  {
+   "q": "Which small marsupial on Rottnest Island is famous for looking like it is smiling?",
+   "options": [
+    "The quokka",
+    "The bilby",
+    "The potoroo",
+    "The numbat"
+   ],
+   "answer": "The quokka",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'BYO' stand for at a restaurant?",
+   "options": [
+    "Book your outing",
+    "Buy your own",
+    "Bring your order",
+    "Bring your own"
+   ],
+   "answer": "Bring your own",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'schnitty night'?",
+   "options": [
+    "A discounted schnitzel special night",
+    "A schnapps promotion",
+    "A cooking class",
+    "A German themed night"
+   ],
+   "answer": "A discounted schnitzel special night",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'chaser'?",
+   "options": [
+    "A cocktail garnish",
+    "A bar tab",
+    "A drink taken straight after a shot",
+    "A double measure"
+   ],
+   "answer": "A drink taken straight after a shot",
+   "d": "easy"
+  },
+  {
+   "q": "What is a common pub quiz round where you name songs from short clips?",
+   "options": [
+    "The music round",
+    "The connection round",
+    "The wipeout round",
+    "The picture round"
+   ],
+   "answer": "The music round",
+   "d": "easy"
+  },
+  {
+   "q": "In cricket, what colour clothing does the Australian Test team traditionally wear?",
+   "options": [
+    "White",
+    "Green",
+    "Gold",
+    "Navy blue"
+   ],
+   "answer": "White",
+   "d": "easy"
+  },
+  {
+   "q": "What does a bar's 'last drinks' call signal?",
+   "options": [
+    "A round is free",
+    "The bar is about to close",
+    "A new keg is on",
+    "Happy hour is starting"
+   ],
+   "answer": "The bar is about to close",
+   "d": "easy"
+  },
+  {
+   "q": "The Hills Hoist is an iconic Australian invention used for what?",
+   "options": [
+    "Fishing",
+    "Drying laundry",
+    "Lifting cars",
+    "Watering gardens"
+   ],
+   "answer": "Drying laundry",
+   "d": "easy"
+  },
+  {
+   "q": "Which fast-food chicken chain features a rooster mascot and is an Aussie icon?",
+   "options": [
+    "Red Rooster",
+    "KFC",
+    "Chicken Treat",
+    "Nando's"
+   ],
+   "answer": "Red Rooster",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport features positions called Goal Attack, Goal Defence and Wing Attack?",
+   "options": [
+    "Water polo",
+    "Basketball",
+    "Hockey",
+    "Netball"
+   ],
+   "answer": "Netball",
+   "d": "easy"
+  },
+  {
+   "q": "The Bledisloe Cup is contested in rugby union between Australia and which country?",
+   "options": [
+    "Wales",
+    "New Zealand",
+    "South Africa",
+    "England"
+   ],
+   "answer": "New Zealand",
+   "d": "easy"
+  },
+  {
+   "q": "What is the traditional Aboriginal name for Ayers Rock?",
+   "options": [
+    "Kakadu",
+    "Uluru",
+    "Tjoritja",
+    "Kata Tjuta"
+   ],
+   "answer": "Uluru",
+   "d": "easy"
+  },
+  {
+   "q": "Which rock band was fronted by the Young brothers and features a schoolboy-uniform-wearing guitarist?",
+   "options": [
+    "AC/DC",
+    "Skyhooks",
+    "Rose Tattoo",
+    "The Saints"
+   ],
+   "answer": "AC/DC",
+   "d": "easy"
+  },
+  {
+   "q": "What is the legal blood alcohol limit for a full licence driver in Australia?",
+   "options": [
+    "0.00",
+    "0.02",
+    "0.05",
+    "0.08"
+   ],
+   "answer": "0.05",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'stubby holder' used for?",
+   "options": [
+    "Insulating a beer can or bottle",
+    "Carrying keys",
+    "Storing food",
+    "Holding pens"
+   ],
+   "answer": "Insulating a beer can or bottle",
+   "d": "easy"
+  },
+  {
+   "q": "Which band, fronted by Michael Hutchence, had global hits like 'Need You Tonight'?",
+   "options": [
+    "INXS",
+    "Men at Work",
+    "Icehouse",
+    "Crowded House"
+   ],
+   "answer": "INXS",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian spider has a red stripe on its back?",
+   "options": [
+    "The trapdoor",
+    "The orb weaver",
+    "The funnel-web",
+    "The redback"
+   ],
+   "answer": "The redback",
+   "d": "easy"
+  },
+  {
+   "q": "Cricket, AFL and rugby league are all examples of what kind of sport in Australia?",
+   "options": [
+    "Team sports",
+    "Motor sports",
+    "Winter-only sports",
+    "Individual sports"
+   ],
+   "answer": "Team sports",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian sprinter lit the Olympic cauldron in Sydney in 2000?",
+   "options": [
+    "Melinda Gainsford",
+    "Jane Flemming",
+    "Cathy Freeman",
+    "Nova Peris"
+   ],
+   "answer": "Cathy Freeman",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian bird is famous for swooping in spring?",
+   "options": [
+    "The kookaburra",
+    "The rosella",
+    "The ibis",
+    "The magpie"
+   ],
+   "answer": "The magpie",
+   "d": "easy"
+  },
+  {
+   "q": "Which children's music group wears coloured skivvies?",
+   "options": [
+    "The Wiggles",
+    "Bananas in Pyjamas",
+    "Hi-5",
+    "Play School"
+   ],
+   "answer": "The Wiggles",
+   "d": "easy"
+  },
+  {
+   "q": "A classic milk bar milkshake was traditionally served in what?",
+   "options": [
+    "A coconut shell",
+    "A glass jar",
+    "A metal cup",
+    "A paper cup"
+   ],
+   "answer": "A metal cup",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'Chrissie' short for in Australian slang?",
+   "options": [
+    "Christmas",
+    "Crisps",
+    "Chrysanthemum",
+    "Christine only"
+   ],
+   "answer": "Christmas",
+   "d": "easy"
+  },
+  {
+   "q": "What is the longest river system in Australia?",
+   "options": [
+    "The Murray-Darling",
+    "The Burdekin",
+    "The Ord",
+    "The Fitzroy"
+   ],
+   "answer": "The Murray-Darling",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian tennis player won the Australian Open women's singles in 2022, then retired at the top of the world rankings?",
+   "options": [
+    "Daria Gavrilova",
+    "Sam Stosur",
+    "Ash Barty",
+    "Ajla Tomljanovic"
+   ],
+   "answer": "Ash Barty",
+   "d": "easy"
+  },
+  {
+   "q": "'Stubbies' as a clothing item refers to what?",
+   "options": [
+    "Long socks",
+    "Short work shorts",
+    "Sandals",
+    "Singlets"
+   ],
+   "answer": "Short work shorts",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian city hosted the 2000 Summer Olympics?",
+   "options": [
+    "Melbourne",
+    "Perth",
+    "Brisbane",
+    "Sydney"
+   ],
+   "answer": "Sydney",
+   "d": "easy"
+  },
+  {
+   "q": "What is keno?",
+   "options": [
+    "A game where numbers are drawn from a pool",
+    "A card game",
+    "A dice game",
+    "A horse racing bet"
+   ],
+   "answer": "A game where numbers are drawn from a pool",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian animal lays eggs and has a duck-like bill?",
+   "options": [
+    "The platypus",
+    "The bilby",
+    "The wombat",
+    "The echidna"
+   ],
+   "answer": "The platypus",
+   "d": "easy"
+  },
+  {
+   "q": "What is the battered hot dog on a stick called at Australian shows (in most states)?",
+   "options": [
+    "Dagwood dog",
+    "Battered banger",
+    "Corn dog roll",
+    "Stick snag"
+   ],
+   "answer": "Dagwood dog",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian city will host the 2032 Summer Olympics?",
+   "options": [
+    "Melbourne",
+    "Brisbane",
+    "Sydney",
+    "Perth"
+   ],
+   "answer": "Brisbane",
+   "d": "easy"
+  },
+  {
+   "q": "What is the highest number in a traditional 90-ball bingo game?",
+   "options": [
+    "100",
+    "75",
+    "80",
+    "90"
+   ],
+   "answer": "90",
+   "d": "easy"
+  },
+  {
+   "q": "What is the nickname of the Australian men's cricket team's rugby union counterpart?",
+   "options": [
+    "The Socceroos",
+    "The Wallabies",
+    "The Kangaroos",
+    "The Boomers"
+   ],
+   "answer": "The Wallabies",
+   "d": "easy"
+  },
+  {
+   "q": "In which month is the Melbourne Cup held?",
+   "options": [
+    "September",
+    "November",
+    "December",
+    "October"
+   ],
+   "answer": "November",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'happy hour' called when it lasts longer than sixty minutes?",
+   "options": [
+    "A power hour",
+    "A session special",
+    "It is still called happy hour",
+    "A tab hour"
+   ],
+   "answer": "It is still called happy hour",
+   "d": "easy"
+  },
+  {
+   "q": "What is the traditional Australian pub game played with two coins on Anzac Day?",
+   "options": [
+    "Skittles",
+    "Two-up",
+    "Pitch and toss",
+    "Crown and anchor"
+   ],
+   "answer": "Two-up",
+   "d": "easy"
+  },
+  {
+   "q": "Which fizzy lemon soft drink is an Australian classic made by Schweppes?",
+   "options": [
+    "Fanta",
+    "Lift",
+    "Sprite",
+    "Solo"
+   ],
+   "answer": "Solo",
+   "d": "easy"
+  },
+  {
+   "q": "Which chocolate-coated marshmallow biscuit with jam is a lunchbox classic?",
+   "options": [
+    "Wagon Wheel",
+    "Tim Tam",
+    "Kingston",
+    "Iced VoVo"
+   ],
+   "answer": "Wagon Wheel",
+   "d": "easy"
+  },
+  {
+   "q": "Which classic kids' party food is white bread with butter and hundreds and thousands?",
+   "options": [
+    "Fairy bread",
+    "Jelly cups",
+    "Honey joys",
+    "Chocolate crackles"
+   ],
+   "answer": "Fairy bread",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian tennis player retired as world number one in 2022?",
+   "options": [
+    "Nick Kyrgios",
+    "Ashleigh Barty",
+    "Sam Stosur",
+    "Alicia Molik"
+   ],
+   "answer": "Ashleigh Barty",
+   "d": "easy"
+  },
+  {
+   "q": "What is 'Barbie' short for in Australian slang?",
+   "options": [
+    "Barbecue",
+    "Barbed wire",
+    "Barbershop",
+    "Barbara only"
+   ],
+   "answer": "Barbecue",
+   "d": "easy"
+  },
+  {
+   "q": "How many players make up a starting side in an association football (soccer) team?",
+   "options": [
+    "Ten",
+    "Eleven",
+    "Nine",
+    "Twelve"
+   ],
+   "answer": "Eleven",
+   "d": "easy"
+  },
+  {
+   "q": "Which stroke is NOT one of the four competitive swimming strokes?",
+   "options": [
+    "Sidestroke",
+    "Backstroke",
+    "Butterfly",
+    "Breaststroke"
+   ],
+   "answer": "Sidestroke",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian tennis player is known for his catchphrase 'C'mon!' and represented Australia in the Davis Cup as player and captain?",
+   "options": [
+    "Lleyton Hewitt",
+    "John Millman",
+    "Nick Kyrgios",
+    "Alex de Minaur"
+   ],
+   "answer": "Lleyton Hewitt",
+   "d": "easy"
+  },
+  {
+   "q": "The Sydney to Hobart is a famous annual Australian race in which sport?",
+   "options": [
+    "Rowing",
+    "Yacht racing (sailing)",
+    "Swimming",
+    "Cycling"
+   ],
+   "answer": "Yacht racing (sailing)",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'thongs' in Australian English?",
+   "options": [
+    "Flip-flop sandals",
+    "A rope",
+    "Underwear only",
+    "A type of hat"
+   ],
+   "answer": "Flip-flop sandals",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'snag' at an Australian barbecue?",
+   "options": [
+    "A skewer",
+    "A steak",
+    "A sausage",
+    "A salad"
+   ],
+   "answer": "A sausage",
+   "d": "easy"
+  },
+  {
+   "q": "Anzac biscuits are traditionally made with rolled oats and which syrup?",
+   "options": [
+    "Corn syrup",
+    "Maple syrup",
+    "Treacle",
+    "Golden syrup"
+   ],
+   "answer": "Golden syrup",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'she'll be right' generally mean in Australia?",
+   "options": [
+    "Turn right",
+    "It'll be okay",
+    "A woman is correct",
+    "She is coming"
+   ],
+   "answer": "It'll be okay",
+   "d": "easy"
+  },
+  {
+   "q": "The Phillip Island circuit, host of the Australian MotoGP, is located in which state?",
+   "options": [
+    "Queensland",
+    "South Australia",
+    "New South Wales",
+    "Victoria"
+   ],
+   "answer": "Victoria",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'covers band'?",
+   "options": [
+    "A tribute act to one artist only",
+    "A band with no singer",
+    "A backup band",
+    "A band that plays other artists' songs"
+   ],
+   "answer": "A band that plays other artists' songs",
+   "d": "easy"
+  },
+  {
+   "q": "What is a shandy?",
+   "options": [
+    "Beer mixed with lemonade",
+    "Wine with soda",
+    "Beer with a shot of spirits",
+    "Cider with lime"
+   ],
+   "answer": "Beer mixed with lemonade",
+   "d": "easy"
+  },
+  {
+   "q": "A fundraising 'sausage sizzle' is famously set up outside which hardware chain?",
+   "options": [
+    "Home Timber",
+    "Bunnings",
+    "Masters",
+    "Mitre 10"
+   ],
+   "answer": "Bunnings",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian rules football competition is the top national league?",
+   "options": [
+    "The AFL",
+    "The VFL",
+    "The SANFL",
+    "The NRL"
+   ],
+   "answer": "The AFL",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'bistro' in an Australian pub?",
+   "options": [
+    "The dining area",
+    "The beer garden",
+    "The gaming room",
+    "The bottle shop"
+   ],
+   "answer": "The dining area",
+   "d": "easy"
+  },
+  {
+   "q": "What is the nickname of the Australian men's national soccer team?",
+   "options": [
+    "The Joeys",
+    "The Olyroos",
+    "The Socceroos",
+    "The Matildas"
+   ],
+   "answer": "The Socceroos",
+   "d": "easy"
+  },
+  {
+   "q": "What is chalked before a pool shot?",
+   "options": [
+    "The table",
+    "The rack",
+    "The cue tip",
+    "The cue ball"
+   ],
+   "answer": "The cue tip",
+   "d": "easy"
+  },
+  {
+   "q": "Which country invented karaoke?",
+   "options": [
+    "The Philippines",
+    "South Korea",
+    "Japan",
+    "China"
+   ],
+   "answer": "Japan",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian beer brewed in Queensland is known as 'XXXX'?",
+   "options": [
+    "VB",
+    "XXXX",
+    "Coopers",
+    "Tooheys"
+   ],
+   "answer": "XXXX",
+   "d": "easy"
+  },
+  {
+   "q": "What sport is Cathy Freeman famous for?",
+   "options": [
+    "Cycling",
+    "Netball",
+    "Swimming",
+    "Athletics (sprinting)"
+   ],
+   "answer": "Athletics (sprinting)",
+   "d": "easy"
+  },
+  {
+   "q": "What is a poker machine commonly called in Australia?",
+   "options": [
+    "A one-armed jack",
+    "A slot only",
+    "A pokie",
+    "A fruity"
+   ],
+   "answer": "A pokie",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'bottle shop' attached to a pub commonly called?",
+   "options": [
+    "The drive in",
+    "The off licence",
+    "The cellar door",
+    "The bottle-o"
+   ],
+   "answer": "The bottle-o",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'beer garden'?",
+   "options": [
+    "A hop farm",
+    "An outdoor drinking area",
+    "A brewery tour",
+    "A garden bar snack menu"
+   ],
+   "answer": "An outdoor drinking area",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 570 millilitre beer glass called in most of Australia?",
+   "options": [
+    "A middy",
+    "A schooner",
+    "A pint",
+    "A pot"
+   ],
+   "answer": "A pint",
+   "d": "easy"
+  },
+  {
+   "q": "On which date is Australia Day held?",
+   "options": [
+    "25 April",
+    "6 June",
+    "26 January",
+    "1 January"
+   ],
+   "answer": "26 January",
+   "d": "easy"
+  },
+  {
+   "q": "What is a full house in bingo?",
+   "options": [
+    "The four corners",
+    "Two lines marked",
+    "Every number on the ticket marked",
+    "One line marked"
+   ],
+   "answer": "Every number on the ticket marked",
+   "d": "easy"
+  },
+  {
+   "q": "What is the froth on top of a poured beer called?",
+   "options": [
+    "The cap",
+    "The foam line",
+    "The head",
+    "The crown"
+   ],
+   "answer": "The head",
+   "d": "easy"
+  },
+  {
+   "q": "How many players from each team are on the field in a rugby union match?",
+   "options": [
+    "15",
+    "13",
+    "11",
+    "18"
+   ],
+   "answer": "15",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian brand popularised the rotary lawn mower?",
+   "options": [
+    "Masport",
+    "Victa",
+    "Honda",
+    "Rover"
+   ],
+   "answer": "Victa",
+   "d": "easy"
+  },
+  {
+   "q": "Which famous Australian road hugs the Victorian coast for about 240 kilometres?",
+   "options": [
+    "The Pacific Highway",
+    "The Great Ocean Road",
+    "The Nullarbor Highway",
+    "The Stuart Highway"
+   ],
+   "answer": "The Great Ocean Road",
+   "d": "easy"
+  },
+  {
+   "q": "What is a lamington coated in?",
+   "options": [
+    "Chocolate and coconut",
+    "Cream and berries",
+    "Icing sugar and jam",
+    "Caramel and nuts"
+   ],
+   "answer": "Chocolate and coconut",
+   "d": "easy"
+  },
+  {
+   "q": "What is the traditional Friday night pub finish called in Australian work culture?",
+   "options": [
+    "The long lunch",
+    "Sunday session",
+    "The wind up",
+    "Knock-off drinks"
+   ],
+   "answer": "Knock-off drinks",
+   "d": "easy"
+  },
+  {
+   "q": "The 'Chiko Roll' is a deep-fried Australian snack loosely based on which dish?",
+   "options": [
+    "Sausage roll",
+    "Samosa",
+    "Spring roll",
+    "Pasty"
+   ],
+   "answer": "Spring roll",
+   "d": "easy"
+  },
+  {
+   "q": "What is an 'esky' used for at an Aussie picnic?",
+   "options": [
+    "Shading from sun",
+    "Cooking snags",
+    "Keeping drinks cold",
+    "Playing music"
+   ],
+   "answer": "Keeping drinks cold",
+   "d": "easy"
+  },
+  {
+   "q": "Which Queensland beer brand is known by four Xs?",
+   "options": [
+    "Tooheys",
+    "XXXX",
+    "Coopers",
+    "VB"
+   ],
+   "answer": "XXXX",
+   "d": "easy"
+  },
+  {
+   "q": "Which gambling machines are commonly called 'pokies' in Australia?",
+   "options": [
+    "Pool tables",
+    "Poker machines",
+    "Jukeboxes",
+    "Pinball machines"
+   ],
+   "answer": "Poker machines",
+   "d": "easy"
+  },
+  {
+   "q": "What is the nickname of the Australian men's national football (soccer) team?",
+   "options": [
+    "The Kangaroos",
+    "The Socceroos",
+    "The Wallabies",
+    "The Matildas"
+   ],
+   "answer": "The Socceroos",
+   "d": "easy"
+  },
+  {
+   "q": "Surfing is a popular Australian sport. What is the name of the world championship tour that surfers compete on?",
+   "options": [
+    "The Global Surf Cup",
+    "The World Surf League",
+    "The Surfing Grand Prix",
+    "The Ocean Series"
+   ],
+   "answer": "The World Surf League",
+   "d": "easy"
+  },
+  {
+   "q": "What is the triangle used to set up pool balls called?",
+   "options": [
+    "The setter",
+    "The frame",
+    "The cradle",
+    "The rack"
+   ],
+   "answer": "The rack",
+   "d": "easy"
+  },
+  {
+   "q": "Which spiny egg-laying Australian mammal is also called a spiny anteater?",
+   "options": [
+    "The echidna",
+    "The quokka",
+    "The numbat",
+    "The platypus"
+   ],
+   "answer": "The echidna",
+   "d": "easy"
+  },
+  {
+   "q": "At which ground is the AFL Grand Final traditionally played?",
+   "options": [
+    "Optus Stadium",
+    "The MCG",
+    "Marvel Stadium",
+    "Adelaide Oval"
+   ],
+   "answer": "The MCG",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian boot brand is known for its elastic-sided leather work boots?",
+   "options": [
+    "Bata",
+    "Blundstone",
+    "Volley",
+    "Dunlop"
+   ],
+   "answer": "Blundstone",
+   "d": "easy"
+  },
+  {
+   "q": "Which crunchy cornflake party treat is made with honey and sugar in patty cases?",
+   "options": [
+    "Anzac slice",
+    "Chocolate crackles",
+    "Honey joys",
+    "Fairy bread"
+   ],
+   "answer": "Honey joys",
+   "d": "easy"
+  },
+  {
+   "q": "Which chewy mint's slogan is 'It's moments like these you need ...'?",
+   "options": [
+    "Minties",
+    "Spearmint Leaves",
+    "Mentos",
+    "Life Savers"
+   ],
+   "answer": "Minties",
+   "d": "easy"
+  },
+  {
+   "q": "Which unofficial Australian song tells of a swagman by a billabong?",
+   "options": [
+    "Waltzing Matilda",
+    "Home Among the Gum Trees",
+    "Advance Australia Fair",
+    "The Road to Gundagai"
+   ],
+   "answer": "Waltzing Matilda",
+   "d": "easy"
+  },
+  {
+   "q": "What does the Aussie slang term 'arvo' mean?",
+   "options": [
+    "Morning",
+    "Evening",
+    "Afternoon",
+    "Midnight"
+   ],
+   "answer": "Afternoon",
+   "d": "easy"
+  },
+  {
+   "q": "In Australia, what is a 'sanger'?",
+   "options": [
+    "A saucepan",
+    "A sandwich",
+    "A sausage",
+    "A singer"
+   ],
+   "answer": "A sandwich",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'on the rocks' mean?",
+   "options": [
+    "Served in a shot glass",
+    "Served with soda",
+    "Served warm",
+    "Served over ice"
+   ],
+   "answer": "Served over ice",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand makes the Golden Gaytime ice cream?",
+   "options": [
+    "Weis",
+    "Bulla",
+    "Peters",
+    "Streets"
+   ],
+   "answer": "Streets",
+   "d": "easy"
+  },
+  {
+   "q": "Which John Farnham song became an unofficial Australian anthem in 1986?",
+   "options": [
+    "Playing to Win",
+    "Age of Reason",
+    "You're the Voice",
+    "Pressure Down"
+   ],
+   "answer": "You're the Voice",
+   "d": "easy"
+  },
+  {
+   "q": "Which Aussie band released the pub-rock anthem 'Khe Sanh'?",
+   "options": [
+    "INXS",
+    "Midnight Oil",
+    "Cold Chisel",
+    "The Angels"
+   ],
+   "answer": "Cold Chisel",
+   "d": "easy"
+  },
+  {
+   "q": "Which sauce is the traditional condiment for an Aussie meat pie?",
+   "options": [
+    "Tomato sauce",
+    "BBQ sauce",
+    "Worcestershire",
+    "Mustard"
+   ],
+   "answer": "Tomato sauce",
+   "d": "easy"
+  },
+  {
+   "q": "In netball, how many players from each team are on the court at one time?",
+   "options": [
+    "Six",
+    "Five",
+    "Seven",
+    "Eight"
+   ],
+   "answer": "Seven",
+   "d": "easy"
+  },
+  {
+   "q": "Which sport does Australian great Don Bradman belong to?",
+   "options": [
+    "Rugby league",
+    "Tennis",
+    "AFL",
+    "Cricket"
+   ],
+   "answer": "Cricket",
+   "d": "easy"
+  },
+  {
+   "q": "Which pub meal is a crumbed cutlet without toppings?",
+   "options": [
+    "A parmigiana",
+    "A rissole",
+    "A schnitzel",
+    "A pattie"
+   ],
+   "answer": "A schnitzel",
+   "d": "easy"
+  },
+  {
+   "q": "Which Queensland city is the gateway to the Great Barrier Reef in the far north?",
+   "options": [
+    "Rockhampton",
+    "Mackay",
+    "Cairns",
+    "Townsville"
+   ],
+   "answer": "Cairns",
+   "d": "easy"
+  },
+  {
+   "q": "Which enormous sandstone monolith sits in the Northern Territory?",
+   "options": [
+    "Kata Tjuta",
+    "Uluru",
+    "Mount Augustus",
+    "The Olgas"
+   ],
+   "answer": "Uluru",
+   "d": "easy"
+  },
+  {
+   "q": "What does ABV stand for on a beer label?",
+   "options": [
+    "Alcohol by volume",
+    "Alcohol base value",
+    "Average beer volume",
+    "Approved beverage value"
+   ],
+   "answer": "Alcohol by volume",
+   "d": "easy"
+  },
+  {
+   "q": "In Australian slang, what are 'thongs'?",
+   "options": [
+    "Underwear",
+    "Swimwear",
+    "A type of hat",
+    "Flip-flop footwear"
+   ],
+   "answer": "Flip-flop footwear",
+   "d": "easy"
+  },
+  {
+   "q": "Which brand's slogan was 'Football, meat pies, kangaroos and ... cars'?",
+   "options": [
+    "Victa",
+    "Holden",
+    "Ford",
+    "Vegemite"
+   ],
+   "answer": "Holden",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian pop singer had a 1987 hit with 'I Should Be So Lucky'?",
+   "options": [
+    "Tina Arena",
+    "Dannii Minogue",
+    "Delta Goodrem",
+    "Kylie Minogue"
+   ],
+   "answer": "Kylie Minogue",
+   "d": "easy"
+  },
+  {
+   "q": "At an agricultural show, kids famously collect which item full of goodies?",
+   "options": [
+    "Goody sacks",
+    "Loot boxes",
+    "Fun packs",
+    "Showbags"
+   ],
+   "answer": "Showbags",
+   "d": "easy"
+  },
+  {
+   "q": "What is the person who runs a pub quiz usually called?",
+   "options": [
+    "The steward",
+    "The bookie",
+    "The quiz master or host",
+    "The compere only"
+   ],
+   "answer": "The quiz master or host",
+   "d": "easy"
+  },
+  {
+   "q": "How many points is a goal worth in Australian rules football?",
+   "options": [
+    "One",
+    "Six",
+    "Three",
+    "Five"
+   ],
+   "answer": "Six",
+   "d": "easy"
+  },
+  {
+   "q": "Which two-up game is legally played in pubs on Anzac Day?",
+   "options": [
+    "Two-up",
+    "Crown and anchor",
+    "Pitch and toss",
+    "Housie"
+   ],
+   "answer": "Two-up",
+   "d": "easy"
+  }
+ ]
+}

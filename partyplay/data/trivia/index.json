@@ -37,69 +37,99 @@
  "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
  "categories": [
   {
-   "category": "General Knowledge",
-   "slug": "general-knowledge",
-   "count": 240,
-   "file": "data/trivia/general-knowledge.json"
+   "category": "Animals",
+   "slug": "animals",
+   "count": 221,
+   "file": "data/trivia/animals.json"
   },
   {
-   "category": "Music",
-   "slug": "music",
-   "count": 240,
-   "file": "data/trivia/music.json"
+   "category": "Very Australian",
+   "slug": "australiana",
+   "count": 205,
+   "file": "data/trivia/australiana.json"
+  },
+  {
+   "category": "Books",
+   "slug": "books",
+   "count": 517,
+   "file": "data/trivia/books.json"
+  },
+  {
+   "category": "Brands and ads",
+   "slug": "brands-and-ads",
+   "count": 64,
+   "file": "data/trivia/brands-and-ads.json"
+  },
+  {
+   "category": "Cars",
+   "slug": "cars",
+   "count": 52,
+   "file": "data/trivia/cars.json"
   },
   {
    "category": "Film",
    "slug": "film",
-   "count": 179,
+   "count": 394,
    "file": "data/trivia/film.json"
   },
   {
-   "category": "Television",
-   "slug": "television",
-   "count": 130,
-   "file": "data/trivia/television.json"
+   "category": "Food and drink",
+   "slug": "food-drink",
+   "count": 175,
+   "file": "data/trivia/food-drink.json"
+  },
+  {
+   "category": "General knowledge",
+   "slug": "general-knowledge",
+   "count": 1624,
+   "file": "data/trivia/general-knowledge.json"
   },
   {
    "category": "Geography",
    "slug": "geography",
-   "count": 217,
+   "count": 362,
    "file": "data/trivia/geography.json"
   },
   {
    "category": "History",
    "slug": "history",
-   "count": 198,
+   "count": 433,
    "file": "data/trivia/history.json"
   },
   {
-   "category": "Science & Nature",
+   "category": "Kids and family",
+   "slug": "kids-and-family",
+   "count": 136,
+   "file": "data/trivia/kids-and-family.json"
+  },
+  {
+   "category": "Music",
+   "slug": "music",
+   "count": 444,
+   "file": "data/trivia/music.json"
+  },
+  {
+   "category": "Science and nature",
    "slug": "science-nature",
-   "count": 240,
+   "count": 595,
    "file": "data/trivia/science-nature.json"
   },
   {
-   "category": "Animals",
-   "slug": "animals",
-   "count": 156,
-   "file": "data/trivia/animals.json"
+   "category": "Sport",
+   "slug": "sport",
+   "count": 143,
+   "file": "data/trivia/sport.json"
   },
   {
-   "category": "Food & Drink",
-   "slug": "food-drink",
-   "count": 134,
-   "file": "data/trivia/food-drink.json"
+   "category": "Cartoons and TV",
+   "slug": "television",
+   "count": 452,
+   "file": "data/trivia/television.json"
   },
   {
-   "category": "Books",
-   "slug": "books",
-   "count": 160,
-   "file": "data/trivia/books.json"
-  },
-  {
-   "category": "Video Games",
+   "category": "Video games",
    "slug": "video-games",
-   "count": 157,
+   "count": 489,
    "file": "data/trivia/video-games.json"
   }
  ]

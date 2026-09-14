@@ -1,2682 +1,4926 @@
 {
-"license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"sources": [
-{
-"name": "Open Trivia Database",
-"url": "https://opentdb.com",
-"license": "CC BY-SA 4.0",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"commercialUse": "permitted with attribution and share-alike",
-"attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"questionCount": 4320
-},
-{
-"name": "OpenTriviaQA",
-"url": "https://github.com/uberspot/OpenTriviaQA",
-"license": "CC BY-SA 4.0",
-"licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-"commercialUse": "permitted with attribution and share-alike",
-"attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"questionCount": 6310
-},
-{
-"name": "VenuePlay original",
-"url": "",
-"license": "VenuePlay original content",
-"licenseUrl": "",
-"commercialUse": "owned by VenuePlay; no third-party attribution required",
-"attribution": "Australian pub-culture questions authored by VenuePlay.",
-"questionCount": 76
-}
-],
-"attributions": [
-"Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
-"Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
-],
-"shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
-"category": "Music",
-"count": 240,
-"questions": [
-{
-"q": "What was the title of ABBA`s first UK hit single?",
-"options": [
-"Dancing Queen",
-"Mamma Mia",
-"Waterloo",
-"Ring Ring"
-],
-"answer": "Waterloo",
-"d": "easy"
-},
-{
-"q": "Which US band released 'Everlong' and 'Learn to Fly'?",
-"options": [
-"Blink-182",
-"Weezer",
-"Foo Fighters",
-"Green Day"
-],
-"answer": "Foo Fighters",
-"d": "easy"
-},
-{
-"q": "My Heart Will Go On is the theme song of what 1997 movie?",
-"options": [
-"Titanic",
-"Wizard of Oz",
-"George of the Jungle",
-"Jumanji"
-],
-"answer": "Titanic",
-"d": "easy"
-},
-{
-"q": "Which US singer released 'All of Me' in 2013?",
-"options": [
-"Bruno Mars",
-"Sam Smith",
-"Ed Sheeran",
-"John Legend"
-],
-"answer": "John Legend",
-"d": "easy"
-},
-{
-"q": "Which Australian band recorded Highway to Hell?",
-"options": [
-"The Wiggles",
-"AC/DC",
-"Cold Chisel",
-"The Saints"
-],
-"answer": "AC/DC",
-"d": "easy"
-},
-{
-"q": "Which artist released the 2011 album 'Born This Way'?",
-"options": [
-"Rihanna",
-"Katy Perry",
-"Kesha",
-"Lady Gaga"
-],
-"answer": "Lady Gaga",
-"d": "easy"
-},
-{
-"q": "Which artist featured on the remix of Lil Nas X's 'Old Town Road'?",
-"options": [
-"Keith Urban",
-"Billy Ray Cyrus",
-"Tim McGraw",
-"Blake Shelton"
-],
-"answer": "Billy Ray Cyrus",
-"d": "easy"
-},
-{
-"q": "Who released the song \"Photograph\" in 2005?",
-"options": [
-"Green Day",
-"Coldplay",
-"Nickelback",
-"Fall Out Boy"
-],
-"answer": "Nickelback",
-"d": "easy"
-},
-{
-"q": "What was Taylor Swift's 5th album called?",
-"options": [
-"Lover",
-"1989",
-"Reputation",
-"Red"
-],
-"answer": "1989",
-"d": "easy"
-},
-{
-"q": "Which British-Irish boy band released 'What Makes You Beautiful' in 2011?",
-"options": [
-"JLS",
-"One Direction",
-"The Wanted",
-"Union J"
-],
-"answer": "One Direction",
-"d": "easy"
-},
-{
-"q": "Band Aid's 'Do They Know It's Christmas' was recorded to raise awareness of which issue in Ethiopia?",
-"options": [
-"Famine",
-"Deforestation",
-"Poverty",
-"Drought"
-],
-"answer": "Famine",
-"d": "easy"
-},
-{
-"q": "Which artist collaborated with Lady Gaga on the 2014 jazz standards album 'Cheek to Cheek'?",
-"options": [
-"Harry Connick Jr.",
-"Michael Buble",
-"Frank Sinatra",
-"Tony Bennett"
-],
-"answer": "Tony Bennett",
-"d": "easy"
-},
-{
-"q": "Which of these songs appears on the Guinness Book of Records as a song having more than 3000 cover versions?",
-"options": [
-"Yesterday Once More by the Carpenters",
-"Yesterdays by Guns N Roses",
-"Yesterday's Gone by The Rutles",
-"Yesterday by The Beatles"
-],
-"answer": "Yesterday by The Beatles",
-"d": "easy"
-},
-{
-"q": "Who is the lead singer of Foo Fighters?",
-"options": [
-"Dave Mustaine",
-"James Hetfield",
-"Dave Grohl",
-"Little Red Riding Hood"
-],
-"answer": "Dave Grohl",
-"d": "easy"
-},
-{
-"q": "Whose albums included \"Back in Black\" and \"Ballbreaker\"?",
-"options": [
-"Iron Maiden",
-"Metallica",
-"AC/DC",
-"Black Sabbath"
-],
-"answer": "AC/DC",
-"d": "easy"
-},
-{
-"q": "Which American Southern rock band, formed in Jacksonville, Florida, recorded the song Sweet Home Alabama?",
-"options": [
-"The Allman Brothers Band",
-"Alabama",
-"Travis Tritt",
-"Lynard Skynard"
-],
-"answer": "Lynard Skynard",
-"d": "easy"
-},
-{
-"q": "Gene Simmons, best known as The Demon, is a founding member of which band?",
-"options": [
-"Kiss Army",
-"Good Charlotte",
-"Green Day",
-"KISS"
-],
-"answer": "KISS",
-"d": "easy"
-},
-{
-"q": "What musician made the song \"F**kin` Perfect\" in 2010?",
-"options": [
-"Kelly Clarkson",
-"Katy Perry",
-"P!nk",
-"Christina Aguilera"
-],
-"answer": "P!nk",
-"d": "easy"
-},
-{
-"q": "Which singer released 'Uptown Funk' with Mark Ronson?",
-"options": [
-"Bruno Mars",
-"John Legend",
-"Pharrell Williams",
-"Justin Timberlake"
-],
-"answer": "Bruno Mars",
-"d": "easy"
-},
-{
-"q": "Who had a 1983 hit with the song 'Africa'?",
-"options": [
-"Foreigner",
-"Journey",
-"Steely Dan",
-"Toto"
-],
-"answer": "Toto",
-"d": "easy"
-},
-{
-"q": "Which pop-punk Canadian singer released 'Complicated' and 'Sk8er Boi' in 2002?",
-"options": [
-"Vanessa Carlton",
-"Kelly Clarkson",
-"Michelle Branch",
-"Avril Lavigne"
-],
-"answer": "Avril Lavigne",
-"d": "easy"
-},
-{
-"q": "Which Australian pop duo of twin sisters released 'Untouched'?",
-"options": [
-"The Veronicas",
-"Girlfriend",
-"Bardot",
-"The Chantoozies"
-],
-"answer": "The Veronicas",
-"d": "easy"
-},
-{
-"q": "Which metal band's frontman is Bruce Dickinson, known as the 'Air Raid Siren'?",
-"options": [
-"Judas Priest",
-"Dio",
-"Iron Maiden",
-"Saxon"
-],
-"answer": "Iron Maiden",
-"d": "easy"
-},
-{
-"q": "Which singer was featured in Jack \u00dc (Skrillex & Diplo)'s 2015 song 'Where Are \u00dc Now'?",
-"options": [
-"Ellie Goulding",
-"Selena Gomez",
-"The Weeknd",
-"Justin Bieber"
-],
-"answer": "Justin Bieber",
-"d": "easy"
-},
-{
-"q": "Who released the 1980s classic rock song Sweet Child of Mine?",
-"options": [
-"Poison",
-"Guns n Roses",
-"Spinal Tap",
-"Whitesnake"
-],
-"answer": "Guns n Roses",
-"d": "easy"
-},
-{
-"q": "Which US singer released the 1984 album 'Born in the U.S.A.'?",
-"options": [
-"John Mellencamp",
-"Bob Seger",
-"Tom Petty",
-"Bruce Springsteen"
-],
-"answer": "Bruce Springsteen",
-"d": "easy"
-},
-{
-"q": "Which artist released the 2017 global hit 'Shape of You'?",
-"options": [
-"Shawn Mendes",
-"Ed Sheeran",
-"Bruno Mars",
-"Justin Bieber"
-],
-"answer": "Ed Sheeran",
-"d": "easy"
-},
-{
-"q": "Which artist released 'Shake It Off' in 2014?",
-"options": [
-"Selena Gomez",
-"Ariana Grande",
-"Katy Perry",
-"Taylor Swift"
-],
-"answer": "Taylor Swift",
-"d": "easy"
-},
-{
-"q": "Who won the first series of Australian Idol in 2003?",
-"options": [
-"Shannon Noll",
-"Anthony Callea",
-"Damien Leith",
-"Guy Sebastian"
-],
-"answer": "Guy Sebastian",
-"d": "easy"
-},
-{
-"q": "Typically, how many keys are on a piano?",
-"options": [
-"100",
-"61",
-"88",
-"76"
-],
-"answer": "88",
-"d": "easy"
-},
-{
-"q": "What popular buy band recorded the song As Long as You Love Me in 1997?",
-"options": [
-"The Backstreet Boys",
-"Take That",
-"Boyzone",
-"N Sync"
-],
-"answer": "The Backstreet Boys",
-"d": "easy"
-},
-{
-"q": "Which decade did the Spice Girls achieve their peak fame?",
-"options": [
-"2000s",
-"2010s",
-"1990s",
-"1980s"
-],
-"answer": "1990s",
-"d": "easy"
-},
-{
-"q": "Which decade did MTV launch, changing how music was consumed?",
-"options": [
-"1990s",
-"1970s",
-"2000s",
-"1980s"
-],
-"answer": "1980s",
-"d": "easy"
-},
-{
-"q": "Which Latin genre, associated with Colombia and artists like Shakira, blends pop with Latin rhythms? (Which 2005-06 Shakira hit topped charts worldwide?)",
-"options": [
-"Waka Waka",
-"Hips Don't Lie",
-"Whenever, Wherever",
-"La Tortura"
-],
-"answer": "Hips Don't Lie",
-"d": "easy"
-},
-{
-"q": "What does TLC advise us not to chase in their massive 1995 hit Waterfalls?",
-"options": [
-"Wild boars",
-"Polar bears",
-"Butterflies",
-"Waterfalls"
-],
-"answer": "Waterfalls",
-"d": "easy"
-},
-{
-"q": "Which band, fronted by Amy Lee, released 'Bring Me to Life' in 2003?",
-"options": [
-"Lacuna Coil",
-"Evanescence",
-"Within Temptation",
-"Flyleaf"
-],
-"answer": "Evanescence",
-"d": "easy"
-},
-{
-"q": "The Beatles rose to worldwide fame during which decade?",
-"options": [
-"1950s",
-"1960s",
-"1970s",
-"1980s"
-],
-"answer": "1960s",
-"d": "easy"
-},
-{
-"q": "The children's entertainers The Wiggles formed in which country?",
-"options": [
-"Canada",
-"England",
-"New Zealand",
-"Australia"
-],
-"answer": "Australia",
-"d": "easy"
-},
-{
-"q": "Which US artist released 'Old Town Road' and later became known for genre-blending pop and rap?",
-"options": [
-"Jack Harlow",
-"Lil Nas X",
-"Roddy Ricch",
-"DaBaby"
-],
-"answer": "Lil Nas X",
-"d": "easy"
-},
-{
-"q": "John Farnham's hugely successful 1986 album was titled what?",
-"options": [
-"Then Again",
-"Whispering Jack",
-"Age of Reason",
-"Chain Reaction"
-],
-"answer": "Whispering Jack",
-"d": "easy"
-},
-{
-"q": "Which metal band released the 1991 self-titled album known as 'The Black Album'?",
-"options": [
-"Anthrax",
-"Megadeth",
-"Slayer",
-"Metallica"
-],
-"answer": "Metallica",
-"d": "easy"
-},
-{
-"q": "Which US band released 'Sweet Home Alabama' in 1974?",
-"options": [
-"Lynyrd Skynyrd",
-"38 Special",
-"The Allman Brothers Band",
-"Molly Hatchet"
-],
-"answer": "Lynyrd Skynyrd",
-"d": "easy"
-},
-{
-"q": "Who is the lead singer of Green Day?",
-"options": [
-"Mike Dirnt",
-"Tr\u00e9 Cool",
-"Sean Hughes",
-"Billie Joe Armstrong"
-],
-"answer": "Billie Joe Armstrong",
-"d": "easy"
-},
-{
-"q": "Which song is NOT by singer Tom Jones?",
-"options": [
-"It's Not Unusual",
-"Delilah",
-"What's New Pussycat",
-"Never Gonna Give You Up"
-],
-"answer": "Never Gonna Give You Up",
-"d": "easy"
-},
-{
-"q": "Which glam metal band released the 1987 hit 'Sweet Child o' Mine'?",
-"options": [
-"Motley Crue",
-"Guns N' Roses",
-"Bon Jovi",
-"Poison"
-],
-"answer": "Guns N' Roses",
-"d": "easy"
-},
-{
-"q": "Which R&B singer released 'No Scrubs' as part of TLC and later solo work is a distractor; who sang 'Crazy in Love' in 2003?",
-"options": [
-"Beyonce",
-"Ashanti",
-"Ciara",
-"Kelis"
-],
-"answer": "Beyonce",
-"d": "easy"
-},
-{
-"q": "Which song by The Beatles features the lyrics, And when the night is cloudy, there is still a light that shines on me, shine on until tomorrow?",
-"options": [
-"Let It Be",
-"Yellow Submarine",
-"Yesterday",
-"Lady Madonna"
-],
-"answer": "Let It Be",
-"d": "easy"
-},
-{
-"q": "Hans Zimmer wrote the beautiful love theme Can You Feel the Love Tonight? for which Broadway/Hollywood musical?",
-"options": [
-"Wicked",
-"The Lion King",
-"The Music Man",
-"Beauty and the Beast"
-],
-"answer": "The Lion King",
-"d": "easy"
-},
-{
-"q": "Which Australian singer-songwriter released 'Scar' in 2004?",
-"options": [
-"Kate Miller-Heidke",
-"Clare Bowditch",
-"Sarah Blasko",
-"Missy Higgins"
-],
-"answer": "Missy Higgins",
-"d": "easy"
-},
-{
-"q": "Who performed the song Paint It Black?",
-"options": [
-"The Black Keys",
-"The Animals",
-"The Rolling Stones",
-"The Kinks"
-],
-"answer": "The Rolling Stones",
-"d": "easy"
-},
-{
-"q": "Which pop-punk trio released 'All the Small Things' in 1999?",
-"options": [
-"Simple Plan",
-"Good Charlotte",
-"Green Day",
-"Blink-182"
-],
-"answer": "Blink-182",
-"d": "easy"
-},
-{
-"q": "The 2023 Beatles song \"Now and Then\" originated from an unfinished demo recorded by which Beatle?",
-"options": [
-"John Lennon",
-"Yoko Ono",
-"Paul McCartney",
-"George Harrison"
-],
-"answer": "John Lennon",
-"d": "easy"
-},
-{
-"q": "Which punk rock band released hit songs such as \"Californication\", \"Can't Stop\" and \"Under the Bridge\"?",
-"options": [
-"Red Hot Chilli Peppers",
-"Green Day",
-"Foo Fighters",
-"Linkin Park"
-],
-"answer": "Red Hot Chilli Peppers",
-"d": "easy"
-},
-{
-"q": "Which Australian band, fronted by Bernard Fanning, released 'These Days'?",
-"options": [
-"Powderfinger",
-"You Am I",
-"Jet",
-"Spiderbait"
-],
-"answer": "Powderfinger",
-"d": "easy"
-},
-{
-"q": "The main Australian music industry awards are known by which acronym?",
-"options": [
-"APRA",
-"AMRA",
-"ARIA",
-"AMPA"
-],
-"answer": "ARIA",
-"d": "easy"
-},
-{
-"q": "Whitney Houston's biggest hit, from 'The Bodyguard', was a cover called what?",
-"options": [
-"I Will Always Love You",
-"I Have Nothing",
-"I'm Every Woman",
-"Run to You"
-],
-"answer": "I Will Always Love You",
-"d": "easy"
-},
-{
-"q": "Who looked like a beauty queen from a movie scene and would dance on the floor, in the round?",
-"options": [
-"Delilah",
-"Billie Jean",
-"Gloria",
-"Girl with Bette Davis Eyes"
-],
-"answer": "Billie Jean",
-"d": "easy"
-},
-{
-"q": "Which rap group released the album \"Straight Outta Compton\"?",
-"options": [
-"N.W.A",
-"Run-D.M.C.",
-"Beastie Boys",
-"Wu-Tang Clan"
-],
-"answer": "N.W.A",
-"d": "easy"
-},
-{
-"q": "Which Australian artist released 'Born to Try'?",
-"options": [
-"Missy Higgins",
-"Sara Storer",
-"Delta Goodrem",
-"Kasey Chambers"
-],
-"answer": "Delta Goodrem",
-"d": "easy"
-},
-{
-"q": "Which artist blends hip hop and pop, known for 'Rockstar' and 'Circles', and the stage name references coins?",
-"options": [
-"Post Malone",
-"Machine Gun Kelly",
-"XXXTentacion",
-"Juice WRLD"
-],
-"answer": "Post Malone",
-"d": "easy"
-},
-{
-"q": "Which singer released 'Shake It Off' in 2014?",
-"options": [
-"Ariana Grande",
-"Taylor Swift",
-"Meghan Trainor",
-"Katy Perry"
-],
-"answer": "Taylor Swift",
-"d": "easy"
-},
-{
-"q": "Which US singer released 'Just the Way You Are' in 2010?",
-"options": [
-"Bruno Mars",
-"Ne-Yo",
-"John Legend",
-"Jason Derulo"
-],
-"answer": "Bruno Mars",
-"d": "easy"
-},
-{
-"q": "Which pop star released the 1983 album 'Thriller'?",
-"options": [
-"Michael Jackson",
-"Prince",
-"Lionel Richie",
-"Stevie Wonder"
-],
-"answer": "Michael Jackson",
-"d": "easy"
-},
-{
-"q": "Which Irish rock band released 'The Joshua Tree' in 1987?",
-"options": [
-"Snow Patrol",
-"Thin Lizzy",
-"U2",
-"The Cranberries"
-],
-"answer": "U2",
-"d": "easy"
-},
-{
-"q": "Which genre, blending country and rock, is exemplified by bands like the Eagles?",
-"options": [
-"Country rock",
-"Alt-country",
-"Bluegrass",
-"Southern rock"
-],
-"answer": "Country rock",
-"d": "easy"
-},
-{
-"q": "What was the best selling album of 2015?",
-"options": [
-"Adele, 25",
-"Taylor Swift, 1989",
-"Justin Bieber, Purpose",
-"Fetty Wap, Fetty Wap"
-],
-"answer": "Adele, 25",
-"d": "easy"
-},
-{
-"q": "Which girl group released the 1996 debut single 'Wannabe'?",
-"options": [
-"All Saints",
-"Spice Girls",
-"Destiny's Child",
-"TLC"
-],
-"answer": "Spice Girls",
-"d": "easy"
-},
-{
-"q": "Which brothers formed the core of the Bee Gees?",
-"options": [
-"The Jackson brothers",
-"The Everly brothers",
-"The Gibb brothers",
-"The Wilson brothers"
-],
-"answer": "The Gibb brothers",
-"d": "easy"
-},
-{
-"q": "What was the first music video to be broadcast on MTV?",
-"options": [
-"Take On Me",
-"Baby Shark",
-"Video Killed the Radio Star",
-"Money for Nothing"
-],
-"answer": "Video Killed the Radio Star",
-"d": "easy"
-},
-{
-"q": "Which brothers were the core songwriters and singers of Oasis?",
-"options": [
-"The Gallagher brothers",
-"The Robinson brothers",
-"The Reid brothers",
-"The Followill cousins"
-],
-"answer": "The Gallagher brothers",
-"d": "easy"
-},
-{
-"q": "Which alternative rock band released the critically-acclaimed album \"OK Computer\"?",
-"options": [
-"Coldplay",
-"Blur",
-"Radiohead",
-"Muse"
-],
-"answer": "Radiohead",
-"d": "easy"
-},
-{
-"q": "Which singer is known as the 'Queen of Soul'?",
-"options": [
-"Diana Ross",
-"Tina Turner",
-"Gladys Knight",
-"Aretha Franklin"
-],
-"answer": "Aretha Franklin",
-"d": "easy"
-},
-{
-"q": "Which Australian singer released 'Can't Get You Out of My Head'?",
-"options": [
-"Olivia Newton-John",
-"Delta Goodrem",
-"Kylie Minogue",
-"Tina Arena"
-],
-"answer": "Kylie Minogue",
-"d": "easy"
-},
-{
-"q": "Which disco-era group's hits include 'Dancing Queen' and 'Mamma Mia'?",
-"options": [
-"Ottawan",
-"ABBA",
-"Boney M.",
-"Baccara"
-],
-"answer": "ABBA",
-"d": "easy"
-},
-{
-"q": "In which country was Australia a guest participant in Eurovision, first competing in 2015?",
-"options": [
-"Australia does not compete",
-"Australia competes despite not being in Europe",
-"Australia hosts Eurovision",
-"Australia only votes"
-],
-"answer": "Australia competes despite not being in Europe",
-"d": "easy"
-},
-{
-"q": "Which band released 'Wonderwall' in 1995?",
-"options": [
-"The Verve",
-"Oasis",
-"Pulp",
-"Blur"
-],
-"answer": "Oasis",
-"d": "easy"
-},
-{
-"q": "Daryl Braithwaite's beloved Australian singalong hit is called what?",
-"options": [
-"The Horses",
-"As the Days Go By",
-"One Summer",
-"Summer Love"
-],
-"answer": "The Horses",
-"d": "easy"
-},
-{
-"q": "Which of these are NOT a Men at Work song?",
-"options": [
-"Basket Case",
-"Be Good Johnny",
-"Dr. Heckyll and Mr. Jive",
-"Who Can It Be Now?"
-],
-"answer": "Basket Case",
-"d": "easy"
-},
-{
-"q": "Rolling Stone Magazine ranked Rubber Soul as the #5 album on the list of the 500 Greatest Albums of All Time. Who released this album?",
-"options": [
-"The Wiggles",
-"The Kinks",
-"The Rolling Stones",
-"The Beatles"
-],
-"answer": "The Beatles",
-"d": "easy"
-},
-{
-"q": "Which soul singer released 'Sitting On The Dock of the Bay', recorded shortly before his death in 1967?",
-"options": [
-"Percy Sledge",
-"Wilson Pickett",
-"Sam Cooke",
-"Otis Redding"
-],
-"answer": "Otis Redding",
-"d": "easy"
-},
-{
-"q": "Which UK act won Eurovision 1997 with 'Love Shine a Light'?",
-"options": [
-"Bucks Fizz",
-"Gina G",
-"Brotherhood of Man",
-"Katrina and the Waves"
-],
-"answer": "Katrina and the Waves",
-"d": "easy"
-},
-{
-"q": "Which member of the British pop group \"The Spice Girls\" was known as Ginger Spice?",
-"options": [
-"Victoria Beckham",
-"Emma Bunton",
-"Melanie Brown",
-"Geri Halliwell"
-],
-"answer": "Geri Halliwell",
-"d": "easy"
-},
-{
-"q": "Which Beatles album cover shows the band on a zebra crossing?",
-"options": [
-"Abbey Road",
-"Let It Be",
-"Revolver",
-"Help!"
-],
-"answer": "Abbey Road",
-"d": "easy"
-},
-{
-"q": "Which band released 'Hotel California' in 1976?",
-"options": [
-"The Doobie Brothers",
-"Eagles",
-"Lynyrd Skynyrd",
-"Fleetwood Mac"
-],
-"answer": "Eagles",
-"d": "easy"
-},
-{
-"q": "Which of Michael Jackson's albums sold the most copies?",
-"options": [
-"Dangerous",
-"Off the Wall",
-"Thriller",
-"HIStory"
-],
-"answer": "Thriller",
-"d": "easy"
-},
-{
-"q": "Which decade produced disco's rise and fall, roughly from the mid-1970s to the early years following?",
-"options": [
-"1970s",
-"1960s",
-"1980s",
-"1990s"
-],
-"answer": "1970s",
-"d": "easy"
-},
-{
-"q": "Who is the vocalist and frontman of rock band \"Guns N' Roses\"?",
-"options": [
-"Axl Rose",
-"Bono",
-"Slash",
-"Kurt Cobain"
-],
-"answer": "Axl Rose",
-"d": "easy"
-},
-{
-"q": "Brian May was the guitarist for which band?",
-"options": [
-"Free",
-"ABBA",
-"Queen",
-"Bad Company"
-],
-"answer": "Queen",
-"d": "easy"
-},
-{
-"q": "Which US city is widely regarded as the birthplace of hip hop in the 1970s?",
-"options": [
-"Los Angeles",
-"Detroit",
-"Atlanta",
-"New York City"
-],
-"answer": "New York City",
-"d": "easy"
-},
-{
-"q": "Which band performed the 1980s classic rock song Pour Some Sugar on Me?",
-"options": [
-"Spinal Tap",
-"Def Leppard",
-"Poison",
-"Bon Jovi"
-],
-"answer": "Def Leppard",
-"d": "easy"
-},
-{
-"q": "Down Under was a worldwide hit for which Australian band?",
-"options": [
-"Men at Work",
-"The Angels",
-"AC/DC",
-"Midnight Oil"
-],
-"answer": "Men at Work",
-"d": "easy"
-},
-{
-"q": "Which of the following songs did Elton John perform following Princess Diana's passing?",
-"options": [
-"Island Girl",
-"Candles in the Wind",
-"I Guess That's Why They Call It The Blues",
-"Your Song"
-],
-"answer": "Candles in the Wind",
-"d": "easy"
-},
-{
-"q": "Which former Beatle released the solo song 'Imagine' in 1971?",
-"options": [
-"Ringo Starr",
-"John Lennon",
-"George Harrison",
-"Paul McCartney"
-],
-"answer": "John Lennon",
-"d": "easy"
-},
-{
-"q": "Which instrument is Elton John most famous for playing?",
-"options": [
-"Piano",
-"Guitar",
-"Violin",
-"Saxophone"
-],
-"answer": "Piano",
-"d": "easy"
-},
-{
-"q": "Which artist released 'Party in the U.S.A.' in 2009?",
-"options": [
-"Demi Lovato",
-"Miley Cyrus",
-"Selena Gomez",
-"Katy Perry"
-],
-"answer": "Miley Cyrus",
-"d": "easy"
-},
-{
-"q": "Which US band released 'Piano Man' and 'Uptown Girl'?",
-"options": [
-"Neil Diamond",
-"Barry Manilow",
-"Elton John",
-"Billy Joel"
-],
-"answer": "Billy Joel",
-"d": "easy"
-},
-{
-"q": "From which country did the song \"Gangnam Style\" originate from?",
-"options": [
-"Ireland",
-"North Korea",
-"Japan",
-"South Korea"
-],
-"answer": "South Korea",
-"d": "easy"
-},
-{
-"q": "Which British-Irish boy band did Harry Styles rise to fame in?",
-"options": [
-"Westlife",
-"JLS",
-"The Wanted",
-"One Direction"
-],
-"answer": "One Direction",
-"d": "easy"
-},
-{
-"q": "Which Australian singer played Sandy in the film 'Grease'?",
-"options": [
-"Olivia Newton-John",
-"Renee Geyer",
-"Helen Reddy",
-"Colleen Hewett"
-],
-"answer": "Olivia Newton-John",
-"d": "easy"
-},
-{
-"q": "The rock band Silverchair formed in which Australian city?",
-"options": [
-"Darwin",
-"Hobart",
-"Perth",
-"Newcastle"
-],
-"answer": "Newcastle",
-"d": "easy"
-},
-{
-"q": "What group released Revolver, the album ranked #3 by Rolling Stone magazine?",
-"options": [
-"Pink Floyd",
-"The Doors",
-"The Beatles",
-"The Who"
-],
-"answer": "The Beatles",
-"d": "easy"
-},
-{
-"q": "Which singer is known as 'The King of Rock and Roll'?",
-"options": [
-"Little Richard",
-"Buddy Holly",
-"Elvis Presley",
-"Chuck Berry"
-],
-"answer": "Elvis Presley",
-"d": "easy"
-},
-{
-"q": "ABBA, the pop supergroup, came from which country?",
-"options": [
-"Norway",
-"Sweden",
-"Denmark",
-"Finland"
-],
-"answer": "Sweden",
-"d": "easy"
-},
-{
-"q": "What is the title of this 1996 song?",
-"options": [
-"Silence",
-"Don't Speak",
-"Don't Talk",
-"Speak Up"
-],
-"answer": "Don't Speak",
-"d": "easy"
-},
-{
-"q": "David Bowie had a #1 hit (U.S) in 1983 with which song?",
-"options": [
-"China Girl",
-"Let's Dance",
-"Fame",
-"The Laughing Gnome"
-],
-"answer": "Let's Dance",
-"d": "easy"
-},
-{
-"q": "Which US band released 'Numb' and 'In the End'?",
-"options": [
-"Papa Roach",
-"Limp Bizkit",
-"Korn",
-"Linkin Park"
-],
-"answer": "Linkin Park",
-"d": "easy"
-},
-{
-"q": "Which Australian band recorded 'Down Under' in 1981?",
-"options": [
-"Men at Work",
-"Air Supply",
-"Icehouse",
-"Little River Band"
-],
-"answer": "Men at Work",
-"d": "easy"
-},
-{
-"q": "Which pop-country star released the album '1989' in 2014?",
-"options": [
-"Carrie Underwood",
-"Taylor Swift",
-"Kacey Musgraves",
-"Miranda Lambert"
-],
-"answer": "Taylor Swift",
-"d": "easy"
-},
-{
-"q": "Which rapper released the 2004 debut album 'The College Dropout'?",
-"options": [
-"Kid Cudi",
-"Common",
-"Lupe Fiasco",
-"Kanye West"
-],
-"answer": "Kanye West",
-"d": "easy"
-},
-{
-"q": "What famous band has been called the Fab Four?",
-"options": [
-"The Monkees",
-"The Rolling Stones",
-"The Beatles",
-"The Teenage Mutant Ninja Turtles"
-],
-"answer": "The Beatles",
-"d": "easy"
-},
-{
-"q": "Which of the following female country artists was a coal miners daughter?",
-"options": [
-"Dolly Parton",
-"Taylor Swift",
-"Loretta Lynn",
-"Tammy Wynette"
-],
-"answer": "Loretta Lynn",
-"d": "easy"
-},
-{
-"q": "Which US band released 'Radioactive' in 2012?",
-"options": [
-"The Fray",
-"Imagine Dragons",
-"Twenty One Pilots",
-"OneRepublic"
-],
-"answer": "Imagine Dragons",
-"d": "easy"
-},
-{
-"q": "Which decade saw Elvis Presley become a rock and roll superstar?",
-"options": [
-"1960s",
-"1970s",
-"1940s",
-"1950s"
-],
-"answer": "1950s",
-"d": "easy"
-},
-{
-"q": "Which former boy-band star released hit solo single \"Angels\" in 1997?",
-"options": [
-"Harry Styles",
-"Gary Barlow",
-"Robbie Williams",
-"Justin Timberlake"
-],
-"answer": "Robbie Williams",
-"d": "easy"
-},
-{
-"q": "What is the name of Finnish DJ Darude's hit single released in October 1999?",
-"options": [
-"Dust Devil",
-"Sandstorm",
-"Sirocco",
-"Leaf Blower"
-],
-"answer": "Sandstorm",
-"d": "easy"
-},
-{
-"q": "Which English band released the electronic dance album 'Discovery' is a Daft Punk album; which band released the 1990s dance hit 'Firestarter'?",
-"options": [
-"Fatboy Slim",
-"The Prodigy",
-"Underworld",
-"The Chemical Brothers"
-],
-"answer": "The Prodigy",
-"d": "easy"
-},
-{
-"q": "Which decade did rock and roll first emerge as a distinct genre in the United States?",
-"options": [
-"1950s",
-"1930s",
-"1940s",
-"1960s"
-],
-"answer": "1950s",
-"d": "easy"
-},
-{
-"q": "Which brass instrument has the lowest pitch in an orchestra?",
-"options": [
-"Trombone",
-"Tuba",
-"Trumpet",
-"French Horn"
-],
-"answer": "Tuba",
-"d": "easy"
-},
-{
-"q": "'Don't You Want Me?' was a number one hit in 1981 for which electropop band?",
-"options": [
-"Pet Shop Boys",
-"Human League",
-"Eurythmics",
-"Depeche Mode"
-],
-"answer": "Human League",
-"d": "easy"
-},
-{
-"q": "Which Nirvana album had a naked baby on the cover?",
-"options": [
-"Bleach",
-"In Utero",
-"Incesticide",
-"Nevermind"
-],
-"answer": "Nevermind",
-"d": "easy"
-},
-{
-"q": "Which Australian band is known for the song 'Prisoner of Society'?",
-"options": [
-"Powderfinger",
-"Silverchair",
-"Grinspoon",
-"The Living End"
-],
-"answer": "The Living End",
-"d": "easy"
-},
-{
-"q": "Which Canadian singer released 'Sorry' and 'Love Yourself' in 2015?",
-"options": [
-"Shawn Mendes",
-"Justin Bieber",
-"The Weeknd",
-"Drake"
-],
-"answer": "Justin Bieber",
-"d": "easy"
-},
-{
-"q": "Which UK band, fronted by Alex Turner, released 'I Bet You Look Good on the Dancefloor' in 2005?",
-"options": [
-"Arctic Monkeys",
-"The Libertines",
-"Kaiser Chiefs",
-"Franz Ferdinand"
-],
-"answer": "Arctic Monkeys",
-"d": "easy"
-},
-{
-"q": "The \"K\" in \"K-Pop\" stands for which word?",
-"options": [
-"Klingon",
-"Korean",
-"Kenyan",
-"Kuwaiti"
-],
-"answer": "Korean",
-"d": "easy"
-},
-{
-"q": "Of which 90s boy band was Justin Timberlake a member?",
-"options": [
-"98 Degrees",
-"*NSYNC",
-"The Beatles",
-"Backstreet Boys"
-],
-"answer": "*NSYNC",
-"d": "easy"
-},
-{
-"q": "What is the name of Adele's 2011 album featuring 'Rolling in the Deep'?",
-"options": [
-"25",
-"30",
-"21",
-"19"
-],
-"answer": "21",
-"d": "easy"
-},
-{
-"q": "Which band recorded the 1990s rock song Smells Like Teen Spirit?",
-"options": [
-"Pearl Jam",
-"The Backstreet Boys",
-"Soundgarden",
-"Nirvana"
-],
-"answer": "Nirvana",
-"d": "easy"
-},
-{
-"q": "Which electronic duo won multiple Grammys for the 2013 album 'Random Access Memories'?",
-"options": [
-"Justice",
-"Disclosure",
-"Daft Punk",
-"The Chemical Brothers"
-],
-"answer": "Daft Punk",
-"d": "easy"
-},
-{
-"q": "Which group recorded the disco anthem 'Stayin' Alive' from the 'Saturday Night Fever' soundtrack?",
-"options": [
-"Village People",
-"Bee Gees",
-"ABBA",
-"Chic"
-],
-"answer": "Bee Gees",
-"d": "easy"
-},
-{
-"q": "Which British rock band, recorded the hits Bohemian Rhapsody, We Will Rock You and We Are The Champions?",
-"options": [
-"Spinal Tap",
-"Led Zeppelin",
-"The Doors",
-"Queen"
-],
-"answer": "Queen",
-"d": "easy"
-},
-{
-"q": "What was Britney Spears' debut single?",
-"options": [
-"...Baby One More Time",
-"(You Drive Me) Crazy",
-"Oops!... I Did It Again",
-"Sometimes"
-],
-"answer": "...Baby One More Time",
-"d": "easy"
-},
-{
-"q": "Which Australian musician recorded the 2011 global hit 'Somebody That I Used to Know'?",
-"options": [
-"Flume",
-"Gotye",
-"Matt Corby",
-"Chet Faker"
-],
-"answer": "Gotye",
-"d": "easy"
-},
-{
-"q": "What bird song has been covered by artists like Josephine Baker, Frank Sinatra, Judy Garland, Liza Minnelli, Dean Martin, Joe Cocker?",
-"options": [
-"Bye Bye Bluebird",
-"Bye Bye Big Bird",
-"Bye Bye Mockingbird",
-"Bye Bye Blackbird"
-],
-"answer": "Bye Bye Blackbird",
-"d": "medium"
-},
-{
-"q": "What was Elvis Presleys favorite sandwich?",
-"options": [
-"Deep-fried peanut butter and jelly sandwich",
-"Peanut butter and banana sandwich",
-"Fried bologna sandwich",
-"Peanut butter and honey sandwich"
-],
-"answer": "Peanut butter and banana sandwich",
-"d": "medium"
-},
-{
-"q": "Which song previously recorded by Elvis Presley was covered by UB40 with a reggae beat?",
-"options": [
-"Jailhouse Rock",
-"Wooden Heart",
-"In the Ghetto",
-"Can't Help Falling in Love"
-],
-"answer": "Can't Help Falling in Love",
-"d": "medium"
-},
-{
-"q": "We Need a Little Christmas is a rousing show stopping number from which Jerry Herman play?",
-"options": [
-"La Cage aux Folles",
-"Mame",
-"Cats",
-"Hello, Dolly!"
-],
-"answer": "Mame",
-"d": "medium"
-},
-{
-"q": "Which Australian band released 'Sweet Disposition' in 2008?",
-"options": [
-"Empire of the Sun",
-"The Temper Trap",
-"Cut Copy",
-"The Presets"
-],
-"answer": "The Temper Trap",
-"d": "medium"
-},
-{
-"q": "Which Canadian band released 'How You Remind Me' in 2001?",
-"options": [
-"Nickelback",
-"3 Doors Down",
-"Default",
-"Creed"
-],
-"answer": "Nickelback",
-"d": "medium"
-},
-{
-"q": "Which of these country artists released the song 25 minutes to Go in 1968?",
-"options": [
-"George Jones",
-"Boxcar Willie",
-"Johnny Cash",
-"Waylon Jennings"
-],
-"answer": "Johnny Cash",
-"d": "medium"
-},
-{
-"q": "Which US indie rock band released the 2004 debut 'Funeral' and won a Grammy for 'The Suburbs'?",
-"options": [
-"Arcade Fire",
-"Vampire Weekend",
-"The Killers",
-"Modest Mouse"
-],
-"answer": "Arcade Fire",
-"d": "medium"
-},
-{
-"q": "What is Brian May's guitar called?",
-"options": [
-"Blue Special",
-"Green Special",
-"Red Special",
-"Rainbow Special"
-],
-"answer": "Red Special",
-"d": "medium"
-},
-{
-"q": "What is the real name of American rapper Pitbull?",
-"options": [
-"Armando P\u00e9rez Rodr\u00edguez",
-"Armando Christian P\u00e9rez",
-"Se\u00f1or Worldwide",
-"Carlos Armando D\u00edaz"
-],
-"answer": "Armando Christian P\u00e9rez",
-"d": "medium"
-},
-{
-"q": "Who was the winner of the 1987 Grammy Award for Record of the Year?",
-"options": [
-"Robert Palmer for Addicted to Love",
-"Peter Gabriel for Sledgehammer",
-"Steve Winwood for Higher Love",
-"Weird Al Yankovic for Eat It"
-],
-"answer": "Steve Winwood for Higher Love",
-"d": "medium"
-},
-{
-"q": "'The Safety Dance' was the biggest hit single for which Canadian act?",
-"options": [
-"Trans-X",
-"Loverboy",
-"Nickelback",
-"Men Without Hats"
-],
-"answer": "Men Without Hats",
-"d": "medium"
-},
-{
-"q": "What rock group is named after a gym teacher who taught at the original band members' high school?",
-"options": [
-"Pink Floyd",
-"Coach & The Whistles",
-"The Byrds",
-"Lynyrd Skynyrd"
-],
-"answer": "Lynyrd Skynyrd",
-"d": "medium"
-},
-{
-"q": "Which US singer released the 1994 album 'Grace', featuring a cover of 'Hallelujah'?",
-"options": [
-"Jeff Buckley",
-"Rufus Wainwright",
-"John Cale",
-"Chris Cornell"
-],
-"answer": "Jeff Buckley",
-"d": "medium"
-},
-{
-"q": "Which Daft Punk album is the song \"Harder, Better, Faster, Stronger\" from?",
-"options": [
-"Homework",
-"Human After All",
-"Discovery",
-"Random Access Memories"
-],
-"answer": "Discovery",
-"d": "medium"
-},
-{
-"q": "Which album was released by Kanye West in 2013?",
-"options": [
-"Yeezus",
-"My Beautiful Dark Twisted Fantasy",
-"808s & Heartbreak",
-"The Life of Pablo"
-],
-"answer": "Yeezus",
-"d": "medium"
-},
-{
-"q": "Which 1970s band released the concept album 'The Wall'?",
-"options": [
-"Genesis",
-"The Who",
-"Rush",
-"Pink Floyd"
-],
-"answer": "Pink Floyd",
-"d": "medium"
-},
-{
-"q": "What caused Jim Morrisons death according to the official report?",
-"options": [
-"Drug Overdose",
-"Shark Attack",
-"Respiratory Failure",
-"Heart Failure"
-],
-"answer": "Heart Failure",
-"d": "medium"
-},
-{
-"q": "La Fenice opera house is in which Italian city?",
-"options": [
-"Naples",
-"Venice",
-"Milan",
-"Atlantis"
-],
-"answer": "Venice",
-"d": "medium"
-},
-{
-"q": "Which 1979 track by The Sugarhill Gang is often cited as the first commercially successful rap single?",
-"options": [
-"Planet Rock",
-"Walk This Way",
-"The Message",
-"Rapper's Delight"
-],
-"answer": "Rapper's Delight",
-"d": "medium"
-},
-{
-"q": "Which Canadian singer released 'Complicated' in 2002?",
-"options": [
-"Nelly Furtado",
-"Shania Twain",
-"Avril Lavigne",
-"Alanis Morissette"
-],
-"answer": "Avril Lavigne",
-"d": "medium"
-},
-{
-"q": "What was the last song Elvis Presley ever sang in concert before his untimely death?",
-"options": [
-"Unchained Melody",
-"Can't Help Falling In Love",
-"Viva Las Vegas",
-"Are You Lonesome Tonight?"
-],
-"answer": "Can't Help Falling In Love",
-"d": "medium"
-},
-{
-"q": "Which band or artist recorded the 1970s classic rock song Stranglehold?",
-"options": [
-"Foghat",
-"The Carpenters",
-"Ted Nugent",
-"Bad Company"
-],
-"answer": "Ted Nugent",
-"d": "medium"
-},
-{
-"q": "Which country artist released the 2018 crossover hit 'Old Town Road' before its Lil Nas X version? (Trick: who originally released 'Old Town Road' in 2018?)",
-"options": [
-"Billy Ray Cyrus",
-"Kane Brown",
-"Lil Nas X",
-"Sam Hunt"
-],
-"answer": "Lil Nas X",
-"d": "medium"
-},
-{
-"q": "What year was Red Hot Chill Pepper's album \"Californication\" released?",
-"options": [
-"1999",
-"1991",
-"1998",
-"2000"
-],
-"answer": "1999",
-"d": "medium"
-},
-{
-"q": "Sublime originally consisted of how many band members?",
-"options": [
-"9",
-"3",
-"4",
-"2"
-],
-"answer": "3",
-"d": "medium"
-},
-{
-"q": "What singer is responsible for supplying us with Here and Now, one of the biggest wedding songs of the 1990s?",
-"options": [
-"Isaac Hayes",
-"Teddy Pendergrass",
-"Luther Vandross",
-"Barry White"
-],
-"answer": "Luther Vandross",
-"d": "medium"
-},
-{
-"q": "Which Beatles song famously featured a sitar, a first for Western pop?",
-"options": [
-"Norwegian Wood",
-"Love You To",
-"Within You Without You",
-"Tomorrow Never Knows"
-],
-"answer": "Norwegian Wood",
-"d": "medium"
-},
-{
-"q": "Who is the lead singer of Silverchair?",
-"options": [
-"Daniel Johns",
-"Chris Joannou",
-"George Costanza",
-"Ben Gillies"
-],
-"answer": "Daniel Johns",
-"d": "medium"
-},
-{
-"q": "Which Toronto landmark was featured on the cover art of Canadian rapper Drake's 2016 album \"Views\"?",
-"options": [
-"Union Station",
-"CN Tower",
-"Rogers Centre",
-"Casa Loma"
-],
-"answer": "CN Tower",
-"d": "medium"
-},
-{
-"q": "Some people may call this gentleman a Space Cowboy or Gangster of Love. In the song The Joker who says I really love your peaches want to shake your tree?",
-"options": [
-"Billie",
-"Vincent",
-"Jimmie Mack",
-"Maurice"
-],
-"answer": "Maurice",
-"d": "medium"
-},
-{
-"q": "What is Fergie's debut album called?",
-"options": [
-"Double Dutchess",
-"The Dutchess",
-"Glamorous",
-"Fergalicious"
-],
-"answer": "The Dutchess",
-"d": "medium"
-},
-{
-"q": "Who recorded Never Mind, the #17 album on Rolling Stone magazines list of the 500 Greatest Albums of All Time?",
-"options": [
-"Soundgarden",
-"Nirvana",
-"Menudo",
-"Pearl Jam"
-],
-"answer": "Nirvana",
-"d": "medium"
-},
-{
-"q": "The \"British Invasion\" was a cultural phenomenon in music where British boy bands became popular in the USA in what decade?",
-"options": [
-"60's",
-"50's",
-"70's",
-"1800's"
-],
-"answer": "60's",
-"d": "medium"
-},
-{
-"q": "What is Justin Bieber's debut Album?",
-"options": [
-"Journals",
-"My World 2.0",
-"Believe",
-"Purpose"
-],
-"answer": "My World 2.0",
-"d": "medium"
-},
-{
-"q": "The Who's eponymous line, \"Teenage Wasteland\", appears in which of their songs?",
-"options": [
-"Pinball Wizard",
-"Magic Bus",
-"Baba O' Riley",
-"Won't Get Fooled Again"
-],
-"answer": "Baba O' Riley",
-"d": "medium"
-},
-{
-"q": "Which one of these songs did the group \"Men At Work\" NOT make?",
-"options": [
-"It's a Mistake",
-"Down Under",
-"Who Can It Be Now?",
-"Safety Dance"
-],
-"answer": "Safety Dance",
-"d": "medium"
-},
-{
-"q": "\"The Singing Cowboy\" Gene Autry is credited with the first recording for all but which classic Christmas jingle?",
-"options": [
-"Frosty the Snowman",
-"White Christmas",
-"Peter Cottontail",
-"Rudolph the Red-Nosed Reindeer"
-],
-"answer": "White Christmas",
-"d": "medium"
-},
-{
-"q": "Which 1960s music festival held in 1969 became a symbol of the counterculture?",
-"options": [
-"Woodstock",
-"Isle of Wight",
-"Altamont",
-"Monterey Pop"
-],
-"answer": "Woodstock",
-"d": "medium"
-},
-{
-"q": "In Prokofiev's 'Peter and the Wolf', the wolf itself is represented by a trio of which musical instrument?",
-"options": [
-"Cello",
-"Clarinet",
-"French horn",
-"Oboe"
-],
-"answer": "French horn",
-"d": "medium"
-},
-{
-"q": "Which of these Deep Purple lead vocalists founded Whitesnake in 1977?",
-"options": [
-"Ian Gillan",
-"Ozzy Osbourne",
-"David Coverdale",
-"Glenn Hughes"
-],
-"answer": "David Coverdale",
-"d": "medium"
-},
-{
-"q": "What artist is famous for the 1979 song The Devil Went Down To Georgia?",
-"options": [
-"Merle Haggard",
-"Charlie Daniels",
-"Marshall Tucker Band",
-"The Devil himself"
-],
-"answer": "Charlie Daniels",
-"d": "medium"
-},
-{
-"q": "Who was the most streamed artist on Spotify in 2019?",
-"options": [
-"Post Malone",
-"Billie Eilish",
-"Drake",
-"Ariana Grande"
-],
-"answer": "Post Malone",
-"d": "medium"
-},
-{
-"q": "Which US rock band is fronted by Anthony Kiedis and includes bassist Flea?",
-"options": [
-"Red Hot Chili Peppers",
-"Faith No More",
-"Jane's Addiction",
-"Rage Against the Machine"
-],
-"answer": "Red Hot Chili Peppers",
-"d": "medium"
-},
-{
-"q": "What do you call a person whose profession is to make string instruments?",
-"options": [
-"Cooper",
-"Fletcher",
-"Stringer",
-"Luthier"
-],
-"answer": "Luthier",
-"d": "medium"
-},
-{
-"q": "What is the name of the rapper who gave Bow Wow his name?",
-"options": [
-"Dr. Dre",
-"Jermaine Dupri",
-"Snoop Dogg",
-"MC Hammer"
-],
-"answer": "Snoop Dogg",
-"d": "medium"
-},
-{
-"q": "Which band released the 1979 album 'London Calling'?",
-"options": [
-"The Jam",
-"The Ramones",
-"The Stranglers",
-"The Clash"
-],
-"answer": "The Clash",
-"d": "medium"
-},
-{
-"q": "Which of these albums by the Stone Temple Pilots includes the song Plush?",
-"options": [
-"Their Greatest Hits",
-"Core",
-"No. 4",
-"Purple"
-],
-"answer": "Core",
-"d": "medium"
-},
-{
-"q": "Which Australian singer released 'Adore' in 2016?",
-"options": [
-"Tones and I",
-"Meg Mac",
-"Vera Blue",
-"Amy Shark"
-],
-"answer": "Amy Shark",
-"d": "medium"
-},
-{
-"q": "What popular band released the song Hella Good in 2002?",
-"options": [
-"Garbage",
-"Limp Bizkit",
-"No Doubt",
-"Blondie"
-],
-"answer": "No Doubt",
-"d": "medium"
-},
-{
-"q": "Who was the lead singer of The Darkness from 2000-2006?",
-"options": [
-"Justin Hawkins",
-"Frankie Poullain",
-"Meat Loaf",
-"Dan Hawkins"
-],
-"answer": "Justin Hawkins",
-"d": "medium"
-},
-{
-"q": "What popular British boy band covered Bee Gees 1977 song How Deep Is Your Love in 1996?",
-"options": [
-"Take That",
-"Westlife",
-"Boyzone",
-"East 17"
-],
-"answer": "Take That",
-"d": "medium"
-},
-{
-"q": "What was Bon Iver's debut album released in 2007?",
-"options": [
-"22, A Million",
-"Bon Iver, Bon Iver",
-"Blood Bank EP",
-"For Emma, Forever Ago"
-],
-"answer": "For Emma, Forever Ago",
-"d": "medium"
-},
-{
-"q": "Come Dancing was a big hit for which group in 1983?",
-"options": [
-"The Who",
-"The Kinks",
-"Madness",
-"The Rolling Stones"
-],
-"answer": "The Kinks",
-"d": "medium"
-},
-{
-"q": "Which one of these #1 hits was the first to reach the #1 spot on the Billboard Hot 100?",
-"options": [
-"Seal - Kiss from a Rose",
-"Los Del Rio - Macarena",
-"TLC - Creep",
-"Sir Mix-A-Lot - Baby Got Back"
-],
-"answer": "Sir Mix-A-Lot - Baby Got Back",
-"d": "medium"
-},
-{
-"q": "What 1985 hit song by Starship was awarded in 2004 The #1 Most Awesomely Bad Song Ever by Blender magazine?",
-"options": [
-"Sara",
-"White Rabbit",
-"Nothing's Gonna Stop Us Now",
-"We Built This City"
-],
-"answer": "We Built This City",
-"d": "medium"
-},
-{
-"q": "Which one of these Pink Floyd albums were also a movie?",
-"options": [
-"The Dark Side of the Moon",
-"Animals",
-"The Wall",
-"Wish You Were Here"
-],
-"answer": "The Wall",
-"d": "medium"
-},
-{
-"q": "The Red Hot Chili Pepper song \"Give It Away\" is from what album?",
-"options": [
-"Californication",
-"By the Way",
-"Abbey Road",
-"Blood Sugar Sex Magik"
-],
-"answer": "Blood Sugar Sex Magik",
-"d": "medium"
-},
-{
-"q": "What is the missing word from this line of the song \u2018Beautiful Liar\u2019 by Beyonce and Shakira: \u2018Let\u2019s not kill the \u2026, let\u2019s not start the fight\u2019?",
-"options": [
-"Karma",
-"Passion",
-"Drama",
-"Llama"
-],
-"answer": "Karma",
-"d": "medium"
-},
-{
-"q": "Which Motown group recorded 'Reach Out I'll Be There' in 1966?",
-"options": [
-"The Isley Brothers",
-"The Spinners",
-"The Temptations",
-"The Four Tops"
-],
-"answer": "The Four Tops",
-"d": "medium"
-},
-{
-"q": "Who originally released the song Blue Monday in 1983?",
-"options": [
-"Bananarama",
-"Depeche Mode",
-"Joy Division",
-"New Order"
-],
-"answer": "New Order",
-"d": "medium"
-},
-{
-"q": "What was Radiohead's first album?",
-"options": [
-"Pablo Honey",
-"The Bends",
-"Amnesiac",
-"Kid A"
-],
-"answer": "Pablo Honey",
-"d": "medium"
-},
-{
-"q": "Which girl group featuring Beyonce released 'Say My Name' in 1999?",
-"options": [
-"SWV",
-"TLC",
-"En Vogue",
-"Destiny's Child"
-],
-"answer": "Destiny's Child",
-"d": "medium"
-},
-{
-"q": "According to a Beatles song, who kept her face in a jar by the door?",
-"options": [
-"Lady Madonna",
-"Eleanor Rigby",
-"Loretta Martin",
-"Molly Jones"
-],
-"answer": "Eleanor Rigby",
-"d": "medium"
-},
-{
-"q": "What is the name of the album released in 2014 by American band Maroon 5?",
-"options": [
-"IV",
-"Maroon 6",
-"III",
-"V"
-],
-"answer": "V",
-"d": "medium"
-},
-{
-"q": "When did Bon Scott, the lead vocalist of AC/DC, die?",
-"options": [
-"15 August 1978",
-"19 February 1980",
-"31 February 1980",
-"19 February 1979"
-],
-"answer": "19 February 1980",
-"d": "medium"
-},
-{
-"q": "Which of these was not among the presents Elvis Presley used to give to his friends and associates?",
-"options": [
-"Cash",
-"Cadillacs",
-"Guitars",
-"Jewelry"
-],
-"answer": "Guitars",
-"d": "medium"
-},
-{
-"q": "Which band or artist recorded the 1970s song Suffragette City?",
-"options": [
-"Spinal Tap",
-"Lou Reed",
-"David Bowie",
-"Iggy Pop"
-],
-"answer": "David Bowie",
-"d": "medium"
-},
-{
-"q": "Which band released the 1990s classic rock song Man in the Box?",
-"options": [
-"Soundgarden",
-"Spinal Tap",
-"Pearl Jam",
-"Alice in Chains"
-],
-"answer": "Alice in Chains",
-"d": "medium"
-},
-{
-"q": "Which band, fronted by Boy George, had the 1982 hit 'Do You Really Want to Hurt Me'?",
-"options": [
-"Wham!",
-"Bronski Beat",
-"Frankie Goes to Hollywood",
-"Culture Club"
-],
-"answer": "Culture Club",
-"d": "medium"
-},
-{
-"q": "In Kendrick Lamar's 2012 album, \"Good Kid, M.A.A.D City\", the album's story takes place in which city?",
-"options": [
-"Long Beach",
-"Los Angeles",
-"Miami",
-"Compton"
-],
-"answer": "Compton",
-"d": "medium"
-},
-{
-"q": "Which Radiohead album was the first to debut at Number 1 in the US chart?",
-"options": [
-"Amnesiac",
-"Kid A",
-"Hail to the Thief",
-"In Rainbows"
-],
-"answer": "Kid A",
-"d": "medium"
-},
-{
-"q": "Who was the lead singer and frontman of rock band R.E.M?",
-"options": [
-"Chris Martin",
-"Ozzy Osbourne",
-"Michael Stipe",
-"Thom Yorke"
-],
-"answer": "Michael Stipe",
-"d": "medium"
-},
-{
-"q": "What's Going On is the #6 album on Rolling Stone magazines list of the 500 Greatest Albums of all Time. What artist recorded this album?",
-"options": [
-"Marvin Gaye",
-"Stevie Wonder",
-"Barry White",
-"Otis Redding"
-],
-"answer": "Marvin Gaye",
-"d": "medium"
-},
-{
-"q": "Which of these is NOT considered a woodwind instrument?",
-"options": [
-"Oboe",
-"Bassoon",
-"Trombone",
-"Clarinet"
-],
-"answer": "Trombone",
-"d": "medium"
-},
-{
-"q": "What celebrated female artist released the song True Blue in 1986?",
-"options": [
-"Dolly Parton",
-"Cyndi Lauper",
-"Madonna",
-"Cher"
-],
-"answer": "Madonna",
-"d": "medium"
-},
-{
-"q": "Which US band released 'Californication' in 1999?",
-"options": [
-"Green Day",
-"Pearl Jam",
-"Foo Fighters",
-"Red Hot Chili Peppers"
-],
-"answer": "Red Hot Chili Peppers",
-"d": "medium"
-},
-{
-"q": "What kind of instrument is a \"Mandolin\"?",
-"options": [
-"String",
-"Woodwind",
-"Brass",
-"Percussion"
-],
-"answer": "String",
-"d": "medium"
-},
-{
-"q": "Which US singer released the 1983 album 'She's So Unusual', featuring 'Girls Just Want to Have Fun'?",
-"options": [
-"Cyndi Lauper",
-"Belinda Carlisle",
-"Pat Benatar",
-"Madonna"
-],
-"answer": "Cyndi Lauper",
-"d": "medium"
-},
-{
-"q": "Waltz is defined as a piece of music with how many beats to the measure (bar)?",
-"options": [
-"12",
-"4",
-"2",
-"3"
-],
-"answer": "3",
-"d": "medium"
-},
-{
-"q": "What band released the albums Killers, Somewhere in Time and A Matter of Life and Death?",
-"options": [
-"Iron Butterfly",
-"Saxon",
-"Iron Maiden",
-"Judas Priest"
-],
-"answer": "Iron Maiden",
-"d": "medium"
-},
-{
-"q": "Saul Hudson (Slash) of the band Guns N' Roses is known for playing what type of guitar?",
-"options": [
-"Les Paul Standard",
-"Gibson SG",
-"Gibson Les Paul Custom",
-"Guitar Hero controller"
-],
-"answer": "Les Paul Standard",
-"d": "medium"
-},
-{
-"q": "Who performed the hit single 'Call Me' for the 1980 film 'American Gigolo'?",
-"options": [
-"Tina Turner",
-"Blondie",
-"Madonna",
-"Pat Benatar"
-],
-"answer": "Blondie",
-"d": "medium"
-},
-{
-"q": "Who is the lead singer of the Smashing Pumpkins?",
-"options": [
-"Eddie Vedder",
-"Brett Scallions",
-"Chino Moreno",
-"Billy Corgan"
-],
-"answer": "Billy Corgan",
-"d": "medium"
-},
-{
-"q": "According to the lyrics and title of a George Thorogood song, he would have one bourbon, one scotch and what else?",
-"options": [
-"One beer",
-"One lemonade",
-"One shot",
-"One whiskey"
-],
-"answer": "One beer",
-"d": "medium"
-},
-{
-"q": "Pink Floyd made this song for their previous lead singer Syd Barrett.",
-"options": [
-"Money",
-"Comfortably Numb",
-"Shine On You Crazy Diamond",
-"Careful With That Axe, Eugene"
-],
-"answer": "Shine On You Crazy Diamond",
-"d": "medium"
-},
-{
-"q": "Which 80s band is fronted by singer/guitarist Robert Smith?",
-"options": [
-"Echo & the Bunnymen",
-"New Order",
-"The Smiths",
-"The Cure"
-],
-"answer": "The Cure",
-"d": "medium"
-},
-{
-"q": "What song by Andy Gibb topped the charts in 1977?",
-"options": [
-"I Just Want to Be Your Everything",
-"(Love Is) Thicker Than Water",
-"Stayin' Alive",
-"Shadow Dancing"
-],
-"answer": "I Just Want to Be Your Everything",
-"d": "medium"
-},
-{
-"q": "Which one hit wonder had a huge hit in 1984 with the song Somebodys Watching Me?",
-"options": [
-"Nena",
-"Weird Al Yankovic",
-"Ollie and Jerry",
-"Rockwell"
-],
-"answer": "Rockwell",
-"d": "medium"
-},
-{
-"q": "Which Australian electronic producer released the 2012 self-titled debut with the hit 'Holdin On'?",
-"options": [
-"Peking Duk",
-"Flume",
-"Rufus Du Sol",
-"Alison Wonderland"
-],
-"answer": "Flume",
-"d": "medium"
-},
-{
-"q": "What was the first name for the band that John Lennon formed in mid-1957 before his Beatles days?",
-"options": [
-"The Nowhere Men",
-"The Silver Beetles",
-"The Quarrymen",
-"Johnny and the Moondogs"
-],
-"answer": "The Quarrymen",
-"d": "medium"
-},
-{
-"q": "In what play did Audrey demand, Feed me Seymour?",
-"options": [
-"Little Shop of Horrors",
-"Sweeney Todd",
-"The Sound of Music",
-"The Rocky Horror Show"
-],
-"answer": "Little Shop of Horrors",
-"d": "medium"
-},
-{
-"q": "Which one of these rappers is NOT a member of the rap group Wu-Tang Clan?",
-"options": [
-"GZA",
-"Dr.Dre",
-"Ol' Dirty Bastard",
-"Method Man"
-],
-"answer": "Dr.Dre",
-"d": "medium"
-},
-{
-"q": "The four strings on a violin are the G string, D string, A string, and...",
-"options": [
-"B string",
-"G-string",
-"C string",
-"E string"
-],
-"answer": "E string",
-"d": "medium"
-},
-{
-"q": "Which country subgenre, popular in the 2010s, emphasises pickup trucks, parties and dirt roads?",
-"options": [
-"Western swing",
-"Bro-country",
-"Outlaw country",
-"Honky-tonk"
-],
-"answer": "Bro-country",
-"d": "medium"
-},
-{
-"q": "Who gave us the song Rock N Me, which tells about different US states?",
-"options": [
-"Boston",
-"The Doobie Brothers",
-"Steve Miller Band",
-"The Village People"
-],
-"answer": "Steve Miller Band",
-"d": "medium"
-},
-{
-"q": "Which Wu-Tang Clan member released the 1995 solo album 'Only Built 4 Cuban Linx...'?",
-"options": [
-"Method Man",
-"GZA",
-"Ghostface Killah",
-"Raekwon"
-],
-"answer": "Raekwon",
-"d": "hard"
-},
-{
-"q": "Which two singers had a hit with The Whiskey Ain't Workin No More?",
-"options": [
-"Simon and Garfunkel",
-"George Jones and Merle Haggard",
-"Brooks and Dunn",
-"Travis Tritt and Marty Stuart"
-],
-"answer": "Travis Tritt and Marty Stuart",
-"d": "hard"
-},
-{
-"q": "What song by punk group Valencia opens with the following lines: Its amazing how quick We could turn an argument Into a fight for what is right?",
-"options": [
-"Capital H",
-"What Are You Doing, Man? That's Weird!",
-"Away We Go",
-"Three Thousand Miles"
-],
-"answer": "What Are You Doing, Man? That's Weird!",
-"d": "hard"
-},
-{
-"q": "Which INXS song, released in 1988, is one of their most enduring ballads?",
-"options": [
-"New Sensation",
-"Never Tear Us Apart",
-"Original Sin",
-"Need You Tonight"
-],
-"answer": "Never Tear Us Apart",
-"d": "hard"
-},
-{
-"q": "Which four outlaw country artists formed the supergroup 'The Highwaymen'?",
-"options": [
-"Nelson, Jennings, Jones, Robbins",
-"Cash, Kristofferson, Rogers, Jennings",
-"Cash, Haggard, Jones, Nelson",
-"Cash, Nelson, Jennings, Kristofferson"
-],
-"answer": "Cash, Nelson, Jennings, Kristofferson",
-"d": "hard"
-},
-{
-"q": "Which country does the power metal band \"Sabaton\" originate from?",
-"options": [
-"Sweden",
-"Germany",
-"Finland",
-"United States"
-],
-"answer": "Sweden",
-"d": "hard"
-},
-{
-"q": "What is the name of this RB B band from the 70s that had a huge hit, titled Sideshow?",
-"options": [
-"Blue Magic",
-"Blue Man Group",
-"The Delfonics",
-"Blue Notes"
-],
-"answer": "Blue Magic",
-"d": "hard"
-},
-{
-"q": "Which Australian solo artist, known for live looping, released 'Jungle' in 2016?",
-"options": [
-"Dean Lewis",
-"Tash Sultana",
-"Matt Corby",
-"Vance Joy"
-],
-"answer": "Tash Sultana",
-"d": "hard"
-},
-{
-"q": "\"All the Boys\" by Panic! At the Disco was released as a bonus track on what album?",
-"options": [
-"Vices & Virtues",
-"Death Of A Bachelor",
-"Songs For The Emo Kids",
-"Too Weird To Live, Too Rare To Die!"
-],
-"answer": "Too Weird To Live, Too Rare To Die!",
-"d": "hard"
-},
-{
-"q": "Which Death Grips album is the only one to feature a band member?",
-"options": [
-"The Money Store",
-"No Love Deep Web",
-"Bottomless Pit",
-"Year of the Snitch"
-],
-"answer": "No Love Deep Web",
-"d": "hard"
-},
-{
-"q": "What was the first Motown song to land in the top 3 of the charts?",
-"options": [
-"Money (That's What I Want) - Barrett Strong",
-"Please Mr. Postman - The Marvelettes",
-"Shop Around - The Miracles",
-"My Girl - The Temptations"
-],
-"answer": "Money (That's What I Want) - Barrett Strong",
-"d": "hard"
-},
-{
-"q": "Which Armenian-American band released the 2005 albums 'Mezmerize' and 'Hypnotize'?",
-"options": [
-"System of a Down",
-"Deftones",
-"Serj Tankian solo",
-"Disturbed"
-],
-"answer": "System of a Down",
-"d": "hard"
-}
-]
+ "license": "CC BY-SA 4.0 for imported questions (share-alike applies to the compiled bank); VenuePlay original content for VenuePlay-authored questions.",
+ "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+ "sources": [
+  {
+   "name": "Open Trivia Database",
+   "url": "https://opentdb.com",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 4320
+  },
+  {
+   "name": "OpenTriviaQA",
+   "url": "https://github.com/uberspot/OpenTriviaQA",
+   "license": "CC BY-SA 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+   "commercialUse": "permitted with attribution and share-alike",
+   "attribution": "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+   "questionCount": 6310
+  },
+  {
+   "name": "VenuePlay original",
+   "url": "",
+   "license": "VenuePlay original content",
+   "licenseUrl": "",
+   "commercialUse": "owned by VenuePlay; no third-party attribution required",
+   "attribution": "Australian pub-culture questions authored by VenuePlay.",
+   "questionCount": 76
+  }
+ ],
+ "attributions": [
+  "Trivia questions from the Open Trivia Database (opentdb.com), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0).",
+  "Trivia questions from OpenTriviaQA (github.com/uberspot/OpenTriviaQA), used under the Creative Commons Attribution-ShareAlike 4.0 International Licence (CC BY-SA 4.0)."
+ ],
+ "shareAlikeNote": "Because this bank mixes CC BY-SA 4.0 material, the compiled question collection is distributed under CC BY-SA 4.0. Display the attribution strings above wherever the trivia library is used.",
+ "category": "Music",
+ "count": 444,
+ "questions": [
+  {
+   "q": "Which singer was featured in Jack Ü (Skrillex & Diplo)'s 2015 song 'Where Are Ü Now'?",
+   "options": [
+    "Ellie Goulding",
+    "Selena Gomez",
+    "The Weeknd",
+    "Justin Bieber"
+   ],
+   "answer": "Justin Bieber",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian band recorded 'Down Under' in 1981?",
+   "options": [
+    "Men at Work",
+    "Air Supply",
+    "Icehouse",
+    "Little River Band"
+   ],
+   "answer": "Men at Work",
+   "d": "easy"
+  },
+  {
+   "q": "Which band, fronted by Amy Lee, released 'Bring Me to Life' in 2003?",
+   "options": [
+    "Lacuna Coil",
+    "Evanescence",
+    "Within Temptation",
+    "Flyleaf"
+   ],
+   "answer": "Evanescence",
+   "d": "easy"
+  },
+  {
+   "q": "Which metal-adjacent band recorded 'Livin' on a Prayer' in 1986?",
+   "options": [
+    "Bon Jovi",
+    "Whitesnake",
+    "Europe",
+    "Def Leppard"
+   ],
+   "answer": "Bon Jovi",
+   "d": "easy"
+  },
+  {
+   "q": "Which one hit wonder had a huge hit in 1984 with the song Somebodys Watching Me?",
+   "options": [
+    "Nena",
+    "Weird Al Yankovic",
+    "Ollie and Jerry",
+    "Rockwell"
+   ],
+   "answer": "Rockwell",
+   "d": "medium"
+  },
+  {
+   "q": "In Kendrick Lamar's 2012 album, \"Good Kid, M.A.A.D City\", the album's story takes place in which city?",
+   "options": [
+    "Long Beach",
+    "Los Angeles",
+    "Miami",
+    "Compton"
+   ],
+   "answer": "Compton",
+   "d": "medium"
+  },
+  {
+   "q": "Which US singer released 'Toxic' in 2003?",
+   "options": [
+    "Christina Aguilera",
+    "Pink",
+    "Britney Spears",
+    "Kylie Minogue"
+   ],
+   "answer": "Britney Spears",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1979 track by The Sugarhill Gang is often cited as the first commercially successful rap single?",
+   "options": [
+    "Planet Rock",
+    "Walk This Way",
+    "The Message",
+    "Rapper's Delight"
+   ],
+   "answer": "Rapper's Delight",
+   "d": "medium"
+  },
+  {
+   "q": "What kind of instrument is a \"Mandolin\"?",
+   "options": [
+    "String",
+    "Woodwind",
+    "Brass",
+    "Percussion"
+   ],
+   "answer": "String",
+   "d": "medium"
+  },
+  {
+   "q": "The rock band Silverchair formed in which Australian city?",
+   "options": [
+    "Darwin",
+    "Hobart",
+    "Perth",
+    "Newcastle"
+   ],
+   "answer": "Newcastle",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian rock band recorded 'Highway to Hell'?",
+   "options": [
+    "Rose Tattoo",
+    "AC/DC",
+    "The Angels",
+    "Cold Chisel"
+   ],
+   "answer": "AC/DC",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s singer was born Madonna Louise Ciccone?",
+   "options": [
+    "Cher",
+    "Debbie Harry",
+    "Madonna",
+    "Cyndi Lauper"
+   ],
+   "answer": "Madonna",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s film trilogy featured a flux capacitor?",
+   "options": [
+    "Star Wars",
+    "Back to the Future",
+    "Indiana Jones",
+    "Ghostbusters"
+   ],
+   "answer": "Back to the Future",
+   "d": "easy"
+  },
+  {
+   "q": "Which portable music player did Sony launch in 1979 and dominate the 1980s with?",
+   "options": [
+    "The Walkman",
+    "The Discman",
+    "The Boombox",
+    "The Minidisc"
+   ],
+   "answer": "The Walkman",
+   "d": "easy"
+  },
+  {
+   "q": "Australia's national youth radio station, known for supporting new music, is called what?",
+   "options": [
+    "triple j",
+    "Triple M",
+    "Nova",
+    "2Day FM"
+   ],
+   "answer": "triple j",
+   "d": "easy"
+  },
+  {
+   "q": "Which American Southern rock band, formed in Jacksonville, Florida, recorded the song Sweet Home Alabama?",
+   "options": [
+    "The Allman Brothers Band",
+    "Alabama",
+    "Travis Tritt",
+    "Lynard Skynard"
+   ],
+   "answer": "Lynard Skynard",
+   "d": "easy"
+  },
+  {
+   "q": "What was Taylor Swift's 5th album called?",
+   "options": [
+    "Lover",
+    "1989",
+    "Reputation",
+    "Red"
+   ],
+   "answer": "1989",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1997 princess died in a Paris car crash?",
+   "options": [
+    "Princess Grace",
+    "Princess Margaret",
+    "Diana, Princess of Wales",
+    "Princess Anne"
+   ],
+   "answer": "Diana, Princess of Wales",
+   "d": "easy"
+  },
+  {
+   "q": "Who released the 1980s classic rock song Sweet Child of Mine?",
+   "options": [
+    "Poison",
+    "Guns n Roses",
+    "Spinal Tap",
+    "Whitesnake"
+   ],
+   "answer": "Guns n Roses",
+   "d": "easy"
+  },
+  {
+   "q": "Which US artist released 'Old Town Road' and later became known for genre-blending pop and rap?",
+   "options": [
+    "Jack Harlow",
+    "Lil Nas X",
+    "Roddy Ricch",
+    "DaBaby"
+   ],
+   "answer": "Lil Nas X",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1994 film features Andy Dufresne escaping prison?",
+   "options": [
+    "Escape from Alcatraz",
+    "The Green Mile",
+    "Con Air",
+    "The Shawshank Redemption"
+   ],
+   "answer": "The Shawshank Redemption",
+   "d": "easy"
+  },
+  {
+   "q": "Which Beatles song begins 'Yesterday, all my troubles seemed so far away'?",
+   "options": [
+    "In My Life",
+    "Let It Be",
+    "Yesterday",
+    "Hey Jude"
+   ],
+   "answer": "Yesterday",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1985 charity concert raised funds for Ethiopian famine relief?",
+   "options": [
+    "Live Aid",
+    "Comic Relief",
+    "Concert for Bangladesh",
+    "Farm Aid"
+   ],
+   "answer": "Live Aid",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s Australian ad campaign told people to 'Slip, Slop, Slap'?",
+   "options": [
+    "The road safety campaign",
+    "The anti-smoking campaign",
+    "The water saving campaign",
+    "The sun protection campaign"
+   ],
+   "answer": "The sun protection campaign",
+   "d": "easy"
+  },
+  {
+   "q": "Which decade did 'girl power' pop peak with the Spice Girls at the forefront?",
+   "options": [
+    "1980s",
+    "1990s",
+    "2000s",
+    "2010s"
+   ],
+   "answer": "1990s",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian band sang 'Beds Are Burning'?",
+   "options": [
+    "Icehouse",
+    "Men at Work",
+    "Midnight Oil",
+    "INXS"
+   ],
+   "answer": "Midnight Oil",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the Australian youth radio station that runs the Hottest 100?",
+   "options": [
+    "Triple M",
+    "2Day FM",
+    "Triple J",
+    "Nova"
+   ],
+   "answer": "Triple J",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s band released 'Sweet Child O' Mine' in 1987?",
+   "options": [
+    "Poison",
+    "Motley Crue",
+    "Def Leppard",
+    "Guns N' Roses"
+   ],
+   "answer": "Guns N' Roses",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer had a worldwide hit with 'Dance Monkey'?",
+   "options": [
+    "Meg Mac",
+    "Tones and I",
+    "Vera Blue",
+    "Amy Shark"
+   ],
+   "answer": "Tones and I",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these are NOT a Men at Work song?",
+   "options": [
+    "Basket Case",
+    "Be Good Johnny",
+    "Dr. Heckyll and Mr. Jive",
+    "Who Can It Be Now?"
+   ],
+   "answer": "Basket Case",
+   "d": "easy"
+  },
+  {
+   "q": "Which country does the power metal band \"Sabaton\" originate from?",
+   "options": [
+    "Sweden",
+    "Germany",
+    "Finland",
+    "United States"
+   ],
+   "answer": "Sweden",
+   "d": "hard"
+  },
+  {
+   "q": "Which Danish-Norwegian group had a 1997 hit with 'Barbie Girl'?",
+   "options": [
+    "Aqua",
+    "Ace of Base",
+    "Eiffel 65",
+    "Vengaboys"
+   ],
+   "answer": "Aqua",
+   "d": "easy"
+  },
+  {
+   "q": "Which country singer is known as the Man in Black?",
+   "options": [
+    "Johnny Cash",
+    "Merle Haggard",
+    "Waylon Jennings",
+    "Willie Nelson"
+   ],
+   "answer": "Johnny Cash",
+   "d": "easy"
+  },
+  {
+   "q": "The \"K\" in \"K-Pop\" stands for which word?",
+   "options": [
+    "Klingon",
+    "Korean",
+    "Kenyan",
+    "Kuwaiti"
+   ],
+   "answer": "Korean",
+   "d": "easy"
+  },
+  {
+   "q": "In what play did Audrey demand, Feed me Seymour?",
+   "options": [
+    "Little Shop of Horrors",
+    "Sweeney Todd",
+    "The Sound of Music",
+    "The Rocky Horror Show"
+   ],
+   "answer": "Little Shop of Horrors",
+   "d": "medium"
+  },
+  {
+   "q": "Which one of these #1 hits was the first to reach the #1 spot on the Billboard Hot 100?",
+   "options": [
+    "Seal - Kiss from a Rose",
+    "Los Del Rio - Macarena",
+    "TLC - Creep",
+    "Sir Mix-A-Lot - Baby Got Back"
+   ],
+   "answer": "Sir Mix-A-Lot - Baby Got Back",
+   "d": "medium"
+  },
+  {
+   "q": "Which US band released 'Africa' in 1982?",
+   "options": [
+    "Foreigner",
+    "Toto",
+    "Chicago",
+    "Journey"
+   ],
+   "answer": "Toto",
+   "d": "easy"
+  },
+  {
+   "q": "Which duo of Jack and Meg White released 'Seven Nation Army' in 2003?",
+   "options": [
+    "Royal Blood",
+    "The White Stripes",
+    "The Black Keys",
+    "The Kills"
+   ],
+   "answer": "The White Stripes",
+   "d": "easy"
+  },
+  {
+   "q": "Which brothers were the core songwriters and singers of Oasis?",
+   "options": [
+    "The Gallagher brothers",
+    "The Robinson brothers",
+    "The Reid brothers",
+    "The Followill cousins"
+   ],
+   "answer": "The Gallagher brothers",
+   "d": "easy"
+  },
+  {
+   "q": "The four strings on a violin are the G string, D string, A string, and...",
+   "options": [
+    "B string",
+    "G-string",
+    "C string",
+    "E string"
+   ],
+   "answer": "E string",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1990s Disney film features a lion cub and 'Circle of Life'?",
+   "options": [
+    "Aladdin",
+    "The Lion King",
+    "Pocahontas",
+    "Hercules"
+   ],
+   "answer": "The Lion King",
+   "d": "easy"
+  },
+  {
+   "q": "Which girl group released the 1996 debut single 'Wannabe'?",
+   "options": [
+    "All Saints",
+    "Spice Girls",
+    "Destiny's Child",
+    "TLC"
+   ],
+   "answer": "Spice Girls",
+   "d": "easy"
+  },
+  {
+   "q": "Which US duo released 'The Sound of Silence' and 'Bridge over Troubled Water'?",
+   "options": [
+    "Hall & Oates",
+    "The Everly Brothers",
+    "Simon & Garfunkel",
+    "The Righteous Brothers"
+   ],
+   "answer": "Simon & Garfunkel",
+   "d": "easy"
+  },
+  {
+   "q": "Which Canadian band released 'How You Remind Me' in 2001?",
+   "options": [
+    "Nickelback",
+    "3 Doors Down",
+    "Default",
+    "Creed"
+   ],
+   "answer": "Nickelback",
+   "d": "medium"
+  },
+  {
+   "q": "Which UK act won Eurovision 1997 with 'Love Shine a Light'?",
+   "options": [
+    "Bucks Fizz",
+    "Gina G",
+    "Brotherhood of Man",
+    "Katrina and the Waves"
+   ],
+   "answer": "Katrina and the Waves",
+   "d": "easy"
+  },
+  {
+   "q": "Which artist released the best-selling 1997 single 'Candle in the Wind 1997'?",
+   "options": [
+    "Rod Stewart",
+    "George Michael",
+    "Sir Wind-in-the-Candle",
+    "Elton John"
+   ],
+   "answer": "Elton John",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s handheld console was black and white with a green screen?",
+   "options": [
+    "The Atari Lynx",
+    "The Neo Geo Pocket",
+    "The Game Boy",
+    "The Game Gear"
+   ],
+   "answer": "The Game Boy",
+   "d": "easy"
+  },
+  {
+   "q": "Which decade did the Spice Girls achieve their peak fame?",
+   "options": [
+    "2000s",
+    "2010s",
+    "1990s",
+    "1980s"
+   ],
+   "answer": "1990s",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1994 Jim Carrey film featured a pet detective?",
+   "options": [
+    "Batman Forever",
+    "Dumb and Dumber",
+    "Ace Ventura",
+    "The Mask"
+   ],
+   "answer": "Ace Ventura",
+   "d": "easy"
+  },
+  {
+   "q": "Which Daft Punk album is the song \"Harder, Better, Faster, Stronger\" from?",
+   "options": [
+    "Homework",
+    "Human After All",
+    "Discovery",
+    "Random Access Memories"
+   ],
+   "answer": "Discovery",
+   "d": "medium"
+  },
+  {
+   "q": "Which Australian musician recorded the 2011 global hit 'Somebody That I Used to Know'?",
+   "options": [
+    "Flume",
+    "Gotye",
+    "Matt Corby",
+    "Chet Faker"
+   ],
+   "answer": "Gotye",
+   "d": "easy"
+  },
+  {
+   "q": "Which metal band's frontman is Bruce Dickinson, known as the 'Air Raid Siren'?",
+   "options": [
+    "Judas Priest",
+    "Dio",
+    "Iron Maiden",
+    "Saxon"
+   ],
+   "answer": "Iron Maiden",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s toy was a colourful cube puzzle that became a worldwide craze?",
+   "options": [
+    "The Slinky",
+    "The Yo-yo",
+    "The Rubik's Cube",
+    "The Etch A Sketch"
+   ],
+   "answer": "The Rubik's Cube",
+   "d": "easy"
+  },
+  {
+   "q": "Which soul singer released 'Sitting On The Dock of the Bay', recorded shortly before his death in 1967?",
+   "options": [
+    "Percy Sledge",
+    "Wilson Pickett",
+    "Sam Cooke",
+    "Otis Redding"
+   ],
+   "answer": "Otis Redding",
+   "d": "easy"
+  },
+  {
+   "q": "What musician made the song \"F**kin` Perfect\" in 2010?",
+   "options": [
+    "Kelly Clarkson",
+    "Katy Perry",
+    "P!nk",
+    "Christina Aguilera"
+   ],
+   "answer": "P!nk",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian band is known for the song 'Prisoner of Society'?",
+   "options": [
+    "Powderfinger",
+    "Silverchair",
+    "Grinspoon",
+    "The Living End"
+   ],
+   "answer": "The Living End",
+   "d": "easy"
+  },
+  {
+   "q": "Which US city is famous for country music and the Grand Ole Opry?",
+   "options": [
+    "Nashville",
+    "Denver",
+    "Austin",
+    "Memphis"
+   ],
+   "answer": "Nashville",
+   "d": "easy"
+  },
+  {
+   "q": "Who won the first series of Australian Idol in 2003?",
+   "options": [
+    "Shannon Noll",
+    "Anthony Callea",
+    "Damien Leith",
+    "Guy Sebastian"
+   ],
+   "answer": "Guy Sebastian",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer, known for 'Chandelier', often keeps her face hidden in a wig?",
+   "options": [
+    "Amy Shark",
+    "Sia",
+    "Tones and I",
+    "Vera Blue"
+   ],
+   "answer": "Sia",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s Australian film starred Paul Hogan and was a global hit?",
+   "options": [
+    "The Man from Snowy River",
+    "Mad Max 2",
+    "Gallipoli",
+    "Crocodile Dundee"
+   ],
+   "answer": "Crocodile Dundee",
+   "d": "easy"
+  },
+  {
+   "q": "Which British-Irish boy band did Harry Styles rise to fame in?",
+   "options": [
+    "Westlife",
+    "JLS",
+    "The Wanted",
+    "One Direction"
+   ],
+   "answer": "One Direction",
+   "d": "easy"
+  },
+  {
+   "q": "Which album was released by Kanye West in 2013?",
+   "options": [
+    "Yeezus",
+    "My Beautiful Dark Twisted Fantasy",
+    "808s & Heartbreak",
+    "The Life of Pablo"
+   ],
+   "answer": "Yeezus",
+   "d": "medium"
+  },
+  {
+   "q": "What famous band has been called the Fab Four?",
+   "options": [
+    "The Monkees",
+    "The Rolling Stones",
+    "The Beatles",
+    "The Teenage Mutant Ninja Turtles"
+   ],
+   "answer": "The Beatles",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s series followed FBI agents investigating the paranormal?",
+   "options": [
+    "Fringe",
+    "The X-Files",
+    "Twin Peaks",
+    "Millennium"
+   ],
+   "answer": "The X-Files",
+   "d": "easy"
+  },
+  {
+   "q": "What was the first name for the band that John Lennon formed in mid-1957 before his Beatles days?",
+   "options": [
+    "The Nowhere Men",
+    "The Silver Beetles",
+    "The Quarrymen",
+    "Johnny and the Moondogs"
+   ],
+   "answer": "The Quarrymen",
+   "d": "medium"
+  },
+  {
+   "q": "Which genre originated in Jamaica and is associated with Bob Marley?",
+   "options": [
+    "Calypso",
+    "Soca",
+    "Zouk",
+    "Reggae"
+   ],
+   "answer": "Reggae",
+   "d": "easy"
+  },
+  {
+   "q": "How many members were in The Beatles?",
+   "options": [
+    "Three",
+    "Five",
+    "Four",
+    "Six"
+   ],
+   "answer": "Four",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1982 film features a friendly alien who wants to phone home?",
+   "options": [
+    "Close Encounters",
+    "Flight of the Navigator",
+    "Batteries Not Included",
+    "E.T."
+   ],
+   "answer": "E.T.",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer released 'Can't Get You Out of My Head'?",
+   "options": [
+    "Olivia Newton-John",
+    "Delta Goodrem",
+    "Kylie Minogue",
+    "Tina Arena"
+   ],
+   "answer": "Kylie Minogue",
+   "d": "easy"
+  },
+  {
+   "q": "Which singer released the albums '21' and '25'?",
+   "options": [
+    "Adele",
+    "Duffy",
+    "Amy Winehouse",
+    "Emeli Sande"
+   ],
+   "answer": "Adele",
+   "d": "easy"
+  },
+  {
+   "q": "From which country did the song \"Gangnam Style\" originate from?",
+   "options": [
+    "Ireland",
+    "North Korea",
+    "Japan",
+    "South Korea"
+   ],
+   "answer": "South Korea",
+   "d": "easy"
+  },
+  {
+   "q": "Which mobile phone game became famous on Nokia handsets?",
+   "options": [
+    "Pong",
+    "Tetris",
+    "Snake",
+    "Space Impact"
+   ],
+   "answer": "Snake",
+   "d": "easy"
+  },
+  {
+   "q": "What popular band released the song Hella Good in 2002?",
+   "options": [
+    "Garbage",
+    "Limp Bizkit",
+    "No Doubt",
+    "Blondie"
+   ],
+   "answer": "No Doubt",
+   "d": "medium"
+  },
+  {
+   "q": "Which band released 'Take On Me' with its part-animated video?",
+   "options": [
+    "Spandau Ballet",
+    "Tears for Fears",
+    "Duran Duran",
+    "a-ha"
+   ],
+   "answer": "a-ha",
+   "d": "easy"
+  },
+  {
+   "q": "Which Canadian singer released the 1995 album 'Jagged Little Pill'?",
+   "options": [
+    "Alanis Morissette",
+    "Jaggy Little Alanis",
+    "Shania Twain",
+    "Sarah McLachlan"
+   ],
+   "answer": "Alanis Morissette",
+   "d": "easy"
+  },
+  {
+   "q": "Which US band released 'Sweet Home Alabama' in 1974?",
+   "options": [
+    "Lynyrd Skynyrd",
+    "38 Special",
+    "The Allman Brothers Band",
+    "Molly Hatchet"
+   ],
+   "answer": "Lynyrd Skynyrd",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s fashion trend involved very baggy jeans and flannel shirts?",
+   "options": [
+    "Disco revival",
+    "Mod",
+    "Preppy",
+    "Grunge"
+   ],
+   "answer": "Grunge",
+   "d": "easy"
+  },
+  {
+   "q": "What does 'a cappella' mean?",
+   "options": [
+    "Singing very loudly",
+    "Singing in Italian",
+    "Singing without instruments",
+    "Singing in a round"
+   ],
+   "answer": "Singing without instruments",
+   "d": "easy"
+  },
+  {
+   "q": "Who recorded Never Mind, the #17 album on Rolling Stone magazines list of the 500 Greatest Albums of All Time?",
+   "options": [
+    "Soundgarden",
+    "Nirvana",
+    "Menudo",
+    "Pearl Jam"
+   ],
+   "answer": "Nirvana",
+   "d": "medium"
+  },
+  {
+   "q": "AC/DC formed in which Australian city?",
+   "options": [
+    "Melbourne",
+    "Adelaide",
+    "Sydney",
+    "Brisbane"
+   ],
+   "answer": "Sydney",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s hair accessory was a fabric-covered elastic?",
+   "options": [
+    "The bobby pin",
+    "The banana clip",
+    "The headband",
+    "The scrunchie"
+   ],
+   "answer": "The scrunchie",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s Australian children's group wore coloured skivvies?",
+   "options": [
+    "Bananas in Pyjamas",
+    "The Wiggles",
+    "The Fairies",
+    "Hi-5"
+   ],
+   "answer": "The Wiggles",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer released 'Adore' in 2016?",
+   "options": [
+    "Tones and I",
+    "Meg Mac",
+    "Vera Blue",
+    "Amy Shark"
+   ],
+   "answer": "Amy Shark",
+   "d": "medium"
+  },
+  {
+   "q": "Which band released 'The Dark Side of the Moon'?",
+   "options": [
+    "Genesis",
+    "Pink Floyd",
+    "The Who",
+    "Yes"
+   ],
+   "answer": "Pink Floyd",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s film franchise features Rocky Balboa?",
+   "options": [
+    "Rambo",
+    "Kickboxer",
+    "Rocky",
+    "Bloodsport"
+   ],
+   "answer": "Rocky",
+   "d": "easy"
+  },
+  {
+   "q": "Which Dolly Parton song was covered by Whitney Houston in 1992?",
+   "options": [
+    "Jolene",
+    "Coat of Many Colors",
+    "9 to 5",
+    "I Will Always Love You"
+   ],
+   "answer": "I Will Always Love You",
+   "d": "easy"
+  },
+  {
+   "q": "Hans Zimmer wrote the beautiful love theme Can You Feel the Love Tonight? for which Broadway/Hollywood musical?",
+   "options": [
+    "Wicked",
+    "The Lion King",
+    "The Music Man",
+    "Beauty and the Beast"
+   ],
+   "answer": "The Lion King",
+   "d": "easy"
+  },
+  {
+   "q": "Which decade did rock and roll first emerge as a distinct genre in the United States?",
+   "options": [
+    "1950s",
+    "1930s",
+    "1940s",
+    "1960s"
+   ],
+   "answer": "1950s",
+   "d": "easy"
+  },
+  {
+   "q": "What is a 'riff' in popular music?",
+   "options": [
+    "A short repeated musical phrase",
+    "A key change",
+    "A crowd chant",
+    "A drum solo"
+   ],
+   "answer": "A short repeated musical phrase",
+   "d": "easy"
+  },
+  {
+   "q": "In Prokofiev's 'Peter and the Wolf', the wolf itself is represented by a trio of which musical instrument?",
+   "options": [
+    "Cello",
+    "Clarinet",
+    "French horn",
+    "Oboe"
+   ],
+   "answer": "French horn",
+   "d": "medium"
+  },
+  {
+   "q": "Which pop star released the 1983 album 'Thriller'?",
+   "options": [
+    "Michael Jackson",
+    "Prince",
+    "Lionel Richie",
+    "Stevie Wonder"
+   ],
+   "answer": "Michael Jackson",
+   "d": "easy"
+  },
+  {
+   "q": "Which electronic duo won multiple Grammys for the 2013 album 'Random Access Memories'?",
+   "options": [
+    "Justice",
+    "Disclosure",
+    "Daft Punk",
+    "The Chemical Brothers"
+   ],
+   "answer": "Daft Punk",
+   "d": "easy"
+  },
+  {
+   "q": "Which music television channel launched in 1981?",
+   "options": [
+    "Channel V",
+    "MTV",
+    "VH1",
+    "Video Hits"
+   ],
+   "answer": "MTV",
+   "d": "easy"
+  },
+  {
+   "q": "Which US band released 'Californication' in 1999?",
+   "options": [
+    "Green Day",
+    "Pearl Jam",
+    "Foo Fighters",
+    "Red Hot Chili Peppers"
+   ],
+   "answer": "Red Hot Chili Peppers",
+   "d": "medium"
+  },
+  {
+   "q": "According to a Beatles song, who kept her face in a jar by the door?",
+   "options": [
+    "Lady Madonna",
+    "Eleanor Rigby",
+    "Loretta Martin",
+    "Molly Jones"
+   ],
+   "answer": "Eleanor Rigby",
+   "d": "medium"
+  },
+  {
+   "q": "Which song previously recorded by Elvis Presley was covered by UB40 with a reggae beat?",
+   "options": [
+    "Jailhouse Rock",
+    "Wooden Heart",
+    "In the Ghetto",
+    "Can't Help Falling in Love"
+   ],
+   "answer": "Can't Help Falling in Love",
+   "d": "medium"
+  },
+  {
+   "q": "Which band is fronted by Mick Jagger?",
+   "options": [
+    "The Rolling Stones",
+    "The Kinks",
+    "The Who",
+    "The Faces"
+   ],
+   "answer": "The Rolling Stones",
+   "d": "easy"
+  },
+  {
+   "q": "Which singer is known as the King of Pop?",
+   "options": [
+    "Justin Timberlake",
+    "Prince",
+    "Michael Jackson",
+    "Elvis Presley"
+   ],
+   "answer": "Michael Jackson",
+   "d": "easy"
+  },
+  {
+   "q": "Which band sang 'Sweet Child O' Mine'?",
+   "options": [
+    "Poison",
+    "Def Leppard",
+    "Guns N' Roses",
+    "Bon Jovi"
+   ],
+   "answer": "Guns N' Roses",
+   "d": "easy"
+  },
+  {
+   "q": "Which US rock band released the 1991 hit 'Losing My Religion'?",
+   "options": [
+    "U2",
+    "R.E.M.M. (the extended mix)",
+    "Red Hot Chili Peppers",
+    "R.E.M."
+   ],
+   "answer": "R.E.M.",
+   "d": "easy"
+  },
+  {
+   "q": "Which former Beatle released the solo song 'Imagine' in 1971?",
+   "options": [
+    "Ringo Starr",
+    "John Lennon",
+    "George Harrison",
+    "Paul McCartney"
+   ],
+   "answer": "John Lennon",
+   "d": "easy"
+  },
+  {
+   "q": "Which Toronto landmark was featured on the cover art of Canadian rapper Drake's 2016 album \"Views\"?",
+   "options": [
+    "Union Station",
+    "CN Tower",
+    "Rogers Centre",
+    "Casa Loma"
+   ],
+   "answer": "CN Tower",
+   "d": "medium"
+  },
+  {
+   "q": "The famous 1969 music festival featuring Jimi Hendrix took place near which town in New York state?",
+   "options": [
+    "Monterey",
+    "Newport",
+    "Woodstock",
+    "Altamont"
+   ],
+   "answer": "Woodstock",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of this RB B band from the 70s that had a huge hit, titled Sideshow?",
+   "options": [
+    "Blue Magic",
+    "Blue Man Group",
+    "The Delfonics",
+    "Blue Notes"
+   ],
+   "answer": "Blue Magic",
+   "d": "hard"
+  },
+  {
+   "q": "What was Bart Simpson's famous catchphrase in the 1990s?",
+   "options": [
+    "Cowabunga only",
+    "D'oh",
+    "Don't have a stroke",
+    "Eat my shorts"
+   ],
+   "answer": "Eat my shorts",
+   "d": "easy"
+  },
+  {
+   "q": "La Fenice opera house is in which Italian city?",
+   "options": [
+    "Naples",
+    "Venice",
+    "Milan",
+    "Atlantis"
+   ],
+   "answer": "Venice",
+   "d": "medium"
+  },
+  {
+   "q": "We Need a Little Christmas is a rousing show stopping number from which Jerry Herman play?",
+   "options": [
+    "La Cage aux Folles",
+    "Mame",
+    "Cats",
+    "Hello, Dolly!"
+   ],
+   "answer": "Mame",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1980s hit by Men at Work mentions a Vegemite sandwich?",
+   "options": [
+    "Down Under",
+    "Be Good Johnny",
+    "Overkill",
+    "Who Can It Be Now?"
+   ],
+   "answer": "Down Under",
+   "d": "easy"
+  },
+  {
+   "q": "Which pop group featured Beyonce in the early 2000s?",
+   "options": [
+    "TLC",
+    "Spice Girls",
+    "Destiny's Child",
+    "En Vogue"
+   ],
+   "answer": "Destiny's Child",
+   "d": "easy"
+  },
+  {
+   "q": "What was the last song Elvis Presley ever sang in concert before his untimely death?",
+   "options": [
+    "Unchained Melody",
+    "Can't Help Falling In Love",
+    "Viva Las Vegas",
+    "Are You Lonesome Tonight?"
+   ],
+   "answer": "Can't Help Falling In Love",
+   "d": "medium"
+  },
+  {
+   "q": "Which of the following songs did Elton John perform following Princess Diana's passing?",
+   "options": [
+    "Island Girl",
+    "Candles in the Wind",
+    "I Guess That's Why They Call It The Blues",
+    "Your Song"
+   ],
+   "answer": "Candles in the Wind",
+   "d": "easy"
+  },
+  {
+   "q": "Which Beatles album cover shows the band on a zebra crossing?",
+   "options": [
+    "Abbey Road",
+    "Let It Be",
+    "Revolver",
+    "Help!"
+   ],
+   "answer": "Abbey Road",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s hairstyle was short at the front and long at the back?",
+   "options": [
+    "The bob",
+    "The pompadour",
+    "The perm",
+    "The mullet"
+   ],
+   "answer": "The mullet",
+   "d": "easy"
+  },
+  {
+   "q": "Which group recorded the disco anthem 'Stayin' Alive' from the 'Saturday Night Fever' soundtrack?",
+   "options": [
+    "Village People",
+    "Bee Gees",
+    "ABBA",
+    "Chic"
+   ],
+   "answer": "Bee Gees",
+   "d": "easy"
+  },
+  {
+   "q": "What caused Jim Morrisons death according to the official report?",
+   "options": [
+    "Drug Overdose",
+    "Shark Attack",
+    "Respiratory Failure",
+    "Heart Failure"
+   ],
+   "answer": "Heart Failure",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1980s show featured a team of soldiers of fortune led by Hannibal?",
+   "options": [
+    "The A-Team",
+    "Miami Vice",
+    "Magnum P.I.",
+    "MacGyver"
+   ],
+   "answer": "The A-Team",
+   "d": "easy"
+  },
+  {
+   "q": "Which pastel-coloured 1980s toy ponies were a merchandising hit?",
+   "options": [
+    "Rainbow Brite",
+    "My Little Pony",
+    "Popples",
+    "Care Bears"
+   ],
+   "answer": "My Little Pony",
+   "d": "easy"
+  },
+  {
+   "q": "Which Latin genre, associated with Colombia and artists like Shakira, blends pop with Latin rhythms? (Which 2005-06 Shakira hit topped charts worldwide?)",
+   "options": [
+    "Waka Waka",
+    "Hips Don't Lie",
+    "Whenever, Wherever",
+    "La Tortura"
+   ],
+   "answer": "Hips Don't Lie",
+   "d": "easy"
+  },
+  {
+   "q": "Which Swedish DJ, known for 'Levels', tragically died in 2018?",
+   "options": [
+    "Alesso",
+    "Eric Prydz",
+    "Avicii",
+    "Swedish House Mafia's Axwell"
+   ],
+   "answer": "Avicii",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these was not among the presents Elvis Presley used to give to his friends and associates?",
+   "options": [
+    "Cash",
+    "Cadillacs",
+    "Guitars",
+    "Jewelry"
+   ],
+   "answer": "Guitars",
+   "d": "medium"
+  },
+  {
+   "q": "The \"British Invasion\" was a cultural phenomenon in music where British boy bands became popular in the USA in what decade?",
+   "options": [
+    "60's",
+    "50's",
+    "70's",
+    "1800's"
+   ],
+   "answer": "60's",
+   "d": "medium"
+  },
+  {
+   "q": "Which singer is known as 'The King of Rock and Roll'?",
+   "options": [
+    "Little Richard",
+    "Buddy Holly",
+    "Elvis Presley",
+    "Chuck Berry"
+   ],
+   "answer": "Elvis Presley",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s film featured a computer hacker discovering reality is a simulation?",
+   "options": [
+    "Johnny Mnemonic",
+    "Hackers",
+    "eXistenZ",
+    "The Matrix"
+   ],
+   "answer": "The Matrix",
+   "d": "easy"
+  },
+  {
+   "q": "Which US rock band is fronted by Anthony Kiedis and includes bassist Flea?",
+   "options": [
+    "Red Hot Chili Peppers",
+    "Faith No More",
+    "Jane's Addiction",
+    "Rage Against the Machine"
+   ],
+   "answer": "Red Hot Chili Peppers",
+   "d": "medium"
+  },
+  {
+   "q": "What does 'BPM' stand for in music?",
+   "options": [
+    "Bridge point marker",
+    "Bars per measure",
+    "Beats per minute",
+    "Bass per mix"
+   ],
+   "answer": "Beats per minute",
+   "d": "easy"
+  },
+  {
+   "q": "Which song by The Beatles features the lyrics, And when the night is cloudy, there is still a light that shines on me, shine on until tomorrow?",
+   "options": [
+    "Let It Be",
+    "Yellow Submarine",
+    "Yesterday",
+    "Lady Madonna"
+   ],
+   "answer": "Let It Be",
+   "d": "easy"
+  },
+  {
+   "q": "Which Beatles song famously featured a sitar, a first for Western pop?",
+   "options": [
+    "Norwegian Wood",
+    "Love You To",
+    "Within You Without You",
+    "Tomorrow Never Knows"
+   ],
+   "answer": "Norwegian Wood",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1990s dance move involved crossing the arms in a repeated pattern to a song?",
+   "options": [
+    "The Macarena",
+    "The Robot",
+    "The Moonwalk",
+    "The Twist"
+   ],
+   "answer": "The Macarena",
+   "d": "easy"
+  },
+  {
+   "q": "What popular buy band recorded the song As Long as You Love Me in 1997?",
+   "options": [
+    "The Backstreet Boys",
+    "Take That",
+    "Boyzone",
+    "N Sync"
+   ],
+   "answer": "The Backstreet Boys",
+   "d": "easy"
+  },
+  {
+   "q": "Which rapper released 'The Marshall Mathers LP'?",
+   "options": [
+    "Eminem",
+    "Jay-Z",
+    "Dr. Dre",
+    "50 Cent"
+   ],
+   "answer": "Eminem",
+   "d": "easy"
+  },
+  {
+   "q": "According to the lyrics and title of a George Thorogood song, he would have one bourbon, one scotch and what else?",
+   "options": [
+    "One beer",
+    "One lemonade",
+    "One shot",
+    "One whiskey"
+   ],
+   "answer": "One beer",
+   "d": "medium"
+  },
+  {
+   "q": "Which US rock band released the 1991 album 'Ten', featuring 'Alive' and 'Jeremy'?",
+   "options": [
+    "The Perfect Ten",
+    "Alice in Chains",
+    "Pearl Jam",
+    "Nirvana"
+   ],
+   "answer": "Pearl Jam",
+   "d": "easy"
+  },
+  {
+   "q": "What was the first music video to be broadcast on MTV?",
+   "options": [
+    "Take On Me",
+    "Baby Shark",
+    "Video Killed the Radio Star",
+    "Money for Nothing"
+   ],
+   "answer": "Video Killed the Radio Star",
+   "d": "easy"
+  },
+  {
+   "q": "Justin Timberlake was a member of which boy band before going solo?",
+   "options": [
+    "NSYNC",
+    "Boyz II Men",
+    "98 Degrees",
+    "Backstreet Boys"
+   ],
+   "answer": "NSYNC",
+   "d": "easy"
+  },
+  {
+   "q": "What year was Red Hot Chill Pepper's album \"Californication\" released?",
+   "options": [
+    "1999",
+    "1991",
+    "1998",
+    "2000"
+   ],
+   "answer": "1999",
+   "d": "medium"
+  },
+  {
+   "q": "What was Britney Spears' debut single?",
+   "options": [
+    "...Baby One More Time",
+    "(You Drive Me) Crazy",
+    "Oops!... I Did It Again",
+    "Sometimes"
+   ],
+   "answer": "...Baby One More Time",
+   "d": "easy"
+  },
+  {
+   "q": "Who originally released the song Blue Monday in 1983?",
+   "options": [
+    "Bananarama",
+    "Depeche Mode",
+    "Joy Division",
+    "New Order"
+   ],
+   "answer": "New Order",
+   "d": "medium"
+  },
+  {
+   "q": "What is the missing word from this line of the song ‘Beautiful Liar’ by Beyonce and Shakira: ‘Let’s not kill the …, let’s not start the fight’?",
+   "options": [
+    "Karma",
+    "Passion",
+    "Drama",
+    "Llama"
+   ],
+   "answer": "Karma",
+   "d": "medium"
+  },
+  {
+   "q": "Which Wu-Tang Clan member released the 1995 solo album 'Only Built 4 Cuban Linx...'?",
+   "options": [
+    "Method Man",
+    "GZA",
+    "Ghostface Killah",
+    "Raekwon"
+   ],
+   "answer": "Raekwon",
+   "d": "hard"
+  },
+  {
+   "q": "Which Irish singer had a 1990 worldwide number one with 'Nothing Compares 2 U'?",
+   "options": [
+    "Dolores O'Riordan",
+    "Nula O'Comparison",
+    "Enya",
+    "Sinead O'Connor"
+   ],
+   "answer": "Sinead O'Connor",
+   "d": "easy"
+  },
+  {
+   "q": "Which rapper released the 1999 debut album 'The Slim Shady LP'?",
+   "options": [
+    "Eminem",
+    "Dr. Dre",
+    "Snoop Dogg",
+    "Slim Shady Junior"
+   ],
+   "answer": "Eminem",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s fashion item had oversized shoulders sewn in?",
+   "options": [
+    "Bell bottoms",
+    "Shoulder pads",
+    "Platform shoes",
+    "Corsets"
+   ],
+   "answer": "Shoulder pads",
+   "d": "easy"
+  },
+  {
+   "q": "Which US band released 'Radioactive' in 2012?",
+   "options": [
+    "The Fray",
+    "Imagine Dragons",
+    "Twenty One Pilots",
+    "OneRepublic"
+   ],
+   "answer": "Imagine Dragons",
+   "d": "easy"
+  },
+  {
+   "q": "Which artist featured on the remix of Lil Nas X's 'Old Town Road'?",
+   "options": [
+    "Keith Urban",
+    "Billy Ray Cyrus",
+    "Tim McGraw",
+    "Blake Shelton"
+   ],
+   "answer": "Billy Ray Cyrus",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the lead singer of Foo Fighters?",
+   "options": [
+    "Dave Mustaine",
+    "James Hetfield",
+    "Dave Grohl",
+    "Little Red Riding Hood"
+   ],
+   "answer": "Dave Grohl",
+   "d": "easy"
+  },
+  {
+   "q": "Which British singer released the album 'Divide' with the hit 'Shape of You'?",
+   "options": [
+    "George Ezra",
+    "Sam Smith",
+    "Ed Sheeran",
+    "James Arthur"
+   ],
+   "answer": "Ed Sheeran",
+   "d": "easy"
+  },
+  {
+   "q": "What were the names of the two lead X-Files agents?",
+   "options": [
+    "Cooper and Truman",
+    "Black and White",
+    "Doggett and Reyes",
+    "Mulder and Scully"
+   ],
+   "answer": "Mulder and Scully",
+   "d": "easy"
+  },
+  {
+   "q": "Which US singer released 'Just the Way You Are' in 2010?",
+   "options": [
+    "Bruno Mars",
+    "Ne-Yo",
+    "John Legend",
+    "Jason Derulo"
+   ],
+   "answer": "Bruno Mars",
+   "d": "easy"
+  },
+  {
+   "q": "Which US producer and DJ won the 2012 Grammy breakthrough with dubstep, known for 'Bangarang'?",
+   "options": [
+    "Skrillex",
+    "Diplo",
+    "Flume",
+    "Deadmau5"
+   ],
+   "answer": "Skrillex",
+   "d": "easy"
+  },
+  {
+   "q": "Which glam metal band released the 1987 hit 'Sweet Child o' Mine'?",
+   "options": [
+    "Motley Crue",
+    "Guns N' Roses",
+    "Bon Jovi",
+    "Poison"
+   ],
+   "answer": "Guns N' Roses",
+   "d": "easy"
+  },
+  {
+   "q": "The main Australian music industry awards are known by which acronym?",
+   "options": [
+    "APRA",
+    "AMRA",
+    "ARIA",
+    "AMPA"
+   ],
+   "answer": "ARIA",
+   "d": "easy"
+  },
+  {
+   "q": "The children's entertainers The Wiggles formed in which country?",
+   "options": [
+    "Canada",
+    "England",
+    "New Zealand",
+    "Australia"
+   ],
+   "answer": "Australia",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1993 film brought dinosaurs to a theme park?",
+   "options": [
+    "Jurassic Park",
+    "The Lost World only",
+    "Godzilla",
+    "King Kong"
+   ],
+   "answer": "Jurassic Park",
+   "d": "easy"
+  },
+  {
+   "q": "Which group had a 1997 worldwide hit with 'MMMBop'?",
+   "options": [
+    "Savage Garden",
+    "Hanson",
+    "The Mmmbop Brothers",
+    "Aqua"
+   ],
+   "answer": "Hanson",
+   "d": "easy"
+  },
+  {
+   "q": "Which British Prime Minister was known as the Iron Lady?",
+   "options": [
+    "Theresa May",
+    "Shirley Williams",
+    "Barbara Castle",
+    "Margaret Thatcher"
+   ],
+   "answer": "Margaret Thatcher",
+   "d": "easy"
+  },
+  {
+   "q": "Which singer released 'Someone Like You' and 'Hello'?",
+   "options": [
+    "Adele",
+    "Sam Smith",
+    "Amy Winehouse",
+    "Duffy"
+   ],
+   "answer": "Adele",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s teen drama was set in a Californian postcode?",
+   "options": [
+    "Dawson's Creek",
+    "Melrose Place",
+    "The OC",
+    "Beverly Hills 90210"
+   ],
+   "answer": "Beverly Hills 90210",
+   "d": "easy"
+  },
+  {
+   "q": "Which member of the British pop group \"The Spice Girls\" was known as Ginger Spice?",
+   "options": [
+    "Victoria Beckham",
+    "Emma Bunton",
+    "Melanie Brown",
+    "Geri Halliwell"
+   ],
+   "answer": "Geri Halliwell",
+   "d": "easy"
+  },
+  {
+   "q": "Which alternative rock band released the critically-acclaimed album \"OK Computer\"?",
+   "options": [
+    "Coldplay",
+    "Blur",
+    "Radiohead",
+    "Muse"
+   ],
+   "answer": "Radiohead",
+   "d": "easy"
+  },
+  {
+   "q": "Which band released the 1979 album 'London Calling'?",
+   "options": [
+    "The Jam",
+    "The Ramones",
+    "The Stranglers",
+    "The Clash"
+   ],
+   "answer": "The Clash",
+   "d": "medium"
+  },
+  {
+   "q": "Which Queen song features an operatic middle section?",
+   "options": [
+    "Radio Ga Ga",
+    "Somebody to Love",
+    "We Will Rock You",
+    "Bohemian Rhapsody"
+   ],
+   "answer": "Bohemian Rhapsody",
+   "d": "easy"
+  },
+  {
+   "q": "Which band released 'Hotel California' in 1976?",
+   "options": [
+    "The Doobie Brothers",
+    "Eagles",
+    "Lynyrd Skynyrd",
+    "Fleetwood Mac"
+   ],
+   "answer": "Eagles",
+   "d": "easy"
+  },
+  {
+   "q": "Which Armenian-American band released the 2005 albums 'Mezmerize' and 'Hypnotize'?",
+   "options": [
+    "System of a Down",
+    "Deftones",
+    "Serj Tankian solo",
+    "Disturbed"
+   ],
+   "answer": "System of a Down",
+   "d": "hard"
+  },
+  {
+   "q": "Which 1980s toy line featured transforming robots?",
+   "options": [
+    "He-Man",
+    "Voltron",
+    "Transformers",
+    "Thundercats"
+   ],
+   "answer": "Transformers",
+   "d": "easy"
+  },
+  {
+   "q": "Which band performed the 1980s classic rock song Pour Some Sugar on Me?",
+   "options": [
+    "Spinal Tap",
+    "Def Leppard",
+    "Poison",
+    "Bon Jovi"
+   ],
+   "answer": "Def Leppard",
+   "d": "easy"
+  },
+  {
+   "q": "Which streaming service is known for its Wrapped year in review?",
+   "options": [
+    "Spotify",
+    "Tidal",
+    "Deezer",
+    "Apple Music"
+   ],
+   "answer": "Spotify",
+   "d": "easy"
+  },
+  {
+   "q": "Which Aretha Franklin song spells out a demand?",
+   "options": [
+    "Chain of Fools",
+    "Natural Woman",
+    "Respect",
+    "Think"
+   ],
+   "answer": "Respect",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian solo artist, known for live looping, released 'Jungle' in 2016?",
+   "options": [
+    "Dean Lewis",
+    "Tash Sultana",
+    "Matt Corby",
+    "Vance Joy"
+   ],
+   "answer": "Tash Sultana",
+   "d": "hard"
+  },
+  {
+   "q": "Which boy band released 'I Want It That Way' in 1999?",
+   "options": [
+    "98 Degrees",
+    "Backstreet Boys",
+    "The Backstreet That Way",
+    "NSYNC"
+   ],
+   "answer": "Backstreet Boys",
+   "d": "easy"
+  },
+  {
+   "q": "The 1977 disco film 'Saturday Night Fever' featured songs by which band?",
+   "options": [
+    "Village People",
+    "KC and the Sunshine Band",
+    "Chic",
+    "Bee Gees"
+   ],
+   "answer": "Bee Gees",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nirvana song opens with a famous four-chord riff and 'Load up on guns'?",
+   "options": [
+    "In Bloom",
+    "Lithium",
+    "Smells Like Teen Spirit",
+    "Come as You Are"
+   ],
+   "answer": "Smells Like Teen Spirit",
+   "d": "easy"
+  },
+  {
+   "q": "Band Aid's 'Do They Know It's Christmas' was recorded to raise awareness of which issue in Ethiopia?",
+   "options": [
+    "Famine",
+    "Deforestation",
+    "Poverty",
+    "Drought"
+   ],
+   "answer": "Famine",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1986 nuclear accident happened in the Soviet Union?",
+   "options": [
+    "Three Mile Island",
+    "Chernobyl",
+    "Windscale",
+    "Fukushima"
+   ],
+   "answer": "Chernobyl",
+   "d": "easy"
+  },
+  {
+   "q": "What is Brian May's guitar called?",
+   "options": [
+    "Blue Special",
+    "Green Special",
+    "Red Special",
+    "Rainbow Special"
+   ],
+   "answer": "Red Special",
+   "d": "medium"
+  },
+  {
+   "q": "Which instrument did Ringo Starr play in The Beatles?",
+   "options": [
+    "Drums",
+    "Piano",
+    "Guitar",
+    "Bass"
+   ],
+   "answer": "Drums",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the lead singer of Cold Chisel?",
+   "options": [
+    "Ian Moss",
+    "Don Walker",
+    "Doc Neeson",
+    "Jimmy Barnes"
+   ],
+   "answer": "Jimmy Barnes",
+   "d": "easy"
+  },
+  {
+   "q": "Which 2012 Korean song became a global viral hit with a horse-riding dance?",
+   "options": [
+    "Nobody",
+    "Gentleman",
+    "Dynamite",
+    "Gangnam Style"
+   ],
+   "answer": "Gangnam Style",
+   "d": "easy"
+  },
+  {
+   "q": "Down Under was a worldwide hit for which Australian band?",
+   "options": [
+    "Men at Work",
+    "The Angels",
+    "AC/DC",
+    "Midnight Oil"
+   ],
+   "answer": "Men at Work",
+   "d": "easy"
+  },
+  {
+   "q": "Which Queen song is a stadium staple with stomp-stomp-clap?",
+   "options": [
+    "Flash",
+    "Under Pressure",
+    "Killer Queen",
+    "We Will Rock You"
+   ],
+   "answer": "We Will Rock You",
+   "d": "easy"
+  },
+  {
+   "q": "Which decade produced disco's rise and fall, roughly from the mid-1970s to the early years following?",
+   "options": [
+    "1970s",
+    "1960s",
+    "1980s",
+    "1990s"
+   ],
+   "answer": "1970s",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s computer company launched the Macintosh in 1984?",
+   "options": [
+    "Commodore",
+    "Atari",
+    "IBM",
+    "Apple"
+   ],
+   "answer": "Apple",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1997 blockbuster starred Leonardo DiCaprio and Kate Winslet?",
+   "options": [
+    "Romeo + Juliet",
+    "The Beach",
+    "Titanic",
+    "Gattaca"
+   ],
+   "answer": "Titanic",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the rapper who gave Bow Wow his name?",
+   "options": [
+    "Dr. Dre",
+    "Jermaine Dupri",
+    "Snoop Dogg",
+    "MC Hammer"
+   ],
+   "answer": "Snoop Dogg",
+   "d": "medium"
+  },
+  {
+   "q": "Which band released the 1990s classic rock song Man in the Box?",
+   "options": [
+    "Soundgarden",
+    "Spinal Tap",
+    "Pearl Jam",
+    "Alice in Chains"
+   ],
+   "answer": "Alice in Chains",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1989 event saw East Germans cross freely into West Berlin?",
+   "options": [
+    "The Velvet Revolution",
+    "The Prague Spring",
+    "The fall of the Berlin Wall",
+    "German reunification"
+   ],
+   "answer": "The fall of the Berlin Wall",
+   "d": "easy"
+  },
+  {
+   "q": "In which English city did The Beatles form?",
+   "options": [
+    "Liverpool",
+    "Birmingham",
+    "London",
+    "Manchester"
+   ],
+   "answer": "Liverpool",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1997 film paired Will Smith and Tommy Lee Jones as alien-hunting agents?",
+   "options": [
+    "Bad Boys",
+    "Wild Wild West",
+    "Men in Black",
+    "Independence Day"
+   ],
+   "answer": "Men in Black",
+   "d": "easy"
+  },
+  {
+   "q": "Which instrument is Elton John most famous for playing?",
+   "options": [
+    "Piano",
+    "Guitar",
+    "Violin",
+    "Saxophone"
+   ],
+   "answer": "Piano",
+   "d": "easy"
+  },
+  {
+   "q": "Which British band released the 1995 hit 'Wonderwall'?",
+   "options": [
+    "The Wonderwallabies",
+    "Oasis",
+    "Pulp",
+    "Blur"
+   ],
+   "answer": "Oasis",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these songs appears on the Guinness Book of Records as a song having more than 3000 cover versions?",
+   "options": [
+    "Yesterday Once More by the Carpenters",
+    "Yesterdays by Guns N Roses",
+    "Yesterday's Gone by The Rutles",
+    "Yesterday by The Beatles"
+   ],
+   "answer": "Yesterday by The Beatles",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s game show offered contestants a million dollars for 15 questions?",
+   "options": [
+    "Deal or No Deal",
+    "Who Wants to Be a Millionaire",
+    "The Weakest Link",
+    "Greed"
+   ],
+   "answer": "Who Wants to Be a Millionaire",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s girl group sang 'Wannabe'?",
+   "options": [
+    "Bananarama",
+    "Spice Girls",
+    "TLC",
+    "All Saints"
+   ],
+   "answer": "Spice Girls",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer released the 1997 hit 'Torn'?",
+   "options": [
+    "Kylie Minogue",
+    "Natalie Torn-Bruglia",
+    "Natalie Imbruglia",
+    "Tina Arena"
+   ],
+   "answer": "Natalie Imbruglia",
+   "d": "easy"
+  },
+  {
+   "q": "Which console did Sony launch in the mid-1990s?",
+   "options": [
+    "The PlayStation",
+    "The Saturn",
+    "The Dreamcast",
+    "The Xbox"
+   ],
+   "answer": "The PlayStation",
+   "d": "easy"
+  },
+  {
+   "q": "Who performed the song Paint It Black?",
+   "options": [
+    "The Black Keys",
+    "The Animals",
+    "The Rolling Stones",
+    "The Kinks"
+   ],
+   "answer": "The Rolling Stones",
+   "d": "easy"
+  },
+  {
+   "q": "Which US singer is known as the King of Rock and Roll?",
+   "options": [
+    "Elvis Presley",
+    "Little Richard",
+    "Chuck Berry",
+    "Buddy Holly"
+   ],
+   "answer": "Elvis Presley",
+   "d": "easy"
+  },
+  {
+   "q": "Who performed the hit single 'Call Me' for the 1980 film 'American Gigolo'?",
+   "options": [
+    "Tina Turner",
+    "Blondie",
+    "Madonna",
+    "Pat Benatar"
+   ],
+   "answer": "Blondie",
+   "d": "medium"
+  },
+  {
+   "q": "Which disco-era group's hits include 'Dancing Queen' and 'Mamma Mia'?",
+   "options": [
+    "Ottawan",
+    "ABBA",
+    "Boney M.",
+    "Baccara"
+   ],
+   "answer": "ABBA",
+   "d": "easy"
+  },
+  {
+   "q": "Which singer released 'Uptown Funk' with Mark Ronson?",
+   "options": [
+    "Bruno Mars",
+    "John Legend",
+    "Pharrell Williams",
+    "Justin Timberlake"
+   ],
+   "answer": "Bruno Mars",
+   "d": "easy"
+  },
+  {
+   "q": "Which band released 'Wonderwall'?",
+   "options": [
+    "Blur",
+    "Oasis",
+    "Pulp",
+    "The Verve"
+   ],
+   "answer": "Oasis",
+   "d": "easy"
+  },
+  {
+   "q": "Whose 1997 single 'Candle in the Wind 1997' was a tribute to Princess Diana?",
+   "options": [
+    "Elton Yesterday",
+    "Phil Collins",
+    "George Michael",
+    "Elton John"
+   ],
+   "answer": "Elton John",
+   "d": "easy"
+  },
+  {
+   "q": "Which country artist released the 2018 crossover hit 'Old Town Road' before its Lil Nas X version? (Trick: who originally released 'Old Town Road' in 2018?)",
+   "options": [
+    "Billy Ray Cyrus",
+    "Kane Brown",
+    "Lil Nas X",
+    "Sam Hunt"
+   ],
+   "answer": "Lil Nas X",
+   "d": "medium"
+  },
+  {
+   "q": "Which Australian band recorded 'Beds Are Burning'?",
+   "options": [
+    "Hunters & Collectors",
+    "The Church",
+    "Midnight Oil",
+    "INXS"
+   ],
+   "answer": "Midnight Oil",
+   "d": "easy"
+  },
+  {
+   "q": "Which band or artist recorded the 1970s classic rock song Stranglehold?",
+   "options": [
+    "Foghat",
+    "The Carpenters",
+    "Ted Nugent",
+    "Bad Company"
+   ],
+   "answer": "Ted Nugent",
+   "d": "medium"
+  },
+  {
+   "q": "Which Australian band recorded Highway to Hell?",
+   "options": [
+    "The Wiggles",
+    "AC/DC",
+    "Cold Chisel",
+    "The Saints"
+   ],
+   "answer": "AC/DC",
+   "d": "easy"
+  },
+  {
+   "q": "What popular British boy band covered Bee Gees 1977 song How Deep Is Your Love in 1996?",
+   "options": [
+    "Take That",
+    "Westlife",
+    "Boyzone",
+    "East 17"
+   ],
+   "answer": "Take That",
+   "d": "medium"
+  },
+  {
+   "q": "Pink Floyd made this song for their previous lead singer Syd Barrett.",
+   "options": [
+    "Money",
+    "Comfortably Numb",
+    "Shine On You Crazy Diamond",
+    "Careful With That Axe, Eugene"
+   ],
+   "answer": "Shine On You Crazy Diamond",
+   "d": "medium"
+  },
+  {
+   "q": "Which Nirvana song opens with the line 'Load up on guns, bring your friends'?",
+   "options": [
+    "Smells Like Team Spirit (the sporty remix)",
+    "Come As You Are",
+    "Lithium",
+    "Smells Like Teen Spirit"
+   ],
+   "answer": "Smells Like Teen Spirit",
+   "d": "easy"
+  },
+  {
+   "q": "Brian May was the guitarist for which band?",
+   "options": [
+    "Free",
+    "ABBA",
+    "Queen",
+    "Bad Company"
+   ],
+   "answer": "Queen",
+   "d": "easy"
+  },
+  {
+   "q": "What does TLC advise us not to chase in their massive 1995 hit Waterfalls?",
+   "options": [
+    "Wild boars",
+    "Polar bears",
+    "Butterflies",
+    "Waterfalls"
+   ],
+   "answer": "Waterfalls",
+   "d": "easy"
+  },
+  {
+   "q": "Which grunge band released the 1991 album 'Nevermind', featuring the single 'Smells Like Teen Spirit'?",
+   "options": [
+    "Pearl Jam",
+    "Nirvana",
+    "Soundgarden",
+    "The Nevermind Babies"
+   ],
+   "answer": "Nirvana",
+   "d": "easy"
+  },
+  {
+   "q": "Of which 90s boy band was Justin Timberlake a member?",
+   "options": [
+    "98 Degrees",
+    "*NSYNC",
+    "The Beatles",
+    "Backstreet Boys"
+   ],
+   "answer": "*NSYNC",
+   "d": "easy"
+  },
+  {
+   "q": "Which Canadian singer released 'Complicated' in 2002?",
+   "options": [
+    "Nelly Furtado",
+    "Shania Twain",
+    "Avril Lavigne",
+    "Alanis Morissette"
+   ],
+   "answer": "Avril Lavigne",
+   "d": "medium"
+  },
+  {
+   "q": "Which Motown group recorded 'Reach Out I'll Be There' in 1966?",
+   "options": [
+    "The Isley Brothers",
+    "The Spinners",
+    "The Temptations",
+    "The Four Tops"
+   ],
+   "answer": "The Four Tops",
+   "d": "medium"
+  },
+  {
+   "q": "Which instrument family does the trumpet belong to?",
+   "options": [
+    "Woodwind",
+    "Percussion",
+    "Strings",
+    "Brass"
+   ],
+   "answer": "Brass",
+   "d": "easy"
+  },
+  {
+   "q": "Which Barbadian artist released 'Umbrella' in 2007?",
+   "options": [
+    "Nicki Minaj",
+    "Rihanna",
+    "Ciara",
+    "Beyonce"
+   ],
+   "answer": "Rihanna",
+   "d": "easy"
+  },
+  {
+   "q": "Some people may call this gentleman a Space Cowboy or Gangster of Love. In the song The Joker who says I really love your peaches want to shake your tree?",
+   "options": [
+    "Billie",
+    "Vincent",
+    "Jimmie Mack",
+    "Maurice"
+   ],
+   "answer": "Maurice",
+   "d": "medium"
+  },
+  {
+   "q": "Which US indie rock band released the 2004 debut 'Funeral' and won a Grammy for 'The Suburbs'?",
+   "options": [
+    "Arcade Fire",
+    "Vampire Weekend",
+    "The Killers",
+    "Modest Mouse"
+   ],
+   "answer": "Arcade Fire",
+   "d": "medium"
+  },
+  {
+   "q": "What was the first Motown song to land in the top 3 of the charts?",
+   "options": [
+    "Money (That's What I Want) - Barrett Strong",
+    "Please Mr. Postman - The Marvelettes",
+    "Shop Around - The Miracles",
+    "My Girl - The Temptations"
+   ],
+   "answer": "Money (That's What I Want) - Barrett Strong",
+   "d": "hard"
+  },
+  {
+   "q": "Which US singer released 'Believe' in 1998, famous for its Auto-Tune effect?",
+   "options": [
+    "Cher",
+    "Tina Turner",
+    "Madonna",
+    "Celine Dion"
+   ],
+   "answer": "Cher",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer played Sandy in the film 'Grease'?",
+   "options": [
+    "Olivia Newton-John",
+    "Renee Geyer",
+    "Helen Reddy",
+    "Colleen Hewett"
+   ],
+   "answer": "Olivia Newton-John",
+   "d": "easy"
+  },
+  {
+   "q": "Which country genre star released 'Body Like a Back Road' in 2017?",
+   "options": [
+    "Luke Combs",
+    "Dan + Shay",
+    "Thomas Rhett",
+    "Sam Hunt"
+   ],
+   "answer": "Sam Hunt",
+   "d": "easy"
+  },
+  {
+   "q": "Which Beatles member was known as the 'Quiet Beatle'?",
+   "options": [
+    "George Harrison",
+    "Ringo Starr",
+    "John Lennon",
+    "Paul McCartney"
+   ],
+   "answer": "George Harrison",
+   "d": "easy"
+  },
+  {
+   "q": "Which former boy-band star released hit solo single \"Angels\" in 1997?",
+   "options": [
+    "Harry Styles",
+    "Gary Barlow",
+    "Robbie Williams",
+    "Justin Timberlake"
+   ],
+   "answer": "Robbie Williams",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian band's frontman was Michael Hutchence?",
+   "options": [
+    "Noiseworks",
+    "INXS",
+    "Divinyls",
+    "Hoodoo Gurus"
+   ],
+   "answer": "INXS",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1960s music festival held in 1969 became a symbol of the counterculture?",
+   "options": [
+    "Woodstock",
+    "Isle of Wight",
+    "Altamont",
+    "Monterey Pop"
+   ],
+   "answer": "Woodstock",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1980s Australian soap was set in a Melbourne street and launched in 1985?",
+   "options": [
+    "Neighbours",
+    "Prisoner",
+    "Home and Away",
+    "A Country Practice"
+   ],
+   "answer": "Neighbours",
+   "d": "easy"
+  },
+  {
+   "q": "Which Nirvana album had a naked baby on the cover?",
+   "options": [
+    "Bleach",
+    "In Utero",
+    "Incesticide",
+    "Nevermind"
+   ],
+   "answer": "Nevermind",
+   "d": "easy"
+  },
+  {
+   "q": "Which artist released the 2017 global hit 'Shape of You'?",
+   "options": [
+    "Shawn Mendes",
+    "Ed Sheeran",
+    "Bruno Mars",
+    "Justin Bieber"
+   ],
+   "answer": "Ed Sheeran",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1999 film features the twist 'I see dead people'?",
+   "options": [
+    "The Sixth Sense",
+    "Stir of Echoes",
+    "The Others",
+    "Unbreakable"
+   ],
+   "answer": "The Sixth Sense",
+   "d": "easy"
+  },
+  {
+   "q": "Who released the song \"Photograph\" in 2005?",
+   "options": [
+    "Green Day",
+    "Coldplay",
+    "Nickelback",
+    "Fall Out Boy"
+   ],
+   "answer": "Nickelback",
+   "d": "easy"
+  },
+  {
+   "q": "What are the Australian music industry awards called?",
+   "options": [
+    "The AIRs",
+    "The Logies",
+    "The ARIA Awards",
+    "The APRAs"
+   ],
+   "answer": "The ARIA Awards",
+   "d": "easy"
+  },
+  {
+   "q": "Which artist released 'Party in the U.S.A.' in 2009?",
+   "options": [
+    "Demi Lovato",
+    "Miley Cyrus",
+    "Selena Gomez",
+    "Katy Perry"
+   ],
+   "answer": "Miley Cyrus",
+   "d": "easy"
+  },
+  {
+   "q": "Who looked like a beauty queen from a movie scene and would dance on the floor, in the round?",
+   "options": [
+    "Delilah",
+    "Billie Jean",
+    "Gloria",
+    "Girl with Bette Davis Eyes"
+   ],
+   "answer": "Billie Jean",
+   "d": "easy"
+  },
+  {
+   "q": "Which INXS song, released in 1988, is one of their most enduring ballads?",
+   "options": [
+    "New Sensation",
+    "Never Tear Us Apart",
+    "Original Sin",
+    "Need You Tonight"
+   ],
+   "answer": "Never Tear Us Apart",
+   "d": "hard"
+  },
+  {
+   "q": "What is the real name of American rapper Pitbull?",
+   "options": [
+    "Armando Pérez Rodríguez",
+    "Armando Christian Pérez",
+    "Señor Worldwide",
+    "Carlos Armando Díaz"
+   ],
+   "answer": "Armando Christian Pérez",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1990s film series began with a boy left behind at Christmas?",
+   "options": [
+    "The Santa Clause",
+    "Home Alone",
+    "Jingle All the Way",
+    "Miracle on 34th Street"
+   ],
+   "answer": "Home Alone",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer-songwriter released 'Scar' in 2004?",
+   "options": [
+    "Kate Miller-Heidke",
+    "Clare Bowditch",
+    "Sarah Blasko",
+    "Missy Higgins"
+   ],
+   "answer": "Missy Higgins",
+   "d": "easy"
+  },
+  {
+   "q": "Which instrument family does the violin belong to?",
+   "options": [
+    "Strings",
+    "Woodwind",
+    "Brass",
+    "Percussion"
+   ],
+   "answer": "Strings",
+   "d": "easy"
+  },
+  {
+   "q": "Which R&B singer released 'No Scrubs' as part of TLC and later solo work is a distractor; who sang 'Crazy in Love' in 2003?",
+   "options": [
+    "Beyonce",
+    "Ashanti",
+    "Ciara",
+    "Kelis"
+   ],
+   "answer": "Beyonce",
+   "d": "easy"
+  },
+  {
+   "q": "Which band recorded the 1978 disco-funk hit 'September'?",
+   "options": [
+    "Kool and the Gang",
+    "Earth, Wind and Fire",
+    "The Jacksons",
+    "The Commodores"
+   ],
+   "answer": "Earth, Wind and Fire",
+   "d": "easy"
+  },
+  {
+   "q": "The 2023 Beatles song \"Now and Then\" originated from an unfinished demo recorded by which Beatle?",
+   "options": [
+    "John Lennon",
+    "Yoko Ono",
+    "Paul McCartney",
+    "George Harrison"
+   ],
+   "answer": "John Lennon",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s show featured Bart Simpson catchphrases?",
+   "options": [
+    "Duckman",
+    "King of the Hill",
+    "The Simpsons",
+    "The Critic"
+   ],
+   "answer": "The Simpsons",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1970s band released the concept album 'The Wall'?",
+   "options": [
+    "Genesis",
+    "The Who",
+    "Rush",
+    "Pink Floyd"
+   ],
+   "answer": "Pink Floyd",
+   "d": "medium"
+  },
+  {
+   "q": "What was Elvis Presleys favorite sandwich?",
+   "options": [
+    "Deep-fried peanut butter and jelly sandwich",
+    "Peanut butter and banana sandwich",
+    "Fried bologna sandwich",
+    "Peanut butter and honey sandwich"
+   ],
+   "answer": "Peanut butter and banana sandwich",
+   "d": "medium"
+  },
+  {
+   "q": "Which US band released 'Sweet Emotion' and 'Walk This Way'?",
+   "options": [
+    "Kiss",
+    "Cheap Trick",
+    "Aerosmith",
+    "Van Halen"
+   ],
+   "answer": "Aerosmith",
+   "d": "easy"
+  },
+  {
+   "q": "Which award is the music industry's biggest annual American honour?",
+   "options": [
+    "The Grammy",
+    "The Brit",
+    "The Juno",
+    "The Mercury"
+   ],
+   "answer": "The Grammy",
+   "d": "easy"
+  },
+  {
+   "q": "When did Bon Scott, the lead vocalist of AC/DC, die?",
+   "options": [
+    "15 August 1978",
+    "19 February 1980",
+    "31 February 1980",
+    "19 February 1979"
+   ],
+   "answer": "19 February 1980",
+   "d": "medium"
+  },
+  {
+   "q": "Which Australian electronic producer released the 2012 self-titled debut with the hit 'Holdin On'?",
+   "options": [
+    "Peking Duk",
+    "Flume",
+    "Rufus Du Sol",
+    "Alison Wonderland"
+   ],
+   "answer": "Flume",
+   "d": "medium"
+  },
+  {
+   "q": "Which girl group featuring Beyonce released 'Say My Name' in 1999?",
+   "options": [
+    "SWV",
+    "TLC",
+    "En Vogue",
+    "Destiny's Child"
+   ],
+   "answer": "Destiny's Child",
+   "d": "medium"
+  },
+  {
+   "q": "Which funk artist recorded 'Super Freak' in 1981, later sampled by MC Hammer?",
+   "options": [
+    "Prince",
+    "George Clinton",
+    "Rick James",
+    "Cameo"
+   ],
+   "answer": "Rick James",
+   "d": "easy"
+  },
+  {
+   "q": "Gene Simmons, best known as The Demon, is a founding member of which band?",
+   "options": [
+    "Kiss Army",
+    "Good Charlotte",
+    "Green Day",
+    "KISS"
+   ],
+   "answer": "KISS",
+   "d": "easy"
+  },
+  {
+   "q": "Which musical is built around ABBA songs?",
+   "options": [
+    "Rock of Ages",
+    "We Will Rock You",
+    "Mamma Mia!",
+    "Jersey Boys"
+   ],
+   "answer": "Mamma Mia!",
+   "d": "easy"
+  },
+  {
+   "q": "Which pop-punk Canadian singer released 'Complicated' and 'Sk8er Boi' in 2002?",
+   "options": [
+    "Vanessa Carlton",
+    "Kelly Clarkson",
+    "Michelle Branch",
+    "Avril Lavigne"
+   ],
+   "answer": "Avril Lavigne",
+   "d": "easy"
+  },
+  {
+   "q": "Who was the most streamed artist on Spotify in 2019?",
+   "options": [
+    "Post Malone",
+    "Billie Eilish",
+    "Drake",
+    "Ariana Grande"
+   ],
+   "answer": "Post Malone",
+   "d": "medium"
+  },
+  {
+   "q": "Which musical about an American founding father uses hip hop?",
+   "options": [
+    "Hamilton",
+    "Rent",
+    "Wicked",
+    "In the Heights"
+   ],
+   "answer": "Hamilton",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Adele's 2011 album featuring 'Rolling in the Deep'?",
+   "options": [
+    "25",
+    "30",
+    "21",
+    "19"
+   ],
+   "answer": "21",
+   "d": "easy"
+  },
+  {
+   "q": "What is Justin Bieber's debut Album?",
+   "options": [
+    "Journals",
+    "My World 2.0",
+    "Believe",
+    "Purpose"
+   ],
+   "answer": "My World 2.0",
+   "d": "medium"
+  },
+  {
+   "q": "Which artist blends hip hop and pop, known for 'Rockstar' and 'Circles', and the stage name references coins?",
+   "options": [
+    "Post Malone",
+    "Machine Gun Kelly",
+    "XXXTentacion",
+    "Juice WRLD"
+   ],
+   "answer": "Post Malone",
+   "d": "easy"
+  },
+  {
+   "q": "Which band sang 'Don't Dream It's Over'?",
+   "options": [
+    "Icehouse",
+    "Split Enz",
+    "The Church",
+    "Crowded House"
+   ],
+   "answer": "Crowded House",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these albums by the Stone Temple Pilots includes the song Plush?",
+   "options": [
+    "Their Greatest Hits",
+    "Core",
+    "No. 4",
+    "Purple"
+   ],
+   "answer": "Core",
+   "d": "medium"
+  },
+  {
+   "q": "What was the best selling album of 2015?",
+   "options": [
+    "Adele, 25",
+    "Taylor Swift, 1989",
+    "Justin Bieber, Purpose",
+    "Fetty Wap, Fetty Wap"
+   ],
+   "answer": "Adele, 25",
+   "d": "easy"
+  },
+  {
+   "q": "Which punk rock band released hit songs such as \"Californication\", \"Can't Stop\" and \"Under the Bridge\"?",
+   "options": [
+    "Red Hot Chilli Peppers",
+    "Green Day",
+    "Foo Fighters",
+    "Linkin Park"
+   ],
+   "answer": "Red Hot Chilli Peppers",
+   "d": "easy"
+  },
+  {
+   "q": "Which British rock band, recorded the hits Bohemian Rhapsody, We Will Rock You and We Are The Champions?",
+   "options": [
+    "Spinal Tap",
+    "Led Zeppelin",
+    "The Doors",
+    "Queen"
+   ],
+   "answer": "Queen",
+   "d": "easy"
+  },
+  {
+   "q": "In which country was Australia a guest participant in Eurovision, first competing in 2015?",
+   "options": [
+    "Australia does not compete",
+    "Australia competes despite not being in Europe",
+    "Australia hosts Eurovision",
+    "Australia only votes"
+   ],
+   "answer": "Australia competes despite not being in Europe",
+   "d": "easy"
+  },
+  {
+   "q": "Rolling Stone Magazine ranked Rubber Soul as the #5 album on the list of the 500 Greatest Albums of All Time. Who released this album?",
+   "options": [
+    "The Wiggles",
+    "The Kinks",
+    "The Rolling Stones",
+    "The Beatles"
+   ],
+   "answer": "The Beatles",
+   "d": "easy"
+  },
+  {
+   "q": "Which song is NOT by singer Tom Jones?",
+   "options": [
+    "It's Not Unusual",
+    "Delilah",
+    "What's New Pussycat",
+    "Never Gonna Give You Up"
+   ],
+   "answer": "Never Gonna Give You Up",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s hairstyle product was essential for big hair?",
+   "options": [
+    "Hairspray",
+    "Setting lotion only",
+    "Conditioner",
+    "Hair oil"
+   ],
+   "answer": "Hairspray",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s film features Tom Hanks running across America?",
+   "options": [
+    "Cast Away",
+    "Apollo 13",
+    "Philadelphia",
+    "Forrest Gump"
+   ],
+   "answer": "Forrest Gump",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s craze involved spinning on cardboard to music?",
+   "options": [
+    "Pogo",
+    "Breakdancing",
+    "Line dancing",
+    "Slam dancing"
+   ],
+   "answer": "Breakdancing",
+   "d": "easy"
+  },
+  {
+   "q": "Which singer released 'Baby One More Time' in 1998?",
+   "options": [
+    "Britney Spears",
+    "Christina Aguilera",
+    "Jessica Simpson",
+    "Mandy Moore"
+   ],
+   "answer": "Britney Spears",
+   "d": "easy"
+  },
+  {
+   "q": "Which of the following female country artists was a coal miners daughter?",
+   "options": [
+    "Dolly Parton",
+    "Taylor Swift",
+    "Loretta Lynn",
+    "Tammy Wynette"
+   ],
+   "answer": "Loretta Lynn",
+   "d": "easy"
+  },
+  {
+   "q": "Which Korean genre exploded globally with acts like BTS?",
+   "options": [
+    "K-pop",
+    "C-pop",
+    "Hallyu rock",
+    "J-pop"
+   ],
+   "answer": "K-pop",
+   "d": "easy"
+  },
+  {
+   "q": "Whitney Houston's biggest hit, from 'The Bodyguard', was a cover called what?",
+   "options": [
+    "I Will Always Love You",
+    "I Have Nothing",
+    "I'm Every Woman",
+    "Run to You"
+   ],
+   "answer": "I Will Always Love You",
+   "d": "easy"
+  },
+  {
+   "q": "Which US singer released 'Halo' and 'Single Ladies' in 2008?",
+   "options": [
+    "Ciara",
+    "Rihanna",
+    "Beyonce",
+    "Alicia Keys"
+   ],
+   "answer": "Beyonce",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer had a 1986 hit with 'You're the Voice'?",
+   "options": [
+    "Daryl Braithwaite",
+    "Glenn Shorrock",
+    "Jimmy Barnes",
+    "John Farnham"
+   ],
+   "answer": "John Farnham",
+   "d": "easy"
+  },
+  {
+   "q": "Which one of these rappers is NOT a member of the rap group Wu-Tang Clan?",
+   "options": [
+    "GZA",
+    "Dr.Dre",
+    "Ol' Dirty Bastard",
+    "Method Man"
+   ],
+   "answer": "Dr.Dre",
+   "d": "medium"
+  },
+  {
+   "q": "Which Australian band released 'Sweet Disposition' in 2008?",
+   "options": [
+    "Empire of the Sun",
+    "The Temper Trap",
+    "Cut Copy",
+    "The Presets"
+   ],
+   "answer": "The Temper Trap",
+   "d": "medium"
+  },
+  {
+   "q": "Which one of these songs did the group \"Men At Work\" NOT make?",
+   "options": [
+    "It's a Mistake",
+    "Down Under",
+    "Who Can It Be Now?",
+    "Safety Dance"
+   ],
+   "answer": "Safety Dance",
+   "d": "medium"
+  },
+  {
+   "q": "The Beatles rose to worldwide fame during which decade?",
+   "options": [
+    "1950s",
+    "1960s",
+    "1970s",
+    "1980s"
+   ],
+   "answer": "1960s",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1996 film features aliens destroying landmarks on 4 July?",
+   "options": [
+    "Men in Black",
+    "Starship Troopers",
+    "Independence Day",
+    "Mars Attacks"
+   ],
+   "answer": "Independence Day",
+   "d": "easy"
+  },
+  {
+   "q": "What song by punk group Valencia opens with the following lines: Its amazing how quick We could turn an argument Into a fight for what is right?",
+   "options": [
+    "Capital H",
+    "What Are You Doing, Man? That's Weird!",
+    "Away We Go",
+    "Three Thousand Miles"
+   ],
+   "answer": "What Are You Doing, Man? That's Weird!",
+   "d": "hard"
+  },
+  {
+   "q": "Which four outlaw country artists formed the supergroup 'The Highwaymen'?",
+   "options": [
+    "Nelson, Jennings, Jones, Robbins",
+    "Cash, Kristofferson, Rogers, Jennings",
+    "Cash, Haggard, Jones, Nelson",
+    "Cash, Nelson, Jennings, Kristofferson"
+   ],
+   "answer": "Cash, Nelson, Jennings, Kristofferson",
+   "d": "hard"
+  },
+  {
+   "q": "Which singer is known as the 'Queen of Soul'?",
+   "options": [
+    "Diana Ross",
+    "Tina Turner",
+    "Gladys Knight",
+    "Aretha Franklin"
+   ],
+   "answer": "Aretha Franklin",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s fitness trend involved leotards and leg warmers?",
+   "options": [
+    "CrossFit",
+    "Zumba",
+    "Aerobics",
+    "Pilates"
+   ],
+   "answer": "Aerobics",
+   "d": "easy"
+  },
+  {
+   "q": "What is Fergie's debut album called?",
+   "options": [
+    "Double Dutchess",
+    "The Dutchess",
+    "Glamorous",
+    "Fergalicious"
+   ],
+   "answer": "The Dutchess",
+   "d": "medium"
+  },
+  {
+   "q": "Which rapper released the 2004 debut album 'The College Dropout'?",
+   "options": [
+    "Kid Cudi",
+    "Common",
+    "Lupe Fiasco",
+    "Kanye West"
+   ],
+   "answer": "Kanye West",
+   "d": "easy"
+  },
+  {
+   "q": "Which trumpeter sang 'What a Wonderful World'?",
+   "options": [
+    "Miles Davis",
+    "Dizzy Gillespie",
+    "Chet Baker",
+    "Louis Armstrong"
+   ],
+   "answer": "Louis Armstrong",
+   "d": "easy"
+  },
+  {
+   "q": "Which two Germanies formally reunified in 1990?",
+   "options": [
+    "Prussia and Bavaria",
+    "North and South Germany",
+    "East and West Germany",
+    "Saxony and Hesse"
+   ],
+   "answer": "East and West Germany",
+   "d": "easy"
+  },
+  {
+   "q": "Which pop duo featured George Michael before his solo career?",
+   "options": [
+    "Hall and Oates",
+    "Tears for Fears",
+    "Wham!",
+    "Eurythmics"
+   ],
+   "answer": "Wham!",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the lead singer of Green Day?",
+   "options": [
+    "Mike Dirnt",
+    "Tré Cool",
+    "Sean Hughes",
+    "Billie Joe Armstrong"
+   ],
+   "answer": "Billie Joe Armstrong",
+   "d": "easy"
+  },
+  {
+   "q": "Which decade saw the emergence of gangsta rap on the US West Coast?",
+   "options": [
+    "1970s",
+    "2000s",
+    "1980s",
+    "1990s"
+   ],
+   "answer": "1980s",
+   "d": "easy"
+  },
+  {
+   "q": "Which band, fronted by Boy George, had the 1982 hit 'Do You Really Want to Hurt Me'?",
+   "options": [
+    "Wham!",
+    "Bronski Beat",
+    "Frankie Goes to Hollywood",
+    "Culture Club"
+   ],
+   "answer": "Culture Club",
+   "d": "medium"
+  },
+  {
+   "q": "Which boy band, formed on 'The X Factor' UK, includes Zayn Malik and Niall Horan?",
+   "options": [
+    "One Direction",
+    "The Wanted",
+    "Union J",
+    "JLS"
+   ],
+   "answer": "One Direction",
+   "d": "easy"
+  },
+  {
+   "q": "Daryl Braithwaite's beloved Australian singalong hit is called what?",
+   "options": [
+    "The Horses",
+    "As the Days Go By",
+    "One Summer",
+    "Summer Love"
+   ],
+   "answer": "The Horses",
+   "d": "easy"
+  },
+  {
+   "q": "Nirvana's breakthrough 1991 single was titled what?",
+   "options": [
+    "Heart-Shaped Box",
+    "In Bloom",
+    "Come as You Are",
+    "Smells Like Teen Spirit"
+   ],
+   "answer": "Smells Like Teen Spirit",
+   "d": "easy"
+  },
+  {
+   "q": "Which band or artist recorded the 1970s song Suffragette City?",
+   "options": [
+    "Spinal Tap",
+    "Lou Reed",
+    "David Bowie",
+    "Iggy Pop"
+   ],
+   "answer": "David Bowie",
+   "d": "medium"
+  },
+  {
+   "q": "Which Australian band sang 'Khe Sanh'?",
+   "options": [
+    "Midnight Oil",
+    "Cold Chisel",
+    "Hunters & Collectors",
+    "The Angels"
+   ],
+   "answer": "Cold Chisel",
+   "d": "easy"
+  },
+  {
+   "q": "Which band released 'Stairway to Heaven'?",
+   "options": [
+    "Led Zeppelin",
+    "Black Sabbath",
+    "Pink Floyd",
+    "Deep Purple"
+   ],
+   "answer": "Led Zeppelin",
+   "d": "easy"
+  },
+  {
+   "q": "Which composer became deaf later in life?",
+   "options": [
+    "Liszt",
+    "Chopin",
+    "Beethoven",
+    "Mozart"
+   ],
+   "answer": "Beethoven",
+   "d": "easy"
+  },
+  {
+   "q": "John Farnham's hugely successful 1986 album was titled what?",
+   "options": [
+    "Then Again",
+    "Whispering Jack",
+    "Age of Reason",
+    "Chain Reaction"
+   ],
+   "answer": "Whispering Jack",
+   "d": "easy"
+  },
+  {
+   "q": "Which Canadian singer released 'Sorry' and 'Love Yourself' in 2015?",
+   "options": [
+    "Shawn Mendes",
+    "Justin Bieber",
+    "The Weeknd",
+    "Drake"
+   ],
+   "answer": "Justin Bieber",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian band, fronted by Bernard Fanning, released 'These Days'?",
+   "options": [
+    "Powderfinger",
+    "You Am I",
+    "Jet",
+    "Spiderbait"
+   ],
+   "answer": "Powderfinger",
+   "d": "easy"
+  },
+  {
+   "q": "Who gave us the song Rock N Me, which tells about different US states?",
+   "options": [
+    "Boston",
+    "The Doobie Brothers",
+    "Steve Miller Band",
+    "The Village People"
+   ],
+   "answer": "Steve Miller Band",
+   "d": "medium"
+  },
+  {
+   "q": "Whose albums included \"Back in Black\" and \"Ballbreaker\"?",
+   "options": [
+    "Iron Maiden",
+    "Metallica",
+    "AC/DC",
+    "Black Sabbath"
+   ],
+   "answer": "AC/DC",
+   "d": "easy"
+  },
+  {
+   "q": "What do you call a person whose profession is to make string instruments?",
+   "options": [
+    "Cooper",
+    "Fletcher",
+    "Stringer",
+    "Luthier"
+   ],
+   "answer": "Luthier",
+   "d": "medium"
+  },
+  {
+   "q": "Which royal wedding took place in 1981 at St Paul's Cathedral?",
+   "options": [
+    "Edward and Sophie",
+    "Charles and Diana",
+    "Andrew and Sarah",
+    "Anne and Mark"
+   ],
+   "answer": "Charles and Diana",
+   "d": "easy"
+  },
+  {
+   "q": "Which R&B singer released 'Ordinary People' in 2004 and later '<All of Me>' in 2013?",
+   "options": [
+    "Musiq Soulchild",
+    "Maxwell",
+    "Ne-Yo",
+    "John Legend"
+   ],
+   "answer": "John Legend",
+   "d": "easy"
+  },
+  {
+   "q": "What rock group is named after a gym teacher who taught at the original band members' high school?",
+   "options": [
+    "Pink Floyd",
+    "Coach & The Whistles",
+    "The Byrds",
+    "Lynyrd Skynyrd"
+   ],
+   "answer": "Lynyrd Skynyrd",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1980s pop star wore a single sequinned glove?",
+   "options": [
+    "Michael Jackson",
+    "George Michael",
+    "Boy George",
+    "Prince"
+   ],
+   "answer": "Michael Jackson",
+   "d": "easy"
+  },
+  {
+   "q": "Which rapper released the 2000 album 'The Marshall Mathers LP'?",
+   "options": [
+    "Dr. Dre",
+    "50 Cent",
+    "Eminem",
+    "Jay-Z"
+   ],
+   "answer": "Eminem",
+   "d": "easy"
+  },
+  {
+   "q": "Which group released the 1996 debut single 'Wannabe'?",
+   "options": [
+    "The Wannabees",
+    "Spice Girls",
+    "B*Witched",
+    "All Saints"
+   ],
+   "answer": "Spice Girls",
+   "d": "easy"
+  },
+  {
+   "q": "Lady Gaga's breakthrough 2008 single was titled what?",
+   "options": [
+    "Paparazzi",
+    "Poker Face",
+    "Bad Romance",
+    "Just Dance"
+   ],
+   "answer": "Just Dance",
+   "d": "easy"
+  },
+  {
+   "q": "Sublime originally consisted of how many band members?",
+   "options": [
+    "9",
+    "3",
+    "4",
+    "2"
+   ],
+   "answer": "3",
+   "d": "medium"
+  },
+  {
+   "q": "David Bowie had a #1 hit (U.S) in 1983 with which song?",
+   "options": [
+    "China Girl",
+    "Let's Dance",
+    "Fame",
+    "The Laughing Gnome"
+   ],
+   "answer": "Let's Dance",
+   "d": "easy"
+  },
+  {
+   "q": "Which composer wrote the Fifth Symphony with its famous four-note opening?",
+   "options": [
+    "Mozart",
+    "Bach",
+    "Beethoven",
+    "Brahms"
+   ],
+   "answer": "Beethoven",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s arcade game featured a plumber jumping barrels?",
+   "options": [
+    "Donkey Kong",
+    "Pac-Man",
+    "Galaga",
+    "Centipede"
+   ],
+   "answer": "Donkey Kong",
+   "d": "easy"
+  },
+  {
+   "q": "My Heart Will Go On is the theme song of what 1997 movie?",
+   "options": [
+    "Titanic",
+    "Wizard of Oz",
+    "George of the Jungle",
+    "Jumanji"
+   ],
+   "answer": "Titanic",
+   "d": "easy"
+  },
+  {
+   "q": "Which Rolling Stones song opens with 'I can't get no'?",
+   "options": [
+    "Start Me Up",
+    "Gimme Shelter",
+    "(I Can't Get No) Satisfaction",
+    "Paint It Black"
+   ],
+   "answer": "(I Can't Get No) Satisfaction",
+   "d": "easy"
+  },
+  {
+   "q": "Which pop-country star released the album '1989' in 2014?",
+   "options": [
+    "Carrie Underwood",
+    "Taylor Swift",
+    "Kacey Musgraves",
+    "Miranda Lambert"
+   ],
+   "answer": "Taylor Swift",
+   "d": "easy"
+  },
+  {
+   "q": "What is the title of this 1996 song?",
+   "options": [
+    "Silence",
+    "Don't Speak",
+    "Don't Talk",
+    "Speak Up"
+   ],
+   "answer": "Don't Speak",
+   "d": "easy"
+  },
+  {
+   "q": "Who conducts an orchestra using a small stick?",
+   "options": [
+    "The conductor",
+    "The first violin",
+    "The concertmaster",
+    "The composer"
+   ],
+   "answer": "The conductor",
+   "d": "easy"
+  },
+  {
+   "q": "Which US band released 'Piano Man' and 'Uptown Girl'?",
+   "options": [
+    "Neil Diamond",
+    "Barry Manilow",
+    "Elton John",
+    "Billy Joel"
+   ],
+   "answer": "Billy Joel",
+   "d": "easy"
+  },
+  {
+   "q": "Which R&B and pop group featured Michael Jackson as its youngest lead singer in the early years?",
+   "options": [
+    "The Commodores",
+    "The Temptations",
+    "The O'Jays",
+    "The Jackson 5"
+   ],
+   "answer": "The Jackson 5",
+   "d": "easy"
+  },
+  {
+   "q": "Which pop-punk trio released 'All the Small Things' in 1999?",
+   "options": [
+    "Simple Plan",
+    "Good Charlotte",
+    "Green Day",
+    "Blink-182"
+   ],
+   "answer": "Blink-182",
+   "d": "easy"
+  },
+  {
+   "q": "Which US singer released the 1994 album 'Grace', featuring a cover of 'Hallelujah'?",
+   "options": [
+    "Jeff Buckley",
+    "Rufus Wainwright",
+    "John Cale",
+    "Chris Cornell"
+   ],
+   "answer": "Jeff Buckley",
+   "d": "medium"
+  },
+  {
+   "q": "Which one of these Pink Floyd albums were also a movie?",
+   "options": [
+    "The Dark Side of the Moon",
+    "Animals",
+    "The Wall",
+    "Wish You Were Here"
+   ],
+   "answer": "The Wall",
+   "d": "medium"
+  },
+  {
+   "q": "Which decade did MTV launch, changing how music was consumed?",
+   "options": [
+    "1990s",
+    "1970s",
+    "2000s",
+    "1980s"
+   ],
+   "answer": "1980s",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these is NOT considered a woodwind instrument?",
+   "options": [
+    "Oboe",
+    "Bassoon",
+    "Trombone",
+    "Clarinet"
+   ],
+   "answer": "Trombone",
+   "d": "medium"
+  },
+  {
+   "q": "Which two singers had a hit with The Whiskey Ain't Workin No More?",
+   "options": [
+    "Simon and Garfunkel",
+    "George Jones and Merle Haggard",
+    "Brooks and Dunn",
+    "Travis Tritt and Marty Stuart"
+   ],
+   "answer": "Travis Tritt and Marty Stuart",
+   "d": "hard"
+  },
+  {
+   "q": "Which English band released the electronic dance album 'Discovery' is a Daft Punk album; which band released the 1990s dance hit 'Firestarter'?",
+   "options": [
+    "Fatboy Slim",
+    "The Prodigy",
+    "Underworld",
+    "The Chemical Brothers"
+   ],
+   "answer": "The Prodigy",
+   "d": "easy"
+  },
+  {
+   "q": "Which pop icon released the 1989 album 'Like a Prayer'?",
+   "options": [
+    "Janet Jackson",
+    "Madonna",
+    "Cyndi Lauper",
+    "Whitney Houston"
+   ],
+   "answer": "Madonna",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of the album released in 2014 by American band Maroon 5?",
+   "options": [
+    "IV",
+    "Maroon 6",
+    "III",
+    "V"
+   ],
+   "answer": "V",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1980s TV series featured a talking car named KITT?",
+   "options": [
+    "Street Hawk",
+    "Airwolf",
+    "The A-Team",
+    "Knight Rider"
+   ],
+   "answer": "Knight Rider",
+   "d": "easy"
+  },
+  {
+   "q": "Which party-pop duo released 'Party Rock Anthem' in 2011?",
+   "options": [
+    "Cobra Starship",
+    "Far East Movement",
+    "LMFAO",
+    "The Black Eyed Peas"
+   ],
+   "answer": "LMFAO",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the lead singer of the Smashing Pumpkins?",
+   "options": [
+    "Eddie Vedder",
+    "Brett Scallions",
+    "Chino Moreno",
+    "Billy Corgan"
+   ],
+   "answer": "Billy Corgan",
+   "d": "medium"
+  },
+  {
+   "q": "What singer is responsible for supplying us with Here and Now, one of the biggest wedding songs of the 1990s?",
+   "options": [
+    "Isaac Hayes",
+    "Teddy Pendergrass",
+    "Luther Vandross",
+    "Barry White"
+   ],
+   "answer": "Luther Vandross",
+   "d": "medium"
+  },
+  {
+   "q": "Which country subgenre, popular in the 2010s, emphasises pickup trucks, parties and dirt roads?",
+   "options": [
+    "Western swing",
+    "Bro-country",
+    "Outlaw country",
+    "Honky-tonk"
+   ],
+   "answer": "Bro-country",
+   "d": "medium"
+  },
+  {
+   "q": "Which bright fluorescent colour trend defined 1980s fashion?",
+   "options": [
+    "Earth tones",
+    "Neon",
+    "Pastel",
+    "Monochrome"
+   ],
+   "answer": "Neon",
+   "d": "easy"
+  },
+  {
+   "q": "Which US singer released the 1983 album 'She's So Unusual', featuring 'Girls Just Want to Have Fun'?",
+   "options": [
+    "Cyndi Lauper",
+    "Belinda Carlisle",
+    "Pat Benatar",
+    "Madonna"
+   ],
+   "answer": "Cyndi Lauper",
+   "d": "medium"
+  },
+  {
+   "q": "Which UK band, fronted by Alex Turner, released 'I Bet You Look Good on the Dancefloor' in 2005?",
+   "options": [
+    "Arctic Monkeys",
+    "The Libertines",
+    "Kaiser Chiefs",
+    "Franz Ferdinand"
+   ],
+   "answer": "Arctic Monkeys",
+   "d": "easy"
+  },
+  {
+   "q": "Which US band released 'Everlong' and 'Learn to Fly'?",
+   "options": [
+    "Blink-182",
+    "Weezer",
+    "Foo Fighters",
+    "Green Day"
+   ],
+   "answer": "Foo Fighters",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the lead singer of Silverchair?",
+   "options": [
+    "Daniel Johns",
+    "Chris Joannou",
+    "George Costanza",
+    "Ben Gillies"
+   ],
+   "answer": "Daniel Johns",
+   "d": "medium"
+  },
+  {
+   "q": "\"The Singing Cowboy\" Gene Autry is credited with the first recording for all but which classic Christmas jingle?",
+   "options": [
+    "Frosty the Snowman",
+    "White Christmas",
+    "Peter Cottontail",
+    "Rudolph the Red-Nosed Reindeer"
+   ],
+   "answer": "White Christmas",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1990s band released the album 'Nevermind'?",
+   "options": [
+    "Pearl Jam",
+    "Alice in Chains",
+    "Nirvana",
+    "Soundgarden"
+   ],
+   "answer": "Nirvana",
+   "d": "easy"
+  },
+  {
+   "q": "Which band recorded 'Hotel California'?",
+   "options": [
+    "Eagles",
+    "America",
+    "Fleetwood Mac",
+    "Chicago"
+   ],
+   "answer": "Eagles",
+   "d": "easy"
+  },
+  {
+   "q": "Which British-Irish boy band released 'What Makes You Beautiful' in 2011?",
+   "options": [
+    "JLS",
+    "One Direction",
+    "The Wanted",
+    "Union J"
+   ],
+   "answer": "One Direction",
+   "d": "easy"
+  },
+  {
+   "q": "What is the name of Finnish DJ Darude's hit single released in October 1999?",
+   "options": [
+    "Dust Devil",
+    "Sandstorm",
+    "Sirocco",
+    "Leaf Blower"
+   ],
+   "answer": "Sandstorm",
+   "d": "easy"
+  },
+  {
+   "q": "'Don't You Want Me?' was a number one hit in 1981 for which electropop band?",
+   "options": [
+    "Pet Shop Boys",
+    "Human League",
+    "Eurythmics",
+    "Depeche Mode"
+   ],
+   "answer": "Human League",
+   "d": "easy"
+  },
+  {
+   "q": "Which Irish rock band released 'The Joshua Tree' in 1987?",
+   "options": [
+    "Snow Patrol",
+    "Thin Lizzy",
+    "U2",
+    "The Cranberries"
+   ],
+   "answer": "U2",
+   "d": "easy"
+  },
+  {
+   "q": "Which metal band released the 1991 self-titled album known as 'The Black Album'?",
+   "options": [
+    "Anthrax",
+    "Megadeth",
+    "Slayer",
+    "Metallica"
+   ],
+   "answer": "Metallica",
+   "d": "easy"
+  },
+  {
+   "q": "Which Spice Girl was nicknamed 'Scary Spice'?",
+   "options": [
+    "Mel C",
+    "Mel B",
+    "Emma Bunton",
+    "Spicy Spice"
+   ],
+   "answer": "Mel B",
+   "d": "easy"
+  },
+  {
+   "q": "Which US star released 'Thank U, Next' in 2018?",
+   "options": [
+    "Ariana Grande",
+    "Halsey",
+    "Selena Gomez",
+    "Camila Cabello"
+   ],
+   "answer": "Ariana Grande",
+   "d": "easy"
+  },
+  {
+   "q": "Which US singer released 'All of Me' in 2013?",
+   "options": [
+    "Bruno Mars",
+    "Sam Smith",
+    "Ed Sheeran",
+    "John Legend"
+   ],
+   "answer": "John Legend",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian pop duo of twin sisters released 'Untouched'?",
+   "options": [
+    "The Veronicas",
+    "Girlfriend",
+    "Bardot",
+    "The Chantoozies"
+   ],
+   "answer": "The Veronicas",
+   "d": "easy"
+  },
+  {
+   "q": "The 1992 hit 'I Will Always Love You' by Whitney Houston was from which film?",
+   "options": [
+    "Ghost",
+    "The Bodyguard",
+    "Waiting to Exhale",
+    "The Lifeguard"
+   ],
+   "answer": "The Bodyguard",
+   "d": "easy"
+  },
+  {
+   "q": "Which brass instrument has the lowest pitch in an orchestra?",
+   "options": [
+    "Trombone",
+    "Tuba",
+    "Trumpet",
+    "French Horn"
+   ],
+   "answer": "Tuba",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these country artists released the song 25 minutes to Go in 1968?",
+   "options": [
+    "George Jones",
+    "Boxcar Willie",
+    "Johnny Cash",
+    "Waylon Jennings"
+   ],
+   "answer": "Johnny Cash",
+   "d": "medium"
+  },
+  {
+   "q": "Which genre, blending country and rock, is exemplified by bands like the Eagles?",
+   "options": [
+    "Country rock",
+    "Alt-country",
+    "Bluegrass",
+    "Southern rock"
+   ],
+   "answer": "Country rock",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian band released 'Throw Your Arms Around Me'?",
+   "options": [
+    "The Triffids",
+    "Mental As Anything",
+    "Icehouse",
+    "Hunters & Collectors"
+   ],
+   "answer": "Hunters & Collectors",
+   "d": "easy"
+  },
+  {
+   "q": "Who was the lead singer and frontman of rock band R.E.M?",
+   "options": [
+    "Chris Martin",
+    "Ozzy Osbourne",
+    "Michael Stipe",
+    "Thom Yorke"
+   ],
+   "answer": "Michael Stipe",
+   "d": "medium"
+  },
+  {
+   "q": "Who had a 1983 hit with the song 'Africa'?",
+   "options": [
+    "Foreigner",
+    "Journey",
+    "Steely Dan",
+    "Toto"
+   ],
+   "answer": "Toto",
+   "d": "easy"
+  },
+  {
+   "q": "What song by Andy Gibb topped the charts in 1977?",
+   "options": [
+    "I Just Want to Be Your Everything",
+    "(Love Is) Thicker Than Water",
+    "Stayin' Alive",
+    "Shadow Dancing"
+   ],
+   "answer": "I Just Want to Be Your Everything",
+   "d": "medium"
+  },
+  {
+   "q": "The Who's eponymous line, \"Teenage Wasteland\", appears in which of their songs?",
+   "options": [
+    "Pinball Wizard",
+    "Magic Bus",
+    "Baba O' Riley",
+    "Won't Get Fooled Again"
+   ],
+   "answer": "Baba O' Riley",
+   "d": "medium"
+  },
+  {
+   "q": "Which Radiohead album was the first to debut at Number 1 in the US chart?",
+   "options": [
+    "Amnesiac",
+    "Kid A",
+    "Hail to the Thief",
+    "In Rainbows"
+   ],
+   "answer": "Kid A",
+   "d": "medium"
+  },
+  {
+   "q": "What 1985 hit song by Starship was awarded in 2004 The #1 Most Awesomely Bad Song Ever by Blender magazine?",
+   "options": [
+    "Sara",
+    "White Rabbit",
+    "Nothing's Gonna Stop Us Now",
+    "We Built This City"
+   ],
+   "answer": "We Built This City",
+   "d": "medium"
+  },
+  {
+   "q": "Which band's frontman was Freddie Mercury?",
+   "options": [
+    "Slade",
+    "Queen",
+    "The Who",
+    "Deep Purple"
+   ],
+   "answer": "Queen",
+   "d": "easy"
+  },
+  {
+   "q": "Which artist released the 2013 song 'Get Lucky' as vocalist and co-writer alongside Daft Punk?",
+   "options": [
+    "Pharrell Williams",
+    "Bruno Mars",
+    "John Legend",
+    "Justin Timberlake"
+   ],
+   "answer": "Pharrell Williams",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1984 film features a karate student and Mr Miyagi?",
+   "options": [
+    "No Retreat No Surrender",
+    "Bloodsport",
+    "The Karate Kid",
+    "Best of the Best"
+   ],
+   "answer": "The Karate Kid",
+   "d": "easy"
+  },
+  {
+   "q": "Which artist released the 2011 album 'Born This Way'?",
+   "options": [
+    "Rihanna",
+    "Katy Perry",
+    "Kesha",
+    "Lady Gaga"
+   ],
+   "answer": "Lady Gaga",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1999 boy band song was 'I Want It That Way'?",
+   "options": [
+    "Backstreet Boys",
+    "Five",
+    "98 Degrees",
+    "NSYNC"
+   ],
+   "answer": "Backstreet Boys",
+   "d": "easy"
+  },
+  {
+   "q": "\"All the Boys\" by Panic! At the Disco was released as a bonus track on what album?",
+   "options": [
+    "Vices & Virtues",
+    "Death Of A Bachelor",
+    "Songs For The Emo Kids",
+    "Too Weird To Live, Too Rare To Die!"
+   ],
+   "answer": "Too Weird To Live, Too Rare To Die!",
+   "d": "hard"
+  },
+  {
+   "q": "What was the title of ABBA`s first UK hit single?",
+   "options": [
+    "Dancing Queen",
+    "Mamma Mia",
+    "Waterloo",
+    "Ring Ring"
+   ],
+   "answer": "Waterloo",
+   "d": "easy"
+  },
+  {
+   "q": "Which US singer released the 1984 album 'Born in the U.S.A.'?",
+   "options": [
+    "John Mellencamp",
+    "Bob Seger",
+    "Tom Petty",
+    "Bruce Springsteen"
+   ],
+   "answer": "Bruce Springsteen",
+   "d": "easy"
+  },
+  {
+   "q": "Saul Hudson (Slash) of the band Guns N' Roses is known for playing what type of guitar?",
+   "options": [
+    "Les Paul Standard",
+    "Gibson SG",
+    "Gibson Les Paul Custom",
+    "Guitar Hero controller"
+   ],
+   "answer": "Les Paul Standard",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1980s duo sang 'Wake Me Up Before You Go-Go'?",
+   "options": [
+    "Tears for Fears",
+    "Wham!",
+    "Eurythmics",
+    "Hall & Oates"
+   ],
+   "answer": "Wham!",
+   "d": "easy"
+  },
+  {
+   "q": "Which of Michael Jackson's albums sold the most copies?",
+   "options": [
+    "Dangerous",
+    "Off the Wall",
+    "Thriller",
+    "HIStory"
+   ],
+   "answer": "Thriller",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s dance craze involved a robotic gliding walk?",
+   "options": [
+    "The worm",
+    "The cabbage patch",
+    "The moonwalk",
+    "The running man"
+   ],
+   "answer": "The moonwalk",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian artist released 'Born to Try'?",
+   "options": [
+    "Missy Higgins",
+    "Sara Storer",
+    "Delta Goodrem",
+    "Kasey Chambers"
+   ],
+   "answer": "Delta Goodrem",
+   "d": "easy"
+  },
+  {
+   "q": "Which band recorded the 1990s rock song Smells Like Teen Spirit?",
+   "options": [
+    "Pearl Jam",
+    "The Backstreet Boys",
+    "Soundgarden",
+    "Nirvana"
+   ],
+   "answer": "Nirvana",
+   "d": "easy"
+  },
+  {
+   "q": "Kylie Minogue rose to fame on which Australian soap opera?",
+   "options": [
+    "A Country Practice",
+    "Neighbours",
+    "Home and Away",
+    "Prisoner"
+   ],
+   "answer": "Neighbours",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1980s band's frontman was Boy George?",
+   "options": [
+    "Spandau Ballet",
+    "Frankie Goes to Hollywood",
+    "Culture Club",
+    "Duran Duran"
+   ],
+   "answer": "Culture Club",
+   "d": "easy"
+  },
+  {
+   "q": "Which band released the album 'Abbey Road'?",
+   "options": [
+    "The Who",
+    "The Rolling Stones",
+    "The Kinks",
+    "The Beatles"
+   ],
+   "answer": "The Beatles",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s TV sitcom featured six friends in New York?",
+   "options": [
+    "Mad About You",
+    "Friends",
+    "Seinfeld",
+    "Frasier"
+   ],
+   "answer": "Friends",
+   "d": "easy"
+  },
+  {
+   "q": "Which two megastars duetted on 'The Girl Is Mine' in 1982?",
+   "options": [
+    "Michael Jackson and Lionel Richie",
+    "Michael Jackson and Stevie Wonder",
+    "Michael Jackson and Paul McCartney",
+    "Prince and Michael Jackson"
+   ],
+   "answer": "Michael Jackson and Paul McCartney",
+   "d": "easy"
+  },
+  {
+   "q": "Which singer released 'Shake It Off' in 2014?",
+   "options": [
+    "Ariana Grande",
+    "Taylor Swift",
+    "Meghan Trainor",
+    "Katy Perry"
+   ],
+   "answer": "Taylor Swift",
+   "d": "easy"
+  },
+  {
+   "q": "Which basketball team dominated the 1990s NBA with Michael Jordan?",
+   "options": [
+    "The Boston Celtics",
+    "The Houston Rockets",
+    "The Chicago Bulls",
+    "The LA Lakers"
+   ],
+   "answer": "The Chicago Bulls",
+   "d": "easy"
+  },
+  {
+   "q": "Where was Elvis Presley's Memphis home?",
+   "options": [
+    "Paisley Park",
+    "Neverland",
+    "Graceland",
+    "Sun Studio"
+   ],
+   "answer": "Graceland",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s alternative rock band was fronted by Eddie Vedder?",
+   "options": [
+    "Bush",
+    "Stone Temple Pilots",
+    "Soundgarden",
+    "Pearl Jam"
+   ],
+   "answer": "Pearl Jam",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1987 film featured Patrick Swayze as a dance instructor at a summer resort?",
+   "options": [
+    "Point Break",
+    "Dirty Dancing",
+    "Ghost",
+    "Road House"
+   ],
+   "answer": "Dirty Dancing",
+   "d": "easy"
+  },
+  {
+   "q": "What's Going On is the #6 album on Rolling Stone magazines list of the 500 Greatest Albums of all Time. What artist recorded this album?",
+   "options": [
+    "Marvin Gaye",
+    "Stevie Wonder",
+    "Barry White",
+    "Otis Redding"
+   ],
+   "answer": "Marvin Gaye",
+   "d": "medium"
+  },
+  {
+   "q": "Which decade saw Elvis Presley become a rock and roll superstar?",
+   "options": [
+    "1960s",
+    "1970s",
+    "1940s",
+    "1950s"
+   ],
+   "answer": "1950s",
+   "d": "easy"
+  },
+  {
+   "q": "Typically, how many keys are on a piano?",
+   "options": [
+    "100",
+    "61",
+    "88",
+    "76"
+   ],
+   "answer": "88",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1987 film features the line 'Nobody puts Baby in a corner'?",
+   "options": [
+    "Grease 2",
+    "Dirty Dancing",
+    "Flashdance",
+    "Footloose"
+   ],
+   "answer": "Dirty Dancing",
+   "d": "easy"
+  },
+  {
+   "q": "Which brothers formed the core of the Bee Gees?",
+   "options": [
+    "The Jackson brothers",
+    "The Everly brothers",
+    "The Gibb brothers",
+    "The Wilson brothers"
+   ],
+   "answer": "The Gibb brothers",
+   "d": "easy"
+  },
+  {
+   "q": "Which world wide web technology became widely available to the public in the early 1990s?",
+   "options": [
+    "The World Wide Web",
+    "Email only",
+    "Wi-Fi",
+    "Bluetooth"
+   ],
+   "answer": "The World Wide Web",
+   "d": "easy"
+  },
+  {
+   "q": "Who was the winner of the 1987 Grammy Award for Record of the Year?",
+   "options": [
+    "Robert Palmer for Addicted to Love",
+    "Peter Gabriel for Sledgehammer",
+    "Steve Winwood for Higher Love",
+    "Weird Al Yankovic for Eat It"
+   ],
+   "answer": "Steve Winwood for Higher Love",
+   "d": "medium"
+  },
+  {
+   "q": "The Red Hot Chili Pepper song \"Give It Away\" is from what album?",
+   "options": [
+    "Californication",
+    "By the Way",
+    "Abbey Road",
+    "Blood Sugar Sex Magik"
+   ],
+   "answer": "Blood Sugar Sex Magik",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1982 Michael Jackson album broke sales records?",
+   "options": [
+    "Dangerous",
+    "Bad",
+    "Thriller",
+    "Off the Wall"
+   ],
+   "answer": "Thriller",
+   "d": "easy"
+  },
+  {
+   "q": "What artist is famous for the 1979 song The Devil Went Down To Georgia?",
+   "options": [
+    "Merle Haggard",
+    "Charlie Daniels",
+    "Marshall Tucker Band",
+    "The Devil himself"
+   ],
+   "answer": "Charlie Daniels",
+   "d": "medium"
+  },
+  {
+   "q": "What band released the albums Killers, Somewhere in Time and A Matter of Life and Death?",
+   "options": [
+    "Iron Butterfly",
+    "Saxon",
+    "Iron Maiden",
+    "Judas Priest"
+   ],
+   "answer": "Iron Maiden",
+   "d": "medium"
+  },
+  {
+   "q": "Who was the lead singer of The Darkness from 2000-2006?",
+   "options": [
+    "Justin Hawkins",
+    "Frankie Poullain",
+    "Meat Loaf",
+    "Dan Hawkins"
+   ],
+   "answer": "Justin Hawkins",
+   "d": "medium"
+  },
+  {
+   "q": "Which artist collaborated with Lady Gaga on the 2014 jazz standards album 'Cheek to Cheek'?",
+   "options": [
+    "Harry Connick Jr.",
+    "Michael Buble",
+    "Frank Sinatra",
+    "Tony Bennett"
+   ],
+   "answer": "Tony Bennett",
+   "d": "easy"
+  },
+  {
+   "q": "What was Bon Iver's debut album released in 2007?",
+   "options": [
+    "22, A Million",
+    "Bon Iver, Bon Iver",
+    "Blood Bank EP",
+    "For Emma, Forever Ago"
+   ],
+   "answer": "For Emma, Forever Ago",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1990s toy was a digital pet you had to feed on a keychain?",
+   "options": [
+    "Giga Pet",
+    "Nano Baby",
+    "Furby",
+    "Tamagotchi"
+   ],
+   "answer": "Tamagotchi",
+   "d": "easy"
+  },
+  {
+   "q": "Which singer is known as the Boss?",
+   "options": [
+    "John Mellencamp",
+    "Bruce Springsteen",
+    "Bob Seger",
+    "Tom Petty"
+   ],
+   "answer": "Bruce Springsteen",
+   "d": "easy"
+  },
+  {
+   "q": "What group released Revolver, the album ranked #3 by Rolling Stone magazine?",
+   "options": [
+    "Pink Floyd",
+    "The Doors",
+    "The Beatles",
+    "The Who"
+   ],
+   "answer": "The Beatles",
+   "d": "easy"
+  },
+  {
+   "q": "Which 80s band is fronted by singer/guitarist Robert Smith?",
+   "options": [
+    "Echo & the Bunnymen",
+    "New Order",
+    "The Smiths",
+    "The Cure"
+   ],
+   "answer": "The Cure",
+   "d": "medium"
+  },
+  {
+   "q": "Which US band released 'Numb' and 'In the End'?",
+   "options": [
+    "Papa Roach",
+    "Limp Bizkit",
+    "Korn",
+    "Linkin Park"
+   ],
+   "answer": "Linkin Park",
+   "d": "easy"
+  },
+  {
+   "q": "What celebrated female artist released the song True Blue in 1986?",
+   "options": [
+    "Dolly Parton",
+    "Cyndi Lauper",
+    "Madonna",
+    "Cher"
+   ],
+   "answer": "Madonna",
+   "d": "medium"
+  },
+  {
+   "q": "What bird song has been covered by artists like Josephine Baker, Frank Sinatra, Judy Garland, Liza Minnelli, Dean Martin, Joe Cocker?",
+   "options": [
+    "Bye Bye Bluebird",
+    "Bye Bye Big Bird",
+    "Bye Bye Mockingbird",
+    "Bye Bye Blackbird"
+   ],
+   "answer": "Bye Bye Blackbird",
+   "d": "medium"
+  },
+  {
+   "q": "Which 1980s soap opera featured the question 'Who shot JR?'",
+   "options": [
+    "Falcon Crest",
+    "Dallas",
+    "Knots Landing",
+    "Dynasty"
+   ],
+   "answer": "Dallas",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1984 film features the line 'Who you gonna call?'",
+   "options": [
+    "Ghostbusters",
+    "The Frighteners",
+    "Beetlejuice",
+    "Poltergeist"
+   ],
+   "answer": "Ghostbusters",
+   "d": "easy"
+  },
+  {
+   "q": "Waltz is defined as a piece of music with how many beats to the measure (bar)?",
+   "options": [
+    "12",
+    "4",
+    "2",
+    "3"
+   ],
+   "answer": "3",
+   "d": "medium"
+  },
+  {
+   "q": "Which Australian band released 'Chained to the Wheel' and 'Sometimes' in the early 1990s?",
+   "options": [
+    "The Grey Sorrows",
+    "Crowded House",
+    "Hunters & Collectors",
+    "The Black Sorrows"
+   ],
+   "answer": "The Black Sorrows",
+   "d": "easy"
+  },
+  {
+   "q": "Who is the vocalist and frontman of rock band \"Guns N' Roses\"?",
+   "options": [
+    "Axl Rose",
+    "Bono",
+    "Slash",
+    "Kurt Cobain"
+   ],
+   "answer": "Axl Rose",
+   "d": "easy"
+  },
+  {
+   "q": "Which band released 'Wonderwall' in 1995?",
+   "options": [
+    "The Verve",
+    "Oasis",
+    "Pulp",
+    "Blur"
+   ],
+   "answer": "Oasis",
+   "d": "easy"
+  },
+  {
+   "q": "Which decade did EDM (electronic dance music) reach massive mainstream popularity in the US?",
+   "options": [
+    "1980s",
+    "1990s",
+    "2010s",
+    "2000s"
+   ],
+   "answer": "2010s",
+   "d": "easy"
+  },
+  {
+   "q": "Queen's rock anthem opening with 'Is this the real life?' is titled what?",
+   "options": [
+    "Don't Stop Me Now",
+    "Bohemian Rhapsody",
+    "Somebody to Love",
+    "Killer Queen"
+   ],
+   "answer": "Bohemian Rhapsody",
+   "d": "easy"
+  },
+  {
+   "q": "'The Safety Dance' was the biggest hit single for which Canadian act?",
+   "options": [
+    "Trans-X",
+    "Loverboy",
+    "Nickelback",
+    "Men Without Hats"
+   ],
+   "answer": "Men Without Hats",
+   "d": "medium"
+  },
+  {
+   "q": "Which artist released the album '1989' and re-recorded her back catalogue?",
+   "options": [
+    "Miley Cyrus",
+    "Selena Gomez",
+    "Katy Perry",
+    "Taylor Swift"
+   ],
+   "answer": "Taylor Swift",
+   "d": "easy"
+  },
+  {
+   "q": "Which US city is widely regarded as the birthplace of hip hop in the 1970s?",
+   "options": [
+    "Los Angeles",
+    "Detroit",
+    "Atlanta",
+    "New York City"
+   ],
+   "answer": "New York City",
+   "d": "easy"
+  },
+  {
+   "q": "What does AC/DC guitarist Angus Young famously wear on stage?",
+   "options": [
+    "A police uniform",
+    "A tuxedo",
+    "A cape",
+    "A schoolboy uniform"
+   ],
+   "answer": "A schoolboy uniform",
+   "d": "easy"
+  },
+  {
+   "q": "Who was the lead singer of the band U2?",
+   "options": [
+    "Chris Martin",
+    "Sting",
+    "Bono",
+    "The Edge"
+   ],
+   "answer": "Bono",
+   "d": "easy"
+  },
+  {
+   "q": "Who was the lead vocalist of Nirvana?",
+   "options": [
+    "Chris Cornell",
+    "Dave Grohl",
+    "Eddie Vedder",
+    "Kurt Cobain"
+   ],
+   "answer": "Kurt Cobain",
+   "d": "easy"
+  },
+  {
+   "q": "Which Australian singer had a hit with 'The Horses'?",
+   "options": [
+    "Richard Clapton",
+    "Daryl Braithwaite",
+    "Jimmy Barnes",
+    "John Farnham"
+   ],
+   "answer": "Daryl Braithwaite",
+   "d": "easy"
+  },
+  {
+   "q": "Which rap group released the album \"Straight Outta Compton\"?",
+   "options": [
+    "N.W.A",
+    "Run-D.M.C.",
+    "Beastie Boys",
+    "Wu-Tang Clan"
+   ],
+   "answer": "N.W.A",
+   "d": "easy"
+  },
+  {
+   "q": "Which John Farnham song is an Australian anthem from 1986?",
+   "options": [
+    "Age of Reason",
+    "Burn for You",
+    "Playing to Win",
+    "You're the Voice"
+   ],
+   "answer": "You're the Voice",
+   "d": "easy"
+  },
+  {
+   "q": "Which US state is most strongly associated with the origins of country music, particularly Nashville?",
+   "options": [
+    "Kentucky",
+    "Texas",
+    "Georgia",
+    "Tennessee"
+   ],
+   "answer": "Tennessee",
+   "d": "easy"
+  },
+  {
+   "q": "What was Radiohead's first album?",
+   "options": [
+    "Pablo Honey",
+    "The Bends",
+    "Amnesiac",
+    "Kid A"
+   ],
+   "answer": "Pablo Honey",
+   "d": "medium"
+  },
+  {
+   "q": "Come Dancing was a big hit for which group in 1983?",
+   "options": [
+    "The Who",
+    "The Kinks",
+    "Madness",
+    "The Rolling Stones"
+   ],
+   "answer": "The Kinks",
+   "d": "medium"
+  },
+  {
+   "q": "Which Australian band had a global hit with 'Down Under'?",
+   "options": [
+    "Little River Band",
+    "INXS",
+    "Men at Work",
+    "Air Supply"
+   ],
+   "answer": "Men at Work",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s dance track by Los del Rio came with its own dance?",
+   "options": [
+    "Macarena",
+    "Cotton Eye Joe",
+    "Saturday Night",
+    "Barbie Girl"
+   ],
+   "answer": "Macarena",
+   "d": "easy"
+  },
+  {
+   "q": "Which dance move is Michael Jackson most associated with?",
+   "options": [
+    "The worm",
+    "The robot",
+    "The floss",
+    "The moonwalk"
+   ],
+   "answer": "The moonwalk",
+   "d": "easy"
+  },
+  {
+   "q": "The Spice Girls' debut single, released in 1996, was titled what?",
+   "options": [
+    "Stop",
+    "Wannabe",
+    "Say You'll Be There",
+    "2 Become 1"
+   ],
+   "answer": "Wannabe",
+   "d": "easy"
+  },
+  {
+   "q": "Which decade did boy bands like Backstreet Boys and NSYNC dominate the charts?",
+   "options": [
+    "Late 2010s",
+    "Late 1990s",
+    "Late 1980s",
+    "Late 2000s"
+   ],
+   "answer": "Late 1990s",
+   "d": "easy"
+  },
+  {
+   "q": "Which video format won the 1980s home video war?",
+   "options": [
+    "VHS",
+    "LaserDisc",
+    "Betamax",
+    "Video 2000"
+   ],
+   "answer": "VHS",
+   "d": "easy"
+  },
+  {
+   "q": "Which 1990s boy band sang 'Backstreet's Back'?",
+   "options": [
+    "Boyzone",
+    "Backstreet Boys",
+    "NSYNC",
+    "Take That"
+   ],
+   "answer": "Backstreet Boys",
+   "d": "easy"
+  },
+  {
+   "q": "Which Death Grips album is the only one to feature a band member?",
+   "options": [
+    "The Money Store",
+    "No Love Deep Web",
+    "Bottomless Pit",
+    "Year of the Snitch"
+   ],
+   "answer": "No Love Deep Web",
+   "d": "hard"
+  },
+  {
+   "q": "Who was the lead singer of The Rolling Stones?",
+   "options": [
+    "Ronnie Wood",
+    "Charlie Watts",
+    "Keith Richards",
+    "Mick Jagger"
+   ],
+   "answer": "Mick Jagger",
+   "d": "easy"
+  },
+  {
+   "q": "Which artist released 'Shake It Off' in 2014?",
+   "options": [
+    "Selena Gomez",
+    "Ariana Grande",
+    "Katy Perry",
+    "Taylor Swift"
+   ],
+   "answer": "Taylor Swift",
+   "d": "easy"
+  },
+  {
+   "q": "ABBA, the pop supergroup, came from which country?",
+   "options": [
+    "Norway",
+    "Sweden",
+    "Denmark",
+    "Finland"
+   ],
+   "answer": "Sweden",
+   "d": "easy"
+  },
+  {
+   "q": "Which of these Deep Purple lead vocalists founded Whitesnake in 1977?",
+   "options": [
+    "Ian Gillan",
+    "Ozzy Osbourne",
+    "David Coverdale",
+    "Glenn Hughes"
+   ],
+   "answer": "David Coverdale",
+   "d": "medium"
+  },
+  {
+   "q": "How many strings does a standard bass guitar usually have?",
+   "options": [
+    "Five",
+    "Six",
+    "Three",
+    "Four"
+   ],
+   "answer": "Four",
+   "d": "easy"
+  }
+ ]
 }
