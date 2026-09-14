@@ -164,5 +164,33 @@ pass("and not picking still keeps you IN",
 pass("the room is told nobody was playing rather than shown a blank",
      /Nobody was still playing/.test(HB));
 
+
+/* ================================================================
+   A GUEST WHO WALKS IN MID GAME IS GIVEN SOMETHING TO DO.
+
+   The console resends the current game to anyone who says hello, but only if that
+   game opted in with a `resend`. On 15 Sep 2026 only charades and guess-who had
+   one, so joining a running party put you on "You are in. Watch the big screen."
+   for the whole of bingo, two truths, heads or tails and the rest. Proved by
+   joining a live party as a second guest during two truths and getting nothing.
+
+   Bingo and two truths are the cheap ones: the phone builds its own ticket from
+   {t:"bingo"}, and the truths form is just {t:"ask-truths"} again. Heads or tails
+   is deliberately NOT here: it is an elimination game and whether a latecomer
+   joins a round already under way is Dean's call, not a bug fix.
+   ================================================================ */
+print("\nA LATE ARRIVAL IS NOT LEFT WATCHING");
+pass("the console resends the running game on hello",
+     /m\.t===\"hello\"[\s\S]{0,600}G\.resend\(\)/.test(RUN),
+     "without this the resend hooks below are never called");
+pass("bingo gives a latecomer a ticket",
+     /resend\s*:\s*resendBingo/.test(RUN) && /function resendBingo\(\)\s*\{\s*send\(\{t:"bingo"\}\)/.test(RUN),
+     "they watched the whole game with no ticket");
+pass("two truths lets a latecomer still write theirs",
+     /mode:"truths"[\s\S]{0,400}resend\s*:/.test(RUN) && /ask-truths/.test(RUN));
+pass("but only while it is still collecting",
+     /phase===\"collect\"[\s\S]{0,60}ask-truths/.test(RUN),
+     "handing a form to someone once the room is voting asks them to write for a closed round");
+
 print(bad ? (bad + " OF " + ran + " CHECKS FAILED") : ("ALL " + ran + " CHECKS PASSED"));
 if (bad) throw new Error("pp host channel: " + bad + " failed");

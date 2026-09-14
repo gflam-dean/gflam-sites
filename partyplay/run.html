@@ -454,8 +454,19 @@
   }, 30000);
 
   /* ------------------------------------------------------------------ bingo -- */
+  /* SOMEBODY WHO WALKS IN MID GAME GETS A TICKET.
+
+     Only charades and guess-who had a resend, so at a party where people drift in all
+     night every other game left the late arrival on "You are in. Watch the big screen."
+     for its whole length. Proved 15 Sep 2026 by joining a running party: the guest saw
+     the waiting screen and nothing else.
+
+     The phone builds its own ticket when it hears {t:"bingo"}, so this is just saying it
+     again. They start from the next ball rather than the first, which is a worse ticket
+     than everyone else's and still enormously better than watching. */
+  function resendBingo(){ send({t:"bingo"}); }
   function runBingo(g){
-    G={ pool:[], called:[], repaint:paintBingo };
+    G={ pool:[], called:[], repaint:paintBingo, resend:resendBingo };
     for(var i=1;i<=90;i++) G.pool.push(i);
     // Tell the phones to build their tickets BEFORE the first ball, so nobody is
     // still staring at a lobby when a number goes up.
@@ -778,7 +789,10 @@
   /* Two phases. Everyone writes their three first, because doing it person by
      person leaves twenty people watching one person type. */
   function runTruths(g){
-    G={ mode:"truths", phase:"collect", subs:[], turn:-1, votes:[], repaint:paintTruths };
+    /* Only while still collecting. Once the room is voting, dropping a form on a new
+       phone would be asking them to write for a round that has already closed. */
+    G={ mode:"truths", phase:"collect", subs:[], turn:-1, votes:[], repaint:paintTruths,
+        resend:function(){ if(G && G.phase==="collect") send({t:"ask-truths"}); } };
     send({t:"ask-truths"});
     send({t:"big",text:"Two truths and a lie",sub:"Write yours on your phone"});
     paintTruths();
