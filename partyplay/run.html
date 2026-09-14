@@ -271,7 +271,11 @@
           }
         }
         if(m.t==="pick" && G && G.mode==="heads" && m.name && G.inPlay.indexOf(m.name)>=0){
-          G.picks[m.name]=m.side; paintHeads();
+          G.picks[m.name]=m.side;
+          /* Staying in without picking is deliberate (see flip()). WINNING without ever
+             picking is not, so remember who actually played at least once. */
+          G.everPicked[m.name]=true;
+          paintHeads();
         }
         if(m.t==="answer" && G && G.items && m.name){
           var dup = G.answers.some(function(a){ return a.name===m.name && a.i===m.i; });
@@ -820,7 +824,7 @@
   /* The pub version makes you stand up and touch your head, which quietly rules
      out anyone who cannot easily do either. On a phone everybody plays. */
   function runHeads(g){
-    G={ mode:"heads", round:0, inPlay:players.slice(), picks:{}, last:null, repaint:paintHeads };
+    G={ mode:"heads", round:0, inPlay:players.slice(), picks:{}, everPicked:{}, last:null, repaint:paintHeads };
     send({t:"heads", round:0});
     send({t:"big", text:"Heads or tails", sub:"Pick one on your phone"});
     paintHeads();
@@ -854,8 +858,14 @@
     send({t:"heads", round:G.round, result:side, out:out, inPlay:G.inPlay.slice()});
     if(G.inPlay.length<=1){
       var w = G.inPlay[0];
+      /* YOU CANNOT WIN A GAME YOU NEVER PLAYED. Not picking keeps you in, on purpose,
+         because knocking out the guest who went to the bar is how you lose a player for
+         the night. But the last person standing having never touched their phone is a
+         different thing: they take the prize and the points off everybody who did play.
+         Seen 15 Sep 2026 running a party, where a guest who never picked once won it. */
+      if(w && !G.everPicked[w]) w = null;
       if(w){ nightAdd([{name:w, score:PPQuiz.CORRECT_POINTS}]); }
-      send({t:"big", text: w?w:"All out", sub: w?"Heads or tails winner":""});
+      send({t:"big", text: w?w:"All out", sub: w?"Heads or tails winner":"Nobody was still playing"});
     } else {
       send({t:"big", text:side.toUpperCase(), sub:G.inPlay.length+" still in"});
     }

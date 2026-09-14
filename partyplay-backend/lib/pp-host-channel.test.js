@@ -140,5 +140,29 @@ onChannelStatus("SOMETHING_SUPABASE_ADDED_LATER");
 pass("an unknown status does not knock a healthy party offline", subscribed === true);
 
 print("");
+/* ================================================================
+   YOU CANNOT WIN HEADS OR TAILS WITHOUT EVER PLAYING IT.
+
+   Not picking keeps you in, deliberately: knocking out the guest who went to the
+   bar is how you lose a player for the night. But on 15 Sep 2026, running a real
+   party, the winner was a guest who never picked once. They took the prize and
+   the points on the night's board off everyone who actually played.
+
+   So: staying in without picking is fine, winning without ever picking is not.
+   ================================================================ */
+print("\nHEADS OR TAILS: THE WINNER HAS TO HAVE PLAYED");
+var HB = RUN;
+pass("the console remembers who has ever picked",
+     /everPicked\s*:\s*\{\s*\}/.test(HB) && /G\.everPicked\[\s*m\.name\s*\]\s*=\s*true/.test(HB),
+     "without it there is no way to tell a quiet player from an absent one");
+pass("a sole survivor who never picked is not crowned",
+     /if\s*\(\s*w\s*&&\s*!\s*G\.everPicked\[\s*w\s*\]\s*\)\s*w\s*=\s*null/.test(HB),
+     "they were declared the winner and given CORRECT_POINTS on the night board");
+pass("and not picking still keeps you IN",
+     /G\.picks\[n\]\s*&&\s*G\.picks\[n\]\s*!==\s*side/.test(HB),
+     "the elimination test must stay conditional on having picked, or the fix breaks the intent");
+pass("the room is told nobody was playing rather than shown a blank",
+     /Nobody was still playing/.test(HB));
+
 print(bad ? (bad + " OF " + ran + " CHECKS FAILED") : ("ALL " + ran + " CHECKS PASSED"));
 if (bad) throw new Error("pp host channel: " + bad + " failed");
