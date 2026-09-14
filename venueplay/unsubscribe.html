@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Unsubscribe | VenuePlay</title>
+<style>
+  :root{--bg:#0B0A0F;--card:#15131C;--line:rgba(255,255,255,.10);--text:#FFF1E6;--muted:#A79FB0;--pink:#FF1F8E;--ok:#3BD16F}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;
+       display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:520px;width:100%;padding:32px 28px}
+  .brand{display:flex;align-items:center;gap:9px;margin-bottom:22px}
+  .brand span{font-family:'Hanken Grotesk',system-ui,sans-serif;font-weight:700;font-size:15px;letter-spacing:.01em}
+  h1{font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:23px;line-height:1.25;margin:0 0 10px}
+  p{margin:0 0 14px;color:var(--muted)}
+  p.big{color:var(--text)}
+  b{color:var(--text)}
+  label{display:block;font-size:13px;color:var(--muted);margin:18px 0 6px}
+  input{width:100%;padding:12px 13px;border-radius:9px;border:1px solid var(--line);background:#0E0D13;color:var(--text);font:inherit}
+  button{margin-top:16px;width:100%;padding:13px;border:0;border-radius:9px;background:var(--pink);color:#fff;
+         font:inherit;font-weight:700;cursor:pointer}
+  button[disabled]{opacity:.55;cursor:default}
+  .done{display:flex;gap:11px;align-items:flex-start;margin-top:4px}
+  .tick{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ok);color:#06210F;
+        display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin-top:2px}
+  .foot{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  .foot a{color:var(--muted)}
+  .err{color:#FF8A8A}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">
+    <svg width="18" height="21" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
+    <span>VenuePlay</span>
+  </div>
+
+  <div id="ask">
+    <h1>Unsubscribe</h1>
+    <p>Put your address in and we will not contact you again. No reason needed and nothing else to do.</p>
+    <form id="f" novalidate>
+      <label for="em">Email address</label>
+      <input id="em" type="email" inputmode="email" autocomplete="email" placeholder="you@yourvenue.com.au" required>
+      <button id="go" type="submit">Unsubscribe me</button>
+    </form>
+    <p id="err" class="err hidden" style="margin-top:12px"></p>
+  </div>
+
+  <div id="done" class="hidden">
+    <h1>Done</h1>
+    <div class="done">
+      <div class="tick" aria-hidden="true">&#10003;</div>
+      <p class="big" id="doneMsg" style="margin:0">You will not hear from us again.</p>
+    </div>
+    <p style="margin-top:16px">If anything does arrive after today, reply to it with <b>STOP</b> and tell us. That would be a mistake on our part, not a setting you need to change.</p>
+  </div>
+
+  <div class="foot">
+    Gflam Group Pty Ltd, ABN 35 679 383 049. Gold Coast, Queensland.<br>
+    This only stops outreach email. It does not affect a VenuePlay account, if you have one.
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   THE OPT-OUT HAS TO ACTUALLY WRITE SOMETHING.
+
+   PartyPlay's unsubscribe printed "Done" and wrote nothing for its whole
+   life, which is the worst possible version of this page: the person
+   believes they are off the list, keeps getting email, and the next thing
+   they do is report it as spam. So this page does not show "Done" until
+   the insert has come back.
+
+   WHY EVERY OUTCOME LOOKS THE SAME. The table is insert-only and a repeat
+   address hits a unique index. That conflict is treated as success, on
+   purpose: the reply must not differ between "you are now off the list"
+   and "you were already on it", or this page becomes a way to ask whether
+   a given venue has unsubscribed, which is nobody's business.
+   ===================================================================== */
+(function () {
+  var SUPA = "https://ijkzgmdtwtgfkedqspxm.supabase.co";
+  var ANON = "sb_publishable_9v83FWCSt7Di-jkgTvsMJQ_f6lJPovb";
+
+  var $ = function (id) { return document.getElementById(id); };
+  function show(el, on) { el.classList.toggle("hidden", !on); }
+
+  function param(n) {
+    try {
+      var m = new RegExp("[?&]" + n + "=([^&]*)").exec(location.search);
+      return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : "";
+    } catch (e) { return ""; }
+  }
+  function looksLikeEmail(s) { return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s || "").trim()); }
+
+  function record(email, source) {
+    return fetch(SUPA + "/rest/v1/vp_unsubscribes", {
+      method: "POST",
+      headers: {
+        "apikey": ANON,
+        "Authorization": "Bearer " + ANON,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({ email: String(email).trim().toLowerCase(), source: source || "page" })
+    }).then(function (r) {
+      /* 409 is the unique index: already on the list. That is a success for the
+         person in front of us, and saying so differently would leak the list. */
+      if (r.ok || r.status === 409) return true;
+      return r.text().then(function (t) { throw new Error(t || ("HTTP " + r.status)); });
+    });
+  }
+
+  function finish(email) {
+    $("doneMsg").textContent = email
+      ? ("You will not hear from us again at " + email + ".")
+      : "You will not hear from us again.";
+    show($("ask"), false);
+    show($("done"), true);
+  }
+
+  /* A link from an email carries the address, so there is nothing to type: one
+     click and it is done. Anything else shows the form. */
+  var fromLink = param("e") || param("email");
+  if (looksLikeEmail(fromLink)) {
+    record(fromLink, "link").then(function () { finish(fromLink.trim().toLowerCase()); })
+      .catch(function () {
+        /* Could not write. Do NOT say Done. Let them use the form, which tries again. */
+        $("em").value = fromLink;
+        $("err").textContent = "That did not go through. Press the button and we will try again.";
+        show($("err"), true);
+      });
+  }
+
+  $("f").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = $("em").value.trim();
+    show($("err"), false);
+    if (!looksLikeEmail(v)) {
+      $("err").textContent = "That does not look like an email address.";
+      show($("err"), true); return;
+    }
+    $("go").disabled = true; $("go").textContent = "One moment...";
+    record(v, "form").then(function () { finish(v.toLowerCase()); })
+      .catch(function () {
+        $("go").disabled = false; $("go").textContent = "Unsubscribe me";
+        $("err").textContent = "Something went wrong at our end. Reply to the email with STOP and we will take you off by hand.";
+        show($("err"), true);
+      });
+  });
+})();
+</script>
+</body>
+</html>
