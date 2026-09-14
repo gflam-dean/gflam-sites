@@ -44,7 +44,12 @@ function lift(src, name) {
 }
 var RUN = find("partyplay/run.html");
 
-var names = ["wireOut", "send", "flushQueue", "onChannelStatus"];
+/* onChannelStatus now raises and clears the host's not-connected banner, so the banner
+   functions have to come across too or the eval below throws on an undefined name. They
+   touch the DOM, which jsc has none of, so document is stubbed just enough for them:
+   this suite is about the QUEUE, not the markup, and pp-guest-connection.test.js is
+   where the banner's own wording and behaviour are checked. */
+var names = ["wireOut", "send", "flushQueue", "wireBar", "armWireWatch", "onChannelStatus"];
 var srcs = names.map(function (n) { return lift(RUN, n); });
 var missing = names.filter(function (n, i) { return !srcs[i]; });
 pass("the real functions came out of run.html", missing.length === 0,
@@ -55,8 +60,28 @@ var capM = /SEND_QUEUE_MAX\s*=\s*(\d+)/.exec(RUN);
 pass("the queue has a cap", !!capM, "an unbounded queue is a memory leak on a long outage");
 var SEND_QUEUE_MAX = capM ? +capM[1] : 50;
 
-var ch, subscribed, sendQueue, sent;
-function reset() { sent = []; sendQueue = []; subscribed = false; ch = { send: function (m) { sent.push(m.payload); return true; } }; }
+var ch, subscribed, sendQueue, sent, wireBarTimer, connect;
+/* Smallest document that lets wireBar run. It records what the host would have been
+   shown, so a later check could assert on it without a browser. */
+var shownBanner = null;
+var document = {
+  /* null for "ppWire" so wireBar builds one; a live stub for the retry button it then
+     wires up, which is looked up straight after insertBefore. */
+  getElementById: function (id) {
+    if (id === "ppWireGo") return { addEventListener: function () {} };
+    return null;
+  },
+  createElement: function () {
+    return { id: "", innerHTML: "", setAttribute: function () {},
+             remove: function () { shownBanner = null; },
+             addEventListener: function () {} };
+  },
+  body: { firstChild: null, insertBefore: function (el) { shownBanner = el; } }
+};
+function setTimeout() { return 0; }
+function clearTimeout() {}
+function reset() { sent = []; sendQueue = []; subscribed = false; shownBanner = null;
+                   ch = { send: function (m) { sent.push(m.payload); return true; } }; }
 eval(srcs.join("\n"));
 
 /* THE ROLL CALL IS PART OF SUBSCRIBING NOW, so it lands in `sent` before anything a game
