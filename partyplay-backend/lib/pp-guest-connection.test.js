@@ -180,6 +180,39 @@ ok("and tells the guest they are still in, when they are",
    /waiting\(s\.nickname\|\|"", _ppLive \? "live" : undefined\)/.test(LOBBY),
    'it passed no state, so it fell through to "Getting you in..." on a healthy phone');
 
+
+print("== and the HOST is told when the room cannot hear them ==");
+/* Found 15 Sep 2026 by running a party. The console opened, the game list drew, bingo
+   started, numbers called, the board filled in, and the guest's phone got nothing for the
+   whole game. The channel had never subscribed, so every send went into sendQueue, which
+   drops its oldest at 50 and never complains.
+
+   Everything a host can see is drawn LOCALLY, so a dead channel and a healthy one look
+   identical from behind the tablet. The guest side of exactly this was fixed on 12 Sep.
+   The host, the one person who could do something about it, was not told. */
+ok("the host console has a not-connected banner at all",
+   /ppWire/.test(runCode) && /Guests/.test(RUN),
+   "a host with a dead channel saw a completely normal screen");
+ok("it says the phones are not receiving, not just 'offline'",
+   /phones are not receiving/i.test(RUN),
+   "'disconnected' means nothing at a party; say what it costs them");
+ok("a dropped channel raises it",
+   /CHANNEL_ERROR[\s\S]{0,160}wireBar\(true\)/.test(runCode),
+   "CHANNEL_ERROR, TIMED_OUT and CLOSED all set subscribed=false and used to return silently");
+/* The first version of this matched "armWireWatch" ANYWHERE, so deleting the CALL and
+   leaving the function definition kept it green. Check the call site: the watch has to be
+   armed where the subscribe happens, or it guards nothing. */
+ok("a subscribe that NEVER lands raises it too",
+   /ch\.subscribe\(onChannelStatus\);\s*armWireWatch\(\)/.test(runCode) &&
+   /setTimeout\([\s\S]{0,80}subscribed[\s\S]{0,40}wireBar\(true\)/.test(runCode),
+   "the failure seen in the wild produced no error event at all: it simply never reached SUBSCRIBED, so waiting for an error waits forever");
+ok("and it clears the moment the channel comes good",
+   /SUBSCRIBED[\s\S]{0,120}wireBar\(false\)/.test(runCode),
+   "a banner that stays up after it reconnects trains the host to ignore it");
+ok("there is a way to retry without reloading",
+   /ppWireGo[\s\S]{0,400}connect\(/.test(runCode),
+   "mid-party, a reload is a worse ask than a button");
+
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

@@ -138,9 +138,55 @@
 
   /* NAMED, so it can be run by a test. It was ch.subscribe() with NO CALLBACK AT ALL:
      the host had no idea whether it was connected, and nothing could ever tell it. */
+  /* THE HOST HAS TO KNOW WHEN THE PHONES CANNOT HEAR THEM.
+
+     Found 15 Sep 2026 by running a party. The console opened, the game list drew, bingo
+     started, numbers called, the board filled in. On the guest's phone: nothing, for the
+     whole game. The channel had never subscribed, so every send went into sendQueue,
+     which drops its oldest at 50 and never complains.
+
+     Nothing on this page said so. onChannelStatus set subscribed=false on CHANNEL_ERROR,
+     TIMED_OUT and CLOSED and then returned, and there was no connection indicator in the
+     console at all. Everything the host can see is drawn locally, so a dead channel and a
+     healthy one look identical from behind the tablet.
+
+     play.html got this fixed on 12 Sep: a guest is told when their phone goes deaf. The
+     host, who is the one person who could actually do something about it, was not.
+
+     A TIMER AS WELL AS THE STATUS CALLBACK. The failure I hit produced no error event at
+     all: it simply never reached SUBSCRIBED. Waiting for an error would have waited
+     forever, so anything still unsubscribed after eight seconds says so. */
+  var wireBarTimer=null;
+  function wireBar(on){
+    var bar=document.getElementById("ppWire");
+    if(!on){ if(bar) bar.remove(); return; }
+    if(bar) return;
+    bar=document.createElement("div");
+    bar.id="ppWire";
+    bar.setAttribute("style",
+      "position:sticky;top:0;z-index:99;background:#5A1020;color:#FFE4E9;padding:11px 16px;"+
+      "font:600 14px/1.45 Manrope,system-ui,sans-serif;display:flex;gap:12px;align-items:center;"+
+      "border-bottom:2px solid #FF1F8E");
+    bar.innerHTML='<span>Not connected. <b>Guests\u2019 phones are not receiving anything.</b> '+
+      'The screen here will still move, but nothing is reaching the room.</span>'+
+      '<button id="ppWireGo" style="margin-left:auto;flex:0 0 auto;border:0;border-radius:7px;'+
+      'padding:8px 13px;background:#FF1F8E;color:#fff;font:inherit;cursor:pointer">Try again</button>';
+    document.body.insertBefore(bar, document.body.firstChild);
+    document.getElementById("ppWireGo").addEventListener("click", function(){
+      wireBar(false);
+      try{ if(ch && ch.unsubscribe) ch.unsubscribe(); }catch(e){}
+      connect();
+      armWireWatch();
+    });
+  }
+  function armWireWatch(){
+    if(wireBarTimer) clearTimeout(wireBarTimer);
+    wireBarTimer=setTimeout(function(){ if(!subscribed) wireBar(true); }, 8000);
+  }
+
   function onChannelStatus(status){
     if(status==="SUBSCRIBED"){
-      subscribed=true; flushQueue();
+      subscribed=true; wireBar(false); if(wireBarTimer) clearTimeout(wireBarTimer); flushQueue();
       /* WHO IS ALREADY HERE.
 
          `players` was built ONLY from hello broadcasts arriving while this console was
@@ -158,7 +204,7 @@
       send({t:"rollcall"});
       return;
     }
-    if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ subscribed=false; }
+    if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ subscribed=false; wireBar(true); }
   }
 
   /* PartyPlay draws in the browser, unlike VenuePlay which had to move its draw
@@ -233,6 +279,7 @@
         }
       });
       ch.subscribe(onChannelStatus);
+      armWireWatch();   // a subscribe that never lands fires no error; catch it on the clock
     }catch(e){}
   }
 
