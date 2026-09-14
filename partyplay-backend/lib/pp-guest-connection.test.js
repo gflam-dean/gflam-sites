@@ -156,10 +156,10 @@ ok("a bingo BALL still gets through, because that really is for the phone",
    /B && !isNaN\(n\)[\s\S]{0,200}paintBingo\(\); return;/.test(BIG),
    "the ball arrives as a big whose text is just a number, and it must keep working");
 ok("but a caption is DROPPED while this phone is holding a game",
-   /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH\) return;/.test(BIG),
+   /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW\) return;/.test(BIG),
    "this single line is what makes nine of the ten games playable");
 ok("and every one of the seven game states is named in that guard",
-   ["B","Q","H","T","W","V","PH"].every(function (v) {
+   ["B","Q","H","T","W","V","PH","CH","GW"].every(function (v) {
      return new RegExp("\\b" + v + "\\b").test((BIG.match(/if\([^)]*\) return;/)||[""])[0]);
    }),
    "a state left out is one more game the wall can wipe");
@@ -234,6 +234,33 @@ ok("everybody else is told who won, not nothing",
 ok("and the host actually sends it",
    /send\(\{t:"draw", winner:w\}\)/.test(runCode),
    "the phone handler is dead code without this");
+
+
+print("== charades and guess-who survive the caption too ==");
+/* THE TWO GAMES THE NINE-GAME FIX MISSED. On 12 Sep the caption guard was added for
+   B, Q, H, T, W, V and PH. Charades and guess-who set NO state of their own: both
+   handlers cleared all seven and added nothing, so the guard could never see them.
+
+   charadesGo() sends the word and then {t:"big"} on the very next line. The word
+   rendered and was wiped 1 to 17ms later, every round, so the actor never saw what
+   they were meant to act. Seen 15 Sep 2026 by taking a turn as the actor: the phone
+   read "Jordan is acting. Shout your guesses", which is the caption, on Jordan's own
+   phone. Both games were unplayable for their whole life. */
+ok("charades keeps a state of its own",
+   /CH\s*=\s*\{[^}]*actor/.test(code),
+   "with nothing set, the guard below cannot protect it");
+ok("guess-who keeps a state of its own",
+   /GW\s*=\s*\{[^}]*guesser/.test(code),
+   "same fault, same round");
+ok("and the caption guard actually names them",
+   /if\(B \|\| Q \|\| H \|\| T \|\| W \|\| V \|\| PH \|\| CH \|\| GW\) return;/.test(code),
+   "a state nothing checks is the same as no state");
+ok("starting either one clears the other",
+   /m\.t === "charades"[\s\S]{0,200}GW=null/.test(code) &&
+   /m\.t === "guesswho"[\s\S]{0,200}CH=null/.test(code),
+   "otherwise the previous game's guard keeps the new one off the screen");
+ok("and the lobby clears both, so a phone is not stuck holding a finished game",
+   /m\.t === "lobby"[\s\S]{0,260}CH\s*=\s*null[\s\S]{0,60}GW\s*=\s*null|CH=null;GW=null;/.test(code));
 
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }

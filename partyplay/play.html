@@ -356,6 +356,15 @@
   var W = null;   // who here has ever
   var V = null;   // voting on somebody's two truths
   var PH = null;  // guess the photo
+  /* CHARADES AND GUESS-WHO HAD NO STATE OF THEIR OWN, so the caption guard below
+     could never see them. Both handlers cleared all seven other states and set
+     nothing, and the host sends {t:"big"} on the very next line after the word.
+     The word rendered and was wiped 1 to 17ms later, every single round, so the
+     actor NEVER saw what they were meant to act. This is the same fault that broke
+     nine games on 12 Sep; these two were missed precisely because they had no
+     state to guard. Seen 15 Sep 2026 by taking a turn as the actor. */
+  var CH = null;  // charades: the word is on THIS phone
+  var GW = null;  // guess who: this phone is the guesser, or watching
 
   function bingoStart(){
     var s = load() || {};
@@ -590,7 +599,7 @@
       var s = load()||{}; waiting(s.nickname||"", _ppLive ? "live" : undefined); return; }
     if(m.t === "bingo"){ Q=null; H=null; bingoStart(); return; }
     if(m.t === "photo"){
-      B=null;Q=null;H=null;T=null;V=null;W=null;
+      B=null;Q=null;H=null;T=null;V=null;W=null;CH=null;GW=null;
       PH={ i:m.i, q:m.q, url:m.url, options:m.options||[], n:m.n, of:m.of, mine:null, correct:null };
       paintPhoto(); return;
     }
@@ -598,7 +607,8 @@
        watch, which also stops them staring at a blank screen wondering whether
        the game has started. */
     if(m.t === "charades"){
-      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;
+      CH = { i:m.i, of:m.of, actor:m.actor };
       var me = (load()||{}).nickname || "";
       var mine = m.actor && me && String(m.actor) === String(me);
       $("app").innerHTML =
@@ -616,7 +626,8 @@
 
     /* WHO AM I. The mirror image: everyone sees it except the one guessing. */
     if(m.t === "guesswho"){
-      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;
+      GW = { i:m.i, of:m.of, guesser:m.guesser };
       var me2 = (load()||{}).nickname || "";
       var blind = m.guesser && me2 && String(m.guesser) === String(me2);
       $("app").innerHTML =
@@ -638,21 +649,21 @@
       return;
     }
     if(m.t === "ask-text"){
-      B=null;Q=null;H=null;V=null;W=null;
+      B=null;Q=null;H=null;V=null;W=null;CH=null;GW=null;
       T={ kind:m.kind, title:m.title, hint:m.hint, sent:0 };
       paintText(); return;
     }
     if(m.t === "ask-truths"){
-      B=null;Q=null;H=null;V=null;W=null;
+      B=null;Q=null;H=null;V=null;W=null;CH=null;GW=null;
       T={ kind:"truths", title:"Two truths and a lie", hint:"Write three things about you. Two true, one not.", sent:0 };
       paintTruthsForm(); return;
     }
     if(m.t === "hands"){
-      B=null;Q=null;H=null;T=null;V=null;
+      B=null;Q=null;H=null;T=null;V=null;CH=null;GW=null;
       W={ i:m.i, q:m.q, raised:false }; paintHands(); return;
     }
     if(m.t === "truthvote"){
-      B=null;Q=null;H=null;T=null;W=null;
+      B=null;Q=null;H=null;T=null;W=null;CH=null;GW=null;
       V={ turn:m.turn, who:m.name, lines:m.lines||[], picked:null, lie:null }; paintVote(); return;
     }
     if(m.t === "truthresult"){
@@ -719,7 +730,7 @@
          clears these, so an ending survives until the host moves on, which is right.
 
          The same shape guards connect(): see the note there. */
-      if(B || Q || H || T || W || V || PH) return;
+      if(B || Q || H || T || W || V || PH || CH || GW) return;
       $("app").innerHTML = '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
         '<div class="waiting"><div class="who">' + esc(m.text||"") + '</div>' +
         '<p>' + esc(m.sub||"") + '</p></div>';
@@ -729,7 +740,7 @@
        every phone renders when it has no game of its own. So every guest in the room read
        "Come and get it". Now the winner is named and only their phone is told to move. */
     if(m.t === "draw"){
-      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;CH=null;GW=null;
       var meD = (load()||{}).nickname || "";
       var wonD = m.winner && meD && String(m.winner) === String(meD);
       $("app").innerHTML =
