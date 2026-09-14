@@ -2192,9 +2192,49 @@
      opt-in player export. The Workers do enforce owner-only on /account/*, so most buttons would
      have failed, but the host could still read the venue's billing and staff, which defeats the
      point of the forced sign-out protecting that data in the first place. */
+
+  /* WHOSE ACCOUNT IS THIS? SAY SO.
+
+     billing.html reads localStorage "vpImpersonate" and sends its id as X-VP-Venue on
+     EVERY call, which is how an HQ admin acts on a venue they are staff of nowhere.
+     It then showed nothing on screen about it.
+
+     index.html has carried a gold "Viewing <venue> from VenuePlay Admin" banner since
+     View-as shipped. This page, the one with the subscription, the plan change, the
+     player count and the cancel button, had none. So an admin could arrive with a flag
+     left over from an earlier View-as, read one venue's billing believing it was
+     another's, and cancel the wrong subscription with nothing on screen to contradict
+     them. The flag is cleared on landing at HQ and on "Back to VenuePlay Admin", but
+     nothing clears it when you navigate straight here.
+
+     Same wording and same colours as index.html on purpose: an admin should not have to
+     learn two banners. Found 14 Sep 2026 auditing the two localStorage keys that decide
+     which venue a page acts on. */
+  function impBillingBanner(){
+    var imp = null;
+    try { imp = JSON.parse(localStorage.getItem("vpImpersonate") || "null"); } catch (e) {}
+    if (!imp || !imp.id) return;
+    if (document.getElementById("vpImpBar")) return;
+    var bar = document.createElement("div");
+    bar.id = "vpImpBar";
+    bar.style.cssText = "position:sticky;top:0;z-index:60;background:rgba(255,194,75,.12);" +
+      "border-bottom:1px solid rgba(255,194,75,.35);color:#FFC24B;font-size:12.5px;font-weight:600;" +
+      "padding:9px 16px;display:flex;align-items:center;gap:10px;font-family:'Manrope',system-ui,sans-serif";
+    bar.innerHTML = '<span>Billing for <b>' + esc(imp.name || "this venue") +
+      '</b>, viewed from VenuePlay Admin</span>' +
+      '<a id="vpImpBack" style="margin-left:auto;color:#FFC24B;text-decoration:underline;' +
+      'cursor:pointer;font-weight:700">Back to VenuePlay Admin</a>';
+    document.body.insertBefore(bar, document.body.firstChild);
+    document.getElementById("vpImpBack").addEventListener("click", function(){
+      try { localStorage.removeItem("vpImpersonate"); } catch (e) {}
+      window.location.href = "hq.html";
+    });
+  }
+
   VP.requireAuth({ roles:['owner','manager'] }).then(function(ctx){
     if (ctx) VP.suspensionBanner(ctx);
     if (!ctx){ return; } // requireAuth handles redirect when signed out
+    impBillingBanner();   // say whose account this is BEFORE anything is drawn or pressed
     load();
     loadHosts();   // populate the hosts list AND the "venues they can run" picker on page load
     initScreen();

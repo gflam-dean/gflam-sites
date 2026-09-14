@@ -2646,6 +2646,64 @@ def founding_windows_are_open():
     page taken down or its code rolled to the new month, so a "no" here is worth
     a look either way.
     """
+    """A PAGE THAT ACTS ON SOMEONE ELSE'S VENUE MUST SAY SO ON SCREEN.
+
+    Two localStorage keys decide which venue a page acts on. vpCurrentVenue is the
+    venue the user picked. vpImpersonate is set by hq.html "View as" and is sent as
+    the X-VP-Venue header, which is how an HQ admin acts on a venue they are staff of
+    nowhere. Nothing clears vpImpersonate when you navigate straight to a page, so it
+    can be left over from an earlier View-as.
+
+    index.html has shown a gold "Viewing <venue> from VenuePlay Admin" banner since
+    View-as shipped. billing.html sent the header and showed NOTHING, and billing.html
+    is the page with the subscription, the plan change and the cancel button. An admin
+    could read one venue's billing believing it was another's and cancel the wrong
+    subscription. Found 14 Sep 2026.
+
+    So: send the header, show the venue. This is a money check."""
+    head('A page acting on another venue says whose account it is')
+    silent = []
+    appdir = os.path.join(ROOT, 'venueplay', 'app')
+    pages = []
+    if os.path.isdir(appdir):
+        for dirpath, _dirs, names in os.walk(appdir):
+            for n in names:
+                if n.endswith('.html'):
+                    pages.append(os.path.join(dirpath, n))
+    for f in sorted(pages):
+        src = io.open(f, encoding='utf-8').read()
+        code = re.sub(r'<!--.*?-->', '', src, flags=re.S)
+        code = re.sub(r'/\*.*?\*/', '', code, flags=re.S)
+        # The danger is narrow: a page that takes the venue from the STORED flag, which
+        # can be left over from an earlier View-as. onboard.html also sends X-VP-Venue but
+        # passes the id straight into the call for a venue being created in that flow, so
+        # there is nothing stale to be wrong about. Flagging it was a false positive, and
+        # an over-broad check that cries wolf is a check people learn to ignore.
+        if 'X-VP-Venue' not in code:
+            continue
+        if 'vpImpersonate' not in code:
+            continue
+        # IT MUST BUILD THE BANNER AND PUT IT IN THE DOCUMENT, not merely mention it.
+        # First attempt matched the string "vpImpBar" anywhere in the file, so renaming
+        # the element the banner is actually built from left the check green. A check
+        # that cannot fail is worse than no check, because the green line says the job
+        # was done. So: the venue's name must reach markup, and that markup must be
+        # inserted into the page.
+        # AND THE INSERTION MUST BE THE BANNER'S OWN. Matching insertBefore anywhere in
+        # the file left this green when the insert was deleted: billing.html is 140KB of
+        # DOM work and something always matches. So look only in the window around the
+        # name, which is the banner's own code.
+        m = re.search(r'(?:innerHTML|textContent)[\s\S]{0,400}?esc\(\s*imp\.name', code)
+        ok_here = False
+        if m:
+            window = code[m.start():m.end() + 700]
+            ok_here = bool(re.search(r'(?:insertBefore|prepend|appendChild)\s*\(', window))
+        if not ok_here:
+            silent.append(short(f))
+    ok('every page sending X-VP-Venue shows whose venue it is', not silent,
+       why='sends the header with nothing on screen naming the venue, so an admin can act '
+           'on the wrong account: ' + ', '.join(sorted(silent)[:4]))
+
     head('Every founding page can still get the price it promises')
     root = os.path.join(ROOT, 'venueplay')
     pages = [f for f in sorted(os.listdir(root))
