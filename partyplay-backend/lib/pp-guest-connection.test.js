@@ -213,6 +213,28 @@ ok("there is a way to retry without reloading",
    /ppWireGo[\s\S]{0,400}connect\(/.test(runCode),
    "mid-party, a reload is a worse ask than a button");
 
+
+print("== the prize draw tells ONE person to come and get it ==");
+/* {t:"big"} is the TELLY's caption, and play.html renders it on any phone with no game
+   of its own. So the draw sent "Jordan. Come and get it" to every guest in the room.
+   Seen 15 Sep 2026 with two phones side by side. With one phone it looks perfect, which
+   is how it survived this long: the fault is invisible unless you hold two. */
+var DRAW = (function(){ var i = code.indexOf('m.t === "draw"'); return i < 0 ? "" : code.slice(i, i + 1100); })();
+ok("the phone has a draw handler of its own", !!DRAW,
+   "without one the draw falls through to the big caption, which everyone sees");
+ok("it compares the winner to THIS phone's nickname",
+   /m\.winner[\s\S]{0,140}nickname|nickname[\s\S]{0,140}m\.winner/.test(DRAW),
+   "the same check charades uses to put the word on exactly one phone");
+ok("only the winner is told to come and get it",
+   /wonD\s*\?[\s\S]{0,200}Come and get it/.test(DRAW),
+   "a room of thirty all standing up is the bug");
+ok("everybody else is told who won, not nothing",
+   /won that one/.test(DRAW),
+   "a blank screen mid party reads as broken");
+ok("and the host actually sends it",
+   /send\(\{t:"draw", winner:w\}\)/.test(runCode),
+   "the phone handler is dead code without this");
+
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
 print("ALL " + pass + " CHECKS PASSED");

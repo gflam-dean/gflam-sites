@@ -725,6 +725,21 @@
         '<p>' + esc(m.sub||"") + '</p></div>';
       return;
     }
+    /* THE PRIZE DRAW USED TO ARRIVE AS {t:"big"}, which is the telly's caption and which
+       every phone renders when it has no game of its own. So every guest in the room read
+       "Come and get it". Now the winner is named and only their phone is told to move. */
+    if(m.t === "draw"){
+      B=null;Q=null;H=null;T=null;V=null;W=null;PH=null;
+      var meD = (load()||{}).nickname || "";
+      var wonD = m.winner && meD && String(m.winner) === String(meD);
+      $("app").innerHTML =
+        '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
+        (wonD
+          ? '<div class="waiting"><div class="who">You won</div><p>Come and get it.</p></div>'
+          : '<div class="waiting"><div class="who">' + esc(m.winner||"Someone") + '</div>' +
+            '<p>won that one. Stick around, there may be another.</p></div>');
+      return;
+    }
     if(m.t === "say"){
       $("app").innerHTML = '<img class="mark" src="/logos/partyplay-mark.svg" alt="">' +
         '<div class="waiting"><div class="who">' + esc(m.title||"") + '</div>' +

@@ -591,6 +591,14 @@
     if(!pool.length) return;
     var w=pool[pick(pool.length)];
     G.won.push(w); G.last=w;
+    /* {t:"big"} is the TELLY's caption, and every phone with no game of its own renders
+       it too. So the draw told EVERY guest "Jordan. Come and get it", and a room of
+       thirty all stood up. Seen 15 Sep 2026 with two phones side by side; with one phone
+       it looks perfect, which is why it survived this long.
+
+       The winner gets a message meant for them, everyone else gets the news. Same shape
+       charades already uses to put the word on exactly one phone. */
+    send({t:"draw", winner:w});
     send({t:"big",text:w,sub:"Come and get it"});
     paintDraw();
   }
