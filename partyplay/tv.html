@@ -54,7 +54,13 @@
     justify-content:center;border-top:1px solid var(--line);background:rgba(18,16,26,.9)}
   .who span{background:rgba(255,241,230,.08);border-radius:2vh;padding:.6vh 1.6vh;font-size:clamp(12px,1.8vh,22px)}
   .who .count{background:var(--pink);color:#fff;font-weight:700}
-  .msg{color:var(--mute);font-size:clamp(15px,2.6vh,32px);max-width:24ch}
+  /* margin-inline:auto, because max-width alone does not centre a block. The wrapper
+     is text-align:center, so the TEXT inside .msg was centred while the BOX it sat in
+     stayed hard against the 4vw left padding. On a 1920 screen that put "Question 3 of
+     10" at x=77 under a question spanning 77 to 1843, which reads as a mistake from
+     across a room. Reported by play-testers as "off-centre subtitles" and never traced.
+     Measured 15 Sep 2026: .msg box was 343px wide starting at the padding edge. */
+  .msg{color:var(--mute);font-size:clamp(15px,2.6vh,32px);max-width:24ch;margin-inline:auto}
   .big{font-size:clamp(40px,14vh,180px);line-height:1}
 </style>
 </head>
