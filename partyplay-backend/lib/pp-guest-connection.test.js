@@ -259,8 +259,44 @@ ok("starting either one clears the other",
    /m\.t === "charades"[\s\S]{0,200}GW=null/.test(code) &&
    /m\.t === "guesswho"[\s\S]{0,200}CH=null/.test(code),
    "otherwise the previous game's guard keeps the new one off the screen");
-ok("and the lobby clears both, so a phone is not stuck holding a finished game",
-   /m\.t === "lobby"[\s\S]{0,260}CH\s*=\s*null[\s\S]{0,60}GW\s*=\s*null|CH=null;GW=null;/.test(code));
+/* THE CHECK THAT USED TO SIT HERE COULD NOT FAIL, and it is worth spelling out why,
+   because it is the third one this week. It read:
+
+     /m\.t === "lobby"[\s\S]{0,260}CH\s*=\s*null[\s\S]{0,60}GW\s*=\s*null|CH=null;GW=null;/
+
+   In JavaScript | splits the WHOLE pattern, not the tail. So the second half was
+   "CH=null;GW=null; anywhere in the file", and the charades handler contains exactly
+   that string. The check passed green while the lobby handler cleared seven states and
+   left CH and GW standing, which meant a phone that had played either game swallowed
+   every television caption for the rest of the night. Reproduced on the live site on
+   15 Sep 2026: the TV read "Prize draw, everyone in the room is in it" and the phone
+   read the generic waiting line.
+
+   So do not match a string. Read the states the phone actually declares, then require
+   the lobby handler to clear each one and the caption guard to name each one. A tenth
+   game added next month is covered without anybody remembering this note. */
+var declBlock = code.split("function bingoStart(")[0] || "";
+var STATES = [], _dre = /\n  var ([A-Z]{1,2}) = null;/g, _dm;
+while ((_dm = _dre.exec(declBlock))) STATES.push(_dm[1]);
+
+ok("the phone's game states can be read at all", STATES.length >= 9,
+   "found " + STATES.length + ": " + STATES.join(" "));
+
+var lobbyBlock = (code.match(/m\.t === "lobby"\)\{[\s\S]*?return;/) || [""])[0];
+ok("the lobby handler can be read at all", lobbyBlock.length > 40);
+
+var guardBlock = (code.match(/if\(([^)]*)\) return;\s*\$\("app"\)\.innerHTML/) || ["", ""])[1];
+ok("the caption guard can be read at all", guardBlock.indexOf("||") > 0, guardBlock);
+
+for (var _si = 0; _si < STATES.length; _si++) {
+  var _s = STATES[_si];
+  var _cleared = new RegExp("\\b" + _s + "\\s*=\\s*null\\b").test(lobbyBlock);
+  ok("lobby clears " + _s, _cleared,
+     "a state the lobby leaves set holds the phone on a finished game for ever");
+  var _named = new RegExp("\\b" + _s + "\\b").test(guardBlock);
+  ok("the caption guard names " + _s, _named,
+     "the television's caption would wipe this game off the phone");
+}
 
 print("");
 if (bad) { print(bad + " OF " + (pass + bad) + " CHECKS FAILED"); throw new Error(bad + " failed"); }
