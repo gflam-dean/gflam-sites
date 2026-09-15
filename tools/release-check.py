@@ -1947,6 +1947,27 @@ def local_checks(which):
     ok('no page uses a CSS variable it never defines', not var_hits,
        why=', '.join(sorted(set(var_hits))[:5]))
 
+    # A PRINTED HANDOUT CANNOT BE UPDATED ONCE IT IS ON A BAR. All four leave-behinds
+    # said "Go live 24 August 2026, first payment 24 September 2026", which on 16 Sep
+    # promised a go-live date three weeks in the past. A rep hands one over, a publican
+    # reads it a fortnight later, and the first concrete thing on it has already expired.
+    # A page can carry a date because a page can be edited. A handout cannot, so it may
+    # not carry one at all.
+    MONTHS = ('January|February|March|April|May|June|July|August|September|October'
+              '|November|December')
+    hand_hits = []
+    for f in files:
+        base = os.path.basename(f)
+        if not base.startswith('leave-behind') or not base.endswith('.html'):
+            continue
+        for m in re.finditer(r'\b\d{1,2} (?:' + MONTHS + r')\b', copy_text(f)):
+            hand_hits.append('%s "%s"' % (short(f), m.group(0)))
+    ok('no printed handout carries a date that can go stale', not hand_hits,
+       detail='%d handout(s)' % len([f for f in files
+                                     if os.path.basename(f).startswith('leave-behind')
+                                     and f.endswith('.html')]),
+       why=', '.join(hand_hits[:4]) + '. Say "the day you sign up", not a date')
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
