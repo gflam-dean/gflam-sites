@@ -633,6 +633,13 @@
     }
     else if(m.t==="question"){
       if(!P.joined) return;
+      /* A CATCH-UP AIMED AT SOMEBODY ELSE. The host replays whatever is on to any phone
+         that announces itself, because a backgrounded tab comes back to nothing. That
+         replay goes down the same channel the whole room is on, so it is tagged with the
+         pid that asked, and every other phone must let it past. Without this, one person
+         reconnecting would re-render the live question on forty phones and wipe the
+         answer they had already given. */
+      if(m.to && m.to !== P.pid) return;
       P.ended=false;
       renderQuestion(m);
     }
@@ -649,19 +656,23 @@
       } else tickCd();
     }
     else if(m.t==="lock"){
+      if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       stopCd(); lockOut();
     }
     else if(m.t==="reveal"){
+      if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       if(!P.joined) return;
       showResult(m);
     }
     else if(m.t==="leaderboard"){
+      if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       /* Leave the result screen up. This used to swap to "Next question coming up" 5 seconds after
          the reveal, so anyone who glanced at the bar missed whether they got it right. The result
          now stays until the next question, the podium or idle arrives. */
       return;
     }
     else if(m.t==="podium"){
+      if(m.to && m.to !== P.pid) return;   // a catch-up for one phone
       if(!P.joined) return;
       showFinal();
     }
