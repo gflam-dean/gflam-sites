@@ -65,7 +65,7 @@ g.PPQuiz = { CORRECT_POINTS: 100, SPEED_POINTS: 0, options: function(){ return [
 var EXPORT = "\n; globalThis.__X = { runCharades:runCharades, runGuessWho:runGuessWho," +
   " charadesGo:charadesGo, guessWhoGo:guessWhoGo, setSend:function(f){ send=f; }," +
   " setPlayers:function(p){ players=p; }, getG:function(){ return G; }, setToast:function(f){ toast=f; }," +
-  " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip };\n";
+  " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip, truthsEnd:truthsEnd, setG:function(o){ G=o; } };\n";
 var cut = body.lastIndexOf("})();");
 if (cut < 0) { print("could not find the end of the IIFE"); throw new Error("no IIFE"); }
 var harness = body.slice(0, cut) + EXPORT + body.slice(cut);
@@ -229,6 +229,44 @@ ok(sent.filter(function(m){ return m.t==="charades"; }).length === 0,
   var lastBig = sent.filter(function(m){ return m.t==="big"; }).pop();
   ok(lastBig && String(lastBig.text).indexOf("All out") >= 0,
      "and the television agrees, said: " + (lastBig && lastBig.text));
+})();
+
+// -------- two truths and a lie: the room has to be told who won ---------------
+/* THE TALLY WAS WORKED OUT, BANKED AND THROWN AWAY. The end of the round sent
+   {t:"lobby"} and nothing else, so the television dropped back to the join code in
+   the middle of the party and no phone learned anything. Spotting five lies looked
+   exactly like spotting none, which is the whole point of the game. Found 15 Sep 2026
+   by playing a round with two phones and watching the telly at the end. */
+(function(){
+  sent = [];
+  X.setG({ mode:"truths", phase:"play", turn:2, subs:[], repaint:function(){},
+           votes:[ {turn:0,name:"Sam",right:true}, {turn:0,name:"Jordan",right:false},
+                   {turn:1,name:"Sam",right:true}, {turn:1,name:"Dean",right:true} ] });
+  X.truthsEnd();
+  var board = sent.filter(function(m){ return m.t==="board"; })[0];
+  var cap   = sent.filter(function(m){ return m.t==="big"; }).pop();
+  ok(!!board, "the phones are sent the tally");
+  ok(board && board.rows && board.rows.length === 2,
+     "everyone who caught one is on it, got " + (board && board.rows && board.rows.length));
+  ok(board && board.rows[0].name === "Sam",
+     "best spotter first, got " + (board && board.rows[0] && board.rows[0].name));
+  ok(board && board.rows[0].score > board.rows[1].score,
+     "two right must beat one right, got " + (board && board.rows[0].score) + " v " + (board && board.rows[1].score));
+  ok(!!cap && String(cap.text).indexOf("Sam") >= 0,
+     "the television names the winner, said: " + (cap && cap.text));
+  ok(sent.filter(function(m){ return m.t==="lobby"; }).length === 0,
+     "no lobby at the end, or it clears the phones and the caption wipes the board");
+
+  // and nobody catching a lie is a result too, not a blank wall
+  sent = [];
+  X.setG({ mode:"truths", phase:"play", turn:1, subs:[], repaint:function(){},
+           votes:[ {turn:0,name:"Sam",right:false} ] });
+  X.truthsEnd();
+  var board2 = sent.filter(function(m){ return m.t==="board"; })[0];
+  var cap2   = sent.filter(function(m){ return m.t==="big"; }).pop();
+  ok(board2 && board2.rows.length === 0, "nobody caught one, so nobody is on the board");
+  ok(cap2 && String(cap2.sub).toLowerCase().indexOf("nobody caught") >= 0,
+     "and the wall says so rather than going blank, said: " + (cap2 && cap2.sub));
 })();
 
 print(fail ? "FAILED " + fail + " of " + (pass+fail) : "ALL " + pass + " CHECKS PASSED");

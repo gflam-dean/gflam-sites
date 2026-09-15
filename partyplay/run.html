@@ -795,6 +795,17 @@
     return Object.keys(by).map(function(n){ return { name:n, score:by[n] }; });
   }
 
+  /* The end of the round. A function rather than four lines inside a click handler,
+     because a click handler is the one thing the test harness cannot reach, and this
+     is the part that was wrong. */
+  function truthsEnd(){
+    var tb = truthsTally(G.votes).sort(function(a,b){ return b.score - a.score; });
+    nightAdd(tb);
+    send({t:"board", title:"Who spotted the lies", rows:tb.slice(0,10)});
+    send({t:"big", text: tb.length ? tb[0].name : "That is the lot",
+          sub:  tb.length ? tb[0].score + " points" : "Nobody caught a lie" });
+  }
+
   /* ------------------------------------------- two truths and a lie --------- */
   /* Two phases. Everyone writes their three first, because doing it person by
      person leaves twenty people watching one person type. */
@@ -822,6 +833,8 @@
         var board=Object.keys(tally).map(function(n){return {name:n,score:tally[n]};})
           .sort(function(a,b){return b.score-a.score;});
         h='<div class="gate"><div class="big">Done</div></div>';
+        if(!board.length) h+='<div class="q"><div class="qn">Best liar spotters</div>'+
+          '<div class="qa">Nobody caught one. Everybody kept a straight face.</div></div>';
         if(board.length) h+='<div class="q"><div class="qn">Best liar spotters</div>'+
           board.slice(0,8).map(function(r,i){ return '<div style="display:flex;justify-content:space-between;padding:3px 0">'+
             '<span>'+(i+1)+'. '+esc(r.name)+'</span><b>'+r.score+'</b></div>'; }).join("")+'</div>';
@@ -1061,7 +1074,16 @@
       var tn=G.subs[G.turn];
       if(tn){ send({t:"truthvote", turn:G.turn, name:tn.name, lines:tn.lines});
               send({t:"big", text:tn.name, sub:"Which one is the lie?"}); }
-      else { send({t:"lobby"}); nightAdd(truthsTally(G.votes)); }
+      /* THE ROOM NEVER FOUND OUT WHO WON. The tally was worked out, banked into the
+         night total and then thrown away: this sent lobby and nothing else, so the
+         television went straight back to the join code in the middle of the party and
+         no phone was told anything at all. Spotting five lies looked exactly like
+         spotting none. Trivia already ends by putting the board on the phones and the
+         winner on the wall, so do that. No lobby: the phones are still holding the last
+         vote, which is what stops the wall's caption wiping the board, and the ending
+         then survives until the host goes back to the games list. Found 15 Sep 2026 by
+         playing a round with two phones and watching the telly at the end. */
+      else { truthsEnd(); }
       paintTruths(); return;
     }
     if(el.id==="askphotos"){ send({t:"askphotos"}); toast("Asked everyone"); return; }
