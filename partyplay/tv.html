@@ -61,7 +61,19 @@
      across a room. Reported by play-testers as "off-centre subtitles" and never traced.
      Measured 15 Sep 2026: .msg box was 343px wide starting at the padding edge. */
   .msg{color:var(--mute);font-size:clamp(15px,2.6vh,32px);max-width:24ch;margin-inline:auto}
+  /* THE TELLY HAS TO SHRINK FOR A LONG QUESTION.
+     14vh sizes off the screen's HEIGHT, which is the right unit, but it takes no
+     account of how many LINES the text wraps to. Measured 15 Sep 2026 on a 1920x902
+     screen: a 186 character question rendered at 126px and ran 92px off the bottom,
+     silently, because .screen is a grid that just overflows.
+     Real data from the packs: 312 questions are over 100 characters, 17 over 150,
+     the longest 171. So this is not a hypothetical, it is most of a long round.
+     Same shape as venueplay/app/trivia/screen.html, which has carried q-med/q-long/
+     q-epic for the same reason. */
   .big{font-size:clamp(40px,14vh,180px);line-height:1}
+  .big.b-med {font-size:clamp(34px,10vh,120px);line-height:1.04}
+  .big.b-long{font-size:clamp(28px,7.4vh,86px);line-height:1.08}
+  .big.b-epic{font-size:clamp(24px,5.6vh,64px);line-height:1.12}
 </style>
 </head>
 <body>
@@ -195,7 +207,14 @@
     if(!m || !m.t) return;
     if(m.t === "players"){ players = m.names || []; drawWho(); return; }
     if(m.t === "lobby"){ drawJoin(); return; }
-    if(m.t === "big"){ show('<div><div class="big">' + esc(m.text) + '</div>' +
+    if(m.t === "big"){
+      /* A bingo ball is two characters and should be enormous; a trivia question can be
+         171. One clamp cannot serve both, so the size comes off the length. */
+      var _t = String(m.text == null ? "" : m.text);
+      var _cls = "big" + (_t.length > 150 ? " b-epic"
+                        : _t.length > 100 ? " b-long"
+                        : _t.length > 55  ? " b-med" : "");
+      show('<div><div class="' + _cls + '">' + esc(_t) + '</div>' +
         (m.sub ? '<p class="msg" style="margin-top:2vh">' + esc(m.sub) + '</p>' : '') + '</div>'); return; }
     /* There was a t:"html" branch here that put a broadcast payload straight
        into innerHTML. Nothing in the product ever sent one, so it was a pure
