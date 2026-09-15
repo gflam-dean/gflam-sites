@@ -7,7 +7,14 @@
 <link rel="icon" href="/logos/partyplay-appicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{--ink:#12101A;--ink2:#1B1826;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
+  /* --ink3 IS USED TWICE IN THIS FILE AND WAS DEFINED IN THE OTHER THREE. run.html,
+     host.html and album.html all declare it; play.html, the one a guest actually holds,
+     did not. An undefined custom property makes the whole declaration invalid, so the
+     video button was a shadow with an emoji in it and every camera message, "Sending 1
+     of 3", "Added to the album", "That did not send", rendered as pale text over
+     whatever game was on screen. The album is the thing that makes a party remembered
+     the next morning, and the control for it was invisible. */
+  :root{--ink:#12101A;--ink2:#1B1826;--ink3:#262234;--paper:#FFF1E6;--mute:#B6ADC2;--faint:#847A98;
     --pink:#FF1F8E;--teal:#17C4B4;--yellow:#FFD23F;--line:rgba(255,241,230,.14)}
   *{box-sizing:border-box}
   body{margin:0;background:var(--ink);color:var(--paper);font-family:Manrope,system-ui,sans-serif;

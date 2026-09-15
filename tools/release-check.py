@@ -1917,6 +1917,32 @@ def local_checks(which):
            why='the privacy page promises deletion within 90 days and nothing does it: '
                'run venueplay-backend/tools/check-player-retention.py')
 
+    # A CSS VARIABLE USED IN A FILE THAT DOES NOT DEFINE IT kills the whole declaration
+    # silently. --ink3 was declared in run.html, host.html and album.html and used, but
+    # never declared, in play.html, which is the one a guest holds. The video button
+    # rendered as a shadow with an emoji in it and every camera message came out as pale
+    # text over the game. Nothing errors, nothing logs, the page just quietly loses a
+    # rule. Cheap to check and it covers every page at once.
+    var_hits = []
+    for f in files:
+        if not f.endswith('.html'):
+            continue
+        text = io.open(f, encoding='utf-8', errors='ignore').read()
+        # Comments first, for the FOURTH time today. billing.html carries a note that
+        # literally reads "this page does not have: class ghost, var(--card) and
+        # var(--dim)", which is a sentence describing a fixed fault, not a use of one.
+        clean = re.sub(r'<!--.*?-->', ' ', text, flags=re.S)
+        clean = re.sub(r'/\*.*?\*/', ' ', clean, flags=re.S)
+        declared = set(re.findall(r'(--[a-zA-Z0-9-]+)\s*:', clean))
+        # And a variable the page sets from JavaScript is declared, just not in the CSS.
+        # --cz is the bingo card zoom: setProperty("--cz", n) on every pinch.
+        declared |= set(re.findall(r'setProperty\(\s*["\'](--[a-zA-Z0-9-]+)', clean))
+        for used in set(re.findall(r'var\(\s*(--[a-zA-Z0-9-]+)', clean)):
+            if used not in declared:
+                var_hits.append('%s %s' % (short(f), used))
+    ok('no page uses a CSS variable it never defines', not var_hits,
+       why=', '.join(sorted(set(var_hits))[:5]))
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
