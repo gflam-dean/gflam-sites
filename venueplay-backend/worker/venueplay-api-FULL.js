@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '15 Sep 2026, 16:31 · c3081422';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '16 Sep 2026, 09:58 · df159e7c';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -186,6 +186,19 @@ export default {
       if (res && res.archived && res.archived.length) {
         await vpaAudit(env, actor, 'auto_archive_run', null,
           { archived: res.archived.length, checked: res.checked });
+      }
+      /* The day-before warning rides the same trigger. Kept separate from the archive
+         sweep and in its own try, because a venue must still be told its last day is
+         tomorrow on a night when the archive sweep has thrown. */
+      try {
+        const last = await vpaLastDaySweep(env);
+        if (last && last.sent) {
+          await vpaAudit(env, actor, 'last_day_emails_sent', null,
+            { sent: last.sent, checked: last.checked });
+        }
+      } catch (e2) {
+        await vpaAudit(env, actor, 'last_day_sweep_failed', null,
+          { error: String((e2 && e2.message) || e2).slice(0, 300) }).catch(() => {});
       }
     } catch (e) {
       // A failed sweep must never take the Worker down. Nothing here is urgent:
@@ -5166,6 +5179,206 @@ async function vpaFireCancelAlert(env, opts) {
   }
 }
 
+
+/* ===========================================================================
+   TELLING THE VENUE THEY ARE LEAVING.
+
+   Until 16 Sep 2026 a venue that cancelled was told nothing at all. vpaFireCancelAlert
+   emails dean@ and hello@, and that was the whole of it: the owner clicked cancel, the
+   screen said ok, and the next thing that happened was the games stopping.
+
+   Two messages now. One the moment they cancel, one the day before it takes effect.
+
+   THEY ARE NOT MARKETING AND THEY DO NOT CARRY AN UNSUBSCRIBE. A message about the
+   service someone is paying for, sent to the people who pay for it, is not a commercial
+   electronic message in the sense the Spam Act means. The unsubscribe list is read only
+   by the outreach tools, exactly as the welcome email's comment says, so opting out of
+   marketing cannot silence a notice that your service is about to stop. Getting that the
+   wrong way round would be the worse fault by far.
+
+   EVERYONE ON THE ACCOUNT GETS THEM. The billing contact plus every manager login. The
+   person who clicks cancel at head office is often not the person standing behind the bar
+   on the last night wondering why the telly has gone off.
+   ======================================================================== */
+
+/* Every address that should hear about this account. The billing contact, plus each
+   manager's login email, deduplicated and lower-cased. Best-effort per lookup: one slow
+   Auth call must not cost the other recipients their email. */
+async function vpaAccountContacts(env, acct, venueId) {
+  const out = [];
+  const seen = {};
+  const add = (e) => {
+    const k = String(e || '').trim().toLowerCase();
+    if (k && k.indexOf('@') > 0 && !seen[k]) { seen[k] = 1; out.push(k); }
+  };
+  add(acct && acct.contact_email);
+  try {
+    const staff = await vpaSelect(env, 'vp_venue_staff',
+      'venue_id=eq.' + encodeURIComponent(venueId) + '&select=auth_user_id,role');
+    for (const s of (staff || [])) {
+      const u = await vpaAuthGetUser(env, s.auth_user_id);
+      if (u && u.email) add(u.email);
+    }
+  } catch (_) { /* the billing contact alone is still worth sending to */ }
+  return out;
+}
+
+/* The shared shell, so the two emails cannot drift apart in tone or in what they promise.
+   `lead` is the one-line summary, `rows` the facts table, `extra` anything after it. */
+function vpaLeavingHtml(env, opts) {
+  const site = (env.SITE_URL || 'https://venueplay.com.au').replace(/\/+$/, '');
+  const logo = site + '/logos/venueplay_primary_dark.png';
+  const billing = site + '/app/billing.html';
+  return ''
+    + '<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:8px 0;color:#12101a">'
+    + '<img src="' + logo + '" alt="VenuePlay" width="150" style="display:block;margin:0 0 24px">'
+    + '<p style="font-size:17px;font-weight:700;margin:0 0 6px">' + vpaEsc(opts.heading) + '</p>'
+    + '<p style="font-size:14px;color:#6a6a75;margin:0 0 20px">' + opts.lead + '</p>'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eee;border-radius:12px;margin-bottom:22px"><tr><td style="padding:18px 20px">'
+    +   (opts.rows || []).map((r) =>
+          '<p style="margin:0 0 10px;font-size:13px;color:#6a6a75">' + vpaEsc(r[0])
+          + '<br><span style="font-size:15px;font-weight:700;color:#12101a">' + vpaEsc(r[1]) + '</span></p>').join('')
+    + '</td></tr></table>'
+    /* THE THREE MONTHS IS A PROMISE, not a nicety. venueplay.com.au/privacy already says a
+       closed venue's player list is deleted within 90 days, so this matches what is
+       published rather than inventing a second number. Change one and you must change both. */
+    + '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
+    + 'Nothing is thrown away on the day. Your members list, your advertising slides, your '
+    + 'raffle and members draw history all stay on the account for <b>three months</b>, so if '
+    + 'you come back in that time everything is where you left it. After that the player list '
+    + 'is deleted, as our privacy page says.</p>'
+    + (opts.extra || '')
+    + '<a href="' + billing + '" style="display:inline-block;background:#FF1F8E;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 22px;border-radius:8px">' + vpaEsc(opts.cta || 'Open your billing page') + '</a>'
+    + '<p style="font-size:13px;color:#6a6a75;margin:22px 0 0">If this was not meant to happen, or you want to talk it through, just reply to this email. It reaches a person.</p>'
+    + '<p style="font-size:12px;color:#c2c2cc;margin:14px 0 0">venueplay.com.au &middot; Gflam Group, ABN ' + VP_ABN + '</p>'
+    + '</div>';
+}
+
+/* Sent the moment they click cancel. Confirms what they just did, in plain words, with the
+   date. An owner who cancels and hears nothing has no way to tell whether it worked, and
+   the support email that follows is always "did that go through?". */
+async function vpaFireCancelConfirm(env, opts) {
+  try {
+    if (!env.RESEND_API_KEY) return;
+    const to = await vpaAccountContacts(env, opts.account, opts.venueId);
+    if (!to.length) return;
+    const ends = opts.ends || null;
+    const rows = [['Venue', opts.name || 'your venue']];
+    if (ends) rows.push(['Last day', ends]);
+    rows.push(['What happens until then', 'Nothing changes. Every game runs as normal.']);
+    const html = vpaLeavingHtml(env, {
+      heading: 'Your cancellation is confirmed.',
+      lead: ends
+        ? 'You have cancelled ' + vpaEsc(opts.name || 'your venue') + '. It stays fully live until <b>'
+          + vpaEsc(ends) + '</b>, which is the end of the period you have already paid for. '
+          + 'There is no further charge after that.'
+        : 'You have cancelled ' + vpaEsc(opts.name || 'your venue') + '. It stays live until the end of '
+          + 'the period you have already paid for, and there is no further charge after that.',
+      rows: rows,
+      extra: '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
+           + 'Changed your mind? You can undo this yourself on your billing page any time before '
+           + 'the last day, and nothing will have been interrupted.</p>',
+      cta: 'Undo this cancellation',
+    });
+    for (const addr of to) {
+      await vpaSendEmail(env, addr, 'Your VenuePlay cancellation is confirmed'
+        + (ends ? ' - last day ' + ends : ''), html).catch(() => false);
+    }
+    await vpaInsert(env, 'vp_admin_audit', {
+      action: 'venue_cancel_confirm_emailed',
+      target: 'venue:' + opts.venueId,
+      detail: { to: to, ends: ends, name: opts.name || null },
+    }, false).catch(() => {});
+  } catch (_) { /* never let an email stop a cancellation */ }
+}
+
+/* THE DAY BEFORE. Runs from the scheduled handler.
+
+   REQUIRES A CRON TRIGGER ON THIS WORKER, and on 16 Sep 2026 there was not one. Checked
+   through the Cloudflare API: venueplay-api had no schedules at all, venueplay-game had
+   "0 * * * *". So the 30-day archive sweep this handler already contains had never run a
+   single time since it was written, and this would have been the second thing to sit there
+   doing nothing. A daily trigger such as "0 20 * * *" runs both.
+
+   Reads the end date from STRIPE, not from our own tables, because nothing here stores it:
+   vp_venues records cancel_at_period_end as a flag and the date lives only on the
+   subscription. Asking the source is also the only way to notice if someone has changed
+   the date in the Stripe dashboard.
+
+   Sends once. An audit row per venue per date is the lock, so a cron that fires hourly,
+   or a retry, cannot send the same venue the same warning twice. */
+async function vpaLastDaySweep(env) {
+  if (!env.RESEND_API_KEY || !env.STRIPE_SECRET_KEY) return { checked: 0, sent: 0 };
+  const now = Math.floor(Date.now() / 1000);
+  const venues = await vpaSelect(env, 'vp_venues',
+    'status=eq.active&cancel_at_period_end=is.true'
+    + '&select=id,name,founding_id,timezone') || [];
+  let sent = 0;
+  const byAccount = {};
+  for (const v of venues) (byAccount[v.founding_id] = byAccount[v.founding_id] || []).push(v);
+
+  for (const fid in byAccount) {
+    let acct = null;
+    try {
+      const rows = await vpaSelect(env, 'venueplay_founding',
+        'id=eq.' + encodeURIComponent(fid)
+        + '&select=id,contact_email,stripe_subscription_id&limit=1');
+      acct = rows && rows[0];
+    } catch (_) { continue; }
+    if (!acct || !acct.stripe_subscription_id) continue;
+    let endTs = 0;
+    try {
+      const sub = await vpbStripeGet(env, 'subscriptions/'
+        + encodeURIComponent(acct.stripe_subscription_id));
+      const item = (sub && sub.items && sub.items.data && sub.items.data[0]) || {};
+      endTs = parseInt(sub.cancel_at || sub.current_period_end || item.current_period_end || 0, 10);
+    } catch (_) { continue; }
+    if (!endTs) continue;
+
+    /* The window is "ends within the next 24 hours, and has not ended yet". A daily cron
+       hits it once. An hourly cron would hit it up to 24 times, which is what the audit
+       lock below is for. */
+    const away = endTs - now;
+    if (away <= 0 || away > 24 * 3600) continue;
+
+    const ends = vpaFmtDate(endTs);
+    for (const v of byAccount[fid]) {
+      const already = await vpaSelect(env, 'vp_admin_audit',
+        'action=eq.venue_last_day_emailed&target=eq.' + encodeURIComponent('venue:' + v.id)
+        + '&select=id&limit=1').catch(() => []);
+      if (already && already.length) continue;
+      const to = await vpaAccountContacts(env, acct, v.id);
+      if (!to.length) continue;
+      const html = vpaLeavingHtml(env, {
+        heading: 'Tomorrow is your last day on VenuePlay.',
+        lead: vpaEsc(v.name || 'Your venue') + ' is set to cancel on <b>' + vpaEsc(ends)
+            + '</b>. Everything still works today and tomorrow, and after that the screens '
+            + 'and the phones stop. We wanted you to know before it happened rather than after.',
+        rows: [['Venue', v.name || 'your venue'],
+               ['Last day', ends],
+               ['After that', 'Games stop. Nothing is deleted for three months.']],
+        extra: '<p style="font-size:13.5px;color:#3a3a44;margin:0 0 18px">'
+             + 'If you would rather stay, one click on your billing page undoes it and '
+             + 'nothing will have been interrupted. If you are going, thank you for giving '
+             + 'it a run, and there is no hard feeling in it. We would genuinely like to '
+             + 'know what did not work, if you have a minute to reply.</p>',
+        cta: 'Keep the venue running',
+      });
+      for (const addr of to) {
+        await vpaSendEmail(env, addr, 'Tomorrow is your last day on VenuePlay', html)
+          .catch(() => false);
+      }
+      await vpaInsert(env, 'vp_admin_audit', {
+        action: 'venue_last_day_emailed',
+        target: 'venue:' + v.id,
+        detail: { to: to, ends: ends, name: v.name || null, end_ts: endTs },
+      }, false).catch(() => {});
+      sent++;
+    }
+  }
+  return { checked: venues.length, sent: sent };
+}
+
 async function vpbCancelVenue(request, env, json) {
   const o = await vpbRequireOwner(request, env);
   if (o.error) return json({ error: o.error }, o.status);
@@ -5214,6 +5427,16 @@ async function vpbCancelVenue(request, env, json) {
     monthly: (info && info.monthly) || null,
     reason: reason, reasonDetail: reasonDetail,
   }).catch(() => {});
+
+  /* AND TELL THE VENUE. Until 16 Sep 2026 the only email a cancellation produced went to
+     dean@ and hello@: the owner clicked cancel and heard nothing back. Awaited so the
+     write cannot be dropped when the response returns, caught so a mail failure can never
+     stop somebody leaving. Not sent on an undo, which has its own confirmation on screen. */
+  if (!undo) {
+    await vpaFireCancelConfirm(env, {
+      venueId: venueId, name: venue.name, ends: endsDate, account: o.account,
+    }).catch(() => {});
+  }
 
   return json({ ok: true, cancelling: !undo, ends: endsDate });
 }
