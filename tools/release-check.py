@@ -1789,6 +1789,24 @@ def local_checks(which):
             hits.append(short(f))
         ok(label, not hits, why=', '.join(hits[:4]))
 
+    # A TERNARY WHOSE TWO ARMS ARE THE SAME STRING decides nothing, and it is
+    # always a half-finished thought rather than a deliberate one. The photos
+    # game carried `right.length===1 ? " got it" : " got it"` for its whole
+    # life, so the plural it was reaching for never happened and a round nobody
+    # got read "0 got it" on the wall in front of the room. Nothing else in the
+    # repo can see this: it parses, it runs, and it prints a sentence.
+    tern = re.compile(r'\?\s*(".*?"|\'.*?\')\s*:\s*(".*?"|\'.*?\')')
+    tern_hits = []
+    for f in files:
+        if not (f.endswith('.html') or f.endswith('.js')):
+            continue
+        text = io.open(f, encoding='utf-8', errors='ignore').read()
+        for m in tern.finditer(text):
+            if m.group(1) == m.group(2):
+                tern_hits.append('%s:%d' % (short(f), text[:m.start()].count('\n') + 1))
+    ok('no ternary picks between two identical strings', not tern_hits,
+       why=', '.join(tern_hits[:4]))
+
     """A WINNER IS SENT TO THE HOST, NEVER TO THE BAR.
 
     Dean's locked rule for bingo and paid tickets. It was applied to the phone a

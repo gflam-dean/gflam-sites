@@ -1018,7 +1018,11 @@
       var right=G.answers.filter(function(a){ return a.i===G.i && a.answer===po.correct; });
       send({t:"photoresult", i:G.i, correct:po.correct,
             board:right.map(function(a){ return {name:a.name, score:PPQuiz.CORRECT_POINTS}; })});
-      send({t:"big", text:po.correct, sub:right.length+(right.length===1?" got it":" got it")});
+      /* Both arms of that ternary were " got it", so it decided nothing and nobody
+         noticed, and with no correct guesses the wall read "0 got it". Say it in
+         words. Found 15 Sep 2026 by playing the round and getting it wrong. */
+      send({t:"big", text:po.correct,
+            sub: right.length ? right.length + " got it" : "Nobody got that one"});
       paintPhotos(); return;
     }
     if(el.id==="photonext"){
@@ -1037,7 +1041,8 @@
           .sort(function(a,b){return b.score-a.score;});
         if(!G.banked){ nightAdd(fin); G.banked=true; }
         send({t:"final", board:fin.slice(0,10), night:nightBoard().slice(0,10)});
-        send({t:"big", text:fin.length?fin[0].name:"Done", sub:fin.length?fin[0].score+" points":""});
+        send({t:"big", text: fin.length ? fin[0].name : "That is the lot",
+              sub:  fin.length ? fin[0].score+" points" : "Nobody got one"});
       }
       paintPhotos(); return;
     }
