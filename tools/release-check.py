@@ -1809,6 +1809,66 @@ def local_checks(which):
                 tick_hits.append('%s:%d' % (short(f), text[:m.start()].count('\n') + 1))
     ok('no consent box is pre-ticked', not tick_hits, why=', '.join(tick_hits[:4]))
 
+    # EVERY MERGE TAG IN AN EMAIL THE WORKER SENDS HAS TO BE FILLED IN BY THE WORKER.
+    # {{unsubscribe_url}} sat in four templates and nothing anywhere replaced it, so the
+    # link in every welcome email was the literal text and a venue clicking it went
+    # nowhere. Nothing could see it: the template is valid, the Worker is valid, and the
+    # fault only exists in the gap between them.
+    #
+    # Only the templates the Worker actually LOADS are checked. upcoming-payment.html is
+    # referenced nowhere and has never been sent, so holding it to this would be red for
+    # a thing that does not happen.
+    api = os.path.join(ROOT, 'venueplay-backend', 'worker', 'venueplay-api-FULL.js')
+    edir = os.path.join(ROOT, 'venueplay', 'emails')
+    if os.path.isfile(api) and os.path.isdir(edir):
+        worker = io.open(api, encoding='utf-8', errors='ignore').read()
+        # AND STRIP THE WORKER'S COMMENTS, for the third time in one session. The note
+        # explaining this very fix quotes {{unsubscribe_url}}, so the first version of the
+        # check stayed green with every substitution deleted, on the strength of the
+        # sentence describing what used to be wrong. The // pattern spares https:// .
+        worker = re.sub(r'/\*.*?\*/', ' ', worker, flags=re.S)
+        worker = re.sub(r'(^|[^:])//[^\n]*', r'\1', worker)
+        unfilled = []
+        for name in sorted(os.listdir(edir)):
+            if not name.endswith('.html') or name not in worker:
+                continue
+            body = io.open(os.path.join(edir, name), encoding='utf-8', errors='ignore').read()
+            # STRIP THE COMMENTS FIRST, for the second time today. welcome-group.html
+            # documents its per-venue tokens in a note at the top and keeps a commented
+            # out copy of the block the Worker generates, so {{venue_monthly}} appears
+            # twice and renders never. A check that reads a comment is reading a claim.
+            body = re.sub(r'<!--.*?-->', ' ', body, flags=re.S)
+            for tag in sorted(set(re.findall(r'\{\{\s*([A-Za-z0-9_.]+)\s*\}\}', body))):
+                if tag not in worker:
+                    unfilled.append('%s {{%s}}' % (name, tag))
+        ok('every merge tag in a live email gets filled in', not unfilled,
+           detail='%d template(s) the Worker sends' %
+                  len([n for n in os.listdir(edir) if n.endswith('.html') and n in worker]),
+           why=', '.join(unfilled[:4]))
+
+    # THE SITE SOLD A FEATURE THE PRODUCT DELIBERATELY REFUSES TO HAVE. All ten pages
+    # said bingo cards were "auto-marked". play.html says the opposite twice, on purpose:
+    #   "manual play by default: the player dabs their own numbers, we never mark for them"
+    #   "It never marks anything. It shows what you have not marked yet and you still tap
+    #    every one, which is what the board behind the caller does in a real hall."
+    # Dabbing IS bingo, so the product is right and the sales copy was wrong. This is the
+    # cheapest possible guard against it drifting back.
+    auto_hits = []
+    for f in files:
+        if not f.endswith('.html'):
+            continue
+        # A NEGATED MENTION IS FINE and is how this was first found to be wrong in only
+        # one direction: the paper-bingo FAQ says what a venue does NOT get, which is
+        # honest. Only an unqualified claim is a breach.
+        for m in re.finditer(r'auto[\s-]?mark', copy_text(f), re.I):
+            before = copy_text(f)[max(0, m.start() - 30):m.start()]
+            if re.search(r'\b(no|not|never|without|cannot|lose|lost)\b[^.]*$', before, re.I):
+                continue
+            auto_hits.append(short(f))
+            break
+    ok('nothing claims the bingo cards mark themselves', not auto_hits,
+       why=', '.join(auto_hits[:4]) + ' (play.html: "we never mark for them")')
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging

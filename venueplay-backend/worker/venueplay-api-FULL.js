@@ -27,7 +27,7 @@
  *   ALLOW_ORIGIN                (optional) e.g. https://www.venueplay.com.au; defaults to *
  * ----------------------------------------------------------------------------
  */
-const BUILD = '12 Sep 2026, 12:18 · f950f241';   // tools/stamp-workers.py, do not edit by hand
+const BUILD = '15 Sep 2026, 16:31 · c3081422';   // tools/stamp-workers.py, do not edit by hand
 export default {
   async fetch(request, env) {
     // Allow BOTH the apex (https://venueplay.com.au) and the www host (and any venueplay.com.au
@@ -2986,6 +2986,16 @@ async function vpaFireWelcome(env, session, f, venues, isGroup) {
       // {{terms_url}}, which is worse than not linking them at all.
       .replace(/{{terms_url}}/g, site + '/terms')
       .replace(/{{privacy_url}}/g, site + '/privacy')
+      /* THE UNSUBSCRIBE LINK IN EVERY WELCOME EMAIL WAS DEAD. The template footers carry
+         {{unsubscribe_url}} and nothing anywhere replaced it, so the href a venue clicked
+         was the literal text. Found 15 Sep 2026 by listing every merge tag in the four
+         templates the Worker loads and asking which ones anything fills in.
+
+         It points at /unsubscribe, which writes to vp_unsubscribes. That list is read ONLY
+         by the outreach send tools, so opting out stops marketing and CANNOT stop a
+         billing notice. Getting that the wrong way round would be far worse than the dead
+         link it replaces. */
+      .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, support);
 
     await fetch('https://api.resend.com/emails', {
@@ -3264,6 +3274,7 @@ async function vpaFireHqWelcome(env, o) {
       .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
       .replace(/{{terms_url}}/g, site + '/terms')
       .replace(/{{privacy_url}}/g, site + '/privacy')
+      .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
 
     return await vpaSendEmail(env, email,
@@ -3291,6 +3302,7 @@ async function vpbFireVenueOnboarding(env, o) {
       .replace(/{{venue_name}}/g, vpaEsc(o.venueName || 'Your new venue'))
       .replace(/{{host_console_url}}/g, site + '/app')
       .replace(/{{tv_url}}/g, site + '/tv?' + encodeURIComponent(o.slug || ''))
+      .replace(/\{\{unsubscribe_url\}\}/g, site + '/unsubscribe?e=' + encodeURIComponent(email || ''))
       .replace(/{{support_email}}/g, 'hello@venueplay.com.au');
 
     return await vpaSendEmail(env, email,
