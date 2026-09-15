@@ -45,6 +45,14 @@ g.screen = { width:1280, height:720 };
 g.alert = function(){}; g.confirm = function(){ return true; };
 g.Image = function(){}; g.FormData = function(){}; g.Blob = function(){};
 g.requestAnimationFrame = function(){ return 0; };
+/* pick() rejection-samples crypto.getRandomValues, and jsc has no crypto at all, so
+   flip() threw before it could be tested. FLIPS lets a check say which side comes up:
+   0 is heads, 1 is tails, and an empty queue falls back to something random. */
+var FLIPS = [];
+g.crypto = { getRandomValues: function(a){
+  a[0] = FLIPS.length ? FLIPS.shift() : (Math.random() < 0.5 ? 0 : 1);
+  return a;
+} };
 g.addEventListener = function(){};
 g.URLSearchParams = function(){ this.get=function(k){ return k==="code"?"ABCDEF":"k"; }; };
 g.PPConfig = { API:"https://x", SUPA_URL:"https://y", SUPA_ANON:"z", channel:function(c){return "pp-"+c;} };
@@ -57,16 +65,16 @@ g.PPQuiz = { CORRECT_POINTS: 100, SPEED_POINTS: 0, options: function(){ return [
 var EXPORT = "\n; globalThis.__X = { runCharades:runCharades, runGuessWho:runGuessWho," +
   " charadesGo:charadesGo, guessWhoGo:guessWhoGo, setSend:function(f){ send=f; }," +
   " setPlayers:function(p){ players=p; }, getG:function(){ return G; }, setToast:function(f){ toast=f; }," +
-  " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); } };\n";
+  " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip };\n";
 var cut = body.lastIndexOf("})();");
 if (cut < 0) { print("could not find the end of the IIFE"); throw new Error("no IIFE"); }
 var harness = body.slice(0, cut) + EXPORT + body.slice(cut);
 try {
   (new Function("globalThis","window","document","location","localStorage","sessionStorage",
                 "fetch","setTimeout","setInterval","clearTimeout","clearInterval",
-                "URLSearchParams","PPConfig","PPQuiz","navigator","screen","alert","confirm","requestAnimationFrame", harness))
+                "URLSearchParams","PPConfig","PPQuiz","navigator","screen","alert","confirm","requestAnimationFrame","crypto", harness))
     (g, g, g.document, g.location, g.localStorage, g.sessionStorage, g.fetch,
-     g.setTimeout, g.setInterval, g.clearTimeout, g.clearInterval, g.URLSearchParams, g.PPConfig, g.PPQuiz, g.navigator, g.screen, g.alert, g.confirm, g.requestAnimationFrame);
+     g.setTimeout, g.setInterval, g.clearTimeout, g.clearInterval, g.URLSearchParams, g.PPConfig, g.PPQuiz, g.navigator, g.screen, g.alert, g.confirm, g.requestAnimationFrame, g.crypto);
 } catch (e) { print("LOAD FAILED: " + e); throw e; }
 
 var X = g.__X;
@@ -171,6 +179,56 @@ ok(sent.filter(function(m){ return m.t==="charades"; }).length === 0,
   ok(scoreOf("Dean") > scoreOf("Nicole"), "the better guesser must finish ahead");
   ok(X.truthsTally([]).length === 0,   "no votes, no rows");
   ok(X.truthsTally(null).length === 0, "no votes at all does not throw");
+})();
+
+
+// ---------------- heads or tails: you cannot win before the first flip ----------
+/* THE CONSOLE OPENED ON "Winner: Sam". paintHeads drew the winner panel whenever one
+   player was left standing, and with a single guest joined that is true before a coin
+   has been flipped. There was no Flip it button, so the game could not be played at all,
+   and the rule that says an untouched phone cannot take the prize never ran, because it
+   lives in flip(). Found 15 Sep 2026 by opening the game with one phone in the party. */
+(function(){
+  function app(){ return dom["app"] ? String(dom["app"].innerHTML) : ""; }
+
+  sent = []; FLIPS = [];
+  X.setPlayers(["Sam"]);
+  X.runHeads({});
+  ok(app().indexOf("Winner") < 0,
+     "one player: nobody has won anything yet, console said: " + app().slice(0,160));
+  ok(app().indexOf('id="flip"') < 0, "one player: there is nothing to flip");
+  ok(app().indexOf("needs two") >= 0, "one player: the host is told why");
+  ok(sent.filter(function(m){ return m.t==="heads"; }).length === 0,
+     "one player: the phones are not told to pick when there is no game");
+  ok(sent.filter(function(m){ return m.t==="big"; }).length === 0,
+     "one player: the television is not told to pick either");
+
+  sent = []; FLIPS = [];
+  X.setPlayers(["Sam","Jordan","Dean"]);
+  X.runHeads({});
+  ok(app().indexOf('id="flip"') >= 0, "three players: the game can be played");
+  ok(app().indexOf("Winner") < 0, "three players: no winner before the first flip");
+  ok(sent.filter(function(m){ return m.t==="heads"; }).length === 1, "three players: the phones are told");
+
+  /* And the last one standing having never touched their phone is still not a winner,
+     on the CONSOLE as well as in the caption. Only Sam ever picks; the moment a tails
+     comes up Sam is out and Jordan is left, having played nothing. */
+  sent = []; FLIPS = [];
+  X.setPlayers(["Sam","Jordan"]);
+  X.runHeads({});
+  var G = X.getG(), guard = 0;
+  while(!G.over && guard++ < 60){
+    G.picks = { Sam:"heads" }; G.everPicked = { Sam:true };
+    FLIPS = [ guard < 3 ? 0 : 1 ];        // two heads to prove it does not end early, then tails
+    X.flip();
+  }
+  ok(G.over, "the round finishes");
+  ok(G.winner === null, "a player who never picked is not the winner, got " + G.winner);
+  ok(app().indexOf("Jordan") < 0, "and the console does not name them, said: " + app().slice(-200));
+  ok(app().indexOf("never picked") >= 0, "the console says why there is no winner");
+  var lastBig = sent.filter(function(m){ return m.t==="big"; }).pop();
+  ok(lastBig && String(lastBig.text).indexOf("All out") >= 0,
+     "and the television agrees, said: " + (lastBig && lastBig.text));
 })();
 
 print(fail ? "FAILED " + fail + " of " + (pass+fail) : "ALL " + pass + " CHECKS PASSED");

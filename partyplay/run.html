@@ -848,7 +848,16 @@
   /* The pub version makes you stand up and touch your head, which quietly rules
      out anyone who cannot easily do either. On a phone everybody plays. */
   function runHeads(g){
-    G={ mode:"heads", round:0, inPlay:players.slice(), picks:{}, everPicked:{}, last:null, repaint:paintHeads };
+    G={ mode:"heads", round:0, inPlay:players.slice(), picks:{}, everPicked:{}, last:null,
+        over:false, winner:null, overWhy:null, repaint:paintHeads };
+    /* ONE PERSON IN THE ROOM USED TO WIN IT ON SIGHT. paintHeads draws the winner panel
+       whenever one player is left standing, and with a single guest joined that is true
+       before a coin has been flipped. The console opened straight on "Winner: Sam", there
+       was no Flip it button at all, and the everPicked rule below never got a chance to
+       run because flip() never ran. Found 15 Sep 2026 by opening the game with one phone
+       in the party. Two truths already refuses to start under two people; this now does
+       the same, and says why. */
+    if(players.length < 2){ paintHeads(); return; }
     send({t:"heads", round:0});
     send({t:"big", text:"Heads or tails", sub:"Pick one on your phone"});
     paintHeads();
@@ -861,9 +870,18 @@
       '<div class="q"><div class="qn">Still in</div><div class="qt">'+G.inPlay.length+
       '<span style="float:right;font-size:15px;font-weight:400;color:var(--faint)">'+
       picked+' of '+G.inPlay.length+' picked</span></div></div>';
-    if(G.inPlay.length<=1){
+    /* The winner is whatever flip() decided, not whoever happens to be standing. Those
+       are not the same thing before the first flip, and they are not the same thing when
+       the last one in never picked. */
+    if(G.over){
       h+='<div class="q"><div class="qn">Winner</div><div class="qt">'+
-         (G.inPlay.length? esc(G.inPlay[0]) : "Nobody, everyone went out together")+'</div></div>';
+         (G.winner ? esc(G.winner)
+                   : (G.overWhy==="never picked" ? "Nobody, the last one in never picked"
+                                                 : "Nobody, everyone went out together"))+'</div></div>';
+    } else if(G.inPlay.length<2){
+      h+='<div class="q"><div class="qn">Not enough people</div>'+
+         '<div class="qt" style="font-size:19px;line-height:1.35">Heads or tails needs two. '+
+         'Get another phone into the party, then tap Start again.</div></div>';
     } else {
       h+='<button class="callbtn" id="flip">Flip it</button>';
     }
@@ -888,6 +906,8 @@
          different thing: they take the prize and the points off everybody who did play.
          Seen 15 Sep 2026 running a party, where a guest who never picked once won it. */
       if(w && !G.everPicked[w]) w = null;
+      G.over = true; G.winner = w || null;
+      G.overWhy = w ? null : (G.inPlay.length ? "never picked" : "all out");
       if(w){ nightAdd([{name:w, score:PPQuiz.CORRECT_POINTS}]); }
       send({t:"big", text: w?w:"All out", sub: w?"Heads or tails winner":"Nobody was still playing"});
     } else {
