@@ -43,7 +43,30 @@ import json, os, re, sys, urllib.request, urllib.error
 URL = os.environ.get("SUPABASE_URL", "https://ijkzgmdtwtgfkedqspxm.supabase.co").rstrip("/")
 KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 HERE = os.path.dirname(os.path.abspath(__file__))
-LIB = os.path.join(HERE, "data", "trivia-library.json")
+
+# THIS TOOL HAS BEEN UNRUNNABLE SINCE SOMEBODY MOVED IT. It used to sit in venueplay/
+# and load ./data/trivia-library.json beside itself. It now lives in
+# venueplay-backend/tools/ and the path never followed, so it died on FileNotFoundError
+# before reaching a single line of its own logic. Nobody noticed, because the only thing
+# it is for is answering a question nobody had asked since August: are the Creative
+# Commons questions still in the bank?
+#
+# That is worth writing down. The tool that tells you whether you are in breach of a
+# licence was itself broken, silently, for weeks. A check nobody runs is a check that
+# does not exist, and a check that cannot run is worse, because the file sitting there
+# looks like cover.
+#
+# Look in both places now, and say which one it used, so the next move cannot hide.
+def _find_library():
+    for rel in (("data", "trivia-library.json"),
+                ("..", "data", "trivia-library.json"),
+                ("..", "..", "venueplay-backend", "data", "trivia-library.json")):
+        p = os.path.abspath(os.path.join(HERE, *rel))
+        if os.path.isfile(p):
+            return p
+    return os.path.join(HERE, "data", "trivia-library.json")   # so the error names something
+
+LIB = _find_library()
 APPLY = "--apply" in sys.argv
 STATUS = "--status" in sys.argv
 
@@ -171,10 +194,15 @@ if not APPLY:
     sys.exit(0)
 
 # ---------------------------------------------------------------- do it
+# Beside the library, wherever that turned out to be. The same HERE/data/ assumption that
+# stopped this tool loading also stopped it writing its backup, and it failed here AFTER
+# reading the live bank and BEFORE deleting anything. Harmless that time. It would not
+# have been harmless if the order had been the other way round.
+LIB_DIR = os.path.dirname(LIB)
 n = 1
-while os.path.exists(os.path.join(HERE, "data", "trivia-library.BACKUP-%d.json" % n)):
+while os.path.exists(os.path.join(LIB_DIR, "trivia-library.BACKUP-%d.json" % n)):
     n += 1
-backup = os.path.join(HERE, "data", "trivia-library.BACKUP-%d.json" % n)
+backup = os.path.join(LIB_DIR, "trivia-library.BACKUP-%d.json" % n)
 json.dump(lib, open(backup, "w", encoding="utf-8"), ensure_ascii=False)
 print("\nBacked up the library to %s" % os.path.basename(backup))
 
