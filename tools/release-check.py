@@ -1900,6 +1900,23 @@ def local_checks(which):
        detail=('; '.join(soon[:3]) if soon else 'none close'),
        why='; '.join(gone[:4]) + '. Update the page AND env.FOUNDING_CODES together')
 
+    # THE PRIVACY PAGE PROMISES PLAYER DATA IS DELETED WITHIN 90 DAYS OF AN ACCOUNT
+    # CLOSING, and nothing implements it. The only tables either Worker deletes from are
+    # staff, questions, question sets, raffle prizes and discounts, plus a single member
+    # row when somebody asks to come off a list. The nightly cron archives a venue, which
+    # sets a status and removes nothing.
+    #
+    # Nothing is overdue yet. The oldest closed venue is 50 days old, so this is green
+    # today and red in 40 days unless somebody builds the sweep or changes the page.
+    tool = os.path.join(ROOT, 'venueplay-backend', 'tools', 'check-player-retention.py')
+    if os.path.isfile(tool):
+        r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=120)
+        out = ((r.stdout or '') + (r.stderr or '')).strip().splitlines()
+        ok('no closed venue is still holding its players', r.returncode == 0,
+           detail=(out[0][:88] if out else ''),
+           why='the privacy page promises deletion within 90 days and nothing does it: '
+               'run venueplay-backend/tools/check-player-retention.py')
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
