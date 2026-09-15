@@ -193,6 +193,21 @@
   .vp-backdrop.open { display: flex; }
 
   .vp-modal {
+    /* THE WHOLE PANEL WAS INHERITING BLACK TEXT. .vp-wrap sets color:var(--white) for the
+       page, and this modal is a child of .vp-backdrop at body level, so it never saw it and
+       fell back to the browser default. Anything inside that sets its own colour was fine,
+       which is why "TUGUN BOWLS CLUB" (--muted) and the subtitle under the game name
+       (--muted-2) both read perfectly while the VenuePlay wordmark and the game heading
+       itself rendered black on a black console. Four panels lost their game name outright:
+       Trivia Game 2, Musical Bingo Game 3, Raffle Game 4, Friday Members Jackpot.
+
+       Not the elements: the panel. Colouring each orphan one at a time is how this comes
+       back the next time somebody adds a heading. The dark text on the pink buttons sets
+       color:var(--ink) explicitly and is unaffected.
+
+       Found 15 Sep 2026 by zooming into the raffle host panel until the pixels were
+       readable. Everything that reads the DOM says this text is present and correct. */
+    color: var(--white);
     position: relative;
     width: 100%;
     max-width: 380px;

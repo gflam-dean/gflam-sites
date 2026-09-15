@@ -1757,6 +1757,25 @@ def local_checks(which):
            detail=(line[0][:90] if line else 'nothing to say'),
            why='run python3 tools/check-mockups.py, look at /see-a-night beside a real /tv, then --accept')
 
+    # THE DEMO PANELS ARE NOT INSIDE .vp-wrap, so they do not inherit the page's white
+    # text. The modal has to set a colour of its own or every element that does not set
+    # one renders black on a black console. That is how the VenuePlay wordmark and four
+    # game headings came to be invisible on the page every cold email points at, while
+    # every tool that reads the DOM reported the text present and correct.
+    san = os.path.join(ROOT, 'venueplay', 'see-a-night.html')
+    if os.path.isfile(san):
+        css = io.open(san, encoding='utf-8').read()
+        m = re.search(r'\.vp-modal\s*\{(.*?)\}', css, re.S)
+        # STRIP THE COMMENT FIRST. The note explaining this fix contains the words
+        # "color:var(--white)", so the first version of this check passed on the strength
+        # of its own explanation and stayed green with the declaration deleted. Fourth
+        # time this exact trap has been walked into; comments are claims, code decides.
+        body = re.sub(r'/\*.*?\*/', ' ', m.group(1), flags=re.S) if m else ''
+        ok('the demo panel sets its own text colour',
+           bool(m) and re.search(r'(^|[;{\s])color\s*:', body),
+           why='see-a-night.html .vp-modal has no color, so anything inside it that does '
+               'not set one inherits black onto a black console')
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
