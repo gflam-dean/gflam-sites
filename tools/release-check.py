@@ -1869,6 +1869,37 @@ def local_checks(which):
     ok('nothing claims the bingo cards mark themselves', not auto_hits,
        why=', '.join(auto_hits[:4]) + ' (play.html: "we never mark for them")')
 
+    # A FOUNDING PAGE THAT HAS OUTLIVED ITS OWN DEADLINE IS A TRAP, in both directions.
+    # The pages are static: nothing on /qld notices 30 September passing. So the morning
+    # after, either the Worker still honours QLD-SEP-2026 and the discount runs past the
+    # date the page promised it would end, or FOUNDING_CODES has been trimmed and a QLD
+    # venue reads $2.50, signs up, and is charged $3 with no error and no explanation.
+    # The Worker's own comment says that exact thing has happened before for a different
+    # reason. Nothing here could see the date arrive, so this watches the clock.
+    import datetime as _dt
+    import calendar as _cal
+    _MON = {m.upper()[:3]: i for i, m in enumerate(_cal.month_name) if m}
+    today = _dt.date.today()
+    gone, soon = [], []
+    for f in files:
+        if not f.endswith('.html'):
+            continue
+        for code in sorted(set(re.findall(r'\b([A-Z]{2,3})-([A-Z]{3})-(20\d\d)\b', io.open(f, encoding='utf-8', errors='ignore').read()))):
+            st, mon, yr = code
+            if mon not in _MON:
+                continue
+            last = _cal.monthrange(int(yr), _MON[mon])[1]
+            end = _dt.date(int(yr), _MON[mon], last)
+            left = (end - today).days
+            tag = '%s-%s-%s on %s' % (st, mon, yr, short(f))
+            if left < 0:
+                gone.append(tag + ' ended %d days ago' % -left)
+            elif left <= 21:
+                soon.append(tag + ' ends in %d days' % left)
+    ok('no founding page has outlived its own deadline', not gone,
+       detail=('; '.join(soon[:3]) if soon else 'none close'),
+       why='; '.join(gone[:4]) + '. Update the page AND env.FOUNDING_CODES together')
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
