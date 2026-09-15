@@ -709,7 +709,11 @@ def local_checks(which):
 
     NOT drawQR: signage prints a wider quiet zone on purpose, and see-a-night
     draws a fake one for the marketing page. Different jobs, same name."""
-    SAME = ['esc', 'cryptoInt', 'tvSend']
+    # tvStatus joined the list on 16 Sep 2026. It is the same twelve lines in all five
+    # screens, and the reason it has to stay that way is that the fault it fixes was
+    # exactly this: five screens each deciding for themselves when to show the
+    # Reconnecting pill, and all five getting it wrong in two different directions.
+    SAME = ['esc', 'cryptoInt', 'tvSend', 'tvStatus']
     def fnbody(src, name):
         m = re.search(r'\n\s*function\s+' + name + r'\s*\(', src)
         if not m:

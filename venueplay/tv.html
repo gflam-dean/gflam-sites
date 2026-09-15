@@ -295,7 +295,7 @@
 <div class="tv" id="tv">
   <div class="winburst" id="winBurst"></div>
 
-  <div class="tv-status" style="display:none"><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
+  <div class="tv-status" id="tvStatus" hidden><span class="sdot" id="statusDot"></span><span id="statusText">Connecting</span></div>
   <div class="tv-corner" id="tvCorner">
     <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
     <span class="vn">VenuePlay</span>
@@ -1678,7 +1678,31 @@
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
   function connectRealtime(){
     if(typeof supabase==="undefined" || !supabase.createClient){
-      $("statusText").textContent="Reconnecting";
+
+  /* THE WARNING COULD NEVER APPEAR. Six places in this file wrote "Reconnecting" into
+     .tv-status and not one of them could ever be seen: the element carried an inline
+     style="display:none", which beats the display:flex in the stylesheet twenty lines
+     above it. The comment up there explains at length that the pill was moved to top
+     centre so a venue's logo could not cover it "at the one moment it matters". It was
+     covered by its own markup the whole time.
+
+     This is the screen that runs unattended for weeks and the one both black-screen
+     incidents happened to, so it is the worst possible place for a warning that cannot
+     warn.
+
+     The four game screens had the opposite fault and the same cause: no inline hide, so
+     once connected they showed a grey CONNECTED badge on a pub wall all night, to
+     customers. A screen that is working should say nothing at all.
+
+     One function, both rules: silent while connected, loud while not. Found 16 Sep 2026.
+     Do not write to statusText directly again; call this. */
+  function tvStatus(connected){
+    var box=document.querySelector(".tv-status"), dot=$("statusDot"), txt=$("statusText");
+    if(dot) dot.classList.toggle("on", !!connected);
+    if(txt) txt.textContent = connected ? "Connected" : "Reconnecting";
+    if(box) box.hidden = !!connected;
+  }
+      tvStatus(false);
       if(++_rtTries>=40){
         /* reload() belongs to the watchdog closure further down and is not in scope here, so the
            same two safeguards are repeated: never reload while the network is down (that swaps a
@@ -1710,11 +1734,11 @@
         _room=VPRoom.connect(VP_GAME_API, "vp-"+CODE, "tv", function(payload){ vpGate(payload, onMsg); }, {
           onUnavailable: function(){ _useRoom=false; _room=null; setTimeout(connectRealtime, 0); },
           onState: function(st){
-            if(st==="open"){ tvSubscribed=true; $("statusDot").classList.add("on"); $("statusText").textContent="Connected";
+            if(st==="open"){ tvSubscribed=true; tvStatus(true);
               try{document.documentElement.setAttribute("data-vp-transport","room");console.log("[VenuePlay] transport: "+"room");}catch(e){};
               try{ _room.send({ t:"tv_here", hello:true }); }catch(e){}   // tvSend() only speaks down the Supabase channel, and it is one of the three kept byte-identical
             }
-            else { tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+            else { tvSubscribed=false; tvStatus(false); }
           }
         });
         return;
@@ -1725,16 +1749,16 @@
       ch=client.channel("vp-"+CODE, { config:{ broadcast:{ self:false } } });
       ch.on("broadcast", { event:"msg" }, function(e){ vpGate(e.payload, onMsg); });
       ch.subscribe(function(status){
-        if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); $("statusDot").classList.add("on"); $("statusText").textContent="Connected"; try{document.documentElement.setAttribute("data-vp-transport","supabase");console.log("[VenuePlay] transport: "+"supabase");}catch(e){} }
+        if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); try{document.documentElement.setAttribute("data-vp-transport","supabase");console.log("[VenuePlay] transport: "+"supabase");}catch(e){} }
         /* CLOSED TOO. Supabase reports three failure states and this listed two, so a
            channel that simply CLOSED left tvSubscribed true: the screen kept announcing
            itself into a dead channel and kept the green dot up while hearing nothing. A
            deaf screen that says Connected is the hardest fault on this page to see, and
            it is the one the watchdog exists to catch minutes later. Found by widening the
            gate check that had only ever looked at host consoles, never at this page. */
-        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; $("statusDot").classList.remove("on"); $("statusText").textContent="Reconnecting"; }
+        else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
       });
-    }catch(err){ $("statusText").textContent="Reconnecting"; setTimeout(connectRealtime, 3000); }
+    }catch(err){ tvStatus(false); setTimeout(connectRealtime, 3000); }
   }
 
   var HOST_TYPES={host_here:1,session:1,mode:1,idle:1,to_ads:1,state:1,started:1,ball:1,players:1,claim_pending:1,resume:1,winner:1};
