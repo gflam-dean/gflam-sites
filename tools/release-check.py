@@ -1776,6 +1776,39 @@ def local_checks(which):
            why='see-a-night.html .vp-modal has no color, so anything inside it that does '
                'not set one inherits black onto a black console')
 
+    # CONSENT IS A CHOICE SOMEBODY MAKES, NOT ONE ALREADY MADE FOR THEM. All ten
+    # VenuePlay signup pages shipped the marketing box pre-ticked, which is not express
+    # consent under the Spam Act and is not an active choice under the Privacy Act.
+    # PartyPlay got this right from the start, which is exactly why nobody noticed.
+    tick_hits = []
+    for f in files:
+        if not f.endswith('.html'):
+            continue
+        text = io.open(f, encoding='utf-8', errors='ignore').read()
+        for m in re.finditer(r'<input[^>]*type=["\']checkbox["\'][^>]*>', text, re.I):
+            tag = m.group(0)
+            if not re.search(r'\bchecked\b', tag, re.I):
+                continue
+            # SKIP A TAG THAT IS BUILT AT RUN TIME. PartyPlay writes
+            #   '<input type="checkbox" id="mkt"' + (saved.mkt ? " checked" : "") + '>'
+            # which restores the guest's OWN earlier choice and renders unticked by
+            # default. A static scan cannot tell that from a pre-tick, and calling it a
+            # breach would be wrong: the browser was checked and the box comes up empty.
+            # The fault this guards against is a literal checked in the markup.
+            if "' +" in tag or '" +' in tag or '+ \'' in tag:
+                continue
+            # A pre-ticked box is only a breach when it is CONSENT TO BE CONTACTED.
+            # Reading the tag's own attributes is too blunt: the first version of this
+            # check failed billing.html's manager permission toggles because one of them
+            # is value="players_optin" and "opt" was in the pattern. Ticking a manager's
+            # permissions on by default is the owner setting a sensible default, not a
+            # consent breach. So read the LABEL a person actually sees.
+            said = re.sub(r'<[^>]+>', ' ', text[m.end():m.end() + 260])
+            if re.search(r'send me|unsubscribe|marketing|newsletter|news, tips|'
+                         r'agree to receive|keep me (posted|updated)', said, re.I):
+                tick_hits.append('%s:%d' % (short(f), text[:m.start()].count('\n') + 1))
+    ok('no consent box is pre-ticked', not tick_hits, why=', '.join(tick_hits[:4]))
+
     head('D. House rules')
     # An em dash used as PUNCTUATION, which is the house rule. A lone "—" in a
     # table cell is a glyph meaning "no value yet", not a sentence, and flagging
