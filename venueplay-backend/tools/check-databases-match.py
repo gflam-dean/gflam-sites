@@ -23,7 +23,30 @@ guarantees is that you decide, rather than finding out during a game.
 import subprocess, sys
 from pathlib import Path
 
-PSQL = '/Applications/Postgres.app/Contents/Versions/latest/bin/psql'
+def _find_psql():
+    """psql, wherever it actually is.
+
+    This was one hardcoded path to Postgres.app. On a machine without it the tool threw
+    a raw FileNotFoundError, which release-check printed as a stack trace, so the line a
+    person reads said nothing about what to do. Worse, these checks had never run here at
+    all: they were failing earlier on a malformed VP_LIVE, and fixing that only moved the
+    failure one step along. A check that cannot run has to SAY it cannot run.
+    """
+    import shutil, glob as _g
+    found = shutil.which('psql')
+    if found:
+        return found
+    pats = ['/Applications/Postgres.app/Contents/Versions/*/bin/psql',
+            '/opt/homebrew/bin/psql', '/usr/local/bin/psql',
+            '/opt/homebrew/opt/libpq/bin/psql', '/usr/local/opt/libpq/bin/psql',
+            '/Library/PostgreSQL/*/bin/psql']
+    for p in pats:
+        hits = sorted(_g.glob(p))
+        if hits:
+            return hits[-1]
+    return None
+
+PSQL = _find_psql()
 ENV  = Path.home() / '.gflam-migrate.env'
 
 # Only our own objects. PostgREST, Supabase auth and the extensions live in other
@@ -48,6 +71,14 @@ def env():
     return e
 
 def ask(url, sql):
+    if PSQL is None:
+        # A check that cannot run has to SAY it cannot run. This used to be one
+        # hardcoded Postgres.app path and a raw FileNotFoundError traceback.
+        print('STOP: psql is not installed on this machine, so this check cannot run.')
+        print('      Install Postgres.app from https://postgresapp.com, or run')
+        print('      "brew install libpq" and add it to PATH, then try again.')
+        print('      This is a missing tool, not a fault in the product.')
+        sys.exit(1)
     r = subprocess.run([PSQL, url, '-At', '-c', sql], capture_output=True, text=True, timeout=120)
     if r.returncode != 0:
         print('  could not query the database: ' + (r.stderr or '').strip()[:200]); sys.exit(1)
