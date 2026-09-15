@@ -70,6 +70,47 @@ GRN, RED, YEL, DIM, OFF = '\033[32m', '\033[31m', '\033[33m', '\033[2m', '\033[0
 # wholeness check is reached. Zero bytes parses perfectly, which is the case
 # that check was actually written for.
 MUTATIONS = [
+    # ---- 15 Sep 2026: four faults found by playing PartyPlay on all three surfaces,
+    # ---- and one check that was green while the fault it named sat underneath it.
+    # ---- Each of these was broken by hand and watched go red as it was written.
+    # ---- Written down here so that stays true tomorrow.
+
+    ('pp-guest-connection.test.js',
+     'partyplay/play.html',
+     "      CH = null; GW = null;\n",
+     "",
+     'a phone that had played charades or who am I swallowing every television caption for the rest of the night'),
+
+    ('pp-run-games.test.js',
+     'partyplay/run.html',
+     "    if(players.length < 2){ paintHeads(); return; }\n",
+     "",
+     'heads or tails opening on "Winner: Sam" with one phone in the room, before a coin has been flipped'),
+
+    ('pp-run-games.test.js',
+     'partyplay/run.html',
+     '    send({t:"board", title:"Who spotted the lies", rows:tb.slice(0,10)});',
+     '    send({t:"lobby"});',
+     'two truths ending with the join code back on the television and nobody told who spotted the lies'),
+
+    ('pp-run-games.test.js',
+     'partyplay/run.html',
+     '      try { send({t:"lobby"});\n            send({t:"big", text:"That is a wrap", sub:"Thanks for coming"}); } catch(e){}\n',
+     '',
+     'the party running out of time and the host tablet being the only thing that knows, while the wall and every phone hold their last screen for ever'),
+
+    ('pp-album-page.test.js',
+     'partyplay/album.html',
+     "    return Math.round((b - a) / 86400000);",
+     "    return Math.ceil((Date.parse(iso)-(nowMs==null?Date.now():nowMs))/86400000);",
+     'the album promising 30 days on the privacy page and printing "31 days away" next to the date it prints itself'),
+
+    ('no ternary picks between two identical strings',
+     'partyplay/run.html',
+     '            sub: right.length ? right.length + " got it" : "Nobody got that one"});',
+     '            sub: right.length+(right.length===1?" got it":" got it")});',
+     'a ternary choosing between two identical strings, which reads as a decision and is not one, and which printed "0 got it" on the wall'),
+
     # ---- 12 Sep 2026: the Sydney move, the demo, and the day Dean asked how many
     # ---- times my own checks had been wrong. Answer at the time: ten.
     #
@@ -981,8 +1022,8 @@ MUTATIONS = [
      'a phone whose channel CLOSED keeps tapping answers into a dead socket, saying Connected'),
     ('pp-host-channel.test.js',
      'partyplay/run.html',
-     'if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ subscribed=false; }',
-     'if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ subscribed=false; }',
+     'if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ subscribed=false; wireBar(true); }',
+     'if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ subscribed=false; wireBar(true); }',
      'the party host keeps sending into a closed channel and the room sees nothing'),
     ('song-excluded-acts.test.js',
      'tools/pull-from-packs.py',
@@ -1210,7 +1251,7 @@ MUTATIONS = [
     # ---- 12 Sep 2026: the television's caption wiped every phone. Nine games.
     ('pp-guest-connection.test.js',
      'partyplay/play.html',
-     '      if(B || Q || H || T || W || V || PH) return;\n',
+     '      if(B || Q || H || T || W || V || PH || CH || GW) return;\n',
      '',
      "the wall's caption replaces the whole phone again a millisecond after the game "
      'arrives: nothing to tap in trivia, no Heads or Tails buttons, the charades actor '
@@ -1218,7 +1259,7 @@ MUTATIONS = [
 
     ('pp-guest-connection.test.js',
      'partyplay/play.html',
-     '      if(B || Q || H || T || W || V || PH) return;',
+     '      if(B || Q || H || T || W || V || PH || CH || GW) return;',
      '      if(B || Q || H || T || W) return;',
      'two of the seven game states drop out of the guard, so Guess the photo and the video '
      'prompt go back to being wiped while the other five are fine, which is the hardest '
