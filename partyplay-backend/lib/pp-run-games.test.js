@@ -58,6 +58,9 @@ g.URLSearchParams = function(){ this.get=function(k){ return k==="code"?"ABCDEF"
 g.PPConfig = { API:"https://x", SUPA_URL:"https://y", SUPA_ANON:"z", channel:function(c){return "pp-"+c;} };
 // The real one is loaded by a <script src>, which this harness does not follow.
 g.PPQuiz = { CORRECT_POINTS: 100, SPEED_POINTS: 0, options: function(){ return []; } };
+// Same again for the licence library, which decides whether the party is still on.
+g.PPLicence = { isLive: function(l){ return Date.now() < l.endsAt; },
+                timeLeft: function(){ return "some time"; } };
 
 // expose the internals we want to drive
 /* The runners live inside the page's own IIFE, so the export has to go INSIDE
@@ -65,16 +68,16 @@ g.PPQuiz = { CORRECT_POINTS: 100, SPEED_POINTS: 0, options: function(){ return [
 var EXPORT = "\n; globalThis.__X = { runCharades:runCharades, runGuessWho:runGuessWho," +
   " charadesGo:charadesGo, guessWhoGo:guessWhoGo, setSend:function(f){ send=f; }," +
   " setPlayers:function(p){ players=p; }, getG:function(){ return G; }, setToast:function(f){ toast=f; }," +
-  " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip, truthsEnd:truthsEnd, setG:function(o){ G=o; } };\n";
+  " truthsTally:truthsTally, resend:function(){ if(G && G.resend) G.resend(); }, runHeads:runHeads, flip:flip, truthsEnd:truthsEnd, setG:function(o){ G=o; }, licenceTick:licenceTick, setParty:function(p){ PARTY=p; }, getParty:function(){ return PARTY; } };\n";
 var cut = body.lastIndexOf("})();");
 if (cut < 0) { print("could not find the end of the IIFE"); throw new Error("no IIFE"); }
 var harness = body.slice(0, cut) + EXPORT + body.slice(cut);
 try {
   (new Function("globalThis","window","document","location","localStorage","sessionStorage",
                 "fetch","setTimeout","setInterval","clearTimeout","clearInterval",
-                "URLSearchParams","PPConfig","PPQuiz","navigator","screen","alert","confirm","requestAnimationFrame","crypto", harness))
+                "URLSearchParams","PPConfig","PPQuiz","PPLicence","navigator","screen","alert","confirm","requestAnimationFrame","crypto", harness))
     (g, g, g.document, g.location, g.localStorage, g.sessionStorage, g.fetch,
-     g.setTimeout, g.setInterval, g.clearTimeout, g.clearInterval, g.URLSearchParams, g.PPConfig, g.PPQuiz, g.navigator, g.screen, g.alert, g.confirm, g.requestAnimationFrame, g.crypto);
+     g.setTimeout, g.setInterval, g.clearTimeout, g.clearInterval, g.URLSearchParams, g.PPConfig, g.PPQuiz, g.PPLicence, g.navigator, g.screen, g.alert, g.confirm, g.requestAnimationFrame, g.crypto);
 } catch (e) { print("LOAD FAILED: " + e); throw e; }
 
 var X = g.__X;
@@ -267,6 +270,62 @@ ok(sent.filter(function(m){ return m.t==="charades"; }).length === 0,
   ok(board2 && board2.rows.length === 0, "nobody caught one, so nobody is on the board");
   ok(cap2 && String(cap2.sub).toLowerCase().indexOf("nobody caught") >= 0,
      "and the wall says so rather than going blank, said: " + (cap2 && cap2.sub));
+})();
+
+// ---------- when the twenty four hours runs out, the room has to be told ----------
+/* THE CONSOLE KNEW AND THE ROOM DID NOT. The licence tick flipped the host's own screen
+   to "That is a wrap" and sent nothing, so the television held its last caption and every
+   phone held its last screen for ever, while the person holding the tablet was the only
+   one who could see the party had ended. And there was no warning before it either: the
+   clock counted down and then the screen simply changed. Found 15 Sep 2026 by reading the
+   one path a play-through cannot reach in under a day. */
+(function(){
+  function party(minsLeft){
+    return { status:"live", code:"ABCDEF",
+             startsAt:new Date(Date.now()-3600000).toISOString(),
+             endsAt:new Date(Date.now()+minsLeft*60000).toISOString() };
+  }
+
+  // Plenty of time left: say nothing to anybody.
+  sent = []; toasts = [];
+  X.setParty(party(120));
+  X.licenceTick();
+  ok(sent.length === 0, "two hours left: the room is not told anything");
+  ok(toasts.length === 0, "two hours left: the host is not nagged either");
+  ok(X.getParty().status === "live", "and the party is still live");
+
+  // Half an hour: the HOST is told, and only the host.
+  sent = []; toasts = [];
+  X.setParty(party(25));
+  X.licenceTick();
+  ok(toasts.length === 1 && /half an hour/i.test(toasts[0]),
+     "half an hour left: the host is warned, got " + JSON.stringify(toasts));
+  ok(sent.length === 0,
+     "and it does NOT go on the wall: thirty guests do not need a countdown");
+  X.licenceTick();
+  ok(toasts.length === 1, "and it is said once, not every thirty seconds");
+
+  // Ten minutes: a second, sharper warning.
+  sent = []; toasts = [];
+  X.licenceTick();                      // still the same party object, now inside 10m? no
+  X.setParty(party(8));
+  X.licenceTick();
+  ok(toasts.length === 1 && /ten minutes/i.test(toasts[0]),
+     "ten minutes left: warned again, got " + JSON.stringify(toasts));
+  ok(sent.length === 0, "still nothing on the wall");
+
+  // And when it is actually over, every surface is told before the console changes.
+  sent = []; toasts = [];
+  X.setParty(party(-1));
+  X.licenceTick();
+  var lob = sent.filter(function(m){ return m.t==="lobby"; });
+  var big = sent.filter(function(m){ return m.t==="big"; });
+  ok(lob.length === 1, "time up: the phones are told to let go of whatever they held");
+  ok(big.length === 1 && /wrap/i.test(big[0].text),
+     "time up: the wall says so, got " + JSON.stringify(big));
+  ok(sent.indexOf(lob[0]) < sent.indexOf(big[0]),
+     "lobby BEFORE the caption, or a phone holding a game swallows it");
+  ok(X.getParty().status === "finished", "and only then does the console change");
 })();
 
 print(fail ? "FAILED " + fail + " of " + (pass+fail) : "ALL " + pass + " CHECKS PASSED");

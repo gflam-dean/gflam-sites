@@ -445,13 +445,41 @@
 
   /* Keep the clock honest without hammering the Worker: recompute locally from
      the end time we already hold, and only every half minute. */
-  setInterval(function(){
+  var warned30 = false, warned10 = false;
+  /* A named function, not an anonymous one inside setInterval, because an interval
+     callback is unreachable from the test harness and this is the part that was
+     wrong. */
+  function licenceTick(){
     if(!PARTY || PARTY.status !== "live" || !PARTY.endsAt) return;
     var lic = { startsAt: Date.parse(PARTY.startsAt), endsAt: Date.parse(PARTY.endsAt) };
     var el = $("clock");
     if(el) el.textContent = PPLicence.timeLeft(lic);
-    if(!PPLicence.isLive(lic)){ PARTY.status = "finished"; G = null; render(); }
-  }, 30000);
+
+    /* THE HOST GETS A HEADS UP, THE ROOM DOES NOT. Twenty four hours runs out at
+       whatever time it was started, and the console said nothing until it was gone.
+       A host who wants to wind the night up, or buy more time, needs to know before
+       the screen changes rather than after. Telling thirty guests their party has
+       ten minutes left is the host's call to make out loud, not ours to put on the
+       wall, so this is a toast on the tablet and nothing else. */
+    var left = lic.endsAt - Date.now();
+    if(left > 0){
+      if(left <= 600000 && !warned10){ warned10 = true; toast("Ten minutes left on your party"); }
+      else if(left <= 1800000 && !warned30){ warned30 = true; toast("Half an hour left on your party"); }
+    }
+
+    if(!PPLicence.isLive(lic)){
+      /* THE CONSOLE KNEW AND THE ROOM DID NOT. This flipped the host's own screen to
+         "That is a wrap" and told nobody else, so the television held its last caption
+         and every phone held its last screen, for ever, while the person holding the
+         tablet was the only one who could see that it had ended. Same shape as every
+         other fault found on 15 Sep 2026: one surface handled, the other two left.
+         lobby first so a phone holding a finished game lets go of it, then the wall. */
+      try { send({t:"lobby"});
+            send({t:"big", text:"That is a wrap", sub:"Thanks for coming"}); } catch(e){}
+      PARTY.status = "finished"; G = null; render();
+    }
+  }
+  setInterval(licenceTick, 30000);
 
   /* ------------------------------------------------------------------ bingo -- */
   /* SOMEBODY WHO WALKS IN MID GAME GETS A TICKET.
