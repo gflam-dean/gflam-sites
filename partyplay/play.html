@@ -595,7 +595,12 @@
        "Getting you in..." with the waiting dot, on a phone that is connected perfectly
        well. All three people who played the games read that as "it has dropped out" and
        reloaded. If the channel really is live, say so. */
+    /* EVERY held game, or the ones left out stay held for ever. CH and GW were added
+       later and were not added here, so a phone that had played charades or who am I
+       silently swallowed the television's caption from then on: the guard below sees CH
+       still set and returns. Found 15 Sep 2026 by ending a round and looking at the phone. */
     if(m.t === "lobby"){ B = null; Q = null; H = null; T = null; W = null; V = null; PH = null;
+      CH = null; GW = null;
       var s = load()||{}; waiting(s.nickname||"", _ppLive ? "live" : undefined); return; }
     if(m.t === "bingo"){ Q=null; H=null; bingoStart(); return; }
     if(m.t === "photo"){

@@ -701,7 +701,8 @@
   function charadesGo(){
     G.i++;
     var it=G.items[G.i];
-    if(!it){ send({t:"big",text:"Charades done",sub:""}); paintCharades(); return; }
+    // lobby FIRST, or the phones are still holding the last round and drop this caption.
+    if(!it){ send({t:"lobby"}); send({t:"big",text:"Charades done",sub:""}); paintCharades(); return; }
     G.actor=nextActor();
     G.got.push(G.actor);
     // The word goes to the phones, tagged with whose it is. The TV gets the name only.
@@ -750,7 +751,8 @@
   function guessWhoGo(){
     G.i++;
     var it=G.items[G.i];
-    if(!it){ send({t:"big",text:"That is the lot",sub:""}); paintGuessWho(); return; }
+    // lobby FIRST, same reason as charades: the last answer is still on every phone.
+    if(!it){ send({t:"lobby"}); send({t:"big",text:"That is the lot",sub:""}); paintGuessWho(); return; }
     if(!players.length){ toast("Nobody has joined yet"); G.i--; return; }
     G.guesser=players[G.done.length % players.length];
     G.done.push(G.guesser);
