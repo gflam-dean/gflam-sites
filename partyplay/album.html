@@ -50,6 +50,34 @@
 
   if(!SHARE){ $("app").innerHTML='<div class="state">This link is missing something.</div>'; return; }
 
+  /* HOW MANY DAYS AWAY, counted the way the sentence beside it is read. This used to be
+     Math.ceil on the raw millisecond gap, so an album deleted at nine in the evening on
+     15 October read "Thursday 15 October, which is 31 days away" on the morning of the
+     15th of September. The date and the number in one sentence disagreed, and the number
+     also contradicted the thirty days the privacy page promises. Count calendar days
+     between local midnights instead, and round rather than floor so an hour of daylight
+     saving cannot move it. Seen 15 Sep 2026 on a real album. */
+  function albumDays(iso, nowMs){
+    var end = new Date(iso), now = new Date(nowMs == null ? Date.now() : nowMs);
+    if(isNaN(end.getTime())) return null;
+    var a = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var b = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    return Math.round((b - a) / 86400000);
+  }
+
+  /* "1 thing in here. Tap any of them to save it." A photo is not a thing, and there is
+     only one of them to tap. Say what is actually in there, and match the verb to the
+     count. */
+  function albumCount(count, photos){
+    var list = photos || [], vids = 0;
+    for(var i=0;i<list.length;i++) if(list[i] && list[i].video) vids++;
+    var noun = vids === 0            ? (count === 1 ? "photo" : "photos")
+             : vids >= (count || 0)  ? (count === 1 ? "clip"  : "clips")
+             :                         "photos and clips";
+    return count + " " + noun + " in here. " +
+           (count === 1 ? "Tap it to save it." : "Tap any of them to save one.");
+  }
+
   fetch(PPConfig.API+"/album?share="+encodeURIComponent(SHARE))
     .then(function(r){ return r.json(); })
     .then(function(d){
@@ -57,10 +85,10 @@
       if(!d.count){ $("app").innerHTML='<h1>'+esc(d.party||"The album")+'</h1><p>Nobody took any photos.</p>'; return; }
       var gone = d.deleteAfter ? new Intl.DateTimeFormat("en-AU",{weekday:"long",day:"numeric",month:"long"})
         .format(new Date(d.deleteAfter)) : null;
-      var days = d.deleteAfter ? Math.ceil((Date.parse(d.deleteAfter)-Date.now())/86400000) : null;
+      var days = d.deleteAfter ? albumDays(d.deleteAfter) : null;
 
       var h='<h1>'+esc(d.party||"The album")+'</h1>'+
-        '<p>'+d.count+(d.count===1?" thing":" things")+' in here. Tap any of them to save it.</p>';
+        '<p>'+albumCount(d.count, d.photos)+'</p>';
       /* The countdown is the honest bit AND the useful bit. Nobody's party photos
          should live on somebody else's server forever, and saying when they go is
          what makes people actually save the ones they want. */
