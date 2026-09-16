@@ -1338,6 +1338,46 @@ def local_checks(which):
                     late.append('%s uses %s before %s' % (short(f), g, lib))
     ok('every shared script loads before it is used', not late, why='; '.join(late[:3]))
 
+    head('The 90 days the privacy page promises')
+    """A PROMISE WITH NO SCHEDULER IS A PROMISE NOBODY KEEPS.
+
+       venueplay.com.au/privacy says a closed venue's player list is deleted within 90
+       days. purge-closed-player-data.py does it, and NOTHING RUNS THAT TOOL. That is the
+       same shape as the 30-day archive sweep, which sat in the Worker unrun from the day
+       it was written until 16 Sep 2026 because nobody had added a Cron Trigger.
+
+       So the gate nags instead. It runs the tool in its read-only mode and goes red the
+       moment a venue is overdue, which is the only thing that will make anyone run it.
+       It does NOT reimplement the rule: a second copy of "what counts as closed" is
+       exactly how the two would drift apart."""
+    tool = os.path.join(ROOT, 'venueplay-backend', 'tools', 'purge-closed-player-data.py')
+    if not os.path.isfile(tool):
+        ok('a closed venue\'s player data is deleted within 90 days', False,
+           why='purge-closed-player-data.py is missing entirely')
+    else:
+        try:
+            r = subprocess.run([sys.executable, tool], capture_output=True, text=True, timeout=180)
+            out = r.stdout + r.stderr
+        except Exception as e:
+            out = 'could not run it: %s' % e
+        due = [l.strip() for l in out.splitlines() if l.strip().startswith('DUE')]
+        soon = [l.strip() for l in out.splitlines() if 'to go' in l]
+        if 'could not run it' in out:
+            ok('a closed venue\'s player data is deleted within 90 days', False, why=out[:120])
+        else:
+            nearest = ''
+            if soon:
+                try:
+                    nearest = min(int(re.search(r'(\d+) to go', l).group(1)) for l in soon
+                                  if re.search(r'(\d+) to go', l))
+                    nearest = 'nearest is %d day(s) away' % nearest
+                except Exception:
+                    nearest = ''
+            ok('a closed venue\'s player data is deleted within 90 days', not due,
+               detail=nearest or ('%d venue(s) overdue' % len(due)),
+               why=('OVERDUE: ' + '; '.join(x[:70] for x in due[:3])
+                    + '. Run venueplay-backend/tools/purge-closed-player-data.py --apply') if due else '')
+
     head('A hidden element is actually hidden')
     """display:flex BEATS THE hidden ATTRIBUTE, and nothing here could see it.
 
