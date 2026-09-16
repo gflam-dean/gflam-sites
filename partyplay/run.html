@@ -656,8 +656,19 @@
 
   /* -------------------------------------------------- who here has ever ----- */
   function runWhoHere(g){
-    G={ mode:"whohere", items:(g.config&&g.config.items)||[], i:-1, hands:[], repaint:paintWhoHere };
+    G={ mode:"whohere", items:(g.config&&g.config.items)||[], i:-1, hands:[], repaint:paintWhoHere,
+        resend:resendWhoHere };
     paintWhoHere();
+  }
+  /* There is no reveal in this one, so a latecomer can always be given the prompt that is
+     on the wall. Heads or tails and guess the photo deliberately have no resend: a coin
+     flip somebody joined halfway through is not a round they played, and a photo round
+     builds its options from who was in the room when it started. */
+  function resendWhoHere(){
+    if(!G || G.i < 0) return;
+    var it = G.items[G.i];
+    if(!it) return;
+    send({t:"hands", i:G.i, q:it.q});
   }
   function paintWhoHere(){
     var it=G.items[G.i];
@@ -962,8 +973,24 @@
     // One seed for the night, so the host, the television and every phone build
     // the same four options in the same order without sending them three times.
     G={ items:(g.config&&g.config.items)||[], i:-1, shown:false, answers:[],
-        seed: Math.floor(Math.random()*1e6), title:(g.title||"Trivia"), repaint:paintTrivia };
+        seed: Math.floor(Math.random()*1e6), title:(g.title||"Trivia"), repaint:paintTrivia,
+        resend:resendTrivia };
     paintTrivia();
+  }
+  /* A LATECOMER GETS THE QUESTION THAT IS ON THE WALL RIGHT NOW.
+     Not once the answer is up: G.shown means the answer is already on the television, and
+     handing somebody the question at that point is handing them the answer with it. They
+     score from this question on, which is a worse deal than everyone else got and a much
+     better one than watching a waiting screen until the round ends.
+     Safe to broadcast to the whole room because play.html now ignores a repeat of the
+     question a phone is already holding. It did not, and this used to wipe the answer off
+     every screen in the room. */
+  function resendTrivia(){
+    if(!G || G.i < 0 || G.shown) return;
+    var it = G.items[G.i];
+    if(!it) return;
+    var o = PPQuiz.options(G.items, G.i, G.seed);
+    send({t:"ask", i:G.i, q:it.q, options:o.options, n:G.i+1, of:G.items.length});
   }
   function answeredCount(){
     return G.answers.filter(function(a){ return a.i===G.i; }).length;

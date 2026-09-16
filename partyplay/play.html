@@ -713,6 +713,9 @@
       paintTruthsForm(); return;
     }
     if(m.t === "hands"){
+      /* Same rule as "ask" above: a repeat of the prompt already on this phone must not
+         put a raised hand back down. */
+      if(W && W.i === m.i && W.q === m.q){ paintHands(); return; }
       B=null;Q=null;H=null;T=null;V=null;CH=null;GW=null;
       W={ i:m.i, q:m.q, raised:false }; paintHands(); return;
     }
@@ -741,7 +744,18 @@
                  '</span><b>'+r.score+'</b></div>'; }).join("")+'</div>';
       return;
     }
-    if(m.t === "ask"){ B=null; H=null; Q={ i:m.i, q:m.q, options:m.options||[], n:m.n, of:m.of, mine:null, correct:null };
+    if(m.t === "ask"){
+      /* A REPEAT OF THE QUESTION THIS PHONE IS ALREADY ON MUST CHANGE NOTHING.
+         The host now resends the live question whenever somebody new walks in, so this
+         arrives again mid-question for everybody else in the room. Rebuilding Q set
+         mine back to null, which wiped the answer off the screen of every guest who had
+         already tapped one. They would tap again, and the host counts only the FIRST
+         answer per person, so the second choice they could see selected was not the one
+         being scored. Worse than the latecomer problem it was added to solve.
+         Matched on the question TEXT as well as the index, because the index restarts
+         at zero on the next trivia game of the night. */
+      if(Q && Q.i === m.i && Q.q === m.q){ paintQuestion(); return; }
+      B=null; H=null; Q={ i:m.i, q:m.q, options:m.options||[], n:m.n, of:m.of, mine:null, correct:null };
       paintQuestion(); return; }
     if(m.t === "result"){
       if(Q && Q.i===m.i){ Q.correct=m.correct; Q.board=m.board||[]; paintQuestion(); }
