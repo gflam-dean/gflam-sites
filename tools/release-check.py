@@ -1414,6 +1414,36 @@ def local_checks(which):
        not clash, why='; '.join(clash[:4]),
        detail='%d page(s) checked' % len(_pages))
 
+    head('No function is declared inside an if, where it may never be bound')
+    """THE FAULT THIS IS HERE FOR SHIPPED TO A LIVE VENUE AND PASSED ALL 292 CHECKS.
+
+       tvStatus was written inside connectRealtime's first if - the branch that runs only
+       while the Supabase library is still loading. A function declaration in a BLOCK is
+       bound when the block RUNS, so on any screen where the CDN was quick it was never
+       bound, and Tugun Bowls Club's television threw "tvStatus is not a function" out of
+       its SUBSCRIBED handler all day. It never said Connected, never recorded which road
+       it took, and could no longer mark itself unsubscribed when the channel closed: a
+       deaf screen would have gone on claiming it was fine.
+
+       The file PARSED. Every other check here was true. Only screen-check.html, which
+       opens the real screen in a frame, could see it.
+
+       It only counts as a fault when the name is called from outside the block too,
+       which is the combination that actually breaks."""
+    stray = []
+    for f in sorted(_glob.glob(os.path.join(ROOT, 'venueplay', '**', '*.html'), recursive=True)
+                    + _glob.glob(os.path.join(ROOT, 'venueplay', '**', '*.js'), recursive=True)
+                    + _glob.glob(os.path.join(ROOT, 'partyplay', '**', '*.html'), recursive=True)):
+        try:
+            body = io.open(f, encoding='utf-8').read()
+        except Exception:
+            continue
+        for name, line in _decls_inside_blocks(body):
+            stray.append('%s:%d: %s() is declared inside a block' % (short(f), line, name))
+    ok('every function is declared where it will actually be bound',
+       not stray, why='; '.join(sorted(set(stray))[:4]),
+       detail='%d stray' % len(set(stray)) if stray else '')
+
 
 
 
@@ -2866,6 +2896,59 @@ def _no_comments(js):
             i += 2; continue
         out.append(c); i += 1
     return ''.join(out)
+
+
+
+def _decls_inside_blocks(src):
+    """Every `function name(...)` written as the FIRST thing inside an if/for/while/try
+    block. Returns (name, line) pairs.
+
+    WHY THIS EXISTS. On 16 September 2026 tvStatus landed inside connectRealtime's first
+    if - the branch that runs only while the Supabase library is still loading. A function
+    declaration in a block is BOUND WHEN THE BLOCK RUNS (Annex B), so on every screen where
+    the CDN was quick it was never bound at all, and the venue television at Tugun Bowls
+    Club spent the day throwing "TypeError: tvStatus is not a function" out of its
+    SUBSCRIBED handler. It never said Connected, never recorded which road it took, and
+    could no longer mark itself unsubscribed when the channel closed: a deaf screen would
+    have gone on claiming it was fine. The file PARSED, and all 292 checks here were green.
+
+    DELIBERATELY NARROW, because the wide version was wrong. The first attempt tracked
+    brace depth across the whole script and named four innocent functions in two files: a
+    regular expression literal containing a quote sends any scanner that is not a real
+    JavaScript tokeniser off by one brace and it never recovers. Rather than ship a check
+    that cries wolf, this reads only the shape that actually shipped - an opening control
+    block, then comments, then a declaration - which needs no brace counting at all and
+    which prove-checks.py can put back and watch go red.
+
+    What it therefore does NOT catch: a declaration buried further down inside a block.
+    Opening the screen is still the thing that finds those. See venueplay/screen-check.html.
+    """
+    lines = src.split('\n')
+    # ...and the trailing { must be the block's own. `if(!DEMO) ch.subscribe(function(s){`
+    # opens a FUNCTION body, where a declaration is bound perfectly normally, and reading
+    # that as a control block named four healthy screens on the first run of this check.
+    OPENS = re.compile(r'^\s*(?:\}\s*else\s+)?(?:if|for|while|switch|try|else)\b'
+                       r'(?![^\n]*(?:function|=>))[^\n]*\{\s*$')
+    DECL  = re.compile(r'^\s*function\s+([A-Za-z_$][\w$]*)\s*\(')
+    out, i = [], 0
+    while i < len(lines) - 1:
+        if OPENS.match(lines[i]):
+            j, incomment = i + 1, False
+            while j < len(lines):
+                t = lines[j].strip()
+                if incomment:
+                    if '*/' in t: incomment = False
+                    j += 1; continue
+                if t.startswith('/*') and '*/' not in t: incomment = True; j += 1; continue
+                if not t or t.startswith('//') or t.startswith('*') or t.startswith('/*'):
+                    j += 1; continue
+                break
+            if j < len(lines):
+                m = DECL.match(lines[j])
+                if m:
+                    out.append((m.group(1), j + 1))
+        i += 1
+    return out
 
 
 def each_worker_is_the_right_worker():

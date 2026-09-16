@@ -639,11 +639,18 @@
     if(_m && _m.t==="screen_refresh"){ try{ reloadVenueLogo(); }catch(_){} return; }
     onMsg(_m);
   }); });
-  /* A DEMO OPENS NO CHANNEL. Not for tidiness: this screen is embedded in a public sales
-     page, and a subscribed screen would sit on a venue channel where a real game could appear
-     on a marketing page, and would answer tv_here, which is what HQ reads to decide a screen
-     is alive. A demo must never make a dead TV look healthy. */
-  if(!VP_DEMO) ch.subscribe(function(status){
+  /* DECLARED OUT HERE, NOT INSIDE THE SUBSCRIBE CALLBACK.
+
+     On members/screen.html it sat inside `if(status==="SUBSCRIBED"){`, a real block, and
+     the only other caller is the channel-error branch OUTSIDE that block. So the one
+     message this function exists to deliver, Reconnecting, could never be delivered: a
+     members draw screen that lost its channel threw "tvStatus is not a function" and kept
+     its green dot up. tv.html had the same fault by the same route the same day and put a
+     live venue's television on the air with no status at all.
+
+     A function declaration inside a BLOCK is bound when the block RUNS. Out here it is
+     bound before anything can call it, in all five screens, which is what the comment
+     below has been claiming all along. tools/release-check.py now watches for the shape. */
   /* SILENT WHILE CONNECTED, LOUD WHILE NOT. This screen used to hide the pill outright
      the moment it had a venue slug, with the note "no connected pill on a live venue
      screen". That half was right: a grey CONNECTED badge on a pub wall is for us, not
@@ -657,8 +664,14 @@
     if(txt) txt.textContent = connected ? "Connected" : "Reconnecting";
     if(box) box.hidden = !!connected;
   }
+
+  /* A DEMO OPENS NO CHANNEL. Not for tidiness: this screen is embedded in a public sales
+     page, and a subscribed screen would sit on a venue channel where a real game could appear
+     on a marketing page, and would answer tv_here, which is what HQ reads to decide a screen
+     is alive. A demo must never make a dead TV look healthy. */
+  if(!VP_DEMO) ch.subscribe(function(status){
     if(status==="SUBSCRIBED"){ tvSubscribed=true; tvSend({ t:"tv_here", hello:true }); tvStatus(true); }
-    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"){ tvSubscribed=false; tvStatus(false); }
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){ tvSubscribed=false; tvStatus(false); }
   });
 
   var HOST_TYPES={host_here:1,session:1,mode:1,started:1,state:1,question:1,lock:1,reveal:1,leaderboard:1,podium:1,idle:1,players:1};
