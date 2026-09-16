@@ -25,7 +25,8 @@
   .layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4% 6%}
   .hidden{display:none!important}
 
-  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;align-items:center;gap:.8cqw;opacity:.92;z-index:6}
+  .tv-corner{position:absolute;top:2cqw;right:2.4cqw;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:.8cqw;opacity:.92;z-index:6;max-width:40cqw}
+  .tv-corner .venuename{flex:0 0 100%;margin-top:.15cqw;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(10px,1.3cqw,17px);letter-spacing:.02em;color:rgba(255,255,255,.82);text-shadow:0 2px 8px rgba(0,0,0,.7)}
   .tv-corner .vn{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:clamp(11px,1.5cqw,20px);color:var(--text)}
   .tv-corner svg{filter:drop-shadow(0 0 3px rgba(255,31,142,.9))}
   /* Top-CENTRE, not top-left. The venue's LOGO is pinned top-left at top:20px with
@@ -168,6 +169,7 @@
   <div class="tv-corner">
     <svg width="18" height="21" viewBox="0 0 26 30" fill="none"><path d="M2 3 L24 15 L2 27 Z" fill="none" stroke="#FF1F8E" stroke-width="2.6" stroke-linejoin="round"/></svg>
     <span class="vn">VenuePlay</span>
+    <div class="venuename" id="venueNameTag" hidden></div>
   </div>
 
   <!-- lobby -->
@@ -919,12 +921,24 @@
       el.src=url; el.style.display="block";
     }
     function load(){
+    /* A DEMO NAMES THE SAME PUB AS THE BINGO WALL. ?demo=1 resolves no venue on
+       purpose, so the fetch below returns nothing and the corner would stay blank while
+       the bingo wall beside it on see-a-night says The Rose and Crown. */
+    if(VP_DEMO){
+      var dnt=document.getElementById("venueNameTag");
+      if(dnt){ dnt.textContent="The Rose and Crown"; dnt.hidden=false; }
+    }
     try{
       /* Through the Worker, not straight at Supabase. The public grant on vp_venue_screen
          answered an unfiltered request with EVERY venue, which is the customer list. */
       fetch(VP_SCREEN_API+"/screen?venue="+encodeURIComponent(VENUE_SLUG))
         .then(function(r){ return r.ok?r.json():null; })
-        .then(function(d){ if(d) paint(d.logo_url||""); })   // one object now, not an array
+        .then(function(d){ if(!d) return; paint(d.logo_url||"");
+          /* THE LOGO WINS. A venue with a logo shows the logo and not the
+             caption, the same rule tv.html applies, so the two never stack. */
+          var nt=document.getElementById("venueNameTag");
+          if(nt){ var nm=String(d.name||"").trim();
+            nt.textContent=nm; nt.hidden = !nm || !!(d.logo_url||""); } })   // one object now, not an array
         .catch(function(){});
     }catch(e){}
     }
