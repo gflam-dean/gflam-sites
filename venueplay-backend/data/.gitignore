@@ -1,0 +1,5 @@
+# The trivia library backups the CC-removal tool writes. They are 18MB each and they
+# contain the CC BY-SA questions that were deliberately taken OUT of the live bank, so
+# committing one puts the licensed content back into the repo the day after it was
+# removed. The real backup lives in ~/venueplay-backups/, outside the repo.
+trivia-library.BACKUP-*.json
