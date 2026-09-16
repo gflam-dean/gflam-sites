@@ -1684,9 +1684,18 @@
      changes road by one constant there. */
   var _useRoom=false, _roomTried=false, _room=null;
   try{ _useRoom = !!(window.VPRoom && window.VPRoom.wanted()); }catch(e){ _useRoom=false; }
-  function connectRealtime(){
-    if(typeof supabase==="undefined" || !supabase.createClient){
+  /* DECLARED OUT HERE, NOT INSIDE connectRealtime's first if.
 
+     That is where it was first written, and on 16 Sep 2026 it put Tugun Bowls Club's
+     television on the air with no connection status at all. A function declaration
+     inside a BLOCK is only bound when the block actually runs (Annex B): that block is
+     the "supabase library has not loaded yet" branch, so on any screen where the CDN
+     was quick it never ran, and the very next call threw "tvStatus is not a function"
+     out of the SUBSCRIBED handler. The throw landed before data-vp-transport was set,
+     so the screen recorded no road, never said Connected, and, worse, could no longer
+     set tvSubscribed=false on CHANNEL_ERROR or CLOSED: a deaf screen would have gone
+     on claiming it was fine, which is the exact fault the watchdog exists to catch.
+     Caught by screen-check.html going red against the live venue, not by reading this. */
   /* THE WARNING COULD NEVER APPEAR. Six places in this file wrote "Reconnecting" into
      .tv-status and not one of them could ever be seen: the element carried an inline
      style="display:none", which beats the display:flex in the stylesheet twenty lines
@@ -1710,6 +1719,9 @@
     if(txt) txt.textContent = connected ? "Connected" : "Reconnecting";
     if(box) box.hidden = !!connected;
   }
+
+  function connectRealtime(){
+    if(typeof supabase==="undefined" || !supabase.createClient){
       tvStatus(false);
       if(++_rtTries>=40){
         /* reload() belongs to the watchdog closure further down and is not in scope here, so the
